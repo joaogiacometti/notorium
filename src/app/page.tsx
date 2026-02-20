@@ -11,9 +11,5 @@ export default async function Home() {
     redirect("/login");
   }
 
-  return (
-    <main>
-      <div>Hello world!</div>
-    </main>
-  );
+  return <main></main>;
 }

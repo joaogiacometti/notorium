@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { LoginForm } from "@/components/login-form";
 import type { SignupForm } from "@/components/signup-form";
@@ -24,4 +25,11 @@ export const signUpAction = async (data: SignupForm) => {
     },
   });
   redirect("/");
+};
+
+export const logoutAction = async () => {
+  await auth.api.signOut({
+    headers: await headers(),
+  });
+  redirect("/login");
 };
