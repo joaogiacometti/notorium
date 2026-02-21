@@ -26,9 +26,29 @@ interface NoteCardProps {
   };
 }
 
+function stripMarkdown(text: string): string {
+  return text
+    .replaceAll(/#{1,6}\s+/g, "")
+    .replaceAll(/(\*\*|__)(.*?)\1/g, "$2")
+    .replaceAll(/(\*|_)(.*?)\1/g, "$2")
+    .replaceAll(/~~(.*?)~~/g, "$1")
+    .replaceAll(/`{1,3}[^`]*`{1,3}/g, "")
+    .replaceAll(/!\[.*?\]\(.*?\)/g, "")
+    .replaceAll(/\[([^\]]*)\]\(.*?\)/g, "$1")
+    .replaceAll(/^>\s+/gm, "")
+    .replaceAll(/^[-*+]\s+/gm, "")
+    .replaceAll(/^\d+\.\s+/gm, "")
+    .replaceAll(/^---+$/gm, "")
+    .replaceAll(/\n{2,}/g, " ")
+    .replaceAll(/\n/g, " ")
+    .trim();
+}
+
 export function NoteCard({ note }: Readonly<NoteCardProps>) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const previewText = note.content ? stripMarkdown(note.content) : null;
 
   return (
     <>
@@ -72,9 +92,9 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
         </CardHeader>
         <Link href={`/subjects/${note.subjectId}/notes/${note.id}`}>
           <CardContent className="pt-0">
-            {note.content && (
+            {previewText && (
               <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
-                {note.content}
+                {previewText}
               </p>
             )}
             <p className="text-xs text-muted-foreground/60">

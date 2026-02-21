@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { createNote } from "@/app/actions/notes";
+import { MarkdownEditor } from "@/components/markdown-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +20,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { type CreateNoteForm, createNoteSchema } from "@/lib/validations/notes";
 
 interface CreateNoteDialogProps {
@@ -55,7 +55,7 @@ export function CreateNoteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create Note</DialogTitle>
         </DialogHeader>
@@ -90,12 +90,11 @@ export function CreateNoteDialog({
                   <FieldLabel htmlFor="form-create-note-content">
                     Content
                   </FieldLabel>
-                  <Textarea
-                    {...field}
+                  <MarkdownEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Write your note here... (Markdown supported)"
                     id="form-create-note-content"
-                    placeholder="Write your note here..."
-                    rows={6}
-                    className="resize-none"
                     aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && (

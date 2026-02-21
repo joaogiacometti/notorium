@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { Button } from "@/components/ui/button";
 
 interface NoteDetailProps {
@@ -79,9 +80,7 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
 
       <div className="rounded-xl border border-border/60 bg-card p-6">
         {note.content ? (
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-            {note.content}
-          </p>
+          <MarkdownRenderer content={note.content} className="text-sm" />
         ) : (
           <p className="text-sm italic text-muted-foreground">
             No content yet. Click Edit to add some notes.

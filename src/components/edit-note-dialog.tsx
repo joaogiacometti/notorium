@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { editNote } from "@/app/actions/notes";
+import { MarkdownEditor } from "@/components/markdown-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,7 +19,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { type EditNoteForm, editNoteSchema } from "@/lib/validations/notes";
 
 interface EditNoteDialogProps {
@@ -54,7 +54,7 @@ export function EditNoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit Note</DialogTitle>
         </DialogHeader>
@@ -87,12 +87,11 @@ export function EditNoteDialog({
                   <FieldLabel htmlFor="form-edit-note-content">
                     Content
                   </FieldLabel>
-                  <Textarea
-                    {...field}
+                  <MarkdownEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Write your note here... (Markdown supported)"
                     id="form-edit-note-content"
-                    placeholder="Write your note here..."
-                    rows={6}
-                    className="resize-none"
                     aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && (
