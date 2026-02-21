@@ -5,6 +5,7 @@ import {
   date,
   index,
   integer,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -161,12 +162,68 @@ export const note = pgTable(
   ],
 );
 
+export const gradeCategory = pgTable(
+  "grade_category",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    name: text("name").notNull(),
+    weight: numeric("weight", { precision: 5, scale: 2 }),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("grade_category_subjectId_idx").on(table.subjectId),
+    index("grade_category_userId_idx").on(table.userId),
+  ],
+);
+
+export const grade = pgTable(
+  "grade",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    name: text("name").notNull(),
+    value: numeric("value", { precision: 5, scale: 2 }).notNull(),
+    categoryId: text("category_id")
+      .notNull()
+      .references((): AnyPgColumn => gradeCategory.id, {
+        onDelete: "cascade",
+      }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("grade_categoryId_idx").on(table.categoryId),
+    index("grade_userId_idx").on(table.userId),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   subjects: many(subject),
   notes: many(note),
   attendanceMisses: many(attendanceMiss),
+  gradeCategories: many(gradeCategory),
+  grades: many(grade),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -190,6 +247,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   }),
   notes: many(note),
   attendanceMisses: many(attendanceMiss),
+  gradeCategories: many(gradeCategory),
 }));
 
 export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
@@ -210,6 +268,32 @@ export const noteRelations = relations(note, ({ one }) => ({
   }),
   user: one(user, {
     fields: [note.userId],
+    references: [user.id],
+  }),
+}));
+
+export const gradeCategoryRelations = relations(
+  gradeCategory,
+  ({ one, many }) => ({
+    subject: one(subject, {
+      fields: [gradeCategory.subjectId],
+      references: [subject.id],
+    }),
+    user: one(user, {
+      fields: [gradeCategory.userId],
+      references: [user.id],
+    }),
+    grades: many(grade),
+  }),
+);
+
+export const gradeRelations = relations(grade, ({ one }) => ({
+  category: one(gradeCategory, {
+    fields: [grade.categoryId],
+    references: [gradeCategory.id],
+  }),
+  user: one(user, {
+    fields: [grade.userId],
     references: [user.id],
   }),
 }));

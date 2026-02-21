@@ -129,12 +129,46 @@ University and school students who want to organize their study materials by sub
 - Attendance summary shows miss count, remaining misses, and attendance rate percentage
 - Individual miss records can be removed
 
-#### 2.2 Grade System
+#### 2.2 Grade System ✅ COMPLETE
 
-- [ ] Define grade categories per subject (exams, activities, group activities, lists)
-- [ ] Add grades to each category
-- [ ] Calculate weighted or simple averages
-- [ ] View grade summary per subject
+- [x] Define grade categories per subject (exams, activities, group activities, lists)
+- [x] Add grades to each category
+- [x] Calculate weighted or simple averages
+- [x] View grade summary per subject
+
+**Data model (grade_category):**
+| Field | Type | Notes |
+|-------------|-----------|--------------------------------|
+| id | text (PK) | Generated ID |
+| name | text | Required |
+| weight | numeric | Optional, category weight (%) |
+| subjectId | text (FK) | References subject.id, cascade |
+| userId | text (FK) | References user.id, cascade |
+| createdAt | timestamp | Auto-set on creation |
+| updatedAt | timestamp | Auto-updated on changes |
+
+**Data model (grade):**
+| Field | Type | Notes |
+|-------------|-----------|--------------------------------------|
+| id | text (PK) | Generated ID |
+| name | text | Required |
+| value | numeric | Required, grade value (0–100) |
+| categoryId | text (FK) | References grade_category.id, cascade|
+| userId | text (FK) | References user.id, cascade |
+| createdAt | timestamp | Auto-set on creation |
+| updatedAt | timestamp | Auto-updated on changes |
+
+**Acceptance criteria:**
+
+- Grade categories belong to a subject and are private to the subject owner
+- Category name is required and non-empty
+- Optional weight per category enables weighted average calculation
+- When weights are set, overall average is computed as a weighted average
+- When no weights are set, overall average is a simple average across categories
+- Individual grades can be added, edited, and deleted within categories
+- Deleting a category cascades to delete all its grades
+- Visual color coding: green (≥70), amber (≥50), red (<50)
+- Overall average card shows current performance with progress bar
 
 #### 2.3 Markdown Notes
 
@@ -148,6 +182,13 @@ University and school students who want to organize their study materials by sub
 - [ ] Loading page/skeleton (loading.tsx)
 - [ ] Toast notifications (Sonner via shadcn/ui) for success/error feedback
 - [ ] Dark/light theme toggle (with system preference support)
+- [ ] Hide misses history behind a collapsible/accordion to avoid cluttering the main UI
+
+#### 2.5 Component Architecture Refactoring
+
+- [ ] Move non-reusable components (used only in one page/feature) out of `@src/components` and co-locate them near their implementation (e.g., in a `components` folder within the specific app route).
+- [ ] Ensure that `@src/components` strictly contains only reusable elements that are shared across multiple pages.
+- [ ] Update all corresponding imports throughout the project.
 
 ---
 

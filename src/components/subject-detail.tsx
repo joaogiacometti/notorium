@@ -8,6 +8,7 @@ import { useState } from "react";
 import { AttendanceSummary } from "@/components/attendance-summary";
 import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/edit-subject-dialog";
+import { GradesSummary } from "@/components/grades-summary";
 import { NotesList } from "@/components/notes-list";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -31,6 +32,27 @@ interface AttendanceMiss {
   updatedAt: Date;
 }
 
+interface Grade {
+  id: string;
+  name: string;
+  value: string;
+  categoryId: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface GradeCategory {
+  id: string;
+  name: string;
+  weight: string | null;
+  subjectId: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  grades: Grade[];
+}
+
 interface SubjectDetailProps {
   subject: {
     id: string;
@@ -43,12 +65,14 @@ interface SubjectDetailProps {
   };
   notes: Note[];
   misses: AttendanceMiss[];
+  gradeCategories: GradeCategory[];
 }
 
 export function SubjectDetail({
   subject,
   notes,
   misses,
+  gradeCategories,
 }: Readonly<SubjectDetailProps>) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -119,6 +143,10 @@ export function SubjectDetail({
         maxMisses={subject.maxMisses}
         misses={misses}
       />
+
+      <Separator className="my-8" />
+
+      <GradesSummary subjectId={subject.id} categories={gradeCategories} />
 
       <Separator className="my-8" />
 
