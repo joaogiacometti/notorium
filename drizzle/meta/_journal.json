@@ -22,6 +22,13 @@
       "when": 1771638498659,
       "tag": "0002_wild_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771689114744,
+      "tag": "0003_nervous_nextwave",
+      "breakpoints": true
     }
   ]
 }

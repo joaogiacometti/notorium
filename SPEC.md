@@ -96,13 +96,38 @@ University and school students who want to organize their study materials by sub
 
 ### Phase 2 — Future Enhancements
 
-#### 2.1 Attendance Tracking System
+#### 2.1 Attendance Tracking System ✅ COMPLETE
 
-- [ ] Configure total classes per subject (e.g., 15)
-- [ ] Configure max allowed misses per subject (e.g., 4)
-- [ ] Record a miss for a specific date
-- [ ] View attendance summary (misses used / max allowed)
-- [ ] Visual indicator when approaching or exceeding miss limit
+- [x] Configure total classes per subject (e.g., 15)
+- [x] Configure max allowed misses per subject (e.g., 4)
+- [x] Record a miss for a specific date
+- [x] View attendance summary (misses used / max allowed)
+- [x] Visual indicator when approaching or exceeding miss limit
+
+**Data model (extends subject table):**
+| Field | Type | Notes |
+|-------------|-----------|--------------------------------|
+| totalClasses| integer | Optional, total classes count |
+| maxMisses | integer | Optional, max allowed misses |
+
+**Data model (attendance_miss):**
+| Field | Type | Notes |
+|-------------|-----------|--------------------------------|
+| id | text (PK) | Generated ID |
+| missDate | date | Required, date of the miss |
+| subjectId | text (FK) | References subject.id, cascade |
+| userId | text (FK) | References user.id, cascade |
+| createdAt | timestamp | Auto-set on creation |
+| updatedAt | timestamp | Auto-updated on changes |
+
+**Acceptance criteria:**
+
+- Attendance settings (totalClasses, maxMisses) are optional per subject
+- A user can only manage attendance for their own subjects
+- Cannot record duplicate misses for the same date on a subject
+- Visual progress bar: green (on track), amber (≥75% misses used), red (limit reached)
+- Attendance summary shows miss count, remaining misses, and attendance rate percentage
+- Individual miss records can be removed
 
 #### 2.2 Grade System
 

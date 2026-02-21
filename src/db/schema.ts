@@ -1,6 +1,15 @@
 import { relations } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  date,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -82,6 +91,8 @@ export const subject = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     description: text("description"),
+    totalClasses: integer("total_classes"),
+    maxMisses: integer("max_misses"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -92,6 +103,36 @@ export const subject = pgTable(
       .notNull(),
   },
   (table) => [index("subject_userId_idx").on(table.userId)],
+);
+
+export const attendanceMiss = pgTable(
+  "attendance_miss",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    missDate: date("miss_date", { mode: "string" }).notNull(),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("attendance_miss_subjectId_idx").on(table.subjectId),
+    index("attendance_miss_userId_idx").on(table.userId),
+    unique("attendance_miss_unique").on(
+      table.subjectId,
+      table.missDate,
+      table.userId,
+    ),
+  ],
 );
 
 export const note = pgTable(
@@ -125,6 +166,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   subjects: many(subject),
   notes: many(note),
+  attendanceMisses: many(attendanceMiss),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -147,6 +189,18 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
     references: [user.id],
   }),
   notes: many(note),
+  attendanceMisses: many(attendanceMiss),
+}));
+
+export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
+  subject: one(subject, {
+    fields: [attendanceMiss.subjectId],
+    references: [subject.id],
+  }),
+  user: one(user, {
+    fields: [attendanceMiss.userId],
+    references: [user.id],
+  }),
 }));
 
 export const noteRelations = relations(note, ({ one }) => ({

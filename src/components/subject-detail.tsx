@@ -5,10 +5,12 @@ import { ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AttendanceSummary } from "@/components/attendance-summary";
 import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/edit-subject-dialog";
 import { NotesList } from "@/components/notes-list";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface Note {
   id: string;
@@ -20,20 +22,33 @@ interface Note {
   updatedAt: Date;
 }
 
+interface AttendanceMiss {
+  id: string;
+  missDate: string;
+  subjectId: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface SubjectDetailProps {
   subject: {
     id: string;
     name: string;
     description: string | null;
+    totalClasses: number | null;
+    maxMisses: number | null;
     createdAt: Date;
     updatedAt: Date;
   };
   notes: Note[];
+  misses: AttendanceMiss[];
 }
 
 export function SubjectDetail({
   subject,
   notes,
+  misses,
 }: Readonly<SubjectDetailProps>) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -97,6 +112,15 @@ export function SubjectDetail({
           </Button>
         </div>
       </div>
+
+      <AttendanceSummary
+        subjectId={subject.id}
+        totalClasses={subject.totalClasses}
+        maxMisses={subject.maxMisses}
+        misses={misses}
+      />
+
+      <Separator className="my-8" />
 
       <NotesList subjectId={subject.id} notes={notes} />
 
