@@ -8,6 +8,13 @@
       "when": 1771624236472,
       "tag": "0000_cold_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771631430890,
+      "tag": "0001_burly_chat",
+      "breakpoints": true
     }
   ]
 }

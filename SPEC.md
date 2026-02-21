@@ -40,14 +40,14 @@ University and school students who want to organize their study materials by sub
 - [x] Session management
 - [x] Navbar shows auth state (sign in/up vs logout)
 
-#### 1.2 Subject Management (CRUD)
+#### 1.2 Subject Management (CRUD) ✅ COMPLETE
 
-- [ ] Create a subject (name, description)
-- [ ] List all subjects for the authenticated user
-- [ ] View a single subject
-- [ ] Edit a subject (name, description)
-- [ ] Delete a subject
-- [ ] Each subject is private to the user who created it
+- [x] Create a subject (name, description)
+- [x] List all subjects for the authenticated user
+- [x] View a single subject
+- [x] Edit a subject (name, description)
+- [x] Delete a subject
+- [x] Each subject is private to the user who created it
 
 **Data model:**
 | Field | Type | Notes |
@@ -116,6 +116,13 @@ University and school students who want to organize their study materials by sub
 - [ ] Replace plain text note content with Markdown editor
 - [ ] Render Markdown preview
 - [ ] Support basic formatting (headings, bold, italic, lists, code blocks)
+
+#### 2.4 UI/UX Improvements
+
+- [ ] Custom 404 (not-found) page
+- [ ] Loading page/skeleton (loading.tsx)
+- [ ] Toast notifications (Sonner via shadcn/ui) for success/error feedback
+- [ ] Dark/light theme toggle (with system preference support)
 
 ---
 
