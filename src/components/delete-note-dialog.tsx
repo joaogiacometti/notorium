@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useTransition } from "react";
-import { deleteSubject } from "@/app/actions/subjects";
+import { deleteNote } from "@/app/actions/notes";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,26 +13,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-interface DeleteSubjectDialogProps {
-  subjectId: string;
-  subjectName: string;
+interface DeleteNoteDialogProps {
+  noteId: string;
+  noteTitle: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-export function DeleteSubjectDialog({
-  subjectId,
-  subjectName,
+export function DeleteNoteDialog({
+  noteId,
+  noteTitle,
   open,
   onOpenChange,
   onSuccess,
-}: Readonly<DeleteSubjectDialogProps>) {
+}: Readonly<DeleteNoteDialogProps>) {
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
     startTransition(async () => {
-      const result = await deleteSubject({ id: subjectId });
+      const result = await deleteNote({ id: noteId });
       if (result.success) {
         if (onSuccess) {
           onSuccess();
@@ -47,13 +47,11 @@ export function DeleteSubjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Subject</DialogTitle>
+          <DialogTitle>Delete Note</DialogTitle>
           <DialogDescription>
             {"Are you sure you want to delete "}
-            <span className="font-semibold text-foreground">{subjectName}</span>
-            {
-              "? This action cannot be undone. All associated notes will also be deleted."
-            }
+            <span className="font-semibold text-foreground">{noteTitle}</span>
+            {"? This action cannot be undone."}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">

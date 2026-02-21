@@ -1,40 +1,26 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
-import { EditSubjectDialog } from "@/components/edit-subject-dialog";
-import { NotesList } from "@/components/notes-list";
+import { DeleteNoteDialog } from "@/components/delete-note-dialog";
+import { EditNoteDialog } from "@/components/edit-note-dialog";
 import { Button } from "@/components/ui/button";
 
-interface Note {
-  id: string;
-  title: string;
-  content: string | null;
-  subjectId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface SubjectDetailProps {
-  subject: {
+interface NoteDetailProps {
+  note: {
     id: string;
-    name: string;
-    description: string | null;
+    title: string;
+    content: string | null;
+    subjectId: string;
     createdAt: Date;
     updatedAt: Date;
   };
-  notes: Note[];
 }
 
-export function SubjectDetail({
-  subject,
-  notes,
-}: Readonly<SubjectDetailProps>) {
+export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -48,9 +34,9 @@ export function SubjectDetail({
           className="gap-1.5 text-muted-foreground hover:text-foreground"
           asChild
         >
-          <Link href="/subjects">
+          <Link href={`/subjects/${note.subjectId}`}>
             <ArrowLeft className="size-4" />
-            Back to Subjects
+            Back to Subject
           </Link>
         </Button>
       </div>
@@ -58,20 +44,13 @@ export function SubjectDetail({
       <div className="mb-8 flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <BookOpen className="size-5" />
+            <FileText className="size-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {subject.name}
-            </h1>
-            {subject.description && (
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                {subject.description}
-              </p>
-            )}
+            <h1 className="text-2xl font-bold tracking-tight">{note.title}</h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
-                Created {formatDistanceToNow(new Date(subject.createdAt))}
+                Created {formatDistanceToNow(new Date(note.createdAt))}
               </span>
             </div>
           </div>
@@ -98,21 +77,27 @@ export function SubjectDetail({
         </div>
       </div>
 
-      <NotesList subjectId={subject.id} notes={notes} />
+      <div className="rounded-xl border border-border/60 bg-card p-6">
+        {note.content ? (
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+            {note.content}
+          </p>
+        ) : (
+          <p className="text-sm italic text-muted-foreground">
+            No content yet. Click Edit to add some notes.
+          </p>
+        )}
+      </div>
 
-      <EditSubjectDialog
-        subject={subject}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-      />
-      <DeleteSubjectDialog
-        subjectId={subject.id}
-        subjectName={subject.name}
+      <EditNoteDialog note={note} open={editOpen} onOpenChange={setEditOpen} />
+      <DeleteNoteDialog
+        noteId={note.id}
+        noteTitle={note.title}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onSuccess={() => {
           setDeleteOpen(false);
-          router.push("/subjects");
+          router.push(`/subjects/${note.subjectId}`);
         }}
       />
     </div>

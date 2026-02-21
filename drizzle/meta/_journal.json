@@ -15,6 +15,13 @@
       "when": 1771631430890,
       "tag": "0001_burly_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771638498659,
+      "tag": "0002_wild_nemesis",
+      "breakpoints": true
     }
   ]
 }

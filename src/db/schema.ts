@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -93,10 +94,37 @@ export const subject = pgTable(
   (table) => [index("subject_userId_idx").on(table.userId)],
 );
 
+export const note = pgTable(
+  "note",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    title: text("title").notNull(),
+    content: text("content"),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("note_subjectId_idx").on(table.subjectId),
+    index("note_userId_idx").on(table.userId),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   subjects: many(subject),
+  notes: many(note),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -113,9 +141,21 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-export const subjectRelations = relations(subject, ({ one }) => ({
+export const subjectRelations = relations(subject, ({ one, many }) => ({
   user: one(user, {
     fields: [subject.userId],
+    references: [user.id],
+  }),
+  notes: many(note),
+}));
+
+export const noteRelations = relations(note, ({ one }) => ({
+  subject: one(subject, {
+    fields: [note.subjectId],
+    references: [subject.id],
+  }),
+  user: one(user, {
+    fields: [note.userId],
     references: [user.id],
   }),
 }));

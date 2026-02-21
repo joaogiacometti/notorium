@@ -66,13 +66,13 @@ University and school students who want to organize their study materials by sub
 - Deleting a subject deletes all associated notes (cascade)
 - Subject list is sorted by most recently updated
 
-#### 1.3 Notes (CRUD per Subject)
+#### 1.3 Notes (CRUD per Subject) ✅ COMPLETE
 
-- [ ] Create a note within a subject (title, content)
-- [ ] List all notes for a subject
-- [ ] View a single note
-- [ ] Edit a note (title, content)
-- [ ] Delete a note
+- [x] Create a note within a subject (title, content)
+- [x] List all notes for a subject
+- [x] View a single note
+- [x] Edit a note (title, content)
+- [x] Delete a note
 
 **Data model:**
 | Field | Type | Notes |

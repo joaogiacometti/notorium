@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { getNotesBySubject } from "@/app/actions/notes";
 import { getSubjectById } from "@/app/actions/subjects";
 import { SubjectDetail } from "@/components/subject-detail";
 import { auth } from "@/lib/auth";
@@ -18,7 +19,10 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
   }
 
   const { id } = await params;
-  const subject = await getSubjectById(id);
+  const [subject, notes] = await Promise.all([
+    getSubjectById(id),
+    getNotesBySubject(id),
+  ]);
 
   if (!subject) {
     notFound();
@@ -26,7 +30,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
 
   return (
     <main>
-      <SubjectDetail subject={subject} />
+      <SubjectDetail subject={subject} notes={notes} />
     </main>
   );
 }

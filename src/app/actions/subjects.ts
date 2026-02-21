@@ -2,11 +2,9 @@
 
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { db } from "@/db/index";
 import { subject } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 import {
   type CreateSubjectForm,
   createSubjectSchema,
@@ -15,18 +13,6 @@ import {
   type EditSubjectForm,
   editSubjectSchema,
 } from "@/lib/validations/subjects";
-
-async function getAuthenticatedUserId(): Promise<string> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  return session.user.id;
-}
 
 export async function getSubjects() {
   const userId = await getAuthenticatedUserId();
