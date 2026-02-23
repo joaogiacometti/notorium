@@ -108,9 +108,6 @@ export function LoginForm({
                 <Button type="submit" form="form-login" disabled={isSubmitting}>
                   {isSubmitting ? "Logging in..." : "Login"}
                 </Button>
-                <Button variant="outline" type="button">
-                  Login with Google
-                </Button>
                 <FieldDescription className="text-center">
                   Don&apos;t have an account?{" "}
                   <Link href="/signup">Sign up</Link>

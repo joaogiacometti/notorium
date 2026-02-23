@@ -184,11 +184,52 @@ University and school students who want to organize their study materials by sub
 - [x] Dark/light theme toggle (with system preference support)
 - [x] Hide misses history behind a collapsible/accordion to avoid cluttering the main UI
 
-#### 2.5 Component Architecture Refactoring
+---
 
-- [ ] Move non-reusable components (used only in one page/feature) out of `@src/components` and co-locate them near their implementation (e.g., in a `components` folder within the specific app route).
-- [ ] Ensure that `@src/components` strictly contains only reusable elements that are shared across multiple pages.
-- [ ] Update all corresponding imports throughout the project.
+### Phase 3 — Planned Features
+
+#### 3.1 Global Search
+
+- [ ] Search across all content (subjects, notes)
+- [ ] Search by subject name
+- [ ] Search by subject description
+- [ ] Search inside note content (title and body)
+- [ ] Display search results with context snippets
+- [ ] Navigate directly to search results
+
+**Acceptance criteria:**
+
+- Search is accessible from the navbar or main dashboard
+- Search is case-insensitive
+- Results show matching subjects and notes with highlighted matches
+- Clicking a result navigates to the subject or note detail page
+- Empty search shows all subjects and notes (no filter applied)
+- Search only returns content owned by the authenticated user
+
+#### 3.2 Subject Module Configuration
+
+- [ ] Configure which modules are enabled per subject (notes, grades, attendance)
+- [ ] Hide disabled modules from the subject detail view
+- [ ] Show only enabled modules in the subject UI
+- [ ] Default: all modules enabled for new subjects
+
+**Data model (extends subject table):**
+| Field | Type | Notes |
+|-----------------|---------|--------------------------------|
+| notesEnabled | boolean | Default true |
+| gradesEnabled | boolean | Default true |
+| attendanceEnabled | boolean | Default true |
+
+**Acceptance criteria:**
+
+- When creating/editing a subject, user can toggle notes, grades, and attendance modules
+- Subject detail page only shows sections for enabled modules
+- Disabling notes hides the notes list and "Create Note" button
+- Disabling grades hides the grades summary and grade management UI
+- Disabling attendance hides the attendance summary and miss recording UI
+- Existing data (notes, grades, misses) is preserved when a module is disabled (just hidden)
+- Re-enabling a module shows the previously hidden data
+- All modules are enabled by default for backward compatibility
 
 ---
 
