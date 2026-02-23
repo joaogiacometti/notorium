@@ -4,6 +4,7 @@ import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
+import { ModeToggle } from "./theme-switcher";
 
 export async function Navbar() {
   const session = await auth.api.getSession({
@@ -22,6 +23,7 @@ export async function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
+          <ModeToggle />
           {session ? (
             <form action={logoutAction}>
               <Button
