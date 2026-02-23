@@ -179,7 +179,7 @@ University and school students who want to organize their study materials by sub
 #### 2.4 UI/UX Improvements
 
 - [x] Custom 404 (not-found) page
-- [ ] Loading page/skeleton (loading.tsx)
+- [x] Loading page/skeleton (loading.tsx)
 - [x] Toast notifications (Sonner via shadcn/ui) for success/error feedback
 - [x] Dark/light theme toggle (with system preference support)
 - [ ] Hide misses history behind a collapsible/accordion to avoid cluttering the main UI
