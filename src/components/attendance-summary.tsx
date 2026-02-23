@@ -14,6 +14,12 @@ import { useState } from "react";
 import { AttendanceSettingsDialog } from "@/components/attendance-settings-dialog";
 import { DeleteMissDialog } from "@/components/delete-miss-dialog";
 import { RecordMissDialog } from "@/components/record-miss-dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -137,47 +143,51 @@ export function AttendanceSummary({
           />
 
           {misses.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground">
-                Recorded Misses
-              </h3>
-              <div className="space-y-2">
-                {misses.map((miss) => (
-                  <div
-                    key={miss.id}
-                    className="group flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3 transition-colors hover:border-border"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-8 items-center justify-center rounded-md bg-muted/50">
-                        <CalendarDays className="size-4 text-muted-foreground" />
+            <Accordion type="single" collapsible>
+              <AccordionItem value="misses">
+                <AccordionTrigger className="text-sm font-medium text-muted-foreground hover:no-underline">
+                  Recorded Misses
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2 pt-3">
+                    {misses.map((miss) => (
+                      <div
+                        key={miss.id}
+                        className="group flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3 transition-colors hover:border-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-8 items-center justify-center rounded-md bg-muted/50">
+                            <CalendarDays className="size-4 text-muted-foreground" />
+                          </div>
+                          <span className="text-sm font-medium">
+                            {format(
+                              new Date(`${miss.missDate}T12:00:00`),
+                              "MMMM d, yyyy",
+                            )}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                          onClick={() =>
+                            setDeleteTarget({
+                              id: miss.id,
+                              date: format(
+                                new Date(`${miss.missDate}T12:00:00`),
+                                "MMMM d, yyyy",
+                              ),
+                            })
+                          }
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
                       </div>
-                      <span className="text-sm font-medium">
-                        {format(
-                          new Date(`${miss.missDate}T12:00:00`),
-                          "MMMM d, yyyy",
-                        )}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                      onClick={() =>
-                        setDeleteTarget({
-                          id: miss.id,
-                          date: format(
-                            new Date(`${miss.missDate}T12:00:00`),
-                            "MMMM d, yyyy",
-                          ),
-                        })
-                      }
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
 
           {misses.length === 0 && (
