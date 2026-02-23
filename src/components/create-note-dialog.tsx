@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { createNote } from "@/app/actions/notes";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,8 @@ export function CreateNoteDialog({
     if (result.success) {
       form.reset();
       onOpenChange(false);
+    } else if (result.error) {
+      toast.error(result.error);
     }
   }
 

@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { editSubject } from "@/app/actions/subjects";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +53,8 @@ export function EditSubjectDialog({
     const result = await editSubject(data);
     if (result.success) {
       onOpenChange(false);
+    } else if (result.error) {
+      toast.error(result.error);
     }
   }
 

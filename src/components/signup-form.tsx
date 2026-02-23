@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { signUpAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -41,8 +42,13 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     },
   });
 
-  function onSubmit(data: SignupForm) {
-    signUpAction(data);
+  const { isSubmitting } = form.formState;
+
+  async function onSubmit(data: SignupForm) {
+    const result = await signUpAction(data);
+    if (result && !result.success) {
+      toast.error(result.error);
+    }
   }
 
   return (
@@ -136,8 +142,8 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               )}
             />
             <Field>
-              <Button type="submit" form="form-signup">
-                Create Account
+              <Button type="submit" form="form-signup" disabled={isSubmitting}>
+                {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
               <Button variant="outline" type="button">
                 Sign up with Google

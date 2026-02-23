@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useTransition } from "react";
+import { toast } from "sonner";
 import { deleteNote } from "@/app/actions/notes";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,8 @@ export function DeleteNoteDialog({
         } else {
           onOpenChange(false);
         }
+      } else if (result.error) {
+        toast.error(result.error);
       }
     });
   }

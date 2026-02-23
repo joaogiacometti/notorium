@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useTransition } from "react";
+import { toast } from "sonner";
 import { deleteGradeCategory } from "@/app/actions/grades";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,8 @@ export function DeleteCategoryDialog({
       const result = await deleteGradeCategory({ id: categoryId });
       if (result.success) {
         onOpenChange(false);
+      } else if (result.error) {
+        toast.error(result.error);
       }
     });
   }

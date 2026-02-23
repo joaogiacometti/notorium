@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useTransition } from "react";
+import { toast } from "sonner";
 import { deleteMiss } from "@/app/actions/attendance";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,8 @@ export function DeleteMissDialog({
       const result = await deleteMiss({ id: missId });
       if (result.success) {
         onOpenChange(false);
+      } else if (result.error) {
+        toast.error(result.error);
       }
     });
   }

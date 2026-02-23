@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Settings } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { updateAttendanceSettings } from "@/app/actions/attendance";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,8 @@ export function AttendanceSettingsDialog({
     const result = await updateAttendanceSettings(data);
     if (result.success) {
       onOpenChange(false);
+    } else if (result.error) {
+      toast.error(result.error);
     }
   }
 
