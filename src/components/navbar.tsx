@@ -2,6 +2,7 @@ import { BookOpenText, LogIn, LogOut, UserPlus } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
+import { GlobalSearch } from "@/components/global-search";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { ModeToggle } from "./theme-switcher";
@@ -23,6 +24,7 @@ export async function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
+          {session && <GlobalSearch />}
           <ModeToggle />
           {session ? (
             <form action={logoutAction}>

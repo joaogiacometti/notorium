@@ -188,14 +188,14 @@ University and school students who want to organize their study materials by sub
 
 ### Phase 3 — Planned Features
 
-#### 3.1 Global Search
+#### 3.1 Global Search ✅ COMPLETE
 
-- [ ] Search across all content (subjects, notes)
-- [ ] Search by subject name
-- [ ] Search by subject description
-- [ ] Search inside note content (title and body)
-- [ ] Display search results with context snippets
-- [ ] Navigate directly to search results
+- [x] Search across all content (subjects, notes)
+- [x] Search by subject name
+- [x] Search by subject description
+- [x] Search inside note content (title and body)
+- [x] Display search results with context snippets
+- [x] Navigate directly to search results
 
 **Acceptance criteria:**
 
@@ -206,7 +206,20 @@ University and school students who want to organize their study materials by sub
 - Empty search shows all subjects and notes (no filter applied)
 - Search only returns content owned by the authenticated user
 
-#### 3.2 Subject Module Configuration
+#### 3.2 Search Result Caching
+
+- [ ] Cache search results to avoid refetching on dialog reopen
+- [ ] Configure stale time for cached search data
+- [ ] Invalidate cache when subjects or notes are created/updated/deleted
+
+**Acceptance criteria:**
+
+- Opening the search dialog shows cached results immediately if available
+- Fresh data is fetched in the background when cache is stale
+- Cache is invalidated when user creates, edits, or deletes subjects or notes
+- Improves perceived performance for frequent search usage
+
+#### 3.3 Subject Module Configuration
 
 - [ ] Configure which modules are enabled per subject (notes, grades, attendance)
 - [ ] Hide disabled modules from the subject detail view
