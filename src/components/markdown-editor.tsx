@@ -177,11 +177,15 @@ export function MarkdownEditor({
           rows={rows}
           className={cn(
             "resize-none border-0 shadow-none focus-visible:ring-0 focus-visible:border-transparent",
+            "max-h-[50vh] overflow-y-auto",
           )}
         />
       ) : (
         <div
-          className={cn("min-h-[calc(var(--rows)*1.625rem+1rem)] px-3 py-2")}
+          className={cn(
+            "min-h-[calc(var(--rows)*1.625rem+1rem)] px-3 py-2",
+            "max-h-[50vh] overflow-y-auto",
+          )}
           style={{ "--rows": rows } as React.CSSProperties}
         >
           {value ? (
