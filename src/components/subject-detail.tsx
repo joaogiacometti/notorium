@@ -110,7 +110,7 @@ export function SubjectDetail({
             )}
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
-                Created {formatDistanceToNow(new Date(subject.createdAt))}
+                Created {formatDistanceToNow(new Date(subject.createdAt), { addSuffix: true })}
               </span>
             </div>
           </div>

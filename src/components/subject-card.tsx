@@ -77,7 +77,7 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
               </p>
             )}
             <p className="text-xs text-muted-foreground/60">
-              Created {formatDistanceToNow(new Date(subject.createdAt))}
+              Created {formatDistanceToNow(new Date(subject.createdAt), { addSuffix: true })}
             </p>
           </CardContent>
         </Link>
