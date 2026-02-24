@@ -2,10 +2,10 @@ import { BookOpenText, LogIn, LogOut, UserPlus } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
-import { GlobalSearch } from "@/components/global-search";
+import { GlobalSearch } from "@/components/navbar/global-search";
+import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
-import { ModeToggle } from "./theme-switcher";
 
 export async function Navbar() {
   const session = await auth.api.getSession({
