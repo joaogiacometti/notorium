@@ -1,6 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SubjectDetailLoading() {
+  const skeletonItems = Array.from(
+    { length: 3 },
+    (_, index) => `loading-note-${index}`,
+  );
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6">
@@ -54,9 +58,9 @@ export default function SubjectDetailLoading() {
           <Skeleton className="h-9 w-28" />
         </div>
         <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+          {skeletonItems.map((id) => (
             <div
-              key={i}
+              key={id}
               className="rounded-xl border border-border/60 bg-card p-4"
             >
               <Skeleton className="mb-2 h-5 w-3/4" />

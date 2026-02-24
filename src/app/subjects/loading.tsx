@@ -1,6 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SubjectsLoading() {
+  const skeletonItems = Array.from(
+    { length: 6 },
+    (_, index) => `loading-subject-${index}`,
+  );
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex items-center justify-between">
@@ -12,9 +16,9 @@ export default function SubjectsLoading() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {skeletonItems.map((id) => (
           <div
-            key={i}
+            key={id}
             className="rounded-xl border border-border/60 bg-card p-6"
           >
             <div className="mb-4 flex items-start justify-between">
