@@ -44,7 +44,7 @@ export function EditSubjectDialog({
   open,
   onOpenChange,
 }: Readonly<EditSubjectDialogProps>) {
-  const form = useForm<EditSubjectForm>({
+  const form = useForm({
     resolver: zodResolver(editSubjectSchema),
     defaultValues: {
       id: subject.id,

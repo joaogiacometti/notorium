@@ -37,7 +37,7 @@ export function RecordMissDialog({
 }: Readonly<RecordMissDialogProps>) {
   const today = new Date().toISOString().split("T")[0];
 
-  const form = useForm<RecordMissForm>({
+  const form = useForm({
     resolver: zodResolver(recordMissSchema),
     defaultValues: {
       subjectId,

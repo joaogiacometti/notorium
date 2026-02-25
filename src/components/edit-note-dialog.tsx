@@ -37,7 +37,7 @@ export function EditNoteDialog({
   open,
   onOpenChange,
 }: Readonly<EditNoteDialogProps>) {
-  const form = useForm<EditNoteForm>({
+  const form = useForm({
     resolver: zodResolver(editNoteSchema),
     defaultValues: {
       id: note.id,

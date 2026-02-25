@@ -41,7 +41,7 @@ export function AttendanceSettingsDialog({
   open,
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
-  const form = useForm<AttendanceSettingsForm>({
+  const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {
       subjectId,

@@ -35,7 +35,7 @@ export function CreateCategoryDialog({
   open,
   onOpenChange,
 }: Readonly<CreateCategoryDialogProps>) {
-  const form = useForm<CreateGradeCategoryForm>({
+  const form = useForm({
     resolver: zodResolver(createGradeCategorySchema),
     defaultValues: {
       subjectId,

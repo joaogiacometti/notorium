@@ -32,7 +32,7 @@ const signupSchema = z
 export type SignupForm = z.infer<typeof signupSchema>;
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
-  const form = useForm<SignupForm>({
+  const form = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: "",

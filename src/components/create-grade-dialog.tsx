@@ -37,7 +37,7 @@ export function CreateGradeDialog({
   open,
   onOpenChange,
 }: Readonly<CreateGradeDialogProps>) {
-  const form = useForm<CreateGradeForm>({
+  const form = useForm({
     resolver: zodResolver(createGradeSchema),
     defaultValues: {
       categoryId,

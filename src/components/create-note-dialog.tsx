@@ -36,7 +36,7 @@ export function CreateNoteDialog({
   open,
   onOpenChange,
 }: Readonly<CreateNoteDialogProps>) {
-  const form = useForm<CreateNoteForm>({
+  const form = useForm({
     resolver: zodResolver(createNoteSchema),
     defaultValues: {
       title: "",

@@ -36,7 +36,7 @@ export function EditGradeDialog({
   open,
   onOpenChange,
 }: Readonly<EditGradeDialogProps>) {
-  const form = useForm<EditGradeForm>({
+  const form = useForm({
     resolver: zodResolver(editGradeSchema),
     defaultValues: {
       id: gradeData.id,

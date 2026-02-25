@@ -39,7 +39,7 @@ export function EditCategoryDialog({
   open,
   onOpenChange,
 }: Readonly<EditCategoryDialogProps>) {
-  const form = useForm<EditGradeCategoryForm>({
+  const form = useForm({
     resolver: zodResolver(editGradeCategorySchema),
     defaultValues: {
       id: category.id,

@@ -38,7 +38,7 @@ export function CreateSubjectDialog({
   open,
   onOpenChange,
 }: Readonly<CreateSubjectDialogProps>) {
-  const form = useForm<CreateSubjectForm>({
+  const form = useForm({
     resolver: zodResolver(createSubjectSchema),
     defaultValues: {
       name: "",
