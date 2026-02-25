@@ -258,6 +258,187 @@ University and school students who want to organize their study materials by sub
 
 ---
 
+### Phase 4 — Future Features
+
+#### 4.1 Note Image Attachments
+
+- [ ] Attach images to notes
+- [ ] Render attached images inside note detail view
+- [ ] Allow removing attached images from notes
+
+**Acceptance criteria:**
+
+- Users can upload one or more images to a note they own
+- Uploaded images are visible when viewing the note
+- Users can remove attachments without deleting the note
+- File validation enforces allowed image types and size limits
+- Users cannot access attachments from notes they do not own
+
+#### 4.2 Assessment Planner (Grade System Refactor)
+
+- [ ] Replace the current grade-category model with a unified `assessment` entity
+- [ ] Support assessment types (exam, assignment, project, presentation, homework, other)
+- [ ] Support status tracking (pending, completed)
+- [ ] Support due dates with overdue and countdown states
+- [ ] Support optional grading fields (score and weight)
+- [ ] Compute subject average directly from completed assessments
+
+### Purpose
+
+The Assessment Planner replaces the rigid grade-category structure with a flexible academic item model.
+
+Instead of forcing every item into a grade category, assessments represent:
+
+- Evaluative work (exams, assignments, projects)
+- Academic tasks with deadlines
+- Graded and ungraded items
+
+This transforms the subject view into both:
+
+- A performance tracker
+- A deadline and task planner
+
+### Data Model (`assessment`)
+
+| Field | Type | Notes |
+|-------------|-----------|--------------------------------|
+| id | text (PK) | Generated ID |
+| title | text | Required |
+| description | text | Optional |
+| type | enum | `exam` \| `assignment` \| `project` \| `presentation` \| `homework` \| `other` |
+| status | enum | `pending` \| `completed` |
+| dueDate | date | Optional |
+| score | numeric | Optional |
+| weight | numeric | Optional (percentage or relative weight) |
+| subjectId | text (FK) | References subject.id, cascade |
+| userId | text (FK) | References user.id, cascade |
+| createdAt | timestamp | Auto-set on creation |
+| updatedAt | timestamp | Auto-updated on changes |
+
+### Behavioral Requirements
+
+#### General Rules
+
+- Assessments can be created with only a title
+- `score` and `weight` are optional
+- New assessments default to `pending`
+- Assessments are private to the authenticated user
+- Deleting a subject cascades to delete its assessments
+
+#### Status Logic
+
+- `pending` assessments represent upcoming or ongoing tasks
+- `completed` assessments represent finished tasks
+- An assessment can be completed without a score
+- Only completed assessments with a defined `score` are considered for average calculation
+
+#### Due Date Logic
+
+If:
+
+- `status = pending`
+- `dueDate < today`
+
+The assessment is marked as overdue.
+
+If:
+
+- `status = pending`
+- `dueDate >= today`
+
+The UI displays a countdown (for example, "3 days left").
+
+If:
+
+- `status = completed`
+
+Overdue logic does not apply.
+
+### Average Calculation Rules
+
+The subject average is calculated using only assessments where:
+
+- `status = completed`
+- `score IS NOT NULL`
+
+If at least one completed assessment has `weight` defined, use weighted average:
+
+```text
+sum(score * weight) / sum(weight)
+```
+
+If no weights are defined, use simple average:
+
+```text
+sum(score) / count(score)
+```
+
+### Sorting Rules
+
+Default ordering:
+
+1. Pending assessments first
+2. Among pending: nearest `dueDate` first and assessments without `dueDate` last
+3. Completed assessments sorted by most recently updated
+
+### Filtering Options
+
+- All
+- Pending
+- Completed
+- Overdue
+- By type
+
+Filtering must always be scoped to `userId`.
+
+### UI Requirements
+
+#### Visual States
+
+Pending:
+- Neutral styling
+- Due date badge
+- Countdown indicator
+
+Overdue:
+- Highlighted in red
+- Overdue badge
+
+Completed:
+- Muted styling
+- Completion indicator
+- Optional grade badge (for example, `85` with weight if defined)
+
+### Subject View Changes
+
+Replace the current grade category structure with a single Assessments section.
+
+Grouped by:
+
+- Pending
+- Completed
+
+Each assessment displays:
+
+- Title
+- Type badge
+- Due date (if defined)
+- Status indicator
+- Optional score
+- Optional weight
+
+### Acceptance Criteria
+
+- Users can create, edit, and delete assessments inside their own subjects
+- Users can create valid assessments without score or weight
+- Completed assessments with score contribute correctly to subject average
+- Pending assessments do not affect subject average
+- Overdue pending assessments are clearly highlighted
+- Sorting and filtering behave according to specification
+- Access is scoped by `userId`
+
+---
+
 ## Out of Scope (v1)
 
 - Real-time collaboration / sharing subjects between users
