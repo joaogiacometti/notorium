@@ -1,501 +1,480 @@
 "use client";
 
 import {
-  BarChart3,
-  ChevronDown,
-  ChevronRight,
-  GraduationCap,
+  format,
+  formatDistanceToNowStrict,
+  parseISO,
+  startOfToday,
+} from "date-fns";
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
   Pencil,
   Plus,
   Trash2,
-  Trophy,
 } from "lucide-react";
-import { useState } from "react";
-import { CreateCategoryDialog } from "@/components/create-category-dialog";
-import { CreateGradeDialog } from "@/components/create-grade-dialog";
-import { DeleteCategoryDialog } from "@/components/delete-category-dialog";
-import { DeleteGradeDialog } from "@/components/delete-grade-dialog";
-import { EditCategoryDialog } from "@/components/edit-category-dialog";
-import { EditGradeDialog } from "@/components/edit-grade-dialog";
+import { useMemo, useState } from "react";
+import { CreateAssessmentDialog } from "@/components/create-assessment-dialog";
+import { DeleteAssessmentDialog } from "@/components/delete-assessment-dialog";
+import { EditAssessmentDialog } from "@/components/edit-assessment-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { GradeCategoryWithGrades, GradeEntity } from "@/lib/api/contracts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { AssessmentEntity } from "@/lib/api/contracts";
+
+type StatusFilter = "all" | "pending" | "completed" | "overdue";
+type TypeFilter =
+  | "all"
+  | "exam"
+  | "assignment"
+  | "project"
+  | "presentation"
+  | "homework"
+  | "other";
 
 interface GradesSummaryProps {
   subjectId: string;
-  categories: GradeCategoryWithGrades[];
+  assessments: AssessmentEntity[];
 }
 
-function getCategoryAverage(grades: GradeEntity[]): number | null {
-  if (grades.length === 0) return null;
-  const sum = grades.reduce((acc, g) => acc + Number(g.value), 0);
-  return sum / grades.length;
+const typeLabels: Record<Exclude<TypeFilter, "all">, string> = {
+  exam: "Exam",
+  assignment: "Assignment",
+  project: "Project",
+  presentation: "Presentation",
+  homework: "Homework",
+  other: "Other",
+};
+
+function getTodayIso(): string {
+  return format(new Date(), "yyyy-MM-dd");
 }
 
-function computeWeightedAverage(
-  categoriesWithGrades: GradeCategoryWithGrades[],
-): number | null {
-  let weightedSum = 0;
-  let totalWeight = 0;
+function isOverdueAssessment(
+  item: AssessmentEntity,
+  todayIso: string,
+): boolean {
+  return (
+    item.status === "pending" &&
+    item.dueDate !== null &&
+    item.dueDate < todayIso
+  );
+}
 
-  for (const category of categoriesWithGrades) {
-    const avg = getCategoryAverage(category.grades);
-    if (avg === null) continue;
-
-    const weight = category.weight === null ? 0 : Number(category.weight);
-    if (weight > 0) {
-      weightedSum += avg * weight;
-      totalWeight += weight;
+function sortAssessments(items: AssessmentEntity[]): AssessmentEntity[] {
+  return [...items].sort((a, b) => {
+    if (a.status !== b.status) {
+      return a.status === "pending" ? -1 : 1;
     }
+
+    if (a.status === "pending" && b.status === "pending") {
+      if (a.dueDate === null && b.dueDate === null) {
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      }
+      if (a.dueDate === null) {
+        return 1;
+      }
+      if (b.dueDate === null) {
+        return -1;
+      }
+      if (a.dueDate !== b.dueDate) {
+        return a.dueDate.localeCompare(b.dueDate);
+      }
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    }
+
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
+  });
+}
+
+function getAverage(assessments: AssessmentEntity[]): number | null {
+  const completedWithScore = assessments.filter(
+    (item) => item.status === "completed" && item.score !== null,
+  );
+
+  if (completedWithScore.length === 0) {
+    return null;
   }
 
-  if (totalWeight === 0) return null;
-  return weightedSum / totalWeight;
-}
-
-function computeSimpleAverage(
-  categoriesWithGrades: GradeCategoryWithGrades[],
-): number | null {
-  const allAvgs = categoriesWithGrades
-    .map((c) => getCategoryAverage(c.grades))
-    .filter((v): v is number => v !== null);
-
-  if (allAvgs.length === 0) return null;
-  return allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length;
-}
-
-function getOverallAverage(
-  categories: GradeCategoryWithGrades[],
-): number | null {
-  const categoriesWithGrades = categories.filter((c) => c.grades.length > 0);
-  if (categoriesWithGrades.length === 0) return null;
-
-  const hasWeights = categoriesWithGrades.some(
-    (c) => c.weight !== null && Number(c.weight) > 0,
+  const hasWeights = completedWithScore.some(
+    (item) => item.weight !== null && Number(item.weight) > 0,
   );
 
   if (hasWeights) {
-    return computeWeightedAverage(categoriesWithGrades);
+    let weightedSum = 0;
+    let totalWeight = 0;
+
+    for (const item of completedWithScore) {
+      const weight = item.weight === null ? 0 : Number(item.weight);
+      if (weight <= 0) {
+        continue;
+      }
+      weightedSum += Number(item.score) * weight;
+      totalWeight += weight;
+    }
+
+    if (totalWeight === 0) {
+      return null;
+    }
+
+    return weightedSum / totalWeight;
   }
 
-  return computeSimpleAverage(categoriesWithGrades);
+  const sum = completedWithScore.reduce(
+    (acc, item) => acc + Number(item.score),
+    0,
+  );
+  return sum / completedWithScore.length;
 }
 
-function getGradeColor(value: number): string {
-  if (value >= 70) return "text-emerald-500";
-  if (value >= 50) return "text-amber-500";
-  return "text-red-500";
+function getAverageTone(value: number): string {
+  if (value >= 70) {
+    return "text-emerald-600 bg-emerald-500/10 border-emerald-500/30";
+  }
+  if (value >= 50) {
+    return "text-amber-600 bg-amber-500/10 border-amber-500/30";
+  }
+  return "text-red-600 bg-red-500/10 border-red-500/30";
 }
 
-function getGradeBgColor(value: number): string {
-  if (value >= 70) return "bg-emerald-500/10 border-emerald-500/20";
-  if (value >= 50) return "bg-amber-500/10 border-amber-500/20";
-  return "bg-red-500/10 border-red-500/20";
-}
+function getCountdownLabel(dueDate: string): string {
+  const due = parseISO(dueDate);
+  const today = startOfToday();
+  const distance = formatDistanceToNowStrict(due, { addSuffix: true });
 
-function getGradeBarColor(value: number): string {
-  if (value >= 70) return "bg-emerald-500";
-  if (value >= 50) return "bg-amber-500";
-  return "bg-red-500";
-}
+  if (due < today) {
+    return `${distance} overdue`;
+  }
 
-function pluralGrades(count: number): string {
-  return count === 1 ? "grade" : "grades";
-}
+  if (format(due, "yyyy-MM-dd") === format(today, "yyyy-MM-dd")) {
+    return "Due today";
+  }
 
-function pluralCategories(count: number): string {
-  return count === 1 ? "category" : "categories";
-}
-
-function getPerformanceLabel(average: number): string {
-  if (average >= 70) return "Good";
-  if (average >= 50) return "Fair";
-  return "Needs Work";
+  return `Due ${distance}`;
 }
 
 export function GradesSummary({
   subjectId,
-  categories,
+  assessments,
 }: Readonly<GradesSummaryProps>) {
-  const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
-  const [addGradeTarget, setAddGradeTarget] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [editCategoryTarget, setEditCategoryTarget] =
-    useState<GradeCategoryWithGrades | null>(null);
-  const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [editGradeTarget, setEditGradeTarget] = useState<GradeEntity | null>(
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<AssessmentEntity | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AssessmentEntity | null>(
     null,
   );
-  const [deleteGradeTarget, setDeleteGradeTarget] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    () => new Set(categories.map((c) => c.id)),
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+
+  const todayIso = getTodayIso();
+  const average = getAverage(assessments);
+
+  const filteredAssessments = useMemo(() => {
+    return sortAssessments(
+      assessments.filter((item) => {
+        const overdue = isOverdueAssessment(item, todayIso);
+
+        const statusMatches =
+          statusFilter === "all"
+            ? true
+            : statusFilter === "overdue"
+              ? overdue
+              : item.status === statusFilter;
+
+        const typeMatches =
+          typeFilter === "all" ? true : item.type === typeFilter;
+
+        return statusMatches && typeMatches;
+      }),
+    );
+  }, [assessments, statusFilter, todayIso, typeFilter]);
+
+  const pending = filteredAssessments.filter(
+    (item) => item.status === "pending",
   );
-
-  const overallAvg = getOverallAverage(categories);
-  const hasWeights = categories.some(
-    (c) => c.weight !== null && Number(c.weight) > 0,
+  const completed = filteredAssessments.filter(
+    (item) => item.status === "completed",
   );
-  const totalGrades = categories.reduce((acc, c) => acc + c.grades.length, 0);
-
-  function toggleCategory(id: string) {
-    setExpandedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  const subtitle =
-    categories.length === 0
-      ? "Add categories to start tracking your grades."
-      : `${totalGrades} ${pluralGrades(totalGrades)} across ${categories.length} ${pluralCategories(categories.length)}`;
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Grades</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
+          <h2 className="text-lg font-semibold tracking-tight">Assessments</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {assessments.length === 0
+              ? "Create your first assessment to start planning deadlines and tracking performance."
+              : `${assessments.length} total assessments`}
+          </p>
         </div>
         <Button
           size="sm"
           className="gap-1.5"
-          onClick={() => setCreateCategoryOpen(true)}
-          id="btn-add-category"
+          onClick={() => setCreateOpen(true)}
         >
           <Plus className="size-4" />
-          <span className="hidden sm:inline">Add Category</span>
+          <span className="hidden sm:inline">Add Assessment</span>
         </Button>
       </div>
 
-      {categories.length > 0 ? (
-        <div className="space-y-6">
-          {/* Overall Average Card */}
-          {overallAvg !== null && (
-            <OverallAverageCard
-              average={overallAvg}
-              hasWeights={hasWeights}
-              totalGrades={totalGrades}
-              totalCategories={categories.length}
-            />
-          )}
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5 text-sm">
+          <span className="text-muted-foreground">Filter</span>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+          >
+            <SelectTrigger className="w-full bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5 text-sm">
+          <span className="text-muted-foreground">Type</span>
+          <Select
+            value={typeFilter}
+            onValueChange={(value) => setTypeFilter(value as TypeFilter)}
+          >
+            <SelectTrigger className="w-full bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="exam">Exam</SelectItem>
+              <SelectItem value="assignment">Assignment</SelectItem>
+              <SelectItem value="project">Project</SelectItem>
+              <SelectItem value="presentation">Presentation</SelectItem>
+              <SelectItem value="homework">Homework</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-          {/* Category List */}
-          <div className="space-y-3">
-            {categories.map((category) => {
-              const catAvg = getCategoryAverage(category.grades);
-              const isExpanded = expandedCategories.has(category.id);
+      {average !== null && (
+        <div
+          className={`mb-6 rounded-xl border p-4 ${getAverageTone(average)}`}
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-medium">Subject Average</p>
+            <Badge variant="secondary">Completed with score only</Badge>
+          </div>
+          <p className="text-3xl font-semibold tracking-tight">
+            {average.toFixed(1)}
+          </p>
+        </div>
+      )}
 
-              return (
-                <div
-                  key={category.id}
-                  className="overflow-hidden rounded-xl border border-border/60 bg-card transition-colors"
-                >
-                  {/* Category Header */}
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <button
-                      type="button"
-                      className="flex flex-1 items-center gap-3"
-                      onClick={() => toggleCategory(category.id)}
-                    >
-                      <div className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-                        {isExpanded ? (
-                          <ChevronDown className="size-4" />
-                        ) : (
-                          <ChevronRight className="size-4" />
+      <div className="space-y-6">
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Clock3 className="size-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Pending ({pending.length})
+            </h3>
+          </div>
+          {pending.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              No pending assessments.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pending.map((item) => {
+                const overdue = isOverdueAssessment(item, todayIso);
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-xl border bg-card p-4 ${
+                      overdue ? "border-red-500/40" : "border-border"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{item.title}</p>
+                        {item.description && (
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {item.description}
+                          </p>
                         )}
-                      </div>
-                      <div className="text-left">
-                        <span className="text-sm font-semibold">
-                          {category.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {category.weight !== null &&
-                            Number(category.weight) > 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                Weight: {Number(category.weight)}%
-                              </span>
-                            )}
-                          <span className="text-xs text-muted-foreground">
-                            {category.grades.length}{" "}
-                            {pluralGrades(category.grades.length)}
-                          </span>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Badge variant="outline">
+                            {typeLabels[item.type]}
+                          </Badge>
+                          <Badge
+                            variant={overdue ? "destructive" : "secondary"}
+                          >
+                            {overdue ? "Overdue" : "Pending"}
+                          </Badge>
+                          {item.dueDate && (
+                            <Badge variant="outline" className="gap-1">
+                              <CalendarDays className="size-3" />
+                              {format(parseISO(item.dueDate), "MMM d, yyyy")}
+                            </Badge>
+                          )}
+                          {item.dueDate && (
+                            <Badge
+                              variant={overdue ? "destructive" : "secondary"}
+                              className="gap-1"
+                            >
+                              {overdue && <AlertTriangle className="size-3" />}
+                              {getCountdownLabel(item.dueDate)}
+                            </Badge>
+                          )}
+                          {item.score !== null && (
+                            <Badge variant="outline">
+                              Score: {Number(item.score).toFixed(1)}
+                            </Badge>
+                          )}
+                          {item.weight !== null && (
+                            <Badge variant="outline">
+                              Weight: {Number(item.weight).toFixed(1)}%
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    </button>
-                    <div className="flex items-center gap-2">
-                      {catAvg !== null && (
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${getGradeColor(catAvg)}`}
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={() => setEditTarget(item)}
                         >
-                          Avg: {catAvg.toFixed(1)}
-                        </Badge>
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => setDeleteTarget(item)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Completed ({completed.length})
+            </h3>
+          </div>
+          {completed.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              No completed assessments.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {completed.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-border bg-muted/20 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{item.title}</p>
+                      {item.description && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.description}
+                        </p>
                       )}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge variant="outline">{typeLabels[item.type]}</Badge>
+                        <Badge variant="secondary">Completed</Badge>
+                        {item.dueDate && (
+                          <Badge variant="outline" className="gap-1">
+                            <CalendarDays className="size-3" />
+                            {format(parseISO(item.dueDate), "MMM d, yyyy")}
+                          </Badge>
+                        )}
+                        {item.score !== null && (
+                          <Badge variant="outline">
+                            Score: {Number(item.score).toFixed(1)}
+                          </Badge>
+                        )}
+                        {item.weight !== null && (
+                          <Badge variant="outline">
+                            Weight: {Number(item.weight).toFixed(1)}%
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-muted-foreground hover:text-primary"
-                        onClick={() =>
-                          setAddGradeTarget({
-                            id: category.id,
-                            name: category.name,
-                          })
-                        }
+                        className="size-8"
+                        onClick={() => setEditTarget(item)}
                       >
-                        <Plus className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-muted-foreground hover:text-primary"
-                        onClick={() => setEditCategoryTarget(category)}
-                      >
-                        <Pencil className="size-3.5" />
+                        <Pencil className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:text-destructive"
-                        onClick={() =>
-                          setDeleteCategoryTarget({
-                            id: category.id,
-                            name: category.name,
-                          })
-                        }
+                        onClick={() => setDeleteTarget(item)}
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </div>
-
-                  {/* Grades List */}
-                  {isExpanded && (
-                    <div className="border-t border-border/40">
-                      {category.grades.length > 0 ? (
-                        <div className="divide-y divide-border/30">
-                          {category.grades.map((g) => (
-                            <div
-                              key={g.id}
-                              className="group flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-muted/30"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`flex size-7 items-center justify-center rounded-md text-xs font-bold ${getGradeBgColor(Number(g.value))} ${getGradeColor(Number(g.value))} border`}
-                                >
-                                  {Math.round(Number(g.value))}
-                                </div>
-                                <span className="text-sm">{g.name}</span>
-                              </div>
-                              <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7 text-muted-foreground hover:text-primary"
-                                  onClick={() => setEditGradeTarget(g)}
-                                >
-                                  <Pencil className="size-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7 text-muted-foreground hover:text-destructive"
-                                  onClick={() =>
-                                    setDeleteGradeTarget({
-                                      id: g.id,
-                                      name: g.name,
-                                    })
-                                  }
-                                >
-                                  <Trash2 className="size-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="px-4 py-6 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            No grades yet.
-                          </p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-3 gap-1.5"
-                            onClick={() =>
-                              setAddGradeTarget({
-                                id: category.id,
-                                name: category.name,
-                              })
-                            }
-                          >
-                            <Plus className="size-3.5" />
-                            Add Grade
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 py-16">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
-            <GraduationCap className="size-6 text-primary" />
-          </div>
-          <h3 className="mb-1 text-lg font-semibold">No grade categories</h3>
-          <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-            Create categories like Exams, Activities, or Lists to start tracking
-            your grades.
-          </p>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setCreateCategoryOpen(true)}
-          >
-            <Plus className="size-4" />
-            Add Category
-          </Button>
-        </div>
-      )}
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
-      {/* Dialogs */}
-      <CreateCategoryDialog
+      <CreateAssessmentDialog
         subjectId={subjectId}
-        open={createCategoryOpen}
-        onOpenChange={setCreateCategoryOpen}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
       />
 
-      {addGradeTarget && (
-        <CreateGradeDialog
-          categoryId={addGradeTarget.id}
-          categoryName={addGradeTarget.name}
-          open={!!addGradeTarget}
+      {editTarget && (
+        <EditAssessmentDialog
+          assessment={editTarget}
+          open={!!editTarget}
           onOpenChange={(open) => {
-            if (!open) setAddGradeTarget(null);
+            if (!open) {
+              setEditTarget(null);
+            }
           }}
         />
       )}
 
-      {editCategoryTarget && (
-        <EditCategoryDialog
-          category={editCategoryTarget}
-          open={!!editCategoryTarget}
+      {deleteTarget && (
+        <DeleteAssessmentDialog
+          assessmentId={deleteTarget.id}
+          assessmentTitle={deleteTarget.title}
+          open={!!deleteTarget}
           onOpenChange={(open) => {
-            if (!open) setEditCategoryTarget(null);
+            if (!open) {
+              setDeleteTarget(null);
+            }
           }}
         />
       )}
-
-      {deleteCategoryTarget && (
-        <DeleteCategoryDialog
-          categoryId={deleteCategoryTarget.id}
-          categoryName={deleteCategoryTarget.name}
-          open={!!deleteCategoryTarget}
-          onOpenChange={(open) => {
-            if (!open) setDeleteCategoryTarget(null);
-          }}
-        />
-      )}
-
-      {editGradeTarget && (
-        <EditGradeDialog
-          grade={editGradeTarget}
-          open={!!editGradeTarget}
-          onOpenChange={(open) => {
-            if (!open) setEditGradeTarget(null);
-          }}
-        />
-      )}
-
-      {deleteGradeTarget && (
-        <DeleteGradeDialog
-          gradeId={deleteGradeTarget.id}
-          gradeName={deleteGradeTarget.name}
-          open={!!deleteGradeTarget}
-          onOpenChange={(open) => {
-            if (!open) setDeleteGradeTarget(null);
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-interface OverallAverageCardProps {
-  average: number;
-  hasWeights: boolean;
-  totalGrades: number;
-  totalCategories: number;
-}
-
-function OverallAverageCard({
-  average,
-  hasWeights,
-  totalGrades,
-  totalCategories,
-}: Readonly<OverallAverageCardProps>) {
-  const color = getGradeColor(average);
-  const bgColor = getGradeBgColor(average);
-  const barColor = getGradeBarColor(average);
-  const performanceLabel = getPerformanceLabel(average);
-  const averageTypeLabel = hasWeights ? "Weighted Average" : "Simple Average";
-
-  return (
-    <div className={`rounded-xl border p-5 ${bgColor}`}>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Trophy className={`size-5 ${color}`} />
-          <span className={`text-sm font-semibold ${color}`}>
-            {averageTypeLabel}
-          </span>
-        </div>
-        <Badge variant="secondary" className="text-xs">
-          <BarChart3 className="mr-1 size-3" />
-          {totalGrades} {pluralGrades(totalGrades)} · {totalCategories}{" "}
-          {pluralCategories(totalCategories)}
-        </Badge>
-      </div>
-
-      <div className="mb-2 flex items-end justify-between">
-        <div className="text-3xl font-bold tracking-tight">
-          {average.toFixed(1)}
-          <span className="text-lg font-normal text-muted-foreground">
-            {" / 100"}
-          </span>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">Performance</p>
-          <p className={`text-lg font-semibold ${color}`}>{performanceLabel}</p>
-        </div>
-      </div>
-
-      <div className="h-2.5 overflow-hidden rounded-full bg-background/60">
-        <div
-          className={`h-full rounded-full ${barColor} transition-all duration-500 ease-out`}
-          style={{ width: `${Math.min(average, 100)}%` }}
-        />
-      </div>
-
-      <div className="mt-3 flex justify-between text-xs text-muted-foreground">
-        <span>0</span>
-        <span>100</span>
-      </div>
     </div>
   );
 }

@@ -13,8 +13,8 @@ import { NotesList } from "@/components/notes-list";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type {
+  AssessmentEntity,
   AttendanceMissEntity,
-  GradeCategoryWithGrades,
   NoteEntity,
   SubjectEntity,
 } from "@/lib/api/contracts";
@@ -23,14 +23,14 @@ interface SubjectDetailProps {
   subject: SubjectEntity;
   notes: NoteEntity[];
   misses: AttendanceMissEntity[];
-  gradeCategories: GradeCategoryWithGrades[];
+  assessments: AssessmentEntity[];
 }
 
 export function SubjectDetail({
   subject,
   notes,
   misses,
-  gradeCategories,
+  assessments,
 }: Readonly<SubjectDetailProps>) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -110,7 +110,7 @@ export function SubjectDetail({
       {subject.gradesEnabled && (
         <>
           <Separator className="my-8" />
-          <GradesSummary subjectId={subject.id} categories={gradeCategories} />
+          <GradesSummary subjectId={subject.id} assessments={assessments} />
         </>
       )}
 

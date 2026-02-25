@@ -276,12 +276,12 @@ University and school students who want to organize their study materials by sub
 
 #### 4.2 Assessment Planner (Grade System Refactor)
 
-- [ ] Replace the current grade-category model with a unified `assessment` entity
-- [ ] Support assessment types (exam, assignment, project, presentation, homework, other)
-- [ ] Support status tracking (pending, completed)
-- [ ] Support due dates with overdue and countdown states
-- [ ] Support optional grading fields (score and weight)
-- [ ] Compute subject average directly from completed assessments
+- [x] Replace the current grade-category model with a unified `assessment` entity
+- [x] Support assessment types (exam, assignment, project, presentation, homework, other)
+- [x] Support status tracking (pending, completed)
+- [x] Support due dates with overdue and countdown states
+- [x] Support optional grading fields (score and weight)
+- [x] Compute subject average directly from completed assessments
 
 ### Purpose
 

@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { deleteGradeCategory } from "@/app/actions/grades";
+import { deleteAssessment } from "@/app/actions/assessments";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,24 +14,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-interface DeleteCategoryDialogProps {
-  categoryId: string;
-  categoryName: string;
+interface DeleteAssessmentDialogProps {
+  assessmentId: string;
+  assessmentTitle: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function DeleteCategoryDialog({
-  categoryId,
-  categoryName,
+export function DeleteAssessmentDialog({
+  assessmentId,
+  assessmentTitle,
   open,
   onOpenChange,
-}: Readonly<DeleteCategoryDialogProps>) {
+}: Readonly<DeleteAssessmentDialogProps>) {
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
     startTransition(async () => {
-      const result = await deleteGradeCategory({ id: categoryId });
+      const result = await deleteAssessment({ id: assessmentId });
       if (result.success) {
         onOpenChange(false);
       } else if (result.error) {
@@ -44,15 +44,13 @@ export function DeleteCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Category</DialogTitle>
+          <DialogTitle>Delete Assessment</DialogTitle>
           <DialogDescription>
             {"Are you sure you want to delete "}
             <span className="font-semibold text-foreground">
-              {categoryName}
+              {assessmentTitle}
             </span>
-            {
-              "? All grades in this category will also be deleted. This action cannot be undone."
-            }
+            {"? This action cannot be undone."}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">

@@ -136,9 +136,9 @@ export function EditSubjectDialog({
                   render={({ field }) => (
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
                       <div>
-                        <span className="text-sm font-medium">Grades</span>
+                        <span className="text-sm font-medium">Assessments</span>
                         <p className="text-[0.8rem] text-muted-foreground">
-                          Track your grades and calculate averages.
+                          Plan deadlines and track completed scores.
                         </p>
                       </div>
                       <Switch

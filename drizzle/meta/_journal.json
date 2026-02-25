@@ -43,6 +43,13 @@
       "when": 1771982982529,
       "tag": "0005_add_subject_module_toggles",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772023444103,
+      "tag": "0006_assessment_planner",
+      "breakpoints": true
     }
   ]
 }

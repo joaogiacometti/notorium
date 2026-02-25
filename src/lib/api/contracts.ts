@@ -1,21 +1,10 @@
 import type { InferSelectModel } from "drizzle-orm";
-import type {
-  attendanceMiss,
-  grade,
-  gradeCategory,
-  note,
-  subject,
-} from "@/db/schema";
+import type { assessment, attendanceMiss, note, subject } from "@/db/schema";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
-export type GradeEntity = InferSelectModel<typeof grade>;
-export type GradeCategoryEntity = InferSelectModel<typeof gradeCategory>;
-
-export type GradeCategoryWithGrades = GradeCategoryEntity & {
-  grades: GradeEntity[];
-};
+export type AssessmentEntity = InferSelectModel<typeof assessment>;
 
 export type SearchSubjectResult = Pick<
   SubjectEntity,
