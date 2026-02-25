@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { signUpAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,20 +15,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-
-const signupSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters."),
-    email: z.email("Please enter a valid email address."),
-    password: z.string().min(8, "Password must be at least 8 characters."),
-    confirmPassword: z.string().min(1, "Confirm password is required."),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
-
-export type SignupForm = z.infer<typeof signupSchema>;
+import {
+  type SignupForm as SignupFormValues,
+  signupSchema,
+} from "@/lib/validations/auth";
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const form = useForm({
@@ -44,7 +33,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
 
   const { isSubmitting } = form.formState;
 
-  async function onSubmit(data: SignupForm) {
+  async function onSubmit(data: SignupFormValues) {
     const result = await signUpAction(data);
     if (result && !result.success) {
       toast.error(result.error);

@@ -3,18 +3,30 @@
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import type { LoginForm } from "@/components/login-form";
-import type { SignupForm } from "@/components/signup-form";
 import { auth } from "@/lib/auth";
+import {
+  type LoginForm,
+  loginSchema,
+  type SignupForm,
+  signupSchema,
+} from "@/lib/validations/auth";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
 export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
+  const parsed = loginSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
   try {
     await auth.api.signInEmail({
       body: {
-        email: data.email,
-        password: data.password,
+        email: parsed.data.email,
+        password: parsed.data.password,
       },
     });
   } catch (error) {
@@ -28,12 +40,20 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
 };
 
 export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
+  const parsed = signupSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
   try {
     await auth.api.signUpEmail({
       body: {
-        email: data.email,
-        password: data.password,
-        name: data.name,
+        email: parsed.data.email,
+        password: parsed.data.password,
+        name: parsed.data.name,
       },
     });
   } catch (error) {

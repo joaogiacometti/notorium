@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { loginAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,13 +16,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-const loginSchema = z.object({
-  email: z.email("Please enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
-});
-
-export type LoginForm = z.infer<typeof loginSchema>;
+import {
+  type LoginForm as LoginFormValues,
+  loginSchema,
+} from "@/lib/validations/auth";
 
 export function LoginForm({
   className,
@@ -39,7 +35,7 @@ export function LoginForm({
 
   const { isSubmitting } = form.formState;
 
-  async function onSubmit(data: LoginForm) {
+  async function onSubmit(data: LoginFormValues) {
     const result = await loginAction(data);
     if (result && !result.success) {
       toast.error(result.error);
