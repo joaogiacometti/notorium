@@ -54,7 +54,7 @@ export function EditNoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
         <DialogHeader>
           <DialogTitle>Edit Note</DialogTitle>
         </DialogHeader>

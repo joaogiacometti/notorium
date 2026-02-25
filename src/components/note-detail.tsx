@@ -36,13 +36,15 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
         </Button>
       </div>
 
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <FileText className="size-5" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{note.title}</h1>
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl font-bold tracking-tight">
+              {note.title}
+            </h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
                 Created{" "}
@@ -53,11 +55,11 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
             </div>
           </div>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex w-full shrink-0 gap-2 sm:w-auto">
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5"
+            className="flex-1 gap-1.5 sm:flex-none"
             onClick={() => setEditOpen(true)}
           >
             <Pencil className="size-3.5" />
@@ -66,7 +68,7 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            className="flex-1 gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground sm:flex-none"
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" />
@@ -75,14 +77,19 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-card p-6">
-        {note.content ? (
-          <MarkdownRenderer content={note.content} className="text-sm" />
-        ) : (
-          <p className="text-sm italic text-muted-foreground">
-            No content yet. Click Edit to add some notes.
-          </p>
-        )}
+      <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-6">
+        <div className="space-y-4 sm:space-y-5">
+          {note.content ? (
+            <MarkdownRenderer
+              content={note.content}
+              className="text-sm sm:text-base"
+            />
+          ) : (
+            <p className="text-sm italic text-muted-foreground sm:text-base">
+              No content yet. Click Edit to add some notes.
+            </p>
+          )}
+        </div>
       </div>
 
       <EditNoteDialog note={note} open={editOpen} onOpenChange={setEditOpen} />

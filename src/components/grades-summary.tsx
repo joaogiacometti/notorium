@@ -205,7 +205,7 @@ export function GradesSummary({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Assessments</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
@@ -216,7 +216,7 @@ export function GradesSummary({
         </div>
         <Button
           size="sm"
-          className="gap-1.5"
+          className="w-full gap-1.5 sm:w-auto"
           onClick={() => setCreateOpen(true)}
         >
           <Plus className="size-4" />
@@ -302,7 +302,7 @@ export function GradesSummary({
                       overdue ? "border-red-500/40" : "border-border"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-medium">{item.title}</p>
                         {item.description && (
@@ -346,7 +346,7 @@ export function GradesSummary({
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 self-end sm:self-auto">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -390,7 +390,7 @@ export function GradesSummary({
                   key={item.id}
                   className="rounded-xl border border-border bg-muted/20 p-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="font-medium">{item.title}</p>
                       {item.description && (
@@ -419,7 +419,7 @@ export function GradesSummary({
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 self-end sm:self-auto">
                       <Button
                         variant="ghost"
                         size="icon"

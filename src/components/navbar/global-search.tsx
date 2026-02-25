@@ -52,7 +52,7 @@ export function GlobalSearch() {
       <Button
         variant="outline"
         size="sm"
-        className="relative justify-start gap-2 text-sm text-muted-foreground sm:w-64"
+        className="relative size-9 justify-center px-0 text-sm text-muted-foreground sm:h-9 sm:w-64 sm:justify-start sm:gap-2 sm:px-3"
         onClick={() => setOpen(true)}
       >
         <Search className="size-4" />

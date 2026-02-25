@@ -125,8 +125,8 @@ export function MarkdownEditor({
 
   return (
     <div className="rounded-md border border-input shadow-xs transition-colors focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]">
-      <div className="flex items-center justify-between border-b border-border/60 px-2 py-1">
-        <div className="flex items-center gap-0.5">
+      <div className="flex flex-col gap-2 border-b border-border/60 px-2 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1 sm:py-1">
+        <div className="flex items-center gap-0.5 overflow-x-auto pb-1 sm:pb-0">
           {mode === "write" &&
             TOOLBAR_ACTIONS.map((action) => (
               <Button
@@ -134,7 +134,7 @@ export function MarkdownEditor({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground hover:text-foreground"
+                className="size-8 shrink-0 text-muted-foreground hover:text-foreground sm:size-7"
                 onClick={() => applyFormatting(action)}
                 title={action.label}
               >
@@ -142,12 +142,12 @@ export function MarkdownEditor({
               </Button>
             ))}
         </div>
-        <div className="flex items-center rounded-md bg-muted p-0.5">
+        <div className="flex items-center self-end rounded-md bg-muted p-0.5 sm:self-auto">
           <Button
             type="button"
             variant={mode === "write" ? "secondary" : "ghost"}
             size="sm"
-            className="h-6 gap-1 px-2 text-xs"
+            className="h-7 gap-1 px-2 text-xs sm:h-6"
             onClick={() => setMode("write")}
           >
             <Pencil className="size-3" />
@@ -157,7 +157,7 @@ export function MarkdownEditor({
             type="button"
             variant={mode === "preview" ? "secondary" : "ghost"}
             size="sm"
-            className="h-6 gap-1 px-2 text-xs"
+            className="h-7 gap-1 px-2 text-xs sm:h-6"
             onClick={() => setMode("preview")}
           >
             <Eye className="size-3" />
@@ -177,14 +177,14 @@ export function MarkdownEditor({
           rows={rows}
           className={cn(
             "resize-none border-0 shadow-none focus-visible:ring-0 focus-visible:border-transparent",
-            "max-h-[50vh] overflow-y-auto",
+            "min-h-52 max-h-[52svh] overflow-y-auto sm:min-h-40",
           )}
         />
       ) : (
         <div
           className={cn(
             "min-h-[calc(var(--rows)*1.625rem+1rem)] px-3 py-2",
-            "max-h-[50vh] overflow-y-auto",
+            "max-h-[52svh] overflow-y-auto",
           )}
           style={{ "--rows": rows } as React.CSSProperties}
         >

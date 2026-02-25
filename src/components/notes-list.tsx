@@ -24,7 +24,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Notes</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
@@ -34,7 +34,11 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
         <CreateNoteDialog
           subjectId={subjectId}
           trigger={
-            <Button size="sm" className="gap-1.5" id="btn-create-note">
+            <Button
+              size="sm"
+              className="w-full gap-1.5 sm:w-auto"
+              id="btn-create-note"
+            >
               <Plus className="size-4" />
               <span className="hidden sm:inline">New Note</span>
             </Button>

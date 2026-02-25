@@ -95,7 +95,7 @@ export function AttendanceSummary({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Attendance</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
@@ -104,11 +104,11 @@ export function AttendanceSummary({
               : "Configure attendance settings to start tracking."}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2 sm:w-auto">
           {isConfigured && (
             <Button
               size="sm"
-              className="gap-1.5"
+              className="flex-1 gap-1.5 sm:flex-none"
               onClick={() => setRecordOpen(true)}
               id="btn-record-miss"
             >

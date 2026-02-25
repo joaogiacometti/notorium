@@ -7,22 +7,22 @@ export default function NoteDetailLoading() {
         <Skeleton className="h-9 w-40" />
       </div>
 
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />
-          <div>
-            <Skeleton className="h-8 w-64" />
+          <div className="min-w-0">
+            <Skeleton className="h-8 w-full max-w-64" />
             <Skeleton className="mt-3 h-3 w-32" />
           </div>
         </div>
-        <div className="flex shrink-0 gap-2">
-          <Skeleton className="h-9 w-20" />
-          <Skeleton className="h-9 w-24" />
+        <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+          <Skeleton className="h-9 flex-1 sm:w-20 sm:flex-none" />
+          <Skeleton className="h-9 flex-1 sm:w-24 sm:flex-none" />
         </div>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-card p-6">
-        <div className="space-y-4">
+      <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-6">
+        <div className="space-y-4 sm:space-y-5">
           <div className="space-y-2">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />

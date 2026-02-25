@@ -31,16 +31,18 @@ export async function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 container items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto flex h-14 min-w-0 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
+          className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80"
         >
-          <BookOpenText className="size-4" />
-          <span className="text-lg font-semibold tracking-tight">Notorium</span>
+          <BookOpenText className="size-5" />
+          <span className="hidden text-lg font-semibold tracking-tight sm:inline">
+            Notorium
+          </span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           {session && <GlobalSearch />}
           <ModeToggle />
           {session ? (
@@ -49,11 +51,13 @@ export async function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="max-w-40 gap-1.5 text-muted-foreground hover:text-foreground"
+                  className="gap-1 px-1.5 text-muted-foreground hover:text-foreground sm:max-w-40 sm:gap-1.5 sm:px-3"
                 >
                   <User className="size-4 shrink-0" />
-                  <span className="truncate">{accountName}</span>
-                  <ChevronDown className="size-3.5 shrink-0" />
+                  <span className="hidden truncate sm:inline">
+                    {accountName}
+                  </span>
+                  <ChevronDown className="hidden size-3.5 shrink-0 sm:inline" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
