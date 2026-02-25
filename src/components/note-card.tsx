@@ -98,7 +98,10 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
               </p>
             )}
             <p className="text-xs text-muted-foreground/60">
-              Created {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+              Created{" "}
+              {formatDistanceToNow(new Date(note.createdAt), {
+                addSuffix: true,
+              })}
             </p>
           </CardContent>
         </Link>

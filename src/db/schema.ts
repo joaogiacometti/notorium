@@ -94,6 +94,9 @@ export const subject = pgTable(
     description: text("description"),
     totalClasses: integer("total_classes"),
     maxMisses: integer("max_misses"),
+    notesEnabled: boolean("notes_enabled").default(true).notNull(),
+    gradesEnabled: boolean("grades_enabled").default(true).notNull(),
+    attendanceEnabled: boolean("attendance_enabled").default(true).notNull(),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

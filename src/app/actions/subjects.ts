@@ -46,6 +46,9 @@ export async function createSubject(data: CreateSubjectForm) {
   await db.insert(subject).values({
     name: parsed.data.name,
     description: parsed.data.description ?? null,
+    notesEnabled: parsed.data.notesEnabled,
+    gradesEnabled: parsed.data.gradesEnabled,
+    attendanceEnabled: parsed.data.attendanceEnabled,
     userId,
   });
 
@@ -75,6 +78,9 @@ export async function editSubject(data: EditSubjectForm) {
     .set({
       name: parsed.data.name,
       description: parsed.data.description ?? null,
+      notesEnabled: parsed.data.notesEnabled,
+      gradesEnabled: parsed.data.gradesEnabled,
+      attendanceEnabled: parsed.data.attendanceEnabled,
     })
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
 

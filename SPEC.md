@@ -219,12 +219,12 @@ University and school students who want to organize their study materials by sub
 - Cache is invalidated when user creates, edits, or deletes subjects or notes
 - Improves perceived performance for frequent search usage
 
-#### 3.3 Subject Module Configuration
+#### 3.3 Subject Module Configuration ✅ COMPLETE
 
-- [ ] Configure which modules are enabled per subject (notes, grades, attendance)
-- [ ] Hide disabled modules from the subject detail view
-- [ ] Show only enabled modules in the subject UI
-- [ ] Default: all modules enabled for new subjects
+- [x] Configure which modules are enabled per subject (notes, grades, attendance)
+- [x] Hide disabled modules from the subject detail view
+- [x] Show only enabled modules in the subject UI
+- [x] Default: all modules enabled for new subjects
 
 **Data model (extends subject table):**
 | Field | Type | Notes |

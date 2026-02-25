@@ -60,6 +60,9 @@ interface SubjectDetailProps {
     description: string | null;
     totalClasses: number | null;
     maxMisses: number | null;
+    notesEnabled: boolean;
+    gradesEnabled: boolean;
+    attendanceEnabled: boolean;
     createdAt: Date;
     updatedAt: Date;
   };
@@ -110,7 +113,10 @@ export function SubjectDetail({
             )}
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
-                Created {formatDistanceToNow(new Date(subject.createdAt), { addSuffix: true })}
+                Created{" "}
+                {formatDistanceToNow(new Date(subject.createdAt), {
+                  addSuffix: true,
+                })}
               </span>
             </div>
           </div>
@@ -137,20 +143,28 @@ export function SubjectDetail({
         </div>
       </div>
 
-      <AttendanceSummary
-        subjectId={subject.id}
-        totalClasses={subject.totalClasses}
-        maxMisses={subject.maxMisses}
-        misses={misses}
-      />
+      {subject.attendanceEnabled && (
+        <AttendanceSummary
+          subjectId={subject.id}
+          totalClasses={subject.totalClasses}
+          maxMisses={subject.maxMisses}
+          misses={misses}
+        />
+      )}
 
-      <Separator className="my-8" />
+      {subject.gradesEnabled && (
+        <>
+          <Separator className="my-8" />
+          <GradesSummary subjectId={subject.id} categories={gradeCategories} />
+        </>
+      )}
 
-      <GradesSummary subjectId={subject.id} categories={gradeCategories} />
-
-      <Separator className="my-8" />
-
-      <NotesList subjectId={subject.id} notes={notes} />
+      {subject.notesEnabled && (
+        <>
+          <Separator className="my-8" />
+          <NotesList subjectId={subject.id} notes={notes} />
+        </>
+      )}
 
       <EditSubjectDialog
         subject={subject}

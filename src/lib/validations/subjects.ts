@@ -9,6 +9,9 @@ export const createSubjectSchema = z.object({
     .string()
     .max(500, "Description must be at most 500 characters.")
     .optional(),
+  notesEnabled: z.boolean().default(true),
+  gradesEnabled: z.boolean().default(true),
+  attendanceEnabled: z.boolean().default(true),
 });
 
 export type CreateSubjectForm = z.infer<typeof createSubjectSchema>;
@@ -23,6 +26,9 @@ export const editSubjectSchema = z.object({
     .string()
     .max(500, "Description must be at most 500 characters.")
     .optional(),
+  notesEnabled: z.boolean().default(true),
+  gradesEnabled: z.boolean().default(true),
+  attendanceEnabled: z.boolean().default(true),
 });
 
 export type EditSubjectForm = z.infer<typeof editSubjectSchema>;

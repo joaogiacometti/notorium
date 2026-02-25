@@ -19,6 +19,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type EditSubjectForm,
@@ -30,6 +31,9 @@ interface EditSubjectDialogProps {
     id: string;
     name: string;
     description: string | null;
+    notesEnabled: boolean;
+    gradesEnabled: boolean;
+    attendanceEnabled: boolean;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -46,6 +50,9 @@ export function EditSubjectDialog({
       id: subject.id,
       name: subject.name,
       description: subject.description ?? "",
+      notesEnabled: subject.notesEnabled,
+      gradesEnabled: subject.gradesEnabled,
+      attendanceEnabled: subject.attendanceEnabled,
     },
   });
 
@@ -107,6 +114,67 @@ export function EditSubjectDialog({
                 </Field>
               )}
             />
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-foreground">Modules</h3>
+              <div className="space-y-2">
+                <Controller
+                  name="notesEnabled"
+                  control={form.control}
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
+                      <div>
+                        <span className="text-sm font-medium">Notes</span>
+                        <p className="text-[0.8rem] text-muted-foreground">
+                          Markdown notes for studying.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="gradesEnabled"
+                  control={form.control}
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
+                      <div>
+                        <span className="text-sm font-medium">Grades</span>
+                        <p className="text-[0.8rem] text-muted-foreground">
+                          Track your grades and calculate averages.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="attendanceEnabled"
+                  control={form.control}
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
+                      <div>
+                        <span className="text-sm font-medium">Attendance</span>
+                        <p className="text-[0.8rem] text-muted-foreground">
+                          Track missed classes against limits.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </div>
+                  )}
+                />
+              </div>
+            </div>
+
             <Button
               type="submit"
               form="form-edit-subject"
