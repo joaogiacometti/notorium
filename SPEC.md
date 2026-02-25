@@ -244,6 +244,18 @@ University and school students who want to organize their study materials by sub
 - Re-enabling a module shows the previously hidden data
 - All modules are enabled by default for backward compatibility
 
+#### 3.4 Navbar Account Indicator ✅ COMPLETE
+
+- [x] Display authenticated user's name in the navbar
+- [x] Provide account indicator entry point for user actions
+- [x] Provide logout action from the account indicator
+
+**Acceptance criteria:**
+
+- Authenticated users see their account name in the navbar
+- Account indicator includes a logout action
+- Unauthenticated users continue to see Sign In and Sign Up actions
+
 ---
 
 ## Out of Scope (v1)
