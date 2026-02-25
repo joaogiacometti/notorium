@@ -3,22 +3,8 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { note, subject } from "@/db/schema";
+import type { SearchData } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
-
-export type SearchData = {
-  subjects: Array<{
-    id: string;
-    name: string;
-    description: string | null;
-  }>;
-  notes: Array<{
-    id: string;
-    title: string;
-    content: string | null;
-    subjectId: string;
-    subjectName: string;
-  }>;
-};
 
 export async function getSearchData(): Promise<SearchData> {
   const userId = await getAuthenticatedUserId();

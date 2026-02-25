@@ -5,20 +5,11 @@ import { useState } from "react";
 import { CreateNoteDialog } from "@/components/create-note-dialog";
 import { NoteCard } from "@/components/note-card";
 import { Button } from "@/components/ui/button";
-
-interface Note {
-  id: string;
-  title: string;
-  content: string | null;
-  subjectId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { NoteEntity } from "@/lib/api/contracts";
 
 interface NotesListProps {
   subjectId: string;
-  notes: Note[];
+  notes: NoteEntity[];
 }
 
 export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {

@@ -21,20 +21,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import type { SubjectEditDto } from "@/lib/api/contracts";
 import {
   type EditSubjectForm,
   editSubjectSchema,
 } from "@/lib/validations/subjects";
 
 interface EditSubjectDialogProps {
-  subject: {
-    id: string;
-    name: string;
-    description: string | null;
-    notesEnabled: boolean;
-    gradesEnabled: boolean;
-    attendanceEnabled: boolean;
-  };
+  subject: SubjectEditDto;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

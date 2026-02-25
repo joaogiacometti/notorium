@@ -14,16 +14,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { NoteEntity } from "@/lib/api/contracts";
 
 interface NoteCardProps {
-  note: {
-    id: string;
-    title: string;
-    content: string | null;
-    subjectId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  note: NoteEntity;
 }
 
 function stripMarkdown(text: string): string {

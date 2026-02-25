@@ -14,15 +14,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { SubjectEntity } from "@/lib/api/contracts";
 
 interface SubjectCardProps {
-  subject: {
-    id: string;
-    name: string;
-    description: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  subject: SubjectEntity;
 }
 
 export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {

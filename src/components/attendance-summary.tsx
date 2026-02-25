@@ -22,21 +22,13 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface AttendanceMiss {
-  id: string;
-  missDate: string;
-  subjectId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { AttendanceMissEntity } from "@/lib/api/contracts";
 
 interface AttendanceSummaryProps {
   subjectId: string;
   totalClasses: number | null;
   maxMisses: number | null;
-  misses: AttendanceMiss[];
+  misses: AttendanceMissEntity[];
 }
 
 function pluralizeMiss(count: number) {

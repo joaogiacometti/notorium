@@ -20,14 +20,11 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import type { NoteEditDto } from "@/lib/api/contracts";
 import { type EditNoteForm, editNoteSchema } from "@/lib/validations/notes";
 
 interface EditNoteDialogProps {
-  note: {
-    id: string;
-    title: string;
-    content: string | null;
-  };
+  note: NoteEditDto;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

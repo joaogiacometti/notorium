@@ -4,6 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
+import type { AttendanceMissEntity, MutationResult } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import {
   type AttendanceSettingsForm,
@@ -14,7 +15,9 @@ import {
   recordMissSchema,
 } from "@/lib/validations/attendance";
 
-export async function updateAttendanceSettings(data: AttendanceSettingsForm) {
+export async function updateAttendanceSettings(
+  data: AttendanceSettingsForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = attendanceSettingsSchema.safeParse(data);
 
@@ -51,7 +54,9 @@ export async function updateAttendanceSettings(data: AttendanceSettingsForm) {
   return { success: true };
 }
 
-export async function getMissesBySubject(subjectId: string) {
+export async function getMissesBySubject(
+  subjectId: string,
+): Promise<AttendanceMissEntity[]> {
   const userId = await getAuthenticatedUserId();
 
   return db
@@ -66,7 +71,9 @@ export async function getMissesBySubject(subjectId: string) {
     .orderBy(asc(attendanceMiss.missDate));
 }
 
-export async function recordMiss(data: RecordMissForm) {
+export async function recordMiss(
+  data: RecordMissForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = recordMissSchema.safeParse(data);
 
@@ -110,7 +117,9 @@ export async function recordMiss(data: RecordMissForm) {
   return { success: true };
 }
 
-export async function deleteMiss(data: DeleteMissForm) {
+export async function deleteMiss(
+  data: DeleteMissForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = deleteMissSchema.safeParse(data);
 

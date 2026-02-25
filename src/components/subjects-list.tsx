@@ -5,18 +5,10 @@ import { useState } from "react";
 import { CreateSubjectDialog } from "@/components/create-subject-dialog";
 import { SubjectCard } from "@/components/subject-card";
 import { Button } from "@/components/ui/button";
-
-interface Subject {
-  id: string;
-  name: string;
-  description: string | null;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { SubjectEntity } from "@/lib/api/contracts";
 
 interface SubjectsListProps {
-  subjects: Subject[];
+  subjects: SubjectEntity[];
 }
 
 export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {

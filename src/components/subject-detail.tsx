@@ -12,63 +12,18 @@ import { GradesSummary } from "@/components/grades-summary";
 import { NotesList } from "@/components/notes-list";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-
-interface Note {
-  id: string;
-  title: string;
-  content: string | null;
-  subjectId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface AttendanceMiss {
-  id: string;
-  missDate: string;
-  subjectId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface Grade {
-  id: string;
-  name: string;
-  value: string;
-  categoryId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface GradeCategory {
-  id: string;
-  name: string;
-  weight: string | null;
-  subjectId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  grades: Grade[];
-}
+import type {
+  AttendanceMissEntity,
+  GradeCategoryWithGrades,
+  NoteEntity,
+  SubjectEntity,
+} from "@/lib/api/contracts";
 
 interface SubjectDetailProps {
-  subject: {
-    id: string;
-    name: string;
-    description: string | null;
-    totalClasses: number | null;
-    maxMisses: number | null;
-    notesEnabled: boolean;
-    gradesEnabled: boolean;
-    attendanceEnabled: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  notes: Note[];
-  misses: AttendanceMiss[];
-  gradeCategories: GradeCategory[];
+  subject: SubjectEntity;
+  notes: NoteEntity[];
+  misses: AttendanceMissEntity[];
+  gradeCategories: GradeCategoryWithGrades[];
 }
 
 export function SubjectDetail({

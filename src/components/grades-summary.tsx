@@ -19,41 +19,21 @@ import { EditCategoryDialog } from "@/components/edit-category-dialog";
 import { EditGradeDialog } from "@/components/edit-grade-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface Grade {
-  id: string;
-  name: string;
-  value: string;
-  categoryId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface GradeCategory {
-  id: string;
-  name: string;
-  weight: string | null;
-  subjectId: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  grades: Grade[];
-}
+import type { GradeCategoryWithGrades, GradeEntity } from "@/lib/api/contracts";
 
 interface GradesSummaryProps {
   subjectId: string;
-  categories: GradeCategory[];
+  categories: GradeCategoryWithGrades[];
 }
 
-function getCategoryAverage(grades: Grade[]): number | null {
+function getCategoryAverage(grades: GradeEntity[]): number | null {
   if (grades.length === 0) return null;
   const sum = grades.reduce((acc, g) => acc + Number(g.value), 0);
   return sum / grades.length;
 }
 
 function computeWeightedAverage(
-  categoriesWithGrades: GradeCategory[],
+  categoriesWithGrades: GradeCategoryWithGrades[],
 ): number | null {
   let weightedSum = 0;
   let totalWeight = 0;
@@ -74,7 +54,7 @@ function computeWeightedAverage(
 }
 
 function computeSimpleAverage(
-  categoriesWithGrades: GradeCategory[],
+  categoriesWithGrades: GradeCategoryWithGrades[],
 ): number | null {
   const allAvgs = categoriesWithGrades
     .map((c) => getCategoryAverage(c.grades))
@@ -84,7 +64,9 @@ function computeSimpleAverage(
   return allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length;
 }
 
-function getOverallAverage(categories: GradeCategory[]): number | null {
+function getOverallAverage(
+  categories: GradeCategoryWithGrades[],
+): number | null {
   const categoriesWithGrades = categories.filter((c) => c.grades.length > 0);
   if (categoriesWithGrades.length === 0) return null;
 
@@ -141,12 +123,14 @@ export function GradesSummary({
     name: string;
   } | null>(null);
   const [editCategoryTarget, setEditCategoryTarget] =
-    useState<GradeCategory | null>(null);
+    useState<GradeCategoryWithGrades | null>(null);
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<{
     id: string;
     name: string;
   } | null>(null);
-  const [editGradeTarget, setEditGradeTarget] = useState<Grade | null>(null);
+  const [editGradeTarget, setEditGradeTarget] = useState<GradeEntity | null>(
+    null,
+  );
   const [deleteGradeTarget, setDeleteGradeTarget] = useState<{
     id: string;
     name: string;

@@ -9,16 +9,10 @@ import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { Button } from "@/components/ui/button";
+import type { NoteEntity } from "@/lib/api/contracts";
 
 interface NoteDetailProps {
-  note: {
-    id: string;
-    title: string;
-    content: string | null;
-    subjectId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  note: NoteEntity;
 }
 
 export function NoteDetail({ note }: Readonly<NoteDetailProps>) {

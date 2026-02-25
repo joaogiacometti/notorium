@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { subject } from "@/db/schema";
+import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import {
   type CreateSubjectForm,
@@ -14,7 +15,7 @@ import {
   editSubjectSchema,
 } from "@/lib/validations/subjects";
 
-export async function getSubjects() {
+export async function getSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
 
   return db
@@ -24,7 +25,9 @@ export async function getSubjects() {
     .orderBy(desc(subject.updatedAt));
 }
 
-export async function getSubjectById(id: string) {
+export async function getSubjectById(
+  id: string,
+): Promise<SubjectEntity | null> {
   const userId = await getAuthenticatedUserId();
 
   const results = await db
@@ -35,7 +38,9 @@ export async function getSubjectById(id: string) {
   return results[0] ?? null;
 }
 
-export async function createSubject(data: CreateSubjectForm) {
+export async function createSubject(
+  data: CreateSubjectForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = createSubjectSchema.safeParse(data);
 
@@ -56,7 +61,9 @@ export async function createSubject(data: CreateSubjectForm) {
   return { success: true };
 }
 
-export async function editSubject(data: EditSubjectForm) {
+export async function editSubject(
+  data: EditSubjectForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = editSubjectSchema.safeParse(data);
 
@@ -89,7 +96,9 @@ export async function editSubject(data: EditSubjectForm) {
   return { success: true };
 }
 
-export async function deleteSubject(data: DeleteSubjectForm) {
+export async function deleteSubject(
+  data: DeleteSubjectForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = deleteSubjectSchema.safeParse(data);
 

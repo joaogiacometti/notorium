@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { note } from "@/db/schema";
+import type { MutationResult, NoteEntity } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import {
   type CreateNoteForm,
@@ -14,7 +15,9 @@ import {
   editNoteSchema,
 } from "@/lib/validations/notes";
 
-export async function getNotesBySubject(subjectId: string) {
+export async function getNotesBySubject(
+  subjectId: string,
+): Promise<NoteEntity[]> {
   const userId = await getAuthenticatedUserId();
 
   return db
@@ -24,7 +27,7 @@ export async function getNotesBySubject(subjectId: string) {
     .orderBy(desc(note.updatedAt));
 }
 
-export async function getNoteById(id: string) {
+export async function getNoteById(id: string): Promise<NoteEntity | null> {
   const userId = await getAuthenticatedUserId();
 
   const results = await db
@@ -35,7 +38,9 @@ export async function getNoteById(id: string) {
   return results[0] ?? null;
 }
 
-export async function createNote(data: CreateNoteForm) {
+export async function createNote(
+  data: CreateNoteForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = createNoteSchema.safeParse(data);
 
@@ -54,7 +59,7 @@ export async function createNote(data: CreateNoteForm) {
   return { success: true };
 }
 
-export async function editNote(data: EditNoteForm) {
+export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = editNoteSchema.safeParse(data);
 
@@ -85,7 +90,9 @@ export async function editNote(data: EditNoteForm) {
   return { success: true };
 }
 
-export async function deleteNote(data: DeleteNoteForm) {
+export async function deleteNote(
+  data: DeleteNoteForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = deleteNoteSchema.safeParse(data);
 

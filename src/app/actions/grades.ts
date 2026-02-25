@@ -4,6 +4,10 @@ import { and, asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { grade, gradeCategory } from "@/db/schema";
+import type {
+  GradeCategoryWithGrades,
+  MutationResult,
+} from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import {
   type CreateGradeCategoryForm,
@@ -20,7 +24,9 @@ import {
   editGradeSchema,
 } from "@/lib/validations/grades";
 
-export async function getGradeCategoriesBySubject(subjectId: string) {
+export async function getGradeCategoriesBySubject(
+  subjectId: string,
+): Promise<GradeCategoryWithGrades[]> {
   const userId = await getAuthenticatedUserId();
 
   const categories = await db
@@ -46,7 +52,9 @@ export async function getGradeCategoriesBySubject(subjectId: string) {
   }));
 }
 
-export async function createGradeCategory(data: CreateGradeCategoryForm) {
+export async function createGradeCategory(
+  data: CreateGradeCategoryForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = createGradeCategorySchema.safeParse(data);
 
@@ -65,7 +73,9 @@ export async function createGradeCategory(data: CreateGradeCategoryForm) {
   return { success: true };
 }
 
-export async function editGradeCategory(data: EditGradeCategoryForm) {
+export async function editGradeCategory(
+  data: EditGradeCategoryForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = editGradeCategorySchema.safeParse(data);
 
@@ -104,7 +114,9 @@ export async function editGradeCategory(data: EditGradeCategoryForm) {
   return { success: true };
 }
 
-export async function deleteGradeCategory(data: DeleteGradeCategoryForm) {
+export async function deleteGradeCategory(
+  data: DeleteGradeCategoryForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = deleteGradeCategorySchema.safeParse(data);
 
@@ -139,7 +151,9 @@ export async function deleteGradeCategory(data: DeleteGradeCategoryForm) {
   return { success: true };
 }
 
-export async function createGrade(data: CreateGradeForm) {
+export async function createGrade(
+  data: CreateGradeForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = createGradeSchema.safeParse(data);
 
@@ -172,7 +186,7 @@ export async function createGrade(data: CreateGradeForm) {
   return { success: true };
 }
 
-export async function editGrade(data: EditGradeForm) {
+export async function editGrade(data: EditGradeForm): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = editGradeSchema.safeParse(data);
 
@@ -208,7 +222,9 @@ export async function editGrade(data: EditGradeForm) {
   return { success: true };
 }
 
-export async function deleteGrade(data: DeleteGradeForm) {
+export async function deleteGrade(
+  data: DeleteGradeForm,
+): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = deleteGradeSchema.safeParse(data);
 
