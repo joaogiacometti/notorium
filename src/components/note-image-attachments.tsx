@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { ImageIcon, Loader2, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { type MouseEvent, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -75,6 +75,15 @@ export function NoteImageAttachments({
     string | null
   >(null);
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+  const [viewerAttachmentId, setViewerAttachmentId] = useState<string | null>(
+    null,
+  );
+  const [viewerZoomOrigin, setViewerZoomOrigin] = useState("50% 50%");
+  const [isViewerZoomed, setIsViewerZoomed] = useState(false);
+
+  const viewerAttachment =
+    attachments.find((attachment) => attachment.id === viewerAttachmentId) ??
+    null;
 
   function clearSelectedFiles() {
     form.reset({
@@ -154,6 +163,31 @@ export function NoteImageAttachments({
         setRemovingAttachmentId(null);
       }
     });
+  }
+
+  function onViewerOpenChange(open: boolean) {
+    if (!open) {
+      setViewerAttachmentId(null);
+      setViewerZoomOrigin("50% 50%");
+      setIsViewerZoomed(false);
+    }
+  }
+
+  function setZoomOriginFromPointer(event: MouseEvent<HTMLElement>) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+
+    setViewerZoomOrigin(`${x}% ${y}%`);
+  }
+
+  function onViewerMouseMove(event: MouseEvent<HTMLDivElement>) {
+    setZoomOriginFromPointer(event);
+  }
+
+  function onViewerImageClick(event: MouseEvent<HTMLImageElement>) {
+    setZoomOriginFromPointer(event);
+    setIsViewerZoomed((current) => !current);
   }
 
   return (
@@ -276,11 +310,12 @@ export function NoteImageAttachments({
               <Image
                 src={`/api/notes/${noteId}/attachments/${attachment.id}`}
                 alt="Note attachment"
-                className="h-44 w-full object-cover"
+                className="h-44 w-full cursor-zoom-in object-cover"
                 loading="lazy"
                 width={704}
                 height={352}
                 unoptimized
+                onClick={() => setViewerAttachmentId(attachment.id)}
               />
               <div className="flex items-center justify-between gap-2 p-2">
                 <span className="text-xs text-muted-foreground">
@@ -333,6 +368,47 @@ export function NoteImageAttachments({
               Remove
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={viewerAttachmentId !== null}
+        onOpenChange={onViewerOpenChange}
+      >
+        <DialogContent
+          className="h-svh w-screen max-w-none border-none bg-black/95 p-0"
+          showCloseButton={false}
+          onMouseMove={onViewerMouseMove}
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>Attachment preview</DialogTitle>
+          </DialogHeader>
+          <button
+            type="button"
+            className="absolute right-4 top-4 z-10 inline-flex size-10 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+            onClick={() => setViewerAttachmentId(null)}
+            aria-label="Close image viewer"
+          >
+            <X className="size-5" />
+          </button>
+          {viewerAttachment && (
+            <div className="flex h-full w-full items-center justify-center overflow-hidden p-4 sm:p-8">
+              <Image
+                src={`/api/notes/${noteId}/attachments/${viewerAttachment.id}`}
+                alt="Note attachment in fullscreen"
+                className={`max-h-full w-auto max-w-full object-contain transition-transform duration-150 ${isViewerZoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
+                style={{
+                  transformOrigin: viewerZoomOrigin,
+                  transform: isViewerZoomed ? "scale(2)" : "scale(1)",
+                }}
+                onClick={onViewerImageClick}
+                width={1600}
+                height={1200}
+                unoptimized
+                priority
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

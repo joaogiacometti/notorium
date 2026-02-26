@@ -442,8 +442,8 @@ Each assessment displays:
 
 ### 4.3 Mobile Image Viewer Mode
 
-- [ ] Open note images in fullscreen modal
-- [ ] Improve image readability on mobile devices
+- [x] Open note images in fullscreen modal
+- [x] Improve image readability on mobile devices
 
 ### Purpose
 
