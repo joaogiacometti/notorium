@@ -8,11 +8,12 @@ import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { NoteImageAttachments } from "@/components/note-image-attachments";
 import { Button } from "@/components/ui/button";
-import type { NoteEntity } from "@/lib/api/contracts";
+import type { NoteWithAttachmentsEntity } from "@/lib/api/contracts";
 
 interface NoteDetailProps {
-  note: NoteEntity;
+  note: NoteWithAttachmentsEntity;
 }
 
 export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
@@ -90,6 +91,10 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <NoteImageAttachments noteId={note.id} attachments={note.attachments} />
       </div>
 
       <EditNoteDialog note={note} open={editOpen} onOpenChange={setEditOpen} />

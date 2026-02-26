@@ -1,10 +1,16 @@
 "use server";
 
+import { del, put } from "@vercel/blob";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
-import { note } from "@/db/schema";
-import type { MutationResult, NoteEntity } from "@/lib/api/contracts";
+import { note, noteImageAttachment } from "@/db/schema";
+import { appEnv } from "@/env";
+import type {
+  MutationResult,
+  NoteEntity,
+  NoteWithAttachmentsEntity,
+} from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import {
   type CreateNoteForm,
@@ -13,7 +19,28 @@ import {
   deleteNoteSchema,
   type EditNoteForm,
   editNoteSchema,
+  noteAttachmentMaxFilesPerUpload,
+  type RemoveNoteAttachmentForm,
+  removeNoteAttachmentSchema,
+  uploadNoteAttachmentsSchema,
+  validateNoteAttachmentFile,
 } from "@/lib/validations/notes";
+
+function getBlobToken(): string | null {
+  return appEnv.BLOB_READ_WRITE_TOKEN ?? null;
+}
+
+function getAttachmentPathname(userId: string, noteId: string, file: File) {
+  const extensionFromFileName = file.name.split(".").at(-1)?.toLowerCase();
+  const extension =
+    extensionFromFileName &&
+    /^[a-z0-9]+$/.test(extensionFromFileName) &&
+    extensionFromFileName.length <= 10
+      ? extensionFromFileName
+      : "jpg";
+
+  return `notes/${userId}/${noteId}/${crypto.randomUUID()}.${extension}`;
+}
 
 export async function getNotesBySubject(
   subjectId: string,
@@ -27,7 +54,9 @@ export async function getNotesBySubject(
     .orderBy(desc(note.updatedAt));
 }
 
-export async function getNoteById(id: string): Promise<NoteEntity | null> {
+export async function getNoteById(
+  id: string,
+): Promise<NoteWithAttachmentsEntity | null> {
   const userId = await getAuthenticatedUserId();
 
   const results = await db
@@ -35,7 +64,27 @@ export async function getNoteById(id: string): Promise<NoteEntity | null> {
     .from(note)
     .where(and(eq(note.id, id), eq(note.userId, userId)));
 
-  return results[0] ?? null;
+  const existingNote = results[0];
+
+  if (!existingNote) {
+    return null;
+  }
+
+  const attachments = await db
+    .select()
+    .from(noteImageAttachment)
+    .where(
+      and(
+        eq(noteImageAttachment.noteId, existingNote.id),
+        eq(noteImageAttachment.userId, userId),
+      ),
+    )
+    .orderBy(desc(noteImageAttachment.createdAt));
+
+  return {
+    ...existingNote,
+    attachments,
+  };
 }
 
 export async function createNote(
@@ -90,6 +139,190 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   return { success: true };
 }
 
+export async function uploadNoteAttachments(
+  formData: FormData,
+): Promise<MutationResult> {
+  const userId = await getAuthenticatedUserId();
+  const blobToken = getBlobToken();
+
+  if (!blobToken) {
+    return { error: "Blob storage is not configured." };
+  }
+
+  const noteId = formData.get("noteId");
+  const parsed = uploadNoteAttachmentsSchema.safeParse({
+    noteId: typeof noteId === "string" ? noteId : "",
+  });
+
+  if (!parsed.success) {
+    return { error: "Invalid request." };
+  }
+
+  const files = formData
+    .getAll("images")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+
+  if (files.length === 0) {
+    return { error: "Select at least one image." };
+  }
+
+  if (files.length > noteAttachmentMaxFilesPerUpload) {
+    return {
+      error: `You can upload up to ${noteAttachmentMaxFilesPerUpload} images at a time.`,
+    };
+  }
+
+  for (const file of files) {
+    const validationError = validateNoteAttachmentFile(file);
+    if (validationError) {
+      return { error: `${file.name}: ${validationError}` };
+    }
+  }
+
+  const existing = await db
+    .select({
+      id: note.id,
+      subjectId: note.subjectId,
+    })
+    .from(note)
+    .where(and(eq(note.id, parsed.data.noteId), eq(note.userId, userId)));
+
+  const existingNote = existing[0];
+
+  if (!existingNote) {
+    return { error: "Note not found." };
+  }
+
+  const uploadedBlobs: Array<{
+    pathname: string;
+    url: string;
+    file: File;
+  }> = [];
+
+  try {
+    for (const file of files) {
+      const blob = await put(
+        getAttachmentPathname(userId, existingNote.id, file),
+        file,
+        {
+          access: "private",
+          addRandomSuffix: true,
+          contentType: file.type,
+          token: blobToken,
+        },
+      );
+
+      uploadedBlobs.push({
+        pathname: blob.pathname,
+        url: blob.url,
+        file,
+      });
+    }
+
+    await db.insert(noteImageAttachment).values(
+      uploadedBlobs.map(({ pathname, url, file }) => ({
+        noteId: existingNote.id,
+        userId,
+        blobUrl: url,
+        blobPathname: pathname,
+        contentType: file.type,
+        sizeBytes: file.size,
+      })),
+    );
+
+    await db
+      .update(note)
+      .set({ updatedAt: new Date() })
+      .where(and(eq(note.id, existingNote.id), eq(note.userId, userId)));
+  } catch {
+    if (uploadedBlobs.length > 0) {
+      try {
+        await del(
+          uploadedBlobs.map((blob) => blob.pathname),
+          { token: blobToken },
+        );
+      } catch {}
+    }
+
+    return { error: "Failed to upload note images." };
+  }
+
+  revalidatePath(`/subjects/${existingNote.subjectId}`);
+  revalidatePath(
+    `/subjects/${existingNote.subjectId}/notes/${existingNote.id}`,
+  );
+  return { success: true };
+}
+
+export async function removeNoteAttachment(
+  data: RemoveNoteAttachmentForm,
+): Promise<MutationResult> {
+  const userId = await getAuthenticatedUserId();
+  const parsed = removeNoteAttachmentSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { error: "Invalid request." };
+  }
+
+  const existingAttachment = await db
+    .select()
+    .from(noteImageAttachment)
+    .where(
+      and(
+        eq(noteImageAttachment.id, parsed.data.id),
+        eq(noteImageAttachment.userId, userId),
+      ),
+    );
+
+  const attachment = existingAttachment[0];
+
+  if (!attachment) {
+    return { error: "Attachment not found." };
+  }
+
+  const existingNotes = await db
+    .select({
+      id: note.id,
+      subjectId: note.subjectId,
+    })
+    .from(note)
+    .where(and(eq(note.id, attachment.noteId), eq(note.userId, userId)));
+
+  const existingNote = existingNotes[0];
+
+  if (!existingNote) {
+    return { error: "Note not found." };
+  }
+
+  await db
+    .delete(noteImageAttachment)
+    .where(
+      and(
+        eq(noteImageAttachment.id, attachment.id),
+        eq(noteImageAttachment.userId, userId),
+      ),
+    );
+
+  await db
+    .update(note)
+    .set({ updatedAt: new Date() })
+    .where(and(eq(note.id, existingNote.id), eq(note.userId, userId)));
+
+  const blobToken = getBlobToken();
+
+  if (blobToken) {
+    try {
+      await del(attachment.blobPathname, { token: blobToken });
+    } catch {}
+  }
+
+  revalidatePath(`/subjects/${existingNote.subjectId}`);
+  revalidatePath(
+    `/subjects/${existingNote.subjectId}/notes/${existingNote.id}`,
+  );
+  return { success: true };
+}
+
 export async function deleteNote(
   data: DeleteNoteForm,
 ): Promise<MutationResult> {
@@ -111,9 +344,32 @@ export async function deleteNote(
 
   const existingNote = existing[0];
 
+  const attachments = await db
+    .select({
+      blobPathname: noteImageAttachment.blobPathname,
+    })
+    .from(noteImageAttachment)
+    .where(
+      and(
+        eq(noteImageAttachment.noteId, parsed.data.id),
+        eq(noteImageAttachment.userId, userId),
+      ),
+    );
+
   await db
     .delete(note)
     .where(and(eq(note.id, parsed.data.id), eq(note.userId, userId)));
+
+  const blobToken = getBlobToken();
+
+  if (blobToken && attachments.length > 0) {
+    try {
+      await del(
+        attachments.map((attachment) => attachment.blobPathname),
+        { token: blobToken },
+      );
+    } catch {}
+  }
 
   revalidatePath(`/subjects/${existingNote.subjectId}`);
   return { success: true };

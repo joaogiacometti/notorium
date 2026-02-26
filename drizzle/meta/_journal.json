@@ -50,6 +50,13 @@
       "when": 1772023444103,
       "tag": "0006_assessment_planner",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772065842262,
+      "tag": "0007_note_image_attachments",
+      "breakpoints": true
     }
   ]
 }

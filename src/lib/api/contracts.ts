@@ -1,8 +1,20 @@
 import type { InferSelectModel } from "drizzle-orm";
-import type { assessment, attendanceMiss, note, subject } from "@/db/schema";
+import type {
+  assessment,
+  attendanceMiss,
+  note,
+  noteImageAttachment,
+  subject,
+} from "@/db/schema";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
+export type NoteImageAttachmentEntity = InferSelectModel<
+  typeof noteImageAttachment
+>;
+export type NoteWithAttachmentsEntity = NoteEntity & {
+  attachments: NoteImageAttachmentEntity[];
+};
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
 

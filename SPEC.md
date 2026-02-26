@@ -262,9 +262,9 @@ University and school students who want to organize their study materials by sub
 
 #### 4.1 Note Image Attachments
 
-- [ ] Attach images to notes
-- [ ] Render attached images inside note detail view
-- [ ] Allow removing attached images from notes
+- [x] Attach images to notes
+- [x] Render attached images inside note detail view
+- [x] Allow removing attached images from notes
 
 **Acceptance criteria:**
 
@@ -300,20 +300,20 @@ This transforms the subject view into both:
 
 ### Data Model (`assessment`)
 
-| Field | Type | Notes |
-|-------------|-----------|--------------------------------|
-| id | text (PK) | Generated ID |
-| title | text | Required |
-| description | text | Optional |
-| type | enum | `exam` \| `assignment` \| `project` \| `presentation` \| `homework` \| `other` |
-| status | enum | `pending` \| `completed` |
-| dueDate | date | Optional |
-| score | numeric | Optional |
-| weight | numeric | Optional (percentage or relative weight) |
-| subjectId | text (FK) | References subject.id, cascade |
-| userId | text (FK) | References user.id, cascade |
-| createdAt | timestamp | Auto-set on creation |
-| updatedAt | timestamp | Auto-updated on changes |
+| Field       | Type      | Notes                                                                          |
+| ----------- | --------- | ------------------------------------------------------------------------------ |
+| id          | text (PK) | Generated ID                                                                   |
+| title       | text      | Required                                                                       |
+| description | text      | Optional                                                                       |
+| type        | enum      | `exam` \| `assignment` \| `project` \| `presentation` \| `homework` \| `other` |
+| status      | enum      | `pending` \| `completed`                                                       |
+| dueDate     | date      | Optional                                                                       |
+| score       | numeric   | Optional                                                                       |
+| weight      | numeric   | Optional (percentage or relative weight)                                       |
+| subjectId   | text (FK) | References subject.id, cascade                                                 |
+| userId      | text (FK) | References user.id, cascade                                                    |
+| createdAt   | timestamp | Auto-set on creation                                                           |
+| updatedAt   | timestamp | Auto-updated on changes                                                        |
 
 ### Behavioral Requirements
 
@@ -396,15 +396,18 @@ Filtering must always be scoped to `userId`.
 #### Visual States
 
 Pending:
+
 - Neutral styling
 - Due date badge
 - Countdown indicator
 
 Overdue:
+
 - Highlighted in red
 - Overdue badge
 
 Completed:
+
 - Muted styling
 - Completion indicator
 - Optional grade badge (for example, `85` with weight if defined)
@@ -437,12 +440,61 @@ Each assessment displays:
 - Sorting and filtering behave according to specification
 - Access is scoped by `userId`
 
+### 4.3 Mobile Image Viewer Mode
+
+- [ ] Open note images in fullscreen modal
+- [ ] Improve image readability on mobile devices
+
+### Purpose
+
+Improve the reading experience of image attachments inside notes, especially on mobile devices where inline images are too small or constrained by layout width.
+
+This feature enhances usability without changing the data model.
+
+---
+
+### Behavioral Requirements
+
+#### Open Behavior
+
+- Tapping an image inside a note opens it in a fullscreen modal
+- Background content is visually dimmed
+- Background scrolling is disabled while the viewer is open
+- Image is displayed at its natural resolution (not markdown-constrained width)
+
+#### Close Behavior
+
+The viewer can be closed by:
+
+- Clicking a close button
+- Pressing `ESC` (desktop)
+- Tapping outside the image
+
+---
+
+### UI Requirements
+
+- Use a modal/dialog component (e.g., shadcn `Dialog`)
+- Viewer occupies full viewport (`100vh`)
+- Image is centered and scales to fit screen
+- Close button is clearly visible (top-right)
+- Minimal UI to avoid distraction
+
+---
+
+### Acceptance Criteria
+
+- Tapping an image opens it in fullscreen
+- Image renders larger than inline view
+- Viewer disables background scroll
+- Viewer can be closed reliably
+- Only images belonging to the authenticated user's note are accessible
+
 ---
 
 ## Out of Scope (v1)
 
 - Real-time collaboration / sharing subjects between users
-- File uploads or attachments
 - Calendar integration
 - Mobile native app
 - Social features (profiles, following)
