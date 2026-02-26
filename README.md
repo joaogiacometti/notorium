@@ -2,21 +2,6 @@
 
 Notorium is a study management app for students. It centralizes subjects, notes, attendance, and assessments in one place with private, user-scoped data.
 
-## Current Status
-
-Based on `SPEC.md`:
-
-- [x] Authentication (email/password, sessions, logout)
-- [x] Subject CRUD
-- [x] Notes CRUD with Markdown support
-- [x] Attendance tracking and miss history
-- [x] Assessment planner (types, statuses, due dates, averages)
-- [x] Subject module toggles (notes, attendance, assessments)
-- [x] Global search across subjects and notes
-- [x] Image attachments for notes
-- [ ] Search result caching
-- [ ] Mobile fullscreen image viewer mode
-
 ## Tech Stack
 
 - Next.js 16 (App Router, Server Components, Server Actions)
