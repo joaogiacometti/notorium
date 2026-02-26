@@ -4,6 +4,12 @@
 
 Notorium is a study management app built with Next.js 16 (App Router). See `SPEC.md` for the full product specification, features, and acceptance criteria.
 
+## Product Docs Workflow
+
+- `SPEC.md`: current behavior and product constraints only.
+- `ROADMAP.md`: planned and in-progress future features.
+- When implementing a future feature, update its status in `ROADMAP.md`.
+
 ## Project Structure
 
 ```
@@ -18,7 +24,7 @@ src/
 │   └── globals.css   # Global styles (Tailwind)
 ├── components/       # React components
 │   ├── ui/           # shadcn/ui primitives (do not edit manually)
-│   ├── navbar.tsx    # Navigation bar
+│   ├── navbar/       # Navigation bar, global search, theme
 │   ├── login-form.tsx
 │   └── signup-form.tsx
 ├── db/               # Database layer
@@ -43,17 +49,17 @@ src/
 | `bun run db:migrate`  | Run Drizzle migrations      |
 | `bun run db:push`     | Push schema directly to DB  |
 
-## Tech Stack & Versions
+## Tech Stack
 
-- **Next.js** 16 (App Router, React Server Components)
-- **React** 19
-- **TypeScript** 5
-- **Drizzle ORM** 0.45
-- **Better Auth** 1.4
-- **Zod** 4
-- **React Hook Form** 7
-- **shadcn/ui** (Radix UI + Tailwind CSS 4)
-- **Biome** 2.2 (linter + formatter)
+- **Next.js** (App Router, React Server Components)
+- **React**
+- **TypeScript**
+- **Drizzle ORM**
+- **Better Auth**
+- **Zod**
+- **React Hook Form**
+- **shadcn/ui** (Radix UI + Tailwind CSS)
+- **Biome** (linter + formatter)
 - **Bun** (package manager and runtime)
 - **PostgreSQL** (via Docker Compose)
 
@@ -96,7 +102,7 @@ src/
 ### Authentication
 
 - Server-side: use `auth.api.getSession()` from `src/lib/auth.ts`.
-- Client-side: use `authClient` from `src/lib/auth-client.ts`.
+- Client-side: use `authClient` from `src/lib/auth-client.ts` only when Better Auth client APIs are required, and ensure its `baseURL` matches the current environment.
 - Always check authentication before accessing user-specific data.
 - All user-owned data must filter by `userId` from the session.
 
@@ -108,7 +114,8 @@ src/
 ## Agent Behavior
 
 - **Ask before assuming.** If a requirement is unclear or ambiguous, ask the user for clarification before proceeding.
-- **Follow SPEC.md.** Always check the current state of `SPEC.md` to understand what is implemented and what is next.
-- **Update SPEC.md.** When a feature is completed, mark it as done (`[x]`). When requirements change, update the spec accordingly.
+- **Follow SPEC.md for current behavior.** Use it as source of truth for implemented product rules.
+- **Follow ROADMAP.md for future work.** Use it to determine what should be built next.
+- **Update docs in the right place.** Keep `SPEC.md` stable and move planning/status updates to `ROADMAP.md`.
 - **Small, focused changes.** Implement one feature or fix at a time. Do not make unrelated changes.
 - **Test after changes.** Verify the dev server still runs (`bun dev`) and check for lint errors (`bun run lint`) after making changes.
