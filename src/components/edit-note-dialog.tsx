@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ export function EditNoteDialog({
   open,
   onOpenChange,
 }: Readonly<EditNoteDialogProps>) {
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(editNoteSchema),
     defaultValues: {
@@ -46,6 +48,7 @@ export function EditNoteDialog({
   async function onSubmit(data: EditNoteForm) {
     const result = await editNote(data);
     if (result.success) {
+      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       onOpenChange(false);
     } else if (result.error) {
       toast.error(result.error);

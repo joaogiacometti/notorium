@@ -43,7 +43,7 @@ export async function Navbar() {
         </Link>
 
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          {session && <GlobalSearch />}
+          {session && <GlobalSearch userId={session.user.id} />}
           <ModeToggle />
           {session ? (
             <DropdownMenu>

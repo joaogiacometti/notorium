@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ export function EditSubjectDialog({
   open,
   onOpenChange,
 }: Readonly<EditSubjectDialogProps>) {
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(editSubjectSchema),
     defaultValues: {
@@ -53,6 +55,7 @@ export function EditSubjectDialog({
   async function onSubmit(data: EditSubjectForm) {
     const result = await editSubject(data);
     if (result.success) {
+      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       onOpenChange(false);
     } else if (result.error) {
       toast.error(result.error);

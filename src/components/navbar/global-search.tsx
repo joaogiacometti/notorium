@@ -16,14 +16,30 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
-export function GlobalSearch() {
+interface GlobalSearchProps {
+  userId: string;
+}
+
+export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const router = useRouter();
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 200);
+
+    return () => clearTimeout(timeout);
+  }, [query]);
+
   const { data, isPending } = useQuery({
-    queryKey: ["search-data"],
-    queryFn: getSearchData,
-    enabled: open,
+    queryKey: ["search-data", userId, debouncedQuery],
+    queryFn: () => getSearchData(debouncedQuery),
+    enabled: open && userId.length > 0,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
   });
 
   useEffect(() => {
@@ -43,9 +59,19 @@ export function GlobalSearch() {
     router.push(path);
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+
+    if (!nextOpen) {
+      setQuery("");
+      setDebouncedQuery("");
+    }
+  }
+
   const subjects = data?.subjects ?? [];
   const notes = data?.notes ?? [];
   const hasData = subjects.length > 0 || notes.length > 0;
+  const canSearch = userId.length > 0;
 
   return (
     <>
@@ -63,16 +89,23 @@ export function GlobalSearch() {
       </Button>
       <CommandDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         title="Global Search"
         description="Search across all your subjects and notes"
         showCloseButton={false}
+        commandProps={{ shouldFilter: false }}
       >
-        <CommandInput placeholder="Search subjects and notes..." />
+        <CommandInput
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Search subjects and notes..."
+        />
         <CommandList>
           {isPending && <SearchSkeleton />}
           {!isPending && !hasData && (
-            <CommandEmpty>No subjects or notes yet.</CommandEmpty>
+            <CommandEmpty>
+              {canSearch ? "No subjects or notes yet." : "Sign in to search."}
+            </CommandEmpty>
           )}
 
           {subjects.length > 0 && (
@@ -80,7 +113,7 @@ export function GlobalSearch() {
               {subjects.map((subj) => (
                 <CommandItem
                   key={subj.id}
-                  value={`${subj.name} ${subj.description ?? ""}`}
+                  value={subj.id}
                   onSelect={() => handleSelect(`/subjects/${subj.id}`)}
                   className="flex flex-col items-start gap-1"
                 >
@@ -103,7 +136,7 @@ export function GlobalSearch() {
               {notes.map((n) => (
                 <CommandItem
                   key={n.id}
-                  value={`${n.title} ${n.content ?? ""} ${n.subjectName}`}
+                  value={n.id}
                   onSelect={() =>
                     handleSelect(`/subjects/${n.subjectId}/notes/${n.id}`)
                   }
@@ -118,7 +151,7 @@ export function GlobalSearch() {
                   </div>
                   {n.content && (
                     <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
-                      {n.content.slice(0, 100)}
+                      {n.content}
                     </span>
                   )}
                 </CommandItem>

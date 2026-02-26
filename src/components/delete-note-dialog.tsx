@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -30,11 +31,13 @@ export function DeleteNoteDialog({
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
   const [isPending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
 
   function handleDelete() {
     startTransition(async () => {
       const result = await deleteNote({ id: noteId });
       if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ["search-data"] });
         if (onSuccess) {
           onSuccess();
         } else {

@@ -206,11 +206,11 @@ University and school students who want to organize their study materials by sub
 - Empty search shows all subjects and notes (no filter applied)
 - Search only returns content owned by the authenticated user
 
-#### 3.2 Search Result Caching
+#### 3.2 Search Result Caching ✅ COMPLETE
 
-- [ ] Cache search results to avoid refetching on dialog reopen
-- [ ] Configure stale time for cached search data
-- [ ] Invalidate cache when subjects or notes are created/updated/deleted
+- [x] Cache search results to avoid refetching on dialog reopen
+- [x] Configure stale time for cached search data
+- [x] Invalidate cache when subjects or notes are created/updated/deleted
 
 **Acceptance criteria:**
 

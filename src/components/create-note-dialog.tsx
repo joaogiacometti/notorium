@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ export function CreateNoteDialog({
   open,
   onOpenChange,
 }: Readonly<CreateNoteDialogProps>) {
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(createNoteSchema),
     defaultValues: {
@@ -48,6 +50,7 @@ export function CreateNoteDialog({
   async function onSubmit(data: CreateNoteForm) {
     const result = await createNote(data);
     if (result.success) {
+      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       form.reset();
       onOpenChange(false);
     } else if (result.error) {
