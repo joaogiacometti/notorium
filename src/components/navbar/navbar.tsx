@@ -61,13 +61,32 @@ export async function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="truncate">
-                  {accountName}
+                <DropdownMenuLabel className="grid gap-0.5">
+                  <span className="truncate font-medium">{accountName}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {session.user.email}
+                  </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link
+                    href="/profile"
+                    className="flex w-full items-center gap-2"
+                  >
+                    <User className="size-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
                 <form action={logoutAction}>
-                  <DropdownMenuItem asChild>
-                    <button type="submit" className="w-full">
+                  <DropdownMenuItem
+                    asChild
+                    className="cursor-pointer"
+                    variant="destructive"
+                  >
+                    <button
+                      type="submit"
+                      className="flex w-full items-center gap-2 text-left"
+                    >
                       <LogOut className="size-4" />
                       Logout
                     </button>

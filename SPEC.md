@@ -257,6 +257,19 @@ University and school students who want to organize their study materials by sub
 - Account indicator includes a logout action
 - Unauthenticated users continue to see Sign In and Sign Up actions
 
+#### 3.5 Profile Management ✅ COMPLETE
+
+- [x] Add a profile page to inspect account details
+- [x] Allow authenticated users to edit their profile name
+- [x] Add a profile entry point in the navbar account menu
+
+**Acceptance criteria:**
+
+- Authenticated users can open profile management from the navbar
+- Profile page shows current account information (name, email, account dates)
+- Profile updates validate input and persist successfully
+- Unauthenticated users are redirected to login when accessing the profile page
+
 ---
 
 ### Phase 4 — Future Features
