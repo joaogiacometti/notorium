@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
-import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -74,12 +73,6 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
           className="block rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
           <CardContent className="pt-0">
-            {note.content && (
-              <div className="relative mb-3 max-h-20 min-w-0 overflow-hidden break-all text-sm text-muted-foreground">
-                <TiptapRenderer content={note.content} className="text-sm" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card to-transparent" />
-              </div>
-            )}
             <p className="text-xs text-muted-foreground/60">
               Created{" "}
               {formatDistanceToNow(new Date(note.createdAt), {

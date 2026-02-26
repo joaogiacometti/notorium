@@ -4,7 +4,7 @@ import { del, put } from "@vercel/blob";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
-import { note, noteImageAttachment } from "@/db/schema";
+import { note, noteImageAttachment, subject } from "@/db/schema";
 import { appEnv } from "@/env";
 import type {
   MutationResult,
@@ -95,6 +95,18 @@ export async function createNote(
 
   if (!parsed.success) {
     return { error: "Invalid note data." };
+  }
+
+  const existingSubject = await db
+    .select({ id: subject.id })
+    .from(subject)
+    .where(
+      and(eq(subject.id, parsed.data.subjectId), eq(subject.userId, userId)),
+    )
+    .limit(1);
+
+  if (existingSubject.length === 0) {
+    return { error: "Subject not found." };
   }
 
   await db.insert(note).values({
