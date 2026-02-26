@@ -5,10 +5,10 @@ import { ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AssessmentsOverview } from "@/components/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance-summary";
 import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/edit-subject-dialog";
-import { GradesSummary } from "@/components/grades-summary";
 import { NotesList } from "@/components/notes-list";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -110,7 +110,10 @@ export function SubjectDetail({
       {subject.gradesEnabled && (
         <>
           <Separator className="my-8" />
-          <GradesSummary subjectId={subject.id} assessments={assessments} />
+          <AssessmentsOverview
+            subjectId={subject.id}
+            assessments={assessments}
+          />
         </>
       )}
 

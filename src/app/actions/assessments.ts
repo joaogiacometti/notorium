@@ -29,6 +29,16 @@ export async function getAssessmentsBySubject(
     .orderBy(desc(assessment.updatedAt));
 }
 
+export async function getAssessments(): Promise<AssessmentEntity[]> {
+  const userId = await getAuthenticatedUserId();
+
+  return db
+    .select()
+    .from(assessment)
+    .where(eq(assessment.userId, userId))
+    .orderBy(desc(assessment.updatedAt));
+}
+
 export async function createAssessment(
   data: CreateAssessmentForm,
 ): Promise<MutationResult> {
@@ -64,6 +74,7 @@ export async function createAssessment(
   });
 
   revalidatePath(`/subjects/${parsed.data.subjectId}`);
+  revalidatePath("/assessments");
   return { success: true };
 }
 
@@ -105,6 +116,7 @@ export async function editAssessment(
     );
 
   revalidatePath(`/subjects/${existingAssessment[0].subjectId}`);
+  revalidatePath("/assessments");
   return { success: true };
 }
 
@@ -137,5 +149,6 @@ export async function deleteAssessment(
     );
 
   revalidatePath(`/subjects/${existingAssessment[0].subjectId}`);
+  revalidatePath("/assessments");
   return { success: true };
 }

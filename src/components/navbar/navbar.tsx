@@ -9,6 +9,7 @@ import {
 import { headers } from "next/headers";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
+import { AppSectionNav } from "@/components/navbar/app-section-nav";
 import { GlobalSearch } from "@/components/navbar/global-search";
 import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { Button } from "@/components/ui/button";
@@ -32,15 +33,25 @@ export async function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-14 min-w-0 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80"
-        >
-          <BookOpenText className="size-5" />
-          <span className="hidden text-lg font-semibold tracking-tight sm:inline">
-            Notorium
-          </span>
-        </Link>
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/"
+            className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80"
+          >
+            <BookOpenText className="size-5" />
+            <span className="hidden text-lg font-semibold tracking-tight sm:inline">
+              Notorium
+            </span>
+          </Link>
+          {session && (
+            <>
+              <div className="ml-1 hidden h-6 w-px bg-border/60 md:block" />
+              <div className="ml-2">
+                <AppSectionNav />
+              </div>
+            </>
+          )}
+        </div>
 
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           {session && <GlobalSearch userId={session.user.id} />}
@@ -51,13 +62,13 @@ export async function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-1 px-1.5 text-muted-foreground hover:text-foreground sm:max-w-40 sm:gap-1.5 sm:px-3"
+                  className="gap-1 px-1.5 text-muted-foreground hover:text-foreground lg:max-w-40 lg:gap-1.5 lg:px-3"
                 >
                   <User className="size-4 shrink-0" />
-                  <span className="hidden truncate sm:inline">
+                  <span className="hidden truncate lg:inline">
                     {accountName}
                   </span>
-                  <ChevronDown className="hidden size-3.5 shrink-0 sm:inline" />
+                  <ChevronDown className="hidden size-3.5 shrink-0 lg:inline" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

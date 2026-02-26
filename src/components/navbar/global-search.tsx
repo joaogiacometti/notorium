@@ -78,12 +78,12 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
       <Button
         variant="outline"
         size="sm"
-        className="relative size-9 justify-center px-0 text-sm text-muted-foreground sm:h-9 sm:w-64 sm:justify-start sm:gap-2 sm:px-3"
+        className="relative size-9 justify-center px-0 text-sm text-muted-foreground lg:h-9 lg:w-56 lg:justify-start lg:gap-2 lg:px-3 xl:w-64"
         onClick={() => setOpen(true)}
       >
         <Search className="size-4" />
-        <span className="hidden sm:inline-flex">Search...</span>
-        <kbd className="pointer-events-none absolute right-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+        <span className="hidden lg:inline-flex">Search...</span>
+        <kbd className="pointer-events-none absolute right-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>

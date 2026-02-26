@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  addDays,
   format,
   formatDistanceToNowStrict,
   parseISO,
@@ -12,11 +13,9 @@ import {
   CheckCircle2,
   Clock3,
   Pencil,
-  Plus,
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { CreateAssessmentDialog } from "@/components/create-assessment-dialog";
 import { DeleteAssessmentDialog } from "@/components/delete-assessment-dialog";
 import { EditAssessmentDialog } from "@/components/edit-assessment-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -39,10 +38,27 @@ type TypeFilter =
   | "presentation"
   | "homework"
   | "other";
+type DueDateFilter =
+  | "all"
+  | "past"
+  | "today"
+  | "next7Days"
+  | "next30Days"
+  | "none";
+type SortBy =
+  | "smart"
+  | "dueDateAsc"
+  | "dueDateDesc"
+  | "updatedAtDesc"
+  | "scoreDesc";
 
 interface GradesSummaryProps {
-  subjectId: string;
   assessments: AssessmentEntity[];
+  heading?: string;
+  description?: string;
+  showAverage?: boolean;
+  showSubjectFilter?: boolean;
+  subjectNamesById?: Record<string, string>;
 }
 
 const typeLabels: Record<Exclude<TypeFilter, "all">, string> = {
@@ -69,8 +85,68 @@ function isOverdueAssessment(
   );
 }
 
-function sortAssessments(items: AssessmentEntity[]): AssessmentEntity[] {
-  return [...items].sort((a, b) => {
+function sortAssessments(
+  items: AssessmentEntity[],
+  sortBy: SortBy,
+): AssessmentEntity[] {
+  const sorted = [...items];
+
+  if (sortBy === "updatedAtDesc") {
+    return sorted.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  }
+
+  if (sortBy === "dueDateAsc") {
+    return sorted.sort((a, b) => {
+      if (a.dueDate === null && b.dueDate === null) {
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      }
+      if (a.dueDate === null) {
+        return 1;
+      }
+      if (b.dueDate === null) {
+        return -1;
+      }
+      if (a.dueDate !== b.dueDate) {
+        return a.dueDate.localeCompare(b.dueDate);
+      }
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    });
+  }
+
+  if (sortBy === "dueDateDesc") {
+    return sorted.sort((a, b) => {
+      if (a.dueDate === null && b.dueDate === null) {
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      }
+      if (a.dueDate === null) {
+        return 1;
+      }
+      if (b.dueDate === null) {
+        return -1;
+      }
+      if (a.dueDate !== b.dueDate) {
+        return b.dueDate.localeCompare(a.dueDate);
+      }
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    });
+  }
+
+  if (sortBy === "scoreDesc") {
+    return sorted.sort((a, b) => {
+      if (a.score === null && b.score === null) {
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      }
+      if (a.score === null) {
+        return 1;
+      }
+      if (b.score === null) {
+        return -1;
+      }
+      return Number(b.score) - Number(a.score);
+    });
+  }
+
+  return sorted.sort((a, b) => {
     if (a.status !== b.status) {
       return a.status === "pending" ? -1 : 1;
     }
@@ -93,6 +169,40 @@ function sortAssessments(items: AssessmentEntity[]): AssessmentEntity[] {
 
     return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
+}
+
+function isInDueDateWindow(
+  item: AssessmentEntity,
+  dueDateFilter: DueDateFilter,
+  todayIso: string,
+  next7DaysIso: string,
+  next30DaysIso: string,
+): boolean {
+  if (dueDateFilter === "all") {
+    return true;
+  }
+
+  if (dueDateFilter === "none") {
+    return item.dueDate === null;
+  }
+
+  if (item.dueDate === null) {
+    return false;
+  }
+
+  if (dueDateFilter === "past") {
+    return item.dueDate < todayIso;
+  }
+
+  if (dueDateFilter === "today") {
+    return item.dueDate === todayIso;
+  }
+
+  if (dueDateFilter === "next7Days") {
+    return item.dueDate >= todayIso && item.dueDate <= next7DaysIso;
+  }
+
+  return item.dueDate >= todayIso && item.dueDate <= next30DaysIso;
 }
 
 function getAverage(assessments: AssessmentEntity[]): number | null {
@@ -162,23 +272,41 @@ function getCountdownLabel(dueDate: string): string {
 }
 
 export function GradesSummary({
-  subjectId,
   assessments,
+  heading = "Assessments",
+  description,
+  showAverage = true,
+  showSubjectFilter = false,
+  subjectNamesById,
 }: Readonly<GradesSummaryProps>) {
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AssessmentEntity | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AssessmentEntity | null>(
     null,
   );
+  const [subjectFilter, setSubjectFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("smart");
 
   const todayIso = getTodayIso();
-  const average = getAverage(assessments);
+  const next7DaysIso = format(addDays(new Date(), 7), "yyyy-MM-dd");
+  const next30DaysIso = format(addDays(new Date(), 30), "yyyy-MM-dd");
+
+  const subjectFilterOptions = useMemo(
+    () =>
+      Array.from(new Set(assessments.map((item) => item.subjectId))).filter(
+        (subjectId) =>
+          subjectNamesById?.[subjectId] !== undefined || !subjectNamesById,
+      ),
+    [assessments, subjectNamesById],
+  );
 
   const filteredAssessments = useMemo(() => {
     return sortAssessments(
       assessments.filter((item) => {
+        const subjectMatches =
+          subjectFilter === "all" ? true : item.subjectId === subjectFilter;
         const overdue = isOverdueAssessment(item, todayIso);
 
         const statusMatches =
@@ -191,10 +319,29 @@ export function GradesSummary({
         const typeMatches =
           typeFilter === "all" ? true : item.type === typeFilter;
 
-        return statusMatches && typeMatches;
+        const dueDateMatches = isInDueDateWindow(
+          item,
+          dueDateFilter,
+          todayIso,
+          next7DaysIso,
+          next30DaysIso,
+        );
+
+        return subjectMatches && statusMatches && typeMatches && dueDateMatches;
       }),
+      sortBy,
     );
-  }, [assessments, statusFilter, todayIso, typeFilter]);
+  }, [
+    assessments,
+    dueDateFilter,
+    next30DaysIso,
+    next7DaysIso,
+    sortBy,
+    subjectFilter,
+    statusFilter,
+    todayIso,
+    typeFilter,
+  ]);
 
   const pending = filteredAssessments.filter(
     (item) => item.status === "pending",
@@ -202,36 +349,52 @@ export function GradesSummary({
   const completed = filteredAssessments.filter(
     (item) => item.status === "completed",
   );
+  const average = getAverage(filteredAssessments);
 
   return (
     <div>
-      <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="mb-6">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Assessments</h2>
+          <h2 className="text-lg font-semibold tracking-tight">{heading}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {assessments.length === 0
-              ? "Create your first assessment to start planning deadlines and tracking performance."
-              : `${assessments.length} total assessments`}
+            {description ??
+              (assessments.length === 0
+                ? "No assessments found."
+                : `${assessments.length} total assessments`)}
           </p>
         </div>
-        <Button
-          size="sm"
-          className="w-full gap-1.5 sm:w-auto"
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">Add Assessment</span>
-        </Button>
       </div>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+      <div
+        className={`mb-6 grid gap-3 sm:grid-cols-2 ${
+          showSubjectFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        }`}
+      >
+        {showSubjectFilter && (
+          <div className="space-y-1.5 text-sm">
+            <span className="text-muted-foreground">Subject</span>
+            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+              <SelectTrigger className="w-full min-w-0 bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {subjectFilterOptions.map((subjectId) => (
+                  <SelectItem key={subjectId} value={subjectId}>
+                    {subjectNamesById?.[subjectId] ?? subjectId}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="space-y-1.5 text-sm">
           <span className="text-muted-foreground">Filter</span>
           <Select
             value={statusFilter}
             onValueChange={(value) => setStatusFilter(value as StatusFilter)}
           >
-            <SelectTrigger className="w-full bg-background">
+            <SelectTrigger className="w-full min-w-0 bg-background">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -243,12 +406,31 @@ export function GradesSummary({
           </Select>
         </div>
         <div className="space-y-1.5 text-sm">
+          <span className="text-muted-foreground">Due Date</span>
+          <Select
+            value={dueDateFilter}
+            onValueChange={(value) => setDueDateFilter(value as DueDateFilter)}
+          >
+            <SelectTrigger className="w-full min-w-0 bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any Due Date</SelectItem>
+              <SelectItem value="past">Past Due Date</SelectItem>
+              <SelectItem value="today">Due Today</SelectItem>
+              <SelectItem value="next7Days">Next 7 Days</SelectItem>
+              <SelectItem value="next30Days">Next 30 Days</SelectItem>
+              <SelectItem value="none">No Due Date</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5 text-sm">
           <span className="text-muted-foreground">Type</span>
           <Select
             value={typeFilter}
             onValueChange={(value) => setTypeFilter(value as TypeFilter)}
           >
-            <SelectTrigger className="w-full bg-background">
+            <SelectTrigger className="w-full min-w-0 bg-background">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -262,14 +444,32 @@ export function GradesSummary({
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-1.5 text-sm">
+          <span className="text-muted-foreground">Sort</span>
+          <Select
+            value={sortBy}
+            onValueChange={(value) => setSortBy(value as SortBy)}
+          >
+            <SelectTrigger className="w-full min-w-0 bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="smart">Smart</SelectItem>
+              <SelectItem value="dueDateAsc">Due Date Asc</SelectItem>
+              <SelectItem value="dueDateDesc">Due Date Desc</SelectItem>
+              <SelectItem value="updatedAtDesc">Recently Updated</SelectItem>
+              <SelectItem value="scoreDesc">Score Desc</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {average !== null && (
+      {showAverage && average !== null && (
         <div
           className={`mb-6 rounded-xl border p-4 ${getAverageTone(average)}`}
         >
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-medium">Subject Average</p>
+          <div className="mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium">Average</p>
             <Badge variant="secondary">Completed with score only</Badge>
           </div>
           <p className="text-3xl font-semibold tracking-tight">
@@ -303,14 +503,20 @@ export function GradesSummary({
                     }`}
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="font-medium">{item.title}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words font-medium">{item.title}</p>
                         {item.description && (
-                          <p className="mt-1 text-sm text-muted-foreground">
+                          <p className="mt-1 break-words text-sm text-muted-foreground">
                             {item.description}
                           </p>
                         )}
                         <div className="mt-2 flex flex-wrap gap-2">
+                          {showSubjectFilter && (
+                            <Badge variant="outline">
+                              {subjectNamesById?.[item.subjectId] ??
+                                "Unknown Subject"}
+                            </Badge>
+                          )}
                           <Badge variant="outline">
                             {typeLabels[item.type]}
                           </Badge>
@@ -346,11 +552,11 @@ export function GradesSummary({
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 self-end sm:self-auto">
+                      <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:self-auto">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-8"
+                          className="size-9 sm:size-8"
                           onClick={() => setEditTarget(item)}
                         >
                           <Pencil className="size-4" />
@@ -358,7 +564,7 @@ export function GradesSummary({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-8 text-muted-foreground hover:text-destructive"
+                          className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
                           onClick={() => setDeleteTarget(item)}
                         >
                           <Trash2 className="size-4" />
@@ -391,14 +597,20 @@ export function GradesSummary({
                   className="rounded-xl border border-border bg-muted/20 p-4"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="font-medium">{item.title}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words font-medium">{item.title}</p>
                       {item.description && (
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-1 break-words text-sm text-muted-foreground">
                           {item.description}
                         </p>
                       )}
                       <div className="mt-2 flex flex-wrap gap-2">
+                        {showSubjectFilter && (
+                          <Badge variant="outline">
+                            {subjectNamesById?.[item.subjectId] ??
+                              "Unknown Subject"}
+                          </Badge>
+                        )}
                         <Badge variant="outline">{typeLabels[item.type]}</Badge>
                         <Badge variant="secondary">Completed</Badge>
                         {item.dueDate && (
@@ -419,11 +631,11 @@ export function GradesSummary({
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 self-end sm:self-auto">
+                    <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:self-auto">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8"
+                        className="size-9 sm:size-8"
                         onClick={() => setEditTarget(item)}
                       >
                         <Pencil className="size-4" />
@@ -431,7 +643,7 @@ export function GradesSummary({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-muted-foreground hover:text-destructive"
+                        className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
                         onClick={() => setDeleteTarget(item)}
                       >
                         <Trash2 className="size-4" />
@@ -444,12 +656,6 @@ export function GradesSummary({
           )}
         </section>
       </div>
-
-      <CreateAssessmentDialog
-        subjectId={subjectId}
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-      />
 
       {editTarget && (
         <EditAssessmentDialog
