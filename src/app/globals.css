@@ -124,7 +124,8 @@
 }
 
 .markdown-content {
-  @apply leading-relaxed text-foreground;
+  @apply min-w-0 break-words leading-relaxed text-foreground;
+  overflow-wrap: anywhere;
 }
 
 .markdown-content h1 {

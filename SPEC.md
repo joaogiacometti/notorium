@@ -175,6 +175,7 @@ University and school students who want to organize their study materials by sub
 - [x] Replace plain text note content with Markdown editor
 - [x] Render Markdown preview
 - [x] Support basic formatting (headings, bold, italic, lists, code blocks)
+- [x] Prevent layout breakage from long unbroken inline markdown content
 
 #### 2.4 UI/UX Improvements ✅ COMPLETE
 

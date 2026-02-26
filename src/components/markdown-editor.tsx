@@ -124,7 +124,7 @@ export function MarkdownEditor({
   );
 
   return (
-    <div className="rounded-md border border-input shadow-xs transition-colors focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]">
+    <div className="w-full min-w-0 rounded-md border border-input shadow-xs transition-colors focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]">
       <div className="flex flex-col gap-2 border-b border-border/60 px-2 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1 sm:py-1">
         <div className="flex items-center gap-0.5 overflow-x-auto pb-1 sm:pb-0">
           {mode === "write" &&
@@ -176,14 +176,14 @@ export function MarkdownEditor({
           aria-invalid={ariaInvalid}
           rows={rows}
           className={cn(
-            "resize-none border-0 shadow-none focus-visible:ring-0 focus-visible:border-transparent",
+            "field-sizing-fixed min-w-0 resize-none border-0 shadow-none focus-visible:border-transparent focus-visible:ring-0",
             "min-h-52 max-h-[52svh] overflow-y-auto sm:min-h-40",
           )}
         />
       ) : (
         <div
           className={cn(
-            "min-h-[calc(var(--rows)*1.625rem+1rem)] px-3 py-2",
+            "min-w-0 min-h-[calc(var(--rows)*1.625rem+1rem)] px-3 py-2",
             "max-h-[52svh] overflow-y-auto",
           )}
           style={{ "--rows": rows } as React.CSSProperties}
