@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
-import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { NoteImageAttachments } from "@/components/note-image-attachments";
+import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import type { NoteWithAttachmentsEntity } from "@/lib/api/contracts";
 
@@ -78,12 +78,12 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-6">
-        <div className="space-y-4 sm:space-y-5">
+      <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">
+        <div className="min-w-0 space-y-4 sm:space-y-5">
           {note.content ? (
-            <MarkdownRenderer
+            <TiptapRenderer
               content={note.content}
-              className="text-sm sm:text-base"
+              className="min-w-0 break-all text-sm sm:text-base"
             />
           ) : (
             <p className="text-sm italic text-muted-foreground sm:text-base">

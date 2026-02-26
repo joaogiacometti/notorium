@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createNote } from "@/app/actions/notes";
-import { MarkdownEditor } from "@/components/markdown-editor";
+import { TiptapEditor } from "@/components/tiptap-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -96,10 +96,10 @@ export function CreateNoteDialog({
                   <FieldLabel htmlFor="form-create-note-content">
                     Content
                   </FieldLabel>
-                  <MarkdownEditor
+                  <TiptapEditor
                     value={field.value ?? ""}
                     onChange={field.onChange}
-                    placeholder="Write your note here... (Markdown supported)"
+                    placeholder="Start writing your notes..."
                     id="form-create-note-content"
                     aria-invalid={fieldState.invalid}
                   />

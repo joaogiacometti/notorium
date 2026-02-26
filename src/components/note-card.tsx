@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
+import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,33 +21,13 @@ interface NoteCardProps {
   note: NoteEntity;
 }
 
-function stripMarkdown(text: string): string {
-  return text
-    .replaceAll(/#{1,6}\s+/g, "")
-    .replaceAll(/(\*\*|__)(.*?)\1/g, "$2")
-    .replaceAll(/(\*|_)(.*?)\1/g, "$2")
-    .replaceAll(/~~(.*?)~~/g, "$1")
-    .replaceAll(/`{1,3}[^`]*`{1,3}/g, "")
-    .replaceAll(/!\[.*?\]\(.*?\)/g, "")
-    .replaceAll(/\[([^\]]*)\]\(.*?\)/g, "$1")
-    .replaceAll(/^>\s+/gm, "")
-    .replaceAll(/^[-*+]\s+/gm, "")
-    .replaceAll(/^\d+\.\s+/gm, "")
-    .replaceAll(/^---+$/gm, "")
-    .replaceAll(/\n{2,}/g, " ")
-    .replaceAll(/\n/g, " ")
-    .trim();
-}
-
 export function NoteCard({ note }: Readonly<NoteCardProps>) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const previewText = note.content ? stripMarkdown(note.content) : null;
-
   return (
     <>
-      <Card className="group relative transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
+      <Card className="group relative min-w-0 overflow-hidden transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
         <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
           <Link
             href={`/subjects/${note.subjectId}/notes/${note.id}`}
@@ -93,10 +74,11 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
           className="block rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
           <CardContent className="pt-0">
-            {previewText && (
-              <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
-                {previewText}
-              </p>
+            {note.content && (
+              <div className="relative mb-3 max-h-20 min-w-0 overflow-hidden break-all text-sm text-muted-foreground">
+                <TiptapRenderer content={note.content} className="text-sm" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card to-transparent" />
+              </div>
             )}
             <p className="text-xs text-muted-foreground/60">
               Created{" "}
