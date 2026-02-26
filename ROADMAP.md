@@ -18,8 +18,6 @@
 
 | ID | Feature | Priority | Status | Why |
 | --- | --- | --- | --- | --- |
-| R-001 | Full-text search for notes and subjects (`tsvector` + GIN) | P2 | planned | Better search scalability and relevance for larger datasets |
-| R-002 | Search pagination/infinite results | P2 | planned | Prevent large payloads and improve navigation in large accounts |
 
 ## Item Template
 
