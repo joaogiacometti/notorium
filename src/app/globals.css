@@ -121,6 +121,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  [data-slot="dropdown-menu-item"]:not([data-disabled]),
+  [data-slot="command-item"]:not([data-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 .markdown-content {

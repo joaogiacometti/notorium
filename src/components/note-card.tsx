@@ -50,7 +50,7 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
         <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
           <Link
             href={`/subjects/${note.subjectId}/notes/${note.id}`}
-            className="flex min-w-0 flex-1 items-center gap-2.5"
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
               <FileText className="size-4" />
@@ -64,19 +64,23 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-8 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+                className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+                aria-label="Open note actions"
               >
                 <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <DropdownMenuItem
+                onClick={() => setEditOpen(true)}
+                className="cursor-pointer"
+              >
                 <Pencil className="size-4" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
-                className="text-destructive focus:text-destructive"
+                className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <Trash2 className="size-4" />
                 Delete
@@ -84,7 +88,10 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
             </DropdownMenuContent>
           </DropdownMenu>
         </CardHeader>
-        <Link href={`/subjects/${note.subjectId}/notes/${note.id}`}>
+        <Link
+          href={`/subjects/${note.subjectId}/notes/${note.id}`}
+          className="block rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
           <CardContent className="pt-0">
             {previewText && (
               <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">

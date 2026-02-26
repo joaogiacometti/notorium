@@ -115,7 +115,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   key={subj.id}
                   value={subj.id}
                   onSelect={() => handleSelect(`/subjects/${subj.id}`)}
-                  className="flex flex-col items-start gap-1"
+                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <BookOpen className="size-4 text-muted-foreground" />
@@ -140,7 +140,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   onSelect={() =>
                     handleSelect(`/subjects/${n.subjectId}/notes/${n.id}`)
                   }
-                  className="flex flex-col items-start gap-1"
+                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-muted-foreground" />
