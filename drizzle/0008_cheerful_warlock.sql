@@ -1,0 +1,2 @@
+-- No-op: assessment table, enums, and indexes were already applied via db:push
+-- grade and grade_category tables were already dropped via db:push

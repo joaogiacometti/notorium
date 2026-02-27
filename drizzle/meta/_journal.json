@@ -57,6 +57,13 @@
       "when": 1772065842262,
       "tag": "0007_note_image_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772233684693,
+      "tag": "0008_cheerful_warlock",
+      "breakpoints": true
     }
   ]
 }
