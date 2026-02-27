@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { CreateNoteDialog } from "@/components/create-note-dialog";
 import { NoteCard } from "@/components/note-card";
@@ -17,7 +17,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
 
   function getNoteCountText() {
     if (notes.length === 0) {
-      return "Get started by creating your first note.";
+      return "Capture what you learn, one note at a time.";
     }
     return `${notes.length} note${notes.length === 1 ? "" : "s"}`;
   }
@@ -49,23 +49,13 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
       </div>
 
       {notes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 py-16">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
-            <FileText className="size-6 text-primary" />
+        <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
+          <div>
+            <h3 className="text-base font-semibold">No notes yet</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Start by creating your first note.
+            </p>
           </div>
-          <h3 className="mb-1 text-lg font-semibold">No notes yet</h3>
-          <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-            Create your first note to start recording what you learn in this
-            subject.
-          </p>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="size-4" />
-            Create Note
-          </Button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">

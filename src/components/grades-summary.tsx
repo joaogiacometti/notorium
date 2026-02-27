@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { AssessmentEntity } from "@/lib/api/contracts";
+import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
 
 type StatusFilter = "all" | "pending" | "completed" | "overdue";
 type TypeFilter =
@@ -246,13 +247,8 @@ function getAverage(assessments: AssessmentEntity[]): number | null {
 }
 
 function getAverageTone(value: number): string {
-  if (value >= 70) {
-    return "text-emerald-600 bg-emerald-500/10 border-emerald-500/30";
-  }
-  if (value >= 50) {
-    return "text-amber-600 bg-amber-500/10 border-amber-500/30";
-  }
-  return "text-red-600 bg-red-500/10 border-red-500/30";
+  const tone = getStatusToneClasses(getScoreTone(value));
+  return `${tone.text} ${tone.bg} ${tone.border}`;
 }
 
 function getCountdownLabel(dueDate: string): string {
@@ -468,11 +464,10 @@ export function GradesSummary({
         <div
           className={`mb-6 rounded-xl border p-4 ${getAverageTone(average)}`}
         >
-          <div className="mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-2">
             <p className="text-sm font-medium">Average</p>
-            <Badge variant="secondary">Completed with score only</Badge>
           </div>
-          <p className="text-3xl font-semibold tracking-tight">
+          <p className="text-3xl font-semibold tracking-tight text-white">
             {average.toFixed(1)}
           </p>
         </div>

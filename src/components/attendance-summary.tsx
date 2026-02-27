@@ -6,7 +6,6 @@ import {
   CalendarDays,
   CheckCircle2,
   Plus,
-  Settings,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -23,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AttendanceMissEntity } from "@/lib/api/contracts";
+import { getStatusToneClasses } from "@/lib/status-tones";
 
 interface AttendanceSummaryProps {
   subjectId: string;
@@ -40,39 +40,42 @@ function getStatusInfo(missCount: number, maxMisses: number) {
   const ratio = missCount / maxMisses;
 
   if (missCount >= maxMisses) {
+    const tone = getStatusToneClasses("danger");
     return {
       label: "Limit Reached",
       icon: XCircle,
-      color: "text-red-500",
-      bgColor: "bg-red-500/10",
-      borderColor: "border-red-500/20",
+      color: tone.text,
+      bgColor: tone.bg,
+      borderColor: tone.border,
       badgeVariant: "destructive" as const,
-      progressColor: "bg-red-500",
+      progressColor: tone.fill,
       remaining: 0,
     };
   }
 
   if (ratio >= 0.75) {
+    const tone = getStatusToneClasses("warning");
     return {
       label: "Warning",
       icon: AlertTriangle,
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10",
-      borderColor: "border-amber-500/20",
+      color: tone.text,
+      bgColor: tone.bg,
+      borderColor: tone.border,
       badgeVariant: "secondary" as const,
-      progressColor: "bg-amber-500",
+      progressColor: tone.fill,
       remaining,
     };
   }
 
+  const tone = getStatusToneClasses("success");
   return {
     label: "On Track",
     icon: CheckCircle2,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-    borderColor: "border-emerald-500/20",
+    color: tone.text,
+    bgColor: tone.bg,
+    borderColor: tone.border,
     badgeVariant: "secondary" as const,
-    progressColor: "bg-emerald-500",
+    progressColor: tone.fill,
     remaining,
   };
 }
@@ -101,7 +104,7 @@ export function AttendanceSummary({
           <p className="mt-0.5 text-sm text-muted-foreground">
             {isConfigured
               ? "Track your attendance status and recorded misses."
-              : "Configure attendance settings to start tracking."}
+              : "Set attendance limits to begin tracking."}
           </p>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -184,25 +187,15 @@ export function AttendanceSummary({
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 py-16">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
-            <Settings className="size-6 text-primary" />
+        <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
+          <div>
+            <h3 className="text-base font-semibold">
+              No attendance settings yet
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Start by adding total classes and allowed misses.
+            </p>
           </div>
-          <h3 className="mb-1 text-lg font-semibold">
-            Attendance not configured
-          </h3>
-          <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-            Set up the total number of classes and maximum allowed misses to
-            start tracking attendance.
-          </p>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings className="size-4" />
-            Configure Attendance
-          </Button>
         </div>
       )}
 

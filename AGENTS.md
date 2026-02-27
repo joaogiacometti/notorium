@@ -119,3 +119,4 @@ src/
 - **Update docs in the right place.** Keep `SPEC.md` stable and move planning/status updates to `ROADMAP.md`.
 - **Small, focused changes.** Implement one feature or fix at a time. Do not make unrelated changes.
 - **Test after changes.** Verify the dev server still runs (`bun dev`) and check for lint errors (`bun run lint`) after making changes.
+- **Follow existing commit message patterns.** Base each new commit message on previous commit messages and keep the same structure/style pattern.
