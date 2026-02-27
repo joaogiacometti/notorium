@@ -116,7 +116,7 @@ export function AttendanceSummary({
               id="btn-record-miss"
             >
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Record Miss</span>
+              <span>Record Miss</span>
             </Button>
           )}
           <AttendanceSettingsDialog

@@ -40,7 +40,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
               id="btn-create-note"
             >
               <Plus className="size-4" />
-              <span className="hidden sm:inline">New Note</span>
+              <span>New Note</span>
             </Button>
           }
           open={createOpen}
