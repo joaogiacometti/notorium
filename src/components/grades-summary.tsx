@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  addDays,
   format,
   formatDistanceToNowStrict,
   parseISO,
@@ -21,34 +20,16 @@ import {
 } from "@/components/ui/select";
 import type { AssessmentEntity } from "@/lib/api/contracts";
 import {
-  getAssessmentAverage,
-  getTodayIso,
-  isAssessmentOverdue,
-} from "@/lib/assessments";
+  type DueDateFilter,
+  filterAndSortAssessments,
+  getDueDateBounds,
+  getSubjectFilterOptions,
+  type SortBy,
+  type StatusFilter,
+  type TypeFilter,
+} from "@/lib/assessment-filters";
+import { getAssessmentAverage, isAssessmentOverdue } from "@/lib/assessments";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
-
-type StatusFilter = "all" | "pending" | "completed" | "overdue";
-type TypeFilter =
-  | "all"
-  | "exam"
-  | "assignment"
-  | "project"
-  | "presentation"
-  | "homework"
-  | "other";
-type DueDateFilter =
-  | "all"
-  | "past"
-  | "today"
-  | "next7Days"
-  | "next30Days"
-  | "none";
-type SortBy =
-  | "smart"
-  | "dueDateAsc"
-  | "dueDateDesc"
-  | "updatedAtDesc"
-  | "scoreDesc";
 
 interface GradesSummaryProps {
   assessments: AssessmentEntity[];
@@ -56,6 +37,7 @@ interface GradesSummaryProps {
   description?: string;
   showAverage?: boolean;
   showSubjectFilter?: boolean;
+  showHeader?: boolean;
   subjectNamesById?: Record<string, string>;
 }
 
@@ -85,126 +67,6 @@ function FilterSelectField({
   );
 }
 
-function sortAssessments(
-  items: AssessmentEntity[],
-  sortBy: SortBy,
-): AssessmentEntity[] {
-  const sorted = [...items];
-
-  if (sortBy === "updatedAtDesc") {
-    return sorted.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-  }
-
-  if (sortBy === "dueDateAsc") {
-    return sorted.sort((a, b) => {
-      if (a.dueDate === null && b.dueDate === null) {
-        return b.updatedAt.getTime() - a.updatedAt.getTime();
-      }
-      if (a.dueDate === null) {
-        return 1;
-      }
-      if (b.dueDate === null) {
-        return -1;
-      }
-      if (a.dueDate !== b.dueDate) {
-        return a.dueDate.localeCompare(b.dueDate);
-      }
-      return b.updatedAt.getTime() - a.updatedAt.getTime();
-    });
-  }
-
-  if (sortBy === "dueDateDesc") {
-    return sorted.sort((a, b) => {
-      if (a.dueDate === null && b.dueDate === null) {
-        return b.updatedAt.getTime() - a.updatedAt.getTime();
-      }
-      if (a.dueDate === null) {
-        return 1;
-      }
-      if (b.dueDate === null) {
-        return -1;
-      }
-      if (a.dueDate !== b.dueDate) {
-        return b.dueDate.localeCompare(a.dueDate);
-      }
-      return b.updatedAt.getTime() - a.updatedAt.getTime();
-    });
-  }
-
-  if (sortBy === "scoreDesc") {
-    return sorted.sort((a, b) => {
-      if (a.score === null && b.score === null) {
-        return b.updatedAt.getTime() - a.updatedAt.getTime();
-      }
-      if (a.score === null) {
-        return 1;
-      }
-      if (b.score === null) {
-        return -1;
-      }
-      return Number(b.score) - Number(a.score);
-    });
-  }
-
-  return sorted.sort((a, b) => {
-    if (a.status !== b.status) {
-      return a.status === "pending" ? -1 : 1;
-    }
-
-    if (a.status === "pending" && b.status === "pending") {
-      if (a.dueDate === null && b.dueDate === null) {
-        return b.updatedAt.getTime() - a.updatedAt.getTime();
-      }
-      if (a.dueDate === null) {
-        return 1;
-      }
-      if (b.dueDate === null) {
-        return -1;
-      }
-      if (a.dueDate !== b.dueDate) {
-        return a.dueDate.localeCompare(b.dueDate);
-      }
-      return b.updatedAt.getTime() - a.updatedAt.getTime();
-    }
-
-    return b.updatedAt.getTime() - a.updatedAt.getTime();
-  });
-}
-
-function isInDueDateWindow(
-  item: AssessmentEntity,
-  dueDateFilter: DueDateFilter,
-  todayIso: string,
-  next7DaysIso: string,
-  next30DaysIso: string,
-): boolean {
-  if (dueDateFilter === "all") {
-    return true;
-  }
-
-  if (dueDateFilter === "none") {
-    return item.dueDate === null;
-  }
-
-  if (item.dueDate === null) {
-    return false;
-  }
-
-  if (dueDateFilter === "past") {
-    return item.dueDate < todayIso;
-  }
-
-  if (dueDateFilter === "today") {
-    return item.dueDate === todayIso;
-  }
-
-  if (dueDateFilter === "next7Days") {
-    return item.dueDate >= todayIso && item.dueDate <= next7DaysIso;
-  }
-
-  return item.dueDate >= todayIso && item.dueDate <= next30DaysIso;
-}
-
 function getAverageTone(value: number): string {
   const tone = getStatusToneClasses(getScoreTone(value));
   return `${tone.text} ${tone.bg} ${tone.border}`;
@@ -232,6 +94,7 @@ export function GradesSummary({
   description,
   showAverage = true,
   showSubjectFilter = false,
+  showHeader = true,
   subjectNamesById,
 }: Readonly<GradesSummaryProps>) {
   const [editTarget, setEditTarget] = useState<AssessmentEntity | null>(null);
@@ -244,57 +107,30 @@ export function GradesSummary({
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("smart");
 
-  const todayIso = getTodayIso();
-  const next7DaysIso = format(addDays(new Date(), 7), "yyyy-MM-dd");
-  const next30DaysIso = format(addDays(new Date(), 30), "yyyy-MM-dd");
+  const dueDateBounds = useMemo(() => getDueDateBounds(), []);
 
   const subjectFilterOptions = useMemo(
-    () =>
-      Array.from(new Set(assessments.map((item) => item.subjectId))).filter(
-        (subjectId) =>
-          subjectNamesById?.[subjectId] !== undefined || !subjectNamesById,
-      ),
+    () => getSubjectFilterOptions(assessments, subjectNamesById),
     [assessments, subjectNamesById],
   );
 
   const filteredAssessments = useMemo(() => {
-    return sortAssessments(
-      assessments.filter((item) => {
-        const subjectMatches =
-          subjectFilter === "all" ? true : item.subjectId === subjectFilter;
-        const overdue = isAssessmentOverdue(item, todayIso);
-
-        const statusMatches =
-          statusFilter === "all"
-            ? true
-            : statusFilter === "overdue"
-              ? overdue
-              : item.status === statusFilter;
-
-        const typeMatches =
-          typeFilter === "all" ? true : item.type === typeFilter;
-
-        const dueDateMatches = isInDueDateWindow(
-          item,
-          dueDateFilter,
-          todayIso,
-          next7DaysIso,
-          next30DaysIso,
-        );
-
-        return subjectMatches && statusMatches && typeMatches && dueDateMatches;
-      }),
+    return filterAndSortAssessments({
+      assessments,
+      subjectFilter,
+      statusFilter,
+      typeFilter,
+      dueDateFilter,
       sortBy,
-    );
+      dueDateBounds,
+    });
   }, [
     assessments,
+    dueDateBounds,
     dueDateFilter,
-    next30DaysIso,
-    next7DaysIso,
     sortBy,
     subjectFilter,
     statusFilter,
-    todayIso,
     typeFilter,
   ]);
 
@@ -306,7 +142,7 @@ export function GradesSummary({
   );
   const average = getAssessmentAverage(filteredAssessments);
   const renderAssessmentCard = (item: AssessmentEntity) => {
-    const overdue = isAssessmentOverdue(item, todayIso);
+    const overdue = isAssessmentOverdue(item, dueDateBounds.todayIso);
     const dueDetail =
       item.dueDate !== null && item.status === "pending"
         ? getCountdownLabel(item.dueDate)
@@ -319,6 +155,7 @@ export function GradesSummary({
         overdue={overdue}
         dueDetail={dueDetail}
         showSubject={showSubjectFilter}
+        showScore={false}
         subjectName={subjectNamesById?.[item.subjectId]}
         className={
           item.status === "completed"
@@ -335,17 +172,19 @@ export function GradesSummary({
 
   return (
     <div>
-      <div className="mb-6">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">{heading}</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {description ??
-              (assessments.length === 0
-                ? "No assessments found."
-                : `${assessments.length} total assessments`)}
-          </p>
+      {showHeader && (
+        <div className="mb-6">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">{heading}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {description ??
+                (assessments.length === 0
+                  ? "No assessments found."
+                  : `${assessments.length} total assessments`)}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div
         className={`mb-6 grid gap-3 sm:grid-cols-2 ${

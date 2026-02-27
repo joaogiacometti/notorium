@@ -11,6 +11,7 @@ interface AssessmentItemCardProps {
   overdue: boolean;
   dueDetail?: string | null;
   showSubject?: boolean;
+  showScore?: boolean;
   subjectName?: string;
   className?: string;
   onEdit: (assessment: AssessmentEntity) => void;
@@ -22,6 +23,7 @@ export function AssessmentItemCard({
   overdue,
   dueDetail,
   showSubject = false,
+  showScore = true,
   subjectName,
   className,
   onEdit,
@@ -105,37 +107,37 @@ export function AssessmentItemCard({
             {assessmentTypeLabels[item.type]}
           </p>
         </div>
-        <div
-          className={cn(
-            "rounded-lg border px-2.5 py-2",
-            overdue
-              ? "border-red-500/30 bg-red-500/5"
-              : "border-border/50 bg-muted/20",
-          )}
-        >
-          <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            Due Date
-          </p>
-          <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium">
-            <CalendarDays className="size-3.5 text-muted-foreground" />
-            {item.dueDate
-              ? format(parseISO(item.dueDate), "MMM d, yyyy")
-              : "No due date"}
-          </p>
-          {dueDetail && (
-            <p
-              className={cn(
-                "mt-0.5 text-xs",
-                overdue
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-muted-foreground",
-              )}
-            >
-              {dueDetail}
+        {item.dueDate && (
+          <div
+            className={cn(
+              "rounded-lg border px-2.5 py-2",
+              overdue
+                ? "border-red-500/30 bg-red-500/5"
+                : "border-border/50 bg-muted/20",
+            )}
+          >
+            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              Due Date
             </p>
-          )}
-        </div>
-        {scoreTone && (
+            <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium">
+              <CalendarDays className="size-3.5 text-muted-foreground" />
+              {format(parseISO(item.dueDate), "MMM d, yyyy")}
+            </p>
+            {dueDetail && (
+              <p
+                className={cn(
+                  "mt-0.5 text-xs",
+                  overdue
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-muted-foreground",
+                )}
+              >
+                {dueDetail}
+              </p>
+            )}
+          </div>
+        )}
+        {showScore && scoreTone && (
           <div
             className={`rounded-lg border px-2.5 py-2 ${scoreTone.border} ${scoreTone.bg}`}
           >
@@ -144,16 +146,6 @@ export function AssessmentItemCard({
             </p>
             <p className={`mt-0.5 text-sm font-semibold ${scoreTone.text}`}>
               {Number(item.score).toFixed(1)}
-            </p>
-          </div>
-        )}
-        {item.weight !== null && (
-          <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              Weight
-            </p>
-            <p className="mt-0.5 text-sm font-medium">
-              {Number(item.weight).toFixed(1)}%
             </p>
           </div>
         )}

@@ -35,8 +35,7 @@ export default async function AssessmentsPage() {
 
         <GradesSummary
           assessments={assessments}
-          heading="Assessments"
-          description="Track all subject assessments in one place."
+          showHeader={false}
           showAverage={false}
           showSubjectFilter
           subjectNamesById={subjectNamesById}
