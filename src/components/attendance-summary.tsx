@@ -100,7 +100,7 @@ export function AttendanceSummary({
           <h2 className="text-lg font-semibold tracking-tight">Attendance</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {isConfigured
-              ? `${missCount} of ${maxMisses} allowed ${pluralizeMiss(maxMisses)} used`
+              ? "Track your attendance status and recorded misses."
               : "Configure attendance settings to start tracking."}
           </p>
         </div>
@@ -142,65 +142,45 @@ export function AttendanceSummary({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-2 pt-3">
-                    {misses.map((miss) => (
-                      <div
-                        key={miss.id}
-                        className="group flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3 transition-colors hover:border-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-8 items-center justify-center rounded-md bg-muted/50">
-                            <CalendarDays className="size-4 text-muted-foreground" />
-                          </div>
-                          <span className="text-sm font-medium">
-                            {format(
-                              new Date(`${miss.missDate}T12:00:00`),
-                              "MMMM d, yyyy",
-                            )}
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                          onClick={() =>
-                            setDeleteTarget({
-                              id: miss.id,
-                              date: format(
-                                new Date(`${miss.missDate}T12:00:00`),
-                                "MMMM d, yyyy",
-                              ),
-                            })
-                          }
+                    {misses.map((miss) => {
+                      const formattedMissDate = format(
+                        new Date(`${miss.missDate}T12:00:00`),
+                        "MMMM d, yyyy",
+                      );
+
+                      return (
+                        <div
+                          key={miss.id}
+                          className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3 transition-colors hover:border-border"
                         >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-8 items-center justify-center rounded-md bg-muted/50">
+                              <CalendarDays className="size-4 text-muted-foreground" />
+                            </div>
+                            <span className="text-sm font-medium">
+                              {formattedMissDate}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+                            onClick={() =>
+                              setDeleteTarget({
+                                id: miss.id,
+                                date: formattedMissDate,
+                              })
+                            }
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-          )}
-
-          {misses.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 py-12">
-              <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-emerald-500/10">
-                <CheckCircle2 className="size-6 text-emerald-500" />
-              </div>
-              <h3 className="mb-1 text-lg font-semibold">Perfect attendance</h3>
-              <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-                No misses recorded yet. Keep up the great work!
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5"
-                onClick={() => setRecordOpen(true)}
-              >
-                <Plus className="size-4" />
-                Record a Miss
-              </Button>
-            </div>
           )}
         </div>
       ) : (
@@ -302,11 +282,6 @@ function AttendanceProgressCard({
           className={`h-full rounded-full ${status.progressColor} transition-all duration-500 ease-out`}
           style={{ width: `${progressPercentage}%` }}
         />
-      </div>
-
-      <div className="mt-3 flex justify-between text-xs text-muted-foreground">
-        <span>{totalClasses} total classes</span>
-        <span>{totalClasses - missCount} attended</span>
       </div>
     </div>
   );
