@@ -1,19 +1,11 @@
 import { ClipboardList } from "lucide-react";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { getAssessments } from "@/app/actions/assessments";
 import { getSubjects } from "@/app/actions/subjects";
 import { GradesSummary } from "@/components/grades-summary";
-import { auth } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 
 export default async function AssessmentsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login");
-  }
+  await requireSession();
 
   const [assessments, subjects] = await Promise.all([
     getAssessments(),

@@ -6,7 +6,6 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
 import { AppSectionNav } from "@/components/navbar/app-section-nav";
@@ -21,12 +20,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { auth } from "@/lib/auth";
+import { getOptionalSession } from "@/lib/auth";
 
 export async function Navbar() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getOptionalSession();
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
 

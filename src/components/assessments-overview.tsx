@@ -1,71 +1,23 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { CalendarDays, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
+import { AssessmentItemCard } from "@/components/assessment-item-card";
 import { CreateAssessmentDialog } from "@/components/create-assessment-dialog";
 import { DeleteAssessmentDialog } from "@/components/delete-assessment-dialog";
 import { EditAssessmentDialog } from "@/components/edit-assessment-dialog";
 import { Button } from "@/components/ui/button";
 import type { AssessmentEntity } from "@/lib/api/contracts";
+import {
+  getAssessmentAverage,
+  getTodayIso,
+  isAssessmentOverdue,
+} from "@/lib/assessments";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
 
 interface AssessmentsOverviewProps {
   subjectId: string;
   assessments: AssessmentEntity[];
-}
-
-const typeLabels: Record<AssessmentEntity["type"], string> = {
-  exam: "Exam",
-  assignment: "Assignment",
-  project: "Project",
-  presentation: "Presentation",
-  homework: "Homework",
-  other: "Other",
-};
-
-function getTodayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getAverage(assessments: AssessmentEntity[]): number | null {
-  const completedWithScore = assessments.filter(
-    (item) => item.status === "completed" && item.score !== null,
-  );
-
-  if (completedWithScore.length === 0) {
-    return null;
-  }
-
-  const hasWeights = completedWithScore.some(
-    (item) => item.weight !== null && Number(item.weight) > 0,
-  );
-
-  if (hasWeights) {
-    let weightedSum = 0;
-    let totalWeight = 0;
-
-    for (const item of completedWithScore) {
-      const weight = item.weight === null ? 0 : Number(item.weight);
-      if (weight <= 0) {
-        continue;
-      }
-      weightedSum += Number(item.score) * weight;
-      totalWeight += weight;
-    }
-
-    if (totalWeight === 0) {
-      return null;
-    }
-
-    return weightedSum / totalWeight;
-  }
-
-  const sum = completedWithScore.reduce(
-    (acc, item) => acc + Number(item.score),
-    0,
-  );
-  return sum / completedWithScore.length;
 }
 
 function getAverageTone(value: number): string {
@@ -101,7 +53,7 @@ export function AssessmentsOverview({
     null,
   );
   const todayIso = getTodayIso();
-  const average = getAverage(assessments);
+  const average = getAssessmentAverage(assessments);
   const averageMeta = average === null ? null : getAverageMeta(average);
   const subjectAssessments = useMemo(
     () =>
@@ -183,123 +135,17 @@ export function AssessmentsOverview({
         ) : (
           <div className="space-y-2">
             {subjectAssessments.map((item) => {
-              const overdue =
-                item.status === "pending" &&
-                item.dueDate !== null &&
-                item.dueDate < todayIso;
-              const statusTone = overdue
-                ? getStatusToneClasses("danger")
-                : item.status === "completed"
-                  ? getStatusToneClasses("success")
-                  : getStatusToneClasses("warning");
-              const statusLabel = overdue
-                ? "Overdue"
-                : item.status === "completed"
-                  ? "Completed"
-                  : "Pending";
-              const scoreTone =
-                item.score === null
-                  ? null
-                  : getStatusToneClasses(getScoreTone(Number(item.score)));
+              const overdue = isAssessmentOverdue(item, todayIso);
 
               return (
-                <div
+                <AssessmentItemCard
                   key={item.id}
-                  className="group rounded-xl border border-border/60 bg-card p-3 transition-colors hover:border-border hover:bg-muted/20 sm:p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="min-w-0 flex-1 break-words text-sm font-semibold">
-                      {item.title}
-                    </p>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-9 text-muted-foreground hover:text-foreground sm:size-8"
-                        onClick={() => setEditTarget(item)}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
-                        onClick={() => setDeleteTarget(item)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  {item.description && (
-                    <p className="mt-1 break-words text-sm text-muted-foreground">
-                      {item.description}
-                    </p>
-                  )}
-
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    <div
-                      className={`rounded-lg border px-2.5 py-2 ${statusTone.border} ${statusTone.bg}`}
-                    >
-                      <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                        Status
-                      </p>
-                      <p
-                        className={`mt-0.5 text-sm font-semibold ${statusTone.text}`}
-                      >
-                        {statusLabel}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-                      <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                        Type
-                      </p>
-                      <p className="mt-0.5 text-sm font-medium">
-                        {typeLabels[item.type]}
-                      </p>
-                    </div>
-                    <div
-                      className={`rounded-lg border px-2.5 py-2 ${
-                        overdue
-                          ? "border-red-500/30 bg-red-500/5"
-                          : "border-border/50 bg-muted/20"
-                      }`}
-                    >
-                      <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                        Due Date
-                      </p>
-                      <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium">
-                        <CalendarDays className="size-3.5 text-muted-foreground" />
-                        {item.dueDate
-                          ? format(parseISO(item.dueDate), "MMM d, yyyy")
-                          : "No due date"}
-                      </p>
-                    </div>
-                    {scoreTone && (
-                      <div
-                        className={`rounded-lg border px-2.5 py-2 ${scoreTone.border} ${scoreTone.bg}`}
-                      >
-                        <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                          Score
-                        </p>
-                        <p
-                          className={`mt-0.5 text-sm font-semibold ${scoreTone.text}`}
-                        >
-                          {Number(item.score).toFixed(1)}
-                        </p>
-                      </div>
-                    )}
-                    {item.weight !== null && (
-                      <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-                        <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                          Weight
-                        </p>
-                        <p className="mt-0.5 text-sm font-medium">
-                          {Number(item.weight).toFixed(1)}%
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  item={item}
+                  overdue={overdue}
+                  className="group border-border/60 bg-card p-3 transition-colors hover:border-border hover:bg-muted/20 sm:p-4"
+                  onEdit={setEditTarget}
+                  onDelete={setDeleteTarget}
+                />
               );
             })}
           </div>

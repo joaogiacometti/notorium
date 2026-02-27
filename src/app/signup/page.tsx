@@ -1,12 +1,9 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/signup-form";
-import { auth } from "@/lib/auth";
+import { getOptionalSession } from "@/lib/auth";
 
 export default async function Page() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getOptionalSession();
 
   if (session) {
     redirect("/");

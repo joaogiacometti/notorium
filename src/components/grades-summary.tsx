@@ -7,17 +7,11 @@ import {
   parseISO,
   startOfToday,
 } from "date-fns";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { CheckCircle2, Clock3 } from "lucide-react";
+import { type ReactNode, useMemo, useState } from "react";
+import { AssessmentItemCard } from "@/components/assessment-item-card";
 import { DeleteAssessmentDialog } from "@/components/delete-assessment-dialog";
 import { EditAssessmentDialog } from "@/components/edit-assessment-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -26,8 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { AssessmentEntity } from "@/lib/api/contracts";
+import {
+  getAssessmentAverage,
+  getTodayIso,
+  isAssessmentOverdue,
+} from "@/lib/assessments";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
-import { cn } from "@/lib/utils";
 
 type StatusFilter = "all" | "pending" | "completed" | "overdue";
 type TypeFilter =
@@ -61,27 +59,29 @@ interface GradesSummaryProps {
   subjectNamesById?: Record<string, string>;
 }
 
-const typeLabels: Record<Exclude<TypeFilter, "all">, string> = {
-  exam: "Exam",
-  assignment: "Assignment",
-  project: "Project",
-  presentation: "Presentation",
-  homework: "Homework",
-  other: "Other",
-};
-
-function getTodayIso(): string {
-  return format(new Date(), "yyyy-MM-dd");
+interface FilterSelectFieldProps {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  children: ReactNode;
 }
 
-function isOverdueAssessment(
-  item: AssessmentEntity,
-  todayIso: string,
-): boolean {
+function FilterSelectField({
+  label,
+  value,
+  onValueChange,
+  children,
+}: Readonly<FilterSelectFieldProps>) {
   return (
-    item.status === "pending" &&
-    item.dueDate !== null &&
-    item.dueDate < todayIso
+    <div className="space-y-1.5 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="w-full min-w-0 bg-background">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>{children}</SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -205,46 +205,6 @@ function isInDueDateWindow(
   return item.dueDate >= todayIso && item.dueDate <= next30DaysIso;
 }
 
-function getAverage(assessments: AssessmentEntity[]): number | null {
-  const completedWithScore = assessments.filter(
-    (item) => item.status === "completed" && item.score !== null,
-  );
-
-  if (completedWithScore.length === 0) {
-    return null;
-  }
-
-  const hasWeights = completedWithScore.some(
-    (item) => item.weight !== null && Number(item.weight) > 0,
-  );
-
-  if (hasWeights) {
-    let weightedSum = 0;
-    let totalWeight = 0;
-
-    for (const item of completedWithScore) {
-      const weight = item.weight === null ? 0 : Number(item.weight);
-      if (weight <= 0) {
-        continue;
-      }
-      weightedSum += Number(item.score) * weight;
-      totalWeight += weight;
-    }
-
-    if (totalWeight === 0) {
-      return null;
-    }
-
-    return weightedSum / totalWeight;
-  }
-
-  const sum = completedWithScore.reduce(
-    (acc, item) => acc + Number(item.score),
-    0,
-  );
-  return sum / completedWithScore.length;
-}
-
 function getAverageTone(value: number): string {
   const tone = getStatusToneClasses(getScoreTone(value));
   return `${tone.text} ${tone.bg} ${tone.border}`;
@@ -302,7 +262,7 @@ export function GradesSummary({
       assessments.filter((item) => {
         const subjectMatches =
           subjectFilter === "all" ? true : item.subjectId === subjectFilter;
-        const overdue = isOverdueAssessment(item, todayIso);
+        const overdue = isAssessmentOverdue(item, todayIso);
 
         const statusMatches =
           statusFilter === "all"
@@ -344,152 +304,32 @@ export function GradesSummary({
   const completed = filteredAssessments.filter(
     (item) => item.status === "completed",
   );
-  const average = getAverage(filteredAssessments);
+  const average = getAssessmentAverage(filteredAssessments);
   const renderAssessmentCard = (item: AssessmentEntity) => {
-    const overdue = isOverdueAssessment(item, todayIso);
-    const statusTone = overdue
-      ? getStatusToneClasses("danger")
-      : item.status === "completed"
-        ? getStatusToneClasses("success")
-        : getStatusToneClasses("warning");
-    const statusLabel = overdue
-      ? "Overdue"
-      : item.status === "completed"
-        ? "Completed"
-        : "Pending";
-    const scoreTone =
-      item.score === null
-        ? null
-        : getStatusToneClasses(getScoreTone(Number(item.score)));
+    const overdue = isAssessmentOverdue(item, todayIso);
     const dueDetail =
       item.dueDate !== null && item.status === "pending"
         ? getCountdownLabel(item.dueDate)
         : null;
 
     return (
-      <div
+      <AssessmentItemCard
         key={item.id}
-        className={cn(
-          "rounded-xl border p-4",
-          item.status === "completed" ? "bg-muted/20" : "bg-card",
-          overdue ? "border-red-500/40" : "border-border",
-        )}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <p className="min-w-0 flex-1 break-words font-semibold">
-            {item.title}
-          </p>
-          <div className="flex shrink-0 items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-9 sm:size-8"
-              onClick={() => setEditTarget(item)}
-            >
-              <Pencil className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
-              onClick={() => setDeleteTarget(item)}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </div>
-        </div>
-        {item.description && (
-          <p className="mt-1 break-words text-sm text-muted-foreground">
-            {item.description}
-          </p>
-        )}
-        <div
-          className={`mt-3 grid grid-cols-2 gap-2 ${
-            showSubjectFilter ? "sm:grid-cols-4" : "sm:grid-cols-3"
-          }`}
-        >
-          {showSubjectFilter && (
-            <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-              <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                Subject
-              </p>
-              <p className="mt-0.5 text-sm font-medium">
-                {subjectNamesById?.[item.subjectId] ?? "Unknown Subject"}
-              </p>
-            </div>
-          )}
-          <div
-            className={`rounded-lg border px-2.5 py-2 ${statusTone.border} ${statusTone.bg}`}
-          >
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              Status
-            </p>
-            <p className={`mt-0.5 text-sm font-semibold ${statusTone.text}`}>
-              {statusLabel}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              Type
-            </p>
-            <p className="mt-0.5 text-sm font-medium">
-              {typeLabels[item.type]}
-            </p>
-          </div>
-          <div
-            className={cn(
-              "rounded-lg border px-2.5 py-2",
-              overdue
-                ? "border-red-500/30 bg-red-500/5"
-                : "border-border/50 bg-muted/20",
-            )}
-          >
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              Due Date
-            </p>
-            <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium">
-              <CalendarDays className="size-3.5 text-muted-foreground" />
-              {item.dueDate
-                ? format(parseISO(item.dueDate), "MMM d, yyyy")
-                : "No due date"}
-            </p>
-            {dueDetail && (
-              <p
-                className={cn(
-                  "mt-0.5 text-xs",
-                  overdue
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-muted-foreground",
-                )}
-              >
-                {dueDetail}
-              </p>
-            )}
-          </div>
-          {scoreTone && (
-            <div
-              className={`rounded-lg border px-2.5 py-2 ${scoreTone.border} ${scoreTone.bg}`}
-            >
-              <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                Score
-              </p>
-              <p className={`mt-0.5 text-sm font-semibold ${scoreTone.text}`}>
-                {Number(item.score).toFixed(1)}
-              </p>
-            </div>
-          )}
-          {item.weight !== null && (
-            <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-              <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                Weight
-              </p>
-              <p className="mt-0.5 text-sm font-medium">
-                {Number(item.weight).toFixed(1)}%
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+        item={item}
+        overdue={overdue}
+        dueDetail={dueDetail}
+        showSubject={showSubjectFilter}
+        subjectName={subjectNamesById?.[item.subjectId]}
+        className={
+          item.status === "completed"
+            ? "border-border bg-muted/20"
+            : overdue
+              ? "border-red-500/40 bg-card"
+              : "border-border bg-card"
+        }
+        onEdit={setEditTarget}
+        onDelete={setDeleteTarget}
+      />
     );
   };
 
@@ -513,97 +353,65 @@ export function GradesSummary({
         }`}
       >
         {showSubjectFilter && (
-          <div className="space-y-1.5 text-sm">
-            <span className="text-muted-foreground">Subject</span>
-            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-              <SelectTrigger className="w-full min-w-0 bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subjects</SelectItem>
-                {subjectFilterOptions.map((subjectId) => (
-                  <SelectItem key={subjectId} value={subjectId}>
-                    {subjectNamesById?.[subjectId] ?? subjectId}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelectField
+            label="Subject"
+            value={subjectFilter}
+            onValueChange={setSubjectFilter}
+          >
+            <SelectItem value="all">All Subjects</SelectItem>
+            {subjectFilterOptions.map((subjectId) => (
+              <SelectItem key={subjectId} value={subjectId}>
+                {subjectNamesById?.[subjectId] ?? subjectId}
+              </SelectItem>
+            ))}
+          </FilterSelectField>
         )}
-        <div className="space-y-1.5 text-sm">
-          <span className="text-muted-foreground">Filter</span>
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as StatusFilter)}
-          >
-            <SelectTrigger className="w-full min-w-0 bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5 text-sm">
-          <span className="text-muted-foreground">Due Date</span>
-          <Select
-            value={dueDateFilter}
-            onValueChange={(value) => setDueDateFilter(value as DueDateFilter)}
-          >
-            <SelectTrigger className="w-full min-w-0 bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any Due Date</SelectItem>
-              <SelectItem value="past">Past Due Date</SelectItem>
-              <SelectItem value="today">Due Today</SelectItem>
-              <SelectItem value="next7Days">Next 7 Days</SelectItem>
-              <SelectItem value="next30Days">Next 30 Days</SelectItem>
-              <SelectItem value="none">No Due Date</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5 text-sm">
-          <span className="text-muted-foreground">Type</span>
-          <Select
-            value={typeFilter}
-            onValueChange={(value) => setTypeFilter(value as TypeFilter)}
-          >
-            <SelectTrigger className="w-full min-w-0 bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="exam">Exam</SelectItem>
-              <SelectItem value="assignment">Assignment</SelectItem>
-              <SelectItem value="project">Project</SelectItem>
-              <SelectItem value="presentation">Presentation</SelectItem>
-              <SelectItem value="homework">Homework</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5 text-sm">
-          <span className="text-muted-foreground">Sort</span>
-          <Select
-            value={sortBy}
-            onValueChange={(value) => setSortBy(value as SortBy)}
-          >
-            <SelectTrigger className="w-full min-w-0 bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="smart">Smart</SelectItem>
-              <SelectItem value="dueDateAsc">Due Date Asc</SelectItem>
-              <SelectItem value="dueDateDesc">Due Date Desc</SelectItem>
-              <SelectItem value="updatedAtDesc">Recently Updated</SelectItem>
-              <SelectItem value="scoreDesc">Score Desc</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <FilterSelectField
+          label="Status"
+          value={statusFilter}
+          onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+        >
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="overdue">Overdue</SelectItem>
+        </FilterSelectField>
+        <FilterSelectField
+          label="Due Date"
+          value={dueDateFilter}
+          onValueChange={(value) => setDueDateFilter(value as DueDateFilter)}
+        >
+          <SelectItem value="all">Any Due Date</SelectItem>
+          <SelectItem value="past">Past Due Date</SelectItem>
+          <SelectItem value="today">Due Today</SelectItem>
+          <SelectItem value="next7Days">Next 7 Days</SelectItem>
+          <SelectItem value="next30Days">Next 30 Days</SelectItem>
+          <SelectItem value="none">No Due Date</SelectItem>
+        </FilterSelectField>
+        <FilterSelectField
+          label="Type"
+          value={typeFilter}
+          onValueChange={(value) => setTypeFilter(value as TypeFilter)}
+        >
+          <SelectItem value="all">All Types</SelectItem>
+          <SelectItem value="exam">Exam</SelectItem>
+          <SelectItem value="assignment">Assignment</SelectItem>
+          <SelectItem value="project">Project</SelectItem>
+          <SelectItem value="presentation">Presentation</SelectItem>
+          <SelectItem value="homework">Homework</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
+        </FilterSelectField>
+        <FilterSelectField
+          label="Sort"
+          value={sortBy}
+          onValueChange={(value) => setSortBy(value as SortBy)}
+        >
+          <SelectItem value="smart">Smart</SelectItem>
+          <SelectItem value="dueDateAsc">Due Date Asc</SelectItem>
+          <SelectItem value="dueDateDesc">Due Date Desc</SelectItem>
+          <SelectItem value="updatedAtDesc">Recently Updated</SelectItem>
+          <SelectItem value="scoreDesc">Score Desc</SelectItem>
+        </FilterSelectField>
       </div>
 
       {showAverage && average !== null && (
