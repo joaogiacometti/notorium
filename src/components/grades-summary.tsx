@@ -8,7 +8,6 @@ import {
   startOfToday,
 } from "date-fns";
 import {
-  AlertTriangle,
   CalendarDays,
   CheckCircle2,
   Clock3,
@@ -18,7 +17,6 @@ import {
 import { useMemo, useState } from "react";
 import { DeleteAssessmentDialog } from "@/components/delete-assessment-dialog";
 import { EditAssessmentDialog } from "@/components/edit-assessment-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -29,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import type { AssessmentEntity } from "@/lib/api/contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
+import { cn } from "@/lib/utils";
 
 type StatusFilter = "all" | "pending" | "completed" | "overdue";
 type TypeFilter =
@@ -346,6 +345,153 @@ export function GradesSummary({
     (item) => item.status === "completed",
   );
   const average = getAverage(filteredAssessments);
+  const renderAssessmentCard = (item: AssessmentEntity) => {
+    const overdue = isOverdueAssessment(item, todayIso);
+    const statusTone = overdue
+      ? getStatusToneClasses("danger")
+      : item.status === "completed"
+        ? getStatusToneClasses("success")
+        : getStatusToneClasses("warning");
+    const statusLabel = overdue
+      ? "Overdue"
+      : item.status === "completed"
+        ? "Completed"
+        : "Pending";
+    const scoreTone =
+      item.score === null
+        ? null
+        : getStatusToneClasses(getScoreTone(Number(item.score)));
+    const dueDetail =
+      item.dueDate !== null && item.status === "pending"
+        ? getCountdownLabel(item.dueDate)
+        : null;
+
+    return (
+      <div
+        key={item.id}
+        className={cn(
+          "rounded-xl border p-4",
+          item.status === "completed" ? "bg-muted/20" : "bg-card",
+          overdue ? "border-red-500/40" : "border-border",
+        )}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <p className="min-w-0 flex-1 break-words font-semibold">
+            {item.title}
+          </p>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9 sm:size-8"
+              onClick={() => setEditTarget(item)}
+            >
+              <Pencil className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
+              onClick={() => setDeleteTarget(item)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        </div>
+        {item.description && (
+          <p className="mt-1 break-words text-sm text-muted-foreground">
+            {item.description}
+          </p>
+        )}
+        <div
+          className={`mt-3 grid grid-cols-2 gap-2 ${
+            showSubjectFilter ? "sm:grid-cols-4" : "sm:grid-cols-3"
+          }`}
+        >
+          {showSubjectFilter && (
+            <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
+              <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                Subject
+              </p>
+              <p className="mt-0.5 text-sm font-medium">
+                {subjectNamesById?.[item.subjectId] ?? "Unknown Subject"}
+              </p>
+            </div>
+          )}
+          <div
+            className={`rounded-lg border px-2.5 py-2 ${statusTone.border} ${statusTone.bg}`}
+          >
+            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              Status
+            </p>
+            <p className={`mt-0.5 text-sm font-semibold ${statusTone.text}`}>
+              {statusLabel}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
+            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              Type
+            </p>
+            <p className="mt-0.5 text-sm font-medium">
+              {typeLabels[item.type]}
+            </p>
+          </div>
+          <div
+            className={cn(
+              "rounded-lg border px-2.5 py-2",
+              overdue
+                ? "border-red-500/30 bg-red-500/5"
+                : "border-border/50 bg-muted/20",
+            )}
+          >
+            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              Due Date
+            </p>
+            <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium">
+              <CalendarDays className="size-3.5 text-muted-foreground" />
+              {item.dueDate
+                ? format(parseISO(item.dueDate), "MMM d, yyyy")
+                : "No due date"}
+            </p>
+            {dueDetail && (
+              <p
+                className={cn(
+                  "mt-0.5 text-xs",
+                  overdue
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-muted-foreground",
+                )}
+              >
+                {dueDetail}
+              </p>
+            )}
+          </div>
+          {scoreTone && (
+            <div
+              className={`rounded-lg border px-2.5 py-2 ${scoreTone.border} ${scoreTone.bg}`}
+            >
+              <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                Score
+              </p>
+              <p className={`mt-0.5 text-sm font-semibold ${scoreTone.text}`}>
+                {Number(item.score).toFixed(1)}
+              </p>
+            </div>
+          )}
+          {item.weight !== null && (
+            <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
+              <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                Weight
+              </p>
+              <p className="mt-0.5 text-sm font-medium">
+                {Number(item.weight).toFixed(1)}%
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -487,88 +633,7 @@ export function GradesSummary({
             </div>
           ) : (
             <div className="space-y-3">
-              {pending.map((item) => {
-                const overdue = isOverdueAssessment(item, todayIso);
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`rounded-xl border bg-card p-4 ${
-                      overdue ? "border-red-500/40" : "border-border"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words font-medium">{item.title}</p>
-                        {item.description && (
-                          <p className="mt-1 break-words text-sm text-muted-foreground">
-                            {item.description}
-                          </p>
-                        )}
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {showSubjectFilter && (
-                            <Badge variant="outline">
-                              {subjectNamesById?.[item.subjectId] ??
-                                "Unknown Subject"}
-                            </Badge>
-                          )}
-                          <Badge variant="outline">
-                            {typeLabels[item.type]}
-                          </Badge>
-                          <Badge
-                            variant={overdue ? "destructive" : "secondary"}
-                          >
-                            {overdue ? "Overdue" : "Pending"}
-                          </Badge>
-                          {item.dueDate && (
-                            <Badge variant="outline" className="gap-1">
-                              <CalendarDays className="size-3" />
-                              {format(parseISO(item.dueDate), "MMM d, yyyy")}
-                            </Badge>
-                          )}
-                          {item.dueDate && (
-                            <Badge
-                              variant={overdue ? "destructive" : "secondary"}
-                              className="gap-1"
-                            >
-                              {overdue && <AlertTriangle className="size-3" />}
-                              {getCountdownLabel(item.dueDate)}
-                            </Badge>
-                          )}
-                          {item.score !== null && (
-                            <Badge variant="outline">
-                              Score: {Number(item.score).toFixed(1)}
-                            </Badge>
-                          )}
-                          {item.weight !== null && (
-                            <Badge variant="outline">
-                              Weight: {Number(item.weight).toFixed(1)}%
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:self-auto">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-9 sm:size-8"
-                          onClick={() => setEditTarget(item)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
-                          onClick={() => setDeleteTarget(item)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {pending.map((item) => renderAssessmentCard(item))}
             </div>
           )}
         </section>
@@ -586,67 +651,7 @@ export function GradesSummary({
             </div>
           ) : (
             <div className="space-y-3">
-              {completed.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl border border-border bg-muted/20 p-4"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="break-words font-medium">{item.title}</p>
-                      {item.description && (
-                        <p className="mt-1 break-words text-sm text-muted-foreground">
-                          {item.description}
-                        </p>
-                      )}
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {showSubjectFilter && (
-                          <Badge variant="outline">
-                            {subjectNamesById?.[item.subjectId] ??
-                              "Unknown Subject"}
-                          </Badge>
-                        )}
-                        <Badge variant="outline">{typeLabels[item.type]}</Badge>
-                        <Badge variant="secondary">Completed</Badge>
-                        {item.dueDate && (
-                          <Badge variant="outline" className="gap-1">
-                            <CalendarDays className="size-3" />
-                            {format(parseISO(item.dueDate), "MMM d, yyyy")}
-                          </Badge>
-                        )}
-                        {item.score !== null && (
-                          <Badge variant="outline">
-                            Score: {Number(item.score).toFixed(1)}
-                          </Badge>
-                        )}
-                        {item.weight !== null && (
-                          <Badge variant="outline">
-                            Weight: {Number(item.weight).toFixed(1)}%
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:self-auto">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-9 sm:size-8"
-                        onClick={() => setEditTarget(item)}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
-                        onClick={() => setDeleteTarget(item)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              {completed.map((item) => renderAssessmentCard(item))}
             </div>
           )}
         </section>
