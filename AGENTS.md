@@ -78,6 +78,13 @@ src/
 - Use **Server Actions** (in `src/app/actions/`) for data mutations (create, update, delete).
 - Use `@/` alias for imports (configured in `tsconfig.json`).
 
+### React Compiler
+
+- Treat **React Compiler** as enabled for this project.
+- Do not use `useCallback`, `useMemo`, or `memo` by default.
+- Use manual memoization only when required for correctness, not performance micro-optimizations.
+- If manual memoization is truly needed, keep it minimal and state the reason in the change summary.
+
 ### Database
 
 - Define all tables in `src/db/schema.ts` using Drizzle's `pgTable`.

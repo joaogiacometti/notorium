@@ -4,7 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageIcon, Loader2, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { type MouseEvent, useRef, useState, useTransition } from "react";
+import {
+  type MouseEvent,
+  type ClipboardEvent as ReactClipboardEvent,
+  type DragEvent as ReactDragEvent,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -34,12 +42,48 @@ import {
   noteAttachmentMaxFilesPerUpload,
   noteAttachmentMaxSizeBytes,
   noteAttachmentUploadSchema,
-  validateNoteAttachmentFile,
 } from "@/lib/validations/notes";
 
 interface NoteImageAttachmentsProps {
   noteId: string;
   attachments: NoteImageAttachmentEntity[];
+}
+
+function getClipboardImageFiles(clipboardData: DataTransfer | null): File[] {
+  if (!clipboardData) {
+    return [];
+  }
+
+  const itemFiles = Array.from(clipboardData.items)
+    .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+    .map((item) => item.getAsFile())
+    .filter((file): file is File => file !== null);
+
+  if (itemFiles.length > 0) {
+    return itemFiles;
+  }
+
+  return Array.from(clipboardData.files).filter((file) =>
+    file.type.startsWith("image/"),
+  );
+}
+
+function isTypingElement(activeElement: Element | null): boolean {
+  if (!activeElement) {
+    return false;
+  }
+
+  if (
+    activeElement instanceof HTMLInputElement ||
+    activeElement instanceof HTMLTextAreaElement
+  ) {
+    return true;
+  }
+
+  return (
+    (activeElement instanceof HTMLElement && activeElement.isContentEditable) ||
+    activeElement.closest("[contenteditable='true']") !== null
+  );
 }
 
 function formatFileSize(sizeBytes: number): string {
@@ -60,6 +104,11 @@ export function NoteImageAttachments({
 }: Readonly<NoteImageAttachmentsProps>) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLFieldSetElement>(null);
+  const isBusyRef = useRef(false);
+  const stageIncomingFilesRef = useRef<(incomingFiles: File[]) => void>(
+    () => {},
+  );
   const form = useForm<NoteAttachmentUploadForm>({
     resolver: zodResolver(noteAttachmentUploadSchema),
     defaultValues: {
@@ -67,6 +116,7 @@ export function NoteImageAttachments({
     },
   });
   const selectedFiles = form.watch("images") ?? [];
+  const [isDragActive, setIsDragActive] = useState(false);
   const [isRemoving, startRemoveTransition] = useTransition();
   const [removingAttachmentId, setRemovingAttachmentId] = useState<
     string | null
@@ -85,6 +135,9 @@ export function NoteImageAttachments({
     attachments.find((attachment) => attachment.id === viewerAttachmentId) ??
     null;
 
+  const isBusy = form.formState.isSubmitting || isRemoving;
+  isBusyRef.current = isBusy;
+
   function clearSelectedFiles() {
     form.reset({
       images: [],
@@ -94,9 +147,50 @@ export function NoteImageAttachments({
     }
   }
 
-  async function onSubmit(data: NoteAttachmentUploadForm) {
-    const filesToUpload = data.images;
+  function stageIncomingFiles(incomingFiles: File[]) {
+    if (incomingFiles.length === 0 || isBusy) {
+      return;
+    }
 
+    const currentFiles = form.getValues("images") ?? [];
+    const mergedFiles = [...currentFiles, ...incomingFiles];
+
+    if (mergedFiles.length > noteAttachmentMaxFilesPerUpload) {
+      toast.error(
+        `You can upload up to ${noteAttachmentMaxFilesPerUpload} images at a time.`,
+      );
+    }
+
+    const stagedFiles = mergedFiles.slice(0, noteAttachmentMaxFilesPerUpload);
+    form.setValue("images", stagedFiles, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+  stageIncomingFilesRef.current = stageIncomingFiles;
+
+  function removeStagedFile(index: number) {
+    const currentFiles = form.getValues("images") ?? [];
+    const nextFiles = currentFiles.filter(
+      (_, fileIndex) => fileIndex !== index,
+    );
+    form.setValue("images", nextFiles, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+
+    if (nextFiles.length === 0 && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  async function uploadFiles(filesToUpload: File[]) {
     try {
       const formData = new FormData();
       formData.set("noteId", noteId);
@@ -120,6 +214,91 @@ export function NoteImageAttachments({
       toast.error("Failed to upload images.");
     }
   }
+
+  async function onSubmit(data: NoteAttachmentUploadForm) {
+    await uploadFiles(data.images);
+  }
+
+  function handleUploadClick() {
+    void form.handleSubmit(onSubmit)();
+  }
+
+  function handleDropZonePaste(event: ReactClipboardEvent<HTMLButtonElement>) {
+    const clipboardImageFiles = getClipboardImageFiles(event.clipboardData);
+
+    if (clipboardImageFiles.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    stageIncomingFiles(clipboardImageFiles);
+  }
+
+  function handleDropZoneClick() {
+    if (isBusy) {
+      return;
+    }
+    fileInputRef.current?.click();
+  }
+
+  function handleDropZoneDragOver(event: ReactDragEvent<HTMLFieldSetElement>) {
+    event.preventDefault();
+
+    if (!isBusy) {
+      setIsDragActive(true);
+    }
+  }
+
+  function handleDropZoneDragLeave(event: ReactDragEvent<HTMLFieldSetElement>) {
+    event.preventDefault();
+    setIsDragActive(false);
+  }
+
+  function handleDropZoneDrop(event: ReactDragEvent<HTMLFieldSetElement>) {
+    event.preventDefault();
+    setIsDragActive(false);
+
+    if (isBusy) {
+      return;
+    }
+
+    const droppedFiles = Array.from(event.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+    stageIncomingFiles(droppedFiles);
+  }
+
+  useEffect(() => {
+    const handleWindowPaste = (event: ClipboardEvent) => {
+      if (isBusyRef.current) {
+        return;
+      }
+
+      const clipboardImageFiles = getClipboardImageFiles(event.clipboardData);
+
+      if (clipboardImageFiles.length === 0) {
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      const isFocusInsideDropZone =
+        activeElement instanceof Node &&
+        dropZoneRef.current?.contains(activeElement);
+
+      if (isTypingElement(activeElement) && !isFocusInsideDropZone) {
+        return;
+      }
+
+      event.preventDefault();
+      stageIncomingFilesRef.current(clipboardImageFiles);
+    };
+
+    window.addEventListener("paste", handleWindowPaste);
+
+    return () => {
+      window.removeEventListener("paste", handleWindowPaste);
+    };
+  }, []);
 
   function onRequestRemove(attachmentId: string) {
     setAttachmentToRemoveId(attachmentId);
@@ -226,73 +405,112 @@ export function NoteImageAttachments({
                   multiple
                   name={field.name}
                   onBlur={field.onBlur}
-                  aria-invalid={fieldState.invalid}
-                  disabled={form.formState.isSubmitting || isRemoving}
-                  onChange={async (event) => {
+                  className="sr-only"
+                  tabIndex={-1}
+                  disabled={isBusy}
+                  onChange={(event) => {
                     const incomingFiles = Array.from(event.target.files ?? []);
-
-                    if (
-                      incomingFiles.length > noteAttachmentMaxFilesPerUpload
-                    ) {
-                      toast.error(
-                        `You can upload up to ${noteAttachmentMaxFilesPerUpload} images at a time.`,
-                      );
-                    }
-
-                    const limitedFiles = incomingFiles.slice(
-                      0,
-                      noteAttachmentMaxFilesPerUpload,
-                    );
-                    const validFiles: File[] = [];
-
-                    for (const file of limitedFiles) {
-                      const validationError = validateNoteAttachmentFile(file);
-
-                      if (validationError) {
-                        toast.error(`${file.name}: ${validationError}`);
-                        continue;
-                      }
-
-                      validFiles.push(file);
-                    }
-
-                    field.onChange(validFiles);
-
-                    if (validFiles.length === 0) {
-                      return;
-                    }
-
-                    const isValid = await form.trigger("images");
-
-                    if (!isValid) {
-                      return;
-                    }
-
-                    await form.handleSubmit(onSubmit)();
+                    stageIncomingFiles(incomingFiles);
                   }}
                 />
+                <fieldset
+                  ref={dropZoneRef}
+                  data-invalid={fieldState.invalid || undefined}
+                  className="m-0 min-w-0 border-0 p-0 data-[invalid]:[&_button]:border-destructive"
+                  onDragOver={handleDropZoneDragOver}
+                  onDragLeave={handleDropZoneDragLeave}
+                  onDrop={handleDropZoneDrop}
+                >
+                  <button
+                    type="button"
+                    className={`w-full rounded-lg border border-dashed px-4 py-6 text-left transition-colors ${
+                      isDragActive
+                        ? "border-primary bg-primary/5"
+                        : "border-border/60 bg-muted/20 hover:bg-muted/30"
+                    }`}
+                    onClick={handleDropZoneClick}
+                    onPaste={handleDropZonePaste}
+                    disabled={isBusy}
+                  >
+                    <div className="flex items-start gap-3">
+                      <ImageIcon className="mt-0.5 size-4 text-primary" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">
+                          Click, drag, or paste images
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, WEBP, GIF. Up to{" "}
+                          {noteAttachmentMaxFilesPerUpload} files,{" "}
+                          {formatFileSize(noteAttachmentMaxSizeBytes)} each.
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </fieldset>
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
                 )}
               </Field>
             )}
           />
-          <p className="text-xs text-muted-foreground">
-            JPG, PNG, WEBP, GIF. Up to{" "}
-            {formatFileSize(noteAttachmentMaxSizeBytes)} each and{" "}
-            {noteAttachmentMaxFilesPerUpload} images per upload.
-          </p>
           {selectedFiles.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Selected: {selectedFiles.map((file) => file.name).join(", ")}
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">
+                Staged ({selectedFiles.length})
+              </p>
+              <div className="space-y-1.5">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
+                    className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
+                  >
+                    <span className="truncate text-xs">{file.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {formatFileSize(file.size)}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-6"
+                        disabled={isBusy}
+                        onClick={() => removeStagedFile(index)}
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
-          {form.formState.isSubmitting && (
-            <p className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="size-3.5 animate-spin" />
-              Uploading images...
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearSelectedFiles}
+              disabled={isBusy || selectedFiles.length === 0}
+            >
+              Clear
+            </Button>
+            <Button
+              type="button"
+              onClick={handleUploadClick}
+              disabled={isBusy || selectedFiles.length === 0}
+            >
+              {form.formState.isSubmitting && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              Upload
+            </Button>
+            {form.formState.isSubmitting && (
+              <span className="text-xs text-muted-foreground">
+                Uploading images...
+              </span>
+            )}
+          </div>
         </FieldGroup>
       </form>
 
