@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createNote } from "@/app/actions/notes";
@@ -22,6 +23,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
+import { useBeforeUnload } from "@/lib/use-before-unload";
 import { type CreateNoteForm, createNoteSchema } from "@/lib/validations/notes";
 
 interface CreateNoteDialogProps {
@@ -38,20 +41,56 @@ export function CreateNoteDialog({
   onOpenChange,
 }: Readonly<CreateNoteDialogProps>) {
   const queryClient = useQueryClient();
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const defaultValues = {
+    title: "",
+    content: "",
+    subjectId,
+  };
   const form = useForm({
     resolver: zodResolver(createNoteSchema),
-    defaultValues: {
-      title: "",
-      content: "",
-      subjectId,
-    },
+    defaultValues,
   });
+  useBeforeUnload(
+    open && form.formState.isDirty && !form.formState.isSubmitting,
+  );
+
+  function handleDiscardChanges() {
+    form.reset(defaultValues);
+    setDiscardDialogOpen(false);
+    onOpenChange(false);
+  }
+
+  function handleDiscardDialogOpenChange(nextOpen: boolean) {
+    setDiscardDialogOpen(nextOpen);
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      setDiscardDialogOpen(false);
+      onOpenChange(true);
+      return;
+    }
+
+    const hasUnsavedChanges =
+      form.formState.isDirty && !form.formState.isSubmitting;
+
+    if (hasUnsavedChanges) {
+      setDiscardDialogOpen(true);
+      return;
+    }
+
+    form.reset(defaultValues);
+    setDiscardDialogOpen(false);
+    onOpenChange(false);
+  }
 
   async function onSubmit(data: CreateNoteForm) {
     const result = await createNote(data);
     if (result.success) {
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      form.reset();
+      form.reset(defaultValues);
+      setDiscardDialogOpen(false);
       onOpenChange(false);
     } else if (result.error) {
       toast.error(result.error);
@@ -59,70 +98,77 @@ export function CreateNoteDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
-        <DialogHeader>
-          <DialogTitle>Create Note</DialogTitle>
-        </DialogHeader>
-        <form id="form-create-note" onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup className="gap-4">
-            <Controller
-              name="title"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-create-note-title">
-                    Title
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id="form-create-note-title"
-                    placeholder="e.g. Lecture 1 — Introduction"
-                    aria-invalid={fieldState.invalid}
-                    autoFocus
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-            <Controller
-              name="content"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-create-note-content">
-                    Content
-                  </FieldLabel>
-                  <TiptapEditor
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    placeholder="Start writing your notes..."
-                    id="form-create-note-content"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-            <Button
-              type="submit"
-              form="form-create-note"
-              disabled={form.formState.isSubmitting}
-              className="w-full"
-            >
-              {form.formState.isSubmitting && (
-                <Loader2 className="size-4 animate-spin" />
-              )}
-              Create Note
-            </Button>
-          </FieldGroup>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Create Note</DialogTitle>
+          </DialogHeader>
+          <form id="form-create-note" onSubmit={form.handleSubmit(onSubmit)}>
+            <FieldGroup className="gap-4">
+              <Controller
+                name="title"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="form-create-note-title">
+                      Title
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id="form-create-note-title"
+                      placeholder="e.g. Lecture 1 — Introduction"
+                      aria-invalid={fieldState.invalid}
+                      autoFocus
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="content"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="form-create-note-content">
+                      Content
+                    </FieldLabel>
+                    <TiptapEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      placeholder="Start writing your notes..."
+                      id="form-create-note-content"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Button
+                type="submit"
+                form="form-create-note"
+                disabled={form.formState.isSubmitting}
+                className="w-full"
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
+                Create Note
+              </Button>
+            </FieldGroup>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <UnsavedChangesDialog
+        open={discardDialogOpen}
+        onOpenChange={handleDiscardDialogOpenChange}
+        onDiscard={handleDiscardChanges}
+      />
+    </>
   );
 }
