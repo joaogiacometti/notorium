@@ -12,7 +12,11 @@ import type {
   NoteWithAttachmentsEntity,
 } from "@/lib/api/contracts";
 import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
-import { checkImageAllowed, checkNoteLimit } from "@/lib/plan-enforcement";
+import {
+  checkImageAllowed,
+  checkImageStorageLimit,
+  checkNoteLimit,
+} from "@/lib/plan-enforcement";
 import {
   type CreateNoteForm,
   createNoteSchema,
@@ -227,6 +231,23 @@ export async function uploadNoteAttachments(
 
   if (upload.error) {
     return { error: upload.error };
+  }
+
+  const uploadSizeBytes = upload.files.reduce(
+    (sum, file) => sum + file.size,
+    0,
+  );
+  const storageCheck = await checkImageStorageLimit(
+    userId,
+    uploadSizeBytes,
+    plan,
+  );
+
+  if (!storageCheck.allowed) {
+    return {
+      error:
+        "You have reached your image storage limit. Remove some images to free up space.",
+    };
   }
 
   const existing = await db

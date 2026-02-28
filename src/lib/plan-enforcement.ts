@@ -1,8 +1,8 @@
 "use server";
 
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sum } from "drizzle-orm";
 import { db } from "@/db/index";
-import { assessment, note, subject } from "@/db/schema";
+import { assessment, note, noteImageAttachment, subject } from "@/db/schema";
 import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
 
 interface LimitCheckResult {
@@ -63,6 +63,33 @@ export async function checkNoteLimit(
 export async function checkImageAllowed(plan: UserPlan): Promise<boolean> {
   const limits = getPlanLimits(plan);
   return limits.imagesAllowed;
+}
+
+export async function checkImageStorageLimit(
+  userId: string,
+  uploadSizeBytes: number,
+  plan: UserPlan,
+): Promise<LimitCheckResult> {
+  const limits = getPlanLimits(plan);
+
+  if (limits.maxImageStorageMb === null) {
+    return { allowed: true, current: 0, max: null };
+  }
+
+  const maxBytes = limits.maxImageStorageMb * 1024 * 1024;
+
+  const result = await db
+    .select({ total: sum(noteImageAttachment.sizeBytes) })
+    .from(noteImageAttachment)
+    .where(eq(noteImageAttachment.userId, userId));
+
+  const currentBytes = Number(result[0]?.total ?? 0);
+
+  return {
+    allowed: currentBytes + uploadSizeBytes <= maxBytes,
+    current: currentBytes,
+    max: maxBytes,
+  };
 }
 
 export async function checkAssessmentLimit(

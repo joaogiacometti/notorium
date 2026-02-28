@@ -533,9 +533,11 @@ export function NoteImageAttachments({
       )}
 
       {attachments.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-8 text-center text-sm text-muted-foreground">
-          No images attached yet.
-        </p>
+        imagesAllowed && (
+          <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-8 text-center text-sm text-muted-foreground">
+            No images attached yet.
+          </p>
+        )
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {attachments.map((attachment) => (
