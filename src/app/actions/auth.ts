@@ -4,6 +4,7 @@ import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { checkAuthRateLimit } from "@/lib/rate-limit";
 import {
   type LoginForm,
   loginSchema,
@@ -14,6 +15,11 @@ import {
 type ActionResult = { success: true } | { success: false; error: string };
 
 export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
+  const rateLimit = await checkAuthRateLimit();
+  if (rateLimit.limited) {
+    return { success: false, error: rateLimit.error };
+  }
+
   const parsed = loginSchema.safeParse(data);
   if (!parsed.success) {
     return {
@@ -40,6 +46,11 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
 };
 
 export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
+  const rateLimit = await checkAuthRateLimit();
+  if (rateLimit.limited) {
+    return { success: false, error: rateLimit.error };
+  }
+
   const parsed = signupSchema.safeParse(data);
   if (!parsed.success) {
     return {
