@@ -70,7 +70,7 @@ export async function createAssessment(
 
   if (!limitCheck.allowed) {
     return {
-      error: `Free plan limit: you can have up to ${limitCheck.max} assessments per subject.`,
+      error: `Plan limit: you can have up to ${limitCheck.max} assessments per subject.`,
     };
   }
 

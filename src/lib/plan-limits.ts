@@ -1,4 +1,4 @@
-export type UserPlan = "free" | "unlimited";
+export type UserPlan = "free" | "pro" | "unlimited";
 
 interface PlanLimits {
   maxSubjects: number | null;
@@ -35,6 +35,9 @@ const UNLIMITED_LIMITS: PlanLimits = {
 export function getPlanLimits(plan: UserPlan): PlanLimits {
   if (plan === "unlimited") {
     return UNLIMITED_LIMITS;
+  }
+  if (plan === "pro") {
+    return PRO_LIMITS;
   }
   return FREE_LIMITS;
 }

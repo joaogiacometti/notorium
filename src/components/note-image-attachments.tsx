@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import type { NoteImageAttachmentEntity } from "@/lib/api/contracts";
+import type { UserPlan } from "@/lib/plan-limits";
 import {
   type NoteAttachmentUploadForm,
   noteAttachmentAllowedTypes,
@@ -47,7 +48,7 @@ import {
 interface NoteImageAttachmentsProps {
   noteId: string;
   attachments: NoteImageAttachmentEntity[];
-  plan: string;
+  plan: UserPlan;
 }
 
 function getClipboardImageFiles(clipboardData: DataTransfer | null): File[] {
@@ -104,7 +105,7 @@ export function NoteImageAttachments({
   attachments,
   plan,
 }: Readonly<NoteImageAttachmentsProps>) {
-  const imagesAllowed = plan === "unlimited";
+  const imagesAllowed = plan !== "free";
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLFieldSetElement>(null);

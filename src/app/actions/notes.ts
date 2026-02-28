@@ -114,7 +114,7 @@ export async function createNote(
 
   if (!limitCheck.allowed) {
     return {
-      error: `Free plan limit: you can have up to ${limitCheck.max} notes per subject.`,
+      error: `Plan limit: you can have up to ${limitCheck.max} notes per subject.`,
     };
   }
 

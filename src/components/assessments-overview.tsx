@@ -13,13 +13,13 @@ import {
   getTodayIso,
   isAssessmentOverdue,
 } from "@/lib/assessments";
-import { getPlanLimits } from "@/lib/plan-limits";
+import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
 
 interface AssessmentsOverviewProps {
   subjectId: string;
   assessments: AssessmentEntity[];
-  plan: string;
+  plan: UserPlan;
 }
 
 function getAverageTone(value: number): string {
@@ -56,7 +56,7 @@ export function AssessmentsOverview({
     null,
   );
 
-  const limits = getPlanLimits(plan === "unlimited" ? "unlimited" : "free");
+  const limits = getPlanLimits(plan);
   const isAtLimit =
     limits.maxAssessmentsPerSubject !== null &&
     assessments.length >= limits.maxAssessmentsPerSubject;
@@ -102,9 +102,8 @@ export function AssessmentsOverview({
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
           <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-amber-800 dark:text-amber-200">
-            You&apos;ve reached the Free plan limit of{" "}
-            {limits.maxAssessmentsPerSubject} assessments per subject. Upgrade
-            your plan to add more.
+            You&apos;ve reached the limit of {limits.maxAssessmentsPerSubject}{" "}
+            assessments per subject on your plan. Upgrade to add more.
           </p>
         </div>
       )}

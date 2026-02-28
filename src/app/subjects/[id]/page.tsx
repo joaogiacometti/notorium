@@ -5,6 +5,7 @@ import { getNotesBySubject } from "@/app/actions/notes";
 import { getSubjectById } from "@/app/actions/subjects";
 import { SubjectDetail } from "@/components/subject-detail";
 import { requireSession } from "@/lib/auth";
+import type { UserPlan } from "@/lib/plan-limits";
 
 interface SubjectPageProps {
   params: Promise<{ id: string }>;
@@ -32,7 +33,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
         notes={notes}
         misses={misses}
         assessments={assessments}
-        plan={session.user.plan ?? "free"}
+        plan={(session.user.plan ?? "free") as UserPlan}
       />
     </main>
   );

@@ -6,12 +6,12 @@ import { CreateNoteDialog } from "@/components/create-note-dialog";
 import { NoteCard } from "@/components/note-card";
 import { Button } from "@/components/ui/button";
 import type { NoteEntity } from "@/lib/api/contracts";
-import { getPlanLimits } from "@/lib/plan-limits";
+import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
 
 interface NotesListProps {
   subjectId: string;
   notes: NoteEntity[];
-  plan: string;
+  plan: UserPlan;
 }
 
 export function NotesList({
@@ -21,7 +21,7 @@ export function NotesList({
 }: Readonly<NotesListProps>) {
   const [createOpen, setCreateOpen] = useState(false);
 
-  const limits = getPlanLimits(plan === "unlimited" ? "unlimited" : "free");
+  const limits = getPlanLimits(plan);
   const isAtLimit =
     limits.maxNotesPerSubject !== null &&
     notes.length >= limits.maxNotesPerSubject;
@@ -70,9 +70,8 @@ export function NotesList({
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
           <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-amber-800 dark:text-amber-200">
-            You&apos;ve reached the Free plan limit of{" "}
-            {limits.maxNotesPerSubject} notes per subject. Upgrade your plan to
-            create more.
+            You&apos;ve reached the limit of {limits.maxNotesPerSubject} notes
+            per subject on your plan. Upgrade to create more.
           </p>
         </div>
       )}

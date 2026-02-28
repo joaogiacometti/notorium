@@ -21,6 +21,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import type { UserPlan } from "@/lib/plan-limits";
 import {
   type UpdateProfileForm,
   updateProfileSchema,
@@ -29,7 +30,7 @@ import {
 interface ProfileFormProps {
   name: string;
   email: string;
-  plan: string;
+  plan: UserPlan;
   createdAt: string;
   updatedAt: string;
 }
@@ -119,8 +120,8 @@ export function ProfileForm({
             <div className="rounded-lg border bg-muted/20 px-4 py-3 text-sm">
               <p className="flex items-center gap-2">
                 <span className="text-muted-foreground">Plan:</span>
-                <Badge variant={plan === "unlimited" ? "default" : "secondary"}>
-                  {plan === "unlimited" ? "Unlimited" : "Free"}
+                <Badge variant={plan === "free" ? "secondary" : "default"}>
+                  {{ free: "Free", pro: "Pro", unlimited: "Unlimited" }[plan]}
                 </Badge>
               </p>
               <p className="mt-1">

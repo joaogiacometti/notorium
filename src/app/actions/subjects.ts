@@ -55,7 +55,7 @@ export async function createSubject(
 
   if (!limitCheck.allowed) {
     return {
-      error: `Free plan limit: you can have up to ${limitCheck.max} subjects.`,
+      error: `Plan limit: you can have up to ${limitCheck.max} subjects.`,
     };
   }
 

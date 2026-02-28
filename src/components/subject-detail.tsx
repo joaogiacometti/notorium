@@ -18,13 +18,14 @@ import type {
   NoteEntity,
   SubjectEntity,
 } from "@/lib/api/contracts";
+import type { UserPlan } from "@/lib/plan-limits";
 
 interface SubjectDetailProps {
   subject: SubjectEntity;
   notes: NoteEntity[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
-  plan: string;
+  plan: UserPlan;
 }
 
 export function SubjectDetail({

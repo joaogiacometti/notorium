@@ -11,10 +11,11 @@ import { NoteImageAttachments } from "@/components/note-image-attachments";
 import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import type { NoteWithAttachmentsEntity } from "@/lib/api/contracts";
+import type { UserPlan } from "@/lib/plan-limits";
 
 interface NoteDetailProps {
   note: NoteWithAttachmentsEntity;
-  plan: string;
+  plan: UserPlan;
 }
 
 export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {

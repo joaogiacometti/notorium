@@ -13,7 +13,7 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 
-export const userPlanEnum = pgEnum("user_plan", ["free", "unlimited"]);
+export const userPlanEnum = pgEnum("user_plan", ["free", "pro", "unlimited"]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
