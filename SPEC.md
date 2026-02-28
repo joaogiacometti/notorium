@@ -72,8 +72,9 @@ Students who want a private, lightweight study management workspace.
 ## Plans
 
 - **Free** (default): up to 5 subjects, up to 5 notes per subject, up to 5 assessments per subject, no image attachments.
-- **Unlimited**: no restrictions on subjects, notes, or image attachments.
-- Plan is stored on the `user` table (`plan` column, enum `free` | `unlimited`).
+- **Pro**: up to 20 subjects, up to 30 notes per subject, up to 5 assessments per subject, up to 50 MB image storage.
+- **Unlimited**: no restrictions on subjects, notes, assessments, or image attachments.
+- Plan is stored on the `user` table (`plan` column, enum `free` | `pro` | `unlimited`).
 - Limits are enforced server-side on create actions and surfaced in the UI.
 
 ## Data Ownership and Security Rules
