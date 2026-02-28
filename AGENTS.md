@@ -4,12 +4,6 @@
 
 Notorium is a study management app built with Next.js 16 (App Router). See `SPEC.md` for the full product specification, features, and acceptance criteria.
 
-## Product Docs Workflow
-
-- `SPEC.md`: current behavior and product constraints only.
-- `ROADMAP.md`: planned and in-progress future features.
-- When implementing a future feature, update its status in `ROADMAP.md`.
-
 ## Project Structure
 
 ```
@@ -122,8 +116,7 @@ src/
 
 - **Ask before assuming.** If a requirement is unclear or ambiguous, ask the user for clarification before proceeding.
 - **Follow SPEC.md for current behavior.** Use it as source of truth for implemented product rules.
-- **Follow ROADMAP.md for future work.** Use it to determine what should be built next.
-- **Update docs in the right place.** Keep `SPEC.md` stable and move planning/status updates to `ROADMAP.md`.
+- **Update docs in the right place.** Keep `SPEC.md` stable.
 - **Small, focused changes.** Implement one feature or fix at a time. Do not make unrelated changes.
 - **Test after changes.** Verify the dev server still runs (`bun dev`) and check for lint errors (`bun run lint`) after making changes.
 - **Follow existing commit message patterns.** Base each new commit message on previous commit messages and keep the same structure/style pattern.

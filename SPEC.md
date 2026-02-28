@@ -5,7 +5,6 @@
 - This file defines the current product behavior and constraints.
 - Keep it stable and concise.
 - Do not track future ideas, minor refactors, or bug-fix history here.
-- Put future work in `ROADMAP.md`.
 
 ## Product Goal
 
