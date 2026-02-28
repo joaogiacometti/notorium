@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { AssessmentEntity, MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
+import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
+import { checkAssessmentLimit } from "@/lib/plan-enforcement";
 import {
   type CreateAssessmentForm,
   createAssessmentSchema,
@@ -42,7 +43,7 @@ export async function getAssessments(): Promise<AssessmentEntity[]> {
 export async function createAssessment(
   data: CreateAssessmentForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
+  const { userId, plan } = await getAuthenticatedUser();
   const parsed = createAssessmentSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -59,6 +60,18 @@ export async function createAssessment(
 
   if (existingSubject.length === 0) {
     return { error: "Subject not found." };
+  }
+
+  const limitCheck = await checkAssessmentLimit(
+    userId,
+    parsed.data.subjectId,
+    plan,
+  );
+
+  if (!limitCheck.allowed) {
+    return {
+      error: `Free plan limit: you can have up to ${limitCheck.max} assessments per subject.`,
+    };
   }
 
   await db.insert(assessment).values({

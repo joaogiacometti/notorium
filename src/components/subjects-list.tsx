@@ -1,22 +1,31 @@
 "use client";
 
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Lock, Plus } from "lucide-react";
 import { useState } from "react";
 import { CreateSubjectDialog } from "@/components/create-subject-dialog";
 import { SubjectCard } from "@/components/subject-card";
 import { Button } from "@/components/ui/button";
 import type { SubjectEntity } from "@/lib/api/contracts";
+import { getPlanLimits } from "@/lib/plan-limits";
 
 interface SubjectsListProps {
   subjects: SubjectEntity[];
+  plan: string;
 }
 
-export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {
+export function SubjectsList({ subjects, plan }: Readonly<SubjectsListProps>) {
   const [createOpen, setCreateOpen] = useState(false);
+
+  const limits = getPlanLimits(plan === "unlimited" ? "unlimited" : "free");
+  const isAtLimit =
+    limits.maxSubjects !== null && subjects.length >= limits.maxSubjects;
 
   function getSubjectCountText() {
     if (subjects.length === 0) {
       return "Get started by creating your first subject.";
+    }
+    if (limits.maxSubjects !== null) {
+      return `${subjects.length}/${limits.maxSubjects} subjects`;
     }
     return `${subjects.length} subject${subjects.length === 1 ? "" : "s"}`;
   }
@@ -32,7 +41,16 @@ export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {
         </div>
         <CreateSubjectDialog
           trigger={
-            <Button className="gap-1.5" id="btn-create-subject">
+            <Button
+              className="gap-1.5"
+              id="btn-create-subject"
+              disabled={isAtLimit}
+              title={
+                isAtLimit
+                  ? "Upgrade your plan to create more subjects"
+                  : undefined
+              }
+            >
               <Plus className="size-4" />
               <span className="hidden sm:inline">New Subject</span>
             </Button>
@@ -41,6 +59,16 @@ export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {
           onOpenChange={setCreateOpen}
         />
       </div>
+
+      {isAtLimit && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-amber-800 dark:text-amber-200">
+            You&apos;ve reached the Free plan limit of {limits.maxSubjects}{" "}
+            subjects. Upgrade your plan to create more.
+          </p>
+        </div>
+      )}
 
       {subjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 py-20">

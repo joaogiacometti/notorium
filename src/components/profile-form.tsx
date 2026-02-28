@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateProfile } from "@/app/actions/profile";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,6 +29,7 @@ import {
 interface ProfileFormProps {
   name: string;
   email: string;
+  plan: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +37,7 @@ interface ProfileFormProps {
 export function ProfileForm({
   name,
   email,
+  plan,
   createdAt,
   updatedAt,
 }: Readonly<ProfileFormProps>) {
@@ -114,7 +117,13 @@ export function ProfileForm({
             </Field>
 
             <div className="rounded-lg border bg-muted/20 px-4 py-3 text-sm">
-              <p>
+              <p className="flex items-center gap-2">
+                <span className="text-muted-foreground">Plan:</span>
+                <Badge variant={plan === "unlimited" ? "default" : "secondary"}>
+                  {plan === "unlimited" ? "Unlimited" : "Free"}
+                </Badge>
+              </p>
+              <p className="mt-1">
                 <span className="text-muted-foreground">Joined:</span>{" "}
                 {createdAtLabel}
               </p>

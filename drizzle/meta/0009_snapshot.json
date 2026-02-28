@@ -1,6 +1,6 @@
 {
-  "id": "294c5c4c-5cd9-4bac-9c08-cc19a62f505f",
-  "prevId": "56d0cd52-7b47-482b-8d05-e1a53ea0cfff",
+  "id": "93b39a29-26e4-4b19-a7c0-6e2c5e8c4098",
+  "prevId": "294c5c4c-5cd9-4bac-9c08-cc19a62f505f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -871,6 +871,14 @@
           "primaryKey": false,
           "notNull": false
         },
+        "plan": {
+          "name": "plan",
+          "type": "user_plan",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -985,6 +993,11 @@
         "homework",
         "other"
       ]
+    },
+    "public.user_plan": {
+      "name": "user_plan",
+      "schema": "public",
+      "values": ["free", "unlimited"]
     }
   },
   "schemas": {},

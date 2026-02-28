@@ -14,6 +14,7 @@ export default async function ProfilePage() {
         <ProfileForm
           name={session.user.name}
           email={session.user.email}
+          plan={session.user.plan ?? "free"}
           createdAt={new Date(session.user.createdAt).toISOString()}
           updatedAt={new Date(session.user.updatedAt).toISOString()}
         />

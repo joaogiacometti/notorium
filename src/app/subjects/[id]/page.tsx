@@ -11,7 +11,7 @@ interface SubjectPageProps {
 }
 
 export default async function SubjectPage({ params }: SubjectPageProps) {
-  await requireSession();
+  const session = await requireSession();
 
   const { id } = await params;
   const [subject, notes, misses, assessments] = await Promise.all([
@@ -32,6 +32,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
         notes={notes}
         misses={misses}
         assessments={assessments}
+        plan={session.user.plan ?? "free"}
       />
     </main>
   );

@@ -47,6 +47,7 @@ import {
 interface NoteImageAttachmentsProps {
   noteId: string;
   attachments: NoteImageAttachmentEntity[];
+  plan: string;
 }
 
 function getClipboardImageFiles(clipboardData: DataTransfer | null): File[] {
@@ -101,7 +102,9 @@ function formatFileSize(sizeBytes: number): string {
 export function NoteImageAttachments({
   noteId,
   attachments,
+  plan,
 }: Readonly<NoteImageAttachmentsProps>) {
+  const imagesAllowed = plan === "unlimited";
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLFieldSetElement>(null);
@@ -293,10 +296,10 @@ export function NoteImageAttachments({
       stageIncomingFilesRef.current(clipboardImageFiles);
     };
 
-    window.addEventListener("paste", handleWindowPaste);
+    globalThis.addEventListener("paste", handleWindowPaste);
 
     return () => {
-      window.removeEventListener("paste", handleWindowPaste);
+      globalThis.removeEventListener("paste", handleWindowPaste);
     };
   }, []);
 
@@ -381,138 +384,152 @@ export function NoteImageAttachments({
         </span>
       </div>
 
-      <form
-        id="form-note-attachments-upload"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
-        <FieldGroup className="mb-5 gap-3">
-          <Controller
-            name="images"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="form-note-attachments-images">
-                  Images
-                </FieldLabel>
-                <Input
-                  id="form-note-attachments-images"
-                  ref={(element) => {
-                    field.ref(element);
-                    fileInputRef.current = element;
-                  }}
-                  type="file"
-                  accept={noteAttachmentAllowedTypes.join(",")}
-                  multiple
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  className="sr-only"
-                  tabIndex={-1}
-                  disabled={isBusy}
-                  onChange={(event) => {
-                    const incomingFiles = Array.from(event.target.files ?? []);
-                    stageIncomingFiles(incomingFiles);
-                  }}
-                />
-                <fieldset
-                  ref={dropZoneRef}
-                  data-invalid={fieldState.invalid || undefined}
-                  className="m-0 min-w-0 border-0 p-0 data-[invalid]:[&_button]:border-destructive"
-                  onDragOver={handleDropZoneDragOver}
-                  onDragLeave={handleDropZoneDragLeave}
-                  onDrop={handleDropZoneDrop}
-                >
-                  <button
-                    type="button"
-                    className={`w-full rounded-lg border border-dashed px-4 py-6 text-left transition-colors ${
-                      isDragActive
-                        ? "border-primary bg-primary/5"
-                        : "border-border/60 bg-muted/20 hover:bg-muted/30"
-                    }`}
-                    onClick={handleDropZoneClick}
-                    onPaste={handleDropZonePaste}
+      {imagesAllowed ? (
+        <form
+          id="form-note-attachments-upload"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <FieldGroup className="mb-5 gap-3">
+            <Controller
+              name="images"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-note-attachments-images">
+                    Images
+                  </FieldLabel>
+                  <Input
+                    id="form-note-attachments-images"
+                    ref={(element) => {
+                      field.ref(element);
+                      fileInputRef.current = element;
+                    }}
+                    type="file"
+                    accept={noteAttachmentAllowedTypes.join(",")}
+                    multiple
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    className="sr-only"
+                    tabIndex={-1}
                     disabled={isBusy}
+                    onChange={(event) => {
+                      const incomingFiles = Array.from(
+                        event.target.files ?? [],
+                      );
+                      stageIncomingFiles(incomingFiles);
+                    }}
+                  />
+                  <fieldset
+                    ref={dropZoneRef}
+                    data-invalid={fieldState.invalid || undefined}
+                    className="m-0 min-w-0 border-0 p-0 data-invalid:[&_button]:border-destructive"
+                    onDragOver={handleDropZoneDragOver}
+                    onDragLeave={handleDropZoneDragLeave}
+                    onDrop={handleDropZoneDrop}
                   >
-                    <div className="flex items-start gap-3">
-                      <ImageIcon className="mt-0.5 size-4 text-primary" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">
-                          Click, drag, or paste images
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG, WEBP, GIF. Up to{" "}
-                          {noteAttachmentMaxFilesPerUpload} files,{" "}
-                          {formatFileSize(noteAttachmentMaxSizeBytes)} each.
-                        </p>
+                    <button
+                      type="button"
+                      className={`w-full rounded-lg border border-dashed px-4 py-6 text-left transition-colors ${
+                        isDragActive
+                          ? "border-primary bg-primary/5"
+                          : "border-border/60 bg-muted/20 hover:bg-muted/30"
+                      }`}
+                      onClick={handleDropZoneClick}
+                      onPaste={handleDropZonePaste}
+                      disabled={isBusy}
+                    >
+                      <div className="flex items-start gap-3">
+                        <ImageIcon className="mt-0.5 size-4 text-primary" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">
+                            Click, drag, or paste images
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            PNG, JPG, WEBP, GIF. Up to{" "}
+                            {noteAttachmentMaxFilesPerUpload} files,{" "}
+                            {formatFileSize(noteAttachmentMaxSizeBytes)} each.
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </fieldset>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Staged ({selectedFiles.length})
+                </p>
+                <div className="space-y-1.5">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
+                      className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
+                    >
+                      <span className="truncate text-xs">{file.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {formatFileSize(file.size)}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-6"
+                          disabled={isBusy}
+                          onClick={() => removeStagedFile(index)}
+                          aria-label={`Remove ${file.name}`}
+                        >
+                          <X className="size-3.5" />
+                        </Button>
                       </div>
                     </div>
-                  </button>
-                </fieldset>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-          {selectedFiles.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">
-                Staged ({selectedFiles.length})
-              </p>
-              <div className="space-y-1.5">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
-                    className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
-                  >
-                    <span className="truncate text-xs">{file.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {formatFileSize(file.size)}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-6"
-                        disabled={isBusy}
-                        onClick={() => removeStagedFile(index)}
-                        aria-label={`Remove ${file.name}`}
-                      >
-                        <X className="size-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={clearSelectedFiles}
-              disabled={isBusy || selectedFiles.length === 0}
-            >
-              Clear
-            </Button>
-            <Button
-              type="button"
-              onClick={handleUploadClick}
-              disabled={isBusy || selectedFiles.length === 0}
-            >
-              {form.formState.isSubmitting && (
-                <Loader2 className="size-4 animate-spin" />
-              )}
-              Upload
-            </Button>
-            {form.formState.isSubmitting && (
-              <span className="text-xs text-muted-foreground">
-                Uploading images...
-              </span>
             )}
-          </div>
-        </FieldGroup>
-      </form>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={clearSelectedFiles}
+                disabled={isBusy || selectedFiles.length === 0}
+              >
+                Clear
+              </Button>
+              <Button
+                type="button"
+                onClick={handleUploadClick}
+                disabled={isBusy || selectedFiles.length === 0}
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
+                Upload
+              </Button>
+              {form.formState.isSubmitting && (
+                <span className="text-xs text-muted-foreground">
+                  Uploading images...
+                </span>
+              )}
+            </div>
+          </FieldGroup>
+        </form>
+      ) : (
+        <div className="mb-5 rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
+          <ImageIcon className="mx-auto mb-2 size-5 text-muted-foreground/60" />
+          <p className="text-sm font-medium text-muted-foreground">
+            Image attachments are not available on the Free plan.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/60">
+            Upgrade your plan to upload images.
+          </p>
+        </div>
+      )}
 
       {attachments.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-8 text-center text-sm text-muted-foreground">

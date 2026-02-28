@@ -24,6 +24,7 @@ interface SubjectDetailProps {
   notes: NoteEntity[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
+  plan: string;
 }
 
 export function SubjectDetail({
@@ -31,6 +32,7 @@ export function SubjectDetail({
   notes,
   misses,
   assessments,
+  plan,
 }: Readonly<SubjectDetailProps>) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -58,11 +60,11 @@ export function SubjectDetail({
             <BookOpen className="size-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="break-words text-2xl font-bold tracking-tight">
+            <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
               {subject.name}
             </h1>
             {subject.description && (
-              <p className="mt-1.5 break-words text-sm text-muted-foreground">
+              <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
                 {subject.description}
               </p>
             )}
@@ -113,6 +115,7 @@ export function SubjectDetail({
           <AssessmentsOverview
             subjectId={subject.id}
             assessments={assessments}
+            plan={plan}
           />
         </>
       )}
@@ -120,7 +123,7 @@ export function SubjectDetail({
       {subject.notesEnabled && (
         <>
           <Separator className="my-8" />
-          <NotesList subjectId={subject.id} notes={notes} />
+          <NotesList subjectId={subject.id} notes={notes} plan={plan} />
         </>
       )}
 

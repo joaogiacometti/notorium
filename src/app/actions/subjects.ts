@@ -7,7 +7,8 @@ import { db } from "@/db/index";
 import { note, noteImageAttachment, subject } from "@/db/schema";
 import { appEnv } from "@/env";
 import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
+import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
+import { checkSubjectLimit } from "@/lib/plan-enforcement";
 import {
   type CreateSubjectForm,
   createSubjectSchema,
@@ -43,11 +44,19 @@ export async function getSubjectById(
 export async function createSubject(
   data: CreateSubjectForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
+  const { userId, plan } = await getAuthenticatedUser();
   const parsed = createSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
     return { error: "Invalid subject data." };
+  }
+
+  const limitCheck = await checkSubjectLimit(userId, plan);
+
+  if (!limitCheck.allowed) {
+    return {
+      error: `Free plan limit: you can have up to ${limitCheck.max} subjects.`,
+    };
   }
 
   await db.insert(subject).values({

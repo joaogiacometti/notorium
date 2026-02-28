@@ -8,7 +8,7 @@ interface NotePageProps {
 }
 
 export default async function NotePage({ params }: NotePageProps) {
-  await requireSession();
+  const session = await requireSession();
 
   const { noteId } = await params;
   const note = await getNoteById(noteId);
@@ -19,7 +19,7 @@ export default async function NotePage({ params }: NotePageProps) {
 
   return (
     <main>
-      <NoteDetail note={note} />
+      <NoteDetail note={note} plan={session.user.plan ?? "free"} />
     </main>
   );
 }

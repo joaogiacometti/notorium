@@ -1,40 +1,48 @@
 # Notorium — Product Specification
 
 ## How This File Works
+
 - This file defines the current product behavior and constraints.
 - Keep it stable and concise.
 - Do not track future ideas, minor refactors, or bug-fix history here.
 - Put future work in `ROADMAP.md`.
 
 ## Product Goal
+
 Notorium helps students organize academic work in one place by combining subjects, notes, attendance tracking, assessments, and fast personal search.
 
 ## Target Users
+
 Students who want a private, lightweight study management workspace.
 
 ## Core Scope (Current)
 
 ### Authentication
+
 - Email/password sign up, sign in, and sign out.
 - Session-based access control across the app.
 
 ### Subjects
+
 - Create, read, update, and delete subjects.
 - Subject fields: name, optional description, module toggles.
 - Subject module toggles: notes, assessments, attendance.
 
 ### Notes
+
 - Create, read, update, and delete notes per subject.
 - Rich text editing and rendering for note content.
 - Optional image attachments per note.
 - Fullscreen mobile-friendly image viewer.
 
 ### Attendance
+
 - Configure `totalClasses` and `maxMisses` per subject.
 - Record and delete misses by date.
 - Show progress, remaining misses, and attendance rate.
 
 ### Assessments
+
 - Create, read, update, and delete assessments per subject.
 - Assessment fields: title, optional description, type, status, due date, optional score, optional weight.
 - Pending/overdue/completed states in UI.
@@ -43,28 +51,40 @@ Students who want a private, lightweight study management workspace.
   - Simple average otherwise.
 
 ### Global Search
+
 - Search subjects and notes by text (case-insensitive).
 - Search is user-scoped and accessible from navbar.
 - Empty search returns user data without text filtering (capped by configured result limits).
 - Search results are cached on the client and invalidated after related mutations.
 
 ### Profile
+
 - View account details.
 - Update display name.
 
 ### UI/UX Baseline
+
 - Responsive layout for desktop/mobile.
 - Loading states/skeletons.
 - Toast feedback for mutation success/errors.
 - Theme toggle (light/dark/system).
 - Custom not-found page.
 
+## Plans
+
+- **Free** (default): up to 5 subjects, up to 5 notes per subject, up to 5 assessments per subject, no image attachments.
+- **Unlimited**: no restrictions on subjects, notes, or image attachments.
+- Plan is stored on the `user` table (`plan` column, enum `free` | `unlimited`).
+- Limits are enforced server-side on create actions and surfaced in the UI.
+
 ## Data Ownership and Security Rules
+
 - All user-owned data must be scoped by authenticated `userId`.
 - A user can only access or mutate their own subjects, notes, attachments, attendance records, and assessments.
 - Subject/note attachment access must enforce ownership checks server-side.
 
 ## Main Entities
+
 - `subject`
   - `id`, `name`, `description`, `notesEnabled`, `gradesEnabled`, `attendanceEnabled`, `totalClasses`, `maxMisses`, timestamps, `userId`.
 - `note`
@@ -77,6 +97,7 @@ Students who want a private, lightweight study management workspace.
   - `id`, `title`, `description`, `type`, `status`, `dueDate`, `score`, `weight`, `subjectId`, timestamps, `userId`.
 
 ## Out of Scope (Current)
+
 - Real-time collaboration and sharing.
 - Calendar integrations.
 - Native mobile apps.

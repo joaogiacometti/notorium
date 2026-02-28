@@ -14,9 +14,10 @@ import type { NoteWithAttachmentsEntity } from "@/lib/api/contracts";
 
 interface NoteDetailProps {
   note: NoteWithAttachmentsEntity;
+  plan: string;
 }
 
-export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
+export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -43,7 +44,7 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
             <FileText className="size-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="break-words text-2xl font-bold tracking-tight">
+            <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
               {note.title}
             </h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
@@ -94,7 +95,11 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
       </div>
 
       <div className="mt-6">
-        <NoteImageAttachments noteId={note.id} attachments={note.attachments} />
+        <NoteImageAttachments
+          noteId={note.id}
+          attachments={note.attachments}
+          plan={plan}
+        />
       </div>
 
       <EditNoteDialog note={note} open={editOpen} onOpenChange={setEditOpen} />

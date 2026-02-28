@@ -11,7 +11,8 @@ import type {
   NoteEntity,
   NoteWithAttachmentsEntity,
 } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
+import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
+import { checkImageAllowed, checkNoteLimit } from "@/lib/plan-enforcement";
 import {
   type CreateNoteForm,
   createNoteSchema,
@@ -90,7 +91,7 @@ export async function getNoteById(
 export async function createNote(
   data: CreateNoteForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
+  const { userId, plan } = await getAuthenticatedUser();
   const parsed = createNoteSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -107,6 +108,14 @@ export async function createNote(
 
   if (existingSubject.length === 0) {
     return { error: "Subject not found." };
+  }
+
+  const limitCheck = await checkNoteLimit(userId, parsed.data.subjectId, plan);
+
+  if (!limitCheck.allowed) {
+    return {
+      error: `Free plan limit: you can have up to ${limitCheck.max} notes per subject.`,
+    };
   }
 
   await db.insert(note).values({
@@ -151,23 +160,18 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   return { success: true };
 }
 
-export async function uploadNoteAttachments(
-  formData: FormData,
-): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const blobToken = getBlobToken();
-
-  if (!blobToken) {
-    return { error: "Blob storage is not configured." };
-  }
-
+function parseAttachmentUpload(formData: FormData): {
+  noteId: string;
+  files: File[];
+  error?: string;
+} {
   const noteId = formData.get("noteId");
   const parsed = uploadNoteAttachmentsSchema.safeParse({
     noteId: typeof noteId === "string" ? noteId : "",
   });
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return { noteId: "", files: [], error: "Invalid request." };
   }
 
   const files = formData
@@ -175,11 +179,17 @@ export async function uploadNoteAttachments(
     .filter((value): value is File => value instanceof File && value.size > 0);
 
   if (files.length === 0) {
-    return { error: "Select at least one image." };
+    return {
+      noteId: parsed.data.noteId,
+      files: [],
+      error: "Select at least one image.",
+    };
   }
 
   if (files.length > noteAttachmentMaxFilesPerUpload) {
     return {
+      noteId: parsed.data.noteId,
+      files: [],
       error: `You can upload up to ${noteAttachmentMaxFilesPerUpload} images at a time.`,
     };
   }
@@ -187,8 +197,36 @@ export async function uploadNoteAttachments(
   for (const file of files) {
     const validationError = validateNoteAttachmentFile(file);
     if (validationError) {
-      return { error: `${file.name}: ${validationError}` };
+      return {
+        noteId: parsed.data.noteId,
+        files: [],
+        error: `${file.name}: ${validationError}`,
+      };
     }
+  }
+
+  return { noteId: parsed.data.noteId, files };
+}
+
+export async function uploadNoteAttachments(
+  formData: FormData,
+): Promise<MutationResult> {
+  const { userId, plan } = await getAuthenticatedUser();
+
+  if (!(await checkImageAllowed(plan))) {
+    return { error: "Image attachments are not available on the Free plan." };
+  }
+
+  const blobToken = getBlobToken();
+
+  if (!blobToken) {
+    return { error: "Blob storage is not configured." };
+  }
+
+  const upload = parseAttachmentUpload(formData);
+
+  if (upload.error) {
+    return { error: upload.error };
   }
 
   const existing = await db
@@ -197,7 +235,7 @@ export async function uploadNoteAttachments(
       subjectId: note.subjectId,
     })
     .from(note)
-    .where(and(eq(note.id, parsed.data.noteId), eq(note.userId, userId)));
+    .where(and(eq(note.id, upload.noteId), eq(note.userId, userId)));
 
   const existingNote = existing[0];
 
@@ -212,7 +250,7 @@ export async function uploadNoteAttachments(
   }> = [];
 
   try {
-    for (const file of files) {
+    for (const file of upload.files) {
       const blob = await put(
         getAttachmentPathname(userId, existingNote.id, file),
         file,

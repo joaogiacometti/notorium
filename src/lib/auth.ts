@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db/index";
 import * as schema from "@/db/schema";
+import type { UserPlan } from "@/lib/plan-limits";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -14,6 +15,15 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+  },
+  user: {
+    additionalFields: {
+      plan: {
+        type: "string",
+        input: false,
+        defaultValue: "free",
+      },
+    },
   },
   plugins: [nextCookies()],
 });
@@ -41,4 +51,15 @@ export async function requireSession() {
 export async function getAuthenticatedUserId(): Promise<string> {
   const session = await requireSession();
   return session.user.id;
+}
+
+export async function getAuthenticatedUser(): Promise<{
+  userId: string;
+  plan: UserPlan;
+}> {
+  const session = await requireSession();
+  return {
+    userId: session.user.id,
+    plan: (session.user.plan as UserPlan) ?? "free",
+  };
 }
