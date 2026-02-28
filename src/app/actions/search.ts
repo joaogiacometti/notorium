@@ -10,6 +10,10 @@ import { searchQuerySchema } from "@/lib/validations/search";
 const searchSubjectsLimit = 50;
 const searchNotesLimit = 50;
 
+function escapeIlike(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
 export async function getSearchData(query?: string): Promise<SearchData> {
   const userId = await getAuthenticatedUserId();
   const parsed = searchQuerySchema.safeParse(query);
@@ -19,7 +23,7 @@ export async function getSearchData(query?: string): Promise<SearchData> {
   }
 
   const searchQuery = parsed.data;
-  const searchPattern = `%${searchQuery}%`;
+  const searchPattern = `%${escapeIlike(searchQuery)}%`;
   const shouldFilter = searchQuery.length > 0;
 
   const [allSubjects, allNotes] = await Promise.all([
