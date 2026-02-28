@@ -12,13 +12,15 @@ export default async function ProfilePage() {
         <p className="mt-1 mb-6 text-sm text-muted-foreground">
           Review your account information and keep your profile up to date.
         </p>
-        <ProfileForm
-          name={session.user.name}
-          email={session.user.email}
-          plan={(session.user.plan ?? "free") as UserPlan}
-          createdAt={new Date(session.user.createdAt).toISOString()}
-          updatedAt={new Date(session.user.updatedAt).toISOString()}
-        />
+        <div className="space-y-6">
+          <ProfileForm
+            name={session.user.name}
+            email={session.user.email}
+            plan={(session.user.plan ?? "free") as UserPlan}
+            createdAt={new Date(session.user.createdAt).toISOString()}
+            updatedAt={new Date(session.user.updatedAt).toISOString()}
+          />
+        </div>
       </div>
     </main>
   );
