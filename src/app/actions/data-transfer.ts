@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { assessment, attendanceMiss, note, subject } from "@/db/schema";
 import type { MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
+import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
+import {
+  checkAssessmentLimit,
+  checkNoteLimit,
+  checkSubjectLimit,
+} from "@/lib/plan-enforcement";
 import {
   type ImportData,
   importDataSchema,
@@ -98,7 +103,7 @@ export async function exportData(
 export async function importData(
   raw: unknown,
 ): Promise<MutationResult & { imported?: number }> {
-  const userId = await getAuthenticatedUserId();
+  const { userId, plan } = await getAuthenticatedUser();
 
   const parsed = importDataSchema.safeParse(raw);
   if (!parsed.success) {
@@ -111,19 +116,29 @@ export async function importData(
     return { error: "No subjects to import." };
   }
 
+  const subjectLimitCheck = await checkSubjectLimit(userId, plan);
+  if (
+    subjectLimitCheck.max !== null &&
+    subjectLimitCheck.current + data.subjects.length > subjectLimitCheck.max
+  ) {
+    return {
+      error: `Plan limit: you can only have ${subjectLimitCheck.max} subjects.`,
+    };
+  }
+
   let importedCount = 0;
 
-  for (const s of data.subjects) {
+  for (const importedSubject of data.subjects) {
     const [inserted] = await db
       .insert(subject)
       .values({
-        name: s.name,
-        description: s.description,
-        totalClasses: s.totalClasses,
-        maxMisses: s.maxMisses,
-        notesEnabled: s.notesEnabled,
-        gradesEnabled: s.gradesEnabled,
-        attendanceEnabled: s.attendanceEnabled,
+        name: importedSubject.name,
+        description: importedSubject.description,
+        totalClasses: importedSubject.totalClasses,
+        maxMisses: importedSubject.maxMisses,
+        notesEnabled: importedSubject.notesEnabled,
+        gradesEnabled: importedSubject.gradesEnabled,
+        attendanceEnabled: importedSubject.attendanceEnabled,
         userId,
       })
       .returning({ id: subject.id });
@@ -132,9 +147,19 @@ export async function importData(
 
     const subjectId = inserted.id;
 
-    if (s.notes.length > 0) {
+    if (importedSubject.notes.length > 0) {
+      const noteLimitCheck = await checkNoteLimit(userId, subjectId, plan);
+      if (
+        noteLimitCheck.max !== null &&
+        importedSubject.notes.length > noteLimitCheck.max
+      ) {
+        return {
+          error: `Plan limit: you can only have ${noteLimitCheck.max} notes per subject.`,
+        };
+      }
+
       await db.insert(note).values(
-        s.notes.map((n) => ({
+        importedSubject.notes.map((n) => ({
           title: n.title,
           content: n.content,
           subjectId,
@@ -143,11 +168,11 @@ export async function importData(
       );
     }
 
-    if (s.attendanceMisses.length > 0) {
+    if (importedSubject.attendanceMisses.length > 0) {
       await db
         .insert(attendanceMiss)
         .values(
-          s.attendanceMisses.map((m) => ({
+          importedSubject.attendanceMisses.map((m) => ({
             missDate: m.missDate,
             subjectId,
             userId,
@@ -156,9 +181,23 @@ export async function importData(
         .onConflictDoNothing();
     }
 
-    if (s.assessments.length > 0) {
+    if (importedSubject.assessments.length > 0) {
+      const assessmentLimitCheck = await checkAssessmentLimit(
+        userId,
+        subjectId,
+        plan,
+      );
+      if (
+        assessmentLimitCheck.max !== null &&
+        importedSubject.assessments.length > assessmentLimitCheck.max
+      ) {
+        return {
+          error: `Plan limit: you can only have ${assessmentLimitCheck.max} assessments per subject.`,
+        };
+      }
+
       await db.insert(assessment).values(
-        s.assessments.map((a) => ({
+        importedSubject.assessments.map((a) => ({
           title: a.title,
           description: a.description,
           type: a.type,
