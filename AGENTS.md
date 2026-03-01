@@ -110,12 +110,28 @@ src/
 ### Testing
 
 - Use **Vitest** for unit and integration tests. Place test files next to the source file with a `.test.ts` suffix.
+- Use **Cypress** for E2E tests. Place test files in `cypress/e2e/` with a `.cy.ts` suffix. Split test files by page or concern, not in a single monolith.
 - **Test behavior and logic, not constants.** Never write tests that merely re-assert hardcoded values from a constant object. If a function just returns a constant, one assertion (e.g., `toEqual(MY_CONSTANT)`) is enough — do not check each property individually.
 - **Focus on edge cases, branching logic, and error handling.** Tests should exercise code paths that could actually break: conditionals, validations, error states, transformations, and boundary conditions.
 - **Zod schema tests should verify rejection of invalid inputs**, not just confirm that valid data passes. Test missing fields, wrong types, boundary values, and malformed data.
 - **Server Action tests should cover authentication checks, authorization, and error responses**, not just the happy path.
 - **Ask yourself: "If I deleted this test, would I lose confidence in the code?"** If the answer is no, the test is not worth writing.
 - Prefer fewer, meaningful tests over many shallow ones that inflate coverage without catching real bugs.
+
+#### What NOT to test in E2E
+
+- **Browser-native behavior.** Do not test things the browser enforces (e.g., `type="email"` validation via `:invalid` pseudo-class). We did not write that code.
+- **Static content strings.** Do not assert heading text just to confirm a page rendered. Prefer asserting interactive elements (links, buttons, forms) that prove the page is functional.
+- **`<Link>` navigation.** If the `href` attribute is already asserted, do not add a separate click-and-check-url test — that tests Next.js routing, not our code.
+
+#### What TO test in E2E
+
+- **Form validation boundaries.** Test both min and max length limits from Zod schemas (short input, over-max input).
+- **Error feedback.** Assert that error toasts appear for server-rejected actions (invalid credentials, duplicate email, etc.).
+- **Loading/disabled states.** Verify submit buttons show loading text and are disabled during submission.
+- **Auth guards.** Test that protected routes (`/subjects`, `/profile`, `/assessments`) redirect unauthenticated users to `/login`.
+- **Auth redirects.** Test that authenticated users are redirected away from `/login` and `/signup`.
+- **Full user flows.** Cover end-to-end journeys (signup → redirect → logout → login).
 
 ### Styling
 
