@@ -107,6 +107,16 @@ src/
 - Always check authentication before accessing user-specific data.
 - All user-owned data must filter by `userId` from the session.
 
+### Testing
+
+- Use **Vitest** for unit and integration tests. Place test files next to the source file with a `.test.ts` suffix.
+- **Test behavior and logic, not constants.** Never write tests that merely re-assert hardcoded values from a constant object. If a function just returns a constant, one assertion (e.g., `toEqual(MY_CONSTANT)`) is enough — do not check each property individually.
+- **Focus on edge cases, branching logic, and error handling.** Tests should exercise code paths that could actually break: conditionals, validations, error states, transformations, and boundary conditions.
+- **Zod schema tests should verify rejection of invalid inputs**, not just confirm that valid data passes. Test missing fields, wrong types, boundary values, and malformed data.
+- **Server Action tests should cover authentication checks, authorization, and error responses**, not just the happy path.
+- **Ask yourself: "If I deleted this test, would I lose confidence in the code?"** If the answer is no, the test is not worth writing.
+- Prefer fewer, meaningful tests over many shallow ones that inflate coverage without catching real bugs.
+
 ### Styling
 
 - Use **Tailwind CSS 4** for styling.
