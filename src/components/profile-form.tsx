@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateProfile } from "@/app/actions/profile";
+import { DataTransferActions } from "@/components/data-transfer-actions";
 import { DeleteAccountDialog } from "@/components/delete-account-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -150,6 +151,19 @@ export function ProfileForm({
               </Button>
             </FieldGroup>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Data Transfer</CardTitle>
+          <CardDescription>
+            Export all your subjects, notes, attendance records, and assessments
+            as a JSON file, or import data from a previous export.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTransferActions />
         </CardContent>
       </Card>
 
