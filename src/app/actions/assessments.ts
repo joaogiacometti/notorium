@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
@@ -22,22 +22,37 @@ export async function getAssessmentsBySubject(
   const userId = await getAuthenticatedUserId();
 
   return db
-    .select()
+    .select({ assessment })
     .from(assessment)
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
     .where(
-      and(eq(assessment.subjectId, subjectId), eq(assessment.userId, userId)),
+      and(
+        eq(assessment.subjectId, subjectId),
+        eq(assessment.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
     )
-    .orderBy(desc(assessment.updatedAt));
+    .orderBy(desc(assessment.updatedAt))
+    .then((rows) => rows.map((row) => row.assessment));
 }
 
 export async function getAssessments(): Promise<AssessmentEntity[]> {
   const userId = await getAuthenticatedUserId();
 
   return db
-    .select()
+    .select({ assessment })
     .from(assessment)
-    .where(eq(assessment.userId, userId))
-    .orderBy(desc(assessment.updatedAt));
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
+    .where(
+      and(
+        eq(assessment.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .orderBy(desc(assessment.updatedAt))
+    .then((rows) => rows.map((row) => row.assessment));
 }
 
 export async function createAssessment(
@@ -54,7 +69,11 @@ export async function createAssessment(
     .select({ id: subject.id })
     .from(subject)
     .where(
-      and(eq(subject.id, parsed.data.subjectId), eq(subject.userId, userId)),
+      and(
+        eq(subject.id, parsed.data.subjectId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
     )
     .limit(1);
 
@@ -104,8 +123,14 @@ export async function editAssessment(
   const existingAssessment = await db
     .select({ id: assessment.id, subjectId: assessment.subjectId })
     .from(assessment)
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
     .where(
-      and(eq(assessment.id, parsed.data.id), eq(assessment.userId, userId)),
+      and(
+        eq(assessment.id, parsed.data.id),
+        eq(assessment.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
     )
     .limit(1);
 
@@ -146,8 +171,14 @@ export async function deleteAssessment(
   const existingAssessment = await db
     .select({ id: assessment.id, subjectId: assessment.subjectId })
     .from(assessment)
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
     .where(
-      and(eq(assessment.id, parsed.data.id), eq(assessment.userId, userId)),
+      and(
+        eq(assessment.id, parsed.data.id),
+        eq(assessment.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
     )
     .limit(1);
 

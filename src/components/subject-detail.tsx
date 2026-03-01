@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -37,6 +37,7 @@ export function SubjectDetail({
 }: Readonly<SubjectDetailProps>) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
@@ -92,6 +93,15 @@ export function SubjectDetail({
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 gap-1.5 sm:flex-none"
+            onClick={() => setArchiveOpen(true)}
+          >
+            <Archive className="size-3.5" />
+            Archive
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             className="flex-1 gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground sm:flex-none"
             onClick={() => setDeleteOpen(true)}
           >
@@ -136,8 +146,20 @@ export function SubjectDetail({
       <DeleteSubjectDialog
         subjectId={subject.id}
         subjectName={subject.name}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        mode="archive"
+        onSuccess={() => {
+          setArchiveOpen(false);
+          router.push("/subjects");
+        }}
+      />
+      <DeleteSubjectDialog
+        subjectId={subject.id}
+        subjectName={subject.name}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+        mode="delete"
         onSuccess={() => {
           setDeleteOpen(false);
           router.push("/subjects");

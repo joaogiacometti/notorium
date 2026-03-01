@@ -1,7 +1,7 @@
 "use server";
 
 import { del, put } from "@vercel/blob";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { note, noteImageAttachment, subject } from "@/db/schema";
@@ -53,10 +53,19 @@ export async function getNotesBySubject(
   const userId = await getAuthenticatedUserId();
 
   return db
-    .select()
+    .select({ note })
     .from(note)
-    .where(and(eq(note.subjectId, subjectId), eq(note.userId, userId)))
-    .orderBy(desc(note.updatedAt));
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.subjectId, subjectId),
+        eq(note.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .orderBy(desc(note.updatedAt))
+    .then((rows) => rows.map((row) => row.note));
 }
 
 export async function getNoteById(
@@ -65,11 +74,19 @@ export async function getNoteById(
   const userId = await getAuthenticatedUserId();
 
   const results = await db
-    .select()
+    .select({ note })
     .from(note)
-    .where(and(eq(note.id, id), eq(note.userId, userId)));
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.id, id),
+        eq(note.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 
-  const existingNote = results[0];
+  const existingNote = results[0]?.note;
 
   if (!existingNote) {
     return null;
@@ -106,7 +123,11 @@ export async function createNote(
     .select({ id: subject.id })
     .from(subject)
     .where(
-      and(eq(subject.id, parsed.data.subjectId), eq(subject.userId, userId)),
+      and(
+        eq(subject.id, parsed.data.subjectId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
     )
     .limit(1);
 
@@ -142,9 +163,17 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   }
 
   const existing = await db
-    .select()
+    .select({ note })
     .from(note)
-    .where(and(eq(note.id, parsed.data.id), eq(note.userId, userId)));
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.id, parsed.data.id),
+        eq(note.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 
   if (existing.length === 0) {
     return { error: "Note not found." };
@@ -158,7 +187,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
     })
     .where(and(eq(note.id, parsed.data.id), eq(note.userId, userId)));
 
-  const existingNote = existing[0];
+  const existingNote = existing[0].note;
   revalidatePath(`/subjects/${existingNote.subjectId}`);
   revalidatePath(`/subjects/${existingNote.subjectId}/notes/${parsed.data.id}`);
   return { success: true };
@@ -256,7 +285,15 @@ export async function uploadNoteAttachments(
       subjectId: note.subjectId,
     })
     .from(note)
-    .where(and(eq(note.id, upload.noteId), eq(note.userId, userId)));
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.id, upload.noteId),
+        eq(note.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 
   const existingNote = existing[0];
 
@@ -357,7 +394,15 @@ export async function removeNoteAttachment(
       subjectId: note.subjectId,
     })
     .from(note)
-    .where(and(eq(note.id, attachment.noteId), eq(note.userId, userId)));
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.id, attachment.noteId),
+        eq(note.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 
   const existingNote = existingNotes[0];
 
@@ -405,15 +450,23 @@ export async function deleteNote(
   }
 
   const existing = await db
-    .select()
+    .select({ note })
     .from(note)
-    .where(and(eq(note.id, parsed.data.id), eq(note.userId, userId)));
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.id, parsed.data.id),
+        eq(note.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 
   if (existing.length === 0) {
     return { error: "Note not found." };
   }
 
-  const existingNote = existing[0];
+  const existingNote = existing[0].note;
 
   const attachments = await db
     .select({

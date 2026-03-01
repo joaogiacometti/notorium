@@ -24,6 +24,7 @@ Students who want a private, lightweight study management workspace.
 ### Subjects
 
 - Create, read, update, and delete subjects.
+- Archive and restore subjects.
 - Subject fields: name, optional description, module toggles.
 - Subject module toggles: notes, assessments, attendance.
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db/index";
 import { note, subject } from "@/db/schema";
 import type { SearchData } from "@/lib/api/contracts";
@@ -38,12 +38,13 @@ export async function getSearchData(query?: string): Promise<SearchData> {
         shouldFilter
           ? and(
               eq(subject.userId, userId),
+              isNull(subject.archivedAt),
               or(
                 ilike(subject.name, searchPattern),
                 ilike(subject.description, searchPattern),
               ),
             )
-          : eq(subject.userId, userId),
+          : and(eq(subject.userId, userId), isNull(subject.archivedAt)),
       )
       .orderBy(desc(subject.updatedAt))
       .limit(searchSubjectsLimit),
@@ -62,13 +63,18 @@ export async function getSearchData(query?: string): Promise<SearchData> {
           ? and(
               eq(note.userId, userId),
               eq(subject.userId, userId),
+              isNull(subject.archivedAt),
               or(
                 ilike(note.title, searchPattern),
                 ilike(note.content, searchPattern),
                 ilike(subject.name, searchPattern),
               ),
             )
-          : and(eq(note.userId, userId), eq(subject.userId, userId)),
+          : and(
+              eq(note.userId, userId),
+              eq(subject.userId, userId),
+              isNull(subject.archivedAt),
+            ),
       )
       .orderBy(desc(note.updatedAt))
       .limit(searchNotesLimit),

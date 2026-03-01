@@ -101,6 +101,7 @@ export const subject = pgTable(
     notesEnabled: boolean("notes_enabled").default(true).notNull(),
     gradesEnabled: boolean("grades_enabled").default(true).notNull(),
     attendanceEnabled: boolean("attendance_enabled").default(true).notNull(),
+    archivedAt: timestamp("archived_at"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -110,7 +111,10 @@ export const subject = pgTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("subject_userId_idx").on(table.userId)],
+  (table) => [
+    index("subject_userId_idx").on(table.userId),
+    index("subject_userId_archivedAt_idx").on(table.userId, table.archivedAt),
+  ],
 );
 
 export const attendanceMiss = pgTable(

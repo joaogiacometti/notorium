@@ -1,9 +1,9 @@
 import { get } from "@vercel/blob";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { noteImageAttachment } from "@/db/schema";
+import { note, noteImageAttachment, subject } from "@/db/schema";
 import { appEnv } from "@/env";
 import { auth } from "@/lib/auth";
 
@@ -35,17 +35,22 @@ export async function GET(
   const { noteId, attachmentId } = await params;
 
   const existing = await db
-    .select()
+    .select({ attachment: noteImageAttachment })
     .from(noteImageAttachment)
+    .innerJoin(note, eq(noteImageAttachment.noteId, note.id))
+    .innerJoin(subject, eq(note.subjectId, subject.id))
     .where(
       and(
         eq(noteImageAttachment.id, attachmentId),
         eq(noteImageAttachment.noteId, noteId),
         eq(noteImageAttachment.userId, session.user.id),
+        eq(note.userId, session.user.id),
+        eq(subject.userId, session.user.id),
+        isNull(subject.archivedAt),
       ),
     );
 
-  const attachment = existing[0];
+  const attachment = existing[0]?.attachment;
 
   if (!attachment) {
     return NextResponse.json(

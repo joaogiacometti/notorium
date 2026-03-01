@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { BookOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Archive, BookOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
@@ -22,6 +22,7 @@ interface SubjectCardProps {
 
 export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
   const [editOpen, setEditOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
@@ -57,6 +58,13 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
               >
                 <Pencil className="size-4" />
                 Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setArchiveOpen(true)}
+                className="cursor-pointer"
+              >
+                <Archive className="size-4" />
+                Archive
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
@@ -96,8 +104,16 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
       <DeleteSubjectDialog
         subjectId={subject.id}
         subjectName={subject.name}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        mode="archive"
+      />
+      <DeleteSubjectDialog
+        subjectId={subject.id}
+        subjectName={subject.name}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+        mode="delete"
       />
     </>
   );
