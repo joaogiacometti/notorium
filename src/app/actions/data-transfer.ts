@@ -6,11 +6,8 @@ import { db } from "@/db/index";
 import { assessment, attendanceMiss, note, subject } from "@/db/schema";
 import type { MutationResult } from "@/lib/api/contracts";
 import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
-import {
-  checkAssessmentLimit,
-  checkNoteLimit,
-  checkSubjectLimit,
-} from "@/lib/plan-enforcement";
+import { checkSubjectLimit } from "@/lib/plan-enforcement";
+import { getPlanLimits } from "@/lib/plan-limits";
 import {
   type ImportData,
   importDataSchema,
@@ -104,6 +101,7 @@ export async function importData(
   raw: unknown,
 ): Promise<MutationResult & { imported?: number }> {
   const { userId, plan } = await getAuthenticatedUser();
+  const limits = getPlanLimits(plan);
 
   const parsed = importDataSchema.safeParse(raw);
   if (!parsed.success) {
@@ -126,92 +124,96 @@ export async function importData(
     };
   }
 
+  for (const importedSubject of data.subjects) {
+    if (
+      limits.maxNotesPerSubject !== null &&
+      importedSubject.notes.length > limits.maxNotesPerSubject
+    ) {
+      return {
+        error: `Plan limit: you can only have ${limits.maxNotesPerSubject} notes per subject.`,
+      };
+    }
+
+    if (
+      limits.maxAssessmentsPerSubject !== null &&
+      importedSubject.assessments.length > limits.maxAssessmentsPerSubject
+    ) {
+      return {
+        error: `Plan limit: you can only have ${limits.maxAssessmentsPerSubject} assessments per subject.`,
+      };
+    }
+  }
+
   let importedCount = 0;
 
-  for (const importedSubject of data.subjects) {
-    const [inserted] = await db
-      .insert(subject)
-      .values({
-        name: importedSubject.name,
-        description: importedSubject.description,
-        totalClasses: importedSubject.totalClasses,
-        maxMisses: importedSubject.maxMisses,
-        notesEnabled: importedSubject.notesEnabled,
-        gradesEnabled: importedSubject.gradesEnabled,
-        attendanceEnabled: importedSubject.attendanceEnabled,
-        userId,
-      })
-      .returning({ id: subject.id });
-
-    if (!inserted) continue;
-
-    const subjectId = inserted.id;
-
-    if (importedSubject.notes.length > 0) {
-      const noteLimitCheck = await checkNoteLimit(userId, subjectId, plan);
-      if (
-        noteLimitCheck.max !== null &&
-        importedSubject.notes.length > noteLimitCheck.max
-      ) {
-        return {
-          error: `Plan limit: you can only have ${noteLimitCheck.max} notes per subject.`,
-        };
-      }
-
-      await db.insert(note).values(
-        importedSubject.notes.map((n) => ({
-          title: n.title,
-          content: n.content,
-          subjectId,
-          userId,
-        })),
-      );
-    }
-
-    if (importedSubject.attendanceMisses.length > 0) {
-      await db
-        .insert(attendanceMiss)
-        .values(
-          importedSubject.attendanceMisses.map((m) => ({
-            missDate: m.missDate,
-            subjectId,
+  try {
+    await db.transaction(async (tx) => {
+      for (const importedSubject of data.subjects) {
+        const [inserted] = await tx
+          .insert(subject)
+          .values({
+            name: importedSubject.name,
+            description: importedSubject.description,
+            totalClasses: importedSubject.totalClasses,
+            maxMisses: importedSubject.maxMisses,
+            notesEnabled: importedSubject.notesEnabled,
+            gradesEnabled: importedSubject.gradesEnabled,
+            attendanceEnabled: importedSubject.attendanceEnabled,
             userId,
-          })),
-        )
-        .onConflictDoNothing();
-    }
+          })
+          .returning({ id: subject.id });
 
-    if (importedSubject.assessments.length > 0) {
-      const assessmentLimitCheck = await checkAssessmentLimit(
-        userId,
-        subjectId,
-        plan,
-      );
-      if (
-        assessmentLimitCheck.max !== null &&
-        importedSubject.assessments.length > assessmentLimitCheck.max
-      ) {
-        return {
-          error: `Plan limit: you can only have ${assessmentLimitCheck.max} assessments per subject.`,
-        };
+        if (!inserted) {
+          continue;
+        }
+
+        const subjectId = inserted.id;
+
+        if (importedSubject.notes.length > 0) {
+          await tx.insert(note).values(
+            importedSubject.notes.map((n) => ({
+              title: n.title,
+              content: n.content,
+              subjectId,
+              userId,
+            })),
+          );
+        }
+
+        if (importedSubject.attendanceMisses.length > 0) {
+          await tx
+            .insert(attendanceMiss)
+            .values(
+              importedSubject.attendanceMisses.map((m) => ({
+                missDate: m.missDate,
+                subjectId,
+                userId,
+              })),
+            )
+            .onConflictDoNothing();
+        }
+
+        if (importedSubject.assessments.length > 0) {
+          await tx.insert(assessment).values(
+            importedSubject.assessments.map((a) => ({
+              title: a.title,
+              description: a.description,
+              type: a.type,
+              status: a.status,
+              dueDate: a.dueDate,
+              score: a.score,
+              weight: a.weight,
+              subjectId,
+              userId,
+            })),
+          );
+        }
+
+        importedCount++;
       }
-
-      await db.insert(assessment).values(
-        importedSubject.assessments.map((a) => ({
-          title: a.title,
-          description: a.description,
-          type: a.type,
-          status: a.status,
-          dueDate: a.dueDate,
-          score: a.score,
-          weight: a.weight,
-          subjectId,
-          userId,
-        })),
-      );
-    }
-
-    importedCount++;
+    });
+  } catch {
+    return { error: "Failed to import data." };
   }
 
   revalidatePath("/subjects");
