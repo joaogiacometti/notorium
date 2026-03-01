@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { assessment, attendanceMiss, note, subject } from "@/db/schema";
@@ -26,7 +26,7 @@ export async function exportData(
   const subjects = await db
     .select()
     .from(subject)
-    .where(eq(subject.userId, userId));
+    .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)));
 
   const subjectsWithData = await Promise.all(
     subjects.map(async (s) => {

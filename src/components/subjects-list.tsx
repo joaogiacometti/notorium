@@ -1,63 +1,81 @@
 "use client";
 
-import { BookOpen, Lock, Plus } from "lucide-react";
+import { Archive, BookOpen, Lock, Plus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { CreateSubjectDialog } from "@/components/create-subject-dialog";
 import { SubjectCard } from "@/components/subject-card";
 import { Button } from "@/components/ui/button";
 import type { SubjectEntity } from "@/lib/api/contracts";
 import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
+import {
+  getSubjectCountText,
+  getTotalSubjectCount,
+} from "@/lib/subjects-count";
 
 interface SubjectsListProps {
   subjects: SubjectEntity[];
+  archivedCount: number;
   plan: UserPlan;
 }
 
-export function SubjectsList({ subjects, plan }: Readonly<SubjectsListProps>) {
+export function SubjectsList({
+  subjects,
+  archivedCount,
+  plan,
+}: Readonly<SubjectsListProps>) {
   const [createOpen, setCreateOpen] = useState(false);
 
   const limits = getPlanLimits(plan);
+  const totalSubjects = getTotalSubjectCount(subjects.length, archivedCount);
   const isAtLimit =
-    limits.maxSubjects !== null && subjects.length >= limits.maxSubjects;
-
-  function getSubjectCountText() {
-    if (subjects.length === 0) {
-      return "Get started by creating your first subject.";
-    }
-    if (limits.maxSubjects !== null) {
-      return `${subjects.length}/${limits.maxSubjects} subjects`;
-    }
-    return `${subjects.length} subject${subjects.length === 1 ? "" : "s"}`;
-  }
+    limits.maxSubjects !== null && totalSubjects >= limits.maxSubjects;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Subjects</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {getSubjectCountText()}
+            {getSubjectCountText({
+              activeCount: subjects.length,
+              archivedCount,
+              maxSubjects: limits.maxSubjects,
+            })}
           </p>
         </div>
-        <CreateSubjectDialog
-          trigger={
-            <Button
-              className="gap-1.5"
-              id="btn-create-subject"
-              disabled={isAtLimit}
-              title={
-                isAtLimit
-                  ? "Upgrade your plan to create more subjects"
-                  : undefined
-              }
-            >
-              <Plus className="size-4" />
-              <span className="hidden sm:inline">New Subject</span>
-            </Button>
-          }
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-        />
+        <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
+          <Button variant="outline" className="gap-1.5" asChild>
+            <Link href="/subjects/archived">
+              <Archive className="size-4" />
+              Archived
+              {archivedCount > 0 ? (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                  {archivedCount}
+                </span>
+              ) : null}
+            </Link>
+          </Button>
+          <CreateSubjectDialog
+            trigger={
+              <Button
+                className="gap-1.5"
+                id="btn-create-subject"
+                disabled={isAtLimit}
+                title={
+                  isAtLimit
+                    ? "Upgrade your plan to create more subjects"
+                    : undefined
+                }
+              >
+                <Plus className="size-4" />
+                <span className="hidden sm:inline">New Subject</span>
+              </Button>
+            }
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+          />
+        </div>
       </div>
 
       {isAtLimit && (
@@ -70,7 +88,7 @@ export function SubjectsList({ subjects, plan }: Readonly<SubjectsListProps>) {
         </div>
       )}
 
-      {subjects.length === 0 ? (
+      {subjects.length === 0 && archivedCount === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 py-20">
           <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
             <BookOpen className="size-6 text-primary" />

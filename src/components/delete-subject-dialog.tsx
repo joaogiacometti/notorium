@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { deleteSubject } from "@/app/actions/subjects";
+import { archiveSubject, deleteSubject } from "@/app/actions/subjects";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +21,7 @@ interface DeleteSubjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  mode?: "archive" | "delete";
 }
 
 export function DeleteSubjectDialog({
@@ -29,13 +30,17 @@ export function DeleteSubjectDialog({
   open,
   onOpenChange,
   onSuccess,
+  mode = "delete",
 }: Readonly<DeleteSubjectDialogProps>) {
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
-  function handleDelete() {
+  function handleConfirm() {
     startTransition(async () => {
-      const result = await deleteSubject({ id: subjectId });
+      const result =
+        mode === "archive"
+          ? await archiveSubject({ id: subjectId })
+          : await deleteSubject({ id: subjectId });
       if (result.success) {
         await queryClient.invalidateQueries({ queryKey: ["search-data"] });
         if (onSuccess) {
@@ -53,13 +58,17 @@ export function DeleteSubjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Subject</DialogTitle>
+          <DialogTitle>
+            {mode === "archive" ? "Archive Subject" : "Delete Subject"}
+          </DialogTitle>
           <DialogDescription>
-            {"Are you sure you want to delete "}
+            {mode === "archive"
+              ? "Are you sure you want to archive "
+              : "Are you sure you want to delete "}
             <span className="font-semibold text-foreground">{subjectName}</span>
-            {
-              "? This action cannot be undone. All associated notes will also be deleted."
-            }
+            {mode === "archive"
+              ? "? You can restore it later from archived subjects."
+              : "? This action cannot be undone. All associated notes will also be deleted."}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -71,12 +80,12 @@ export function DeleteSubjectDialog({
             Cancel
           </Button>
           <Button
-            variant="destructive"
-            onClick={handleDelete}
+            variant={mode === "archive" ? "default" : "destructive"}
+            onClick={handleConfirm}
             disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            Delete
+            {mode === "archive" ? "Archive" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

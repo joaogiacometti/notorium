@@ -1,7 +1,7 @@
 "use server";
 
 import { del } from "@vercel/blob";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { note, noteImageAttachment, subject } from "@/db/schema";
@@ -10,12 +10,16 @@ import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
 import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
 import { checkSubjectLimit } from "@/lib/plan-enforcement";
 import {
+  type ArchiveSubjectForm,
+  archiveSubjectSchema,
   type CreateSubjectForm,
   createSubjectSchema,
   type DeleteSubjectForm,
   deleteSubjectSchema,
   type EditSubjectForm,
   editSubjectSchema,
+  type RestoreSubjectForm,
+  restoreSubjectSchema,
 } from "@/lib/validations/subjects";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
@@ -24,7 +28,17 @@ export async function getSubjects(): Promise<SubjectEntity[]> {
   return db
     .select()
     .from(subject)
-    .where(eq(subject.userId, userId))
+    .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)))
+    .orderBy(desc(subject.updatedAt));
+}
+
+export async function getArchivedSubjects(): Promise<SubjectEntity[]> {
+  const userId = await getAuthenticatedUserId();
+
+  return db
+    .select()
+    .from(subject)
+    .where(and(eq(subject.userId, userId), isNotNull(subject.archivedAt)))
     .orderBy(desc(subject.updatedAt));
 }
 
@@ -36,7 +50,13 @@ export async function getSubjectById(
   const results = await db
     .select()
     .from(subject)
-    .where(and(eq(subject.id, id), eq(subject.userId, userId)));
+    .where(
+      and(
+        eq(subject.id, id),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 
   return results[0] ?? null;
 }
@@ -85,7 +105,13 @@ export async function editSubject(
   const existing = await db
     .select()
     .from(subject)
-    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
+    .where(
+      and(
+        eq(subject.id, parsed.data.id),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 
   if (existing.length === 0) {
     return { error: "Subject not found." };
@@ -104,6 +130,86 @@ export async function editSubject(
 
   revalidatePath("/subjects");
   revalidatePath(`/subjects/${parsed.data.id}`);
+  return { success: true };
+}
+
+export async function archiveSubject(
+  data: ArchiveSubjectForm,
+): Promise<MutationResult> {
+  const userId = await getAuthenticatedUserId();
+  const parsed = archiveSubjectSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { error: "Invalid request." };
+  }
+
+  const existing = await db
+    .select({ id: subject.id })
+    .from(subject)
+    .where(
+      and(
+        eq(subject.id, parsed.data.id),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .limit(1);
+
+  if (existing.length === 0) {
+    return { error: "Subject not found." };
+  }
+
+  await db
+    .update(subject)
+    .set({
+      archivedAt: new Date(),
+    })
+    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
+
+  revalidatePath("/subjects");
+  revalidatePath("/subjects/archived");
+  revalidatePath(`/subjects/${parsed.data.id}`);
+  revalidatePath("/assessments");
+  return { success: true };
+}
+
+export async function restoreSubject(
+  data: RestoreSubjectForm,
+): Promise<MutationResult> {
+  const userId = await getAuthenticatedUserId();
+  const parsed = restoreSubjectSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { error: "Invalid request." };
+  }
+
+  const existing = await db
+    .select({ id: subject.id })
+    .from(subject)
+    .where(
+      and(
+        eq(subject.id, parsed.data.id),
+        eq(subject.userId, userId),
+        isNotNull(subject.archivedAt),
+      ),
+    )
+    .limit(1);
+
+  if (existing.length === 0) {
+    return { error: "Subject not found." };
+  }
+
+  await db
+    .update(subject)
+    .set({
+      archivedAt: null,
+    })
+    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
+
+  revalidatePath("/subjects");
+  revalidatePath("/subjects/archived");
+  revalidatePath(`/subjects/${parsed.data.id}`);
+  revalidatePath("/assessments");
   return { success: true };
 }
 
@@ -154,5 +260,7 @@ export async function deleteSubject(
   }
 
   revalidatePath("/subjects");
+  revalidatePath("/subjects/archived");
+  revalidatePath("/assessments");
   return { success: true };
 }

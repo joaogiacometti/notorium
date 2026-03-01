@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
@@ -33,7 +33,11 @@ export async function updateAttendanceSettings(
     .select()
     .from(subject)
     .where(
-      and(eq(subject.id, parsed.data.subjectId), eq(subject.userId, userId)),
+      and(
+        eq(subject.id, parsed.data.subjectId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
     );
 
   if (existing.length === 0) {
@@ -60,15 +64,19 @@ export async function getMissesBySubject(
   const userId = await getAuthenticatedUserId();
 
   return db
-    .select()
+    .select({ attendanceMiss })
     .from(attendanceMiss)
+    .innerJoin(subject, eq(attendanceMiss.subjectId, subject.id))
     .where(
       and(
         eq(attendanceMiss.subjectId, subjectId),
         eq(attendanceMiss.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
       ),
     )
-    .orderBy(asc(attendanceMiss.missDate));
+    .orderBy(asc(attendanceMiss.missDate))
+    .then((rows) => rows.map((row) => row.attendanceMiss));
 }
 
 export async function recordMiss(
@@ -85,7 +93,11 @@ export async function recordMiss(
     .select()
     .from(subject)
     .where(
-      and(eq(subject.id, parsed.data.subjectId), eq(subject.userId, userId)),
+      and(
+        eq(subject.id, parsed.data.subjectId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
     );
 
   if (existingSubject.length === 0) {
@@ -128,12 +140,15 @@ export async function deleteMiss(
   }
 
   const existing = await db
-    .select()
+    .select({ attendanceMiss })
     .from(attendanceMiss)
+    .innerJoin(subject, eq(attendanceMiss.subjectId, subject.id))
     .where(
       and(
         eq(attendanceMiss.id, parsed.data.id),
         eq(attendanceMiss.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
       ),
     );
 
@@ -141,7 +156,7 @@ export async function deleteMiss(
     return { error: "Miss record not found." };
   }
 
-  const existingMiss = existing[0];
+  const existingMiss = existing[0].attendanceMiss;
 
   await db
     .delete(attendanceMiss)
