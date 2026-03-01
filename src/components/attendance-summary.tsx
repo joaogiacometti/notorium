@@ -232,7 +232,8 @@ function AttendanceProgressCard({
 }: Readonly<AttendanceProgressCardProps>) {
   const status = getStatusInfo(missCount, maxMisses);
   const StatusIcon = status.icon;
-  const progressPercentage = Math.min((missCount / maxMisses) * 100, 100);
+  const progressPercentage =
+    maxMisses === 0 ? 100 : Math.min((missCount / maxMisses) * 100, 100);
   const attendanceRate =
     totalClasses > 0
       ? Math.round(((totalClasses - missCount) / totalClasses) * 100)
