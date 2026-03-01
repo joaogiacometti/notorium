@@ -25,9 +25,7 @@ export function login(user: { email: string; password: string }) {
 }
 
 export function setUserPlan(email: string, plan: "free" | "pro" | "unlimited") {
-  cy.exec(
-    `bun -e 'import "dotenv/config"; import { Client } from "pg"; const client = new Client({ connectionString: process.env.DATABASE_URL }); await client.connect(); await client.query("update \\"user\\" set plan = $1 where email = $2", [${JSON.stringify(plan)}, ${JSON.stringify(email)}]); await client.end();'`,
-  );
+  cy.task("setUserPlan", { email, plan });
 }
 
 export function authenticateWithSession(
