@@ -101,14 +101,6 @@ jobs:
           path: cypress/screenshots
           retention-days: 7
 
-      - name: Post Schema Diff Comment
-        if: always()
-        uses: neondatabase/schema-diff-action@v1
-        with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
-          compare_branch: preview/pr-${{ github.event.number }}-${{ github.head_ref }}
-          api_key: ${{ secrets.NEON_API_KEY }}
-
   cleanup:
     name: Delete Neon Branch
     if: github.event.action == 'closed'
