@@ -61,6 +61,7 @@ jobs:
           DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
           BETTER_AUTH_URL: http://localhost:3000
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
 
@@ -70,6 +71,7 @@ jobs:
           DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
           BETTER_AUTH_URL: http://localhost:3000
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
 
@@ -79,6 +81,7 @@ jobs:
           DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
           BETTER_AUTH_URL: http://localhost:3000
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
 
@@ -92,6 +95,12 @@ jobs:
           browser: chrome
         env:
           CYPRESS_BASE_URL: http://localhost:3000
+          DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
+          BETTER_AUTH_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
 
       - name: Upload screenshots on failure
         uses: actions/upload-artifact@v4
