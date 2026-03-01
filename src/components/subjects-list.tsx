@@ -8,10 +8,7 @@ import { SubjectCard } from "@/components/subject-card";
 import { Button } from "@/components/ui/button";
 import type { SubjectEntity } from "@/lib/api/contracts";
 import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
-import {
-  getSubjectCountText,
-  getTotalSubjectCount,
-} from "@/lib/subjects-count";
+import { getTotalSubjectCount } from "@/lib/subjects-count";
 
 interface SubjectsListProps {
   subjects: SubjectEntity[];
@@ -33,16 +30,19 @@ export function SubjectsList({
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Subjects</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {getSubjectCountText({
-              activeCount: subjects.length,
-              archivedCount,
-              maxSubjects: limits.maxSubjects,
-            })}
-          </p>
+      <div className="mb-10 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 items-start gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <BookOpen className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
+              Subjects
+            </h1>
+            <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
+              Manage your courses and track progress.
+            </p>
+          </div>
         </div>
         <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
           <Button variant="outline" className="gap-1.5" asChild>
