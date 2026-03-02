@@ -47,7 +47,9 @@ export function AssessmentItemCard({
   return (
     <div className={cn("rounded-xl border p-4", className)}>
       <div className="flex items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 break-words font-semibold">{item.title}</p>
+        <p className="min-w-0 flex-1 wrap-break-word font-semibold">
+          {item.title}
+        </p>
         <div className="flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
@@ -69,7 +71,7 @@ export function AssessmentItemCard({
       </div>
 
       {item.description && (
-        <p className="mt-1 break-words text-sm text-muted-foreground">
+        <p className="mt-1 wrap-break-word text-sm text-muted-foreground">
           {item.description}
         </p>
       )}

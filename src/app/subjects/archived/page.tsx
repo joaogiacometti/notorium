@@ -26,15 +26,15 @@ export default async function ArchivedSubjectsPage() {
           </Button>
         </div>
 
-        <div className="mb-8 flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <Archive className="size-4" />
+        <div className="mb-10 flex min-w-0 items-start gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Archive className="size-5" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+          <div className="min-w-0">
+            <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
               Archived Subjects
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
               {archivedSubjects.length} archived subject
               {archivedSubjects.length === 1 ? "" : "s"}
             </p>

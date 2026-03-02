@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, FolderKanban } from "lucide-react";
+import { CalendarDays, ClipboardList, FolderKanban } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,11 @@ const sections = [
     href: "/assessments",
     label: "Assessments",
     icon: ClipboardList,
+  },
+  {
+    href: "/calendar",
+    label: "Calendar",
+    icon: CalendarDays,
   },
 ] as const;
 

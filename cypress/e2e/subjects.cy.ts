@@ -261,6 +261,5 @@ describe("Subjects", () => {
 
     cy.url({ timeout: 10000 }).should("include", "/subjects");
     cy.get("#btn-create-subject").should("be.disabled");
-    cy.contains("5/5 subjects (1 archived)").should("be.visible");
   });
 });

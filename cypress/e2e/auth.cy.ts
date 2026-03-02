@@ -69,4 +69,10 @@ describe("Protected Routes", () => {
 
     cy.url({ timeout: 10000 }).should("include", "/login");
   });
+
+  it("should redirect unauthenticated users from /calendar to /login", () => {
+    cy.visit("/calendar");
+
+    cy.url({ timeout: 10000 }).should("include", "/login");
+  });
 });
