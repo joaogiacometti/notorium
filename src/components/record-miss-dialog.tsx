@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { recordMiss } from "@/app/actions/attendance";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,8 @@ export function RecordMissDialog({
   open,
   onOpenChange,
 }: Readonly<RecordMissDialogProps>) {
+  const t = useTranslations("RecordMissDialog");
+  const _tCommon = useTranslations("Common");
   const today = new Date().toISOString().split("T")[0];
 
   const form = useForm({
@@ -59,10 +62,8 @@ export function RecordMissDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Record a Miss</DialogTitle>
-          <DialogDescription>
-            Select the date you missed a class for this subject.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <form id="form-record-miss" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-4">

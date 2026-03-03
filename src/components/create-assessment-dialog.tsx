@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { createAssessment } from "@/app/actions/assessments";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,8 @@ export function CreateAssessmentDialog({
   open,
   onOpenChange,
 }: Readonly<CreateAssessmentDialogProps>) {
+  const t = useTranslations("CreateAssessmentDialog");
+  const _tCommon = useTranslations("Common");
   const form = useForm({
     resolver: zodResolver(createAssessmentSchema),
     defaultValues: {
@@ -89,10 +92,8 @@ export function CreateAssessmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Assessment</DialogTitle>
-          <DialogDescription>
-            Track an upcoming or completed assessment for this subject.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <form
           id="form-create-assessment"
@@ -206,8 +207,12 @@ export function CreateAssessmentDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="pending">
+                        {t("field_status_pending")}
+                      </SelectItem>
+                      <SelectItem value="completed">
+                        {t("field_status_completed")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && (

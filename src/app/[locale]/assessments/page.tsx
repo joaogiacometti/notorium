@@ -1,4 +1,5 @@
 import { ClipboardList } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { getAssessments } from "@/app/actions/assessments";
 import { getSubjects } from "@/app/actions/subjects";
 import { GradesSummary } from "@/components/grades-summary";
@@ -6,6 +7,7 @@ import { requireSession } from "@/lib/auth";
 
 export default async function AssessmentsPage() {
   await requireSession();
+  const t = await getTranslations("AssessmentsPage");
 
   const [assessments, subjects] = await Promise.all([
     getAssessments(),
@@ -25,10 +27,10 @@ export default async function AssessmentsPage() {
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
-              All Assessments
+              {t("title")}
             </h1>
             <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
-              Detailed view across all subjects with global filters.
+              {t("description")}
             </p>
           </div>
         </div>

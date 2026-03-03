@@ -2,15 +2,16 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
 import { NoteImageAttachments } from "@/components/note-image-attachments";
 import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
+import { Link, useRouter } from "@/i18n/routing";
 import type { NoteWithAttachmentsEntity } from "@/lib/api/contracts";
+import { getDateFnsLocale } from "@/lib/date-locale";
 import type { UserPlan } from "@/lib/plan-limits";
 
 interface NoteDetailProps {
@@ -19,6 +20,9 @@ interface NoteDetailProps {
 }
 
 export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
+  const t = useTranslations("NoteDetail");
+  const locale = useLocale();
+  const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -34,7 +38,7 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
         >
           <Link href={`/subjects/${note.subjectId}`}>
             <ArrowLeft className="size-4" />
-            Back to Subject
+            {t("back")}
           </Link>
         </Button>
       </div>
@@ -53,6 +57,7 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
                 Created{" "}
                 {formatDistanceToNow(new Date(note.createdAt), {
                   addSuffix: true,
+                  locale: dateLocale,
                 })}
               </span>
             </div>
@@ -66,7 +71,7 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
             onClick={() => setEditOpen(true)}
           >
             <Pencil className="size-3.5" />
-            Edit
+            {t("edit")}
           </Button>
           <Button
             variant="outline"
@@ -75,7 +80,7 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" />
-            Delete
+            {t("delete")}
           </Button>
         </div>
       </div>
@@ -89,7 +94,7 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
             />
           ) : (
             <p className="text-sm italic text-muted-foreground sm:text-base">
-              No content yet. Click Edit to add some notes.
+              {t("empty")}
             </p>
           )}
         </div>

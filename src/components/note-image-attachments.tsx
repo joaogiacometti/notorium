@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageIcon, Loader2, Trash2, X } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   type MouseEvent,
   type ClipboardEvent as ReactClipboardEvent,
@@ -35,6 +35,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "@/i18n/routing";
 import type { NoteImageAttachmentEntity } from "@/lib/api/contracts";
 import type { UserPlan } from "@/lib/plan-limits";
 import {
@@ -105,6 +106,7 @@ export function NoteImageAttachments({
   attachments,
   plan,
 }: Readonly<NoteImageAttachmentsProps>) {
+  const t = useTranslations("NoteImageAttachments");
   const imagesAllowed = plan !== "free";
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -378,7 +380,7 @@ export function NoteImageAttachments({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ImageIcon className="size-4 text-primary" />
-          <h2 className="text-base font-semibold">Attachments</h2>
+          <h2 className="text-base font-semibold">{t("title")}</h2>
         </div>
         <span className="text-xs text-muted-foreground">
           {attachments.length} image{attachments.length === 1 ? "" : "s"}
@@ -397,7 +399,7 @@ export function NoteImageAttachments({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-note-attachments-images">
-                    Images
+                    {t("images")}
                   </FieldLabel>
                   <Input
                     id="form-note-attachments-images"
@@ -442,9 +444,7 @@ export function NoteImageAttachments({
                       <div className="flex items-start gap-3">
                         <ImageIcon className="mt-0.5 size-4 text-primary" />
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">
-                            Click, drag, or paste images
-                          </p>
+                          <p className="text-sm font-medium">{t("dropzone")}</p>
                           <p className="text-xs text-muted-foreground">
                             PNG, JPG, WEBP, GIF. Up to{" "}
                             {noteAttachmentMaxFilesPerUpload} files,{" "}
@@ -500,7 +500,7 @@ export function NoteImageAttachments({
                 onClick={clearSelectedFiles}
                 disabled={isBusy || selectedFiles.length === 0}
               >
-                Clear
+                {t("clear")}
               </Button>
               <Button
                 type="button"
@@ -514,7 +514,7 @@ export function NoteImageAttachments({
               </Button>
               {form.formState.isSubmitting && (
                 <span className="text-xs text-muted-foreground">
-                  Uploading images...
+                  {t("uploading")}
                 </span>
               )}
             </div>
@@ -524,10 +524,10 @@ export function NoteImageAttachments({
         <div className="mb-5 rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
           <ImageIcon className="mx-auto mb-2 size-5 text-muted-foreground/60" />
           <p className="text-sm font-medium text-muted-foreground">
-            Image attachments are not available on the Free plan.
+            {t("free_plan_title")}
           </p>
           <p className="mt-1 text-xs text-muted-foreground/60">
-            Upgrade your plan to upload images.
+            {t("free_plan_desc")}
           </p>
         </div>
       )}
@@ -535,7 +535,7 @@ export function NoteImageAttachments({
       {attachments.length === 0 ? (
         imagesAllowed && (
           <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-8 text-center text-sm text-muted-foreground">
-            No images attached yet.
+            {t("empty")}
           </p>
         )
       ) : (
@@ -583,11 +583,8 @@ export function NoteImageAttachments({
       <Dialog open={removeConfirmOpen} onOpenChange={onRemoveConfirmOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remove Attachment</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this image? This action cannot be
-              undone.
-            </DialogDescription>
+            <DialogTitle>{t("remove")}</DialogTitle>
+            <DialogDescription>{t("remove_prompt")}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
@@ -619,7 +616,7 @@ export function NoteImageAttachments({
           onMouseMove={onViewerMouseMove}
         >
           <DialogHeader className="sr-only">
-            <DialogTitle>Attachment preview</DialogTitle>
+            <DialogTitle>{t("preview")}</DialogTitle>
           </DialogHeader>
           <button
             type="button"

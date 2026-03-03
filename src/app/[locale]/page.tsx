@@ -9,7 +9,6 @@ import {
   Sparkles,
   UserPlus,
 } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,36 +27,37 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Link } from "@/i18n/routing";
 import { getOptionalSession } from "@/lib/auth";
 import { FREE_LIMITS, PRO_LIMITS } from "@/lib/plan-limits";
 
 const PLAN_ROWS: Array<{
-  feature: string;
+  featureKey: string;
   free: string | boolean;
   pro: string | boolean;
 }> = [
   {
-    feature: "Subjects",
+    featureKey: "subjects",
     free: String(FREE_LIMITS.maxSubjects),
     pro: String(PRO_LIMITS.maxSubjects),
   },
   {
-    feature: "Notes per subject",
+    featureKey: "notes_per_subject",
     free: String(FREE_LIMITS.maxNotesPerSubject),
     pro: String(PRO_LIMITS.maxNotesPerSubject),
   },
   {
-    feature: "Assessments per subject",
+    featureKey: "assessments_per_subject",
     free: String(FREE_LIMITS.maxAssessmentsPerSubject),
     pro: String(PRO_LIMITS.maxAssessmentsPerSubject),
   },
   {
-    feature: "Image attachments",
+    featureKey: "image_attachments",
     free: FREE_LIMITS.imagesAllowed,
     pro: `${PRO_LIMITS.maxImageStorageMb} MB`,
   },
-  { feature: "Rich text editor", free: true, pro: true },
-  { feature: "Attendance tracking", free: true, pro: true },
+  { featureKey: "rich_text_editor", free: true, pro: true },
+  { featureKey: "attendance_tracking", free: true, pro: true },
 ];
 
 function PlanCell({ value }: { value: string | boolean }) {
@@ -73,26 +73,27 @@ function PlanCell({ value }: { value: string | boolean }) {
 const FEATURES = [
   {
     icon: FolderOpen,
-    title: "Subjects",
-    description:
-      "Organize your courses and modules in one place with descriptions and attendance tracking.",
+    titleKey: "subjects_title",
+    descriptionKey: "subjects_description",
   },
   {
     icon: FileText,
-    title: "Notes",
-    description:
-      "Write and format notes with a rich text editor supporting headings, lists, code blocks, and more.",
+    titleKey: "notes_title",
+    descriptionKey: "notes_description",
   },
   {
     icon: ClipboardList,
-    title: "Assessments",
-    description:
-      "Track exams, assignments, and quizzes with grades, dates, and weight breakdowns.",
+    titleKey: "assessments_title",
+    descriptionKey: "assessments_description",
   },
 ];
 
+import { getTranslations } from "next-intl/server";
+
 export default async function Home() {
   const session = await getOptionalSession();
+  const t = await getTranslations("Index");
+  const tLanding = await getTranslations("Landing");
 
   if (session) {
     redirect("/subjects");
@@ -101,26 +102,26 @@ export default async function Home() {
   return (
     <main className="flex flex-col">
       <section className="flex flex-col items-center gap-6 px-4 pt-20 pb-16 text-center sm:px-6 sm:pt-28 sm:pb-20 lg:px-8">
-        <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
-          <Sparkles className="size-3.5" />
-          Free to use — no credit card required
+        <div className="flex max-w-[22rem] items-center justify-center gap-2 rounded-xl border border-border/70 bg-muted/70 px-4 py-2 text-center text-sm leading-snug text-foreground/90 sm:max-w-none">
+          <Sparkles className="size-4 shrink-0 text-primary" />
+          <span>{t("badge")}</span>
         </div>
         <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          Your studies, <span className="text-primary">organized</span>
+          {t("title_start")}
+          <span className="text-primary">{t("title_highlight")}</span>
         </h1>
         <p className="max-w-xl text-lg text-muted-foreground sm:text-xl">
-          Notorium helps you manage subjects, notes, assessments, and attendance
-          all in one place. Stay on top of your academic life.
+          {t("description")}
         </p>
         <div className="flex items-center gap-3 pt-2">
           <Button size="lg" asChild>
             <Link href="/signup">
               <UserPlus className="size-4" />
-              Get Started
+              {t("get_started")}
             </Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
-            <Link href="/login">Sign In</Link>
+            <Link href="/login">{t("sign_in")}</Link>
           </Button>
         </div>
       </section>
@@ -128,17 +129,19 @@ export default async function Home() {
       <section className="border-t bg-muted/30 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <h2 className="mb-10 text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-            Everything you need to stay on track
+            {tLanding("features_heading")}
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature) => (
-              <Card key={feature.title} className="border-border/50">
+              <Card key={feature.titleKey} className="border-border/50">
                 <CardHeader>
                   <div className="mb-1 flex size-10 items-center justify-center rounded-lg bg-primary/10">
                     <feature.icon className="size-5 text-primary" />
                   </div>
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription>{feature.description}</CardDescription>
+                  <CardTitle>{tLanding(feature.titleKey)}</CardTitle>
+                  <CardDescription>
+                    {tLanding(feature.descriptionKey)}
+                  </CardDescription>
                 </CardHeader>
               </Card>
             ))}
@@ -149,7 +152,7 @@ export default async function Home() {
       <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-2xl">
           <h2 className="mb-10 text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-            Simple plans for every student
+            {tLanding("plans_heading")}
           </h2>
           <Card>
             <CardContent>
@@ -158,12 +161,12 @@ export default async function Home() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="w-[60%]" />
                     <TableHead className="text-center">
-                      <Badge variant="secondary">Free</Badge>
+                      <Badge variant="secondary">{tLanding("free")}</Badge>
                     </TableHead>
                     <TableHead className="text-center">
                       <Badge className="gap-1">
                         <Crown className="size-3" />
-                        Pro
+                        {tLanding("pro")}
                       </Badge>
                     </TableHead>
                   </TableRow>
@@ -171,11 +174,11 @@ export default async function Home() {
                 <TableBody>
                   {PLAN_ROWS.map((row) => (
                     <TableRow
-                      key={row.feature}
+                      key={row.featureKey}
                       className="hover:bg-transparent"
                     >
                       <TableCell className="text-muted-foreground">
-                        {row.feature}
+                        {tLanding(`plan_feature_${row.featureKey}`)}
                       </TableCell>
                       <TableCell className="text-center font-medium">
                         <span className="flex justify-center">
@@ -193,7 +196,7 @@ export default async function Home() {
               </Table>
               <div className="flex flex-col items-center gap-3 pt-6 sm:flex-row sm:justify-center">
                 <Button className="w-full sm:w-auto sm:px-12" asChild>
-                  <Link href="/signup">Start for free</Link>
+                  <Link href="/signup">{tLanding("start_for_free")}</Link>
                 </Button>
                 <Button
                   className="w-full sm:w-auto sm:px-12"
@@ -201,9 +204,9 @@ export default async function Home() {
                   disabled
                 >
                   <Crown className="size-3.5" />
-                  Become Pro
+                  {tLanding("become_pro")}
                   <Badge variant="secondary" className="text-[10px]">
-                    Coming soon
+                    {tLanding("coming_soon")}
                   </Badge>
                 </Button>
               </div>

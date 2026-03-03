@@ -1,8 +1,9 @@
 import { format, parseISO } from "date-fns";
 import { CalendarDays, Pencil, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { AssessmentEntity } from "@/lib/api/contracts";
-import { assessmentTypeLabels } from "@/lib/assessments";
+import { getDateFnsLocale } from "@/lib/date-locale";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
 import { cn } from "@/lib/utils";
 
@@ -29,16 +30,19 @@ export function AssessmentItemCard({
   onEdit,
   onDelete,
 }: Readonly<AssessmentItemCardProps>) {
+  const locale = useLocale();
+  const dateLocale = getDateFnsLocale(locale);
+  const t = useTranslations("AssessmentItemCard");
   const statusTone = overdue
     ? getStatusToneClasses("danger")
     : item.status === "completed"
       ? getStatusToneClasses("success")
       : getStatusToneClasses("warning");
   const statusLabel = overdue
-    ? "Overdue"
+    ? t("status_overdue")
     : item.status === "completed"
-      ? "Completed"
-      : "Pending";
+      ? t("status_completed")
+      : t("status_pending");
   const scoreTone =
     item.score === null
       ? null
@@ -56,6 +60,7 @@ export function AssessmentItemCard({
             size="icon"
             className="size-9 sm:size-8"
             onClick={() => onEdit(item)}
+            aria-label={t("edit")}
           >
             <Pencil className="size-4" />
           </Button>
@@ -64,6 +69,7 @@ export function AssessmentItemCard({
             size="icon"
             className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
             onClick={() => onDelete(item)}
+            aria-label={t("delete")}
           >
             <Trash2 className="size-4" />
           </Button>
@@ -84,10 +90,10 @@ export function AssessmentItemCard({
         {showSubject && (
           <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
             <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              Subject
+              {t("subject")}
             </p>
             <p className="mt-0.5 text-sm font-medium">
-              {subjectName ?? "Unknown Subject"}
+              {subjectName ?? t("unknown_subject")}
             </p>
           </div>
         )}
@@ -95,7 +101,7 @@ export function AssessmentItemCard({
           className={`rounded-lg border px-2.5 py-2 ${statusTone.border} ${statusTone.bg}`}
         >
           <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            Status
+            {t("status")}
           </p>
           <p className={`mt-0.5 text-sm font-semibold ${statusTone.text}`}>
             {statusLabel}
@@ -103,11 +109,9 @@ export function AssessmentItemCard({
         </div>
         <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
           <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            Type
+            {t("type")}
           </p>
-          <p className="mt-0.5 text-sm font-medium">
-            {assessmentTypeLabels[item.type]}
-          </p>
+          <p className="mt-0.5 text-sm font-medium">{t(`type_${item.type}`)}</p>
         </div>
         {item.dueDate && (
           <div
@@ -119,11 +123,13 @@ export function AssessmentItemCard({
             )}
           >
             <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              Due Date
+              {t("due_date")}
             </p>
             <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium">
               <CalendarDays className="size-3.5 text-muted-foreground" />
-              {format(parseISO(item.dueDate), "MMM d, yyyy")}
+              {format(parseISO(item.dueDate), "MMM d, yyyy", {
+                locale: dateLocale,
+              })}
             </p>
             {dueDetail && (
               <p
@@ -144,7 +150,7 @@ export function AssessmentItemCard({
             className={`rounded-lg border px-2.5 py-2 ${scoreTone.border} ${scoreTone.bg}`}
           >
             <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              Score
+              {t("score")}
             </p>
             <p className={`mt-0.5 text-sm font-semibold ${scoreTone.text}`}>
               {Number(item.score).toFixed(1)}

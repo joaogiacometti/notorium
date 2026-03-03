@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { Archive, BookOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/edit-subject-dialog";
@@ -14,13 +14,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/routing";
 import type { SubjectEntity } from "@/lib/api/contracts";
+import { getDateFnsLocale } from "@/lib/date-locale";
 
 interface SubjectCardProps {
   subject: SubjectEntity;
 }
 
 export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
+  const locale = useLocale();
+  const dateLocale = getDateFnsLocale(locale);
+  const t = useTranslations("SubjectCard");
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -46,7 +51,7 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
                 variant="ghost"
                 size="icon"
                 className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
-                aria-label="Open subject actions"
+                aria-label={t("open_actions")}
               >
                 <MoreVertical className="size-4" />
               </Button>
@@ -57,21 +62,21 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
                 className="cursor-pointer"
               >
                 <Pencil className="size-4" />
-                Edit
+                {t("edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setArchiveOpen(true)}
                 className="cursor-pointer"
               >
                 <Archive className="size-4" />
-                Archive
+                {t("archive")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <Trash2 className="size-4" />
-                Delete
+                {t("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -87,9 +92,10 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
               </p>
             )}
             <p className="text-xs text-muted-foreground/60">
-              Created{" "}
+              {t("created")}{" "}
               {formatDistanceToNow(new Date(subject.createdAt), {
                 addSuffix: true,
+                locale: dateLocale,
               })}
             </p>
           </CardContent>

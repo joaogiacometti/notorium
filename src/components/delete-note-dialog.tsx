@@ -2,6 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteNote } from "@/app/actions/notes";
@@ -30,6 +31,8 @@ export function DeleteNoteDialog({
   onOpenChange,
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
+  const t = useTranslations("DeleteNoteDialog");
+  const _tCommon = useTranslations("Common");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -53,7 +56,7 @@ export function DeleteNoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Note</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
             {"Are you sure you want to delete "}
             <span className="font-semibold text-foreground">{noteTitle}</span>

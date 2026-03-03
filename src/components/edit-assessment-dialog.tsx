@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { editAssessment } from "@/app/actions/assessments";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,9 @@ export function EditAssessmentDialog({
   open,
   onOpenChange,
 }: Readonly<EditAssessmentDialogProps>) {
+  const t = useTranslations("EditAssessmentDialog");
+  const _tAssessment = useTranslations("CreateAssessmentDialog");
+  const _tCommon = useTranslations("Common");
   const form = useForm({
     resolver: zodResolver(editAssessmentSchema),
     defaultValues: {
@@ -81,10 +85,8 @@ export function EditAssessmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Assessment</DialogTitle>
-          <DialogDescription>
-            Update details, status, dates, and grading values.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <form
           id="form-edit-assessment"

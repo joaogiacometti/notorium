@@ -1,12 +1,14 @@
 import { Archive, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { getArchivedSubjects } from "@/app/actions/subjects";
 import { ArchivedSubjectCard } from "@/components/archived-subject-card";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/routing";
 import { requireSession } from "@/lib/auth";
 
 export default async function ArchivedSubjectsPage() {
   await requireSession();
+  const t = await getTranslations("ArchivedSubjectsPage");
   const archivedSubjects = await getArchivedSubjects();
 
   return (
@@ -21,7 +23,7 @@ export default async function ArchivedSubjectsPage() {
           >
             <Link href="/subjects">
               <ArrowLeft className="size-4" />
-              Back to Subjects
+              {t("back")}
             </Link>
           </Button>
         </div>
@@ -32,20 +34,19 @@ export default async function ArchivedSubjectsPage() {
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
-              Archived Subjects
+              {t("title")}
             </h1>
             <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
-              {archivedSubjects.length} archived subject
-              {archivedSubjects.length === 1 ? "" : "s"}
+              {t("count", { count: archivedSubjects.length })}
             </p>
           </div>
         </div>
 
         {archivedSubjects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-6">
-            <h2 className="text-base font-semibold">No archived subjects</h2>
+            <h2 className="text-base font-semibold">{t("empty_title")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Archived subjects will show up here.
+              {t("empty_description")}
             </p>
           </div>
         ) : (

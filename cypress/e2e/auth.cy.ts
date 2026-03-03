@@ -26,8 +26,8 @@ describe("Auth Flow", () => {
     cy.visit("/");
     cy.url().should("include", "/subjects");
 
-    cy.contains("button", testUser.name).click();
-    cy.contains("Logout").click();
+    cy.contains("button", /^Cypress Tes/).click();
+    cy.contains(/log\s*out/i).click();
 
     cy.url({ timeout: 10000 }).should("include", "/login");
 

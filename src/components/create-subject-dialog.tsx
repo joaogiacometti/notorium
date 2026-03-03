@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createSubject } from "@/app/actions/subjects";
@@ -39,6 +40,8 @@ export function CreateSubjectDialog({
   open,
   onOpenChange,
 }: Readonly<CreateSubjectDialogProps>) {
+  const t = useTranslations("CreateSubjectDialog");
+  const _tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(createSubjectSchema),
@@ -67,7 +70,7 @@ export function CreateSubjectDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Subject</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
         <form id="form-create-subject" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-4">
@@ -116,7 +119,9 @@ export function CreateSubjectDialog({
             />
 
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-foreground">Modules</h3>
+              <h3 className="text-sm font-medium text-foreground">
+                {t("section_modules")}
+              </h3>
               <div className="space-y-2">
                 <Controller
                   name="notesEnabled"
@@ -124,9 +129,11 @@ export function CreateSubjectDialog({
                   render={({ field }) => (
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
                       <div>
-                        <span className="text-sm font-medium">Notes</span>
+                        <span className="text-sm font-medium">
+                          {t("section_notes")}
+                        </span>
                         <p className="text-[0.8rem] text-muted-foreground">
-                          Markdown notes for studying.
+                          {t("section_notes_desc")}
                         </p>
                       </div>
                       <Switch
@@ -142,9 +149,11 @@ export function CreateSubjectDialog({
                   render={({ field }) => (
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
                       <div>
-                        <span className="text-sm font-medium">Assessments</span>
+                        <span className="text-sm font-medium">
+                          {t("section_assessments")}
+                        </span>
                         <p className="text-[0.8rem] text-muted-foreground">
-                          Plan deadlines and track completed scores.
+                          {t("section_assessments_desc")}
                         </p>
                       </div>
                       <Switch
@@ -160,9 +169,11 @@ export function CreateSubjectDialog({
                   render={({ field }) => (
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
                       <div>
-                        <span className="text-sm font-medium">Attendance</span>
+                        <span className="text-sm font-medium">
+                          {t("section_attendance")}
+                        </span>
                         <p className="text-[0.8rem] text-muted-foreground">
-                          Track missed classes against limits.
+                          {t("section_attendance_desc")}
                         </p>
                       </div>
                       <Switch

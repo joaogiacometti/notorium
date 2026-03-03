@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAssessment } from "@/app/actions/assessments";
@@ -27,6 +28,8 @@ export function DeleteAssessmentDialog({
   open,
   onOpenChange,
 }: Readonly<DeleteAssessmentDialogProps>) {
+  const t = useTranslations("DeleteAssessmentDialog");
+  const _tCommon = useTranslations("Common");
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -44,7 +47,7 @@ export function DeleteAssessmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Assessment</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
             {"Are you sure you want to delete "}
             <span className="font-semibold text-foreground">

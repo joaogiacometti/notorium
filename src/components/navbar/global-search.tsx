@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileText, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/search-skeleton";
@@ -15,12 +15,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useRouter } from "@/i18n/routing";
 
 interface GlobalSearchProps {
   userId: string;
 }
 
 export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
+  const t = useTranslations("GlobalSearch");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -82,7 +84,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
         onClick={() => setOpen(true)}
       >
         <Search className="size-4" />
-        <span className="hidden lg:inline-flex">Search...</span>
+        <span className="hidden lg:inline-flex">{t("trigger")}</span>
         <kbd className="pointer-events-none absolute right-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
@@ -90,26 +92,26 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
       <CommandDialog
         open={open}
         onOpenChange={handleOpenChange}
-        title="Global Search"
-        description="Search across all your subjects and notes"
+        title={t("dialog_title")}
+        description={t("dialog_description")}
         showCloseButton={false}
         commandProps={{ shouldFilter: false }}
       >
         <CommandInput
           value={query}
           onValueChange={setQuery}
-          placeholder="Search subjects and notes..."
+          placeholder={t("input_placeholder")}
         />
         <CommandList>
           {isPending && <SearchSkeleton />}
           {!isPending && !hasData && (
             <CommandEmpty>
-              {canSearch ? "No subjects or notes yet." : "Sign in to search."}
+              {canSearch ? t("empty_has_data") : t("empty_sign_in")}
             </CommandEmpty>
           )}
 
           {subjects.length > 0 && (
-            <CommandGroup heading="Subjects">
+            <CommandGroup heading={t("subjects_group")}>
               {subjects.map((subj) => (
                 <CommandItem
                   key={subj.id}
@@ -132,7 +134,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
           )}
 
           {notes.length > 0 && (
-            <CommandGroup heading="Notes">
+            <CommandGroup heading={t("notes_group")}>
               {notes.map((n) => (
                 <CommandItem
                   key={n.id}
@@ -146,7 +148,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                     <FileText className="size-4 text-muted-foreground" />
                     <span>{n.title}</span>
                     <span className="text-xs text-muted-foreground">
-                      in {n.subjectName}
+                      {t("in_subject")} {n.subjectName}
                     </span>
                   </div>
                   {n.content && (

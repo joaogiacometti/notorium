@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
@@ -14,13 +14,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/routing";
 import type { NoteEntity } from "@/lib/api/contracts";
+import { getDateFnsLocale } from "@/lib/date-locale";
 
 interface NoteCardProps {
   note: NoteEntity;
 }
 
-export function NoteCard({ note }: Readonly<NoteCardProps>) {
+export function NoteCard({
+  note,
+  onEdit,
+  onDeleted,
+  compact = false,
+}: Readonly<
+  NoteCardProps & {
+    onEdit?: () => void;
+    onDeleted?: () => void;
+    compact?: boolean;
+  }
+>) {
+  const t = useTranslations("NoteCard");
+  const locale = useLocale();
+  const dateLocale = getDateFnsLocale(locale);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -56,14 +72,14 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
                 className="cursor-pointer"
               >
                 <Pencil className="size-4" />
-                Edit
+                {t("edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <Trash2 className="size-4" />
-                Delete
+                {t("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -77,6 +93,7 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
               Created{" "}
               {formatDistanceToNow(new Date(note.createdAt), {
                 addSuffix: true,
+                locale: dateLocale,
               })}
             </p>
           </CardContent>

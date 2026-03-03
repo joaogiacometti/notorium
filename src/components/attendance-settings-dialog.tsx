@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Settings } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAttendanceSettings } from "@/app/actions/attendance";
@@ -41,6 +42,8 @@ export function AttendanceSettingsDialog({
   open,
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
+  const t = useTranslations("AttendanceSettingsDialog");
+  const _tCommon = useTranslations("Common");
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {
@@ -64,16 +67,13 @@ export function AttendanceSettingsDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Settings className="size-3.5" />
-          Settings
+          {t("trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Attendance Settings</DialogTitle>
-          <DialogDescription>
-            Configure the total number of classes and maximum allowed misses for
-            this subject.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <form
           id="form-attendance-settings"

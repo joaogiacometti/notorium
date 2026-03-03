@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Download, Loader2, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { exportData, importData } from "@/app/actions/data-transfer";
@@ -32,6 +33,7 @@ function downloadJson(data: unknown, filename: string) {
 }
 
 export function DataTransferActions() {
+  const t = useTranslations("DataTransferActions");
   const [isExporting, startExport] = useTransition();
   const [isImporting, startImport] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -46,9 +48,9 @@ export function DataTransferActions() {
         const suffix = templateOnly ? "template" : "full";
         const filename = `notorium-export-${suffix}-${new Date().toISOString().slice(0, 10)}.json`;
         downloadJson(data, filename);
-        toast.success("Data exported successfully.");
+        toast.success(t("export_success"));
       } catch {
-        toast.error("Failed to export data.");
+        toast.error(t("export_error"));
       }
     });
   }
@@ -76,12 +78,10 @@ export function DataTransferActions() {
         if (result.error) {
           toast.error(result.error);
         } else {
-          toast.success(
-            `Imported ${result.imported} subject${result.imported === 1 ? "" : "s"} successfully.`,
-          );
+          toast.success(t("import_success", { count: result.imported ?? 0 }));
         }
       } catch {
-        toast.error("Failed to read the import file.");
+        toast.error(t("import_read_error"));
       } finally {
         pendingFileRef.current = null;
         setConfirmOpen(false);
@@ -105,16 +105,16 @@ export function DataTransferActions() {
               ) : (
                 <Download className="size-4" />
               )}
-              Export Data
+              {t("export_data")}
               <ChevronDown className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={() => handleExport(false)}>
-              Export All
+              {t("export_all")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExport(true)}>
-              Export Template
+              {t("export_template")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -128,7 +128,7 @@ export function DataTransferActions() {
           ) : (
             <Upload className="size-4" />
           )}
-          Import Data
+          {t("import_data")}
         </Button>
         <input
           ref={fileInputRef}
@@ -142,11 +142,9 @@ export function DataTransferActions() {
       <Dialog open={confirmOpen} onOpenChange={handleImportCancel}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Import Data</DialogTitle>
+            <DialogTitle>{t("import_dialog_title")}</DialogTitle>
             <DialogDescription>
-              This will create new subjects from the import file with all their
-              notes, attendance records, and assessments. Existing data will not
-              be modified.
+              {t("import_dialog_description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">
@@ -155,11 +153,11 @@ export function DataTransferActions() {
               onClick={handleImportCancel}
               disabled={isImporting}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button onClick={handleImportConfirm} disabled={isImporting}>
               {isImporting && <Loader2 className="size-4 animate-spin" />}
-              Confirm Import
+              {t("confirm_import")}
             </Button>
           </DialogFooter>
         </DialogContent>

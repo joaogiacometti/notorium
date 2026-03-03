@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -38,6 +39,9 @@ export function EditNoteDialog({
   open,
   onOpenChange,
 }: Readonly<EditNoteDialogProps>) {
+  const t = useTranslations("EditNoteDialog");
+  const _tNote = useTranslations("CreateNoteDialog");
+  const _tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const defaultValues = {
@@ -100,7 +104,7 @@ export function EditNoteDialog({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
           <DialogHeader>
-            <DialogTitle>Edit Note</DialogTitle>
+            <DialogTitle>{t("title")}</DialogTitle>
           </DialogHeader>
           <form id="form-edit-note" onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">

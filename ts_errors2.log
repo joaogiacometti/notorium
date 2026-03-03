@@ -1,0 +1,57 @@
+src/app/[locale]/actions/auth.ts(17,53): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.
+src/app/[locale]/actions/auth.ts(45,12): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/app/[locale]/actions/auth.ts(48,55): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.
+src/app/[locale]/actions/auth.ts(77,12): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/app/[locale]/actions/auth.ts(84,12): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/app/[locale]/actions/profile.ts(46,40): error TS2355: A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.
+src/app/[locale]/actions/profile.ts(69,12): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/app/[locale]/assessments/page.tsx(2,32): error TS2307: Cannot find module '@/app/actions/assessments' or its corresponding type declarations.
+src/app/[locale]/assessments/page.tsx(3,29): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/app/[locale]/assessments/page.tsx(16,19): error TS7006: Parameter 'subject' implicitly has an 'any' type.
+src/app/[locale]/login/page.tsx(9,14): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/app/[locale]/page.tsx(98,14): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/app/[locale]/profile/page.tsx(27,19): error TS18047: 'session' is possibly 'null'.
+src/app/[locale]/profile/page.tsx(28,20): error TS18047: 'session' is possibly 'null'.
+src/app/[locale]/profile/page.tsx(29,20): error TS18047: 'session' is possibly 'null'.
+src/app/[locale]/profile/page.tsx(30,33): error TS18047: 'session' is possibly 'null'.
+src/app/[locale]/profile/page.tsx(31,33): error TS18047: 'session' is possibly 'null'.
+src/app/[locale]/signup/page.tsx(9,14): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/app/[locale]/subjects/[id]/notes/[noteId]/page.tsx(2,29): error TS2307: Cannot find module '@/app/actions/notes' or its corresponding type declarations.
+src/app/[locale]/subjects/[id]/notes/[noteId]/page.tsx(25,16): error TS18047: 'session' is possibly 'null'.
+src/app/[locale]/subjects/[id]/page.tsx(2,41): error TS2307: Cannot find module '@/app/actions/assessments' or its corresponding type declarations.
+src/app/[locale]/subjects/[id]/page.tsx(3,36): error TS2307: Cannot find module '@/app/actions/attendance' or its corresponding type declarations.
+src/app/[locale]/subjects/[id]/page.tsx(4,35): error TS2307: Cannot find module '@/app/actions/notes' or its corresponding type declarations.
+src/app/[locale]/subjects/[id]/page.tsx(5,32): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/app/[locale]/subjects/[id]/page.tsx(36,16): error TS18047: 'session' is possibly 'null'.
+src/app/[locale]/subjects/archived/page.tsx(3,37): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/app/[locale]/subjects/archived/page.tsx(53,36): error TS7006: Parameter 'subject' implicitly has an 'any' type.
+src/app/[locale]/subjects/page.tsx(1,50): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/app/[locale]/subjects/page.tsx(19,16): error TS18047: 'session' is possibly 'null'.
+src/components/archived-subject-card.tsx(8,32): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/components/attendance-settings-dialog.tsx(7,42): error TS2307: Cannot find module '@/app/actions/attendance' or its corresponding type declarations.
+src/components/calendar-view.tsx(23,35): error TS2307: Cannot find module '@/app/actions/calendar' or its corresponding type declarations.
+src/components/create-assessment-dialog.tsx(6,34): error TS2307: Cannot find module '@/app/actions/assessments' or its corresponding type declarations.
+src/components/create-note-dialog.tsx(9,28): error TS2307: Cannot find module '@/app/actions/notes' or its corresponding type declarations.
+src/components/create-subject-dialog.tsx(8,31): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/components/data-transfer-actions.tsx(6,40): error TS2307: Cannot find module '@/app/actions/data-transfer' or its corresponding type declarations.
+src/components/delete-account-dialog.tsx(6,31): error TS2307: Cannot find module '@/app/actions/profile' or its corresponding type declarations.
+src/components/delete-assessment-dialog.tsx(6,34): error TS2307: Cannot find module '@/app/actions/assessments' or its corresponding type declarations.
+src/components/delete-miss-dialog.tsx(6,28): error TS2307: Cannot find module '@/app/actions/attendance' or its corresponding type declarations.
+src/components/delete-note-dialog.tsx(7,28): error TS2307: Cannot find module '@/app/actions/notes' or its corresponding type declarations.
+src/components/delete-subject-dialog.tsx(7,47): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/components/edit-assessment-dialog.tsx(6,32): error TS2307: Cannot find module '@/app/actions/assessments' or its corresponding type declarations.
+src/components/edit-note-dialog.tsx(9,26): error TS2307: Cannot find module '@/app/actions/notes' or its corresponding type declarations.
+src/components/edit-subject-dialog.tsx(8,29): error TS2307: Cannot find module '@/app/actions/subjects' or its corresponding type declarations.
+src/components/login-form.tsx(7,29): error TS2307: Cannot find module '@/app/actions/auth' or its corresponding type declarations.
+src/components/navbar/global-search.tsx(7,31): error TS2307: Cannot find module '@/app/actions/search' or its corresponding type declarations.
+src/components/navbar/global-search.tsx(113,30): error TS7006: Parameter 'subj' implicitly has an 'any' type.
+src/components/navbar/global-search.tsx(136,27): error TS7006: Parameter 'n' implicitly has an 'any' type.
+src/components/navbar/navbar.tsx(10,30): error TS2307: Cannot find module '@/app/actions/auth' or its corresponding type declarations.
+src/components/note-image-attachments.tsx(21,8): error TS2307: Cannot find module '@/app/actions/notes' or its corresponding type declarations.
+src/components/profile-form.tsx(8,31): error TS2307: Cannot find module '@/app/actions/profile' or its corresponding type declarations.
+src/components/record-miss-dialog.tsx(6,28): error TS2307: Cannot find module '@/app/actions/attendance' or its corresponding type declarations.
+src/components/signup-form.tsx(7,30): error TS2307: Cannot find module '@/app/actions/auth' or its corresponding type declarations.
+src/lib/auth.ts(45,14): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ href: string | { pathname: string; query?: QueryParams | undefined; }; locale: string; forcePrefix?: boolean | undefined; }'.
+src/lib/auth.ts(53,10): error TS18047: 'session' is possibly 'null'.
+src/lib/auth.ts(62,13): error TS18047: 'session' is possibly 'null'.
+src/lib/auth.ts(63,12): error TS18047: 'session' is possibly 'null'.

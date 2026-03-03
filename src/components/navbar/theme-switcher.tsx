@@ -1,6 +1,7 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
 
 export function ModeToggle() {
   const { setTheme } = useTheme();
+  const t = useTranslations("Navigation");
 
   return (
     <DropdownMenu>
@@ -24,7 +26,7 @@ export function ModeToggle() {
         >
           <Sun className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
           <Moon className="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          <span className="sr-only">Toggle theme</span>
+          <span className="sr-only">{t("toggle_theme")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -32,19 +34,19 @@ export function ModeToggle() {
           onClick={() => setTheme("light")}
           className="cursor-pointer"
         >
-          Light
+          {t("light")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("dark")}
           className="cursor-pointer"
         >
-          Dark
+          {t("dark")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("system")}
           className="cursor-pointer"
         >
-          System
+          {t("system")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

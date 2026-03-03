@@ -2,6 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { archiveSubject, deleteSubject } from "@/app/actions/subjects";
@@ -32,6 +33,7 @@ export function DeleteSubjectDialog({
   onSuccess,
   mode = "delete",
 }: Readonly<DeleteSubjectDialogProps>) {
+  const t = useTranslations("DeleteSubjectDialog");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -59,16 +61,12 @@ export function DeleteSubjectDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "archive" ? "Archive Subject" : "Delete Subject"}
+            {mode === "archive" ? t("archive_title") : t("delete_title")}
           </DialogTitle>
           <DialogDescription>
-            {mode === "archive"
-              ? "Are you sure you want to archive "
-              : "Are you sure you want to delete "}
+            {mode === "archive" ? t("archive_prompt") : t("delete_prompt")}
             <span className="font-semibold text-foreground">{subjectName}</span>
-            {mode === "archive"
-              ? "? You can restore it later from archived subjects."
-              : "? This action cannot be undone. All associated notes will also be deleted."}
+            {mode === "archive" ? t("archive_suffix") : t("delete_suffix")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -77,7 +75,7 @@ export function DeleteSubjectDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             variant={mode === "archive" ? "default" : "destructive"}
@@ -85,7 +83,7 @@ export function DeleteSubjectDialog({
             disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            {mode === "archive" ? "Archive" : "Delete"}
+            {mode === "archive" ? t("archive_action") : t("delete_action")}
           </Button>
         </DialogFooter>
       </DialogContent>

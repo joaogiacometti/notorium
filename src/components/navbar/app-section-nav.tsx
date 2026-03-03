@@ -1,30 +1,32 @@
 "use client";
 
 import { CalendarDays, ClipboardList, FolderKanban } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 const sections = [
   {
     href: "/subjects",
-    label: "Subjects",
+    labelKey: "subjects",
     icon: FolderKanban,
   },
   {
     href: "/assessments",
-    label: "Assessments",
+    labelKey: "assessments",
     icon: ClipboardList,
   },
   {
     href: "/calendar",
-    label: "Calendar",
+    labelKey: "calendar",
     icon: CalendarDays,
   },
 ] as const;
 
 export function AppSectionNav() {
   const pathname = usePathname();
+  const t = useTranslations("Navigation");
 
   return (
     <>
@@ -40,7 +42,7 @@ export function AppSectionNav() {
               key={section.href}
               href={section.href}
               aria-current={active ? "page" : undefined}
-              aria-label={section.label}
+              aria-label={t(section.labelKey)}
               className={cn(
                 "inline-flex items-center rounded-md p-1.5 transition-colors",
                 active
@@ -74,7 +76,7 @@ export function AppSectionNav() {
               )}
             >
               <Icon className="size-4" />
-              {section.label}
+              {t(section.labelKey)}
             </Link>
           );
         })}

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -24,6 +24,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "@/i18n/routing";
+import { getIntlLocale } from "@/lib/date-locale";
 import type { UserPlan } from "@/lib/plan-limits";
 import {
   type UpdateProfileForm,
@@ -45,6 +47,9 @@ export function ProfileForm({
   createdAt,
   updatedAt,
 }: Readonly<ProfileFormProps>) {
+  const locale = useLocale();
+  const intlLocale = getIntlLocale(locale);
+  const t = useTranslations("ProfileForm");
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const form = useForm({
@@ -54,12 +59,12 @@ export function ProfileForm({
     },
   });
 
-  const createdAtLabel = new Date(createdAt).toLocaleDateString(undefined, {
+  const createdAtLabel = new Date(createdAt).toLocaleDateString(intlLocale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  const updatedAtLabel = new Date(updatedAt).toLocaleString(undefined, {
+  const updatedAtLabel = new Date(updatedAt).toLocaleString(intlLocale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -71,7 +76,7 @@ export function ProfileForm({
     const result = await updateProfile(data);
     if (result.success) {
       form.reset({ name: data.name });
-      toast.success("Profile updated.");
+      toast.success(t("toast_success"));
       router.refresh();
       return;
     }
@@ -82,10 +87,8 @@ export function ProfileForm({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>
-            Inspect and update your account details.
-          </CardDescription>
+          <CardTitle>{t("profile_title")}</CardTitle>
+          <CardDescription>{t("profile_description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form id="form-profile" onSubmit={form.handleSubmit(onSubmit)}>
@@ -96,13 +99,13 @@ export function ProfileForm({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-profile-name">
-                      Full Name
+                      {t("name_label")}
                     </FieldLabel>
                     <Input
                       {...field}
                       id="form-profile-name"
                       type="text"
-                      placeholder="John Doe"
+                      placeholder={t("name_placeholder")}
                       aria-invalid={fieldState.invalid}
                       autoComplete="name"
                     />
@@ -114,7 +117,9 @@ export function ProfileForm({
               />
 
               <Field>
-                <FieldLabel htmlFor="form-profile-email">Email</FieldLabel>
+                <FieldLabel htmlFor="form-profile-email">
+                  {t("email_label")}
+                </FieldLabel>
                 <Input
                   id="form-profile-email"
                   value={email}
@@ -126,17 +131,25 @@ export function ProfileForm({
 
               <div className="rounded-lg border bg-muted/20 px-4 py-3 text-sm">
                 <p className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Plan:</span>
+                  <span className="text-muted-foreground">{t("plan")}:</span>
                   <Badge variant={plan === "free" ? "secondary" : "default"}>
-                    {{ free: "Free", pro: "Pro", unlimited: "Unlimited" }[plan]}
+                    {
+                      {
+                        free: t("plan_free"),
+                        pro: t("plan_pro"),
+                        unlimited: t("plan_unlimited"),
+                      }[plan]
+                    }
                   </Badge>
                 </p>
                 <p className="mt-1">
-                  <span className="text-muted-foreground">Joined:</span>{" "}
+                  <span className="text-muted-foreground">{t("joined")}:</span>{" "}
                   {createdAtLabel}
                 </p>
                 <p className="mt-1">
-                  <span className="text-muted-foreground">Last updated:</span>{" "}
+                  <span className="text-muted-foreground">
+                    {t("last_updated")}:
+                  </span>{" "}
                   {updatedAtLabel}
                 </p>
               </div>
@@ -147,7 +160,7 @@ export function ProfileForm({
                 disabled={form.formState.isSubmitting}
                 className="w-full sm:w-fit"
               >
-                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+                {form.formState.isSubmitting ? t("saving") : t("save_changes")}
               </Button>
             </FieldGroup>
           </form>
@@ -156,11 +169,8 @@ export function ProfileForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Data Transfer</CardTitle>
-          <CardDescription>
-            Export all your subjects, notes, attendance records, and assessments
-            as a JSON file, or import data from a previous export.
-          </CardDescription>
+          <CardTitle>{t("data_transfer_title")}</CardTitle>
+          <CardDescription>{t("data_transfer_description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <DataTransferActions />
@@ -169,22 +179,18 @@ export function ProfileForm({
 
       <Card className="border-destructive/50">
         <CardHeader>
-          <CardTitle>Danger Zone</CardTitle>
-          <CardDescription>
-            Permanently delete your account and all associated data.
-          </CardDescription>
+          <CardTitle>{t("danger_title")}</CardTitle>
+          <CardDescription>{t("danger_description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-muted-foreground">
-            Once you delete your account, all of your subjects, notes,
-            assessments, and attendance records will be permanently removed.
-            This action cannot be undone.
+            {t("danger_body")}
           </p>
           <Button
             variant="destructive"
             onClick={() => setDeleteDialogOpen(true)}
           >
-            Delete Account
+            {t("delete_account")}
           </Button>
         </CardContent>
       </Card>

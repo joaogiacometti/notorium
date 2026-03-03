@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAccount } from "@/app/actions/profile";
@@ -23,6 +24,8 @@ export function DeleteAccountDialog({
   open,
   onOpenChange,
 }: Readonly<DeleteAccountDialogProps>) {
+  const t = useTranslations("DeleteAccountDialog");
+  const _tCommon = useTranslations("Common");
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -38,12 +41,8 @@ export function DeleteAccountDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Account</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete your account? This action cannot be
-            undone. All your subjects, notes, assessments, and attendance
-            records will be permanently deleted.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button
