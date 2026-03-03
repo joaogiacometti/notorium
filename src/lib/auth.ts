@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { cache } from "react";
 import { db } from "@/db/index";
 import * as schema from "@/db/schema";
@@ -42,7 +43,8 @@ export async function requireSession() {
   const session = await getSession();
 
   if (!session) {
-    redirect("/login");
+    const locale = await getLocale();
+    redirect(`/${locale}/login`);
   }
 
   return session;

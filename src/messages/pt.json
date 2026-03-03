@@ -1,0 +1,603 @@
+{
+  "Navigation": {
+    "dashboard": "Painel",
+    "subjects": "Matérias",
+    "assessments": "Avaliações",
+    "calendar": "Calendário",
+    "profile": "Perfil",
+    "login": "Entrar",
+    "signup": "Cadastrar",
+    "logout": "Sair",
+    "preferences": "Preferências",
+    "preferences_title": "Preferências",
+    "preferences_description": "Atualize suas configurações de idioma e tema.",
+    "preferences_language_description": "Escolha como o Notorium é exibido.",
+    "preferences_theme_description": "Controle como a interface aparece.",
+    "preferences_hint": "As mudanças são aplicadas imediatamente.",
+    "language": "Idioma",
+    "theme": "Tema",
+    "english": "Inglês",
+    "portuguese": "Português",
+    "toggle_theme": "Alternar tema",
+    "light": "Claro",
+    "dark": "Escuro",
+    "system": "Sistema"
+  },
+  "Index": {
+    "badge": "Gratuito para usar — não precisa de cartão",
+    "title_start": "Seus estudos, ",
+    "title_highlight": "organizados",
+    "description": "O Notorium ajuda você a gerenciar matérias, notas, avaliações e presenças em um só lugar. Fique em dia com sua vida acadêmica.",
+    "get_started": "Começar agora",
+    "sign_in": "Entrar"
+  },
+  "Landing": {
+    "features_heading": "Tudo o que você precisa para se manter em dia",
+    "subjects_title": "Matérias",
+    "subjects_description": "Organize seus cursos e módulos em um só lugar com descrições e acompanhamento de faltas.",
+    "notes_title": "Notas",
+    "notes_description": "Escreva e formate notas com editor rico que suporta títulos, listas, blocos de código e mais.",
+    "assessments_title": "Avaliações",
+    "assessments_description": "Acompanhe provas, trabalhos e médias ponderadas para monitorar seu desempenho.",
+    "calendar_title": "Calendário",
+    "calendar_description": "Veja avaliações e faltas em uma visão de linha do tempo para planejar melhor sua semana.",
+    "plans_heading": "Planos simples para cada estudante",
+    "free": "Grátis",
+    "pro": "Pro",
+    "plan_feature_subjects": "Matérias",
+    "plan_feature_notes_per_subject": "Notas por matéria",
+    "plan_feature_assessments_per_subject": "Avaliações por matéria",
+    "plan_feature_image_attachments": "Anexos de imagem",
+    "plan_feature_rich_text_editor": "Editor de texto rico",
+    "plan_feature_attendance_tracking": "Controle de faltas",
+    "start_for_free": "Começar grátis",
+    "become_pro": "Virar Pro",
+    "coming_soon": "Em breve"
+  },
+  "LoginForm": {
+    "title": "Entre na sua conta",
+    "email_label": "Email",
+    "email_placeholder": "m@exemplo.com",
+    "password_label": "Senha",
+    "forgot_password": "Esqueceu sua senha?",
+    "submitting": "Entrando...",
+    "submit": "Entrar",
+    "no_account": "Não tem uma conta?",
+    "sign_up": "Cadastre-se"
+  },
+  "SignupForm": {
+    "title": "Crie uma conta",
+    "name_label": "Nome completo",
+    "name_placeholder": "João Silva",
+    "email_label": "Email",
+    "email_placeholder": "m@exemplo.com",
+    "password_label": "Senha",
+    "confirm_password_label": "Confirmar senha",
+    "submitting": "Criando conta...",
+    "submit": "Criar conta",
+    "has_account": "Já tem uma conta?",
+    "sign_in": "Entrar"
+  },
+  "SubjectsList": {
+    "title": "Matérias",
+    "description": "Gerencie suas disciplinas e acompanhe o progresso.",
+    "archived": "Arquivadas",
+    "limit_tooltip": "Faça upgrade do plano para criar mais matérias",
+    "new_subject": "Nova matéria",
+    "limit_message": "Você atingiu o limite de {max} matérias no seu plano. Faça upgrade para criar mais.",
+    "empty_title": "Ainda não há matérias",
+    "empty_description": "Crie sua primeira matéria para organizar suas notas e acompanhar seu progresso acadêmico.",
+    "create_subject": "Criar matéria"
+  },
+  "SubjectCard": {
+    "open_actions": "Abrir ações da matéria",
+    "edit": "Editar",
+    "archive": "Arquivar",
+    "delete": "Excluir",
+    "created": "Criado"
+  },
+  "DeleteSubjectDialog": {
+    "archive_title": "Arquivar matéria",
+    "delete_title": "Excluir matéria",
+    "archive_prompt": "Tem certeza que deseja arquivar ",
+    "delete_prompt": "Tem certeza que deseja excluir ",
+    "archive_suffix": "? Você pode restaurar depois em matérias arquivadas.",
+    "delete_suffix": "? Esta ação não pode ser desfeita. Todas as notas associadas também serão excluídas.",
+    "cancel": "Cancelar",
+    "archive_action": "Arquivar",
+    "delete_action": "Excluir"
+  },
+  "SubjectDetail": {
+    "back": "Voltar para matérias",
+    "created": "Criado",
+    "edit": "Editar",
+    "archive": "Arquivar",
+    "delete": "Excluir"
+  },
+  "NotesList": {
+    "title": "Notas",
+    "count_empty": "Registre o que você aprende, uma nota por vez.",
+    "count_with_limit": "{count}/{max} notas",
+    "count_no_limit": "{count, plural, one {# nota} other {# notas}}",
+    "limit_tooltip": "Faça upgrade do plano para criar mais notas",
+    "new_note": "Nova nota",
+    "limit_message": "Você atingiu o limite de {max} notas por matéria no seu plano. Faça upgrade para criar mais.",
+    "empty_title": "Ainda não há notas",
+    "empty_description": "Comece criando sua primeira nota."
+  },
+  "AssessmentsOverview": {
+    "title": "Avaliações",
+    "description": "Visão geral desta matéria.",
+    "limit_tooltip": "Faça upgrade do plano para adicionar mais avaliações",
+    "add_assessment": "Adicionar avaliação",
+    "limit_message": "Você atingiu o limite de {max} avaliações por matéria no seu plano. Faça upgrade para adicionar mais.",
+    "subject_average": "Média da matéria",
+    "average_strong": "Ótimo desempenho",
+    "average_warning": "Precisa melhorar",
+    "average_risk": "Em risco",
+    "subject_assessments": "Avaliações da matéria",
+    "items_no_limit": "{count} itens",
+    "items_with_limit": "{count}/{max} itens",
+    "empty_title": "Ainda não há avaliações",
+    "empty_description": "Comece adicionando sua primeira avaliação."
+  },
+  "AssessmentItemCard": {
+    "edit": "Editar",
+    "delete": "Excluir",
+    "subject": "Matéria",
+    "unknown_subject": "Matéria desconhecida",
+    "status": "Status",
+    "status_pending": "Pendente",
+    "status_completed": "Concluída",
+    "status_overdue": "Atrasada",
+    "type": "Tipo",
+    "type_exam": "Prova",
+    "type_assignment": "Trabalho",
+    "type_project": "Projeto",
+    "type_presentation": "Apresentação",
+    "type_homework": "Tarefa",
+    "type_other": "Outro",
+    "due_date": "Data limite",
+    "score": "Nota"
+  },
+  "ArchivedSubjectCard": {
+    "archived": "Arquivado",
+    "restore": "Restaurar",
+    "delete": "Excluir"
+  },
+  "ArchivedSubjectsPage": {
+    "back": "Voltar para matérias",
+    "title": "Matérias arquivadas",
+    "count": "{count, plural, one {# matéria arquivada} other {# matérias arquivadas}}",
+    "empty_title": "Nenhuma matéria arquivada",
+    "empty_description": "As matérias arquivadas aparecerão aqui."
+  },
+  "AssessmentsPage": {
+    "title": "Todas as avaliações",
+    "description": "Visão detalhada de todas as matérias com filtros globais."
+  },
+  "CalendarPage": {
+    "title": "Calendário",
+    "description": "Avaliações e faltas em uma linha do tempo."
+  },
+  "CalendarView": {
+    "title": "Calendário",
+    "description": "Avaliações e faltas em uma linha do tempo.",
+    "today": "Hoje",
+    "more": "mais"
+  },
+  "GlobalSearch": {
+    "trigger": "Buscar...",
+    "dialog_title": "Busca global",
+    "dialog_description": "Busque em todas as suas matérias e notas",
+    "input_placeholder": "Buscar matérias e notas...",
+    "empty_has_data": "Ainda não há matérias ou notas.",
+    "empty_sign_in": "Entre para buscar.",
+    "subjects_group": "Matérias",
+    "notes_group": "Notas",
+    "in_subject": "em"
+  },
+  "ProfilePage": {
+    "title": "Gerenciar perfil",
+    "description": "Revise as informações da sua conta e mantenha seu perfil atualizado."
+  },
+  "ProfileForm": {
+    "toast_success": "Perfil atualizado.",
+    "profile_title": "Perfil",
+    "profile_description": "Veja e atualize os dados da sua conta.",
+    "name_label": "Nome completo",
+    "name_placeholder": "João Silva",
+    "email_label": "Email",
+    "plan": "Plano",
+    "plan_free": "Grátis",
+    "plan_pro": "Pro",
+    "plan_unlimited": "Ilimitado",
+    "joined": "Entrou em",
+    "last_updated": "Última atualização",
+    "saving": "Salvando...",
+    "save_changes": "Salvar alterações",
+    "data_transfer_title": "Transferência de dados",
+    "data_transfer_description": "Exporte todas as suas matérias, notas, faltas e avaliações em um arquivo JSON ou importe dados de um export anterior.",
+    "danger_title": "Zona de perigo",
+    "danger_description": "Exclua permanentemente sua conta e todos os dados associados.",
+    "danger_body": "Ao excluir sua conta, todas as suas matérias, notas, avaliações e faltas serão removidas permanentemente. Esta ação não pode ser desfeita.",
+    "delete_account": "Excluir conta"
+  },
+  "DataTransferActions": {
+    "export_success": "Dados exportados com sucesso.",
+    "export_error": "Falha ao exportar dados.",
+    "import_success": "{count, plural, one {# matéria importada com sucesso.} other {# matérias importadas com sucesso.}}",
+    "import_read_error": "Falha ao ler o arquivo de importação.",
+    "export_data": "Exportar dados",
+    "export_all": "Exportar tudo",
+    "export_template": "Exportar modelo",
+    "import_data": "Importar dados",
+    "import_dialog_title": "Importar dados",
+    "import_dialog_description": "Isso criará novas matérias a partir do arquivo de importação com todas as notas, faltas e avaliações. Os dados existentes não serão modificados.",
+    "cancel": "Cancelar",
+    "confirm_import": "Confirmar importação"
+  },
+  "GradesSummary": {
+    "heading": "Avaliações",
+    "header_empty": "Nenhuma avaliação encontrada.",
+    "header_count": "{count} avaliações no total",
+    "subject": "Matéria",
+    "subject_all": "Todas as matérias",
+    "status": "Status",
+    "status_all": "Todos",
+    "status_pending": "Pendentes",
+    "status_completed": "Concluídas",
+    "status_overdue": "Atrasadas",
+    "due_date": "Data limite",
+    "due_any": "Qualquer data",
+    "due_past": "Data passada",
+    "due_today": "Para hoje",
+    "due_today_option": "Para hoje",
+    "due_next_7": "Próximos 7 dias",
+    "due_next_30": "Próximos 30 dias",
+    "due_none": "Sem data limite",
+    "due_overdue": "{distance} de atraso",
+    "due_in": "{count, plural, one {Falta {distance}} other {Faltam {distance}}}",
+    "type": "Tipo",
+    "type_all": "Todos os tipos",
+    "type_exam": "Prova",
+    "type_assignment": "Trabalho",
+    "type_project": "Projeto",
+    "type_presentation": "Apresentação",
+    "type_homework": "Tarefa",
+    "type_other": "Outro",
+    "sort": "Ordenação",
+    "sort_smart": "Inteligente",
+    "sort_due_asc": "Data limite crescente",
+    "sort_due_desc": "Data limite decrescente",
+    "sort_updated": "Atualizados recentemente",
+    "sort_score": "Nota decrescente",
+    "average": "Média",
+    "pending": "Pendentes",
+    "pending_empty": "Não há avaliações pendentes.",
+    "completed": "Concluídas",
+    "completed_empty": "Não há avaliações concluídas."
+  },
+  "NotFoundPage": {
+    "title": "Página não encontrada",
+    "description": "A página que você está procurando não existe ou foi movida.",
+    "home": "Ir para o início"
+  },
+  "AttendanceSettingsDialog": {
+    "trigger": "Configurações",
+    "title": "Configurações de Faltas",
+    "description": "Configure o número total de aulas e o limite de faltas para esta matéria.",
+    "total_classes": "Total de Aulas",
+    "max_misses": "Limite de Faltas",
+    "total_classes_placeholder": "ex.: 15",
+    "max_misses_placeholder": "ex.: 4",
+    "submit": "Salvar Configurações"
+  },
+  "AttendanceSummary": {
+    "title": "Faltas",
+    "description_configured": "Acompanhe seu status de presença e faltas registradas.",
+    "description_unconfigured": "Defina limites de faltas para começar a acompanhar.",
+    "record_miss": "Registrar Falta",
+    "recorded_misses": "Faltas Registradas",
+    "empty_title": "Nenhuma configuração de faltas",
+    "empty_description": "Comece adicionando o total de aulas e limites de faltas.",
+    "attendance_rate": "Taxa de Presença",
+    "status_limit": "Limite Atingido",
+    "status_warning": "Aviso",
+    "status_track": "No Caminho",
+    "badge_no_misses": "Sem faltas restantes",
+    "badge_remaining": "{count, plural, one {# falta restante} other {# faltas restantes}}"
+  },
+  "CreateAssessmentDialog": {
+    "title": "Adicionar Avaliação",
+    "description": "Acompanhe uma avaliação futura ou concluída para esta matéria.",
+    "field_title": "Título",
+    "field_description": "Descrição (opcional)",
+    "field_type": "Tipo",
+    "field_status": "Status",
+    "field_due_date": "Data limite (opcional)",
+    "field_score": "Nota (opcional)",
+    "field_weight": "Peso (opcional)",
+    "field_title_placeholder": "ex.: Prova 1",
+    "field_description_placeholder": "Detalhes extras...",
+    "field_score_placeholder": "ex.: 84",
+    "field_weight_placeholder": "ex.: 40",
+    "submit": "Adicionar Avaliação"
+  },
+  "EditAssessmentDialog": {
+    "title": "Editar Avaliação",
+    "description": "Atualize detalhes, status, datas e valores de notas.",
+    "field_title": "Título",
+    "field_description": "Descrição (opcional)",
+    "field_type": "Tipo",
+    "field_status": "Status",
+    "field_due_date": "Data limite (opcional)",
+    "field_score": "Nota (opcional)",
+    "field_weight": "Peso (opcional)",
+    "field_title_placeholder": "ex.: Prova 1",
+    "field_description_placeholder": "Detalhes extras...",
+    "field_score_placeholder": "ex.: 84",
+    "field_weight_placeholder": "ex.: 40",
+    "submit": "Salvar Alterações"
+  },
+  "DeleteAssessmentDialog": {
+    "title": "Excluir Avaliação",
+    "prompt_prefix": "Tem certeza que deseja excluir ",
+    "prompt_suffix": "? Esta ação não pode ser desfeita.",
+    "confirm": "Excluir"
+  },
+  "CreateNoteDialog": {
+    "title": "Criar Nota",
+    "field_title": "Título",
+    "field_content": "Conteúdo",
+    "field_title_placeholder": "ex.: Aula 1 - Introdução",
+    "field_content_placeholder": "Comece a escrever suas notas...",
+    "submit": "Criar Nota"
+  },
+  "EditNoteDialog": {
+    "title": "Editar Nota",
+    "field_title": "Título",
+    "field_title_placeholder": "ex.: Aula 1 - Introdução",
+    "field_content": "Conteúdo",
+    "field_content_placeholder": "Comece a escrever suas notas...",
+    "submit": "Salvar Alterações"
+  },
+  "DeleteNoteDialog": {
+    "title": "Excluir Nota",
+    "prompt_prefix": "Tem certeza que deseja excluir ",
+    "prompt_suffix": "? Esta ação não pode ser desfeita.",
+    "confirm": "Excluir"
+  },
+  "CreateSubjectDialog": {
+    "title": "Criar Matéria",
+    "field_name": "Nome",
+    "field_description": "Descrição",
+    "field_name_placeholder": "ex.: Cálculo I",
+    "field_description_placeholder": "Descrição opcional...",
+    "submit": "Criar matéria",
+    "section_modules": "Módulos",
+    "section_notes": "Notas",
+    "section_notes_desc": "Notas em texto rico para estudos.",
+    "section_assessments": "Avaliações",
+    "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
+    "section_attendance": "Faltas",
+    "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites."
+  },
+  "EditSubjectDialog": {
+    "title": "Editar Matéria",
+    "section_modules": "Módulos",
+    "section_notes": "Notas",
+    "section_notes_desc": "Notas em texto rico para estudos.",
+    "section_assessments": "Avaliações",
+    "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
+    "section_attendance": "Faltas",
+    "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites.",
+    "submit": "Salvar alterações"
+  },
+  "DeleteAccountDialog": {
+    "title": "Excluir Conta",
+    "description": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
+  },
+  "DeleteMissDialog": {
+    "title": "Remover Falta",
+    "prompt_prefix": "Tem certeza que deseja remover a falta registrada em ",
+    "prompt_suffix": "? Esta ação não pode ser desfeita.",
+    "confirm": "Remover"
+  },
+  "RecordMissDialog": {
+    "title": "Registrar Falta",
+    "description": "Selecione a data que você faltou em uma aula desta matéria.",
+    "field_date": "Data",
+    "submit": "Registrar Falta"
+  },
+  "NoteCard": {
+    "open_actions": "Abrir ações da nota",
+    "created_label": "Criado",
+    "edit": "Editar",
+    "delete": "Excluir"
+  },
+  "NoteDetail": {
+    "back": "Voltar para Matéria",
+    "created_label": "Criado",
+    "empty": "Nenhum conteúdo ainda. Clique em Editar para adicionar notas.",
+    "edit": "Editar",
+    "delete": "Excluir"
+  },
+  "NoteImageAttachments": {
+    "title": "Anexos",
+    "images": "Imagens",
+    "dropzone": "Clique, arraste ou cole imagens",
+    "clear": "Limpar",
+    "uploading": "Enviando imagens...",
+    "free_plan_title": "Anexos de imagem não estão disponíveis no plano Grátis.",
+    "free_plan_desc": "Faça upgrade do seu plano para enviar imagens.",
+    "empty": "Nenhuma imagem anexada ainda.",
+    "remove": "Remover Anexo",
+    "cancel": "Cancelar",
+    "remove_prompt": "Tem certeza que deseja remover esta imagem? Esta ação não pode ser desfeita.",
+    "preview": "Pré-visualização do anexo",
+    "max_files_error": "Você pode enviar no máximo {max} imagens por vez.",
+    "upload_success": "{count, plural, one {# imagem enviada.} other {# imagens enviadas.}}",
+    "upload_failed": "Falha ao enviar imagens.",
+    "remove_success": "Anexo removido.",
+    "remove_failed": "Falha ao remover anexo.",
+    "attachment_alt": "Anexo da nota",
+    "attachment_fullscreen_alt": "Anexo da nota em tela cheia",
+    "close_viewer": "Fechar visualizador de imagem"
+  },
+  "TiptapEditor": {
+    "placeholder": "Comece a escrever suas notas...",
+    "bold": "Negrito (Ctrl+B)",
+    "italic": "Itálico (Ctrl+I)",
+    "underline": "Sublinhado (Ctrl+U)",
+    "strikethrough": "Tachado",
+    "highlight": "Destaque",
+    "inline_code": "Código Inline",
+    "heading_1": "Título 1",
+    "heading_2": "Título 2",
+    "heading_3": "Título 3",
+    "bullet_list": "Lista com Marcadores",
+    "numbered_list": "Lista Numerada",
+    "task_list": "Lista de Tarefas",
+    "quote": "Citação",
+    "divider": "Divisor",
+    "undo": "Desfazer (Ctrl+Z)",
+    "redo": "Refazer (Ctrl+Shift+Z)"
+  },
+  "UnsavedChangesDialog": {
+    "title": "Descartar alterações?",
+    "description": "Você tem edições não salvas nesta nota. Se descartar agora, essas alterações serão perdidas.",
+    "keep": "Continuar Editando",
+    "discard": "Descartar"
+  },
+  "ServerActions": {
+    "common": {
+      "generic": "Algo deu errado. Tente novamente.",
+      "invalidRequest": "Solicitacao invalida."
+    },
+    "auth": {
+      "rateLimited": "Muitas tentativas. Tente novamente mais tarde.",
+      "invalidInput": "Dados invalidos.",
+      "loginFailed": "Falha no login.",
+      "signupFailed": "Falha no cadastro."
+    },
+    "subjects": {
+      "invalidData": "Dados da materia invalidos.",
+      "notFound": "Materia nao encontrada."
+    },
+    "assessments": {
+      "invalidData": "Dados da avaliacao invalidos.",
+      "notFound": "Avaliacao nao encontrada."
+    },
+    "attendance": {
+      "invalidSettings": "Configuracoes de faltas invalidas.",
+      "maxMissesExceeded": "O limite de faltas nao pode ser maior que o total de aulas.",
+      "invalidMissData": "Dados de falta invalidos.",
+      "missAlreadyRecorded": "Ja existe uma falta registrada para esta data.",
+      "missNotFound": "Registro de falta nao encontrado."
+    },
+    "dataTransfer": {
+      "invalidImportFormat": "Formato do arquivo de importacao invalido.",
+      "noSubjectsToImport": "Nao ha materias para importar.",
+      "importFailed": "Falha ao importar dados."
+    },
+    "notes": {
+      "invalidData": "Dados da nota invalidos.",
+      "notFound": "Nota nao encontrada.",
+      "attachments": {
+        "selectAtLeastOne": "Selecione pelo menos uma imagem.",
+        "maxFilesPerUpload": "Voce pode enviar no maximo {max} imagens por vez.",
+        "invalidFile": "Arquivo invalido: {fileName}.",
+        "freePlanNotAllowed": "Anexos de imagem nao estao disponiveis no plano Gratis.",
+        "blobNotConfigured": "O armazenamento Blob nao esta configurado.",
+        "storageLimitReached": "Voce atingiu o limite de armazenamento de imagens. Remova algumas imagens para liberar espaco.",
+        "uploadFailed": "Falha ao enviar imagens da nota.",
+        "notFound": "Anexo nao encontrado."
+      }
+    },
+    "profile": {
+      "invalidData": "Dados de perfil invalidos.",
+      "updateFailed": "Falha ao atualizar o perfil."
+    },
+    "plan": {
+      "subjectLimit": "Limite do plano: voce pode ter ate {max} materias.",
+      "subjectImportLimit": "Limite do plano: voce so pode ter ate {max} materias.",
+      "noteLimit": "Limite do plano: voce pode ter ate {max} notas por materia.",
+      "assessmentLimit": "Limite do plano: voce pode ter ate {max} avaliacoes por materia."
+    }
+  },
+  "Validation": {
+    "auth": {
+      "emailMaxLength": "O email deve ter no maximo 254 caracteres.",
+      "emailInvalid": "Informe um endereco de email valido.",
+      "passwordMinLength": "A senha deve ter pelo menos 8 caracteres.",
+      "passwordMaxLength": "A senha deve ter no maximo 128 caracteres.",
+      "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",
+      "nameMaxLength": "O nome deve ter no maximo 100 caracteres.",
+      "confirmPasswordRequired": "A confirmacao de senha e obrigatoria.",
+      "passwordsDoNotMatch": "As senhas nao coincidem."
+    },
+    "subjects": {
+      "nameRequired": "O nome da materia e obrigatorio.",
+      "nameMaxLength": "O nome da materia deve ter no maximo 100 caracteres.",
+      "descriptionMaxLength": "A descricao deve ter no maximo 500 caracteres."
+    },
+    "assessments": {
+      "dueDateInvalid": "A data limite deve ser valida.",
+      "titleRequired": "O titulo e obrigatorio.",
+      "titleMaxLength": "O titulo deve ter no maximo 100 caracteres.",
+      "descriptionMaxLength": "A descricao deve ter no maximo 1000 caracteres.",
+      "score": {
+        "notNumber": "A nota deve ser um numero.",
+        "minValue": "A nota nao pode ser negativa.",
+        "maxValue": "A nota nao pode exceder 100."
+      },
+      "weight": {
+        "notNumber": "O peso deve ser um numero.",
+        "minValue": "O peso nao pode ser negativo.",
+        "maxValue": "O peso nao pode exceder 100."
+      }
+    },
+    "attendance": {
+      "totalClasses": {
+        "integer": "Deve ser um numero inteiro.",
+        "min": "Deve ter pelo menos 1 aula.",
+        "max": "Nao pode exceder 365 aulas."
+      },
+      "maxMisses": {
+        "integer": "Deve ser um numero inteiro.",
+        "min": "Nao pode ser negativo.",
+        "max": "Nao pode exceder 365 faltas."
+      },
+      "dateRequired": "A data e obrigatoria."
+    },
+    "notes": {
+      "titleRequired": "O titulo da nota e obrigatorio.",
+      "titleMaxLength": "O titulo da nota deve ter no maximo 200 caracteres.",
+      "contentMaxLength": "O conteudo deve ter no maximo 10000 caracteres.",
+      "attachments": {
+        "invalidSelection": "Selecao de arquivo invalida.",
+        "selectAtLeastOne": "Selecione pelo menos uma imagem.",
+        "maxFilesPerUpload": "Voce pode enviar no maximo {max} imagens por vez.",
+        "unsupportedType": "Tipo de arquivo nao suportado. Use JPG, PNG, WEBP ou GIF.",
+        "maxSize": "Arquivo muito grande. O tamanho maximo e {max}MB.",
+        "fileError": "{fileName}: Arquivo invalido."
+      }
+    },
+    "profile": {
+      "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",
+      "nameMaxLength": "O nome deve ter no maximo 100 caracteres."
+    },
+    "search": {
+      "queryMaxLength": "A busca deve ter no maximo 200 caracteres."
+    }
+  },
+  "Common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "creating": "Criando...",
+    "saving": "Salvando...",
+    "deleting": "Excluindo...",
+    "uploading": "Enviando..."
+  }
+}

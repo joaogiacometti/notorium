@@ -2,6 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteNote } from "@/app/actions/notes";
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteNoteDialogProps {
   noteId: string;
@@ -30,6 +32,9 @@ export function DeleteNoteDialog({
   onOpenChange,
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
+  const t = useTranslations("DeleteNoteDialog");
+  const tCommon = useTranslations("Common");
+  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -43,8 +48,8 @@ export function DeleteNoteDialog({
         } else {
           onOpenChange(false);
         }
-      } else if (result.error) {
-        toast.error(result.error);
+      } else {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     });
   }
@@ -53,11 +58,11 @@ export function DeleteNoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Note</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {"Are you sure you want to delete "}
+            {t("prompt_prefix")}
             <span className="font-semibold text-foreground">{noteTitle}</span>
-            {"? This action cannot be undone."}
+            {t("prompt_suffix")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -66,7 +71,7 @@ export function DeleteNoteDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -74,7 +79,7 @@ export function DeleteNoteDialog({
             disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            Delete
+            {t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

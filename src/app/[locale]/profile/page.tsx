@@ -1,10 +1,12 @@
 import { UserCircle } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { ProfileForm } from "@/components/profile-form";
 import { requireSession } from "@/lib/auth";
 import type { UserPlan } from "@/lib/plan-limits";
 
 export default async function ProfilePage() {
   const session = await requireSession();
+  const t = await getTranslations("ProfilePage");
 
   return (
     <main>
@@ -15,10 +17,10 @@ export default async function ProfilePage() {
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
-              Manage Profile
+              {t("title")}
             </h1>
             <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
-              Review your account information and keep your profile up to date.
+              {t("description")}
             </p>
           </div>
         </div>

@@ -15,7 +15,7 @@ const authRateLimit = new Ratelimit({
 });
 
 export async function checkAuthRateLimit(): Promise<
-  { limited: false } | { limited: true; error: string }
+  { limited: false } | { limited: true; errorCode: string }
 > {
   const headersList = await headers();
   const ip =
@@ -26,7 +26,7 @@ export async function checkAuthRateLimit(): Promise<
   if (!success) {
     return {
       limited: true,
-      error: "Too many attempts. Please try again later.",
+      errorCode: "auth.rateLimited",
     };
   }
 

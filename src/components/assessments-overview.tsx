@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Plus, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { AssessmentItemCard } from "@/components/assessment-item-card";
 import { CreateAssessmentDialog } from "@/components/create-assessment-dialog";
@@ -27,22 +28,28 @@ function getAverageTone(value: number): string {
   return `${tone.border} ${tone.bg} ${tone.text}`;
 }
 
-function getAverageMeta(value: number): { label: string; barClass: string } {
+function getAverageMeta(
+  value: number,
+  t: (key: string) => string,
+): { label: string; barClass: string } {
   const tone = getScoreTone(value);
 
   if (tone === "success") {
     return {
-      label: "Strong performance",
+      label: t("average_strong"),
       barClass: getStatusToneClasses(tone).fill,
     };
   }
   if (tone === "warning") {
     return {
-      label: "Needs improvement",
+      label: t("average_warning"),
       barClass: getStatusToneClasses(tone).fill,
     };
   }
-  return { label: "At risk", barClass: getStatusToneClasses(tone).fill };
+  return {
+    label: t("average_risk"),
+    barClass: getStatusToneClasses(tone).fill,
+  };
 }
 
 export function AssessmentsOverview({
@@ -50,6 +57,7 @@ export function AssessmentsOverview({
   assessments,
   plan,
 }: Readonly<AssessmentsOverviewProps>) {
+  const t = useTranslations("AssessmentsOverview");
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AssessmentEntity | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AssessmentEntity | null>(
@@ -62,7 +70,7 @@ export function AssessmentsOverview({
     assessments.length >= limits.maxAssessmentsPerSubject;
   const todayIso = getTodayIso();
   const average = getAssessmentAverage(assessments);
-  const averageMeta = average === null ? null : getAverageMeta(average);
+  const averageMeta = average === null ? null : getAverageMeta(average, t);
   const subjectAssessments = useMemo(
     () =>
       [...assessments].sort(
@@ -75,9 +83,9 @@ export function AssessmentsOverview({
     <div>
       <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Assessments</h2>
+          <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            General overview for this subject.
+            {t("description")}
           </p>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -86,14 +94,10 @@ export function AssessmentsOverview({
             className="flex-1 gap-1.5 sm:flex-none"
             onClick={() => setCreateOpen(true)}
             disabled={isAtLimit}
-            title={
-              isAtLimit
-                ? "Upgrade your plan to add more assessments"
-                : undefined
-            }
+            title={isAtLimit ? t("limit_tooltip") : undefined}
           >
             <Plus className="size-4" />
-            Add Assessment
+            {t("add_assessment")}
           </Button>
         </div>
       </div>
@@ -102,8 +106,9 @@ export function AssessmentsOverview({
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
           <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-amber-800 dark:text-amber-200">
-            You&apos;ve reached the limit of {limits.maxAssessmentsPerSubject}{" "}
-            assessments per subject on your plan. Upgrade to add more.
+            {t("limit_message", {
+              max: limits.maxAssessmentsPerSubject ?? 0,
+            })}
           </p>
         </div>
       )}
@@ -116,7 +121,7 @@ export function AssessmentsOverview({
           <div className="relative mb-2">
             <p className="inline-flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="size-4" />
-              Subject Average
+              {t("subject_average")}
             </p>
           </div>
           <div className="relative flex flex-col items-start gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
@@ -143,19 +148,22 @@ export function AssessmentsOverview({
       >
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-muted-foreground">
-            Subject Assessments
+            {t("subject_assessments")}
           </h3>
           <p className="text-sm text-muted-foreground">
             {limits.maxAssessmentsPerSubject === null
-              ? `${subjectAssessments.length} items`
-              : `${subjectAssessments.length}/${limits.maxAssessmentsPerSubject} items`}
+              ? t("items_no_limit", { count: subjectAssessments.length })
+              : t("items_with_limit", {
+                  count: subjectAssessments.length,
+                  max: limits.maxAssessmentsPerSubject,
+                })}
           </p>
         </div>
         {subjectAssessments.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-4">
-            <h4 className="text-sm font-semibold">No assessments yet</h4>
+            <h4 className="text-sm font-semibold">{t("empty_title")}</h4>
             <p className="mt-1 text-sm text-muted-foreground">
-              Start by adding your first assessment.
+              {t("empty_description")}
             </p>
           </div>
         ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { signUpAction } from "@/app/actions/auth";
@@ -15,12 +15,16 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Link } from "@/i18n/routing";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type SignupForm as SignupFormValues,
   signupSchema,
 } from "@/lib/validations/auth";
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
+  const t = useTranslations("SignupForm");
+  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -36,14 +40,14 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   async function onSubmit(data: SignupFormValues) {
     const result = await signUpAction(data);
     if (result && !result.success) {
-      toast.error(result.error);
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 
   return (
     <Card {...props}>
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <form id="form-signup" onSubmit={form.handleSubmit(onSubmit)}>
@@ -53,12 +57,14 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-signup-name">Full Name</FieldLabel>
+                  <FieldLabel htmlFor="form-signup-name">
+                    {t("name_label")}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id="form-signup-name"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder={t("name_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoComplete="name"
                   />
@@ -73,12 +79,14 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-signup-email">Email</FieldLabel>
+                  <FieldLabel htmlFor="form-signup-email">
+                    {t("email_label")}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id="form-signup-email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder={t("email_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoComplete="email"
                   />
@@ -94,7 +102,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-signup-password">
-                    Password
+                    {t("password_label")}
                   </FieldLabel>
                   <Input
                     {...field}
@@ -115,7 +123,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-signup-confirm-password">
-                    Confirm Password
+                    {t("confirm_password_label")}
                   </FieldLabel>
                   <Input
                     {...field}
@@ -132,10 +140,10 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
             />
             <Field>
               <Button type="submit" form="form-signup" disabled={isSubmitting}>
-                {isSubmitting ? "Creating account..." : "Create Account"}
+                {isSubmitting ? t("submitting") : t("submit")}
               </Button>
               <FieldDescription className="px-6 text-center">
-                Already have an account? <Link href="/login">Sign in</Link>
+                {t("has_account")} <Link href="/login">{t("sign_in")}</Link>
               </FieldDescription>
             </Field>
           </FieldGroup>

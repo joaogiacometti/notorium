@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Settings } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAttendanceSettings } from "@/app/actions/attendance";
@@ -21,6 +22,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type AttendanceSettingsForm,
   attendanceSettingsSchema,
@@ -41,6 +43,8 @@ export function AttendanceSettingsDialog({
   open,
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
+  const t = useTranslations("AttendanceSettingsDialog");
+  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {
@@ -54,8 +58,8 @@ export function AttendanceSettingsDialog({
     const result = await updateAttendanceSettings(data);
     if (result.success) {
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 
@@ -64,16 +68,13 @@ export function AttendanceSettingsDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Settings className="size-3.5" />
-          Settings
+          {t("trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Attendance Settings</DialogTitle>
-          <DialogDescription>
-            Configure the total number of classes and maximum allowed misses for
-            this subject.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <form
           id="form-attendance-settings"
@@ -86,14 +87,14 @@ export function AttendanceSettingsDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-attendance-total-classes">
-                    Total Classes
+                    {t("total_classes")}
                   </FieldLabel>
                   <Input
                     id="form-attendance-total-classes"
                     type="number"
                     min={1}
                     max={365}
-                    placeholder="e.g. 15"
+                    placeholder={t("total_classes_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                     value={field.value}
@@ -114,14 +115,14 @@ export function AttendanceSettingsDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-attendance-max-misses">
-                    Max Allowed Misses
+                    {t("max_misses")}
                   </FieldLabel>
                   <Input
                     id="form-attendance-max-misses"
                     type="number"
                     min={0}
                     max={365}
-                    placeholder="e.g. 4"
+                    placeholder={t("max_misses_placeholder")}
                     aria-invalid={fieldState.invalid}
                     value={field.value}
                     onBlur={field.onBlur}
@@ -144,7 +145,7 @@ export function AttendanceSettingsDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Save Settings
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>

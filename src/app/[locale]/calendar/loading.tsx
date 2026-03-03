@@ -1,12 +1,20 @@
 import { format } from "date-fns";
+
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+
+import { getLocale, getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDateFnsLocale } from "@/lib/date-locale";
 
-const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-export default function CalendarLoading() {
-  const title = format(new Date(), "MMMM yyyy");
+export default async function CalendarLoading() {
+  const locale = await getLocale();
+  const t = await getTranslations("CalendarView");
+  const dateLocale = getDateFnsLocale(locale);
+  const title = format(new Date(), "MMMM yyyy", { locale: dateLocale });
+  const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
+    format(new Date(2026, 2, 2 + index), "EEE", { locale: dateLocale }),
+  );
 
   return (
     <main>
@@ -17,10 +25,10 @@ export default function CalendarLoading() {
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
-              Calendar
+              {t("title")}
             </h1>
             <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
-              Assessments and attendance misses on a timeline.
+              {t("description")}
             </p>
           </div>
         </div>
@@ -39,14 +47,14 @@ export default function CalendarLoading() {
               </Button>
             </div>
             <Button variant="ghost" size="sm" className="h-7 text-xs" disabled>
-              Today
+              {t("today")}
             </Button>
           </div>
 
           <div className="flex flex-col gap-2">
             <div className="min-w-0">
               <div className="grid grid-cols-7 gap-px lg:gap-1">
-                {WEEKDAY_LABELS.map((d) => (
+                {weekdayLabels.map((d) => (
                   <div
                     key={d}
                     className="py-1 text-center text-[11px] font-medium text-muted-foreground lg:text-xs"

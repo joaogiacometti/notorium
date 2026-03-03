@@ -2,8 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { AssessmentsOverview } from "@/components/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance-summary";
@@ -12,12 +11,14 @@ import { EditSubjectDialog } from "@/components/edit-subject-dialog";
 import { NotesList } from "@/components/notes-list";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Link, useRouter } from "@/i18n/routing";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
   NoteEntity,
   SubjectEntity,
 } from "@/lib/api/contracts";
+import { getDateFnsLocale } from "@/lib/date-locale";
 import type { UserPlan } from "@/lib/plan-limits";
 
 interface SubjectDetailProps {
@@ -35,6 +36,9 @@ export function SubjectDetail({
   assessments,
   plan,
 }: Readonly<SubjectDetailProps>) {
+  const locale = useLocale();
+  const dateLocale = getDateFnsLocale(locale);
+  const t = useTranslations("SubjectDetail");
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -51,7 +55,7 @@ export function SubjectDetail({
         >
           <Link href="/subjects">
             <ArrowLeft className="size-4" />
-            Back to Subjects
+            {t("back")}
           </Link>
         </Button>
       </div>
@@ -72,9 +76,10 @@ export function SubjectDetail({
             )}
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
-                Created{" "}
+                {t("created")}{" "}
                 {formatDistanceToNow(new Date(subject.createdAt), {
                   addSuffix: true,
+                  locale: dateLocale,
                 })}
               </span>
             </div>
@@ -88,7 +93,7 @@ export function SubjectDetail({
             onClick={() => setEditOpen(true)}
           >
             <Pencil className="size-3.5" />
-            Edit
+            {t("edit")}
           </Button>
           <Button
             variant="outline"
@@ -97,7 +102,7 @@ export function SubjectDetail({
             onClick={() => setArchiveOpen(true)}
           >
             <Archive className="size-3.5" />
-            Archive
+            {t("archive")}
           </Button>
           <Button
             variant="outline"
@@ -106,7 +111,7 @@ export function SubjectDetail({
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" />
-            Delete
+            {t("delete")}
           </Button>
         </div>
       </div>

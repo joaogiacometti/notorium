@@ -193,9 +193,11 @@ describe("Subjects", () => {
       cy.contains("button", "Restore").click();
     });
 
-    cy.contains('[data-slot="card-title"]', name).should("not.exist");
     cy.contains("a", "Back to Subjects").click();
     cy.contains('[data-slot="card-title"]', name).should("be.visible");
+    cy.contains("a", "Archived").click();
+    cy.url({ timeout: 10000 }).should("include", "/subjects/archived");
+    cy.contains('[data-slot="card-title"]', name).should("not.exist");
   });
 
   it("deletes an archived subject permanently", () => {

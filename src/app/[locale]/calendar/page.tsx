@@ -1,9 +1,11 @@
 import { CalendarDays } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { CalendarView } from "@/components/calendar-view";
 import { requireSession } from "@/lib/auth";
 
 export default async function CalendarPage() {
   await requireSession();
+  const t = await getTranslations("CalendarPage");
 
   return (
     <main>
@@ -14,10 +16,10 @@ export default async function CalendarPage() {
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
-              Calendar
+              {t("title")}
             </h1>
             <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
-              Assessments and attendance misses on a timeline.
+              {t("description")}
             </p>
           </div>
         </div>

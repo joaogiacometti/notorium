@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import { useBeforeUnload } from "@/lib/use-before-unload";
 import { type CreateNoteForm, createNoteSchema } from "@/lib/validations/notes";
 
@@ -40,6 +42,8 @@ export function CreateNoteDialog({
   open,
   onOpenChange,
 }: Readonly<CreateNoteDialogProps>) {
+  const t = useTranslations("CreateNoteDialog");
+  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const defaultValues = {
@@ -88,12 +92,12 @@ export function CreateNoteDialog({
   async function onSubmit(data: CreateNoteForm) {
     const result = await createNote(data);
     if (result.success) {
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       form.reset(defaultValues);
       setDiscardDialogOpen(false);
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+      void queryClient.invalidateQueries({ queryKey: ["search-data"] });
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 
@@ -103,7 +107,7 @@ export function CreateNoteDialog({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
           <DialogHeader>
-            <DialogTitle>Create Note</DialogTitle>
+            <DialogTitle>{t("title")}</DialogTitle>
           </DialogHeader>
           <form id="form-create-note" onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">
@@ -113,12 +117,12 @@ export function CreateNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-create-note-title">
-                      Title
+                      {t("field_title")}
                     </FieldLabel>
                     <Input
                       {...field}
                       id="form-create-note-title"
-                      placeholder="e.g. Lecture 1 — Introduction"
+                      placeholder={t("field_title_placeholder")}
                       aria-invalid={fieldState.invalid}
                       autoFocus
                     />
@@ -134,12 +138,12 @@ export function CreateNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-create-note-content">
-                      Content
+                      {t("field_content")}
                     </FieldLabel>
                     <TiptapEditor
                       value={field.value ?? ""}
                       onChange={field.onChange}
-                      placeholder="Start writing your notes..."
+                      placeholder={t("field_content_placeholder")}
                       id="form-create-note-content"
                       aria-invalid={fieldState.invalid}
                     />
@@ -158,7 +162,7 @@ export function CreateNoteDialog({
                 {form.formState.isSubmitting && (
                   <Loader2 className="size-4 animate-spin" />
                 )}
-                Create Note
+                {t("submit")}
               </Button>
             </FieldGroup>
           </form>

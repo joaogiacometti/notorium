@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
@@ -14,13 +14,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/routing";
 import type { NoteEntity } from "@/lib/api/contracts";
+import { getDateFnsLocale } from "@/lib/date-locale";
 
 interface NoteCardProps {
   note: NoteEntity;
 }
 
 export function NoteCard({ note }: Readonly<NoteCardProps>) {
+  const t = useTranslations("NoteCard");
+  const locale = useLocale();
+  const dateLocale = getDateFnsLocale(locale);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -45,7 +50,7 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
                 variant="ghost"
                 size="icon"
                 className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
-                aria-label="Open note actions"
+                aria-label={t("open_actions")}
               >
                 <MoreVertical className="size-4" />
               </Button>
@@ -56,14 +61,14 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
                 className="cursor-pointer"
               >
                 <Pencil className="size-4" />
-                Edit
+                {t("edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <Trash2 className="size-4" />
-                Delete
+                {t("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -74,9 +79,10 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
         >
           <CardContent className="pt-0">
             <p className="text-xs text-muted-foreground/60">
-              Created{" "}
+              {t("created_label")}{" "}
               {formatDistanceToNow(new Date(note.createdAt), {
                 addSuffix: true,
+                locale: dateLocale,
               })}
             </p>
           </CardContent>

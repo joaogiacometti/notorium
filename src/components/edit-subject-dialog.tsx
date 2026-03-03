@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editSubject } from "@/app/actions/subjects";
@@ -23,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { SubjectEditDto } from "@/lib/api/contracts";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type EditSubjectForm,
   editSubjectSchema,
@@ -39,6 +41,9 @@ export function EditSubjectDialog({
   open,
   onOpenChange,
 }: Readonly<EditSubjectDialogProps>) {
+  const t = useTranslations("EditSubjectDialog");
+  const _tSubject = useTranslations("CreateSubjectDialog");
+  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(editSubjectSchema),
@@ -57,8 +62,8 @@ export function EditSubjectDialog({
     if (result.success) {
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 
@@ -66,7 +71,7 @@ export function EditSubjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Subject</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
         <form id="form-edit-subject" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-4">
@@ -75,11 +80,13 @@ export function EditSubjectDialog({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-edit-subject-name">Name</FieldLabel>
+                  <FieldLabel htmlFor="form-edit-subject-name">
+                    {_tSubject("field_name")}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id="form-edit-subject-name"
-                    placeholder="e.g. Calculus I"
+                    placeholder={_tSubject("field_name_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />
@@ -95,12 +102,12 @@ export function EditSubjectDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-subject-description">
-                    Description
+                    {_tSubject("field_description")}
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id="form-edit-subject-description"
-                    placeholder="Optional description..."
+                    placeholder={_tSubject("field_description_placeholder")}
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
@@ -113,7 +120,9 @@ export function EditSubjectDialog({
             />
 
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-foreground">Modules</h3>
+              <h3 className="text-sm font-medium text-foreground">
+                {t("section_modules")}
+              </h3>
               <div className="space-y-2">
                 <Controller
                   name="notesEnabled"
@@ -121,9 +130,11 @@ export function EditSubjectDialog({
                   render={({ field }) => (
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
                       <div>
-                        <span className="text-sm font-medium">Notes</span>
+                        <span className="text-sm font-medium">
+                          {t("section_notes")}
+                        </span>
                         <p className="text-[0.8rem] text-muted-foreground">
-                          Markdown notes for studying.
+                          {t("section_notes_desc")}
                         </p>
                       </div>
                       <Switch
@@ -139,9 +150,11 @@ export function EditSubjectDialog({
                   render={({ field }) => (
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
                       <div>
-                        <span className="text-sm font-medium">Assessments</span>
+                        <span className="text-sm font-medium">
+                          {t("section_assessments")}
+                        </span>
                         <p className="text-[0.8rem] text-muted-foreground">
-                          Plan deadlines and track completed scores.
+                          {t("section_assessments_desc")}
                         </p>
                       </div>
                       <Switch
@@ -157,9 +170,11 @@ export function EditSubjectDialog({
                   render={({ field }) => (
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
                       <div>
-                        <span className="text-sm font-medium">Attendance</span>
+                        <span className="text-sm font-medium">
+                          {t("section_attendance")}
+                        </span>
                         <p className="text-[0.8rem] text-muted-foreground">
-                          Track missed classes against limits.
+                          {t("section_attendance_desc")}
                         </p>
                       </div>
                       <Switch
@@ -181,7 +196,7 @@ export function EditSubjectDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Save Changes
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>

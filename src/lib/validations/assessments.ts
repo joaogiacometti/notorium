@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validationMessage } from "@/lib/validation-messages";
 
 const assessmentTypeValues = [
   "exam",
@@ -16,31 +17,36 @@ export const assessmentStatusSchema = z.enum(assessmentStatusValues);
 
 const optionalDateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Due date must be a valid date.")
+  .regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+    validationMessage("Validation.assessments.dueDateInvalid"),
+  )
   .optional();
 
-const optionalNumberSchema = (label: string) =>
+const optionalNumberSchema = (field: "score" | "weight") =>
   z
-    .number({ message: `${label} must be a number.` })
-    .min(0, `${label} cannot be negative.`)
-    .max(100, `${label} cannot exceed 100.`)
+    .number({
+      message: validationMessage(`Validation.assessments.${field}.notNumber`),
+    })
+    .min(0, validationMessage(`Validation.assessments.${field}.minValue`))
+    .max(100, validationMessage(`Validation.assessments.${field}.maxValue`))
     .optional();
 
 export const createAssessmentSchema = z.object({
   subjectId: z.string().min(1),
   title: z
     .string()
-    .min(1, "Title is required.")
-    .max(100, "Title must be at most 100 characters."),
+    .min(1, validationMessage("Validation.assessments.titleRequired"))
+    .max(100, validationMessage("Validation.assessments.titleMaxLength")),
   description: z
     .string()
-    .max(1000, "Description must be at most 1000 characters.")
+    .max(1000, validationMessage("Validation.assessments.descriptionMaxLength"))
     .optional(),
   type: assessmentTypeSchema.default("other"),
   status: assessmentStatusSchema.default("pending"),
   dueDate: optionalDateSchema,
-  score: optionalNumberSchema("Score"),
-  weight: optionalNumberSchema("Weight"),
+  score: optionalNumberSchema("score"),
+  weight: optionalNumberSchema("weight"),
 });
 
 export type CreateAssessmentForm = z.infer<typeof createAssessmentSchema>;
@@ -49,17 +55,17 @@ export const editAssessmentSchema = z.object({
   id: z.string().min(1),
   title: z
     .string()
-    .min(1, "Title is required.")
-    .max(100, "Title must be at most 100 characters."),
+    .min(1, validationMessage("Validation.assessments.titleRequired"))
+    .max(100, validationMessage("Validation.assessments.titleMaxLength")),
   description: z
     .string()
-    .max(1000, "Description must be at most 1000 characters.")
+    .max(1000, validationMessage("Validation.assessments.descriptionMaxLength"))
     .optional(),
   type: assessmentTypeSchema,
   status: assessmentStatusSchema,
   dueDate: optionalDateSchema,
-  score: optionalNumberSchema("Score"),
-  weight: optionalNumberSchema("Weight"),
+  score: optionalNumberSchema("score"),
+  weight: optionalNumberSchema("weight"),
 });
 
 export type EditAssessmentForm = z.infer<typeof editAssessmentSchema>;

@@ -1,15 +1,18 @@
 import { z } from "zod";
+import { validationMessage } from "@/lib/validation-messages";
 
 export const loginSchema = z.object({
   email: z
     .string()
     .trim()
-    .max(254, "Email must be at most 254 characters.")
-    .pipe(z.email({ error: "Please enter a valid email address." })),
+    .max(254, validationMessage("Validation.auth.emailMaxLength"))
+    .pipe(
+      z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
+    ),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters.")
-    .max(128, "Password must be at most 128 characters."),
+    .min(8, validationMessage("Validation.auth.passwordMinLength"))
+    .max(128, validationMessage("Validation.auth.passwordMaxLength")),
 });
 
 export type LoginForm = z.infer<typeof loginSchema>;
@@ -19,21 +22,25 @@ export const signupSchema = z
     name: z
       .string()
       .trim()
-      .min(2, "Name must be at least 2 characters.")
-      .max(100, "Name must be at most 100 characters."),
+      .min(2, validationMessage("Validation.auth.nameMinLength"))
+      .max(100, validationMessage("Validation.auth.nameMaxLength")),
     email: z
       .string()
       .trim()
-      .max(254, "Email must be at most 254 characters.")
-      .pipe(z.email({ error: "Please enter a valid email address." })),
+      .max(254, validationMessage("Validation.auth.emailMaxLength"))
+      .pipe(
+        z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
+      ),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters.")
-      .max(128, "Password must be at most 128 characters."),
-    confirmPassword: z.string().min(1, "Confirm password is required."),
+      .min(8, validationMessage("Validation.auth.passwordMinLength"))
+      .max(128, validationMessage("Validation.auth.passwordMaxLength")),
+    confirmPassword: z
+      .string()
+      .min(1, validationMessage("Validation.auth.confirmPasswordRequired")),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    error: "Passwords do not match.",
+    error: validationMessage("Validation.auth.passwordsDoNotMatch"),
     path: ["confirmPassword"],
   });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  addDays,
   addMonths,
   endOfMonth,
   endOfWeek,
@@ -18,20 +19,20 @@ import {
   CircleAlert,
   ClipboardList,
 } from "lucide-react";
-import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { getCalendarEvents } from "@/app/actions/calendar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "@/i18n/routing";
 import { assessmentTypeLabels } from "@/lib/assessments";
 import {
   buildCalendarEvents,
   type CalendarEvent,
   getMonthGridDates,
 } from "@/lib/calendar";
+import { getDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
-
-const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function EventDot({ kind }: Readonly<{ kind: "assessment" | "miss" }>) {
   return (
@@ -44,28 +45,60 @@ function EventDot({ kind }: Readonly<{ kind: "assessment" | "miss" }>) {
   );
 }
 
+function getEventChipToneClass(event: CalendarEvent, todayIso: string) {
+  if (event.kind === "miss") {
+    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
+  }
+
+  const status = event.meta?.status;
+  if (status === "pending" && event.date < todayIso) {
+    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
+  }
+
+  if (status === "completed") {
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+  }
+
+  return "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+}
+
+function getAssessmentTypeLabel(
+  event: CalendarEvent,
+  tAssessment: ReturnType<typeof useTranslations>,
+) {
+  if (event.kind !== "assessment" || !event.meta?.type) {
+    return null;
+  }
+
+  const key = `type_${event.meta.type}`;
+  if (tAssessment.has(key)) {
+    return tAssessment(key);
+  }
+
+  return (
+    assessmentTypeLabels[
+      event.meta.type as keyof typeof assessmentTypeLabels
+    ] ?? event.meta.type
+  );
+}
+
 function EventChip({
   event,
   compact,
 }: Readonly<{ event: CalendarEvent; compact?: boolean }>) {
-  const isOverdue =
-    event.kind === "assessment" &&
-    event.meta?.status === "pending" &&
-    event.date < format(new Date(), "yyyy-MM-dd");
-  const isCompleted =
-    event.kind === "assessment" && event.meta?.status === "completed";
+  const tAssessment = useTranslations("AssessmentItemCard");
+  const todayIso = format(new Date(), "yyyy-MM-dd");
+  const chipToneClass = getEventChipToneClass(event, todayIso);
+  const assessmentTypeLabel = getAssessmentTypeLabel(event, tAssessment);
+  const subtitle = assessmentTypeLabel
+    ? `${event.subjectName} · ${assessmentTypeLabel}`
+    : event.subjectName;
 
   return (
     <div
       className={cn(
         "flex items-start gap-1 rounded border px-1.5 py-1 text-[11px] leading-tight",
-        event.kind === "miss"
-          ? "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
-          : isOverdue
-            ? "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
-            : isCompleted
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-              : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+        chipToneClass,
       )}
     >
       {event.kind === "assessment" ? (
@@ -76,12 +109,7 @@ function EventChip({
       <div className="min-w-0">
         <p className="truncate font-medium">{event.title}</p>
         {!compact && (
-          <p className="truncate text-[10px] opacity-70">
-            {event.subjectName}
-            {event.kind === "assessment" && event.meta?.type
-              ? ` · ${assessmentTypeLabels[event.meta.type as keyof typeof assessmentTypeLabels] ?? event.meta.type}`
-              : ""}
-          </p>
+          <p className="truncate text-[10px] opacity-70">{subtitle}</p>
         )}
       </div>
     </div>
@@ -94,12 +122,14 @@ function DayCell({
   isCurrentMonth,
   selected,
   onSelect,
+  moreLabel,
 }: Readonly<{
   date: Date;
   events: CalendarEvent[];
   isCurrentMonth: boolean;
   selected: boolean;
   onSelect: (d: Date) => void;
+  moreLabel: string;
 }>) {
   const today = isToday(date);
   const dayEvents = events.filter((e) => e.date === format(date, "yyyy-MM-dd"));
@@ -109,7 +139,7 @@ function DayCell({
       type="button"
       onClick={() => onSelect(date)}
       className={cn(
-        "group relative flex flex-col rounded-md border p-1 lg:p-1.5 text-left transition-colors min-h-10 lg:min-h-18",
+        "group relative flex min-h-10 flex-col rounded-md border p-1 text-left transition-colors lg:min-h-18 lg:p-1.5",
         !isCurrentMonth && "opacity-40",
         selected
           ? "border-primary/50 bg-primary/5"
@@ -118,7 +148,7 @@ function DayCell({
     >
       <span
         className={cn(
-          "flex size-5 lg:size-6 items-center justify-center rounded-full text-[11px] lg:text-xs font-medium",
+          "flex size-5 items-center justify-center rounded-full text-[11px] font-medium lg:size-6 lg:text-xs",
           today && "bg-primary text-primary-foreground",
           selected && !today && "bg-foreground/10",
         )}
@@ -144,7 +174,7 @@ function DayCell({
             ))}
             {dayEvents.length > 2 && (
               <span className="text-[10px] text-muted-foreground">
-                +{dayEvents.length - 2} more
+                +{dayEvents.length - 2} {moreLabel}
               </span>
             )}
           </div>
@@ -157,7 +187,12 @@ function DayCell({
 function DayDetail({
   date,
   events,
-}: Readonly<{ date: Date; events: CalendarEvent[] }>) {
+  dateLocale,
+}: Readonly<{
+  date: Date;
+  events: CalendarEvent[];
+  dateLocale: ReturnType<typeof getDateFnsLocale>;
+}>) {
   const dateStr = format(date, "yyyy-MM-dd");
   const dayEvents = events.filter((e) => e.date === dateStr);
 
@@ -166,7 +201,7 @@ function DayDetail({
   return (
     <div className="pt-2">
       <h3 className="mb-2 text-xs font-medium text-muted-foreground">
-        {format(date, "EEEE, MMMM d, yyyy")}
+        {format(date, "EEEE, MMMM d, yyyy", { locale: dateLocale })}
       </h3>
       <div className="space-y-1.5">
         {dayEvents.map((e) => (
@@ -184,6 +219,9 @@ function DayDetail({
 }
 
 export function CalendarView() {
+  const locale = useLocale();
+  const t = useTranslations("CalendarView");
+  const dateLocale = getDateFnsLocale(locale);
   const [anchor, setAnchor] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -203,6 +241,11 @@ export function CalendarView() {
   }, [rangeEnd, rangeStart]);
 
   const dates = getMonthGridDates(anchor);
+  const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
+    format(addDays(startOfWeek(anchor, { weekStartsOn: 1 }), index), "EEE", {
+      locale: dateLocale,
+    }),
+  );
 
   function goBack() {
     setAnchor((a) => subMonths(a, 1));
@@ -218,7 +261,7 @@ export function CalendarView() {
     setSelectedDate(today);
   }
 
-  const title = format(anchor, "MMMM yyyy");
+  const title = format(anchor, "MMMM yyyy", { locale: dateLocale });
 
   return (
     <div className="space-y-2">
@@ -251,7 +294,7 @@ export function CalendarView() {
           className="h-7 text-xs"
           onClick={goToday}
         >
-          Today
+          {t("today")}
         </Button>
       </div>
 
@@ -259,10 +302,10 @@ export function CalendarView() {
         <div className="min-w-0">
           {isPending ? (
             <div className="grid grid-cols-7 gap-px lg:gap-1">
-              {WEEKDAY_LABELS.map((d) => (
+              {weekdayLabels.map((d) => (
                 <div
                   key={d}
-                  className="py-1 text-center text-[11px] lg:text-xs font-medium text-muted-foreground"
+                  className="py-1 text-center text-[11px] font-medium text-muted-foreground lg:text-xs"
                 >
                   {d}
                 </div>
@@ -273,10 +316,10 @@ export function CalendarView() {
             </div>
           ) : (
             <div className="grid grid-cols-7 gap-px lg:gap-1">
-              {WEEKDAY_LABELS.map((d) => (
+              {weekdayLabels.map((d) => (
                 <div
                   key={d}
-                  className="py-1 text-center text-[11px] lg:text-xs font-medium text-muted-foreground"
+                  className="py-1 text-center text-[11px] font-medium text-muted-foreground lg:text-xs"
                 >
                   {d}
                 </div>
@@ -289,13 +332,18 @@ export function CalendarView() {
                   isCurrentMonth={isSameMonth(date, anchor)}
                   selected={isSameDay(date, selectedDate)}
                   onSelect={setSelectedDate}
+                  moreLabel={t("more")}
                 />
               ))}
             </div>
           )}
         </div>
 
-        <DayDetail date={selectedDate} events={events} />
+        <DayDetail
+          date={selectedDate}
+          events={events}
+          dateLocale={dateLocale}
+        />
       </div>
     </div>
   );

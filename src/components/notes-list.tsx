@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CreateNoteDialog } from "@/components/create-note-dialog";
 import { NoteCard } from "@/components/note-card";
@@ -19,6 +20,7 @@ export function NotesList({
   notes,
   plan,
 }: Readonly<NotesListProps>) {
+  const t = useTranslations("NotesList");
   const [createOpen, setCreateOpen] = useState(false);
 
   const limits = getPlanLimits(plan);
@@ -28,19 +30,22 @@ export function NotesList({
 
   function getNoteCountText() {
     if (notes.length === 0) {
-      return "Capture what you learn, one note at a time.";
+      return t("count_empty");
     }
     if (limits.maxNotesPerSubject !== null) {
-      return `${notes.length}/${limits.maxNotesPerSubject} notes`;
+      return t("count_with_limit", {
+        count: notes.length,
+        max: limits.maxNotesPerSubject,
+      });
     }
-    return `${notes.length} note${notes.length === 1 ? "" : "s"}`;
+    return t("count_no_limit", { count: notes.length });
   }
 
   return (
     <div>
       <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Notes</h2>
+          <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {getNoteCountText()}
           </p>
@@ -53,12 +58,10 @@ export function NotesList({
               className="w-full gap-1.5 sm:w-auto"
               id="btn-create-note"
               disabled={isAtLimit}
-              title={
-                isAtLimit ? "Upgrade your plan to create more notes" : undefined
-              }
+              title={isAtLimit ? t("limit_tooltip") : undefined}
             >
               <Plus className="size-4" />
-              <span>New Note</span>
+              <span>{t("new_note")}</span>
             </Button>
           }
           open={createOpen}
@@ -70,8 +73,7 @@ export function NotesList({
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
           <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-amber-800 dark:text-amber-200">
-            You&apos;ve reached the limit of {limits.maxNotesPerSubject} notes
-            per subject on your plan. Upgrade to create more.
+            {t("limit_message", { max: limits.maxNotesPerSubject ?? 0 })}
           </p>
         </div>
       )}
@@ -79,9 +81,9 @@ export function NotesList({
       {notes.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
           <div>
-            <h3 className="text-base font-semibold">No notes yet</h3>
+            <h3 className="text-base font-semibold">{t("empty_title")}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Start by creating your first note.
+              {t("empty_description")}
             </p>
           </div>
         </div>

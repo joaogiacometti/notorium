@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteMiss } from "@/app/actions/attendance";
@@ -13,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteMissDialogProps {
   missId: string;
@@ -27,6 +29,10 @@ export function DeleteMissDialog({
   open,
   onOpenChange,
 }: Readonly<DeleteMissDialogProps>) {
+  const t = useTranslations("DeleteMissDialog");
+  const tCommon = useTranslations("Common");
+  const tErrors = useTranslations("ServerActions");
+
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -34,8 +40,8 @@ export function DeleteMissDialog({
       const result = await deleteMiss({ id: missId });
       if (result.success) {
         onOpenChange(false);
-      } else if (result.error) {
-        toast.error(result.error);
+      } else {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     });
   }
@@ -44,11 +50,11 @@ export function DeleteMissDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Remove Miss</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {"Are you sure you want to remove the miss recorded for "}
+            {t("prompt_prefix")}
             <span className="font-semibold text-foreground">{missDate}</span>
-            {"? This action cannot be undone."}
+            {t("prompt_suffix")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -57,7 +63,7 @@ export function DeleteMissDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -65,7 +71,7 @@ export function DeleteMissDialog({
             disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            Remove
+            {t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

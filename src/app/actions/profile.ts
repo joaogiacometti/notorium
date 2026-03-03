@@ -5,11 +5,13 @@ import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
 import { noteImageAttachment, user } from "@/db/schema";
 import { appEnv } from "@/env";
 import type { MutationResult } from "@/lib/api/contracts";
 import { auth, getAuthenticatedUserId } from "@/lib/auth";
+import { actionError } from "@/lib/server-action-errors";
 import {
   type UpdateProfileForm,
   updateProfileSchema,
@@ -21,9 +23,7 @@ export async function updateProfile(
   const parsed = updateProfileSchema.safeParse(data);
 
   if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "Invalid profile data.",
-    };
+    return actionError("profile.invalidData");
   }
 
   try {
@@ -35,9 +35,11 @@ export async function updateProfile(
     });
   } catch (error) {
     if (error instanceof APIError) {
-      return { error: error.message };
+      return actionError("profile.updateFailed", {
+        errorMessage: error.message,
+      });
     }
-    return { error: "Failed to update profile." };
+    return actionError("profile.updateFailed");
   }
 
   return { success: true };
@@ -66,5 +68,6 @@ export async function deleteAccount(): Promise<MutationResult> {
     headers: await headers(),
   });
 
-  redirect("/login");
+  const locale = await getLocale();
+  redirect(`/${locale}/login`);
 }

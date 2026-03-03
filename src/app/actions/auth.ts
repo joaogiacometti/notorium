@@ -3,8 +3,11 @@
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import type { MutationResult } from "@/lib/api/contracts";
 import { auth } from "@/lib/auth";
 import { checkAuthRateLimit } from "@/lib/rate-limit";
+import { actionError } from "@/lib/server-action-errors";
 import {
   type LoginForm,
   loginSchema,
@@ -12,20 +15,17 @@ import {
   signupSchema,
 } from "@/lib/validations/auth";
 
-type ActionResult = { success: true } | { success: false; error: string };
+type ActionResult = MutationResult;
 
 export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
   const rateLimit = await checkAuthRateLimit();
   if (rateLimit.limited) {
-    return { success: false, error: rateLimit.error };
+    return actionError(rateLimit.errorCode);
   }
 
   const parsed = loginSchema.safeParse(data);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
+    return actionError("auth.invalidInput");
   }
 
   try {
@@ -37,26 +37,24 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
     });
   } catch (error) {
     if (error instanceof APIError) {
-      return { success: false, error: error.message };
+      return actionError("auth.loginFailed", { errorMessage: error.message });
     }
-    return { success: false, error: "Login failed" };
+    return actionError("auth.loginFailed");
   }
 
-  redirect("/");
+  const locale = await getLocale();
+  redirect(`/${locale}`);
 };
 
 export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
   const rateLimit = await checkAuthRateLimit();
   if (rateLimit.limited) {
-    return { success: false, error: rateLimit.error };
+    return actionError(rateLimit.errorCode);
   }
 
   const parsed = signupSchema.safeParse(data);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
+    return actionError("auth.invalidInput");
   }
 
   try {
@@ -69,17 +67,19 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
     });
   } catch (error) {
     if (error instanceof APIError) {
-      return { success: false, error: error.message };
+      return actionError("auth.signupFailed", { errorMessage: error.message });
     }
-    return { success: false, error: "Sign up failed" };
+    return actionError("auth.signupFailed");
   }
 
-  redirect("/");
+  const locale = await getLocale();
+  redirect(`/${locale}`);
 };
 
 export const logoutAction = async () => {
   await auth.api.signOut({
     headers: await headers(),
   });
-  redirect("/login");
+  const locale = await getLocale();
+  redirect(`/${locale}/login`);
 };

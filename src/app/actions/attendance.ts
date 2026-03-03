@@ -6,6 +6,7 @@ import { db } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
 import type { AttendanceMissEntity, MutationResult } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import { actionError } from "@/lib/server-action-errors";
 import {
   type AttendanceSettingsForm,
   attendanceSettingsSchema,
@@ -22,11 +23,11 @@ export async function updateAttendanceSettings(
   const parsed = attendanceSettingsSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid attendance settings." };
+    return actionError("attendance.invalidSettings");
   }
 
   if (parsed.data.maxMisses > parsed.data.totalClasses) {
-    return { error: "Max misses cannot exceed total classes." };
+    return actionError("attendance.maxMissesExceeded");
   }
 
   const existing = await db
@@ -41,7 +42,7 @@ export async function updateAttendanceSettings(
     );
 
   if (existing.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   await db
@@ -86,7 +87,7 @@ export async function recordMiss(
   const parsed = recordMissSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid miss data." };
+    return actionError("attendance.invalidMissData");
   }
 
   const existingSubject = await db
@@ -101,7 +102,7 @@ export async function recordMiss(
     );
 
   if (existingSubject.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   const existingMiss = await db
@@ -116,7 +117,7 @@ export async function recordMiss(
     );
 
   if (existingMiss.length > 0) {
-    return { error: "A miss is already recorded for this date." };
+    return actionError("attendance.missAlreadyRecorded");
   }
 
   await db.insert(attendanceMiss).values({
@@ -136,7 +137,7 @@ export async function deleteMiss(
   const parsed = deleteMissSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return actionError("common.invalidRequest");
   }
 
   const existing = await db
@@ -153,7 +154,7 @@ export async function deleteMiss(
     );
 
   if (existing.length === 0) {
-    return { error: "Miss record not found." };
+    return actionError("attendance.missNotFound");
   }
 
   const existingMiss = existing[0].attendanceMiss;

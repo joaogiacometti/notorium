@@ -1,0 +1,603 @@
+{
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "subjects": "Subjects",
+    "assessments": "Assessments",
+    "calendar": "Calendar",
+    "profile": "Profile",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "logout": "Log Out",
+    "preferences": "Preferences",
+    "preferences_title": "Preferences",
+    "preferences_description": "Update your language and theme settings.",
+    "preferences_language_description": "Choose how Notorium is displayed.",
+    "preferences_theme_description": "Control how the interface looks.",
+    "preferences_hint": "Changes are applied immediately.",
+    "language": "Language",
+    "theme": "Theme",
+    "english": "English",
+    "portuguese": "Portuguese",
+    "toggle_theme": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "Index": {
+    "badge": "Free to use — no credit card required",
+    "title_start": "Your studies, ",
+    "title_highlight": "organized",
+    "description": "Notorium helps you manage subjects, notes, assessments, and attendance all in one place. Stay on top of your academic life.",
+    "get_started": "Get Started",
+    "sign_in": "Sign In"
+  },
+  "Landing": {
+    "features_heading": "Everything you need to stay on track",
+    "subjects_title": "Subjects",
+    "subjects_description": "Organize your courses and modules in one place with descriptions and attendance tracking.",
+    "notes_title": "Notes",
+    "notes_description": "Write and format notes with a rich text editor supporting headings, lists, code blocks, and more.",
+    "assessments_title": "Assessments",
+    "assessments_description": "Track exams, assignments, and weighted grades to monitor your performance over time.",
+    "calendar_title": "Calendar",
+    "calendar_description": "See assessments and attendance misses in a timeline view to plan your week better.",
+    "plans_heading": "Simple plans for every student",
+    "free": "Free",
+    "pro": "Pro",
+    "plan_feature_subjects": "Subjects",
+    "plan_feature_notes_per_subject": "Notes per subject",
+    "plan_feature_assessments_per_subject": "Assessments per subject",
+    "plan_feature_image_attachments": "Image attachments",
+    "plan_feature_rich_text_editor": "Rich text editor",
+    "plan_feature_attendance_tracking": "Attendance tracking",
+    "start_for_free": "Start for free",
+    "become_pro": "Become Pro",
+    "coming_soon": "Coming soon"
+  },
+  "LoginForm": {
+    "title": "Login to your account",
+    "email_label": "Email",
+    "email_placeholder": "m@example.com",
+    "password_label": "Password",
+    "forgot_password": "Forgot your password?",
+    "submitting": "Logging in...",
+    "submit": "Login",
+    "no_account": "Don't have an account?",
+    "sign_up": "Sign up"
+  },
+  "SignupForm": {
+    "title": "Create an account",
+    "name_label": "Full Name",
+    "name_placeholder": "John Doe",
+    "email_label": "Email",
+    "email_placeholder": "m@example.com",
+    "password_label": "Password",
+    "confirm_password_label": "Confirm Password",
+    "submitting": "Creating account...",
+    "submit": "Create Account",
+    "has_account": "Already have an account?",
+    "sign_in": "Sign in"
+  },
+  "SubjectsList": {
+    "title": "Subjects",
+    "description": "Manage your courses and track progress.",
+    "archived": "Archived",
+    "limit_tooltip": "Upgrade your plan to create more subjects",
+    "new_subject": "New Subject",
+    "limit_message": "You've reached the limit of {max} subjects on your plan. Upgrade to create more.",
+    "empty_title": "No subjects yet",
+    "empty_description": "Create your first subject to start organizing your notes and tracking your academic progress.",
+    "create_subject": "Create Subject"
+  },
+  "SubjectCard": {
+    "open_actions": "Open subject actions",
+    "edit": "Edit",
+    "archive": "Archive",
+    "delete": "Delete",
+    "created": "Created"
+  },
+  "DeleteSubjectDialog": {
+    "archive_title": "Archive Subject",
+    "delete_title": "Delete Subject",
+    "archive_prompt": "Are you sure you want to archive ",
+    "delete_prompt": "Are you sure you want to delete ",
+    "archive_suffix": "? You can restore it later from archived subjects.",
+    "delete_suffix": "? This action cannot be undone. All associated notes will also be deleted.",
+    "cancel": "Cancel",
+    "archive_action": "Archive",
+    "delete_action": "Delete"
+  },
+  "SubjectDetail": {
+    "back": "Back to Subjects",
+    "created": "Created",
+    "edit": "Edit",
+    "archive": "Archive",
+    "delete": "Delete"
+  },
+  "NotesList": {
+    "title": "Notes",
+    "count_empty": "Capture what you learn, one note at a time.",
+    "count_with_limit": "{count}/{max} notes",
+    "count_no_limit": "{count, plural, one {# note} other {# notes}}",
+    "limit_tooltip": "Upgrade your plan to create more notes",
+    "new_note": "New Note",
+    "limit_message": "You've reached the limit of {max} notes per subject on your plan. Upgrade to create more.",
+    "empty_title": "No notes yet",
+    "empty_description": "Start by creating your first note."
+  },
+  "AssessmentsOverview": {
+    "title": "Assessments",
+    "description": "General overview for this subject.",
+    "limit_tooltip": "Upgrade your plan to add more assessments",
+    "add_assessment": "Add Assessment",
+    "limit_message": "You've reached the limit of {max} assessments per subject on your plan. Upgrade to add more.",
+    "subject_average": "Subject Average",
+    "average_strong": "Strong performance",
+    "average_warning": "Needs improvement",
+    "average_risk": "At risk",
+    "subject_assessments": "Subject Assessments",
+    "items_no_limit": "{count} items",
+    "items_with_limit": "{count}/{max} items",
+    "empty_title": "No assessments yet",
+    "empty_description": "Start by adding your first assessment."
+  },
+  "AssessmentItemCard": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "subject": "Subject",
+    "unknown_subject": "Unknown Subject",
+    "status": "Status",
+    "status_pending": "Pending",
+    "status_completed": "Completed",
+    "status_overdue": "Overdue",
+    "type": "Type",
+    "type_exam": "Exam",
+    "type_assignment": "Assignment",
+    "type_project": "Project",
+    "type_presentation": "Presentation",
+    "type_homework": "Homework",
+    "type_other": "Other",
+    "due_date": "Due Date",
+    "score": "Score"
+  },
+  "ArchivedSubjectCard": {
+    "archived": "Archived",
+    "restore": "Restore",
+    "delete": "Delete"
+  },
+  "ArchivedSubjectsPage": {
+    "back": "Back to Subjects",
+    "title": "Archived Subjects",
+    "count": "{count, plural, one {# archived subject} other {# archived subjects}}",
+    "empty_title": "No archived subjects",
+    "empty_description": "Archived subjects will show up here."
+  },
+  "AssessmentsPage": {
+    "title": "All Assessments",
+    "description": "Detailed view across all subjects with global filters."
+  },
+  "CalendarPage": {
+    "title": "Calendar",
+    "description": "Assessments and attendance misses on a timeline."
+  },
+  "CalendarView": {
+    "title": "Calendar",
+    "description": "Assessments and attendance misses on a timeline.",
+    "today": "Today",
+    "more": "more"
+  },
+  "GlobalSearch": {
+    "trigger": "Search...",
+    "dialog_title": "Global Search",
+    "dialog_description": "Search across all your subjects and notes",
+    "input_placeholder": "Search subjects and notes...",
+    "empty_has_data": "No subjects or notes yet.",
+    "empty_sign_in": "Sign in to search.",
+    "subjects_group": "Subjects",
+    "notes_group": "Notes",
+    "in_subject": "in"
+  },
+  "ProfilePage": {
+    "title": "Manage Profile",
+    "description": "Review your account information and keep your profile up to date."
+  },
+  "ProfileForm": {
+    "toast_success": "Profile updated.",
+    "profile_title": "Profile",
+    "profile_description": "Inspect and update your account details.",
+    "name_label": "Full Name",
+    "name_placeholder": "John Doe",
+    "email_label": "Email",
+    "plan": "Plan",
+    "plan_free": "Free",
+    "plan_pro": "Pro",
+    "plan_unlimited": "Unlimited",
+    "joined": "Joined",
+    "last_updated": "Last updated",
+    "saving": "Saving...",
+    "save_changes": "Save Changes",
+    "data_transfer_title": "Data Transfer",
+    "data_transfer_description": "Export all your subjects, notes, attendance records, and assessments as a JSON file, or import data from a previous export.",
+    "danger_title": "Danger Zone",
+    "danger_description": "Permanently delete your account and all associated data.",
+    "danger_body": "Once you delete your account, all of your subjects, notes, assessments, and attendance records will be permanently removed. This action cannot be undone.",
+    "delete_account": "Delete Account"
+  },
+  "DataTransferActions": {
+    "export_success": "Data exported successfully.",
+    "export_error": "Failed to export data.",
+    "import_success": "Imported {count, plural, one {# subject} other {# subjects}} successfully.",
+    "import_read_error": "Failed to read the import file.",
+    "export_data": "Export Data",
+    "export_all": "Export All",
+    "export_template": "Export Template",
+    "import_data": "Import Data",
+    "import_dialog_title": "Import Data",
+    "import_dialog_description": "This will create new subjects from the import file with all their notes, attendance records, and assessments. Existing data will not be modified.",
+    "cancel": "Cancel",
+    "confirm_import": "Confirm Import"
+  },
+  "GradesSummary": {
+    "heading": "Assessments",
+    "header_empty": "No assessments found.",
+    "header_count": "{count} total assessments",
+    "subject": "Subject",
+    "subject_all": "All Subjects",
+    "status": "Status",
+    "status_all": "All",
+    "status_pending": "Pending",
+    "status_completed": "Completed",
+    "status_overdue": "Overdue",
+    "due_date": "Due Date",
+    "due_any": "Any Due Date",
+    "due_past": "Past Due Date",
+    "due_today": "Due today",
+    "due_today_option": "Due Today",
+    "due_next_7": "Next 7 Days",
+    "due_next_30": "Next 30 Days",
+    "due_none": "No Due Date",
+    "due_overdue": "{distance} overdue",
+    "due_in": "Due in {distance}",
+    "type": "Type",
+    "type_all": "All Types",
+    "type_exam": "Exam",
+    "type_assignment": "Assignment",
+    "type_project": "Project",
+    "type_presentation": "Presentation",
+    "type_homework": "Homework",
+    "type_other": "Other",
+    "sort": "Sort",
+    "sort_smart": "Smart",
+    "sort_due_asc": "Due Date Asc",
+    "sort_due_desc": "Due Date Desc",
+    "sort_updated": "Recently Updated",
+    "sort_score": "Score Desc",
+    "average": "Average",
+    "pending": "Pending",
+    "pending_empty": "No pending assessments.",
+    "completed": "Completed",
+    "completed_empty": "No completed assessments."
+  },
+  "NotFoundPage": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "home": "Go home"
+  },
+  "AttendanceSettingsDialog": {
+    "trigger": "Settings",
+    "title": "Attendance Settings",
+    "description": "Configure the total number of classes and maximum allowed misses for this subject.",
+    "total_classes": "Total Classes",
+    "max_misses": "Max Allowed Misses",
+    "total_classes_placeholder": "e.g. 15",
+    "max_misses_placeholder": "e.g. 4",
+    "submit": "Save Settings"
+  },
+  "AttendanceSummary": {
+    "title": "Attendance",
+    "description_configured": "Track your attendance status and recorded misses.",
+    "description_unconfigured": "Set attendance limits to begin tracking.",
+    "record_miss": "Record Miss",
+    "recorded_misses": "Recorded Misses",
+    "empty_title": "No attendance settings yet",
+    "empty_description": "Start by adding total classes and allowed misses.",
+    "attendance_rate": "Attendance Rate",
+    "status_limit": "Limit Reached",
+    "status_warning": "Warning",
+    "status_track": "On Track",
+    "badge_no_misses": "No misses left",
+    "badge_remaining": "{count, plural, one {# miss remaining} other {# misses remaining}}"
+  },
+  "CreateAssessmentDialog": {
+    "title": "Add Assessment",
+    "description": "Track an upcoming or completed assessment for this subject.",
+    "field_title": "Title",
+    "field_description": "Description (optional)",
+    "field_type": "Type",
+    "field_status": "Status",
+    "field_due_date": "Due Date (optional)",
+    "field_score": "Score (optional)",
+    "field_weight": "Weight (optional)",
+    "field_title_placeholder": "e.g. Midterm 1",
+    "field_description_placeholder": "Extra details...",
+    "field_score_placeholder": "e.g. 84",
+    "field_weight_placeholder": "e.g. 40",
+    "submit": "Add Assessment"
+  },
+  "EditAssessmentDialog": {
+    "title": "Edit Assessment",
+    "description": "Update details, status, dates, and grading values.",
+    "field_title": "Title",
+    "field_description": "Description (optional)",
+    "field_type": "Type",
+    "field_status": "Status",
+    "field_due_date": "Due Date (optional)",
+    "field_score": "Score (optional)",
+    "field_weight": "Weight (optional)",
+    "field_title_placeholder": "e.g. Midterm 1",
+    "field_description_placeholder": "Extra details...",
+    "field_score_placeholder": "e.g. 84",
+    "field_weight_placeholder": "e.g. 40",
+    "submit": "Save Changes"
+  },
+  "DeleteAssessmentDialog": {
+    "title": "Delete Assessment",
+    "prompt_prefix": "Are you sure you want to delete ",
+    "prompt_suffix": "? This action cannot be undone.",
+    "confirm": "Delete"
+  },
+  "CreateNoteDialog": {
+    "title": "Create Note",
+    "field_title": "Title",
+    "field_content": "Content",
+    "field_title_placeholder": "e.g. Lecture 1 - Introduction",
+    "field_content_placeholder": "Start writing your notes...",
+    "submit": "Create Note"
+  },
+  "EditNoteDialog": {
+    "title": "Edit Note",
+    "field_title": "Title",
+    "field_title_placeholder": "e.g. Lecture 1 - Introduction",
+    "field_content": "Content",
+    "field_content_placeholder": "Start writing your notes...",
+    "submit": "Save Changes"
+  },
+  "DeleteNoteDialog": {
+    "title": "Delete Note",
+    "prompt_prefix": "Are you sure you want to delete ",
+    "prompt_suffix": "? This action cannot be undone.",
+    "confirm": "Delete"
+  },
+  "CreateSubjectDialog": {
+    "title": "Create Subject",
+    "field_name": "Name",
+    "field_description": "Description",
+    "field_name_placeholder": "e.g. Calculus I",
+    "field_description_placeholder": "Optional description...",
+    "submit": "Create Subject",
+    "section_modules": "Modules",
+    "section_notes": "Notes",
+    "section_notes_desc": "Rich text notes for studying.",
+    "section_assessments": "Assessments",
+    "section_assessments_desc": "Plan deadlines and track completed scores.",
+    "section_attendance": "Attendance",
+    "section_attendance_desc": "Track missed classes against limits."
+  },
+  "EditSubjectDialog": {
+    "title": "Edit Subject",
+    "section_modules": "Modules",
+    "section_notes": "Notes",
+    "section_notes_desc": "Rich text notes for studying.",
+    "section_assessments": "Assessments",
+    "section_assessments_desc": "Plan deadlines and track completed scores.",
+    "section_attendance": "Attendance",
+    "section_attendance_desc": "Track missed classes against limits.",
+    "submit": "Save Changes"
+  },
+  "DeleteAccountDialog": {
+    "title": "Delete Account",
+    "description": "Are you sure you want to delete your account? This action cannot be undone."
+  },
+  "DeleteMissDialog": {
+    "title": "Remove Miss",
+    "prompt_prefix": "Are you sure you want to remove the miss recorded for ",
+    "prompt_suffix": "? This action cannot be undone.",
+    "confirm": "Remove"
+  },
+  "RecordMissDialog": {
+    "title": "Record a Miss",
+    "description": "Select the date you missed a class for this subject.",
+    "field_date": "Date",
+    "submit": "Record Miss"
+  },
+  "NoteCard": {
+    "open_actions": "Open note actions",
+    "created_label": "Created",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "NoteDetail": {
+    "back": "Back to Subject",
+    "created_label": "Created",
+    "empty": "No content yet. Click Edit to add some notes.",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "NoteImageAttachments": {
+    "title": "Attachments",
+    "images": "Images",
+    "dropzone": "Click, drag, or paste images",
+    "clear": "Clear",
+    "uploading": "Uploading images...",
+    "free_plan_title": "Image attachments are not available on the Free plan.",
+    "free_plan_desc": "Upgrade your plan to upload images.",
+    "empty": "No images attached yet.",
+    "remove": "Remove Attachment",
+    "cancel": "Cancel",
+    "remove_prompt": "Are you sure you want to remove this image? This action cannot be undone.",
+    "preview": "Attachment preview",
+    "max_files_error": "You can upload up to {max} images at a time.",
+    "upload_success": "{count, plural, one {# image uploaded.} other {# images uploaded.}}",
+    "upload_failed": "Failed to upload images.",
+    "remove_success": "Attachment removed.",
+    "remove_failed": "Failed to remove attachment.",
+    "attachment_alt": "Note attachment",
+    "attachment_fullscreen_alt": "Note attachment in fullscreen",
+    "close_viewer": "Close image viewer"
+  },
+  "TiptapEditor": {
+    "placeholder": "Start writing your notes...",
+    "bold": "Bold (Ctrl+B)",
+    "italic": "Italic (Ctrl+I)",
+    "underline": "Underline (Ctrl+U)",
+    "strikethrough": "Strikethrough",
+    "highlight": "Highlight",
+    "inline_code": "Inline Code",
+    "heading_1": "Heading 1",
+    "heading_2": "Heading 2",
+    "heading_3": "Heading 3",
+    "bullet_list": "Bullet List",
+    "numbered_list": "Numbered List",
+    "task_list": "Task List",
+    "quote": "Quote",
+    "divider": "Divider",
+    "undo": "Undo (Ctrl+Z)",
+    "redo": "Redo (Ctrl+Shift+Z)"
+  },
+  "UnsavedChangesDialog": {
+    "title": "Discard changes?",
+    "description": "You have unsaved edits in this note. If you discard now, those changes will be lost.",
+    "keep": "Keep Editing",
+    "discard": "Discard"
+  },
+  "ServerActions": {
+    "common": {
+      "generic": "Something went wrong. Please try again.",
+      "invalidRequest": "Invalid request."
+    },
+    "auth": {
+      "rateLimited": "Too many attempts. Please try again later.",
+      "invalidInput": "Invalid input.",
+      "loginFailed": "Login failed.",
+      "signupFailed": "Sign up failed."
+    },
+    "subjects": {
+      "invalidData": "Invalid subject data.",
+      "notFound": "Subject not found."
+    },
+    "assessments": {
+      "invalidData": "Invalid assessment data.",
+      "notFound": "Assessment not found."
+    },
+    "attendance": {
+      "invalidSettings": "Invalid attendance settings.",
+      "maxMissesExceeded": "Max misses cannot exceed total classes.",
+      "invalidMissData": "Invalid miss data.",
+      "missAlreadyRecorded": "A miss is already recorded for this date.",
+      "missNotFound": "Miss record not found."
+    },
+    "dataTransfer": {
+      "invalidImportFormat": "Invalid import file format.",
+      "noSubjectsToImport": "No subjects to import.",
+      "importFailed": "Failed to import data."
+    },
+    "notes": {
+      "invalidData": "Invalid note data.",
+      "notFound": "Note not found.",
+      "attachments": {
+        "selectAtLeastOne": "Select at least one image.",
+        "maxFilesPerUpload": "You can upload up to {max} images at a time.",
+        "invalidFile": "Invalid file: {fileName}.",
+        "freePlanNotAllowed": "Image attachments are not available on the Free plan.",
+        "blobNotConfigured": "Blob storage is not configured.",
+        "storageLimitReached": "You have reached your image storage limit. Remove some images to free up space.",
+        "uploadFailed": "Failed to upload note images.",
+        "notFound": "Attachment not found."
+      }
+    },
+    "profile": {
+      "invalidData": "Invalid profile data.",
+      "updateFailed": "Failed to update profile."
+    },
+    "plan": {
+      "subjectLimit": "Plan limit: you can have up to {max} subjects.",
+      "subjectImportLimit": "Plan limit: you can only have {max} subjects.",
+      "noteLimit": "Plan limit: you can have up to {max} notes per subject.",
+      "assessmentLimit": "Plan limit: you can have up to {max} assessments per subject."
+    }
+  },
+  "Validation": {
+    "auth": {
+      "emailMaxLength": "Email must be at most 254 characters.",
+      "emailInvalid": "Please enter a valid email address.",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "passwordMaxLength": "Password must be at most 128 characters.",
+      "nameMinLength": "Name must be at least 2 characters.",
+      "nameMaxLength": "Name must be at most 100 characters.",
+      "confirmPasswordRequired": "Confirm password is required.",
+      "passwordsDoNotMatch": "Passwords do not match."
+    },
+    "subjects": {
+      "nameRequired": "Subject name is required.",
+      "nameMaxLength": "Subject name must be at most 100 characters.",
+      "descriptionMaxLength": "Description must be at most 500 characters."
+    },
+    "assessments": {
+      "dueDateInvalid": "Due date must be a valid date.",
+      "titleRequired": "Title is required.",
+      "titleMaxLength": "Title must be at most 100 characters.",
+      "descriptionMaxLength": "Description must be at most 1000 characters.",
+      "score": {
+        "notNumber": "Score must be a number.",
+        "minValue": "Score cannot be negative.",
+        "maxValue": "Score cannot exceed 100."
+      },
+      "weight": {
+        "notNumber": "Weight must be a number.",
+        "minValue": "Weight cannot be negative.",
+        "maxValue": "Weight cannot exceed 100."
+      }
+    },
+    "attendance": {
+      "totalClasses": {
+        "integer": "Must be a whole number.",
+        "min": "Must have at least 1 class.",
+        "max": "Cannot exceed 365 classes."
+      },
+      "maxMisses": {
+        "integer": "Must be a whole number.",
+        "min": "Cannot be negative.",
+        "max": "Cannot exceed 365 misses."
+      },
+      "dateRequired": "Date is required."
+    },
+    "notes": {
+      "titleRequired": "Note title is required.",
+      "titleMaxLength": "Note title must be at most 200 characters.",
+      "contentMaxLength": "Content must be at most 10000 characters.",
+      "attachments": {
+        "invalidSelection": "Invalid file selection.",
+        "selectAtLeastOne": "Select at least one image.",
+        "maxFilesPerUpload": "You can upload up to {max} images at a time.",
+        "unsupportedType": "Unsupported file type. Use JPG, PNG, WEBP, or GIF.",
+        "maxSize": "File is too large. Maximum size is {max}MB.",
+        "fileError": "{fileName}: Invalid file."
+      }
+    },
+    "profile": {
+      "nameMinLength": "Name must be at least 2 characters.",
+      "nameMaxLength": "Name must be at most 100 characters."
+    },
+    "search": {
+      "queryMaxLength": "Search query must be at most 200 characters."
+    }
+  },
+  "Common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "uploading": "Uploading..."
+  }
+}

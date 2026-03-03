@@ -9,6 +9,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { AttendanceSettingsDialog } from "@/components/attendance-settings-dialog";
 import { DeleteMissDialog } from "@/components/delete-miss-dialog";
@@ -22,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AttendanceMissEntity } from "@/lib/api/contracts";
+import { getDateFnsLocale } from "@/lib/date-locale";
 import { getStatusToneClasses } from "@/lib/status-tones";
 
 interface AttendanceSummaryProps {
@@ -31,7 +33,7 @@ interface AttendanceSummaryProps {
   misses: AttendanceMissEntity[];
 }
 
-function pluralizeMiss(count: number) {
+function _pluralizeMiss(count: number) {
   return count === 1 ? "miss" : "misses";
 }
 
@@ -86,6 +88,9 @@ export function AttendanceSummary({
   maxMisses,
   misses,
 }: Readonly<AttendanceSummaryProps>) {
+  const locale = useLocale();
+  const t = useTranslations("AttendanceSummary");
+  const dateLocale = getDateFnsLocale(locale);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -100,11 +105,11 @@ export function AttendanceSummary({
     <div>
       <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Attendance</h2>
+          <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {isConfigured
-              ? "Track your attendance status and recorded misses."
-              : "Set attendance limits to begin tracking."}
+              ? t("description_configured")
+              : t("description_unconfigured")}
           </p>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -116,7 +121,7 @@ export function AttendanceSummary({
               id="btn-record-miss"
             >
               <Plus className="size-4" />
-              <span>Record Miss</span>
+              <span>{t("record_miss")}</span>
             </Button>
           )}
           <AttendanceSettingsDialog
@@ -141,7 +146,7 @@ export function AttendanceSummary({
             <Accordion type="single" collapsible>
               <AccordionItem value="misses">
                 <AccordionTrigger className="text-sm font-medium text-muted-foreground hover:no-underline">
-                  Recorded Misses
+                  {t("recorded_misses")}
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-2 pt-3">
@@ -149,6 +154,7 @@ export function AttendanceSummary({
                       const formattedMissDate = format(
                         new Date(`${miss.missDate}T12:00:00`),
                         "MMMM d, yyyy",
+                        { locale: dateLocale },
                       );
 
                       return (
@@ -189,11 +195,9 @@ export function AttendanceSummary({
       ) : (
         <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
           <div>
-            <h3 className="text-base font-semibold">
-              No attendance settings yet
-            </h3>
+            <h3 className="text-base font-semibold">{t("empty_title")}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Start by adding total classes and allowed misses.
+              {t("empty_description")}
             </p>
           </div>
         </div>
@@ -230,7 +234,19 @@ function AttendanceProgressCard({
   maxMisses,
   totalClasses,
 }: Readonly<AttendanceProgressCardProps>) {
+  const t = useTranslations("AttendanceSummary");
   const status = getStatusInfo(missCount, maxMisses);
+
+  // Replace static label logic with translation keys mapping
+  let statusLabel = "";
+  if (missCount >= maxMisses) {
+    statusLabel = t("status_limit");
+  } else if (missCount / maxMisses >= 0.75) {
+    statusLabel = t("status_warning");
+  } else {
+    statusLabel = t("status_track");
+  }
+
   const StatusIcon = status.icon;
   const progressPercentage =
     maxMisses === 0 ? 100 : Math.min((missCount / maxMisses) * 100, 100);
@@ -247,13 +263,13 @@ function AttendanceProgressCard({
         <div className="flex items-center gap-2">
           <StatusIcon className={`size-5 ${status.color}`} />
           <span className={`text-sm font-semibold ${status.color}`}>
-            {status.label}
+            {statusLabel}
           </span>
         </div>
         <Badge variant={status.badgeVariant} className="text-xs">
           {missCount >= maxMisses
-            ? "No misses left"
-            : `${status.remaining} ${pluralizeMiss(status.remaining)} remaining`}
+            ? t("badge_no_misses")
+            : t("badge_remaining", { count: status.remaining })}
         </Badge>
       </div>
 
@@ -266,7 +282,9 @@ function AttendanceProgressCard({
           </span>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted-foreground">Attendance Rate</p>
+          <p className="text-xs text-muted-foreground">
+            {t("attendance_rate")}
+          </p>
           <p className="text-lg font-semibold">{attendanceRate}%</p>
         </div>
       </div>

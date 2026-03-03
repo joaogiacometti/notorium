@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import type { NoteEditDto } from "@/lib/api/contracts";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import { useBeforeUnload } from "@/lib/use-before-unload";
 import { type EditNoteForm, editNoteSchema } from "@/lib/validations/notes";
 
@@ -38,6 +40,8 @@ export function EditNoteDialog({
   open,
   onOpenChange,
 }: Readonly<EditNoteDialogProps>) {
+  const t = useTranslations("EditNoteDialog");
+  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const defaultValues = {
@@ -90,8 +94,8 @@ export function EditNoteDialog({
       form.reset(data);
       setDiscardDialogOpen(false);
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 
@@ -100,7 +104,7 @@ export function EditNoteDialog({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
           <DialogHeader>
-            <DialogTitle>Edit Note</DialogTitle>
+            <DialogTitle>{t("title")}</DialogTitle>
           </DialogHeader>
           <form id="form-edit-note" onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">
@@ -110,12 +114,12 @@ export function EditNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-edit-note-title">
-                      Title
+                      {t("field_title")}
                     </FieldLabel>
                     <Input
                       {...field}
                       id="form-edit-note-title"
-                      placeholder="e.g. Lecture 1 — Introduction"
+                      placeholder={t("field_title_placeholder")}
                       aria-invalid={fieldState.invalid}
                       autoFocus
                     />
@@ -131,12 +135,12 @@ export function EditNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-edit-note-content">
-                      Content
+                      {t("field_content")}
                     </FieldLabel>
                     <TiptapEditor
                       value={field.value ?? ""}
                       onChange={field.onChange}
-                      placeholder="Start writing your notes..."
+                      placeholder={t("field_content_placeholder")}
                       id="form-edit-note-content"
                       aria-invalid={fieldState.invalid}
                     />
@@ -155,7 +159,7 @@ export function EditNoteDialog({
                 {form.formState.isSubmitting && (
                   <Loader2 className="size-4 animate-spin" />
                 )}
-                Save Changes
+                {t("submit")}
               </Button>
             </FieldGroup>
           </form>

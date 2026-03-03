@@ -27,6 +27,7 @@ import {
   UnderlineIcon,
   Undo,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -73,7 +74,10 @@ function ToolbarButton({
   );
 }
 
-function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
+function EditorToolbar({
+  editor,
+  t,
+}: Readonly<{ editor: Editor | null; t: ReturnType<typeof useTranslations> }>) {
   if (!editor) return null;
 
   return (
@@ -81,42 +85,42 @@ function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive("bold")}
-        title="Bold (Ctrl+B)"
+        title={t("bold")}
       >
         <Bold className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive("italic")}
-        title="Italic (Ctrl+I)"
+        title={t("italic")}
       >
         <Italic className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive("underline")}
-        title="Underline (Ctrl+U)"
+        title={t("underline")}
       >
         <UnderlineIcon className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive("strike")}
-        title="Strikethrough"
+        title={t("strikethrough")}
       >
         <Strikethrough className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHighlight().run()}
         isActive={editor.isActive("highlight")}
-        title="Highlight"
+        title={t("highlight")}
       >
         <Highlighter className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCode().run()}
         isActive={editor.isActive("code")}
-        title="Inline Code"
+        title={t("inline_code")}
       >
         <Code className="size-3.5" />
       </ToolbarButton>
@@ -126,21 +130,21 @@ function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isActive={editor.isActive("heading", { level: 1 })}
-        title="Heading 1"
+        title={t("heading_1")}
       >
         <Heading1 className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isActive={editor.isActive("heading", { level: 2 })}
-        title="Heading 2"
+        title={t("heading_2")}
       >
         <Heading2 className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isActive={editor.isActive("heading", { level: 3 })}
-        title="Heading 3"
+        title={t("heading_3")}
       >
         <Heading3 className="size-3.5" />
       </ToolbarButton>
@@ -150,21 +154,21 @@ function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive("bulletList")}
-        title="Bullet List"
+        title={t("bullet_list")}
       >
         <List className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive("orderedList")}
-        title="Numbered List"
+        title={t("numbered_list")}
       >
         <ListOrdered className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleTaskList().run()}
         isActive={editor.isActive("taskList")}
-        title="Task List"
+        title={t("task_list")}
       >
         <ListChecks className="size-3.5" />
       </ToolbarButton>
@@ -174,13 +178,13 @@ function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive("blockquote")}
-        title="Quote"
+        title={t("quote")}
       >
         <Quote className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        title="Divider"
+        title={t("divider")}
       >
         <Minus className="size-3.5" />
       </ToolbarButton>
@@ -190,14 +194,14 @@ function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
-        title="Undo (Ctrl+Z)"
+        title={t("undo")}
       >
         <Undo className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
-        title="Redo (Ctrl+Shift+Z)"
+        title={t("redo")}
       >
         <Redo className="size-3.5" />
       </ToolbarButton>
@@ -208,10 +212,12 @@ function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
 export function TiptapEditor({
   value,
   onChange,
-  placeholder = "Start writing your notes...",
+  placeholder,
   id,
   "aria-invalid": ariaInvalid,
 }: Readonly<TiptapEditorProps>) {
+  const t = useTranslations("TiptapEditor");
+  const resolvedPlaceholder = placeholder ?? t("placeholder");
   const handleUpdate = useCallback(
     ({ editor }: { editor: { getHTML: () => string; isEmpty: boolean } }) => {
       const html = editor.isEmpty ? "" : editor.getHTML();
@@ -226,7 +232,7 @@ export function TiptapEditor({
         heading: { levels: [1, 2, 3] },
         codeBlock: false,
       }),
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({ placeholder: resolvedPlaceholder }),
       Highlight.configure({ multicolor: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -260,7 +266,7 @@ export function TiptapEditor({
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
       )}
     >
-      <EditorToolbar editor={editor} />
+      <EditorToolbar editor={editor} t={t} />
       <EditorContent
         editor={editor}
         className="tiptap-wrapper min-h-52 max-h-[52svh] overflow-y-auto"
