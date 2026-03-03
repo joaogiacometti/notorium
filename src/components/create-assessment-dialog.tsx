@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type CreateAssessmentForm,
   createAssessmentSchema,
@@ -54,6 +55,7 @@ export function CreateAssessmentDialog({
   onOpenChange,
 }: Readonly<CreateAssessmentDialogProps>) {
   const t = useTranslations("CreateAssessmentDialog");
+  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(createAssessmentSchema),
     defaultValues: {
@@ -82,8 +84,10 @@ export function CreateAssessmentDialog({
         weight: undefined,
       });
       onOpenChange(false);
-    } else if (result.error) {
-      form.setError("title", { message: result.error });
+    } else {
+      form.setError("title", {
+        message: resolveActionErrorMessage(result, tErrors),
+      });
     }
   }
 

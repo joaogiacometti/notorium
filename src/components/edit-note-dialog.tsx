@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import type { NoteEditDto } from "@/lib/api/contracts";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import { useBeforeUnload } from "@/lib/use-before-unload";
 import { type EditNoteForm, editNoteSchema } from "@/lib/validations/notes";
 
@@ -40,6 +41,7 @@ export function EditNoteDialog({
   onOpenChange,
 }: Readonly<EditNoteDialogProps>) {
   const t = useTranslations("EditNoteDialog");
+  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const defaultValues = {
@@ -92,8 +94,8 @@ export function EditNoteDialog({
       form.reset(data);
       setDiscardDialogOpen(false);
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 

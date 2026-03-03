@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteAccountDialogProps {
   open: boolean;
@@ -25,13 +26,14 @@ export function DeleteAccountDialog({
   onOpenChange,
 }: Readonly<DeleteAccountDialogProps>) {
   const t = useTranslations("DeleteAccountDialog");
+  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
     startTransition(async () => {
       const result = await deleteAccount();
-      if (result?.error) {
-        toast.error(result.error);
+      if (result && !result.success) {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     });
   }

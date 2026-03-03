@@ -11,6 +11,7 @@ import { noteImageAttachment, user } from "@/db/schema";
 import { appEnv } from "@/env";
 import type { MutationResult } from "@/lib/api/contracts";
 import { auth, getAuthenticatedUserId } from "@/lib/auth";
+import { actionError } from "@/lib/server-action-errors";
 import {
   type UpdateProfileForm,
   updateProfileSchema,
@@ -22,9 +23,7 @@ export async function updateProfile(
   const parsed = updateProfileSchema.safeParse(data);
 
   if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "Invalid profile data.",
-    };
+    return actionError("profile.invalidData");
   }
 
   try {
@@ -36,9 +35,11 @@ export async function updateProfile(
     });
   } catch (error) {
     if (error instanceof APIError) {
-      return { error: error.message };
+      return actionError("profile.updateFailed", {
+        errorMessage: error.message,
+      });
     }
-    return { error: "Failed to update profile." };
+    return actionError("profile.updateFailed");
   }
 
   return { success: true };

@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 function downloadJson(data: unknown, filename: string) {
   const json = JSON.stringify(data, null, 2);
@@ -34,6 +35,7 @@ function downloadJson(data: unknown, filename: string) {
 
 export function DataTransferActions() {
   const t = useTranslations("DataTransferActions");
+  const tErrors = useTranslations("ServerActions");
   const [isExporting, startExport] = useTransition();
   const [isImporting, startImport] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -75,8 +77,8 @@ export function DataTransferActions() {
         const json = JSON.parse(text);
         const result = await importData(json);
 
-        if (result.error) {
-          toast.error(result.error);
+        if (!result.success) {
+          toast.error(resolveActionErrorMessage(result, tErrors));
         } else {
           toast.success(t("import_success", { count: result.imported ?? 0 }));
         }

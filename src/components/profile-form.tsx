@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "@/i18n/routing";
 import { getIntlLocale } from "@/lib/date-locale";
 import type { UserPlan } from "@/lib/plan-limits";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type UpdateProfileForm,
   updateProfileSchema,
@@ -50,6 +51,7 @@ export function ProfileForm({
   const locale = useLocale();
   const intlLocale = getIntlLocale(locale);
   const t = useTranslations("ProfileForm");
+  const tErrors = useTranslations("ServerActions");
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const form = useForm({
@@ -80,7 +82,7 @@ export function ProfileForm({
       router.refresh();
       return;
     }
-    toast.error(result.error);
+    toast.error(resolveActionErrorMessage(result, tErrors));
   }
 
   return (

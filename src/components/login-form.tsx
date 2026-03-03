@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/routing";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import { cn } from "@/lib/utils";
 import {
   type LoginForm as LoginFormValues,
@@ -27,6 +28,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const t = useTranslations("LoginForm");
+  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -40,7 +42,7 @@ export function LoginForm({
   async function onSubmit(data: LoginFormValues) {
     const result = await loginAction(data);
     if (result && !result.success) {
-      toast.error(result.error);
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 

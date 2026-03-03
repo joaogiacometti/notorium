@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/routing";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type SignupForm as SignupFormValues,
   signupSchema,
@@ -23,6 +24,7 @@ import {
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const t = useTranslations("SignupForm");
+  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -38,7 +40,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   async function onSubmit(data: SignupFormValues) {
     const result = await signUpAction(data);
     if (result && !result.success) {
-      toast.error(result.error);
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 

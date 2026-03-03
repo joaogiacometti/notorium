@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type CreateSubjectForm,
   createSubjectSchema,
@@ -41,6 +42,7 @@ export function CreateSubjectDialog({
   onOpenChange,
 }: Readonly<CreateSubjectDialogProps>) {
   const t = useTranslations("CreateSubjectDialog");
+  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(createSubjectSchema),
@@ -59,8 +61,8 @@ export function CreateSubjectDialog({
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       form.reset();
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 

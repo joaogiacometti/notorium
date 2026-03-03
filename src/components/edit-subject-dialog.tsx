@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { SubjectEditDto } from "@/lib/api/contracts";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type EditSubjectForm,
   editSubjectSchema,
@@ -42,6 +43,7 @@ export function EditSubjectDialog({
 }: Readonly<EditSubjectDialogProps>) {
   const t = useTranslations("EditSubjectDialog");
   const _tSubject = useTranslations("CreateSubjectDialog");
+  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(editSubjectSchema),
@@ -60,8 +62,8 @@ export function EditSubjectDialog({
     if (result.success) {
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 

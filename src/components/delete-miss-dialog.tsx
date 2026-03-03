@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteMissDialogProps {
   missId: string;
@@ -29,6 +30,7 @@ export function DeleteMissDialog({
   onOpenChange,
 }: Readonly<DeleteMissDialogProps>) {
   const t = useTranslations("DeleteMissDialog");
+  const tErrors = useTranslations("ServerActions");
 
   const [isPending, startTransition] = useTransition();
 
@@ -37,8 +39,8 @@ export function DeleteMissDialog({
       const result = await deleteMiss({ id: missId });
       if (result.success) {
         onOpenChange(false);
-      } else if (result.error) {
-        toast.error(result.error);
+      } else {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     });
   }

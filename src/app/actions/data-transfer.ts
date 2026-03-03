@@ -8,6 +8,7 @@ import type { MutationResult } from "@/lib/api/contracts";
 import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
 import { checkSubjectLimit } from "@/lib/plan-enforcement";
 import { getPlanLimits } from "@/lib/plan-limits";
+import { actionError } from "@/lib/server-action-errors";
 import {
   type ImportData,
   importDataSchema,
@@ -105,13 +106,13 @@ export async function importData(
 
   const parsed = importDataSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: "Invalid import file format." };
+    return actionError("dataTransfer.invalidImportFormat");
   }
 
   const data = parsed.data;
 
   if (data.subjects.length === 0) {
-    return { error: "No subjects to import." };
+    return actionError("dataTransfer.noSubjectsToImport");
   }
 
   const subjectLimitCheck = await checkSubjectLimit(userId, plan);
@@ -119,9 +120,9 @@ export async function importData(
     subjectLimitCheck.max !== null &&
     subjectLimitCheck.current + data.subjects.length > subjectLimitCheck.max
   ) {
-    return {
-      error: `Plan limit: you can only have ${subjectLimitCheck.max} subjects.`,
-    };
+    return actionError("plan.subjectImportLimit", {
+      errorParams: { max: subjectLimitCheck.max },
+    });
   }
 
   for (const importedSubject of data.subjects) {
@@ -129,18 +130,18 @@ export async function importData(
       limits.maxNotesPerSubject !== null &&
       importedSubject.notes.length > limits.maxNotesPerSubject
     ) {
-      return {
-        error: `Plan limit: you can only have ${limits.maxNotesPerSubject} notes per subject.`,
-      };
+      return actionError("plan.noteLimit", {
+        errorParams: { max: limits.maxNotesPerSubject },
+      });
     }
 
     if (
       limits.maxAssessmentsPerSubject !== null &&
       importedSubject.assessments.length > limits.maxAssessmentsPerSubject
     ) {
-      return {
-        error: `Plan limit: you can only have ${limits.maxAssessmentsPerSubject} assessments per subject.`,
-      };
+      return actionError("plan.assessmentLimit", {
+        errorParams: { max: limits.maxAssessmentsPerSubject },
+      });
     }
   }
 
@@ -213,7 +214,7 @@ export async function importData(
       }
     });
   } catch {
-    return { error: "Failed to import data." };
+    return actionError("dataTransfer.importFailed");
   }
 
   revalidatePath("/subjects");

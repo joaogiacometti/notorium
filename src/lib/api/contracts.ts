@@ -6,6 +6,7 @@ import type {
   noteImageAttachment,
   subject,
 } from "@/db/schema";
+import type { ActionErrorResult } from "@/lib/server-action-errors";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
@@ -47,6 +48,4 @@ export type SubjectEditDto = Pick<
 
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 
-export type MutationResult =
-  | { success: true; error?: never }
-  | { success?: false; error: string };
+export type MutationResult = { success: true } | ActionErrorResult;

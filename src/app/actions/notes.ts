@@ -18,6 +18,10 @@ import {
   checkNoteLimit,
 } from "@/lib/plan-enforcement";
 import {
+  type ActionErrorResult,
+  actionError,
+} from "@/lib/server-action-errors";
+import {
   type CreateNoteForm,
   createNoteSchema,
   type DeleteNoteForm,
@@ -116,7 +120,7 @@ export async function createNote(
   const parsed = createNoteSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid note data." };
+    return actionError("notes.invalidData");
   }
 
   const existingSubject = await db
@@ -132,15 +136,19 @@ export async function createNote(
     .limit(1);
 
   if (existingSubject.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   const limitCheck = await checkNoteLimit(userId, parsed.data.subjectId, plan);
 
   if (!limitCheck.allowed) {
-    return {
-      error: `Plan limit: you can have up to ${limitCheck.max} notes per subject.`,
-    };
+    if (limitCheck.max === null) {
+      return actionError("common.generic");
+    }
+
+    return actionError("plan.noteLimit", {
+      errorParams: { max: limitCheck.max },
+    });
   }
 
   await db.insert(note).values({
@@ -159,7 +167,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   const parsed = editNoteSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid note data." };
+    return actionError("notes.invalidData");
   }
 
   const existing = await db
@@ -176,7 +184,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
     );
 
   if (existing.length === 0) {
-    return { error: "Note not found." };
+    return actionError("notes.notFound");
   }
 
   await db
@@ -196,7 +204,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
 function parseAttachmentUpload(formData: FormData): {
   noteId: string;
   files: File[];
-  error?: string;
+  error?: ActionErrorResult;
 } {
   const noteId = formData.get("noteId");
   const parsed = uploadNoteAttachmentsSchema.safeParse({
@@ -204,7 +212,11 @@ function parseAttachmentUpload(formData: FormData): {
   });
 
   if (!parsed.success) {
-    return { noteId: "", files: [], error: "Invalid request." };
+    return {
+      noteId: "",
+      files: [],
+      error: actionError("common.invalidRequest"),
+    };
   }
 
   const files = formData
@@ -215,7 +227,7 @@ function parseAttachmentUpload(formData: FormData): {
     return {
       noteId: parsed.data.noteId,
       files: [],
-      error: "Select at least one image.",
+      error: actionError("notes.attachments.selectAtLeastOne"),
     };
   }
 
@@ -223,7 +235,9 @@ function parseAttachmentUpload(formData: FormData): {
     return {
       noteId: parsed.data.noteId,
       files: [],
-      error: `You can upload up to ${noteAttachmentMaxFilesPerUpload} images at a time.`,
+      error: actionError("notes.attachments.maxFilesPerUpload", {
+        errorParams: { max: noteAttachmentMaxFilesPerUpload },
+      }),
     };
   }
 
@@ -233,7 +247,10 @@ function parseAttachmentUpload(formData: FormData): {
       return {
         noteId: parsed.data.noteId,
         files: [],
-        error: `${file.name}: ${validationError}`,
+        error: actionError("notes.attachments.invalidFile", {
+          errorParams: { fileName: file.name },
+          errorMessage: `${file.name}: ${validationError}`,
+        }),
       };
     }
   }
@@ -247,19 +264,19 @@ export async function uploadNoteAttachments(
   const { userId, plan } = await getAuthenticatedUser();
 
   if (!(await checkImageAllowed(plan))) {
-    return { error: "Image attachments are not available on the Free plan." };
+    return actionError("notes.attachments.freePlanNotAllowed");
   }
 
   const blobToken = getBlobToken();
 
   if (!blobToken) {
-    return { error: "Blob storage is not configured." };
+    return actionError("notes.attachments.blobNotConfigured");
   }
 
   const upload = parseAttachmentUpload(formData);
 
   if (upload.error) {
-    return { error: upload.error };
+    return upload.error;
   }
 
   const uploadSizeBytes = upload.files.reduce(
@@ -273,10 +290,7 @@ export async function uploadNoteAttachments(
   );
 
   if (!storageCheck.allowed) {
-    return {
-      error:
-        "You have reached your image storage limit. Remove some images to free up space.",
-    };
+    return actionError("notes.attachments.storageLimitReached");
   }
 
   const existing = await db
@@ -298,7 +312,7 @@ export async function uploadNoteAttachments(
   const existingNote = existing[0];
 
   if (!existingNote) {
-    return { error: "Note not found." };
+    return actionError("notes.notFound");
   }
 
   const uploadedBlobs: Array<{
@@ -352,7 +366,7 @@ export async function uploadNoteAttachments(
       } catch {}
     }
 
-    return { error: "Failed to upload note images." };
+    return actionError("notes.attachments.uploadFailed");
   }
 
   revalidatePath(`/subjects/${existingNote.subjectId}`);
@@ -369,7 +383,7 @@ export async function removeNoteAttachment(
   const parsed = removeNoteAttachmentSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return actionError("common.invalidRequest");
   }
 
   const existingAttachment = await db
@@ -385,7 +399,7 @@ export async function removeNoteAttachment(
   const attachment = existingAttachment[0];
 
   if (!attachment) {
-    return { error: "Attachment not found." };
+    return actionError("notes.attachments.notFound");
   }
 
   const existingNotes = await db
@@ -407,7 +421,7 @@ export async function removeNoteAttachment(
   const existingNote = existingNotes[0];
 
   if (!existingNote) {
-    return { error: "Note not found." };
+    return actionError("notes.notFound");
   }
 
   await db
@@ -446,7 +460,7 @@ export async function deleteNote(
   const parsed = deleteNoteSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return actionError("common.invalidRequest");
   }
 
   const existing = await db
@@ -463,7 +477,7 @@ export async function deleteNote(
     );
 
   if (existing.length === 0) {
-    return { error: "Note not found." };
+    return actionError("notes.notFound");
   }
 
   const existingNote = existing[0].note;

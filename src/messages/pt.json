@@ -399,6 +399,62 @@
     "keep": "Continuar Editando",
     "discard": "Descartar"
   },
+  "ServerActions": {
+    "common": {
+      "generic": "Algo deu errado. Tente novamente.",
+      "invalidRequest": "Solicitacao invalida."
+    },
+    "auth": {
+      "rateLimited": "Muitas tentativas. Tente novamente mais tarde.",
+      "invalidInput": "Dados invalidos.",
+      "loginFailed": "Falha no login.",
+      "signupFailed": "Falha no cadastro."
+    },
+    "subjects": {
+      "invalidData": "Dados da materia invalidos.",
+      "notFound": "Materia nao encontrada."
+    },
+    "assessments": {
+      "invalidData": "Dados da avaliacao invalidos.",
+      "notFound": "Avaliacao nao encontrada."
+    },
+    "attendance": {
+      "invalidSettings": "Configuracoes de faltas invalidas.",
+      "maxMissesExceeded": "O limite de faltas nao pode ser maior que o total de aulas.",
+      "invalidMissData": "Dados de falta invalidos.",
+      "missAlreadyRecorded": "Ja existe uma falta registrada para esta data.",
+      "missNotFound": "Registro de falta nao encontrado."
+    },
+    "dataTransfer": {
+      "invalidImportFormat": "Formato do arquivo de importacao invalido.",
+      "noSubjectsToImport": "Nao ha materias para importar.",
+      "importFailed": "Falha ao importar dados."
+    },
+    "notes": {
+      "invalidData": "Dados da nota invalidos.",
+      "notFound": "Nota nao encontrada.",
+      "attachments": {
+        "selectAtLeastOne": "Selecione pelo menos uma imagem.",
+        "maxFilesPerUpload": "Voce pode enviar no maximo {max} imagens por vez.",
+        "invalidFile": "Arquivo invalido: {fileName}.",
+        "freePlanNotAllowed": "Anexos de imagem nao estao disponiveis no plano Gratis.",
+        "blobNotConfigured": "O armazenamento Blob nao esta configurado.",
+        "storageLimitReached": "Voce atingiu o limite de armazenamento de imagens. Remova algumas imagens para liberar espaco.",
+        "uploadFailed": "Falha ao enviar imagens da nota.",
+        "notFound": "Anexo nao encontrado."
+      }
+    },
+    "profile": {
+      "invalidData": "Dados de perfil invalidos.",
+      "updateFailed": "Falha ao atualizar o perfil."
+    },
+    "plan": {
+      "subjectLimit": "Limite do plano: voce pode ter ate {max} materias.",
+      "subjectImportLimit": "Limite do plano: voce so pode ter ate {max} materias.",
+      "noteLimit": "Limite do plano: voce pode ter ate {max} notas por materia.",
+      "assessmentLimit": "Limite do plano: voce pode ter ate {max} avaliacoes por materia."
+    }
+  },
   "Common": {
     "save": "Salvar",
     "cancel": "Cancelar",

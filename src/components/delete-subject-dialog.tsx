@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteSubjectDialogProps {
   subjectId: string;
@@ -34,6 +35,7 @@ export function DeleteSubjectDialog({
   mode = "delete",
 }: Readonly<DeleteSubjectDialogProps>) {
   const t = useTranslations("DeleteSubjectDialog");
+  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -50,8 +52,8 @@ export function DeleteSubjectDialog({
         } else {
           onOpenChange(false);
         }
-      } else if (result.error) {
-        toast.error(result.error);
+      } else {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     });
   }

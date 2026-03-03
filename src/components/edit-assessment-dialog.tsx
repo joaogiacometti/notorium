@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { AssessmentEntity } from "@/lib/api/contracts";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type EditAssessmentForm,
   editAssessmentSchema,
@@ -55,6 +56,7 @@ export function EditAssessmentDialog({
   onOpenChange,
 }: Readonly<EditAssessmentDialogProps>) {
   const t = useTranslations("EditAssessmentDialog");
+  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(editAssessmentSchema),
     defaultValues: {
@@ -74,8 +76,10 @@ export function EditAssessmentDialog({
     const result = await editAssessment(data);
     if (result.success) {
       onOpenChange(false);
-    } else if (result.error) {
-      form.setError("title", { message: result.error });
+    } else {
+      form.setError("title", {
+        message: resolveActionErrorMessage(result, tErrors),
+      });
     }
   }
 

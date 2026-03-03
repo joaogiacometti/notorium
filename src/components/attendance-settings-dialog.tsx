@@ -22,6 +22,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type AttendanceSettingsForm,
   attendanceSettingsSchema,
@@ -43,6 +44,7 @@ export function AttendanceSettingsDialog({
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
   const t = useTranslations("AttendanceSettingsDialog");
+  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {
@@ -56,8 +58,8 @@ export function AttendanceSettingsDialog({
     const result = await updateAttendanceSettings(data);
     if (result.success) {
       onOpenChange(false);
-    } else if (result.error) {
-      toast.error(result.error);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
     }
   }
 

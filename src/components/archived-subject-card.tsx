@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SubjectEntity } from "@/lib/api/contracts";
 import { getDateFnsLocale } from "@/lib/date-locale";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface ArchivedSubjectCardProps {
   subject: SubjectEntity;
@@ -23,6 +24,7 @@ export function ArchivedSubjectCard({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const t = useTranslations("ArchivedSubjectCard");
+  const tErrors = useTranslations("ServerActions");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isRestoring, startRestoreTransition] = useTransition();
   const queryClient = useQueryClient();
@@ -43,7 +45,7 @@ export function ArchivedSubjectCard({
         return;
       }
 
-      toast.error(result.error);
+      toast.error(resolveActionErrorMessage(result, tErrors));
     });
   }
 

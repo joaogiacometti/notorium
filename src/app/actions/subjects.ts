@@ -9,6 +9,7 @@ import { appEnv } from "@/env";
 import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
 import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
 import { checkSubjectLimit } from "@/lib/plan-enforcement";
+import { actionError } from "@/lib/server-action-errors";
 import {
   type ArchiveSubjectForm,
   archiveSubjectSchema,
@@ -68,15 +69,19 @@ export async function createSubject(
   const parsed = createSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid subject data." };
+    return actionError("subjects.invalidData");
   }
 
   const limitCheck = await checkSubjectLimit(userId, plan);
 
   if (!limitCheck.allowed) {
-    return {
-      error: `Plan limit: you can have up to ${limitCheck.max} subjects.`,
-    };
+    if (limitCheck.max === null) {
+      return actionError("common.generic");
+    }
+
+    return actionError("plan.subjectLimit", {
+      errorParams: { max: limitCheck.max },
+    });
   }
 
   await db.insert(subject).values({
@@ -99,7 +104,7 @@ export async function editSubject(
   const parsed = editSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid subject data." };
+    return actionError("subjects.invalidData");
   }
 
   const existing = await db
@@ -114,7 +119,7 @@ export async function editSubject(
     );
 
   if (existing.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   await db
@@ -140,7 +145,7 @@ export async function archiveSubject(
   const parsed = archiveSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return actionError("common.invalidRequest");
   }
 
   const existing = await db
@@ -156,7 +161,7 @@ export async function archiveSubject(
     .limit(1);
 
   if (existing.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   await db
@@ -180,7 +185,7 @@ export async function restoreSubject(
   const parsed = restoreSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return actionError("common.invalidRequest");
   }
 
   const existing = await db
@@ -196,7 +201,7 @@ export async function restoreSubject(
     .limit(1);
 
   if (existing.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   await db
@@ -220,7 +225,7 @@ export async function deleteSubject(
   const parsed = deleteSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return actionError("common.invalidRequest");
   }
 
   const existing = await db
@@ -229,7 +234,7 @@ export async function deleteSubject(
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
 
   if (existing.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   const attachments = await db

@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "@/i18n/routing";
 import type { NoteImageAttachmentEntity } from "@/lib/api/contracts";
 import type { UserPlan } from "@/lib/plan-limits";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type NoteAttachmentUploadForm,
   noteAttachmentAllowedTypes,
@@ -107,6 +108,7 @@ export function NoteImageAttachments({
   plan,
 }: Readonly<NoteImageAttachmentsProps>) {
   const t = useTranslations("NoteImageAttachments");
+  const tErrors = useTranslations("ServerActions");
   const imagesAllowed = plan !== "free";
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -213,8 +215,8 @@ export function NoteImageAttachments({
         );
         clearSelectedFiles();
         router.refresh();
-      } else if (result.error) {
-        toast.error(result.error);
+      } else {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     } catch {
       toast.error("Failed to upload images.");
@@ -339,8 +341,8 @@ export function NoteImageAttachments({
           setRemoveConfirmOpen(false);
           setAttachmentToRemoveId(null);
           router.refresh();
-        } else if (result.error) {
-          toast.error(result.error);
+        } else {
+          toast.error(resolveActionErrorMessage(result, tErrors));
         }
       } catch {
         toast.error("Failed to remove attachment.");

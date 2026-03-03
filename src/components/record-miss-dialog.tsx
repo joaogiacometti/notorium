@@ -20,6 +20,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type RecordMissForm,
   recordMissSchema,
@@ -37,6 +38,7 @@ export function RecordMissDialog({
   onOpenChange,
 }: Readonly<RecordMissDialogProps>) {
   const t = useTranslations("RecordMissDialog");
+  const tErrors = useTranslations("ServerActions");
   const today = new Date().toISOString().split("T")[0];
 
   const form = useForm({
@@ -52,8 +54,10 @@ export function RecordMissDialog({
     if (result.success) {
       form.reset({ subjectId, missDate: today });
       onOpenChange(false);
-    } else if (result.error) {
-      form.setError("missDate", { message: result.error });
+    } else {
+      form.setError("missDate", {
+        message: resolveActionErrorMessage(result, tErrors),
+      });
     }
   }
 

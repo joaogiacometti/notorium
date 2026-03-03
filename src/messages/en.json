@@ -399,6 +399,62 @@
     "keep": "Keep Editing",
     "discard": "Discard"
   },
+  "ServerActions": {
+    "common": {
+      "generic": "Something went wrong. Please try again.",
+      "invalidRequest": "Invalid request."
+    },
+    "auth": {
+      "rateLimited": "Too many attempts. Please try again later.",
+      "invalidInput": "Invalid input.",
+      "loginFailed": "Login failed.",
+      "signupFailed": "Sign up failed."
+    },
+    "subjects": {
+      "invalidData": "Invalid subject data.",
+      "notFound": "Subject not found."
+    },
+    "assessments": {
+      "invalidData": "Invalid assessment data.",
+      "notFound": "Assessment not found."
+    },
+    "attendance": {
+      "invalidSettings": "Invalid attendance settings.",
+      "maxMissesExceeded": "Max misses cannot exceed total classes.",
+      "invalidMissData": "Invalid miss data.",
+      "missAlreadyRecorded": "A miss is already recorded for this date.",
+      "missNotFound": "Miss record not found."
+    },
+    "dataTransfer": {
+      "invalidImportFormat": "Invalid import file format.",
+      "noSubjectsToImport": "No subjects to import.",
+      "importFailed": "Failed to import data."
+    },
+    "notes": {
+      "invalidData": "Invalid note data.",
+      "notFound": "Note not found.",
+      "attachments": {
+        "selectAtLeastOne": "Select at least one image.",
+        "maxFilesPerUpload": "You can upload up to {max} images at a time.",
+        "invalidFile": "Invalid file: {fileName}.",
+        "freePlanNotAllowed": "Image attachments are not available on the Free plan.",
+        "blobNotConfigured": "Blob storage is not configured.",
+        "storageLimitReached": "You have reached your image storage limit. Remove some images to free up space.",
+        "uploadFailed": "Failed to upload note images.",
+        "notFound": "Attachment not found."
+      }
+    },
+    "profile": {
+      "invalidData": "Invalid profile data.",
+      "updateFailed": "Failed to update profile."
+    },
+    "plan": {
+      "subjectLimit": "Plan limit: you can have up to {max} subjects.",
+      "subjectImportLimit": "Plan limit: you can only have {max} subjects.",
+      "noteLimit": "Plan limit: you can have up to {max} notes per subject.",
+      "assessmentLimit": "Plan limit: you can have up to {max} assessments per subject."
+    }
+  },
   "Common": {
     "save": "Save",
     "cancel": "Cancel",

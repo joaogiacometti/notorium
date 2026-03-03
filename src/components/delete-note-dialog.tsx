@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteNoteDialogProps {
   noteId: string;
@@ -32,6 +33,7 @@ export function DeleteNoteDialog({
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
   const t = useTranslations("DeleteNoteDialog");
+  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -45,8 +47,8 @@ export function DeleteNoteDialog({
         } else {
           onOpenChange(false);
         }
-      } else if (result.error) {
-        toast.error(result.error);
+      } else {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     });
   }

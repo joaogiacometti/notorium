@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteAssessmentDialogProps {
   assessmentId: string;
@@ -29,6 +30,7 @@ export function DeleteAssessmentDialog({
   onOpenChange,
 }: Readonly<DeleteAssessmentDialogProps>) {
   const t = useTranslations("DeleteAssessmentDialog");
+  const tErrors = useTranslations("ServerActions");
 
   const [isPending, startTransition] = useTransition();
 
@@ -37,8 +39,8 @@ export function DeleteAssessmentDialog({
       const result = await deleteAssessment({ id: assessmentId });
       if (result.success) {
         onOpenChange(false);
-      } else if (result.error) {
-        toast.error(result.error);
+      } else {
+        toast.error(resolveActionErrorMessage(result, tErrors));
       }
     });
   }

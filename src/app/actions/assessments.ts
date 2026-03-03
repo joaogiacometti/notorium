@@ -7,6 +7,7 @@ import { assessment, subject } from "@/db/schema";
 import type { AssessmentEntity, MutationResult } from "@/lib/api/contracts";
 import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
 import { checkAssessmentLimit } from "@/lib/plan-enforcement";
+import { actionError } from "@/lib/server-action-errors";
 import {
   type CreateAssessmentForm,
   createAssessmentSchema,
@@ -62,7 +63,7 @@ export async function createAssessment(
   const parsed = createAssessmentSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid assessment data." };
+    return actionError("assessments.invalidData");
   }
 
   const existingSubject = await db
@@ -78,7 +79,7 @@ export async function createAssessment(
     .limit(1);
 
   if (existingSubject.length === 0) {
-    return { error: "Subject not found." };
+    return actionError("subjects.notFound");
   }
 
   const limitCheck = await checkAssessmentLimit(
@@ -88,9 +89,13 @@ export async function createAssessment(
   );
 
   if (!limitCheck.allowed) {
-    return {
-      error: `Plan limit: you can have up to ${limitCheck.max} assessments per subject.`,
-    };
+    if (limitCheck.max === null) {
+      return actionError("common.generic");
+    }
+
+    return actionError("plan.assessmentLimit", {
+      errorParams: { max: limitCheck.max },
+    });
   }
 
   await db.insert(assessment).values({
@@ -117,7 +122,7 @@ export async function editAssessment(
   const parsed = editAssessmentSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid assessment data." };
+    return actionError("assessments.invalidData");
   }
 
   const existingAssessment = await db
@@ -135,7 +140,7 @@ export async function editAssessment(
     .limit(1);
 
   if (existingAssessment.length === 0) {
-    return { error: "Assessment not found." };
+    return actionError("assessments.notFound");
   }
 
   await db
@@ -165,7 +170,7 @@ export async function deleteAssessment(
   const parsed = deleteAssessmentSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid request." };
+    return actionError("common.invalidRequest");
   }
 
   const existingAssessment = await db
@@ -183,7 +188,7 @@ export async function deleteAssessment(
     .limit(1);
 
   if (existingAssessment.length === 0) {
-    return { error: "Assessment not found." };
+    return actionError("assessments.notFound");
   }
 
   await db
