@@ -32,14 +32,19 @@ describe("Preferences Menu", () => {
 
     cy.url({ timeout: 10000 }).should("include", "/pt");
     cy.get("html").should("have.attr", "lang", "pt");
-    cy.contains("button", "Preferências").should("be.visible");
-
-    openPreferencesDialog();
-    cy.contains('[role="dialog"] button', "Inglês").click();
+    cy.get('[data-testid="account-menu-trigger"]').click();
+    cy.get('[data-testid="account-menu-preferences"]')
+      .should("be.visible")
+      .contains(/Prefer.ncias/);
+    cy.get('[data-testid="account-menu-preferences"]').click();
+    cy.contains('[role="dialog"] button', /Ingl.s|English/).click();
 
     cy.url({ timeout: 10000 }).should("include", "/en");
     cy.get("html").should("have.attr", "lang", "en");
-    cy.contains("button", "Preferences").should("be.visible");
+    cy.get('[data-testid="account-menu-trigger"]').click();
+    cy.get('[data-testid="account-menu-preferences"]')
+      .should("be.visible")
+      .contains("Preferences");
   });
 
   it("switches theme between dark and light modes", () => {
