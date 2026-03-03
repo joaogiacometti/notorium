@@ -361,11 +361,13 @@ export function CalendarView() {
           )}
         </div>
 
-        <DayDetail
-          date={selectedDate}
-          events={events}
-          dateLocale={dateLocale}
-        />
+        {!isPending && (
+          <DayDetail
+            date={selectedDate}
+            events={events}
+            dateLocale={dateLocale}
+          />
+        )}
       </div>
     </div>
   );
