@@ -1,11 +1,93 @@
 import { format, parseISO } from "date-fns";
-import { CalendarDays, Pencil, Trash2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardList,
+  Ellipsis,
+  GraduationCap,
+  NotebookPen,
+  Pencil,
+  Presentation,
+  Rocket,
+  Trash2,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { AssessmentEntity } from "@/lib/api/contracts";
 import { getDateFnsLocale } from "@/lib/date-locale";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
 import { cn } from "@/lib/utils";
+
+type AssessmentStatus = "overdue" | "completed" | "pending";
+type AssessmentType = AssessmentEntity["type"];
+
+function resolveAssessmentStatus(
+  overdue: boolean,
+  status: AssessmentEntity["status"],
+): AssessmentStatus {
+  if (overdue) return "overdue";
+  if (status === "completed") return "completed";
+  return "pending";
+}
+
+const STATUS_TONE = {
+  overdue: getStatusToneClasses("danger"),
+  completed: getStatusToneClasses("success"),
+  pending: getStatusToneClasses("warning"),
+} as const;
+
+interface TypeStyle {
+  icon: LucideIcon;
+  text: string;
+  bg: string;
+  border: string;
+  iconColor: string;
+}
+
+const TYPE_STYLES: Record<AssessmentType, TypeStyle> = {
+  exam: {
+    icon: GraduationCap,
+    text: "text-indigo-700 dark:text-indigo-300",
+    bg: "bg-indigo-500/10",
+    border: "border-indigo-500/30",
+    iconColor: "text-indigo-500 dark:text-indigo-400",
+  },
+  assignment: {
+    icon: ClipboardList,
+    text: "text-sky-700 dark:text-sky-300",
+    bg: "bg-sky-500/10",
+    border: "border-sky-500/30",
+    iconColor: "text-sky-500 dark:text-sky-400",
+  },
+  project: {
+    icon: Rocket,
+    text: "text-violet-700 dark:text-violet-300",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/30",
+    iconColor: "text-violet-500 dark:text-violet-400",
+  },
+  presentation: {
+    icon: Presentation,
+    text: "text-fuchsia-700 dark:text-fuchsia-300",
+    bg: "bg-fuchsia-500/10",
+    border: "border-fuchsia-500/30",
+    iconColor: "text-fuchsia-500 dark:text-fuchsia-400",
+  },
+  homework: {
+    icon: NotebookPen,
+    text: "text-teal-700 dark:text-teal-300",
+    bg: "bg-teal-500/10",
+    border: "border-teal-500/30",
+    iconColor: "text-teal-500 dark:text-teal-400",
+  },
+  other: {
+    icon: Ellipsis,
+    text: "text-slate-600 dark:text-slate-400",
+    bg: "bg-slate-500/10",
+    border: "border-slate-500/30",
+    iconColor: "text-slate-500 dark:text-slate-400",
+  },
+};
 
 interface AssessmentItemCardProps {
   item: AssessmentEntity;
@@ -33,129 +115,123 @@ export function AssessmentItemCard({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const t = useTranslations("AssessmentItemCard");
-  const statusTone = overdue
-    ? getStatusToneClasses("danger")
-    : item.status === "completed"
-      ? getStatusToneClasses("success")
-      : getStatusToneClasses("warning");
-  const statusLabel = overdue
-    ? t("status_overdue")
-    : item.status === "completed"
-      ? t("status_completed")
-      : t("status_pending");
+  const assessmentStatus = resolveAssessmentStatus(overdue, item.status);
+  const statusTone = STATUS_TONE[assessmentStatus];
+  const statusLabel = t(`status_${assessmentStatus}`);
+  const typeStyle = TYPE_STYLES[item.type];
+  const TypeIcon = typeStyle.icon;
   const scoreTone =
     item.score === null
       ? null
       : getStatusToneClasses(getScoreTone(Number(item.score)));
 
   return (
-    <div className={cn("rounded-xl border p-4", className)}>
-      <div className="flex items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 wrap-break-word font-semibold">
-          {item.title}
-        </p>
-        <div className="flex shrink-0 items-center gap-1">
+    <div
+      className={cn(
+        "rounded-xl border-l-[3px] bg-card p-3 shadow-sm",
+        statusTone.border,
+        className,
+      )}
+    >
+      {/* Header: icon + title + actions */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <div
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-lg",
+              typeStyle.bg,
+            )}
+          >
+            <TypeIcon className={cn("size-4", typeStyle.iconColor)} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="wrap-break-word text-sm font-semibold leading-snug">
+              {item.title}
+            </p>
+            {item.description && (
+              <p className="mt-0.5 wrap-break-word text-xs text-muted-foreground">
+                {item.description}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 sm:size-8"
+            className="size-7 text-muted-foreground hover:text-foreground"
             onClick={() => onEdit(item)}
             aria-label={t("edit")}
           >
-            <Pencil className="size-4" />
+            <Pencil className="size-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
+            className="size-7 text-muted-foreground hover:text-destructive"
             onClick={() => onDelete(item)}
             aria-label={t("delete")}
           >
-            <Trash2 className="size-4" />
+            <Trash2 className="size-3.5" />
           </Button>
         </div>
       </div>
 
-      {item.description && (
-        <p className="mt-1 wrap-break-word text-sm text-muted-foreground">
-          {item.description}
-        </p>
-      )}
-
-      <div
-        className={`mt-3 grid grid-cols-2 gap-2 ${
-          showSubject ? "sm:grid-cols-4" : "sm:grid-cols-3"
-        }`}
-      >
+      {/* Metadata pills */}
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {showSubject && (
-          <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              {t("subject")}
-            </p>
-            <p className="mt-0.5 text-sm font-medium">
-              {subjectName ?? t("unknown_subject")}
-            </p>
-          </div>
+          <span className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
+            {subjectName ?? t("unknown_subject")}
+          </span>
         )}
-        <div
-          className={`rounded-lg border px-2.5 py-2 ${statusTone.border} ${statusTone.bg}`}
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
+            statusTone.border,
+            statusTone.bg,
+            statusTone.text,
+          )}
         >
-          <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            {t("status")}
-          </p>
-          <p className={`mt-0.5 text-sm font-semibold ${statusTone.text}`}>
-            {statusLabel}
-          </p>
-        </div>
-        <div className="rounded-lg border border-border/50 bg-muted/20 px-2.5 py-2">
-          <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            {t("type")}
-          </p>
-          <p className="mt-0.5 text-sm font-medium">{t(`type_${item.type}`)}</p>
-        </div>
+          {statusLabel}
+        </span>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
+            typeStyle.border,
+            typeStyle.bg,
+            typeStyle.text,
+          )}
+        >
+          <TypeIcon className="size-3" />
+          {t(`type_${item.type}`)}
+        </span>
         {item.dueDate && (
-          <div
+          <span
             className={cn(
-              "rounded-lg border px-2.5 py-2",
+              "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs",
               overdue
-                ? "border-red-500/30 bg-red-500/5"
-                : "border-border/50 bg-muted/20",
+                ? "border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400"
+                : "border-border/50 bg-muted/30 text-muted-foreground",
             )}
           >
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              {t("due_date")}
-            </p>
-            <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium">
-              <CalendarDays className="size-3.5 text-muted-foreground" />
-              {format(parseISO(item.dueDate), "MMM d, yyyy", {
-                locale: dateLocale,
-              })}
-            </p>
-            {dueDetail && (
-              <p
-                className={cn(
-                  "mt-0.5 text-xs",
-                  overdue
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-muted-foreground",
-                )}
-              >
-                {dueDetail}
-              </p>
-            )}
-          </div>
+            <CalendarDays className="size-3" />
+            {format(parseISO(item.dueDate), "MMM d, yyyy", {
+              locale: dateLocale,
+            })}
+            {dueDetail && <span className="opacity-75">· {dueDetail}</span>}
+          </span>
         )}
         {showScore && scoreTone && (
-          <div
-            className={`rounded-lg border px-2.5 py-2 ${scoreTone.border} ${scoreTone.bg}`}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold",
+              scoreTone.border,
+              scoreTone.bg,
+              scoreTone.text,
+            )}
           >
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              {t("score")}
-            </p>
-            <p className={`mt-0.5 text-sm font-semibold ${scoreTone.text}`}>
-              {Number(item.score).toFixed(1)}
-            </p>
-          </div>
+            {Number(item.score).toFixed(1)}
+          </span>
         )}
       </div>
     </div>
