@@ -455,6 +455,72 @@
       "assessmentLimit": "Plan limit: you can have up to {max} assessments per subject."
     }
   },
+  "Validation": {
+    "auth": {
+      "emailMaxLength": "Email must be at most 254 characters.",
+      "emailInvalid": "Please enter a valid email address.",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "passwordMaxLength": "Password must be at most 128 characters.",
+      "nameMinLength": "Name must be at least 2 characters.",
+      "nameMaxLength": "Name must be at most 100 characters.",
+      "confirmPasswordRequired": "Confirm password is required.",
+      "passwordsDoNotMatch": "Passwords do not match."
+    },
+    "subjects": {
+      "nameRequired": "Subject name is required.",
+      "nameMaxLength": "Subject name must be at most 100 characters.",
+      "descriptionMaxLength": "Description must be at most 500 characters."
+    },
+    "assessments": {
+      "dueDateInvalid": "Due date must be a valid date.",
+      "titleRequired": "Title is required.",
+      "titleMaxLength": "Title must be at most 100 characters.",
+      "descriptionMaxLength": "Description must be at most 1000 characters.",
+      "score": {
+        "notNumber": "Score must be a number.",
+        "minValue": "Score cannot be negative.",
+        "maxValue": "Score cannot exceed 100."
+      },
+      "weight": {
+        "notNumber": "Weight must be a number.",
+        "minValue": "Weight cannot be negative.",
+        "maxValue": "Weight cannot exceed 100."
+      }
+    },
+    "attendance": {
+      "totalClasses": {
+        "integer": "Must be a whole number.",
+        "min": "Must have at least 1 class.",
+        "max": "Cannot exceed 365 classes."
+      },
+      "maxMisses": {
+        "integer": "Must be a whole number.",
+        "min": "Cannot be negative.",
+        "max": "Cannot exceed 365 misses."
+      },
+      "dateRequired": "Date is required."
+    },
+    "notes": {
+      "titleRequired": "Note title is required.",
+      "titleMaxLength": "Note title must be at most 200 characters.",
+      "contentMaxLength": "Content must be at most 10000 characters.",
+      "attachments": {
+        "invalidSelection": "Invalid file selection.",
+        "selectAtLeastOne": "Select at least one image.",
+        "maxFilesPerUpload": "You can upload up to {max} images at a time.",
+        "unsupportedType": "Unsupported file type. Use JPG, PNG, WEBP, or GIF.",
+        "maxSize": "File is too large. Maximum size is {max}MB.",
+        "fileError": "{fileName}: Invalid file."
+      }
+    },
+    "profile": {
+      "nameMinLength": "Name must be at least 2 characters.",
+      "nameMaxLength": "Name must be at most 100 characters."
+    },
+    "search": {
+      "queryMaxLength": "Search query must be at most 200 characters."
+    }
+  },
   "Common": {
     "save": "Save",
     "cancel": "Cancel",

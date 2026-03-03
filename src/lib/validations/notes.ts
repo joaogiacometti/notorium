@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validationMessage } from "@/lib/validation-messages";
 
 export const noteAttachmentAllowedTypes = [
   "image/jpeg",
@@ -17,11 +18,11 @@ function isFile(value: unknown): value is File {
 export const createNoteSchema = z.object({
   title: z
     .string()
-    .min(1, "Note title is required.")
-    .max(200, "Note title must be at most 200 characters."),
+    .min(1, validationMessage("Validation.notes.titleRequired"))
+    .max(200, validationMessage("Validation.notes.titleMaxLength")),
   content: z
     .string()
-    .max(10000, "Content must be at most 10000 characters.")
+    .max(10000, validationMessage("Validation.notes.contentMaxLength"))
     .optional(),
   subjectId: z.string().min(1),
 });
@@ -32,11 +33,11 @@ export const editNoteSchema = z.object({
   id: z.string().min(1),
   title: z
     .string()
-    .min(1, "Note title is required.")
-    .max(200, "Note title must be at most 200 characters."),
+    .min(1, validationMessage("Validation.notes.titleRequired"))
+    .max(200, validationMessage("Validation.notes.titleMaxLength")),
   content: z
     .string()
-    .max(10000, "Content must be at most 10000 characters.")
+    .max(10000, validationMessage("Validation.notes.contentMaxLength"))
     .optional(),
 });
 
@@ -70,11 +71,13 @@ export function validateNoteAttachmentFile(file: File): string | null {
       file.type as (typeof noteAttachmentAllowedTypes)[number],
     )
   ) {
-    return "Unsupported file type. Use JPG, PNG, WEBP, or GIF.";
+    return validationMessage("Validation.notes.attachments.unsupportedType");
   }
 
   if (file.size > noteAttachmentMaxSizeBytes) {
-    return `File is too large. Maximum size is ${Math.floor(noteAttachmentMaxSizeBytes / (1024 * 1024))}MB.`;
+    return validationMessage("Validation.notes.attachments.maxSize", {
+      max: Math.floor(noteAttachmentMaxSizeBytes / (1024 * 1024)),
+    });
   }
 
   return null;
@@ -84,13 +87,17 @@ export const noteAttachmentUploadSchema = z.object({
   images: z
     .array(
       z.custom<File>(isFile, {
-        message: "Invalid file selection.",
+        message: validationMessage(
+          "Validation.notes.attachments.invalidSelection",
+        ),
       }),
     )
-    .min(1, "Select at least one image.")
+    .min(1, validationMessage("Validation.notes.attachments.selectAtLeastOne"))
     .max(
       noteAttachmentMaxFilesPerUpload,
-      `You can upload up to ${noteAttachmentMaxFilesPerUpload} images at a time.`,
+      validationMessage("Validation.notes.attachments.maxFilesPerUpload", {
+        max: noteAttachmentMaxFilesPerUpload,
+      }),
     )
     .superRefine((files, ctx) => {
       for (const file of files) {
@@ -99,7 +106,12 @@ export const noteAttachmentUploadSchema = z.object({
         if (validationError) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `${file.name}: ${validationError}`,
+            message: validationMessage(
+              "Validation.notes.attachments.fileError",
+              {
+                fileName: file.name,
+              },
+            ),
           });
         }
       }

@@ -92,10 +92,10 @@ export function CreateNoteDialog({
   async function onSubmit(data: CreateNoteForm) {
     const result = await createNote(data);
     if (result.success) {
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       form.reset(defaultValues);
       setDiscardDialogOpen(false);
       onOpenChange(false);
+      void queryClient.invalidateQueries({ queryKey: ["search-data"] });
     } else {
       toast.error(resolveActionErrorMessage(result, tErrors));
     }

@@ -455,6 +455,72 @@
       "assessmentLimit": "Limite do plano: voce pode ter ate {max} avaliacoes por materia."
     }
   },
+  "Validation": {
+    "auth": {
+      "emailMaxLength": "O email deve ter no maximo 254 caracteres.",
+      "emailInvalid": "Informe um endereco de email valido.",
+      "passwordMinLength": "A senha deve ter pelo menos 8 caracteres.",
+      "passwordMaxLength": "A senha deve ter no maximo 128 caracteres.",
+      "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",
+      "nameMaxLength": "O nome deve ter no maximo 100 caracteres.",
+      "confirmPasswordRequired": "A confirmacao de senha e obrigatoria.",
+      "passwordsDoNotMatch": "As senhas nao coincidem."
+    },
+    "subjects": {
+      "nameRequired": "O nome da materia e obrigatorio.",
+      "nameMaxLength": "O nome da materia deve ter no maximo 100 caracteres.",
+      "descriptionMaxLength": "A descricao deve ter no maximo 500 caracteres."
+    },
+    "assessments": {
+      "dueDateInvalid": "A data limite deve ser valida.",
+      "titleRequired": "O titulo e obrigatorio.",
+      "titleMaxLength": "O titulo deve ter no maximo 100 caracteres.",
+      "descriptionMaxLength": "A descricao deve ter no maximo 1000 caracteres.",
+      "score": {
+        "notNumber": "A nota deve ser um numero.",
+        "minValue": "A nota nao pode ser negativa.",
+        "maxValue": "A nota nao pode exceder 100."
+      },
+      "weight": {
+        "notNumber": "O peso deve ser um numero.",
+        "minValue": "O peso nao pode ser negativo.",
+        "maxValue": "O peso nao pode exceder 100."
+      }
+    },
+    "attendance": {
+      "totalClasses": {
+        "integer": "Deve ser um numero inteiro.",
+        "min": "Deve ter pelo menos 1 aula.",
+        "max": "Nao pode exceder 365 aulas."
+      },
+      "maxMisses": {
+        "integer": "Deve ser um numero inteiro.",
+        "min": "Nao pode ser negativo.",
+        "max": "Nao pode exceder 365 faltas."
+      },
+      "dateRequired": "A data e obrigatoria."
+    },
+    "notes": {
+      "titleRequired": "O titulo da nota e obrigatorio.",
+      "titleMaxLength": "O titulo da nota deve ter no maximo 200 caracteres.",
+      "contentMaxLength": "O conteudo deve ter no maximo 10000 caracteres.",
+      "attachments": {
+        "invalidSelection": "Selecao de arquivo invalida.",
+        "selectAtLeastOne": "Selecione pelo menos uma imagem.",
+        "maxFilesPerUpload": "Voce pode enviar no maximo {max} imagens por vez.",
+        "unsupportedType": "Tipo de arquivo nao suportado. Use JPG, PNG, WEBP ou GIF.",
+        "maxSize": "Arquivo muito grande. O tamanho maximo e {max}MB.",
+        "fileError": "{fileName}: Arquivo invalido."
+      }
+    },
+    "profile": {
+      "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",
+      "nameMaxLength": "O nome deve ter no maximo 100 caracteres."
+    },
+    "search": {
+      "queryMaxLength": "A busca deve ter no maximo 200 caracteres."
+    }
+  },
   "Common": {
     "save": "Salvar",
     "cancel": "Cancelar",

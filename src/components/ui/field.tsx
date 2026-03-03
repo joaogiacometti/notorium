@@ -1,10 +1,12 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { resolveValidationMessage } from "@/lib/validation-messages";
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   return (
@@ -189,6 +191,7 @@ function FieldError({
 }: React.ComponentProps<"div"> & {
   errors?: Array<{ message?: string } | undefined>;
 }) {
+  const t = useTranslations();
   const content = useMemo(() => {
     if (children) {
       return children;
@@ -201,20 +204,26 @@ function FieldError({
     const uniqueErrors = [
       ...new Map(errors.map((error) => [error?.message, error])).values(),
     ];
+    const resolvedMessages = uniqueErrors
+      .map((error) => resolveValidationMessage(error?.message, t))
+      .filter((message): message is string => Boolean(message));
 
-    if (uniqueErrors?.length === 1) {
-      return uniqueErrors[0]?.message;
+    if (resolvedMessages.length === 0) {
+      return null;
+    }
+
+    if (resolvedMessages.length === 1) {
+      return resolvedMessages[0];
     }
 
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
-        {uniqueErrors.map(
-          (error) =>
-            error?.message && <li key={error.message}>{error.message}</li>,
-        )}
+        {resolvedMessages.map((message) => (
+          <li key={message}>{message}</li>
+        ))}
       </ul>
     );
-  }, [children, errors]);
+  }, [children, errors, t]);
 
   if (!content) {
     return null;

@@ -1,13 +1,14 @@
 import { z } from "zod";
+import { validationMessage } from "@/lib/validation-messages";
 
 export const createSubjectSchema = z.object({
   name: z
     .string()
-    .min(1, "Subject name is required.")
-    .max(100, "Subject name must be at most 100 characters."),
+    .min(1, validationMessage("Validation.subjects.nameRequired"))
+    .max(100, validationMessage("Validation.subjects.nameMaxLength")),
   description: z
     .string()
-    .max(500, "Description must be at most 500 characters.")
+    .max(500, validationMessage("Validation.subjects.descriptionMaxLength"))
     .optional(),
   notesEnabled: z.boolean().default(true),
   gradesEnabled: z.boolean().default(true),
@@ -20,11 +21,11 @@ export const editSubjectSchema = z.object({
   id: z.string().min(1),
   name: z
     .string()
-    .min(1, "Subject name is required.")
-    .max(100, "Subject name must be at most 100 characters."),
+    .min(1, validationMessage("Validation.subjects.nameRequired"))
+    .max(100, validationMessage("Validation.subjects.nameMaxLength")),
   description: z
     .string()
-    .max(500, "Description must be at most 500 characters.")
+    .max(500, validationMessage("Validation.subjects.descriptionMaxLength"))
     .optional(),
   notesEnabled: z.boolean().default(true),
   gradesEnabled: z.boolean().default(true),

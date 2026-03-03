@@ -249,7 +249,6 @@ function parseAttachmentUpload(formData: FormData): {
         files: [],
         error: actionError("notes.attachments.invalidFile", {
           errorParams: { fileName: file.name },
-          errorMessage: `${file.name}: ${validationError}`,
         }),
       };
     }
