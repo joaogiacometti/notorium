@@ -74,10 +74,13 @@ describe("Assessments", () => {
       weight: "40",
     });
 
-    cy.contains("p", assessmentTitle).should("be.visible");
-    cy.contains("p", "Completed").should("not.exist");
-    cy.contains("p", "Pending").should("be.visible");
-    cy.contains("p", "84.0").should("be.visible");
+    cy.contains("p", assessmentTitle)
+      .closest("div.rounded-xl")
+      .within(() => {
+        cy.contains("Pending").should("be.visible");
+        cy.contains("Completed").should("not.exist");
+        cy.contains("84.0").should("be.visible");
+      });
   });
 
   it("validates required title before creating", () => {
@@ -133,8 +136,11 @@ describe("Assessments", () => {
     cy.contains('[role="dialog"] button', "Save Changes").click();
 
     cy.get('[role="dialog"]').should("not.exist");
-    cy.contains("p", updatedTitle).should("be.visible");
-    cy.contains("p", "Completed").should("be.visible");
+    cy.contains("p", updatedTitle)
+      .closest("div.rounded-xl")
+      .within(() => {
+        cy.contains("Completed").should("be.visible");
+      });
   });
 
   it("deletes an assessment", () => {
