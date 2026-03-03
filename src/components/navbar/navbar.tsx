@@ -30,8 +30,8 @@ export async function Navbar() {
   const t = await getTranslations("Navigation");
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto flex h-14 min-w-0 items-center justify-between px-4 sm:px-6 lg:px-8">
+    <nav className="sticky top-0 z-50 box-border h-14 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <div className="container mx-auto flex h-full min-w-0 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
