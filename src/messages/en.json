@@ -39,6 +39,8 @@
     "notes_description": "Write and format notes with a rich text editor supporting headings, lists, code blocks, and more.",
     "assessments_title": "Assessments",
     "assessments_description": "Track exams, assignments, and weighted grades to monitor your performance over time.",
+    "calendar_title": "Calendar",
+    "calendar_description": "See assessments and attendance misses in a timeline view to plan your week better.",
     "plans_heading": "Simple plans for every student",
     "free": "Free",
     "pro": "Pro",

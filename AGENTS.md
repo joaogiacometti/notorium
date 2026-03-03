@@ -10,11 +10,9 @@ Notorium is a study management app built with Next.js 16 (App Router). See `SPEC
 src/
 ├── api/              # API route handlers (Better Auth)
 ├── app/              # Next.js App Router pages and layouts
+│   ├── [locale]/     # Locale-prefixed app routes (en, pt)
 │   ├── actions/      # Server Actions
-│   ├── login/        # Login page
-│   ├── signup/       # Signup page
-│   ├── layout.tsx    # Root layout
-│   ├── page.tsx      # Home page
+│   ├── api/          # App Router API routes
 │   └── globals.css   # Global styles (Tailwind)
 ├── components/       # React components
 │   ├── ui/           # shadcn/ui primitives (do not edit manually)
@@ -24,6 +22,8 @@ src/
 ├── db/               # Database layer
 │   ├── index.ts      # Drizzle client instance
 │   └── schema.ts     # Drizzle schema definitions
+├── i18n/             # next-intl routing and request setup
+├── messages/         # Locale dictionaries (en.json, pt.json)
 ├── lib/              # Shared utilities
 │   ├── auth.ts       # Better Auth server config
 │   ├── auth-client.ts # Better Auth client
@@ -37,8 +37,14 @@ src/
 | --------------------- | --------------------------- |
 | `bun dev`             | Start development server    |
 | `bun run build`       | Production build            |
+| `bun run typecheck`   | TypeScript type checking    |
 | `bun run lint`        | Run Biome linter            |
 | `bun run format`      | Format code with Biome      |
+| `bun run test`        | Run Vitest test suite       |
+| `bun run test:watch`  | Run Vitest in watch mode    |
+| `bun run test:coverage` | Run Vitest with coverage  |
+| `bun run cypress:open` | Open Cypress UI            |
+| `bun run cypress:run` | Run Cypress headless        |
 | `bun run db:generate` | Generate Drizzle migrations |
 | `bun run db:migrate`  | Run Drizzle migrations      |
 | `bun run db:push`     | Push schema directly to DB  |
@@ -93,6 +99,14 @@ src/
 - Define Zod schemas for all form inputs and server action parameters.
 - Use `@hookform/resolvers/zod` to connect Zod schemas with React Hook Form.
 - Validate on both client (form) and server (action) sides.
+
+### Localization (Required)
+
+- Supported locales are `en` and `pt`.
+- Any user-facing text change must be applied to both `src/messages/en.json` and `src/messages/pt.json`.
+- Keep translation key structures aligned between locale files; do not add a key to only one locale.
+- Any new page/route must work under locale-prefixed routing in `src/app/[locale]/`.
+- If a change affects product copy or UX behavior, update docs (`README.md`, `SPEC.md`, `AGENTS.md`) so localization expectations stay explicit.
 
 ### Components
 
@@ -168,6 +182,7 @@ This means ~2–4 Cypress tests per form, not 6–8.
 - **Ask before assuming.** If a requirement is unclear or ambiguous, ask the user for clarification before proceeding.
 - **Follow SPEC.md for current behavior.** Use it as source of truth for implemented product rules.
 - **Update docs in the right place.** Keep `SPEC.md` stable.
+- **Keep docs synchronized with implementation.** When behavior changes, update `README.md`, `SPEC.md`, and `AGENTS.md` in the same PR.
 - **Small, focused changes.** Implement one feature or fix at a time. Do not make unrelated changes.
 - **Test after changes.** Verify the dev server still runs (`bun dev`) and check for lint errors (`bun run lint`) after making changes.
 - **Follow existing commit message patterns.** Base each new commit message on previous commit messages and keep the same structure/style pattern.

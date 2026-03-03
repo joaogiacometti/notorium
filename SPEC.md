@@ -16,6 +16,12 @@ Students who want a private, lightweight study management workspace.
 
 ## Core Scope (Current)
 
+### Localization
+
+- Full product localization in English (`en`) and Portuguese (`pt`).
+- All user-facing copy must exist in both locale dictionaries with aligned key paths.
+- Locale-aware routing is required for all app pages.
+
 ### Authentication
 
 - Email/password sign up, sign in, and sign out.
@@ -61,6 +67,9 @@ Students who want a private, lightweight study management workspace.
 
 - View account details.
 - Update display name.
+- Export all user data as JSON.
+- Import user data from a previous Notorium export.
+- Delete account and all user-owned data.
 
 ### UI/UX Baseline
 
@@ -83,6 +92,7 @@ Students who want a private, lightweight study management workspace.
 - All user-owned data must be scoped by authenticated `userId`.
 - A user can only access or mutate their own subjects, notes, attachments, attendance records, and assessments.
 - Subject/note attachment access must enforce ownership checks server-side.
+- Data export/import and account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
 
