@@ -10,8 +10,7 @@ import { getTranslations } from "next-intl/server";
 import { logoutAction } from "@/app/actions/auth";
 import { AppSectionNav } from "@/components/navbar/app-section-nav";
 import { GlobalSearch } from "@/components/navbar/global-search";
-import { LanguageSwitcher } from "@/components/navbar/language-switcher";
-import { ModeToggle } from "@/components/navbar/theme-switcher";
+import { PreferencesDialog } from "@/components/navbar/preferences-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -55,8 +54,6 @@ export async function Navbar() {
 
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           {session && <GlobalSearch userId={session.user.id} />}
-          <LanguageSwitcher />
-          <ModeToggle />
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -91,6 +88,8 @@ export async function Navbar() {
                     </button>
                   </DropdownMenuItem>
                 </form>
+                <PreferencesDialog />
+                <DropdownMenuSeparator />
                 <form action={logoutAction}>
                   <DropdownMenuItem
                     asChild
