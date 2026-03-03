@@ -19,7 +19,7 @@ export const FREE_LIMITS: PlanLimits = {
 export const PRO_LIMITS: PlanLimits = {
   maxSubjects: 20,
   maxNotesPerSubject: 30,
-  maxAssessmentsPerSubject: 5,
+  maxAssessmentsPerSubject: 15,
   imagesAllowed: true,
   maxImageStorageMb: 50,
 };
