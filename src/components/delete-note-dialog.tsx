@@ -33,6 +33,7 @@ export function DeleteNoteDialog({
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
   const t = useTranslations("DeleteNoteDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
@@ -59,9 +60,9 @@ export function DeleteNoteDialog({
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {"Are you sure you want to delete "}
+            {t("prompt_prefix")}
             <span className="font-semibold text-foreground">{noteTitle}</span>
-            {"? This action cannot be undone."}
+            {t("prompt_suffix")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -70,7 +71,7 @@ export function DeleteNoteDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -78,7 +79,7 @@ export function DeleteNoteDialog({
             disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            Delete
+            {t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

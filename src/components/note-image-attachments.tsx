@@ -165,7 +165,7 @@ export function NoteImageAttachments({
 
     if (mergedFiles.length > noteAttachmentMaxFilesPerUpload) {
       toast.error(
-        `You can upload up to ${noteAttachmentMaxFilesPerUpload} images at a time.`,
+        t("max_files_error", { max: noteAttachmentMaxFilesPerUpload }),
       );
     }
 
@@ -210,16 +210,14 @@ export function NoteImageAttachments({
       const result = await uploadNoteAttachments(formData);
 
       if (result.success) {
-        toast.success(
-          `${filesToUpload.length} image${filesToUpload.length === 1 ? "" : "s"} uploaded.`,
-        );
+        toast.success(t("upload_success", { count: filesToUpload.length }));
         clearSelectedFiles();
         router.refresh();
       } else {
         toast.error(resolveActionErrorMessage(result, tErrors));
       }
     } catch {
-      toast.error("Failed to upload images.");
+      toast.error(t("upload_failed"));
     }
   }
 
@@ -337,7 +335,7 @@ export function NoteImageAttachments({
         const result = await removeNoteAttachment({ id: attachmentToRemoveId });
 
         if (result.success) {
-          toast.success("Attachment removed.");
+          toast.success(t("remove_success"));
           setRemoveConfirmOpen(false);
           setAttachmentToRemoveId(null);
           router.refresh();
@@ -345,7 +343,7 @@ export function NoteImageAttachments({
           toast.error(resolveActionErrorMessage(result, tErrors));
         }
       } catch {
-        toast.error("Failed to remove attachment.");
+        toast.error(t("remove_failed"));
       } finally {
         setRemovingAttachmentId(null);
       }
@@ -549,7 +547,7 @@ export function NoteImageAttachments({
             >
               <Image
                 src={`/api/notes/${noteId}/attachments/${attachment.id}`}
-                alt="Note attachment"
+                alt={t("attachment_alt")}
                 className="h-44 w-full cursor-zoom-in object-cover"
                 loading="lazy"
                 width={704}
@@ -574,7 +572,7 @@ export function NoteImageAttachments({
                   ) : (
                     <Trash2 className="size-3.5" />
                   )}
-                  Remove
+                  {t("remove")}
                 </Button>
               </div>
             </div>
@@ -594,7 +592,7 @@ export function NoteImageAttachments({
               onClick={() => onRemoveConfirmOpenChange(false)}
               disabled={isRemoving}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -602,7 +600,7 @@ export function NoteImageAttachments({
               disabled={isRemoving}
             >
               {isRemoving && <Loader2 className="size-4 animate-spin" />}
-              Remove
+              {t("remove")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -624,7 +622,7 @@ export function NoteImageAttachments({
             type="button"
             className="absolute right-4 top-4 z-10 inline-flex size-10 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
             onClick={() => setViewerAttachmentId(null)}
-            aria-label="Close image viewer"
+            aria-label={t("close_viewer")}
           >
             <X className="size-5" />
           </button>
@@ -632,7 +630,7 @@ export function NoteImageAttachments({
             <div className="flex h-full w-full items-center justify-center overflow-hidden p-4 sm:p-8">
               <Image
                 src={`/api/notes/${noteId}/attachments/${viewerAttachment.id}`}
-                alt="Note attachment in fullscreen"
+                alt={t("attachment_fullscreen_alt")}
                 className={`max-h-full w-auto max-w-full object-contain transition-transform duration-150 ${isViewerZoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
                 style={{
                   transformOrigin: viewerZoomOrigin,

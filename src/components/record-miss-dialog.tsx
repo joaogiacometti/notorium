@@ -75,7 +75,9 @@ export function RecordMissDialog({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-record-miss-date">Date</FieldLabel>
+                  <FieldLabel htmlFor="form-record-miss-date">
+                    {t("field_date")}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id="form-record-miss-date"
@@ -98,7 +100,7 @@ export function RecordMissDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Record Miss
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>

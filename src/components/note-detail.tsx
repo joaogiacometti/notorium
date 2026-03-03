@@ -54,7 +54,7 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
             </h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
-                Created{" "}
+                {t("created_label")}{" "}
                 {formatDistanceToNow(new Date(note.createdAt), {
                   addSuffix: true,
                   locale: dateLocale,

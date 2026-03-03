@@ -286,7 +286,10 @@
     "title": "Attendance Settings",
     "description": "Configure the total number of classes and maximum allowed misses for this subject.",
     "total_classes": "Total Classes",
-    "max_misses": "Max Allowed Misses"
+    "max_misses": "Max Allowed Misses",
+    "total_classes_placeholder": "e.g. 15",
+    "max_misses_placeholder": "e.g. 4",
+    "submit": "Save Settings"
   },
   "AttendanceSummary": {
     "title": "Attendance",
@@ -312,25 +315,56 @@
     "field_status": "Status",
     "field_due_date": "Due Date (optional)",
     "field_score": "Score (optional)",
-    "field_weight": "Weight (optional)"
+    "field_weight": "Weight (optional)",
+    "field_title_placeholder": "e.g. Midterm 1",
+    "field_description_placeholder": "Extra details...",
+    "field_score_placeholder": "e.g. 84",
+    "field_weight_placeholder": "e.g. 40",
+    "submit": "Add Assessment"
   },
   "EditAssessmentDialog": {
     "title": "Edit Assessment",
-    "description": "Update details, status, dates, and grading values."
+    "description": "Update details, status, dates, and grading values.",
+    "field_title": "Title",
+    "field_description": "Description (optional)",
+    "field_type": "Type",
+    "field_status": "Status",
+    "field_due_date": "Due Date (optional)",
+    "field_score": "Score (optional)",
+    "field_weight": "Weight (optional)",
+    "field_title_placeholder": "e.g. Midterm 1",
+    "field_description_placeholder": "Extra details...",
+    "field_score_placeholder": "e.g. 84",
+    "field_weight_placeholder": "e.g. 40",
+    "submit": "Save Changes"
   },
   "DeleteAssessmentDialog": {
-    "title": "Delete Assessment"
+    "title": "Delete Assessment",
+    "prompt_prefix": "Are you sure you want to delete ",
+    "prompt_suffix": "? This action cannot be undone.",
+    "confirm": "Delete"
   },
   "CreateNoteDialog": {
     "title": "Create Note",
     "field_title": "Title",
-    "field_content": "Content"
+    "field_content": "Content",
+    "field_title_placeholder": "e.g. Lecture 1 - Introduction",
+    "field_content_placeholder": "Start writing your notes...",
+    "submit": "Create Note"
   },
   "EditNoteDialog": {
-    "title": "Edit Note"
+    "title": "Edit Note",
+    "field_title": "Title",
+    "field_title_placeholder": "e.g. Lecture 1 - Introduction",
+    "field_content": "Content",
+    "field_content_placeholder": "Start writing your notes...",
+    "submit": "Save Changes"
   },
   "DeleteNoteDialog": {
-    "title": "Delete Note"
+    "title": "Delete Note",
+    "prompt_prefix": "Are you sure you want to delete ",
+    "prompt_suffix": "? This action cannot be undone.",
+    "confirm": "Delete"
   },
   "CreateSubjectDialog": {
     "title": "Create Subject",
@@ -341,7 +375,7 @@
     "submit": "Create Subject",
     "section_modules": "Modules",
     "section_notes": "Notes",
-    "section_notes_desc": "Markdown notes for studying.",
+    "section_notes_desc": "Rich text notes for studying.",
     "section_assessments": "Assessments",
     "section_assessments_desc": "Plan deadlines and track completed scores.",
     "section_attendance": "Attendance",
@@ -351,7 +385,7 @@
     "title": "Edit Subject",
     "section_modules": "Modules",
     "section_notes": "Notes",
-    "section_notes_desc": "Markdown notes for studying.",
+    "section_notes_desc": "Rich text notes for studying.",
     "section_assessments": "Assessments",
     "section_assessments_desc": "Plan deadlines and track completed scores.",
     "section_attendance": "Attendance",
@@ -363,19 +397,26 @@
     "description": "Are you sure you want to delete your account? This action cannot be undone."
   },
   "DeleteMissDialog": {
-    "title": "Remove Miss"
+    "title": "Remove Miss",
+    "prompt_prefix": "Are you sure you want to remove the miss recorded for ",
+    "prompt_suffix": "? This action cannot be undone.",
+    "confirm": "Remove"
   },
   "RecordMissDialog": {
     "title": "Record a Miss",
     "description": "Select the date you missed a class for this subject.",
-    "field_date": "Date"
+    "field_date": "Date",
+    "submit": "Record Miss"
   },
   "NoteCard": {
+    "open_actions": "Open note actions",
+    "created_label": "Created",
     "edit": "Edit",
     "delete": "Delete"
   },
   "NoteDetail": {
     "back": "Back to Subject",
+    "created_label": "Created",
     "empty": "No content yet. Click Edit to add some notes.",
     "edit": "Edit",
     "delete": "Delete"
@@ -390,8 +431,36 @@
     "free_plan_desc": "Upgrade your plan to upload images.",
     "empty": "No images attached yet.",
     "remove": "Remove Attachment",
+    "cancel": "Cancel",
     "remove_prompt": "Are you sure you want to remove this image? This action cannot be undone.",
-    "preview": "Attachment preview"
+    "preview": "Attachment preview",
+    "max_files_error": "You can upload up to {max} images at a time.",
+    "upload_success": "{count, plural, one {# image uploaded.} other {# images uploaded.}}",
+    "upload_failed": "Failed to upload images.",
+    "remove_success": "Attachment removed.",
+    "remove_failed": "Failed to remove attachment.",
+    "attachment_alt": "Note attachment",
+    "attachment_fullscreen_alt": "Note attachment in fullscreen",
+    "close_viewer": "Close image viewer"
+  },
+  "TiptapEditor": {
+    "placeholder": "Start writing your notes...",
+    "bold": "Bold (Ctrl+B)",
+    "italic": "Italic (Ctrl+I)",
+    "underline": "Underline (Ctrl+U)",
+    "strikethrough": "Strikethrough",
+    "highlight": "Highlight",
+    "inline_code": "Inline Code",
+    "heading_1": "Heading 1",
+    "heading_2": "Heading 2",
+    "heading_3": "Heading 3",
+    "bullet_list": "Bullet List",
+    "numbered_list": "Numbered List",
+    "task_list": "Task List",
+    "quote": "Quote",
+    "divider": "Divider",
+    "undo": "Undo (Ctrl+Z)",
+    "redo": "Redo (Ctrl+Shift+Z)"
   },
   "UnsavedChangesDialog": {
     "title": "Discard changes?",

@@ -50,7 +50,7 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
                 variant="ghost"
                 size="icon"
                 className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
-                aria-label="Open note actions"
+                aria-label={t("open_actions")}
               >
                 <MoreVertical className="size-4" />
               </Button>
@@ -79,7 +79,7 @@ export function NoteCard({ note }: Readonly<NoteCardProps>) {
         >
           <CardContent className="pt-0">
             <p className="text-xs text-muted-foreground/60">
-              Created{" "}
+              {t("created_label")}{" "}
               {formatDistanceToNow(new Date(note.createdAt), {
                 addSuffix: true,
                 locale: dateLocale,

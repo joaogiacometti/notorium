@@ -41,12 +41,12 @@ interface CreateAssessmentDialogProps {
 }
 
 const assessmentTypes = [
-  { value: "exam", label: "Exam" },
-  { value: "assignment", label: "Assignment" },
-  { value: "project", label: "Project" },
-  { value: "presentation", label: "Presentation" },
-  { value: "homework", label: "Homework" },
-  { value: "other", label: "Other" },
+  { value: "exam" },
+  { value: "assignment" },
+  { value: "project" },
+  { value: "presentation" },
+  { value: "homework" },
+  { value: "other" },
 ] as const;
 
 export function CreateAssessmentDialog({
@@ -55,6 +55,7 @@ export function CreateAssessmentDialog({
   onOpenChange,
 }: Readonly<CreateAssessmentDialogProps>) {
   const t = useTranslations("CreateAssessmentDialog");
+  const tAssessment = useTranslations("AssessmentItemCard");
   const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(createAssessmentSchema),
@@ -110,12 +111,12 @@ export function CreateAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-assessment-title">
-                    Title
+                    {t("field_title")}
                   </FieldLabel>
                   <Input
                     {...field}
                     id="form-create-assessment-title"
-                    placeholder="e.g. Midterm 1"
+                    placeholder={t("field_title_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />
@@ -131,12 +132,12 @@ export function CreateAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-assessment-description">
-                    Description (optional)
+                    {t("field_description")}
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id="form-create-assessment-description"
-                    placeholder="Extra details..."
+                    placeholder={t("field_description_placeholder")}
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
@@ -153,7 +154,7 @@ export function CreateAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-assessment-type">
-                    Type
+                    {t("field_type")}
                   </FieldLabel>
                   <Select
                     value={field.value}
@@ -174,7 +175,7 @@ export function CreateAssessmentDialog({
                     <SelectContent>
                       {assessmentTypes.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          {tAssessment(`type_${option.value}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -191,7 +192,7 @@ export function CreateAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-assessment-status">
-                    Status
+                    {t("field_status")}
                   </FieldLabel>
                   <Select
                     value={field.value}
@@ -211,10 +212,10 @@ export function CreateAssessmentDialog({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pending">
-                        {t("field_status_pending")}
+                        {tAssessment("status_pending")}
                       </SelectItem>
                       <SelectItem value="completed">
-                        {t("field_status_completed")}
+                        {tAssessment("status_completed")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -230,7 +231,7 @@ export function CreateAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-assessment-due-date">
-                    Due Date (optional)
+                    {t("field_due_date")}
                   </FieldLabel>
                   <Input
                     id="form-create-assessment-due-date"
@@ -260,7 +261,7 @@ export function CreateAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-assessment-score">
-                    Score (optional)
+                    {t("field_score")}
                   </FieldLabel>
                   <Input
                     id="form-create-assessment-score"
@@ -268,7 +269,7 @@ export function CreateAssessmentDialog({
                     min={0}
                     max={100}
                     step={0.01}
-                    placeholder="e.g. 84"
+                    placeholder={t("field_score_placeholder")}
                     aria-invalid={fieldState.invalid}
                     value={field.value ?? ""}
                     onChange={(event) =>
@@ -294,7 +295,7 @@ export function CreateAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-assessment-weight">
-                    Weight (optional)
+                    {t("field_weight")}
                   </FieldLabel>
                   <Input
                     id="form-create-assessment-weight"
@@ -302,7 +303,7 @@ export function CreateAssessmentDialog({
                     min={0}
                     max={100}
                     step={0.01}
-                    placeholder="e.g. 40"
+                    placeholder={t("field_weight_placeholder")}
                     aria-invalid={fieldState.invalid}
                     value={field.value ?? ""}
                     onChange={(event) =>
@@ -331,7 +332,7 @@ export function CreateAssessmentDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Add Assessment
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>

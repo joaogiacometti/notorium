@@ -30,6 +30,7 @@ export function DeleteAssessmentDialog({
   onOpenChange,
 }: Readonly<DeleteAssessmentDialogProps>) {
   const t = useTranslations("DeleteAssessmentDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
 
   const [isPending, startTransition] = useTransition();
@@ -51,11 +52,11 @@ export function DeleteAssessmentDialog({
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {"Are you sure you want to delete "}
+            {t("prompt_prefix")}
             <span className="font-semibold text-foreground">
               {assessmentTitle}
             </span>
-            {"? This action cannot be undone."}
+            {t("prompt_suffix")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -64,7 +65,7 @@ export function DeleteAssessmentDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -72,7 +73,7 @@ export function DeleteAssessmentDialog({
             disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            Delete
+            {t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

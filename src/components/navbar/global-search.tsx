@@ -94,7 +94,6 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
         onOpenChange={handleOpenChange}
         title={t("dialog_title")}
         description={t("dialog_description")}
-        showCloseButton={false}
         commandProps={{ shouldFilter: false }}
       >
         <CommandInput

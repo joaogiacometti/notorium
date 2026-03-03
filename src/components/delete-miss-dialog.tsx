@@ -30,6 +30,7 @@ export function DeleteMissDialog({
   onOpenChange,
 }: Readonly<DeleteMissDialogProps>) {
   const t = useTranslations("DeleteMissDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
 
   const [isPending, startTransition] = useTransition();
@@ -51,9 +52,9 @@ export function DeleteMissDialog({
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {"Are you sure you want to remove the miss recorded for "}
+            {t("prompt_prefix")}
             <span className="font-semibold text-foreground">{missDate}</span>
-            {"? This action cannot be undone."}
+            {t("prompt_suffix")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -62,7 +63,7 @@ export function DeleteMissDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -70,7 +71,7 @@ export function DeleteMissDialog({
             disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            Remove
+            {t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

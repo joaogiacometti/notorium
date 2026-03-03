@@ -286,7 +286,10 @@
     "title": "Configurações de Faltas",
     "description": "Configure o número total de aulas e o limite de faltas para esta matéria.",
     "total_classes": "Total de Aulas",
-    "max_misses": "Limite de Faltas"
+    "max_misses": "Limite de Faltas",
+    "total_classes_placeholder": "ex.: 15",
+    "max_misses_placeholder": "ex.: 4",
+    "submit": "Salvar Configurações"
   },
   "AttendanceSummary": {
     "title": "Faltas",
@@ -312,25 +315,56 @@
     "field_status": "Status",
     "field_due_date": "Data limite (opcional)",
     "field_score": "Nota (opcional)",
-    "field_weight": "Peso (opcional)"
+    "field_weight": "Peso (opcional)",
+    "field_title_placeholder": "ex.: Prova 1",
+    "field_description_placeholder": "Detalhes extras...",
+    "field_score_placeholder": "ex.: 84",
+    "field_weight_placeholder": "ex.: 40",
+    "submit": "Adicionar Avaliação"
   },
   "EditAssessmentDialog": {
     "title": "Editar Avaliação",
-    "description": "Atualize detalhes, status, datas e valores de notas."
+    "description": "Atualize detalhes, status, datas e valores de notas.",
+    "field_title": "Título",
+    "field_description": "Descrição (opcional)",
+    "field_type": "Tipo",
+    "field_status": "Status",
+    "field_due_date": "Data limite (opcional)",
+    "field_score": "Nota (opcional)",
+    "field_weight": "Peso (opcional)",
+    "field_title_placeholder": "ex.: Prova 1",
+    "field_description_placeholder": "Detalhes extras...",
+    "field_score_placeholder": "ex.: 84",
+    "field_weight_placeholder": "ex.: 40",
+    "submit": "Salvar Alterações"
   },
   "DeleteAssessmentDialog": {
-    "title": "Excluir Avaliação"
+    "title": "Excluir Avaliação",
+    "prompt_prefix": "Tem certeza que deseja excluir ",
+    "prompt_suffix": "? Esta ação não pode ser desfeita.",
+    "confirm": "Excluir"
   },
   "CreateNoteDialog": {
     "title": "Criar Nota",
     "field_title": "Título",
-    "field_content": "Conteúdo"
+    "field_content": "Conteúdo",
+    "field_title_placeholder": "ex.: Aula 1 - Introdução",
+    "field_content_placeholder": "Comece a escrever suas notas...",
+    "submit": "Criar Nota"
   },
   "EditNoteDialog": {
-    "title": "Editar Nota"
+    "title": "Editar Nota",
+    "field_title": "Título",
+    "field_title_placeholder": "ex.: Aula 1 - Introdução",
+    "field_content": "Conteúdo",
+    "field_content_placeholder": "Comece a escrever suas notas...",
+    "submit": "Salvar Alterações"
   },
   "DeleteNoteDialog": {
-    "title": "Excluir Nota"
+    "title": "Excluir Nota",
+    "prompt_prefix": "Tem certeza que deseja excluir ",
+    "prompt_suffix": "? Esta ação não pode ser desfeita.",
+    "confirm": "Excluir"
   },
   "CreateSubjectDialog": {
     "title": "Criar Matéria",
@@ -341,7 +375,7 @@
     "submit": "Criar matéria",
     "section_modules": "Módulos",
     "section_notes": "Notas",
-    "section_notes_desc": "Notas em Markdown para estudos.",
+    "section_notes_desc": "Notas em texto rico para estudos.",
     "section_assessments": "Avaliações",
     "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
     "section_attendance": "Faltas",
@@ -351,7 +385,7 @@
     "title": "Editar Matéria",
     "section_modules": "Módulos",
     "section_notes": "Notas",
-    "section_notes_desc": "Notas em Markdown para estudos.",
+    "section_notes_desc": "Notas em texto rico para estudos.",
     "section_assessments": "Avaliações",
     "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
     "section_attendance": "Faltas",
@@ -363,19 +397,26 @@
     "description": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
   },
   "DeleteMissDialog": {
-    "title": "Remover Falta"
+    "title": "Remover Falta",
+    "prompt_prefix": "Tem certeza que deseja remover a falta registrada em ",
+    "prompt_suffix": "? Esta ação não pode ser desfeita.",
+    "confirm": "Remover"
   },
   "RecordMissDialog": {
     "title": "Registrar Falta",
     "description": "Selecione a data que você faltou em uma aula desta matéria.",
-    "field_date": "Data"
+    "field_date": "Data",
+    "submit": "Registrar Falta"
   },
   "NoteCard": {
+    "open_actions": "Abrir ações da nota",
+    "created_label": "Criado",
     "edit": "Editar",
     "delete": "Excluir"
   },
   "NoteDetail": {
     "back": "Voltar para Matéria",
+    "created_label": "Criado",
     "empty": "Nenhum conteúdo ainda. Clique em Editar para adicionar notas.",
     "edit": "Editar",
     "delete": "Excluir"
@@ -390,8 +431,36 @@
     "free_plan_desc": "Faça upgrade do seu plano para enviar imagens.",
     "empty": "Nenhuma imagem anexada ainda.",
     "remove": "Remover Anexo",
+    "cancel": "Cancelar",
     "remove_prompt": "Tem certeza que deseja remover esta imagem? Esta ação não pode ser desfeita.",
-    "preview": "Pré-visualização do anexo"
+    "preview": "Pré-visualização do anexo",
+    "max_files_error": "Você pode enviar no máximo {max} imagens por vez.",
+    "upload_success": "{count, plural, one {# imagem enviada.} other {# imagens enviadas.}}",
+    "upload_failed": "Falha ao enviar imagens.",
+    "remove_success": "Anexo removido.",
+    "remove_failed": "Falha ao remover anexo.",
+    "attachment_alt": "Anexo da nota",
+    "attachment_fullscreen_alt": "Anexo da nota em tela cheia",
+    "close_viewer": "Fechar visualizador de imagem"
+  },
+  "TiptapEditor": {
+    "placeholder": "Comece a escrever suas notas...",
+    "bold": "Negrito (Ctrl+B)",
+    "italic": "Itálico (Ctrl+I)",
+    "underline": "Sublinhado (Ctrl+U)",
+    "strikethrough": "Tachado",
+    "highlight": "Destaque",
+    "inline_code": "Código Inline",
+    "heading_1": "Título 1",
+    "heading_2": "Título 2",
+    "heading_3": "Título 3",
+    "bullet_list": "Lista com Marcadores",
+    "numbered_list": "Lista Numerada",
+    "task_list": "Lista de Tarefas",
+    "quote": "Citação",
+    "divider": "Divisor",
+    "undo": "Desfazer (Ctrl+Z)",
+    "redo": "Refazer (Ctrl+Shift+Z)"
   },
   "UnsavedChangesDialog": {
     "title": "Descartar alterações?",

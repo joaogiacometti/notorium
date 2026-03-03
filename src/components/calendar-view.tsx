@@ -45,28 +45,60 @@ function EventDot({ kind }: Readonly<{ kind: "assessment" | "miss" }>) {
   );
 }
 
+function getEventChipToneClass(event: CalendarEvent, todayIso: string) {
+  if (event.kind === "miss") {
+    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
+  }
+
+  const status = event.meta?.status;
+  if (status === "pending" && event.date < todayIso) {
+    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
+  }
+
+  if (status === "completed") {
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+  }
+
+  return "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+}
+
+function getAssessmentTypeLabel(
+  event: CalendarEvent,
+  tAssessment: ReturnType<typeof useTranslations>,
+) {
+  if (event.kind !== "assessment" || !event.meta?.type) {
+    return null;
+  }
+
+  const key = `type_${event.meta.type}`;
+  if (tAssessment.has(key)) {
+    return tAssessment(key);
+  }
+
+  return (
+    assessmentTypeLabels[
+      event.meta.type as keyof typeof assessmentTypeLabels
+    ] ?? event.meta.type
+  );
+}
+
 function EventChip({
   event,
   compact,
 }: Readonly<{ event: CalendarEvent; compact?: boolean }>) {
-  const isOverdue =
-    event.kind === "assessment" &&
-    event.meta?.status === "pending" &&
-    event.date < format(new Date(), "yyyy-MM-dd");
-  const isCompleted =
-    event.kind === "assessment" && event.meta?.status === "completed";
+  const tAssessment = useTranslations("AssessmentItemCard");
+  const todayIso = format(new Date(), "yyyy-MM-dd");
+  const chipToneClass = getEventChipToneClass(event, todayIso);
+  const assessmentTypeLabel = getAssessmentTypeLabel(event, tAssessment);
+  const subtitle = assessmentTypeLabel
+    ? `${event.subjectName} · ${assessmentTypeLabel}`
+    : event.subjectName;
 
   return (
     <div
       className={cn(
         "flex items-start gap-1 rounded border px-1.5 py-1 text-[11px] leading-tight",
-        event.kind === "miss"
-          ? "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
-          : isOverdue
-            ? "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
-            : isCompleted
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-              : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+        chipToneClass,
       )}
     >
       {event.kind === "assessment" ? (
@@ -77,12 +109,7 @@ function EventChip({
       <div className="min-w-0">
         <p className="truncate font-medium">{event.title}</p>
         {!compact && (
-          <p className="truncate text-[10px] opacity-70">
-            {event.subjectName}
-            {event.kind === "assessment" && event.meta?.type
-              ? ` · ${assessmentTypeLabels[event.meta.type as keyof typeof assessmentTypeLabels] ?? event.meta.type}`
-              : ""}
-          </p>
+          <p className="truncate text-[10px] opacity-70">{subtitle}</p>
         )}
       </div>
     </div>

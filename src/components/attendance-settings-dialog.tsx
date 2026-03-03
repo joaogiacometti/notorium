@@ -87,14 +87,14 @@ export function AttendanceSettingsDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-attendance-total-classes">
-                    Total Classes
+                    {t("total_classes")}
                   </FieldLabel>
                   <Input
                     id="form-attendance-total-classes"
                     type="number"
                     min={1}
                     max={365}
-                    placeholder="e.g. 15"
+                    placeholder={t("total_classes_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                     value={field.value}
@@ -115,14 +115,14 @@ export function AttendanceSettingsDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-attendance-max-misses">
-                    Max Allowed Misses
+                    {t("max_misses")}
                   </FieldLabel>
                   <Input
                     id="form-attendance-max-misses"
                     type="number"
                     min={0}
                     max={365}
-                    placeholder="e.g. 4"
+                    placeholder={t("max_misses_placeholder")}
                     aria-invalid={fieldState.invalid}
                     value={field.value}
                     onBlur={field.onBlur}
@@ -145,7 +145,7 @@ export function AttendanceSettingsDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Save Settings
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>

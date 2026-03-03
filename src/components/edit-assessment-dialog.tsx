@@ -42,12 +42,12 @@ interface EditAssessmentDialogProps {
 }
 
 const assessmentTypes = [
-  { value: "exam", label: "Exam" },
-  { value: "assignment", label: "Assignment" },
-  { value: "project", label: "Project" },
-  { value: "presentation", label: "Presentation" },
-  { value: "homework", label: "Homework" },
-  { value: "other", label: "Other" },
+  { value: "exam" },
+  { value: "assignment" },
+  { value: "project" },
+  { value: "presentation" },
+  { value: "homework" },
+  { value: "other" },
 ] as const;
 
 export function EditAssessmentDialog({
@@ -56,6 +56,7 @@ export function EditAssessmentDialog({
   onOpenChange,
 }: Readonly<EditAssessmentDialogProps>) {
   const t = useTranslations("EditAssessmentDialog");
+  const tAssessment = useTranslations("AssessmentItemCard");
   const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(editAssessmentSchema),
@@ -102,12 +103,12 @@ export function EditAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-assessment-title">
-                    Title
+                    {t("field_title")}
                   </FieldLabel>
                   <Input
                     {...field}
                     id="form-edit-assessment-title"
-                    placeholder="e.g. Midterm 1"
+                    placeholder={t("field_title_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />
@@ -123,12 +124,12 @@ export function EditAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-assessment-description">
-                    Description (optional)
+                    {t("field_description")}
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id="form-edit-assessment-description"
-                    placeholder="Extra details..."
+                    placeholder={t("field_description_placeholder")}
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
@@ -145,7 +146,7 @@ export function EditAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-assessment-type">
-                    Type
+                    {t("field_type")}
                   </FieldLabel>
                   <Select
                     value={field.value}
@@ -166,7 +167,7 @@ export function EditAssessmentDialog({
                     <SelectContent>
                       {assessmentTypes.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          {tAssessment(`type_${option.value}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -183,7 +184,7 @@ export function EditAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-assessment-status">
-                    Status
+                    {t("field_status")}
                   </FieldLabel>
                   <Select
                     value={field.value}
@@ -202,8 +203,12 @@ export function EditAssessmentDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="pending">
+                        {tAssessment("status_pending")}
+                      </SelectItem>
+                      <SelectItem value="completed">
+                        {tAssessment("status_completed")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && (
@@ -218,7 +223,7 @@ export function EditAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-assessment-due-date">
-                    Due Date (optional)
+                    {t("field_due_date")}
                   </FieldLabel>
                   <Input
                     id="form-edit-assessment-due-date"
@@ -248,7 +253,7 @@ export function EditAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-assessment-score">
-                    Score (optional)
+                    {t("field_score")}
                   </FieldLabel>
                   <Input
                     id="form-edit-assessment-score"
@@ -256,7 +261,7 @@ export function EditAssessmentDialog({
                     min={0}
                     max={100}
                     step={0.01}
-                    placeholder="e.g. 84"
+                    placeholder={t("field_score_placeholder")}
                     aria-invalid={fieldState.invalid}
                     value={field.value ?? ""}
                     onChange={(event) =>
@@ -282,7 +287,7 @@ export function EditAssessmentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-assessment-weight">
-                    Weight (optional)
+                    {t("field_weight")}
                   </FieldLabel>
                   <Input
                     id="form-edit-assessment-weight"
@@ -290,7 +295,7 @@ export function EditAssessmentDialog({
                     min={0}
                     max={100}
                     step={0.01}
-                    placeholder="e.g. 40"
+                    placeholder={t("field_weight_placeholder")}
                     aria-invalid={fieldState.invalid}
                     value={field.value ?? ""}
                     onChange={(event) =>
@@ -319,7 +324,7 @@ export function EditAssessmentDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Save Changes
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>

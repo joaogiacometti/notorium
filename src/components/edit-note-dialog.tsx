@@ -114,12 +114,12 @@ export function EditNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-edit-note-title">
-                      Title
+                      {t("field_title")}
                     </FieldLabel>
                     <Input
                       {...field}
                       id="form-edit-note-title"
-                      placeholder="e.g. Lecture 1 — Introduction"
+                      placeholder={t("field_title_placeholder")}
                       aria-invalid={fieldState.invalid}
                       autoFocus
                     />
@@ -135,12 +135,12 @@ export function EditNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-edit-note-content">
-                      Content
+                      {t("field_content")}
                     </FieldLabel>
                     <TiptapEditor
                       value={field.value ?? ""}
                       onChange={field.onChange}
-                      placeholder="Start writing your notes..."
+                      placeholder={t("field_content_placeholder")}
                       id="form-edit-note-content"
                       aria-invalid={fieldState.invalid}
                     />
@@ -159,7 +159,7 @@ export function EditNoteDialog({
                 {form.formState.isSubmitting && (
                   <Loader2 className="size-4 animate-spin" />
                 )}
-                Save Changes
+                {t("submit")}
               </Button>
             </FieldGroup>
           </form>

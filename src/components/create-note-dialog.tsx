@@ -117,12 +117,12 @@ export function CreateNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-create-note-title">
-                      Title
+                      {t("field_title")}
                     </FieldLabel>
                     <Input
                       {...field}
                       id="form-create-note-title"
-                      placeholder="e.g. Lecture 1 — Introduction"
+                      placeholder={t("field_title_placeholder")}
                       aria-invalid={fieldState.invalid}
                       autoFocus
                     />
@@ -138,12 +138,12 @@ export function CreateNoteDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-create-note-content">
-                      Content
+                      {t("field_content")}
                     </FieldLabel>
                     <TiptapEditor
                       value={field.value ?? ""}
                       onChange={field.onChange}
-                      placeholder="Start writing your notes..."
+                      placeholder={t("field_content_placeholder")}
                       id="form-create-note-content"
                       aria-invalid={fieldState.invalid}
                     />
@@ -162,7 +162,7 @@ export function CreateNoteDialog({
                 {form.formState.isSubmitting && (
                   <Loader2 className="size-4 animate-spin" />
                 )}
-                Create Note
+                {t("submit")}
               </Button>
             </FieldGroup>
           </form>
