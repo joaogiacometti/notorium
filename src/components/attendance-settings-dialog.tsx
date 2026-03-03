@@ -43,7 +43,6 @@ export function AttendanceSettingsDialog({
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
   const t = useTranslations("AttendanceSettingsDialog");
-  const _tCommon = useTranslations("Common");
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {

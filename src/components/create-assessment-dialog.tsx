@@ -54,7 +54,6 @@ export function CreateAssessmentDialog({
   onOpenChange,
 }: Readonly<CreateAssessmentDialogProps>) {
   const t = useTranslations("CreateAssessmentDialog");
-  const _tCommon = useTranslations("Common");
   const form = useForm({
     resolver: zodResolver(createAssessmentSchema),
     defaultValues: {

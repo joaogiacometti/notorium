@@ -29,7 +29,7 @@ export function DeleteMissDialog({
   onOpenChange,
 }: Readonly<DeleteMissDialogProps>) {
   const t = useTranslations("DeleteMissDialog");
-  const _tCommon = useTranslations("Common");
+
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {

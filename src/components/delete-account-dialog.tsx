@@ -25,7 +25,6 @@ export function DeleteAccountDialog({
   onOpenChange,
 }: Readonly<DeleteAccountDialogProps>) {
   const t = useTranslations("DeleteAccountDialog");
-  const _tCommon = useTranslations("Common");
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {

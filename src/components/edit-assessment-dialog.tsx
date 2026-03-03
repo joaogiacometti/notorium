@@ -55,8 +55,6 @@ export function EditAssessmentDialog({
   onOpenChange,
 }: Readonly<EditAssessmentDialogProps>) {
   const t = useTranslations("EditAssessmentDialog");
-  const _tAssessment = useTranslations("CreateAssessmentDialog");
-  const _tCommon = useTranslations("Common");
   const form = useForm({
     resolver: zodResolver(editAssessmentSchema),
     defaultValues: {

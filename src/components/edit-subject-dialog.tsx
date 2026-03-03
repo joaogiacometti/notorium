@@ -42,7 +42,6 @@ export function EditSubjectDialog({
 }: Readonly<EditSubjectDialogProps>) {
   const t = useTranslations("EditSubjectDialog");
   const _tSubject = useTranslations("CreateSubjectDialog");
-  const _tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(editSubjectSchema),
@@ -79,11 +78,13 @@ export function EditSubjectDialog({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-edit-subject-name">Name</FieldLabel>
+                  <FieldLabel htmlFor="form-edit-subject-name">
+                    {_tSubject("field_name")}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id="form-edit-subject-name"
-                    placeholder="e.g. Calculus I"
+                    placeholder={_tSubject("field_name_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />
@@ -99,12 +100,12 @@ export function EditSubjectDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-edit-subject-description">
-                    Description
+                    {_tSubject("field_description")}
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id="form-edit-subject-description"
-                    placeholder="Optional description..."
+                    placeholder={_tSubject("field_description_placeholder")}
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
@@ -193,7 +194,7 @@ export function EditSubjectDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Save Changes
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>

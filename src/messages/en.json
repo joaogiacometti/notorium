@@ -172,6 +172,8 @@
     "description": "Assessments and attendance misses on a timeline."
   },
   "CalendarView": {
+    "title": "Calendar",
+    "description": "Assessments and attendance misses on a timeline.",
     "today": "Today",
     "more": "more"
   },
@@ -327,6 +329,9 @@
     "title": "Create Subject",
     "field_name": "Name",
     "field_description": "Description",
+    "field_name_placeholder": "e.g. Calculus I",
+    "field_description_placeholder": "Optional description...",
+    "submit": "Create Subject",
     "section_modules": "Modules",
     "section_notes": "Notes",
     "section_notes_desc": "Markdown notes for studying.",
@@ -336,10 +341,19 @@
     "section_attendance_desc": "Track missed classes against limits."
   },
   "EditSubjectDialog": {
-    "title": "Edit Subject"
+    "title": "Edit Subject",
+    "section_modules": "Modules",
+    "section_notes": "Notes",
+    "section_notes_desc": "Markdown notes for studying.",
+    "section_assessments": "Assessments",
+    "section_assessments_desc": "Plan deadlines and track completed scores.",
+    "section_attendance": "Attendance",
+    "section_attendance_desc": "Track missed classes against limits.",
+    "submit": "Save Changes"
   },
   "DeleteAccountDialog": {
-    "title": "Delete Account"
+    "title": "Delete Account",
+    "description": "Are you sure you want to delete your account? This action cannot be undone."
   },
   "DeleteMissDialog": {
     "title": "Remove Miss"
@@ -355,7 +369,9 @@
   },
   "NoteDetail": {
     "back": "Back to Subject",
-    "empty": "No content yet. Click Edit to add some notes."
+    "empty": "No content yet. Click Edit to add some notes.",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "NoteImageAttachments": {
     "title": "Attachments",

@@ -37,7 +37,6 @@ export function RecordMissDialog({
   onOpenChange,
 }: Readonly<RecordMissDialogProps>) {
   const t = useTranslations("RecordMissDialog");
-  const _tCommon = useTranslations("Common");
   const today = new Date().toISOString().split("T")[0];
 
   const form = useForm({

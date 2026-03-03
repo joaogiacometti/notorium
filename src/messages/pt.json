@@ -17,7 +17,7 @@
     "system": "Sistema"
   },
   "Index": {
-    "badge": "Gratuito para usar — não precisa de cartão de crédito",
+    "badge": "Gratuito para usar — não precisa de cartão",
     "title_start": "Seus estudos, ",
     "title_highlight": "organizados",
     "description": "O Notorium ajuda você a gerenciar matérias, notas, avaliações e presenças em um só lugar. Fique em dia com sua vida acadêmica.",
@@ -172,6 +172,8 @@
     "description": "Avaliações e faltas em uma linha do tempo."
   },
   "CalendarView": {
+    "title": "Calendário",
+    "description": "Avaliações e faltas em uma linha do tempo.",
     "today": "Hoje",
     "more": "mais"
   },
@@ -327,6 +329,9 @@
     "title": "Criar Matéria",
     "field_name": "Nome",
     "field_description": "Descrição",
+    "field_name_placeholder": "ex.: Cálculo I",
+    "field_description_placeholder": "Descrição opcional...",
+    "submit": "Criar matéria",
     "section_modules": "Módulos",
     "section_notes": "Notas",
     "section_notes_desc": "Notas em Markdown para estudos.",
@@ -336,10 +341,19 @@
     "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites."
   },
   "EditSubjectDialog": {
-    "title": "Editar Matéria"
+    "title": "Editar Matéria",
+    "section_modules": "Módulos",
+    "section_notes": "Notas",
+    "section_notes_desc": "Notas em Markdown para estudos.",
+    "section_assessments": "Avaliações",
+    "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
+    "section_attendance": "Faltas",
+    "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites.",
+    "submit": "Salvar alterações"
   },
   "DeleteAccountDialog": {
-    "title": "Excluir Conta"
+    "title": "Excluir Conta",
+    "description": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
   },
   "DeleteMissDialog": {
     "title": "Remover Falta"
@@ -355,7 +369,9 @@
   },
   "NoteDetail": {
     "back": "Voltar para Matéria",
-    "empty": "Nenhum conteúdo ainda. Clique em Editar para adicionar notas."
+    "empty": "Nenhum conteúdo ainda. Clique em Editar para adicionar notas.",
+    "edit": "Editar",
+    "delete": "Excluir"
   },
   "NoteImageAttachments": {
     "title": "Anexos",

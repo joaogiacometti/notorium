@@ -3,6 +3,7 @@
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { auth } from "@/lib/auth";
 import { checkAuthRateLimit } from "@/lib/rate-limit";
 import {
@@ -42,7 +43,8 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
     return { success: false, error: "Login failed" };
   }
 
-  redirect("/");
+  const locale = await getLocale();
+  redirect(`/${locale}`);
 };
 
 export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
@@ -74,12 +76,14 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
     return { success: false, error: "Sign up failed" };
   }
 
-  redirect("/");
+  const locale = await getLocale();
+  redirect(`/${locale}`);
 };
 
 export const logoutAction = async () => {
   await auth.api.signOut({
     headers: await headers(),
   });
-  redirect("/login");
+  const locale = await getLocale();
+  redirect(`/${locale}/login`);
 };

@@ -40,8 +40,6 @@ export function EditNoteDialog({
   onOpenChange,
 }: Readonly<EditNoteDialogProps>) {
   const t = useTranslations("EditNoteDialog");
-  const _tNote = useTranslations("CreateNoteDialog");
-  const _tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const defaultValues = {

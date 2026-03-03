@@ -32,7 +32,6 @@ export function DeleteNoteDialog({
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
   const t = useTranslations("DeleteNoteDialog");
-  const _tCommon = useTranslations("Common");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 

@@ -22,18 +22,7 @@ interface NoteCardProps {
   note: NoteEntity;
 }
 
-export function NoteCard({
-  note,
-  onEdit,
-  onDeleted,
-  compact = false,
-}: Readonly<
-  NoteCardProps & {
-    onEdit?: () => void;
-    onDeleted?: () => void;
-    compact?: boolean;
-  }
->) {
+export function NoteCard({ note }: Readonly<NoteCardProps>) {
   const t = useTranslations("NoteCard");
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);

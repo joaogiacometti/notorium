@@ -5,6 +5,7 @@ import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
 import { noteImageAttachment, user } from "@/db/schema";
 import { appEnv } from "@/env";
@@ -66,5 +67,6 @@ export async function deleteAccount(): Promise<MutationResult> {
     headers: await headers(),
   });
 
-  redirect("/login");
+  const locale = await getLocale();
+  redirect(`/${locale}/login`);
 }

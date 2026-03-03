@@ -29,7 +29,7 @@ export function DeleteAssessmentDialog({
   onOpenChange,
 }: Readonly<DeleteAssessmentDialogProps>) {
   const t = useTranslations("DeleteAssessmentDialog");
-  const _tCommon = useTranslations("Common");
+
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {

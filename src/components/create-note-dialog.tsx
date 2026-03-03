@@ -42,7 +42,6 @@ export function CreateNoteDialog({
   onOpenChange,
 }: Readonly<CreateNoteDialogProps>) {
   const t = useTranslations("CreateNoteDialog");
-  const _tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const defaultValues = {

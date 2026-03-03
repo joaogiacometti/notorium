@@ -41,7 +41,6 @@ export function CreateSubjectDialog({
   onOpenChange,
 }: Readonly<CreateSubjectDialogProps>) {
   const t = useTranslations("CreateSubjectDialog");
-  const _tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(createSubjectSchema),
@@ -80,12 +79,12 @@ export function CreateSubjectDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-subject-name">
-                    Name
+                    {t("field_name")}
                   </FieldLabel>
                   <Input
                     {...field}
                     id="form-create-subject-name"
-                    placeholder="e.g. Calculus I"
+                    placeholder={t("field_name_placeholder")}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />
@@ -101,12 +100,12 @@ export function CreateSubjectDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-create-subject-description">
-                    Description
+                    {t("field_description")}
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id="form-create-subject-description"
-                    placeholder="Optional description..."
+                    placeholder={t("field_description_placeholder")}
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
@@ -195,7 +194,7 @@ export function CreateSubjectDialog({
               {form.formState.isSubmitting && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Create Subject
+              {t("submit")}
             </Button>
           </FieldGroup>
         </form>
