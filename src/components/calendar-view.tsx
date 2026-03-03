@@ -34,28 +34,47 @@ import {
 import { getDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
 
-function EventDot({ kind }: Readonly<{ kind: "assessment" | "miss" }>) {
-  return (
-    <span
-      className={cn(
-        "inline-block size-1.5 rounded-full",
-        kind === "assessment" ? "bg-primary" : "bg-red-500",
-      )}
-    />
-  );
-}
+type EventTone = "amber" | "emerald" | "red";
 
-function getEventChipToneClass(event: CalendarEvent, todayIso: string) {
+function getEventTone(event: CalendarEvent, todayIso: string): EventTone {
   if (event.kind === "miss") {
-    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
+    return "red";
   }
 
   const status = event.meta?.status;
   if (status === "pending" && event.date < todayIso) {
-    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
+    return "red";
   }
 
   if (status === "completed") {
+    return "emerald";
+  }
+
+  return "amber";
+}
+
+function EventDot({ event }: Readonly<{ event: CalendarEvent }>) {
+  const todayIso = format(new Date(), "yyyy-MM-dd");
+  const tone = getEventTone(event, todayIso);
+
+  const toneClass =
+    tone === "red"
+      ? "bg-red-500"
+      : tone === "emerald"
+        ? "bg-emerald-500"
+        : "bg-amber-500";
+
+  return <span className={cn("inline-block size-2 rounded-full", toneClass)} />;
+}
+
+function getEventChipToneClass(event: CalendarEvent, todayIso: string) {
+  const tone = getEventTone(event, todayIso);
+
+  if (tone === "red") {
+    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
+  }
+
+  if (tone === "emerald") {
     return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
   }
 
@@ -97,20 +116,23 @@ function EventChip({
   return (
     <div
       className={cn(
-        "flex items-start gap-1 rounded border px-1.5 py-1 text-[11px] leading-tight",
+        "flex items-start rounded border leading-tight",
+        compact ? "gap-1.5 px-2 py-1.5 text-xs" : "gap-2 px-3 py-2.5 text-base",
         chipToneClass,
       )}
     >
       {event.kind === "assessment" ? (
-        <ClipboardList className="mt-0.5 size-3 shrink-0" />
+        <ClipboardList
+          className={cn("mt-0.5 shrink-0", compact ? "size-3.5" : "size-4")}
+        />
       ) : (
-        <CircleAlert className="mt-0.5 size-3 shrink-0" />
+        <CircleAlert
+          className={cn("mt-0.5 shrink-0", compact ? "size-3.5" : "size-4")}
+        />
       )}
       <div className="min-w-0">
         <p className="truncate font-medium">{event.title}</p>
-        {!compact && (
-          <p className="truncate text-[10px] opacity-70">{subtitle}</p>
-        )}
+        {!compact && <p className="truncate text-sm opacity-70">{subtitle}</p>}
       </div>
     </div>
   );
@@ -139,7 +161,7 @@ function DayCell({
       type="button"
       onClick={() => onSelect(date)}
       className={cn(
-        "group relative flex min-h-10 flex-col rounded-md border p-1 text-left transition-colors lg:min-h-18 lg:p-1.5",
+        "group relative flex min-h-12 flex-col rounded-md border p-1.5 text-left transition-colors lg:min-h-20",
         !isCurrentMonth && "opacity-40",
         selected
           ? "border-primary/50 bg-primary/5"
@@ -157,18 +179,18 @@ function DayCell({
       </span>
 
       {dayEvents.length > 0 && (
-        <div className="mt-0.5 flex flex-col gap-0.5">
-          <div className="flex flex-wrap gap-0.5">
+        <div className="mt-1 flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-1 lg:hidden">
             {dayEvents.slice(0, 3).map((e) => (
-              <EventDot key={e.id} kind={e.kind} />
+              <EventDot key={e.id} event={e} />
             ))}
             {dayEvents.length > 3 && (
-              <span className="text-[8px] leading-none text-muted-foreground">
+              <span className="text-[10px] leading-none text-muted-foreground">
                 +{dayEvents.length - 3}
               </span>
             )}
           </div>
-          <div className="hidden lg:flex lg:flex-col lg:gap-0.5 lg:overflow-hidden">
+          <div className="hidden lg:flex lg:flex-col lg:gap-1 lg:overflow-hidden">
             {dayEvents.slice(0, 2).map((e) => (
               <EventChip key={e.id} event={e} compact />
             ))}
@@ -200,10 +222,10 @@ function DayDetail({
 
   return (
     <div className="pt-2">
-      <h3 className="mb-2 text-xs font-medium text-muted-foreground">
+      <h3 className="mb-3 text-sm font-medium text-muted-foreground">
         {format(date, "EEEE, MMMM d, yyyy", { locale: dateLocale })}
       </h3>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {dayEvents.map((e) => (
           <Link
             key={e.id}
@@ -311,7 +333,7 @@ export function CalendarView() {
                 </div>
               ))}
               {Array.from({ length: 35 }, (_, i) => `skel-${i}`).map((id) => (
-                <Skeleton key={id} className="h-10 rounded-md lg:h-18" />
+                <Skeleton key={id} className="h-12 rounded-md lg:h-20" />
               ))}
             </div>
           ) : (
