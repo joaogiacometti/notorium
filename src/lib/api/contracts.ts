@@ -20,6 +20,20 @@ export type NoteWithAttachmentsEntity = NoteEntity & {
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
+export type FlashcardReviewEntity = Pick<
+  FlashcardEntity,
+  | "id"
+  | "front"
+  | "back"
+  | "subjectId"
+  | "state"
+  | "dueAt"
+  | "ease"
+  | "intervalDays"
+  | "learningStep"
+  | "reviewCount"
+  | "lapseCount"
+>;
 
 export type SearchSubjectResult = Pick<
   SubjectEntity,

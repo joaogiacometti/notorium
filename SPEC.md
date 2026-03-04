@@ -39,6 +39,9 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete flashcards per subject.
 - Flashcard fields: front and back text.
 - Flashcards are displayed inline in subject detail.
+- Global review page with spaced repetition queue.
+- Review answers: Again, Hard, Good, Easy.
+- Scheduler: SM-2-compatible defaults with learning/relearning stages.
 
 ### Notes
 

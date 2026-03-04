@@ -217,6 +217,13 @@ export const assessmentStatusEnum = pgEnum("assessment_status", [
   "completed",
 ]);
 
+export const flashcardStateEnum = pgEnum("flashcard_state", [
+  "new",
+  "learning",
+  "review",
+  "relearning",
+]);
+
 export const assessment = pgTable(
   "assessment",
   {
@@ -258,6 +265,14 @@ export const flashcard = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     front: text("front").notNull(),
     back: text("back").notNull(),
+    state: flashcardStateEnum("state").notNull().default("new"),
+    dueAt: timestamp("due_at").defaultNow().notNull(),
+    ease: integer("ease").notNull().default(250),
+    intervalDays: integer("interval_days").notNull().default(0),
+    learningStep: integer("learning_step"),
+    lastReviewedAt: timestamp("last_reviewed_at"),
+    reviewCount: integer("review_count").notNull().default(0),
+    lapseCount: integer("lapse_count").notNull().default(0),
     subjectId: text("subject_id")
       .notNull()
       .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
@@ -273,6 +288,8 @@ export const flashcard = pgTable(
   (table) => [
     index("flashcard_subjectId_idx").on(table.subjectId),
     index("flashcard_userId_idx").on(table.userId),
+    index("flashcard_dueAt_idx").on(table.dueAt),
+    index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
   ],
 );
 

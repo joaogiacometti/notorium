@@ -6,6 +6,7 @@ import { useState } from "react";
 import { CreateFlashcardDialog } from "@/components/create-flashcard-dialog";
 import { FlashcardCard } from "@/components/flashcard-card";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/routing";
 import type { FlashcardEntity } from "@/lib/api/contracts";
 
 interface FlashcardsListProps {
@@ -46,6 +47,11 @@ export function FlashcardsList({
           open={createOpen}
           onOpenChange={setCreateOpen}
         />
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/flashcards/review?subjectId=${subjectId}`}>
+            {t("review_due")}
+          </Link>
+        </Button>
       </div>
 
       {flashcards.length === 0 ? (

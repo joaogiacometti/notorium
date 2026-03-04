@@ -2,6 +2,7 @@
   "Navigation": {
     "dashboard": "Painel",
     "subjects": "Matérias",
+    "flashcards_review": "Revisão",
     "assessments": "Avaliações",
     "calendar": "Calendário",
     "profile": "Perfil",
@@ -119,8 +120,24 @@
     "count_empty": "Crie cartões para revisar conceitos rapidamente.",
     "count": "{count, plural, one {# flashcard} other {# flashcards}}",
     "new_flashcard": "Novo flashcard",
+    "review_due": "Revisar vencidos",
     "empty_title": "Ainda não há flashcards",
     "empty_description": "Crie seu primeiro flashcard com frente e verso."
+  },
+  "FlashcardReviewPage": {
+    "title": "Revisão de Flashcards",
+    "description": "Revise seus flashcards vencidos com repetição espaçada.",
+    "due_empty": "Não há cartões vencidos agora.",
+    "due_count": "{due} vencidos de {total} cartões no total.",
+    "empty_title": "Tudo em dia",
+    "empty_description": "Não há flashcards vencidos para revisar.",
+    "front_label": "Frente",
+    "back_label": "Verso",
+    "show_answer": "Mostrar resposta",
+    "grade_again": "De novo",
+    "grade_hard": "Dificil",
+    "grade_good": "Bom",
+    "grade_easy": "Facil"
   },
   "NotesList": {
     "title": "Notas",
@@ -558,7 +575,12 @@
     "flashcards": {
       "invalidData": "Dados do flashcard invalidos.",
       "notFound": "Flashcard nao encontrado.",
-      "moduleDisabled": "Flashcards estao desativados para esta materia."
+      "moduleDisabled": "Flashcards estao desativados para esta materia.",
+      "review": {
+        "invalidData": "Dados de revisão inválidos.",
+        "notFound": "Flashcard não encontrado para revisão.",
+        "notDue": "Este flashcard ainda não está vencido."
+      }
     },
     "profile": {
       "invalidData": "Dados de perfil invalidos.",

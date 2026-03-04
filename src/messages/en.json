@@ -2,6 +2,7 @@
   "Navigation": {
     "dashboard": "Dashboard",
     "subjects": "Subjects",
+    "flashcards_review": "Review",
     "assessments": "Assessments",
     "calendar": "Calendar",
     "profile": "Profile",
@@ -119,8 +120,24 @@
     "count_empty": "Create cards to review key concepts quickly.",
     "count": "{count, plural, one {# flashcard} other {# flashcards}}",
     "new_flashcard": "New Flashcard",
+    "review_due": "Review Due Cards",
     "empty_title": "No flashcards yet",
     "empty_description": "Create your first flashcard with a front and back."
+  },
+  "FlashcardReviewPage": {
+    "title": "Flashcard Review",
+    "description": "Review your due flashcards with spaced repetition.",
+    "due_empty": "No cards due right now.",
+    "due_count": "{due} due of {total} total cards.",
+    "empty_title": "All caught up",
+    "empty_description": "There are no due flashcards to review.",
+    "front_label": "Front",
+    "back_label": "Back",
+    "show_answer": "Show Answer",
+    "grade_again": "Again",
+    "grade_hard": "Hard",
+    "grade_good": "Good",
+    "grade_easy": "Easy"
   },
   "NotesList": {
     "title": "Notes",
@@ -558,7 +575,12 @@
     "flashcards": {
       "invalidData": "Invalid flashcard data.",
       "notFound": "Flashcard not found.",
-      "moduleDisabled": "Flashcards are disabled for this subject."
+      "moduleDisabled": "Flashcards are disabled for this subject.",
+      "review": {
+        "invalidData": "Invalid review input.",
+        "notFound": "Flashcard not found for review.",
+        "notDue": "This flashcard is not due yet."
+      }
     },
     "profile": {
       "invalidData": "Invalid profile data.",
