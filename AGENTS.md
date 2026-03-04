@@ -2,7 +2,8 @@
 
 ## Project Overview
 
-Notorium is a study management app built with Next.js 16 (App Router). See `SPEC.md` for the full product specification, features, and acceptance criteria.
+Notorium is a study management app built with Next.js 16 (App Router). Core modules include subjects, notes, flashcards, assessments, and attendance. See `SPEC.md` for the full product specification, features, and acceptance criteria.
+Flashcards on subject detail are presented in a collapsed section and loaded when expanded.
 
 ## Project Structure
 

@@ -7,17 +7,17 @@ import {
   visitSubjectsPage,
 } from "../support/test-helpers";
 
+function openSearchDialog() {
+  cy.contains("button", "Search...").click();
+  cy.get('[role="dialog"]').should("be.visible");
+}
+
 describe("Global Search", () => {
   const testUser = {
     name: "Cypress Search User",
     email: `cypress-search-${Date.now()}@test.com`,
     password: "TestPassword123!",
   };
-
-  function openSearchDialog() {
-    cy.contains("button", "Search...").click();
-    cy.get('[role="dialog"]').should("be.visible");
-  }
 
   beforeEach(() => {
     cy.viewport(1280, 720);
@@ -35,9 +35,9 @@ describe("Global Search", () => {
 
     openSearchDialog();
     cy.get('[role="dialog"]').within(() => {
-      cy.get('input[placeholder="Search subjects and notes..."]').type(
-        subjectName,
-      );
+      cy.get(
+        'input[placeholder="Search subjects, notes, and flashcards..."]',
+      ).type(subjectName);
       cy.contains('[data-slot="command-item"]', subjectName).click();
     });
     cy.url({ timeout: 10000 }).should("match", /\/subjects\/[^/]+$/);
@@ -58,9 +58,9 @@ describe("Global Search", () => {
     visitSubjectsPage();
     openSearchDialog();
     cy.get('[role="dialog"]').within(() => {
-      cy.get('input[placeholder="Search subjects and notes..."]').type(
-        noteTitle,
-      );
+      cy.get(
+        'input[placeholder="Search subjects, notes, and flashcards..."]',
+      ).type(noteTitle);
       cy.contains('[data-slot="command-item"]', noteTitle).click();
     });
     cy.url({ timeout: 10000 }).should("match", /\/notes\/[^/]+$/);

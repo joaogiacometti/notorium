@@ -2,6 +2,7 @@
   "Navigation": {
     "dashboard": "Painel",
     "subjects": "Matérias",
+    "flashcards_review": "Revisão",
     "assessments": "Avaliações",
     "calendar": "Calendário",
     "profile": "Perfil",
@@ -114,6 +115,46 @@
     "archive": "Arquivar",
     "delete": "Excluir"
   },
+  "FlashcardsList": {
+    "title": "Flashcards",
+    "count_empty": "Crie cartões para revisar conceitos rapidamente.",
+    "count": "{count, plural, one {# flashcard} other {# flashcards}}",
+    "collapsed_hint": "Expanda para carregar seus flashcards.",
+    "toggle": "Mostrar flashcards",
+    "loading": "Carregando flashcards...",
+    "new_flashcard": "Novo flashcard",
+    "empty_title": "Ainda não há flashcards",
+    "empty_description": "Crie seu primeiro flashcard com frente e verso.",
+    "search_placeholder": "Buscar frente ou verso...",
+    "results_count": "{filtered} de {total} flashcards",
+    "table_front": "Frente",
+    "table_back": "Verso",
+    "table_actions": "Ações",
+    "open_actions": "Abrir ações do flashcard",
+    "view": "Visualizar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "reset": "Resetar",
+    "no_results": "Nenhum flashcard corresponde à busca.",
+    "prev": "Anterior",
+    "next": "Próxima",
+    "page": "Página {current} de {total}"
+  },
+  "FlashcardReviewPage": {
+    "title": "Revisão de Flashcards",
+    "description": "Revise seus flashcards vencidos com repetição espaçada.",
+    "due_empty": "Não há cartões vencidos agora.",
+    "due_count": "{due} vencidos de {total} cartões no total.",
+    "empty_title": "Tudo em dia",
+    "empty_description": "Não há flashcards vencidos para revisar.",
+    "front_label": "Frente",
+    "back_label": "Verso",
+    "show_answer": "Mostrar resposta",
+    "grade_again": "De novo",
+    "grade_hard": "Dificil",
+    "grade_good": "Bom",
+    "grade_easy": "Facil"
+  },
   "NotesList": {
     "title": "Notas",
     "count_empty": "Registre o que você aprende, uma nota por vez.",
@@ -189,12 +230,13 @@
   "GlobalSearch": {
     "trigger": "Buscar...",
     "dialog_title": "Busca global",
-    "dialog_description": "Busque em todas as suas matérias e notas",
-    "input_placeholder": "Buscar matérias e notas...",
-    "empty_has_data": "Ainda não há matérias ou notas.",
+    "dialog_description": "Busque em todas as suas matérias, notas e flashcards",
+    "input_placeholder": "Buscar matérias, notas e flashcards...",
+    "empty_has_data": "Ainda não há matérias, notas ou flashcards.",
     "empty_sign_in": "Entre para buscar.",
     "subjects_group": "Matérias",
     "notes_group": "Notas",
+    "flashcards_group": "Flashcards",
     "in_subject": "em"
   },
   "ProfilePage": {
@@ -368,6 +410,34 @@
     "prompt_suffix": "? Esta ação não pode ser desfeita.",
     "confirm": "Excluir"
   },
+  "CreateFlashcardDialog": {
+    "title": "Criar Flashcard",
+    "field_front": "Frente",
+    "field_back": "Verso",
+    "field_front_placeholder": "ex.: O que é fotossíntese?",
+    "field_back_placeholder": "ex.: Processo em que plantas convertem luz em energia.",
+    "submit": "Criar Flashcard"
+  },
+  "EditFlashcardDialog": {
+    "title": "Editar Flashcard",
+    "field_front": "Frente",
+    "field_back": "Verso",
+    "field_front_placeholder": "ex.: O que é fotossíntese?",
+    "field_back_placeholder": "ex.: Processo em que plantas convertem luz em energia.",
+    "submit": "Salvar alterações"
+  },
+  "DeleteFlashcardDialog": {
+    "title": "Excluir Flashcard",
+    "prompt_prefix": "Tem certeza que deseja excluir ",
+    "prompt_suffix": "? Esta ação não pode ser desfeita.",
+    "confirm": "Excluir"
+  },
+  "ResetFlashcardDialog": {
+    "title": "Resetar Flashcard",
+    "prompt_prefix": "Tem certeza que deseja resetar ",
+    "prompt_suffix": "? Todo o progresso de revisão será perdido e o cartão será tratado como novo.",
+    "confirm": "Resetar"
+  },
   "CreateSubjectDialog": {
     "title": "Criar Matéria",
     "field_name": "Nome",
@@ -381,7 +451,9 @@
     "section_assessments": "Avaliações",
     "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
     "section_attendance": "Faltas",
-    "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites."
+    "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites.",
+    "section_flashcards": "Flashcards",
+    "section_flashcards_desc": "Cartões simples de frente e verso para revisão rápida."
   },
   "EditSubjectDialog": {
     "title": "Editar Matéria",
@@ -392,7 +464,21 @@
     "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
     "section_attendance": "Faltas",
     "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites.",
+    "section_flashcards": "Flashcards",
+    "section_flashcards_desc": "Cartões simples de frente e verso para revisão rápida.",
     "submit": "Salvar alterações"
+  },
+  "FlashcardCard": {
+    "open_actions": "Abrir ações do flashcard",
+    "created_label": "Criado",
+    "edit": "Editar",
+    "delete": "Excluir"
+  },
+  "FlashcardPreviewDialog": {
+    "title": "Visualização do Flashcard",
+    "description": "Revise a frente e o verso completos antes de editar.",
+    "front_label": "Frente",
+    "back_label": "Verso"
   },
   "DeleteAccountDialog": {
     "title": "Excluir Conta",
@@ -515,6 +601,16 @@
         "notFound": "Anexo nao encontrado."
       }
     },
+    "flashcards": {
+      "invalidData": "Dados do flashcard invalidos.",
+      "notFound": "Flashcard nao encontrado.",
+      "moduleDisabled": "Flashcards estao desativados para esta materia.",
+      "review": {
+        "invalidData": "Dados de revisão inválidos.",
+        "notFound": "Flashcard não encontrado para revisão.",
+        "notDue": "Este flashcard ainda não está vencido."
+      }
+    },
     "profile": {
       "invalidData": "Dados de perfil invalidos.",
       "updateFailed": "Falha ao atualizar o perfil."
@@ -583,6 +679,12 @@
         "maxSize": "Arquivo muito grande. O tamanho maximo e {max}MB.",
         "fileError": "{fileName}: Arquivo invalido."
       }
+    },
+    "flashcards": {
+      "frontRequired": "A frente do flashcard e obrigatoria.",
+      "frontMaxLength": "A frente do flashcard deve ter no maximo 500 caracteres.",
+      "backRequired": "O verso do flashcard e obrigatorio.",
+      "backMaxLength": "O verso do flashcard deve ter no maximo 2000 caracteres."
     },
     "profile": {
       "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, FileText, Search } from "lucide-react";
+import { BookOpen, FileText, Layers, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { getSearchData } from "@/app/actions/search";
@@ -72,7 +72,9 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
   const subjects = data?.subjects ?? [];
   const notes = data?.notes ?? [];
-  const hasData = subjects.length > 0 || notes.length > 0;
+  const flashcards = data?.flashcards ?? [];
+  const hasData =
+    subjects.length > 0 || notes.length > 0 || flashcards.length > 0;
   const canSearch = userId.length > 0;
 
   return (
@@ -153,6 +155,32 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   {n.content && (
                     <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
                       {n.content}
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {flashcards.length > 0 && (
+            <CommandGroup heading={t("flashcards_group")}>
+              {flashcards.map((fc) => (
+                <CommandItem
+                  key={fc.id}
+                  value={fc.id}
+                  onSelect={() => handleSelect(`/subjects/${fc.subjectId}`)}
+                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Layers className="size-4 text-muted-foreground" />
+                    <span>{fc.front}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("in_subject")} {fc.subjectName}
+                    </span>
+                  </div>
+                  {fc.back && (
+                    <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
+                      {fc.back}
                     </span>
                   )}
                 </CommandItem>

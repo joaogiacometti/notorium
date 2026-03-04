@@ -13,6 +13,7 @@ export const createSubjectSchema = z.object({
   notesEnabled: z.boolean().default(true),
   gradesEnabled: z.boolean().default(true),
   attendanceEnabled: z.boolean().default(true),
+  flashcardsEnabled: z.boolean().default(true),
 });
 
 export type CreateSubjectForm = z.infer<typeof createSubjectSchema>;
@@ -30,6 +31,7 @@ export const editSubjectSchema = z.object({
   notesEnabled: z.boolean().default(true),
   gradesEnabled: z.boolean().default(true),
   attendanceEnabled: z.boolean().default(true),
+  flashcardsEnabled: z.boolean().default(true),
 });
 
 export type EditSubjectForm = z.infer<typeof editSubjectSchema>;

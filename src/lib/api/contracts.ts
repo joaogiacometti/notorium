@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import type {
   assessment,
   attendanceMiss,
+  flashcard,
   note,
   noteImageAttachment,
   subject,
@@ -18,6 +19,21 @@ export type NoteWithAttachmentsEntity = NoteEntity & {
 };
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
+export type FlashcardEntity = InferSelectModel<typeof flashcard>;
+export type FlashcardReviewEntity = Pick<
+  FlashcardEntity,
+  | "id"
+  | "front"
+  | "back"
+  | "subjectId"
+  | "state"
+  | "dueAt"
+  | "ease"
+  | "intervalDays"
+  | "learningStep"
+  | "reviewCount"
+  | "lapseCount"
+>;
 
 export type SearchSubjectResult = Pick<
   SubjectEntity,
@@ -31,9 +47,17 @@ export type SearchNoteResult = Pick<
   subjectName: string;
 };
 
+export type SearchFlashcardResult = Pick<
+  FlashcardEntity,
+  "id" | "front" | "back" | "subjectId"
+> & {
+  subjectName: string;
+};
+
 export type SearchData = {
   subjects: SearchSubjectResult[];
   notes: SearchNoteResult[];
+  flashcards: SearchFlashcardResult[];
 };
 
 export type SubjectEditDto = Pick<
@@ -44,8 +68,33 @@ export type SubjectEditDto = Pick<
   | "notesEnabled"
   | "gradesEnabled"
   | "attendanceEnabled"
+  | "flashcardsEnabled"
 >;
 
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
+export type CreateFlashcardResult =
+  | {
+      success: true;
+      flashcard: FlashcardEntity;
+    }
+  | ActionErrorResult;
+export type EditFlashcardResult =
+  | {
+      success: true;
+      flashcard: FlashcardEntity;
+    }
+  | ActionErrorResult;
+export type DeleteFlashcardResult =
+  | {
+      success: true;
+      id: string;
+    }
+  | ActionErrorResult;
+export type ResetFlashcardResult =
+  | {
+      success: true;
+      flashcard: FlashcardEntity;
+    }
+  | ActionErrorResult;

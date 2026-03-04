@@ -1,7 +1,9 @@
 # Notorium
 
-Notorium is a study management app for students. It centralizes subjects, notes, attendance, and assessments in one place with private, user-scoped data.
+Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, and assessments in one place with private, user-scoped data.
 The app is localized in English (`en`) and Portuguese (`pt`).
+
+On subject detail pages, flashcards are shown in a collapsed section and loaded on first expand.
 
 ## Tech Stack
 

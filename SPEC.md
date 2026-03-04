@@ -8,7 +8,7 @@
 
 ## Product Goal
 
-Notorium helps students organize academic work in one place by combining subjects, notes, attendance tracking, assessments, and fast personal search.
+Notorium helps students organize academic work in one place by combining subjects, notes, flashcards, attendance tracking, assessments, and fast personal search.
 
 ## Target Users
 
@@ -32,7 +32,17 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete subjects.
 - Archive and restore subjects.
 - Subject fields: name, optional description, module toggles.
-- Subject module toggles: notes, assessments, attendance.
+- Subject module toggles: notes, flashcards, assessments, attendance.
+
+### Flashcards
+
+- Create, read, update, and delete flashcards per subject.
+- Flashcard fields: front and back text.
+- Flashcards are displayed inline in subject detail in a collapsed section.
+- Subject flashcards are loaded when the section is expanded.
+- Global review page with spaced repetition queue.
+- Review answers: Again, Hard, Good, Easy.
+- Scheduler: SM-2-compatible defaults with learning/relearning stages.
 
 ### Notes
 
@@ -97,7 +107,9 @@ Students who want a private, lightweight study management workspace.
 ## Main Entities
 
 - `subject`
-  - `id`, `name`, `description`, `notesEnabled`, `gradesEnabled`, `attendanceEnabled`, `totalClasses`, `maxMisses`, timestamps, `userId`.
+  - `id`, `name`, `description`, `notesEnabled`, `flashcardsEnabled`, `gradesEnabled`, `attendanceEnabled`, `totalClasses`, `maxMisses`, timestamps, `userId`.
+- `flashcard`
+  - `id`, `front`, `back`, `subjectId`, timestamps, `userId`.
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`.
 - `note_image_attachment`

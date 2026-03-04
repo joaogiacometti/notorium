@@ -8,6 +8,7 @@ import { AssessmentsOverview } from "@/components/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance-summary";
 import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/edit-subject-dialog";
+import { FlashcardsList } from "@/components/flashcards-list";
 import { NotesList } from "@/components/notes-list";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -140,6 +141,13 @@ export function SubjectDetail({
         <>
           <Separator className="my-8" />
           <NotesList subjectId={subject.id} notes={notes} plan={plan} />
+        </>
+      )}
+
+      {subject.flashcardsEnabled && (
+        <>
+          <Separator className="my-8" />
+          <FlashcardsList subjectId={subject.id} />
         </>
       )}
 
