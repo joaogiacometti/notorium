@@ -14,10 +14,6 @@ describe("createSubjectSchema", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.name).toBe("Mathematics");
-      expect(result.data.notesEnabled).toBe(true);
-      expect(result.data.gradesEnabled).toBe(true);
-      expect(result.data.attendanceEnabled).toBe(true);
-      expect(result.data.flashcardsEnabled).toBe(true);
     }
   });
 
@@ -25,18 +21,9 @@ describe("createSubjectSchema", () => {
     const result = createSubjectSchema.safeParse({
       name: "Physics",
       description: "Intro to physics",
-      notesEnabled: false,
-      gradesEnabled: true,
-      attendanceEnabled: false,
-      flashcardsEnabled: false,
     });
 
     expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.notesEnabled).toBe(false);
-      expect(result.data.attendanceEnabled).toBe(false);
-      expect(result.data.flashcardsEnabled).toBe(false);
-    }
   });
 
   it("rejects empty name", () => {

@@ -4,32 +4,9 @@ import {
   visitSubjectsPage,
 } from "../support/test-helpers";
 
-interface ModulesState {
-  notes: boolean;
-  assessments: boolean;
-  attendance: boolean;
-}
-
 interface SubjectInput {
   name: string;
   description: string;
-  modules?: ModulesState;
-}
-
-function setModuleSwitches(modules: ModulesState) {
-  const values = [modules.notes, modules.assessments, modules.attendance];
-
-  values.forEach((value, index) => {
-    cy.get('[role="dialog"] [data-slot="switch"]')
-      .eq(index)
-      .then(($switch) => {
-        const isChecked = $switch.attr("data-state") === "checked";
-
-        if (isChecked !== value) {
-          cy.wrap($switch).click();
-        }
-      });
-  });
 }
 
 function createSubject(input: SubjectInput) {
@@ -38,10 +15,6 @@ function createSubject(input: SubjectInput) {
 
   cy.get("#form-create-subject-name").clear().type(input.name);
   cy.get("#form-create-subject-description").clear().type(input.description);
-
-  if (input.modules) {
-    setModuleSwitches(input.modules);
-  }
 
   cy.contains('[role="dialog"] button', "Create Subject").click();
   cy.get('[role="dialog"]').should("not.exist");
@@ -58,10 +31,6 @@ function editSubject(input: SubjectInput) {
 
   cy.get("#form-edit-subject-name").clear().type(input.name);
   cy.get("#form-edit-subject-description").clear().type(input.description);
-
-  if (input.modules) {
-    setModuleSwitches(input.modules);
-  }
 
   cy.contains('[role="dialog"] button', "Save Changes").click();
   cy.get('[role="dialog"]').should("not.exist");
@@ -109,41 +78,24 @@ describe("Subjects", () => {
     cy.contains('[data-slot="card-title"]', name).should("be.visible");
   });
 
-  it("edits a subject and updates module sections", () => {
+  it("edits a subject name and description", () => {
     const initialName = uniqueValue("History");
     const updatedName = uniqueValue("Modern History");
 
     createSubject({
       name: initialName,
       description: "Initial history description",
-      modules: {
-        notes: false,
-        assessments: false,
-        attendance: false,
-      },
     });
 
     openSubjectDetail(initialName);
 
-    cy.contains("h2", "Attendance").should("not.exist");
-    cy.contains("h2", "Assessments").should("not.exist");
-    cy.contains("h2", "Notes").should("not.exist");
-
     editSubject({
       name: updatedName,
       description: "Updated history description",
-      modules: {
-        notes: true,
-        assessments: true,
-        attendance: true,
-      },
     });
 
     cy.contains("h1", updatedName).should("be.visible");
     cy.contains("Updated history description").should("be.visible");
-    cy.contains("h2", "Attendance").should("be.visible");
-    cy.contains("h2", "Assessments").should("be.visible");
-    cy.contains("h2", "Notes").should("be.visible");
   });
 
   it("archives a subject from subject detail", () => {

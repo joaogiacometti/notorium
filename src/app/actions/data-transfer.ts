@@ -62,10 +62,6 @@ export async function exportData(
         description: s.description,
         totalClasses: s.totalClasses,
         maxMisses: s.maxMisses,
-        notesEnabled: s.notesEnabled,
-        gradesEnabled: s.gradesEnabled,
-        attendanceEnabled: s.attendanceEnabled,
-        flashcardsEnabled: s.flashcardsEnabled,
         createdAt: s.createdAt.toISOString(),
         updatedAt: s.updatedAt.toISOString(),
         notes: notes.map((n) => ({
@@ -158,10 +154,6 @@ export async function importData(
             description: importedSubject.description,
             totalClasses: importedSubject.totalClasses,
             maxMisses: importedSubject.maxMisses,
-            notesEnabled: importedSubject.notesEnabled,
-            gradesEnabled: importedSubject.gradesEnabled,
-            attendanceEnabled: importedSubject.attendanceEnabled,
-            flashcardsEnabled: importedSubject.flashcardsEnabled ?? true,
             userId,
           })
           .returning({ id: subject.id });

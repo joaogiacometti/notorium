@@ -38,7 +38,6 @@ function getDueFilters(
     eq(subject.userId, userId),
     lte(flashcard.dueAt, now),
     isNull(subject.archivedAt),
-    eq(subject.flashcardsEnabled, true),
   ];
 
   if (options.subjectId) {
@@ -78,7 +77,6 @@ export async function getFlashcardReviewSummary(
     eq(flashcard.userId, userId),
     eq(subject.userId, userId),
     isNull(subject.archivedAt),
-    eq(subject.flashcardsEnabled, true),
   ];
 
   if (options.subjectId) {
@@ -126,7 +124,6 @@ export async function reviewFlashcard(
         eq(flashcard.userId, userId),
         eq(subject.userId, userId),
         isNull(subject.archivedAt),
-        eq(subject.flashcardsEnabled, true),
       ),
     )
     .limit(1)

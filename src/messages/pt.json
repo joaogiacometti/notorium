@@ -444,28 +444,10 @@
     "field_description": "Descrição",
     "field_name_placeholder": "ex.: Cálculo I",
     "field_description_placeholder": "Descrição opcional...",
-    "submit": "Criar matéria",
-    "section_modules": "Módulos",
-    "section_notes": "Notas",
-    "section_notes_desc": "Notas em texto rico para estudos.",
-    "section_assessments": "Avaliações",
-    "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
-    "section_attendance": "Faltas",
-    "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites.",
-    "section_flashcards": "Flashcards",
-    "section_flashcards_desc": "Cartões simples de frente e verso para revisão rápida."
+    "submit": "Criar matéria"
   },
   "EditSubjectDialog": {
     "title": "Editar Matéria",
-    "section_modules": "Módulos",
-    "section_notes": "Notas",
-    "section_notes_desc": "Notas em texto rico para estudos.",
-    "section_assessments": "Avaliações",
-    "section_assessments_desc": "Planeje prazos e acompanhe notas concluídas.",
-    "section_attendance": "Faltas",
-    "section_attendance_desc": "Acompanhe aulas perdidas em relação aos limites.",
-    "section_flashcards": "Flashcards",
-    "section_flashcards_desc": "Cartões simples de frente e verso para revisão rápida.",
     "submit": "Salvar alterações"
   },
   "FlashcardCard": {
@@ -604,7 +586,6 @@
     "flashcards": {
       "invalidData": "Dados do flashcard invalidos.",
       "notFound": "Flashcard nao encontrado.",
-      "moduleDisabled": "Flashcards estao desativados para esta materia.",
       "review": {
         "invalidData": "Dados de revisão inválidos.",
         "notFound": "Flashcard não encontrado para revisão.",

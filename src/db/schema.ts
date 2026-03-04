@@ -98,10 +98,7 @@ export const subject = pgTable(
     description: text("description"),
     totalClasses: integer("total_classes"),
     maxMisses: integer("max_misses"),
-    notesEnabled: boolean("notes_enabled").default(true).notNull(),
-    gradesEnabled: boolean("grades_enabled").default(true).notNull(),
-    attendanceEnabled: boolean("attendance_enabled").default(true).notNull(),
-    flashcardsEnabled: boolean("flashcards_enabled").default(true).notNull(),
+
     archivedAt: timestamp("archived_at"),
     userId: text("user_id")
       .notNull()

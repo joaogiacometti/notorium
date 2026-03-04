@@ -21,7 +21,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { SubjectEditDto } from "@/lib/api/contracts";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
@@ -51,10 +50,6 @@ export function EditSubjectDialog({
       id: subject.id,
       name: subject.name,
       description: subject.description ?? "",
-      notesEnabled: subject.notesEnabled,
-      gradesEnabled: subject.gradesEnabled,
-      attendanceEnabled: subject.attendanceEnabled,
-      flashcardsEnabled: subject.flashcardsEnabled,
     },
   });
 
@@ -119,94 +114,6 @@ export function EditSubjectDialog({
                 </Field>
               )}
             />
-
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-foreground">
-                {t("section_modules")}
-              </h3>
-              <div className="space-y-2">
-                <Controller
-                  name="notesEnabled"
-                  control={form.control}
-                  render={({ field }) => (
-                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
-                      <div>
-                        <span className="text-sm font-medium">
-                          {t("section_notes")}
-                        </span>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                          {t("section_notes_desc")}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </div>
-                  )}
-                />
-                <Controller
-                  name="gradesEnabled"
-                  control={form.control}
-                  render={({ field }) => (
-                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
-                      <div>
-                        <span className="text-sm font-medium">
-                          {t("section_assessments")}
-                        </span>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                          {t("section_assessments_desc")}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </div>
-                  )}
-                />
-                <Controller
-                  name="attendanceEnabled"
-                  control={form.control}
-                  render={({ field }) => (
-                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
-                      <div>
-                        <span className="text-sm font-medium">
-                          {t("section_attendance")}
-                        </span>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                          {t("section_attendance_desc")}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </div>
-                  )}
-                />
-                <Controller
-                  name="flashcardsEnabled"
-                  control={form.control}
-                  render={({ field }) => (
-                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
-                      <div>
-                        <span className="text-sm font-medium">
-                          {t("section_flashcards")}
-                        </span>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                          {t("section_flashcards_desc")}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </div>
-                  )}
-                />
-              </div>
-            </div>
 
             <Button
               type="submit"

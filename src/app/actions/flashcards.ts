@@ -56,7 +56,7 @@ export async function createFlashcard(
   }
 
   const existingSubject = await db
-    .select({ id: subject.id, flashcardsEnabled: subject.flashcardsEnabled })
+    .select({ id: subject.id })
     .from(subject)
     .where(
       and(
@@ -69,10 +69,6 @@ export async function createFlashcard(
 
   if (existingSubject.length === 0) {
     return actionError("subjects.notFound");
-  }
-
-  if (!existingSubject[0].flashcardsEnabled) {
-    return actionError("flashcards.moduleDisabled");
   }
 
   const inserted = await db

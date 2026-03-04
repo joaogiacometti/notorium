@@ -444,28 +444,10 @@
     "field_description": "Description",
     "field_name_placeholder": "e.g. Calculus I",
     "field_description_placeholder": "Optional description...",
-    "submit": "Create Subject",
-    "section_modules": "Modules",
-    "section_notes": "Notes",
-    "section_notes_desc": "Rich text notes for studying.",
-    "section_assessments": "Assessments",
-    "section_assessments_desc": "Plan deadlines and track completed scores.",
-    "section_attendance": "Attendance",
-    "section_attendance_desc": "Track missed classes against limits.",
-    "section_flashcards": "Flashcards",
-    "section_flashcards_desc": "Simple front/back cards for quick review."
+    "submit": "Create Subject"
   },
   "EditSubjectDialog": {
     "title": "Edit Subject",
-    "section_modules": "Modules",
-    "section_notes": "Notes",
-    "section_notes_desc": "Rich text notes for studying.",
-    "section_assessments": "Assessments",
-    "section_assessments_desc": "Plan deadlines and track completed scores.",
-    "section_attendance": "Attendance",
-    "section_attendance_desc": "Track missed classes against limits.",
-    "section_flashcards": "Flashcards",
-    "section_flashcards_desc": "Simple front/back cards for quick review.",
     "submit": "Save Changes"
   },
   "FlashcardCard": {
@@ -604,7 +586,6 @@
     "flashcards": {
       "invalidData": "Invalid flashcard data.",
       "notFound": "Flashcard not found.",
-      "moduleDisabled": "Flashcards are disabled for this subject.",
       "review": {
         "invalidData": "Invalid review input.",
         "notFound": "Flashcard not found for review.",

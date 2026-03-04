@@ -117,39 +117,25 @@ export function SubjectDetail({
         </div>
       </div>
 
-      {subject.attendanceEnabled && (
-        <AttendanceSummary
-          subjectId={subject.id}
-          totalClasses={subject.totalClasses}
-          maxMisses={subject.maxMisses}
-          misses={misses}
-        />
-      )}
+      <AttendanceSummary
+        subjectId={subject.id}
+        totalClasses={subject.totalClasses}
+        maxMisses={subject.maxMisses}
+        misses={misses}
+      />
 
-      {subject.gradesEnabled && (
-        <>
-          <Separator className="my-8" />
-          <AssessmentsOverview
-            subjectId={subject.id}
-            assessments={assessments}
-            plan={plan}
-          />
-        </>
-      )}
+      <Separator className="my-8" />
+      <AssessmentsOverview
+        subjectId={subject.id}
+        assessments={assessments}
+        plan={plan}
+      />
 
-      {subject.notesEnabled && (
-        <>
-          <Separator className="my-8" />
-          <NotesList subjectId={subject.id} notes={notes} plan={plan} />
-        </>
-      )}
+      <Separator className="my-8" />
+      <NotesList subjectId={subject.id} notes={notes} plan={plan} />
 
-      {subject.flashcardsEnabled && (
-        <>
-          <Separator className="my-8" />
-          <FlashcardsList subjectId={subject.id} />
-        </>
-      )}
+      <Separator className="my-8" />
+      <FlashcardsList subjectId={subject.id} />
 
       <EditSubjectDialog
         subject={subject}

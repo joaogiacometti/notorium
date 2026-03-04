@@ -60,16 +60,7 @@ export type SearchData = {
   flashcards: SearchFlashcardResult[];
 };
 
-export type SubjectEditDto = Pick<
-  SubjectEntity,
-  | "id"
-  | "name"
-  | "description"
-  | "notesEnabled"
-  | "gradesEnabled"
-  | "attendanceEnabled"
-  | "flashcardsEnabled"
->;
+export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "description">;
 
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 

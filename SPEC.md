@@ -31,8 +31,7 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete subjects.
 - Archive and restore subjects.
-- Subject fields: name, optional description, module toggles.
-- Subject module toggles: notes, flashcards, assessments, attendance.
+- Subject fields: name, optional description.
 
 ### Flashcards
 
@@ -107,7 +106,7 @@ Students who want a private, lightweight study management workspace.
 ## Main Entities
 
 - `subject`
-  - `id`, `name`, `description`, `notesEnabled`, `flashcardsEnabled`, `gradesEnabled`, `attendanceEnabled`, `totalClasses`, `maxMisses`, timestamps, `userId`.
+  - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`.
 - `flashcard`
   - `id`, `front`, `back`, `subjectId`, timestamps, `userId`.
 - `note`

@@ -25,9 +25,6 @@ const validSubject = {
   description: null,
   totalClasses: null,
   maxMisses: null,
-  notesEnabled: true,
-  gradesEnabled: true,
-  attendanceEnabled: true,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
   notes: [],
@@ -62,24 +59,6 @@ describe("importDataSchema", () => {
     });
 
     expect(result.success).toBe(true);
-  });
-
-  it("defaults flashcardsEnabled to true when missing", () => {
-    const subjectWithoutFlashcards = {
-      ...validSubject,
-    };
-    delete (subjectWithoutFlashcards as { flashcardsEnabled?: boolean })
-      .flashcardsEnabled;
-
-    const result = importDataSchema.safeParse({
-      ...validPayload,
-      subjects: [subjectWithoutFlashcards],
-    });
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.subjects[0]?.flashcardsEnabled).toBe(true);
-    }
   });
 
   it("rejects wrong version number", () => {
