@@ -92,3 +92,9 @@ export type DeleteFlashcardResult =
       id: string;
     }
   | ActionErrorResult;
+export type ResetFlashcardResult =
+  | {
+      success: true;
+      flashcard: FlashcardEntity;
+    }
+  | ActionErrorResult;

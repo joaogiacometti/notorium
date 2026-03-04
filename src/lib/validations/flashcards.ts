@@ -34,3 +34,9 @@ export const deleteFlashcardSchema = z.object({
 });
 
 export type DeleteFlashcardForm = z.infer<typeof deleteFlashcardSchema>;
+
+export const resetFlashcardSchema = z.object({
+  id: z.string().min(1),
+});
+
+export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;

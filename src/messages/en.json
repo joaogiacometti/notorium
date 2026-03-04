@@ -134,6 +134,7 @@
     "view": "View",
     "edit": "Edit",
     "delete": "Delete",
+    "reset": "Reset",
     "no_results": "No flashcards match your search.",
     "prev": "Previous",
     "next": "Next",
@@ -430,6 +431,12 @@
     "prompt_prefix": "Are you sure you want to delete ",
     "prompt_suffix": "? This action cannot be undone.",
     "confirm": "Delete"
+  },
+  "ResetFlashcardDialog": {
+    "title": "Reset Flashcard",
+    "prompt_prefix": "Are you sure you want to reset ",
+    "prompt_suffix": "? All review progress will be lost and the card will be treated as new.",
+    "confirm": "Reset"
   },
   "CreateSubjectDialog": {
     "title": "Create Subject",

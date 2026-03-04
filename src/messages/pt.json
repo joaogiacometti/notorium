@@ -134,6 +134,7 @@
     "view": "Visualizar",
     "edit": "Editar",
     "delete": "Excluir",
+    "reset": "Resetar",
     "no_results": "Nenhum flashcard corresponde à busca.",
     "prev": "Anterior",
     "next": "Próxima",
@@ -430,6 +431,12 @@
     "prompt_prefix": "Tem certeza que deseja excluir ",
     "prompt_suffix": "? Esta ação não pode ser desfeita.",
     "confirm": "Excluir"
+  },
+  "ResetFlashcardDialog": {
+    "title": "Resetar Flashcard",
+    "prompt_prefix": "Tem certeza que deseja resetar ",
+    "prompt_suffix": "? Todo o progresso de revisão será perdido e o cartão será tratado como novo.",
+    "confirm": "Resetar"
   },
   "CreateSubjectDialog": {
     "title": "Criar Matéria",

@@ -3,6 +3,7 @@ import {
   createFlashcardSchema,
   deleteFlashcardSchema,
   editFlashcardSchema,
+  resetFlashcardSchema,
 } from "@/lib/validations/flashcards";
 
 describe("createFlashcardSchema", () => {
@@ -87,6 +88,20 @@ describe("deleteFlashcardSchema", () => {
 
   it("rejects empty id", () => {
     const result = deleteFlashcardSchema.safeParse({ id: "" });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("resetFlashcardSchema", () => {
+  it("accepts valid id", () => {
+    const result = resetFlashcardSchema.safeParse({ id: "flashcard-1" });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty id", () => {
+    const result = resetFlashcardSchema.safeParse({ id: "" });
 
     expect(result.success).toBe(false);
   });

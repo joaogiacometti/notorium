@@ -1,10 +1,11 @@
 "use client";
 
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteFlashcardDialog } from "@/components/delete-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/edit-flashcard-dialog";
+import { ResetFlashcardDialog } from "@/components/reset-flashcard-dialog";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +31,7 @@ export function FlashcardsTableRowActions({
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
 
   return (
     <>
@@ -53,6 +55,13 @@ export function FlashcardsTableRowActions({
             {t("edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
+            onClick={() => setResetOpen(true)}
+            className="cursor-pointer"
+          >
+            <RotateCcw className="size-4" />
+            {t("reset")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
             onClick={() => setDeleteOpen(true)}
             className="cursor-pointer text-destructive focus:text-destructive"
           >
@@ -67,6 +76,13 @@ export function FlashcardsTableRowActions({
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdated={onUpdated}
+      />
+      <ResetFlashcardDialog
+        flashcardId={flashcard.id}
+        flashcardFront={flashcard.front}
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        onReset={onUpdated}
       />
       <DeleteFlashcardDialog
         flashcardId={flashcard.id}

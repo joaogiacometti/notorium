@@ -9,6 +9,7 @@ import type {
   DeleteFlashcardResult,
   EditFlashcardResult,
   FlashcardEntity,
+  ResetFlashcardResult,
 } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import { actionError } from "@/lib/server-action-errors";
@@ -19,6 +20,8 @@ import {
   deleteFlashcardSchema,
   type EditFlashcardForm,
   editFlashcardSchema,
+  type ResetFlashcardForm,
+  resetFlashcardSchema,
 } from "@/lib/validations/flashcards";
 
 export async function getFlashcardsBySubject(
@@ -161,4 +164,55 @@ export async function deleteFlashcard(
 
   revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
   return { success: true, id: parsed.data.id };
+}
+
+export async function resetFlashcard(
+  data: ResetFlashcardForm,
+): Promise<ResetFlashcardResult> {
+  const userId = await getAuthenticatedUserId();
+  const parsed = resetFlashcardSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return actionError("common.invalidRequest");
+  }
+
+  const existingFlashcard = await db
+    .select({ id: flashcard.id, subjectId: flashcard.subjectId })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .where(
+      and(
+        eq(flashcard.id, parsed.data.id),
+        eq(flashcard.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .limit(1);
+
+  if (existingFlashcard.length === 0) {
+    return actionError("flashcards.notFound");
+  }
+
+  const now = new Date();
+
+  const updated = await db
+    .update(flashcard)
+    .set({
+      state: "new",
+      dueAt: now,
+      ease: 250,
+      intervalDays: 0,
+      learningStep: null,
+      lastReviewedAt: null,
+      reviewCount: 0,
+      lapseCount: 0,
+      updatedAt: now,
+    })
+    .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)))
+    .returning();
+
+  revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
+  revalidatePath("/flashcards/review");
+  return { success: true, flashcard: updated[0] };
 }
