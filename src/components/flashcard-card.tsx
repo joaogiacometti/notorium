@@ -1,13 +1,12 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import { CreditCard, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteFlashcardDialog } from "@/components/delete-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/edit-flashcard-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,84 +14,75 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { FlashcardEntity } from "@/lib/api/contracts";
-import { getDateFnsLocale } from "@/lib/date-locale";
 
 interface FlashcardCardProps {
   flashcard: FlashcardEntity;
+  onUpdated?: (flashcard: FlashcardEntity) => void;
+  onDeleted?: (id: string) => void;
 }
 
-export function FlashcardCard({ flashcard }: Readonly<FlashcardCardProps>) {
+export function FlashcardCard({
+  flashcard,
+  onUpdated,
+  onDeleted,
+}: Readonly<FlashcardCardProps>) {
   const t = useTranslations("FlashcardCard");
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
     <>
-      <Card className="group relative min-w-0 overflow-hidden transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
-        <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2.5">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
-              <CreditCard className="size-4" />
-            </div>
-            <CardTitle className="truncate text-base leading-tight">
-              {flashcard.front}
-            </CardTitle>
+      <Card className="group flex w-full items-center justify-between gap-2.5 rounded-xl border-border/70 bg-card/70 px-2.5 py-2 shadow-none transition-colors hover:border-border hover:bg-card">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <CreditCard className="size-3.5" />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
-                aria-label={t("open_actions")}
-              >
-                <MoreVertical className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setEditOpen(true)}
-                className="cursor-pointer"
-              >
-                <Pencil className="size-4" />
-                {t("edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setDeleteOpen(true)}
-                className="cursor-pointer text-destructive focus:text-destructive"
-              >
-                <Trash2 className="size-4" />
-                {t("delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </CardHeader>
-        <CardContent className="space-y-3 pt-0">
-          <p className="line-clamp-4 whitespace-pre-wrap text-sm text-muted-foreground">
-            {flashcard.back}
-          </p>
-          <p className="text-xs text-muted-foreground/60">
-            {t("created_label")}{" "}
-            {formatDistanceToNow(new Date(flashcard.createdAt), {
-              addSuffix: true,
-              locale: dateLocale,
-            })}
-          </p>
-        </CardContent>
+          <CardTitle className="truncate text-sm font-medium leading-none text-foreground/95">
+            {flashcard.front}
+          </CardTitle>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0 rounded-md text-muted-foreground/80 opacity-100 transition-all hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+              aria-label={t("open_actions")}
+            >
+              <MoreVertical className="size-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => setEditOpen(true)}
+              className="cursor-pointer"
+            >
+              <Pencil className="size-4" />
+              {t("edit")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setDeleteOpen(true)}
+              className="cursor-pointer text-destructive focus:text-destructive"
+            >
+              <Trash2 className="size-4" />
+              {t("delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </Card>
 
       <EditFlashcardDialog
         flashcard={flashcard}
         open={editOpen}
         onOpenChange={setEditOpen}
+        onUpdated={onUpdated}
       />
       <DeleteFlashcardDialog
         flashcardId={flashcard.id}
         flashcardFront={flashcard.front}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+        onDeleted={onDeleted}
       />
     </>
   );

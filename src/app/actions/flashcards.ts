@@ -4,7 +4,12 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
-import type { FlashcardEntity, MutationResult } from "@/lib/api/contracts";
+import type {
+  CreateFlashcardResult,
+  DeleteFlashcardResult,
+  EditFlashcardResult,
+  FlashcardEntity,
+} from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import { actionError } from "@/lib/server-action-errors";
 import {
@@ -39,7 +44,7 @@ export async function getFlashcardsBySubject(
 
 export async function createFlashcard(
   data: CreateFlashcardForm,
-): Promise<MutationResult> {
+): Promise<CreateFlashcardResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = createFlashcardSchema.safeParse(data);
 
@@ -67,20 +72,23 @@ export async function createFlashcard(
     return actionError("flashcards.moduleDisabled");
   }
 
-  await db.insert(flashcard).values({
-    subjectId: parsed.data.subjectId,
-    userId,
-    front: parsed.data.front,
-    back: parsed.data.back,
-  });
+  const inserted = await db
+    .insert(flashcard)
+    .values({
+      subjectId: parsed.data.subjectId,
+      userId,
+      front: parsed.data.front,
+      back: parsed.data.back,
+    })
+    .returning();
 
   revalidatePath(`/subjects/${parsed.data.subjectId}`);
-  return { success: true };
+  return { success: true, flashcard: inserted[0] };
 }
 
 export async function editFlashcard(
   data: EditFlashcardForm,
-): Promise<MutationResult> {
+): Promise<EditFlashcardResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = editFlashcardSchema.safeParse(data);
 
@@ -106,21 +114,22 @@ export async function editFlashcard(
     return actionError("flashcards.notFound");
   }
 
-  await db
+  const updated = await db
     .update(flashcard)
     .set({
       front: parsed.data.front,
       back: parsed.data.back,
     })
-    .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)));
+    .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)))
+    .returning();
 
   revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
-  return { success: true };
+  return { success: true, flashcard: updated[0] };
 }
 
 export async function deleteFlashcard(
   data: DeleteFlashcardForm,
-): Promise<MutationResult> {
+): Promise<DeleteFlashcardResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = deleteFlashcardSchema.safeParse(data);
 
@@ -151,5 +160,5 @@ export async function deleteFlashcard(
     .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)));
 
   revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
-  return { success: true };
+  return { success: true, id: parsed.data.id };
 }

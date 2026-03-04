@@ -119,10 +119,25 @@
     "title": "Flashcards",
     "count_empty": "Create cards to review key concepts quickly.",
     "count": "{count, plural, one {# flashcard} other {# flashcards}}",
+    "collapsed_hint": "Expand to load your flashcards.",
+    "toggle": "Show flashcards",
+    "loading": "Loading flashcards...",
     "new_flashcard": "New Flashcard",
-    "review_due": "Review Due Cards",
     "empty_title": "No flashcards yet",
-    "empty_description": "Create your first flashcard with a front and back."
+    "empty_description": "Create your first flashcard with a front and back.",
+    "search_placeholder": "Search front or back...",
+    "results_count": "{filtered} of {total} flashcards",
+    "table_front": "Front",
+    "table_back": "Back",
+    "table_actions": "Actions",
+    "open_actions": "Open flashcard actions",
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "no_results": "No flashcards match your search.",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}"
   },
   "FlashcardReviewPage": {
     "title": "Flashcard Review",
@@ -450,6 +465,12 @@
     "created_label": "Created",
     "edit": "Edit",
     "delete": "Delete"
+  },
+  "FlashcardPreviewDialog": {
+    "title": "Flashcard Preview",
+    "description": "Review the full front and back before editing.",
+    "front_label": "Front",
+    "back_label": "Back"
   },
   "DeleteAccountDialog": {
     "title": "Delete Account",

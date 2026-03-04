@@ -21,6 +21,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import type { FlashcardEntity } from "@/lib/api/contracts";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type CreateFlashcardForm,
@@ -32,6 +33,7 @@ interface CreateFlashcardDialogProps {
   trigger: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: (flashcard: FlashcardEntity) => void;
 }
 
 export function CreateFlashcardDialog({
@@ -39,6 +41,7 @@ export function CreateFlashcardDialog({
   trigger,
   open,
   onOpenChange,
+  onCreated,
 }: Readonly<CreateFlashcardDialogProps>) {
   const t = useTranslations("CreateFlashcardDialog");
   const tErrors = useTranslations("ServerActions");
@@ -59,6 +62,7 @@ export function CreateFlashcardDialog({
         front: "",
         back: "",
       });
+      onCreated?.(result.flashcard);
       onOpenChange(false);
     } else {
       toast.error(resolveActionErrorMessage(result, tErrors));

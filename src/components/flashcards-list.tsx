@@ -1,35 +1,87 @@
 "use client";
 
-import { CreditCard, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { getFlashcardsBySubject } from "@/app/actions/flashcards";
 import { CreateFlashcardDialog } from "@/components/create-flashcard-dialog";
-import { FlashcardCard } from "@/components/flashcard-card";
+import { FlashcardsEmptyState } from "@/components/flashcards-empty-state";
+import { FlashcardsLoading } from "@/components/flashcards-loading";
+import { FlashcardsTable } from "@/components/flashcards-table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/routing";
 import type { FlashcardEntity } from "@/lib/api/contracts";
+import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface FlashcardsListProps {
   subjectId: string;
-  flashcards: FlashcardEntity[];
 }
 
-export function FlashcardsList({
-  subjectId,
-  flashcards,
-}: Readonly<FlashcardsListProps>) {
+export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
   const t = useTranslations("FlashcardsList");
+  const tErrors = useTranslations("ServerActions");
   const [createOpen, setCreateOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [accordionValue, setAccordionValue] = useState("");
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [flashcards, setFlashcards] = useState<FlashcardEntity[]>([]);
+
+  function handleOpenChange(value: string) {
+    setAccordionValue(value);
+    if (value !== "flashcards" || hasLoaded || isPending) {
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const loaded = await getFlashcardsBySubject(subjectId);
+        setFlashcards(loaded);
+        setHasLoaded(true);
+      } catch {
+        toast.error(
+          resolveActionErrorMessage({ errorCode: "common.generic" }, tErrors),
+        );
+      }
+    });
+  }
+
+  function getSubtitle() {
+    if (!hasLoaded) {
+      return t("collapsed_hint");
+    }
+
+    return flashcards.length === 0
+      ? t("count_empty")
+      : t("count", { count: flashcards.length });
+  }
+
+  function renderAccordionContent() {
+    if (isPending && !hasLoaded) {
+      return <FlashcardsLoading />;
+    }
+
+    if (flashcards.length === 0) {
+      return <FlashcardsEmptyState />;
+    }
+
+    return (
+      <FlashcardsTable flashcards={flashcards} setFlashcards={setFlashcards} />
+    );
+  }
 
   return (
     <div>
-      <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-3 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {flashcards.length === 0
-              ? t("count_empty")
-              : t("count", { count: flashcards.length })}
+            {getSubtitle()}
           </p>
         </div>
         <CreateFlashcardDialog
@@ -46,35 +98,21 @@ export function FlashcardsList({
           }
           open={createOpen}
           onOpenChange={setCreateOpen}
+          onCreated={(card) => setFlashcards((current) => [card, ...current])}
         />
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/flashcards/review?subjectId=${subjectId}`}>
-            {t("review_due")}
-          </Link>
-        </Button>
       </div>
 
-      {flashcards.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <CreditCard className="size-4" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold">{t("empty_title")}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("empty_description")}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {flashcards.map((item) => (
-            <FlashcardCard key={item.id} flashcard={item} />
-          ))}
-        </div>
-      )}
+      <Accordion
+        type="single"
+        collapsible
+        value={accordionValue}
+        onValueChange={handleOpenChange}
+      >
+        <AccordionItem value="flashcards">
+          <AccordionTrigger>{t("toggle")}</AccordionTrigger>
+          <AccordionContent>{renderAccordionContent()}</AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

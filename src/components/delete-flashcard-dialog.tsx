@@ -21,6 +21,7 @@ interface DeleteFlashcardDialogProps {
   flashcardFront: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (id: string) => void;
 }
 
 export function DeleteFlashcardDialog({
@@ -28,6 +29,7 @@ export function DeleteFlashcardDialog({
   flashcardFront,
   open,
   onOpenChange,
+  onDeleted,
 }: Readonly<DeleteFlashcardDialogProps>) {
   const t = useTranslations("DeleteFlashcardDialog");
   const tCommon = useTranslations("Common");
@@ -38,6 +40,7 @@ export function DeleteFlashcardDialog({
     startTransition(async () => {
       const result = await deleteFlashcard({ id: flashcardId });
       if (result.success) {
+        onDeleted?.(result.id);
         onOpenChange(false);
       } else {
         toast.error(resolveActionErrorMessage(result, tErrors));

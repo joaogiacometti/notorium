@@ -66,3 +66,21 @@ export type SubjectEditDto = Pick<
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
+export type CreateFlashcardResult =
+  | {
+      success: true;
+      flashcard: FlashcardEntity;
+    }
+  | ActionErrorResult;
+export type EditFlashcardResult =
+  | {
+      success: true;
+      flashcard: FlashcardEntity;
+    }
+  | ActionErrorResult;
+export type DeleteFlashcardResult =
+  | {
+      success: true;
+      id: string;
+    }
+  | ActionErrorResult;

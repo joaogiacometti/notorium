@@ -19,6 +19,10 @@ describe("Flashcards", () => {
     visitSubjectsPage();
   });
 
+  function expandFlashcards() {
+    cy.contains('[data-slot="accordion-trigger"]', "Show flashcards").click();
+  }
+
   it("creates and reads a flashcard", () => {
     const subjectName = uniqueValue("Flashcards Subject");
     const front = uniqueValue("What is inertia?");
@@ -30,6 +34,9 @@ describe("Flashcards", () => {
     });
     openSubjectDetail(subjectName);
     cy.contains("h2", "Flashcards").should("be.visible");
+    cy.contains("Review Due Cards").should("not.exist");
+    cy.contains("Expand to load your flashcards.").should("be.visible");
+    expandFlashcards();
 
     cy.get("#btn-create-flashcard").click();
     cy.get('[role="dialog"]').should("be.visible");
@@ -39,8 +46,7 @@ describe("Flashcards", () => {
     cy.contains('[role="dialog"] button', "Create Flashcard").click();
 
     cy.get('[role="dialog"]').should("not.exist");
-    cy.contains('[data-slot="card-title"]', front).should("be.visible");
-    cy.contains(back).should("be.visible");
+    cy.contains('[data-slot="table-row"]', front).should("be.visible");
   });
 
   it("validates required front before creating", () => {
@@ -52,6 +58,7 @@ describe("Flashcards", () => {
       description: "Subject used for flashcard validation",
     });
     openSubjectDetail(subjectName);
+    expandFlashcards();
 
     cy.get("#btn-create-flashcard").click();
     cy.get('[role="dialog"]').should("be.visible");
@@ -74,14 +81,15 @@ describe("Flashcards", () => {
       description: "Subject used for flashcard editing",
     });
     openSubjectDetail(subjectName);
+    expandFlashcards();
 
     cy.get("#btn-create-flashcard").click();
     cy.get("#form-create-flashcard-front").type(initialFront);
     cy.get("#form-create-flashcard-back").type("Initial answer");
     cy.contains('[role="dialog"] button', "Create Flashcard").click();
 
-    cy.contains('[data-slot="card"]', initialFront).within(() => {
-      cy.get("button").first().click();
+    cy.contains('[data-slot="table-row"]', initialFront).within(() => {
+      cy.get('button[aria-label="Open flashcard actions"]').click();
     });
 
     cy.contains('[role="menuitem"]', "Edit").click();
@@ -91,8 +99,7 @@ describe("Flashcards", () => {
     cy.contains('[role="dialog"] button', "Save Changes").click();
 
     cy.get('[role="dialog"]').should("not.exist");
-    cy.contains('[data-slot="card-title"]', updatedFront).should("be.visible");
-    cy.contains(updatedBack).should("be.visible");
+    cy.contains('[data-slot="table-row"]', updatedFront).should("be.visible");
   });
 
   it("deletes a flashcard", () => {
@@ -104,14 +111,15 @@ describe("Flashcards", () => {
       description: "Subject used for flashcard deletion",
     });
     openSubjectDetail(subjectName);
+    expandFlashcards();
 
     cy.get("#btn-create-flashcard").click();
     cy.get("#form-create-flashcard-front").type(front);
     cy.get("#form-create-flashcard-back").type("Disposable answer");
     cy.contains('[role="dialog"] button', "Create Flashcard").click();
 
-    cy.contains('[data-slot="card"]', front).within(() => {
-      cy.get("button").first().click();
+    cy.contains('[data-slot="table-row"]', front).within(() => {
+      cy.get('button[aria-label="Open flashcard actions"]').click();
     });
 
     cy.contains('[role="menuitem"]', "Delete").click();
@@ -120,7 +128,7 @@ describe("Flashcards", () => {
       cy.contains("button", "Delete").click();
     });
 
-    cy.contains('[data-slot="card-title"]', front).should("not.exist");
+    cy.contains('[data-slot="table-row"]', front).should("not.exist");
     cy.contains("No flashcards yet").should("be.visible");
   });
 });

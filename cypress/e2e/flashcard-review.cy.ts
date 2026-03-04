@@ -14,6 +14,7 @@ describe("Flashcard Review", () => {
   };
 
   function createFlashcard(front: string, back: string) {
+    cy.contains('[data-slot="accordion-trigger"]', "Show flashcards").click();
     cy.get("#btn-create-flashcard").click();
     cy.get('[role="dialog"]').should("be.visible");
     cy.get("#form-create-flashcard-front").type(front);

@@ -16,7 +16,6 @@ import { Link, useRouter } from "@/i18n/routing";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
-  FlashcardEntity,
   NoteEntity,
   SubjectEntity,
 } from "@/lib/api/contracts";
@@ -28,7 +27,6 @@ interface SubjectDetailProps {
   notes: NoteEntity[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
-  flashcards: FlashcardEntity[];
   plan: UserPlan;
 }
 
@@ -37,7 +35,6 @@ export function SubjectDetail({
   notes,
   misses,
   assessments,
-  flashcards,
   plan,
 }: Readonly<SubjectDetailProps>) {
   const locale = useLocale();
@@ -150,7 +147,7 @@ export function SubjectDetail({
       {subject.flashcardsEnabled && (
         <>
           <Separator className="my-8" />
-          <FlashcardsList subjectId={subject.id} flashcards={flashcards} />
+          <FlashcardsList subjectId={subject.id} />
         </>
       )}
 

@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getAssessmentsBySubject } from "@/app/actions/assessments";
 import { getMissesBySubject } from "@/app/actions/attendance";
-import { getFlashcardsBySubject } from "@/app/actions/flashcards";
 import { getNotesBySubject } from "@/app/actions/notes";
 import { getSubjectById } from "@/app/actions/subjects";
 import { SubjectDetail } from "@/components/subject-detail";
@@ -16,12 +15,11 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
   const session = await requireSession();
 
   const { id } = await params;
-  const [subject, notes, misses, assessments, flashcards] = await Promise.all([
+  const [subject, notes, misses, assessments] = await Promise.all([
     getSubjectById(id),
     getNotesBySubject(id),
     getMissesBySubject(id),
     getAssessmentsBySubject(id),
-    getFlashcardsBySubject(id),
   ]);
 
   if (!subject) {
@@ -35,7 +33,6 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
         notes={notes}
         misses={misses}
         assessments={assessments}
-        flashcards={flashcards}
         plan={(session.user.plan ?? "free") as UserPlan}
       />
     </main>

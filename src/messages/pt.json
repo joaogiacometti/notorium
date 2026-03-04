@@ -119,10 +119,25 @@
     "title": "Flashcards",
     "count_empty": "Crie cartões para revisar conceitos rapidamente.",
     "count": "{count, plural, one {# flashcard} other {# flashcards}}",
+    "collapsed_hint": "Expanda para carregar seus flashcards.",
+    "toggle": "Mostrar flashcards",
+    "loading": "Carregando flashcards...",
     "new_flashcard": "Novo flashcard",
-    "review_due": "Revisar vencidos",
     "empty_title": "Ainda não há flashcards",
-    "empty_description": "Crie seu primeiro flashcard com frente e verso."
+    "empty_description": "Crie seu primeiro flashcard com frente e verso.",
+    "search_placeholder": "Buscar frente ou verso...",
+    "results_count": "{filtered} de {total} flashcards",
+    "table_front": "Frente",
+    "table_back": "Verso",
+    "table_actions": "Ações",
+    "open_actions": "Abrir ações do flashcard",
+    "view": "Visualizar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "no_results": "Nenhum flashcard corresponde à busca.",
+    "prev": "Anterior",
+    "next": "Próxima",
+    "page": "Página {current} de {total}"
   },
   "FlashcardReviewPage": {
     "title": "Revisão de Flashcards",
@@ -450,6 +465,12 @@
     "created_label": "Criado",
     "edit": "Editar",
     "delete": "Excluir"
+  },
+  "FlashcardPreviewDialog": {
+    "title": "Visualização do Flashcard",
+    "description": "Revise a frente e o verso completos antes de editar.",
+    "front_label": "Frente",
+    "back_label": "Verso"
   },
   "DeleteAccountDialog": {
     "title": "Excluir Conta",
