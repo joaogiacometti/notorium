@@ -6,22 +6,22 @@ import {
   visitSubjectsPage,
 } from "../support/test-helpers";
 
+function createFlashcard(front: string, back: string) {
+  cy.contains('[data-slot="accordion-trigger"]', "Show flashcards").click();
+  cy.get("#btn-create-flashcard").click();
+  cy.get('[role="dialog"]').should("be.visible");
+  cy.get("#form-create-flashcard-front").type(front);
+  cy.get("#form-create-flashcard-back").type(back);
+  cy.contains('[role="dialog"] button', "Create Flashcard").click();
+  cy.get('[role="dialog"]').should("not.exist");
+}
+
 describe("Flashcard Review", () => {
   const testUser = {
     name: "Cypress Flashcard Review User",
     email: `cypress-flashcard-review-${Date.now()}@test.com`,
     password: "TestPassword123!",
   };
-
-  function createFlashcard(front: string, back: string) {
-    cy.contains('[data-slot="accordion-trigger"]', "Show flashcards").click();
-    cy.get("#btn-create-flashcard").click();
-    cy.get('[role="dialog"]').should("be.visible");
-    cy.get("#form-create-flashcard-front").type(front);
-    cy.get("#form-create-flashcard-back").type(back);
-    cy.contains('[role="dialog"] button', "Create Flashcard").click();
-    cy.get('[role="dialog"]').should("not.exist");
-  }
 
   beforeEach(() => {
     cy.viewport(1280, 720);
@@ -72,6 +72,12 @@ describe("Flashcard Review", () => {
   });
 
   it("shows empty state when no cards are due", () => {
+    const emptyUser = {
+      name: "Cypress Flashcard Empty User",
+      email: `cypress-flashcard-empty-${Date.now()}@test.com`,
+      password: "TestPassword123!",
+    };
+    authenticateWithSession(emptyUser);
     cy.visit("/flashcards/review");
 
     cy.contains("All caught up").should("be.visible");

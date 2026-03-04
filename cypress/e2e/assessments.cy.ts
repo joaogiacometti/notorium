@@ -14,40 +14,40 @@ interface AssessmentInput {
   weight?: string;
 }
 
+function createAssessment(input: AssessmentInput) {
+  cy.contains("button", "Add Assessment").click();
+  cy.get('[role="dialog"]').should("be.visible");
+
+  cy.get("#form-create-assessment-title").clear().type(input.title);
+
+  if (input.description) {
+    cy.get("#form-create-assessment-description")
+      .clear()
+      .type(input.description);
+  }
+
+  if (input.dueDate) {
+    cy.get("#form-create-assessment-due-date").clear().type(input.dueDate);
+  }
+
+  if (input.score) {
+    cy.get("#form-create-assessment-score").clear().type(input.score);
+  }
+
+  if (input.weight) {
+    cy.get("#form-create-assessment-weight").clear().type(input.weight);
+  }
+
+  cy.contains('[role="dialog"] button', "Add Assessment").click();
+  cy.get('[role="dialog"]').should("not.exist");
+}
+
 describe("Assessments", () => {
   const testUser = {
     name: "Cypress Assessments User",
     email: `cypress-assessments-${Date.now()}@test.com`,
     password: "TestPassword123!",
   };
-
-  function createAssessment(input: AssessmentInput) {
-    cy.contains("button", "Add Assessment").click();
-    cy.get('[role="dialog"]').should("be.visible");
-
-    cy.get("#form-create-assessment-title").clear().type(input.title);
-
-    if (input.description) {
-      cy.get("#form-create-assessment-description")
-        .clear()
-        .type(input.description);
-    }
-
-    if (input.dueDate) {
-      cy.get("#form-create-assessment-due-date").clear().type(input.dueDate);
-    }
-
-    if (input.score) {
-      cy.get("#form-create-assessment-score").clear().type(input.score);
-    }
-
-    if (input.weight) {
-      cy.get("#form-create-assessment-weight").clear().type(input.weight);
-    }
-
-    cy.contains('[role="dialog"] button', "Add Assessment").click();
-    cy.get('[role="dialog"]').should("not.exist");
-  }
 
   beforeEach(() => {
     cy.viewport(1280, 720);

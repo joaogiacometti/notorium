@@ -6,6 +6,10 @@ import {
   visitSubjectsPage,
 } from "../support/test-helpers";
 
+function expandFlashcards() {
+  cy.contains('[data-slot="accordion-trigger"]', "Show flashcards").click();
+}
+
 describe("Flashcards", () => {
   const testUser = {
     name: "Cypress Flashcards User",
@@ -18,10 +22,6 @@ describe("Flashcards", () => {
     authenticateWithSession(testUser);
     visitSubjectsPage();
   });
-
-  function expandFlashcards() {
-    cy.contains('[data-slot="accordion-trigger"]', "Show flashcards").click();
-  }
 
   it("creates and reads a flashcard", () => {
     const subjectName = uniqueValue("Flashcards Subject");

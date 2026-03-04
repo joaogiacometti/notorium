@@ -1,17 +1,17 @@
 import { authenticateWithSession } from "../support/test-helpers";
 
+function openPreferencesDialog() {
+  cy.get('[data-testid="account-menu-trigger"]').click();
+  cy.get('[data-testid="account-menu-preferences"]').click();
+  cy.get('[role="dialog"]').should("be.visible");
+}
+
 describe("Preferences Menu", () => {
   const testUser = {
     name: "Cypress Preferences User",
     email: `cypress-preferences-${Date.now()}@test.com`,
     password: "TestPassword123!",
   };
-
-  function openPreferencesDialog() {
-    cy.get('[data-testid="account-menu-trigger"]').click();
-    cy.get('[data-testid="account-menu-preferences"]').click();
-    cy.get('[role="dialog"]').should("be.visible");
-  }
 
   beforeEach(() => {
     cy.viewport(1280, 720);

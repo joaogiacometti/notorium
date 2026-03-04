@@ -16,63 +16,63 @@ interface SubjectInput {
   modules?: ModulesState;
 }
 
+function setModuleSwitches(modules: ModulesState) {
+  const values = [modules.notes, modules.assessments, modules.attendance];
+
+  values.forEach((value, index) => {
+    cy.get('[role="dialog"] [data-slot="switch"]')
+      .eq(index)
+      .then(($switch) => {
+        const isChecked = $switch.attr("data-state") === "checked";
+
+        if (isChecked !== value) {
+          cy.wrap($switch).click();
+        }
+      });
+  });
+}
+
+function createSubject(input: SubjectInput) {
+  cy.get("#btn-create-subject").click();
+  cy.get('[role="dialog"]').should("be.visible");
+
+  cy.get("#form-create-subject-name").clear().type(input.name);
+  cy.get("#form-create-subject-description").clear().type(input.description);
+
+  if (input.modules) {
+    setModuleSwitches(input.modules);
+  }
+
+  cy.contains('[role="dialog"] button', "Create Subject").click();
+  cy.get('[role="dialog"]').should("not.exist");
+}
+
+function openSubjectDetail(name: string) {
+  cy.contains('[data-slot="card-title"]', name).click();
+  cy.url({ timeout: 10000 }).should("match", /\/subjects\/[^/]+$/);
+}
+
+function editSubject(input: SubjectInput) {
+  cy.contains("button", "Edit").click();
+  cy.get('[role="dialog"]').should("be.visible");
+
+  cy.get("#form-edit-subject-name").clear().type(input.name);
+  cy.get("#form-edit-subject-description").clear().type(input.description);
+
+  if (input.modules) {
+    setModuleSwitches(input.modules);
+  }
+
+  cy.contains('[role="dialog"] button', "Save Changes").click();
+  cy.get('[role="dialog"]').should("not.exist");
+}
+
 describe("Subjects", () => {
   const testUser = {
     name: "Cypress Subjects User",
     email: `cypress-subjects-${Date.now()}@test.com`,
     password: "TestPassword123!",
   };
-
-  function setModuleSwitches(modules: ModulesState) {
-    const values = [modules.notes, modules.assessments, modules.attendance];
-
-    values.forEach((value, index) => {
-      cy.get('[role="dialog"] [data-slot="switch"]')
-        .eq(index)
-        .then(($switch) => {
-          const isChecked = $switch.attr("data-state") === "checked";
-
-          if (isChecked !== value) {
-            cy.wrap($switch).click();
-          }
-        });
-    });
-  }
-
-  function createSubject(input: SubjectInput) {
-    cy.get("#btn-create-subject").click();
-    cy.get('[role="dialog"]').should("be.visible");
-
-    cy.get("#form-create-subject-name").clear().type(input.name);
-    cy.get("#form-create-subject-description").clear().type(input.description);
-
-    if (input.modules) {
-      setModuleSwitches(input.modules);
-    }
-
-    cy.contains('[role="dialog"] button', "Create Subject").click();
-    cy.get('[role="dialog"]').should("not.exist");
-  }
-
-  function openSubjectDetail(name: string) {
-    cy.contains('[data-slot="card-title"]', name).click();
-    cy.url({ timeout: 10000 }).should("match", /\/subjects\/[^/]+$/);
-  }
-
-  function editSubject(input: SubjectInput) {
-    cy.contains("button", "Edit").click();
-    cy.get('[role="dialog"]').should("be.visible");
-
-    cy.get("#form-edit-subject-name").clear().type(input.name);
-    cy.get("#form-edit-subject-description").clear().type(input.description);
-
-    if (input.modules) {
-      setModuleSwitches(input.modules);
-    }
-
-    cy.contains('[role="dialog"] button', "Save Changes").click();
-    cy.get('[role="dialog"]').should("not.exist");
-  }
 
   beforeEach(() => {
     cy.viewport(1280, 720);

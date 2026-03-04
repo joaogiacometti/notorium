@@ -6,23 +6,23 @@ import {
   visitSubjectsPage,
 } from "../support/test-helpers";
 
+function configureAttendance(totalClasses: string, maxMisses: string) {
+  cy.contains("button", "Settings").click();
+  cy.get('[role="dialog"]').should("be.visible");
+
+  cy.get("#form-attendance-total-classes").clear().type(totalClasses);
+  cy.get("#form-attendance-max-misses").clear().type(maxMisses);
+  cy.contains('[role="dialog"] button', "Save Settings").click();
+
+  cy.get('[role="dialog"]').should("not.exist");
+}
+
 describe("Attendance", () => {
   const testUser = {
     name: "Cypress Attendance User",
     email: `cypress-attendance-${Date.now()}@test.com`,
     password: "TestPassword123!",
   };
-
-  function configureAttendance(totalClasses: string, maxMisses: string) {
-    cy.contains("button", "Settings").click();
-    cy.get('[role="dialog"]').should("be.visible");
-
-    cy.get("#form-attendance-total-classes").clear().type(totalClasses);
-    cy.get("#form-attendance-max-misses").clear().type(maxMisses);
-    cy.contains('[role="dialog"] button', "Save Settings").click();
-
-    cy.get('[role="dialog"]').should("not.exist");
-  }
 
   beforeEach(() => {
     cy.viewport(1280, 720);
@@ -96,9 +96,12 @@ describe("Attendance", () => {
     cy.get('[role="dialog"]').should("not.exist");
 
     cy.contains("Recorded Misses").click();
-    cy.get('[data-slot="accordion-content"]').within(() => {
-      cy.get("button").first().click();
-    });
+    cy.contains("Recorded Misses")
+      .closest('[data-slot="accordion-item"]')
+      .find('[data-slot="accordion-content"]')
+      .within(() => {
+        cy.get("button").first().click();
+      });
 
     cy.get('[role="dialog"]').within(() => {
       cy.contains("Remove Miss").should("be.visible");
