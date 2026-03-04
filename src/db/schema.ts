@@ -101,6 +101,7 @@ export const subject = pgTable(
     notesEnabled: boolean("notes_enabled").default(true).notNull(),
     gradesEnabled: boolean("grades_enabled").default(true).notNull(),
     attendanceEnabled: boolean("attendance_enabled").default(true).notNull(),
+    flashcardsEnabled: boolean("flashcards_enabled").default(true).notNull(),
     archivedAt: timestamp("archived_at"),
     userId: text("user_id")
       .notNull()
@@ -249,6 +250,32 @@ export const assessment = pgTable(
   ],
 );
 
+export const flashcard = pgTable(
+  "flashcard",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    front: text("front").notNull(),
+    back: text("back").notNull(),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("flashcard_subjectId_idx").on(table.subjectId),
+    index("flashcard_userId_idx").on(table.userId),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -257,6 +284,7 @@ export const userRelations = relations(user, ({ many }) => ({
   noteImageAttachments: many(noteImageAttachment),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
+  flashcards: many(flashcard),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -281,6 +309,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   notes: many(note),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
+  flashcards: many(flashcard),
 }));
 
 export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
@@ -327,6 +356,17 @@ export const assessmentRelations = relations(assessment, ({ one }) => ({
   }),
   user: one(user, {
     fields: [assessment.userId],
+    references: [user.id],
+  }),
+}));
+
+export const flashcardRelations = relations(flashcard, ({ one }) => ({
+  subject: one(subject, {
+    fields: [flashcard.subjectId],
+    references: [subject.id],
+  }),
+  user: one(user, {
+    fields: [flashcard.userId],
     references: [user.id],
   }),
 }));

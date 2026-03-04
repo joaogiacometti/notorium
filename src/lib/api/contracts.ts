@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import type {
   assessment,
   attendanceMiss,
+  flashcard,
   note,
   noteImageAttachment,
   subject,
@@ -18,6 +19,7 @@ export type NoteWithAttachmentsEntity = NoteEntity & {
 };
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
+export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 
 export type SearchSubjectResult = Pick<
   SubjectEntity,
@@ -44,6 +46,7 @@ export type SubjectEditDto = Pick<
   | "notesEnabled"
   | "gradesEnabled"
   | "attendanceEnabled"
+  | "flashcardsEnabled"
 >;
 
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;

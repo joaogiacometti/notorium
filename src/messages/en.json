@@ -114,6 +114,14 @@
     "archive": "Archive",
     "delete": "Delete"
   },
+  "FlashcardsList": {
+    "title": "Flashcards",
+    "count_empty": "Create cards to review key concepts quickly.",
+    "count": "{count, plural, one {# flashcard} other {# flashcards}}",
+    "new_flashcard": "New Flashcard",
+    "empty_title": "No flashcards yet",
+    "empty_description": "Create your first flashcard with a front and back."
+  },
   "NotesList": {
     "title": "Notes",
     "count_empty": "Capture what you learn, one note at a time.",
@@ -368,6 +376,28 @@
     "prompt_suffix": "? This action cannot be undone.",
     "confirm": "Delete"
   },
+  "CreateFlashcardDialog": {
+    "title": "Create Flashcard",
+    "field_front": "Front",
+    "field_back": "Back",
+    "field_front_placeholder": "e.g. What is photosynthesis?",
+    "field_back_placeholder": "e.g. Process plants use to convert light into energy.",
+    "submit": "Create Flashcard"
+  },
+  "EditFlashcardDialog": {
+    "title": "Edit Flashcard",
+    "field_front": "Front",
+    "field_back": "Back",
+    "field_front_placeholder": "e.g. What is photosynthesis?",
+    "field_back_placeholder": "e.g. Process plants use to convert light into energy.",
+    "submit": "Save Changes"
+  },
+  "DeleteFlashcardDialog": {
+    "title": "Delete Flashcard",
+    "prompt_prefix": "Are you sure you want to delete ",
+    "prompt_suffix": "? This action cannot be undone.",
+    "confirm": "Delete"
+  },
   "CreateSubjectDialog": {
     "title": "Create Subject",
     "field_name": "Name",
@@ -381,7 +411,9 @@
     "section_assessments": "Assessments",
     "section_assessments_desc": "Plan deadlines and track completed scores.",
     "section_attendance": "Attendance",
-    "section_attendance_desc": "Track missed classes against limits."
+    "section_attendance_desc": "Track missed classes against limits.",
+    "section_flashcards": "Flashcards",
+    "section_flashcards_desc": "Simple front/back cards for quick review."
   },
   "EditSubjectDialog": {
     "title": "Edit Subject",
@@ -392,7 +424,15 @@
     "section_assessments_desc": "Plan deadlines and track completed scores.",
     "section_attendance": "Attendance",
     "section_attendance_desc": "Track missed classes against limits.",
+    "section_flashcards": "Flashcards",
+    "section_flashcards_desc": "Simple front/back cards for quick review.",
     "submit": "Save Changes"
+  },
+  "FlashcardCard": {
+    "open_actions": "Open flashcard actions",
+    "created_label": "Created",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "DeleteAccountDialog": {
     "title": "Delete Account",
@@ -515,6 +555,11 @@
         "notFound": "Attachment not found."
       }
     },
+    "flashcards": {
+      "invalidData": "Invalid flashcard data.",
+      "notFound": "Flashcard not found.",
+      "moduleDisabled": "Flashcards are disabled for this subject."
+    },
     "profile": {
       "invalidData": "Invalid profile data.",
       "updateFailed": "Failed to update profile."
@@ -583,6 +628,12 @@
         "maxSize": "File is too large. Maximum size is {max}MB.",
         "fileError": "{fileName}: Invalid file."
       }
+    },
+    "flashcards": {
+      "frontRequired": "Flashcard front is required.",
+      "frontMaxLength": "Flashcard front must be at most 500 characters.",
+      "backRequired": "Flashcard back is required.",
+      "backMaxLength": "Flashcard back must be at most 2000 characters."
     },
     "profile": {
       "nameMinLength": "Name must be at least 2 characters.",

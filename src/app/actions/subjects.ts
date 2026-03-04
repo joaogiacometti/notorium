@@ -90,6 +90,7 @@ export async function createSubject(
     notesEnabled: parsed.data.notesEnabled,
     gradesEnabled: parsed.data.gradesEnabled,
     attendanceEnabled: parsed.data.attendanceEnabled,
+    flashcardsEnabled: parsed.data.flashcardsEnabled,
     userId,
   });
 
@@ -130,6 +131,7 @@ export async function editSubject(
       notesEnabled: parsed.data.notesEnabled,
       gradesEnabled: parsed.data.gradesEnabled,
       attendanceEnabled: parsed.data.attendanceEnabled,
+      flashcardsEnabled: parsed.data.flashcardsEnabled,
     })
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
 

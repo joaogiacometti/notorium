@@ -38,6 +38,7 @@ const subjectSchema = z.object({
   notesEnabled: z.boolean(),
   gradesEnabled: z.boolean(),
   attendanceEnabled: z.boolean(),
+  flashcardsEnabled: z.boolean().optional().default(true),
   createdAt: z.string(),
   updatedAt: z.string(),
   notes: z.array(noteSchema).optional().default([]),

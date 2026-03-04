@@ -54,6 +54,7 @@ export function EditSubjectDialog({
       notesEnabled: subject.notesEnabled,
       gradesEnabled: subject.gradesEnabled,
       attendanceEnabled: subject.attendanceEnabled,
+      flashcardsEnabled: subject.flashcardsEnabled,
     },
   });
 
@@ -175,6 +176,26 @@ export function EditSubjectDialog({
                         </span>
                         <p className="text-[0.8rem] text-muted-foreground">
                           {t("section_attendance_desc")}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="flashcardsEnabled"
+                  control={form.control}
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
+                      <div>
+                        <span className="text-sm font-medium">
+                          {t("section_flashcards")}
+                        </span>
+                        <p className="text-[0.8rem] text-muted-foreground">
+                          {t("section_flashcards_desc")}
                         </p>
                       </div>
                       <Switch
