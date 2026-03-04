@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  CheckCircle2,
+  CircleAlert,
+  Gauge,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -9,7 +16,7 @@ import {
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import type { FlashcardReviewEntity } from "@/lib/api/contracts";
 import type { ReviewGrade } from "@/lib/flashcard-scheduler";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
@@ -26,6 +33,19 @@ interface FlashcardReviewClientProps {
 }
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
+const gradeButtonStyles: Record<ReviewGrade, string> = {
+  again:
+    "border-destructive/45 bg-destructive/10 text-destructive hover:border-destructive/60 hover:bg-destructive/15",
+  hard: "border-amber-500/40 bg-amber-500/10 text-amber-700 hover:border-amber-500/55 hover:bg-amber-500/15 dark:text-amber-300",
+  good: "border-primary/45 bg-primary/10 text-primary hover:border-primary/60 hover:bg-primary/15",
+  easy: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:border-emerald-500/55 hover:bg-emerald-500/15 dark:text-emerald-300",
+};
+const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
+  again: CircleAlert,
+  hard: Gauge,
+  good: CheckCircle2,
+  easy: Sparkles,
+};
 
 export function FlashcardReviewClient({
   initialCards,
@@ -77,15 +97,22 @@ export function FlashcardReviewClient({
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {t("description")}
-        </p>
-        <p className="mt-2 text-sm font-medium text-foreground">
-          {dueCountText}
-        </p>
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-10 flex min-w-0 items-start gap-4">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <RotateCcw className="size-5" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
+            {t("title")}
+          </h1>
+          <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
+            {t("description")}
+          </p>
+          <p className="mt-2 text-sm font-medium text-foreground">
+            {dueCountText}
+          </p>
+        </div>
       </div>
 
       {!currentCard ? (
@@ -99,18 +126,22 @@ export function FlashcardReviewClient({
         </Card>
       ) : (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t("front_label")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="whitespace-pre-wrap text-base leading-relaxed">
-              {currentCard.front}
-            </p>
+          <CardContent className="space-y-4 pt-0">
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                {t("front_label")}
+              </h2>
+              <p className="whitespace-pre-wrap text-base leading-relaxed">
+                {currentCard.front}
+              </p>
+            </div>
 
             {revealed && (
-              <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-4">
-                <h3 className="text-sm font-semibold">{t("back_label")}</h3>
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+              <div className="space-y-2 border-t border-border/60 pt-3">
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  {t("back_label")}
+                </h3>
+                <p className="whitespace-pre-wrap text-base leading-relaxed">
                   {currentCard.back}
                 </p>
               </div>
@@ -125,18 +156,24 @@ export function FlashcardReviewClient({
                 {t("show_answer")}
               </Button>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-4">
-                {reviewGrades.map((grade) => (
-                  <Button
-                    key={grade}
-                    variant={grade === "again" ? "destructive" : "outline"}
-                    onClick={() => handleGrade(grade)}
-                    disabled={isPending}
-                    className="w-full"
-                  >
-                    {t(`grade_${grade}`)}
-                  </Button>
-                ))}
+              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                {reviewGrades.map((grade) => {
+                  const Icon = gradeIcons[grade];
+
+                  return (
+                    <Button
+                      key={grade}
+                      variant="outline"
+                      size="lg"
+                      onClick={() => handleGrade(grade)}
+                      disabled={isPending}
+                      className={`h-12 w-full min-w-0 border-2 px-2 text-sm font-semibold shadow-xs transition-transform hover:-translate-y-0.5 sm:px-4 ${gradeButtonStyles[grade]}`}
+                    >
+                      <Icon className="hidden size-4 sm:inline-flex" />
+                      {t(`grade_${grade}`)}
+                    </Button>
+                  );
+                })}
               </div>
             )}
           </CardContent>
