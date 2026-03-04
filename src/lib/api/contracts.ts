@@ -47,9 +47,17 @@ export type SearchNoteResult = Pick<
   subjectName: string;
 };
 
+export type SearchFlashcardResult = Pick<
+  FlashcardEntity,
+  "id" | "front" | "back" | "subjectId"
+> & {
+  subjectName: string;
+};
+
 export type SearchData = {
   subjects: SearchSubjectResult[];
   notes: SearchNoteResult[];
+  flashcards: SearchFlashcardResult[];
 };
 
 export type SubjectEditDto = Pick<

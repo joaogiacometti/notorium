@@ -2,16 +2,17 @@
 
 import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db/index";
-import { note, subject } from "@/db/schema";
+import { flashcard, note, subject } from "@/db/schema";
 import type { SearchData } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import { searchQuerySchema } from "@/lib/validations/search";
 
 const searchSubjectsLimit = 50;
 const searchNotesLimit = 50;
+const searchFlashcardsLimit = 50;
 
 function escapeIlike(value: string): string {
-  return value.replace(/[\\%_]/g, "\\$&");
+  return value.replaceAll(/[\\%_]/g, String.raw`\$&`);
 }
 
 export async function getSearchData(query?: string): Promise<SearchData> {
@@ -19,14 +20,14 @@ export async function getSearchData(query?: string): Promise<SearchData> {
   const parsed = searchQuerySchema.safeParse(query);
 
   if (!parsed.success) {
-    return { subjects: [], notes: [] };
+    return { subjects: [], notes: [], flashcards: [] };
   }
 
   const searchQuery = parsed.data;
   const searchPattern = `%${escapeIlike(searchQuery)}%`;
   const shouldFilter = searchQuery.length > 0;
 
-  const [allSubjects, allNotes] = await Promise.all([
+  const [allSubjects, allNotes, allFlashcards] = await Promise.all([
     db
       .select({
         id: subject.id,
@@ -78,7 +79,36 @@ export async function getSearchData(query?: string): Promise<SearchData> {
       )
       .orderBy(desc(note.updatedAt))
       .limit(searchNotesLimit),
+    db
+      .select({
+        id: flashcard.id,
+        front: flashcard.front,
+        back: sql<string>`left(${flashcard.back}, 100)`,
+        subjectId: flashcard.subjectId,
+        subjectName: subject.name,
+      })
+      .from(flashcard)
+      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .where(
+        shouldFilter
+          ? and(
+              eq(flashcard.userId, userId),
+              eq(subject.userId, userId),
+              isNull(subject.archivedAt),
+              or(
+                ilike(flashcard.front, searchPattern),
+                ilike(flashcard.back, searchPattern),
+              ),
+            )
+          : and(
+              eq(flashcard.userId, userId),
+              eq(subject.userId, userId),
+              isNull(subject.archivedAt),
+            ),
+      )
+      .orderBy(desc(flashcard.updatedAt))
+      .limit(searchFlashcardsLimit),
   ]);
 
-  return { subjects: allSubjects, notes: allNotes };
+  return { subjects: allSubjects, notes: allNotes, flashcards: allFlashcards };
 }

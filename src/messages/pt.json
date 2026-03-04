@@ -229,12 +229,13 @@
   "GlobalSearch": {
     "trigger": "Buscar...",
     "dialog_title": "Busca global",
-    "dialog_description": "Busque em todas as suas matérias e notas",
-    "input_placeholder": "Buscar matérias e notas...",
-    "empty_has_data": "Ainda não há matérias ou notas.",
+    "dialog_description": "Busque em todas as suas matérias, notas e flashcards",
+    "input_placeholder": "Buscar matérias, notas e flashcards...",
+    "empty_has_data": "Ainda não há matérias, notas ou flashcards.",
     "empty_sign_in": "Entre para buscar.",
     "subjects_group": "Matérias",
     "notes_group": "Notas",
+    "flashcards_group": "Flashcards",
     "in_subject": "em"
   },
   "ProfilePage": {

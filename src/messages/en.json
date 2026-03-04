@@ -229,12 +229,13 @@
   "GlobalSearch": {
     "trigger": "Search...",
     "dialog_title": "Global Search",
-    "dialog_description": "Search across all your subjects and notes",
-    "input_placeholder": "Search subjects and notes...",
-    "empty_has_data": "No subjects or notes yet.",
+    "dialog_description": "Search across all your subjects, notes, and flashcards",
+    "input_placeholder": "Search subjects, notes, and flashcards...",
+    "empty_has_data": "No subjects, notes, or flashcards yet.",
     "empty_sign_in": "Sign in to search.",
     "subjects_group": "Subjects",
     "notes_group": "Notes",
+    "flashcards_group": "Flashcards",
     "in_subject": "in"
   },
   "ProfilePage": {
