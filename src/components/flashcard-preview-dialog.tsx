@@ -33,13 +33,13 @@ export function FlashcardPreviewDialog({
         <div className="space-y-4">
           <section className="space-y-1.5">
             <h3 className="text-sm font-medium">{t("front_label")}</h3>
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+            <p className="wrap-break-word whitespace-pre-wrap text-sm text-muted-foreground">
               {flashcard.front}
             </p>
           </section>
           <section className="space-y-1.5">
             <h3 className="text-sm font-medium">{t("back_label")}</h3>
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+            <p className="wrap-break-word whitespace-pre-wrap text-sm text-muted-foreground">
               {flashcard.back}
             </p>
           </section>

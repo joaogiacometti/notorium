@@ -115,23 +115,14 @@ export function FlashcardReviewClient({
         </div>
       </div>
 
-      {!currentCard ? (
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-base font-semibold">{t("empty_title")}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("empty_description")}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
+      {currentCard ? (
         <Card>
           <CardContent className="space-y-4 pt-0">
             <div className="space-y-2">
               <h2 className="text-sm font-semibold text-muted-foreground">
                 {t("front_label")}
               </h2>
-              <p className="whitespace-pre-wrap text-base leading-relaxed">
+              <p className="wrap-break-word whitespace-pre-wrap text-base leading-relaxed">
                 {currentCard.front}
               </p>
             </div>
@@ -141,21 +132,13 @@ export function FlashcardReviewClient({
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   {t("back_label")}
                 </h3>
-                <p className="whitespace-pre-wrap text-base leading-relaxed">
+                <p className="wrap-break-word whitespace-pre-wrap text-base leading-relaxed">
                   {currentCard.back}
                 </p>
               </div>
             )}
 
-            {!revealed ? (
-              <Button
-                onClick={() => setRevealed(true)}
-                disabled={isPending}
-                className="w-full"
-              >
-                {t("show_answer")}
-              </Button>
-            ) : (
+            {revealed ? (
               <div className="grid grid-cols-4 gap-2 sm:gap-3">
                 {reviewGrades.map((grade) => {
                   const Icon = gradeIcons[grade];
@@ -175,7 +158,24 @@ export function FlashcardReviewClient({
                   );
                 })}
               </div>
+            ) : (
+              <Button
+                onClick={() => setRevealed(true)}
+                disabled={isPending}
+                className="w-full"
+              >
+                {t("show_answer")}
+              </Button>
             )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="text-base font-semibold">{t("empty_title")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("empty_description")}
+            </p>
           </CardContent>
         </Card>
       )}
