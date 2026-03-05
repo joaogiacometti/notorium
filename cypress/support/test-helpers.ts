@@ -24,26 +24,15 @@ export function login(user: { email: string; password: string }) {
   cy.url({ timeout: 10000 }).should("include", "/subjects");
 }
 
-export function setUserPlan(email: string, plan: "free" | "pro" | "unlimited") {
-  cy.task("setUserPlan", { email, plan });
-}
-
-export function authenticateWithSession(
-  user: {
-    name: string;
-    email: string;
-    password: string;
-  },
-  plan: "free" | "pro" | "unlimited" = "free",
-) {
-  cy.session(`${user.email}:${plan}`, () => {
+export function authenticateWithSession(user: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  cy.session(user.email, () => {
     signUp(user);
-
-    if (plan !== "free") {
-      setUserPlan(user.email, plan);
-      cy.visit("/subjects");
-      cy.url({ timeout: 10000 }).should("include", "/subjects");
-    }
+    cy.visit("/subjects");
+    cy.url({ timeout: 10000 }).should("include", "/subjects");
   });
 }
 

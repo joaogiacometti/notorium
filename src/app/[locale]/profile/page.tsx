@@ -2,7 +2,6 @@ import { UserCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { ProfileForm } from "@/components/profile-form";
 import { requireSession } from "@/lib/auth";
-import type { UserPlan } from "@/lib/plan-limits";
 
 export default async function ProfilePage() {
   const session = await requireSession();
@@ -28,7 +27,6 @@ export default async function ProfilePage() {
           <ProfileForm
             name={session.user.name}
             email={session.user.email}
-            plan={(session.user.plan ?? "free") as UserPlan}
             createdAt={new Date(session.user.createdAt).toISOString()}
             updatedAt={new Date(session.user.updatedAt).toISOString()}
           />

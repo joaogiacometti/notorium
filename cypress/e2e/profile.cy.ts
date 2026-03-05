@@ -65,39 +65,13 @@ describe("Profile Account Deletion", () => {
 });
 
 describe("Profile Data Transfer", () => {
-  const freePlanUser = {
-    name: "Cypress Profile Transfer Free User",
-    email: `cypress-profile-transfer-free-${Date.now()}@test.com`,
-    password: "TestPassword123!",
-  };
-
-  const proPlanUser = {
-    name: "Cypress Profile Transfer Pro User",
-    email: `cypress-profile-transfer-pro-${Date.now()}@test.com`,
-    password: "TestPassword123!",
-  };
-
-  it("shows data-transfer section as locked on free plan", () => {
-    cy.viewport(1280, 720);
-    authenticateWithSession(freePlanUser, "free");
-    cy.visit("/profile");
-    cy.url({ timeout: 10000 }).should("include", "/profile");
-
-    cy.contains('[data-slot="card"]', "Data Transfer").within(() => {
-      cy.contains("Data transfer is not available on the Free plan.").should(
-        "be.visible",
-      );
-      cy.contains("Upgrade your plan to import and export data.").should(
-        "not.exist",
-      );
-      cy.contains("button", "Export Data").should("not.exist");
-      cy.contains("button", "Import Data").should("not.exist");
-    });
-  });
-
   it("exports template without flashcards", () => {
     cy.viewport(1280, 720);
-    authenticateWithSession(proPlanUser, "pro");
+    authenticateWithSession({
+      name: "Cypress Profile Transfer User",
+      email: `cypress-profile-transfer-${Date.now()}@test.com`,
+      password: "TestPassword123!",
+    });
     cy.visit("/subjects");
 
     const subjectName = uniqueValue("Template Export Subject");

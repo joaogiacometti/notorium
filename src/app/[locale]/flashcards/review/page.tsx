@@ -4,7 +4,6 @@ import {
 } from "@/app/actions/flashcard-review";
 import { FlashcardReviewClient } from "@/components/flashcard-review-client";
 import { requireSession } from "@/lib/auth";
-import { getPlanLimits } from "@/lib/plan-limits";
 
 interface FlashcardReviewPageProps {
   searchParams: Promise<{ subjectId?: string }>;
@@ -13,7 +12,7 @@ interface FlashcardReviewPageProps {
 export default async function FlashcardReviewPage({
   searchParams,
 }: Readonly<FlashcardReviewPageProps>) {
-  const session = await requireSession();
+  await requireSession();
 
   const { subjectId } = await searchParams;
   const scopedSubjectId = typeof subjectId === "string" ? subjectId : undefined;
@@ -22,8 +21,6 @@ export default async function FlashcardReviewPage({
     getDueFlashcards({ subjectId: scopedSubjectId, limit: 50 }),
     getFlashcardReviewSummary({ subjectId: scopedSubjectId }),
   ]);
-  const plan = (session.user.plan as "free" | "pro" | "unlimited") ?? "free";
-  const flashcardsAllowed = getPlanLimits(plan).flashcardsAllowed;
 
   return (
     <main>
@@ -31,7 +28,6 @@ export default async function FlashcardReviewPage({
         initialCards={dueCards}
         initialSummary={summary}
         subjectId={scopedSubjectId}
-        flashcardsAllowed={flashcardsAllowed}
       />
     </main>
   );

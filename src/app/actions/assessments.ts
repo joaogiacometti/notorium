@@ -1,12 +1,12 @@
 "use server";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { AssessmentEntity, MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
-import { checkAssessmentLimit } from "@/lib/plan-enforcement";
+import { getAuthenticatedUserId } from "@/lib/auth";
+import { LIMITS } from "@/lib/limits";
 import { actionError } from "@/lib/server-action-errors";
 import {
   type CreateAssessmentForm,
@@ -59,7 +59,7 @@ export async function getAssessments(): Promise<AssessmentEntity[]> {
 export async function createAssessment(
   data: CreateAssessmentForm,
 ): Promise<MutationResult> {
-  const { userId, plan } = await getAuthenticatedUser();
+  const userId = await getAuthenticatedUserId();
   const parsed = createAssessmentSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -82,19 +82,21 @@ export async function createAssessment(
     return actionError("subjects.notFound");
   }
 
-  const limitCheck = await checkAssessmentLimit(
-    userId,
-    parsed.data.subjectId,
-    plan,
-  );
+  const result = await db
+    .select({ total: count() })
+    .from(assessment)
+    .where(
+      and(
+        eq(assessment.subjectId, parsed.data.subjectId),
+        eq(assessment.userId, userId),
+      ),
+    );
 
-  if (!limitCheck.allowed) {
-    if (limitCheck.max === null) {
-      return actionError("common.generic");
-    }
+  const current = result[0]?.total ?? 0;
 
-    return actionError("plan.assessmentLimit", {
-      errorParams: { max: limitCheck.max },
+  if (current >= LIMITS.maxAssessmentsPerSubject) {
+    return actionError("limits.assessmentLimit", {
+      errorParams: { max: LIMITS.maxAssessmentsPerSubject },
     });
   }
 

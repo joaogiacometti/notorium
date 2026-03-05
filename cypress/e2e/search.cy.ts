@@ -21,7 +21,7 @@ describe("Global Search", () => {
 
   beforeEach(() => {
     cy.viewport(1280, 720);
-    authenticateWithSession(testUser, "pro");
+    authenticateWithSession(testUser);
     visitSubjectsPage();
   });
 

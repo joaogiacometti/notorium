@@ -1,12 +1,12 @@
 "use server";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { note, subject } from "@/db/schema";
 import type { MutationResult, NoteEntity } from "@/lib/api/contracts";
-import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
-import { checkNoteLimit } from "@/lib/plan-enforcement";
+import { getAuthenticatedUserId } from "@/lib/auth";
+import { LIMITS } from "@/lib/limits";
 import { actionError } from "@/lib/server-action-errors";
 import {
   type CreateNoteForm,
@@ -60,7 +60,7 @@ export async function getNoteById(id: string): Promise<NoteEntity | null> {
 export async function createNote(
   data: CreateNoteForm,
 ): Promise<MutationResult> {
-  const { userId, plan } = await getAuthenticatedUser();
+  const userId = await getAuthenticatedUserId();
   const parsed = createNoteSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -83,15 +83,18 @@ export async function createNote(
     return actionError("subjects.notFound");
   }
 
-  const limitCheck = await checkNoteLimit(userId, parsed.data.subjectId, plan);
+  const result = await db
+    .select({ total: count() })
+    .from(note)
+    .where(
+      and(eq(note.subjectId, parsed.data.subjectId), eq(note.userId, userId)),
+    );
 
-  if (!limitCheck.allowed) {
-    if (limitCheck.max === null) {
-      return actionError("common.generic");
-    }
+  const current = result[0]?.total ?? 0;
 
-    return actionError("plan.noteLimit", {
-      errorParams: { max: limitCheck.max },
+  if (current >= LIMITS.maxNotesPerSubject) {
+    return actionError("limits.noteLimit", {
+      errorParams: { max: LIMITS.maxNotesPerSubject },
     });
   }
 

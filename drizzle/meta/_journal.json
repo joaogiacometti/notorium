@@ -113,6 +113,13 @@
       "when": 1772718528568,
       "tag": "0015_bent_longshot",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1772729390454,
+      "tag": "0016_illegal_viper",
+      "breakpoints": true
     }
   ]
 }

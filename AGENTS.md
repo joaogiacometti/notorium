@@ -6,7 +6,7 @@ Notorium is a study management app built with Next.js 16 (App Router). Core modu
 Notes support rich text and render images from pasted direct image URLs and Markdown image syntax.
 Flashcards on subject detail are presented in a collapsed section and loaded when expanded.
 Flashcards also have a dedicated page under each subject, and global search routes flashcard results to that page.
-Profile data transfer is available on paid plans (`pro`, `unlimited`): full mode exports/imports flashcards, while template export excludes flashcards.
+Profile data transfer is available to all users: full mode exports/imports flashcards, while template export excludes notes, attendance records, and flashcards.
 
 ## Project Structure
 
@@ -37,21 +37,21 @@ src/
 
 ## Commands
 
-| Command               | Description                 |
-| --------------------- | --------------------------- |
-| `bun dev`             | Start development server    |
-| `bun run build`       | Production build            |
-| `bun run typecheck`   | TypeScript type checking    |
-| `bun run lint`        | Run Biome linter            |
-| `bun run format`      | Format code with Biome      |
-| `bun run test`        | Run Vitest test suite       |
-| `bun run test:watch`  | Run Vitest in watch mode    |
-| `bun run test:coverage` | Run Vitest with coverage  |
-| `bun run cypress:open` | Open Cypress UI            |
-| `bun run cypress:run` | Run Cypress headless        |
-| `bun run db:generate` | Generate Drizzle migrations |
-| `bun run db:migrate`  | Run Drizzle migrations      |
-| `bun run db:push`     | Push schema directly to DB  |
+| Command                 | Description                 |
+| ----------------------- | --------------------------- |
+| `bun dev`               | Start development server    |
+| `bun run build`         | Production build            |
+| `bun run typecheck`     | TypeScript type checking    |
+| `bun run lint`          | Run Biome linter            |
+| `bun run format`        | Format code with Biome      |
+| `bun run test`          | Run Vitest test suite       |
+| `bun run test:watch`    | Run Vitest in watch mode    |
+| `bun run test:coverage` | Run Vitest with coverage    |
+| `bun run cypress:open`  | Open Cypress UI             |
+| `bun run cypress:run`   | Run Cypress headless        |
+| `bun run db:generate`   | Generate Drizzle migrations |
+| `bun run db:migrate`    | Run Drizzle migrations      |
+| `bun run db:push`       | Push schema directly to DB  |
 
 ## Tech Stack
 
@@ -140,7 +140,7 @@ This is where validation depth lives. Zod schemas, utility functions, and server
 
 - **Zod schema tests should verify rejection of invalid inputs**, not just confirm that valid data passes. Test missing fields, wrong types, boundary values, and malformed data. Cover all edge cases, all refinements, all error messages.
 - **Server Action tests should cover authentication checks, authorization, and error responses**, not just the happy path.
-- **Utility / business logic tests** should cover branching, boundary conditions, and transformations (e.g., weighted vs simple averages, overdue detection, plan limit logic).
+- **Utility / business logic tests** should cover branching, boundary conditions, and transformations (e.g., weighted vs simple averages, overdue detection, system limit logic).
 
 #### E2E Tests (Cypress)
 
@@ -153,7 +153,7 @@ E2E tests prove the full stack works together: UI → form → action/API → da
 | Happy path                | 1              | Create/submit succeeds, data appears, correct redirect                          |
 | Representative validation | 1              | One invalid case → error surfaces in UI, no redirect/side-effect                |
 | Server error              | 0–1            | Server-rejected action shows toast (e.g., duplicate email, invalid credentials) |
-| Auth / permissions        | 0–1            | Unauth redirect or plan-gated feature blocked                                   |
+| Auth / permissions        | 0–1            | Unauth redirect blocked                                                         |
 
 This means ~2–4 Cypress tests per form, not 6–8.
 
@@ -164,7 +164,7 @@ This means ~2–4 Cypress tests per form, not 6–8.
 - **One representative validation per form.** Pick the most important invalid case (e.g., empty required field) that proves UI → action → error rendering works. Do not test every field's required message, every Zod refinement, or every boundary.
 - **Server-rejected errors.** Assert that error toasts appear for actions the server rejects (invalid credentials, duplicate email, duplicate attendance date). These are not caught by client-side Zod.
 - **Auth guards.** Test that protected routes redirect unauthenticated users to `/login` and that authenticated users are redirected away from `/login` and `/signup`.
-- **Plan/business rule enforcement.** Test that plan limits and feature gates work in the UI (e.g., free plan blocks flashcards, subject limit disables create button).
+- **Business rule enforcement.** Test that limits work in the UI (e.g., subject limit disables create button).
 
 **What NOT to test in E2E:**
 

@@ -45,7 +45,7 @@ describe("Subjects", () => {
 
   beforeEach(() => {
     cy.viewport(1280, 720);
-    authenticateWithSession(testUser, "pro");
+    authenticateWithSession(testUser);
     visitSubjectsPage();
   });
 
@@ -183,37 +183,5 @@ describe("Subjects", () => {
     cy.contains('[data-slot="card-title"]', name).should("not.exist");
     cy.contains("a", "Back to Subjects").click();
     cy.contains('[data-slot="card-title"]', name).should("not.exist");
-  });
-
-  it("counts archived subjects toward free plan subject limit", () => {
-    const limitUser = {
-      name: "Cypress Subjects Limit User",
-      email: `cypress-subjects-limit-${Date.now()}@test.com`,
-      password: "TestPassword123!",
-    };
-
-    authenticateWithSession(limitUser);
-    visitSubjectsPage();
-
-    const subjects = Array.from({ length: 5 }, (_, index) => ({
-      name: uniqueValue(`Limit Subject ${index + 1}`),
-      description: `Limit subject ${index + 1}`,
-    }));
-
-    subjects.forEach((subjectInput) => {
-      createSubject(subjectInput);
-      cy.contains('[data-slot="card-title"]', subjectInput.name).should(
-        "be.visible",
-      );
-    });
-
-    openSubjectDetail(subjects[0].name);
-    cy.contains("button", "Archive").click();
-    cy.get('[role="dialog"]').within(() => {
-      cy.contains("button", "Archive").click();
-    });
-
-    cy.url({ timeout: 10000 }).should("include", "/subjects");
-    cy.get("#btn-create-subject").should("be.disabled");
   });
 });

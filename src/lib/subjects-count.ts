@@ -1,8 +1,4 @@
-export interface SubjectCountOptions {
-  activeCount: number;
-  archivedCount: number;
-  maxSubjects: number | null;
-}
+import { LIMITS } from "./limits";
 
 export function getTotalSubjectCount(
   activeCount: number,
@@ -11,22 +7,28 @@ export function getTotalSubjectCount(
   return activeCount + archivedCount;
 }
 
-export function getSubjectCountText({
-  activeCount,
-  archivedCount,
-  maxSubjects,
-}: SubjectCountOptions): string {
-  const totalSubjects = getTotalSubjectCount(activeCount, archivedCount);
+export function formatSubjectCount(activeCount: number): string {
+  if (activeCount === 0) {
+    return "0 subjects";
+  }
+  if (activeCount === 1) {
+    return "1 subject";
+  }
+  return `${activeCount} subjects`;
+}
 
-  if (totalSubjects === 0) {
-    return "Get started by creating your first subject.";
+export function getSubjectCountWithLimitText(
+  activeCount: number,
+  archivedCount: number,
+): string {
+  const total = getTotalSubjectCount(activeCount, archivedCount);
+
+  if (activeCount === 0 && archivedCount === 0) {
+    return "No subjects yet";
   }
 
-  if (maxSubjects !== null) {
-    return archivedCount > 0
-      ? `${totalSubjects}/${maxSubjects} subjects (${archivedCount} archived)`
-      : `${totalSubjects}/${maxSubjects} subjects`;
-  }
+  const activeText = formatSubjectCount(activeCount);
+  const totalText = `(${total}/${LIMITS.maxSubjects} total)`;
 
-  return `${totalSubjects} subject${totalSubjects === 1 ? "" : "s"}`;
+  return `${activeText} ${totalText}`;
 }

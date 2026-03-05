@@ -6,7 +6,7 @@ Notes support rich text and can render images from direct image URLs (paste) and
 
 On subject detail pages, flashcards are shown in a collapsed section and loaded on first expand.
 Flashcards also have a dedicated detail page under each subject, and global search results for flashcards open that detail page directly.
-Profile data transfer is available on paid plans (`pro`, `unlimited`) and supports full export/import for subjects, notes, attendance, assessments, and flashcards, plus a template export that excludes notes, attendance, and flashcards.
+Profile data transfer is available to all users and supports full export/import for subjects, notes, attendance, assessments, and flashcards, plus a template export that excludes notes, attendance, and flashcards.
 
 ## Tech Stack
 

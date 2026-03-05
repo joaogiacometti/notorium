@@ -1,12 +1,12 @@
 "use server";
 
-import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { subject } from "@/db/schema";
 import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
-import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
-import { checkSubjectLimit } from "@/lib/plan-enforcement";
+import { getAuthenticatedUserId } from "@/lib/auth";
+import { LIMITS } from "@/lib/limits";
 import { actionError } from "@/lib/server-action-errors";
 import {
   type ArchiveSubjectForm,
@@ -63,22 +63,23 @@ export async function getSubjectById(
 export async function createSubject(
   data: CreateSubjectForm,
 ): Promise<MutationResult> {
-  const { userId, plan } = await getAuthenticatedUser();
+  const userId = await getAuthenticatedUserId();
   const parsed = createSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
     return actionError("subjects.invalidData");
   }
 
-  const limitCheck = await checkSubjectLimit(userId, plan);
+  const result = await db
+    .select({ total: count() })
+    .from(subject)
+    .where(eq(subject.userId, userId));
 
-  if (!limitCheck.allowed) {
-    if (limitCheck.max === null) {
-      return actionError("common.generic");
-    }
+  const current = result[0]?.total ?? 0;
 
-    return actionError("plan.subjectLimit", {
-      errorParams: { max: limitCheck.max },
+  if (current >= LIMITS.maxSubjects) {
+    return actionError("limits.subjectLimit", {
+      errorParams: { max: LIMITS.maxSubjects },
     });
   }
 

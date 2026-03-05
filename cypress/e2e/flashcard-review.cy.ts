@@ -25,7 +25,7 @@ describe("Flashcard Review", () => {
 
   beforeEach(() => {
     cy.viewport(1280, 720);
-    authenticateWithSession(testUser, "pro");
+    authenticateWithSession(testUser);
     visitSubjectsPage();
   });
 
@@ -77,7 +77,7 @@ describe("Flashcard Review", () => {
       email: `cypress-flashcard-empty-${Date.now()}@test.com`,
       password: "TestPassword123!",
     };
-    authenticateWithSession(emptyUser, "pro");
+    authenticateWithSession(emptyUser);
     cy.visit("/flashcards/review");
 
     cy.contains("All caught up").should("be.visible");

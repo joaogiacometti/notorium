@@ -7,38 +7,27 @@ import { CreateNoteDialog } from "@/components/create-note-dialog";
 import { NoteCard } from "@/components/note-card";
 import { Button } from "@/components/ui/button";
 import type { NoteEntity } from "@/lib/api/contracts";
-import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
+import { LIMITS } from "@/lib/limits";
 
 interface NotesListProps {
   subjectId: string;
   notes: NoteEntity[];
-  plan: UserPlan;
 }
 
-export function NotesList({
-  subjectId,
-  notes,
-  plan,
-}: Readonly<NotesListProps>) {
+export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
   const t = useTranslations("NotesList");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const limits = getPlanLimits(plan);
-  const isAtLimit =
-    limits.maxNotesPerSubject !== null &&
-    notes.length >= limits.maxNotesPerSubject;
+  const isAtLimit = notes.length >= LIMITS.maxNotesPerSubject;
 
   function getNoteCountText() {
     if (notes.length === 0) {
       return t("count_empty");
     }
-    if (limits.maxNotesPerSubject !== null) {
-      return t("count_with_limit", {
-        count: notes.length,
-        max: limits.maxNotesPerSubject,
-      });
-    }
-    return t("count_no_limit", { count: notes.length });
+    return t("count_with_limit", {
+      count: notes.length,
+      max: LIMITS.maxNotesPerSubject,
+    });
   }
 
   return (
@@ -73,7 +62,7 @@ export function NotesList({
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
           <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-amber-800 dark:text-amber-200">
-            {t("limit_message", { max: limits.maxNotesPerSubject ?? 0 })}
+            {t("limit_message", { max: LIMITS.maxNotesPerSubject })}
           </p>
         </div>
       )}

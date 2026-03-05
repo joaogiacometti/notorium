@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
@@ -11,11 +11,8 @@ import type {
   FlashcardEntity,
   ResetFlashcardResult,
 } from "@/lib/api/contracts";
-import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
-import {
-  checkFlashcardLimit,
-  checkFlashcardsAllowed,
-} from "@/lib/plan-enforcement";
+import { getAuthenticatedUserId } from "@/lib/auth";
+import { LIMITS } from "@/lib/limits";
 import { actionError } from "@/lib/server-action-errors";
 import {
   type CreateFlashcardForm,
@@ -74,7 +71,7 @@ export async function getFlashcardById(
 export async function createFlashcard(
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
-  const { userId, plan } = await getAuthenticatedUser();
+  const userId = await getAuthenticatedUserId();
   const parsed = createFlashcardSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -97,25 +94,21 @@ export async function createFlashcard(
     return actionError("subjects.notFound");
   }
 
-  if (!(await checkFlashcardsAllowed(plan))) {
-    return actionError("plan.flashcardLimit", {
-      errorParams: { max: 0 },
-    });
-  }
+  const result = await db
+    .select({ total: count() })
+    .from(flashcard)
+    .where(
+      and(
+        eq(flashcard.subjectId, parsed.data.subjectId),
+        eq(flashcard.userId, userId),
+      ),
+    );
 
-  const limitCheck = await checkFlashcardLimit(
-    userId,
-    parsed.data.subjectId,
-    plan,
-  );
+  const current = result[0]?.total ?? 0;
 
-  if (!limitCheck.allowed) {
-    if (limitCheck.max === null) {
-      return actionError("common.generic");
-    }
-
-    return actionError("plan.flashcardLimit", {
-      errorParams: { max: limitCheck.max },
+  if (current >= LIMITS.maxFlashcardsPerSubject) {
+    return actionError("limits.flashcardLimit", {
+      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
     });
   }
 
