@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   CircleAlert,
   Gauge,
-  Lock,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
@@ -31,7 +30,6 @@ interface FlashcardReviewClientProps {
   initialCards: FlashcardReviewEntity[];
   initialSummary: ReviewSummary;
   subjectId?: string;
-  flashcardsAllowed: boolean;
 }
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
@@ -53,7 +51,6 @@ export function FlashcardReviewClient({
   initialCards,
   initialSummary,
   subjectId,
-  flashcardsAllowed,
 }: Readonly<FlashcardReviewClientProps>) {
   const t = useTranslations("FlashcardReviewPage");
   const tErrors = useTranslations("ServerActions");
@@ -98,7 +95,7 @@ export function FlashcardReviewClient({
 
   let reviewContent = null;
 
-  if (flashcardsAllowed && currentCard) {
+  if (currentCard) {
     reviewContent = (
       <Card>
         <CardContent className="space-y-4 pt-0">
@@ -154,7 +151,7 @@ export function FlashcardReviewClient({
         </CardContent>
       </Card>
     );
-  } else if (flashcardsAllowed) {
+  } else {
     reviewContent = (
       <Card>
         <CardContent className="pt-0">
@@ -182,22 +179,11 @@ export function FlashcardReviewClient({
           <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
             {t("description")}
           </p>
-          {flashcardsAllowed && (
-            <p className="mt-2 text-sm font-medium text-foreground">
-              {dueCountText}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {!flashcardsAllowed && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
-          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-amber-800 dark:text-amber-200">
-            {t("free_plan_title")}
+          <p className="mt-2 text-sm font-medium text-foreground">
+            {dueCountText}
           </p>
         </div>
-      )}
+      </div>
 
       {reviewContent}
     </div>

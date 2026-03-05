@@ -1,63 +1,57 @@
 import { describe, expect, it } from "vitest";
+import { LIMITS } from "./limits";
 import {
-  getSubjectCountText,
+  formatSubjectCount,
+  getSubjectCountWithLimitText,
   getTotalSubjectCount,
-} from "@/lib/subjects-count";
+} from "./subjects-count";
 
-describe("getTotalSubjectCount", () => {
-  it("sums active and archived subject counts", () => {
-    expect(getTotalSubjectCount(3, 2)).toBe(5);
-  });
-});
-
-describe("getSubjectCountText", () => {
-  it("returns onboarding text when user has no subjects", () => {
-    expect(
-      getSubjectCountText({
-        activeCount: 0,
-        archivedCount: 0,
-        maxSubjects: 5,
-      }),
-    ).toBe("Get started by creating your first subject.");
+describe("subjects-count", () => {
+  describe("getTotalSubjectCount", () => {
+    it("should sum active and archived counts", () => {
+      expect(getTotalSubjectCount(0, 0)).toBe(0);
+      expect(getTotalSubjectCount(5, 0)).toBe(5);
+      expect(getTotalSubjectCount(0, 3)).toBe(3);
+      expect(getTotalSubjectCount(5, 2)).toBe(7);
+    });
   });
 
-  it("returns limited count text without archived subjects", () => {
-    expect(
-      getSubjectCountText({
-        activeCount: 2,
-        archivedCount: 0,
-        maxSubjects: 5,
-      }),
-    ).toBe("2/5 subjects");
+  describe("formatSubjectCount", () => {
+    it("should format 0 subjects", () => {
+      expect(formatSubjectCount(0)).toBe("0 subjects");
+    });
+
+    it("should format 1 subject", () => {
+      expect(formatSubjectCount(1)).toBe("1 subject");
+    });
+
+    it("should format multiple subjects", () => {
+      expect(formatSubjectCount(5)).toBe("5 subjects");
+      expect(formatSubjectCount(10)).toBe("10 subjects");
+    });
   });
 
-  it("returns limited count text including archived subjects", () => {
-    expect(
-      getSubjectCountText({
-        activeCount: 4,
-        archivedCount: 1,
-        maxSubjects: 5,
-      }),
-    ).toBe("5/5 subjects (1 archived)");
-  });
+  describe("getSubjectCountWithLimitText", () => {
+    it("should return empty state text when there are 0 total subjects", () => {
+      expect(getSubjectCountWithLimitText(0, 0)).toBe("No subjects yet");
+    });
 
-  it("handles unlimited plans with singular subject label", () => {
-    expect(
-      getSubjectCountText({
-        activeCount: 1,
-        archivedCount: 0,
-        maxSubjects: null,
-      }),
-    ).toBe("1 subject");
-  });
+    it("should format active count and append total limit indication", () => {
+      expect(getSubjectCountWithLimitText(5, 0)).toBe(
+        `5 subjects (5/${LIMITS.maxSubjects} total)`,
+      );
+    });
 
-  it("handles unlimited plans with plural subject label", () => {
-    expect(
-      getSubjectCountText({
-        activeCount: 1,
-        archivedCount: 2,
-        maxSubjects: null,
-      }),
-    ).toBe("3 subjects");
+    it("should include archived subjects in the total count calculation", () => {
+      expect(getSubjectCountWithLimitText(3, 2)).toBe(
+        `3 subjects (5/${LIMITS.maxSubjects} total)`,
+      );
+    });
+
+    it("should handle formatting correctly at precisely the global limit", () => {
+      expect(getSubjectCountWithLimitText(LIMITS.maxSubjects, 0)).toBe(
+        `${LIMITS.maxSubjects} subjects (${LIMITS.maxSubjects}/${LIMITS.maxSubjects} total)`,
+      );
+    });
   });
 });

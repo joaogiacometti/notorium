@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import {
@@ -11,9 +11,8 @@ import {
   subject,
 } from "@/db/schema";
 import type { MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUser } from "@/lib/auth";
-import { checkSubjectLimit } from "@/lib/plan-enforcement";
-import { getPlanLimits } from "@/lib/plan-limits";
+import { getAuthenticatedUserId } from "@/lib/auth";
+import { LIMITS } from "@/lib/limits";
 import {
   type ActionErrorResult,
   actionError,
@@ -31,11 +30,7 @@ export async function exportData(
   options: ExportOptions = {},
 ): Promise<ImportData | ActionErrorResult> {
   const { templateOnly = false } = options;
-  const { userId, plan } = await getAuthenticatedUser();
-
-  if (plan === "free") {
-    return actionError("plan.dataTransferNotAllowed");
-  }
+  const userId = await getAuthenticatedUserId();
 
   const subjects = await db
     .select()
@@ -136,13 +131,7 @@ export async function exportData(
 export async function importData(
   raw: unknown,
 ): Promise<MutationResult & { imported?: number }> {
-  const { userId, plan } = await getAuthenticatedUser();
-
-  if (plan === "free") {
-    return actionError("plan.dataTransferNotAllowed");
-  }
-
-  const limits = getPlanLimits(plan);
+  const userId = await getAuthenticatedUserId();
 
   const parsed = importDataSchema.safeParse(raw);
   if (!parsed.success) {
@@ -155,41 +144,35 @@ export async function importData(
     return actionError("dataTransfer.noSubjectsToImport");
   }
 
-  const subjectLimitCheck = await checkSubjectLimit(userId, plan);
-  if (
-    subjectLimitCheck.max !== null &&
-    subjectLimitCheck.current + data.subjects.length > subjectLimitCheck.max
-  ) {
-    return actionError("plan.subjectImportLimit", {
-      errorParams: { max: subjectLimitCheck.max },
+  const subjectCountResult = await db
+    .select({ total: count() })
+    .from(subject)
+    .where(eq(subject.userId, userId));
+
+  const currentSubjects = subjectCountResult[0]?.total ?? 0;
+
+  if (currentSubjects + data.subjects.length > LIMITS.maxSubjects) {
+    return actionError("limits.subjectImportLimit", {
+      errorParams: { max: LIMITS.maxSubjects },
     });
   }
 
   for (const importedSubject of data.subjects) {
-    if (
-      limits.maxNotesPerSubject !== null &&
-      importedSubject.notes.length > limits.maxNotesPerSubject
-    ) {
-      return actionError("plan.noteLimit", {
-        errorParams: { max: limits.maxNotesPerSubject },
+    if (importedSubject.notes.length > LIMITS.maxNotesPerSubject) {
+      return actionError("limits.noteLimit", {
+        errorParams: { max: LIMITS.maxNotesPerSubject },
       });
     }
 
-    if (
-      limits.maxAssessmentsPerSubject !== null &&
-      importedSubject.assessments.length > limits.maxAssessmentsPerSubject
-    ) {
-      return actionError("plan.assessmentLimit", {
-        errorParams: { max: limits.maxAssessmentsPerSubject },
+    if (importedSubject.assessments.length > LIMITS.maxAssessmentsPerSubject) {
+      return actionError("limits.assessmentLimit", {
+        errorParams: { max: LIMITS.maxAssessmentsPerSubject },
       });
     }
 
-    if (
-      limits.maxFlashcardsPerSubject !== null &&
-      importedSubject.flashcards.length > limits.maxFlashcardsPerSubject
-    ) {
-      return actionError("plan.flashcardLimit", {
-        errorParams: { max: limits.maxFlashcardsPerSubject },
+    if (importedSubject.flashcards.length > LIMITS.maxFlashcardsPerSubject) {
+      return actionError("limits.flashcardLimit", {
+        errorParams: { max: LIMITS.maxFlashcardsPerSubject },
       });
     }
   }

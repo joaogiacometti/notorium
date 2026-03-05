@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -9,7 +8,6 @@ import { toast } from "sonner";
 import { updateProfile } from "@/app/actions/profile";
 import { DataTransferActions } from "@/components/data-transfer-actions";
 import { DeleteAccountDialog } from "@/components/delete-account-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,7 +25,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useRouter } from "@/i18n/routing";
 import { getIntlLocale } from "@/lib/date-locale";
-import type { UserPlan } from "@/lib/plan-limits";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import {
   type UpdateProfileForm,
@@ -37,7 +34,6 @@ import {
 interface ProfileFormProps {
   name: string;
   email: string;
-  plan: UserPlan;
   createdAt: string;
   updatedAt: string;
 }
@@ -45,7 +41,6 @@ interface ProfileFormProps {
 export function ProfileForm({
   name,
   email,
-  plan,
   createdAt,
   updatedAt,
 }: Readonly<ProfileFormProps>) {
@@ -61,7 +56,6 @@ export function ProfileForm({
       name,
     },
   });
-  const dataTransferAllowed = plan !== "free";
 
   const createdAtLabel = new Date(createdAt).toLocaleDateString(intlLocale, {
     year: "numeric",
@@ -134,18 +128,6 @@ export function ProfileForm({
               </Field>
 
               <div className="rounded-lg border bg-muted/20 px-4 py-3 text-sm">
-                <p className="flex items-center gap-2">
-                  <span className="text-muted-foreground">{t("plan")}:</span>
-                  <Badge variant={plan === "free" ? "secondary" : "default"}>
-                    {
-                      {
-                        free: t("plan_free"),
-                        pro: t("plan_pro"),
-                        unlimited: t("plan_unlimited"),
-                      }[plan]
-                    }
-                  </Badge>
-                </p>
                 <p className="mt-1">
                   <span className="text-muted-foreground">{t("joined")}:</span>{" "}
                   {createdAtLabel}
@@ -177,18 +159,7 @@ export function ProfileForm({
           <CardDescription>{t("data_transfer_description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          {dataTransferAllowed ? (
-            <DataTransferActions />
-          ) : (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  {t("data_transfer_locked_description")}
-                </p>
-              </div>
-            </div>
-          )}
+          <DataTransferActions />
         </CardContent>
       </Card>
 

@@ -1,17 +1,20 @@
 "use server";
 
-import { del } from "@vercel/blob";
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
-import { noteImageAttachment, user } from "@/db/schema";
-import { appEnv } from "@/env";
+import { user } from "@/db/schema";
+import { isAdminUser } from "@/lib/access-control";
 import type { MutationResult } from "@/lib/api/contracts";
 import { auth, getAuthenticatedUserId } from "@/lib/auth";
 import { actionError } from "@/lib/server-action-errors";
+import {
+  type UpdateUserAccessInput,
+  updateUserAccessSchema,
+} from "@/lib/validations/access-control";
 import {
   type UpdateProfileForm,
   updateProfileSchema,
@@ -48,21 +51,7 @@ export async function updateProfile(
 export async function deleteAccount(): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
 
-  const attachments = await db
-    .select({ blobPathname: noteImageAttachment.blobPathname })
-    .from(noteImageAttachment)
-    .where(eq(noteImageAttachment.userId, userId));
-
   await db.delete(user).where(eq(user.id, userId));
-
-  if (appEnv.BLOB_READ_WRITE_TOKEN && attachments.length > 0) {
-    try {
-      await del(
-        attachments.map((a) => a.blobPathname),
-        { token: appEnv.BLOB_READ_WRITE_TOKEN },
-      );
-    } catch {}
-  }
 
   await auth.api.signOut({
     headers: await headers(),
@@ -70,4 +59,53 @@ export async function deleteAccount(): Promise<MutationResult> {
 
   const locale = await getLocale();
   redirect(`/${locale}/login`);
+}
+
+async function getAdminUserId() {
+  const userId = await getAuthenticatedUserId();
+  const isAdmin = await isAdminUser(userId);
+  if (!isAdmin) {
+    return null;
+  }
+
+  return userId;
+}
+
+export async function updateUserAccessStatus(
+  data: UpdateUserAccessInput,
+): Promise<MutationResult> {
+  const adminUserId = await getAdminUserId();
+  if (!adminUserId) {
+    return actionError("auth.forbidden");
+  }
+
+  const parsed = updateUserAccessSchema.safeParse(data);
+  if (!parsed.success) {
+    return actionError("common.invalidRequest");
+  }
+
+  if (parsed.data.userId === adminUserId) {
+    return actionError("auth.forbidden");
+  }
+
+  const [targetUser] = await db
+    .select({
+      id: user.id,
+    })
+    .from(user)
+    .where(eq(user.id, parsed.data.userId))
+    .limit(1);
+
+  if (!targetUser) {
+    return actionError("auth.userNotFound");
+  }
+
+  await db
+    .update(user)
+    .set({
+      accessStatus: parsed.data.accessStatus,
+    })
+    .where(eq(user.id, parsed.data.userId));
+
+  return { success: true };
 }

@@ -2,10 +2,12 @@
 
 Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, and assessments in one place with private, user-scoped data.
 The app is localized in English (`en`) and Portuguese (`pt`).
+Notes support rich text and can render images from direct image URLs (paste) and Markdown image syntax.
 
 On subject detail pages, flashcards are shown in a collapsed section and loaded on first expand.
 Flashcards also have a dedicated detail page under each subject, and global search results for flashcards open that detail page directly.
-Profile data transfer is available on paid plans (`pro`, `unlimited`) and supports full export/import for subjects, notes, attendance, assessments, and flashcards, plus a template export that excludes notes, attendance, and flashcards.
+Profile data transfer is available to all users and supports full export/import for subjects, notes, attendance, assessments, and flashcards, plus a template export that excludes notes, attendance, and flashcards.
+Account access is approval-based: new users are created as pending, approved users can enter the app, and admins can approve or block users from the Admin Panel in the account menu.
 
 ## Tech Stack
 
@@ -67,7 +69,6 @@ Defined in `src/env.ts`:
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
 | `BETTER_AUTH_URL` | Yes | Base app URL (local: `http://localhost:3000`) |
 | `BETTER_AUTH_SECRET` | Yes | Secret used by Better Auth (min 32 chars) |
-| `BLOB_READ_WRITE_TOKEN` | No | Required for note image attachment upload/serving |
 | `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL used by rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token used by rate limiting |
 
@@ -84,8 +85,6 @@ Defined in `src/env.ts`:
 | `bun run test` | Run Vitest suite |
 | `bun run test:watch` | Run Vitest in watch mode |
 | `bun run test:coverage` | Run Vitest with coverage |
-| `bun run cypress:open` | Open Cypress UI |
-| `bun run cypress:run` | Run Cypress headless |
 | `bun run db:generate` | Generate Drizzle migrations |
 | `bun run db:migrate` | Apply Drizzle migrations |
 | `bun run db:push` | Push schema directly to DB |

@@ -14,13 +14,12 @@ import {
   getTodayIso,
   isAssessmentOverdue,
 } from "@/lib/assessments";
-import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
+import { LIMITS } from "@/lib/limits";
 import { getScoreTone, getStatusToneClasses } from "@/lib/status-tones";
 
 interface AssessmentsOverviewProps {
   subjectId: string;
   assessments: AssessmentEntity[];
-  plan: UserPlan;
 }
 
 function getAverageTone(value: number): string {
@@ -55,7 +54,6 @@ function getAverageMeta(
 export function AssessmentsOverview({
   subjectId,
   assessments,
-  plan,
 }: Readonly<AssessmentsOverviewProps>) {
   const t = useTranslations("AssessmentsOverview");
   const [createOpen, setCreateOpen] = useState(false);
@@ -64,10 +62,7 @@ export function AssessmentsOverview({
     null,
   );
 
-  const limits = getPlanLimits(plan);
-  const isAtLimit =
-    limits.maxAssessmentsPerSubject !== null &&
-    assessments.length >= limits.maxAssessmentsPerSubject;
+  const isAtLimit = assessments.length >= LIMITS.maxAssessmentsPerSubject;
   const todayIso = getTodayIso();
   const average = getAssessmentAverage(assessments);
   const averageMeta = average === null ? null : getAverageMeta(average, t);
@@ -103,7 +98,7 @@ export function AssessmentsOverview({
           <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-amber-800 dark:text-amber-200">
             {t("limit_message", {
-              max: limits.maxAssessmentsPerSubject ?? 0,
+              max: LIMITS.maxAssessmentsPerSubject,
             })}
           </p>
         </div>
@@ -147,12 +142,10 @@ export function AssessmentsOverview({
             {t("subject_assessments")}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {limits.maxAssessmentsPerSubject === null
-              ? t("items_no_limit", { count: subjectAssessments.length })
-              : t("items_with_limit", {
-                  count: subjectAssessments.length,
-                  max: limits.maxAssessmentsPerSubject,
-                })}
+            {t("items_with_limit", {
+              count: subjectAssessments.length,
+              max: LIMITS.maxAssessmentsPerSubject,
+            })}
           </p>
         </div>
         {subjectAssessments.length === 0 ? (

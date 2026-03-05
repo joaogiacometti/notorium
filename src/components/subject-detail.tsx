@@ -20,14 +20,12 @@ import type {
   SubjectEntity,
 } from "@/lib/api/contracts";
 import { getDateFnsLocale } from "@/lib/date-locale";
-import type { UserPlan } from "@/lib/plan-limits";
 
 interface SubjectDetailProps {
   subject: SubjectEntity;
   notes: NoteEntity[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
-  plan: UserPlan;
 }
 
 export function SubjectDetail({
@@ -35,7 +33,6 @@ export function SubjectDetail({
   notes,
   misses,
   assessments,
-  plan,
 }: Readonly<SubjectDetailProps>) {
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
@@ -125,17 +122,13 @@ export function SubjectDetail({
       />
 
       <Separator className="my-8" />
-      <AssessmentsOverview
-        subjectId={subject.id}
-        assessments={assessments}
-        plan={plan}
-      />
+      <AssessmentsOverview subjectId={subject.id} assessments={assessments} />
 
       <Separator className="my-8" />
-      <NotesList subjectId={subject.id} notes={notes} plan={plan} />
+      <NotesList subjectId={subject.id} notes={notes} />
 
       <Separator className="my-8" />
-      <FlashcardsList subjectId={subject.id} plan={plan} />
+      <FlashcardsList subjectId={subject.id} />
 
       <EditSubjectDialog
         subject={subject}

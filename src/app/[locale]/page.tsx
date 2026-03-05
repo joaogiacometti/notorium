@@ -1,81 +1,24 @@
 import {
   BookOpenText,
   CalendarDays,
-  Check,
   ClipboardList,
-  Crown,
   FileText,
   FolderOpen,
   Layers,
-  Minus,
   Sparkles,
   UserPlus,
 } from "lucide-react";
 import { redirect } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Link } from "@/i18n/routing";
 import { getOptionalSession } from "@/lib/auth";
-import { FREE_LIMITS, PRO_LIMITS } from "@/lib/plan-limits";
-
-const PLAN_ROWS: Array<{
-  featureKey: string;
-  free: string | boolean;
-  pro: string | boolean;
-}> = [
-  {
-    featureKey: "subjects",
-    free: String(FREE_LIMITS.maxSubjects),
-    pro: String(PRO_LIMITS.maxSubjects),
-  },
-  {
-    featureKey: "notes_per_subject",
-    free: String(FREE_LIMITS.maxNotesPerSubject),
-    pro: String(PRO_LIMITS.maxNotesPerSubject),
-  },
-  {
-    featureKey: "assessments_per_subject",
-    free: String(FREE_LIMITS.maxAssessmentsPerSubject),
-    pro: String(PRO_LIMITS.maxAssessmentsPerSubject),
-  },
-  {
-    featureKey: "image_attachments",
-    free: FREE_LIMITS.imagesAllowed,
-    pro: `${PRO_LIMITS.maxImageStorageMb} MB`,
-  },
-  { featureKey: "rich_text_editor", free: true, pro: true },
-  { featureKey: "attendance_tracking", free: true, pro: true },
-  {
-    featureKey: "flashcards_per_subject",
-    free: false,
-    pro: String(PRO_LIMITS.maxFlashcardsPerSubject),
-  },
-];
-
-function PlanCell({ value }: { value: string | boolean }) {
-  if (value === true) {
-    return <Check className="size-4 text-primary" />;
-  }
-  if (value === false) {
-    return <Minus className="size-4 text-muted-foreground/40" />;
-  }
-  return value;
-}
 
 const FEATURES = [
   {
@@ -104,8 +47,6 @@ const FEATURES = [
     descriptionKey: "flashcards_description",
   },
 ];
-
-import { getTranslations } from "next-intl/server";
 
 export default async function Home() {
   const session = await getOptionalSession();
@@ -163,72 +104,6 @@ export default async function Home() {
               </Card>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-2xl">
-          <h2 className="mb-10 text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-            {tLanding("plans_heading")}
-          </h2>
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[60%]" />
-                    <TableHead className="text-center">
-                      <Badge variant="secondary">{tLanding("free")}</Badge>
-                    </TableHead>
-                    <TableHead className="text-center">
-                      <Badge className="gap-1">
-                        <Crown className="size-3" />
-                        {tLanding("pro")}
-                      </Badge>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {PLAN_ROWS.map((row) => (
-                    <TableRow
-                      key={row.featureKey}
-                      className="hover:bg-transparent"
-                    >
-                      <TableCell className="text-muted-foreground">
-                        {tLanding(`plan_feature_${row.featureKey}`)}
-                      </TableCell>
-                      <TableCell className="text-center font-medium">
-                        <span className="flex justify-center">
-                          <PlanCell value={row.free} />
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center font-medium">
-                        <span className="flex justify-center">
-                          <PlanCell value={row.pro} />
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <div className="flex flex-col items-center gap-3 pt-6 sm:flex-row sm:justify-center">
-                <Button className="w-full sm:w-auto sm:px-12" asChild>
-                  <Link href="/signup">{tLanding("start_for_free")}</Link>
-                </Button>
-                <Button
-                  className="w-full sm:w-auto sm:px-12"
-                  variant="outline"
-                  disabled
-                >
-                  <Crown className="size-3.5" />
-                  {tLanding("become_pro")}
-                  <Badge variant="secondary" className="text-[10px]">
-                    {tLanding("coming_soon")}
-                  </Badge>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </section>
 

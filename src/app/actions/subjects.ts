@@ -1,14 +1,12 @@
 "use server";
 
-import { del } from "@vercel/blob";
-import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
-import { note, noteImageAttachment, subject } from "@/db/schema";
-import { appEnv } from "@/env";
+import { subject } from "@/db/schema";
 import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
-import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
-import { checkSubjectLimit } from "@/lib/plan-enforcement";
+import { getAuthenticatedUserId } from "@/lib/auth";
+import { LIMITS } from "@/lib/limits";
 import { actionError } from "@/lib/server-action-errors";
 import {
   type ArchiveSubjectForm,
@@ -65,22 +63,23 @@ export async function getSubjectById(
 export async function createSubject(
   data: CreateSubjectForm,
 ): Promise<MutationResult> {
-  const { userId, plan } = await getAuthenticatedUser();
+  const userId = await getAuthenticatedUserId();
   const parsed = createSubjectSchema.safeParse(data);
 
   if (!parsed.success) {
     return actionError("subjects.invalidData");
   }
 
-  const limitCheck = await checkSubjectLimit(userId, plan);
+  const result = await db
+    .select({ total: count() })
+    .from(subject)
+    .where(eq(subject.userId, userId));
 
-  if (!limitCheck.allowed) {
-    if (limitCheck.max === null) {
-      return actionError("common.generic");
-    }
+  const current = result[0]?.total ?? 0;
 
-    return actionError("plan.subjectLimit", {
-      errorParams: { max: limitCheck.max },
+  if (current >= LIMITS.maxSubjects) {
+    return actionError("limits.subjectLimit", {
+      errorParams: { max: LIMITS.maxSubjects },
     });
   }
 
@@ -231,32 +230,9 @@ export async function deleteSubject(
     return actionError("subjects.notFound");
   }
 
-  const attachments = await db
-    .select({
-      blobPathname: noteImageAttachment.blobPathname,
-    })
-    .from(noteImageAttachment)
-    .innerJoin(note, eq(noteImageAttachment.noteId, note.id))
-    .where(
-      and(
-        eq(note.subjectId, parsed.data.id),
-        eq(note.userId, userId),
-        eq(noteImageAttachment.userId, userId),
-      ),
-    );
-
   await db
     .delete(subject)
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
-
-  if (appEnv.BLOB_READ_WRITE_TOKEN && attachments.length > 0) {
-    try {
-      await del(
-        attachments.map((attachment) => attachment.blobPathname),
-        { token: appEnv.BLOB_READ_WRITE_TOKEN },
-      );
-    } catch {}
-  }
 
   revalidatePath("/subjects");
   revalidatePath("/subjects/archived");

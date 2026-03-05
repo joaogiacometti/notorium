@@ -6,20 +6,17 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/delete-note-dialog";
 import { EditNoteDialog } from "@/components/edit-note-dialog";
-import { NoteImageAttachments } from "@/components/note-image-attachments";
 import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/routing";
-import type { NoteWithAttachmentsEntity } from "@/lib/api/contracts";
+import type { NoteEntity } from "@/lib/api/contracts";
 import { getDateFnsLocale } from "@/lib/date-locale";
-import type { UserPlan } from "@/lib/plan-limits";
 
 interface NoteDetailProps {
-  note: NoteWithAttachmentsEntity;
-  plan: UserPlan;
+  note: NoteEntity;
 }
 
-export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
+export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
   const t = useTranslations("NoteDetail");
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
@@ -54,7 +51,7 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
             </h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
-                {t("created_label")}{" "}
+                {t("created_label")}
                 {formatDistanceToNow(new Date(note.createdAt), {
                   addSuffix: true,
                   locale: dateLocale,
@@ -98,14 +95,6 @@ export function NoteDetail({ note, plan }: Readonly<NoteDetailProps>) {
             </p>
           )}
         </div>
-      </div>
-
-      <div className="mt-6">
-        <NoteImageAttachments
-          noteId={note.id}
-          attachments={note.attachments}
-          plan={plan}
-        />
       </div>
 
       <EditNoteDialog note={note} open={editOpen} onOpenChange={setEditOpen} />

@@ -8,27 +8,23 @@ import { SubjectCard } from "@/components/subject-card";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/routing";
 import type { SubjectEntity } from "@/lib/api/contracts";
-import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
+import { LIMITS } from "@/lib/limits";
 import { getTotalSubjectCount } from "@/lib/subjects-count";
 
 interface SubjectsListProps {
   subjects: SubjectEntity[];
   archivedCount: number;
-  plan: UserPlan;
 }
 
 export function SubjectsList({
   subjects,
   archivedCount,
-  plan,
 }: Readonly<SubjectsListProps>) {
   const t = useTranslations("SubjectsList");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const limits = getPlanLimits(plan);
   const totalSubjects = getTotalSubjectCount(subjects.length, archivedCount);
-  const isAtLimit =
-    limits.maxSubjects !== null && totalSubjects >= limits.maxSubjects;
+  const isAtLimit = totalSubjects >= LIMITS.maxSubjects;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -80,7 +76,7 @@ export function SubjectsList({
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
           <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-amber-800 dark:text-amber-200">
-            {t("limit_message", { max: limits.maxSubjects ?? 0 })}
+            {t("limit_message", { max: LIMITS.maxSubjects })}
           </p>
         </div>
       )}

@@ -26,6 +26,10 @@ Students who want a private, lightweight study management workspace.
 
 - Email/password sign up, sign in, and sign out.
 - Session-based access control across the app.
+- New accounts start with pending access status.
+- Only approved users can access authenticated app routes and server actions.
+- Blocked and pending users are denied sign in with an access-status error.
+- Admin users can manage user access status (pending, approved, blocked) from an Admin Panel in the account menu.
 
 ### Subjects
 
@@ -48,8 +52,7 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete notes per subject.
 - Rich text editing and rendering for note content.
-- Optional image attachments per note.
-- Fullscreen mobile-friendly image viewer.
+- Note content renders images from pasted direct image URLs and Markdown image syntax.
 
 ### Attendance
 
@@ -78,9 +81,10 @@ Students who want a private, lightweight study management workspace.
 
 - View account details.
 - Update display name.
-- Export all user data as JSON (subjects, notes, attendance, assessments, flashcards) on paid plans (`pro`, `unlimited`).
-- Export template JSON with subject structure only (excludes notes, attendance records, and flashcards) on paid plans (`pro`, `unlimited`).
-- Import user data from a previous Notorium export on paid plans (`pro`, `unlimited`).
+- Admin-only access management page to approve, block, or set pending for users.
+- Export all user data as JSON (subjects, notes, attendance, assessments, flashcards).
+- Export template JSON with subject structure only (excludes notes, attendance records, and flashcards).
+- Import user data from a previous Notorium export.
 - Delete account and all user-owned data.
 
 ### UI/UX Baseline
@@ -91,31 +95,22 @@ Students who want a private, lightweight study management workspace.
 - Theme toggle (light/dark/system).
 - Custom not-found page.
 
-## Plans
-
-- **Free** (default): up to 5 subjects, up to 5 notes per subject, up to 5 assessments per subject, no flashcards, no image attachments.
-- **Pro**: up to 20 subjects, up to 30 notes per subject, up to 5 assessments per subject, up to 500 flashcards per subject, up to 50 MB image storage.
-- **Unlimited**: no restrictions on subjects, notes, assessments, flashcards, or image attachments.
-- Plan is stored on the `user` table (`plan` column, enum `free` | `pro` | `unlimited`).
-- Limits are enforced server-side on create actions and surfaced in the UI.
-
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.
-- A user can only access or mutate their own subjects, notes, attachments, attendance records, and assessments.
-- Subject/note attachment access must enforce ownership checks server-side.
+- A user can only access or mutate their own subjects, notes, attendance records, and assessments.
 - Data export/import and account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
 
+- `user`
+  - `id`, `name`, `email`, `accessStatus` (`pending` | `approved` | `blocked`), `isAdmin`, timestamps.
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`.
 - `flashcard`
   - `id`, `front`, `back`, `state`, `dueAt`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`.
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`.
-- `note_image_attachment`
-  - `id`, `noteId`, `blobUrl`, `blobPathname`, `contentType`, `sizeBytes`, timestamps, `userId`.
 - `attendance_miss`
   - `id`, `missDate`, `subjectId`, timestamps, `userId`.
 - `assessment`
