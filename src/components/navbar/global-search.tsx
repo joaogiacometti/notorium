@@ -16,6 +16,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useRouter } from "@/i18n/routing";
+import { getRichTextExcerpt } from "@/lib/rich-text";
 
 interface GlobalSearchProps {
   userId: string;
@@ -177,14 +178,14 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                 >
                   <div className="flex items-center gap-2">
                     <Layers className="size-4 text-muted-foreground" />
-                    <span>{fc.front}</span>
+                    <span>{getRichTextExcerpt(fc.front, 80)}</span>
                     <span className="text-xs text-muted-foreground">
                       {t("in_subject")} {fc.subjectName}
                     </span>
                   </div>
                   {fc.back && (
                     <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
-                      {fc.back}
+                      {getRichTextExcerpt(fc.back, 120)}
                     </span>
                   )}
                 </CommandItem>

@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getRichTextExcerpt } from "@/lib/rich-text";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface DeleteFlashcardDialogProps {
@@ -35,6 +36,7 @@ export function DeleteFlashcardDialog({
   const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
+  const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
 
   function handleDelete() {
     startTransition(async () => {
@@ -56,7 +58,7 @@ export function DeleteFlashcardDialog({
           <DialogDescription>
             {t("prompt_prefix")}
             <span className="font-semibold text-foreground">
-              {flashcardFront}
+              {flashcardFrontPreview}
             </span>
             {t("prompt_suffix")}
           </DialogDescription>

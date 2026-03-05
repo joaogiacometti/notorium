@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { TiptapRenderer } from "@/components/tiptap-renderer";
 import {
   Dialog,
   DialogContent,
@@ -33,15 +34,17 @@ export function FlashcardPreviewDialog({
         <div className="space-y-4">
           <section className="space-y-1.5">
             <h3 className="text-sm font-medium">{t("front_label")}</h3>
-            <p className="wrap-break-word whitespace-pre-wrap text-sm text-muted-foreground">
-              {flashcard.front}
-            </p>
+            <TiptapRenderer
+              content={flashcard.front}
+              className="min-w-0 break-all text-sm text-muted-foreground"
+            />
           </section>
           <section className="space-y-1.5">
             <h3 className="text-sm font-medium">{t("back_label")}</h3>
-            <p className="wrap-break-word whitespace-pre-wrap text-sm text-muted-foreground">
-              {flashcard.back}
-            </p>
+            <TiptapRenderer
+              content={flashcard.back}
+              className="min-w-0 break-all text-sm text-muted-foreground"
+            />
           </section>
         </div>
       </DialogContent>

@@ -7,10 +7,12 @@ import { useState } from "react";
 import { DeleteFlashcardDialog } from "@/components/delete-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/reset-flashcard-dialog";
+import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/routing";
 import type { FlashcardEntity } from "@/lib/api/contracts";
 import { getDateFnsLocale } from "@/lib/date-locale";
+import { getRichTextExcerpt } from "@/lib/rich-text";
 
 interface FlashcardDetailProps {
   flashcard: FlashcardEntity;
@@ -51,7 +53,7 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
-              {currentFlashcard.front}
+              {getRichTextExcerpt(currentFlashcard.front, 120)}
             </h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
               <span>
@@ -98,11 +100,22 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
       <div className="space-y-4">
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">
           <h2 className="mb-2 text-sm font-semibold text-foreground/80">
+            {t("front_label")}
+          </h2>
+          <TiptapRenderer
+            content={currentFlashcard.front}
+            className="min-w-0 break-all text-sm sm:text-base"
+          />
+        </div>
+
+        <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">
+          <h2 className="mb-2 text-sm font-semibold text-foreground/80">
             {t("back_label")}
           </h2>
-          <p className="wrap-break-word whitespace-pre-wrap text-sm text-muted-foreground sm:text-base">
-            {currentFlashcard.back}
-          </p>
+          <TiptapRenderer
+            content={currentFlashcard.back}
+            className="min-w-0 break-all text-sm sm:text-base"
+          />
         </div>
       </div>
 

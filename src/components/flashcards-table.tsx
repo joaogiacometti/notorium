@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from "@/i18n/routing";
 import type { FlashcardEntity } from "@/lib/api/contracts";
+import { getRichTextExcerpt, richTextToPlainText } from "@/lib/rich-text";
 
 const PAGE_SIZE = 25;
 
@@ -37,9 +38,11 @@ export function FlashcardsTable({
     normalizedSearch.length === 0
       ? flashcards
       : flashcards.filter((card) => {
+          const frontText = richTextToPlainText(card.front).toLowerCase();
+          const backText = richTextToPlainText(card.back).toLowerCase();
           return (
-            card.front.toLowerCase().includes(normalizedSearch) ||
-            card.back.toLowerCase().includes(normalizedSearch)
+            frontText.includes(normalizedSearch) ||
+            backText.includes(normalizedSearch)
           );
         });
 
@@ -121,11 +124,13 @@ export function FlashcardsTable({
                     href={`/subjects/${item.subjectId}/flashcards/${item.id}`}
                     className="block truncate rounded-sm font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                   >
-                    {item.front}
+                    {getRichTextExcerpt(item.front, 100)}
                   </Link>
                 </TableCell>
                 <TableCell className="max-w-0 text-muted-foreground">
-                  <p className="truncate">{item.back}</p>
+                  <p className="truncate">
+                    {getRichTextExcerpt(item.back, 140)}
+                  </p>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end">

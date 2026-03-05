@@ -65,6 +65,8 @@ interface TiptapEditorProps {
   placeholder?: string;
   id?: string;
   "aria-invalid"?: boolean;
+  contentClassName?: string;
+  showToolbar?: boolean;
 }
 
 interface ToolbarButtonProps {
@@ -241,6 +243,8 @@ export function TiptapEditor({
   placeholder,
   id,
   "aria-invalid": ariaInvalid,
+  contentClassName,
+  showToolbar = true,
 }: Readonly<TiptapEditorProps>) {
   const t = useTranslations("TiptapEditor");
   const resolvedPlaceholder = placeholder ?? t("placeholder");
@@ -303,10 +307,13 @@ export function TiptapEditor({
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
       )}
     >
-      <EditorToolbar editor={editor} t={t} />
+      {showToolbar && <EditorToolbar editor={editor} t={t} />}
       <EditorContent
         editor={editor}
-        className="tiptap-wrapper min-h-52 max-h-[52svh] overflow-y-auto"
+        className={cn(
+          "tiptap-wrapper min-h-52 max-h-[52svh] overflow-y-auto",
+          contentClassName,
+        )}
       />
     </div>
   );

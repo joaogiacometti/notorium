@@ -15,6 +15,7 @@ import {
   getFlashcardReviewSummary,
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
+import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FlashcardReviewEntity } from "@/lib/api/contracts";
@@ -103,9 +104,10 @@ export function FlashcardReviewClient({
             <h2 className="text-sm font-semibold text-muted-foreground">
               {t("front_label")}
             </h2>
-            <p className="wrap-break-word whitespace-pre-wrap text-base leading-relaxed">
-              {currentCard.front}
-            </p>
+            <TiptapRenderer
+              content={currentCard.front}
+              className="min-w-0 break-all text-base leading-relaxed"
+            />
           </div>
 
           {revealed && (
@@ -113,9 +115,10 @@ export function FlashcardReviewClient({
               <h3 className="text-sm font-semibold text-muted-foreground">
                 {t("back_label")}
               </h3>
-              <p className="wrap-break-word whitespace-pre-wrap text-base leading-relaxed">
-                {currentCard.back}
-              </p>
+              <TiptapRenderer
+                content={currentCard.back}
+                className="min-w-0 break-all text-base leading-relaxed"
+              />
             </div>
           )}
 

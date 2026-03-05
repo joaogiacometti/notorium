@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { FlashcardEntity } from "@/lib/api/contracts";
+import { getRichTextExcerpt } from "@/lib/rich-text";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface ResetFlashcardDialogProps {
@@ -36,6 +37,7 @@ export function ResetFlashcardDialog({
   const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
+  const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
 
   function handleReset() {
     startTransition(async () => {
@@ -57,7 +59,7 @@ export function ResetFlashcardDialog({
           <DialogDescription>
             {t("prompt_prefix")}
             <span className="font-semibold text-foreground">
-              {flashcardFront}
+              {flashcardFrontPreview}
             </span>
             {t("prompt_suffix")}
           </DialogDescription>

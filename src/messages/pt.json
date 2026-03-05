@@ -514,6 +514,7 @@
   "FlashcardDetail": {
     "back": "Voltar para Matéria",
     "created_label": "Criado",
+    "front_label": "Frente",
     "back_label": "Verso",
     "edit": "Editar",
     "reset": "Resetar",
@@ -540,7 +541,7 @@
   },
   "UnsavedChangesDialog": {
     "title": "Descartar alterações?",
-    "description": "Você tem edições não salvas nesta nota. Se descartar agora, essas alterações serão perdidas.",
+    "description": "Você tem edições não salvas. Se descartar agora, essas alterações serão perdidas.",
     "keep": "Continuar Editando",
     "discard": "Descartar"
   },

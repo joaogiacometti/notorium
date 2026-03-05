@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { FlashcardEntity } from "@/lib/api/contracts";
+import { getRichTextExcerpt } from "@/lib/rich-text";
 
 interface FlashcardCardProps {
   flashcard: FlashcardEntity;
@@ -29,6 +30,7 @@ export function FlashcardCard({
   const t = useTranslations("FlashcardCard");
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const frontPreview = getRichTextExcerpt(flashcard.front, 120);
 
   return (
     <>
@@ -38,7 +40,7 @@ export function FlashcardCard({
             <CreditCard className="size-3.5" />
           </div>
           <CardTitle className="truncate text-sm font-medium leading-none text-foreground/95">
-            {flashcard.front}
+            {frontPreview}
           </CardTitle>
         </div>
         <DropdownMenu>

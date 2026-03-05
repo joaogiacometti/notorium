@@ -514,6 +514,7 @@
   "FlashcardDetail": {
     "back": "Back to Subject",
     "created_label": "Created",
+    "front_label": "Front",
     "back_label": "Back",
     "edit": "Edit",
     "reset": "Reset",
@@ -540,7 +541,7 @@
   },
   "UnsavedChangesDialog": {
     "title": "Discard changes?",
-    "description": "You have unsaved edits in this note. If you discard now, those changes will be lost.",
+    "description": "You have unsaved edits. If you discard now, those changes will be lost.",
     "keep": "Keep Editing",
     "discard": "Discard"
   },

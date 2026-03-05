@@ -135,6 +135,7 @@
 .tiptap-wrapper .tiptap {
   @apply min-w-0 break-words leading-relaxed text-foreground;
   overflow-wrap: anywhere;
+  overflow-x: auto;
 }
 
 .tiptap-content h1,
@@ -234,12 +235,21 @@
   @apply mb-3 block h-auto max-w-full rounded-md border border-border/60 last:mb-0;
 }
 
+.tiptap-content [data-resize-container],
 .tiptap-wrapper .tiptap [data-resize-container] {
+  max-width: 100%;
   @apply mb-3 last:mb-0;
 }
 
+.tiptap-content [data-resize-wrapper],
 .tiptap-wrapper .tiptap [data-resize-wrapper] {
+  max-width: 100%;
   @apply inline-block align-top;
+}
+
+.tiptap-content [data-resize-wrapper] img,
+.tiptap-wrapper .tiptap [data-resize-wrapper] img {
+  width: 100%;
 }
 
 .tiptap-wrapper .tiptap [data-resize-handle] {

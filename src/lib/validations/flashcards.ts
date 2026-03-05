@@ -1,16 +1,29 @@
 import { z } from "zod";
+import { hasRichTextContent, richTextToPlainText } from "@/lib/rich-text";
 import { validationMessage } from "@/lib/validation-messages";
 
 export const createFlashcardSchema = z.object({
   subjectId: z.string().min(1),
   front: z
     .string()
-    .min(1, validationMessage("Validation.flashcards.frontRequired"))
-    .max(500, validationMessage("Validation.flashcards.frontMaxLength")),
+    .refine(
+      (value) => hasRichTextContent(value),
+      validationMessage("Validation.flashcards.frontRequired"),
+    )
+    .refine(
+      (value) => richTextToPlainText(value).length <= 500,
+      validationMessage("Validation.flashcards.frontMaxLength"),
+    ),
   back: z
     .string()
-    .min(1, validationMessage("Validation.flashcards.backRequired"))
-    .max(2000, validationMessage("Validation.flashcards.backMaxLength")),
+    .refine(
+      (value) => hasRichTextContent(value),
+      validationMessage("Validation.flashcards.backRequired"),
+    )
+    .refine(
+      (value) => richTextToPlainText(value).length <= 2000,
+      validationMessage("Validation.flashcards.backMaxLength"),
+    ),
 });
 
 export type CreateFlashcardForm = z.infer<typeof createFlashcardSchema>;
@@ -19,12 +32,24 @@ export const editFlashcardSchema = z.object({
   id: z.string().min(1),
   front: z
     .string()
-    .min(1, validationMessage("Validation.flashcards.frontRequired"))
-    .max(500, validationMessage("Validation.flashcards.frontMaxLength")),
+    .refine(
+      (value) => hasRichTextContent(value),
+      validationMessage("Validation.flashcards.frontRequired"),
+    )
+    .refine(
+      (value) => richTextToPlainText(value).length <= 500,
+      validationMessage("Validation.flashcards.frontMaxLength"),
+    ),
   back: z
     .string()
-    .min(1, validationMessage("Validation.flashcards.backRequired"))
-    .max(2000, validationMessage("Validation.flashcards.backMaxLength")),
+    .refine(
+      (value) => hasRichTextContent(value),
+      validationMessage("Validation.flashcards.backRequired"),
+    )
+    .refine(
+      (value) => richTextToPlainText(value).length <= 2000,
+      validationMessage("Validation.flashcards.backMaxLength"),
+    ),
 });
 
 export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
