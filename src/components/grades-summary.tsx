@@ -9,7 +9,7 @@ import {
 } from "date-fns";
 import { CheckCircle2, Clock3 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { AssessmentItemCard } from "@/components/assessment-item-card";
 import { DeleteAssessmentDialog } from "@/components/delete-assessment-dialog";
 import { EditAssessmentDialog } from "@/components/edit-assessment-dialog";
@@ -119,32 +119,22 @@ export function GradesSummary({
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("smart");
 
-  const dueDateBounds = useMemo(() => getDueDateBounds(), []);
+  const dueDateBounds = getDueDateBounds();
 
-  const subjectFilterOptions = useMemo(
-    () => getSubjectFilterOptions(assessments, subjectNamesById),
-    [assessments, subjectNamesById],
+  const subjectFilterOptions = getSubjectFilterOptions(
+    assessments,
+    subjectNamesById,
   );
 
-  const filteredAssessments = useMemo(() => {
-    return filterAndSortAssessments({
-      assessments,
-      subjectFilter,
-      statusFilter,
-      typeFilter,
-      dueDateFilter,
-      sortBy,
-      dueDateBounds,
-    });
-  }, [
+  const filteredAssessments = filterAndSortAssessments({
     assessments,
-    dueDateBounds,
-    dueDateFilter,
-    sortBy,
     subjectFilter,
     statusFilter,
     typeFilter,
-  ]);
+    dueDateBounds,
+    dueDateFilter,
+    sortBy,
+  });
 
   const pending = filteredAssessments.filter(
     (item) => item.status === "pending",

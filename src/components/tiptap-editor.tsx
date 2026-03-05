@@ -28,7 +28,7 @@ import {
   Undo,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -218,13 +218,14 @@ export function TiptapEditor({
 }: Readonly<TiptapEditorProps>) {
   const t = useTranslations("TiptapEditor");
   const resolvedPlaceholder = placeholder ?? t("placeholder");
-  const handleUpdate = useCallback(
-    ({ editor }: { editor: { getHTML: () => string; isEmpty: boolean } }) => {
-      const html = editor.isEmpty ? "" : editor.getHTML();
-      onChange(html);
-    },
-    [onChange],
-  );
+  const handleUpdate = ({
+    editor,
+  }: {
+    editor: { getHTML: () => string; isEmpty: boolean };
+  }) => {
+    const html = editor.isEmpty ? "" : editor.getHTML();
+    onChange(html);
+  };
 
   const editor = useEditor({
     extensions: [

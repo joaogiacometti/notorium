@@ -2,7 +2,7 @@
 
 import { Lock, Plus, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AssessmentItemCard } from "@/components/assessment-item-card";
 import { CreateAssessmentDialog } from "@/components/create-assessment-dialog";
 import { DeleteAssessmentDialog } from "@/components/delete-assessment-dialog";
@@ -71,12 +71,8 @@ export function AssessmentsOverview({
   const todayIso = getTodayIso();
   const average = getAssessmentAverage(assessments);
   const averageMeta = average === null ? null : getAverageMeta(average, t);
-  const subjectAssessments = useMemo(
-    () =>
-      [...assessments].sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
-      ),
-    [assessments],
+  const subjectAssessments = [...assessments].sort(
+    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
   );
 
   return (
