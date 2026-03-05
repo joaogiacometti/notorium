@@ -85,8 +85,6 @@ Defined in `src/env.ts`:
 | `bun run test` | Run Vitest suite |
 | `bun run test:watch` | Run Vitest in watch mode |
 | `bun run test:coverage` | Run Vitest with coverage |
-| `bun run cypress:open` | Open Cypress UI |
-| `bun run cypress:run` | Run Cypress headless |
 | `bun run db:generate` | Generate Drizzle migrations |
 | `bun run db:migrate` | Apply Drizzle migrations |
 | `bun run db:push` | Push schema directly to DB |

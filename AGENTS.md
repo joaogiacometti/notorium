@@ -48,8 +48,6 @@ src/
 | `bun run test`          | Run Vitest test suite       |
 | `bun run test:watch`    | Run Vitest in watch mode    |
 | `bun run test:coverage` | Run Vitest with coverage    |
-| `bun run cypress:open`  | Open Cypress UI             |
-| `bun run cypress:run`   | Run Cypress headless        |
 | `bun run db:generate`   | Generate Drizzle migrations |
 | `bun run db:migrate`    | Run Drizzle migrations      |
 | `bun run db:push`       | Push schema directly to DB  |
@@ -131,7 +129,6 @@ src/
 ### Testing
 
 - Use **Vitest** for unit and integration tests. Place test files next to the source file with a `.test.ts` suffix.
-- Use **Cypress** for E2E tests. Place test files in `cypress/e2e/` with a `.cy.ts` suffix. Split test files by page or concern, not in a single monolith.
 - **Test behavior and logic, not constants.** Never write tests that merely re-assert hardcoded values from a constant object. If a function just returns a constant, one assertion (e.g., `toEqual(MY_CONSTANT)`) is enough — do not check each property individually.
 - **Focus on edge cases, branching logic, and error handling.** Tests should exercise code paths that could actually break: conditionals, validations, error states, transformations, and boundary conditions.
 - **Ask yourself: "If I deleted this test, would I lose confidence in the code?"** If the answer is no, the test is not worth writing.
@@ -144,40 +141,6 @@ This is where validation depth lives. Zod schemas, utility functions, and server
 - **Zod schema tests should verify rejection of invalid inputs**, not just confirm that valid data passes. Test missing fields, wrong types, boundary values, and malformed data. Cover all edge cases, all refinements, all error messages.
 - **Server Action tests should cover authentication checks, authorization, and error responses**, not just the happy path.
 - **Utility / business logic tests** should cover branching, boundary conditions, and transformations (e.g., weighted vs simple averages, overdue detection, system limit logic).
-
-#### E2E Tests (Cypress)
-
-E2E tests prove the full stack works together: UI → form → action/API → database → response → rendered feedback. They are not for exhaustive field-level validation — Zod unit tests already cover that.
-
-**Per-form E2E budget (target):**
-
-| Test type                 | Count per form | Purpose                                                                         |
-| ------------------------- | -------------- | ------------------------------------------------------------------------------- |
-| Happy path                | 1              | Create/submit succeeds, data appears, correct redirect                          |
-| Representative validation | 1              | One invalid case → error surfaces in UI, no redirect/side-effect                |
-| Server error              | 0–1            | Server-rejected action shows toast (e.g., duplicate email, invalid credentials) |
-| Auth / permissions        | 0–1            | Unauth redirect blocked                                                         |
-
-This means ~2–4 Cypress tests per form, not 6–8.
-
-**What TO test in E2E:**
-
-- **Critical user flows.** End-to-end journeys that cross multiple pages (signup → redirect → logout → login).
-- **CRUD operations.** One happy-path test per entity (create, edit, delete) to prove the full stack wiring.
-- **One representative validation per form.** Pick the most important invalid case (e.g., empty required field) that proves UI → action → error rendering works. Do not test every field's required message, every Zod refinement, or every boundary.
-- **Server-rejected errors.** Assert that error toasts appear for actions the server rejects (invalid credentials, duplicate email, duplicate attendance date). These are not caught by client-side Zod.
-- **Auth guards.** Test that protected routes redirect unauthenticated users to `/login` and that authenticated users are redirected away from `/login` and `/signup`.
-- **Business rule enforcement.** Test that limits work in the UI (e.g., subject limit disables create button).
-
-**What NOT to test in E2E:**
-
-- **Exhaustive field validation.** Do not E2E-test every field's required message, min/max length, format error, or refinement combination. One representative case per form is enough. Move the rest to Zod unit tests.
-- **Exact error message wording.** Unless it is a compliance/product requirement, do not assert specific error strings beyond the one representative case.
-- **Multiple variations of the same invalid pattern.** Do not test short password _and_ long password _and_ empty password in E2E. Pick one; Zod tests cover the rest.
-- **Browser-native behavior.** Do not test things the browser enforces (e.g., `type="email"` validation via `:invalid` pseudo-class).
-- **Static content strings.** Do not assert heading text just to confirm a page rendered. Prefer asserting interactive elements that prove the page is functional.
-- **`<Link>` navigation.** If the `href` attribute is already asserted, do not add a separate click-and-check-url test — that tests Next.js routing, not our code.
-- **Duplicate auth guard tests.** If a route's auth redirect is tested in `auth.cy.ts`, do not re-test it in that feature's spec file.
 
 ### Styling
 
