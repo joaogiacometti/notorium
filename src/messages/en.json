@@ -6,6 +6,7 @@
     "assessments": "Assessments",
     "calendar": "Calendar",
     "profile": "Profile",
+    "admin_panel": "Admin Panel",
     "login": "Log In",
     "signup": "Sign Up",
     "logout": "Log Out",
@@ -237,6 +238,10 @@
     "title": "Manage Profile",
     "description": "Review your account information and keep your profile up to date."
   },
+  "AdminPage": {
+    "title": "Admin Panel",
+    "description": "Manage user access and approval states."
+  },
   "ProfileForm": {
     "toast_success": "Profile updated.",
     "profile_title": "Profile",
@@ -254,6 +259,31 @@
     "danger_description": "Permanently delete your account and all associated data.",
     "danger_body": "Once you delete your account, all of your subjects, notes, assessments, and attendance records will be permanently removed. This action cannot be undone.",
     "delete_account": "Delete Account"
+  },
+  "UserAccessManagement": {
+    "title": "Access Control",
+    "description": "Approve, hold, or block user access.",
+    "empty": "No other users yet.",
+    "name": "Name",
+    "email": "Email",
+    "status": "Status",
+    "actions": "Actions",
+    "open_actions": "Open user actions",
+    "search_placeholder": "Search name or email...",
+    "filter_status": "Filter by status",
+    "filter_all": "All",
+    "results_count": "{filtered} of {total} users",
+    "no_results": "No users match your current search or filter.",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}",
+    "approve": "Approve",
+    "set_pending": "Set Pending",
+    "block": "Block",
+    "status_pending": "Pending",
+    "status_approved": "Approved",
+    "status_blocked": "Blocked",
+    "updated": "Access status updated."
   },
   "DataTransferActions": {
     "export_success": "Data exported successfully.",
@@ -523,7 +553,11 @@
       "rateLimited": "Too many attempts. Please try again later.",
       "invalidInput": "Invalid input.",
       "loginFailed": "Login failed.",
-      "signupFailed": "Sign up failed."
+      "signupFailed": "Sign up failed.",
+      "accessPending": "Your account is pending approval.",
+      "accessBlocked": "Your account access is blocked.",
+      "forbidden": "You are not allowed to do this.",
+      "userNotFound": "User not found."
     },
     "subjects": {
       "invalidData": "Invalid subject data.",

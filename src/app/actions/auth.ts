@@ -1,9 +1,12 @@
 "use server";
 
 import { APIError } from "better-auth/api";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
+import { db } from "@/db/index";
+import { user } from "@/db/schema";
 import type { MutationResult } from "@/lib/api/contracts";
 import { auth } from "@/lib/auth";
 import { checkAuthRateLimit } from "@/lib/rate-limit";
@@ -26,6 +29,22 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
   const parsed = loginSchema.safeParse(data);
   if (!parsed.success) {
     return actionError("auth.invalidInput");
+  }
+
+  const [existingUser] = await db
+    .select({
+      accessStatus: user.accessStatus,
+    })
+    .from(user)
+    .where(eq(user.email, parsed.data.email))
+    .limit(1);
+
+  if (existingUser?.accessStatus === "pending") {
+    return actionError("auth.accessPending");
+  }
+
+  if (existingUser?.accessStatus === "blocked") {
+    return actionError("auth.accessBlocked");
   }
 
   try {
@@ -73,7 +92,7 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
   }
 
   const locale = await getLocale();
-  redirect(`/${locale}`);
+  redirect(`/${locale}/login`);
 };
 
 export const logoutAction = async () => {

@@ -13,12 +13,22 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 
+export const userAccessStatusEnum = pgEnum("user_access_status", [
+  "pending",
+  "approved",
+  "blocked",
+]);
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  accessStatus: userAccessStatusEnum("access_status")
+    .notNull()
+    .default("pending"),
+  isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

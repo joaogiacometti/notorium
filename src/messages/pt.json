@@ -6,6 +6,7 @@
     "assessments": "Avaliações",
     "calendar": "Calendário",
     "profile": "Perfil",
+    "admin_panel": "Painel de admin",
     "login": "Entrar",
     "signup": "Cadastrar",
     "logout": "Sair",
@@ -237,6 +238,10 @@
     "title": "Gerenciar perfil",
     "description": "Revise as informações da sua conta e mantenha seu perfil atualizado."
   },
+  "AdminPage": {
+    "title": "Painel de admin",
+    "description": "Gerencie estados de acesso e aprovação de usuários."
+  },
   "ProfileForm": {
     "toast_success": "Perfil atualizado.",
     "profile_title": "Perfil",
@@ -254,6 +259,31 @@
     "danger_description": "Exclua permanentemente sua conta e todos os dados associados.",
     "danger_body": "Ao excluir sua conta, todas as suas matérias, notas, avaliações e faltas serão removidas permanentemente. Esta ação não pode ser desfeita.",
     "delete_account": "Excluir conta"
+  },
+  "UserAccessManagement": {
+    "title": "Controle de acesso",
+    "description": "Aprove, coloque em espera ou bloqueie acesso de usuários.",
+    "empty": "Ainda não há outros usuários.",
+    "name": "Nome",
+    "email": "Email",
+    "status": "Status",
+    "actions": "Ações",
+    "open_actions": "Abrir ações do usuário",
+    "search_placeholder": "Buscar por nome ou email...",
+    "filter_status": "Filtrar por status",
+    "filter_all": "Todos",
+    "results_count": "{filtered} de {total} usuários",
+    "no_results": "Nenhum usuário corresponde à busca ou filtro atual.",
+    "prev": "Anterior",
+    "next": "Próxima",
+    "page": "Página {current} de {total}",
+    "approve": "Aprovar",
+    "set_pending": "Definir pendente",
+    "block": "Bloquear",
+    "status_pending": "Pendente",
+    "status_approved": "Aprovado",
+    "status_blocked": "Bloqueado",
+    "updated": "Status de acesso atualizado."
   },
   "DataTransferActions": {
     "export_success": "Dados exportados com sucesso.",
@@ -523,7 +553,11 @@
       "rateLimited": "Muitas tentativas. Tente novamente mais tarde.",
       "invalidInput": "Dados invalidos.",
       "loginFailed": "Falha no login.",
-      "signupFailed": "Falha no cadastro."
+      "signupFailed": "Falha no cadastro.",
+      "accessPending": "Sua conta está aguardando aprovação.",
+      "accessBlocked": "O acesso da sua conta está bloqueado.",
+      "forbidden": "Você não tem permissão para fazer isso.",
+      "userNotFound": "Usuário não encontrado."
     },
     "subjects": {
       "invalidData": "Dados da materia invalidos.",

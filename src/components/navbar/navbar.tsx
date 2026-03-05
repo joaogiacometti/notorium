@@ -3,6 +3,7 @@ import {
   ChevronDown,
   LogIn,
   LogOut,
+  Shield,
   User,
   UserPlus,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/routing";
+import { isAdminUser } from "@/lib/access-control";
 import { getOptionalSession } from "@/lib/auth";
 
 export async function Navbar() {
@@ -28,6 +30,7 @@ export async function Navbar() {
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
   const t = await getTranslations("Navigation");
+  const isAdmin = session ? await isAdminUser(session.user.id) : false;
 
   return (
     <nav className="sticky top-0 z-50 box-border h-14 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -88,6 +91,20 @@ export async function Navbar() {
                     </button>
                   </DropdownMenuItem>
                 </form>
+                {isAdmin && (
+                  <form action="/admin">
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <button
+                        type="submit"
+                        data-testid="account-menu-admin"
+                        className="flex w-full items-center gap-2 text-left"
+                      >
+                        <Shield className="size-4" />
+                        {t("admin_panel")}
+                      </button>
+                    </DropdownMenuItem>
+                  </form>
+                )}
                 <PreferencesDialog />
                 <DropdownMenuSeparator />
                 <form action={logoutAction}>

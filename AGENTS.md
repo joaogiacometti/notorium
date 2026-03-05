@@ -7,6 +7,7 @@ Notes support rich text and render images from pasted direct image URLs and Mark
 Flashcards on subject detail are presented in a collapsed section and loaded when expanded.
 Flashcards also have a dedicated page under each subject, and global search routes flashcard results to that page.
 Profile data transfer is available to all users: full mode exports/imports flashcards, while template export excludes notes, attendance records, and flashcards.
+Authentication is approval-based: new users start as pending, only approved users can access the app, and admins can approve/block users from an Admin Panel entry in the authenticated account menu.
 
 ## Project Structure
 
@@ -124,6 +125,8 @@ src/
 - Client-side: use `authClient` from `src/lib/auth-client.ts` only when Better Auth client APIs are required, and ensure its `baseURL` matches the current environment.
 - Always check authentication before accessing user-specific data.
 - All user-owned data must filter by `userId` from the session.
+- App access must enforce approved status (`pending` and `blocked` users cannot access authenticated routes/actions).
+- User access management mutations (approve/block/pending) must be admin-only on server side.
 
 ### Testing
 

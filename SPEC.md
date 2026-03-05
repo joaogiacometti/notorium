@@ -26,6 +26,10 @@ Students who want a private, lightweight study management workspace.
 
 - Email/password sign up, sign in, and sign out.
 - Session-based access control across the app.
+- New accounts start with pending access status.
+- Only approved users can access authenticated app routes and server actions.
+- Blocked and pending users are denied sign in with an access-status error.
+- Admin users can manage user access status (pending, approved, blocked) from an Admin Panel in the account menu.
 
 ### Subjects
 
@@ -77,6 +81,7 @@ Students who want a private, lightweight study management workspace.
 
 - View account details.
 - Update display name.
+- Admin-only access management page to approve, block, or set pending for users.
 - Export all user data as JSON (subjects, notes, attendance, assessments, flashcards).
 - Export template JSON with subject structure only (excludes notes, attendance records, and flashcards).
 - Import user data from a previous Notorium export.
@@ -98,6 +103,8 @@ Students who want a private, lightweight study management workspace.
 
 ## Main Entities
 
+- `user`
+  - `id`, `name`, `email`, `accessStatus` (`pending` | `approved` | `blocked`), `isAdmin`, timestamps.
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`.
 - `flashcard`

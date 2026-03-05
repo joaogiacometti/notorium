@@ -120,6 +120,13 @@
       "when": 1772729390454,
       "tag": "0016_illegal_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1772731081429,
+      "tag": "0017_lovely_tana_nile",
+      "breakpoints": true
     }
   ]
 }
