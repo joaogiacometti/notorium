@@ -3,12 +3,21 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
-import { assessment, attendanceMiss, note, subject } from "@/db/schema";
+import {
+  assessment,
+  attendanceMiss,
+  flashcard,
+  note,
+  subject,
+} from "@/db/schema";
 import type { MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { checkSubjectLimit } from "@/lib/plan-enforcement";
 import { getPlanLimits } from "@/lib/plan-limits";
-import { actionError } from "@/lib/server-action-errors";
+import {
+  type ActionErrorResult,
+  actionError,
+} from "@/lib/server-action-errors";
 import {
   type ImportData,
   importDataSchema,
@@ -20,9 +29,13 @@ interface ExportOptions {
 
 export async function exportData(
   options: ExportOptions = {},
-): Promise<ImportData> {
+): Promise<ImportData | ActionErrorResult> {
   const { templateOnly = false } = options;
-  const userId = await getAuthenticatedUserId();
+  const { userId, plan } = await getAuthenticatedUser();
+
+  if (plan === "free") {
+    return actionError("plan.dataTransferNotAllowed");
+  }
 
   const subjects = await db
     .select()
@@ -31,7 +44,7 @@ export async function exportData(
 
   const subjectsWithData = await Promise.all(
     subjects.map(async (s) => {
-      const [notes, misses, assessments] = await Promise.all([
+      const [notes, misses, assessments, flashcards] = await Promise.all([
         templateOnly
           ? Promise.resolve([])
           : db
@@ -55,6 +68,17 @@ export async function exportData(
           .where(
             and(eq(assessment.subjectId, s.id), eq(assessment.userId, userId)),
           ),
+        templateOnly
+          ? Promise.resolve([])
+          : db
+              .select()
+              .from(flashcard)
+              .where(
+                and(
+                  eq(flashcard.subjectId, s.id),
+                  eq(flashcard.userId, userId),
+                ),
+              ),
       ]);
 
       return {
@@ -84,6 +108,20 @@ export async function exportData(
           createdAt: a.createdAt.toISOString(),
           updatedAt: a.updatedAt.toISOString(),
         })),
+        flashcards: flashcards.map((f) => ({
+          front: f.front,
+          back: f.back,
+          state: f.state,
+          dueAt: f.dueAt.toISOString(),
+          ease: f.ease,
+          intervalDays: f.intervalDays,
+          learningStep: f.learningStep,
+          lastReviewedAt: f.lastReviewedAt?.toISOString() ?? null,
+          reviewCount: f.reviewCount,
+          lapseCount: f.lapseCount,
+          createdAt: f.createdAt.toISOString(),
+          updatedAt: f.updatedAt.toISOString(),
+        })),
       };
     }),
   );
@@ -99,6 +137,11 @@ export async function importData(
   raw: unknown,
 ): Promise<MutationResult & { imported?: number }> {
   const { userId, plan } = await getAuthenticatedUser();
+
+  if (plan === "free") {
+    return actionError("plan.dataTransferNotAllowed");
+  }
+
   const limits = getPlanLimits(plan);
 
   const parsed = importDataSchema.safeParse(raw);
@@ -138,6 +181,15 @@ export async function importData(
     ) {
       return actionError("plan.assessmentLimit", {
         errorParams: { max: limits.maxAssessmentsPerSubject },
+      });
+    }
+
+    if (
+      limits.maxFlashcardsPerSubject !== null &&
+      importedSubject.flashcards.length > limits.maxFlashcardsPerSubject
+    ) {
+      return actionError("plan.flashcardLimit", {
+        errorParams: { max: limits.maxFlashcardsPerSubject },
       });
     }
   }
@@ -204,6 +256,27 @@ export async function importData(
           );
         }
 
+        if (importedSubject.flashcards.length > 0) {
+          await tx.insert(flashcard).values(
+            importedSubject.flashcards.map((f) => ({
+              front: f.front,
+              back: f.back,
+              state: f.state,
+              dueAt: new Date(f.dueAt),
+              ease: f.ease,
+              intervalDays: f.intervalDays,
+              learningStep: f.learningStep,
+              lastReviewedAt: f.lastReviewedAt
+                ? new Date(f.lastReviewedAt)
+                : null,
+              reviewCount: f.reviewCount,
+              lapseCount: f.lapseCount,
+              subjectId,
+              userId,
+            })),
+          );
+        }
+
         importedCount++;
       }
     });
@@ -213,5 +286,6 @@ export async function importData(
 
   revalidatePath("/subjects");
   revalidatePath("/assessments");
+  revalidatePath("/flashcards/review");
   return { success: true, imported: importedCount };
 }

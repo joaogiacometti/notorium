@@ -65,7 +65,7 @@ export function FlashcardsList({
 
   function getSubtitle() {
     if (flashcardsNotAllowed) {
-      return t("free_plan_description");
+      return t("free_plan_title");
     }
 
     if (!hasLoaded) {

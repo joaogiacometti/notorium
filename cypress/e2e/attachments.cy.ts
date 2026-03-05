@@ -55,7 +55,7 @@ describe("Note Attachments - Free Plan", () => {
     cy.contains("Image attachments are not available on the Free plan.").should(
       "be.visible",
     );
-    cy.contains("Upgrade your plan to upload images.").should("be.visible");
+    cy.contains("Upgrade your plan to upload images.").should("not.exist");
   });
 
   it("does not render upload controls on free plan", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImageIcon, Loader2, Trash2, X } from "lucide-react";
+import { ImageIcon, Loader2, Lock, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
@@ -521,13 +521,10 @@ export function NoteImageAttachments({
           </FieldGroup>
         </form>
       ) : (
-        <div className="mb-5 rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
-          <ImageIcon className="mx-auto mb-2 size-5 text-muted-foreground/60" />
-          <p className="text-sm font-medium text-muted-foreground">
+        <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <p className="flex items-center gap-3 text-sm text-amber-800 dark:text-amber-200">
+            <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
             {t("free_plan_title")}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground/60">
-            {t("free_plan_desc")}
           </p>
         </div>
       )}

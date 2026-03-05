@@ -46,10 +46,15 @@ export function DataTransferActions() {
   function handleExport(templateOnly: boolean) {
     startExport(async () => {
       try {
-        const data = await exportData({ templateOnly });
+        const result = await exportData({ templateOnly });
+        if ("success" in result && result.success === false) {
+          toast.error(resolveActionErrorMessage(result, tErrors));
+          return;
+        }
+
         const suffix = templateOnly ? "template" : "full";
         const filename = `notorium-export-${suffix}-${new Date().toISOString().slice(0, 10)}.json`;
-        downloadJson(data, filename);
+        downloadJson(result, filename);
         toast.success(t("export_success"));
       } catch {
         toast.error(t("export_error"));
@@ -77,10 +82,10 @@ export function DataTransferActions() {
         const json = JSON.parse(text);
         const result = await importData(json);
 
-        if (!result.success) {
-          toast.error(resolveActionErrorMessage(result, tErrors));
-        } else {
+        if (result.success) {
           toast.success(t("import_success", { count: result.imported ?? 0 }));
+        } else {
+          toast.error(resolveActionErrorMessage(result, tErrors));
         }
       } catch {
         toast.error(t("import_read_error"));

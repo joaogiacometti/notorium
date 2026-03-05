@@ -30,12 +30,28 @@ const validSubject = {
   notes: [],
   attendanceMisses: [],
   assessments: [],
+  flashcards: [],
 };
 
 const validPayload = {
   version: 1,
   exportedAt: "2026-03-01T00:00:00.000Z",
   subjects: [],
+};
+
+const validFlashcard = {
+  front: "Question",
+  back: "Answer",
+  state: "new",
+  dueAt: "2026-01-02T00:00:00.000Z",
+  ease: 250,
+  intervalDays: 0,
+  learningStep: null,
+  lastReviewedAt: null,
+  reviewCount: 0,
+  lapseCount: 0,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
 describe("importDataSchema", () => {
@@ -45,7 +61,7 @@ describe("importDataSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts a full subject with notes, assessments, and attendance", () => {
+  it("accepts a full subject with notes, assessments, attendance, and flashcards", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
       subjects: [
@@ -54,6 +70,7 @@ describe("importDataSchema", () => {
           notes: [validNote],
           assessments: [validAssessment],
           attendanceMisses: [{ missDate: "2026-02-10" }],
+          flashcards: [validFlashcard],
         },
       ],
     });
@@ -118,10 +135,43 @@ describe("importDataSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects flashcard with empty front", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
+          flashcards: [{ ...validFlashcard, front: "" }],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects missing exportedAt", () => {
     const { exportedAt: _, ...rest } = validPayload;
     const result = importDataSchema.safeParse(rest);
 
     expect(result.success).toBe(false);
+  });
+
+  it("defaults missing flashcards array to empty", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
+          flashcards: undefined,
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.subjects[0]?.flashcards).toEqual([]);
   });
 });

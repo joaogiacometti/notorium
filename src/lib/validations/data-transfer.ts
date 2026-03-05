@@ -30,6 +30,21 @@ const assessmentSchema = z.object({
   updatedAt: z.string(),
 });
 
+const flashcardSchema = z.object({
+  front: z.string().min(1).max(500),
+  back: z.string().min(1).max(2000),
+  state: z.enum(["new", "learning", "review", "relearning"]),
+  dueAt: z.string(),
+  ease: z.number().int(),
+  intervalDays: z.number().int(),
+  learningStep: z.number().int().nullable(),
+  lastReviewedAt: z.string().nullable(),
+  reviewCount: z.number().int(),
+  lapseCount: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 const subjectSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().nullable(),
@@ -40,6 +55,7 @@ const subjectSchema = z.object({
   notes: z.array(noteSchema).optional().default([]),
   attendanceMisses: z.array(attendanceMissSchema),
   assessments: z.array(assessmentSchema),
+  flashcards: z.array(flashcardSchema).optional().default([]),
 });
 
 export const importDataSchema = z.object({

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -60,6 +61,7 @@ export function ProfileForm({
       name,
     },
   });
+  const dataTransferAllowed = plan !== "free";
 
   const createdAtLabel = new Date(createdAt).toLocaleDateString(intlLocale, {
     year: "numeric",
@@ -169,13 +171,24 @@ export function ProfileForm({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="gap-4">
         <CardHeader>
           <CardTitle>{t("data_transfer_title")}</CardTitle>
           <CardDescription>{t("data_transfer_description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTransferActions />
+          {dataTransferAllowed ? (
+            <DataTransferActions />
+          ) : (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  {t("data_transfer_locked_description")}
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

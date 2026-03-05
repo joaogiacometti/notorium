@@ -76,8 +76,9 @@ Students who want a private, lightweight study management workspace.
 
 - View account details.
 - Update display name.
-- Export all user data as JSON.
-- Import user data from a previous Notorium export.
+- Export all user data as JSON (subjects, notes, attendance, assessments, flashcards) on paid plans (`pro`, `unlimited`).
+- Export template JSON with subject structure only (excludes notes, attendance records, and flashcards) on paid plans (`pro`, `unlimited`).
+- Import user data from a previous Notorium export on paid plans (`pro`, `unlimited`).
 - Delete account and all user-owned data.
 
 ### UI/UX Baseline

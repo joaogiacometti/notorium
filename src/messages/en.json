@@ -135,7 +135,7 @@
     "limit_tooltip": "Upgrade your plan to create more flashcards",
     "limit_message": "You've reached the limit of {max} flashcards per subject on your plan. Upgrade to create more.",
     "free_plan_title": "Flashcards are not available on the Free plan.",
-    "free_plan_description": "Upgrade your plan to create flashcards.",
+    "free_plan_description": "Flashcards are not available on the Free plan.",
     "table_front": "Front",
     "table_back": "Back",
     "table_actions": "Actions",
@@ -269,7 +269,9 @@
     "saving": "Saving...",
     "save_changes": "Save Changes",
     "data_transfer_title": "Data Transfer",
-    "data_transfer_description": "Export all your subjects, notes, attendance records, and assessments as a JSON file, or import data from a previous export.",
+    "data_transfer_description": "Export all your subjects, notes, attendance records, assessments, and flashcards as a JSON file, or import data from a previous export.",
+    "data_transfer_locked_description": "Data transfer is not available on the Free plan.",
+    "data_transfer_locked_message": "Data transfer is not available on the Free plan.",
     "danger_title": "Danger Zone",
     "danger_description": "Permanently delete your account and all associated data.",
     "danger_body": "Once you delete your account, all of your subjects, notes, assessments, and attendance records will be permanently removed. This action cannot be undone.",
@@ -285,7 +287,7 @@
     "export_template": "Export Template",
     "import_data": "Import Data",
     "import_dialog_title": "Import Data",
-    "import_dialog_description": "This will create new subjects from the import file with all their notes, attendance records, and assessments. Existing data will not be modified.",
+    "import_dialog_description": "This will create new subjects from the import file with all their notes, attendance records, assessments, and flashcards. Existing data will not be modified.",
     "cancel": "Cancel",
     "confirm_import": "Confirm Import"
   },
@@ -508,7 +510,7 @@
     "clear": "Clear",
     "uploading": "Uploading images...",
     "free_plan_title": "Image attachments are not available on the Free plan.",
-    "free_plan_desc": "Upgrade your plan to upload images.",
+    "free_plan_desc": "Image attachments are not available on the Free plan.",
     "empty": "No images attached yet.",
     "remove": "Remove Attachment",
     "cancel": "Cancel",
@@ -611,7 +613,8 @@
       "subjectImportLimit": "Plan limit: you can only have {max} subjects.",
       "noteLimit": "Plan limit: you can have up to {max} notes per subject.",
       "assessmentLimit": "Plan limit: you can have up to {max} assessments per subject.",
-      "flashcardLimit": "Plan limit: you can have up to {max} flashcards per subject."
+      "flashcardLimit": "Plan limit: you can have up to {max} flashcards per subject.",
+      "dataTransferNotAllowed": "Data transfer is not available on the Free plan."
     }
   },
   "Validation": {

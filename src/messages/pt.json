@@ -135,7 +135,7 @@
     "limit_tooltip": "Faça upgrade do plano para criar mais flashcards",
     "limit_message": "Você atingiu o limite de {max} flashcards por matéria no seu plano. Faça upgrade para criar mais.",
     "free_plan_title": "Flashcards não estão disponíveis no plano Grátis.",
-    "free_plan_description": "Faça upgrade do seu plano para criar flashcards.",
+    "free_plan_description": "Flashcards não estão disponíveis no plano Grátis.",
     "table_front": "Frente",
     "table_back": "Verso",
     "table_actions": "Ações",
@@ -269,7 +269,9 @@
     "saving": "Salvando...",
     "save_changes": "Salvar alterações",
     "data_transfer_title": "Transferência de dados",
-    "data_transfer_description": "Exporte todas as suas matérias, notas, faltas e avaliações em um arquivo JSON ou importe dados de um export anterior.",
+    "data_transfer_description": "Exporte todas as suas matérias, notas, faltas, avaliações e flashcards em um arquivo JSON ou importe dados de um export anterior.",
+    "data_transfer_locked_description": "A transferência de dados não está disponível no plano Grátis.",
+    "data_transfer_locked_message": "A transferência de dados não está disponível no plano Grátis.",
     "danger_title": "Zona de perigo",
     "danger_description": "Exclua permanentemente sua conta e todos os dados associados.",
     "danger_body": "Ao excluir sua conta, todas as suas matérias, notas, avaliações e faltas serão removidas permanentemente. Esta ação não pode ser desfeita.",
@@ -285,7 +287,7 @@
     "export_template": "Exportar modelo",
     "import_data": "Importar dados",
     "import_dialog_title": "Importar dados",
-    "import_dialog_description": "Isso criará novas matérias a partir do arquivo de importação com todas as notas, faltas e avaliações. Os dados existentes não serão modificados.",
+    "import_dialog_description": "Isso criará novas matérias a partir do arquivo de importação com todas as notas, faltas, avaliações e flashcards. Os dados existentes não serão modificados.",
     "cancel": "Cancelar",
     "confirm_import": "Confirmar importação"
   },
@@ -508,7 +510,7 @@
     "clear": "Limpar",
     "uploading": "Enviando imagens...",
     "free_plan_title": "Anexos de imagem não estão disponíveis no plano Grátis.",
-    "free_plan_desc": "Faça upgrade do seu plano para enviar imagens.",
+    "free_plan_desc": "Anexos de imagem não estão disponíveis no plano Grátis.",
     "empty": "Nenhuma imagem anexada ainda.",
     "remove": "Remover Anexo",
     "cancel": "Cancelar",
@@ -586,7 +588,7 @@
         "selectAtLeastOne": "Selecione pelo menos uma imagem.",
         "maxFilesPerUpload": "Voce pode enviar no maximo {max} imagens por vez.",
         "invalidFile": "Arquivo invalido: {fileName}.",
-        "freePlanNotAllowed": "Anexos de imagem nao estao disponiveis no plano Gratis.",
+        "freePlanNotAllowed": "Anexos de imagem não estão disponíveis no plano Grátis.",
         "blobNotConfigured": "O armazenamento Blob nao esta configurado.",
         "storageLimitReached": "Voce atingiu o limite de armazenamento de imagens. Remova algumas imagens para liberar espaco.",
         "uploadFailed": "Falha ao enviar imagens da nota.",
@@ -611,7 +613,8 @@
       "subjectImportLimit": "Limite do plano: voce so pode ter ate {max} materias.",
       "noteLimit": "Limite do plano: voce pode ter ate {max} notas por materia.",
       "assessmentLimit": "Limite do plano: voce pode ter ate {max} avaliacoes por materia.",
-      "flashcardLimit": "Limite do plano: voce pode ter ate {max} flashcards por materia."
+      "flashcardLimit": "Limite do plano: voce pode ter ate {max} flashcards por materia.",
+      "dataTransferNotAllowed": "A transferência de dados não está disponível no plano Grátis."
     }
   },
   "Validation": {

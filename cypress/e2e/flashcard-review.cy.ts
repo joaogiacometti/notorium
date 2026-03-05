@@ -77,7 +77,7 @@ describe("Flashcard Review", () => {
       email: `cypress-flashcard-empty-${Date.now()}@test.com`,
       password: "TestPassword123!",
     };
-    authenticateWithSession(emptyUser);
+    authenticateWithSession(emptyUser, "pro");
     cy.visit("/flashcards/review");
 
     cy.contains("All caught up").should("be.visible");
