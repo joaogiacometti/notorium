@@ -26,7 +26,7 @@
     "system": "System"
   },
   "Index": {
-    "badge": "Free to use — no credit card required",
+    "badge": "100% Free & Open Source",
     "title_start": "Your studies, ",
     "title_highlight": "organized",
     "description": "Notorium helps you manage subjects, notes, flashcards, assessments, and attendance all in one place. Stay on top of your academic life.",
@@ -44,7 +44,16 @@
     "calendar_title": "Calendar",
     "calendar_description": "See assessments and attendance misses in a timeline view to plan your week better.",
     "flashcards_title": "Flashcards",
-    "flashcards_description": "Create flashcards and review them with spaced repetition to retain what you learn."
+    "flashcards_description": "Create flashcards and review them with spaced repetition to retain what you learn.",
+    "all_inclusive_heading": "Everything Included, For Free",
+    "all_inclusive_description": "No hidden fees, no premium tiers. Get full access to all Notorium features immediately.",
+    "limit_subjects": "Up to 20 Subjects",
+    "limit_notes": "30 Notes per Subject",
+    "limit_flashcards": "500 Flashcards per Subject",
+    "limit_assessments": "15 Assessments per Subject",
+    "opensource_notice_title": "Private Instance & Open Source",
+    "opensource_notice_description": "This instance is private and invite-only. However, Notorium is fully open-source! You can freely self-host your own instance.",
+    "opensource_repo_link": "View on GitHub"
   },
   "LoginForm": {
     "title": "Login to your account",

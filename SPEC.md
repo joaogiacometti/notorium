@@ -95,6 +95,13 @@ Students who want a private, lightweight study management workspace.
 - Theme toggle (light/dark/system).
 - Custom not-found page.
 
+## Resource Limits
+
+- A user can create a maximum of 20 subjects.
+- A user can create a maximum of 30 notes per subject.
+- A user can create a maximum of 15 assessments per subject.
+- A user can create a maximum of 500 flashcards per subject.
+
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.

@@ -26,7 +26,7 @@
     "system": "Sistema"
   },
   "Index": {
-    "badge": "Gratuito para usar — não precisa de cartão",
+    "badge": "100% Gratuito e Código Aberto",
     "title_start": "Seus estudos, ",
     "title_highlight": "organizados",
     "description": "O Notorium ajuda você a gerenciar matérias, notas, flashcards, avaliações e presenças em um só lugar. Fique em dia com sua vida acadêmica.",
@@ -44,7 +44,16 @@
     "calendar_title": "Calendário",
     "calendar_description": "Veja avaliações e faltas em uma visão de linha do tempo para planejar melhor sua semana.",
     "flashcards_title": "Flashcards",
-    "flashcards_description": "Crie flashcards e os revise com repetição espaçada para reter o que você aprende."
+    "flashcards_description": "Crie flashcards e os revise com repetição espaçada para reter o que você aprende.",
+    "all_inclusive_heading": "Tudo Incluído, de Graça",
+    "all_inclusive_description": "Sem taxas ocultas, sem planos premium. Tenha acesso total a todas as funcionalidades do Notorium imediatamente.",
+    "limit_subjects": "Até 20 Matérias",
+    "limit_notes": "30 Notas por Matéria",
+    "limit_flashcards": "500 Flashcards por Matéria",
+    "limit_assessments": "15 Avaliações por Matéria",
+    "opensource_notice_title": "Instância Privada & Código Aberto",
+    "opensource_notice_description": "Esta instância é privada e apenas para convidados. No entanto, o Notorium possui código aberto! Você pode hospedar sua própria instância gratuitamente.",
+    "opensource_repo_link": "Ver no GitHub"
   },
   "LoginForm": {
     "title": "Entre na sua conta",
