@@ -28,7 +28,7 @@
     "badge": "Gratuito para usar — não precisa de cartão",
     "title_start": "Seus estudos, ",
     "title_highlight": "organizados",
-    "description": "O Notorium ajuda você a gerenciar matérias, notas, avaliações e presenças em um só lugar. Fique em dia com sua vida acadêmica.",
+    "description": "O Notorium ajuda você a gerenciar matérias, notas, flashcards, avaliações e presenças em um só lugar. Fique em dia com sua vida acadêmica.",
     "get_started": "Começar agora",
     "sign_in": "Entrar"
   },
@@ -51,6 +51,9 @@
     "plan_feature_image_attachments": "Anexos de imagem",
     "plan_feature_rich_text_editor": "Editor de texto rico",
     "plan_feature_attendance_tracking": "Controle de faltas",
+    "plan_feature_flashcards_per_subject": "Flashcards por matéria",
+    "flashcards_title": "Flashcards",
+    "flashcards_description": "Crie flashcards e revise-os com repetição espaçada para fixar o que você aprende.",
     "start_for_free": "Começar grátis",
     "become_pro": "Virar Pro",
     "coming_soon": "Em breve"
@@ -127,6 +130,12 @@
     "empty_description": "Crie seu primeiro flashcard com frente e verso.",
     "search_placeholder": "Buscar frente ou verso...",
     "results_count": "{filtered} de {total} flashcards",
+    "count_with_limit": "{count}/{max} flashcards",
+    "count_no_limit": "{count, plural, one {# flashcard} other {# flashcards}}",
+    "limit_tooltip": "Faça upgrade do plano para criar mais flashcards",
+    "limit_message": "Você atingiu o limite de {max} flashcards por matéria no seu plano. Faça upgrade para criar mais.",
+    "free_plan_title": "Flashcards não estão disponíveis no plano Grátis.",
+    "free_plan_description": "Faça upgrade do seu plano para criar flashcards.",
     "table_front": "Frente",
     "table_back": "Verso",
     "table_actions": "Ações",
@@ -600,7 +609,8 @@
       "subjectLimit": "Limite do plano: voce pode ter ate {max} materias.",
       "subjectImportLimit": "Limite do plano: voce so pode ter ate {max} materias.",
       "noteLimit": "Limite do plano: voce pode ter ate {max} notas por materia.",
-      "assessmentLimit": "Limite do plano: voce pode ter ate {max} avaliacoes por materia."
+      "assessmentLimit": "Limite do plano: voce pode ter ate {max} avaliacoes por materia.",
+      "flashcardLimit": "Limite do plano: voce pode ter ate {max} flashcards por materia."
     }
   },
   "Validation": {

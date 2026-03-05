@@ -67,7 +67,7 @@ Students who want a private, lightweight study management workspace.
 
 ### Global Search
 
-- Search subjects and notes by text (case-insensitive).
+- Search subjects, notes, and flashcards by text (case-insensitive).
 - Search is user-scoped and accessible from navbar.
 - Empty search returns user data without text filtering (capped by configured result limits).
 - Search results are cached on the client and invalidated after related mutations.
@@ -90,9 +90,9 @@ Students who want a private, lightweight study management workspace.
 
 ## Plans
 
-- **Free** (default): up to 5 subjects, up to 5 notes per subject, up to 5 assessments per subject, no image attachments.
-- **Pro**: up to 20 subjects, up to 30 notes per subject, up to 5 assessments per subject, up to 50 MB image storage.
-- **Unlimited**: no restrictions on subjects, notes, assessments, or image attachments.
+- **Free** (default): up to 5 subjects, up to 5 notes per subject, up to 5 assessments per subject, no flashcards, no image attachments.
+- **Pro**: up to 20 subjects, up to 30 notes per subject, up to 5 assessments per subject, up to 500 flashcards per subject, up to 50 MB image storage.
+- **Unlimited**: no restrictions on subjects, notes, assessments, flashcards, or image attachments.
 - Plan is stored on the `user` table (`plan` column, enum `free` | `pro` | `unlimited`).
 - Limits are enforced server-side on create actions and surfaced in the UI.
 
@@ -108,7 +108,7 @@ Students who want a private, lightweight study management workspace.
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`.
 - `flashcard`
-  - `id`, `front`, `back`, `subjectId`, timestamps, `userId`.
+  - `id`, `front`, `back`, `state`, `dueAt`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`.
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`.
 - `note_image_attachment`

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -17,13 +17,18 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import type { FlashcardEntity } from "@/lib/api/contracts";
+import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 
 interface FlashcardsListProps {
   subjectId: string;
+  plan: UserPlan;
 }
 
-export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
+export function FlashcardsList({
+  subjectId,
+  plan,
+}: Readonly<FlashcardsListProps>) {
   const t = useTranslations("FlashcardsList");
   const tErrors = useTranslations("ServerActions");
   const [createOpen, setCreateOpen] = useState(false);
@@ -31,6 +36,13 @@ export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
   const [accordionValue, setAccordionValue] = useState("");
   const [hasLoaded, setHasLoaded] = useState(false);
   const [flashcards, setFlashcards] = useState<FlashcardEntity[]>([]);
+
+  const limits = getPlanLimits(plan);
+  const flashcardsNotAllowed = !limits.flashcardsAllowed;
+  const isAtLimit =
+    !flashcardsNotAllowed &&
+    limits.maxFlashcardsPerSubject !== null &&
+    flashcards.length >= limits.maxFlashcardsPerSubject;
 
   function handleOpenChange(value: string) {
     setAccordionValue(value);
@@ -52,13 +64,26 @@ export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
   }
 
   function getSubtitle() {
+    if (flashcardsNotAllowed) {
+      return t("free_plan_description");
+    }
+
     if (!hasLoaded) {
       return t("collapsed_hint");
     }
 
-    return flashcards.length === 0
-      ? t("count_empty")
-      : t("count", { count: flashcards.length });
+    if (flashcards.length === 0) {
+      return t("count_empty");
+    }
+
+    if (limits.maxFlashcardsPerSubject !== null) {
+      return t("count_with_limit", {
+        count: flashcards.length,
+        max: limits.maxFlashcardsPerSubject,
+      });
+    }
+
+    return t("count_no_limit", { count: flashcards.length });
   }
 
   function renderAccordionContent() {
@@ -84,35 +109,59 @@ export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
             {getSubtitle()}
           </p>
         </div>
-        <CreateFlashcardDialog
-          subjectId={subjectId}
-          trigger={
-            <Button
-              size="sm"
-              className="w-full gap-1.5 sm:w-auto"
-              id="btn-create-flashcard"
-            >
-              <Plus className="size-4" />
-              <span>{t("new_flashcard")}</span>
-            </Button>
-          }
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          onCreated={(card) => setFlashcards((current) => [card, ...current])}
-        />
+        {!flashcardsNotAllowed && (
+          <CreateFlashcardDialog
+            subjectId={subjectId}
+            trigger={
+              <Button
+                size="sm"
+                className="w-full gap-1.5 sm:w-auto"
+                id="btn-create-flashcard"
+                disabled={isAtLimit}
+                title={isAtLimit ? t("limit_tooltip") : undefined}
+              >
+                <Plus className="size-4" />
+                <span>{t("new_flashcard")}</span>
+              </Button>
+            }
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            onCreated={(card) => setFlashcards((current) => [card, ...current])}
+          />
+        )}
       </div>
 
-      <Accordion
-        type="single"
-        collapsible
-        value={accordionValue}
-        onValueChange={handleOpenChange}
-      >
-        <AccordionItem value="flashcards">
-          <AccordionTrigger>{t("toggle")}</AccordionTrigger>
-          <AccordionContent>{renderAccordionContent()}</AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      {flashcardsNotAllowed && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-amber-800 dark:text-amber-200">
+            {t("free_plan_title")}
+          </p>
+        </div>
+      )}
+
+      {isAtLimit && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-amber-800 dark:text-amber-200">
+            {t("limit_message", { max: limits.maxFlashcardsPerSubject ?? 0 })}
+          </p>
+        </div>
+      )}
+
+      {!flashcardsNotAllowed && (
+        <Accordion
+          type="single"
+          collapsible
+          value={accordionValue}
+          onValueChange={handleOpenChange}
+        >
+          <AccordionItem value="flashcards">
+            <AccordionTrigger>{t("toggle")}</AccordionTrigger>
+            <AccordionContent>{renderAccordionContent()}</AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
     </div>
   );
 }

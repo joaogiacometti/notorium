@@ -6,6 +6,7 @@ import {
   Crown,
   FileText,
   FolderOpen,
+  Layers,
   Minus,
   Sparkles,
   UserPlus,
@@ -59,6 +60,11 @@ const PLAN_ROWS: Array<{
   },
   { featureKey: "rich_text_editor", free: true, pro: true },
   { featureKey: "attendance_tracking", free: true, pro: true },
+  {
+    featureKey: "flashcards_per_subject",
+    free: false,
+    pro: String(PRO_LIMITS.maxFlashcardsPerSubject),
+  },
 ];
 
 function PlanCell({ value }: { value: string | boolean }) {
@@ -91,6 +97,11 @@ const FEATURES = [
     icon: CalendarDays,
     titleKey: "calendar_title",
     descriptionKey: "calendar_description",
+  },
+  {
+    icon: Layers,
+    titleKey: "flashcards_title",
+    descriptionKey: "flashcards_description",
   },
 ];
 

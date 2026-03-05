@@ -11,7 +11,11 @@ import type {
   FlashcardEntity,
   ResetFlashcardResult,
 } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
+import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
+import {
+  checkFlashcardLimit,
+  checkFlashcardsAllowed,
+} from "@/lib/plan-enforcement";
 import { actionError } from "@/lib/server-action-errors";
 import {
   type CreateFlashcardForm,
@@ -48,7 +52,7 @@ export async function getFlashcardsBySubject(
 export async function createFlashcard(
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
-  const userId = await getAuthenticatedUserId();
+  const { userId, plan } = await getAuthenticatedUser();
   const parsed = createFlashcardSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -69,6 +73,28 @@ export async function createFlashcard(
 
   if (existingSubject.length === 0) {
     return actionError("subjects.notFound");
+  }
+
+  if (!(await checkFlashcardsAllowed(plan))) {
+    return actionError("plan.flashcardLimit", {
+      errorParams: { max: 0 },
+    });
+  }
+
+  const limitCheck = await checkFlashcardLimit(
+    userId,
+    parsed.data.subjectId,
+    plan,
+  );
+
+  if (!limitCheck.allowed) {
+    if (limitCheck.max === null) {
+      return actionError("common.generic");
+    }
+
+    return actionError("plan.flashcardLimit", {
+      errorParams: { max: limitCheck.max },
+    });
   }
 
   const inserted = await db

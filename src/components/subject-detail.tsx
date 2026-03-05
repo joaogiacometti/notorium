@@ -135,7 +135,7 @@ export function SubjectDetail({
       <NotesList subjectId={subject.id} notes={notes} plan={plan} />
 
       <Separator className="my-8" />
-      <FlashcardsList subjectId={subject.id} />
+      <FlashcardsList subjectId={subject.id} plan={plan} />
 
       <EditSubjectDialog
         subject={subject}

@@ -16,7 +16,9 @@ describe("getPlanLimits", () => {
     expect(limits.maxSubjects).toBeNull();
     expect(limits.maxNotesPerSubject).toBeNull();
     expect(limits.maxAssessmentsPerSubject).toBeNull();
+    expect(limits.maxFlashcardsPerSubject).toBeNull();
     expect(limits.maxImageStorageMb).toBeNull();
+    expect(limits.flashcardsAllowed).toBe(true);
     expect(limits.imagesAllowed).toBe(true);
   });
 
@@ -26,5 +28,17 @@ describe("getPlanLimits", () => {
 
   it("pro plan allows images", () => {
     expect(getPlanLimits("pro").imagesAllowed).toBe(true);
+  });
+
+  it("free plan disallows flashcards", () => {
+    expect(getPlanLimits("free").flashcardsAllowed).toBe(false);
+  });
+
+  it("pro plan allows flashcards", () => {
+    expect(getPlanLimits("pro").flashcardsAllowed).toBe(true);
+  });
+
+  it("pro plan allows up to 500 flashcards per subject", () => {
+    expect(getPlanLimits("pro").maxFlashcardsPerSubject).toBe(500);
   });
 });

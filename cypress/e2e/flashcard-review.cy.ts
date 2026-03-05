@@ -25,7 +25,7 @@ describe("Flashcard Review", () => {
 
   beforeEach(() => {
     cy.viewport(1280, 720);
-    authenticateWithSession(testUser);
+    authenticateWithSession(testUser, "pro");
     visitSubjectsPage();
   });
 

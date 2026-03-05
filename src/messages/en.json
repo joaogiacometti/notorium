@@ -28,7 +28,7 @@
     "badge": "Free to use — no credit card required",
     "title_start": "Your studies, ",
     "title_highlight": "organized",
-    "description": "Notorium helps you manage subjects, notes, assessments, and attendance all in one place. Stay on top of your academic life.",
+    "description": "Notorium helps you manage subjects, notes, flashcards, assessments, and attendance all in one place. Stay on top of your academic life.",
     "get_started": "Get Started",
     "sign_in": "Sign In"
   },
@@ -51,6 +51,9 @@
     "plan_feature_image_attachments": "Image attachments",
     "plan_feature_rich_text_editor": "Rich text editor",
     "plan_feature_attendance_tracking": "Attendance tracking",
+    "plan_feature_flashcards_per_subject": "Flashcards per subject",
+    "flashcards_title": "Flashcards",
+    "flashcards_description": "Create flashcards and review them with spaced repetition to retain what you learn.",
     "start_for_free": "Start for free",
     "become_pro": "Become Pro",
     "coming_soon": "Coming soon"
@@ -127,6 +130,12 @@
     "empty_description": "Create your first flashcard with a front and back.",
     "search_placeholder": "Search front or back...",
     "results_count": "{filtered} of {total} flashcards",
+    "count_with_limit": "{count}/{max} flashcards",
+    "count_no_limit": "{count, plural, one {# flashcard} other {# flashcards}}",
+    "limit_tooltip": "Upgrade your plan to create more flashcards",
+    "limit_message": "You've reached the limit of {max} flashcards per subject on your plan. Upgrade to create more.",
+    "free_plan_title": "Flashcards are not available on the Free plan.",
+    "free_plan_description": "Upgrade your plan to create flashcards.",
     "table_front": "Front",
     "table_back": "Back",
     "table_actions": "Actions",
@@ -600,7 +609,8 @@
       "subjectLimit": "Plan limit: you can have up to {max} subjects.",
       "subjectImportLimit": "Plan limit: you can only have {max} subjects.",
       "noteLimit": "Plan limit: you can have up to {max} notes per subject.",
-      "assessmentLimit": "Plan limit: you can have up to {max} assessments per subject."
+      "assessmentLimit": "Plan limit: you can have up to {max} assessments per subject.",
+      "flashcardLimit": "Plan limit: you can have up to {max} flashcards per subject."
     }
   },
   "Validation": {

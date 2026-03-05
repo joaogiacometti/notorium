@@ -2,7 +2,13 @@
 
 import { and, count, eq, sum } from "drizzle-orm";
 import { db } from "@/db/index";
-import { assessment, note, noteImageAttachment, subject } from "@/db/schema";
+import {
+  assessment,
+  flashcard,
+  note,
+  noteImageAttachment,
+  subject,
+} from "@/db/schema";
 import { getPlanLimits, type UserPlan } from "@/lib/plan-limits";
 
 interface LimitCheckResult {
@@ -117,4 +123,36 @@ export async function checkAssessmentLimit(
     current,
     max: limits.maxAssessmentsPerSubject,
   };
+}
+
+export async function checkFlashcardLimit(
+  userId: string,
+  subjectId: string,
+  plan: UserPlan,
+): Promise<LimitCheckResult> {
+  const limits = getPlanLimits(plan);
+
+  if (limits.maxFlashcardsPerSubject === null) {
+    return { allowed: true, current: 0, max: null };
+  }
+
+  const result = await db
+    .select({ total: count() })
+    .from(flashcard)
+    .where(
+      and(eq(flashcard.subjectId, subjectId), eq(flashcard.userId, userId)),
+    );
+
+  const current = result[0]?.total ?? 0;
+
+  return {
+    allowed: current < limits.maxFlashcardsPerSubject,
+    current,
+    max: limits.maxFlashcardsPerSubject,
+  };
+}
+
+export async function checkFlashcardsAllowed(plan: UserPlan): Promise<boolean> {
+  const limits = getPlanLimits(plan);
+  return limits.flashcardsAllowed;
 }
