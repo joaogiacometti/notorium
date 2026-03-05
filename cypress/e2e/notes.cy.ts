@@ -101,7 +101,8 @@ describe("Notes", () => {
     createNote({ title: noteTitle });
     openNoteDetail(noteTitle);
 
-    cy.contains("button", "Delete").click();
+    cy.contains("h1", noteTitle, { timeout: 10000 }).should("be.visible");
+    cy.contains("button", "Delete", { timeout: 10000 }).click();
     cy.get('[role="dialog"]').within(() => {
       cy.contains("Delete Note").should("be.visible");
       cy.contains("button", "Delete").click();

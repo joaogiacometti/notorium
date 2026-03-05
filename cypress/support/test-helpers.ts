@@ -41,9 +41,8 @@ export function authenticateWithSession(
 
     if (plan !== "free") {
       setUserPlan(user.email, plan);
-      cy.clearCookies();
-      cy.clearLocalStorage();
-      login(user);
+      cy.visit("/subjects");
+      cy.url({ timeout: 10000 }).should("include", "/subjects");
     }
   });
 }
@@ -78,4 +77,9 @@ export function createNote(input: { title: string }) {
 export function openNoteDetail(noteTitle: string) {
   cy.contains("a", noteTitle).click();
   cy.url({ timeout: 10000 }).should("match", /\/notes\/[^/]+$/);
+}
+
+export function openFlashcardDetail(front: string) {
+  cy.contains("a", front).click();
+  cy.url({ timeout: 10000 }).should("match", /\/flashcards\/[^/]+$/);
 }

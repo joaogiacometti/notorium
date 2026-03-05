@@ -39,6 +39,7 @@ Students who want a private, lightweight study management workspace.
 - Flashcard fields: front and back text.
 - Flashcards are displayed inline in subject detail in a collapsed section.
 - Subject flashcards are loaded when the section is expanded.
+- Flashcards have a dedicated detail page nested under subject routes.
 - Global review page with spaced repetition queue.
 - Review answers: Again, Hard, Good, Easy.
 - Scheduler: SM-2-compatible defaults with learning/relearning stages.
@@ -68,6 +69,7 @@ Students who want a private, lightweight study management workspace.
 ### Global Search
 
 - Search subjects, notes, and flashcards by text (case-insensitive).
+- Flashcard search results navigate to the flashcard detail page.
 - Search is user-scoped and accessible from navbar.
 - Empty search returns user data without text filtering (capped by configured result limits).
 - Search results are cached on the client and invalidated after related mutations.

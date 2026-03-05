@@ -168,7 +168,11 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                 <CommandItem
                   key={fc.id}
                   value={fc.id}
-                  onSelect={() => handleSelect(`/subjects/${fc.subjectId}`)}
+                  onSelect={() =>
+                    handleSelect(
+                      `/subjects/${fc.subjectId}/flashcards/${fc.id}`,
+                    )
+                  }
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
                   <div className="flex items-center gap-2">

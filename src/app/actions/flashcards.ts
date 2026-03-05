@@ -49,6 +49,28 @@ export async function getFlashcardsBySubject(
     .then((rows) => rows.map((row) => row.flashcard));
 }
 
+export async function getFlashcardById(
+  id: string,
+): Promise<FlashcardEntity | null> {
+  const userId = await getAuthenticatedUserId();
+
+  const results = await db
+    .select({ flashcard })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .where(
+      and(
+        eq(flashcard.id, id),
+        eq(flashcard.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .limit(1);
+
+  return results[0]?.flashcard ?? null;
+}
+
 export async function createFlashcard(
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
@@ -149,6 +171,9 @@ export async function editFlashcard(
     .returning();
 
   revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
+  revalidatePath(
+    `/subjects/${existingFlashcard[0].subjectId}/flashcards/${parsed.data.id}`,
+  );
   return { success: true, flashcard: updated[0] };
 }
 
@@ -185,6 +210,9 @@ export async function deleteFlashcard(
     .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)));
 
   revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
+  revalidatePath(
+    `/subjects/${existingFlashcard[0].subjectId}/flashcards/${parsed.data.id}`,
+  );
   return { success: true, id: parsed.data.id };
 }
 
@@ -235,6 +263,9 @@ export async function resetFlashcard(
     .returning();
 
   revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
+  revalidatePath(
+    `/subjects/${existingFlashcard[0].subjectId}/flashcards/${parsed.data.id}`,
+  );
   revalidatePath("/flashcards/review");
   return { success: true, flashcard: updated[0] };
 }

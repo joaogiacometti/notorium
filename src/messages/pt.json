@@ -503,6 +503,14 @@
     "edit": "Editar",
     "delete": "Excluir"
   },
+  "FlashcardDetail": {
+    "back": "Voltar para Matéria",
+    "created_label": "Criado",
+    "back_label": "Verso",
+    "edit": "Editar",
+    "reset": "Resetar",
+    "delete": "Excluir"
+  },
   "NoteImageAttachments": {
     "title": "Anexos",
     "images": "Imagens",

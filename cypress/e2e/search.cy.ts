@@ -21,7 +21,7 @@ describe("Global Search", () => {
 
   beforeEach(() => {
     cy.viewport(1280, 720);
-    authenticateWithSession(testUser);
+    authenticateWithSession(testUser, "pro");
     visitSubjectsPage();
   });
 
@@ -65,5 +65,36 @@ describe("Global Search", () => {
     });
     cy.url({ timeout: 10000 }).should("match", /\/notes\/[^/]+$/);
     cy.contains("h1", noteTitle).should("be.visible");
+  });
+
+  it("navigates to a flashcard from global search", () => {
+    const subjectName = uniqueValue("Search Flashcards Subject");
+    const flashcardFront = uniqueValue("Searchable Flashcard Front");
+    const flashcardBack = "Searchable flashcard back";
+
+    createSubject({
+      name: subjectName,
+      description: "Subject for searchable flashcard",
+    });
+    openSubjectDetail(subjectName);
+    cy.contains('[data-slot="accordion-trigger"]', "Show flashcards").click();
+
+    cy.get("#btn-create-flashcard").click();
+    cy.get("#form-create-flashcard-front").type(flashcardFront);
+    cy.get("#form-create-flashcard-back").type(flashcardBack);
+    cy.contains('[role="dialog"] button', "Create Flashcard").click();
+    cy.get('[role="dialog"]').should("not.exist");
+
+    visitSubjectsPage();
+    openSearchDialog();
+    cy.get('[role="dialog"]').within(() => {
+      cy.get(
+        'input[placeholder="Search subjects, notes, and flashcards..."]',
+      ).type(flashcardFront);
+      cy.contains('[data-slot="command-item"]', flashcardFront).click();
+    });
+    cy.url({ timeout: 10000 }).should("match", /\/flashcards\/[^/]+$/);
+    cy.contains("h1", flashcardFront).should("be.visible");
+    cy.contains("p", flashcardBack).should("be.visible");
   });
 });

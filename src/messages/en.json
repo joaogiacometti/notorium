@@ -503,6 +503,14 @@
     "edit": "Edit",
     "delete": "Delete"
   },
+  "FlashcardDetail": {
+    "back": "Back to Subject",
+    "created_label": "Created",
+    "back_label": "Back",
+    "edit": "Edit",
+    "reset": "Reset",
+    "delete": "Delete"
+  },
   "NoteImageAttachments": {
     "title": "Attachments",
     "images": "Images",

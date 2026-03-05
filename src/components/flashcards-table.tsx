@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Link } from "@/i18n/routing";
 import type { FlashcardEntity } from "@/lib/api/contracts";
 
 const PAGE_SIZE = 25;
@@ -116,7 +117,12 @@ export function FlashcardsTable({
             paginatedFlashcards.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="max-w-0">
-                  <p className="truncate font-medium">{item.front}</p>
+                  <Link
+                    href={`/subjects/${item.subjectId}/flashcards/${item.id}`}
+                    className="block truncate rounded-sm font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {item.front}
+                  </Link>
                 </TableCell>
                 <TableCell className="max-w-0 text-muted-foreground">
                   <p className="truncate">{item.back}</p>
