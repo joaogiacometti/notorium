@@ -229,6 +229,58 @@
   @apply my-6 border-border;
 }
 
+.tiptap-content img,
+.tiptap-wrapper .tiptap img {
+  @apply mb-3 block h-auto max-w-full rounded-md border border-border/60 last:mb-0;
+}
+
+.tiptap-wrapper .tiptap [data-resize-container] {
+  @apply mb-3 last:mb-0;
+}
+
+.tiptap-wrapper .tiptap [data-resize-wrapper] {
+  @apply inline-block align-top;
+}
+
+.tiptap-wrapper .tiptap [data-resize-handle] {
+  @apply z-10 size-3 rounded-full border-2 border-background bg-primary shadow-sm;
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.tiptap-wrapper
+  .tiptap
+  [data-resize-container].ProseMirror-selectednode
+  [data-resize-handle],
+.tiptap-wrapper
+  .tiptap
+  [data-resize-container][data-resize-state="true"]
+  [data-resize-handle] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tiptap-wrapper .tiptap [data-resize-handle="top-left"] {
+  cursor: nwse-resize;
+  transform: translate(-50%, -50%);
+}
+
+.tiptap-wrapper .tiptap [data-resize-handle="top-right"] {
+  cursor: nesw-resize;
+  transform: translate(50%, -50%);
+}
+
+.tiptap-wrapper .tiptap [data-resize-handle="bottom-left"] {
+  cursor: nesw-resize;
+  transform: translate(-50%, 50%);
+}
+
+.tiptap-wrapper .tiptap [data-resize-handle="bottom-right"] {
+  cursor: nwse-resize;
+  transform: translate(50%, 50%);
+}
+
 .tiptap-content mark,
 .tiptap-wrapper .tiptap mark {
   @apply rounded-sm bg-yellow-200/60 px-0.5 dark:bg-yellow-500/30;

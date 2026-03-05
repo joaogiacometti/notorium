@@ -1,11 +1,14 @@
 "use client";
 
+import { Extension } from "@tiptap/core";
 import Highlight from "@tiptap/extension-highlight";
+import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import Typography from "@tiptap/extension-typography";
 import Underline from "@tiptap/extension-underline";
+import { Plugin } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -31,7 +34,30 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { isDirectImageUrl } from "@/lib/tiptap-image-url";
 import { cn } from "@/lib/utils";
+
+const ImageUrlPasteExtension = Extension.create({
+  name: "imageUrlPaste",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          handlePaste: (_, event) => {
+            const src =
+              event.clipboardData?.getData("text/plain")?.trim() ?? "";
+            if (!isDirectImageUrl(src)) {
+              return false;
+            }
+
+            this.editor.chain().focus().setImage({ src }).run();
+            return true;
+          },
+        },
+      }),
+    ];
+  },
+});
 
 interface TiptapEditorProps {
   value: string;
@@ -235,10 +261,20 @@ export function TiptapEditor({
       }),
       Placeholder.configure({ placeholder: resolvedPlaceholder }),
       Highlight.configure({ multicolor: false }),
+      Image.configure({
+        allowBase64: false,
+        resize: {
+          enabled: true,
+          minWidth: 120,
+          minHeight: 80,
+          alwaysPreserveAspectRatio: true,
+        },
+      }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Underline,
       Typography,
+      ImageUrlPasteExtension,
     ],
     content: value || "",
     onUpdate: handleUpdate,

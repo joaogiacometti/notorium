@@ -1,6 +1,7 @@
 "use client";
 
 import Highlight from "@tiptap/extension-highlight";
+import Image from "@tiptap/extension-image";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import Underline from "@tiptap/extension-underline";
@@ -25,6 +26,7 @@ export function TiptapRenderer({
         codeBlock: false,
       }),
       Highlight,
+      Image.configure({ allowBase64: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Underline,

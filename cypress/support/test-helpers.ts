@@ -66,10 +66,15 @@ export function openSubjectDetail(subjectName: string) {
   cy.url({ timeout: 10000 }).should("match", /\/subjects\/[^/]+$/);
 }
 
-export function createNote(input: { title: string }) {
+export function createNote(input: { title: string; content?: string }) {
   cy.get("#btn-create-note").click();
   cy.get('[role="dialog"]').should("be.visible");
   cy.get("#form-create-note-title").clear().type(input.title);
+  if (input.content) {
+    cy.get("#form-create-note-content")
+      .click()
+      .type(input.content, { parseSpecialCharSequences: false });
+  }
   cy.contains('[role="dialog"] button', "Create Note").click();
   cy.get('[role="dialog"]').should("not.exist");
 }

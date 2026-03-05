@@ -2,6 +2,7 @@
 
 Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, and assessments in one place with private, user-scoped data.
 The app is localized in English (`en`) and Portuguese (`pt`).
+Notes support rich text and can render images from direct image URLs (paste) and Markdown image syntax.
 
 On subject detail pages, flashcards are shown in a collapsed section and loaded on first expand.
 Flashcards also have a dedicated detail page under each subject, and global search results for flashcards open that detail page directly.

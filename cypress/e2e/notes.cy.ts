@@ -40,6 +40,82 @@ describe("Notes", () => {
     cy.contains("h1", noteTitle).should("be.visible");
   });
 
+  it("renders an image from markdown content", () => {
+    const subjectName = uniqueValue("Image notes subject");
+    const noteTitle = uniqueValue("Image note");
+    const imageUrl = "https://cdn.example.com/diagram.png";
+
+    createSubject({
+      name: subjectName,
+      description: "Subject used for note image rendering",
+    });
+    openSubjectDetail(subjectName);
+
+    createNote({
+      title: noteTitle,
+      content: `![Study diagram](${imageUrl})`,
+    });
+
+    openNoteDetail(noteTitle);
+    cy.get(".tiptap-content img")
+      .should("have.length", 1)
+      .and("have.attr", "src", imageUrl);
+  });
+
+  it("resizes an image in the editor and persists dimensions", () => {
+    const subjectName = uniqueValue("Resizable image subject");
+    const noteTitle = uniqueValue("Resizable image note");
+    const imageUrl = "https://cdn.example.com/resizable-diagram.png";
+
+    createSubject({
+      name: subjectName,
+      description: "Subject used for note image resizing",
+    });
+    openSubjectDetail(subjectName);
+
+    createNote({
+      title: noteTitle,
+      content: `![Resizable diagram](${imageUrl})`,
+    });
+
+    openNoteDetail(noteTitle);
+    cy.contains("button", "Edit").click();
+    cy.get('[role="dialog"]').should("be.visible");
+
+    cy.get(".tiptap-wrapper img").should("exist");
+    cy.get('.tiptap-wrapper [data-resize-handle="bottom-right"]')
+      .first()
+      .then(($handle) => {
+        const rect = $handle[0].getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+
+        cy.wrap($handle).trigger("mousedown", {
+          button: 0,
+          clientX: startX,
+          clientY: startY,
+          force: true,
+        });
+        cy.document().trigger("mousemove", {
+          clientX: startX + 120,
+          clientY: startY + 80,
+          force: true,
+        });
+        cy.document().trigger("mouseup", { force: true });
+      });
+
+    cy.contains('[role="dialog"] button', "Save Changes").click();
+    cy.get('[role="dialog"]').should("not.exist");
+
+    cy.get(".tiptap-content img").should(($img) => {
+      const width = Number($img.attr("width"));
+      const height = Number($img.attr("height"));
+
+      expect(width).to.be.greaterThan(0);
+      expect(height).to.be.greaterThan(0);
+    });
+  });
+
   it("validates required note title before creating", () => {
     const subjectName = uniqueValue("Validation subject");
     const noteTitle = uniqueValue("Validated note");
