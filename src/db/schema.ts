@@ -171,35 +171,6 @@ export const note = pgTable(
   ],
 );
 
-export const noteImageAttachment = pgTable(
-  "note_image_attachment",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    noteId: text("note_id")
-      .notNull()
-      .references((): AnyPgColumn => note.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    blobUrl: text("blob_url").notNull(),
-    blobPathname: text("blob_pathname").notNull(),
-    contentType: text("content_type").notNull(),
-    sizeBytes: integer("size_bytes").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    index("note_image_attachment_noteId_idx").on(table.noteId),
-    index("note_image_attachment_userId_idx").on(table.userId),
-    unique("note_image_attachment_blobPathname_unique").on(table.blobPathname),
-  ],
-);
-
 export const assessmentTypeEnum = pgEnum("assessment_type", [
   "exam",
   "assignment",
@@ -295,7 +266,6 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   subjects: many(subject),
   notes: many(note),
-  noteImageAttachments: many(noteImageAttachment),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
   flashcards: many(flashcard),
@@ -337,7 +307,7 @@ export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
   }),
 }));
 
-export const noteRelations = relations(note, ({ one, many }) => ({
+export const noteRelations = relations(note, ({ one }) => ({
   subject: one(subject, {
     fields: [note.subjectId],
     references: [subject.id],
@@ -346,22 +316,7 @@ export const noteRelations = relations(note, ({ one, many }) => ({
     fields: [note.userId],
     references: [user.id],
   }),
-  imageAttachments: many(noteImageAttachment),
 }));
-
-export const noteImageAttachmentRelations = relations(
-  noteImageAttachment,
-  ({ one }) => ({
-    note: one(note, {
-      fields: [noteImageAttachment.noteId],
-      references: [note.id],
-    }),
-    user: one(user, {
-      fields: [noteImageAttachment.userId],
-      references: [user.id],
-    }),
-  }),
-);
 
 export const assessmentRelations = relations(assessment, ({ one }) => ({
   subject: one(subject, {

@@ -1,14 +1,12 @@
 "use server";
 
-import { del } from "@vercel/blob";
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
-import { noteImageAttachment, user } from "@/db/schema";
-import { appEnv } from "@/env";
+import { user } from "@/db/schema";
 import type { MutationResult } from "@/lib/api/contracts";
 import { auth, getAuthenticatedUserId } from "@/lib/auth";
 import { actionError } from "@/lib/server-action-errors";
@@ -48,21 +46,7 @@ export async function updateProfile(
 export async function deleteAccount(): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
 
-  const attachments = await db
-    .select({ blobPathname: noteImageAttachment.blobPathname })
-    .from(noteImageAttachment)
-    .where(eq(noteImageAttachment.userId, userId));
-
   await db.delete(user).where(eq(user.id, userId));
-
-  if (appEnv.BLOB_READ_WRITE_TOKEN && attachments.length > 0) {
-    try {
-      await del(
-        attachments.map((a) => a.blobPathname),
-        { token: appEnv.BLOB_READ_WRITE_TOKEN },
-      );
-    } catch {}
-  }
 
   await auth.api.signOut({
     headers: await headers(),

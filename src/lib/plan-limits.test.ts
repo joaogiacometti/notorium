@@ -17,17 +17,7 @@ describe("getPlanLimits", () => {
     expect(limits.maxNotesPerSubject).toBeNull();
     expect(limits.maxAssessmentsPerSubject).toBeNull();
     expect(limits.maxFlashcardsPerSubject).toBeNull();
-    expect(limits.maxImageStorageMb).toBeNull();
     expect(limits.flashcardsAllowed).toBe(true);
-    expect(limits.imagesAllowed).toBe(true);
-  });
-
-  it("free plan disallows images", () => {
-    expect(getPlanLimits("free").imagesAllowed).toBe(false);
-  });
-
-  it("pro plan allows images", () => {
-    expect(getPlanLimits("pro").imagesAllowed).toBe(true);
   });
 
   it("free plan disallows flashcards", () => {

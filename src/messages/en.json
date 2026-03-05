@@ -48,7 +48,6 @@
     "plan_feature_subjects": "Subjects",
     "plan_feature_notes_per_subject": "Notes per subject",
     "plan_feature_assessments_per_subject": "Assessments per subject",
-    "plan_feature_image_attachments": "Image attachments",
     "plan_feature_rich_text_editor": "Rich text editor",
     "plan_feature_attendance_tracking": "Attendance tracking",
     "plan_feature_flashcards_per_subject": "Flashcards per subject",
@@ -511,28 +510,6 @@
     "reset": "Reset",
     "delete": "Delete"
   },
-  "NoteImageAttachments": {
-    "title": "Attachments",
-    "images": "Images",
-    "dropzone": "Click, drag, or paste images",
-    "clear": "Clear",
-    "uploading": "Uploading images...",
-    "free_plan_title": "Image attachments are not available on the Free plan.",
-    "free_plan_desc": "Image attachments are not available on the Free plan.",
-    "empty": "No images attached yet.",
-    "remove": "Remove Attachment",
-    "cancel": "Cancel",
-    "remove_prompt": "Are you sure you want to remove this image? This action cannot be undone.",
-    "preview": "Attachment preview",
-    "max_files_error": "You can upload up to {max} images at a time.",
-    "upload_success": "{count, plural, one {# image uploaded.} other {# images uploaded.}}",
-    "upload_failed": "Failed to upload images.",
-    "remove_success": "Attachment removed.",
-    "remove_failed": "Failed to remove attachment.",
-    "attachment_alt": "Note attachment",
-    "attachment_fullscreen_alt": "Note attachment in fullscreen",
-    "close_viewer": "Close image viewer"
-  },
   "TiptapEditor": {
     "placeholder": "Start writing your notes...",
     "bold": "Bold (Ctrl+B)",
@@ -591,17 +568,7 @@
     },
     "notes": {
       "invalidData": "Invalid note data.",
-      "notFound": "Note not found.",
-      "attachments": {
-        "selectAtLeastOne": "Select at least one image.",
-        "maxFilesPerUpload": "You can upload up to {max} images at a time.",
-        "invalidFile": "Invalid file: {fileName}.",
-        "freePlanNotAllowed": "Image attachments are not available on the Free plan.",
-        "blobNotConfigured": "Blob storage is not configured.",
-        "storageLimitReached": "You have reached your image storage limit. Remove some images to free up space.",
-        "uploadFailed": "Failed to upload note images.",
-        "notFound": "Attachment not found."
-      }
+      "notFound": "Note not found."
     },
     "flashcards": {
       "invalidData": "Invalid flashcard data.",
@@ -673,15 +640,7 @@
     "notes": {
       "titleRequired": "Note title is required.",
       "titleMaxLength": "Note title must be at most 200 characters.",
-      "contentMaxLength": "Content must be at most 10000 characters.",
-      "attachments": {
-        "invalidSelection": "Invalid file selection.",
-        "selectAtLeastOne": "Select at least one image.",
-        "maxFilesPerUpload": "You can upload up to {max} images at a time.",
-        "unsupportedType": "Unsupported file type. Use JPG, PNG, WEBP, or GIF.",
-        "maxSize": "File is too large. Maximum size is {max}MB.",
-        "fileError": "{fileName}: Invalid file."
-      }
+      "contentMaxLength": "Content must be at most 10000 characters."
     },
     "flashcards": {
       "frontRequired": "Flashcard front is required.",

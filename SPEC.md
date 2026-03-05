@@ -48,8 +48,6 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete notes per subject.
 - Rich text editing and rendering for note content.
-- Optional image attachments per note.
-- Fullscreen mobile-friendly image viewer.
 
 ### Attendance
 
@@ -93,17 +91,16 @@ Students who want a private, lightweight study management workspace.
 
 ## Plans
 
-- **Free** (default): up to 5 subjects, up to 5 notes per subject, up to 5 assessments per subject, no flashcards, no image attachments.
-- **Pro**: up to 20 subjects, up to 30 notes per subject, up to 5 assessments per subject, up to 500 flashcards per subject, up to 50 MB image storage.
-- **Unlimited**: no restrictions on subjects, notes, assessments, flashcards, or image attachments.
+- **Free** (default): up to 5 subjects, up to 5 notes per subject, up to 5 assessments per subject, no flashcards.
+- **Pro**: up to 20 subjects, up to 30 notes per subject, up to 5 assessments per subject, up to 500 flashcards per subject.
+- **Unlimited**: no restrictions on subjects, notes, assessments, or flashcards.
 - Plan is stored on the `user` table (`plan` column, enum `free` | `pro` | `unlimited`).
 - Limits are enforced server-side on create actions and surfaced in the UI.
 
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.
-- A user can only access or mutate their own subjects, notes, attachments, attendance records, and assessments.
-- Subject/note attachment access must enforce ownership checks server-side.
+- A user can only access or mutate their own subjects, notes, attendance records, and assessments.
 - Data export/import and account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
@@ -114,8 +111,6 @@ Students who want a private, lightweight study management workspace.
   - `id`, `front`, `back`, `state`, `dueAt`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`.
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`.
-- `note_image_attachment`
-  - `id`, `noteId`, `blobUrl`, `blobPathname`, `contentType`, `sizeBytes`, timestamps, `userId`.
 - `attendance_miss`
   - `id`, `missDate`, `subjectId`, timestamps, `userId`.
 - `assessment`

@@ -1,11 +1,9 @@
 "use server";
 
-import { del } from "@vercel/blob";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
-import { note, noteImageAttachment, subject } from "@/db/schema";
-import { appEnv } from "@/env";
+import { subject } from "@/db/schema";
 import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
 import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth";
 import { checkSubjectLimit } from "@/lib/plan-enforcement";
@@ -231,32 +229,9 @@ export async function deleteSubject(
     return actionError("subjects.notFound");
   }
 
-  const attachments = await db
-    .select({
-      blobPathname: noteImageAttachment.blobPathname,
-    })
-    .from(noteImageAttachment)
-    .innerJoin(note, eq(noteImageAttachment.noteId, note.id))
-    .where(
-      and(
-        eq(note.subjectId, parsed.data.id),
-        eq(note.userId, userId),
-        eq(noteImageAttachment.userId, userId),
-      ),
-    );
-
   await db
     .delete(subject)
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
-
-  if (appEnv.BLOB_READ_WRITE_TOKEN && attachments.length > 0) {
-    try {
-      await del(
-        attachments.map((attachment) => attachment.blobPathname),
-        { token: appEnv.BLOB_READ_WRITE_TOKEN },
-      );
-    } catch {}
-  }
 
   revalidatePath("/subjects");
   revalidatePath("/subjects/archived");

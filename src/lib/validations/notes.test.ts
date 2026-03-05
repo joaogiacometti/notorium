@@ -3,8 +3,6 @@ import {
   createNoteSchema,
   deleteNoteSchema,
   editNoteSchema,
-  noteAttachmentMaxSizeBytes,
-  validateNoteAttachmentFile,
 } from "@/lib/validations/notes";
 
 describe("createNoteSchema", () => {
@@ -118,50 +116,5 @@ describe("deleteNoteSchema", () => {
     const result = deleteNoteSchema.safeParse({ id: "" });
 
     expect(result.success).toBe(false);
-  });
-});
-
-function makeFile(name: string, type: string, size: number): File {
-  const blob = new Blob([new Uint8Array(size)], { type });
-  return new File([blob], name, { type });
-}
-
-describe("validateNoteAttachmentFile", () => {
-  it("returns null for a valid JPEG under 2 MB", () => {
-    const file = makeFile("photo.jpg", "image/jpeg", 1024);
-
-    expect(validateNoteAttachmentFile(file)).toBeNull();
-  });
-
-  it("returns null for a valid PNG under 2 MB", () => {
-    const file = makeFile("photo.png", "image/png", 500 * 1024);
-
-    expect(validateNoteAttachmentFile(file)).toBeNull();
-  });
-
-  it("returns an error for an unsupported MIME type", () => {
-    const file = makeFile("document.pdf", "application/pdf", 1024);
-
-    expect(validateNoteAttachmentFile(file)).not.toBeNull();
-  });
-
-  it("returns an error when file exceeds 2 MB", () => {
-    const file = makeFile(
-      "big.jpg",
-      "image/jpeg",
-      noteAttachmentMaxSizeBytes + 1,
-    );
-
-    expect(validateNoteAttachmentFile(file)).not.toBeNull();
-  });
-
-  it("returns null for a file at exactly the size limit", () => {
-    const file = makeFile(
-      "exact.jpg",
-      "image/jpeg",
-      noteAttachmentMaxSizeBytes,
-    );
-
-    expect(validateNoteAttachmentFile(file)).toBeNull();
   });
 });

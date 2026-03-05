@@ -6,8 +6,6 @@ interface PlanLimits {
   maxAssessmentsPerSubject: number | null;
   maxFlashcardsPerSubject: number | null;
   flashcardsAllowed: boolean;
-  imagesAllowed: boolean;
-  maxImageStorageMb: number | null;
 }
 
 export const FREE_LIMITS: PlanLimits = {
@@ -16,8 +14,6 @@ export const FREE_LIMITS: PlanLimits = {
   maxAssessmentsPerSubject: 5,
   maxFlashcardsPerSubject: 0,
   flashcardsAllowed: false,
-  imagesAllowed: false,
-  maxImageStorageMb: 0,
 };
 
 export const PRO_LIMITS: PlanLimits = {
@@ -26,8 +22,6 @@ export const PRO_LIMITS: PlanLimits = {
   maxAssessmentsPerSubject: 15,
   maxFlashcardsPerSubject: 500,
   flashcardsAllowed: true,
-  imagesAllowed: true,
-  maxImageStorageMb: 50,
 };
 
 const UNLIMITED_LIMITS: PlanLimits = {
@@ -36,8 +30,6 @@ const UNLIMITED_LIMITS: PlanLimits = {
   maxAssessmentsPerSubject: null,
   maxFlashcardsPerSubject: null,
   flashcardsAllowed: true,
-  imagesAllowed: true,
-  maxImageStorageMb: null,
 };
 
 export function getPlanLimits(plan: UserPlan): PlanLimits {

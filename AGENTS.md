@@ -163,7 +163,7 @@ This means ~2–4 Cypress tests per form, not 6–8.
 - **One representative validation per form.** Pick the most important invalid case (e.g., empty required field) that proves UI → action → error rendering works. Do not test every field's required message, every Zod refinement, or every boundary.
 - **Server-rejected errors.** Assert that error toasts appear for actions the server rejects (invalid credentials, duplicate email, duplicate attendance date). These are not caught by client-side Zod.
 - **Auth guards.** Test that protected routes redirect unauthenticated users to `/login` and that authenticated users are redirected away from `/login` and `/signup`.
-- **Plan/business rule enforcement.** Test that plan limits and feature gates work in the UI (e.g., free plan blocks image uploads, subject limit disables create button).
+- **Plan/business rule enforcement.** Test that plan limits and feature gates work in the UI (e.g., free plan blocks flashcards, subject limit disables create button).
 
 **What NOT to test in E2E:**
 

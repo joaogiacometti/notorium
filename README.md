@@ -67,7 +67,6 @@ Defined in `src/env.ts`:
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
 | `BETTER_AUTH_URL` | Yes | Base app URL (local: `http://localhost:3000`) |
 | `BETTER_AUTH_SECRET` | Yes | Secret used by Better Auth (min 32 chars) |
-| `BLOB_READ_WRITE_TOKEN` | No | Required for note image attachment upload/serving |
 | `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL used by rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token used by rate limiting |
 

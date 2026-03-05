@@ -53,11 +53,6 @@ const PLAN_ROWS: Array<{
     free: String(FREE_LIMITS.maxAssessmentsPerSubject),
     pro: String(PRO_LIMITS.maxAssessmentsPerSubject),
   },
-  {
-    featureKey: "image_attachments",
-    free: FREE_LIMITS.imagesAllowed,
-    pro: `${PRO_LIMITS.maxImageStorageMb} MB`,
-  },
   { featureKey: "rich_text_editor", free: true, pro: true },
   { featureKey: "attendance_tracking", free: true, pro: true },
   {

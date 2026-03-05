@@ -48,7 +48,6 @@
     "plan_feature_subjects": "Matérias",
     "plan_feature_notes_per_subject": "Notas por matéria",
     "plan_feature_assessments_per_subject": "Avaliações por matéria",
-    "plan_feature_image_attachments": "Anexos de imagem",
     "plan_feature_rich_text_editor": "Editor de texto rico",
     "plan_feature_attendance_tracking": "Controle de faltas",
     "plan_feature_flashcards_per_subject": "Flashcards por matéria",
@@ -511,28 +510,6 @@
     "reset": "Resetar",
     "delete": "Excluir"
   },
-  "NoteImageAttachments": {
-    "title": "Anexos",
-    "images": "Imagens",
-    "dropzone": "Clique, arraste ou cole imagens",
-    "clear": "Limpar",
-    "uploading": "Enviando imagens...",
-    "free_plan_title": "Anexos de imagem não estão disponíveis no plano Grátis.",
-    "free_plan_desc": "Anexos de imagem não estão disponíveis no plano Grátis.",
-    "empty": "Nenhuma imagem anexada ainda.",
-    "remove": "Remover Anexo",
-    "cancel": "Cancelar",
-    "remove_prompt": "Tem certeza que deseja remover esta imagem? Esta ação não pode ser desfeita.",
-    "preview": "Pré-visualização do anexo",
-    "max_files_error": "Você pode enviar no máximo {max} imagens por vez.",
-    "upload_success": "{count, plural, one {# imagem enviada.} other {# imagens enviadas.}}",
-    "upload_failed": "Falha ao enviar imagens.",
-    "remove_success": "Anexo removido.",
-    "remove_failed": "Falha ao remover anexo.",
-    "attachment_alt": "Anexo da nota",
-    "attachment_fullscreen_alt": "Anexo da nota em tela cheia",
-    "close_viewer": "Fechar visualizador de imagem"
-  },
   "TiptapEditor": {
     "placeholder": "Comece a escrever suas notas...",
     "bold": "Negrito (Ctrl+B)",
@@ -591,17 +568,7 @@
     },
     "notes": {
       "invalidData": "Dados da nota invalidos.",
-      "notFound": "Nota nao encontrada.",
-      "attachments": {
-        "selectAtLeastOne": "Selecione pelo menos uma imagem.",
-        "maxFilesPerUpload": "Voce pode enviar no maximo {max} imagens por vez.",
-        "invalidFile": "Arquivo invalido: {fileName}.",
-        "freePlanNotAllowed": "Anexos de imagem não estão disponíveis no plano Grátis.",
-        "blobNotConfigured": "O armazenamento Blob nao esta configurado.",
-        "storageLimitReached": "Voce atingiu o limite de armazenamento de imagens. Remova algumas imagens para liberar espaco.",
-        "uploadFailed": "Falha ao enviar imagens da nota.",
-        "notFound": "Anexo nao encontrado."
-      }
+      "notFound": "Nota nao encontrada."
     },
     "flashcards": {
       "invalidData": "Dados do flashcard invalidos.",
@@ -673,15 +640,7 @@
     "notes": {
       "titleRequired": "O titulo da nota e obrigatorio.",
       "titleMaxLength": "O titulo da nota deve ter no maximo 200 caracteres.",
-      "contentMaxLength": "O conteudo deve ter no maximo 10000 caracteres.",
-      "attachments": {
-        "invalidSelection": "Selecao de arquivo invalida.",
-        "selectAtLeastOne": "Selecione pelo menos uma imagem.",
-        "maxFilesPerUpload": "Voce pode enviar no maximo {max} imagens por vez.",
-        "unsupportedType": "Tipo de arquivo nao suportado. Use JPG, PNG, WEBP ou GIF.",
-        "maxSize": "Arquivo muito grande. O tamanho maximo e {max}MB.",
-        "fileError": "{fileName}: Arquivo invalido."
-      }
+      "contentMaxLength": "O conteudo deve ter no maximo 10000 caracteres."
     },
     "flashcards": {
       "frontRequired": "A frente do flashcard e obrigatoria.",
