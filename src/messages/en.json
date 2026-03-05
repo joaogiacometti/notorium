@@ -152,6 +152,7 @@
   "FlashcardReviewPage": {
     "title": "Flashcard Review",
     "description": "Review your due flashcards with spaced repetition.",
+    "free_plan_title": "Flashcards are not available on the Free plan.",
     "due_empty": "No cards due right now.",
     "due_count": "{due} due of {total} total cards.",
     "empty_title": "All caught up",

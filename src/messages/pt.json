@@ -152,6 +152,7 @@
   "FlashcardReviewPage": {
     "title": "Revisão de Flashcards",
     "description": "Revise seus flashcards vencidos com repetição espaçada.",
+    "free_plan_title": "Flashcards não estão disponíveis no plano Grátis.",
     "due_empty": "Não há cartões vencidos agora.",
     "due_count": "{due} vencidos de {total} cartões no total.",
     "empty_title": "Tudo em dia",
