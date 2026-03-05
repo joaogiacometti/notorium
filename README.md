@@ -64,30 +64,30 @@ Open `http://localhost:3000`.
 
 Defined in `src/env.ts`:
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `BETTER_AUTH_URL` | Yes | Base app URL (local: `http://localhost:3000`) |
-| `BETTER_AUTH_SECRET` | Yes | Secret used by Better Auth (min 32 chars) |
-| `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL used by rate limiting |
-| `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token used by rate limiting |
+| Variable                   | Required | Description                                    |
+| -------------------------- | -------- | ---------------------------------------------- |
+| `DATABASE_URL`             | Yes      | PostgreSQL connection string                   |
+| `BETTER_AUTH_URL`          | Yes      | Base app URL (local: `http://localhost:3000`)  |
+| `BETTER_AUTH_SECRET`       | Yes      | Secret used by Better Auth (min 32 chars)      |
+| `UPSTASH_REDIS_REST_URL`   | Yes      | Upstash Redis REST URL used by rate limiting   |
+| `UPSTASH_REDIS_REST_TOKEN` | Yes      | Upstash Redis REST token used by rate limiting |
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `bun dev` | Start development server |
-| `bun run build` | Production build |
-| `bun run start` | Start production server |
-| `bun run typecheck` | Run TypeScript checks |
-| `bun run lint` | Run Biome checks |
-| `bun run format` | Format files with Biome |
-| `bun run test` | Run Vitest suite |
-| `bun run test:watch` | Run Vitest in watch mode |
-| `bun run test:coverage` | Run Vitest with coverage |
-| `bun run db:generate` | Generate Drizzle migrations |
-| `bun run db:migrate` | Apply Drizzle migrations |
-| `bun run db:push` | Push schema directly to DB |
+| Command                 | Description                 |
+| ----------------------- | --------------------------- |
+| `bun dev`               | Start development server    |
+| `bun run build`         | Production build            |
+| `bun run start`         | Start production server     |
+| `bun run typecheck`     | Run TypeScript checks       |
+| `bun run lint`          | Run Biome checks            |
+| `bun run format`        | Format files with Biome     |
+| `bun run test`          | Run Vitest suite            |
+| `bun run test:watch`    | Run Vitest in watch mode    |
+| `bun run test:coverage` | Run Vitest with coverage    |
+| `bun run db:generate`   | Generate Drizzle migrations |
+| `bun run db:migrate`    | Apply Drizzle migrations    |
+| `bun run db:push`       | Push schema directly to DB  |
 
 ## Project Structure
 
@@ -117,8 +117,7 @@ src/
 When changing the schema:
 
 1. Edit `src/db/schema.ts`
-2. Generate migration: `bun run db:generate`
-3. Apply migration: `bun run db:migrate`
+2. Do not manually edit files in `drizzle/*.sql` or `drizzle/meta/*`.
 
 ## Quality Checks
 

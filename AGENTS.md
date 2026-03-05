@@ -95,7 +95,8 @@ src/
 - Use `text` type for IDs (not `uuid` or `serial`).
 - Always include `createdAt` and `updatedAt` timestamps on every table.
 - Use `onDelete: "cascade"` for foreign keys where appropriate.
-- Run `bun run db:generate` after schema changes, then `bun run db:migrate`.
+- Never manually edit Drizzle migration artifacts in `drizzle/*.sql` or `drizzle/meta/*`.
+- For schema changes, prepare code changes and instruct the user to run `bun run db:generate` and `bun run db:migrate` themselves.
 
 ### Validation
 
