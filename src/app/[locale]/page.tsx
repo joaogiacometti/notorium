@@ -10,7 +10,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -80,11 +80,12 @@ const FEATURES: {
 
 export default async function Home() {
   const session = await getOptionalSession();
+  const locale = await getLocale();
   const t = await getTranslations("Index");
   const tLanding = await getTranslations("Landing");
 
   if (session) {
-    redirect("/subjects");
+    redirect(`/${locale}/subjects`);
   }
 
   return (
@@ -175,7 +176,7 @@ export default async function Home() {
                   <Check className="size-7" />
                 </div>
                 <span className="text-sm font-medium text-foreground text-center">
-                  {tLanding(limitKey as Parameters<typeof tLanding>[0])}
+                  {tLanding(limitKey)}
                 </span>
               </div>
             ))}

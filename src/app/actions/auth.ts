@@ -21,14 +21,14 @@ import {
 type ActionResult = MutationResult;
 
 export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
-  const rateLimit = await checkAuthRateLimit();
-  if (rateLimit.limited) {
-    return actionError(rateLimit.errorCode);
-  }
-
   const parsed = loginSchema.safeParse(data);
   if (!parsed.success) {
     return actionError("auth.invalidInput");
+  }
+
+  const rateLimit = await checkAuthRateLimit(parsed.data.email);
+  if (rateLimit.limited) {
+    return actionError(rateLimit.errorCode);
   }
 
   const [existingUser] = await db
@@ -66,14 +66,14 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
 };
 
 export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
-  const rateLimit = await checkAuthRateLimit();
-  if (rateLimit.limited) {
-    return actionError(rateLimit.errorCode);
-  }
-
   const parsed = signupSchema.safeParse(data);
   if (!parsed.success) {
     return actionError("auth.invalidInput");
+  }
+
+  const rateLimit = await checkAuthRateLimit(parsed.data.email);
+  if (rateLimit.limited) {
+    return actionError(rateLimit.errorCode);
   }
 
   try {

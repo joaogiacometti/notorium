@@ -1,0 +1,100 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: notorium
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/notorium
+      APP_PORT: 3000
+      REDIS_PORT: 6379
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      RATE_LIMIT_BACKEND: redis
+      E2E_USER_NAME: Notorium E2E User
+      E2E_USER_EMAIL: e2e-user@notorium.local
+      E2E_USER_PASSWORD: notorium-e2e-password
+      E2E_STORAGE_STATE_PATH: e2e/.auth/user.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.4"
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+      - name: Install Playwright browser (full)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: bunx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: bunx playwright install-deps chromium
+
+      - name: Start Compose stack
+        run: docker compose up --build --wait
+
+      - name: Run Playwright E2E
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.APP_PORT }}
+        run: bun run test:e2e
+
+      - name: Capture Compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color > compose.log
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+            compose.log
+          if-no-files-found: ignore
+
+      - name: Stop Compose stack
+        if: always()
+        run: docker compose down -v --remove-orphans

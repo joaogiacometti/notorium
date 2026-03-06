@@ -8,6 +8,7 @@ Flashcards on subject detail are presented in a collapsed section and loaded whe
 Flashcards also have a dedicated page under each subject, and global search routes flashcard results to that page.
 Profile data transfer is available to all users: full mode exports/imports flashcards, while template export excludes notes, attendance records, and flashcards.
 Authentication is approval-based: new users start as pending, only approved users can access the app, and admins can approve/block users from an Admin Panel entry in the authenticated account menu.
+Local infrastructure and app runtime can be started together with Docker Compose (`app`, `postgres`, `redis`, and a one-off `migrate` service).
 
 ## Project Structure
 
@@ -48,9 +49,16 @@ src/
 | `bun run test`          | Run Vitest test suite       |
 | `bun run test:watch`    | Run Vitest in watch mode    |
 | `bun run test:coverage` | Run Vitest with coverage    |
+| `bun run test:e2e:install` | Install Playwright Chromium browser |
+| `bun run test:e2e`      | Run Playwright E2E suite    |
+| `bun run test:e2e:auth` | Run Playwright auth project  |
+| `bun run test:e2e:subjects` | Run Playwright subjects project |
+| `bun run test:e2e:headed` | Run Playwright E2E in headed mode |
+| `bun run test:e2e:ui`   | Run Playwright E2E UI mode  |
 | `bun run db:generate`   | Generate Drizzle migrations |
 | `bun run db:migrate`    | Run Drizzle migrations      |
 | `bun run db:push`       | Push schema directly to DB  |
+| `docker compose up --build -d` | Start full local stack (app + postgres + redis) |
 
 ## Tech Stack
 
@@ -65,6 +73,7 @@ src/
 - **Biome** (linter + formatter)
 - **Bun** (package manager and runtime)
 - **PostgreSQL** (via Docker Compose)
+- **Redis** (via Docker Compose)
 
 ## Coding Rules
 

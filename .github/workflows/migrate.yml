@@ -7,6 +7,9 @@ on:
       - "src/db/schema.ts"
       - "drizzle/**"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
@@ -32,7 +35,3 @@ jobs:
         run: bun run db:migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}

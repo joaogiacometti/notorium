@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { SignupForm } from "@/components/signup-form";
 import { getOptionalSession } from "@/lib/auth";
 
 export default async function Page() {
   const session = await getOptionalSession();
+  const locale = await getLocale();
 
   if (session) {
-    redirect("/");
+    redirect(`/${locale}`);
   }
 
   return (

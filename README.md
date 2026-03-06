@@ -23,10 +23,9 @@ Account access is approval-based: new users are created as pending, approved use
 ## Requirements
 
 - Bun
-- Docker (for local PostgreSQL)
-- Upstash Redis REST credentials (required by runtime env validation)
+- Docker (for local Docker Compose stack)
 
-## Quick Start
+## Quick Start (Docker Compose)
 
 1. Install dependencies:
 
@@ -40,10 +39,50 @@ bun install
 cp .env.example .env
 ```
 
+Generate a secure auth secret before first run:
+
+```bash
+openssl rand -hex 32
+```
+
 3. Start PostgreSQL:
 
 ```bash
-docker compose up -d postgres
+docker compose up --build -d
+```
+
+Open `http://localhost:3000`.
+
+The Compose stack runs:
+
+- `postgres` (`postgres:17-alpine`)
+- `redis` (`redis:7-alpine`)
+- `migrate` (runs `bun run db:migrate` once on startup)
+- `app` (containerized Next.js standalone server on port `3000`)
+
+Security defaults in Compose:
+
+- `app` runs as non-root with dropped Linux capabilities and `no-new-privileges`
+- `postgres` and `redis` ports are bound to `127.0.0.1` only
+
+## Quick Start (Local Bun Dev Server)
+
+1. Install dependencies:
+
+```bash
+bun install
+```
+
+2. Create environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Start infrastructure services:
+
+```bash
+docker compose up -d postgres redis
 ```
 
 4. Run database migrations:
@@ -64,30 +103,81 @@ Open `http://localhost:3000`.
 
 Defined in `src/env.ts`:
 
-| Variable                   | Required | Description                                    |
-| -------------------------- | -------- | ---------------------------------------------- |
-| `DATABASE_URL`             | Yes      | PostgreSQL connection string                   |
-| `BETTER_AUTH_URL`          | Yes      | Base app URL (local: `http://localhost:3000`)  |
-| `BETTER_AUTH_SECRET`       | Yes      | Secret used by Better Auth (min 32 chars)      |
-| `UPSTASH_REDIS_REST_URL`   | Yes      | Upstash Redis REST URL used by rate limiting   |
-| `UPSTASH_REDIS_REST_TOKEN` | Yes      | Upstash Redis REST token used by rate limiting |
+| Variable                         | Required    | Description                                                                               |
+| -------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                   | Yes         | PostgreSQL connection string. This is the only variable required for `bun run db:migrate` |
+| `BETTER_AUTH_URL`                | Yes         | Base app URL (local: `http://localhost:3000`)                                             |
+| `BETTER_AUTH_SECRET`             | Yes         | Secret used by Better Auth (min 32 chars)                                                 |
+| `RATE_LIMIT_BACKEND`             | No          | Rate-limit backend (`redis` default, or `upstash`)                                        |
+| `UPSTASH_REDIS_REST_URL`         | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
+| `UPSTASH_REDIS_REST_TOKEN`       | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
+| `REDIS_URL`                      | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                  |
+| `AUTH_RATE_LIMIT_MAX_ATTEMPTS`   | No          | Override max auth attempts before blocking (default `10`)                                 |
+| `AUTH_RATE_LIMIT_WINDOW_SECONDS` | No          | Override auth rate-limit window in seconds (default `60`)                                 |
+| `AUTH_RATE_LIMIT_PREFIX`         | No          | Override auth rate-limit Redis key prefix (default `ratelimit:auth`)                      |
+| `MAX_IMPORT_BYTES`               | No          | Max accepted JSON import payload size in bytes (default `1048576`)                        |
+| `TRUSTED_PROXY_COUNT`            | No          | Number of trusted proxies for forwarded client IP parsing (default `1`)                   |
+| `E2E_USER_NAME`                  | No          | Dedicated Playwright E2E account display name                                             |
+| `E2E_USER_EMAIL`                 | No          | Dedicated Playwright E2E account email                                                    |
+| `E2E_USER_PASSWORD`              | No          | Dedicated Playwright E2E account password                                                 |
+| `E2E_STORAGE_STATE_PATH`         | No          | Storage state output path for authenticated Playwright projects                           |
 
 ## Scripts
 
-| Command                 | Description                 |
-| ----------------------- | --------------------------- |
-| `bun dev`               | Start development server    |
-| `bun run build`         | Production build            |
-| `bun run start`         | Start production server     |
-| `bun run typecheck`     | Run TypeScript checks       |
-| `bun run lint`          | Run Biome checks            |
-| `bun run format`        | Format files with Biome     |
-| `bun run test`          | Run Vitest suite            |
-| `bun run test:watch`    | Run Vitest in watch mode    |
-| `bun run test:coverage` | Run Vitest with coverage    |
-| `bun run db:generate`   | Generate Drizzle migrations |
-| `bun run db:migrate`    | Apply Drizzle migrations    |
-| `bun run db:push`       | Push schema directly to DB  |
+| Command                     | Description                          |
+| --------------------------- | ------------------------------------ |
+| `bun dev`                   | Start development server             |
+| `bun run build`             | Production build                     |
+| `bun run start`             | Start production server              |
+| `bun run typecheck`         | Run TypeScript checks                |
+| `bun run lint`              | Run Biome checks                     |
+| `bun run format`            | Format files with Biome              |
+| `bun run test`              | Run Vitest suite                     |
+| `bun run test:watch`        | Run Vitest in watch mode             |
+| `bun run test:coverage`     | Run Vitest with coverage             |
+| `bun run test:e2e:install`  | Install Playwright Chromium browser  |
+| `bun run test:e2e`          | Run Playwright E2E suite             |
+| `bun run test:e2e:auth`     | Run only Playwright auth project     |
+| `bun run test:e2e:subjects` | Run only Playwright subjects project |
+| `bun run test:e2e:headed`   | Run Playwright E2E in headed mode    |
+| `bun run test:e2e:ui`       | Run Playwright E2E UI mode           |
+| `bun run db:generate`       | Generate Drizzle migrations          |
+| `bun run db:migrate`        | Apply Drizzle migrations             |
+| `bun run db:push`           | Push schema directly to DB           |
+
+## E2E Tests (Playwright)
+
+1. Install browser binaries:
+
+```bash
+bun run test:e2e:install
+```
+
+2. Run the suite:
+
+```bash
+bun run test:e2e
+```
+
+Auth and subjects can also be run independently:
+
+```bash
+bun run test:e2e:auth
+bun run test:e2e:subjects
+```
+
+## CI E2E
+
+Pull requests to `main` run Playwright E2E in a dedicated workflow using Docker Compose for runtime parity with local Docker execution.
+
+The workflow starts the same stack topology used locally:
+
+- `postgres` (`postgres:17-alpine`)
+- `redis` (`redis:7-alpine`)
+- `migrate` (runs `bun run db:migrate` once)
+- `app` (containerized Next.js server on `http://localhost:3000`)
+
+Playwright runs from the GitHub runner against `PLAYWRIGHT_BASE_URL=http://localhost:3000`, while `RATE_LIMIT_BACKEND=redis` validates auth rate limiting with Redis in CI.
 
 ## Project Structure
 
