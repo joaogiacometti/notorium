@@ -1,5 +1,5 @@
 import { defineConfig } from "@playwright/test";
-import { e2eStorageStatePath } from "./e2e/helpers/constants";
+import { e2eSubjectsStorageStatePath } from "./e2e/helpers/constants";
 
 const port = process.env.PORT ?? "3000";
 const playwrightBaseURL = process.env.PLAYWRIGHT_BASE_URL;
@@ -32,7 +32,7 @@ export default defineConfig({
       dependencies: ["setup-auth-session"],
       testMatch: /.*\/subjects\/.*\.spec\.ts/,
       use: {
-        storageState: e2eStorageStatePath,
+        storageState: e2eSubjectsStorageStatePath,
       },
     },
   ],

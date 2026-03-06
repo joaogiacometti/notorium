@@ -1,44 +1,70 @@
 import { expect, test } from "@playwright/test";
 import { submitLogin, submitSignup } from "../../helpers/auth";
-import { e2eStorageStatePath, e2eUser } from "../../helpers/constants";
+import {
+  e2eAuthUser,
+  e2eSubjectsStorageStatePath,
+  e2eSubjectsUser,
+} from "../../helpers/constants";
 import { approveE2EUser, closeE2EDb, resetE2EUser } from "../../helpers/db";
-
-test.use({
-  extraHTTPHeaders: {
-    "x-forwarded-for": "10.0.0.1",
-  },
-});
 
 test.afterAll(async () => {
   await closeE2EDb();
 });
 
-test("create approved e2e account and persist auth state", async ({ page }) => {
-  await resetE2EUser();
+test("create approved e2e accounts and persist subjects auth state", async ({
+  browser,
+}) => {
+  await resetE2EUser(e2eSubjectsUser.email);
+  await resetE2EUser(e2eAuthUser.email);
 
-  await page.goto("/en/signup");
-  await submitSignup(page, e2eUser);
+  const subjectsContext = await browser.newContext({
+    extraHTTPHeaders: {
+      "x-forwarded-for": "10.0.0.1",
+    },
+  });
+  const subjectsPage = await subjectsContext.newPage();
+
+  await subjectsPage.goto("/en/signup");
+  await submitSignup(subjectsPage, e2eSubjectsUser);
   await Promise.race([
-    expect(page).toHaveURL(/\/en\/login$/),
-    expect(page).toHaveURL(/\/en(?:\/)?$/),
+    expect(subjectsPage).toHaveURL(/\/en\/login$/),
+    expect(subjectsPage).toHaveURL(/\/en(?:\/)?$/),
   ]);
 
-  await approveE2EUser();
+  await approveE2EUser(e2eSubjectsUser.email);
 
-  await page.goto("/en/subjects");
+  await subjectsPage.goto("/en/subjects");
 
-  if (new URL(page.url()).pathname === "/en/login") {
-    await submitLogin(page, {
-      email: e2eUser.email,
-      password: e2eUser.password,
+  if (new URL(subjectsPage.url()).pathname === "/en/login") {
+    await submitLogin(subjectsPage, {
+      email: e2eSubjectsUser.email,
+      password: e2eSubjectsUser.password,
     });
-    await expect(page).toHaveURL(/\/en(?:\/)?$/);
-    await page.goto("/en/subjects");
+    await expect(subjectsPage).toHaveURL(/\/en(?:\/)?$/);
+    await subjectsPage.goto("/en/subjects");
   }
 
-  await expect(page.locator("#btn-create-subject")).toBeVisible();
+  await expect(subjectsPage.locator("#btn-create-subject")).toBeVisible();
 
-  const storageState = await page.context().storageState();
+  const storageState = await subjectsContext.storageState();
   expect(storageState.cookies.length).toBeGreaterThan(0);
-  await page.context().storageState({ path: e2eStorageStatePath });
+  await subjectsContext.storageState({ path: e2eSubjectsStorageStatePath });
+  await subjectsContext.close();
+
+  const authContext = await browser.newContext({
+    extraHTTPHeaders: {
+      "x-forwarded-for": "10.0.0.1",
+    },
+  });
+  const authPage = await authContext.newPage();
+
+  await authPage.goto("/en/signup");
+  await submitSignup(authPage, e2eAuthUser);
+  await Promise.race([
+    expect(authPage).toHaveURL(/\/en\/login$/),
+    expect(authPage).toHaveURL(/\/en(?:\/)?$/),
+  ]);
+
+  await approveE2EUser(e2eAuthUser.email);
+  await authContext.close();
 });

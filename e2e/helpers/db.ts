@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { Pool } from "pg";
-import { e2eUser } from "./constants";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -12,28 +11,38 @@ const pool = new Pool({
   connectionString: databaseUrl,
 });
 
-async function getE2EUserId() {
+async function getE2EUserId(email: string) {
   const result = await pool.query<{ id: string }>(
     'select id from "user" where email = $1 limit 1',
-    [e2eUser.email],
+    [email],
   );
 
   return result.rows[0]?.id ?? null;
 }
 
-export async function resetE2EUser() {
-  await pool.query('delete from "user" where email = $1', [e2eUser.email]);
+export async function resetE2EUser(email: string) {
+  await pool.query('delete from "user" where email = $1', [email]);
 }
 
-export async function approveE2EUser() {
+export async function approveE2EUser(email: string) {
   await pool.query('update "user" set access_status = $1 where email = $2', [
     "approved",
-    e2eUser.email,
+    email,
   ]);
 }
 
-export async function clearE2ESubjects() {
-  const userId = await getE2EUserId();
+export async function setE2EUserAccessStatus(
+  email: string,
+  status: "pending" | "approved" | "blocked",
+) {
+  await pool.query('update "user" set access_status = $1 where email = $2', [
+    status,
+    email,
+  ]);
+}
+
+export async function clearE2ESubjects(email: string) {
+  const userId = await getE2EUserId(email);
   if (!userId) {
     return;
   }

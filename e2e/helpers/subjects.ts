@@ -36,3 +36,12 @@ export async function archiveFirstSubject(page: Page) {
   await page.getByRole("menuitem", { name: "Archive" }).click();
   await page.getByRole("button", { name: "Archive" }).click();
 }
+
+export async function deleteFirstSubject(page: Page) {
+  await firstSubjectActionsButton(page).click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Delete" })
+    .click();
+}
