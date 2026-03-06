@@ -25,7 +25,7 @@ Account access is approval-based: new users are created as pending, approved use
 - Bun
 - Docker (for local Docker Compose stack)
 
-## Quick Start (Docker Compose)
+## Quick Start (Production-like Docker Compose)
 
 1. Install dependencies:
 
@@ -45,7 +45,7 @@ Generate a secure auth secret before first run:
 openssl rand -hex 32
 ```
 
-3. Start PostgreSQL:
+3. Start the production-like stack:
 
 ```bash
 docker compose up --build -d
@@ -65,6 +65,31 @@ Security defaults in Compose:
 - `app` runs as non-root with dropped Linux capabilities and `no-new-privileges`
 - `postgres` and `redis` ports are bound to `127.0.0.1` only
 
+## Quick Start (Development Infrastructure)
+
+1. Install dependencies:
+
+```bash
+bun install
+```
+
+2. Create environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Start PostgreSQL and Redis:
+
+```bash
+docker compose -f compose.dev.yml up -d
+```
+
+The development Compose stack runs infrastructure only:
+
+- `postgres` (`postgres:17-alpine`)
+- `redis` (`redis:7-alpine`)
+
 ## Quick Start (Local Bun Dev Server)
 
 1. Install dependencies:
@@ -82,7 +107,7 @@ cp .env.example .env
 3. Start infrastructure services:
 
 ```bash
-docker compose up -d postgres redis
+docker compose -f compose.dev.yml up -d
 ```
 
 4. Run database migrations:

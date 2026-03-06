@@ -8,7 +8,7 @@ Flashcards on subject detail are presented in a collapsed section and loaded whe
 Flashcards also have a dedicated page under each subject, and global search routes flashcard results to that page.
 Profile data transfer is available to all users: full mode exports/imports flashcards, while template export excludes notes, attendance records, and flashcards.
 Authentication is approval-based: new users start as pending, only approved users can access the app, and admins can approve/block users from an Admin Panel entry in the authenticated account menu.
-Local infrastructure and app runtime can be started together with Docker Compose (`app`, `postgres`, `redis`, and a one-off `migrate` service).
+Local infrastructure and app runtime can be started together with Docker Compose. Use `compose.yml` for the production-like stack (`app`, `postgres`, `redis`, and a one-off `migrate` service) and `compose.dev.yml` for development infrastructure only (`postgres` and `redis`, with the app running via local `bun dev`).
 
 ## Project Structure
 
@@ -58,7 +58,8 @@ src/
 | `bun run db:generate`   | Generate Drizzle migrations |
 | `bun run db:migrate`    | Run Drizzle migrations      |
 | `bun run db:push`       | Push schema directly to DB  |
-| `docker compose up --build -d` | Start full local stack (app + postgres + redis) |
+| `docker compose up --build -d` | Start production-like local stack |
+| `docker compose -f compose.dev.yml up -d` | Start development infrastructure stack |
 
 ## Tech Stack
 
