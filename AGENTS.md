@@ -39,26 +39,26 @@ src/
 
 ## Commands
 
-| Command                 | Description                 |
-| ----------------------- | --------------------------- |
-| `bun dev`               | Start development server    |
-| `bun run build`         | Production build            |
-| `bun run typecheck`     | TypeScript type checking    |
-| `bun run lint`          | Run Biome linter            |
-| `bun run format`        | Format code with Biome      |
-| `bun run test`          | Run Vitest test suite       |
-| `bun run test:watch`    | Run Vitest in watch mode    |
-| `bun run test:coverage` | Run Vitest with coverage    |
-| `bun run test:e2e:install` | Install Playwright Chromium browser |
-| `bun run test:e2e`      | Run Playwright E2E suite    |
-| `bun run test:e2e:auth` | Run Playwright auth project  |
-| `bun run test:e2e:subjects` | Run Playwright subjects project |
-| `bun run test:e2e:headed` | Run Playwright E2E in headed mode |
-| `bun run test:e2e:ui`   | Run Playwright E2E UI mode  |
-| `bun run db:generate`   | Generate Drizzle migrations |
-| `bun run db:migrate`    | Run Drizzle migrations      |
-| `bun run db:push`       | Push schema directly to DB  |
-| `docker compose up --build -d` | Start production-like local stack |
+| Command                                   | Description                            |
+| ----------------------------------------- | -------------------------------------- |
+| `bun dev`                                 | Start development server               |
+| `bun run build`                           | Production build                       |
+| `bun run typecheck`                       | TypeScript type checking               |
+| `bun run lint`                            | Run Biome linter                       |
+| `bun run format`                          | Format code with Biome                 |
+| `bun run test`                            | Run Vitest test suite                  |
+| `bun run test:watch`                      | Run Vitest in watch mode               |
+| `bun run test:coverage`                   | Run Vitest with coverage               |
+| `bun run test:e2e:install`                | Install Playwright Chromium browser    |
+| `bun run test:e2e`                        | Run Playwright E2E suite               |
+| `bun run test:e2e:auth`                   | Run Playwright auth project            |
+| `bun run test:e2e:subjects`               | Run Playwright subjects project        |
+| `bun run test:e2e:headed`                 | Run Playwright E2E in headed mode      |
+| `bun run test:e2e:ui`                     | Run Playwright E2E UI mode             |
+| `bun run db:generate`                     | Generate Drizzle migrations            |
+| `bun run db:migrate`                      | Run Drizzle migrations                 |
+| `bun run db:push`                         | Push schema directly to DB             |
+| `docker compose up --build -d`            | Start production-like local stack      |
 | `docker compose -f compose.dev.yml up -d` | Start development infrastructure stack |
 
 ## Tech Stack
@@ -147,10 +147,10 @@ src/
 
 #### Unit / Integration Tests (Vitest)
 
-This is where validation depth lives. Zod schemas, utility functions, and server action logic are tested exhaustively here.
+This is where validation depth lives. Zod schemas and utility functions are tested exhaustively here.
 
 - **Zod schema tests should verify rejection of invalid inputs**, not just confirm that valid data passes. Test missing fields, wrong types, boundary values, and malformed data. Cover all edge cases, all refinements, all error messages.
-- **Server Action tests should cover authentication checks, authorization, and error responses**, not just the happy path.
+- **Do NOT test Server Actions.** Server actions should not be unit tested to avoid overly complex mocks. Rely on E2E tests for these behaviors instead.
 - **Utility / business logic tests** should cover branching, boundary conditions, and transformations (e.g., weighted vs simple averages, overdue detection, system limit logic).
 
 ### Styling
@@ -160,6 +160,7 @@ This is where validation depth lives. Zod schemas, utility functions, and server
 
 ## Agent Behavior
 
+- **Use Bun, never npm.** When installing dependencies, running scripts, or interacting with the project, always use `bun`. Do not use `npm` or `npx`.
 - **Ask before assuming.** If a requirement is unclear or ambiguous, ask the user for clarification before proceeding.
 - **Follow SPEC.md for current behavior.** Use it as source of truth for implemented product rules.
 - **Update docs in the right place.** Keep `SPEC.md` stable.
