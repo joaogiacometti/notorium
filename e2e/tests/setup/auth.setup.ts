@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 import { submitLogin, submitSignup } from "../../helpers/auth";
 import {
   e2eAuthUser,
+  e2eNotesStorageStatePath,
+  e2eNotesUser,
   e2eSubjectsStorageStatePath,
   e2eSubjectsUser,
 } from "../../helpers/constants";
@@ -15,6 +17,7 @@ test("create approved e2e accounts and persist subjects auth state", async ({
   browser,
 }) => {
   await resetE2EUser(e2eSubjectsUser.email);
+  await resetE2EUser(e2eNotesUser.email);
   await resetE2EUser(e2eAuthUser.email);
 
   const subjectsContext = await browser.newContext({
@@ -50,6 +53,40 @@ test("create approved e2e accounts and persist subjects auth state", async ({
   expect(storageState.cookies.length).toBeGreaterThan(0);
   await subjectsContext.storageState({ path: e2eSubjectsStorageStatePath });
   await subjectsContext.close();
+
+  const notesContext = await browser.newContext({
+    extraHTTPHeaders: {
+      "x-forwarded-for": "10.0.0.1",
+    },
+  });
+  const notesPage = await notesContext.newPage();
+
+  await notesPage.goto("/en/signup");
+  await submitSignup(notesPage, e2eNotesUser);
+  await Promise.race([
+    expect(notesPage).toHaveURL(/\/en\/login$/),
+    expect(notesPage).toHaveURL(/\/en(?:\/)?$/),
+  ]);
+
+  await approveE2EUser(e2eNotesUser.email);
+
+  await notesPage.goto("/en/subjects");
+
+  if (new URL(notesPage.url()).pathname === "/en/login") {
+    await submitLogin(notesPage, {
+      email: e2eNotesUser.email,
+      password: e2eNotesUser.password,
+    });
+    await expect(notesPage).toHaveURL(/\/en(?:\/)?$/);
+    await notesPage.goto("/en/subjects");
+  }
+
+  await expect(notesPage.locator("#btn-create-subject")).toBeVisible();
+
+  const notesStorageState = await notesContext.storageState();
+  expect(notesStorageState.cookies.length).toBeGreaterThan(0);
+  await notesContext.storageState({ path: e2eNotesStorageStatePath });
+  await notesContext.close();
 
   const authContext = await browser.newContext({
     extraHTTPHeaders: {

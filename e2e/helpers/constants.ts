@@ -6,6 +6,13 @@ export const e2eSubjectsUser = {
     process.env.E2E_SUBJECTS_USER_PASSWORD ?? "notorium-e2e-password-subjects",
 };
 
+export const e2eNotesUser = {
+  name: process.env.E2E_NOTES_USER_NAME ?? "Notorium E2E Notes User",
+  email: process.env.E2E_NOTES_USER_EMAIL ?? "e2e-notes-user@notorium.local",
+  password:
+    process.env.E2E_NOTES_USER_PASSWORD ?? "notorium-e2e-password-notes",
+};
+
 export const e2eAuthUser = {
   name: process.env.E2E_AUTH_USER_NAME ?? "Notorium E2E Auth User",
   email: process.env.E2E_AUTH_USER_EMAIL ?? "e2e-auth-user@notorium.local",
@@ -14,6 +21,9 @@ export const e2eAuthUser = {
 
 export const e2eSubjectsStorageStatePath =
   process.env.E2E_SUBJECTS_STORAGE_STATE_PATH ?? "e2e/.auth/subjects-user.json";
+
+export const e2eNotesStorageStatePath =
+  process.env.E2E_NOTES_STORAGE_STATE_PATH ?? "e2e/.auth/notes-user.json";
 
 export const e2eSubjectNames = {
   created: "E2E Subject Created",
