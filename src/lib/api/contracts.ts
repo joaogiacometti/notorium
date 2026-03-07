@@ -28,6 +28,16 @@ export type FlashcardReviewEntity = Pick<
   | "lapseCount"
 >;
 
+export interface FlashcardReviewSummary {
+  dueCount: number;
+  totalCount: number;
+}
+
+export interface FlashcardReviewState {
+  cards: FlashcardReviewEntity[];
+  summary: FlashcardReviewSummary;
+}
+
 export type SearchSubjectResult = Pick<
   SubjectEntity,
   "id" | "name" | "description"
@@ -58,6 +68,13 @@ export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "description">;
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
+export type ReviewFlashcardResult =
+  | {
+      success: true;
+      reviewedCardId: string;
+      flashcard: FlashcardReviewEntity;
+    }
+  | ActionErrorResult;
 export type CreateFlashcardResult =
   | {
       success: true;

@@ -1,7 +1,4 @@
-import {
-  getDueFlashcards,
-  getFlashcardReviewSummary,
-} from "@/app/actions/flashcard-review";
+import { getFlashcardReviewState } from "@/app/actions/flashcard-review";
 import { FlashcardReviewClient } from "@/components/flashcard-review-client";
 import { requireSession } from "@/lib/auth";
 
@@ -16,17 +13,15 @@ export default async function FlashcardReviewPage({
 
   const { subjectId } = await searchParams;
   const scopedSubjectId = typeof subjectId === "string" ? subjectId : undefined;
-
-  const [dueCards, summary] = await Promise.all([
-    getDueFlashcards({ subjectId: scopedSubjectId, limit: 50 }),
-    getFlashcardReviewSummary({ subjectId: scopedSubjectId }),
-  ]);
+  const initialState = await getFlashcardReviewState({
+    subjectId: scopedSubjectId,
+    limit: 50,
+  });
 
   return (
     <main>
       <FlashcardReviewClient
-        initialCards={dueCards}
-        initialSummary={summary}
+        initialState={initialState}
         subjectId={scopedSubjectId}
       />
     </main>
