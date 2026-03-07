@@ -36,14 +36,14 @@ export function FlashcardPreviewDialog({
             <h3 className="text-sm font-medium">{t("front_label")}</h3>
             <TiptapRenderer
               content={flashcard.front}
-              className="min-w-0 break-all text-sm text-muted-foreground"
+              className="min-w-0 wrap-break-word hyphens-auto text-sm text-muted-foreground"
             />
           </section>
           <section className="space-y-1.5">
             <h3 className="text-sm font-medium">{t("back_label")}</h3>
             <TiptapRenderer
               content={flashcard.back}
-              className="min-w-0 break-all text-sm text-muted-foreground"
+              className="min-w-0 wrap-break-word hyphens-auto text-sm text-muted-foreground"
             />
           </section>
         </div>

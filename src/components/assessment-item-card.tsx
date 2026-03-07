@@ -145,11 +145,11 @@ export function AssessmentItemCard({
             <TypeIcon className={cn("size-4", typeStyle.iconColor)} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="wrap-break-word text-sm font-semibold leading-snug">
+            <p className="wrap-break-word hyphens-auto text-sm font-semibold leading-snug">
               {item.title}
             </p>
             {item.description && (
-              <p className="mt-0.5 wrap-break-word text-xs text-muted-foreground">
+              <p className="mt-0.5 wrap-break-word hyphens-auto text-xs text-muted-foreground">
                 {item.description}
               </p>
             )}

@@ -64,11 +64,11 @@ export function SubjectDetail({
             <BookOpen className="size-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
+            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
               {subject.name}
             </h1>
             {subject.description && (
-              <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
+              <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
                 {subject.description}
               </p>
             )}

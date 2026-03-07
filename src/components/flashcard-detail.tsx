@@ -52,7 +52,7 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
             <CreditCard className="size-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
+            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
               {getRichTextExcerpt(currentFlashcard.front, 120)}
             </h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
@@ -104,7 +104,7 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
           </h2>
           <TiptapRenderer
             content={currentFlashcard.front}
-            className="min-w-0 break-all text-sm sm:text-base"
+            className="min-w-0 wrap-break-word hyphens-auto text-sm sm:text-base"
           />
         </div>
 
@@ -114,7 +114,7 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
           </h2>
           <TiptapRenderer
             content={currentFlashcard.back}
-            className="min-w-0 break-all text-sm sm:text-base"
+            className="min-w-0 wrap-break-word hyphens-auto text-sm sm:text-base"
           />
         </div>
       </div>

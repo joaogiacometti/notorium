@@ -46,7 +46,7 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
             <FileText className="size-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
+            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
               {note.title}
             </h1>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
@@ -87,7 +87,7 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
           {note.content ? (
             <TiptapRenderer
               content={note.content}
-              className="min-w-0 break-all text-sm sm:text-base"
+              className="min-w-0 wrap-break-word hyphens-auto text-sm sm:text-base"
             />
           ) : (
             <p className="text-sm italic text-muted-foreground sm:text-base">

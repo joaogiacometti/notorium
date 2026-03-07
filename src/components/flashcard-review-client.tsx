@@ -106,7 +106,7 @@ export function FlashcardReviewClient({
             </h2>
             <TiptapRenderer
               content={currentCard.front}
-              className="min-w-0 break-all text-base leading-relaxed"
+              className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
             />
           </div>
 
@@ -117,7 +117,7 @@ export function FlashcardReviewClient({
               </h3>
               <TiptapRenderer
                 content={currentCard.back}
-                className="min-w-0 break-all text-base leading-relaxed"
+                className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
               />
             </div>
           )}
@@ -176,10 +176,10 @@ export function FlashcardReviewClient({
           <RotateCcw className="size-5" />
         </div>
         <div className="min-w-0">
-          <h1 className="wrap-break-word text-2xl font-bold tracking-tight">
+          <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
             {t("title")}
           </h1>
-          <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
+          <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
             {t("description")}
           </p>
           <p className="mt-2 text-sm font-medium text-foreground">
