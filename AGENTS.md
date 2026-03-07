@@ -6,7 +6,8 @@ Notorium is a study management app built with Next.js 16 (App Router). Core modu
 Notes and flashcards support rich text and render images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax.
 Flashcards on subject detail are presented in a collapsed section and loaded when expanded.
 Flashcards also have a dedicated page under each subject, and global search routes flashcard results to that page.
-Profile data transfer is available to all users: full mode exports/imports flashcards, while template export excludes notes, attendance records, and flashcards.
+Flashcard review uses a memory-state scheduler with stored review logs and per-user parameter tuning.
+Profile data transfer is available to all users: full mode exports/imports flashcards and flashcard review settings, while template export excludes notes, attendance records, and flashcards.
 Authentication is approval-based: new users start as pending, only approved users can access the app, and admins can approve/block users from an Admin Panel entry in the authenticated account menu.
 Local infrastructure and app runtime can be started together with Docker Compose. Use `compose.yml` for the production-like stack (`app`, `postgres`, `redis`, and a one-off `migrate` service) and `compose.dev.yml` for development infrastructure only (`postgres` and `redis`, with the app running via local `bun dev`).
 

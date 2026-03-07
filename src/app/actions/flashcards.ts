@@ -12,6 +12,8 @@ import type {
   ResetFlashcardResult,
 } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import { getInitialFlashcardSchedulingState } from "@/lib/fsrs";
+import { ensureFsrsSettings } from "@/lib/fsrs-settings";
 import { LIMITS } from "@/lib/limits";
 import { actionError } from "@/lib/server-action-errors";
 import {
@@ -29,6 +31,7 @@ export async function getFlashcardsBySubject(
   subjectId: string,
 ): Promise<FlashcardEntity[]> {
   const userId = await getAuthenticatedUserId();
+  await ensureFsrsSettings(userId);
 
   return db
     .select({ flashcard })
@@ -50,6 +53,7 @@ export async function getFlashcardById(
   id: string,
 ): Promise<FlashcardEntity | null> {
   const userId = await getAuthenticatedUserId();
+  await ensureFsrsSettings(userId);
 
   const results = await db
     .select({ flashcard })
@@ -112,6 +116,7 @@ export async function createFlashcard(
     });
   }
 
+  const schedulingState = getInitialFlashcardSchedulingState();
   const inserted = await db
     .insert(flashcard)
     .values({
@@ -119,6 +124,16 @@ export async function createFlashcard(
       userId,
       front: parsed.data.front,
       back: parsed.data.back,
+      state: schedulingState.state,
+      dueAt: schedulingState.dueAt,
+      stability: schedulingState.stability,
+      difficulty: schedulingState.difficulty,
+      ease: schedulingState.ease,
+      intervalDays: schedulingState.intervalDays,
+      learningStep: schedulingState.learningStep,
+      lastReviewedAt: schedulingState.lastReviewedAt,
+      reviewCount: schedulingState.reviewCount,
+      lapseCount: schedulingState.lapseCount,
     })
     .returning();
 
@@ -239,18 +254,21 @@ export async function resetFlashcard(
   }
 
   const now = new Date();
+  const schedulingState = getInitialFlashcardSchedulingState(now);
 
   const updated = await db
     .update(flashcard)
     .set({
-      state: "new",
-      dueAt: now,
-      ease: 250,
-      intervalDays: 0,
-      learningStep: null,
-      lastReviewedAt: null,
-      reviewCount: 0,
-      lapseCount: 0,
+      state: schedulingState.state,
+      dueAt: schedulingState.dueAt,
+      stability: schedulingState.stability,
+      difficulty: schedulingState.difficulty,
+      ease: schedulingState.ease,
+      intervalDays: schedulingState.intervalDays,
+      learningStep: schedulingState.learningStep,
+      lastReviewedAt: schedulingState.lastReviewedAt,
+      reviewCount: schedulingState.reviewCount,
+      lapseCount: schedulingState.lapseCount,
       updatedAt: now,
     })
     .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)))

@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@napi-rs/wasm-runtime": "^1.1.1",
+    "@open-spaced-repetition/binding": "^0.1.2",
     "@tanstack/react-query": "^5.90.21",
     "@tiptap/extension-code-block-lowlight": "^3.20.0",
     "@tiptap/extension-highlight": "^3.20.0",
@@ -51,6 +53,7 @@
     "redis": "^5.11.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "ts-fsrs": "^5.2.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -6,7 +6,8 @@ Notes and flashcards support rich text and can render images from pasted direct 
 
 On subject detail pages, flashcards are shown in a collapsed section and loaded on first expand.
 Flashcards also have a dedicated detail page under each subject, and global search results for flashcards open that detail page directly.
-Profile data transfer is available to all users and supports full export/import for subjects, notes, attendance, assessments, and flashcards, plus a template export that excludes notes, attendance, and flashcards.
+Flashcard review uses a memory-state scheduler with per-user parameter tuning and stored review logs.
+Profile data transfer is available to all users and supports full export/import for subjects, notes, attendance, assessments, flashcards, and flashcard review settings, plus a template export that excludes notes, attendance, and flashcards.
 Account access is approval-based: new users are created as pending, approved users can enter the app, and admins can approve or block users from the Admin Panel in the account menu.
 
 ## Tech Stack

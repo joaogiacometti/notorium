@@ -158,7 +158,11 @@
     "grade_again": "Again",
     "grade_hard": "Hard",
     "grade_good": "Good",
-    "grade_easy": "Easy"
+    "grade_easy": "Easy",
+    "preview_state_new": "New",
+    "preview_state_learning": "Learning",
+    "preview_state_review": "Review",
+    "preview_state_relearning": "Relearning"
   },
   "NotesList": {
     "title": "Notes",

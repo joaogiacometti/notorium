@@ -36,6 +36,10 @@ const validSubject = {
 const validPayload = {
   version: 1,
   exportedAt: "2026-03-01T00:00:00.000Z",
+  flashcardScheduler: {
+    desiredRetention: 0.9,
+    weights: Array.from({ length: 21 }, (_, index) => index + 1),
+  },
   subjects: [],
 };
 
@@ -44,6 +48,8 @@ const validFlashcard = {
   back: "Answer",
   state: "new",
   dueAt: "2026-01-02T00:00:00.000Z",
+  stability: null,
+  difficulty: null,
   ease: 250,
   intervalDays: 0,
   learningStep: null,

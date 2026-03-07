@@ -158,7 +158,11 @@
     "grade_again": "De novo",
     "grade_hard": "Dificil",
     "grade_good": "Bom",
-    "grade_easy": "Facil"
+    "grade_easy": "Facil",
+    "preview_state_new": "Novo",
+    "preview_state_learning": "Aprendendo",
+    "preview_state_review": "Revisão",
+    "preview_state_relearning": "Reaprendendo"
   },
   "NotesList": {
     "title": "Notas",

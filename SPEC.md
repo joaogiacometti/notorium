@@ -46,7 +46,7 @@ Students who want a private, lightweight study management workspace.
 - Flashcards have a dedicated detail page nested under subject routes.
 - Global review page with spaced repetition queue.
 - Review answers: Again, Hard, Good, Easy.
-- Scheduler: SM-2-compatible defaults with learning/relearning stages.
+- Scheduler: memory-state spaced repetition with learning/relearning stages, stored review logs, and per-user parameter tuning.
 
 ### Notes
 
@@ -115,7 +115,11 @@ Students who want a private, lightweight study management workspace.
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`.
 - `flashcard`
-  - `id`, `front`, `back`, `state`, `dueAt`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`.
+  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`.
+- `flashcard_scheduler_settings`
+  - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, optimization timestamps.
+- `flashcard_review_log`
+  - `id`, `flashcardId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps.
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`.
 - `attendance_miss`

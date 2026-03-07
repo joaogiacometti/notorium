@@ -41,6 +41,7 @@ export function applyReviewedFlashcardToState(
     return {
       cards: insertCardByDueAt(remainingCards, flashcard),
       summary: state.summary,
+      scheduler: state.scheduler,
     };
   }
 
@@ -50,6 +51,7 @@ export function applyReviewedFlashcardToState(
       ...state.summary,
       dueCount: Math.max(0, state.summary.dueCount - 1),
     },
+    scheduler: state.scheduler,
   };
 }
 
@@ -76,6 +78,7 @@ export function mergeFlashcardReviewStates(
   return {
     cards,
     summary: incoming.summary,
+    scheduler: incoming.scheduler,
   };
 }
 

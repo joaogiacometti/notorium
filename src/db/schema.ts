@@ -199,6 +199,13 @@ export const flashcardStateEnum = pgEnum("flashcard_state", [
   "relearning",
 ]);
 
+export const flashcardReviewRatingEnum = pgEnum("flashcard_review_rating", [
+  "again",
+  "hard",
+  "good",
+  "easy",
+]);
+
 export const assessment = pgTable(
   "assessment",
   {
@@ -242,6 +249,8 @@ export const flashcard = pgTable(
     back: text("back").notNull(),
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
+    stability: numeric("stability", { precision: 10, scale: 4 }),
+    difficulty: numeric("difficulty", { precision: 10, scale: 4 }),
     ease: integer("ease").notNull().default(250),
     intervalDays: integer("interval_days").notNull().default(0),
     learningStep: integer("learning_step"),
@@ -268,6 +277,70 @@ export const flashcard = pgTable(
   ],
 );
 
+export const flashcardSchedulerSettings = pgTable(
+  "flashcard_scheduler_settings",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    desiredRetention: numeric("desired_retention", {
+      precision: 4,
+      scale: 3,
+    })
+      .notNull()
+      .default("0.900"),
+    weights: text("weights").notNull(),
+    optimizedReviewCount: integer("optimized_review_count")
+      .notNull()
+      .default(0),
+    lastOptimizedAt: timestamp("last_optimized_at"),
+    legacySchedulerMigratedAt: timestamp("legacy_scheduler_migrated_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    unique("flashcard_scheduler_settings_userId_unique").on(table.userId),
+    index("flashcard_scheduler_settings_userId_idx").on(table.userId),
+  ],
+);
+
+export const flashcardReviewLog = pgTable(
+  "flashcard_review_log",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    flashcardId: text("flashcard_id")
+      .notNull()
+      .references(() => flashcard.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    rating: flashcardReviewRatingEnum("rating").notNull(),
+    reviewedAt: timestamp("reviewed_at").notNull(),
+    daysElapsed: integer("days_elapsed").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("flashcard_review_log_flashcardId_idx").on(table.flashcardId),
+    index("flashcard_review_log_userId_idx").on(table.userId),
+    index("flashcard_review_log_userId_reviewedAt_idx").on(
+      table.userId,
+      table.reviewedAt,
+    ),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -276,6 +349,7 @@ export const userRelations = relations(user, ({ many }) => ({
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
   flashcards: many(flashcard),
+  flashcardReviewLogs: many(flashcardReviewLog),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -346,3 +420,27 @@ export const flashcardRelations = relations(flashcard, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const flashcardSchedulerSettingsRelations = relations(
+  flashcardSchedulerSettings,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [flashcardSchedulerSettings.userId],
+      references: [user.id],
+    }),
+  }),
+);
+
+export const flashcardReviewLogRelations = relations(
+  flashcardReviewLog,
+  ({ one }) => ({
+    flashcard: one(flashcard, {
+      fields: [flashcardReviewLog.flashcardId],
+      references: [flashcard.id],
+    }),
+    user: one(user, {
+      fields: [flashcardReviewLog.userId],
+      references: [user.id],
+    }),
+  }),
+);
