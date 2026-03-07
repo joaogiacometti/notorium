@@ -9,7 +9,13 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import {
   getFlashcardReviewState,
@@ -20,6 +26,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FlashcardReviewState } from "@/lib/api/contracts";
 import { getFlashcardReviewPreviewLabels } from "@/lib/flashcard-review-preview";
+import {
+  getFlashcardReviewShortcutAction,
+  isEditableFlashcardReviewKeyboardTarget,
+} from "@/lib/flashcard-review-shortcuts";
 import {
   applyReviewedFlashcardToState,
   mergeFlashcardReviewStates,
@@ -133,6 +143,43 @@ export function FlashcardReviewClient({
     });
   }
 
+  const handleReviewKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    const action = getFlashcardReviewShortcutAction({
+      key: event.key,
+      revealed,
+      hasCurrentCard: currentCard !== null,
+      isPending,
+      isDialogOpen: editOpen,
+      isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
+      hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
+      isRepeat: event.repeat,
+    });
+
+    if (!action) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (action.type === "reveal") {
+      setRevealed(true);
+      return;
+    }
+
+    if (action.type === "edit") {
+      setEditOpen(true);
+      return;
+    }
+
+    handleGrade(action.grade);
+  });
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleReviewKeyDown);
+
+    return () => document.removeEventListener("keydown", handleReviewKeyDown);
+  }, []);
+
   let reviewContent = null;
 
   if (currentCard) {
@@ -194,7 +241,7 @@ export function FlashcardReviewClient({
                         <span>{t(`grade_${grade}`)}</span>
                       </span>
                       {previewLabels ? (
-                        <span className="text-pretty whitespace-normal break-words text-[10px] leading-tight font-medium opacity-80 sm:text-[11px]">
+                        <span className="text-pretty whitespace-normal wrap-break-word text-[10px] leading-tight font-medium opacity-80 sm:text-[11px]">
                           {t(`preview_state_${previewLabels[grade].state}`)} ·{" "}
                           {previewLabels[grade].durationText}
                         </span>
