@@ -49,12 +49,6 @@ src/
 | `bun run test`                            | Run Vitest test suite                  |
 | `bun run test:watch`                      | Run Vitest in watch mode               |
 | `bun run test:coverage`                   | Run Vitest with coverage               |
-| `bun run test:e2e:install`                | Install Playwright Chromium browser    |
-| `bun run test:e2e`                        | Run Playwright E2E suite               |
-| `bun run test:e2e:auth`                   | Run Playwright auth project            |
-| `bun run test:e2e:subjects`               | Run Playwright subjects project        |
-| `bun run test:e2e:headed`                 | Run Playwright E2E in headed mode      |
-| `bun run test:e2e:ui`                     | Run Playwright E2E UI mode             |
 | `bun run db:generate`                     | Generate Drizzle migrations            |
 | `bun run db:migrate`                      | Run Drizzle migrations                 |
 | `bun run db:push`                         | Push schema directly to DB             |
@@ -150,7 +144,7 @@ src/
 This is where validation depth lives. Zod schemas and utility functions are tested exhaustively here.
 
 - **Zod schema tests should verify rejection of invalid inputs**, not just confirm that valid data passes. Test missing fields, wrong types, boundary values, and malformed data. Cover all edge cases, all refinements, all error messages.
-- **Do NOT test Server Actions.** Server actions should not be unit tested to avoid overly complex mocks. Rely on E2E tests for these behaviors instead.
+- **Do NOT test Server Actions.** Server actions should not be unit tested to avoid overly complex mocks. Prefer testing the extracted validation and business logic they depend on instead.
 - **Utility / business logic tests** should cover branching, boundary conditions, and transformations (e.g., weighted vs simple averages, overdue detection, system limit logic).
 
 ### Styling

@@ -142,10 +142,6 @@ Defined in `src/env.ts`:
 | `AUTH_RATE_LIMIT_PREFIX`         | No          | Override auth rate-limit Redis key prefix (default `ratelimit:auth`)                      |
 | `MAX_IMPORT_BYTES`               | No          | Max accepted JSON import payload size in bytes (default `1048576`)                        |
 | `TRUSTED_PROXY_COUNT`            | No          | Number of trusted proxies for forwarded client IP parsing (default `1`)                   |
-| `E2E_USER_NAME`                  | No          | Dedicated Playwright E2E account display name                                             |
-| `E2E_USER_EMAIL`                 | No          | Dedicated Playwright E2E account email                                                    |
-| `E2E_USER_PASSWORD`              | No          | Dedicated Playwright E2E account password                                                 |
-| `E2E_STORAGE_STATE_PATH`         | No          | Storage state output path for authenticated Playwright projects                           |
 
 ## Scripts
 
@@ -160,49 +156,9 @@ Defined in `src/env.ts`:
 | `bun run test`              | Run Vitest suite                     |
 | `bun run test:watch`        | Run Vitest in watch mode             |
 | `bun run test:coverage`     | Run Vitest with coverage             |
-| `bun run test:e2e:install`  | Install Playwright Chromium browser  |
-| `bun run test:e2e`          | Run Playwright E2E suite             |
-| `bun run test:e2e:auth`     | Run only Playwright auth project     |
-| `bun run test:e2e:subjects` | Run only Playwright subjects project |
-| `bun run test:e2e:headed`   | Run Playwright E2E in headed mode    |
-| `bun run test:e2e:ui`       | Run Playwright E2E UI mode           |
 | `bun run db:generate`       | Generate Drizzle migrations          |
 | `bun run db:migrate`        | Apply Drizzle migrations             |
 | `bun run db:push`           | Push schema directly to DB           |
-
-## E2E Tests (Playwright)
-
-1. Install browser binaries:
-
-```bash
-bun run test:e2e:install
-```
-
-2. Run the suite:
-
-```bash
-bun run test:e2e
-```
-
-Auth and subjects can also be run independently:
-
-```bash
-bun run test:e2e:auth
-bun run test:e2e:subjects
-```
-
-## CI E2E
-
-Pull requests to `main` run Playwright E2E in a dedicated workflow using Docker Compose for runtime parity with local Docker execution.
-
-The workflow starts the same stack topology used locally:
-
-- `postgres` (`postgres:17-alpine`)
-- `redis` (`redis:7-alpine`)
-- `migrate` (runs `bun run db:migrate` once)
-- `app` (containerized Next.js server on `http://localhost:3000`)
-
-Playwright runs from the GitHub runner against `PLAYWRIGHT_BASE_URL=http://localhost:3000`, while `RATE_LIMIT_BACKEND=redis` validates auth rate limiting with Redis in CI.
 
 ## Project Structure
 
