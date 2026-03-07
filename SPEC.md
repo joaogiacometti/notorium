@@ -46,6 +46,7 @@ Students who want a private, lightweight study management workspace.
 - Flashcards have a dedicated detail page nested under subject routes.
 - Global review page with spaced repetition queue.
 - Review answers: Again, Hard, Good, Easy.
+- Review shortcuts on the review page: `Enter` reveals the back or grades Good, and `1` to `4` map to Again, Hard, Good, and Easy after reveal.
 - Scheduler: memory-state spaced repetition with learning/relearning stages, stored review logs, and per-user parameter tuning.
 
 ### Notes
