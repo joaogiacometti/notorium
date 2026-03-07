@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   CircleAlert,
   Gauge,
+  Loader2,
   Pencil,
   RotateCcw,
   Sparkles,
@@ -69,6 +70,7 @@ export function FlashcardReviewClient({
   const [reviewState, setReviewState] = useState(initialState);
   const [revealed, setRevealed] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
   const [isPending, startTransition] = useTransition();
   const refillRequestIdRef = useRef(0);
 
@@ -116,30 +118,35 @@ export function FlashcardReviewClient({
   }
 
   function handleGrade(grade: ReviewGrade) {
-    if (!currentCard) {
+    if (!currentCard || isPending) {
       return;
     }
 
+    setPendingGrade(grade);
     startTransition(async () => {
-      const result = await reviewFlashcard({ id: currentCard.id, grade });
+      try {
+        const result = await reviewFlashcard({ id: currentCard.id, grade });
 
-      if (!result.success) {
-        toast.error(resolveActionErrorMessage(result, tErrors));
-        return;
-      }
+        if (!result.success) {
+          toast.error(resolveActionErrorMessage(result, tErrors));
+          return;
+        }
 
-      const nextState = applyReviewedFlashcardToState(
-        reviewState,
-        result.reviewedCardId,
-        result.flashcard,
-      );
+        const nextState = applyReviewedFlashcardToState(
+          reviewState,
+          result.reviewedCardId,
+          result.flashcard,
+        );
 
-      setReviewState(nextState);
-      setRevealed(false);
-      setEditOpen(false);
+        setReviewState(nextState);
+        setRevealed(false);
+        setEditOpen(false);
 
-      if (shouldRefillFlashcardReviewState(nextState)) {
-        void refillReviewState();
+        if (shouldRefillFlashcardReviewState(nextState)) {
+          void refillReviewState();
+        }
+      } finally {
+        setPendingGrade(null);
       }
     });
   }
@@ -226,6 +233,7 @@ export function FlashcardReviewClient({
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
               {reviewGrades.map((grade) => {
                 const Icon = gradeIcons[grade];
+                const isActivePendingGrade = pendingGrade === grade;
 
                 return (
                   <Button
@@ -238,7 +246,11 @@ export function FlashcardReviewClient({
                   >
                     <span className="flex min-w-0 flex-col items-center justify-center gap-0.5 text-center">
                       <span className="flex min-w-0 items-center gap-1.5">
-                        <Icon className="hidden size-4 sm:inline-flex" />
+                        {isActivePendingGrade ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Icon className="hidden size-4 sm:inline-flex" />
+                        )}
                         <span>{t(`grade_${grade}`)}</span>
                       </span>
                       {previewLabels ? (
