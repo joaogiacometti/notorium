@@ -19,12 +19,13 @@ import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FlashcardReviewState } from "@/lib/api/contracts";
+import { getFlashcardReviewPreviewLabels } from "@/lib/flashcard-review-preview";
 import {
   applyReviewedFlashcardToState,
   mergeFlashcardReviewStates,
   shouldRefillFlashcardReviewState,
 } from "@/lib/flashcard-review-state";
-import type { ReviewGrade } from "@/lib/flashcard-scheduler";
+import type { ReviewGrade } from "@/lib/fsrs";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import { EditFlashcardDialog } from "./edit-flashcard-dialog";
 
@@ -70,6 +71,12 @@ export function FlashcardReviewClient({
           due: reviewState.summary.dueCount,
           total: reviewState.summary.totalCount,
         });
+  const previewLabels = currentCard
+    ? getFlashcardReviewPreviewLabels({
+        card: currentCard,
+        scheduler: reviewState.scheduler,
+      })
+    : null;
 
   async function refreshReviewState() {
     const nextState = await getFlashcardReviewState({
@@ -168,7 +175,7 @@ export function FlashcardReviewClient({
           )}
 
           {revealed ? (
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
               {reviewGrades.map((grade) => {
                 const Icon = gradeIcons[grade];
 
@@ -179,10 +186,20 @@ export function FlashcardReviewClient({
                     size="lg"
                     onClick={() => handleGrade(grade)}
                     disabled={isPending}
-                    className={`h-12 w-full min-w-0 border-2 px-2 text-sm font-semibold shadow-xs transition-transform hover:-translate-y-0.5 sm:px-4 ${gradeButtonStyles[grade]}`}
+                    className={`h-auto min-h-18 w-full min-w-0 border-2 px-2 py-2 text-sm font-semibold shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 ${gradeButtonStyles[grade]}`}
                   >
-                    <Icon className="hidden size-4 sm:inline-flex" />
-                    {t(`grade_${grade}`)}
+                    <span className="flex min-w-0 flex-col items-center justify-center gap-0.5 text-center">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <Icon className="hidden size-4 sm:inline-flex" />
+                        <span>{t(`grade_${grade}`)}</span>
+                      </span>
+                      {previewLabels ? (
+                        <span className="text-pretty whitespace-normal break-words text-[10px] leading-tight font-medium opacity-80 sm:text-[11px]">
+                          {t(`preview_state_${previewLabels[grade].state}`)} ·{" "}
+                          {previewLabels[grade].durationText}
+                        </span>
+                      ) : null}
+                    </span>
                   </Button>
                 );
               })}

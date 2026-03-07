@@ -6,7 +6,7 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   reactCompiler: true,
   output: "standalone",
-  serverExternalPackages: ["pg"],
+  serverExternalPackages: ["@open-spaced-repetition/binding", "pg"],
 };
 
 export default withNextIntl(nextConfig);

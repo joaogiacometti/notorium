@@ -3,6 +3,8 @@ import type {
   assessment,
   attendanceMiss,
   flashcard,
+  flashcardReviewLog,
+  flashcardSchedulerSettings,
   note,
   subject,
 } from "@/db/schema";
@@ -13,6 +15,12 @@ export type NoteEntity = InferSelectModel<typeof note>;
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
+export type FlashcardReviewLogEntity = InferSelectModel<
+  typeof flashcardReviewLog
+>;
+export type FlashcardSchedulerSettingsEntity = InferSelectModel<
+  typeof flashcardSchedulerSettings
+>;
 export type FlashcardReviewEntity = Pick<
   FlashcardEntity,
   | "id"
@@ -21,9 +29,12 @@ export type FlashcardReviewEntity = Pick<
   | "subjectId"
   | "state"
   | "dueAt"
+  | "stability"
+  | "difficulty"
   | "ease"
   | "intervalDays"
   | "learningStep"
+  | "lastReviewedAt"
   | "reviewCount"
   | "lapseCount"
 >;
@@ -33,9 +44,15 @@ export interface FlashcardReviewSummary {
   totalCount: number;
 }
 
+export interface FlashcardReviewSchedulerSettings {
+  desiredRetention: number;
+  weights: number[];
+}
+
 export interface FlashcardReviewState {
   cards: FlashcardReviewEntity[];
   summary: FlashcardReviewSummary;
+  scheduler: FlashcardReviewSchedulerSettings;
 }
 
 export type SearchSubjectResult = Pick<

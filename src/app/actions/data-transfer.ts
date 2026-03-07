@@ -7,12 +7,19 @@ import {
   assessment,
   attendanceMiss,
   flashcard,
+  flashcardSchedulerSettings,
   note,
   subject,
 } from "@/db/schema";
 import { appEnv } from "@/env";
 import type { MutationResult } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import {
+  getDefaultFsrsDesiredRetention,
+  getDefaultFsrsWeights,
+  getInitialFlashcardSchedulingState,
+  serializeFsrsWeights,
+} from "@/lib/fsrs";
 import { LIMITS } from "@/lib/limits";
 import {
   type ActionErrorResult,
@@ -32,6 +39,11 @@ export async function exportData(
 ): Promise<ImportData | ActionErrorResult> {
   const { templateOnly = false } = options;
   const userId = await getAuthenticatedUserId();
+  const [schedulerSettings] = await db
+    .select()
+    .from(flashcardSchedulerSettings)
+    .where(eq(flashcardSchedulerSettings.userId, userId))
+    .limit(1);
 
   const subjects = await db
     .select()
@@ -127,6 +139,10 @@ export async function exportData(
       back: f.back,
       state: f.state,
       dueAt: f.dueAt.toISOString(),
+      stability:
+        f.stability === null ? null : Number.parseFloat(String(f.stability)),
+      difficulty:
+        f.difficulty === null ? null : Number.parseFloat(String(f.difficulty)),
       ease: f.ease,
       intervalDays: f.intervalDays,
       learningStep: f.learningStep,
@@ -141,6 +157,17 @@ export async function exportData(
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
+    flashcardScheduler: schedulerSettings
+      ? {
+          desiredRetention: Number.parseFloat(
+            String(schedulerSettings.desiredRetention),
+          ),
+          weights: JSON.parse(schedulerSettings.weights) as number[],
+        }
+      : {
+          desiredRetention: getDefaultFsrsDesiredRetention(),
+          weights: getDefaultFsrsWeights(),
+        },
     subjects: subjectsWithData,
   };
 }
@@ -322,6 +349,12 @@ function validateSubjectImportLimits(
 async function importSubjectsFromData(userId: string, data: ImportData) {
   return db.transaction(async (tx) => {
     let importedCount = 0;
+    const importedScheduler =
+      data.flashcardScheduler ??
+      ({
+        desiredRetention: getDefaultFsrsDesiredRetention(),
+        weights: getDefaultFsrsWeights(),
+      } as const);
 
     for (const importedSubject of data.subjects) {
       const [inserted] = await tx
@@ -383,27 +416,59 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
 
       if (importedSubject.flashcards.length > 0) {
         await tx.insert(flashcard).values(
-          importedSubject.flashcards.map((f) => ({
-            front: f.front,
-            back: f.back,
-            state: f.state,
-            dueAt: new Date(f.dueAt),
-            ease: f.ease,
-            intervalDays: f.intervalDays,
-            learningStep: f.learningStep,
-            lastReviewedAt: f.lastReviewedAt
-              ? new Date(f.lastReviewedAt)
-              : null,
-            reviewCount: f.reviewCount,
-            lapseCount: f.lapseCount,
-            subjectId,
-            userId,
-          })),
+          importedSubject.flashcards.map((f) => {
+            const importedSchedulingState =
+              typeof f.stability === "number" &&
+              typeof f.difficulty === "number"
+                ? {
+                    state: f.state,
+                    dueAt: new Date(f.dueAt),
+                    stability: f.stability.toFixed(4),
+                    difficulty: f.difficulty.toFixed(4),
+                    ease: f.ease,
+                    intervalDays: f.intervalDays,
+                    learningStep: f.learningStep,
+                    lastReviewedAt: f.lastReviewedAt
+                      ? new Date(f.lastReviewedAt)
+                      : null,
+                    reviewCount: f.reviewCount,
+                    lapseCount: f.lapseCount,
+                    updatedAt: new Date(f.updatedAt),
+                  }
+                : getInitialFlashcardSchedulingState();
+
+            return {
+              ...importedSchedulingState,
+              front: f.front,
+              back: f.back,
+              subjectId,
+              userId,
+            };
+          }),
         );
       }
 
       importedCount++;
     }
+
+    await tx
+      .insert(flashcardSchedulerSettings)
+      .values({
+        userId,
+        desiredRetention: importedScheduler.desiredRetention.toFixed(3),
+        weights: serializeFsrsWeights(importedScheduler.weights),
+        legacySchedulerMigratedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: flashcardSchedulerSettings.userId,
+        set: {
+          desiredRetention: importedScheduler.desiredRetention.toFixed(3),
+          weights: serializeFsrsWeights(importedScheduler.weights),
+          legacySchedulerMigratedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
     return importedCount;
   });
 }

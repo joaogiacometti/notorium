@@ -3,7 +3,7 @@
 import { and, asc, count, eq, isNull, lte, type SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
-import { flashcard, subject } from "@/db/schema";
+import { flashcard, flashcardReviewLog, subject } from "@/db/schema";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -11,7 +11,11 @@ import type {
   ReviewFlashcardResult,
 } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
-import { scheduleFlashcardReview } from "@/lib/flashcard-scheduler";
+import { scheduleFlashcardReview } from "@/lib/fsrs";
+import {
+  ensureFsrsSettings,
+  maybeOptimizeFsrsParameters,
+} from "@/lib/fsrs-settings";
 import { actionError } from "@/lib/server-action-errors";
 import {
   type ReviewFlashcardForm,
@@ -68,6 +72,7 @@ export async function getDueFlashcards(
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewEntity[]> {
   const userId = await getAuthenticatedUserId();
+  await ensureFsrsSettings(userId);
   return getDueFlashcardsForUser(userId, new Date(), options);
 }
 
@@ -109,6 +114,7 @@ export async function getFlashcardReviewSummary(
   options: Pick<GetDueFlashcardsOptions, "subjectId"> = {},
 ): Promise<FlashcardReviewSummary> {
   const userId = await getAuthenticatedUserId();
+  await ensureFsrsSettings(userId);
   return getFlashcardReviewSummaryForUser(userId, new Date(), options);
 }
 
@@ -116,6 +122,7 @@ export async function getFlashcardReviewState(
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewState> {
   const userId = await getAuthenticatedUserId();
+  const settings = await ensureFsrsSettings(userId);
   const now = new Date();
   const [cards, summary] = await Promise.all([
     getDueFlashcardsForUser(userId, now, options),
@@ -125,6 +132,10 @@ export async function getFlashcardReviewState(
   return {
     cards,
     summary,
+    scheduler: {
+      desiredRetention: settings.desiredRetention,
+      weights: settings.weights,
+    },
   };
 }
 
@@ -137,6 +148,8 @@ export async function reviewFlashcard(
   if (!parsed.success) {
     return actionError("flashcards.review.invalidData");
   }
+
+  const settings = await ensureFsrsSettings(userId);
 
   const now = new Date();
 
@@ -166,38 +179,73 @@ export async function reviewFlashcard(
   const nextState = scheduleFlashcardReview({
     card: {
       state: existingCard.state,
-      ease: existingCard.ease,
+      dueAt: existingCard.dueAt,
+      stability: existingCard.stability,
+      difficulty: existingCard.difficulty,
       intervalDays: existingCard.intervalDays,
       learningStep: existingCard.learningStep,
+      lastReviewedAt: existingCard.lastReviewedAt,
       reviewCount: existingCard.reviewCount,
       lapseCount: existingCard.lapseCount,
     },
     grade: parsed.data.grade,
     now,
+    desiredRetention: settings.desiredRetention,
+    weights: settings.weights,
   });
 
-  const updatedCards = await db
-    .update(flashcard)
-    .set(nextState)
-    .where(and(eq(flashcard.id, existingCard.id), eq(flashcard.userId, userId)))
-    .returning({
-      id: flashcard.id,
-      front: flashcard.front,
-      back: flashcard.back,
-      subjectId: flashcard.subjectId,
-      state: flashcard.state,
-      dueAt: flashcard.dueAt,
-      ease: flashcard.ease,
-      intervalDays: flashcard.intervalDays,
-      learningStep: flashcard.learningStep,
-      reviewCount: flashcard.reviewCount,
-      lapseCount: flashcard.lapseCount,
+  const updatedCard = await db.transaction(async (tx) => {
+    const updatedCards = await tx
+      .update(flashcard)
+      .set({
+        state: nextState.state,
+        dueAt: nextState.dueAt,
+        stability: nextState.stability,
+        difficulty: nextState.difficulty,
+        ease: nextState.ease,
+        intervalDays: nextState.intervalDays,
+        learningStep: nextState.learningStep,
+        lastReviewedAt: nextState.lastReviewedAt,
+        reviewCount: nextState.reviewCount,
+        lapseCount: nextState.lapseCount,
+        updatedAt: nextState.updatedAt,
+      })
+      .where(
+        and(eq(flashcard.id, existingCard.id), eq(flashcard.userId, userId)),
+      )
+      .returning({
+        id: flashcard.id,
+        front: flashcard.front,
+        back: flashcard.back,
+        subjectId: flashcard.subjectId,
+        state: flashcard.state,
+        dueAt: flashcard.dueAt,
+        stability: flashcard.stability,
+        difficulty: flashcard.difficulty,
+        ease: flashcard.ease,
+        intervalDays: flashcard.intervalDays,
+        learningStep: flashcard.learningStep,
+        lastReviewedAt: flashcard.lastReviewedAt,
+        reviewCount: flashcard.reviewCount,
+        lapseCount: flashcard.lapseCount,
+      });
+
+    await tx.insert(flashcardReviewLog).values({
+      flashcardId: existingCard.id,
+      userId,
+      rating: parsed.data.grade,
+      reviewedAt: now,
+      daysElapsed: nextState.daysElapsed,
     });
-  const updatedCard = updatedCards[0];
+
+    return updatedCards[0];
+  });
 
   if (!updatedCard) {
     return actionError("flashcards.review.notFound");
   }
+
+  await maybeOptimizeFsrsParameters(userId);
 
   revalidatePath(`/subjects/${existingCard.subjectId}`);
   return {

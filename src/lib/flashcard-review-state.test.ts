@@ -8,6 +8,12 @@ import {
   mergeFlashcardReviewStates,
   shouldRefillFlashcardReviewState,
 } from "@/lib/flashcard-review-state";
+import { getDefaultFsrsWeights } from "@/lib/fsrs";
+
+const scheduler = {
+  desiredRetention: 0.9,
+  weights: getDefaultFsrsWeights(),
+};
 
 function makeCard(
   id: string,
@@ -21,9 +27,12 @@ function makeCard(
     subjectId: "subject-1",
     state: "new",
     dueAt,
+    stability: null,
+    difficulty: null,
     ease: 250,
     intervalDays: 0,
     learningStep: null,
+    lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
     ...overrides,
@@ -40,6 +49,7 @@ function makeState(
       dueCount,
       totalCount: dueCount,
     },
+    scheduler,
   };
 }
 
@@ -71,6 +81,7 @@ describe("applyReviewedFlashcardToState", () => {
         dueCount: 1,
         totalCount: 2,
       },
+      scheduler,
     });
   });
 
@@ -121,6 +132,7 @@ describe("mergeFlashcardReviewStates", () => {
         dueCount: 3,
         totalCount: 8,
       },
+      scheduler,
     };
 
     const nextState = mergeFlashcardReviewStates(current, incoming);
