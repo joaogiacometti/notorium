@@ -136,6 +136,7 @@ export function FlashcardReviewClient({
 
       setReviewState(nextState);
       setRevealed(false);
+      setEditOpen(false);
 
       if (shouldRefillFlashcardReviewState(nextState)) {
         void refillReviewState();
@@ -300,6 +301,7 @@ export function FlashcardReviewClient({
       {reviewContent}
       {currentCard ? (
         <EditFlashcardDialog
+          key={currentCard.id}
           flashcard={currentCard}
           open={editOpen}
           onOpenChange={setEditOpen}
