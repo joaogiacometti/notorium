@@ -167,6 +167,7 @@ export async function editFlashcard(
   revalidatePath(
     `/subjects/${existingFlashcard[0].subjectId}/flashcards/${parsed.data.id}`,
   );
+  revalidatePath("/flashcards/review");
   return { success: true, flashcard: updated[0] };
 }
 

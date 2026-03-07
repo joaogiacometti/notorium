@@ -34,7 +34,7 @@ interface EditFlashcardDialogProps {
   flashcard: Pick<FlashcardEntity, "id" | "front" | "back">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdated?: (flashcard: FlashcardEntity) => void;
+  onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
 }
 
 export function EditFlashcardDialog({
@@ -92,7 +92,7 @@ export function EditFlashcardDialog({
   async function onSubmit(data: EditFlashcardForm) {
     const result = await editFlashcard(data);
     if (result.success) {
-      onUpdated?.(result.flashcard);
+      await onUpdated?.(result.flashcard);
       form.reset(data);
       setDiscardDialogOpen(false);
       onOpenChange(false);

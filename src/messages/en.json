@@ -153,6 +153,7 @@
     "empty_description": "There are no due flashcards to review.",
     "front_label": "Front",
     "back_label": "Back",
+    "edit": "Edit",
     "show_answer": "Show Answer",
     "grade_again": "Again",
     "grade_hard": "Hard",

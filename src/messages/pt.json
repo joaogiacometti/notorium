@@ -153,6 +153,7 @@
     "empty_description": "Não há flashcards vencidos para revisar.",
     "front_label": "Frente",
     "back_label": "Verso",
+    "edit": "Editar",
     "show_answer": "Mostrar resposta",
     "grade_again": "De novo",
     "grade_hard": "Dificil",

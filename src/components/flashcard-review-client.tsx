@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   CircleAlert,
   Gauge,
+  Pencil,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { FlashcardReviewEntity } from "@/lib/api/contracts";
 import type { ReviewGrade } from "@/lib/flashcard-scheduler";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
+import { EditFlashcardDialog } from "./edit-flashcard-dialog";
 
 interface ReviewSummary {
   dueCount: number;
@@ -58,6 +60,7 @@ export function FlashcardReviewClient({
   const [cards, setCards] = useState(initialCards);
   const [summary, setSummary] = useState(initialSummary);
   const [revealed, setRevealed] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const currentCard = cards[0] ?? null;
@@ -69,6 +72,17 @@ export function FlashcardReviewClient({
           due: summary.dueCount,
           total: summary.totalCount,
         });
+
+  async function refreshReviewState() {
+    const [nextCards, nextSummary] = await Promise.all([
+      getDueFlashcards({ subjectId, limit: 50 }),
+      getFlashcardReviewSummary({ subjectId }),
+    ]);
+
+    setCards(nextCards);
+    setSummary(nextSummary);
+    setRevealed(false);
+  }
 
   function handleGrade(grade: ReviewGrade) {
     if (!currentCard) {
@@ -83,14 +97,7 @@ export function FlashcardReviewClient({
         return;
       }
 
-      const [nextCards, nextSummary] = await Promise.all([
-        getDueFlashcards({ subjectId, limit: 50 }),
-        getFlashcardReviewSummary({ subjectId }),
-      ]);
-
-      setCards(nextCards);
-      setSummary(nextSummary);
-      setRevealed(false);
+      await refreshReviewState();
     });
   }
 
@@ -101,9 +108,22 @@ export function FlashcardReviewClient({
       <Card>
         <CardContent className="space-y-4 pt-0">
           <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              {t("front_label")}
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                {t("front_label")}
+              </h2>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setEditOpen(true)}
+                disabled={isPending}
+              >
+                <Pencil className="size-3.5" />
+                {t("edit")}
+              </Button>
+            </div>
             <TiptapRenderer
               content={currentCard.front}
               className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
@@ -189,6 +209,14 @@ export function FlashcardReviewClient({
       </div>
 
       {reviewContent}
+      {currentCard ? (
+        <EditFlashcardDialog
+          flashcard={currentCard}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onUpdated={refreshReviewState}
+        />
+      ) : null}
     </div>
   );
 }
