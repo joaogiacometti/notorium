@@ -34,8 +34,20 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { isDirectImageUrl } from "@/lib/tiptap-image-url";
+import {
+  isSupportedSharedImageUrl,
+  resolveEmbeddableImageUrl,
+} from "@/lib/tiptap-image-url";
+import { resolvePastedImageUrl } from "@/lib/tiptap-paste-image-url";
 import { cn } from "@/lib/utils";
+
+function insertImage(editor: Editor, src: string) {
+  editor.chain().focus().setImage({ src }).run();
+}
+
+function insertText(editor: Editor, value: string) {
+  editor.chain().focus().insertContent(value).run();
+}
 
 const ImageUrlPasteExtension = Extension.create({
   name: "imageUrlPaste",
@@ -46,11 +58,27 @@ const ImageUrlPasteExtension = Extension.create({
           handlePaste: (_, event) => {
             const src =
               event.clipboardData?.getData("text/plain")?.trim() ?? "";
-            if (!isDirectImageUrl(src)) {
+            const directImageUrl = resolveEmbeddableImageUrl(src);
+            if (directImageUrl) {
+              insertImage(this.editor, directImageUrl);
+              return true;
+            }
+
+            if (!isSupportedSharedImageUrl(src)) {
               return false;
             }
 
-            this.editor.chain().focus().setImage({ src }).run();
+            void resolvePastedImageUrl(src).then((resolution) => {
+              if (resolution.imageUrl) {
+                insertImage(this.editor, resolution.imageUrl);
+                return;
+              }
+
+              if (resolution.fallbackText) {
+                insertText(this.editor, resolution.fallbackText);
+              }
+            });
+
             return true;
           },
         },

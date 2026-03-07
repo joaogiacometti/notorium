@@ -7,7 +7,9 @@ import TaskList from "@tiptap/extension-task-list";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { normalizeRichTextForRendering } from "@/lib/rich-text";
+import { resolveSharedEmbeddableImageUrl } from "@/lib/tiptap-image-url";
 import { cn } from "@/lib/utils";
 
 interface TiptapRendererProps {
@@ -19,6 +21,8 @@ export function TiptapRenderer({
   content,
   className,
 }: Readonly<TiptapRendererProps>) {
+  const [resolvedContent, setResolvedContent] = useState(content);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -31,7 +35,7 @@ export function TiptapRenderer({
       TaskItem.configure({ nested: true }),
       Underline,
     ],
-    content,
+    content: resolvedContent,
     editable: false,
     immediatelyRender: false,
     editorProps: {
@@ -42,12 +46,29 @@ export function TiptapRenderer({
   });
 
   useEffect(() => {
+    let active = true;
+
+    void normalizeRichTextForRendering(
+      content,
+      resolveSharedEmbeddableImageUrl,
+    ).then((nextContent) => {
+      if (active) {
+        setResolvedContent(nextContent);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [content]);
+
+  useEffect(() => {
     if (!editor) return;
     const currentHTML = editor.isEmpty ? "" : editor.getHTML();
-    if (content !== currentHTML) {
-      editor.commands.setContent(content || "", { emitUpdate: false });
+    if (resolvedContent !== currentHTML) {
+      editor.commands.setContent(resolvedContent || "", { emitUpdate: false });
     }
-  }, [editor, content]);
+  }, [editor, resolvedContent]);
 
   return (
     <div className={cn("tiptap-content", className)}>

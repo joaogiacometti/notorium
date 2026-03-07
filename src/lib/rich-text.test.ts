@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getRichTextExcerpt,
   hasRichTextContent,
+  normalizeRichTextForRendering,
   richTextToPlainText,
 } from "@/lib/rich-text";
 
@@ -40,5 +41,37 @@ describe("getRichTextExcerpt", () => {
 
   it("truncates and appends ellipsis", () => {
     expect(getRichTextExcerpt("<p>123456789</p>", 5)).toBe("12345...");
+  });
+});
+
+describe("normalizeRichTextForRendering", () => {
+  it("converts image URL paragraphs into image markup", async () => {
+    const result = await normalizeRichTextForRendering(
+      "<p>https://imgur.com/abc123</p>",
+      async (value) =>
+        value === "https://imgur.com/abc123"
+          ? "https://i.imgur.com/abc123.png"
+          : null,
+    );
+
+    expect(result).toBe('<img src="https://i.imgur.com/abc123.png" alt="">');
+  });
+
+  it("preserves existing image markup", async () => {
+    const result = await normalizeRichTextForRendering(
+      '<p><img src="https://img.test/a.png"></p>',
+      async () => "https://i.imgur.com/abc123.png",
+    );
+
+    expect(result).toBe('<p><img src="https://img.test/a.png"></p>');
+  });
+
+  it("leaves mixed-content paragraphs unchanged", async () => {
+    const result = await normalizeRichTextForRendering(
+      "<p>See https://imgur.com/abc123 later</p>",
+      async () => "https://i.imgur.com/abc123.png",
+    );
+
+    expect(result).toBe("<p>See https://imgur.com/abc123 later</p>");
   });
 });
