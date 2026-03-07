@@ -6,7 +6,9 @@ import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import type {
   FlashcardReviewEntity,
-  MutationResult,
+  FlashcardReviewState,
+  FlashcardReviewSummary,
+  ReviewFlashcardResult,
 } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import { scheduleFlashcardReview } from "@/lib/flashcard-scheduler";
@@ -19,11 +21,6 @@ import {
 interface GetDueFlashcardsOptions {
   subjectId?: string;
   limit?: number;
-}
-
-interface ReviewSummary {
-  dueCount: number;
-  totalCount: number;
 }
 
 const defaultDueLimit = 50;
@@ -47,11 +44,11 @@ function getDueFilters(
   return filters;
 }
 
-export async function getDueFlashcards(
+async function getDueFlashcardsForUser(
+  userId: string,
+  now: Date,
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  const now = new Date();
   const limit =
     options.limit && options.limit > 0
       ? Math.min(options.limit, 200)
@@ -67,12 +64,18 @@ export async function getDueFlashcards(
     .then((rows) => rows.map((row) => row.flashcard));
 }
 
-export async function getFlashcardReviewSummary(
-  options: Pick<GetDueFlashcardsOptions, "subjectId"> = {},
-): Promise<ReviewSummary> {
+export async function getDueFlashcards(
+  options: GetDueFlashcardsOptions = {},
+): Promise<FlashcardReviewEntity[]> {
   const userId = await getAuthenticatedUserId();
-  const now = new Date();
+  return getDueFlashcardsForUser(userId, new Date(), options);
+}
 
+async function getFlashcardReviewSummaryForUser(
+  userId: string,
+  now: Date,
+  options: Pick<GetDueFlashcardsOptions, "subjectId"> = {},
+): Promise<FlashcardReviewSummary> {
   const baseFilters: SQL<unknown>[] = [
     eq(flashcard.userId, userId),
     eq(subject.userId, userId),
@@ -102,9 +105,32 @@ export async function getFlashcardReviewSummary(
   };
 }
 
+export async function getFlashcardReviewSummary(
+  options: Pick<GetDueFlashcardsOptions, "subjectId"> = {},
+): Promise<FlashcardReviewSummary> {
+  const userId = await getAuthenticatedUserId();
+  return getFlashcardReviewSummaryForUser(userId, new Date(), options);
+}
+
+export async function getFlashcardReviewState(
+  options: GetDueFlashcardsOptions = {},
+): Promise<FlashcardReviewState> {
+  const userId = await getAuthenticatedUserId();
+  const now = new Date();
+  const [cards, summary] = await Promise.all([
+    getDueFlashcardsForUser(userId, now, options),
+    getFlashcardReviewSummaryForUser(userId, now, options),
+  ]);
+
+  return {
+    cards,
+    summary,
+  };
+}
+
 export async function reviewFlashcard(
   data: ReviewFlashcardForm,
-): Promise<MutationResult> {
+): Promise<ReviewFlashcardResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = reviewFlashcardSchema.safeParse(data);
 
@@ -150,14 +176,33 @@ export async function reviewFlashcard(
     now,
   });
 
-  await db
+  const updatedCards = await db
     .update(flashcard)
     .set(nextState)
-    .where(
-      and(eq(flashcard.id, existingCard.id), eq(flashcard.userId, userId)),
-    );
+    .where(and(eq(flashcard.id, existingCard.id), eq(flashcard.userId, userId)))
+    .returning({
+      id: flashcard.id,
+      front: flashcard.front,
+      back: flashcard.back,
+      subjectId: flashcard.subjectId,
+      state: flashcard.state,
+      dueAt: flashcard.dueAt,
+      ease: flashcard.ease,
+      intervalDays: flashcard.intervalDays,
+      learningStep: flashcard.learningStep,
+      reviewCount: flashcard.reviewCount,
+      lapseCount: flashcard.lapseCount,
+    });
+  const updatedCard = updatedCards[0];
 
-  revalidatePath("/flashcards/review");
+  if (!updatedCard) {
+    return actionError("flashcards.review.notFound");
+  }
+
   revalidatePath(`/subjects/${existingCard.subjectId}`);
-  return { success: true };
+  return {
+    success: true,
+    reviewedCardId: existingCard.id,
+    flashcard: updatedCard,
+  };
 }

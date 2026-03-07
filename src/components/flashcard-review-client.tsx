@@ -9,33 +9,32 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
-  getDueFlashcards,
-  getFlashcardReviewSummary,
+  getFlashcardReviewState,
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
 import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { FlashcardReviewEntity } from "@/lib/api/contracts";
+import type { FlashcardReviewState } from "@/lib/api/contracts";
+import {
+  applyReviewedFlashcardToState,
+  mergeFlashcardReviewStates,
+  shouldRefillFlashcardReviewState,
+} from "@/lib/flashcard-review-state";
 import type { ReviewGrade } from "@/lib/flashcard-scheduler";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";
 import { EditFlashcardDialog } from "./edit-flashcard-dialog";
 
-interface ReviewSummary {
-  dueCount: number;
-  totalCount: number;
-}
-
 interface FlashcardReviewClientProps {
-  initialCards: FlashcardReviewEntity[];
-  initialSummary: ReviewSummary;
+  initialState: FlashcardReviewState;
   subjectId?: string;
 }
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
+const reviewBatchLimit = 50;
 const gradeButtonStyles: Record<ReviewGrade, string> = {
   again:
     "border-destructive/45 bg-destructive/10 text-destructive hover:border-destructive/60 hover:bg-destructive/15",
@@ -51,37 +50,52 @@ const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
 };
 
 export function FlashcardReviewClient({
-  initialCards,
-  initialSummary,
+  initialState,
   subjectId,
 }: Readonly<FlashcardReviewClientProps>) {
   const t = useTranslations("FlashcardReviewPage");
   const tErrors = useTranslations("ServerActions");
-  const [cards, setCards] = useState(initialCards);
-  const [summary, setSummary] = useState(initialSummary);
+  const [reviewState, setReviewState] = useState(initialState);
   const [revealed, setRevealed] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const refillRequestIdRef = useRef(0);
 
-  const currentCard = cards[0] ?? null;
+  const currentCard = reviewState.cards[0] ?? null;
 
   const dueCountText =
-    summary.dueCount === 0
+    reviewState.summary.dueCount === 0
       ? t("due_empty")
       : t("due_count", {
-          due: summary.dueCount,
-          total: summary.totalCount,
+          due: reviewState.summary.dueCount,
+          total: reviewState.summary.totalCount,
         });
 
   async function refreshReviewState() {
-    const [nextCards, nextSummary] = await Promise.all([
-      getDueFlashcards({ subjectId, limit: 50 }),
-      getFlashcardReviewSummary({ subjectId }),
-    ]);
-
-    setCards(nextCards);
-    setSummary(nextSummary);
+    const nextState = await getFlashcardReviewState({
+      subjectId,
+      limit: reviewBatchLimit,
+    });
+    setReviewState(nextState);
     setRevealed(false);
+  }
+
+  async function refillReviewState() {
+    const requestId = refillRequestIdRef.current + 1;
+    refillRequestIdRef.current = requestId;
+
+    const nextState = await getFlashcardReviewState({
+      subjectId,
+      limit: reviewBatchLimit,
+    });
+
+    if (refillRequestIdRef.current !== requestId) {
+      return;
+    }
+
+    setReviewState((currentState) =>
+      mergeFlashcardReviewStates(currentState, nextState),
+    );
   }
 
   function handleGrade(grade: ReviewGrade) {
@@ -97,7 +111,18 @@ export function FlashcardReviewClient({
         return;
       }
 
-      await refreshReviewState();
+      const nextState = applyReviewedFlashcardToState(
+        reviewState,
+        result.reviewedCardId,
+        result.flashcard,
+      );
+
+      setReviewState(nextState);
+      setRevealed(false);
+
+      if (shouldRefillFlashcardReviewState(nextState)) {
+        void refillReviewState();
+      }
     });
   }
 
