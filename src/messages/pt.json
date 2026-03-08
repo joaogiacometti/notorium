@@ -95,6 +95,7 @@
     "edit": "Editar",
     "archive": "Arquivar",
     "delete": "Excluir",
+    "create_flashcard": "Criar Flashcard",
     "created": "Criado"
   },
   "DeleteSubjectDialog": {

@@ -1,9 +1,17 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { Archive, BookOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  Archive,
+  BookOpen,
+  FileText,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+import { CreateFlashcardDialog } from "@/components/create-flashcard-dialog";
 import { DeleteSubjectDialog } from "@/components/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/edit-subject-dialog";
 import { Button } from "@/components/ui/button";
@@ -27,6 +35,7 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
   const dateLocale = getDateFnsLocale(locale);
   const t = useTranslations("SubjectCard");
   const [editOpen, setEditOpen] = useState(false);
+  const [createFlashcardOpen, setCreateFlashcardOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -63,6 +72,13 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
               >
                 <Pencil className="size-4" />
                 {t("edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setCreateFlashcardOpen(true)}
+                className="cursor-pointer"
+              >
+                <FileText className="size-4" />
+                {t("create_flashcard")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setArchiveOpen(true)}
@@ -106,6 +122,11 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
         subject={subject}
         open={editOpen}
         onOpenChange={setEditOpen}
+      />
+      <CreateFlashcardDialog
+        subjectId={subject.id}
+        open={createFlashcardOpen}
+        onOpenChange={setCreateFlashcardOpen}
       />
       <DeleteSubjectDialog
         subjectId={subject.id}

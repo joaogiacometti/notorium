@@ -95,6 +95,7 @@
     "edit": "Edit",
     "archive": "Archive",
     "delete": "Delete",
+    "create_flashcard": "Create Flashcard",
     "created": "Created"
   },
   "DeleteSubjectDialog": {

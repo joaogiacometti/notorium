@@ -33,7 +33,7 @@ import {
 
 interface CreateFlashcardDialogProps {
   subjectId: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
@@ -115,7 +115,7 @@ export function CreateFlashcardDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
         <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
