@@ -1,9 +1,17 @@
 "use server";
 
-import { and, asc, count, eq, isNull, lte, type SQL } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index";
-import { flashcard, flashcardReviewLog, subject } from "@/db/schema";
+import { flashcard, flashcardReviewLog } from "@/db/schema";
+import {
+  type GetDueFlashcardsOptions,
+  getDueFlashcardsForUser,
+  getFlashcardReviewStateForUser,
+  getFlashcardReviewSummaryForUser,
+  getReviewableFlashcardForUser,
+} from "@/features/flashcard-review/queries";
+import { revalidateFlashcardReviewSubjectPaths } from "@/features/flashcard-review/revalidation";
+import { parseActionInput } from "@/lib/action-input";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -22,92 +30,12 @@ import {
   reviewFlashcardSchema,
 } from "@/lib/validations/flashcard-review";
 
-interface GetDueFlashcardsOptions {
-  subjectId?: string;
-  limit?: number;
-}
-
-const defaultDueLimit = 50;
-
-function getDueFilters(
-  userId: string,
-  now: Date,
-  options: GetDueFlashcardsOptions,
-): SQL<unknown>[] {
-  const filters: SQL<unknown>[] = [
-    eq(flashcard.userId, userId),
-    eq(subject.userId, userId),
-    lte(flashcard.dueAt, now),
-    isNull(subject.archivedAt),
-  ];
-
-  if (options.subjectId) {
-    filters.push(eq(flashcard.subjectId, options.subjectId));
-  }
-
-  return filters;
-}
-
-async function getDueFlashcardsForUser(
-  userId: string,
-  now: Date,
-  options: GetDueFlashcardsOptions = {},
-): Promise<FlashcardReviewEntity[]> {
-  const limit =
-    options.limit && options.limit > 0
-      ? Math.min(options.limit, 200)
-      : defaultDueLimit;
-
-  return db
-    .select({ flashcard })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(and(...getDueFilters(userId, now, options)))
-    .orderBy(asc(flashcard.dueAt), asc(flashcard.createdAt))
-    .limit(limit)
-    .then((rows) => rows.map((row) => row.flashcard));
-}
-
 export async function getDueFlashcards(
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewEntity[]> {
   const userId = await getAuthenticatedUserId();
   await ensureFsrsSettings(userId);
   return getDueFlashcardsForUser(userId, new Date(), options);
-}
-
-async function getFlashcardReviewSummaryForUser(
-  userId: string,
-  now: Date,
-  options: Pick<GetDueFlashcardsOptions, "subjectId"> = {},
-): Promise<FlashcardReviewSummary> {
-  const baseFilters: SQL<unknown>[] = [
-    eq(flashcard.userId, userId),
-    eq(subject.userId, userId),
-    isNull(subject.archivedAt),
-  ];
-
-  if (options.subjectId) {
-    baseFilters.push(eq(flashcard.subjectId, options.subjectId));
-  }
-
-  const [dueResult, totalResult] = await Promise.all([
-    db
-      .select({ total: count() })
-      .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-      .where(and(...baseFilters, lte(flashcard.dueAt, now))),
-    db
-      .select({ total: count() })
-      .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-      .where(and(...baseFilters)),
-  ]);
-
-  return {
-    dueCount: dueResult[0]?.total ?? 0,
-    totalCount: totalResult[0]?.total ?? 0,
-  };
 }
 
 export async function getFlashcardReviewSummary(
@@ -122,51 +50,31 @@ export async function getFlashcardReviewState(
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewState> {
   const userId = await getAuthenticatedUserId();
-  const settings = await ensureFsrsSettings(userId);
-  const now = new Date();
-  const [cards, summary] = await Promise.all([
-    getDueFlashcardsForUser(userId, now, options),
-    getFlashcardReviewSummaryForUser(userId, now, options),
-  ]);
-
-  return {
-    cards,
-    summary,
-    scheduler: {
-      desiredRetention: settings.desiredRetention,
-      weights: settings.weights,
-    },
-  };
+  return getFlashcardReviewStateForUser(userId, options);
 }
 
 export async function reviewFlashcard(
   data: ReviewFlashcardForm,
 ): Promise<ReviewFlashcardResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = reviewFlashcardSchema.safeParse(data);
+  const parsed = parseActionInput(
+    reviewFlashcardSchema,
+    data,
+    "flashcards.review.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("flashcards.review.invalidData");
+    return parsed.error;
   }
 
   const settings = await ensureFsrsSettings(userId);
 
   const now = new Date();
 
-  const existingCard = await db
-    .select({ flashcard })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, parsed.data.id),
-        eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1)
-    .then((rows) => rows[0]?.flashcard ?? null);
+  const existingCard = await getReviewableFlashcardForUser(
+    userId,
+    parsed.data.id,
+  );
 
   if (!existingCard) {
     return actionError("flashcards.review.notFound");
@@ -247,7 +155,7 @@ export async function reviewFlashcard(
 
   await maybeOptimizeFsrsParameters(userId);
 
-  revalidatePath(`/subjects/${existingCard.subjectId}`);
+  revalidateFlashcardReviewSubjectPaths(existingCard.subjectId);
   return {
     success: true,
     reviewedCardId: existingCard.id,

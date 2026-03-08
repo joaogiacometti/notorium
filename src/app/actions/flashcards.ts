@@ -1,10 +1,22 @@
 "use server";
 
-import { and, count, desc, eq, isNull } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index";
-import { flashcard, subject } from "@/db/schema";
+import { flashcard } from "@/db/schema";
 import { appEnv } from "@/env";
+import {
+  countFlashcardsBySubjectForUser,
+  getFlashcardByIdForUser,
+  getFlashcardRecordForUser,
+  getFlashcardsBySubjectForUser,
+} from "@/features/flashcards/queries";
+import {
+  revalidateFlashcardDetailPaths,
+  revalidateFlashcardReviewPaths,
+  revalidateFlashcardSubjectPaths,
+} from "@/features/flashcards/revalidation";
+import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { parseActionInput } from "@/lib/action-input";
 import {
   mapAnkiImportCardToFlashcardInsert,
   parseAnkiImportFile,
@@ -42,21 +54,7 @@ export async function getFlashcardsBySubject(
 ): Promise<FlashcardEntity[]> {
   const userId = await getAuthenticatedUserId();
   await ensureFsrsSettings(userId);
-
-  return db
-    .select({ flashcard })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.subjectId, subjectId),
-        eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .orderBy(desc(flashcard.updatedAt))
-    .then((rows) => rows.map((row) => row.flashcard));
+  return getFlashcardsBySubjectForUser(userId, subjectId);
 }
 
 export async function getFlashcardById(
@@ -64,61 +62,36 @@ export async function getFlashcardById(
 ): Promise<FlashcardEntity | null> {
   const userId = await getAuthenticatedUserId();
   await ensureFsrsSettings(userId);
-
-  const results = await db
-    .select({ flashcard })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, id),
-        eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
-
-  return results[0]?.flashcard ?? null;
+  return getFlashcardByIdForUser(userId, id);
 }
 
 export async function createFlashcard(
   data: CreateFlashcardInput,
 ): Promise<CreateFlashcardResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = createFlashcardInputSchema.safeParse(data);
+  const parsed = parseActionInput(
+    createFlashcardInputSchema,
+    data,
+    "flashcards.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("flashcards.invalidData");
+    return parsed.error;
   }
 
-  const existingSubject = await db
-    .select({ id: subject.id })
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, parsed.data.subjectId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingSubject = await getActiveSubjectRecordForUser(
+    userId,
+    parsed.data.subjectId,
+  );
 
-  if (existingSubject.length === 0) {
+  if (!existingSubject) {
     return actionError("subjects.notFound");
   }
 
-  const result = await db
-    .select({ total: count() })
-    .from(flashcard)
-    .where(
-      and(
-        eq(flashcard.subjectId, parsed.data.subjectId),
-        eq(flashcard.userId, userId),
-      ),
-    );
-
-  const current = result[0]?.total ?? 0;
+  const current = await countFlashcardsBySubjectForUser(
+    userId,
+    parsed.data.subjectId,
+  );
 
   if (current >= LIMITS.maxFlashcardsPerSubject) {
     return actionError("limits.flashcardLimit", {
@@ -147,7 +120,7 @@ export async function createFlashcard(
     })
     .returning();
 
-  revalidatePath(`/subjects/${parsed.data.subjectId}`);
+  revalidateFlashcardSubjectPaths(parsed.data.subjectId);
   return { success: true, flashcard: inserted[0] };
 }
 
@@ -166,30 +139,16 @@ export async function importAnkiFlashcards(
     return actionError("flashcards.import.invalidFormat");
   }
 
-  const existingSubject = await db
-    .select({ id: subject.id })
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, subjectId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingSubject = await getActiveSubjectRecordForUser(
+    userId,
+    subjectId,
+  );
 
-  if (existingSubject.length === 0) {
+  if (!existingSubject) {
     return actionError("subjects.notFound");
   }
 
-  const result = await db
-    .select({ total: count() })
-    .from(flashcard)
-    .where(
-      and(eq(flashcard.subjectId, subjectId), eq(flashcard.userId, userId)),
-    );
-
-  const current = result[0]?.total ?? 0;
+  const current = await countFlashcardsBySubjectForUser(userId, subjectId);
   let parsedCards: AnkiImportCard[];
 
   try {
@@ -233,8 +192,7 @@ export async function importAnkiFlashcards(
     return actionError("flashcards.import.failed");
   }
 
-  revalidatePath(`/subjects/${subjectId}`);
-  revalidatePath("/flashcards/review");
+  revalidateFlashcardReviewPaths(subjectId);
   return { success: true, imported: incoming };
 }
 
@@ -242,27 +200,22 @@ export async function editFlashcard(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = editFlashcardSchema.safeParse(data);
+  const parsed = parseActionInput(
+    editFlashcardSchema,
+    data,
+    "flashcards.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("flashcards.invalidData");
+    return parsed.error;
   }
 
-  const existingFlashcard = await db
-    .select({ id: flashcard.id, subjectId: flashcard.subjectId })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, parsed.data.id),
-        eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingFlashcard = await getFlashcardRecordForUser(
+    userId,
+    parsed.data.id,
+  );
 
-  if (existingFlashcard.length === 0) {
+  if (!existingFlashcard) {
     return actionError("flashcards.notFound");
   }
 
@@ -275,11 +228,7 @@ export async function editFlashcard(
     .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)))
     .returning();
 
-  revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
-  revalidatePath(
-    `/subjects/${existingFlashcard[0].subjectId}/flashcards/${parsed.data.id}`,
-  );
-  revalidatePath("/flashcards/review");
+  revalidateFlashcardReviewPaths(existingFlashcard.subjectId, parsed.data.id);
   return { success: true, flashcard: updated[0] };
 }
 
@@ -287,27 +236,22 @@ export async function deleteFlashcard(
   data: DeleteFlashcardForm,
 ): Promise<DeleteFlashcardResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = deleteFlashcardSchema.safeParse(data);
+  const parsed = parseActionInput(
+    deleteFlashcardSchema,
+    data,
+    "common.invalidRequest",
+  );
 
   if (!parsed.success) {
-    return actionError("common.invalidRequest");
+    return parsed.error;
   }
 
-  const existingFlashcard = await db
-    .select({ id: flashcard.id, subjectId: flashcard.subjectId })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, parsed.data.id),
-        eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingFlashcard = await getFlashcardRecordForUser(
+    userId,
+    parsed.data.id,
+  );
 
-  if (existingFlashcard.length === 0) {
+  if (!existingFlashcard) {
     return actionError("flashcards.notFound");
   }
 
@@ -315,10 +259,7 @@ export async function deleteFlashcard(
     .delete(flashcard)
     .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)));
 
-  revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
-  revalidatePath(
-    `/subjects/${existingFlashcard[0].subjectId}/flashcards/${parsed.data.id}`,
-  );
+  revalidateFlashcardDetailPaths(existingFlashcard.subjectId, parsed.data.id);
   return { success: true, id: parsed.data.id };
 }
 
@@ -326,27 +267,22 @@ export async function resetFlashcard(
   data: ResetFlashcardForm,
 ): Promise<ResetFlashcardResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = resetFlashcardSchema.safeParse(data);
+  const parsed = parseActionInput(
+    resetFlashcardSchema,
+    data,
+    "common.invalidRequest",
+  );
 
   if (!parsed.success) {
-    return actionError("common.invalidRequest");
+    return parsed.error;
   }
 
-  const existingFlashcard = await db
-    .select({ id: flashcard.id, subjectId: flashcard.subjectId })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, parsed.data.id),
-        eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingFlashcard = await getFlashcardRecordForUser(
+    userId,
+    parsed.data.id,
+  );
 
-  if (existingFlashcard.length === 0) {
+  if (!existingFlashcard) {
     return actionError("flashcards.notFound");
   }
 
@@ -371,10 +307,6 @@ export async function resetFlashcard(
     .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)))
     .returning();
 
-  revalidatePath(`/subjects/${existingFlashcard[0].subjectId}`);
-  revalidatePath(
-    `/subjects/${existingFlashcard[0].subjectId}/flashcards/${parsed.data.id}`,
-  );
-  revalidatePath("/flashcards/review");
+  revalidateFlashcardReviewPaths(existingFlashcard.subjectId, parsed.data.id);
   return { success: true, flashcard: updated[0] };
 }

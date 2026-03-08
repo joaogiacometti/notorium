@@ -1,15 +1,15 @@
 import { Archive, ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { getArchivedSubjects } from "@/app/actions/subjects";
 import { ArchivedSubjectCard } from "@/components/archived-subject-card";
 import { Button } from "@/components/ui/button";
+import { getArchivedSubjectsForUser } from "@/features/subjects/queries";
 import { Link } from "@/i18n/routing";
 import { requireSession } from "@/lib/auth";
 
 export default async function ArchivedSubjectsPage() {
-  await requireSession();
+  const session = await requireSession();
   const t = await getTranslations("ArchivedSubjectsPage");
-  const archivedSubjects = await getArchivedSubjects();
+  const archivedSubjects = await getArchivedSubjectsForUser(session.user.id);
 
   return (
     <main>

@@ -1,5 +1,5 @@
-import { getFlashcardReviewState } from "@/app/actions/flashcard-review";
 import { FlashcardReviewClient } from "@/components/flashcard-review-client";
+import { getFlashcardReviewState } from "@/features/flashcard-review/server";
 import { requireSession } from "@/lib/auth";
 
 interface FlashcardReviewPageProps {

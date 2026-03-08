@@ -1,9 +1,17 @@
 "use server";
 
-import { and, count, desc, eq, isNull } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/index";
-import { assessment, subject } from "@/db/schema";
+import { assessment } from "@/db/schema";
+import {
+  countAssessmentsBySubjectForUser,
+  getAssessmentRecordForUser,
+  getAssessmentsBySubjectForUser,
+  getAssessmentsForUser,
+} from "@/features/assessments/queries";
+import { revalidateAssessmentPaths } from "@/features/assessments/revalidation";
+import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { parseActionInput } from "@/lib/action-input";
 import type { AssessmentEntity, MutationResult } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import { LIMITS } from "@/lib/limits";
@@ -17,82 +25,62 @@ import {
   editAssessmentSchema,
 } from "@/lib/validations/assessments";
 
+function getAssessmentMutationValues(
+  values: Pick<
+    CreateAssessmentForm,
+    "title" | "description" | "type" | "status" | "dueDate" | "score" | "weight"
+  >,
+) {
+  return {
+    title: values.title,
+    description: values.description || null,
+    type: values.type,
+    status: values.status,
+    dueDate: values.dueDate ?? null,
+    score: values.score?.toString() ?? null,
+    weight: values.weight?.toString() ?? null,
+  };
+}
+
 export async function getAssessmentsBySubject(
   subjectId: string,
 ): Promise<AssessmentEntity[]> {
   const userId = await getAuthenticatedUserId();
-
-  return db
-    .select({ assessment })
-    .from(assessment)
-    .innerJoin(subject, eq(assessment.subjectId, subject.id))
-    .where(
-      and(
-        eq(assessment.subjectId, subjectId),
-        eq(assessment.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .orderBy(desc(assessment.updatedAt))
-    .then((rows) => rows.map((row) => row.assessment));
+  return getAssessmentsBySubjectForUser(userId, subjectId);
 }
 
 export async function getAssessments(): Promise<AssessmentEntity[]> {
   const userId = await getAuthenticatedUserId();
-
-  return db
-    .select({ assessment })
-    .from(assessment)
-    .innerJoin(subject, eq(assessment.subjectId, subject.id))
-    .where(
-      and(
-        eq(assessment.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .orderBy(desc(assessment.updatedAt))
-    .then((rows) => rows.map((row) => row.assessment));
+  return getAssessmentsForUser(userId);
 }
 
 export async function createAssessment(
   data: CreateAssessmentForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = createAssessmentSchema.safeParse(data);
+  const parsed = parseActionInput(
+    createAssessmentSchema,
+    data,
+    "assessments.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("assessments.invalidData");
+    return parsed.error;
   }
 
-  const existingSubject = await db
-    .select({ id: subject.id })
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, parsed.data.subjectId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingSubject = await getActiveSubjectRecordForUser(
+    userId,
+    parsed.data.subjectId,
+  );
 
-  if (existingSubject.length === 0) {
+  if (!existingSubject) {
     return actionError("subjects.notFound");
   }
 
-  const result = await db
-    .select({ total: count() })
-    .from(assessment)
-    .where(
-      and(
-        eq(assessment.subjectId, parsed.data.subjectId),
-        eq(assessment.userId, userId),
-      ),
-    );
-
-  const current = result[0]?.total ?? 0;
+  const current = await countAssessmentsBySubjectForUser(
+    userId,
+    parsed.data.subjectId,
+  );
 
   if (current >= LIMITS.maxAssessmentsPerSubject) {
     return actionError("limits.assessmentLimit", {
@@ -103,17 +91,10 @@ export async function createAssessment(
   await db.insert(assessment).values({
     subjectId: parsed.data.subjectId,
     userId,
-    title: parsed.data.title,
-    description: parsed.data.description ?? null,
-    type: parsed.data.type,
-    status: parsed.data.status,
-    dueDate: parsed.data.dueDate ?? null,
-    score: parsed.data.score?.toString() ?? null,
-    weight: parsed.data.weight?.toString() ?? null,
+    ...getAssessmentMutationValues(parsed.data),
   });
 
-  revalidatePath(`/subjects/${parsed.data.subjectId}`);
-  revalidatePath("/assessments");
+  revalidateAssessmentPaths(parsed.data.subjectId);
   return { success: true };
 }
 
@@ -121,47 +102,31 @@ export async function editAssessment(
   data: EditAssessmentForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = editAssessmentSchema.safeParse(data);
+  const parsed = parseActionInput(
+    editAssessmentSchema,
+    data,
+    "assessments.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("assessments.invalidData");
+    return parsed.error;
   }
 
-  const existingAssessment = await db
-    .select({ id: assessment.id, subjectId: assessment.subjectId })
-    .from(assessment)
-    .innerJoin(subject, eq(assessment.subjectId, subject.id))
-    .where(
-      and(
-        eq(assessment.id, parsed.data.id),
-        eq(assessment.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingAssessment = await getAssessmentRecordForUser(
+    userId,
+    parsed.data.id,
+  );
 
-  if (existingAssessment.length === 0) {
+  if (!existingAssessment) {
     return actionError("assessments.notFound");
   }
 
   await db
     .update(assessment)
-    .set({
-      title: parsed.data.title,
-      description: parsed.data.description ?? null,
-      type: parsed.data.type,
-      status: parsed.data.status,
-      dueDate: parsed.data.dueDate ?? null,
-      score: parsed.data.score?.toString() ?? null,
-      weight: parsed.data.weight?.toString() ?? null,
-    })
-    .where(
-      and(eq(assessment.id, parsed.data.id), eq(assessment.userId, userId)),
-    );
+    .set(getAssessmentMutationValues(parsed.data))
+    .where(eq(assessment.id, parsed.data.id));
 
-  revalidatePath(`/subjects/${existingAssessment[0].subjectId}`);
-  revalidatePath("/assessments");
+  revalidateAssessmentPaths(existingAssessment.subjectId);
   return { success: true };
 }
 
@@ -169,37 +134,27 @@ export async function deleteAssessment(
   data: DeleteAssessmentForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = deleteAssessmentSchema.safeParse(data);
+  const parsed = parseActionInput(
+    deleteAssessmentSchema,
+    data,
+    "common.invalidRequest",
+  );
 
   if (!parsed.success) {
-    return actionError("common.invalidRequest");
+    return parsed.error;
   }
 
-  const existingAssessment = await db
-    .select({ id: assessment.id, subjectId: assessment.subjectId })
-    .from(assessment)
-    .innerJoin(subject, eq(assessment.subjectId, subject.id))
-    .where(
-      and(
-        eq(assessment.id, parsed.data.id),
-        eq(assessment.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existingAssessment = await getAssessmentRecordForUser(
+    userId,
+    parsed.data.id,
+  );
 
-  if (existingAssessment.length === 0) {
+  if (!existingAssessment) {
     return actionError("assessments.notFound");
   }
 
-  await db
-    .delete(assessment)
-    .where(
-      and(eq(assessment.id, parsed.data.id), eq(assessment.userId, userId)),
-    );
+  await db.delete(assessment).where(eq(assessment.id, parsed.data.id));
 
-  revalidatePath(`/subjects/${existingAssessment[0].subjectId}`);
-  revalidatePath("/assessments");
+  revalidateAssessmentPaths(existingAssessment.subjectId);
   return { success: true };
 }

@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileText, Layers, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/search-skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { getSearchData } from "@/features/search/server";
 import { useRouter } from "@/i18n/routing";
 import { getRichTextExcerpt } from "@/lib/rich-text";
 

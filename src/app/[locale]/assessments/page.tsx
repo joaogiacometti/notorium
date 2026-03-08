@@ -1,17 +1,17 @@
 import { ClipboardList } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { getAssessments } from "@/app/actions/assessments";
-import { getSubjects } from "@/app/actions/subjects";
 import { GradesSummary } from "@/components/grades-summary";
+import { getAssessmentsForUser } from "@/features/assessments/queries";
+import { getSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth";
 
 export default async function AssessmentsPage() {
-  await requireSession();
+  const session = await requireSession();
   const t = await getTranslations("AssessmentsPage");
 
   const [assessments, subjects] = await Promise.all([
-    getAssessments(),
-    getSubjects(),
+    getAssessmentsForUser(session.user.id),
+    getSubjectsForUser(session.user.id),
   ]);
 
   const subjectNamesById = Object.fromEntries(

@@ -4,7 +4,6 @@ import { Lock, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { getFlashcardsBySubject } from "@/app/actions/flashcards";
 import { CreateFlashcardDialog } from "@/components/create-flashcard-dialog";
 import { FlashcardsEmptyState } from "@/components/flashcards-empty-state";
 import { FlashcardsLoading } from "@/components/flashcards-loading";
@@ -17,6 +16,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { getFlashcardsBySubject } from "@/features/flashcards/server";
 import type { FlashcardEntity } from "@/lib/api/contracts";
 import { LIMITS } from "@/lib/limits";
 import { resolveActionErrorMessage } from "@/lib/server-action-errors";

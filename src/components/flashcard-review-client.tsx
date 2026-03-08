@@ -18,13 +18,11 @@ import {
   useTransition,
 } from "react";
 import { toast } from "sonner";
-import {
-  getFlashcardReviewState,
-  reviewFlashcard,
-} from "@/app/actions/flashcard-review";
+import { reviewFlashcard } from "@/app/actions/flashcard-review";
 import { TiptapRenderer } from "@/components/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getFlashcardReviewState } from "@/features/flashcard-review/server";
 import type { FlashcardReviewState } from "@/lib/api/contracts";
 import { getFlashcardReviewPreviewLabels } from "@/lib/flashcard-review-preview";
 import {
@@ -254,7 +252,7 @@ export function FlashcardReviewClient({
                         <span className="truncate">{t(`grade_${grade}`)}</span>
                       </span>
                       {previewLabels ? (
-                        <span className="text-pretty whitespace-normal break-words text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
+                        <span className="text-pretty whitespace-normal wrap-break-word text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
                           {previewLabels[grade].durationText}
                         </span>
                       ) : null}

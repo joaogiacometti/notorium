@@ -1,16 +1,9 @@
 import { z } from "zod";
+import {
+  assessmentStatusValues,
+  assessmentTypeValues,
+} from "@/features/assessments/constants";
 import { validationMessage } from "@/lib/validation-messages";
-
-const assessmentTypeValues = [
-  "exam",
-  "assignment",
-  "project",
-  "presentation",
-  "homework",
-  "other",
-] as const;
-
-const assessmentStatusValues = ["pending", "completed"] as const;
 
 export const assessmentTypeSchema = z.enum(assessmentTypeValues);
 export const assessmentStatusSchema = z.enum(assessmentStatusValues);
@@ -50,6 +43,7 @@ export const createAssessmentSchema = z.object({
 });
 
 export type CreateAssessmentForm = z.infer<typeof createAssessmentSchema>;
+export type CreateAssessmentFormInput = z.input<typeof createAssessmentSchema>;
 
 export const editAssessmentSchema = z.object({
   id: z.string().min(1),
@@ -69,6 +63,7 @@ export const editAssessmentSchema = z.object({
 });
 
 export type EditAssessmentForm = z.infer<typeof editAssessmentSchema>;
+export type EditAssessmentFormInput = z.input<typeof editAssessmentSchema>;
 
 export const deleteAssessmentSchema = z.object({
   id: z.string().min(1),

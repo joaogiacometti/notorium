@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getFlashcardById } from "@/app/actions/flashcards";
 import { FlashcardDetail } from "@/components/flashcard-detail";
+import { getFlashcardByIdForUser } from "@/features/flashcards/queries";
 import { requireSession } from "@/lib/auth";
 
 interface FlashcardPageProps {
@@ -8,10 +8,10 @@ interface FlashcardPageProps {
 }
 
 export default async function FlashcardPage({ params }: FlashcardPageProps) {
-  await requireSession();
+  const session = await requireSession();
 
   const { id, flashcardId } = await params;
-  const flashcard = await getFlashcardById(flashcardId);
+  const flashcard = await getFlashcardByIdForUser(session.user.id, flashcardId);
 
   if (!flashcard || flashcard.subjectId !== id) {
     notFound();

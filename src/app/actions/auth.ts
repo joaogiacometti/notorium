@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
 import { user } from "@/db/schema";
+import { parseActionInput } from "@/lib/action-input";
 import type { MutationResult } from "@/lib/api/contracts";
 import { auth } from "@/lib/auth";
 import { checkAuthRateLimit } from "@/lib/rate-limit";
@@ -21,9 +22,9 @@ import {
 type ActionResult = MutationResult;
 
 export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
-  const parsed = loginSchema.safeParse(data);
+  const parsed = parseActionInput(loginSchema, data, "auth.invalidInput");
   if (!parsed.success) {
-    return actionError("auth.invalidInput");
+    return parsed.error;
   }
 
   const rateLimit = await checkAuthRateLimit(parsed.data.email);
@@ -66,9 +67,9 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
 };
 
 export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
-  const parsed = signupSchema.safeParse(data);
+  const parsed = parseActionInput(signupSchema, data, "auth.invalidInput");
   if (!parsed.success) {
-    return actionError("auth.invalidInput");
+    return parsed.error;
   }
 
   const rateLimit = await checkAuthRateLimit(parsed.data.email);

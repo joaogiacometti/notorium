@@ -8,6 +8,7 @@ import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
 import { user } from "@/db/schema";
 import { isAdminUser } from "@/lib/access-control";
+import { parseActionInput } from "@/lib/action-input";
 import type { MutationResult } from "@/lib/api/contracts";
 import { auth, getAuthenticatedUserId } from "@/lib/auth";
 import { actionError } from "@/lib/server-action-errors";
@@ -23,10 +24,14 @@ import {
 export async function updateProfile(
   data: UpdateProfileForm,
 ): Promise<MutationResult> {
-  const parsed = updateProfileSchema.safeParse(data);
+  const parsed = parseActionInput(
+    updateProfileSchema,
+    data,
+    "profile.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("profile.invalidData");
+    return parsed.error;
   }
 
   try {
@@ -79,9 +84,13 @@ export async function updateUserAccessStatus(
     return actionError("auth.forbidden");
   }
 
-  const parsed = updateUserAccessSchema.safeParse(data);
+  const parsed = parseActionInput(
+    updateUserAccessSchema,
+    data,
+    "common.invalidRequest",
+  );
   if (!parsed.success) {
-    return actionError("common.invalidRequest");
+    return parsed.error;
   }
 
   if (parsed.data.userId === adminUserId) {

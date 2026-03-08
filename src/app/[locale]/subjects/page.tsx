@@ -1,13 +1,16 @@
-import { getArchivedSubjects, getSubjects } from "@/app/actions/subjects";
 import { SubjectsList } from "@/components/subjects-list";
+import {
+  getArchivedSubjectsForUser,
+  getSubjectsForUser,
+} from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth";
 
 export default async function SubjectsPage() {
-  await requireSession();
+  const session = await requireSession();
 
   const [subjects, archived] = await Promise.all([
-    getSubjects(),
-    getArchivedSubjects(),
+    getSubjectsForUser(session.user.id),
+    getArchivedSubjectsForUser(session.user.id),
   ]);
 
   return (

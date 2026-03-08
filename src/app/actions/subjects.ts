@@ -1,9 +1,23 @@
 "use server";
 
-import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { subject } from "@/db/schema";
+import {
+  countSubjectsForUser,
+  getActiveSubjectByIdForUser,
+  getActiveSubjectRecordForUser,
+  getArchivedSubjectRecordForUser,
+  getArchivedSubjectsForUser,
+  getSubjectRecordForUser,
+  getSubjectsForUser,
+} from "@/features/subjects/queries";
+import {
+  revalidateAllSubjectPaths,
+  revalidateSubjectDetailPaths,
+  revalidateSubjectListPaths,
+} from "@/features/subjects/revalidation";
+import { parseActionInput } from "@/lib/action-input";
 import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import { LIMITS } from "@/lib/limits";
@@ -23,59 +37,36 @@ import {
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
-
-  return db
-    .select()
-    .from(subject)
-    .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)))
-    .orderBy(desc(subject.updatedAt));
+  return getSubjectsForUser(userId);
 }
 
 export async function getArchivedSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
-
-  return db
-    .select()
-    .from(subject)
-    .where(and(eq(subject.userId, userId), isNotNull(subject.archivedAt)))
-    .orderBy(desc(subject.updatedAt));
+  return getArchivedSubjectsForUser(userId);
 }
 
 export async function getSubjectById(
   id: string,
 ): Promise<SubjectEntity | null> {
   const userId = await getAuthenticatedUserId();
-
-  const results = await db
-    .select()
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, id),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    );
-
-  return results[0] ?? null;
+  return getActiveSubjectByIdForUser(userId, id);
 }
 
 export async function createSubject(
   data: CreateSubjectForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = createSubjectSchema.safeParse(data);
+  const parsed = parseActionInput(
+    createSubjectSchema,
+    data,
+    "subjects.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("subjects.invalidData");
+    return parsed.error;
   }
 
-  const result = await db
-    .select({ total: count() })
-    .from(subject)
-    .where(eq(subject.userId, userId));
-
-  const current = result[0]?.total ?? 0;
+  const current = await countSubjectsForUser(userId);
 
   if (current >= LIMITS.maxSubjects) {
     return actionError("limits.subjectLimit", {
@@ -89,7 +80,7 @@ export async function createSubject(
     userId,
   });
 
-  revalidatePath("/subjects");
+  revalidateSubjectListPaths();
   return { success: true };
 }
 
@@ -97,24 +88,19 @@ export async function editSubject(
   data: EditSubjectForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = editSubjectSchema.safeParse(data);
+  const parsed = parseActionInput(
+    editSubjectSchema,
+    data,
+    "subjects.invalidData",
+  );
 
   if (!parsed.success) {
-    return actionError("subjects.invalidData");
+    return parsed.error;
   }
 
-  const existing = await db
-    .select()
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, parsed.data.id),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    );
+  const existing = await getActiveSubjectRecordForUser(userId, parsed.data.id);
 
-  if (existing.length === 0) {
+  if (!existing) {
     return actionError("subjects.notFound");
   }
 
@@ -126,8 +112,7 @@ export async function editSubject(
     })
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
 
-  revalidatePath("/subjects");
-  revalidatePath(`/subjects/${parsed.data.id}`);
+  revalidateSubjectDetailPaths(parsed.data.id);
   return { success: true };
 }
 
@@ -135,25 +120,19 @@ export async function archiveSubject(
   data: ArchiveSubjectForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = archiveSubjectSchema.safeParse(data);
+  const parsed = parseActionInput(
+    archiveSubjectSchema,
+    data,
+    "common.invalidRequest",
+  );
 
   if (!parsed.success) {
-    return actionError("common.invalidRequest");
+    return parsed.error;
   }
 
-  const existing = await db
-    .select({ id: subject.id })
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, parsed.data.id),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existing = await getActiveSubjectRecordForUser(userId, parsed.data.id);
 
-  if (existing.length === 0) {
+  if (!existing) {
     return actionError("subjects.notFound");
   }
 
@@ -164,10 +143,7 @@ export async function archiveSubject(
     })
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
 
-  revalidatePath("/subjects");
-  revalidatePath("/subjects/archived");
-  revalidatePath(`/subjects/${parsed.data.id}`);
-  revalidatePath("/assessments");
+  revalidateAllSubjectPaths(parsed.data.id);
   return { success: true };
 }
 
@@ -175,25 +151,22 @@ export async function restoreSubject(
   data: RestoreSubjectForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = restoreSubjectSchema.safeParse(data);
+  const parsed = parseActionInput(
+    restoreSubjectSchema,
+    data,
+    "common.invalidRequest",
+  );
 
   if (!parsed.success) {
-    return actionError("common.invalidRequest");
+    return parsed.error;
   }
 
-  const existing = await db
-    .select({ id: subject.id })
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, parsed.data.id),
-        eq(subject.userId, userId),
-        isNotNull(subject.archivedAt),
-      ),
-    )
-    .limit(1);
+  const existing = await getArchivedSubjectRecordForUser(
+    userId,
+    parsed.data.id,
+  );
 
-  if (existing.length === 0) {
+  if (!existing) {
     return actionError("subjects.notFound");
   }
 
@@ -204,10 +177,7 @@ export async function restoreSubject(
     })
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
 
-  revalidatePath("/subjects");
-  revalidatePath("/subjects/archived");
-  revalidatePath(`/subjects/${parsed.data.id}`);
-  revalidatePath("/assessments");
+  revalidateAllSubjectPaths(parsed.data.id);
   return { success: true };
 }
 
@@ -215,18 +185,19 @@ export async function deleteSubject(
   data: DeleteSubjectForm,
 ): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = deleteSubjectSchema.safeParse(data);
+  const parsed = parseActionInput(
+    deleteSubjectSchema,
+    data,
+    "common.invalidRequest",
+  );
 
   if (!parsed.success) {
-    return actionError("common.invalidRequest");
+    return parsed.error;
   }
 
-  const existing = await db
-    .select()
-    .from(subject)
-    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
+  const existing = await getSubjectRecordForUser(userId, parsed.data.id);
 
-  if (existing.length === 0) {
+  if (!existing) {
     return actionError("subjects.notFound");
   }
 
@@ -234,8 +205,6 @@ export async function deleteSubject(
     .delete(subject)
     .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
 
-  revalidatePath("/subjects");
-  revalidatePath("/subjects/archived");
-  revalidatePath("/assessments");
+  revalidateSubjectListPaths();
   return { success: true };
 }

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getNoteById } from "@/app/actions/notes";
 import { NoteDetail } from "@/components/note-detail";
+import { getNoteByIdForUser } from "@/features/notes/queries";
 import { requireSession } from "@/lib/auth";
 
 interface NotePageProps {
@@ -8,10 +8,10 @@ interface NotePageProps {
 }
 
 export default async function NotePage({ params }: NotePageProps) {
-  await requireSession();
+  const session = await requireSession();
 
   const { noteId } = await params;
-  const note = await getNoteById(noteId);
+  const note = await getNoteByIdForUser(session.user.id, noteId);
 
   if (!note) {
     notFound();

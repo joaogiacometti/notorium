@@ -28,12 +28,13 @@ src/
 │   ├── navbar/       # Navigation bar, global search, theme
 │   ├── login-form.tsx
 │   └── signup-form.tsx
+├── features/         # Feature-scoped queries, mappers, business logic
 ├── db/               # Database layer
 │   ├── index.ts      # Drizzle client instance
 │   └── schema.ts     # Drizzle schema definitions
 ├── i18n/             # next-intl routing and request setup
 ├── messages/         # Locale dictionaries (en.json, pt.json)
-├── lib/              # Shared utilities
+├── lib/              # Cross-feature infrastructure
 │   ├── auth.ts       # Better Auth server config
 │   ├── auth-client.ts # Better Auth client
 │   └── utils.ts      # General utilities (cn helper)
@@ -86,6 +87,8 @@ src/
 
 - Use **Server Components** by default. Only add `"use client"` when necessary (interactivity, hooks, browser APIs).
 - Use **Server Actions** (in `src/app/actions/`) for data mutations (create, update, delete).
+- Keep read/query helpers and feature business rules in `src/features/*` instead of expanding route files or action files.
+- Keep Server Actions thin: authenticate, validate, delegate to feature helpers, and revalidate.
 - Use `@/` alias for imports (configured in `tsconfig.json`).
 
 ### React Compiler
