@@ -230,7 +230,7 @@ export function FlashcardReviewClient({
           )}
 
           {revealed ? (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
               {reviewGrades.map((grade) => {
                 const Icon = gradeIcons[grade];
                 const isActivePendingGrade = pendingGrade === grade;
@@ -242,20 +242,19 @@ export function FlashcardReviewClient({
                     size="lg"
                     onClick={() => handleGrade(grade)}
                     disabled={isPending}
-                    className={`h-auto min-h-18 w-full min-w-0 border-2 px-2 py-2 text-sm font-semibold shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 ${gradeButtonStyles[grade]}`}
+                    className={`h-auto min-h-14 w-full min-w-0 border-2 px-1 py-0.75 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
                   >
-                    <span className="flex min-w-0 flex-col items-center justify-center gap-0.5 text-center">
-                      <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="flex min-w-0 flex-col items-center justify-center gap-px text-center">
+                      <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
                         {isActivePendingGrade ? (
-                          <Loader2 className="size-4 animate-spin" />
+                          <Loader2 className="size-3.5 animate-spin sm:size-4" />
                         ) : (
                           <Icon className="hidden size-4 sm:inline-flex" />
                         )}
-                        <span>{t(`grade_${grade}`)}</span>
+                        <span className="truncate">{t(`grade_${grade}`)}</span>
                       </span>
                       {previewLabels ? (
-                        <span className="text-pretty whitespace-normal wrap-break-word text-[10px] leading-tight font-medium opacity-80 sm:text-[11px]">
-                          {t(`preview_state_${previewLabels[grade].state}`)} ·{" "}
+                        <span className="text-pretty whitespace-normal break-words text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
                           {previewLabels[grade].durationText}
                         </span>
                       ) : null}
