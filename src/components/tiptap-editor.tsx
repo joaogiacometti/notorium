@@ -31,9 +31,10 @@ import {
   Undo,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor-submit-shortcuts";
 import {
   isSupportedSharedImageUrl,
   resolveEmbeddableImageUrl,
@@ -95,6 +96,7 @@ interface TiptapEditorProps {
   "aria-invalid"?: boolean;
   contentClassName?: string;
   showToolbar?: boolean;
+  onCtrlEnter?: () => void;
 }
 
 interface ToolbarButtonProps {
@@ -273,9 +275,13 @@ export function TiptapEditor({
   "aria-invalid": ariaInvalid,
   contentClassName,
   showToolbar = true,
+  onCtrlEnter,
 }: Readonly<TiptapEditorProps>) {
   const t = useTranslations("TiptapEditor");
   const resolvedPlaceholder = placeholder ?? t("placeholder");
+  const onCtrlEnterRef = useRef(onCtrlEnter);
+  onCtrlEnterRef.current = onCtrlEnter;
+
   const handleUpdate = ({
     editor,
   }: {
@@ -315,6 +321,24 @@ export function TiptapEditor({
         id: id ?? "",
         "aria-invalid": ariaInvalid ? "true" : "false",
         class: "tiptap-editor-content",
+      },
+      handleKeyDown: (_, event) => {
+        if (
+          !onCtrlEnterRef.current ||
+          !shouldSubmitEditorOnCtrlEnter({
+            key: event.key,
+            ctrlKey: event.ctrlKey,
+            altKey: event.altKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey,
+          })
+        ) {
+          return false;
+        }
+
+        event.preventDefault();
+        onCtrlEnterRef.current();
+        return true;
       },
     },
     immediatelyRender: false,

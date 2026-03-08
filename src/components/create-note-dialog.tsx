@@ -101,6 +101,14 @@ export function CreateNoteDialog({
     }
   }
 
+  function handleCtrlEnter() {
+    if (form.formState.isSubmitting) {
+      return;
+    }
+
+    void form.handleSubmit(onSubmit)();
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -146,6 +154,7 @@ export function CreateNoteDialog({
                       placeholder={t("field_content_placeholder")}
                       id="form-create-note-content"
                       aria-invalid={fieldState.invalid}
+                      onCtrlEnter={handleCtrlEnter}
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />

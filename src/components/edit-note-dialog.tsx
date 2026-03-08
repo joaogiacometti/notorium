@@ -99,6 +99,14 @@ export function EditNoteDialog({
     }
   }
 
+  function handleCtrlEnter() {
+    if (form.formState.isSubmitting) {
+      return;
+    }
+
+    void form.handleSubmit(onSubmit)();
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -143,6 +151,7 @@ export function EditNoteDialog({
                       placeholder={t("field_content_placeholder")}
                       id="form-edit-note-content"
                       aria-invalid={fieldState.invalid}
+                      onCtrlEnter={handleCtrlEnter}
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />

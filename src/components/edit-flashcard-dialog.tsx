@@ -101,6 +101,14 @@ export function EditFlashcardDialog({
     }
   }
 
+  function handleCtrlEnter() {
+    if (form.formState.isSubmitting) {
+      return;
+    }
+
+    void form.handleSubmit(onSubmit)();
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -126,6 +134,7 @@ export function EditFlashcardDialog({
                       aria-invalid={fieldState.invalid}
                       contentClassName="min-h-11 max-h-[40svh]"
                       showToolbar={false}
+                      onCtrlEnter={handleCtrlEnter}
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -147,6 +156,7 @@ export function EditFlashcardDialog({
                       placeholder={t("field_back_placeholder")}
                       id="form-edit-flashcard-back"
                       aria-invalid={fieldState.invalid}
+                      onCtrlEnter={handleCtrlEnter}
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
