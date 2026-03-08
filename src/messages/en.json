@@ -123,6 +123,13 @@
     "collapsed_hint": "Expand to load your flashcards.",
     "toggle": "Show flashcards",
     "loading": "Loading flashcards...",
+    "import_flashcards": "Import Flashcards",
+    "import_success": "Imported {count, plural, one {# flashcard} other {# flashcards}} successfully.",
+    "import_read_error": "Failed to import the selected file.",
+    "import_dialog_title": "Import Flashcards",
+    "import_dialog_description": "This will add flashcards from an Anki .txt export into this subject. Existing flashcards will not be changed.",
+    "import_cancel": "Cancel",
+    "import_confirm": "Confirm Import",
     "new_flashcard": "New Flashcard",
     "empty_title": "No flashcards yet",
     "empty_description": "Create your first flashcard with a front and back.",
@@ -602,6 +609,11 @@
     "flashcards": {
       "invalidData": "Invalid flashcard data.",
       "notFound": "Flashcard not found.",
+      "import": {
+        "invalidFormat": "Invalid Anki import file. Use a .txt export.",
+        "noCards": "No flashcards were found to import.",
+        "failed": "Failed to import flashcards."
+      },
       "review": {
         "invalidData": "Invalid review input.",
         "notFound": "Flashcard not found for review.",
@@ -675,6 +687,9 @@
       "frontMaxLength": "Flashcard front must be at most 500 characters.",
       "backRequired": "Flashcard back is required.",
       "backMaxLength": "Flashcard back must be at most 2000 characters."
+    },
+    "ankiImport": {
+      "invalidDate": "Import date must be a valid date."
     },
     "profile": {
       "nameMinLength": "Name must be at least 2 characters.",

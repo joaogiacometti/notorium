@@ -4,11 +4,17 @@ import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
+import { appEnv } from "@/env";
+import {
+  mapAnkiImportCardToFlashcardInsert,
+  parseAnkiImportFile,
+} from "@/lib/anki-import";
 import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
   FlashcardEntity,
+  MutationResult,
   ResetFlashcardResult,
 } from "@/lib/api/contracts";
 import { getAuthenticatedUserId } from "@/lib/auth";
@@ -17,8 +23,12 @@ import { ensureFsrsSettings } from "@/lib/fsrs-settings";
 import { LIMITS } from "@/lib/limits";
 import { actionError } from "@/lib/server-action-errors";
 import {
-  type CreateFlashcardForm,
-  createFlashcardSchema,
+  type AnkiImportCard,
+  importAnkiFlashcardsSchema,
+} from "@/lib/validations/anki-import";
+import {
+  type CreateFlashcardForm as CreateFlashcardInput,
+  createFlashcardSchema as createFlashcardInputSchema,
   type DeleteFlashcardForm,
   deleteFlashcardSchema,
   type EditFlashcardForm,
@@ -73,10 +83,10 @@ export async function getFlashcardById(
 }
 
 export async function createFlashcard(
-  data: CreateFlashcardForm,
+  data: CreateFlashcardInput,
 ): Promise<CreateFlashcardResult> {
   const userId = await getAuthenticatedUserId();
-  const parsed = createFlashcardSchema.safeParse(data);
+  const parsed = createFlashcardInputSchema.safeParse(data);
 
   if (!parsed.success) {
     return actionError("flashcards.invalidData");
@@ -139,6 +149,93 @@ export async function createFlashcard(
 
   revalidatePath(`/subjects/${parsed.data.subjectId}`);
   return { success: true, flashcard: inserted[0] };
+}
+
+export async function importAnkiFlashcards(
+  formData: FormData,
+): Promise<MutationResult & { imported?: number }> {
+  const userId = await getAuthenticatedUserId();
+  const subjectId = formData.get("subjectId");
+  const file = formData.get("file");
+
+  if (typeof subjectId !== "string" || !(file instanceof File)) {
+    return actionError("flashcards.import.invalidFormat");
+  }
+
+  if (file.size === 0 || file.size > appEnv.MAX_IMPORT_BYTES) {
+    return actionError("flashcards.import.invalidFormat");
+  }
+
+  const existingSubject = await db
+    .select({ id: subject.id })
+    .from(subject)
+    .where(
+      and(
+        eq(subject.id, subjectId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .limit(1);
+
+  if (existingSubject.length === 0) {
+    return actionError("subjects.notFound");
+  }
+
+  const result = await db
+    .select({ total: count() })
+    .from(flashcard)
+    .where(
+      and(eq(flashcard.subjectId, subjectId), eq(flashcard.userId, userId)),
+    );
+
+  const current = result[0]?.total ?? 0;
+  let parsedCards: AnkiImportCard[];
+
+  try {
+    parsedCards = await parseAnkiImportFile(file);
+  } catch {
+    return actionError("flashcards.import.invalidFormat");
+  }
+
+  const parsed = importAnkiFlashcardsSchema.safeParse({
+    subjectId,
+    cards: parsedCards,
+  });
+
+  if (!parsed.success) {
+    return actionError("flashcards.import.invalidFormat");
+  }
+
+  if (parsed.data.cards.length === 0) {
+    return actionError("flashcards.import.noCards");
+  }
+
+  const incoming = parsed.data.cards.length;
+
+  if (current + incoming > LIMITS.maxFlashcardsPerSubject) {
+    return actionError("limits.flashcardLimit", {
+      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+    });
+  }
+
+  try {
+    const now = new Date();
+
+    await db.insert(flashcard).values(
+      parsed.data.cards.map((cardData) => ({
+        ...mapAnkiImportCardToFlashcardInsert(cardData, now),
+        subjectId,
+        userId,
+      })),
+    );
+  } catch {
+    return actionError("flashcards.import.failed");
+  }
+
+  revalidatePath(`/subjects/${subjectId}`);
+  revalidatePath("/flashcards/review");
+  return { success: true, imported: incoming };
 }
 
 export async function editFlashcard(

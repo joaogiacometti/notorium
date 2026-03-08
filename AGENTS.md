@@ -5,6 +5,7 @@
 Notorium is a study management app built with Next.js 16 (App Router). Core modules include subjects, notes, flashcards, assessments, and attendance. See `SPEC.md` for the full product specification, features, and acceptance criteria.
 Notes and flashcards support rich text and render images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax.
 Flashcards on subject detail are presented in a collapsed section and loaded when expanded.
+Subject detail flashcards also support importing Anki `.txt` exports into the current subject while preserving supported scheduling metadata when present.
 Flashcards also have a dedicated page under each subject, and global search routes flashcard results to that page.
 Flashcard review uses a memory-state scheduler with stored review logs and per-user parameter tuning.
 Flashcard review supports keyboard shortcuts on the review screen: `Enter` reveals the back or grades Good, and `1` to `4` map to Again, Hard, Good, and Easy after the answer is shown.

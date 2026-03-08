@@ -5,6 +5,7 @@ The app is localized in English (`en`) and Portuguese (`pt`).
 Notes and flashcards support rich text and can render images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax.
 
 On subject detail pages, flashcards are shown in a collapsed section and loaded on first expand.
+Each subject can also import flashcards from Anki `.txt` exports directly into that subject, preserving supported scheduling metadata when present.
 Flashcards also have a dedicated detail page under each subject, and global search results for flashcards open that detail page directly.
 Flashcard review uses a memory-state scheduler with per-user parameter tuning and stored review logs, plus keyboard shortcuts for reveal and grading on the review screen.
 Profile data transfer is available to all users and supports full export/import for subjects, notes, attendance, assessments, flashcards, and flashcard review settings, plus a template export that excludes notes, attendance, and flashcards.

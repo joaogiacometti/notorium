@@ -9,6 +9,7 @@ import { CreateFlashcardDialog } from "@/components/create-flashcard-dialog";
 import { FlashcardsEmptyState } from "@/components/flashcards-empty-state";
 import { FlashcardsLoading } from "@/components/flashcards-loading";
 import { FlashcardsTable } from "@/components/flashcards-table";
+import { ImportFlashcardsButton } from "@/components/import-flashcards-button";
 import {
   Accordion,
   AccordionContent,
@@ -35,12 +36,7 @@ export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
 
   const isAtLimit = flashcards.length >= LIMITS.maxFlashcardsPerSubject;
 
-  function handleOpenChange(value: string) {
-    setAccordionValue(value);
-    if (value !== "flashcards" || hasLoaded || isPending) {
-      return;
-    }
-
+  function loadFlashcards() {
     startTransition(async () => {
       try {
         const loaded = await getFlashcardsBySubject(subjectId);
@@ -52,6 +48,15 @@ export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
         );
       }
     });
+  }
+
+  function handleOpenChange(value: string) {
+    setAccordionValue(value);
+    if (value !== "flashcards" || hasLoaded || isPending) {
+      return;
+    }
+
+    loadFlashcards();
   }
 
   function getSubtitle() {
@@ -92,24 +97,34 @@ export function FlashcardsList({ subjectId }: Readonly<FlashcardsListProps>) {
             {getSubtitle()}
           </p>
         </div>
-        <CreateFlashcardDialog
-          subjectId={subjectId}
-          trigger={
-            <Button
-              size="sm"
-              className="w-full gap-1.5 sm:w-auto"
-              id="btn-create-flashcard"
-              disabled={isAtLimit}
-              title={isAtLimit ? t("limit_tooltip") : undefined}
-            >
-              <Plus className="size-4" />
-              <span>{t("new_flashcard")}</span>
-            </Button>
-          }
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          onCreated={(card) => setFlashcards((current) => [card, ...current])}
-        />
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <ImportFlashcardsButton
+            subjectId={subjectId}
+            disabled={isAtLimit}
+            onImported={async () => {
+              setAccordionValue("flashcards");
+              loadFlashcards();
+            }}
+          />
+          <CreateFlashcardDialog
+            subjectId={subjectId}
+            trigger={
+              <Button
+                size="sm"
+                className="w-full gap-1.5 sm:w-auto"
+                id="btn-create-flashcard"
+                disabled={isAtLimit}
+                title={isAtLimit ? t("limit_tooltip") : undefined}
+              >
+                <Plus className="size-4" />
+                <span>{t("new_flashcard")}</span>
+              </Button>
+            }
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            onCreated={(card) => setFlashcards((current) => [card, ...current])}
+          />
+        </div>
       </div>
 
       {isAtLimit && (
