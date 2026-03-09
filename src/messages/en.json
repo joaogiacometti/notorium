@@ -5,7 +5,7 @@
     "flashcards_review": "Review",
     "assessments": "Assessments",
     "calendar": "Calendar",
-    "profile": "Profile",
+    "profile": "Account",
     "admin_panel": "Admin Panel",
     "login": "Log In",
     "signup": "Sign Up",
@@ -257,17 +257,32 @@
     "in_subject": "in"
   },
   "ProfilePage": {
-    "title": "Manage Profile",
-    "description": "Review your account information and keep your profile up to date."
+    "title": "Manage Account",
+    "description": "Review your account information and manage your settings."
   },
   "AdminPage": {
     "title": "Admin Panel",
     "description": "Manage user access and approval states."
   },
   "ProfileForm": {
-    "toast_success": "Profile updated.",
-    "profile_title": "Profile",
-    "profile_description": "Inspect and update your account details.",
+    "toast_success": "Account updated.",
+    "profile_title": "Account",
+    "profile_description": "Inspect and update your account details and settings.",
+    "ai_title": "AI Settings",
+    "ai_description": "Bring your own OpenRouter key and model for flashcard generation. Your key is encrypted at rest and never shown again after saving.",
+    "ai_provider": "Provider",
+    "ai_model": "Model",
+    "ai_model_placeholder": "openai/gpt-4.1-mini",
+    "ai_model_hint": "Enter any OpenRouter model ID.",
+    "ai_api_key": "OpenRouter API Key",
+    "ai_api_key_placeholder": "sk-or-v1-...",
+    "ai_saved_key": "Saved key ending in {suffix}. Leave the field blank to keep it unchanged.",
+    "ai_no_key": "No API key saved yet. AI generation will stay unavailable until you add one.",
+    "ai_save": "Save AI Settings",
+    "ai_update": "Update AI Settings",
+    "ai_clear": "Clear Saved Key",
+    "ai_saved": "AI settings updated.",
+    "ai_cleared": "AI settings cleared.",
     "name_label": "Full Name",
     "name_placeholder": "John Doe",
     "email_label": "Email",
@@ -276,7 +291,7 @@
     "saving": "Saving...",
     "save_changes": "Save Changes",
     "data_transfer_title": "Data Transfer",
-    "data_transfer_description": "Export all your subjects, notes, attendance records, assessments, and flashcards as a JSON file, or import data from a previous export.",
+    "data_transfer_description": "Export your study data as a JSON file, or import data from a previous Notorium export. API keys, account details, sessions, and other sensitive information are never included.",
     "danger_title": "Danger Zone",
     "danger_description": "Permanently delete your account and all associated data.",
     "danger_body": "Once you delete your account, all of your subjects, notes, assessments, and attendance records will be permanently removed. This action cannot be undone.",
@@ -308,7 +323,7 @@
     "updated": "Access status updated."
   },
   "DataTransferActions": {
-    "export_success": "Data exported successfully.",
+    "export_success": "Study data exported successfully.",
     "export_error": "Failed to export data.",
     "import_success": "Imported {count, plural, one {# subject} other {# subjects}} successfully.",
     "import_read_error": "Failed to read the import file.",
@@ -317,7 +332,7 @@
     "export_template": "Export Template",
     "import_data": "Import Data",
     "import_dialog_title": "Import Data",
-    "import_dialog_description": "This will create new subjects from the import file with all their notes, attendance records, assessments, and flashcards. Existing data will not be modified.",
+    "import_dialog_description": "This will create new subjects from the import file with their study data only. Account details, API keys, sessions, and other sensitive information are ignored.",
     "cancel": "Cancel",
     "confirm_import": "Confirm Import"
   },
@@ -458,6 +473,8 @@
     "field_back": "Back",
     "field_front_placeholder": "e.g. What is photosynthesis?",
     "field_back_placeholder": "e.g. Process plants use to convert light into energy.",
+    "generate_back": "Generate with AI",
+    "generating_back": "Generating...",
     "submit": "Create Flashcard"
   },
   "EditFlashcardDialog": {
@@ -466,6 +483,8 @@
     "field_back": "Back",
     "field_front_placeholder": "e.g. What is photosynthesis?",
     "field_back_placeholder": "e.g. Process plants use to convert light into energy.",
+    "generate_back": "Generate with AI",
+    "generating_back": "Generating...",
     "submit": "Save Changes"
   },
   "DeleteFlashcardDialog": {
@@ -610,6 +629,11 @@
     "flashcards": {
       "invalidData": "Invalid flashcard data.",
       "notFound": "Flashcard not found.",
+      "ai": {
+        "invalidData": "Invalid flashcard input for AI generation.",
+        "notConfigured": "AI flashcard generation is not configured. Add your OpenRouter key and model in your account page.",
+        "unavailable": "AI flashcard generation is temporarily unavailable."
+      },
       "import": {
         "invalidFormat": "Invalid Anki import file. Use a .txt export.",
         "noCards": "No flashcards were found to import.",
@@ -624,7 +648,12 @@
     },
     "profile": {
       "invalidData": "Invalid profile data.",
-      "updateFailed": "Failed to update profile."
+      "updateFailed": "Failed to update account.",
+      "ai": {
+        "invalidData": "Invalid AI settings.",
+        "updateFailed": "Failed to update AI settings.",
+        "clearFailed": "Failed to clear AI settings."
+      }
     },
     "limits": {
       "subjectLimit": "System limit reached: you can have up to {max} subjects.",
@@ -695,7 +724,11 @@
     },
     "profile": {
       "nameMinLength": "Name must be at least 2 characters.",
-      "nameMaxLength": "Name must be at most 100 characters."
+      "nameMaxLength": "Name must be at most 100 characters.",
+      "aiModelRequired": "Model is required.",
+      "aiModelMaxLength": "Model must be at most 150 characters.",
+      "aiApiKeyRequired": "API key is required.",
+      "aiApiKeyMaxLength": "API key must be at most 500 characters."
     },
     "search": {
       "queryMaxLength": "Search query must be at most 200 characters."

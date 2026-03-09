@@ -53,6 +53,8 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete flashcards per subject.
 - Flashcard fields: front and back rich text.
+- Flashcard create and edit support AI generation of the back when the back is empty.
+- AI flashcard generation is BYOK-only: each user configures their own OpenRouter model and API key on the account page.
 - Flashcard rich text supports the same shared editor capabilities as notes, including syntax-highlighted code blocks and supported image rendering.
 - Flashcard content renders images from:
   - pasted direct image URLs
@@ -64,6 +66,7 @@ Students who want a private, lightweight study management workspace.
 - Flashcards have a dedicated detail page nested under subject routes.
 - Subject detail flashcards support importing Anki `.txt` exports into the current subject.
 - Supported scheduling metadata from Anki imports is preserved when present.
+- User AI API keys are encrypted at rest, never shown back to the user after saving, and excluded from data export/import.
 
 ### Flashcard Review
 
@@ -108,8 +111,8 @@ Students who want a private, lightweight study management workspace.
 - View account details.
 - Update display name.
 - Admin-only access management page to approve, block, or set pending for users.
-- Export full user data as JSON, including subjects, notes, attendance, assessments, flashcards, and flashcard review settings.
-- Export template JSON with subject structure only, excluding notes, attendance records, and flashcards.
+- Export study data as JSON, including subjects, notes, attendance, assessments, flashcards, and flashcard review settings.
+- Export template JSON with subject structure only, excluding notes, attendance records, flashcards, and all account/security data.
 - Import user data from a previous Notorium export.
 - Delete account and all user-owned data.
 

@@ -3,6 +3,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard } from "@/db/schema";
+import { generateFlashcardBackForUser } from "@/features/flashcards/ai-service";
 import {
   mapAnkiImportCardToFlashcardInsert,
   parseAnkiImportFile,
@@ -31,10 +32,15 @@ import {
   deleteFlashcardSchema,
   type EditFlashcardForm,
   editFlashcardSchema,
+  type GenerateFlashcardBackForm,
+  generateFlashcardBackSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import {
+  getActiveSubjectByIdForUser,
+  getActiveSubjectRecordForUser,
+} from "@/features/subjects/queries";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { LIMITS } from "@/lib/config/limits";
 import { parseActionInput } from "@/lib/server/action-input";
@@ -43,6 +49,7 @@ import type {
   DeleteFlashcardResult,
   EditFlashcardResult,
   FlashcardEntity,
+  GenerateFlashcardBackResult,
   MutationResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
@@ -229,6 +236,42 @@ export async function editFlashcard(
 
   revalidateFlashcardReviewPaths(existingFlashcard.subjectId, parsed.data.id);
   return { success: true, flashcard: updated[0] };
+}
+
+export async function generateFlashcardBack(
+  data: GenerateFlashcardBackForm,
+): Promise<GenerateFlashcardBackResult> {
+  const userId = await getAuthenticatedUserId();
+  const parsed = parseActionInput(
+    generateFlashcardBackSchema,
+    data,
+    "flashcards.ai.invalidData",
+  );
+
+  if (!parsed.success) {
+    return parsed.error;
+  }
+
+  const existingSubject = await getActiveSubjectByIdForUser(
+    userId,
+    parsed.data.subjectId,
+  );
+
+  if (!existingSubject) {
+    return actionError("subjects.notFound");
+  }
+
+  const result = await generateFlashcardBackForUser({
+    userId,
+    subjectName: existingSubject.name,
+    front: parsed.data.front,
+  });
+
+  if (!result.success) {
+    return actionError(result.errorCode);
+  }
+
+  return { success: true, back: result.back };
 }
 
 export async function deleteFlashcard(

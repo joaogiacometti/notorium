@@ -3,6 +3,7 @@ import {
   createFlashcardSchema,
   deleteFlashcardSchema,
   editFlashcardSchema,
+  generateFlashcardBackSchema,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
 
@@ -112,6 +113,7 @@ describe("editFlashcardSchema", () => {
   it("accepts valid input", () => {
     const result = editFlashcardSchema.safeParse({
       id: "flashcard-1",
+      subjectId: "subject-1",
       front: "Front",
       back: "Back",
     });
@@ -121,6 +123,7 @@ describe("editFlashcardSchema", () => {
 
   it("rejects missing id", () => {
     const result = editFlashcardSchema.safeParse({
+      subjectId: "subject-1",
       front: "Front",
       back: "Back",
     });
@@ -131,6 +134,7 @@ describe("editFlashcardSchema", () => {
   it("rejects back with only empty rich text markup", () => {
     const result = editFlashcardSchema.safeParse({
       id: "flashcard-1",
+      subjectId: "subject-1",
       front: "<p>Front</p>",
       back: "<p> </p>",
     });
@@ -141,8 +145,29 @@ describe("editFlashcardSchema", () => {
   it("rejects front with only empty rich text markup", () => {
     const result = editFlashcardSchema.safeParse({
       id: "flashcard-1",
+      subjectId: "subject-1",
       front: "<p> </p>",
       back: "<p>Back</p>",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("generateFlashcardBackSchema", () => {
+  it("accepts valid input", () => {
+    const result = generateFlashcardBackSchema.safeParse({
+      subjectId: "subject-1",
+      front: "<p>What is ATP?</p>",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty front", () => {
+    const result = generateFlashcardBackSchema.safeParse({
+      subjectId: "subject-1",
+      front: "<p> </p>",
     });
 
     expect(result.success).toBe(false);

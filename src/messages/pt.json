@@ -5,7 +5,7 @@
     "flashcards_review": "Revisão",
     "assessments": "Avaliações",
     "calendar": "Calendário",
-    "profile": "Perfil",
+    "profile": "Conta",
     "admin_panel": "Painel de admin",
     "login": "Entrar",
     "signup": "Cadastrar",
@@ -257,17 +257,32 @@
     "in_subject": "em"
   },
   "ProfilePage": {
-    "title": "Gerenciar perfil",
-    "description": "Revise as informações da sua conta e mantenha seu perfil atualizado."
+    "title": "Gerenciar conta",
+    "description": "Revise as informacoes da sua conta e gerencie suas configuracoes."
   },
   "AdminPage": {
     "title": "Painel de admin",
     "description": "Gerencie estados de acesso e aprovação de usuários."
   },
   "ProfileForm": {
-    "toast_success": "Perfil atualizado.",
-    "profile_title": "Perfil",
-    "profile_description": "Veja e atualize os dados da sua conta.",
+    "toast_success": "Conta atualizada.",
+    "profile_title": "Conta",
+    "profile_description": "Veja e atualize os dados e configuracoes da sua conta.",
+    "ai_title": "Configuracoes de IA",
+    "ai_description": "Use sua propria chave e modelo da OpenRouter para gerar flashcards. Sua chave e criptografada em repouso e nao e exibida novamente depois de salva.",
+    "ai_provider": "Provedor",
+    "ai_model": "Modelo",
+    "ai_model_placeholder": "openai/gpt-4.1-mini",
+    "ai_model_hint": "Informe qualquer identificador de modelo da OpenRouter.",
+    "ai_api_key": "Chave de API da OpenRouter",
+    "ai_api_key_placeholder": "sk-or-v1-...",
+    "ai_saved_key": "Chave salva terminando em {suffix}. Deixe o campo vazio para mante-la.",
+    "ai_no_key": "Nenhuma chave de API salva ainda. A geracao com IA continuara indisponivel ate voce adicionar uma.",
+    "ai_save": "Salvar IA",
+    "ai_update": "Atualizar IA",
+    "ai_clear": "Remover chave salva",
+    "ai_saved": "Configuracoes de IA atualizadas.",
+    "ai_cleared": "Configuracoes de IA removidas.",
     "name_label": "Nome completo",
     "name_placeholder": "João Silva",
     "email_label": "Email",
@@ -276,7 +291,7 @@
     "saving": "Salvando...",
     "save_changes": "Salvar Alterações",
     "data_transfer_title": "Transferência de Dados",
-    "data_transfer_description": "Exporte todas as suas matérias, notas, registros de faltas, avaliações e flashcards como um arquivo JSON, ou importe dados de uma exportação anterior.",
+    "data_transfer_description": "Exporte seus dados de estudo como um arquivo JSON, ou importe dados de uma exportação anterior do Notorium. Chaves de API, dados da conta, sessoes e outras informacoes sensiveis nunca sao incluidos.",
     "danger_title": "Zona de Perigo",
     "danger_description": "Exclua permanentemente sua conta e todos os dados associados.",
     "danger_body": "Ao excluir sua conta, todas as suas matérias, notas, avaliações e faltas serão removidas permanentemente. Esta ação não pode ser desfeita.",
@@ -308,7 +323,7 @@
     "updated": "Status de acesso atualizado."
   },
   "DataTransferActions": {
-    "export_success": "Dados exportados com sucesso.",
+    "export_success": "Dados de estudo exportados com sucesso.",
     "export_error": "Falha ao exportar dados.",
     "import_success": "{count, plural, one {# matéria importada com sucesso.} other {# matérias importadas com sucesso.}}",
     "import_read_error": "Falha ao ler o arquivo de importação.",
@@ -317,7 +332,7 @@
     "export_template": "Exportar modelo",
     "import_data": "Importar dados",
     "import_dialog_title": "Importar dados",
-    "import_dialog_description": "Isso criará novas matérias a partir do arquivo de importação com todas as notas, faltas, avaliações e flashcards. Os dados existentes não serão modificados.",
+    "import_dialog_description": "Isso criara novas materias a partir do arquivo de importacao apenas com dados de estudo. Dados da conta, chaves de API, sessoes e outras informacoes sensiveis sao ignorados.",
     "cancel": "Cancelar",
     "confirm_import": "Confirmar importação"
   },
@@ -458,6 +473,8 @@
     "field_back": "Verso",
     "field_front_placeholder": "ex.: O que é fotossíntese?",
     "field_back_placeholder": "ex.: Processo em que plantas convertem luz em energia.",
+    "generate_back": "Gerar com IA",
+    "generating_back": "Gerando...",
     "submit": "Criar Flashcard"
   },
   "EditFlashcardDialog": {
@@ -466,6 +483,8 @@
     "field_back": "Verso",
     "field_front_placeholder": "ex.: O que é fotossíntese?",
     "field_back_placeholder": "ex.: Processo em que plantas convertem luz em energia.",
+    "generate_back": "Gerar com IA",
+    "generating_back": "Gerando...",
     "submit": "Salvar alterações"
   },
   "DeleteFlashcardDialog": {
@@ -610,6 +629,11 @@
     "flashcards": {
       "invalidData": "Dados do flashcard invalidos.",
       "notFound": "Flashcard nao encontrado.",
+      "ai": {
+        "invalidData": "Dados do flashcard invalidos para geracao com IA.",
+        "notConfigured": "A geracao de flashcards com IA nao esta configurada. Adicione sua chave e modelo da OpenRouter na pagina da sua conta.",
+        "unavailable": "A geracao de flashcards com IA esta temporariamente indisponivel."
+      },
       "import": {
         "invalidFormat": "Arquivo do Anki invalido. Use uma exportação .txt.",
         "noCards": "Nenhum flashcard foi encontrado para importar.",
@@ -624,7 +648,12 @@
     },
     "profile": {
       "invalidData": "Dados de perfil invalidos.",
-      "updateFailed": "Falha ao atualizar o perfil."
+      "updateFailed": "Falha ao atualizar a conta.",
+      "ai": {
+        "invalidData": "Configuracoes de IA invalidas.",
+        "updateFailed": "Falha ao atualizar as configuracoes de IA.",
+        "clearFailed": "Falha ao remover as configuracoes de IA."
+      }
     },
     "limits": {
       "subjectLimit": "Limite do sistema atingido: voce pode ter ate {max} materias.",
@@ -695,7 +724,11 @@
     },
     "profile": {
       "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",
-      "nameMaxLength": "O nome deve ter no maximo 100 caracteres."
+      "nameMaxLength": "O nome deve ter no maximo 100 caracteres.",
+      "aiModelRequired": "O modelo e obrigatorio.",
+      "aiModelMaxLength": "O modelo deve ter no maximo 150 caracteres.",
+      "aiApiKeyRequired": "A chave de API e obrigatoria.",
+      "aiApiKeyMaxLength": "A chave de API deve ter no maximo 500 caracteres."
     },
     "search": {
       "queryMaxLength": "A busca deve ter no maximo 200 caracteres."

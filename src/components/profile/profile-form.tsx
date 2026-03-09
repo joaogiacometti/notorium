@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateProfile } from "@/app/actions/profile";
+import { AiSettingsCard } from "@/components/profile/ai-settings-card";
 import { DataTransferActions } from "@/components/profile/data-transfer-actions";
 import { DeleteAccountDialog } from "@/components/profile/delete-account-dialog";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
 } from "@/features/profile/validation";
 import { useRouter } from "@/i18n/routing";
 import { getIntlLocale } from "@/lib/dates/date-locale";
+import type { UserAiSettingsSummary } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface ProfileFormProps {
@@ -36,6 +38,7 @@ interface ProfileFormProps {
   email: string;
   createdAt: string;
   updatedAt: string;
+  initialAiSettings: UserAiSettingsSummary | null;
 }
 
 export function ProfileForm({
@@ -43,6 +46,7 @@ export function ProfileForm({
   email,
   createdAt,
   updatedAt,
+  initialAiSettings,
 }: Readonly<ProfileFormProps>) {
   const locale = useLocale();
   const intlLocale = getIntlLocale(locale);
@@ -152,6 +156,8 @@ export function ProfileForm({
           </form>
         </CardContent>
       </Card>
+
+      <AiSettingsCard initialAiSettings={initialAiSettings} />
 
       <Card className="gap-4">
         <CardHeader>

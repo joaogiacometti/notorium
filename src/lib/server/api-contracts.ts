@@ -7,6 +7,7 @@ import type {
   flashcardSchedulerSettings,
   note,
   subject,
+  userAiSettings,
 } from "@/db/schema";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
@@ -21,6 +22,13 @@ export type FlashcardReviewLogEntity = InferSelectModel<
 export type FlashcardSchedulerSettingsEntity = InferSelectModel<
   typeof flashcardSchedulerSettings
 >;
+export type UserAiSettingsEntity = InferSelectModel<typeof userAiSettings>;
+export interface UserAiSettingsSummary {
+  provider: "openrouter";
+  model: string;
+  hasApiKey: boolean;
+  apiKeyLastFour: string | null;
+}
 export type FlashcardReviewEntity = Pick<
   FlashcardEntity,
   | "id"
@@ -104,6 +112,12 @@ export type EditFlashcardResult =
   | {
       success: true;
       flashcard: FlashcardEntity;
+    }
+  | ActionErrorResult;
+export type GenerateFlashcardBackResult =
+  | {
+      success: true;
+      back: string;
     }
   | ActionErrorResult;
 export type DeleteFlashcardResult =

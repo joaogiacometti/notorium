@@ -145,6 +145,14 @@ src/
 - App access must enforce approved status.
 - User access management mutations must be admin-only on the server side.
 
+### Sensitive Data
+
+- Never export, import, log, cache in client state, or expose sensitive information unless it is strictly required for the feature and explicitly approved by product behavior in `SPEC.md`.
+- Sensitive information includes API keys, auth/session/account/verification data, tokens, password hashes, provider credentials, encrypted secret material, and account/profile metadata that is not required by the current feature.
+- Data transfer must stay study-data-only. Exports and imports must exclude AI settings, auth/session tables, account security data, and any future secret-bearing fields by default.
+- Secrets must remain server-only, encrypted at rest when persisted, and must never be returned to the client after save.
+- Do not include sensitive values in action errors, telemetry payloads, test fixtures, snapshots, or user-facing messages.
+
 ### Testing
 
 - Use Vitest for unit and integration tests. Place test files next to the source file with a `.test.ts` suffix.
@@ -153,6 +161,7 @@ src/
 - Prefer fewer meaningful tests over shallow coverage inflation.
 - Do not test Server Actions directly. Test extracted validation and business logic instead.
 - Zod schema tests should reject invalid inputs thoroughly.
+- Add or update regression tests when changing auth, AI, account, or data-transfer code so sensitive fields cannot leak into exports, imports, logs, or client-visible payloads.
 
 ### Styling
 

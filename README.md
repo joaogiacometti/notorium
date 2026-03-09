@@ -20,6 +20,7 @@ This document covers project setup, local development, and repository operations
 - PostgreSQL + Drizzle ORM
 - Better Auth
 - Zod + React Hook Form
+- Vercel AI SDK + OpenRouter
 - Tailwind CSS 4 + shadcn/ui
 - Biome
 - Bun
@@ -42,6 +43,8 @@ bun install
 ```bash
 cp .env.example .env
 ```
+
+Set `USER_AI_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte key so user-provided OpenRouter credentials can be stored securely.
 
 Generate a secure auth secret before first run:
 
@@ -83,6 +86,8 @@ bun install
 cp .env.example .env
 ```
 
+Set `USER_AI_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte key so user-provided OpenRouter credentials can be stored securely.
+
 3. Start PostgreSQL and Redis:
 
 ```bash
@@ -107,6 +112,8 @@ bun install
 ```bash
 cp .env.example .env
 ```
+
+Set `USER_AI_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte key so user-provided OpenRouter credentials can be stored securely.
 
 3. Start infrastructure services:
 
@@ -141,6 +148,7 @@ Defined in `src/env.ts`:
 | `UPSTASH_REDIS_REST_URL`         | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
 | `UPSTASH_REDIS_REST_TOKEN`       | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
 | `REDIS_URL`                      | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                  |
+| `USER_AI_SETTINGS_ENCRYPTION_KEY` | Yes        | Base64-encoded 32-byte key used to encrypt user BYOK OpenRouter credentials at rest       |
 
 ## Scripts
 

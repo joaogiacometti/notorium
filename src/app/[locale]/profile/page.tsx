@@ -1,10 +1,12 @@
 import { UserCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { getUserAiSettingsSummary } from "@/features/ai/settings";
 import { requireSession } from "@/lib/auth/auth";
 
 export default async function ProfilePage() {
   const session = await requireSession();
+  const aiSettings = await getUserAiSettingsSummary(session.user.id);
   const t = await getTranslations("ProfilePage");
 
   return (
@@ -29,6 +31,7 @@ export default async function ProfilePage() {
             email={session.user.email}
             createdAt={new Date(session.user.createdAt).toISOString()}
             updatedAt={new Date(session.user.updatedAt).toISOString()}
+            initialAiSettings={aiSettings}
           />
         </div>
       </div>

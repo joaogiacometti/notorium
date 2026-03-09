@@ -241,4 +241,76 @@ describe("importDataSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("strips unexpected ai settings fields from imported payloads", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      userAiSettings: {
+        provider: "openrouter",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-or-v1-should-not-import",
+      },
+      subjects: [
+        {
+          ...validSubject,
+          aiSettings: {
+            provider: "openrouter",
+          },
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect("userAiSettings" in result.data).toBe(false);
+    expect("aiSettings" in (result.data.subjects[0] ?? {})).toBe(false);
+  });
+
+  it("strips account and security fields from imported payloads", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      session: {
+        token: "session-token",
+      },
+      account: {
+        providerId: "openrouter",
+        accessToken: "access-token",
+      },
+      verification: {
+        value: "verification-secret",
+      },
+      email: "user@example.com",
+      name: "User Name",
+      subjects: [
+        {
+          ...validSubject,
+          token: "nested-secret",
+          email: "nested@example.com",
+          notes: [
+            {
+              ...validNote,
+              password: "note-secret",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect("session" in result.data).toBe(false);
+    expect("account" in result.data).toBe(false);
+    expect("verification" in result.data).toBe(false);
+    expect("email" in result.data).toBe(false);
+    expect("name" in result.data).toBe(false);
+    expect("token" in (result.data.subjects[0] ?? {})).toBe(false);
+    expect("email" in (result.data.subjects[0] ?? {})).toBe(false);
+    expect("password" in (result.data.subjects[0]?.notes[0] ?? {})).toBe(false);
+  });
 });

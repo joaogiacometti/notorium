@@ -8,13 +8,23 @@ import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
 import { user } from "@/db/schema";
 import {
+  clearUserAiSettings as clearUserAiSettingsForUser,
+  updateUserAiSettings as updateUserAiSettingsForUser,
+} from "@/features/ai/settings";
+import {
+  createUserAiSettingsSchema,
   type UpdateProfileForm,
+  type UpdateUserAiSettingsForm,
   updateProfileSchema,
+  updateUserAiSettingsSchema,
 } from "@/features/profile/validation";
 import { isAdminUser } from "@/lib/auth/access-control";
 import { auth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import { parseActionInput } from "@/lib/server/action-input";
-import type { MutationResult } from "@/lib/server/api-contracts";
+import type {
+  MutationResult,
+  UserAiSettingsSummary,
+} from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
 import {
   type UpdateUserAccessInput,
@@ -48,6 +58,66 @@ export async function updateProfile(
       });
     }
     return actionError("profile.updateFailed");
+  }
+
+  return { success: true };
+}
+
+export async function updateUserAiSettings(
+  data: UpdateUserAiSettingsForm,
+): Promise<MutationResult & { settings?: UserAiSettingsSummary }> {
+  const userId = await getAuthenticatedUserId();
+  const parsed = parseActionInput(
+    updateUserAiSettingsSchema,
+    data,
+    "profile.ai.invalidData",
+  );
+
+  if (!parsed.success) {
+    return parsed.error;
+  }
+
+  try {
+    const settings = await updateUserAiSettingsForUser(userId, parsed.data);
+
+    if (!settings) {
+      const created = createUserAiSettingsSchema.safeParse(data);
+
+      if (!created.success) {
+        return actionError("profile.ai.invalidData");
+      }
+
+      const savedSettings = await updateUserAiSettingsForUser(
+        userId,
+        created.data,
+      );
+
+      if (!savedSettings) {
+        return actionError("profile.ai.updateFailed");
+      }
+
+      return {
+        success: true,
+        settings: savedSettings,
+      };
+    }
+
+    return {
+      success: true,
+      settings,
+    };
+  } catch {
+    return actionError("profile.ai.updateFailed");
+  }
+}
+
+export async function clearUserAiSettings(): Promise<MutationResult> {
+  const userId = await getAuthenticatedUserId();
+
+  try {
+    await clearUserAiSettingsForUser(userId);
+  } catch {
+    return actionError("profile.ai.clearFailed");
   }
 
   return { success: true };

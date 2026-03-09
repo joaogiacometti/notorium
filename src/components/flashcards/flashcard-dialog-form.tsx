@@ -4,8 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { Controller, type UseFormReturn, useForm } from "react-hook-form";
+import {
+  Controller,
+  type UseFormReturn,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { toast } from "sonner";
+import { generateFlashcardBack } from "@/app/actions/flashcards";
 import { TiptapEditor } from "@/components/shared/tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
@@ -27,6 +33,7 @@ import {
   createFlashcardSchema,
   type EditFlashcardForm,
   editFlashcardSchema,
+  hasRichTextContent,
 } from "@/features/flashcards/validation";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
@@ -75,6 +82,7 @@ export function FlashcardDialogForm({
   );
   const tErrors = useTranslations("ServerActions");
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [isGeneratingBack, setIsGeneratingBack] = useState(false);
   const form = useFlashcardForm(mode, values);
 
   useEffect(() => {
@@ -111,17 +119,22 @@ export function FlashcardDialogForm({
   async function onSubmit(data: FlashcardFormValues) {
     const result = await onSubmitAction(data);
     if (result.success) {
-      form.reset(
-        mode === "create"
-          ? "subjectId" in values
+      let resetValues: FlashcardFormValues;
+
+      if (mode === "create") {
+        resetValues =
+          "subjectId" in values
             ? {
                 subjectId: values.subjectId,
                 front: "",
                 back: "",
               }
-            : values
-          : data,
-      );
+            : values;
+      } else {
+        resetValues = data;
+      }
+
+      form.reset(resetValues);
       setDiscardDialogOpen(false);
       await onSuccess?.(result.flashcard);
       onOpenChange(false);
@@ -129,6 +142,39 @@ export function FlashcardDialogForm({
     }
 
     toast.error(resolveActionErrorMessage(result, tErrors));
+  }
+
+  async function handleGenerateBack() {
+    const currentValues = form.getValues();
+
+    if (
+      !("subjectId" in currentValues) ||
+      !hasRichTextContent(currentValues.front) ||
+      hasRichTextContent(currentValues.back) ||
+      isGeneratingBack
+    ) {
+      return;
+    }
+
+    setIsGeneratingBack(true);
+
+    const result = await generateFlashcardBack({
+      subjectId: currentValues.subjectId,
+      front: currentValues.front,
+    });
+
+    setIsGeneratingBack(false);
+
+    if (!result.success) {
+      toast.error(resolveActionErrorMessage(result, tErrors));
+      return;
+    }
+
+    form.setValue("back", result.back, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   }
 
   function handleCtrlEnter() {
@@ -141,6 +187,17 @@ export function FlashcardDialogForm({
 
   const formId =
     mode === "create" ? "form-create-flashcard" : "form-edit-flashcard";
+  const [subjectIdValue, frontValue, backValue] = useWatch({
+    control: form.control,
+    name: ["subjectId", "front", "back"],
+  });
+  const canGenerateBack =
+    typeof subjectIdValue === "string" &&
+    subjectIdValue.length > 0 &&
+    hasRichTextContent(frontValue ?? "") &&
+    !hasRichTextContent(backValue ?? "") &&
+    !isGeneratingBack &&
+    !form.formState.isSubmitting;
 
   return (
     <>
@@ -181,9 +238,25 @@ export function FlashcardDialogForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-back`}>
-                      {t("field_back")}
-                    </FieldLabel>
+                    <div className="flex items-center justify-between gap-3">
+                      <FieldLabel htmlFor={`${formId}-back`}>
+                        {t("field_back")}
+                      </FieldLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleGenerateBack()}
+                        disabled={!canGenerateBack}
+                      >
+                        {isGeneratingBack ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : null}
+                        {isGeneratingBack
+                          ? t("generating_back")
+                          : t("generate_back")}
+                      </Button>
+                    </div>
                     <TiptapEditor
                       value={field.value ?? ""}
                       onChange={field.onChange}
@@ -201,7 +274,7 @@ export function FlashcardDialogForm({
               <Button
                 type="submit"
                 form={formId}
-                disabled={form.formState.isSubmitting}
+                disabled={form.formState.isSubmitting || isGeneratingBack}
                 className="w-full"
               >
                 {form.formState.isSubmitting ? (

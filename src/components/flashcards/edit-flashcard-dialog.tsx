@@ -6,17 +6,18 @@ import type { EditFlashcardForm } from "@/features/flashcards/validation";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 interface EditFlashcardDialogProps {
-  flashcard: Pick<FlashcardEntity, "id" | "front" | "back">;
+  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
 }
 
 function getEditFlashcardFormValues(
-  flashcard: Pick<FlashcardEntity, "id" | "front" | "back">,
+  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">,
 ): EditFlashcardForm {
   return {
     id: flashcard.id,
+    subjectId: flashcard.subjectId,
     front: flashcard.front,
     back: flashcard.back,
   };
