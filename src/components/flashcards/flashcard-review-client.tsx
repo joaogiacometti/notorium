@@ -33,6 +33,7 @@ import {
 import {
   applyReviewedFlashcardToState,
   mergeFlashcardReviewStates,
+  replaceFlashcardInReviewState,
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
@@ -90,12 +91,12 @@ export function FlashcardReviewClient({
       })
     : null;
 
-  async function refreshReviewState() {
-    const nextState = await getFlashcardReviewState({
-      subjectId,
-      limit: reviewBatchLimit,
-    });
-    setReviewState(nextState);
+  function handleFlashcardUpdated(
+    updatedFlashcard: FlashcardReviewState["cards"][number],
+  ) {
+    setReviewState((currentState) =>
+      replaceFlashcardInReviewState(currentState, updatedFlashcard),
+    );
     setRevealed(false);
   }
 
@@ -316,7 +317,7 @@ export function FlashcardReviewClient({
           flashcard={currentCard}
           open={editOpen}
           onOpenChange={setEditOpen}
-          onUpdated={refreshReviewState}
+          onUpdated={handleFlashcardUpdated}
         />
       ) : null}
     </div>

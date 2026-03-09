@@ -82,6 +82,26 @@ export function mergeFlashcardReviewStates(
   };
 }
 
+export function replaceFlashcardInReviewState(
+  state: FlashcardReviewState,
+  flashcard: FlashcardReviewEntity,
+): FlashcardReviewState {
+  const cardIndex = state.cards.findIndex((card) => card.id === flashcard.id);
+
+  if (cardIndex === -1) {
+    return state;
+  }
+
+  const cards = [...state.cards];
+  cards[cardIndex] = flashcard;
+
+  return {
+    cards,
+    summary: state.summary,
+    scheduler: state.scheduler,
+  };
+}
+
 export function shouldRefillFlashcardReviewState(
   state: FlashcardReviewState,
   threshold: number = defaultReviewRefillThreshold,

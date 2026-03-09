@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyReviewedFlashcardToState,
   mergeFlashcardReviewStates,
+  replaceFlashcardInReviewState,
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
@@ -143,6 +144,48 @@ describe("mergeFlashcardReviewStates", () => {
       "card-3",
     ]);
     expect(nextState.summary).toEqual(incoming.summary);
+  });
+});
+
+describe("replaceFlashcardInReviewState", () => {
+  it("replaces the matching card without changing queue order", () => {
+    const state = makeState(
+      [
+        makeCard("card-1", new Date("2026-03-07T11:00:00.000Z")),
+        makeCard("card-2", new Date("2026-03-07T11:05:00.000Z")),
+      ],
+      2,
+    );
+
+    const nextState = replaceFlashcardInReviewState(
+      state,
+      makeCard("card-1", new Date("2026-03-07T11:00:00.000Z"), {
+        front: "<p>updated front</p>",
+        back: "<p>updated back</p>",
+      }),
+    );
+
+    expect(nextState.cards.map((card) => card.id)).toEqual([
+      "card-1",
+      "card-2",
+    ]);
+    expect(nextState.cards[0]?.front).toBe("<p>updated front</p>");
+    expect(nextState.cards[0]?.back).toBe("<p>updated back</p>");
+    expect(nextState.summary).toEqual(state.summary);
+  });
+
+  it("returns the current state when the flashcard is not in the queue", () => {
+    const state = makeState(
+      [makeCard("card-1", new Date("2026-03-07T11:00:00.000Z"))],
+      1,
+    );
+
+    const nextState = replaceFlashcardInReviewState(
+      state,
+      makeCard("card-2", new Date("2026-03-07T11:05:00.000Z")),
+    );
+
+    expect(nextState).toBe(state);
   });
 });
 
