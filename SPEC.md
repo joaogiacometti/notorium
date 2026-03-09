@@ -1,10 +1,11 @@
 # Notorium — Product Specification
 
-## How This File Works
+## Document Scope
 
-- This file defines the current product behavior and constraints.
+- This file is the source of truth for current product behavior, UX rules, feature constraints, and acceptance criteria.
 - Keep it stable and concise.
-- Do not track future ideas, minor refactors, or bug-fix history here.
+- Do not use this file for contributor workflow, coding conventions, setup instructions, or deployment steps.
+- Do not track future ideas, refactor history, or bug-fix history here.
 
 ## Product Goal
 
@@ -14,7 +15,7 @@ Notorium helps students organize academic work in one place by combining subject
 
 Students who want a private, lightweight study management workspace.
 
-## Core Scope (Current)
+## Core Scope
 
 ### Localization
 
@@ -29,34 +30,55 @@ Students who want a private, lightweight study management workspace.
 - New accounts start with pending access status.
 - Only approved users can access authenticated app routes and server actions.
 - Blocked and pending users are denied sign in with an access-status error.
-- Admin users can manage user access status (pending, approved, blocked) from an Admin Panel in the account menu.
+- Admin users can manage user access status (`pending`, `approved`, `blocked`) from an Admin Panel in the account menu.
 
 ### Subjects
 
 - Create, read, update, and delete subjects.
 - Archive and restore subjects.
-- Subject fields: name, optional description.
-
-### Flashcards
-
-- Create, read, update, and delete flashcards per subject.
-- Flashcard fields: front and back text.
-- Flashcard rich text renders images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax.
-- Unsupported relative or local media references degrade to plain text instead of rendering as images.
-- Flashcards are displayed inline in subject detail in a collapsed section.
-- Subject flashcards are loaded when the section is expanded.
-- Flashcards have a dedicated detail page nested under subject routes.
-- Global review page with spaced repetition queue.
-- Review answers: Again, Hard, Good, Easy.
-- Review shortcuts on the review page: `Enter` reveals the back or grades Good, and `1` to `4` map to Again, Hard, Good, and Easy after reveal.
-- Scheduler: memory-state spaced repetition with learning/relearning stages, stored review logs, and per-user parameter tuning.
+- Subject fields: name and optional description.
 
 ### Notes
 
 - Create, read, update, and delete notes per subject.
-- Rich text editing and rendering for note content.
-- Note content renders images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax.
+- Notes use rich text editing and rendering.
+- Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, and other shared editor formatting exposed by the app.
+- Note content renders images from:
+  - pasted direct image URLs
+  - supported Imgur share links
+  - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
+
+### Flashcards
+
+- Create, read, update, and delete flashcards per subject.
+- Flashcard fields: front and back rich text.
+- Flashcard rich text supports the same shared editor capabilities as notes, including syntax-highlighted code blocks and supported image rendering.
+- Flashcard content renders images from:
+  - pasted direct image URLs
+  - supported Imgur share links
+  - Markdown image syntax
+- Unsupported relative or local media references degrade to plain text instead of rendering as images.
+- Flashcards are displayed inline in subject detail in a collapsed section.
+- Subject flashcards are loaded when the section is expanded.
+- Flashcards have a dedicated detail page nested under subject routes.
+- Subject detail flashcards support importing Anki `.txt` exports into the current subject.
+- Supported scheduling metadata from Anki imports is preserved when present.
+
+### Flashcard Review
+
+- Global review page with a spaced repetition queue.
+- Review answers are `Again`, `Hard`, `Good`, and `Easy`.
+- Review uses a memory-state scheduler with learning and relearning stages.
+- Review logs are stored per user.
+- Review parameters support per-user tuning.
+- Keyboard shortcuts on the review screen:
+  - `Enter` reveals the back when hidden.
+  - `Enter` grades `Good` after the back is shown.
+  - `1` grades `Again` after reveal.
+  - `2` grades `Hard` after reveal.
+  - `3` grades `Good` after reveal.
+  - `4` grades `Easy` after reveal.
 
 ### Attendance
 
@@ -67,18 +89,18 @@ Students who want a private, lightweight study management workspace.
 ### Assessments
 
 - Create, read, update, and delete assessments per subject.
-- Assessment fields: title, optional description, type, status, due date, optional score, optional weight.
-- Pending/overdue/completed states in UI.
+- Assessment fields: title, optional description, type, status, due date, optional score, and optional weight.
+- Pending, overdue, and completed states are shown in the UI.
 - Subject average from completed assessments with score:
-  - Weighted average if at least one valid weight exists.
-  - Simple average otherwise.
+  - weighted average if at least one valid weight exists
+  - simple average otherwise
 
 ### Global Search
 
-- Search subjects, notes, and flashcards by text (case-insensitive).
+- Search subjects, notes, and flashcards by text with case-insensitive matching.
 - Flashcard search results navigate to the flashcard detail page.
-- Search is user-scoped and accessible from navbar.
-- Empty search returns user data without text filtering (capped by configured result limits).
+- Search is user-scoped and accessible from the navbar.
+- Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
 
 ### Profile
@@ -86,17 +108,17 @@ Students who want a private, lightweight study management workspace.
 - View account details.
 - Update display name.
 - Admin-only access management page to approve, block, or set pending for users.
-- Export all user data as JSON (subjects, notes, attendance, assessments, flashcards).
-- Export template JSON with subject structure only (excludes notes, attendance records, and flashcards).
+- Export full user data as JSON, including subjects, notes, attendance, assessments, flashcards, and flashcard review settings.
+- Export template JSON with subject structure only, excluding notes, attendance records, and flashcards.
 - Import user data from a previous Notorium export.
 - Delete account and all user-owned data.
 
 ### UI/UX Baseline
 
-- Responsive layout for desktop/mobile.
-- Loading states/skeletons.
-- Toast feedback for mutation success/errors.
-- Theme toggle (light/dark/system).
+- Responsive layout for desktop and mobile.
+- Loading states and skeletons.
+- Toast feedback for mutation success and error states.
+- Theme toggle with `light`, `dark`, and `system`.
 - Custom not-found page.
 
 ## Resource Limits
@@ -109,29 +131,29 @@ Students who want a private, lightweight study management workspace.
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.
-- A user can only access or mutate their own subjects, notes, attendance records, and assessments.
-- Data export/import and account deletion operations must enforce ownership checks server-side.
+- A user can only access or mutate their own subjects, notes, flashcards, attendance records, and assessments.
+- Data export, import, and account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
 
 - `user`
-  - `id`, `name`, `email`, `accessStatus` (`pending` | `approved` | `blocked`), `isAdmin`, timestamps.
+  - `id`, `name`, `email`, `accessStatus` (`pending` | `approved` | `blocked`), `isAdmin`, timestamps
 - `subject`
-  - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`.
+  - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`
 - `flashcard`
-  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`.
+  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
-  - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, optimization timestamps.
+  - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, optimization timestamps
 - `flashcard_review_log`
-  - `id`, `flashcardId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps.
+  - `id`, `flashcardId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps
 - `note`
-  - `id`, `title`, `content`, `subjectId`, timestamps, `userId`.
+  - `id`, `title`, `content`, `subjectId`, timestamps, `userId`
 - `attendance_miss`
-  - `id`, `missDate`, `subjectId`, timestamps, `userId`.
+  - `id`, `missDate`, `subjectId`, timestamps, `userId`
 - `assessment`
-  - `id`, `title`, `description`, `type`, `status`, `dueDate`, `score`, `weight`, `subjectId`, timestamps, `userId`.
+  - `id`, `title`, `description`, `type`, `status`, `dueDate`, `score`, `weight`, `subjectId`, timestamps, `userId`
 
-## Out of Scope (Current)
+## Out of Scope
 
 - Real-time collaboration and sharing.
 - Calendar integrations.

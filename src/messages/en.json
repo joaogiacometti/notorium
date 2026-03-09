@@ -550,6 +550,7 @@
     "strikethrough": "Strikethrough",
     "highlight": "Highlight",
     "inline_code": "Inline Code",
+    "code_block": "Code Block",
     "heading_1": "Heading 1",
     "heading_2": "Heading 2",
     "heading_3": "Heading 3",

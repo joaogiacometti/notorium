@@ -1,5 +1,6 @@
 "use client";
 
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import TaskItem from "@tiptap/extension-task-item";
@@ -9,6 +10,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useState } from "react";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { resolveSharedEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
+import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
 import { cn } from "@/lib/utils";
 
 interface TiptapRendererProps {
@@ -27,6 +29,10 @@ export function TiptapRenderer({
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        defaultLanguage: "plaintext",
+        lowlight: tiptapLowlight,
       }),
       Highlight,
       Image.configure({ allowBase64: false }),

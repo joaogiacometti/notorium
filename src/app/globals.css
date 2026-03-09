@@ -225,6 +225,83 @@
   @apply bg-transparent p-0;
 }
 
+.tiptap-content .hljs,
+.tiptap-wrapper .tiptap .hljs {
+  @apply block overflow-x-auto bg-transparent text-foreground;
+}
+
+.tiptap-content .hljs-comment,
+.tiptap-content .hljs-quote,
+.tiptap-wrapper .tiptap .hljs-comment,
+.tiptap-wrapper .tiptap .hljs-quote {
+  @apply text-muted-foreground italic;
+}
+
+.tiptap-content .hljs-keyword,
+.tiptap-content .hljs-selector-tag,
+.tiptap-content .hljs-literal,
+.tiptap-content .hljs-section,
+.tiptap-content .hljs-link,
+.tiptap-wrapper .tiptap .hljs-keyword,
+.tiptap-wrapper .tiptap .hljs-selector-tag,
+.tiptap-wrapper .tiptap .hljs-literal,
+.tiptap-wrapper .tiptap .hljs-section,
+.tiptap-wrapper .tiptap .hljs-link {
+  color: color-mix(in oklab, var(--foreground) 82%, var(--chart-3));
+}
+
+.tiptap-content .hljs-string,
+.tiptap-content .hljs-title,
+.tiptap-content .hljs-name,
+.tiptap-content .hljs-attribute,
+.tiptap-content .hljs-symbol,
+.tiptap-content .hljs-bullet,
+.tiptap-content .hljs-addition,
+.tiptap-wrapper .tiptap .hljs-string,
+.tiptap-wrapper .tiptap .hljs-title,
+.tiptap-wrapper .tiptap .hljs-name,
+.tiptap-wrapper .tiptap .hljs-attribute,
+.tiptap-wrapper .tiptap .hljs-symbol,
+.tiptap-wrapper .tiptap .hljs-bullet,
+.tiptap-wrapper .tiptap .hljs-addition {
+  color: color-mix(in oklab, var(--foreground) 78%, var(--chart-2));
+}
+
+.tiptap-content .hljs-number,
+.tiptap-content .hljs-meta,
+.tiptap-content .hljs-variable,
+.tiptap-content .hljs-template-variable,
+.tiptap-content .hljs-type,
+.tiptap-content .hljs-params,
+.tiptap-content .hljs-attr,
+.tiptap-wrapper .tiptap .hljs-number,
+.tiptap-wrapper .tiptap .hljs-meta,
+.tiptap-wrapper .tiptap .hljs-variable,
+.tiptap-wrapper .tiptap .hljs-template-variable,
+.tiptap-wrapper .tiptap .hljs-type,
+.tiptap-wrapper .tiptap .hljs-params,
+.tiptap-wrapper .tiptap .hljs-attr {
+  color: color-mix(in oklab, var(--foreground) 74%, var(--chart-1));
+}
+
+.tiptap-content .hljs-regexp,
+.tiptap-content .hljs-selector-attr,
+.tiptap-content .hljs-selector-pseudo,
+.tiptap-wrapper .tiptap .hljs-regexp,
+.tiptap-wrapper .tiptap .hljs-selector-attr,
+.tiptap-wrapper .tiptap .hljs-selector-pseudo {
+  color: color-mix(in oklab, var(--foreground) 78%, var(--chart-5));
+}
+
+.tiptap-content .hljs-built_in,
+.tiptap-content .hljs-function,
+.tiptap-content .hljs-class,
+.tiptap-wrapper .tiptap .hljs-built_in,
+.tiptap-wrapper .tiptap .hljs-function,
+.tiptap-wrapper .tiptap .hljs-class {
+  color: color-mix(in oklab, var(--foreground) 78%, var(--chart-4));
+}
+
 .tiptap-content hr,
 .tiptap-wrapper .tiptap hr {
   @apply my-6 border-border;

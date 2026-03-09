@@ -1,15 +1,17 @@
 # Notorium
 
-Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, and assessments in one place with private, user-scoped data.
-The app is localized in English (`en`) and Portuguese (`pt`).
-Notes and flashcards support rich text and can render images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax. Unsupported relative or local media references degrade to plain text instead of rendering as images.
+Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, assessments, and personal search in one place with private, user-scoped data.
 
-On subject detail pages, flashcards are shown in a collapsed section and loaded on first expand.
-Each subject can also import flashcards from Anki `.txt` exports directly into that subject, preserving supported scheduling metadata when present.
-Flashcards also have a dedicated detail page under each subject, and global search results for flashcards open that detail page directly.
-Flashcard review uses a memory-state scheduler with per-user parameter tuning and stored review logs, plus keyboard shortcuts for reveal and grading on the review screen.
-Profile data transfer is available to all users and supports full export/import for subjects, notes, attendance, assessments, flashcards, and flashcard review settings, plus a template export that excludes notes, attendance, and flashcards.
-Account access is approval-based: new users are created as pending, approved users can enter the app, and admins can approve or block users from the Admin Panel in the account menu.
+This document covers project setup, local development, and repository operations. For product behavior, UX rules, and feature acceptance criteria, use `SPEC.md`.
+
+## High-Level Features
+
+- Subject organization
+- Rich text notes and flashcards
+- Flashcard review with spaced repetition
+- Attendance tracking
+- Assessment tracking
+- English (`en`) and Portuguese (`pt`) localization
 
 ## Tech Stack
 
@@ -166,42 +168,30 @@ Defined in `src/env.ts`:
 
 ```text
 src/
-  api/              API route handlers
-  app/              Next.js App Router pages and layouts
-  app/[locale]/     Localized routes (en, pt)
-  app/actions/      Server Actions
-  components/       Feature-first UI components
-  components/ui/    shadcn/ui primitives
+  api/               API route handlers
+  app/               Next.js App Router pages and layouts
+  app/[locale]/      Localized routes (en, pt)
+  app/actions/       Server Actions
+  components/        Feature-first UI components
+  components/ui/     shadcn/ui primitives
   components/shared/ Shared cross-feature UI
   components/navbar/ Global navigation and preferences
-  features/         Feature-scoped queries, mappers, and business logic
-  db/               Drizzle client and schema
-  i18n/             next-intl routing and request config
-  messages/         Translation dictionaries (en.json, pt.json)
-  lib/              Cross-feature infrastructure and shared utilities
-  lib/auth/         Auth server/client, access control, rate limiting
-  lib/server/       Server action helpers, contracts, revalidation
-  lib/editor/       Rich-text and editor-specific helpers
-  lib/dates/        Calendar and date-localization helpers
-  lib/validations/  Shared validation utilities and boundary schemas
-  env.ts            Environment validation
+  features/          Feature-scoped queries, mappers, and business logic
+  db/                Drizzle client and schema
+  i18n/              next-intl routing and request config
+  messages/          Translation dictionaries (en.json, pt.json)
+  lib/               Cross-feature infrastructure and shared utilities
+  env.ts             Environment validation
 ```
-
-Routing and localized pages stay under `src/app/[locale]/`, but reusable domain reads, feature-specific validation schemas, and business rules should move into `src/features/*`. Server Actions should remain thin mutation entrypoints that authenticate, validate, delegate to feature helpers, and revalidate affected paths.
-
-## Localization Rules
-
-- Supported locales are `en` and `pt`.
-- Every user-facing string must be added and maintained in both `src/messages/en.json` and `src/messages/pt.json` with matching key paths.
-- New pages and redirects must stay compatible with locale-prefixed routes under `src/app/[locale]/`.
-- Documentation that defines product behavior (for example `README.md`, `SPEC.md`, `AGENTS.md`) must keep localization requirements explicit and up to date.
 
 ## Database Workflow
 
 When changing the schema:
 
 1. Edit `src/db/schema.ts`
-2. Do not manually edit files in `drizzle/*.sql` or `drizzle/meta/*`.
+2. Do not manually edit files in `drizzle/*.sql` or `drizzle/meta/*`
+3. Run `bun run db:generate`
+4. Run `bun run db:migrate`
 
 ## Quality Checks
 

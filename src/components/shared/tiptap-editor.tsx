@@ -1,6 +1,7 @@
 "use client";
 
 import { Extension } from "@tiptap/core";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -25,6 +26,7 @@ import {
   Minus,
   Quote,
   Redo,
+  SquareCode,
   Strikethrough,
   UnderlineIcon,
   Undo,
@@ -40,6 +42,7 @@ import {
   resolveEmbeddableImageUrl,
   resolveSharedEmbeddableImageUrl,
 } from "@/lib/editor/tiptap-image-url";
+import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
 import { resolvePastedImageUrl } from "@/lib/editor/tiptap-paste-image-url";
 import { cn } from "@/lib/utils";
 
@@ -183,6 +186,13 @@ function EditorToolbar({
       >
         <Code className="size-3.5" />
       </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        isActive={editor.isActive("codeBlock")}
+        title={t("code_block")}
+      >
+        <SquareCode className="size-3.5" />
+      </ToolbarButton>
 
       <Separator orientation="vertical" className="mx-1 h-5" />
 
@@ -298,6 +308,11 @@ export function TiptapEditor({
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        defaultLanguage: "plaintext",
+        enableTabIndentation: true,
+        lowlight: tiptapLowlight,
       }),
       Placeholder.configure({ placeholder: resolvedPlaceholder }),
       Highlight.configure({ multicolor: false }),
