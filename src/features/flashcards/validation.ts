@@ -28,7 +28,9 @@ export const flashcardBackSchema = z
   );
 
 export const createFlashcardSchema = z.object({
-  subjectId: z.string().min(1),
+  subjectId: z
+    .string()
+    .min(1, validationMessage("Validation.flashcards.subjectRequired")),
   front: flashcardFrontSchema,
   back: flashcardBackSchema,
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, FolderKanban, RotateCcw } from "lucide-react";
+import { CalendarDays, FolderKanban, Layers3 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
@@ -18,9 +18,9 @@ const sections = [
     icon: CalendarDays,
   },
   {
-    href: "/flashcards/review",
-    labelKey: "flashcards_review",
-    icon: RotateCcw,
+    href: "/flashcards",
+    labelKey: "flashcards",
+    icon: Layers3,
   },
 ] as const;
 

@@ -44,6 +44,7 @@ import { EditFlashcardDialog } from "./edit-flashcard-dialog";
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;
   subjectId?: string;
+  embedded?: boolean;
 }
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
@@ -65,6 +66,7 @@ const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
 export function FlashcardReviewClient({
   initialState,
   subjectId,
+  embedded = false,
 }: Readonly<FlashcardReviewClientProps>) {
   const t = useTranslations("FlashcardReviewPage");
   const tErrors = useTranslations("ServerActions");
@@ -309,25 +311,35 @@ export function FlashcardReviewClient({
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <div
-        className={`flex min-w-0 items-start gap-4 ${currentCard ? "mb-10" : "mb-6"}`}
-      >
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <RotateCcw className="size-5" />
+    <div
+      className={
+        embedded
+          ? "space-y-6"
+          : "mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8"
+      }
+    >
+      {embedded ? (
+        <p className="text-sm font-medium text-foreground">{dueCountText}</p>
+      ) : (
+        <div
+          className={`flex min-w-0 items-start gap-4 ${currentCard ? "mb-10" : "mb-6"}`}
+        >
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <RotateCcw className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
+              {t("title")}
+            </h1>
+            <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
+              {t("description")}
+            </p>
+            <p className="mt-2 text-sm font-medium text-foreground">
+              {dueCountText}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
-            {t("title")}
-          </h1>
-          <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
-            {t("description")}
-          </p>
-          <p className="mt-2 text-sm font-medium text-foreground">
-            {dueCountText}
-          </p>
-        </div>
-      </div>
+      )}
 
       {reviewContent}
       {currentCard ? (

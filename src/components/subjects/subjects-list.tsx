@@ -27,21 +27,8 @@ export function SubjectsList({
   const isAtLimit = totalSubjects >= LIMITS.maxSubjects;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div>
       <div className="mb-10 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <BookOpen className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
-              {t("title")}
-            </h1>
-            <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
-              {t("description")}
-            </p>
-          </div>
-        </div>
         <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
           <Button variant="outline" className="gap-1.5" asChild>
             <Link href="/subjects/archived">

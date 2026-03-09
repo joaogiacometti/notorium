@@ -29,6 +29,13 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   type CreateFlashcardForm,
   createFlashcardSchema,
   type EditFlashcardForm,
@@ -36,7 +43,10 @@ import {
   hasRichTextContent,
 } from "@/features/flashcards/validation";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
@@ -48,6 +58,7 @@ interface FlashcardDialogFormProps {
   onOpenChange: (open: boolean) => void;
   trigger?: React.ReactNode;
   values: FlashcardFormValues;
+  subjects?: SubjectEntity[];
   onSubmitAction: (
     values: FlashcardFormValues,
   ) => Promise<
@@ -74,6 +85,7 @@ export function FlashcardDialogForm({
   onOpenChange,
   trigger,
   values,
+  subjects,
   onSubmitAction,
   onSuccess,
 }: Readonly<FlashcardDialogFormProps>) {
@@ -209,6 +221,42 @@ export function FlashcardDialogForm({
           </DialogHeader>
           <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">
+              {mode === "create" && subjects && subjects.length > 0 ? (
+                <Controller
+                  name="subjectId"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={`${formId}-subject`}>
+                        {t("field_subject")}
+                      </FieldLabel>
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger
+                          id={`${formId}-subject`}
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue
+                            placeholder={t("field_subject_placeholder")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subjects.map((subject) => (
+                            <SelectItem key={subject.id} value={subject.id}>
+                              {subject.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid ? (
+                        <FieldError errors={[fieldState.error]} />
+                      ) : null}
+                    </Field>
+                  )}
+                />
+              ) : null}
               <Controller
                 name="front"
                 control={form.control}
