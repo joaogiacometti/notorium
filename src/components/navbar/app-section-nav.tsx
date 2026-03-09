@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  CalendarDays,
-  ClipboardList,
-  FolderKanban,
-  RotateCcw,
-} from "lucide-react";
+import { CalendarDays, FolderKanban, RotateCcw } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
@@ -18,13 +13,8 @@ const sections = [
     icon: FolderKanban,
   },
   {
-    href: "/assessments",
-    labelKey: "assessments",
-    icon: ClipboardList,
-  },
-  {
-    href: "/calendar",
-    labelKey: "calendar",
+    href: "/planning",
+    labelKey: "planning",
     icon: CalendarDays,
   },
   {

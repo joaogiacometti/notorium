@@ -2,6 +2,7 @@
   "Navigation": {
     "dashboard": "Painel",
     "subjects": "Matérias",
+    "planning": "Planejamento",
     "flashcards_review": "Revisão",
     "assessments": "Avaliações",
     "calendar": "Calendário",
@@ -230,13 +231,11 @@
     "empty_title": "Nenhuma matéria arquivada",
     "empty_description": "As matérias arquivadas aparecerão aqui."
   },
-  "AssessmentsPage": {
-    "title": "Todas as avaliações",
-    "description": "Visão detalhada de todas as matérias com filtros globais."
-  },
-  "CalendarPage": {
-    "title": "Calendário",
-    "description": "Avaliações e faltas em uma linha do tempo."
+  "PlanningPage": {
+    "title": "Planejamento",
+    "description": "Alterne entre o gerenciamento de avaliações e sua linha do tempo no calendário.",
+    "assessments": "Avaliações",
+    "calendar": "Calendário"
   },
   "CalendarView": {
     "title": "Calendário",

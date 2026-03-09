@@ -2,6 +2,7 @@
   "Navigation": {
     "dashboard": "Dashboard",
     "subjects": "Subjects",
+    "planning": "Planning",
     "flashcards_review": "Review",
     "assessments": "Assessments",
     "calendar": "Calendar",
@@ -230,13 +231,11 @@
     "empty_title": "No archived subjects",
     "empty_description": "Archived subjects will show up here."
   },
-  "AssessmentsPage": {
-    "title": "All Assessments",
-    "description": "Detailed view across all subjects with global filters."
-  },
-  "CalendarPage": {
-    "title": "Calendar",
-    "description": "Assessments and attendance misses on a timeline."
+  "PlanningPage": {
+    "title": "Planning",
+    "description": "Switch between assessment management and your calendar timeline.",
+    "assessments": "Assessments",
+    "calendar": "Calendar"
   },
   "CalendarView": {
     "title": "Calendar",
