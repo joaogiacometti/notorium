@@ -3,10 +3,11 @@ import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
 import { createClient as createRedisClient, type RedisClientType } from "redis";
 import { appEnv } from "@/env";
+import { LIMITS } from "@/lib/config/limits";
 
-const authRateLimitMaxAttempts = appEnv.AUTH_RATE_LIMIT_MAX_ATTEMPTS;
-const authRateLimitWindowSeconds = appEnv.AUTH_RATE_LIMIT_WINDOW_SECONDS;
-const authRateLimitPrefix = appEnv.AUTH_RATE_LIMIT_PREFIX;
+const authRateLimitMaxAttempts = LIMITS.authRateLimitMaxAttempts;
+const authRateLimitWindowSeconds = LIMITS.authRateLimitWindowSeconds;
+const authRateLimitPrefix = LIMITS.authRateLimitPrefix;
 
 const authRateLimit = (() => {
   if (appEnv.RATE_LIMIT_BACKEND !== "upstash") {
@@ -19,10 +20,10 @@ const authRateLimit = (() => {
       token: appEnv.UPSTASH_REDIS_REST_TOKEN,
     }),
     limiter: Ratelimit.slidingWindow(
-      appEnv.AUTH_RATE_LIMIT_MAX_ATTEMPTS,
-      `${appEnv.AUTH_RATE_LIMIT_WINDOW_SECONDS} s`,
+      authRateLimitMaxAttempts,
+      `${authRateLimitWindowSeconds} s`,
     ),
-    prefix: appEnv.AUTH_RATE_LIMIT_PREFIX,
+    prefix: authRateLimitPrefix,
   });
 })();
 
@@ -39,7 +40,7 @@ function extractCandidateIp(headersList: Headers) {
     ?.split(",")
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
-  const trustedProxyCount = appEnv.TRUSTED_PROXY_COUNT;
+  const trustedProxyCount = LIMITS.trustedProxyCount;
   const forwardedForIndex = Math.max(
     0,
     (forwardedForChain?.length ?? 1) - trustedProxyCount - 1,

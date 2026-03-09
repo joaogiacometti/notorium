@@ -3,7 +3,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard } from "@/db/schema";
-import { appEnv } from "@/env";
 import {
   mapAnkiImportCardToFlashcardInsert,
   parseAnkiImportFile,
@@ -135,7 +134,7 @@ export async function importAnkiFlashcards(
     return actionError("flashcards.import.invalidFormat");
   }
 
-  if (file.size === 0 || file.size > appEnv.MAX_IMPORT_BYTES) {
+  if (file.size === 0 || file.size > LIMITS.maxImportBytes) {
     return actionError("flashcards.import.invalidFormat");
   }
 

@@ -11,15 +11,6 @@ const appEnvSchema = z
     UPSTASH_REDIS_REST_URL: z.url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
     REDIS_URL: z.url().optional(),
-    AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
-    AUTH_RATE_LIMIT_WINDOW_SECONDS: z.coerce
-      .number()
-      .int()
-      .positive()
-      .default(60),
-    AUTH_RATE_LIMIT_PREFIX: z.string().min(1).default("ratelimit:auth"),
-    MAX_IMPORT_BYTES: z.coerce.number().int().positive().default(1048576),
-    TRUSTED_PROXY_COUNT: z.coerce.number().int().nonnegative().default(1),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .optional()

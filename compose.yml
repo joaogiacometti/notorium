@@ -63,8 +63,6 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND}
       REDIS_URL: redis://redis:6379
-      MAX_IMPORT_BYTES: ${MAX_IMPORT_BYTES:-1048576}
-      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-1}
     ports:
       - "${APP_PORT:-3000}:3000"
     read_only: true

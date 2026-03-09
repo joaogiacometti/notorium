@@ -141,11 +141,6 @@ Defined in `src/env.ts`:
 | `UPSTASH_REDIS_REST_URL`         | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
 | `UPSTASH_REDIS_REST_TOKEN`       | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
 | `REDIS_URL`                      | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                  |
-| `AUTH_RATE_LIMIT_MAX_ATTEMPTS`   | No          | Override max auth attempts before blocking (default `10`)                                 |
-| `AUTH_RATE_LIMIT_WINDOW_SECONDS` | No          | Override auth rate-limit window in seconds (default `60`)                                 |
-| `AUTH_RATE_LIMIT_PREFIX`         | No          | Override auth rate-limit Redis key prefix (default `ratelimit:auth`)                      |
-| `MAX_IMPORT_BYTES`               | No          | Max accepted JSON import payload size in bytes (default `1048576`)                        |
-| `TRUSTED_PROXY_COUNT`            | No          | Number of trusted proxies for forwarded client IP parsing (default `1`)                   |
 
 ## Scripts
 

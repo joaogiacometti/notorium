@@ -8,7 +8,6 @@ import {
   note,
   subject,
 } from "@/db/schema";
-import { appEnv } from "@/env";
 import {
   type ImportData,
   importDataSchema,
@@ -261,7 +260,7 @@ export async function importDataForUser(
   const rawPayload = JSON.stringify(raw);
   const importBytes = new TextEncoder().encode(rawPayload).length;
 
-  if (importBytes > appEnv.MAX_IMPORT_BYTES) {
+  if (importBytes > LIMITS.maxImportBytes) {
     return actionError("dataTransfer.invalidImportFormat");
   }
 
