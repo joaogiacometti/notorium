@@ -133,7 +133,7 @@
 /* Tiptap shared prose styles */
 .tiptap-content,
 .tiptap-wrapper .tiptap {
-  @apply min-w-0 break-words leading-relaxed text-foreground;
+  @apply min-w-0 wrap-break-word leading-relaxed text-foreground;
   overflow-wrap: anywhere;
   overflow-x: auto;
 }
