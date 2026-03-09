@@ -45,13 +45,18 @@ export async function getDueFlashcardsForUser(
       : defaultDueLimit;
 
   return db
-    .select({ flashcard })
+    .select({ flashcard, subjectName: subject.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(and(...getDueFilters(userId, now, options)))
     .orderBy(asc(flashcard.dueAt), asc(flashcard.createdAt))
     .limit(limit)
-    .then((rows) => rows.map((row) => row.flashcard));
+    .then((rows) =>
+      rows.map((row) => ({
+        ...row.flashcard,
+        subjectName: row.subjectName,
+      })),
+    );
 }
 
 export async function getFlashcardReviewSummaryForUser(
@@ -114,7 +119,7 @@ export async function getReviewableFlashcardForUser(
   flashcardId: string,
 ) {
   return db
-    .select({ flashcard })
+    .select({ flashcard, subjectName: subject.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(
@@ -126,5 +131,12 @@ export async function getReviewableFlashcardForUser(
       ),
     )
     .limit(1)
-    .then((rows) => rows[0]?.flashcard ?? null);
+    .then((rows) =>
+      rows[0]
+        ? {
+            ...rows[0].flashcard,
+            subjectName: rows[0].subjectName,
+          }
+        : null,
+    );
 }

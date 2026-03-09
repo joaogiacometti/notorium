@@ -37,7 +37,9 @@ export type FlashcardReviewEntity = Pick<
   | "lastReviewedAt"
   | "reviewCount"
   | "lapseCount"
->;
+> & {
+  subjectName?: string;
+};
 
 export interface FlashcardReviewSummary {
   dueCount: number;

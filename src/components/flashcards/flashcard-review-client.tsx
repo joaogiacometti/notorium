@@ -194,85 +194,104 @@ export function FlashcardReviewClient({
   if (currentCard) {
     reviewContent = (
       <Card>
-        <CardContent className="space-y-4 pt-0">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                {t("front_label")}
-              </h2>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setEditOpen(true)}
-                disabled={isPending}
-              >
-                <Pencil className="size-3.5" />
-                {t("edit")}
-              </Button>
+        <CardContent className="p-0">
+          <div className="max-h-[55svh] overflow-y-auto px-6 pt-0 sm:max-h-[60svh] sm:px-8">
+            <div className="mx-auto w-full max-w-3xl space-y-4 pb-4">
+              <div className="space-y-2">
+                {currentCard.subjectName ? (
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {currentCard.subjectName}
+                  </p>
+                ) : null}
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-semibold text-muted-foreground">
+                    {t("front_label")}
+                  </h2>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setEditOpen(true)}
+                    disabled={isPending}
+                  >
+                    <Pencil className="size-3.5" />
+                    {t("edit")}
+                  </Button>
+                </div>
+                <div className="max-w-3xl">
+                  <TiptapRenderer
+                    content={currentCard.front}
+                    className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              {revealed && (
+                <div className="space-y-2 border-t border-border/60 pt-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground">
+                    {t("back_label")}
+                  </h3>
+                  <div className="max-w-3xl">
+                    <TiptapRenderer
+                      content={currentCard.back}
+                      className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            <TiptapRenderer
-              content={currentCard.front}
-              className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-            />
           </div>
 
-          {revealed && (
-            <div className="space-y-2 border-t border-border/60 pt-3">
-              <h3 className="text-sm font-semibold text-muted-foreground">
-                {t("back_label")}
-              </h3>
-              <TiptapRenderer
-                content={currentCard.back}
-                className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-              />
-            </div>
-          )}
+          <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
+            <div className="mx-auto w-full max-w-3xl">
+              {revealed ? (
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+                  {reviewGrades.map((grade) => {
+                    const Icon = gradeIcons[grade];
+                    const isActivePendingGrade = pendingGrade === grade;
 
-          {revealed ? (
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
-              {reviewGrades.map((grade) => {
-                const Icon = gradeIcons[grade];
-                const isActivePendingGrade = pendingGrade === grade;
-
-                return (
-                  <Button
-                    key={grade}
-                    variant="outline"
-                    size="lg"
-                    onClick={() => handleGrade(grade)}
-                    disabled={isPending}
-                    className={`h-auto min-h-14 w-full min-w-0 border-2 px-1 py-0.75 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
-                  >
-                    <span className="flex min-w-0 flex-col items-center justify-center gap-px text-center">
-                      <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-                        {isActivePendingGrade ? (
-                          <Loader2 className="size-3.5 animate-spin sm:size-4" />
-                        ) : (
-                          <Icon className="hidden size-4 sm:inline-flex" />
-                        )}
-                        <span className="truncate">{t(`grade_${grade}`)}</span>
-                      </span>
-                      {previewLabels ? (
-                        <span className="text-pretty whitespace-normal wrap-break-word text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
-                          {previewLabels[grade].durationText}
+                    return (
+                      <Button
+                        key={grade}
+                        variant="outline"
+                        size="lg"
+                        onClick={() => handleGrade(grade)}
+                        disabled={isPending}
+                        className={`h-auto min-h-14 w-full min-w-0 border-2 px-1 py-0.75 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
+                      >
+                        <span className="flex min-w-0 flex-col items-center justify-center gap-px text-center">
+                          <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+                            {isActivePendingGrade ? (
+                              <Loader2 className="size-3.5 animate-spin sm:size-4" />
+                            ) : (
+                              <Icon className="hidden size-4 sm:inline-flex" />
+                            )}
+                            <span className="truncate">
+                              {t(`grade_${grade}`)}
+                            </span>
+                          </span>
+                          {previewLabels ? (
+                            <span className="text-pretty whitespace-normal wrap-break-word text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
+                              {previewLabels[grade].durationText}
+                            </span>
+                          ) : null}
                         </span>
-                      ) : null}
-                    </span>
-                  </Button>
-                );
-              })}
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setRevealed(true)}
+                  disabled={isPending}
+                  className="w-full"
+                >
+                  {t("show_answer")}
+                </Button>
+              )}
             </div>
-          ) : (
-            <Button
-              onClick={() => setRevealed(true)}
-              disabled={isPending}
-              className="w-full"
-            >
-              {t("show_answer")}
-            </Button>
-          )}
+          </div>
         </CardContent>
       </Card>
     );
