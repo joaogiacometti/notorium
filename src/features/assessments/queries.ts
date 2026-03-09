@@ -1,7 +1,7 @@
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
-import type { AssessmentEntity } from "@/lib/api/contracts";
+import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
 export async function getAssessmentsForUser(
   userId: string,

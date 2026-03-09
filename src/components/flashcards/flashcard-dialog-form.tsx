@@ -1,0 +1,223 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { Controller, type UseFormReturn, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { TiptapEditor } from "@/components/shared/tiptap-editor";
+import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import {
+  type CreateFlashcardForm,
+  createFlashcardSchema,
+  type EditFlashcardForm,
+  editFlashcardSchema,
+} from "@/features/flashcards/validation";
+import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type { ActionErrorResult } from "@/lib/server/server-action-errors";
+import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+
+type FlashcardFormValues = CreateFlashcardForm | EditFlashcardForm;
+
+interface FlashcardDialogFormProps {
+  mode: "create" | "edit";
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger?: React.ReactNode;
+  values: FlashcardFormValues;
+  onSubmitAction: (
+    values: FlashcardFormValues,
+  ) => Promise<
+    { success: true; flashcard?: FlashcardEntity } | ActionErrorResult
+  >;
+  onSuccess?: (flashcard?: FlashcardEntity) => void | Promise<void>;
+}
+
+function useFlashcardForm(
+  mode: "create" | "edit",
+  values: FlashcardFormValues,
+): UseFormReturn<FlashcardFormValues> {
+  return useForm<FlashcardFormValues>({
+    resolver: zodResolver(
+      mode === "create" ? createFlashcardSchema : editFlashcardSchema,
+    ),
+    defaultValues: values,
+  });
+}
+
+export function FlashcardDialogForm({
+  mode,
+  open,
+  onOpenChange,
+  trigger,
+  values,
+  onSubmitAction,
+  onSuccess,
+}: Readonly<FlashcardDialogFormProps>) {
+  const t = useTranslations(
+    mode === "create" ? "CreateFlashcardDialog" : "EditFlashcardDialog",
+  );
+  const tErrors = useTranslations("ServerActions");
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const form = useFlashcardForm(mode, values);
+
+  useEffect(() => {
+    form.reset(values);
+  }, [form, values]);
+
+  useBeforeUnload(
+    open && form.formState.isDirty && !form.formState.isSubmitting,
+  );
+
+  function handleDiscardChanges() {
+    form.reset(values);
+    setDiscardDialogOpen(false);
+    onOpenChange(false);
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      setDiscardDialogOpen(false);
+      onOpenChange(true);
+      return;
+    }
+
+    if (form.formState.isDirty && !form.formState.isSubmitting) {
+      setDiscardDialogOpen(true);
+      return;
+    }
+
+    form.reset(values);
+    setDiscardDialogOpen(false);
+    onOpenChange(false);
+  }
+
+  async function onSubmit(data: FlashcardFormValues) {
+    const result = await onSubmitAction(data);
+    if (result.success) {
+      form.reset(
+        mode === "create"
+          ? "subjectId" in values
+            ? {
+                subjectId: values.subjectId,
+                front: "",
+                back: "",
+              }
+            : values
+          : data,
+      );
+      setDiscardDialogOpen(false);
+      await onSuccess?.(result.flashcard);
+      onOpenChange(false);
+      return;
+    }
+
+    toast.error(resolveActionErrorMessage(result, tErrors));
+  }
+
+  function handleCtrlEnter() {
+    if (form.formState.isSubmitting) {
+      return;
+    }
+
+    void form.handleSubmit(onSubmit)();
+  }
+
+  const formId =
+    mode === "create" ? "form-create-flashcard" : "form-edit-flashcard";
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
+        <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
+          <DialogHeader>
+            <DialogTitle>{t("title")}</DialogTitle>
+          </DialogHeader>
+          <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
+            <FieldGroup className="gap-4">
+              <Controller
+                name="front"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={`${formId}-front`}>
+                      {t("field_front")}
+                    </FieldLabel>
+                    <TiptapEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      placeholder={t("field_front_placeholder")}
+                      id={`${formId}-front`}
+                      aria-invalid={fieldState.invalid}
+                      contentClassName="min-h-11 max-h-[40svh]"
+                      showToolbar={false}
+                      onCtrlEnter={handleCtrlEnter}
+                    />
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="back"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={`${formId}-back`}>
+                      {t("field_back")}
+                    </FieldLabel>
+                    <TiptapEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      placeholder={t("field_back_placeholder")}
+                      id={`${formId}-back`}
+                      aria-invalid={fieldState.invalid}
+                      onCtrlEnter={handleCtrlEnter}
+                    />
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </Field>
+                )}
+              />
+              <Button
+                type="submit"
+                form={formId}
+                disabled={form.formState.isSubmitting}
+                className="w-full"
+              >
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
+                {t("submit")}
+              </Button>
+            </FieldGroup>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <UnsavedChangesDialog
+        open={discardDialogOpen}
+        onOpenChange={setDiscardDialogOpen}
+        onDiscard={handleDiscardChanges}
+      />
+    </>
+  );
+}

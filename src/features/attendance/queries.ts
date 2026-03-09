@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
-import type { AttendanceMissEntity } from "@/lib/api/contracts";
+import type { AttendanceMissEntity } from "@/lib/server/api-contracts";
 
 export async function getMissesBySubjectForUser(
   userId: string,

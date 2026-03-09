@@ -1,7 +1,7 @@
 import { UserCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { ProfileForm } from "@/components/profile-form";
-import { requireSession } from "@/lib/auth";
+import { ProfileForm } from "@/components/profile/profile-form";
+import { requireSession } from "@/lib/auth/auth";
 
 export default async function ProfilePage() {
   const session = await requireSession();

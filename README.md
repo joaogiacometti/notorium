@@ -170,16 +170,24 @@ src/
   app/              Next.js App Router pages and layouts
   app/[locale]/     Localized routes (en, pt)
   app/actions/      Server Actions
-  components/       Feature and UI components
+  components/       Feature-first UI components
+  components/ui/    shadcn/ui primitives
+  components/shared/ Shared cross-feature UI
+  components/navbar/ Global navigation and preferences
   features/         Feature-scoped queries, mappers, and business logic
   db/               Drizzle client and schema
   i18n/             next-intl routing and request config
   messages/         Translation dictionaries (en.json, pt.json)
   lib/              Cross-feature infrastructure and shared utilities
+  lib/auth/         Auth server/client, access control, rate limiting
+  lib/server/       Server action helpers, contracts, revalidation
+  lib/editor/       Rich-text and editor-specific helpers
+  lib/dates/        Calendar and date-localization helpers
+  lib/validations/  Shared validation utilities and boundary schemas
   env.ts            Environment validation
 ```
 
-Routing and localized pages stay under `src/app/[locale]/`, but reusable domain reads and business rules should move into `src/features/*`. Server Actions should remain thin mutation entrypoints that authenticate, validate, delegate to feature helpers, and revalidate affected paths.
+Routing and localized pages stay under `src/app/[locale]/`, but reusable domain reads, feature-specific validation schemas, and business rules should move into `src/features/*`. Server Actions should remain thin mutation entrypoints that authenticate, validate, delegate to feature helpers, and revalidate affected paths.
 
 ## Localization Rules
 

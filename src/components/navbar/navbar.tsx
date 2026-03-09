@@ -22,8 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/routing";
-import { isAdminUser } from "@/lib/access-control";
-import { getOptionalSession } from "@/lib/auth";
+import { isAdminUser } from "@/lib/auth/access-control";
+import { getOptionalSession } from "@/lib/auth/auth";
 
 export async function Navbar() {
   const session = await getOptionalSession();

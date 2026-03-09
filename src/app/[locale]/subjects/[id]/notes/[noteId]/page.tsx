@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { NoteDetail } from "@/components/note-detail";
+import { NoteDetail } from "@/components/notes/note-detail";
 import { getNoteByIdForUser } from "@/features/notes/queries";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth/auth";
 
 interface NotePageProps {
   params: Promise<{ id: string; noteId: string }>;

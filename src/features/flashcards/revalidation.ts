@@ -1,4 +1,4 @@
-import { revalidatePaths } from "@/lib/revalidation";
+import { revalidatePaths } from "@/lib/server/revalidation";
 
 export function revalidateFlashcardSubjectPaths(subjectId: string) {
   revalidatePaths([`/subjects/${subjectId}`]);

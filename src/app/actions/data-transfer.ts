@@ -5,10 +5,10 @@ import {
   exportDataForUser,
   importDataForUser,
 } from "@/features/data-transfer/service";
-import type { MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import type { ActionErrorResult } from "@/lib/server-action-errors";
-import type { ImportData } from "@/lib/validations/data-transfer";
+import type { ImportData } from "@/features/data-transfer/validation";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import type { MutationResult } from "@/lib/server/api-contracts";
+import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 interface ExportOptions {
   templateOnly?: boolean;

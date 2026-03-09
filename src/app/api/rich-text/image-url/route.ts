@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   isSupportedSharedImageUrl,
   resolveEmbeddableImageUrl,
-} from "@/lib/tiptap-image-url";
+} from "@/lib/editor/tiptap-image-url";
 
 function decodeHtmlEntities(value: string): string {
   return value

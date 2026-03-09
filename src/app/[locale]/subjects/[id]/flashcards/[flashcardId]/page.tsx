@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { FlashcardDetail } from "@/components/flashcard-detail";
+import { FlashcardDetail } from "@/components/flashcards/flashcard-detail";
 import { getFlashcardByIdForUser } from "@/features/flashcards/queries";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth/auth";
 
 interface FlashcardPageProps {
   params: Promise<{ id: string; flashcardId: string }>;

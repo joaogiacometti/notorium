@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { SubjectDetail } from "@/components/subject-detail";
+import { SubjectDetail } from "@/components/subjects/subject-detail";
 import { getAssessmentsBySubjectForUser } from "@/features/assessments/queries";
 import { getMissesBySubjectForUser } from "@/features/attendance/queries";
 import { getNotesBySubjectForUser } from "@/features/notes/queries";
 import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth/auth";
 
 interface SubjectPageProps {
   params: Promise<{ id: string }>;

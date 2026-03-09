@@ -1,12 +1,12 @@
 "use server";
 
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
 import {
   getFlashcardByIdForUser,
   getFlashcardsBySubjectForUser,
 } from "@/features/flashcards/queries";
-import type { FlashcardEntity } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { ensureFsrsSettings } from "@/lib/fsrs-settings";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 export async function getFlashcardsBySubject(
   subjectId: string,

@@ -1,8 +1,8 @@
 import { Shield } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { UserAccessManagementCard } from "@/components/user-access-management-card";
-import { getManagedUsers } from "@/lib/access-control";
-import { requireAdminSession } from "@/lib/auth";
+import { UserAccessManagementCard } from "@/components/admin/user-access-management-card";
+import { getManagedUsers } from "@/lib/auth/access-control";
+import { requireAdminSession } from "@/lib/auth/auth";
 
 export default async function AdminPage() {
   const session = await requireAdminSession();

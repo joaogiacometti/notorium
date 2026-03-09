@@ -1,9 +1,9 @@
-import { SubjectsList } from "@/components/subjects-list";
+import { SubjectsList } from "@/components/subjects/subjects-list";
 import {
   getArchivedSubjectsForUser,
   getSubjectsForUser,
 } from "@/features/subjects/queries";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth/auth";
 
 export default async function SubjectsPage() {
   const session = await requireSession();

@@ -7,11 +7,11 @@ import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
 import { user } from "@/db/schema";
-import { parseActionInput } from "@/lib/action-input";
-import type { MutationResult } from "@/lib/api/contracts";
-import { auth } from "@/lib/auth";
-import { checkAuthRateLimit } from "@/lib/rate-limit";
-import { actionError } from "@/lib/server-action-errors";
+import { auth } from "@/lib/auth/auth";
+import { checkAuthRateLimit } from "@/lib/auth/rate-limit";
+import { parseActionInput } from "@/lib/server/action-input";
+import type { MutationResult } from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 import {
   type LoginForm,
   loginSchema,

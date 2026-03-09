@@ -1,7 +1,7 @@
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
-import type { FlashcardEntity } from "@/lib/api/contracts";
+import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 export async function getFlashcardsBySubjectForUser(
   userId: string,

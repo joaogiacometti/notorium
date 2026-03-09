@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
-import { LoginForm } from "@/components/login-form";
-import { getOptionalSession } from "@/lib/auth";
+import { LoginForm } from "@/components/auth/login-form";
+import { getOptionalSession } from "@/lib/auth/auth";
 
 export default async function Page() {
   const session = await getOptionalSession();

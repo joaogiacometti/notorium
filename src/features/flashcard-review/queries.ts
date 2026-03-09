@@ -1,12 +1,12 @@
 import { and, asc, count, eq, isNull, lte, type SQL } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
   FlashcardReviewSummary,
-} from "@/lib/api/contracts";
-import { ensureFsrsSettings } from "@/lib/fsrs-settings";
+} from "@/lib/server/api-contracts";
 
 export interface GetDueFlashcardsOptions {
   subjectId?: string;

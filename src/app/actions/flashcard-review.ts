@@ -11,24 +11,24 @@ import {
   getReviewableFlashcardForUser,
 } from "@/features/flashcard-review/queries";
 import { revalidateFlashcardReviewSubjectPaths } from "@/features/flashcard-review/revalidation";
-import { parseActionInput } from "@/lib/action-input";
+import {
+  type ReviewFlashcardForm,
+  reviewFlashcardSchema,
+} from "@/features/flashcard-review/validation";
+import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
+import {
+  ensureFsrsSettings,
+  maybeOptimizeFsrsParameters,
+} from "@/features/flashcards/fsrs-settings";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import { parseActionInput } from "@/lib/server/action-input";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
   FlashcardReviewSummary,
   ReviewFlashcardResult,
-} from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { scheduleFlashcardReview } from "@/lib/fsrs";
-import {
-  ensureFsrsSettings,
-  maybeOptimizeFsrsParameters,
-} from "@/lib/fsrs-settings";
-import { actionError } from "@/lib/server-action-errors";
-import {
-  type ReviewFlashcardForm,
-  reviewFlashcardSchema,
-} from "@/lib/validations/flashcard-review";
+} from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 
 export async function getDueFlashcards(
   options: GetDueFlashcardsOptions = {},

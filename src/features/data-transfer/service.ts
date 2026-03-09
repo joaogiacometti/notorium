@@ -9,23 +9,23 @@ import {
   subject,
 } from "@/db/schema";
 import { appEnv } from "@/env";
-import { parseActionInput } from "@/lib/action-input";
-import type { MutationResult } from "@/lib/api/contracts";
+import {
+  type ImportData,
+  importDataSchema,
+} from "@/features/data-transfer/validation";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
   getInitialFlashcardSchedulingState,
   serializeFsrsWeights,
-} from "@/lib/fsrs";
-import { LIMITS } from "@/lib/limits";
+} from "@/features/flashcards/fsrs";
+import { LIMITS } from "@/lib/config/limits";
+import { parseActionInput } from "@/lib/server/action-input";
+import type { MutationResult } from "@/lib/server/api-contracts";
 import {
   type ActionErrorResult,
   actionError,
-} from "@/lib/server-action-errors";
-import {
-  type ImportData,
-  importDataSchema,
-} from "@/lib/validations/data-transfer";
+} from "@/lib/server/server-action-errors";
 
 interface ExportOptions {
   templateOnly?: boolean;

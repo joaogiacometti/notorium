@@ -1,7 +1,7 @@
 import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard, note, subject } from "@/db/schema";
-import type { SearchData } from "@/lib/api/contracts";
+import type { SearchData } from "@/lib/server/api-contracts";
 
 const searchSubjectsLimit = 50;
 const searchNotesLimit = 50;

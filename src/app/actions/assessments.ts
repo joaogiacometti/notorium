@@ -10,12 +10,6 @@ import {
   getAssessmentsForUser,
 } from "@/features/assessments/queries";
 import { revalidateAssessmentPaths } from "@/features/assessments/revalidation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
-import { parseActionInput } from "@/lib/action-input";
-import type { AssessmentEntity, MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { LIMITS } from "@/lib/limits";
-import { actionError } from "@/lib/server-action-errors";
 import {
   type CreateAssessmentForm,
   createAssessmentSchema,
@@ -23,7 +17,16 @@ import {
   deleteAssessmentSchema,
   type EditAssessmentForm,
   editAssessmentSchema,
-} from "@/lib/validations/assessments";
+} from "@/features/assessments/validation";
+import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import { LIMITS } from "@/lib/config/limits";
+import { parseActionInput } from "@/lib/server/action-input";
+import type {
+  AssessmentEntity,
+  MutationResult,
+} from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 
 function getAssessmentMutationValues(
   values: Pick<

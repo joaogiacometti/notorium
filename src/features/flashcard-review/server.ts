@@ -6,13 +6,13 @@ import {
   getFlashcardReviewStateForUser,
   getFlashcardReviewSummaryForUser,
 } from "@/features/flashcard-review/queries";
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
   FlashcardReviewSummary,
-} from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { ensureFsrsSettings } from "@/lib/fsrs-settings";
+} from "@/lib/server/api-contracts";
 
 export async function getDueFlashcards(
   options: GetDueFlashcardsOptions = {},

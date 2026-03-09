@@ -3,12 +3,12 @@
 import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db } from "@/db/index";
 import { assessment, attendanceMiss, subject } from "@/db/schema";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
   SubjectEntity,
-} from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
+} from "@/lib/server/api-contracts";
 
 export interface CalendarData {
   assessments: (AssessmentEntity & { subjectName: string })[];

@@ -1,0 +1,155 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Settings } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { updateAttendanceSettings } from "@/app/actions/attendance";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  type AttendanceSettingsForm,
+  attendanceSettingsSchema,
+} from "@/features/attendance/validation";
+import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+
+interface AttendanceSettingsDialogProps {
+  subjectId: string;
+  totalClasses: number | null;
+  maxMisses: number | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function AttendanceSettingsDialog({
+  subjectId,
+  totalClasses,
+  maxMisses,
+  open,
+  onOpenChange,
+}: Readonly<AttendanceSettingsDialogProps>) {
+  const t = useTranslations("AttendanceSettingsDialog");
+  const tErrors = useTranslations("ServerActions");
+  const form = useForm({
+    resolver: zodResolver(attendanceSettingsSchema),
+    defaultValues: {
+      subjectId,
+      totalClasses: totalClasses ?? 15,
+      maxMisses: maxMisses ?? 4,
+    },
+  });
+
+  async function onSubmit(data: AttendanceSettingsForm) {
+    const result = await updateAttendanceSettings(data);
+    if (result.success) {
+      onOpenChange(false);
+    } else {
+      toast.error(resolveActionErrorMessage(result, tErrors));
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Settings className="size-3.5" />
+          {t("trigger")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
+        </DialogHeader>
+        <form
+          id="form-attendance-settings"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <FieldGroup className="gap-4">
+            <Controller
+              name="totalClasses"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-attendance-total-classes">
+                    {t("total_classes")}
+                  </FieldLabel>
+                  <Input
+                    id="form-attendance-total-classes"
+                    type="number"
+                    min={1}
+                    max={365}
+                    placeholder={t("total_classes_placeholder")}
+                    aria-invalid={fieldState.invalid}
+                    autoFocus
+                    value={field.value}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    name={field.name}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              name="maxMisses"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-attendance-max-misses">
+                    {t("max_misses")}
+                  </FieldLabel>
+                  <Input
+                    id="form-attendance-max-misses"
+                    type="number"
+                    min={0}
+                    max={365}
+                    placeholder={t("max_misses_placeholder")}
+                    aria-invalid={fieldState.invalid}
+                    value={field.value}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    name={field.name}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Button
+              type="submit"
+              form="form-attendance-settings"
+              disabled={form.formState.isSubmitting}
+              className="w-full"
+            >
+              {form.formState.isSubmitting && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {t("submit")}
+            </Button>
+          </FieldGroup>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

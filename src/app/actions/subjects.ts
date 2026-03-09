@@ -17,11 +17,6 @@ import {
   revalidateSubjectDetailPaths,
   revalidateSubjectListPaths,
 } from "@/features/subjects/revalidation";
-import { parseActionInput } from "@/lib/action-input";
-import type { MutationResult, SubjectEntity } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { LIMITS } from "@/lib/limits";
-import { actionError } from "@/lib/server-action-errors";
 import {
   type ArchiveSubjectForm,
   archiveSubjectSchema,
@@ -33,7 +28,12 @@ import {
   editSubjectSchema,
   type RestoreSubjectForm,
   restoreSubjectSchema,
-} from "@/lib/validations/subjects";
+} from "@/features/subjects/validation";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import { LIMITS } from "@/lib/config/limits";
+import { parseActionInput } from "@/lib/server/action-input";
+import type { MutationResult, SubjectEntity } from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();

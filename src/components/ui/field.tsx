@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { resolveValidationMessage } from "@/lib/validation-messages";
+import { resolveValidationMessage } from "@/lib/validations/validation-messages";
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   return (

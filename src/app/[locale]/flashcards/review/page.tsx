@@ -1,6 +1,6 @@
-import { FlashcardReviewClient } from "@/components/flashcard-review-client";
+import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-client";
 import { getFlashcardReviewState } from "@/features/flashcard-review/server";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth/auth";
 
 interface FlashcardReviewPageProps {
   searchParams: Promise<{ subjectId?: string }>;

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { validationMessage } from "@/lib/validation-messages";
+import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const searchQuerySchema = z
   .string()

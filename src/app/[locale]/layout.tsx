@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Navbar } from "@/components/navbar/navbar";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
-import { QueryProvider } from "@/components/query-provider";
+import { QueryProvider } from "@/components/shared/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { routing } from "@/i18n/routing";
 import "../globals.css";

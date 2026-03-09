@@ -23,11 +23,12 @@ src/
 │   ├── actions/      # Server Actions
 │   ├── api/          # App Router API routes
 │   └── globals.css   # Global styles (Tailwind)
-├── components/       # React components
+├── components/       # Feature-first UI components
 │   ├── ui/           # shadcn/ui primitives (do not edit manually)
-│   ├── navbar/       # Navigation bar, global search, theme
-│   ├── login-form.tsx
-│   └── signup-form.tsx
+│   ├── navbar/       # Global navigation, search, theme, preferences
+│   ├── shared/       # Cross-feature shared components and editors
+│   ├── auth/         # Login and signup forms
+│   └── ...           # Feature folders (subjects, notes, flashcards, etc.)
 ├── features/         # Feature-scoped queries, mappers, business logic
 ├── db/               # Database layer
 │   ├── index.ts      # Drizzle client instance
@@ -35,8 +36,11 @@ src/
 ├── i18n/             # next-intl routing and request setup
 ├── messages/         # Locale dictionaries (en.json, pt.json)
 ├── lib/              # Cross-feature infrastructure
-│   ├── auth.ts       # Better Auth server config
-│   ├── auth-client.ts # Better Auth client
+│   ├── auth/         # Better Auth config, client, access control, rate limiting
+│   ├── server/       # Server action helpers, contracts, revalidation
+│   ├── editor/       # Rich-text and editor helpers
+│   ├── dates/        # Calendar/date helpers
+│   ├── validations/  # Shared validation utilities and boundary schemas
 │   └── utils.ts      # General utilities (cn helper)
 └── env.ts            # Environment variable validation
 ```
@@ -87,7 +91,7 @@ src/
 
 - Use **Server Components** by default. Only add `"use client"` when necessary (interactivity, hooks, browser APIs).
 - Use **Server Actions** (in `src/app/actions/`) for data mutations (create, update, delete).
-- Keep read/query helpers and feature business rules in `src/features/*` instead of expanding route files or action files.
+- Keep read/query helpers, feature validation schemas, and feature business rules in `src/features/*` instead of expanding route files or action files.
 - Keep Server Actions thin: authenticate, validate, delegate to feature helpers, and revalidate.
 - Use `@/` alias for imports (configured in `tsconfig.json`).
 
@@ -130,8 +134,8 @@ src/
 
 ### Authentication
 
-- Server-side: use `auth.api.getSession()` from `src/lib/auth.ts`.
-- Client-side: use `authClient` from `src/lib/auth-client.ts` only when Better Auth client APIs are required, and ensure its `baseURL` matches the current environment.
+- Server-side: use `auth.api.getSession()` from `src/lib/auth/auth.ts`.
+- Client-side: use `authClient` from `src/lib/auth/auth-client.ts` only when Better Auth client APIs are required, and ensure its `baseURL` matches the current environment.
 - Always check authentication before accessing user-specific data.
 - All user-owned data must filter by `userId` from the session.
 - App access must enforce approved status (`pending` and `blocked` users cannot access authenticated routes/actions).

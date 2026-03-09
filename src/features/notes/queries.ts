@@ -1,7 +1,7 @@
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/index";
 import { note, subject } from "@/db/schema";
-import type { NoteEntity } from "@/lib/api/contracts";
+import type { NoteEntity } from "@/lib/server/api-contracts";
 
 export async function getNotesBySubjectForUser(
   userId: string,

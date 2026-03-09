@@ -5,6 +5,16 @@ import { db } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { appEnv } from "@/env";
 import {
+  mapAnkiImportCardToFlashcardInsert,
+  parseAnkiImportFile,
+} from "@/features/flashcards/anki-import";
+import {
+  type AnkiImportCard,
+  importAnkiFlashcardsSchema,
+} from "@/features/flashcards/anki-import-validation";
+import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
+import {
   countFlashcardsBySubjectForUser,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
@@ -15,29 +25,6 @@ import {
   revalidateFlashcardReviewPaths,
   revalidateFlashcardSubjectPaths,
 } from "@/features/flashcards/revalidation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
-import { parseActionInput } from "@/lib/action-input";
-import {
-  mapAnkiImportCardToFlashcardInsert,
-  parseAnkiImportFile,
-} from "@/lib/anki-import";
-import type {
-  CreateFlashcardResult,
-  DeleteFlashcardResult,
-  EditFlashcardResult,
-  FlashcardEntity,
-  MutationResult,
-  ResetFlashcardResult,
-} from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { getInitialFlashcardSchedulingState } from "@/lib/fsrs";
-import { ensureFsrsSettings } from "@/lib/fsrs-settings";
-import { LIMITS } from "@/lib/limits";
-import { actionError } from "@/lib/server-action-errors";
-import {
-  type AnkiImportCard,
-  importAnkiFlashcardsSchema,
-} from "@/lib/validations/anki-import";
 import {
   type CreateFlashcardForm as CreateFlashcardInput,
   createFlashcardSchema as createFlashcardInputSchema,
@@ -47,7 +34,20 @@ import {
   editFlashcardSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
-} from "@/lib/validations/flashcards";
+} from "@/features/flashcards/validation";
+import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import { LIMITS } from "@/lib/config/limits";
+import { parseActionInput } from "@/lib/server/action-input";
+import type {
+  CreateFlashcardResult,
+  DeleteFlashcardResult,
+  EditFlashcardResult,
+  FlashcardEntity,
+  MutationResult,
+  ResetFlashcardResult,
+} from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 
 export async function getFlashcardsBySubject(
   subjectId: string,

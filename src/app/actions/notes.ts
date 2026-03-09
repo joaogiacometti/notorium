@@ -13,12 +13,6 @@ import {
   revalidateNoteDetailPaths,
   revalidateNoteSubjectPaths,
 } from "@/features/notes/revalidation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
-import { parseActionInput } from "@/lib/action-input";
-import type { MutationResult, NoteEntity } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { LIMITS } from "@/lib/limits";
-import { actionError } from "@/lib/server-action-errors";
 import {
   type CreateNoteForm,
   createNoteSchema,
@@ -26,7 +20,13 @@ import {
   deleteNoteSchema,
   type EditNoteForm,
   editNoteSchema,
-} from "@/lib/validations/notes";
+} from "@/features/notes/validation";
+import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import { LIMITS } from "@/lib/config/limits";
+import { parseActionInput } from "@/lib/server/action-input";
+import type { MutationResult, NoteEntity } from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 
 export async function getNotesBySubject(
   subjectId: string,

@@ -1,7 +1,7 @@
 import { CalendarDays } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { CalendarView } from "@/components/calendar-view";
-import { requireSession } from "@/lib/auth";
+import { CalendarView } from "@/components/shared/calendar-view";
+import { requireSession } from "@/lib/auth/auth";
 
 export default async function CalendarPage() {
   await requireSession();

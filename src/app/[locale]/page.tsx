@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@/i18n/routing";
-import { getOptionalSession } from "@/lib/auth";
+import { getOptionalSession } from "@/lib/auth/auth";
 import { cn } from "@/lib/utils";
 
 const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (

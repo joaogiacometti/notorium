@@ -9,11 +9,6 @@ import {
   hasMissOnDateForUser,
 } from "@/features/attendance/queries";
 import { revalidateAttendancePaths } from "@/features/attendance/revalidation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
-import { parseActionInput } from "@/lib/action-input";
-import type { AttendanceMissEntity, MutationResult } from "@/lib/api/contracts";
-import { getAuthenticatedUserId } from "@/lib/auth";
-import { actionError } from "@/lib/server-action-errors";
 import {
   type AttendanceSettingsForm,
   attendanceSettingsSchema,
@@ -21,7 +16,15 @@ import {
   deleteMissSchema,
   type RecordMissForm,
   recordMissSchema,
-} from "@/lib/validations/attendance";
+} from "@/features/attendance/validation";
+import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import { parseActionInput } from "@/lib/server/action-input";
+import type {
+  AttendanceMissEntity,
+  MutationResult,
+} from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 
 export async function updateAttendanceSettings(
   data: AttendanceSettingsForm,

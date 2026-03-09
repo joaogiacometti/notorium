@@ -7,19 +7,19 @@ import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { db } from "@/db/index";
 import { user } from "@/db/schema";
-import { isAdminUser } from "@/lib/access-control";
-import { parseActionInput } from "@/lib/action-input";
-import type { MutationResult } from "@/lib/api/contracts";
-import { auth, getAuthenticatedUserId } from "@/lib/auth";
-import { actionError } from "@/lib/server-action-errors";
+import {
+  type UpdateProfileForm,
+  updateProfileSchema,
+} from "@/features/profile/validation";
+import { isAdminUser } from "@/lib/auth/access-control";
+import { auth, getAuthenticatedUserId } from "@/lib/auth/auth";
+import { parseActionInput } from "@/lib/server/action-input";
+import type { MutationResult } from "@/lib/server/api-contracts";
+import { actionError } from "@/lib/server/server-action-errors";
 import {
   type UpdateUserAccessInput,
   updateUserAccessSchema,
 } from "@/lib/validations/access-control";
-import {
-  type UpdateProfileForm,
-  updateProfileSchema,
-} from "@/lib/validations/profile";
 
 export async function updateProfile(
   data: UpdateProfileForm,

@@ -1,4 +1,4 @@
-import { revalidatePaths } from "@/lib/revalidation";
+import { revalidatePaths } from "@/lib/server/revalidation";
 
 export function revalidateNoteSubjectPaths(subjectId: string) {
   revalidatePaths([`/subjects/${subjectId}`]);

@@ -1,9 +1,9 @@
 import { ClipboardList } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { GradesSummary } from "@/components/grades-summary";
+import { GradesSummary } from "@/components/subjects/grades-summary";
 import { getAssessmentsForUser } from "@/features/assessments/queries";
 import { getSubjectsForUser } from "@/features/subjects/queries";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth/auth";
 
 export default async function AssessmentsPage() {
   const session = await requireSession();
