@@ -7,7 +7,6 @@ import Placeholder from "@tiptap/extension-placeholder";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import Typography from "@tiptap/extension-typography";
-import Underline from "@tiptap/extension-underline";
 import { Plugin } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -31,13 +30,15 @@ import {
   Undo,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
+import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import {
   isSupportedSharedImageUrl,
   resolveEmbeddableImageUrl,
+  resolveSharedEmbeddableImageUrl,
 } from "@/lib/editor/tiptap-image-url";
 import { resolvePastedImageUrl } from "@/lib/editor/tiptap-paste-image-url";
 import { cn } from "@/lib/utils";
@@ -280,6 +281,7 @@ export function TiptapEditor({
   const t = useTranslations("TiptapEditor");
   const resolvedPlaceholder = placeholder ?? t("placeholder");
   const onCtrlEnterRef = useRef(onCtrlEnter);
+  const [resolvedValue, setResolvedValue] = useState(value);
   onCtrlEnterRef.current = onCtrlEnter;
 
   const handleUpdate = ({
@@ -310,11 +312,10 @@ export function TiptapEditor({
       }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      Underline,
       Typography,
       ImageUrlPasteExtension,
     ],
-    content: value || "",
+    content: resolvedValue || "",
     onUpdate: handleUpdate,
     editorProps: {
       attributes: {
@@ -345,12 +346,29 @@ export function TiptapEditor({
   });
 
   useEffect(() => {
+    let active = true;
+
+    void normalizeRichTextForRendering(
+      value,
+      resolveSharedEmbeddableImageUrl,
+    ).then((nextValue) => {
+      if (active) {
+        setResolvedValue(nextValue);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [value]);
+
+  useEffect(() => {
     if (!editor) return;
     const currentHTML = editor.isEmpty ? "" : editor.getHTML();
-    if (value !== currentHTML) {
-      editor.commands.setContent(value || "", { emitUpdate: false });
+    if (resolvedValue !== currentHTML) {
+      editor.commands.setContent(resolvedValue || "", { emitUpdate: false });
     }
-  }, [editor, value]);
+  }, [editor, resolvedValue]);
 
   return (
     <div

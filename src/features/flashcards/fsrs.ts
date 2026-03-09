@@ -61,23 +61,75 @@ const defaultSchedulerParameters = generatorParameters({
 });
 
 const defaultEaseValue = 250;
+const defaultDifficultyValue = 5;
+const defaultStabilityValue = 0;
+
+function isValidDate(value: Date): boolean {
+  return Number.isFinite(value.getTime());
+}
+
+function isFiniteNumber(value: number): boolean {
+  return Number.isFinite(value);
+}
+
+function normalizeDate(
+  value: Date | string | null | undefined,
+  fallback: Date,
+): Date {
+  if (!value) {
+    return fallback;
+  }
+
+  const normalized = value instanceof Date ? new Date(value) : new Date(value);
+
+  return isValidDate(normalized) ? normalized : fallback;
+}
+
+function normalizeOptionalDate(
+  value: Date | string | null | undefined,
+): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value instanceof Date ? new Date(value) : new Date(value);
+
+  return isValidDate(normalized) ? normalized : undefined;
+}
 
 function formatFsrsNumber(value: number): string {
-  return value.toFixed(4);
+  return (isFiniteNumber(value) ? value : 0).toFixed(4);
 }
 
 function parseNullableNumeric(
   value: string | number | null | undefined,
 ): number {
   if (typeof value === "number") {
-    return value;
+    return isFiniteNumber(value) ? value : 0;
   }
 
   if (typeof value === "string") {
-    return Number.parseFloat(value);
+    const parsed = Number.parseFloat(value);
+
+    return isFiniteNumber(parsed) ? parsed : 0;
   }
 
   return 0;
+}
+
+function normalizeNonNegativeInteger(
+  value: number | null | undefined,
+  fallback: number = 0,
+): number {
+  if (typeof value !== "number" || !isFiniteNumber(value)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.floor(value));
+}
+
+function normalizeFsrsOutputNumber(value: number, fallback: number): number {
+  return isFiniteNumber(value) ? value : fallback;
 }
 
 function mapStateToFsrs(state: FlashcardEntity["state"]): State {
@@ -123,9 +175,8 @@ function buildFsrsCard(
   card: ScheduleFlashcardReviewInput["card"],
   now: Date,
 ): Card {
-  const lastReview = card.lastReviewedAt
-    ? new Date(card.lastReviewedAt)
-    : undefined;
+  const due = normalizeDate(card.dueAt, now);
+  const lastReview = normalizeOptionalDate(card.lastReviewedAt);
   const daysElapsed =
     lastReview && card.state !== "new"
       ? Math.max(
@@ -137,14 +188,14 @@ function buildFsrsCard(
       : 0;
 
   return {
-    due: new Date(card.dueAt),
+    due,
     stability: parseNullableNumeric(card.stability),
     difficulty: parseNullableNumeric(card.difficulty),
     elapsed_days: daysElapsed,
-    scheduled_days: Math.max(0, card.intervalDays),
-    learning_steps: Math.max(0, card.learningStep ?? 0),
-    reps: Math.max(0, card.reviewCount),
-    lapses: Math.max(0, card.lapseCount),
+    scheduled_days: normalizeNonNegativeInteger(card.intervalDays),
+    learning_steps: normalizeNonNegativeInteger(card.learningStep),
+    reps: normalizeNonNegativeInteger(card.reviewCount),
+    lapses: normalizeNonNegativeInteger(card.lapseCount),
     state: mapStateToFsrs(card.state),
     last_review: lastReview,
   };
@@ -220,20 +271,35 @@ export function scheduleFlashcardReview({
   const currentCard = buildFsrsCard(card, now);
   const next = scheduler.next(currentCard, now, mapGradeToRating(grade));
   const nextCard = next.card;
+  const dueAt = normalizeDate(nextCard.due, now);
+  const lastReviewedAt = normalizeDate(nextCard.last_review ?? now, now);
+  const stability = normalizeFsrsOutputNumber(
+    nextCard.stability,
+    defaultStabilityValue,
+  );
+  const difficulty = normalizeFsrsOutputNumber(
+    nextCard.difficulty,
+    defaultDifficultyValue,
+  );
+  const intervalDays = normalizeNonNegativeInteger(nextCard.scheduled_days);
+  const learningStep = normalizeNonNegativeInteger(nextCard.learning_steps);
+  const reviewCount = normalizeNonNegativeInteger(nextCard.reps);
+  const lapseCount = normalizeNonNegativeInteger(nextCard.lapses);
+  const daysElapsed = normalizeNonNegativeInteger(next.log.elapsed_days);
 
   return {
     state: mapStateFromFsrs(nextCard.state),
-    dueAt: nextCard.due,
-    stability: formatFsrsNumber(nextCard.stability),
-    difficulty: formatFsrsNumber(nextCard.difficulty),
+    dueAt,
+    stability: formatFsrsNumber(stability),
+    difficulty: formatFsrsNumber(difficulty),
     ease: defaultEaseValue,
-    intervalDays: nextCard.scheduled_days,
-    learningStep: nextCard.learning_steps,
-    lastReviewedAt: nextCard.last_review ?? now,
-    reviewCount: nextCard.reps,
-    lapseCount: nextCard.lapses,
+    intervalDays,
+    learningStep,
+    lastReviewedAt,
+    reviewCount,
+    lapseCount,
     updatedAt: now,
-    daysElapsed: next.log.elapsed_days,
+    daysElapsed,
   };
 }
 

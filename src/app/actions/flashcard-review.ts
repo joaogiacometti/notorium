@@ -15,7 +15,10 @@ import {
   type ReviewFlashcardForm,
   reviewFlashcardSchema,
 } from "@/features/flashcard-review/validation";
-import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
+import {
+  type ReviewGrade,
+  scheduleFlashcardReview,
+} from "@/features/flashcards/fsrs";
 import {
   ensureFsrsSettings,
   maybeOptimizeFsrsParameters,
@@ -29,6 +32,25 @@ import type {
   ReviewFlashcardResult,
 } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
+
+type ReviewFlashcardFailureStage = "persist" | "optimize" | "revalidate";
+
+function logReviewFlashcardFailure(
+  stage: ReviewFlashcardFailureStage,
+  context: {
+    flashcardId: string;
+    userId: string;
+    grade: ReviewGrade;
+    subjectId: string;
+  },
+  error: unknown,
+) {
+  console.error("Flashcard review action failed", {
+    stage,
+    ...context,
+    error: error instanceof Error ? error.message : String(error),
+  });
+}
 
 export async function getDueFlashcards(
   options: GetDueFlashcardsOptions = {},
@@ -102,60 +124,83 @@ export async function reviewFlashcard(
     weights: settings.weights,
   });
 
-  const updatedCard = await db.transaction(async (tx) => {
-    const updatedCards = await tx
-      .update(flashcard)
-      .set({
-        state: nextState.state,
-        dueAt: nextState.dueAt,
-        stability: nextState.stability,
-        difficulty: nextState.difficulty,
-        ease: nextState.ease,
-        intervalDays: nextState.intervalDays,
-        learningStep: nextState.learningStep,
-        lastReviewedAt: nextState.lastReviewedAt,
-        reviewCount: nextState.reviewCount,
-        lapseCount: nextState.lapseCount,
-        updatedAt: nextState.updatedAt,
-      })
-      .where(
-        and(eq(flashcard.id, existingCard.id), eq(flashcard.userId, userId)),
-      )
-      .returning({
-        id: flashcard.id,
-        front: flashcard.front,
-        back: flashcard.back,
-        subjectId: flashcard.subjectId,
-        state: flashcard.state,
-        dueAt: flashcard.dueAt,
-        stability: flashcard.stability,
-        difficulty: flashcard.difficulty,
-        ease: flashcard.ease,
-        intervalDays: flashcard.intervalDays,
-        learningStep: flashcard.learningStep,
-        lastReviewedAt: flashcard.lastReviewedAt,
-        reviewCount: flashcard.reviewCount,
-        lapseCount: flashcard.lapseCount,
+  const failureContext = {
+    flashcardId: existingCard.id,
+    userId,
+    grade: parsed.data.grade,
+    subjectId: existingCard.subjectId,
+  } as const;
+
+  let updatedCard: FlashcardReviewEntity | undefined;
+
+  try {
+    updatedCard = await db.transaction(async (tx) => {
+      const updatedCards = await tx
+        .update(flashcard)
+        .set({
+          state: nextState.state,
+          dueAt: nextState.dueAt,
+          stability: nextState.stability,
+          difficulty: nextState.difficulty,
+          ease: nextState.ease,
+          intervalDays: nextState.intervalDays,
+          learningStep: nextState.learningStep,
+          lastReviewedAt: nextState.lastReviewedAt,
+          reviewCount: nextState.reviewCount,
+          lapseCount: nextState.lapseCount,
+          updatedAt: nextState.updatedAt,
+        })
+        .where(
+          and(eq(flashcard.id, existingCard.id), eq(flashcard.userId, userId)),
+        )
+        .returning({
+          id: flashcard.id,
+          front: flashcard.front,
+          back: flashcard.back,
+          subjectId: flashcard.subjectId,
+          state: flashcard.state,
+          dueAt: flashcard.dueAt,
+          stability: flashcard.stability,
+          difficulty: flashcard.difficulty,
+          ease: flashcard.ease,
+          intervalDays: flashcard.intervalDays,
+          learningStep: flashcard.learningStep,
+          lastReviewedAt: flashcard.lastReviewedAt,
+          reviewCount: flashcard.reviewCount,
+          lapseCount: flashcard.lapseCount,
+        });
+
+      await tx.insert(flashcardReviewLog).values({
+        flashcardId: existingCard.id,
+        userId,
+        rating: parsed.data.grade,
+        reviewedAt: now,
+        daysElapsed: nextState.daysElapsed,
       });
 
-    await tx.insert(flashcardReviewLog).values({
-      flashcardId: existingCard.id,
-      userId,
-      rating: parsed.data.grade,
-      reviewedAt: now,
-      daysElapsed: nextState.daysElapsed,
+      return updatedCards[0];
     });
-
-    return updatedCards[0];
-  });
+  } catch (error) {
+    logReviewFlashcardFailure("persist", failureContext, error);
+    return actionError("flashcards.review.unavailable");
+  }
 
   if (!updatedCard) {
     return actionError("flashcards.review.notFound");
   }
 
-  await maybeOptimizeFsrsParameters(userId);
+  try {
+    await maybeOptimizeFsrsParameters(userId);
+  } catch (error) {
+    logReviewFlashcardFailure("optimize", failureContext, error);
+  }
 
-  revalidateFlashcardReviewSubjectPaths(existingCard.subjectId);
+  try {
+    revalidateFlashcardReviewSubjectPaths(existingCard.subjectId);
+  } catch (error) {
+    logReviewFlashcardFailure("revalidate", failureContext, error);
+  }
+
   return {
     success: true,
     reviewedCardId: existingCard.id,

@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+function isValidDateString(value: string) {
+  return !Number.isNaN(new Date(value).getTime());
+}
+
+const finiteNumberSchema = z.number().finite();
+const nonNegativeIntegerSchema = z.number().int().nonnegative();
+const isoDateStringSchema = z.string().refine(isValidDateString);
+
 const attendanceMissSchema = z.object({
   missDate: z.string(),
 });
@@ -34,17 +42,17 @@ const flashcardSchema = z.object({
   front: z.string().min(1).max(500),
   back: z.string().min(1).max(2000),
   state: z.enum(["new", "learning", "review", "relearning"]),
-  dueAt: z.string(),
-  stability: z.number().nullable().optional(),
-  difficulty: z.number().nullable().optional(),
+  dueAt: isoDateStringSchema,
+  stability: finiteNumberSchema.nullable().optional(),
+  difficulty: finiteNumberSchema.nullable().optional(),
   ease: z.number().int(),
-  intervalDays: z.number().int(),
-  learningStep: z.number().int().nullable(),
-  lastReviewedAt: z.string().nullable(),
-  reviewCount: z.number().int(),
-  lapseCount: z.number().int(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  intervalDays: nonNegativeIntegerSchema,
+  learningStep: nonNegativeIntegerSchema.nullable(),
+  lastReviewedAt: isoDateStringSchema.nullable(),
+  reviewCount: nonNegativeIntegerSchema,
+  lapseCount: nonNegativeIntegerSchema,
+  createdAt: isoDateStringSchema,
+  updatedAt: isoDateStringSchema,
 });
 
 const subjectSchema = z.object({
@@ -61,8 +69,8 @@ const subjectSchema = z.object({
 });
 
 const flashcardSchedulerSchema = z.object({
-  desiredRetention: z.number(),
-  weights: z.array(z.number()),
+  desiredRetention: finiteNumberSchema,
+  weights: z.array(finiteNumberSchema),
 });
 
 export const importDataSchema = z.object({

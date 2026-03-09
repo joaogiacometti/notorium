@@ -68,6 +68,18 @@ describe("ankiImportCardsSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects non-finite numeric metadata", () => {
+    const result = ankiImportCardsSchema.safeParse([
+      {
+        front: "Question",
+        back: "Answer",
+        stability: Number.NaN,
+      },
+    ]);
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("importAnkiFlashcardsSchema", () => {

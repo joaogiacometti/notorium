@@ -5,11 +5,44 @@ import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 const textExtensions = new Set([".txt"]);
 
 function toFsrsNumeric(value: number | null | undefined, fallback: string) {
-  if (typeof value !== "number") {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
     return fallback;
   }
 
   return value.toFixed(4);
+}
+
+function toSafeDate(value: string | null | undefined, fallback: Date | null) {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+
+  return Number.isNaN(parsed.getTime()) ? fallback : parsed;
+}
+
+function toSafeNonNegativeInteger(
+  value: number | null | undefined,
+  fallback: number | null,
+) {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.floor(value));
 }
 
 function detectTextSeparator(source: string) {
@@ -117,25 +150,24 @@ export function mapAnkiImportCardToFlashcardInsert(
     front: card.front,
     back: card.back,
     state: card.state ?? initialState.state,
-    dueAt: card.dueAt ? new Date(card.dueAt) : initialState.dueAt,
+    dueAt: toSafeDate(card.dueAt, initialState.dueAt) ?? initialState.dueAt,
     stability: toFsrsNumeric(card.stability, initialState.stability),
     difficulty: toFsrsNumeric(card.difficulty, initialState.difficulty),
     ease: card.ease ?? initialState.ease,
-    intervalDays: Math.max(0, card.intervalDays ?? initialState.intervalDays),
+    intervalDays:
+      toSafeNonNegativeInteger(card.intervalDays, initialState.intervalDays) ??
+      initialState.intervalDays,
     learningStep:
-      card.learningStep === undefined
-        ? initialState.learningStep
-        : card.learningStep === null
-          ? null
-          : Math.max(0, card.learningStep),
+      toSafeNonNegativeInteger(card.learningStep, initialState.learningStep) ??
+      null,
     lastReviewedAt:
-      card.lastReviewedAt === undefined
-        ? initialState.lastReviewedAt
-        : card.lastReviewedAt === null
-          ? null
-          : new Date(card.lastReviewedAt),
-    reviewCount: Math.max(0, card.reviewCount ?? initialState.reviewCount),
-    lapseCount: Math.max(0, card.lapseCount ?? initialState.lapseCount),
+      toSafeDate(card.lastReviewedAt, initialState.lastReviewedAt) ?? null,
+    reviewCount:
+      toSafeNonNegativeInteger(card.reviewCount, initialState.reviewCount) ??
+      initialState.reviewCount,
+    lapseCount:
+      toSafeNonNegativeInteger(card.lapseCount, initialState.lapseCount) ??
+      initialState.lapseCount,
     updatedAt: now,
   };
 }

@@ -41,6 +41,8 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete flashcards per subject.
 - Flashcard fields: front and back text.
+- Flashcard rich text renders images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax.
+- Unsupported relative or local media references degrade to plain text instead of rendering as images.
 - Flashcards are displayed inline in subject detail in a collapsed section.
 - Subject flashcards are loaded when the section is expanded.
 - Flashcards have a dedicated detail page nested under subject routes.
@@ -54,6 +56,7 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete notes per subject.
 - Rich text editing and rendering for note content.
 - Note content renders images from pasted direct image URLs, supported Imgur share links, and Markdown image syntax.
+- Unsupported relative or local media references degrade to plain text instead of rendering as images.
 
 ### Attendance
 

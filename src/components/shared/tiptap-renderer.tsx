@@ -4,7 +4,6 @@ import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
-import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useState } from "react";
@@ -33,7 +32,6 @@ export function TiptapRenderer({
       Image.configure({ allowBase64: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      Underline,
     ],
     content: resolvedContent,
     editable: false,

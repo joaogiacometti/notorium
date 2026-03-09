@@ -617,7 +617,8 @@
       "review": {
         "invalidData": "Dados de revisão inválidos.",
         "notFound": "Flashcard não encontrado para revisão.",
-        "notDue": "Este flashcard ainda não está vencido."
+        "notDue": "Este flashcard ainda não está vencido.",
+        "unavailable": "O envio da revisão está temporariamente indisponível. Tente novamente em instantes."
       }
     },
     "profile": {

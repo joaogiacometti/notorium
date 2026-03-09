@@ -135,4 +135,31 @@ describe("mapAnkiImportCardToFlashcardInsert", () => {
     expect(result.reviewCount).toBe(0);
     expect(result.lapseCount).toBe(0);
   });
+
+  it("falls back to defaults for non-finite imported scheduling values", () => {
+    const now = new Date("2026-03-08T10:00:00.000Z");
+
+    const result = mapAnkiImportCardToFlashcardInsert(
+      {
+        front: "Question",
+        back: "Answer",
+        stability: Number.NaN,
+        difficulty: Number.POSITIVE_INFINITY,
+        intervalDays: Number.NaN,
+        learningStep: Number.NaN,
+        lastReviewedAt: "not-a-date",
+        reviewCount: Number.NaN,
+        lapseCount: Number.NaN,
+      } as never,
+      now,
+    );
+
+    expect(result.stability).toBe("0.0000");
+    expect(result.difficulty).toBe("0.0000");
+    expect(result.intervalDays).toBe(0);
+    expect(result.learningStep).toBe(0);
+    expect(result.lastReviewedAt).toBeNull();
+    expect(result.reviewCount).toBe(0);
+    expect(result.lapseCount).toBe(0);
+  });
 });

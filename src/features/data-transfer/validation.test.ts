@@ -180,4 +180,65 @@ describe("importDataSchema", () => {
 
     expect(result.data.subjects[0]?.flashcards).toEqual([]);
   });
+
+  it("rejects flashcards with invalid scheduling dates", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
+          flashcards: [{ ...validFlashcard, dueAt: "not-a-date" }],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects flashcards with non-finite scheduling numbers", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
+          flashcards: [{ ...validFlashcard, stability: Number.NaN }],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects flashcards with negative counters and intervals", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
+          flashcards: [
+            {
+              ...validFlashcard,
+              intervalDays: -1,
+              reviewCount: -1,
+              lapseCount: -1,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects scheduler settings with non-finite values", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      flashcardScheduler: {
+        desiredRetention: Number.NaN,
+        weights: [1, Number.POSITIVE_INFINITY],
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
 });

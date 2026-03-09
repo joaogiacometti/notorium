@@ -30,6 +30,10 @@ describe("resolveEmbeddableImageUrl", () => {
   it("rejects invalid URL", () => {
     expect(resolveEmbeddableImageUrl("not-a-url")).toBeNull();
   });
+
+  it("rejects relative image filenames", () => {
+    expect(resolveEmbeddableImageUrl("cisco_switch.jpg")).toBeNull();
+  });
 });
 
 describe("isSupportedSharedImageUrl", () => {

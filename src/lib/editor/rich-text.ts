@@ -37,6 +37,49 @@ function escapeHtmlAttribute(value: string): string {
     .replaceAll(">", "&gt;");
 }
 
+function extractImageFallbackText(attributes: string): string | null {
+  const altMatch = attributes.match(/\balt\s*=\s*["']([^"']*)["']/i);
+  const srcMatch = attributes.match(/\bsrc\s*=\s*["']([^"']*)["']/i);
+  const alt = altMatch ? decodeHtmlEntities(altMatch[1]).trim() : "";
+  const src = srcMatch ? decodeHtmlEntities(srcMatch[1]).trim() : "";
+
+  if (alt.length > 0) {
+    return alt;
+  }
+
+  return src.length > 0 ? src : null;
+}
+
+function isRelativeImageSource(value: string): boolean {
+  if (value.trim().length === 0) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol !== "http:" && parsed.protocol !== "https:";
+  } catch {
+    return true;
+  }
+}
+
+function normalizeUnsupportedImageMarkup(value: string): string {
+  return value.replaceAll(/<img\b([^>]*)>/gi, (imageHtml, attributes) => {
+    const srcMatch = attributes.match(/\bsrc\s*=\s*["']([^"']*)["']/i);
+    if (!srcMatch) {
+      return imageHtml;
+    }
+
+    const src = decodeHtmlEntities(srcMatch[1]).trim();
+    if (!isRelativeImageSource(src)) {
+      return imageHtml;
+    }
+
+    const fallbackText = extractImageFallbackText(attributes);
+    return fallbackText ? escapeHtmlAttribute(fallbackText) : "";
+  });
+}
+
 function extractImageUrlCandidate(innerHtml: string): string | null {
   const trimmed = innerHtml.trim();
   if (trimmed.length === 0) {
@@ -64,19 +107,21 @@ export async function normalizeRichTextForRendering(
   value: string,
   resolveImageUrl: (value: string) => Promise<string | null>,
 ): Promise<string> {
-  if (!/<p>[\s\S]*<\/p>/i.test(value)) {
-    return value;
+  const normalizedImages = normalizeUnsupportedImageMarkup(value);
+
+  if (!/<p>[\s\S]*<\/p>/i.test(normalizedImages)) {
+    return normalizedImages;
   }
 
   const paragraphPattern = /<p>([\s\S]*?)<\/p>/gi;
-  const matches = [...value.matchAll(paragraphPattern)];
+  const matches = [...normalizedImages.matchAll(paragraphPattern)];
   if (matches.length === 0) {
-    return value;
+    return normalizedImages;
   }
 
   let result = "";
   let lastIndex = 0;
-  let changed = false;
+  let changed = normalizedImages !== value;
 
   for (const match of matches) {
     const [paragraphHtml, innerHtml] = match;
@@ -92,11 +137,11 @@ export async function normalizeRichTextForRendering(
       }
     }
 
-    result += value.slice(lastIndex, index);
+    result += normalizedImages.slice(lastIndex, index);
     result += replacement;
     lastIndex = index + paragraphHtml.length;
   }
 
-  result += value.slice(lastIndex);
-  return changed ? result : value;
+  result += normalizedImages.slice(lastIndex);
+  return changed ? result : normalizedImages;
 }

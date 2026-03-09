@@ -617,7 +617,8 @@
       "review": {
         "invalidData": "Invalid review input.",
         "notFound": "Flashcard not found for review.",
-        "notDue": "This flashcard is not due yet."
+        "notDue": "This flashcard is not due yet.",
+        "unavailable": "Review submission is temporarily unavailable. Try again in a moment."
       }
     },
     "profile": {

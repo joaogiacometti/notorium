@@ -146,4 +146,51 @@ describe("scheduleFlashcardReview", () => {
     expect(result.lapseCount).toBe(1);
     expect(result.dueAt.toISOString()).toBe("2026-03-04T12:10:00.000Z");
   });
+
+  it("falls back to now when persisted review dates are invalid", () => {
+    const result = scheduleFlashcardReview({
+      card: makeCard({
+        state: "review",
+        dueAt: new Date("invalid"),
+        stability: "10.0000",
+        difficulty: "5.0000",
+        intervalDays: 10,
+        learningStep: 0,
+        lastReviewedAt: new Date("invalid"),
+        reviewCount: 10,
+      }),
+      grade: "good",
+      now,
+      enableFuzz: false,
+    });
+
+    expect(Number.isNaN(result.dueAt.getTime())).toBe(false);
+    expect(Number.isNaN(result.lastReviewedAt.getTime())).toBe(false);
+  });
+
+  it("sanitizes invalid persisted numeric scheduling state", () => {
+    const result = scheduleFlashcardReview({
+      card: makeCard({
+        state: "review",
+        dueAt: now,
+        stability: "NaN",
+        difficulty: "NaN",
+        intervalDays: Number.NaN,
+        learningStep: Number.NaN,
+        lastReviewedAt: now,
+        reviewCount: Number.NaN,
+        lapseCount: Number.NaN,
+      }),
+      grade: "good",
+      now,
+      enableFuzz: false,
+    });
+
+    expect(result.stability).not.toBe("NaN");
+    expect(result.difficulty).not.toBe("NaN");
+    expect(Number.isNaN(result.intervalDays)).toBe(false);
+    expect(Number.isNaN(result.learningStep ?? 0)).toBe(false);
+    expect(Number.isNaN(result.reviewCount)).toBe(false);
+    expect(Number.isNaN(result.lapseCount)).toBe(false);
+  });
 });

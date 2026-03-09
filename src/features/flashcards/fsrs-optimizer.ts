@@ -39,8 +39,23 @@ function getFsrsBindingModule(): FsrsBindingModule {
   return require("@open-spaced-repetition/binding") as FsrsBindingModule;
 }
 
-function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
-  const { FSRSBindingItem, FSRSBindingReview } = getFsrsBindingModule();
+function mapRatingToBindingRating(rating: FlashcardReviewLogEntity["rating"]) {
+  return rating === "again"
+    ? 1
+    : rating === "hard"
+      ? 2
+      : rating === "good"
+        ? 3
+        : 4;
+}
+
+function hasValidOptimizationHistory(
+  logs: FlashcardReviewLogEntity[],
+): boolean {
+  return logs.some((log) => log.daysElapsed > 0);
+}
+
+function getEligibleCardLogs(logs: FlashcardReviewLogEntity[]) {
   const logsByFlashcardId = new Map<string, FlashcardReviewLogEntity[]>();
 
   for (const log of logs) {
@@ -53,22 +68,30 @@ function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
     logsByFlashcardId.set(log.flashcardId, [log]);
   }
 
+  return [...logsByFlashcardId.values()]
+    .map((cardLogs) =>
+      [...cardLogs].sort(
+        (left, right) => left.reviewedAt.getTime() - right.reviewedAt.getTime(),
+      ),
+    )
+    .filter(hasValidOptimizationHistory);
+}
+
+function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
+  const eligibleCardLogs = getEligibleCardLogs(logs);
+
+  if (eligibleCardLogs.length === 0) {
+    return [];
+  }
+
+  const { FSRSBindingItem, FSRSBindingReview } = getFsrsBindingModule();
   const trainingSet: FsrsBindingItemInstance[] = [];
 
-  for (const cardLogs of logsByFlashcardId.values()) {
-    const sortedLogs = [...cardLogs].sort(
-      (left, right) => left.reviewedAt.getTime() - right.reviewedAt.getTime(),
-    );
-    const reviews = sortedLogs.map(
+  for (const cardLogs of eligibleCardLogs) {
+    const reviews = cardLogs.map(
       (log) =>
         new FSRSBindingReview(
-          log.rating === "again"
-            ? 1
-            : log.rating === "hard"
-              ? 2
-              : log.rating === "good"
-                ? 3
-                : 4,
+          mapRatingToBindingRating(log.rating),
           log.daysElapsed,
         ),
     );

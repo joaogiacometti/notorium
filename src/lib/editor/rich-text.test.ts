@@ -45,6 +45,24 @@ describe("getRichTextExcerpt", () => {
 });
 
 describe("normalizeRichTextForRendering", () => {
+  it("replaces relative image markup with alt text", async () => {
+    const result = await normalizeRichTextForRendering(
+      '<p><img src="cisco_switch.jpg" alt="Cisco switch"></p>',
+      async () => null,
+    );
+
+    expect(result).toBe("<p>Cisco switch</p>");
+  });
+
+  it("replaces relative image markup with the source when alt text is missing", async () => {
+    const result = await normalizeRichTextForRendering(
+      '<p><img src="/foo/bar.png"></p>',
+      async () => null,
+    );
+
+    expect(result).toBe("<p>/foo/bar.png</p>");
+  });
+
   it("converts image URL paragraphs into image markup", async () => {
     const result = await normalizeRichTextForRendering(
       "<p>https://imgur.com/abc123</p>",
@@ -73,5 +91,14 @@ describe("normalizeRichTextForRendering", () => {
     );
 
     expect(result).toBe("<p>See https://imgur.com/abc123 later</p>");
+  });
+
+  it("keeps absolute image markup with non-paragraph content unchanged", async () => {
+    const result = await normalizeRichTextForRendering(
+      '<img src="https://img.test/a.png" alt="">',
+      async () => null,
+    );
+
+    expect(result).toBe('<img src="https://img.test/a.png" alt="">');
   });
 });

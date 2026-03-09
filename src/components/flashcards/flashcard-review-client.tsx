@@ -18,12 +18,14 @@ import {
   useTransition,
 } from "react";
 import { toast } from "sonner";
-import { reviewFlashcard } from "@/app/actions/flashcard-review";
+import {
+  getFlashcardReviewState,
+  reviewFlashcard,
+} from "@/app/actions/flashcard-review";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
-import { getFlashcardReviewState } from "@/features/flashcard-review/server";
 import {
   getFlashcardReviewShortcutAction,
   isEditableFlashcardReviewKeyboardTarget,
