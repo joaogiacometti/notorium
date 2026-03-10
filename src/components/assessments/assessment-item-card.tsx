@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
@@ -180,8 +181,12 @@ export function AssessmentItemCard({
       {/* Metadata pills */}
       <div className="mt-2 flex flex-wrap gap-1.5">
         {showSubject && (
-          <span className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
-            {subjectName ?? t("unknown_subject")}
+          <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
+            <SubjectText
+              value={subjectName ?? t("unknown_subject")}
+              mode="truncate"
+              className="inline-block max-w-[12rem] align-bottom"
+            />
           </span>
         )}
         <span

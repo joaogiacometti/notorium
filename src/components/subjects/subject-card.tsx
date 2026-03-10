@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Archive, BookOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { Button } from "@/components/ui/button";
@@ -41,8 +42,12 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
             <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
               <BookOpen className="size-4" />
             </div>
-            <CardTitle className="truncate text-base leading-tight">
-              {subject.name}
+            <CardTitle className="min-w-0 text-base leading-tight">
+              <SubjectText
+                value={subject.name}
+                mode="truncate"
+                className="block max-w-full"
+              />
             </CardTitle>
           </Link>
           <DropdownMenu>

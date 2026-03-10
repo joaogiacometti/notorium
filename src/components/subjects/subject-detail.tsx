@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AssessmentsOverview } from "@/components/assessments/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
 import { NotesList } from "@/components/notes/notes-list";
+import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,7 @@ export function SubjectDetail({
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
-              {subject.name}
+              <SubjectText value={subject.name} mode="wrap" />
             </h1>
             {subject.description && (
               <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">

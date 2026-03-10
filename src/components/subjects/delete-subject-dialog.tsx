@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { archiveSubject, deleteSubject } from "@/app/actions/subjects";
+import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -67,7 +68,11 @@ export function DeleteSubjectDialog({
           </DialogTitle>
           <DialogDescription>
             {mode === "archive" ? t("archive_prompt") : t("delete_prompt")}
-            <span className="font-semibold text-foreground">{subjectName}</span>
+            <SubjectText
+              value={subjectName}
+              mode="wrap"
+              className="font-semibold text-foreground"
+            />
             {mode === "archive" ? t("archive_suffix") : t("delete_suffix")}
           </DialogDescription>
         </DialogHeader>

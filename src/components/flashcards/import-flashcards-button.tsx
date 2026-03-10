@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { importAnkiFlashcards } from "@/app/actions/flashcards";
+import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -144,7 +145,11 @@ export function ImportFlashcardsButton({
                 <SelectContent>
                   {subjects.map((subject) => (
                     <SelectItem key={subject.id} value={subject.id}>
-                      {subject.name}
+                      <SubjectText
+                        value={subject.name}
+                        mode="truncate"
+                        className="block max-w-full"
+                      />
                     </SelectItem>
                   ))}
                 </SelectContent>

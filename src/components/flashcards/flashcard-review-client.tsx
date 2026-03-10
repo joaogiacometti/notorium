@@ -22,6 +22,7 @@ import {
   getFlashcardReviewState,
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
+import { SubjectText } from "@/components/shared/subject-text";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -201,8 +202,12 @@ export function FlashcardReviewClient({
             <div className="mx-auto w-full max-w-3xl space-y-4 pb-4">
               <div className="space-y-2">
                 {currentCard.subjectName ? (
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {currentCard.subjectName}
+                  <p className="min-w-0 text-sm font-medium text-muted-foreground">
+                    <SubjectText
+                      value={currentCard.subjectName}
+                      mode="truncate"
+                      className="block max-w-full"
+                    />
                   </p>
                 ) : null}
                 <div className="flex items-center justify-between gap-3">

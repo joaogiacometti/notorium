@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
 import { FlashcardsTableRowActions } from "@/components/flashcards/flashcards-table-row-actions";
 import { ImportFlashcardsButton } from "@/components/flashcards/import-flashcards-button";
+import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -141,7 +142,11 @@ export function FlashcardsManager({
               </SelectItem>
               {subjects.map((subject) => (
                 <SelectItem key={subject.id} value={subject.id}>
-                  {subject.name}
+                  <SubjectText
+                    value={subject.name}
+                    mode="truncate"
+                    className="block max-w-full"
+                  />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -267,10 +272,14 @@ export function FlashcardsManager({
                     <TableCell className="max-w-0">
                       <button
                         type="button"
-                        className="truncate rounded-sm text-left text-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                        className="block w-full min-w-0 rounded-sm text-left text-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                         onClick={() => updateSubject(item.subjectId)}
                       >
-                        {item.subjectName}
+                        <SubjectText
+                          value={item.subjectName}
+                          mode="truncate"
+                          className="block max-w-full"
+                        />
                       </button>
                     </TableCell>
                     <TableCell className="text-right">

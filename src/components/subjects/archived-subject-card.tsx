@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { restoreSubject } from "@/app/actions/subjects";
+import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,8 +54,12 @@ export function ArchivedSubjectCard({
     <>
       <Card className="border-border/60 bg-muted/20">
         <CardHeader className="pb-2">
-          <CardTitle className="truncate text-base leading-tight">
-            {subject.name}
+          <CardTitle className="text-base leading-tight">
+            <SubjectText
+              value={subject.name}
+              mode="truncate"
+              className="block max-w-full"
+            />
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-0">

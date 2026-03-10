@@ -12,6 +12,7 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { generateFlashcardBack } from "@/app/actions/flashcards";
+import { SubjectText } from "@/components/shared/subject-text";
 import { TiptapEditor } from "@/components/shared/tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
@@ -249,7 +250,11 @@ export function FlashcardDialogForm({
                         <SelectContent>
                           {subjects.map((subject) => (
                             <SelectItem key={subject.id} value={subject.id}>
-                              {subject.name}
+                              <SubjectText
+                                value={subject.name}
+                                mode="truncate"
+                                className="block max-w-full"
+                              />
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -13,6 +13,7 @@ import { type ReactNode, useState } from "react";
 import { AssessmentItemCard } from "@/components/assessments/assessment-item-card";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { EditAssessmentDialog } from "@/components/assessments/edit-assessment-dialog";
+import { SubjectText } from "@/components/shared/subject-text";
 import {
   Select,
   SelectContent,
@@ -207,7 +208,11 @@ export function GradesSummary({
             <SelectItem value="all">{t("subject_all")}</SelectItem>
             {subjectFilterOptions.map((subjectId) => (
               <SelectItem key={subjectId} value={subjectId}>
-                {subjectNamesById?.[subjectId] ?? subjectId}
+                <SubjectText
+                  value={subjectNamesById?.[subjectId] ?? subjectId}
+                  mode="truncate"
+                  className="block max-w-full"
+                />
               </SelectItem>
             ))}
           </FilterSelectField>

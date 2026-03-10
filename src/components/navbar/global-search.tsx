@@ -5,6 +5,7 @@ import { BookOpen, FileText, Layers, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
+import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
@@ -121,9 +122,13 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   onSelect={() => handleSelect(`/subjects/${subj.id}`)}
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex w-full min-w-0 items-center gap-2">
                     <BookOpen className="size-4 text-muted-foreground" />
-                    <span>{subj.name}</span>
+                    <SubjectText
+                      value={subj.name}
+                      mode="truncate"
+                      className="block flex-1"
+                    />
                   </div>
                   {subj.description && (
                     <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
@@ -146,11 +151,16 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   }
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex w-full min-w-0 items-center gap-2">
                     <FileText className="size-4 text-muted-foreground" />
-                    <span>{n.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t("in_subject")} {n.subjectName}
+                    <span className="min-w-0 flex-1 truncate">{n.title}</span>
+                    <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+                      <span className="shrink-0">{t("in_subject")}</span>
+                      <SubjectText
+                        value={n.subjectName}
+                        mode="truncate"
+                        className="block flex-1"
+                      />
                     </span>
                   </div>
                   {n.content && (
@@ -176,11 +186,18 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   }
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex w-full min-w-0 items-center gap-2">
                     <Layers className="size-4 text-muted-foreground" />
-                    <span>{getRichTextExcerpt(fc.front, 80)}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t("in_subject")} {fc.subjectName}
+                    <span className="min-w-0 flex-1 truncate">
+                      {getRichTextExcerpt(fc.front, 80)}
+                    </span>
+                    <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+                      <span className="shrink-0">{t("in_subject")}</span>
+                      <SubjectText
+                        value={fc.subjectName}
+                        mode="truncate"
+                        className="block flex-1"
+                      />
                     </span>
                   </div>
                   {fc.back && (
