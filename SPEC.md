@@ -62,7 +62,7 @@ Students who want a private, lightweight study management workspace.
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
 - Flashcards have a global top-level page with a management view and a review view.
-- The default flashcards page shows filtering, finding, and editing across subjects, with optional subject scoping for create/import.
+- The default flashcards page opens in the review view, with management available as the alternate global view for filtering, finding, and editing across subjects.
 - Flashcards have a dedicated detail page nested under subject routes.
 - Flashcard review remains available as the second view in the global flashcards page.
 - Flashcard imports support importing Anki `.txt` exports into a selected subject.

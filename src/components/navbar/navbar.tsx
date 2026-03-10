@@ -29,6 +29,7 @@ export async function Navbar() {
   const session = await getOptionalSession();
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
+  const logoHref = session ? "/subjects" : "/";
   const t = await getTranslations("Navigation");
   const isAdmin = session ? await isAdminUser(session.user.id) : false;
 
@@ -37,7 +38,7 @@ export async function Navbar() {
       <div className="container mx-auto flex h-full min-w-0 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <Link
-            href="/"
+            href={logoHref}
             className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80"
           >
             <BookOpenText className="size-5" />

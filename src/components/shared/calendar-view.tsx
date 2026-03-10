@@ -20,7 +20,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { getCalendarEvents } from "@/app/actions/calendar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -240,27 +240,64 @@ function DayDetail({
   );
 }
 
-export function CalendarView() {
-  const locale = useLocale();
-  const t = useTranslations("CalendarView");
-  const dateLocale = getDateFnsLocale(locale);
-  const [anchor, setAnchor] = useState(() => new Date());
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isPending, startTransition] = useTransition();
+interface CalendarViewProps {
+  initialAnchorIso?: string;
+  initialSelectedDateIso?: string;
+  initialEvents?: CalendarEvent[];
+}
 
+function resolveInitialDate(dateIso?: string): Date {
+  return dateIso ? new Date(dateIso) : new Date();
+}
+
+function getRangeKey(anchor: Date): string {
   const rangeStart = startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 });
   const rangeEnd = endOfWeek(endOfMonth(anchor), { weekStartsOn: 1 });
 
+  return `${format(rangeStart, "yyyy-MM-dd")}:${format(rangeEnd, "yyyy-MM-dd")}`;
+}
+
+export function CalendarView({
+  initialAnchorIso,
+  initialSelectedDateIso,
+  initialEvents,
+}: Readonly<CalendarViewProps>) {
+  const locale = useLocale();
+  const t = useTranslations("CalendarView");
+  const dateLocale = getDateFnsLocale(locale);
+  const [anchor, setAnchor] = useState(() =>
+    resolveInitialDate(initialAnchorIso),
+  );
+  const [selectedDate, setSelectedDate] = useState(() =>
+    resolveInitialDate(initialSelectedDateIso ?? initialAnchorIso),
+  );
+  const [events, setEvents] = useState<CalendarEvent[]>(initialEvents ?? []);
+  const [isPending, startTransition] = useTransition();
+  const initialRangeKeyRef = useRef(
+    initialEvents ? getRangeKey(resolveInitialDate(initialAnchorIso)) : null,
+  );
+  const shouldReuseInitialEventsRef = useRef(initialEvents !== undefined);
+
+  const rangeStart = startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 });
+  const rangeEnd = endOfWeek(endOfMonth(anchor), { weekStartsOn: 1 });
+  const rangeStartIso = format(rangeStart, "yyyy-MM-dd");
+  const rangeEndIso = format(rangeEnd, "yyyy-MM-dd");
+  const rangeKey = `${rangeStartIso}:${rangeEndIso}`;
+
   useEffect(() => {
+    if (
+      shouldReuseInitialEventsRef.current &&
+      initialRangeKeyRef.current === rangeKey
+    ) {
+      shouldReuseInitialEventsRef.current = false;
+      return;
+    }
+
     startTransition(async () => {
-      const data = await getCalendarEvents(
-        format(rangeStart, "yyyy-MM-dd"),
-        format(rangeEnd, "yyyy-MM-dd"),
-      );
+      const data = await getCalendarEvents(rangeStartIso, rangeEndIso);
       setEvents(buildCalendarEvents(data));
     });
-  }, [rangeEnd, rangeStart]);
+  }, [rangeEndIso, rangeKey, rangeStartIso]);
 
   const dates = getMonthGridDates(anchor);
   const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
