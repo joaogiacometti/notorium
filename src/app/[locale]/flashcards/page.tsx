@@ -17,6 +17,7 @@ export default async function FlashcardsPage({
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
   const t = await getTranslations("FlashcardsPage");
+  const tReview = await getTranslations("FlashcardReviewPage");
   const { view, subjectId } = await searchParams;
   const currentView = resolveFlashcardsView(view);
   const subjects = await getSubjectsForUser(session.user.id);
@@ -30,11 +31,19 @@ export default async function FlashcardsPage({
       subjectId: scopedSubjectId,
       limit: 50,
     });
+    const headerMeta =
+      reviewState.summary.dueCount === 0
+        ? tReview("due_empty")
+        : tReview("due_count", {
+            due: reviewState.summary.dueCount,
+            total: reviewState.summary.totalCount,
+          });
 
     return (
       <FlashcardsPageShell
         currentView={currentView}
         description={t("description")}
+        headerMeta={headerMeta}
         manageLabel={t("manage")}
         reviewLabel={t("review")}
         subjectId={scopedSubjectId}

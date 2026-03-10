@@ -196,11 +196,17 @@ export function FlashcardReviewClient({
 
   if (currentCard) {
     reviewContent = (
-      <Card>
-        <CardContent className="p-0">
-          <div className="max-h-[55svh] overflow-y-auto px-6 pt-0 sm:max-h-[60svh] sm:px-8">
-            <div className="mx-auto w-full max-w-3xl space-y-4 pb-4">
-              <div className="space-y-2">
+      <Card
+        className={
+          revealed
+            ? "h-[calc(100svh-16rem)] gap-0 overflow-hidden sm:h-[calc(100svh-18rem)]"
+            : "gap-0"
+        }
+      >
+        <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+          <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 sm:px-8">
+            <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col space-y-3 pb-3">
+              <div className="shrink-0 space-y-1.5">
                 {currentCard.subjectName ? (
                   <p className="min-w-0 text-sm font-medium text-muted-foreground">
                     <SubjectText
@@ -235,15 +241,17 @@ export function FlashcardReviewClient({
               </div>
 
               {revealed && (
-                <div className="space-y-2 border-t border-border/60 pt-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground">
+                <div className="flex min-h-0 flex-1 flex-col space-y-2 border-t border-border/60 pt-2">
+                  <h3 className="shrink-0 text-sm font-semibold text-muted-foreground">
                     {t("back_label")}
                   </h3>
-                  <div className="max-w-3xl">
-                    <TiptapRenderer
-                      content={currentCard.back}
-                      className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-                    />
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                    <div className="max-w-3xl">
+                      <TiptapRenderer
+                        content={currentCard.back}
+                        className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -323,9 +331,7 @@ export function FlashcardReviewClient({
           : "mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8"
       }
     >
-      {embedded ? (
-        <p className="text-sm font-medium text-foreground">{dueCountText}</p>
-      ) : (
+      {embedded ? null : (
         <div
           className={`flex min-w-0 items-start gap-4 ${currentCard ? "mb-10" : "mb-6"}`}
         >
