@@ -1,5 +1,6 @@
 import { Layers3 } from "lucide-react";
 import type { ReactNode } from "react";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import type { FlashcardsView } from "@/features/flashcards/view";
 import { FlashcardsViewSwitch } from "./flashcards-view-switch";
 
@@ -26,7 +27,7 @@ export function FlashcardsPageShell({
 }: Readonly<FlashcardsPageShellProps>) {
   return (
     <main>
-      <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <AppPageContainer>
         <div className="mb-3 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Layers3 className="size-5" />
@@ -56,7 +57,7 @@ export function FlashcardsPageShell({
         </div>
 
         {children}
-      </div>
+      </AppPageContainer>
     </main>
   );
 }

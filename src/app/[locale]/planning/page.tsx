@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { PlanningAssessmentsPanel } from "@/components/planning/planning-assessments-panel";
 import { PlanningCalendarPanel } from "@/components/planning/planning-calendar-panel";
 import { PlanningViewSwitch } from "@/components/planning/planning-view-switch";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { resolvePlanningView } from "@/features/planning/view";
 import { requireSession } from "@/lib/auth/auth";
 
@@ -20,7 +21,7 @@ export default async function PlanningPage({
 
   return (
     <main>
-      <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <AppPageContainer>
         <div className="mb-10 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <CalendarDays className="size-5" />
@@ -48,7 +49,7 @@ export default async function PlanningPage({
         ) : (
           <PlanningCalendarPanel />
         )}
-      </div>
+      </AppPageContainer>
     </main>
   );
 }

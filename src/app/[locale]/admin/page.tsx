@@ -1,6 +1,7 @@
 import { Shield } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { UserAccessManagementCard } from "@/components/admin/user-access-management-card";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { getManagedUsers } from "@/lib/auth/access-control";
 import { requireAdminSession } from "@/lib/auth/auth";
 
@@ -11,7 +12,7 @@ export default async function AdminPage() {
 
   return (
     <main>
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <AppPageContainer maxWidth="3xl">
         <div className="mb-10 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Shield className="size-5" />
@@ -26,7 +27,7 @@ export default async function AdminPage() {
           </div>
         </div>
         <UserAccessManagementCard users={managedUsers} />
-      </div>
+      </AppPageContainer>
     </main>
   );
 }

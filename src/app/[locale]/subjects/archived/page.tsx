@@ -1,5 +1,6 @@
 import { Archive, ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { ArchivedSubjectCard } from "@/components/subjects/archived-subject-card";
 import { Button } from "@/components/ui/button";
 import { getArchivedSubjectsForUser } from "@/features/subjects/queries";
@@ -13,7 +14,7 @@ export default async function ArchivedSubjectsPage() {
 
   return (
     <main>
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <AppPageContainer maxWidth="5xl">
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -56,7 +57,7 @@ export default async function ArchivedSubjectsPage() {
             ))}
           </div>
         )}
-      </div>
+      </AppPageContainer>
     </main>
   );
 }

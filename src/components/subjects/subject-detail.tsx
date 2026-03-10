@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AssessmentsOverview } from "@/components/assessments/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
 import { NotesList } from "@/components/notes/notes-list";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
@@ -43,7 +44,7 @@ export function SubjectDetail({
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppPageContainer maxWidth="3xl">
       <div className="mb-6">
         <Button
           variant="ghost"
@@ -154,6 +155,6 @@ export function SubjectDetail({
           router.push("/subjects");
         }}
       />
-    </div>
+    </AppPageContainer>
   );
 }

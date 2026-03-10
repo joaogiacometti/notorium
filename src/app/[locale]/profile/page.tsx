@@ -1,6 +1,7 @@
 import { UserCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { getUserAiSettingsSummary } from "@/features/ai/settings";
 import { requireSession } from "@/lib/auth/auth";
 
@@ -11,7 +12,7 @@ export default async function ProfilePage() {
 
   return (
     <main>
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <AppPageContainer maxWidth="3xl">
         <div className="mb-10 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <UserCircle className="size-5" />
@@ -34,7 +35,7 @@ export default async function ProfilePage() {
             initialAiSettings={aiSettings}
           />
         </div>
-      </div>
+      </AppPageContainer>
     </main>
   );
 }

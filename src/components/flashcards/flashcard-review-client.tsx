@@ -22,6 +22,7 @@ import {
   getFlashcardReviewState,
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { SubjectText } from "@/components/shared/subject-text";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";
@@ -199,7 +200,7 @@ export function FlashcardReviewClient({
       <Card
         className={
           revealed
-            ? "h-[calc(100svh-16rem)] gap-0 overflow-hidden sm:h-[calc(100svh-18rem)]"
+            ? "max-h-[calc(100svh-16rem)] gap-0 overflow-hidden sm:max-h-[calc(100svh-18rem)]"
             : "gap-0"
         }
       >
@@ -323,14 +324,8 @@ export function FlashcardReviewClient({
     );
   }
 
-  return (
-    <div
-      className={
-        embedded
-          ? "space-y-6"
-          : "mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8"
-      }
-    >
+  const content = (
+    <>
       {embedded ? null : (
         <div
           className={`flex min-w-0 items-start gap-4 ${currentCard ? "mb-10" : "mb-6"}`}
@@ -362,6 +357,12 @@ export function FlashcardReviewClient({
           onUpdated={handleFlashcardUpdated}
         />
       ) : null}
-    </div>
+    </>
+  );
+
+  return embedded ? (
+    <div className="space-y-6">{content}</div>
+  ) : (
+    <AppPageContainer>{content}</AppPageContainer>
   );
 }

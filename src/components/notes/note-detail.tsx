@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { EditNoteDialog } from "@/components/notes/edit-note-dialog";
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/routing";
@@ -25,7 +26,7 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppPageContainer maxWidth="3xl">
       <div className="mb-6">
         <Button
           variant="ghost"
@@ -108,6 +109,6 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
           router.push(`/subjects/${note.subjectId}`);
         }}
       />
-    </div>
+    </AppPageContainer>
   );
 }

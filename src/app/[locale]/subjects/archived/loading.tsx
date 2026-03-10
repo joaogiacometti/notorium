@@ -1,3 +1,4 @@
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ArchivedSubjectsLoading() {
@@ -8,7 +9,7 @@ export default function ArchivedSubjectsLoading() {
 
   return (
     <main>
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <AppPageContainer maxWidth="5xl">
         <div className="mb-6">
           <Skeleton className="h-9 w-40" />
         </div>
@@ -38,7 +39,7 @@ export default function ArchivedSubjectsLoading() {
             </div>
           ))}
         </div>
-      </div>
+      </AppPageContainer>
     </main>
   );
 }

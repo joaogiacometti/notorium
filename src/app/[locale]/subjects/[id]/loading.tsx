@@ -1,3 +1,4 @@
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SubjectDetailLoading() {
@@ -6,7 +7,7 @@ export default function SubjectDetailLoading() {
     (_, index) => `loading-note-${index}`,
   );
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppPageContainer maxWidth="3xl">
       <div className="mb-6">
         <Skeleton className="h-9 w-40" />
       </div>
@@ -70,6 +71,6 @@ export default function SubjectDetailLoading() {
           ))}
         </div>
       </div>
-    </div>
+    </AppPageContainer>
   );
 }

@@ -1,9 +1,10 @@
+import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminLoading() {
   return (
     <main>
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <AppPageContainer maxWidth="3xl">
         <div className="mb-10 flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />
           <div className="min-w-0">
@@ -26,7 +27,7 @@ export default function AdminLoading() {
             </div>
           </div>
         </div>
-      </div>
+      </AppPageContainer>
     </main>
   );
 }
