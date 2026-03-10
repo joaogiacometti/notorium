@@ -3,10 +3,14 @@
 import { createFlashcard } from "@/app/actions/flashcards";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
 import type { CreateFlashcardForm } from "@/features/flashcards/validation";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 
 interface CreateFlashcardDialogProps {
-  subjectId: string;
+  subjectId?: string;
+  subjects?: SubjectEntity[];
   trigger?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -23,6 +27,7 @@ function getCreateFlashcardFormValues(subjectId: string): CreateFlashcardForm {
 
 export function CreateFlashcardDialog({
   subjectId,
+  subjects,
   trigger,
   open,
   onOpenChange,
@@ -34,7 +39,8 @@ export function CreateFlashcardDialog({
       open={open}
       onOpenChange={onOpenChange}
       trigger={trigger}
-      values={getCreateFlashcardFormValues(subjectId)}
+      values={getCreateFlashcardFormValues(subjectId ?? "")}
+      subjects={subjects}
       onSubmitAction={(values) =>
         createFlashcard(values as CreateFlashcardForm)
       }

@@ -133,6 +133,8 @@ src/
 ### Components
 
 - Use shadcn/ui components from `src/components/ui/`. Do not modify those files directly.
+- When a matching shadcn/ui primitive already exists, use it instead of building a custom replacement.
+- When the project has the underlying shadcn-compatible dependency available but the primitive is missing from `src/components/ui/`, add the standard shadcn primitive first, then use it.
 - Put custom components in `src/components/`.
 - Keep components focused and single-purpose.
 

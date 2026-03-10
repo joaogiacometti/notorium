@@ -1,7 +1,10 @@
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  FlashcardListEntity,
+} from "@/lib/server/api-contracts";
 
 export async function getFlashcardsBySubjectForUser(
   userId: string,
@@ -21,6 +24,29 @@ export async function getFlashcardsBySubjectForUser(
     )
     .orderBy(desc(flashcard.updatedAt))
     .then((rows) => rows.map((row) => row.flashcard));
+}
+
+export async function getFlashcardsForUser(
+  userId: string,
+): Promise<FlashcardListEntity[]> {
+  return db
+    .select({ flashcard, subjectName: subject.name })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .where(
+      and(
+        eq(flashcard.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .orderBy(desc(flashcard.updatedAt))
+    .then((rows) =>
+      rows.map((row) => ({
+        ...row.flashcard,
+        subjectName: row.subjectName,
+      })),
+    );
 }
 
 export async function getFlashcardByIdForUser(

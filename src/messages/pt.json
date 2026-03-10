@@ -2,7 +2,8 @@
   "Navigation": {
     "dashboard": "Painel",
     "subjects": "Matérias",
-    "flashcards_review": "Revisão",
+    "planning": "Planejamento",
+    "flashcards": "Flashcards",
     "assessments": "Avaliações",
     "calendar": "Calendário",
     "profile": "Conta",
@@ -127,7 +128,9 @@
     "import_success": "{count, plural, one {# flashcard importado com sucesso.} other {# flashcards importados com sucesso.}}",
     "import_read_error": "Falha ao importar o arquivo selecionado.",
     "import_dialog_title": "Importar flashcards",
-    "import_dialog_description": "Isso adicionará flashcards de uma exportação .txt do Anki a esta matéria. Os flashcards existentes não serão alterados.",
+    "import_dialog_description": "Isso adicionará flashcards de uma exportação .txt do Anki à matéria selecionada. Os flashcards existentes não serão alterados.",
+    "import_subject": "Matéria",
+    "import_subject_placeholder": "Selecione uma matéria",
     "import_cancel": "Cancelar",
     "import_confirm": "Confirmar importação",
     "new_flashcard": "Novo flashcard",
@@ -148,6 +151,33 @@
     "delete": "Excluir",
     "reset": "Resetar",
     "no_results": "Nenhum flashcard corresponde à busca.",
+    "prev": "Anterior",
+    "next": "Próxima",
+    "page": "Página {current} de {total}"
+  },
+  "FlashcardsPage": {
+    "title": "Flashcards",
+    "description": "Gerencie todos os seus flashcards ou alterne para a revisão dos cartões pendentes.",
+    "manage": "Gerenciar",
+    "review": "Revisar"
+  },
+  "FlashcardsManager": {
+    "search_placeholder": "Buscar frente, verso ou matéria...",
+    "subject_filter_placeholder": "Filtrar por matéria",
+    "subject_all": "Todas as matérias",
+    "select_subject_required": "Escolha uma matéria primeiro.",
+    "new_flashcard": "Novo Flashcard",
+    "results_count": "{filtered} de {total} flashcards",
+    "selected_subject_count": "{count}/{max} flashcards nesta matéria",
+    "limit_tooltip": "Você não pode criar mais flashcards para esta matéria",
+    "limit_message": "Você atingiu o limite de {max} flashcards por matéria. Por favor, exclua flashcards existentes para criar mais.",
+    "empty_title": "Ainda não há flashcards",
+    "empty_description": "Escolha uma matéria e crie ou importe seus primeiros flashcards.",
+    "table_front": "Frente",
+    "table_back": "Verso",
+    "table_subject": "Matéria",
+    "table_actions": "Ações",
+    "no_results": "Nenhum flashcard corresponde aos seus filtros.",
     "prev": "Anterior",
     "next": "Próxima",
     "page": "Página {current} de {total}"
@@ -230,13 +260,11 @@
     "empty_title": "Nenhuma matéria arquivada",
     "empty_description": "As matérias arquivadas aparecerão aqui."
   },
-  "AssessmentsPage": {
-    "title": "Todas as avaliações",
-    "description": "Visão detalhada de todas as matérias com filtros globais."
-  },
-  "CalendarPage": {
-    "title": "Calendário",
-    "description": "Avaliações e faltas em uma linha do tempo."
+  "PlanningPage": {
+    "title": "Planejamento",
+    "description": "Alterne entre o gerenciamento de avaliações e sua linha do tempo no calendário.",
+    "assessments": "Avaliações",
+    "calendar": "Calendário"
   },
   "CalendarView": {
     "title": "Calendário",
@@ -469,6 +497,8 @@
   },
   "CreateFlashcardDialog": {
     "title": "Criar Flashcard",
+    "field_subject": "Matéria",
+    "field_subject_placeholder": "Selecione uma matéria",
     "field_front": "Frente",
     "field_back": "Verso",
     "field_front_placeholder": "ex.: O que é fotossíntese?",
@@ -714,6 +744,7 @@
       "contentMaxLength": "O conteudo deve ter no maximo 10000 caracteres."
     },
     "flashcards": {
+      "subjectRequired": "A materia e obrigatoria.",
       "frontRequired": "A frente do flashcard e obrigatoria.",
       "frontMaxLength": "A frente do flashcard deve ter no maximo 500 caracteres.",
       "backRequired": "O verso do flashcard e obrigatorio.",

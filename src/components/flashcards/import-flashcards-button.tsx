@@ -14,16 +14,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { SubjectEntity } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface ImportFlashcardsButtonProps {
-  subjectId: string;
+  subjectId?: string;
+  subjects?: SubjectEntity[];
   disabled?: boolean;
   onImported?: () => void | Promise<void>;
 }
 
 export function ImportFlashcardsButton({
   subjectId,
+  subjects,
   disabled = false,
   onImported,
 }: Readonly<ImportFlashcardsButtonProps>) {
@@ -31,6 +41,7 @@ export function ImportFlashcardsButton({
   const tErrors = useTranslations("ServerActions");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isImporting, startImport] = useTransition();
+  const [selectedSubjectId, setSelectedSubjectId] = useState(subjectId ?? "");
   const pendingFileRef = useRef<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +52,7 @@ export function ImportFlashcardsButton({
     }
 
     pendingFileRef.current = file;
+    setSelectedSubjectId(subjectId ?? "");
     setConfirmOpen(true);
 
     if (fileInputRef.current) {
@@ -55,14 +67,14 @@ export function ImportFlashcardsButton({
 
   function handleConfirm() {
     const file = pendingFileRef.current;
-    if (!file) {
+    if (!file || selectedSubjectId.length === 0) {
       return;
     }
 
     startImport(async () => {
       try {
         const formData = new FormData();
-        formData.set("subjectId", subjectId);
+        formData.set("subjectId", selectedSubjectId);
         formData.set("file", file);
         const result = await importAnkiFlashcards(formData);
 
@@ -114,6 +126,31 @@ export function ImportFlashcardsButton({
               {t("import_dialog_description")}
             </DialogDescription>
           </DialogHeader>
+          {subjects && subjects.length > 0 ? (
+            <div className="space-y-2">
+              <label
+                htmlFor="flashcards-import-subject"
+                className="text-sm font-medium"
+              >
+                {t("import_subject")}
+              </label>
+              <Select
+                value={selectedSubjectId}
+                onValueChange={setSelectedSubjectId}
+              >
+                <SelectTrigger id="flashcards-import-subject">
+                  <SelectValue placeholder={t("import_subject_placeholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
@@ -122,7 +159,10 @@ export function ImportFlashcardsButton({
             >
               {t("import_cancel")}
             </Button>
-            <Button onClick={handleConfirm} disabled={isImporting}>
+            <Button
+              onClick={handleConfirm}
+              disabled={isImporting || selectedSubjectId.length === 0}
+            >
               {isImporting && <Loader2 className="size-4 animate-spin" />}
               {t("import_confirm")}
             </Button>

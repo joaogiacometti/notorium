@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { AssessmentsOverview } from "@/components/assessments/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
-import { FlashcardsList } from "@/components/flashcards/flashcards-list";
 import { NotesList } from "@/components/notes/notes-list";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
@@ -126,9 +125,6 @@ export function SubjectDetail({
 
       <Separator className="my-8" />
       <NotesList subjectId={subject.id} notes={notes} />
-
-      <Separator className="my-8" />
-      <FlashcardsList subjectId={subject.id} />
 
       <EditSubjectDialog
         subject={subject}

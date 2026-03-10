@@ -1,29 +1,22 @@
-import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-client";
-import { getFlashcardReviewState } from "@/features/flashcard-review/server";
-import { requireSession } from "@/lib/auth/auth";
+import { redirect } from "next/navigation";
 
 interface FlashcardReviewPageProps {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ subjectId?: string }>;
 }
 
 export default async function FlashcardReviewPage({
+  params,
   searchParams,
 }: Readonly<FlashcardReviewPageProps>) {
-  await requireSession();
-
+  const { locale } = await params;
   const { subjectId } = await searchParams;
-  const scopedSubjectId = typeof subjectId === "string" ? subjectId : undefined;
-  const initialState = await getFlashcardReviewState({
-    subjectId: scopedSubjectId,
-    limit: 50,
-  });
+  const query = new URLSearchParams();
+  query.set("view", "review");
 
-  return (
-    <main>
-      <FlashcardReviewClient
-        initialState={initialState}
-        subjectId={scopedSubjectId}
-      />
-    </main>
-  );
+  if (typeof subjectId === "string") {
+    query.set("subjectId", subjectId);
+  }
+
+  redirect(`/${locale}/flashcards?${query.toString()}`);
 }

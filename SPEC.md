@@ -61,10 +61,11 @@ Students who want a private, lightweight study management workspace.
   - supported Imgur share links
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
-- Flashcards are displayed inline in subject detail in a collapsed section.
-- Subject flashcards are loaded when the section is expanded.
+- Flashcards have a global top-level page with a management view and a review view.
+- The default flashcards page shows filtering, finding, and editing across subjects, with optional subject scoping for create/import.
 - Flashcards have a dedicated detail page nested under subject routes.
-- Subject detail flashcards support importing Anki `.txt` exports into the current subject.
+- Flashcard review remains available as the second view in the global flashcards page.
+- Flashcard imports support importing Anki `.txt` exports into a selected subject.
 - Supported scheduling metadata from Anki imports is preserved when present.
 - User AI API keys are encrypted at rest, never shown back to the user after saving, and excluded from data export/import.
 
