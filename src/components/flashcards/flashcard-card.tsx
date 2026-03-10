@@ -48,7 +48,7 @@ export function FlashcardCard({
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 shrink-0 rounded-md text-muted-foreground/80 opacity-100 transition-all hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="size-7 shrink-0 rounded-md text-muted-foreground/80 transition-all hover:text-foreground"
               aria-label={t("open_actions")}
             >
               <MoreVertical className="size-3.5" />

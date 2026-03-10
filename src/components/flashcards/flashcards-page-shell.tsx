@@ -26,9 +26,9 @@ export function FlashcardsPageShell({
   title,
 }: Readonly<FlashcardsPageShellProps>) {
   return (
-    <main>
-      <AppPageContainer>
-        <div className="mb-3 flex min-w-0 items-start gap-4">
+    <main className="lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden">
+      <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
+        <div className="mb-10 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Layers3 className="size-5" />
           </div>
@@ -56,7 +56,7 @@ export function FlashcardsPageShell({
           />
         </div>
 
-        {children}
+        <div className="lg:flex-1 lg:min-h-0">{children}</div>
       </AppPageContainer>
     </main>
   );

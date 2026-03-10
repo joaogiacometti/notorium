@@ -40,10 +40,10 @@ export function FlashcardsTableRowActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8"
+            className="size-7 text-muted-foreground/75 transition-all hover:text-foreground"
             aria-label={t("open_actions")}
           >
-            <MoreVertical className="size-4" />
+            <MoreVertical className="size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
