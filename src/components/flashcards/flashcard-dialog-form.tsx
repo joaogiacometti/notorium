@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Pin, PinOff, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import {
   type CreateFlashcardForm,
   createFlashcardSchema,
@@ -95,6 +96,8 @@ export function FlashcardDialogForm({
   const tErrors = useTranslations("ServerActions");
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isGeneratingBack, setIsGeneratingBack] = useState(false);
+  const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
+  const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
   const form = useFlashcardForm(mode, values);
 
   useEffect(() => {
@@ -114,6 +117,10 @@ export function FlashcardDialogForm({
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
       setDiscardDialogOpen(false);
+      if (mode === "create") {
+        setKeepFrontAfterSubmit(false);
+        setKeepBackAfterSubmit(false);
+      }
       onOpenChange(true);
       return;
     }
@@ -131,22 +138,19 @@ export function FlashcardDialogForm({
   async function onSubmit(data: FlashcardFormValues) {
     const result = await onSubmitAction(data);
     if (result.success) {
-      let resetValues: FlashcardFormValues;
-
       if (mode === "create") {
-        resetValues =
-          "subjectId" in values
-            ? {
-                subjectId: values.subjectId,
-                front: "",
-                back: "",
-              }
-            : values;
-      } else {
-        resetValues = data;
+        form.reset(
+          getCreateFlashcardResetValues(data as CreateFlashcardForm, {
+            keepFrontAfterSubmit,
+            keepBackAfterSubmit,
+          }),
+        );
+        setDiscardDialogOpen(false);
+        await onSuccess?.(result.flashcard);
+        return;
       }
 
-      form.reset(resetValues);
+      form.reset(data);
       setDiscardDialogOpen(false);
       await onSuccess?.(result.flashcard);
       onOpenChange(false);
@@ -262,9 +266,41 @@ export function FlashcardDialogForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-front`}>
-                      {t("field_front")}
-                    </FieldLabel>
+                    <div className="flex h-9 items-center justify-between gap-3">
+                      <FieldLabel htmlFor={`${formId}-front`}>
+                        {t("field_front")}
+                      </FieldLabel>
+                      <div className="flex items-center gap-1">
+                        {mode === "create" ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            aria-label={
+                              keepFrontAfterSubmit
+                                ? t("keep_front_off")
+                                : t("keep_front_on")
+                            }
+                            title={
+                              keepFrontAfterSubmit
+                                ? t("keep_front_off")
+                                : t("keep_front_on")
+                            }
+                            aria-pressed={keepFrontAfterSubmit}
+                            onClick={() =>
+                              setKeepFrontAfterSubmit((current) => !current)
+                            }
+                            disabled={form.formState.isSubmitting}
+                          >
+                            {keepFrontAfterSubmit ? (
+                              <Pin className="size-3.5" />
+                            ) : (
+                              <PinOff className="size-3.5" />
+                            )}
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
                     <TiptapEditor
                       value={field.value ?? ""}
                       onChange={field.onChange}
@@ -286,24 +322,59 @@ export function FlashcardDialogForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <div className="flex items-center justify-between gap-3">
-                      <FieldLabel htmlFor={`${formId}-back`}>
-                        {t("field_back")}
-                      </FieldLabel>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void handleGenerateBack()}
-                        disabled={!canGenerateBack}
-                      >
-                        {isGeneratingBack ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : null}
-                        {isGeneratingBack
-                          ? t("generating_back")
-                          : t("generate_back")}
-                      </Button>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <FieldLabel htmlFor={`${formId}-back`}>
+                          {t("field_back")}
+                        </FieldLabel>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
+                            onClick={() => void handleGenerateBack()}
+                            disabled={!canGenerateBack}
+                          >
+                            {isGeneratingBack ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Sparkles className="size-3.5" />
+                            )}
+                            {isGeneratingBack
+                              ? t("generating_back")
+                              : t("generate_back")}
+                          </Button>
+                          {mode === "create" ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              aria-label={
+                                keepBackAfterSubmit
+                                  ? t("keep_back_off")
+                                  : t("keep_back_on")
+                              }
+                              title={
+                                keepBackAfterSubmit
+                                  ? t("keep_back_off")
+                                  : t("keep_back_on")
+                              }
+                              aria-pressed={keepBackAfterSubmit}
+                              onClick={() =>
+                                setKeepBackAfterSubmit((current) => !current)
+                              }
+                              disabled={form.formState.isSubmitting}
+                            >
+                              {keepBackAfterSubmit ? (
+                                <Pin className="size-3.5" />
+                              ) : (
+                                <PinOff className="size-3.5" />
+                              )}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
                     <TiptapEditor
                       value={field.value ?? ""}

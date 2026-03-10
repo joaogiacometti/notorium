@@ -503,6 +503,10 @@
     "field_back": "Verso",
     "field_front_placeholder": "ex.: O que é fotossíntese?",
     "field_back_placeholder": "ex.: Processo em que plantas convertem luz em energia.",
+    "keep_front_on": "Manter frente após enviar",
+    "keep_front_off": "Limpar frente após enviar",
+    "keep_back_on": "Manter verso após enviar",
+    "keep_back_off": "Limpar verso após enviar",
     "generate_back": "Gerar com IA",
     "generating_back": "Gerando...",
     "submit": "Criar Flashcard"

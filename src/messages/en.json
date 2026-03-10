@@ -503,6 +503,10 @@
     "field_back": "Back",
     "field_front_placeholder": "e.g. What is photosynthesis?",
     "field_back_placeholder": "e.g. Process plants use to convert light into energy.",
+    "keep_front_on": "Keep front after submit",
+    "keep_front_off": "Clear front after submit",
+    "keep_back_on": "Keep back after submit",
+    "keep_back_off": "Clear back after submit",
     "generate_back": "Generate with AI",
     "generating_back": "Generating...",
     "submit": "Create Flashcard"
