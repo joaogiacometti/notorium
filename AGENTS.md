@@ -98,6 +98,7 @@ src/
 - Keep read/query helpers, feature validation schemas, and business rules in `src/features/*`.
 - Keep Server Actions thin: authenticate, validate, delegate, and revalidate.
 - Use `@/` alias imports.
+- Every route with a `page.tsx` must have a matching `loading.tsx` that mirrors the page layout structure. When a page layout changes (e.g., wrapper classes, sections, structural hierarchy), update the corresponding `loading.tsx` skeleton to match.
 
 ### React Compiler
 

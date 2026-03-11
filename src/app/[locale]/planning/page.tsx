@@ -20,8 +20,8 @@ export default async function PlanningPage({
   const currentView = resolvePlanningView(view);
 
   return (
-    <main>
-      <AppPageContainer>
+    <main className="lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden">
+      <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
         <div className="mb-10 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <CalendarDays className="size-5" />
@@ -44,11 +44,13 @@ export default async function PlanningPage({
           />
         </div>
 
-        {currentView === "assessments" ? (
-          <PlanningAssessmentsPanel userId={session.user.id} />
-        ) : (
-          <PlanningCalendarPanel />
-        )}
+        <div className="lg:flex-1 lg:min-h-0">
+          {currentView === "assessments" ? (
+            <PlanningAssessmentsPanel userId={session.user.id} />
+          ) : (
+            <PlanningCalendarPanel />
+          )}
+        </div>
       </AppPageContainer>
     </main>
   );

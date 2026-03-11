@@ -1,0 +1,73 @@
+"use client";
+
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
+import { EditAssessmentDialog } from "@/components/assessments/edit-assessment-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { AssessmentEntity } from "@/lib/server/api-contracts";
+
+interface AssessmentsTableRowActionsProps {
+  assessment: AssessmentEntity;
+}
+
+export function AssessmentsTableRowActions({
+  assessment,
+}: Readonly<AssessmentsTableRowActionsProps>) {
+  const t = useTranslations("PlanningAssessmentsTable");
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground/75 transition-all hover:text-foreground"
+            aria-label={t("open_actions")}
+          >
+            <MoreVertical className="size-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => setEditOpen(true)}
+            className="cursor-pointer"
+          >
+            <Pencil className="size-4" />
+            {t("edit")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setDeleteOpen(true)}
+            className="cursor-pointer text-destructive focus:text-destructive"
+          >
+            <Trash2 className="size-4" />
+            {t("delete")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <EditAssessmentDialog
+        assessment={assessment}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+      <DeleteAssessmentDialog
+        assessmentId={assessment.id}
+        assessmentTitle={assessment.title}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
+    </>
+  );
+}

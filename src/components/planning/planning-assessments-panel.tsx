@@ -1,4 +1,4 @@
-import { GradesSummary } from "@/components/subjects/grades-summary";
+import { PlanningAssessmentsTable } from "@/components/planning/planning-assessments-table";
 import { getAssessmentsForUser } from "@/features/assessments/queries";
 import { getSubjectsForUser } from "@/features/subjects/queries";
 
@@ -19,11 +19,9 @@ export async function PlanningAssessmentsPanel({
   );
 
   return (
-    <GradesSummary
+    <PlanningAssessmentsTable
       assessments={assessments}
-      showHeader={false}
-      showAverage={false}
-      showSubjectFilter
+      subjects={subjects}
       subjectNamesById={subjectNamesById}
     />
   );
