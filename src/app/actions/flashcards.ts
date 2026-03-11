@@ -1,25 +1,13 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
-import { flashcard } from "@/db/schema";
-import { generateFlashcardBackForUser } from "@/features/flashcards/ai-service";
 import {
-  mapAnkiImportCardToFlashcardInsert,
-  parseAnkiImportFile,
-} from "@/features/flashcards/anki-import";
-import {
-  type AnkiImportCard,
-  importAnkiFlashcardsSchema,
-} from "@/features/flashcards/anki-import-validation";
-import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
-import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
-import {
-  countFlashcardsBySubjectForUser,
-  getFlashcardByIdForUser,
-  getFlashcardRecordForUser,
-  getFlashcardsBySubjectForUser,
-} from "@/features/flashcards/queries";
+  createFlashcardForUser,
+  deleteFlashcardForUser,
+  editFlashcardForUser,
+  generateFlashcardBackForUserInput,
+  importAnkiFlashcardsForUser,
+  resetFlashcardForUser,
+} from "@/features/flashcards/mutations";
 import {
   revalidateFlashcardDetailPaths,
   revalidateFlashcardReviewPaths,
@@ -37,10 +25,6 @@ import {
   type ResetFlashcardForm,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
-import {
-  getActiveSubjectByIdForUser,
-  getActiveSubjectRecordForUser,
-} from "@/features/subjects/queries";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { LIMITS } from "@/lib/config/limits";
 import { parseActionInput } from "@/lib/server/action-input";
@@ -48,28 +32,11 @@ import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
-  FlashcardEntity,
   GenerateFlashcardBackResult,
   MutationResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
-
-export async function getFlashcardsBySubject(
-  subjectId: string,
-): Promise<FlashcardEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  await ensureFsrsSettings(userId);
-  return getFlashcardsBySubjectForUser(userId, subjectId);
-}
-
-export async function getFlashcardById(
-  id: string,
-): Promise<FlashcardEntity | null> {
-  const userId = await getAuthenticatedUserId();
-  await ensureFsrsSettings(userId);
-  return getFlashcardByIdForUser(userId, id);
-}
 
 export async function createFlashcard(
   data: CreateFlashcardInput,
@@ -85,49 +52,13 @@ export async function createFlashcard(
     return parsed.error;
   }
 
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    parsed.data.subjectId,
-  );
+  const result = await createFlashcardForUser(userId, parsed.data);
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateFlashcardSubjectPaths(result.flashcard.subjectId);
   }
 
-  const current = await countFlashcardsBySubjectForUser(
-    userId,
-    parsed.data.subjectId,
-  );
-
-  if (current >= LIMITS.maxFlashcardsPerSubject) {
-    return actionError("limits.flashcardLimit", {
-      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
-    });
-  }
-
-  const schedulingState = getInitialFlashcardSchedulingState();
-  const inserted = await db
-    .insert(flashcard)
-    .values({
-      subjectId: parsed.data.subjectId,
-      userId,
-      front: parsed.data.front,
-      back: parsed.data.back,
-      state: schedulingState.state,
-      dueAt: schedulingState.dueAt,
-      stability: schedulingState.stability,
-      difficulty: schedulingState.difficulty,
-      ease: schedulingState.ease,
-      intervalDays: schedulingState.intervalDays,
-      learningStep: schedulingState.learningStep,
-      lastReviewedAt: schedulingState.lastReviewedAt,
-      reviewCount: schedulingState.reviewCount,
-      lapseCount: schedulingState.lapseCount,
-    })
-    .returning();
-
-  revalidateFlashcardSubjectPaths(parsed.data.subjectId);
-  return { success: true, flashcard: inserted[0] };
+  return result;
 }
 
 export async function importAnkiFlashcards(
@@ -145,61 +76,13 @@ export async function importAnkiFlashcards(
     return actionError("flashcards.import.invalidFormat");
   }
 
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    subjectId,
-  );
+  const result = await importAnkiFlashcardsForUser(userId, { subjectId, file });
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateFlashcardReviewPaths(subjectId);
   }
 
-  const current = await countFlashcardsBySubjectForUser(userId, subjectId);
-  let parsedCards: AnkiImportCard[];
-
-  try {
-    parsedCards = await parseAnkiImportFile(file);
-  } catch {
-    return actionError("flashcards.import.invalidFormat");
-  }
-
-  const parsed = importAnkiFlashcardsSchema.safeParse({
-    subjectId,
-    cards: parsedCards,
-  });
-
-  if (!parsed.success) {
-    return actionError("flashcards.import.invalidFormat");
-  }
-
-  if (parsed.data.cards.length === 0) {
-    return actionError("flashcards.import.noCards");
-  }
-
-  const incoming = parsed.data.cards.length;
-
-  if (current + incoming > LIMITS.maxFlashcardsPerSubject) {
-    return actionError("limits.flashcardLimit", {
-      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
-    });
-  }
-
-  try {
-    const now = new Date();
-
-    await db.insert(flashcard).values(
-      parsed.data.cards.map((cardData) => ({
-        ...mapAnkiImportCardToFlashcardInsert(cardData, now),
-        subjectId,
-        userId,
-      })),
-    );
-  } catch {
-    return actionError("flashcards.import.failed");
-  }
-
-  revalidateFlashcardReviewPaths(subjectId);
-  return { success: true, imported: incoming };
+  return result;
 }
 
 export async function editFlashcard(
@@ -216,26 +99,13 @@ export async function editFlashcard(
     return parsed.error;
   }
 
-  const existingFlashcard = await getFlashcardRecordForUser(
-    userId,
-    parsed.data.id,
-  );
+  const result = await editFlashcardForUser(userId, parsed.data);
 
-  if (!existingFlashcard) {
-    return actionError("flashcards.notFound");
+  if (result.success) {
+    revalidateFlashcardReviewPaths(result.flashcard.subjectId, parsed.data.id);
   }
 
-  const updated = await db
-    .update(flashcard)
-    .set({
-      front: parsed.data.front,
-      back: parsed.data.back,
-    })
-    .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)))
-    .returning();
-
-  revalidateFlashcardReviewPaths(existingFlashcard.subjectId, parsed.data.id);
-  return { success: true, flashcard: updated[0] };
+  return result;
 }
 
 export async function generateFlashcardBack(
@@ -252,26 +122,7 @@ export async function generateFlashcardBack(
     return parsed.error;
   }
 
-  const existingSubject = await getActiveSubjectByIdForUser(
-    userId,
-    parsed.data.subjectId,
-  );
-
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
-  }
-
-  const result = await generateFlashcardBackForUser({
-    userId,
-    subjectName: existingSubject.name,
-    front: parsed.data.front,
-  });
-
-  if (!result.success) {
-    return actionError(result.errorCode);
-  }
-
-  return { success: true, back: result.back };
+  return generateFlashcardBackForUserInput(userId, parsed.data);
 }
 
 export async function deleteFlashcard(
@@ -288,20 +139,13 @@ export async function deleteFlashcard(
     return parsed.error;
   }
 
-  const existingFlashcard = await getFlashcardRecordForUser(
-    userId,
-    parsed.data.id,
-  );
+  const result = await deleteFlashcardForUser(userId, parsed.data);
 
-  if (!existingFlashcard) {
-    return actionError("flashcards.notFound");
+  if (result.success !== true) {
+    return result;
   }
 
-  await db
-    .delete(flashcard)
-    .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)));
-
-  revalidateFlashcardDetailPaths(existingFlashcard.subjectId, parsed.data.id);
+  revalidateFlashcardDetailPaths(result.subjectId, parsed.data.id);
   return { success: true, id: parsed.data.id };
 }
 
@@ -319,36 +163,11 @@ export async function resetFlashcard(
     return parsed.error;
   }
 
-  const existingFlashcard = await getFlashcardRecordForUser(
-    userId,
-    parsed.data.id,
-  );
+  const result = await resetFlashcardForUser(userId, parsed.data);
 
-  if (!existingFlashcard) {
-    return actionError("flashcards.notFound");
+  if (result.success) {
+    revalidateFlashcardReviewPaths(result.flashcard.subjectId, parsed.data.id);
   }
 
-  const now = new Date();
-  const schedulingState = getInitialFlashcardSchedulingState(now);
-
-  const updated = await db
-    .update(flashcard)
-    .set({
-      state: schedulingState.state,
-      dueAt: schedulingState.dueAt,
-      stability: schedulingState.stability,
-      difficulty: schedulingState.difficulty,
-      ease: schedulingState.ease,
-      intervalDays: schedulingState.intervalDays,
-      learningStep: schedulingState.learningStep,
-      lastReviewedAt: schedulingState.lastReviewedAt,
-      reviewCount: schedulingState.reviewCount,
-      lapseCount: schedulingState.lapseCount,
-      updatedAt: now,
-    })
-    .where(and(eq(flashcard.id, parsed.data.id), eq(flashcard.userId, userId)))
-    .returning();
-
-  revalidateFlashcardReviewPaths(existingFlashcard.subjectId, parsed.data.id);
-  return { success: true, flashcard: updated[0] };
+  return result;
 }

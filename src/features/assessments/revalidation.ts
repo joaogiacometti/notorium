@@ -1,5 +1,5 @@
 import { revalidatePaths } from "@/lib/server/revalidation";
 
 export function revalidateAssessmentPaths(subjectId: string) {
-  revalidatePaths([`/subjects/${subjectId}`, "/assessments", "/planning"]);
+  revalidatePaths([`/subjects/${subjectId}`, "/planning"]);
 }

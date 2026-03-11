@@ -34,3 +34,54 @@ export function filterFlashcardList({
     );
   });
 }
+
+interface DeriveFlashcardsManagerStateInput {
+  allSubjectsValue: string;
+  flashcards: FlashcardListEntity[];
+  maxFlashcardsPerSubject: number;
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  selectedSubjectId: string;
+}
+
+export function deriveFlashcardsManagerState({
+  allSubjectsValue,
+  flashcards,
+  maxFlashcardsPerSubject,
+  page,
+  pageSize,
+  searchQuery,
+  selectedSubjectId,
+}: DeriveFlashcardsManagerStateInput) {
+  const selectedActionSubjectId =
+    selectedSubjectId === allSubjectsValue ? undefined : selectedSubjectId;
+  const selectedSubjectCardCount = selectedActionSubjectId
+    ? flashcards.filter((card) => card.subjectId === selectedActionSubjectId)
+        .length
+    : 0;
+  const filteredFlashcards = filterFlashcardList({
+    flashcards,
+    searchQuery,
+    subjectId: selectedActionSubjectId,
+  });
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredFlashcards.length / pageSize),
+  );
+  const clampedPage = Math.min(page, totalPages);
+  const startIndex = (clampedPage - 1) * pageSize;
+
+  return {
+    clampedPage,
+    filteredFlashcards,
+    isAtSubjectLimit: selectedSubjectCardCount >= maxFlashcardsPerSubject,
+    paginatedFlashcards: filteredFlashcards.slice(
+      startIndex,
+      startIndex + pageSize,
+    ),
+    selectedActionSubjectId,
+    selectedSubjectCardCount,
+    totalPages,
+  };
+}

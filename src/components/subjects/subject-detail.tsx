@@ -7,13 +7,13 @@ import { useState } from "react";
 import { AssessmentsOverview } from "@/components/assessments/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
 import { NotesList } from "@/components/notes/notes-list";
-import { AppPageContainer } from "@/components/shared/app-page-container";
+import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Link, useRouter } from "@/i18n/routing";
+import { useRouter } from "@/i18n/routing";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type {
   AssessmentEntity,
@@ -44,47 +44,9 @@ export function SubjectDetail({
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
-    <AppPageContainer maxWidth="3xl">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-muted-foreground hover:text-foreground"
-          asChild
-        >
-          <Link href="/subjects">
-            <ArrowLeft className="size-4" />
-            {t("back")}
-          </Link>
-        </Button>
-      </div>
-
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <BookOpen className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
-              <SubjectText value={subject.name} mode="wrap" />
-            </h1>
-            {subject.description && (
-              <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
-                {subject.description}
-              </p>
-            )}
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
-              <span>
-                {t("created")}{" "}
-                {formatDistanceToNow(new Date(subject.createdAt), {
-                  addSuffix: true,
-                  locale: dateLocale,
-                })}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+    <DetailPageLayout
+      actions={
+        <>
           <Button
             variant="outline"
             size="sm"
@@ -112,9 +74,24 @@ export function SubjectDetail({
             <Trash2 className="size-3.5" />
             {t("delete")}
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+      backHref="/subjects"
+      backIcon={ArrowLeft}
+      backLabel={t("back")}
+      description={subject.description}
+      meta={
+        <span>
+          {t("created")}{" "}
+          {formatDistanceToNow(new Date(subject.createdAt), {
+            addSuffix: true,
+            locale: dateLocale,
+          })}
+        </span>
+      }
+      title={<SubjectText value={subject.name} mode="wrap" />}
+      titleIcon={BookOpen}
+    >
       <AttendanceSummary
         subjectId={subject.id}
         totalClasses={subject.totalClasses}
@@ -155,6 +132,6 @@ export function SubjectDetail({
           router.push("/subjects");
         }}
       />
-    </AppPageContainer>
+    </DetailPageLayout>
   );
 }

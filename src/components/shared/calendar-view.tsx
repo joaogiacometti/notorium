@@ -3,13 +3,10 @@
 import {
   addDays,
   addMonths,
-  endOfMonth,
-  endOfWeek,
   format,
   isSameDay,
   isSameMonth,
   isToday,
-  startOfMonth,
   startOfWeek,
   subMonths,
 } from "date-fns";
@@ -29,7 +26,10 @@ import { Link } from "@/i18n/routing";
 import {
   buildCalendarEvents,
   type CalendarEvent,
+  filterEventsByDate,
   getMonthGridDates,
+  getMonthRange,
+  resolveCalendarDate,
 } from "@/lib/dates/calendar";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import { cn } from "@/lib/utils";
@@ -154,7 +154,7 @@ function DayCell({
   moreLabel: string;
 }>) {
   const today = isToday(date);
-  const dayEvents = events.filter((e) => e.date === format(date, "yyyy-MM-dd"));
+  const dayEvents = filterEventsByDate(events, format(date, "yyyy-MM-dd"));
 
   return (
     <button
@@ -216,7 +216,7 @@ function DayDetail({
   dateLocale: ReturnType<typeof getDateFnsLocale>;
 }>) {
   const dateStr = format(date, "yyyy-MM-dd");
-  const dayEvents = events.filter((e) => e.date === dateStr);
+  const dayEvents = filterEventsByDate(events, dateStr);
 
   if (dayEvents.length === 0) return null;
 
@@ -246,17 +246,6 @@ interface CalendarViewProps {
   initialEvents?: CalendarEvent[];
 }
 
-function resolveInitialDate(dateIso?: string): Date {
-  return dateIso ? new Date(dateIso) : new Date();
-}
-
-function getRangeKey(anchor: Date): string {
-  const rangeStart = startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 });
-  const rangeEnd = endOfWeek(endOfMonth(anchor), { weekStartsOn: 1 });
-
-  return `${format(rangeStart, "yyyy-MM-dd")}:${format(rangeEnd, "yyyy-MM-dd")}`;
-}
-
 export function CalendarView({
   initialAnchorIso,
   initialSelectedDateIso,
@@ -266,23 +255,24 @@ export function CalendarView({
   const t = useTranslations("CalendarView");
   const dateLocale = getDateFnsLocale(locale);
   const [anchor, setAnchor] = useState(() =>
-    resolveInitialDate(initialAnchorIso),
+    resolveCalendarDate(initialAnchorIso),
   );
   const [selectedDate, setSelectedDate] = useState(() =>
-    resolveInitialDate(initialSelectedDateIso ?? initialAnchorIso),
+    resolveCalendarDate(initialSelectedDateIso ?? initialAnchorIso),
   );
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents ?? []);
   const [isPending, startTransition] = useTransition();
   const initialRangeKeyRef = useRef(
-    initialEvents ? getRangeKey(resolveInitialDate(initialAnchorIso)) : null,
+    initialEvents
+      ? getMonthRange(resolveCalendarDate(initialAnchorIso)).key
+      : null,
   );
   const shouldReuseInitialEventsRef = useRef(initialEvents !== undefined);
-
-  const rangeStart = startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 });
-  const rangeEnd = endOfWeek(endOfMonth(anchor), { weekStartsOn: 1 });
-  const rangeStartIso = format(rangeStart, "yyyy-MM-dd");
-  const rangeEndIso = format(rangeEnd, "yyyy-MM-dd");
-  const rangeKey = `${rangeStartIso}:${rangeEndIso}`;
+  const {
+    endIso: rangeEndIso,
+    key: rangeKey,
+    startIso: rangeStartIso,
+  } = getMonthRange(anchor);
 
   useEffect(() => {
     if (

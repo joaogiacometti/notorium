@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-client";
 import { FlashcardsManager } from "@/components/flashcards/flashcards-manager";
 import { FlashcardsPageShell } from "@/components/flashcards/flashcards-page-shell";
-import { getFlashcardReviewState } from "@/features/flashcard-review/server";
+import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
 import { getFlashcardsForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
 import { getSubjectsForUser } from "@/features/subjects/queries";
@@ -27,7 +27,7 @@ export default async function FlashcardsPage({
     : undefined;
 
   if (currentView === "review") {
-    const reviewState = await getFlashcardReviewState({
+    const reviewState = await getFlashcardReviewStateForUser(session.user.id, {
       subjectId: scopedSubjectId,
       limit: 50,
     });

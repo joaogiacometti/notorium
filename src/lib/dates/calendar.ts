@@ -2,6 +2,7 @@ import {
   addDays,
   endOfMonth,
   endOfWeek,
+  format,
   startOfMonth,
   startOfWeek,
 } from "date-fns";
@@ -71,6 +72,34 @@ export function getMonthGridDates(anchor: Date): Date[] {
     current = addDays(current, 1);
   }
   return dates;
+}
+
+export function resolveCalendarDate(dateIso?: string): Date {
+  if (!dateIso) {
+    return new Date();
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) {
+    const [year, month, day] = dateIso.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  return new Date(dateIso);
+}
+
+export function getMonthRange(anchor: Date) {
+  const start = startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 });
+  const end = endOfWeek(endOfMonth(anchor), { weekStartsOn: 1 });
+  const startIso = format(start, "yyyy-MM-dd");
+  const endIso = format(end, "yyyy-MM-dd");
+
+  return {
+    end,
+    endIso,
+    key: `${startIso}:${endIso}`,
+    start,
+    startIso,
+  };
 }
 
 export function getWeekDates(anchor: Date): Date[] {

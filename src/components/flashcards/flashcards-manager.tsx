@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { filterFlashcardList } from "@/features/flashcards/manager";
+import { deriveFlashcardsManagerState } from "@/features/flashcards/manager";
 import { Link, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
@@ -60,32 +60,28 @@ export function FlashcardsManager({
     initialSubjectId ?? allSubjectsValue,
   );
 
-  const selectedActionSubject =
-    selectedSubjectId === allSubjectsValue
-      ? undefined
-      : subjects.find((subject) => subject.id === selectedSubjectId);
-  const selectedSubjectCardCount = selectedActionSubject
-    ? flashcards.filter((card) => card.subjectId === selectedActionSubject.id)
-        .length
-    : 0;
-  const isAtSubjectLimit =
-    selectedSubjectCardCount >= LIMITS.maxFlashcardsPerSubject;
-  const filteredFlashcards = filterFlashcardList({
+  const derivedState = deriveFlashcardsManagerState({
+    allSubjectsValue,
     flashcards,
+    maxFlashcardsPerSubject: LIMITS.maxFlashcardsPerSubject,
+    page,
+    pageSize: PAGE_SIZE,
     searchQuery,
-    subjectId:
-      selectedSubjectId === allSubjectsValue ? undefined : selectedSubjectId,
+    selectedSubjectId,
   });
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredFlashcards.length / PAGE_SIZE),
-  );
-  const clampedPage = Math.min(page, totalPages);
-  const startIndex = (clampedPage - 1) * PAGE_SIZE;
-  const paginatedFlashcards = filteredFlashcards.slice(
-    startIndex,
-    startIndex + PAGE_SIZE,
-  );
+  const selectedActionSubject = derivedState.selectedActionSubjectId
+    ? subjects.find(
+        (subject) => subject.id === derivedState.selectedActionSubjectId,
+      )
+    : undefined;
+  const {
+    clampedPage,
+    filteredFlashcards,
+    isAtSubjectLimit,
+    paginatedFlashcards,
+    selectedSubjectCardCount,
+    totalPages,
+  } = derivedState;
 
   useEffect(() => {
     setFlashcards(initialFlashcards);

@@ -1,16 +1,17 @@
 "use server";
 
 import { APIError } from "better-auth/api";
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
-import { db } from "@/db/index";
-import { user } from "@/db/schema";
 import {
   clearUserAiSettings as clearUserAiSettingsForUser,
   updateUserAiSettings as updateUserAiSettingsForUser,
 } from "@/features/ai/settings";
+import {
+  deleteAccountForUser,
+  updateUserAccessStatusForUser,
+} from "@/features/profile/mutations";
 import {
   createUserAiSettingsSchema,
   type UpdateProfileForm,
@@ -125,8 +126,11 @@ export async function clearUserAiSettings(): Promise<MutationResult> {
 
 export async function deleteAccount(): Promise<MutationResult> {
   const userId = await getAuthenticatedUserId();
+  const result = await deleteAccountForUser(userId);
 
-  await db.delete(user).where(eq(user.id, userId));
+  if (!result.success) {
+    return result;
+  }
 
   await auth.api.signOut({
     headers: await headers(),
@@ -167,24 +171,5 @@ export async function updateUserAccessStatus(
     return actionError("auth.forbidden");
   }
 
-  const [targetUser] = await db
-    .select({
-      id: user.id,
-    })
-    .from(user)
-    .where(eq(user.id, parsed.data.userId))
-    .limit(1);
-
-  if (!targetUser) {
-    return actionError("auth.userNotFound");
-  }
-
-  await db
-    .update(user)
-    .set({
-      accessStatus: parsed.data.accessStatus,
-    })
-    .where(eq(user.id, parsed.data.userId));
-
-  return { success: true };
+  return updateUserAccessStatusForUser(parsed.data);
 }

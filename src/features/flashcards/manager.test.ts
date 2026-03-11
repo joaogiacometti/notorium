@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { filterFlashcardList } from "@/features/flashcards/manager";
+import {
+  deriveFlashcardsManagerState,
+  filterFlashcardList,
+} from "@/features/flashcards/manager";
 import type { FlashcardListEntity } from "@/lib/server/api-contracts";
 
 const flashcards: FlashcardListEntity[] = [
@@ -109,5 +112,41 @@ describe("filterFlashcardList", () => {
         subjectId: "subject-3",
       }).map((card) => card.id),
     ).toEqual(["card-3"]);
+  });
+});
+
+describe("deriveFlashcardsManagerState", () => {
+  it("derives subject counts and limits for a selected subject", () => {
+    const result = deriveFlashcardsManagerState({
+      allSubjectsValue: "__all__",
+      flashcards,
+      maxFlashcardsPerSubject: 1,
+      page: 1,
+      pageSize: 25,
+      searchQuery: "",
+      selectedSubjectId: "subject-2",
+    });
+
+    expect(result.selectedActionSubjectId).toBe("subject-2");
+    expect(result.selectedSubjectCardCount).toBe(1);
+    expect(result.isAtSubjectLimit).toBe(true);
+  });
+
+  it("clamps the current page to the available result set", () => {
+    const result = deriveFlashcardsManagerState({
+      allSubjectsValue: "__all__",
+      flashcards,
+      maxFlashcardsPerSubject: 10,
+      page: 3,
+      pageSize: 2,
+      searchQuery: "physics",
+      selectedSubjectId: "__all__",
+    });
+
+    expect(result.totalPages).toBe(1);
+    expect(result.clampedPage).toBe(1);
+    expect(result.paginatedFlashcards.map((card) => card.id)).toEqual([
+      "card-2",
+    ]);
   });
 });

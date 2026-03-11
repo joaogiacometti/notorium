@@ -7,10 +7,10 @@ import { useState } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
-import { AppPageContainer } from "@/components/shared/app-page-container";
+import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";
-import { Link, useRouter } from "@/i18n/routing";
+import { useRouter } from "@/i18n/routing";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
@@ -32,42 +32,9 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
-    <AppPageContainer maxWidth="3xl">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-muted-foreground hover:text-foreground"
-          asChild
-        >
-          <Link href={`/subjects/${currentFlashcard.subjectId}`}>
-            <ArrowLeft className="size-4" />
-            {t("back")}
-          </Link>
-        </Button>
-      </div>
-
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <CreditCard className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
-              {getRichTextExcerpt(currentFlashcard.front, 120)}
-            </h1>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
-              <span>
-                {t("created_label")}{" "}
-                {formatDistanceToNow(new Date(currentFlashcard.createdAt), {
-                  addSuffix: true,
-                  locale: dateLocale,
-                })}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+    <DetailPageLayout
+      actions={
+        <>
           <Button
             variant="outline"
             size="sm"
@@ -95,9 +62,23 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
             <Trash2 className="size-3.5" />
             {t("delete")}
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+      backHref={`/subjects/${currentFlashcard.subjectId}`}
+      backIcon={ArrowLeft}
+      backLabel={t("back")}
+      meta={
+        <span>
+          {t("created_label")}{" "}
+          {formatDistanceToNow(new Date(currentFlashcard.createdAt), {
+            addSuffix: true,
+            locale: dateLocale,
+          })}
+        </span>
+      }
+      title={getRichTextExcerpt(currentFlashcard.front, 120)}
+      titleIcon={CreditCard}
+    >
       <div className="space-y-4">
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">
           <h2 className="mb-2 text-sm font-semibold text-foreground/80">
@@ -143,6 +124,6 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
           router.push(`/subjects/${currentFlashcard.subjectId}`);
         }}
       />
-    </AppPageContainer>
+    </DetailPageLayout>
   );
 }

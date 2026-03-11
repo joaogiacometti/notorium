@@ -1,12 +1,12 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
-import { note } from "@/db/schema";
 import {
-  countNotesBySubjectForUser,
+  createNoteForUser,
+  deleteNoteForUser,
+  editNoteForUser,
+} from "@/features/notes/mutations";
+import {
   getNoteByIdForUser,
-  getNoteRecordForUser,
   getNotesBySubjectForUser,
 } from "@/features/notes/queries";
 import {
@@ -21,12 +21,9 @@ import {
   type EditNoteForm,
   editNoteSchema,
 } from "@/features/notes/validation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { LIMITS } from "@/lib/config/limits";
 import { parseActionInput } from "@/lib/server/action-input";
 import type { MutationResult, NoteEntity } from "@/lib/server/api-contracts";
-import { actionError } from "@/lib/server/server-action-errors";
 
 export async function getNotesBySubject(
   subjectId: string,
@@ -50,35 +47,13 @@ export async function createNote(
     return parsed.error;
   }
 
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    parsed.data.subjectId,
-  );
+  const result = await createNoteForUser(userId, parsed.data);
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateNoteSubjectPaths(result.subjectId);
   }
 
-  const current = await countNotesBySubjectForUser(
-    userId,
-    parsed.data.subjectId,
-  );
-
-  if (current >= LIMITS.maxNotesPerSubject) {
-    return actionError("limits.noteLimit", {
-      errorParams: { max: LIMITS.maxNotesPerSubject },
-    });
-  }
-
-  await db.insert(note).values({
-    title: parsed.data.title,
-    content: parsed.data.content ?? null,
-    subjectId: parsed.data.subjectId,
-    userId,
-  });
-
-  revalidateNoteSubjectPaths(parsed.data.subjectId);
-  return { success: true };
+  return result;
 }
 
 export async function editNote(data: EditNoteForm): Promise<MutationResult> {
@@ -89,22 +64,13 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
     return parsed.error;
   }
 
-  const existing = await getNoteRecordForUser(userId, parsed.data.id);
+  const result = await editNoteForUser(userId, parsed.data);
 
-  if (!existing) {
-    return actionError("notes.notFound");
+  if (result.success) {
+    revalidateNoteDetailPaths(result.subjectId, parsed.data.id);
   }
 
-  await db
-    .update(note)
-    .set({
-      title: parsed.data.title,
-      content: parsed.data.content ?? null,
-    })
-    .where(and(eq(note.id, parsed.data.id), eq(note.userId, userId)));
-
-  revalidateNoteDetailPaths(existing.subjectId, parsed.data.id);
-  return { success: true };
+  return result;
 }
 
 export async function deleteNote(
@@ -121,16 +87,11 @@ export async function deleteNote(
     return parsed.error;
   }
 
-  const existing = await getNoteRecordForUser(userId, parsed.data.id);
+  const result = await deleteNoteForUser(userId, parsed.data);
 
-  if (!existing) {
-    return actionError("notes.notFound");
+  if (result.success) {
+    revalidateNoteSubjectPaths(result.subjectId);
   }
 
-  await db
-    .delete(note)
-    .where(and(eq(note.id, parsed.data.id), eq(note.userId, userId)));
-
-  revalidateNoteSubjectPaths(existing.subjectId);
-  return { success: true };
+  return result;
 }

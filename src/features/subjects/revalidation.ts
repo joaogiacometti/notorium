@@ -1,12 +1,7 @@
 import { revalidatePaths } from "@/lib/server/revalidation";
 
 export function revalidateSubjectListPaths() {
-  revalidatePaths([
-    "/subjects",
-    "/subjects/archived",
-    "/assessments",
-    "/planning",
-  ]);
+  revalidatePaths(["/subjects", "/subjects/archived", "/planning"]);
 }
 
 export function revalidateSubjectDetailPaths(subjectId: string) {
@@ -18,7 +13,6 @@ export function revalidateAllSubjectPaths(subjectId: string) {
     "/subjects",
     "/subjects/archived",
     `/subjects/${subjectId}`,
-    "/assessments",
     "/planning",
   ]);
 }

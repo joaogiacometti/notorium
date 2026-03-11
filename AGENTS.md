@@ -94,11 +94,17 @@ src/
 ### Next.js Patterns
 
 - Use Server Components by default. Add `"use client"` only when required.
-- Use Server Actions in `src/app/actions/` for mutations.
+- Use Server Actions in `src/app/actions/` as the only client-callable server boundary for both reads and writes.
 - Keep read/query helpers, feature validation schemas, and business rules in `src/features/*`.
-- Keep Server Actions thin: authenticate, validate, delegate, and revalidate.
+- Use `src/features/*/queries.ts` as the default home for read-side DB access.
+- Use `src/features/*/mutations.ts` as the default home for write-side DB access and feature-owned business rules.
+- Server Components should read from `src/features/*` directly instead of calling `src/app/actions/*`.
+- Keep Server Actions thin: authenticate, validate, delegate, revalidate, and return typed results.
+- `src/app/actions/*` should not import `@/db/index` directly unless a documented exception is required.
+- Client Components should call server code only through `src/app/actions/*`.
 - Use `@/` alias imports.
 - Every route with a `page.tsx` must have a matching `loading.tsx` that mirrors the page layout structure. When a page layout changes (e.g., wrapper classes, sections, structural hierarchy), update the corresponding `loading.tsx` skeleton to match.
+- Treat `/planning` as the canonical route for planning views. Do not add route aliases like `/assessments` or `/calendar`.
 
 ### React Compiler
 
@@ -166,7 +172,9 @@ src/
 - Test behavior and logic, not constants.
 - Focus on edge cases, branching logic, transformations, and error handling.
 - Prefer fewer meaningful tests over shallow coverage inflation.
-- Do not test Server Actions directly. Test extracted validation and business logic instead.
+- Do not test Server Actions directly.
+- Do not add direct tests for `queries.ts`, `mutations.ts`, or `revalidation.ts`.
+- Keep Server Actions thin and keep write-side feature logic in `mutations.ts`.
 - Zod schema tests should reject invalid inputs thoroughly.
 - Add or update regression tests when changing auth, AI, account, or data-transfer code so sensitive fields cannot leak into exports, imports, logs, or client-visible payloads.
 

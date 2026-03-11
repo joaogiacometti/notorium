@@ -5,7 +5,9 @@ import {
   type CalendarSourceData,
   filterEventsByDate,
   getMonthGridDates,
+  getMonthRange,
   getWeekDates,
+  resolveCalendarDate,
 } from "@/lib/dates/calendar";
 import type {
   AssessmentEntity,
@@ -185,6 +187,31 @@ describe("getMonthGridDates", () => {
     const dates = getMonthGridDates(anchor);
 
     expect(format(dates[0], "yyyy-MM-dd")).toBe("2026-06-01");
+  });
+});
+
+describe("resolveCalendarDate", () => {
+  it("uses the provided iso string when present", () => {
+    expect(format(resolveCalendarDate("2026-03-15"), "yyyy-MM-dd")).toBe(
+      "2026-03-15",
+    );
+  });
+
+  it("falls back to the current date when not provided", () => {
+    const resolved = resolveCalendarDate();
+
+    expect(resolved).toBeInstanceOf(Date);
+    expect(Number.isNaN(resolved.getTime())).toBe(false);
+  });
+});
+
+describe("getMonthRange", () => {
+  it("returns a stable range key with matching start and end iso dates", () => {
+    const range = getMonthRange(new Date(2026, 2, 15));
+
+    expect(range.startIso).toBe("2026-02-23");
+    expect(range.endIso).toBe("2026-04-05");
+    expect(range.key).toBe("2026-02-23:2026-04-05");
   });
 });
 

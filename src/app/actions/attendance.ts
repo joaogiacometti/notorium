@@ -1,13 +1,11 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
-import { attendanceMiss, subject } from "@/db/schema";
 import {
-  getMissesBySubjectForUser,
-  getMissRecordForUser,
-  hasMissOnDateForUser,
-} from "@/features/attendance/queries";
+  deleteMissForUser,
+  recordMissForUser,
+  updateAttendanceSettingsForUser,
+} from "@/features/attendance/mutations";
+import { getMissesBySubjectForUser } from "@/features/attendance/queries";
 import { revalidateAttendancePaths } from "@/features/attendance/revalidation";
 import {
   type AttendanceSettingsForm,
@@ -17,14 +15,12 @@ import {
   type RecordMissForm,
   recordMissSchema,
 } from "@/features/attendance/validation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { parseActionInput } from "@/lib/server/action-input";
 import type {
   AttendanceMissEntity,
   MutationResult,
 } from "@/lib/server/api-contracts";
-import { actionError } from "@/lib/server/server-action-errors";
 
 export async function updateAttendanceSettings(
   data: AttendanceSettingsForm,
@@ -40,31 +36,13 @@ export async function updateAttendanceSettings(
     return parsed.error;
   }
 
-  if (parsed.data.maxMisses > parsed.data.totalClasses) {
-    return actionError("attendance.maxMissesExceeded");
+  const result = await updateAttendanceSettingsForUser(userId, parsed.data);
+
+  if (result.success) {
+    revalidateAttendancePaths(result.subjectId);
   }
 
-  const existing = await getActiveSubjectRecordForUser(
-    userId,
-    parsed.data.subjectId,
-  );
-
-  if (!existing) {
-    return actionError("subjects.notFound");
-  }
-
-  await db
-    .update(subject)
-    .set({
-      totalClasses: parsed.data.totalClasses,
-      maxMisses: parsed.data.maxMisses,
-    })
-    .where(
-      and(eq(subject.id, parsed.data.subjectId), eq(subject.userId, userId)),
-    );
-
-  revalidateAttendancePaths(parsed.data.subjectId);
-  return { success: true };
+  return result;
 }
 
 export async function getMissesBySubject(
@@ -88,33 +66,13 @@ export async function recordMiss(
     return parsed.error;
   }
 
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    parsed.data.subjectId,
-  );
+  const result = await recordMissForUser(userId, parsed.data);
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateAttendancePaths(result.subjectId);
   }
 
-  const existingMiss = await hasMissOnDateForUser(
-    userId,
-    parsed.data.subjectId,
-    parsed.data.missDate,
-  );
-
-  if (existingMiss) {
-    return actionError("attendance.missAlreadyRecorded");
-  }
-
-  await db.insert(attendanceMiss).values({
-    missDate: parsed.data.missDate,
-    subjectId: parsed.data.subjectId,
-    userId,
-  });
-
-  revalidateAttendancePaths(parsed.data.subjectId);
-  return { success: true };
+  return result;
 }
 
 export async function deleteMiss(
@@ -131,21 +89,11 @@ export async function deleteMiss(
     return parsed.error;
   }
 
-  const existing = await getMissRecordForUser(userId, parsed.data.id);
+  const result = await deleteMissForUser(userId, parsed.data);
 
-  if (!existing) {
-    return actionError("attendance.missNotFound");
+  if (result.success) {
+    revalidateAttendancePaths(result.subjectId);
   }
 
-  await db
-    .delete(attendanceMiss)
-    .where(
-      and(
-        eq(attendanceMiss.id, parsed.data.id),
-        eq(attendanceMiss.userId, userId),
-      ),
-    );
-
-  revalidateAttendancePaths(existing.subjectId);
-  return { success: true };
+  return result;
 }

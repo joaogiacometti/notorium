@@ -1,11 +1,11 @@
 "use server";
 
-import { eq } from "drizzle-orm";
-import { db } from "@/db/index";
-import { assessment } from "@/db/schema";
 import {
-  countAssessmentsBySubjectForUser,
-  getAssessmentRecordForUser,
+  createAssessmentForUser,
+  deleteAssessmentForUser,
+  editAssessmentForUser,
+} from "@/features/assessments/mutations";
+import {
   getAssessmentsBySubjectForUser,
   getAssessmentsForUser,
 } from "@/features/assessments/queries";
@@ -18,32 +18,12 @@ import {
   type EditAssessmentForm,
   editAssessmentSchema,
 } from "@/features/assessments/validation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { LIMITS } from "@/lib/config/limits";
 import { parseActionInput } from "@/lib/server/action-input";
 import type {
   AssessmentEntity,
   MutationResult,
 } from "@/lib/server/api-contracts";
-import { actionError } from "@/lib/server/server-action-errors";
-
-function getAssessmentMutationValues(
-  values: Pick<
-    CreateAssessmentForm,
-    "title" | "description" | "type" | "status" | "dueDate" | "score" | "weight"
-  >,
-) {
-  return {
-    title: values.title,
-    description: values.description || null,
-    type: values.type,
-    status: values.status,
-    dueDate: values.dueDate ?? null,
-    score: values.score?.toString() ?? null,
-    weight: values.weight?.toString() ?? null,
-  };
-}
 
 export async function getAssessmentsBySubject(
   subjectId: string,
@@ -71,34 +51,13 @@ export async function createAssessment(
     return parsed.error;
   }
 
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    parsed.data.subjectId,
-  );
+  const result = await createAssessmentForUser(userId, parsed.data);
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateAssessmentPaths(result.subjectId);
   }
 
-  const current = await countAssessmentsBySubjectForUser(
-    userId,
-    parsed.data.subjectId,
-  );
-
-  if (current >= LIMITS.maxAssessmentsPerSubject) {
-    return actionError("limits.assessmentLimit", {
-      errorParams: { max: LIMITS.maxAssessmentsPerSubject },
-    });
-  }
-
-  await db.insert(assessment).values({
-    subjectId: parsed.data.subjectId,
-    userId,
-    ...getAssessmentMutationValues(parsed.data),
-  });
-
-  revalidateAssessmentPaths(parsed.data.subjectId);
-  return { success: true };
+  return result;
 }
 
 export async function editAssessment(
@@ -115,22 +74,13 @@ export async function editAssessment(
     return parsed.error;
   }
 
-  const existingAssessment = await getAssessmentRecordForUser(
-    userId,
-    parsed.data.id,
-  );
+  const result = await editAssessmentForUser(userId, parsed.data);
 
-  if (!existingAssessment) {
-    return actionError("assessments.notFound");
+  if (result.success) {
+    revalidateAssessmentPaths(result.subjectId);
   }
 
-  await db
-    .update(assessment)
-    .set(getAssessmentMutationValues(parsed.data))
-    .where(eq(assessment.id, parsed.data.id));
-
-  revalidateAssessmentPaths(existingAssessment.subjectId);
-  return { success: true };
+  return result;
 }
 
 export async function deleteAssessment(
@@ -147,17 +97,11 @@ export async function deleteAssessment(
     return parsed.error;
   }
 
-  const existingAssessment = await getAssessmentRecordForUser(
-    userId,
-    parsed.data.id,
-  );
+  const result = await deleteAssessmentForUser(userId, parsed.data);
 
-  if (!existingAssessment) {
-    return actionError("assessments.notFound");
+  if (result.success) {
+    revalidateAssessmentPaths(result.subjectId);
   }
 
-  await db.delete(assessment).where(eq(assessment.id, parsed.data.id));
-
-  revalidateAssessmentPaths(existingAssessment.subjectId);
-  return { success: true };
+  return result;
 }

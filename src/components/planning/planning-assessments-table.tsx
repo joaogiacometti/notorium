@@ -36,13 +36,13 @@ import {
 } from "@/components/ui/table";
 import {
   type DueDateFilter,
-  filterAndSortAssessments,
   getDueDateBounds,
   type SortBy,
   type StatusFilter,
   type TypeFilter,
 } from "@/features/assessments/assessment-filters";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
+import { derivePlanningAssessmentsTableState } from "@/features/planning/assessments-table-state";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type {
   AssessmentEntity,
@@ -107,27 +107,19 @@ export function PlanningAssessmentsTable({
   const dueDateBounds = getDueDateBounds();
   const dueDateFilter: DueDateFilter = "all";
 
-  const filteredAssessments = filterAndSortAssessments({
-    assessments,
-    searchQuery,
-    subjectFilter: subjectFilter === allValue ? "all" : subjectFilter,
-    statusFilter,
-    typeFilter,
-    dueDateFilter,
-    sortBy,
-    dueDateBounds,
-  });
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredAssessments.length / PAGE_SIZE),
-  );
-  const clampedPage = Math.min(page, totalPages);
-  const startIndex = (clampedPage - 1) * PAGE_SIZE;
-  const paginatedAssessments = filteredAssessments.slice(
-    startIndex,
-    startIndex + PAGE_SIZE,
-  );
+  const { clampedPage, filteredAssessments, paginatedAssessments, totalPages } =
+    derivePlanningAssessmentsTableState({
+      assessments,
+      dueDateBounds,
+      dueDateFilter,
+      page,
+      pageSize: PAGE_SIZE,
+      searchQuery,
+      sortBy,
+      statusFilter,
+      subjectFilter: subjectFilter === allValue ? "all" : subjectFilter,
+      typeFilter,
+    });
 
   useEffect(() => {
     if (page > totalPages) {

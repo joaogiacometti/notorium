@@ -1,15 +1,15 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
-import { subject } from "@/db/schema";
 import {
-  countSubjectsForUser,
+  archiveSubjectForUser,
+  createSubjectForUser,
+  deleteSubjectForUser,
+  editSubjectForUser,
+  restoreSubjectForUser,
+} from "@/features/subjects/mutations";
+import {
   getActiveSubjectByIdForUser,
-  getActiveSubjectRecordForUser,
-  getArchivedSubjectRecordForUser,
   getArchivedSubjectsForUser,
-  getSubjectRecordForUser,
   getSubjectsForUser,
 } from "@/features/subjects/queries";
 import {
@@ -30,10 +30,8 @@ import {
   restoreSubjectSchema,
 } from "@/features/subjects/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { LIMITS } from "@/lib/config/limits";
 import { parseActionInput } from "@/lib/server/action-input";
 import type { MutationResult, SubjectEntity } from "@/lib/server/api-contracts";
-import { actionError } from "@/lib/server/server-action-errors";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
@@ -66,22 +64,13 @@ export async function createSubject(
     return parsed.error;
   }
 
-  const current = await countSubjectsForUser(userId);
+  const result = await createSubjectForUser(userId, parsed.data);
 
-  if (current >= LIMITS.maxSubjects) {
-    return actionError("limits.subjectLimit", {
-      errorParams: { max: LIMITS.maxSubjects },
-    });
+  if (result.success) {
+    revalidateSubjectListPaths();
   }
 
-  await db.insert(subject).values({
-    name: parsed.data.name,
-    description: parsed.data.description ?? null,
-    userId,
-  });
-
-  revalidateSubjectListPaths();
-  return { success: true };
+  return result;
 }
 
 export async function editSubject(
@@ -98,22 +87,13 @@ export async function editSubject(
     return parsed.error;
   }
 
-  const existing = await getActiveSubjectRecordForUser(userId, parsed.data.id);
+  const result = await editSubjectForUser(userId, parsed.data);
 
-  if (!existing) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateSubjectDetailPaths(parsed.data.id);
   }
 
-  await db
-    .update(subject)
-    .set({
-      name: parsed.data.name,
-      description: parsed.data.description ?? null,
-    })
-    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
-
-  revalidateSubjectDetailPaths(parsed.data.id);
-  return { success: true };
+  return result;
 }
 
 export async function archiveSubject(
@@ -130,21 +110,13 @@ export async function archiveSubject(
     return parsed.error;
   }
 
-  const existing = await getActiveSubjectRecordForUser(userId, parsed.data.id);
+  const result = await archiveSubjectForUser(userId, parsed.data);
 
-  if (!existing) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateAllSubjectPaths(parsed.data.id);
   }
 
-  await db
-    .update(subject)
-    .set({
-      archivedAt: new Date(),
-    })
-    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
-
-  revalidateAllSubjectPaths(parsed.data.id);
-  return { success: true };
+  return result;
 }
 
 export async function restoreSubject(
@@ -161,24 +133,13 @@ export async function restoreSubject(
     return parsed.error;
   }
 
-  const existing = await getArchivedSubjectRecordForUser(
-    userId,
-    parsed.data.id,
-  );
+  const result = await restoreSubjectForUser(userId, parsed.data);
 
-  if (!existing) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateAllSubjectPaths(parsed.data.id);
   }
 
-  await db
-    .update(subject)
-    .set({
-      archivedAt: null,
-    })
-    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
-
-  revalidateAllSubjectPaths(parsed.data.id);
-  return { success: true };
+  return result;
 }
 
 export async function deleteSubject(
@@ -195,16 +156,11 @@ export async function deleteSubject(
     return parsed.error;
   }
 
-  const existing = await getSubjectRecordForUser(userId, parsed.data.id);
+  const result = await deleteSubjectForUser(userId, parsed.data);
 
-  if (!existing) {
-    return actionError("subjects.notFound");
+  if (result.success) {
+    revalidateSubjectListPaths();
   }
 
-  await db
-    .delete(subject)
-    .where(and(eq(subject.id, parsed.data.id), eq(subject.userId, userId)));
-
-  revalidateSubjectListPaths();
-  return { success: true };
+  return result;
 }

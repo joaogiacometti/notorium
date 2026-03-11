@@ -1,12 +1,10 @@
 "use server";
 
 import { APIError } from "better-auth/api";
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
-import { db } from "@/db/index";
-import { user } from "@/db/schema";
+import { getUserAccessStatusByEmail } from "@/features/auth/queries";
 import { auth } from "@/lib/auth/auth";
 import { checkAuthRateLimit } from "@/lib/auth/rate-limit";
 import { parseActionInput } from "@/lib/server/action-input";
@@ -32,19 +30,13 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
     return actionError(rateLimit.errorCode);
   }
 
-  const [existingUser] = await db
-    .select({
-      accessStatus: user.accessStatus,
-    })
-    .from(user)
-    .where(eq(user.email, parsed.data.email))
-    .limit(1);
+  const accessStatus = await getUserAccessStatusByEmail(parsed.data.email);
 
-  if (existingUser?.accessStatus === "pending") {
+  if (accessStatus === "pending") {
     return actionError("auth.accessPending");
   }
 
-  if (existingUser?.accessStatus === "blocked") {
+  if (accessStatus === "blocked") {
     return actionError("auth.accessBlocked");
   }
 
