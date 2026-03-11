@@ -18,6 +18,7 @@ import { AssessmentsTableRowActions } from "@/components/assessments/assessments
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -96,6 +97,7 @@ export function PlanningAssessmentsTable({
   const dateLocale = getDateFnsLocale(locale);
   const t = useTranslations("PlanningAssessmentsTable");
 
+  const [searchQuery, setSearchQuery] = useState("");
   const [subjectFilter, setSubjectFilter] = useState(allValue);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -107,6 +109,7 @@ export function PlanningAssessmentsTable({
 
   const filteredAssessments = filterAndSortAssessments({
     assessments,
+    searchQuery,
     subjectFilter: subjectFilter === allValue ? "all" : subjectFilter,
     statusFilter,
     typeFilter,
@@ -141,7 +144,16 @@ export function PlanningAssessmentsTable({
       <Card className="gap-0 overflow-hidden border-border/60 bg-card/95 py-0 shadow-none lg:flex-1 lg:min-h-0">
         <CardHeader className="gap-0 border-b border-border/60 bg-muted/20 px-4 pb-3 pt-4 sm:px-6">
           <div className="min-w-0 flex-1 rounded-xl border border-border/60 bg-muted/20 p-2">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              <Input
+                value={searchQuery}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  resetPage();
+                }}
+                placeholder={t("search_placeholder")}
+                className="w-full border-border/60 bg-transparent shadow-none sm:col-span-2 lg:col-span-1"
+              />
               <Select
                 value={subjectFilter}
                 onValueChange={(value) => {

@@ -267,6 +267,7 @@
     "calendar": "Calendário"
   },
   "PlanningAssessmentsTable": {
+    "search_placeholder": "Buscar titulo ou descricao...",
     "subject_placeholder": "Filtrar por matéria",
     "subject_all": "Todas as Matérias",
     "status_all": "Todos os Status",

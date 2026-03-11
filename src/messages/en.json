@@ -267,6 +267,7 @@
     "calendar": "Calendar"
   },
   "PlanningAssessmentsTable": {
+    "search_placeholder": "Search title or description...",
     "subject_placeholder": "Filter by subject",
     "subject_all": "All Subjects",
     "status_all": "All Statuses",

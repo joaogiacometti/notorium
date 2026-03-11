@@ -38,6 +38,7 @@ function filter(
 ) {
   return filterAndSortAssessments({
     assessments,
+    searchQuery: "",
     subjectFilter: "all",
     statusFilter: "all",
     typeFilter: "all",
@@ -157,6 +158,79 @@ describe("filterAndSortAssessments — subject filter", () => {
   it("returns all items when subjectFilter is 'all'", () => {
     const result = filter([s1, s2], { subjectFilter: "all" });
     expect(result).toHaveLength(2);
+  });
+});
+
+describe("filterAndSortAssessments — search", () => {
+  it("matches title text case-insensitively", () => {
+    const result = filter(
+      [
+        makeAssessment({ id: "1", title: "Calculus Midterm" }),
+        makeAssessment({ id: "2", title: "History Essay" }),
+      ],
+      { searchQuery: "midTERM" },
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("1");
+  });
+
+  it("matches description text when present", () => {
+    const result = filter(
+      [
+        makeAssessment({ id: "1", description: "Bring lab notebook" }),
+        makeAssessment({ id: "2", description: "Chapter 5 summary" }),
+      ],
+      { searchQuery: "lab notebook" },
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("1");
+  });
+
+  it("treats empty search as no search", () => {
+    const result = filter(
+      [
+        makeAssessment({ id: "1", title: "Physics Quiz" }),
+        makeAssessment({ id: "2", title: "Chemistry Quiz" }),
+      ],
+      { searchQuery: "   " },
+    );
+
+    expect(result).toHaveLength(2);
+  });
+
+  it("combines search with other filters", () => {
+    const result = filter(
+      [
+        makeAssessment({
+          id: "1",
+          title: "Physics Quiz",
+          subjectId: "s1",
+          status: "pending",
+        }),
+        makeAssessment({
+          id: "2",
+          title: "Physics Final",
+          subjectId: "s2",
+          status: "pending",
+        }),
+        makeAssessment({
+          id: "3",
+          title: "Physics Quiz",
+          subjectId: "s1",
+          status: "completed",
+        }),
+      ],
+      {
+        searchQuery: "quiz",
+        subjectFilter: "s1",
+        statusFilter: "pending",
+      },
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("1");
   });
 });
 

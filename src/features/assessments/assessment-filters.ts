@@ -33,6 +33,7 @@ interface DueDateBounds {
 
 interface FilterAndSortAssessmentsInput {
   assessments: AssessmentEntity[];
+  searchQuery: string;
   subjectFilter: string;
   statusFilter: StatusFilter;
   typeFilter: TypeFilter;
@@ -63,6 +64,7 @@ export function getSubjectFilterOptions(
 
 export function filterAndSortAssessments({
   assessments,
+  searchQuery,
   subjectFilter,
   statusFilter,
   typeFilter,
@@ -70,8 +72,15 @@ export function filterAndSortAssessments({
   sortBy,
   dueDateBounds,
 }: FilterAndSortAssessmentsInput): AssessmentEntity[] {
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+
   return sortAssessments(
     assessments.filter((item) => {
+      const matchesSearch =
+        normalizedSearch.length === 0
+          ? true
+          : item.title.toLowerCase().includes(normalizedSearch) ||
+            item.description?.toLowerCase().includes(normalizedSearch) === true;
       const subjectMatches =
         subjectFilter === "all" ? true : item.subjectId === subjectFilter;
       const overdue = isAssessmentOverdue(item, dueDateBounds.todayIso);
@@ -92,7 +101,13 @@ export function filterAndSortAssessments({
         dueDateBounds,
       );
 
-      return subjectMatches && statusMatches && typeMatches && dueDateMatches;
+      return (
+        matchesSearch &&
+        subjectMatches &&
+        statusMatches &&
+        typeMatches &&
+        dueDateMatches
+      );
     }),
     sortBy,
   );

@@ -132,6 +132,7 @@ export function GradesSummary({
 
   const filteredAssessments = filterAndSortAssessments({
     assessments,
+    searchQuery: "",
     subjectFilter,
     statusFilter,
     typeFilter,
