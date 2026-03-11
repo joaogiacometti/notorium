@@ -1,13 +1,14 @@
 "use client";
 
-import { Layers3, Lock, Plus } from "lucide-react";
+import { Layers3, Lock, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
-import { FlashcardsTableRowActions } from "@/components/flashcards/flashcards-table-row-actions";
+import { FlashcardsManagerTable } from "@/components/flashcards/flashcards-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,27 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { deriveFlashcardsManagerState } from "@/features/flashcards/manager";
-import { Link } from "@/i18n/routing";
+import { filterFlashcards } from "@/features/flashcards/flashcard-filters";
+import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
-import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type {
   FlashcardEntity,
   FlashcardListEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
-import { cn } from "@/lib/utils";
-
-const PAGE_SIZE = 25;
-const allSubjectsValue = "__all__";
 
 interface FlashcardsManagerProps {
   flashcards: FlashcardListEntity[];
@@ -45,115 +33,125 @@ interface FlashcardsManagerProps {
 }
 
 export function FlashcardsManager({
-  flashcards: initialFlashcards,
+  flashcards,
   subjects,
   initialSubjectId,
 }: Readonly<FlashcardsManagerProps>) {
   const t = useTranslations("FlashcardsManager");
-  const [flashcards, setFlashcards] = useState(initialFlashcards);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const pathname = usePathname();
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
-  const [selectedSubjectId, setSelectedSubjectId] = useState(
-    initialSubjectId ?? allSubjectsValue,
+  const [pageIndex, setPageIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const [localFlashcards, setLocalFlashcards] = useState(
+    sortFlashcards(flashcards),
+  );
+  const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubjectId);
+  const subjectNameById = Object.fromEntries(
+    subjects.map((subject) => [subject.id, subject.name]),
   );
 
-  const derivedState = deriveFlashcardsManagerState({
-    allSubjectsValue,
-    flashcards,
-    maxFlashcardsPerSubject: LIMITS.maxFlashcardsPerSubject,
-    page,
-    pageSize: PAGE_SIZE,
-    searchQuery,
-    selectedSubjectId,
-  });
-  const selectedActionSubject = derivedState.selectedActionSubjectId
-    ? subjects.find(
-        (subject) => subject.id === derivedState.selectedActionSubjectId,
-      )
-    : undefined;
-  const {
-    clampedPage,
-    filteredFlashcards,
-    isAtSubjectLimit,
-    paginatedFlashcards,
-    selectedSubjectCardCount,
-    totalPages,
-  } = derivedState;
+  useEffect(() => {
+    setLocalFlashcards(sortFlashcards(flashcards));
+    setPageIndex(0);
+  }, [flashcards]);
 
   useEffect(() => {
-    setFlashcards(initialFlashcards);
-  }, [initialFlashcards]);
-
-  useEffect(() => {
-    setSelectedSubjectId(initialSubjectId ?? allSubjectsValue);
-    setPage(1);
+    setSelectedSubjectId(initialSubjectId);
+    setPageIndex(0);
   }, [initialSubjectId]);
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
+  const selectedSubjectCardCount = selectedSubjectId
+    ? localFlashcards.filter((card) => card.subjectId === selectedSubjectId)
+        .length
+    : 0;
+  const isAtSubjectLimit =
+    selectedSubjectCardCount >= LIMITS.maxFlashcardsPerSubject;
+  const filteredFlashcards = filterFlashcards({
+    flashcards: localFlashcards,
+    searchQuery: deferredSearchQuery,
+    subjectId: selectedSubjectId,
+  });
+  const hasSubjects = subjects.length > 0;
+
+  function updateSubjectFilter(nextSubjectId: string | undefined) {
+    setSelectedSubjectId(nextSubjectId);
+    setPageIndex(0);
+
+    const query = new URLSearchParams();
+    query.set("view", "manage");
+
+    if (nextSubjectId) {
+      query.set("subjectId", nextSubjectId);
     }
-  }, [page, totalPages]);
 
-  function updateSubject(subjectId: string) {
-    setSelectedSubjectId(subjectId);
-    setPage(1);
+    startTransition(() => {
+      router.replace(`${pathname}?${query.toString()}`);
+    });
   }
 
-  function handleUpdate(updated: FlashcardEntity) {
-    setFlashcards((current) =>
-      current.map((card) =>
-        card.id === updated.id ? { ...card, ...updated } : card,
-      ),
+  function handleCreated(flashcard: FlashcardEntity) {
+    setLocalFlashcards((current) =>
+      upsertFlashcard(current, {
+        ...flashcard,
+        subjectName: subjectNameById[flashcard.subjectId] ?? "",
+      }),
     );
+    setPageIndex(0);
   }
 
-  function handleDelete(id: string) {
-    setFlashcards((current) => current.filter((card) => card.id !== id));
+  function handleUpdated(flashcard: FlashcardEntity) {
+    setLocalFlashcards((current) =>
+      upsertFlashcard(current, {
+        ...flashcard,
+        subjectName: subjectNameById[flashcard.subjectId] ?? "",
+      }),
+    );
+    setPageIndex(0);
+  }
+
+  function handleDeleted(id: string) {
+    setLocalFlashcards((current) =>
+      current.filter((flashcard) => flashcard.id !== id),
+    );
+    setPageIndex(0);
   }
 
   return (
-    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
-      {selectedActionSubject && isAtSubjectLimit ? (
-        <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
-          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-amber-800 dark:text-amber-200">
-            {t("limit_message", { max: LIMITS.maxFlashcardsPerSubject })}
-          </p>
-        </div>
-      ) : null}
-
-      <Card className="gap-0 overflow-hidden border-border/60 bg-card/95 py-0 shadow-none lg:flex-1 lg:min-h-0">
-        <CardHeader
-          className={cn(
-            "border-b border-border/60 bg-muted/20 px-4 pt-4 sm:px-6",
-            selectedActionSubject ? "gap-4 pb-4" : "gap-0 pb-3",
-          )}
-        >
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0 flex-1 rounded-xl border border-border/60 bg-muted/20 p-2">
-              <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_13rem]">
-                <Input
-                  id="flashcards-search"
-                  value={searchQuery}
-                  onChange={(event) => {
-                    setSearchQuery(event.target.value);
-                    setPage(1);
-                  }}
-                  placeholder={t("search_placeholder")}
-                  className="border-border/60 bg-transparent shadow-none"
-                />
-                <Select value={selectedSubjectId} onValueChange={updateSubject}>
-                  <SelectTrigger className="w-full border-border/60 bg-transparent shadow-none">
+    <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
+      <Card className="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
+        <div className="absolute top-0 right-0 size-28 rounded-full bg-primary/10 blur-3xl" />
+        <CardContent className="relative px-4 py-3 sm:px-5 sm:py-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="grid flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value);
+                      setPageIndex(0);
+                    }}
+                    placeholder={t("search_placeholder")}
+                    className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
+                  />
+                </div>
+                <Select
+                  value={selectedSubjectId ?? "all"}
+                  onValueChange={(value) =>
+                    updateSubjectFilter(value === "all" ? undefined : value)
+                  }
+                >
+                  <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
                     <SelectValue
                       placeholder={t("subject_filter_placeholder")}
                     />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={allSubjectsValue}>
-                      {t("subject_all")}
-                    </SelectItem>
+                  <SelectContent align="start">
+                    <SelectItem value="all">{t("subject_all")}</SelectItem>
                     {subjects.map((subject) => (
                       <SelectItem key={subject.id} value={subject.id}>
                         <SubjectText
@@ -166,203 +164,111 @@ export function FlashcardsManager({
                   </SelectContent>
                 </Select>
               </div>
+              <Button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                disabled={!hasSubjects}
+                className="h-10 w-full gap-2 rounded-lg px-4 shadow-sm sm:w-auto"
+              >
+                <Plus className="size-4" />
+                {t("new_flashcard")}
+              </Button>
             </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0 lg:items-center">
-              <CreateFlashcardDialog
-                subjectId={selectedActionSubject?.id}
-                subjects={subjects}
-                trigger={
-                  <Button
-                    size="sm"
-                    className="gap-1.5 shadow-none"
-                    title={isAtSubjectLimit ? t("limit_tooltip") : undefined}
-                  >
-                    <Plus className="size-4" />
-                    {t("new_flashcard")}
-                  </Button>
-                }
-                open={createOpen}
-                onOpenChange={setCreateOpen}
-                onCreated={(flashcard) => {
-                  const subjectName = subjects.find(
-                    (subject) => subject.id === flashcard.subjectId,
-                  )?.name;
-
-                  if (!subjectName) {
-                    return;
-                  }
-
-                  setFlashcards((current) => [
-                    { ...flashcard, subjectName },
-                    ...current,
-                  ]);
-                }}
-              />
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge
+                variant="outline"
+                className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-muted-foreground"
+              >
+                <Search className="size-3.5" />
+                {t("results_count", {
+                  filtered: filteredFlashcards.length,
+                  total: localFlashcards.length,
+                })}
+              </Badge>
+              {selectedSubjectId ? (
+                <Badge
+                  variant="outline"
+                  className="rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground"
+                >
+                  <Layers3 className="size-3.5 text-primary" />
+                  {t("selected_subject_count", {
+                    count: selectedSubjectCardCount,
+                    max: LIMITS.maxFlashcardsPerSubject,
+                  })}
+                </Badge>
+              ) : null}
             </div>
           </div>
-
-          {selectedActionSubject ? (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground/70">
-              <span>
-                {t("selected_subject_count", {
-                  count: selectedSubjectCardCount,
-                  max: LIMITS.maxFlashcardsPerSubject,
-                })}
-              </span>
-            </div>
-          ) : null}
-        </CardHeader>
-
-        <CardContent className="px-0 py-0 lg:flex-1 lg:min-h-0">
-          {flashcards.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-6 py-16 text-center lg:h-full">
-              <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Layers3 className="size-6" />
-              </div>
-              <h2 className="text-lg font-semibold">{t("empty_title")}</h2>
-              <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                {t("empty_description")}
-              </p>
-            </div>
-          ) : (
-            <div className="lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-              {filteredFlashcards.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-muted-foreground sm:px-6">
-                  {t("no_results")}
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3 p-4 lg:hidden">
-                    {paginatedFlashcards.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <Link
-                              href={`/subjects/${item.subjectId}/flashcards/${item.id}`}
-                              className="block rounded-md text-sm font-medium text-foreground/95 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-                            >
-                              {getRichTextExcerpt(item.front, 100)}
-                            </Link>
-                            <p className="mt-2 text-sm text-muted-foreground/85">
-                              {getRichTextExcerpt(item.back, 140)}
-                            </p>
-                          </div>
-                          <div className="shrink-0">
-                            <FlashcardsTableRowActions
-                              flashcard={item}
-                              onUpdated={handleUpdate}
-                              onDeleted={handleDelete}
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <div className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                            <SubjectText
-                              value={item.subjectName}
-                              mode="truncate"
-                              className="block max-w-48"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="hidden lg:block lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-                    <Table>
-                      <TableHeader className="sticky top-0 z-10 bg-muted/30 backdrop-blur-sm">
-                        <TableRow className="border-border/50 bg-transparent hover:bg-transparent">
-                          <TableHead className="h-11 w-[35%] px-4 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
-                            {t("table_front")}
-                          </TableHead>
-                          <TableHead className="h-11 w-[30%] px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                            {t("table_back")}
-                          </TableHead>
-                          <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                            {t("table_subject")}
-                          </TableHead>
-                          <TableHead className="h-11 w-22 px-4 text-right text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
-                            {t("table_actions")}
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedFlashcards.map((item) => (
-                          <TableRow
-                            key={item.id}
-                            className="group border-border/40 hover:bg-muted/20"
-                          >
-                            <TableCell className="max-w-0 px-4 py-3 sm:px-6">
-                              <Link
-                                href={`/subjects/${item.subjectId}/flashcards/${item.id}`}
-                                className="block truncate rounded-md text-sm font-medium text-foreground/95 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-                              >
-                                {getRichTextExcerpt(item.front, 100)}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="max-w-0 px-2 py-3 text-muted-foreground">
-                              <p className="truncate text-sm text-muted-foreground/85">
-                                {getRichTextExcerpt(item.back, 140)}
-                              </p>
-                            </TableCell>
-                            <TableCell className="max-w-0 px-2 py-3">
-                              <div className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                <SubjectText
-                                  value={item.subjectName}
-                                  mode="truncate"
-                                  className="block max-w-40"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-right sm:px-6">
-                              <div className="flex justify-end">
-                                <FlashcardsTableRowActions
-                                  flashcard={item}
-                                  onUpdated={handleUpdate}
-                                  onDeleted={handleDelete}
-                                />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </>
-              )}
-              <div className="flex items-center justify-end gap-4 border-t border-border/60 bg-muted/20 px-4 py-3 sm:px-6">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  disabled={clampedPage <= 1}
-                >
-                  {t("prev")}
-                </Button>
-                <p className="text-sm text-muted-foreground">
-                  {t("page", { current: clampedPage, total: totalPages })}
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setPage((current) => Math.min(totalPages, current + 1))
-                  }
-                  disabled={clampedPage >= totalPages}
-                >
-                  {t("next")}
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
+      {selectedSubjectId && isAtSubjectLimit ? (
+        <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-linear-to-r from-amber-500/12 via-amber-500/8 to-transparent px-4 py-2.5 text-sm shadow-xs">
+          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-amber-800 dark:text-amber-200">
+            {t("limit_message", { max: LIMITS.maxFlashcardsPerSubject })}
+          </p>
+        </div>
+      ) : null}
+      <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
+        {localFlashcards.length > 0 ? (
+          <FlashcardsManagerTable
+            flashcards={filteredFlashcards}
+            pageIndex={pageIndex}
+            onPageIndexChange={setPageIndex}
+            onUpdated={handleUpdated}
+            onDeleted={handleDeleted}
+          />
+        ) : (
+          <CardContent className="flex flex-col items-center justify-center px-6 py-14 text-center sm:px-10">
+            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
+              <Layers3 className="size-6" />
+            </div>
+            <h2 className="text-lg font-semibold tracking-tight">
+              {t("empty_title")}
+            </h2>
+            <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+              {t("empty_description")}
+            </p>
+            <Button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              disabled={!hasSubjects}
+              className="mt-6 h-10 gap-2 rounded-lg px-4 shadow-sm"
+            >
+              <Plus className="size-4" />
+              {t("new_flashcard")}
+            </Button>
+          </CardContent>
+        )}
+      </Card>
+      <CreateFlashcardDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={handleCreated}
+        subjectId={selectedSubjectId}
+        subjects={subjects}
+      />
     </div>
   );
+}
+
+function toTimestamp(value: Date | string): number {
+  return new Date(value).getTime();
+}
+
+function sortFlashcards(
+  flashcards: FlashcardListEntity[],
+): FlashcardListEntity[] {
+  return [...flashcards].sort(
+    (left, right) => toTimestamp(right.updatedAt) - toTimestamp(left.updatedAt),
+  );
+}
+
+function upsertFlashcard(
+  current: FlashcardListEntity[],
+  next: FlashcardListEntity,
+): FlashcardListEntity[] {
+  const withoutNext = current.filter((flashcard) => flashcard.id !== next.id);
+
+  return sortFlashcards([...withoutNext, next]);
 }

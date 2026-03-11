@@ -18,6 +18,7 @@ interface EditAssessmentDialogProps {
   assessment: AssessmentEntity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdated?: (assessment: AssessmentEntity) => void;
 }
 
 function getEditAssessmentFormValues(
@@ -39,6 +40,7 @@ export function EditAssessmentDialog({
   assessment,
   open,
   onOpenChange,
+  onUpdated,
 }: Readonly<EditAssessmentDialogProps>) {
   const t = useTranslations("EditAssessmentDialog");
   const tErrors = useTranslations("ServerActions");
@@ -54,6 +56,7 @@ export function EditAssessmentDialog({
   async function onSubmit(data: EditAssessmentForm) {
     const result = await editAssessment(data);
     if (result.success) {
+      onUpdated?.(result.assessment);
       onOpenChange(false);
     } else {
       form.setError("title", {

@@ -22,7 +22,9 @@ import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { parseActionInput } from "@/lib/server/action-input";
 import type {
   AssessmentEntity,
-  MutationResult,
+  CreateAssessmentResult,
+  DeleteAssessmentResult,
+  EditAssessmentResult,
 } from "@/lib/server/api-contracts";
 
 export async function getAssessmentsBySubject(
@@ -39,7 +41,7 @@ export async function getAssessments(): Promise<AssessmentEntity[]> {
 
 export async function createAssessment(
   data: CreateAssessmentForm,
-): Promise<MutationResult> {
+): Promise<CreateAssessmentResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = parseActionInput(
     createAssessmentSchema,
@@ -62,7 +64,7 @@ export async function createAssessment(
 
 export async function editAssessment(
   data: EditAssessmentForm,
-): Promise<MutationResult> {
+): Promise<EditAssessmentResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = parseActionInput(
     editAssessmentSchema,
@@ -85,7 +87,7 @@ export async function editAssessment(
 
 export async function deleteAssessment(
   data: DeleteAssessmentForm,
-): Promise<MutationResult> {
+): Promise<DeleteAssessmentResult> {
   const userId = await getAuthenticatedUserId();
   const parsed = parseActionInput(
     deleteAssessmentSchema,

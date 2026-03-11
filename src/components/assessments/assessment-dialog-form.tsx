@@ -8,6 +8,7 @@ import {
   type FieldValues,
   type UseFormReturn,
 } from "react-hook-form";
+import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,7 @@ import type {
   CreateAssessmentFormInput,
   EditAssessmentFormInput,
 } from "@/features/assessments/validation";
+import type { SubjectEntity } from "@/lib/server/api-contracts";
 
 type AssessmentSharedFormValues = Pick<
   CreateAssessmentFormInput,
@@ -56,6 +58,7 @@ interface AssessmentDialogFormProps<
   description: string;
   submitLabel: string;
   onSubmit: (values: TSubmitValues) => Promise<void>;
+  subjects?: SubjectEntity[];
 }
 
 export function AssessmentDialogForm<
@@ -70,6 +73,7 @@ export function AssessmentDialogForm<
   description,
   submitLabel,
   onSubmit,
+  subjects,
 }: Readonly<AssessmentDialogFormProps<TValues, TSubmitValues>>) {
   const t = useTranslations("CreateAssessmentDialog");
   const tAssessment = useTranslations("AssessmentItemCard");
@@ -87,6 +91,52 @@ export function AssessmentDialogForm<
           className="max-h-[70vh] overflow-y-auto pr-1"
         >
           <FieldGroup className="gap-4">
+            {subjects && subjects.length > 0 ? (
+              <Controller
+                name={"subjectId" as FieldPath<TValues>}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={`${formId}-subject`}>
+                      {t("field_subject")}
+                    </FieldLabel>
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                      onOpenChange={(nextOpen) => {
+                        if (!nextOpen) {
+                          field.onBlur();
+                        }
+                      }}
+                    >
+                      <SelectTrigger
+                        id={`${formId}-subject`}
+                        className="w-full"
+                        aria-invalid={fieldState.invalid}
+                      >
+                        <SelectValue
+                          placeholder={t("field_subject_placeholder")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id}>
+                            <SubjectText
+                              value={subject.name}
+                              mode="truncate"
+                              className="block max-w-full"
+                            />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            ) : null}
             <Controller
               name={"title" as FieldPath<TValues>}
               control={form.control}

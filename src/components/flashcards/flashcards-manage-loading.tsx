@@ -2,88 +2,68 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FlashcardsLoadingShell } from "./flashcards-loading-shell";
 
 export function FlashcardsManageLoading() {
-  const rows = Array.from(
-    { length: 5 },
-    (_, index) => `flashcards-loading-row-${index}`,
-  );
-
   return (
     <FlashcardsLoadingShell>
       <div
         className="flex flex-col gap-4 lg:h-full lg:min-h-0"
         data-testid="flashcards-manage-loading"
       >
-        <div className="gap-0 overflow-hidden rounded-xl border border-border/60 bg-card/95 py-0 shadow-none lg:flex-1 lg:min-h-0">
-          <div className="gap-0 border-b border-border/60 bg-muted/20 px-4 pt-4 pb-3 sm:px-6">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0 flex-1 rounded-xl border border-border/60 bg-muted/20 p-2">
-                <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_13rem]">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card/85">
+          <div className="px-4 py-3 sm:px-5 sm:py-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="grid flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
+                  <Skeleton className="h-10 w-full rounded-lg" />
+                  <Skeleton className="h-10 w-full rounded-lg" />
                 </div>
+                <Skeleton className="h-10 w-full rounded-lg sm:w-40" />
               </div>
-
-              <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0 lg:items-center">
-                <Skeleton className="h-9 w-full sm:w-32" />
-                <Skeleton className="h-9 w-full sm:w-36" />
+              <div className="flex gap-1.5">
+                <Skeleton className="h-6 w-40 rounded-full" />
+                <Skeleton className="h-6 w-44 rounded-full" />
               </div>
             </div>
           </div>
-
-          <div className="px-0 py-0 lg:flex-1 lg:min-h-0">
-            <div className="lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-              <div className="space-y-3 p-4 lg:hidden">
-                {rows.map((id) => (
-                  <div
-                    key={id}
-                    className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="mt-2 h-4 w-full" />
-                        <Skeleton className="mt-1 h-4 w-5/6" />
-                      </div>
-                      <Skeleton className="size-8 shrink-0 rounded-md" />
-                    </div>
-                    <div className="mt-3">
-                      <Skeleton className="h-6 w-24 rounded-full" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="hidden lg:block lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-                <div className="border-b border-border/60 bg-muted/30 px-4 py-3 sm:px-6">
-                  <div className="grid grid-cols-[35%_30%_1fr_5.5rem] gap-3">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="ml-auto h-4 w-14" />
-                  </div>
-                </div>
-
-                <div className="space-y-1 px-4 py-2 sm:px-6">
-                  {rows.map((id) => (
-                    <div
-                      key={id}
-                      className="grid grid-cols-[35%_30%_1fr_5.5rem] items-center gap-3 py-3"
-                    >
-                      <Skeleton className="h-5 w-full" />
-                      <Skeleton className="h-5 w-full" />
-                      <Skeleton className="h-6 w-24 rounded-full" />
-                      <Skeleton className="ml-auto h-8 w-8 rounded-md" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-4 border-t border-border/60 bg-muted/20 px-4 py-3 sm:px-6">
-                <Skeleton className="h-9 w-20 rounded-md" />
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-9 w-20 rounded-md" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card/85 lg:min-h-0 lg:flex-1">
+          <div className="border-b border-border/60 bg-muted/30 px-4 py-4">
+            <div className="grid grid-cols-[1.35fr_1fr_0.7fr_3.5rem] gap-4">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-14" />
+              <Skeleton className="h-4 w-20" />
+              <div />
+            </div>
+          </div>
+          <div className="space-y-0">
+            <div className="border-b border-border/50 px-4 py-3">
+              <div className="grid grid-cols-[1.35fr_1fr_0.7fr_3.5rem] gap-4">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-7 w-24 rounded-full" />
+                <Skeleton className="h-10 w-10 self-center justify-self-center rounded-full" />
               </div>
             </div>
+            <div className="border-b border-border/50 px-4 py-3">
+              <div className="grid grid-cols-[1.35fr_1fr_0.7fr_3.5rem] gap-4">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-7 w-20 rounded-full" />
+                <Skeleton className="h-10 w-10 self-center justify-self-center rounded-full" />
+              </div>
+            </div>
+            <div className="border-b border-border/50 px-4 py-3">
+              <div className="grid grid-cols-[1.35fr_1fr_0.7fr_3.5rem] gap-4">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-7 w-28 rounded-full" />
+                <Skeleton className="h-10 w-10 self-center justify-self-center rounded-full" />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 border-t border-border/60 bg-muted/15 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-end">
+            <Skeleton className="h-7 w-28 rounded-full" />
+            <Skeleton className="h-8 w-24 rounded-full" />
+            <Skeleton className="h-8 w-24 rounded-full" />
           </div>
         </div>
       </div>

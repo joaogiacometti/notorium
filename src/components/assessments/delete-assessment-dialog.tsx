@@ -21,6 +21,7 @@ interface DeleteAssessmentDialogProps {
   assessmentTitle: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (id: string) => void;
 }
 
 export function DeleteAssessmentDialog({
@@ -28,6 +29,7 @@ export function DeleteAssessmentDialog({
   assessmentTitle,
   open,
   onOpenChange,
+  onDeleted,
 }: Readonly<DeleteAssessmentDialogProps>) {
   const t = useTranslations("DeleteAssessmentDialog");
   const tCommon = useTranslations("Common");
@@ -39,6 +41,7 @@ export function DeleteAssessmentDialog({
     startTransition(async () => {
       const result = await deleteAssessment({ id: assessmentId });
       if (result.success) {
+        onDeleted?.(result.id);
         onOpenChange(false);
       } else {
         toast.error(resolveActionErrorMessage(result, tErrors));

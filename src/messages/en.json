@@ -466,6 +466,8 @@
   "CreateAssessmentDialog": {
     "title": "Add Assessment",
     "description": "Track an upcoming or completed assessment for this subject.",
+    "field_subject": "Subject",
+    "field_subject_placeholder": "Select a subject",
     "field_title": "Title",
     "field_description": "Description (optional)",
     "field_type": "Type",

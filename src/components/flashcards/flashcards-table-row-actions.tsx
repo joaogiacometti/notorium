@@ -40,7 +40,7 @@ export function FlashcardsTableRowActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 text-muted-foreground/75 transition-all hover:text-foreground"
+            className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
             aria-label={t("open_actions")}
           >
             <MoreVertical className="size-3.5" />

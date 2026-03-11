@@ -22,6 +22,7 @@
     "@open-spaced-repetition/binding": "^0.1.2",
     "@openrouter/ai-sdk-provider": "^2.2.5",
     "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-table": "^8.21.3",
     "@tiptap/extension-code-block-lowlight": "^3.20.0",
     "@tiptap/extension-highlight": "^3.20.0",
     "@tiptap/extension-image": "^3.20.0",

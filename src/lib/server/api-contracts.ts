@@ -98,6 +98,24 @@ export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "description">;
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
+export type CreateAssessmentResult =
+  | {
+      success: true;
+      assessment: AssessmentEntity;
+    }
+  | ActionErrorResult;
+export type EditAssessmentResult =
+  | {
+      success: true;
+      assessment: AssessmentEntity;
+    }
+  | ActionErrorResult;
+export type DeleteAssessmentResult =
+  | {
+      success: true;
+      id: string;
+    }
+  | ActionErrorResult;
 export type ReviewFlashcardResult =
   | {
       success: true;

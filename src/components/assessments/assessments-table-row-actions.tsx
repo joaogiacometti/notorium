@@ -16,10 +16,14 @@ import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
 interface AssessmentsTableRowActionsProps {
   assessment: AssessmentEntity;
+  onUpdated?: (assessment: AssessmentEntity) => void;
+  onDeleted?: (id: string) => void;
 }
 
 export function AssessmentsTableRowActions({
   assessment,
+  onUpdated,
+  onDeleted,
 }: Readonly<AssessmentsTableRowActionsProps>) {
   const t = useTranslations("PlanningAssessmentsTable");
 
@@ -33,7 +37,7 @@ export function AssessmentsTableRowActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 text-muted-foreground/75 transition-all hover:text-foreground"
+            className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
             aria-label={t("open_actions")}
           >
             <MoreVertical className="size-3.5" />
@@ -61,12 +65,14 @@ export function AssessmentsTableRowActions({
         assessment={assessment}
         open={editOpen}
         onOpenChange={setEditOpen}
+        onUpdated={onUpdated}
       />
       <DeleteAssessmentDialog
         assessmentId={assessment.id}
         assessmentTitle={assessment.title}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+        onDeleted={onDeleted}
       />
     </>
   );

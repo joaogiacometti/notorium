@@ -466,6 +466,8 @@
   "CreateAssessmentDialog": {
     "title": "Adicionar Avaliação",
     "description": "Acompanhe uma avaliação futura ou concluída para esta matéria.",
+    "field_subject": "Matéria",
+    "field_subject_placeholder": "Selecione uma matéria",
     "field_title": "Título",
     "field_description": "Descrição (opcional)",
     "field_type": "Tipo",

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { createAssessment } from "@/app/actions/assessments";
 import { AssessmentDialogForm } from "@/components/assessments/assessment-dialog-form";
@@ -10,19 +11,25 @@ import {
   type CreateAssessmentFormInput,
   createAssessmentSchema,
 } from "@/features/assessments/validation";
+import type {
+  AssessmentEntity,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface CreateAssessmentDialogProps {
-  subjectId: string;
+  subjectId?: string;
+  subjects?: SubjectEntity[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: (assessment: AssessmentEntity) => void;
 }
 
 function getCreateAssessmentFormValues(
-  subjectId: string,
+  subjectId?: string,
 ): CreateAssessmentForm {
   return {
-    subjectId,
+    subjectId: subjectId ?? "",
     title: "",
     description: "",
     type: "other",
@@ -35,8 +42,10 @@ function getCreateAssessmentFormValues(
 
 export function CreateAssessmentDialog({
   subjectId,
+  subjects,
   open,
   onOpenChange,
+  onCreated,
 }: Readonly<CreateAssessmentDialogProps>) {
   const t = useTranslations("CreateAssessmentDialog");
   const tErrors = useTranslations("ServerActions");
@@ -49,10 +58,15 @@ export function CreateAssessmentDialog({
     defaultValues: getCreateAssessmentFormValues(subjectId),
   });
 
+  useEffect(() => {
+    form.reset(getCreateAssessmentFormValues(subjectId));
+  }, [form, subjectId]);
+
   async function onSubmit(data: CreateAssessmentForm) {
     const result = await createAssessment(data);
     if (result.success) {
       form.reset(getCreateAssessmentFormValues(subjectId));
+      onCreated?.(result.assessment);
       onOpenChange(false);
     } else {
       form.setError("title", {
@@ -71,6 +85,7 @@ export function CreateAssessmentDialog({
       description={t("description")}
       submitLabel={t("submit")}
       onSubmit={onSubmit}
+      subjects={subjects}
     />
   );
 }
