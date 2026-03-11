@@ -124,15 +124,6 @@
     "collapsed_hint": "Expand to load your flashcards.",
     "toggle": "Show flashcards",
     "loading": "Loading flashcards...",
-    "import_flashcards": "Import Flashcards",
-    "import_success": "Imported {count, plural, one {# flashcard} other {# flashcards}} successfully.",
-    "import_read_error": "Failed to import the selected file.",
-    "import_dialog_title": "Import Flashcards",
-    "import_dialog_description": "This will add flashcards from an Anki .txt export into the selected subject. Existing flashcards will not be changed.",
-    "import_subject": "Subject",
-    "import_subject_placeholder": "Select a subject",
-    "import_cancel": "Cancel",
-    "import_confirm": "Confirm Import",
     "new_flashcard": "New Flashcard",
     "empty_title": "No flashcards yet",
     "empty_description": "Create your first flashcard with a front and back.",
@@ -165,14 +156,13 @@
     "search_placeholder": "Search front, back, or subject...",
     "subject_filter_placeholder": "Filter by subject",
     "subject_all": "All subjects",
-    "select_subject_required": "Choose a subject first.",
     "new_flashcard": "New Flashcard",
     "results_count": "{filtered} of {total} flashcards",
     "selected_subject_count": "{count}/{max} flashcards in this subject",
     "limit_tooltip": "You cannot create more flashcards for this subject",
     "limit_message": "You've reached the limit of {max} flashcards per subject. Please delete existing ones to create more.",
     "empty_title": "No flashcards yet",
-    "empty_description": "Pick a subject and create or import your first flashcards.",
+    "empty_description": "Pick a subject and create your first flashcards.",
     "table_front": "Front",
     "table_back": "Back",
     "table_subject": "Subject",
@@ -706,11 +696,6 @@
         "notConfigured": "AI flashcard generation is not configured. Add your OpenRouter key and model in your account page.",
         "unavailable": "AI flashcard generation is temporarily unavailable."
       },
-      "import": {
-        "invalidFormat": "Invalid Anki import file. Use a .txt export.",
-        "noCards": "No flashcards were found to import.",
-        "failed": "Failed to import flashcards."
-      },
       "review": {
         "invalidData": "Invalid review input.",
         "notFound": "Flashcard not found for review.",
@@ -791,9 +776,6 @@
       "frontMaxLength": "Flashcard front must be at most 500 characters.",
       "backRequired": "Flashcard back is required.",
       "backMaxLength": "Flashcard back must be at most 2000 characters."
-    },
-    "ankiImport": {
-      "invalidDate": "Import date must be a valid date."
     },
     "profile": {
       "nameMinLength": "Name must be at least 2 characters.",

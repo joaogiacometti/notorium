@@ -65,8 +65,6 @@ Students who want a private, lightweight study management workspace.
 - The default flashcards page opens in the review view, with management available as the alternate global view for filtering, finding, and editing across subjects.
 - Flashcards have a dedicated detail page nested under subject routes.
 - Flashcard review remains available as the second view in the global flashcards page.
-- Flashcard imports support importing Anki `.txt` exports into a selected subject.
-- Supported scheduling metadata from Anki imports is preserved when present.
 - User AI API keys are encrypted at rest, never shown back to the user after saving, and excluded from data export/import.
 
 ### Flashcard Review

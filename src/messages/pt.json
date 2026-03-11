@@ -124,15 +124,6 @@
     "collapsed_hint": "Expanda para carregar seus flashcards.",
     "toggle": "Mostrar flashcards",
     "loading": "Carregando flashcards...",
-    "import_flashcards": "Importar flashcards",
-    "import_success": "{count, plural, one {# flashcard importado com sucesso.} other {# flashcards importados com sucesso.}}",
-    "import_read_error": "Falha ao importar o arquivo selecionado.",
-    "import_dialog_title": "Importar flashcards",
-    "import_dialog_description": "Isso adicionará flashcards de uma exportação .txt do Anki à matéria selecionada. Os flashcards existentes não serão alterados.",
-    "import_subject": "Matéria",
-    "import_subject_placeholder": "Selecione uma matéria",
-    "import_cancel": "Cancelar",
-    "import_confirm": "Confirmar importação",
     "new_flashcard": "Novo flashcard",
     "empty_title": "Ainda não há flashcards",
     "empty_description": "Crie seu primeiro flashcard com frente e verso.",
@@ -165,14 +156,13 @@
     "search_placeholder": "Buscar frente, verso ou matéria...",
     "subject_filter_placeholder": "Filtrar por matéria",
     "subject_all": "Todas as matérias",
-    "select_subject_required": "Escolha uma matéria primeiro.",
     "new_flashcard": "Novo Flashcard",
     "results_count": "{filtered} de {total} flashcards",
     "selected_subject_count": "{count}/{max} flashcards nesta matéria",
     "limit_tooltip": "Você não pode criar mais flashcards para esta matéria",
     "limit_message": "Você atingiu o limite de {max} flashcards por matéria. Por favor, exclua flashcards existentes para criar mais.",
     "empty_title": "Ainda não há flashcards",
-    "empty_description": "Escolha uma matéria e crie ou importe seus primeiros flashcards.",
+    "empty_description": "Escolha uma matéria e crie seus primeiros flashcards.",
     "table_front": "Frente",
     "table_back": "Verso",
     "table_subject": "Matéria",
@@ -706,11 +696,6 @@
         "notConfigured": "A geracao de flashcards com IA nao esta configurada. Adicione sua chave e modelo da OpenRouter na pagina da sua conta.",
         "unavailable": "A geracao de flashcards com IA esta temporariamente indisponivel."
       },
-      "import": {
-        "invalidFormat": "Arquivo do Anki invalido. Use uma exportação .txt.",
-        "noCards": "Nenhum flashcard foi encontrado para importar.",
-        "failed": "Falha ao importar flashcards."
-      },
       "review": {
         "invalidData": "Dados de revisão inválidos.",
         "notFound": "Flashcard não encontrado para revisão.",
@@ -791,9 +776,6 @@
       "frontMaxLength": "A frente do flashcard deve ter no maximo 500 caracteres.",
       "backRequired": "O verso do flashcard e obrigatorio.",
       "backMaxLength": "O verso do flashcard deve ter no maximo 2000 caracteres."
-    },
-    "ankiImport": {
-      "invalidDate": "A data importada deve ser uma data valida."
     },
     "profile": {
       "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",

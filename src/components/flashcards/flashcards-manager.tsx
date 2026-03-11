@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
 import { FlashcardsTableRowActions } from "@/components/flashcards/flashcards-table-row-actions";
-import { ImportFlashcardsButton } from "@/components/flashcards/import-flashcards-button";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -26,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { deriveFlashcardsManagerState } from "@/features/flashcards/manager";
-import { Link, useRouter } from "@/i18n/routing";
+import { Link } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type {
@@ -51,7 +50,6 @@ export function FlashcardsManager({
   initialSubjectId,
 }: Readonly<FlashcardsManagerProps>) {
   const t = useTranslations("FlashcardsManager");
-  const router = useRouter();
   const [flashcards, setFlashcards] = useState(initialFlashcards);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -171,13 +169,6 @@ export function FlashcardsManager({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0 lg:items-center">
-              <ImportFlashcardsButton
-                subjectId={selectedActionSubject?.id}
-                subjects={subjects}
-                onImported={() => {
-                  router.refresh();
-                }}
-              />
               <CreateFlashcardDialog
                 subjectId={selectedActionSubject?.id}
                 subjects={subjects}

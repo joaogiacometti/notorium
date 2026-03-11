@@ -5,7 +5,6 @@ import {
   deleteFlashcardForUser,
   editFlashcardForUser,
   generateFlashcardBackForUserInput,
-  importAnkiFlashcardsForUser,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
@@ -26,17 +25,14 @@ import {
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { LIMITS } from "@/lib/config/limits";
 import { parseActionInput } from "@/lib/server/action-input";
 import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
   GenerateFlashcardBackResult,
-  MutationResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
-import { actionError } from "@/lib/server/server-action-errors";
 
 export async function createFlashcard(
   data: CreateFlashcardInput,
@@ -56,30 +52,6 @@ export async function createFlashcard(
 
   if (result.success) {
     revalidateFlashcardSubjectPaths(result.flashcard.subjectId);
-  }
-
-  return result;
-}
-
-export async function importAnkiFlashcards(
-  formData: FormData,
-): Promise<MutationResult & { imported?: number }> {
-  const userId = await getAuthenticatedUserId();
-  const subjectId = formData.get("subjectId");
-  const file = formData.get("file");
-
-  if (typeof subjectId !== "string" || !(file instanceof File)) {
-    return actionError("flashcards.import.invalidFormat");
-  }
-
-  if (file.size === 0 || file.size > LIMITS.maxImportBytes) {
-    return actionError("flashcards.import.invalidFormat");
-  }
-
-  const result = await importAnkiFlashcardsForUser(userId, { subjectId, file });
-
-  if (result.success) {
-    revalidateFlashcardReviewPaths(subjectId);
   }
 
   return result;

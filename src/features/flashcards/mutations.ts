@@ -2,14 +2,6 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { generateFlashcardBackForUser } from "@/features/flashcards/ai-service";
-import {
-  mapAnkiImportCardToFlashcardInsert,
-  parseAnkiImportFile,
-} from "@/features/flashcards/anki-import";
-import {
-  type ImportAnkiFlashcardsInput,
-  importAnkiFlashcardsSchema,
-} from "@/features/flashcards/anki-import-validation";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   countFlashcardsBySubjectForUser,
@@ -31,7 +23,6 @@ import type {
   CreateFlashcardResult,
   EditFlashcardResult,
   GenerateFlashcardBackResult,
-  MutationResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
 import {
@@ -90,69 +81,6 @@ export async function createFlashcardForUser(
     .returning();
 
   return { success: true, flashcard: inserted[0] };
-}
-
-export async function importAnkiFlashcardsForUser(
-  userId: string,
-  input: { subjectId: string; file: File },
-): Promise<MutationResult & { imported?: number }> {
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    input.subjectId,
-  );
-
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
-  }
-
-  const current = await countFlashcardsBySubjectForUser(
-    userId,
-    input.subjectId,
-  );
-  let parsedCards: ImportAnkiFlashcardsInput["cards"];
-
-  try {
-    parsedCards = await parseAnkiImportFile(input.file);
-  } catch {
-    return actionError("flashcards.import.invalidFormat");
-  }
-
-  const parsed = importAnkiFlashcardsSchema.safeParse({
-    subjectId: input.subjectId,
-    cards: parsedCards,
-  });
-
-  if (!parsed.success) {
-    return actionError("flashcards.import.invalidFormat");
-  }
-
-  if (parsed.data.cards.length === 0) {
-    return actionError("flashcards.import.noCards");
-  }
-
-  const incoming = parsed.data.cards.length;
-
-  if (current + incoming > LIMITS.maxFlashcardsPerSubject) {
-    return actionError("limits.flashcardLimit", {
-      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
-    });
-  }
-
-  try {
-    const now = new Date();
-
-    await db.insert(flashcard).values(
-      parsed.data.cards.map((cardData) => ({
-        ...mapAnkiImportCardToFlashcardInsert(cardData, now),
-        subjectId: input.subjectId,
-        userId,
-      })),
-    );
-  } catch {
-    return actionError("flashcards.import.failed");
-  }
-
-  return { success: true, imported: incoming };
 }
 
 export async function editFlashcardForUser(
