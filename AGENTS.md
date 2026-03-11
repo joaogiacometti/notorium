@@ -138,6 +138,10 @@ src/
 - When the project has the underlying shadcn-compatible dependency available but the primitive is missing from `src/components/ui/`, add the standard shadcn primitive first, then use it.
 - Put custom components in `src/components/`.
 - Keep components focused and single-purpose.
+- Do not keep speculative scaffolding, placeholder modules, or "might use later" components in the repo.
+- When a new implementation replaces an old path, remove the old unreachable code in the same change unless the user explicitly asks to keep it.
+- Before finishing, verify that new files and touched modules are reachable from active app code using search or project checks.
+- If intentionally unused code must remain, call it out explicitly in the change summary with the reason it still exists.
 
 ### Authentication
 
