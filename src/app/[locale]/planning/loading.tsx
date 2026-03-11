@@ -38,7 +38,33 @@ export default function PlanningLoading() {
 
               <div className="px-0 py-0 lg:flex-1 lg:min-h-0">
                 <div className="lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-                  <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                  <div className="space-y-3 p-4 lg:hidden">
+                    {skeletonRows.map((id) => (
+                      <div
+                        key={id}
+                        className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                            <Skeleton className="size-7 shrink-0 rounded-lg" />
+                            <div className="min-w-0 flex-1">
+                              <Skeleton className="h-4 w-2/3" />
+                              <Skeleton className="mt-1 h-3 w-1/2" />
+                            </div>
+                          </div>
+                          <Skeleton className="size-8 shrink-0 rounded-md" />
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <Skeleton className="h-6 w-24 rounded-md" />
+                          <Skeleton className="h-6 w-20 rounded-md" />
+                          <Skeleton className="h-6 w-24 rounded-md" />
+                          <Skeleton className="h-6 w-12 rounded-md" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="hidden lg:block lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                     <table className="w-full caption-bottom text-sm">
                       <thead className="sticky top-0 z-10 bg-muted/30">
                         <tr className="border-b border-border/50">

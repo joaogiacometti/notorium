@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FlashcardsLoadingShell } from "./flashcards-loading-shell";
 
 export function FlashcardsManageLoading() {
-  const tableRows = Array.from(
+  const rows = Array.from(
     { length: 5 },
     (_, index) => `flashcards-loading-row-${index}`,
   );
@@ -32,7 +32,28 @@ export function FlashcardsManageLoading() {
 
           <div className="px-0 py-0 lg:flex-1 lg:min-h-0">
             <div className="lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-              <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+              <div className="space-y-3 p-4 lg:hidden">
+                {rows.map((id) => (
+                  <div
+                    key={id}
+                    className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="mt-2 h-4 w-full" />
+                        <Skeleton className="mt-1 h-4 w-5/6" />
+                      </div>
+                      <Skeleton className="size-8 shrink-0 rounded-md" />
+                    </div>
+                    <div className="mt-3">
+                      <Skeleton className="h-6 w-24 rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden lg:block lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                 <div className="border-b border-border/60 bg-muted/30 px-4 py-3 sm:px-6">
                   <div className="grid grid-cols-[35%_30%_1fr_5.5rem] gap-3">
                     <Skeleton className="h-4 w-20" />
@@ -43,7 +64,7 @@ export function FlashcardsManageLoading() {
                 </div>
 
                 <div className="space-y-1 px-4 py-2 sm:px-6">
-                  {tableRows.map((id) => (
+                  {rows.map((id) => (
                     <div
                       key={id}
                       className="grid grid-cols-[35%_30%_1fr_5.5rem] items-center gap-3 py-3"

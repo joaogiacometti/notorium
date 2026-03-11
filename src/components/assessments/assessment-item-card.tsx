@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
@@ -98,6 +99,7 @@ interface AssessmentItemCardProps {
   showScore?: boolean;
   subjectName?: string;
   className?: string;
+  actions?: ReactNode;
   onEdit: (assessment: AssessmentEntity) => void;
   onDelete: (assessment: AssessmentEntity) => void;
 }
@@ -110,6 +112,7 @@ export function AssessmentItemCard({
   showScore = true,
   subjectName,
   className,
+  actions,
   onEdit,
   onDelete,
 }: Readonly<AssessmentItemCardProps>) {
@@ -157,24 +160,28 @@ export function AssessmentItemCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7 text-muted-foreground hover:text-foreground"
-            onClick={() => onEdit(item)}
-            aria-label={t("edit")}
-          >
-            <Pencil className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7 text-muted-foreground hover:text-destructive"
-            onClick={() => onDelete(item)}
-            aria-label={t("delete")}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
+          {actions ?? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-foreground"
+                onClick={() => onEdit(item)}
+                aria-label={t("edit")}
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-destructive"
+                onClick={() => onDelete(item)}
+                aria-label={t("delete")}
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -185,7 +192,7 @@ export function AssessmentItemCard({
             <SubjectText
               value={subjectName ?? t("unknown_subject")}
               mode="truncate"
-              className="inline-block max-w-[12rem] align-bottom"
+              className="inline-block max-w-48 align-bottom"
             />
           </span>
         )}

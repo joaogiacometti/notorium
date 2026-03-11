@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { AssessmentItemCard } from "@/components/assessments/assessment-item-card";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
@@ -231,9 +232,7 @@ export function PlanningAssessmentsTable({
                   <SelectItem value="updatedAtDesc">
                     {t("sort_updated")}
                   </SelectItem>
-                  <SelectItem value="scoreDesc">
-                    {t("sort_score")}
-                  </SelectItem>
+                  <SelectItem value="scoreDesc">{t("sort_score")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -253,128 +252,154 @@ export function PlanningAssessmentsTable({
             </div>
           ) : (
             <div className="lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-              <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-muted/30 backdrop-blur-sm">
-                    <TableRow className="border-border/50 bg-transparent hover:bg-transparent">
-                      <TableHead className="h-11 w-[25%] px-4 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
-                        {t("table_title")}
-                      </TableHead>
-                      <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                        {t("table_type")}
-                      </TableHead>
-                      <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                        {t("table_status")}
-                      </TableHead>
-                      <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                        {t("table_due_date")}
-                      </TableHead>
-                      <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                        {t("table_score")}
-                      </TableHead>
-                      <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                        {t("table_subject")}
-                      </TableHead>
-                      <TableHead className="h-11 w-22 px-4 text-right text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
-                        {t("table_actions")}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAssessments.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={7}
-                          className="py-8 text-center text-sm text-muted-foreground"
-                        >
-                          {t("no_results")}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      paginatedAssessments.map((item) => {
-                        const overdue = isAssessmentOverdue(
-                          item,
-                          dueDateBounds.todayIso,
-                        );
-                        const status = resolveStatus(overdue, item.status);
-                        const statusTone = STATUS_TONE[status];
-                        const TypeIcon = TYPE_ICONS[item.type];
+              {filteredAssessments.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-muted-foreground sm:px-6">
+                  {t("no_results")}
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3 p-4 lg:hidden">
+                    {paginatedAssessments.map((item) => {
+                      const overdue = isAssessmentOverdue(
+                        item,
+                        dueDateBounds.todayIso,
+                      );
 
-                        return (
-                          <TableRow
-                            key={item.id}
-                            className="group border-border/40 hover:bg-muted/20"
-                          >
-                            <TableCell className="max-w-0 px-4 py-2 sm:px-6">
-                              <p className="truncate text-sm font-medium text-foreground/95">
-                                {item.title}
-                              </p>
-                              {item.description && (
-                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                  {item.description}
+                      return (
+                        <AssessmentItemCard
+                          key={item.id}
+                          item={item}
+                          overdue={overdue}
+                          showSubject
+                          showScore
+                          subjectName={
+                            subjectNamesById[item.subjectId] ??
+                            t("unknown_subject")
+                          }
+                          className="border border-border/60 bg-card p-4 shadow-sm"
+                          actions={
+                            <AssessmentsTableRowActions assessment={item} />
+                          }
+                          onEdit={() => undefined}
+                          onDelete={() => undefined}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  <div className="hidden lg:block lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                    <Table>
+                      <TableHeader className="sticky top-0 z-10 bg-muted/30 backdrop-blur-sm">
+                        <TableRow className="border-border/50 bg-transparent hover:bg-transparent">
+                          <TableHead className="h-11 w-[25%] px-4 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
+                            {t("table_title")}
+                          </TableHead>
+                          <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+                            {t("table_type")}
+                          </TableHead>
+                          <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+                            {t("table_status")}
+                          </TableHead>
+                          <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+                            {t("table_due_date")}
+                          </TableHead>
+                          <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+                            {t("table_score")}
+                          </TableHead>
+                          <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+                            {t("table_subject")}
+                          </TableHead>
+                          <TableHead className="h-11 w-22 px-4 text-right text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
+                            {t("table_actions")}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedAssessments.map((item) => {
+                          const overdue = isAssessmentOverdue(
+                            item,
+                            dueDateBounds.todayIso,
+                          );
+                          const status = resolveStatus(overdue, item.status);
+                          const statusTone = STATUS_TONE[status];
+                          const TypeIcon = TYPE_ICONS[item.type];
+
+                          return (
+                            <TableRow
+                              key={item.id}
+                              className="group border-border/40 hover:bg-muted/20"
+                            >
+                              <TableCell className="max-w-0 px-4 py-2 sm:px-6">
+                                <p className="truncate text-sm font-medium text-foreground/95">
+                                  {item.title}
                                 </p>
-                              )}
-                            </TableCell>
-                            <TableCell className="px-2 py-2">
-                              <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <TypeIcon className="size-3.5" />
-                                <span>{t(`type_${item.type}`)}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-2 py-2">
-                              <span
-                                className={cn(
-                                  "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
-                                  statusTone.border,
-                                  statusTone.bg,
-                                  statusTone.text,
+                                {item.description && (
+                                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                    {item.description}
+                                  </p>
                                 )}
-                              >
-                                {t(`status_${status}`)}
-                              </span>
-                            </TableCell>
-                            <TableCell className="px-2 py-2 text-sm text-muted-foreground">
-                              {item.dueDate
-                                ? format(
-                                    parseISO(item.dueDate),
-                                    "MMM d, yyyy",
-                                    {
-                                      locale: dateLocale,
-                                    },
-                                  )
-                                : "—"}
-                            </TableCell>
-                            <TableCell className="px-2 py-3 text-sm text-muted-foreground">
-                              {item.score === null
-                                ? "—"
-                                : Number(item.score).toFixed(1)}
-                            </TableCell>
-                            <TableCell className="max-w-0 px-2 py-3">
-                              <div className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                <SubjectText
-                                  value={
-                                    subjectNamesById[item.subjectId] ??
-                                    t("unknown_subject")
-                                  }
-                                  mode="truncate"
-                                  className="block max-w-40"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-right sm:px-6">
-                              <div className="flex justify-end">
-                                <AssessmentsTableRowActions
-                                  assessment={item}
-                                />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                              </TableCell>
+                              <TableCell className="px-2 py-2">
+                                <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <TypeIcon className="size-3.5" />
+                                  <span>{t(`type_${item.type}`)}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-2 py-2">
+                                <span
+                                  className={cn(
+                                    "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
+                                    statusTone.border,
+                                    statusTone.bg,
+                                    statusTone.text,
+                                  )}
+                                >
+                                  {t(`status_${status}`)}
+                                </span>
+                              </TableCell>
+                              <TableCell className="px-2 py-2 text-sm text-muted-foreground">
+                                {item.dueDate
+                                  ? format(
+                                      parseISO(item.dueDate),
+                                      "MMM d, yyyy",
+                                      {
+                                        locale: dateLocale,
+                                      },
+                                    )
+                                  : "—"}
+                              </TableCell>
+                              <TableCell className="px-2 py-3 text-sm text-muted-foreground">
+                                {item.score === null
+                                  ? "—"
+                                  : Number(item.score).toFixed(1)}
+                              </TableCell>
+                              <TableCell className="max-w-0 px-2 py-3">
+                                <div className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  <SubjectText
+                                    value={
+                                      subjectNamesById[item.subjectId] ??
+                                      t("unknown_subject")
+                                    }
+                                    mode="truncate"
+                                    className="block max-w-40"
+                                  />
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-right sm:px-6">
+                                <div className="flex justify-end">
+                                  <AssessmentsTableRowActions
+                                    assessment={item}
+                                  />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
               <div className="flex items-center justify-end gap-4 border-t border-border/60 bg-muted/20 px-4 py-3 sm:px-6">
                 <Button
                   type="button"
@@ -404,7 +429,6 @@ export function PlanningAssessmentsTable({
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 }

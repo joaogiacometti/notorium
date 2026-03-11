@@ -240,77 +240,113 @@ export function FlashcardsManager({
             </div>
           ) : (
             <div className="lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-              <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-muted/30 backdrop-blur-sm">
-                    <TableRow className="border-border/50 bg-transparent hover:bg-transparent">
-                      <TableHead className="h-11 w-[35%] px-4 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
-                        {t("table_front")}
-                      </TableHead>
-                      <TableHead className="h-11 w-[30%] px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                        {t("table_back")}
-                      </TableHead>
-                      <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
-                        {t("table_subject")}
-                      </TableHead>
-                      <TableHead className="h-11 w-22 px-4 text-right text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
-                        {t("table_actions")}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredFlashcards.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          className="py-8 text-center text-sm text-muted-foreground"
-                        >
-                          {t("no_results")}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      paginatedFlashcards.map((item) => (
-                        <TableRow
-                          key={item.id}
-                          className="group border-border/40 hover:bg-muted/20"
-                        >
-                          <TableCell className="max-w-0 px-4 py-3 sm:px-6">
+              {filteredFlashcards.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-muted-foreground sm:px-6">
+                  {t("no_results")}
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3 p-4 lg:hidden">
+                    {paginatedFlashcards.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
                             <Link
                               href={`/subjects/${item.subjectId}/flashcards/${item.id}`}
-                              className="block truncate rounded-md text-sm font-medium text-foreground/95 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                              className="block rounded-md text-sm font-medium text-foreground/95 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                             >
                               {getRichTextExcerpt(item.front, 100)}
                             </Link>
-                          </TableCell>
-                          <TableCell className="max-w-0 px-2 py-3 text-muted-foreground">
-                            <p className="truncate text-sm text-muted-foreground/85">
+                            <p className="mt-2 text-sm text-muted-foreground/85">
                               {getRichTextExcerpt(item.back, 140)}
                             </p>
-                          </TableCell>
-                          <TableCell className="max-w-0 px-2 py-3">
-                            <div className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                              <SubjectText
-                                value={item.subjectName}
-                                mode="truncate"
-                                className="block max-w-40"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-right sm:px-6">
-                            <div className="flex justify-end">
-                              <FlashcardsTableRowActions
-                                flashcard={item}
-                                onUpdated={handleUpdate}
-                                onDeleted={handleDelete}
-                              />
-                            </div>
-                          </TableCell>
+                          </div>
+                          <div className="shrink-0">
+                            <FlashcardsTableRowActions
+                              flashcard={item}
+                              onUpdated={handleUpdate}
+                              onDeleted={handleDelete}
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <div className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                            <SubjectText
+                              value={item.subjectName}
+                              mode="truncate"
+                              className="block max-w-48"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="hidden lg:block lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                    <Table>
+                      <TableHeader className="sticky top-0 z-10 bg-muted/30 backdrop-blur-sm">
+                        <TableRow className="border-border/50 bg-transparent hover:bg-transparent">
+                          <TableHead className="h-11 w-[35%] px-4 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
+                            {t("table_front")}
+                          </TableHead>
+                          <TableHead className="h-11 w-[30%] px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+                            {t("table_back")}
+                          </TableHead>
+                          <TableHead className="h-11 px-2 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+                            {t("table_subject")}
+                          </TableHead>
+                          <TableHead className="h-11 w-22 px-4 text-right text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase sm:px-6">
+                            {t("table_actions")}
+                          </TableHead>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedFlashcards.map((item) => (
+                          <TableRow
+                            key={item.id}
+                            className="group border-border/40 hover:bg-muted/20"
+                          >
+                            <TableCell className="max-w-0 px-4 py-3 sm:px-6">
+                              <Link
+                                href={`/subjects/${item.subjectId}/flashcards/${item.id}`}
+                                className="block truncate rounded-md text-sm font-medium text-foreground/95 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                              >
+                                {getRichTextExcerpt(item.front, 100)}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="max-w-0 px-2 py-3 text-muted-foreground">
+                              <p className="truncate text-sm text-muted-foreground/85">
+                                {getRichTextExcerpt(item.back, 140)}
+                              </p>
+                            </TableCell>
+                            <TableCell className="max-w-0 px-2 py-3">
+                              <div className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                <SubjectText
+                                  value={item.subjectName}
+                                  mode="truncate"
+                                  className="block max-w-40"
+                                />
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-right sm:px-6">
+                              <div className="flex justify-end">
+                                <FlashcardsTableRowActions
+                                  flashcard={item}
+                                  onUpdated={handleUpdate}
+                                  onDeleted={handleDelete}
+                                />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
               <div className="flex items-center justify-end gap-4 border-t border-border/60 bg-muted/20 px-4 py-3 sm:px-6">
                 <Button
                   type="button"
