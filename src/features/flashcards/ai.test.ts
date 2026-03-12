@@ -25,18 +25,27 @@ describe("buildGenerateFlashcardBackPrompt", () => {
 });
 
 describe("flashcardBackSystemPrompt", () => {
-  it("requires short precise answers without repeating the front", () => {
+  it("requires concise answers without repeating the front", () => {
     expect(flashcardBackSystemPrompt).toContain(
       "Do not repeat, restate, or paraphrase the front.",
     );
     expect(flashcardBackSystemPrompt).toContain(
-      "Default to one short, direct answer sentence.",
+      "Default to concise bullet points.",
+    );
+    expect(flashcardBackSystemPrompt).toContain(
+      "Write 3 to 5 short bullets maximum.",
     );
   });
 
-  it("limits lists to process and workflow cards", () => {
+  it("defines optional single example bullets", () => {
     expect(flashcardBackSystemPrompt).toContain(
-      "Use a short bullet list only when the front explicitly asks for stages, steps, phases, parts, or a workflow.",
+      'Use at most one bullet starting with "E.g." only when it improves recall.',
+    );
+  });
+
+  it("bans generic definition wrappers", () => {
+    expect(flashcardBackSystemPrompt).toContain(
+      'Do not start with generic definition wrappers such as "An approach where...", "A method that...", or "It is...".',
     );
   });
 
@@ -68,6 +77,17 @@ describe("normalizeGeneratedBack", () => {
     expect(normalizeGeneratedBack("Answer: Machine code.")).toBe(
       "Machine code.",
     );
+  });
+
+  it("removes common list prefaces before bullets", () => {
+    expect(
+      normalizeGeneratedBack("Key points:\n- Point one\n- Point two"),
+    ).toBe("- Point one\n- Point two");
+    expect(
+      normalizeGeneratedBack(
+        "Here are the key points:\n1. Point one\n2. Point two",
+      ),
+    ).toBe("1. Point one\n2. Point two");
   });
 });
 

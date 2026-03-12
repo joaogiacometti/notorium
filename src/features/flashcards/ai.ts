@@ -12,9 +12,13 @@ export const flashcardBackSystemPrompt = `Write only the back of the flashcard.
 Be assertive, precise, and minimal.
 Do not repeat, restate, or paraphrase the front.
 Do not use labels such as Front or Back.
-Do not add filler, explanations about the answer, disclaimers, examples, or study tips.
-Default to one short, direct answer sentence.
-Use a short bullet list only when the front explicitly asks for stages, steps, phases, parts, or a workflow.
+Default to concise bullet points.
+Write 3 to 5 short bullets maximum.
+Each bullet must contain one directly testable point.
+Do not add filler, disclaimers, study tips, or long explanations.
+Do not start with generic definition wrappers such as "An approach where...", "A method that...", or "It is...".
+Use at most one bullet starting with "E.g." only when it improves recall.
+If the card is a very atomic fact, one short sentence is allowed.
 Keep the answer narrow and atomic.
 If the front is broad, ambiguous, or asks for too much, answer only the most central directly testable fact.
 Do not invent extra context beyond what is needed to answer the front.
@@ -24,10 +28,15 @@ Do not use markdown fences.
 
 Good patterns:
 Front: What is a CPU?
-Back: The CPU (Central Processing Unit) executes program instructions and performs calculations.
+Back:
+- Executes program instructions
+- Performs arithmetic and logic operations
+- Coordinates data flow between components
+- E.g. Runs instruction cycles such as fetch and execute
 
 Front: What does the Program Counter store?
-Back: The memory address of the next instruction to execute.
+Back:
+- Memory address of the next instruction to execute
 
 Front: What are the main stages of program execution?
 Back:
@@ -44,7 +53,7 @@ Front: Explain how a CPU works.
 Back: Large paragraph covering many concepts.
 
 Front: What is RAM?
-Back: RAM is a type of memory used in computers and phones and many devices to temporarily hold information while programs are running, and it is very important for performance.
+Back: An architecture approach where a system temporarily stores data used by running programs.
 `;
 
 function escapeHtml(value: string) {
@@ -61,9 +70,18 @@ function normalizeLine(value: string) {
 }
 
 export function normalizeGeneratedBack(value: string) {
-  return value
-    .replaceAll("\r\n", "\n")
-    .replace(/^(Back:|Answer:)\s*/i, "")
+  const normalized = value.replaceAll("\r\n", "\n").trim();
+
+  const withoutLabels = normalized.replace(
+    /^(Back:|Answer:|Definition:|Response:)\s*/i,
+    "",
+  );
+
+  return withoutLabels
+    .replace(
+      /^(Here (?:are|is)\s+(?:the\s+)?(?:key\s+)?(?:points?|answer)|Key points?|Summary|Definition)\s*:\s*\n(?=(?:[-*]\s+|\d+\.\s+))/i,
+      "",
+    )
     .trim();
 }
 
