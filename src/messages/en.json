@@ -117,6 +117,16 @@
     "archive": "Archive",
     "delete": "Delete"
   },
+  "SubjectAssessmentsSummary": {
+    "title": "Assessments",
+    "description": "Track how your completed assessments shape the final grade.",
+    "manage_in_planning": "Manage assessments",
+    "subject_average": "Final grade",
+    "assessment_count": "{count, plural, one {Based on # assessment} other {Based on # assessments}}",
+    "empty_helper": "Add assessments to start tracking your final grade.",
+    "status_ready": "Assessment summary",
+    "status_empty": "No assessments yet"
+  },
   "FlashcardsList": {
     "title": "Flashcards",
     "count_empty": "Create cards to review key concepts quickly.",
@@ -275,7 +285,7 @@
     "table_type": "Type",
     "table_status": "Status",
     "table_due_date": "Due Date",
-    "table_score": "Score",
+    "table_grade_weight": "Grade/Weight",
     "table_subject": "Subject",
     "table_actions": "Actions",
     "unknown_subject": "Unknown Subject",
@@ -288,6 +298,8 @@
     "prev": "Previous",
     "next": "Next",
     "page": "Page {current} of {total}",
+    "footer_final_grade": "Final grade",
+    "footer_final_grade_subject": "{subject} final grade",
     "sort_smart": "Smart",
     "sort_due_asc": "Due Date Asc",
     "sort_due_desc": "Due Date Desc",
@@ -298,7 +310,8 @@
     "title": "Calendar",
     "description": "Assessments and attendance misses on a timeline.",
     "today": "Today",
-    "more": "more"
+    "more": "more",
+    "empty": "No assessments or attendance misses on this day."
   },
   "GlobalSearch": {
     "trigger": "Search...",

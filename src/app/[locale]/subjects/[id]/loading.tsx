@@ -40,14 +40,26 @@ export default function SubjectDetailLoading() {
 
       <Skeleton className="my-8 h-px w-full" />
 
-      <div className="rounded-xl border border-border/60 bg-card p-6">
-        <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-9 w-full sm:w-32" />
+      <div>
+        <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="mt-1 h-4 w-72 max-w-full" />
+          </div>
+          <Skeleton className="h-9 w-full sm:w-40" />
         </div>
-        <div className="space-y-3">
-          <Skeleton className="h-16 w-full rounded-lg" />
-          <Skeleton className="h-16 w-full rounded-lg" />
+        <div className="rounded-xl border border-border/60 bg-card p-6">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="mt-4 flex items-end justify-between gap-4">
+            <div className="flex items-end gap-2">
+              <Skeleton className="h-12 w-24 sm:h-14 sm:w-28" />
+              <Skeleton className="h-5 w-10" />
+            </div>
+            <Skeleton className="h-4 w-40" />
+          </div>
         </div>
       </div>
 

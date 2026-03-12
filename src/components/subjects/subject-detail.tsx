@@ -4,13 +4,13 @@ import { formatDistanceToNow } from "date-fns";
 import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
-import { AssessmentsOverview } from "@/components/assessments/assessments-overview";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
 import { NotesList } from "@/components/notes/notes-list";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
+import { SubjectAssessmentsSummary } from "@/components/subjects/subject-assessments-summary";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "@/i18n/routing";
@@ -100,7 +100,10 @@ export function SubjectDetail({
       />
 
       <Separator className="my-8" />
-      <AssessmentsOverview subjectId={subject.id} assessments={assessments} />
+      <SubjectAssessmentsSummary
+        assessments={assessments}
+        subjectId={subject.id}
+      />
 
       <Separator className="my-8" />
       <NotesList subjectId={subject.id} notes={notes} />

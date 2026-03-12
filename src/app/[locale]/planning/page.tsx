@@ -8,7 +8,7 @@ import { resolvePlanningView } from "@/features/planning/view";
 import { requireSession } from "@/lib/auth/auth";
 
 interface PlanningPageProps {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ subject?: string; view?: string }>;
 }
 
 export default async function PlanningPage({
@@ -16,7 +16,7 @@ export default async function PlanningPage({
 }: Readonly<PlanningPageProps>) {
   const session = await requireSession();
   const t = await getTranslations("PlanningPage");
-  const { view } = await searchParams;
+  const { subject, view } = await searchParams;
   const currentView = resolvePlanningView(view);
 
   return (
@@ -26,6 +26,7 @@ export default async function PlanningPage({
       switcher={
         <PlanningViewSwitch
           currentView={currentView}
+          currentSubjectId={subject}
           assessmentsLabel={t("assessments")}
           calendarLabel={t("calendar")}
         />
@@ -33,7 +34,10 @@ export default async function PlanningPage({
       title={t("title")}
     >
       {currentView === "assessments" ? (
-        <PlanningAssessmentsPanel userId={session.user.id} />
+        <PlanningAssessmentsPanel
+          userId={session.user.id}
+          initialSubjectId={subject}
+        />
       ) : (
         <PlanningCalendarPanel />
       )}

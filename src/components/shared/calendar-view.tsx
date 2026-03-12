@@ -101,10 +101,7 @@ function getAssessmentTypeLabel(
   );
 }
 
-function EventChip({
-  event,
-  compact,
-}: Readonly<{ event: CalendarEvent; compact?: boolean }>) {
+function EventChip({ event }: Readonly<{ event: CalendarEvent }>) {
   const tAssessment = useTranslations("AssessmentItemCard");
   const todayIso = format(new Date(), "yyyy-MM-dd");
   const chipToneClass = getEventChipToneClass(event, todayIso);
@@ -116,26 +113,28 @@ function EventChip({
   return (
     <div
       className={cn(
-        "flex items-start rounded border leading-tight",
-        compact ? "gap-1.5 px-2 py-1.5 text-xs" : "gap-2 px-3 py-2.5 text-base",
+        "flex min-w-0 w-full max-w-full items-start rounded border leading-tight",
+        "gap-1.5 px-2.5 py-2 text-sm sm:gap-2 sm:px-3 sm:py-2.5 sm:text-base",
         chipToneClass,
       )}
     >
       {event.kind === "assessment" ? (
-        <ClipboardList
-          className={cn("mt-0.5 shrink-0", compact ? "size-3.5" : "size-4")}
-        />
+        <ClipboardList className="mt-0.5 size-3.5 shrink-0 sm:size-4" />
       ) : (
-        <CircleAlert
-          className={cn("mt-0.5 shrink-0", compact ? "size-3.5" : "size-4")}
-        />
+        <CircleAlert className="mt-0.5 size-3.5 shrink-0 sm:size-4" />
       )}
-      <div className="min-w-0">
-        <p className="truncate font-medium">{event.title}</p>
-        {!compact && <p className="truncate text-sm opacity-70">{subtitle}</p>}
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <p className="truncate text-sm font-medium sm:text-base">
+          {event.title}
+        </p>
+        <p className="truncate text-xs opacity-70 sm:text-sm">{subtitle}</p>
       </div>
     </div>
   );
+}
+
+function getDayEvents(events: CalendarEvent[], date: Date) {
+  return filterEventsByDate(events, format(date, "yyyy-MM-dd"));
 }
 
 function DayCell({
@@ -144,24 +143,22 @@ function DayCell({
   isCurrentMonth,
   selected,
   onSelect,
-  moreLabel,
 }: Readonly<{
   date: Date;
   events: CalendarEvent[];
   isCurrentMonth: boolean;
   selected: boolean;
   onSelect: (d: Date) => void;
-  moreLabel: string;
 }>) {
   const today = isToday(date);
-  const dayEvents = filterEventsByDate(events, format(date, "yyyy-MM-dd"));
+  const dayEvents = getDayEvents(events, date);
 
   return (
     <button
       type="button"
       onClick={() => onSelect(date)}
       className={cn(
-        "group relative flex min-h-12 flex-col rounded-md border p-1.5 text-left transition-colors lg:min-h-20",
+        "group relative flex min-h-10 flex-col rounded-md border p-1 text-left transition-colors lg:min-h-16 lg:p-1.5",
         !isCurrentMonth && "opacity-40",
         selected
           ? "border-primary/50 bg-primary/5"
@@ -179,24 +176,14 @@ function DayCell({
       </span>
 
       {dayEvents.length > 0 && (
-        <div className="mt-1 flex flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-1 lg:hidden">
+        <div className="mt-0.5 flex flex-col gap-0.5 lg:mt-1">
+          <div className="flex flex-wrap items-center gap-0.5 lg:gap-1">
             {dayEvents.slice(0, 3).map((e) => (
               <EventDot key={e.id} event={e} />
             ))}
             {dayEvents.length > 3 && (
               <span className="text-[10px] leading-none text-muted-foreground">
                 +{dayEvents.length - 3}
-              </span>
-            )}
-          </div>
-          <div className="hidden lg:flex lg:flex-col lg:gap-1 lg:overflow-hidden">
-            {dayEvents.slice(0, 2).map((e) => (
-              <EventChip key={e.id} event={e} compact />
-            ))}
-            {dayEvents.length > 2 && (
-              <span className="text-[10px] text-muted-foreground">
-                +{dayEvents.length - 2} {moreLabel}
               </span>
             )}
           </div>
@@ -210,30 +197,67 @@ function DayDetail({
   date,
   events,
   dateLocale,
+  emptyLabel,
+  className,
 }: Readonly<{
   date: Date;
   events: CalendarEvent[];
   dateLocale: ReturnType<typeof getDateFnsLocale>;
+  emptyLabel: string;
+  className?: string;
 }>) {
-  const dateStr = format(date, "yyyy-MM-dd");
-  const dayEvents = filterEventsByDate(events, dateStr);
-
-  if (dayEvents.length === 0) return null;
+  const dayEvents = getDayEvents(events, date);
 
   return (
-    <div className="pt-2">
-      <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+    <section
+      className={cn(
+        "min-w-0 rounded-xl border border-border/70 bg-card/85 p-4",
+        className,
+      )}
+    >
+      <h3 className="text-sm font-medium text-muted-foreground">
         {format(date, "EEEE, MMMM d, yyyy", { locale: dateLocale })}
       </h3>
-      <div className="space-y-2">
-        {dayEvents.map((e) => (
-          <Link
-            key={e.id}
-            href={`/subjects/${e.subjectId}`}
-            className="block transition-opacity hover:opacity-80"
-          >
-            <EventChip event={e} />
-          </Link>
+      {dayEvents.length > 0 ? (
+        <div className="mt-4 min-w-0 space-y-2">
+          {dayEvents.map((e) => (
+            <Link
+              key={e.id}
+              href={`/subjects/${e.subjectId}`}
+              className="block min-w-0 w-full max-w-full transition-opacity hover:opacity-80"
+            >
+              <EventChip event={e} />
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-dashed border-border/70 bg-background/40 px-3 py-4 text-sm text-muted-foreground">
+          {emptyLabel}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DayDetailSkeleton({
+  className,
+}: Readonly<{
+  className?: string;
+}>) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-border/70 bg-card/85 p-4",
+        className,
+      )}
+    >
+      <Skeleton className="h-5 w-40" />
+      <div className="mt-4 space-y-3">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton
+            key={`calendar-detail-skeleton-${index + 1}`}
+            className="h-16 rounded-lg"
+          />
         ))}
       </div>
     </div>
@@ -298,10 +322,12 @@ export function CalendarView({
 
   function goBack() {
     setAnchor((a) => subMonths(a, 1));
+    setSelectedDate((date) => subMonths(date, 1));
   }
 
   function goForward() {
     setAnchor((a) => addMonths(a, 1));
+    setSelectedDate((date) => addMonths(date, 1));
   }
 
   function goToday() {
@@ -313,42 +339,42 @@ export function CalendarView({
   const title = format(anchor, "MMMM yyyy", { locale: dateLocale });
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
+    <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.6fr)_22rem]">
+      <div className="rounded-xl border border-border/70 bg-card/85 p-4 lg:flex lg:min-h-0 lg:flex-col">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={goBack}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <h2 className="min-w-40 text-center text-base font-semibold">
+              {title}
+            </h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={goForward}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+
           <Button
             variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={goBack}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={goToday}
           >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <h2 className="min-w-40 text-center text-base font-semibold">
-            {title}
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={goForward}
-          >
-            <ChevronRight className="size-4" />
+            {t("today")}
           </Button>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={goToday}
-        >
-          {t("today")}
-        </Button>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div className="min-w-0">
+        <div className="mt-4 min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {isPending ? (
             <div className="grid grid-cols-7 gap-px lg:gap-1">
               {weekdayLabels.map((d) => (
@@ -360,7 +386,7 @@ export function CalendarView({
                 </div>
               ))}
               {Array.from({ length: 35 }, (_, i) => `skel-${i}`).map((id) => (
-                <Skeleton key={id} className="h-12 rounded-md lg:h-20" />
+                <Skeleton key={id} className="h-10 rounded-md lg:h-16" />
               ))}
             </div>
           ) : (
@@ -381,21 +407,36 @@ export function CalendarView({
                   isCurrentMonth={isSameMonth(date, anchor)}
                   selected={isSameDay(date, selectedDate)}
                   onSelect={setSelectedDate}
-                  moreLabel={t("more")}
                 />
               ))}
             </div>
           )}
         </div>
+      </div>
 
-        {!isPending && (
+      {isPending ? (
+        <>
+          <DayDetailSkeleton className="lg:hidden" />
+          <DayDetailSkeleton className="hidden lg:block lg:min-h-0 lg:overflow-y-auto" />
+        </>
+      ) : (
+        <>
           <DayDetail
             date={selectedDate}
             events={events}
             dateLocale={dateLocale}
+            emptyLabel={t("empty")}
+            className="lg:hidden"
           />
-        )}
-      </div>
+          <DayDetail
+            date={selectedDate}
+            events={events}
+            dateLocale={dateLocale}
+            emptyLabel={t("empty")}
+            className="hidden lg:block lg:min-h-0 lg:overflow-y-auto"
+          />
+        </>
+      )}
     </div>
   );
 }

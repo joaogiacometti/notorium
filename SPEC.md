@@ -91,6 +91,9 @@ Students who want a private, lightweight study management workspace.
 ### Assessments
 
 - Create, read, update, and delete assessments per subject.
+- Assessments have a dedicated global planning page for full management and calendar-based timeline viewing.
+- Subject detail pages show a minimal assessment summary with the subject average when available and a link to the planning page filtered to that subject.
+- The planning assessments view always shows a combined grade/weight column, and enters a subject-focused mode when exactly one subject is selected to additionally show the final grade summary for that subject.
 - Assessment fields: title, optional description, type, status, due date, optional score, and optional weight.
 - Pending, overdue, and completed states are shown in the UI.
 - Subject average from completed assessments with score:

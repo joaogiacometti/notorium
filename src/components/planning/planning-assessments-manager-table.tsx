@@ -9,9 +9,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { format, parseISO } from "date-fns";
-import { BookOpen, CalendarDays, ClipboardList } from "lucide-react";
+import { CalendarDays, ClipboardList } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
+import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,11 +27,14 @@ import {
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
-import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
 
 interface PlanningAssessmentsManagerTableProps {
   assessments: AssessmentEntity[];
+  finalGrade: number | null;
   pageIndex: number;
+  showSubjectDetails: boolean;
   subjectNamesById: Record<string, string>;
   onPageIndexChange: (pageIndex: number) => void;
   onUpdated: (assessment: AssessmentEntity) => void;
@@ -73,19 +78,66 @@ function formatDueDate(
   return format(parseISO(dueDate), "PP", { locale: dateLocale });
 }
 
+function formatScore(score: string | null) {
+  if (score === null) {
+    return "—";
+  }
+
+  return Number(score).toFixed(1);
+}
+
+function formatWeight(weight: string | null) {
+  if (weight === null) {
+    return "—";
+  }
+
+  const numericWeight = Number(weight);
+
+  return `${Number.isInteger(numericWeight) ? numericWeight : numericWeight.toFixed(1)}%`;
+}
+
+function formatGradeWeight(score: string | null, weight: string | null) {
+  return `${formatScore(score)}/${formatWeight(weight)}`;
+}
+
+function formatTrimmedTitle(title: string) {
+  return title.length > 10 ? `${title.slice(0, 10)}...` : title;
+}
+
+function getColumnClassName(columnId: string, showSubjectDetails: boolean) {
+  switch (columnId) {
+    case "title":
+      return "w-full min-w-[10rem]";
+    case "type":
+      return "min-w-[7rem]";
+    case "status":
+      return "min-w-[7.5rem]";
+    case "dueDate":
+      return "min-w-[7rem]";
+    case "gradeWeight":
+      return "min-w-[6.5rem]";
+    case "subject":
+      return showSubjectDetails ? "" : "min-w-[10rem]";
+    case "actions":
+      return "w-14 min-w-14";
+    default:
+      return "";
+  }
+}
+
 function getColumns(
   onUpdated: (assessment: AssessmentEntity) => void,
   onDeleted: (id: string) => void,
+  showSubjectDetails: boolean,
   subjectNamesById: Record<string, string>,
   todayIso: string,
   dateLocale: ReturnType<typeof getDateFnsLocale>,
   tTable: ReturnType<typeof useTranslations>,
   tAssessment: ReturnType<typeof useTranslations>,
 ): ColumnDef<AssessmentEntity>[] {
-  return [
+  const columns: ColumnDef<AssessmentEntity>[] = [
     {
       accessorKey: "title",
-      size: 172,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
           {tTable("table_title")}
@@ -97,8 +149,11 @@ function getColumns(
             <ClipboardList className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold leading-5.5 text-foreground/95">
-              {row.original.title}
+            <div
+              className="truncate text-sm font-semibold leading-5.5 text-foreground/95"
+              title={row.original.title}
+            >
+              {formatTrimmedTitle(row.original.title)}
             </div>
             {row.original.description ? (
               <div
@@ -114,24 +169,17 @@ function getColumns(
     },
     {
       accessorKey: "type",
-      size: 104,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
           {tTable("table_type")}
         </div>
       ),
       cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className="rounded-full border-border/70 bg-muted/35 px-2.5 py-1 text-muted-foreground"
-        >
-          {tAssessment(`type_${row.original.type}`)}
-        </Badge>
+        <AssessmentTypeBadge type={row.original.type} className="px-2.5 py-1" />
       ),
     },
     {
       accessorKey: "status",
-      size: 100,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
           {tTable("table_status")}
@@ -157,14 +205,13 @@ function getColumns(
     },
     {
       accessorKey: "dueDate",
-      size: 112,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
           {tTable("table_due_date")}
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1.5 py-1 text-xs text-muted-foreground">
           <CalendarDays className="size-3.5 shrink-0 text-muted-foreground/70" />
           <span className="truncate leading-5">
             {formatDueDate(row.original.dueDate, dateLocale)}
@@ -173,32 +220,23 @@ function getColumns(
       ),
     },
     {
-      id: "subject",
-      size: 112,
+      id: "gradeWeight",
       header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {tTable("table_subject")}
+        <div className="px-1 text-center text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+          {tTable("table_grade_weight")}
         </div>
       ),
       cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className="max-w-[7.5rem] rounded-full border-border/70 bg-muted/35 px-2.5 py-1 text-muted-foreground"
-        >
-          <BookOpen className="size-3.5" />
-          <span className="truncate">
-            {subjectNamesById[row.original.subjectId] ??
-              tTable("unknown_subject")}
-          </span>
-        </Badge>
+        <div className="py-1 text-center text-sm font-medium whitespace-nowrap text-foreground">
+          {formatGradeWeight(row.original.score, row.original.weight)}
+        </div>
       ),
     },
     {
       id: "actions",
-      size: 56,
       header: () => <div className="flex w-14 min-w-14 justify-start" />,
       cell: ({ row }) => (
-        <div className="flex w-14 min-w-14 items-center justify-start">
+        <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <AssessmentsTableRowActions
             assessment={row.original}
             onUpdated={onUpdated}
@@ -209,11 +247,48 @@ function getColumns(
       enableHiding: false,
     },
   ];
+
+  if (!showSubjectDetails) {
+    columns.splice(columns.length - 1, 0, {
+      id: "subject",
+      header: () => (
+        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+          {tTable("table_subject")}
+        </div>
+      ),
+      cell: ({ row }) => {
+        const subjectName = subjectNamesById[row.original.subjectId];
+
+        if (!subjectName) {
+          return (
+            <SubjectChip
+              label={tTable("unknown_subject")}
+              maxWidthClassName="max-w-[10rem]"
+            />
+          );
+        }
+
+        return (
+          <SubjectChip
+            href={`/subjects/${row.original.subjectId}`}
+            label={subjectName}
+            maxWidthClassName="max-w-[10rem]"
+          />
+        );
+      },
+    });
+
+    return columns;
+  }
+
+  return columns;
 }
 
 export function PlanningAssessmentsManagerTable({
   assessments,
+  finalGrade,
   pageIndex,
+  showSubjectDetails,
   subjectNamesById,
   onPageIndexChange,
   onUpdated,
@@ -224,6 +299,8 @@ export function PlanningAssessmentsManagerTable({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const todayIso = format(new Date(), "yyyy-MM-dd");
+  const finalGradeTone =
+    finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
   const pagination: PaginationState = {
     pageIndex,
     pageSize: 25,
@@ -234,6 +311,7 @@ export function PlanningAssessmentsManagerTable({
     columns: getColumns(
       onUpdated,
       onDeleted,
+      showSubjectDetails,
       subjectNamesById,
       todayIso,
       dateLocale,
@@ -248,7 +326,6 @@ export function PlanningAssessmentsManagerTable({
       onPageIndexChange(nextPagination.pageIndex);
     },
     getRowId: (row) => row.id,
-    columnResizeMode: "onChange",
     state: {
       pagination,
     },
@@ -259,7 +336,12 @@ export function PlanningAssessmentsManagerTable({
   return (
     <div className="flex h-full flex-col lg:min-h-0 lg:flex-1">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <Table className="w-full table-fixed">
+        <Table
+          className={cn(
+            "w-full",
+            showSubjectDetails ? "min-w-160" : "min-w-210",
+          )}
+        >
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
@@ -269,10 +351,10 @@ export function PlanningAssessmentsManagerTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-3"
-                    style={{
-                      width: header.getSize(),
-                    }}
+                    className={cn(
+                      "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-3",
+                      getColumnClassName(header.column.id, showSubjectDetails),
+                    )}
                   >
                     {header.isPlaceholder
                       ? null
@@ -295,10 +377,11 @@ export function PlanningAssessmentsManagerTable({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="px-3 py-3 align-middle"
-                      style={{
-                        width: cell.column.getSize(),
-                      }}
+                      className={cn(
+                        "align-middle",
+                        getColumnClassName(cell.column.id, showSubjectDetails),
+                        showSubjectDetails ? "px-2 py-3" : "px-3 py-3",
+                      )}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -321,36 +404,53 @@ export function PlanningAssessmentsManagerTable({
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col gap-2 border-t border-border/60 bg-muted/15 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-end">
-        <Badge
-          variant="outline"
-          className="rounded-full border-border/70 bg-background/80 px-3 py-1 text-muted-foreground"
-        >
-          {tTable("page", {
-            current: pagination.pageIndex + 1,
-            total: pageCount,
-          })}
-        </Badge>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          className="rounded-full border-border/70 bg-background/80 px-4"
-        >
-          {tTable("prev")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          className="rounded-full border-border/70 bg-background/80 px-4"
-        >
-          {tTable("next")}
-        </Button>
+      <div
+        className={cn(
+          "flex flex-col gap-2 border-t border-border/60 bg-muted/15 px-4 py-2.5 sm:flex-row sm:items-center",
+          showSubjectDetails ? "sm:justify-between" : "sm:justify-end",
+        )}
+      >
+        {showSubjectDetails ? (
+          <div className="min-w-0 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {tTable("footer_final_grade")}:
+            </span>{" "}
+            <span className={finalGradeTone?.text}>
+              {finalGrade === null ? "—" : finalGrade.toFixed(1)}
+            </span>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Badge
+            variant="outline"
+            className="rounded-full border-border/70 bg-background/80 px-3 py-1 text-muted-foreground"
+          >
+            {tTable("page", {
+              current: pagination.pageIndex + 1,
+              total: pageCount,
+            })}
+          </Badge>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="rounded-full border-border/70 bg-background/80 px-4"
+          >
+            {tTable("prev")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="rounded-full border-border/70 bg-background/80 px-4"
+          >
+            {tTable("next")}
+          </Button>
+        </div>
       </div>
     </div>
   );

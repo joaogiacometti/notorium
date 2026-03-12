@@ -16,7 +16,7 @@ const maxWidthStyles = {
 export function AppPageContainer({
   children,
   className,
-  maxWidth = "4xl",
+  maxWidth = "5xl",
 }: Readonly<AppPageContainerProps>) {
   return (
     <div

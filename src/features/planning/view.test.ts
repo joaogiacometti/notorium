@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolvePlanningView } from "@/features/planning/view";
+import {
+  resolvePlanningSubject,
+  resolvePlanningView,
+} from "@/features/planning/view";
 
 describe("resolvePlanningView", () => {
   it("returns assessments when view is missing", () => {
@@ -12,5 +15,21 @@ describe("resolvePlanningView", () => {
 
   it("falls back to assessments for invalid values", () => {
     expect(resolvePlanningView("invalid")).toBe("assessments");
+  });
+});
+
+describe("resolvePlanningSubject", () => {
+  const subjectIds = ["s1", "s2"];
+
+  it("returns undefined when the subject is missing", () => {
+    expect(resolvePlanningSubject(undefined, subjectIds)).toBeUndefined();
+  });
+
+  it("returns the subject when it exists in the available list", () => {
+    expect(resolvePlanningSubject("s2", subjectIds)).toBe("s2");
+  });
+
+  it("returns undefined for an invalid subject", () => {
+    expect(resolvePlanningSubject("invalid", subjectIds)).toBeUndefined();
   });
 });

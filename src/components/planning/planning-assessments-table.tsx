@@ -2,7 +2,7 @@
 
 import { ClipboardList, Lock, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -24,7 +24,9 @@ import {
   type StatusFilter,
   type TypeFilter,
 } from "@/features/assessments/assessment-filters";
+import { getAssessmentAverage } from "@/features/assessments/assessments";
 import { assessmentTypeValues } from "@/features/assessments/constants";
+import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   AssessmentEntity,
@@ -33,23 +35,28 @@ import type {
 
 interface PlanningAssessmentsTableProps {
   assessments: AssessmentEntity[];
+  initialSubjectId?: string;
   subjects: SubjectEntity[];
   subjectNamesById: Record<string, string>;
 }
 
 export function PlanningAssessmentsTable({
   assessments,
+  initialSubjectId,
   subjects,
   subjectNamesById,
 }: Readonly<PlanningAssessmentsTableProps>) {
   const t = useTranslations("PlanningAssessmentsTable");
   const tOverview = useTranslations("AssessmentsOverview");
   const tAssessment = useTranslations("AssessmentItemCard");
+  const pathname = usePathname();
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const [subjectFilter, setSubjectFilter] = useState("all");
+  const [subjectFilter, setSubjectFilter] = useState(initialSubjectId ?? "all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("smart");
@@ -61,6 +68,11 @@ export function PlanningAssessmentsTable({
     setLocalAssessments(sortAssessments(assessments));
     setPageIndex(0);
   }, [assessments]);
+
+  useEffect(() => {
+    setSubjectFilter(initialSubjectId ?? "all");
+    setPageIndex(0);
+  }, [initialSubjectId]);
 
   const filteredAssessments = filterAndSortAssessments({
     assessments: localAssessments,
@@ -81,7 +93,32 @@ export function PlanningAssessmentsTable({
   const isAtSubjectLimit =
     subjectFilter !== "all" &&
     selectedSubjectCount >= LIMITS.maxAssessmentsPerSubject;
+  const isSingleSubjectMode = subjectFilter !== "all";
+  const subjectAssessments = isSingleSubjectMode
+    ? localAssessments.filter(
+        (assessment) => assessment.subjectId === subjectFilter,
+      )
+    : [];
+  const finalGrade = isSingleSubjectMode
+    ? getAssessmentAverage(subjectAssessments)
+    : null;
   const hasSubjects = subjects.length > 0;
+
+  function updateSubjectFilter(nextSubjectFilter: string) {
+    setSubjectFilter(nextSubjectFilter);
+    setPageIndex(0);
+
+    const query = new URLSearchParams();
+    query.set("view", "assessments");
+
+    if (nextSubjectFilter !== "all") {
+      query.set("subject", nextSubjectFilter);
+    }
+
+    startTransition(() => {
+      router.replace(`${pathname}?${query.toString()}`);
+    });
+  }
 
   function handleCreated(assessment: AssessmentEntity) {
     setLocalAssessments((current) => upsertAssessment(current, assessment));
@@ -135,10 +172,7 @@ export function PlanningAssessmentsTable({
               <div className="min-w-0">
                 <Select
                   value={subjectFilter}
-                  onValueChange={(value) => {
-                    setSubjectFilter(value);
-                    setPageIndex(0);
-                  }}
+                  onValueChange={updateSubjectFilter}
                 >
                   <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
                     <SelectValue placeholder={t("subject_placeholder")} />
@@ -270,7 +304,9 @@ export function PlanningAssessmentsTable({
         {localAssessments.length > 0 ? (
           <PlanningAssessmentsManagerTable
             assessments={filteredAssessments}
+            finalGrade={finalGrade}
             pageIndex={pageIndex}
+            showSubjectDetails={isSingleSubjectMode}
             subjectNamesById={subjectNamesById}
             onPageIndexChange={setPageIndex}
             onUpdated={handleUpdated}

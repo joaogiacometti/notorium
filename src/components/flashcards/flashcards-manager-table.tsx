@@ -8,8 +8,9 @@ import {
   type PaginationState,
   useReactTable,
 } from "@tanstack/react-table";
-import { BookOpen, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,13 +92,11 @@ function getColumns(
         </div>
       ),
       cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className="max-w-[7.5rem] rounded-full border-border/70 bg-muted/35 px-2.5 py-1 text-muted-foreground"
-        >
-          <BookOpen className="size-3.5" />
-          <span className="truncate">{row.original.subjectName}</span>
-        </Badge>
+        <SubjectChip
+          href={`/subjects/${row.original.subjectId}`}
+          label={row.original.subjectName}
+          maxWidthClassName="max-w-[7.5rem]"
+        />
       ),
     },
     {

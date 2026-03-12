@@ -51,6 +51,8 @@ interface FlashcardReviewClientProps {
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
 const reviewBatchLimit = 50;
+const reviewContentFrameClassName = "mx-auto flex min-h-0 w-full max-w-5xl";
+const reviewContentMeasureClassName = "w-full max-w-[58rem]";
 const gradeButtonStyles: Record<ReviewGrade, string> = {
   again:
     "border-destructive/45 bg-destructive/10 text-destructive hover:border-destructive/60 hover:bg-destructive/15",
@@ -206,7 +208,9 @@ export function FlashcardReviewClient({
       >
         <CardContent className="flex min-h-0 flex-1 flex-col p-0">
           <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 sm:px-8">
-            <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col space-y-3 pb-3">
+            <div
+              className={`${reviewContentFrameClassName} flex-1 flex-col space-y-3 pb-3`}
+            >
               <div className="shrink-0 space-y-1.5">
                 {currentCard.subjectName ? (
                   <p className="min-w-0 text-sm font-medium text-muted-foreground">
@@ -233,7 +237,7 @@ export function FlashcardReviewClient({
                     {t("edit")}
                   </Button>
                 </div>
-                <div className="max-w-3xl">
+                <div className={reviewContentMeasureClassName}>
                   <TiptapRenderer
                     content={currentCard.front}
                     className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
@@ -247,7 +251,7 @@ export function FlashcardReviewClient({
                     {t("back_label")}
                   </h3>
                   <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-                    <div className="max-w-3xl">
+                    <div className={reviewContentMeasureClassName}>
                       <TiptapRenderer
                         content={currentCard.back}
                         className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
@@ -260,7 +264,7 @@ export function FlashcardReviewClient({
           </div>
 
           <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
-            <div className="mx-auto w-full max-w-3xl">
+            <div className={`${reviewContentFrameClassName} pb-0`}>
               {revealed ? (
                 <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
                   {reviewGrades.map((grade) => {

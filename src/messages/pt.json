@@ -117,6 +117,16 @@
     "archive": "Arquivar",
     "delete": "Excluir"
   },
+  "SubjectAssessmentsSummary": {
+    "title": "Avaliações",
+    "description": "Acompanhe como suas avaliações concluídas formam a nota final.",
+    "manage_in_planning": "Gerenciar avaliações",
+    "subject_average": "Nota final",
+    "assessment_count": "{count, plural, one {Baseada em # avaliação} other {Baseada em # avaliações}}",
+    "empty_helper": "Adicione avaliações para começar a acompanhar sua nota final.",
+    "status_ready": "Resumo das avaliações",
+    "status_empty": "Ainda não há avaliações"
+  },
   "FlashcardsList": {
     "title": "Flashcards",
     "count_empty": "Crie cartões para revisar conceitos rapidamente.",
@@ -275,7 +285,7 @@
     "table_type": "Tipo",
     "table_status": "Status",
     "table_due_date": "Data Limite",
-    "table_score": "Nota",
+    "table_grade_weight": "Nota/Peso",
     "table_subject": "Matéria",
     "table_actions": "Ações",
     "unknown_subject": "Matéria desconhecida",
@@ -288,6 +298,8 @@
     "prev": "Anterior",
     "next": "Próxima",
     "page": "Página {current} de {total}",
+    "footer_final_grade": "Média final",
+    "footer_final_grade_subject": "Média final de {subject}",
     "sort_smart": "Inteligente",
     "sort_due_asc": "Data limite crescente",
     "sort_due_desc": "Data limite decrescente",
@@ -298,7 +310,8 @@
     "title": "Calendário",
     "description": "Avaliações e faltas em uma linha do tempo.",
     "today": "Hoje",
-    "more": "mais"
+    "more": "mais",
+    "empty": "Nenhuma avaliação ou falta registrada neste dia."
   },
   "GlobalSearch": {
     "trigger": "Buscar...",
