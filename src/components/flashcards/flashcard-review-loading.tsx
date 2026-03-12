@@ -10,11 +10,11 @@ export function FlashcardReviewLoading() {
         <div className="rounded-xl border border-border/60 bg-card">
           <div className="space-y-6 p-6 sm:p-8">
             <div className="space-y-3">
-              <Skeleton className="h-4 w-24" />
               <div className="flex items-center justify-between gap-3">
-                <Skeleton className="h-4 w-14" />
-                <Skeleton className="h-9 w-24 rounded-md" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="size-8 rounded-md" />
               </div>
+              <Skeleton className="h-4 w-14" />
               <div className="space-y-2">
                 <Skeleton className="h-5 w-full" />
                 <Skeleton className="h-5 w-11/12" />

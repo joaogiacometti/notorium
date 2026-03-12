@@ -207,6 +207,7 @@
     "due_count": "{due} due of {total} total cards.",
     "empty_title": "All caught up",
     "empty_description": "There are no due flashcards to review.",
+    "subject_prefix": "Subject:",
     "front_label": "Front",
     "back_label": "Back",
     "edit": "Edit",

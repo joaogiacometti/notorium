@@ -207,6 +207,7 @@
     "due_count": "{due} vencidos de {total} cartões no total.",
     "empty_title": "Tudo em dia",
     "empty_description": "Não há flashcards vencidos para revisar.",
+    "subject_prefix": "Matéria:",
     "front_label": "Frente",
     "back_label": "Verso",
     "edit": "Editar",

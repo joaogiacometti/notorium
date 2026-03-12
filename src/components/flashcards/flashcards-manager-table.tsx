@@ -30,9 +30,9 @@ function getColumnClassName(columnId: string) {
     case "select":
       return "w-9 min-w-9";
     case "front":
-      return "w-full min-w-[14rem]";
-    case "back":
       return "min-w-[10rem]";
+    case "back":
+      return "min-w-[8rem]";
     case "subjectName":
       return "min-w-[8rem]";
     case "actions":
@@ -51,7 +51,7 @@ function getColumns(
   return [
     {
       accessorKey: "front",
-      size: 272,
+      size: 160,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
           {t("table_front")}
@@ -67,7 +67,7 @@ function getColumns(
               className="truncate text-sm font-semibold leading-6 text-foreground/95"
               title={getRichTextExcerpt(row.original.front, 240)}
             >
-              {getRichTextExcerpt(row.original.front, 140)}
+              {getRichTextExcerpt(row.original.front, 25)}
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ function getColumns(
     },
     {
       accessorKey: "back",
-      size: 200,
+      size: 140,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
           {t("table_back")}
@@ -86,7 +86,7 @@ function getColumns(
           className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
           title={getRichTextExcerpt(row.original.back, 280)}
         >
-          {getRichTextExcerpt(row.original.back, 180)}
+          {getRichTextExcerpt(row.original.back, 25)}
         </div>
       ),
     },

@@ -387,6 +387,7 @@ export function FlashcardDialogForm({
                       placeholder={t("field_back_placeholder")}
                       id={`${formId}-back`}
                       aria-invalid={fieldState.invalid}
+                      contentClassName="max-h-[10lh]"
                       onCtrlEnter={handleCtrlEnter}
                     />
                     {fieldState.invalid ? (

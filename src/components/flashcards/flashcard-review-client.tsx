@@ -228,31 +228,34 @@ export function FlashcardReviewClient({
               className={`${reviewContentFrameClassName} flex-1 flex-col space-y-3 pb-3`}
             >
               <div className="shrink-0 space-y-1.5">
-                {currentCard.subjectName ? (
-                  <p className="min-w-0 text-sm font-medium text-muted-foreground">
-                    <SubjectText
-                      value={currentCard.subjectName}
-                      mode="truncate"
-                      className="block max-w-full"
-                    />
-                  </p>
-                ) : null}
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-sm font-semibold text-muted-foreground">
-                    {t("front_label")}
-                  </h2>
+                  {currentCard.subjectName ? (
+                    <p className="flex min-w-0 items-baseline gap-1 text-sm font-medium text-foreground/70">
+                      <span className="shrink-0">{t("subject_prefix")}</span>
+                      <SubjectText
+                        value={currentCard.subjectName}
+                        mode="truncate"
+                        className="block max-w-full"
+                      />
+                    </p>
+                  ) : (
+                    <span className="min-h-5" />
+                  )}
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
                     onClick={() => setEditOpen(true)}
                     disabled={isPending}
+                    aria-label={t("edit")}
                   >
                     <Pencil className="size-3.5" />
-                    {t("edit")}
                   </Button>
                 </div>
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  {t("front_label")}
+                </h2>
                 <div className={reviewContentMeasureClassName}>
                   <TiptapRenderer
                     content={currentCard.front}
