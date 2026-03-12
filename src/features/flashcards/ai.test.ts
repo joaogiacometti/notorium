@@ -30,16 +30,34 @@ describe("flashcardBackSystemPrompt", () => {
       "Do not repeat, restate, or paraphrase the front.",
     );
     expect(flashcardBackSystemPrompt).toContain(
-      "Default to concise bullet points.",
+      "If the answer is a single atomic fact, output one concise sentence only.",
     );
     expect(flashcardBackSystemPrompt).toContain(
-      "Write 3 to 5 short bullets maximum.",
+      "Otherwise output a list with 3 to 5 lines.",
     );
   });
 
-  it("defines optional single example bullets", () => {
+  it("enforces strict list formatting", () => {
     expect(flashcardBackSystemPrompt).toContain(
-      'Use at most one bullet starting with "E.g." only when it improves recall.',
+      'In list mode, every line must start with "- ".',
+    );
+    expect(flashcardBackSystemPrompt).toContain(
+      'In list mode, do not use inline separators like " - " inside a line.',
+    );
+    expect(flashcardBackSystemPrompt).toContain(
+      "In list mode, do not use numbering.",
+    );
+  });
+
+  it("allows one optional list example line and forbids e.g shorthand", () => {
+    expect(flashcardBackSystemPrompt).toContain(
+      'In list mode, you may include at most one final bullet starting with "- Example:"',
+    );
+    expect(flashcardBackSystemPrompt).toContain(
+      "Do not use it for definitions, facts, or concepts that are self-explanatory.",
+    );
+    expect(flashcardBackSystemPrompt).toContain(
+      'Do not use bullets starting with "E.g." or "Ex.".',
     );
   });
 
@@ -50,11 +68,16 @@ describe("flashcardBackSystemPrompt", () => {
   });
 
   it("includes compact good examples and bad versus good guidance", () => {
+    expect(flashcardBackSystemPrompt).toContain(
+      "Front: What does DNS stand for?",
+    );
+    expect(flashcardBackSystemPrompt).toContain("Front: What is DNS?");
     expect(flashcardBackSystemPrompt).toContain("Front: What is a CPU?");
     expect(flashcardBackSystemPrompt).toContain(
       "Front: What are the main stages of program execution?",
     );
     expect(flashcardBackSystemPrompt).toContain("Bad patterns:");
+    expect(flashcardBackSystemPrompt).toContain("Front: Tabela CAN");
     expect(flashcardBackSystemPrompt).toContain(
       "Front: Explain how a CPU works.",
     );
