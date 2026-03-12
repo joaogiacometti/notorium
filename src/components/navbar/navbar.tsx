@@ -80,15 +80,15 @@ export async function Navbar() {
                   </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <form action="/profile">
+                <form action="/account">
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <button
                       type="submit"
-                      data-testid="account-menu-profile"
+                      data-testid="account-menu-account"
                       className="flex w-full items-center gap-2 text-left"
                     >
                       <User className="size-4" />
-                      {t("profile")}
+                      {t("account")}
                     </button>
                   </DropdownMenuItem>
                 </form>

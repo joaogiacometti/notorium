@@ -14,7 +14,7 @@ import {
 } from "@/features/flashcard-review/validation";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { parseActionInput } from "@/lib/server/action-input";
+import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -48,22 +48,18 @@ export async function getFlashcardReviewState(
 export async function reviewFlashcard(
   data: ReviewFlashcardForm,
 ): Promise<ReviewFlashcardResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     reviewFlashcardSchema,
     data,
     "flashcards.review.invalidData",
+    async (userId, parsedData) => {
+      const result = await reviewFlashcardForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateFlashcardReviewSubjectPaths(result.flashcard.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await reviewFlashcardForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateFlashcardReviewSubjectPaths(result.flashcard.subjectId);
-  }
-
-  return result;
 }

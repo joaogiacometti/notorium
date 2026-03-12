@@ -7,18 +7,18 @@ import {
 } from "@/lib/server/server-action-errors";
 import type { UpdateUserAccessInput } from "@/lib/validations/access-control";
 
-export type ProfileMutationResult = { success: true } | ActionErrorResult;
+export type AccountMutationResult = { success: true } | ActionErrorResult;
 
 export async function deleteAccountForUser(
   userId: string,
-): Promise<ProfileMutationResult> {
+): Promise<AccountMutationResult> {
   await db.delete(user).where(eq(user.id, userId));
   return { success: true };
 }
 
 export async function updateUserAccessStatusForUser(
   data: UpdateUserAccessInput,
-): Promise<ProfileMutationResult> {
+): Promise<AccountMutationResult> {
   const [targetUser] = await db
     .select({
       id: user.id,

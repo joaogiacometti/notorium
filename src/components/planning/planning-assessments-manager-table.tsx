@@ -1,29 +1,14 @@
 "use client";
 
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  type PaginationState,
-  useReactTable,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { format, parseISO } from "date-fns";
 import { CalendarDays, ClipboardList } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
+import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
@@ -100,10 +85,6 @@ function formatGradeWeight(score: string | null, weight: string | null) {
   return `${formatScore(score)}/${formatWeight(weight)}`;
 }
 
-function formatTrimmedTitle(title: string) {
-  return title.length > 10 ? `${title.slice(0, 10)}...` : title;
-}
-
 function getColumnClassName(columnId: string, showSubjectDetails: boolean) {
   switch (columnId) {
     case "title":
@@ -153,7 +134,7 @@ function getColumns(
               className="truncate text-sm font-semibold leading-5.5 text-foreground/95"
               title={row.original.title}
             >
-              {formatTrimmedTitle(row.original.title)}
+              {row.original.title}
             </div>
             {row.original.description ? (
               <div
@@ -301,116 +282,53 @@ export function PlanningAssessmentsManagerTable({
   const todayIso = format(new Date(), "yyyy-MM-dd");
   const finalGradeTone =
     finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
-  const pagination: PaginationState = {
-    pageIndex,
-    pageSize: 25,
-  };
-
-  const table = useReactTable({
-    data: assessments,
-    columns: getColumns(
-      onUpdated,
-      onDeleted,
-      showSubjectDetails,
-      subjectNamesById,
-      todayIso,
-      dateLocale,
-      tTable,
-      tAssessment,
-    ),
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: (updater) => {
-      const nextPagination =
-        typeof updater === "function" ? updater(pagination) : updater;
-      onPageIndexChange(nextPagination.pageIndex);
-    },
-    getRowId: (row) => row.id,
-    state: {
-      pagination,
-    },
-  });
-
-  const pageCount = Math.max(table.getPageCount(), 1);
 
   return (
-    <div className="flex h-full flex-col lg:min-h-0 lg:flex-1">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <Table
-          className={cn(
-            "w-full",
-            showSubjectDetails ? "min-w-160" : "min-w-210",
-          )}
-        >
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="border-b border-border/60 bg-muted/30 hover:bg-muted/30"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className={cn(
-                      "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-3",
-                      getColumnClassName(header.column.id, showSubjectDetails),
-                    )}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-b border-border/50 transition-colors duration-150 hover:bg-muted/20"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        "align-middle",
-                        getColumnClassName(cell.column.id, showSubjectDetails),
-                        showSubjectDetails ? "px-2 py-3" : "px-3 py-3",
-                      )}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={table.getAllColumns().length}
-                  className="h-36 px-6 text-center text-sm text-muted-foreground"
-                >
-                  {tTable("no_results")}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div
-        className={cn(
-          "flex flex-col gap-2 border-t border-border/60 bg-muted/15 px-4 py-2.5 sm:flex-row sm:items-center",
-          showSubjectDetails ? "sm:justify-between" : "sm:justify-end",
-        )}
-      >
-        {showSubjectDetails ? (
+    <ManagerDataTable
+      data={assessments}
+      columns={getColumns(
+        onUpdated,
+        onDeleted,
+        showSubjectDetails,
+        subjectNamesById,
+        todayIso,
+        dateLocale,
+        tTable,
+        tAssessment,
+      )}
+      pageIndex={pageIndex}
+      onPageIndexChange={onPageIndexChange}
+      pageLabel={(current, total) =>
+        tTable("page", {
+          current,
+          total,
+        })
+      }
+      prevLabel={tTable("prev")}
+      nextLabel={tTable("next")}
+      emptyLabel={tTable("no_results")}
+      getRowId={(row) => row.id}
+      tableClassName={cn(
+        "w-full",
+        showSubjectDetails ? "min-w-160" : "min-w-210",
+      )}
+      getHeaderCellClassName={(columnId) =>
+        getColumnClassName(columnId, showSubjectDetails)
+      }
+      getBodyCellClassName={(columnId) =>
+        cn(
+          "align-middle",
+          getColumnClassName(columnId, showSubjectDetails),
+          showSubjectDetails ? "px-2 py-3" : "px-3 py-3",
+        )
+      }
+      footerClassName={cn(
+        "sm:items-center",
+        showSubjectDetails ? "sm:justify-between" : "sm:justify-end",
+      )}
+      controlsClassName="sm:items-center"
+      footerLeading={
+        showSubjectDetails ? (
           <div className="min-w-0 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">
               {tTable("footer_final_grade")}:
@@ -419,39 +337,8 @@ export function PlanningAssessmentsManagerTable({
               {finalGrade === null ? "—" : finalGrade.toFixed(1)}
             </span>
           </div>
-        ) : null}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Badge
-            variant="outline"
-            className="rounded-full border-border/70 bg-background/80 px-3 py-1 text-muted-foreground"
-          >
-            {tTable("page", {
-              current: pagination.pageIndex + 1,
-              total: pageCount,
-            })}
-          </Badge>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="rounded-full border-border/70 bg-background/80 px-4"
-          >
-            {tTable("prev")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="rounded-full border-border/70 bg-background/80 px-4"
-          >
-            {tTable("next")}
-          </Button>
-        </div>
-      </div>
-    </div>
+        ) : null
+      }
+    />
   );
 }

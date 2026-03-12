@@ -126,8 +126,8 @@ export function FlashcardsManager({
         <CardContent className="relative px-4 py-3 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-              <div className="grid flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
-                <div className="relative">
+              <div className="min-w-0 flex-1 lg:max-w-3xl">
+                <div className="relative min-w-0">
                   <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchQuery}
@@ -139,6 +139,19 @@ export function FlashcardsManager({
                     className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                   />
                 </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                disabled={!hasSubjects}
+                className="h-10 w-full shrink-0 gap-2 rounded-lg px-4 shadow-sm sm:w-auto"
+              >
+                <Plus className="size-4" />
+                {t("new_flashcard")}
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="min-w-0">
                 <Select
                   value={selectedSubjectId ?? "all"}
                   onValueChange={(value) =>
@@ -164,15 +177,6 @@ export function FlashcardsManager({
                   </SelectContent>
                 </Select>
               </div>
-              <Button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                disabled={!hasSubjects}
-                className="h-10 w-full gap-2 rounded-lg px-4 shadow-sm sm:w-auto"
-              >
-                <Plus className="size-4" />
-                {t("new_flashcard")}
-              </Button>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   clearUserAiSettings,
   updateUserAiSettings,
-} from "@/app/actions/profile";
+} from "@/app/actions/account";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,7 +31,7 @@ import {
   type UpdateUserAiSettingsForm,
   type UpdateUserAiSettingsFormInput,
   updateUserAiSettingsSchema,
-} from "@/features/profile/validation";
+} from "@/features/account/validation";
 import type { UserAiSettingsSummary } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
@@ -42,7 +42,7 @@ interface AiSettingsCardProps {
 export function AiSettingsCard({
   initialAiSettings,
 }: Readonly<AiSettingsCardProps>) {
-  const t = useTranslations("ProfileForm");
+  const t = useTranslations("AccountForm");
   const tErrors = useTranslations("ServerActions");
   const [aiSettings, setAiSettings] = useState(initialAiSettings);
   const [isSavingAi, startSavingAi] = useTransition();
@@ -129,14 +129,14 @@ export function AiSettingsCard({
         </div>
       </CardHeader>
       <CardContent>
-        <form id="form-profile-ai" onSubmit={handleAiSubmit}>
+        <form id="form-account-ai" onSubmit={handleAiSubmit}>
           <FieldGroup className="gap-4">
             <Field>
-              <FieldLabel htmlFor="profile-ai-provider">
+              <FieldLabel htmlFor="account-ai-provider">
                 {t("ai_provider")}
               </FieldLabel>
               <div
-                id="profile-ai-provider"
+                id="account-ai-provider"
                 className="flex h-10 items-center rounded-md border bg-muted/30 px-3 text-sm"
               >
                 OpenRouter
@@ -147,12 +147,12 @@ export function AiSettingsCard({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="profile-ai-model">
+                  <FieldLabel htmlFor="account-ai-model">
                     {t("ai_model")}
                   </FieldLabel>
                   <Input
                     {...field}
-                    id="profile-ai-model"
+                    id="account-ai-model"
                     type="text"
                     placeholder={t("ai_model_placeholder")}
                     aria-invalid={fieldState.invalid}
@@ -171,14 +171,14 @@ export function AiSettingsCard({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="profile-ai-api-key">
+                  <FieldLabel htmlFor="account-ai-api-key">
                     {t("ai_api_key")}
                   </FieldLabel>
                   <div className="relative">
                     <KeyRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       {...field}
-                      id="profile-ai-api-key"
+                      id="account-ai-api-key"
                       type="password"
                       placeholder={t("ai_api_key_placeholder")}
                       aria-invalid={fieldState.invalid}
@@ -202,7 +202,7 @@ export function AiSettingsCard({
             <div className="flex flex-wrap gap-2">
               <Button
                 type="submit"
-                form="form-profile-ai"
+                form="form-account-ai"
                 disabled={isSavingAi || isClearingAi}
                 className="w-full sm:w-fit"
               >

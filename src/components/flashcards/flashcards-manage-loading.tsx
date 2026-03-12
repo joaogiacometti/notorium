@@ -12,11 +12,13 @@ export function FlashcardsManageLoading() {
           <div className="px-4 py-3 sm:px-5 sm:py-4">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="grid flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
-                  <Skeleton className="h-10 w-full rounded-lg" />
+                <div className="min-w-0 flex-1 lg:max-w-3xl">
                   <Skeleton className="h-10 w-full rounded-lg" />
                 </div>
                 <Skeleton className="h-10 w-full rounded-lg sm:w-40" />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <Skeleton className="h-10 w-full rounded-lg" />
               </div>
               <div className="flex gap-1.5">
                 <Skeleton className="h-6 w-40 rounded-full" />

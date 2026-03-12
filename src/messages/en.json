@@ -6,7 +6,7 @@
     "flashcards": "Flashcards",
     "assessments": "Assessments",
     "calendar": "Calendar",
-    "profile": "Account",
+    "account": "Account",
     "admin_panel": "Admin Panel",
     "login": "Log In",
     "signup": "Sign Up",
@@ -123,8 +123,9 @@
     "manage_in_planning": "Manage assessments",
     "subject_average": "Final grade",
     "assessment_count": "{count, plural, one {Based on # assessment} other {Based on # assessments}}",
-    "empty_helper": "Add assessments to start tracking your final grade.",
+    "empty_helper": "Add completed assessments with a score to track your final grade.",
     "status_ready": "Assessment summary",
+    "status_no_grade": "No grade yet",
     "status_empty": "No assessments yet"
   },
   "FlashcardsList": {
@@ -164,8 +165,8 @@
   },
   "FlashcardsManager": {
     "search_placeholder": "Search front, back, or subject...",
-    "subject_filter_placeholder": "Filter by subject",
-    "subject_all": "All subjects",
+    "subject_filter_placeholder": "Filter by Subject",
+    "subject_all": "All Subjects",
     "new_flashcard": "New Flashcard",
     "results_count": "{filtered} of {total} flashcards",
     "selected_subject_count": "{count}/{max} flashcards in this subject",
@@ -325,7 +326,7 @@
     "flashcards_group": "Flashcards",
     "in_subject": "in"
   },
-  "ProfilePage": {
+  "AccountPage": {
     "title": "Manage Account",
     "description": "Review your account information and manage your settings."
   },
@@ -333,10 +334,10 @@
     "title": "Admin Panel",
     "description": "Manage user access and approval states."
   },
-  "ProfileForm": {
+  "AccountForm": {
     "toast_success": "Account updated.",
-    "profile_title": "Account",
-    "profile_description": "Inspect and update your account details and settings.",
+    "account_title": "Account",
+    "account_description": "Inspect and update your account details and settings.",
     "ai_title": "AI Settings",
     "ai_description": "Bring your own OpenRouter key and model for flashcard generation. Your key is encrypted at rest and never shown again after saving.",
     "ai_provider": "Provider",
@@ -718,8 +719,8 @@
         "unavailable": "Review submission is temporarily unavailable. Try again in a moment."
       }
     },
-    "profile": {
-      "invalidData": "Invalid profile data.",
+    "account": {
+      "invalidData": "Invalid account data.",
       "updateFailed": "Failed to update account.",
       "ai": {
         "invalidData": "Invalid AI settings.",
@@ -792,7 +793,7 @@
       "backRequired": "Flashcard back is required.",
       "backMaxLength": "Flashcard back must be at most 2000 characters."
     },
-    "profile": {
+    "account": {
       "nameMinLength": "Name must be at least 2 characters.",
       "nameMaxLength": "Name must be at most 100 characters.",
       "aiModelRequired": "Model is required.",

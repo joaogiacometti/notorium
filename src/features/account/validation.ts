@@ -1,27 +1,27 @@
 import { z } from "zod";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
-export const updateProfileSchema = z.object({
+export const updateAccountSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, validationMessage("Validation.profile.nameMinLength"))
-    .max(100, validationMessage("Validation.profile.nameMaxLength")),
+    .min(2, validationMessage("Validation.account.nameMinLength"))
+    .max(100, validationMessage("Validation.account.nameMaxLength")),
 });
 
-export type UpdateProfileForm = z.infer<typeof updateProfileSchema>;
+export type UpdateAccountForm = z.infer<typeof updateAccountSchema>;
 
 export const aiModelSchema = z
   .string()
   .trim()
-  .min(1, validationMessage("Validation.profile.aiModelRequired"))
-  .max(150, validationMessage("Validation.profile.aiModelMaxLength"));
+  .min(1, validationMessage("Validation.account.aiModelRequired"))
+  .max(150, validationMessage("Validation.account.aiModelMaxLength"));
 
 export const aiApiKeySchema = z
   .string()
   .trim()
-  .min(1, validationMessage("Validation.profile.aiApiKeyRequired"))
-  .max(500, validationMessage("Validation.profile.aiApiKeyMaxLength"));
+  .min(1, validationMessage("Validation.account.aiApiKeyRequired"))
+  .max(500, validationMessage("Validation.account.aiApiKeyMaxLength"));
 
 export const updateUserAiSettingsSchema = z.object({
   model: aiModelSchema,

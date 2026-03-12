@@ -6,7 +6,7 @@
     "flashcards": "Flashcards",
     "assessments": "Avaliações",
     "calendar": "Calendário",
-    "profile": "Conta",
+    "account": "Conta",
     "admin_panel": "Painel de admin",
     "login": "Entrar",
     "signup": "Cadastrar",
@@ -123,8 +123,9 @@
     "manage_in_planning": "Gerenciar avaliações",
     "subject_average": "Nota final",
     "assessment_count": "{count, plural, one {Baseada em # avaliação} other {Baseada em # avaliações}}",
-    "empty_helper": "Adicione avaliações para começar a acompanhar sua nota final.",
+    "empty_helper": "Adicione avaliações concluídas com nota para acompanhar sua nota final.",
     "status_ready": "Resumo das avaliações",
+    "status_no_grade": "Sem nota ainda",
     "status_empty": "Ainda não há avaliações"
   },
   "FlashcardsList": {
@@ -164,8 +165,8 @@
   },
   "FlashcardsManager": {
     "search_placeholder": "Buscar frente, verso ou matéria...",
-    "subject_filter_placeholder": "Filtrar por matéria",
-    "subject_all": "Todas as matérias",
+    "subject_filter_placeholder": "Filtrar por Matéria",
+    "subject_all": "Todas as Matérias",
     "new_flashcard": "Novo Flashcard",
     "results_count": "{filtered} de {total} flashcards",
     "selected_subject_count": "{count}/{max} flashcards nesta matéria",
@@ -325,7 +326,7 @@
     "flashcards_group": "Flashcards",
     "in_subject": "em"
   },
-  "ProfilePage": {
+  "AccountPage": {
     "title": "Gerenciar conta",
     "description": "Revise as informacoes da sua conta e gerencie suas configuracoes."
   },
@@ -333,10 +334,10 @@
     "title": "Painel de admin",
     "description": "Gerencie estados de acesso e aprovação de usuários."
   },
-  "ProfileForm": {
+  "AccountForm": {
     "toast_success": "Conta atualizada.",
-    "profile_title": "Conta",
-    "profile_description": "Veja e atualize os dados e configuracoes da sua conta.",
+    "account_title": "Conta",
+    "account_description": "Veja e atualize os dados e configuracoes da sua conta.",
     "ai_title": "Configuracoes de IA",
     "ai_description": "Use sua propria chave e modelo da OpenRouter para gerar flashcards. Sua chave e criptografada em repouso e nao e exibida novamente depois de salva.",
     "ai_provider": "Provedor",
@@ -718,7 +719,7 @@
         "unavailable": "O envio da revisão está temporariamente indisponível. Tente novamente em instantes."
       }
     },
-    "profile": {
+    "account": {
       "invalidData": "Dados de perfil invalidos.",
       "updateFailed": "Falha ao atualizar a conta.",
       "ai": {
@@ -792,7 +793,7 @@
       "backRequired": "O verso do flashcard e obrigatorio.",
       "backMaxLength": "O verso do flashcard deve ter no maximo 2000 caracteres."
     },
-    "profile": {
+    "account": {
       "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",
       "nameMaxLength": "O nome deve ter no maximo 100 caracteres.",
       "aiModelRequired": "O modelo e obrigatorio.",

@@ -19,7 +19,7 @@ import {
   editAssessmentSchema,
 } from "@/features/assessments/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { parseActionInput } from "@/lib/server/action-input";
+import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   AssessmentEntity,
   CreateAssessmentResult,
@@ -42,68 +42,56 @@ export async function getAssessments(): Promise<AssessmentEntity[]> {
 export async function createAssessment(
   data: CreateAssessmentForm,
 ): Promise<CreateAssessmentResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     createAssessmentSchema,
     data,
     "assessments.invalidData",
+    async (userId, parsedData) => {
+      const result = await createAssessmentForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAssessmentPaths(result.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await createAssessmentForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAssessmentPaths(result.subjectId);
-  }
-
-  return result;
 }
 
 export async function editAssessment(
   data: EditAssessmentForm,
 ): Promise<EditAssessmentResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     editAssessmentSchema,
     data,
     "assessments.invalidData",
+    async (userId, parsedData) => {
+      const result = await editAssessmentForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAssessmentPaths(result.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await editAssessmentForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAssessmentPaths(result.subjectId);
-  }
-
-  return result;
 }
 
 export async function deleteAssessment(
   data: DeleteAssessmentForm,
 ): Promise<DeleteAssessmentResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     deleteAssessmentSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await deleteAssessmentForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAssessmentPaths(result.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await deleteAssessmentForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAssessmentPaths(result.subjectId);
-  }
-
-  return result;
 }

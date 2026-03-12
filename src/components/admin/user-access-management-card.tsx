@@ -4,7 +4,7 @@ import { MoreVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { updateUserAccessStatus } from "@/app/actions/profile";
+import { updateUserAccessStatus } from "@/app/actions/account";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

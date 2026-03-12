@@ -1,7 +1,7 @@
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ProfileLoading() {
+export default function AccountLoading() {
   return (
     <main>
       <AppPageContainer maxWidth="3xl">

@@ -266,7 +266,7 @@ export function FlashcardReviewClient({
           <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
             <div className={`${reviewContentFrameClassName} pb-0`}>
               {revealed ? (
-                <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+                <div className="mx-auto grid w-full max-w-3xl grid-cols-4 gap-1.5 sm:gap-3">
                   {reviewGrades.map((grade) => {
                     const Icon = gradeIcons[grade];
                     const isActivePendingGrade = pendingGrade === grade;

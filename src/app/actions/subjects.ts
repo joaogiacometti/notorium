@@ -30,7 +30,7 @@ import {
   restoreSubjectSchema,
 } from "@/features/subjects/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { parseActionInput } from "@/lib/server/action-input";
+import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MutationResult, SubjectEntity } from "@/lib/server/api-contracts";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
@@ -53,114 +53,94 @@ export async function getSubjectById(
 export async function createSubject(
   data: CreateSubjectForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     createSubjectSchema,
     data,
     "subjects.invalidData",
+    async (userId, parsedData) => {
+      const result = await createSubjectForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateSubjectListPaths();
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await createSubjectForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateSubjectListPaths();
-  }
-
-  return result;
 }
 
 export async function editSubject(
   data: EditSubjectForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     editSubjectSchema,
     data,
     "subjects.invalidData",
+    async (userId, parsedData) => {
+      const result = await editSubjectForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateSubjectDetailPaths(parsedData.id);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await editSubjectForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateSubjectDetailPaths(parsed.data.id);
-  }
-
-  return result;
 }
 
 export async function archiveSubject(
   data: ArchiveSubjectForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     archiveSubjectSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await archiveSubjectForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAllSubjectPaths(parsedData.id);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await archiveSubjectForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAllSubjectPaths(parsed.data.id);
-  }
-
-  return result;
 }
 
 export async function restoreSubject(
   data: RestoreSubjectForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     restoreSubjectSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await restoreSubjectForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAllSubjectPaths(parsedData.id);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await restoreSubjectForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAllSubjectPaths(parsed.data.id);
-  }
-
-  return result;
 }
 
 export async function deleteSubject(
   data: DeleteSubjectForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     deleteSubjectSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await deleteSubjectForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateSubjectListPaths();
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await deleteSubjectForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateSubjectListPaths();
-  }
-
-  return result;
 }

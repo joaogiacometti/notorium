@@ -16,7 +16,7 @@ import {
   recordMissSchema,
 } from "@/features/attendance/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { parseActionInput } from "@/lib/server/action-input";
+import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   AttendanceMissEntity,
   MutationResult,
@@ -25,24 +25,20 @@ import type {
 export async function updateAttendanceSettings(
   data: AttendanceSettingsForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     attendanceSettingsSchema,
     data,
     "attendance.invalidSettings",
+    async (userId, parsedData) => {
+      const result = await updateAttendanceSettingsForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAttendancePaths(result.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await updateAttendanceSettingsForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAttendancePaths(result.subjectId);
-  }
-
-  return result;
 }
 
 export async function getMissesBySubject(
@@ -55,45 +51,37 @@ export async function getMissesBySubject(
 export async function recordMiss(
   data: RecordMissForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     recordMissSchema,
     data,
     "attendance.invalidMissData",
+    async (userId, parsedData) => {
+      const result = await recordMissForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAttendancePaths(result.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await recordMissForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAttendancePaths(result.subjectId);
-  }
-
-  return result;
 }
 
 export async function deleteMiss(
   data: DeleteMissForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     deleteMissSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await deleteMissForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateAttendancePaths(result.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await deleteMissForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateAttendancePaths(result.subjectId);
-  }
-
-  return result;
 }

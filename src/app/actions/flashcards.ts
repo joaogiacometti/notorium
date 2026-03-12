@@ -24,8 +24,7 @@ import {
   type ResetFlashcardForm,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { parseActionInput } from "@/lib/server/action-input";
+import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
@@ -37,109 +36,94 @@ import type {
 export async function createFlashcard(
   data: CreateFlashcardInput,
 ): Promise<CreateFlashcardResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     createFlashcardInputSchema,
     data,
     "flashcards.invalidData",
+    async (userId, parsedData) => {
+      const result = await createFlashcardForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateFlashcardSubjectPaths(result.flashcard.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await createFlashcardForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateFlashcardSubjectPaths(result.flashcard.subjectId);
-  }
-
-  return result;
 }
 
 export async function editFlashcard(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     editFlashcardSchema,
     data,
     "flashcards.invalidData",
+    async (userId, parsedData) => {
+      const result = await editFlashcardForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateFlashcardReviewPaths(
+          result.flashcard.subjectId,
+          parsedData.id,
+        );
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await editFlashcardForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateFlashcardReviewPaths(result.flashcard.subjectId, parsed.data.id);
-  }
-
-  return result;
 }
 
 export async function generateFlashcardBack(
   data: GenerateFlashcardBackForm,
 ): Promise<GenerateFlashcardBackResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     generateFlashcardBackSchema,
     data,
     "flashcards.ai.invalidData",
+    (userId, parsedData) =>
+      generateFlashcardBackForUserInput(userId, parsedData),
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  return generateFlashcardBackForUserInput(userId, parsed.data);
 }
 
 export async function deleteFlashcard(
   data: DeleteFlashcardForm,
 ): Promise<DeleteFlashcardResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     deleteFlashcardSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await deleteFlashcardForUser(userId, parsedData);
+
+      if (result.success !== true) {
+        return result;
+      }
+
+      revalidateFlashcardDetailPaths(result.subjectId, parsedData.id);
+      return { success: true, id: parsedData.id };
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await deleteFlashcardForUser(userId, parsed.data);
-
-  if (result.success !== true) {
-    return result;
-  }
-
-  revalidateFlashcardDetailPaths(result.subjectId, parsed.data.id);
-  return { success: true, id: parsed.data.id };
 }
 
 export async function resetFlashcard(
   data: ResetFlashcardForm,
 ): Promise<ResetFlashcardResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     resetFlashcardSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await resetFlashcardForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateFlashcardReviewPaths(
+          result.flashcard.subjectId,
+          parsedData.id,
+        );
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await resetFlashcardForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateFlashcardReviewPaths(result.flashcard.subjectId, parsed.data.id);
-  }
-
-  return result;
 }

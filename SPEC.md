@@ -108,7 +108,7 @@ Students who want a private, lightweight study management workspace.
 - Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
 
-### Profile
+### Account
 
 - View account details.
 - Update display name.

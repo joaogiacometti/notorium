@@ -5,10 +5,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { updateProfile } from "@/app/actions/profile";
-import { AiSettingsCard } from "@/components/profile/ai-settings-card";
-import { DataTransferActions } from "@/components/profile/data-transfer-actions";
-import { DeleteAccountDialog } from "@/components/profile/delete-account-dialog";
+import { updateAccount } from "@/app/actions/account";
+import { AiSettingsCard } from "@/components/account/ai-settings-card";
+import { DataTransferActions } from "@/components/account/data-transfer-actions";
+import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,15 +25,15 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  type UpdateProfileForm,
-  updateProfileSchema,
-} from "@/features/profile/validation";
+  type UpdateAccountForm,
+  updateAccountSchema,
+} from "@/features/account/validation";
 import { useRouter } from "@/i18n/routing";
 import { getIntlLocale } from "@/lib/dates/date-locale";
 import type { UserAiSettingsSummary } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
-interface ProfileFormProps {
+interface AccountFormProps {
   name: string;
   email: string;
   createdAt: string;
@@ -41,21 +41,21 @@ interface ProfileFormProps {
   initialAiSettings: UserAiSettingsSummary | null;
 }
 
-export function ProfileForm({
+export function AccountForm({
   name,
   email,
   createdAt,
   updatedAt,
   initialAiSettings,
-}: Readonly<ProfileFormProps>) {
+}: Readonly<AccountFormProps>) {
   const locale = useLocale();
   const intlLocale = getIntlLocale(locale);
-  const t = useTranslations("ProfileForm");
+  const t = useTranslations("AccountForm");
   const tErrors = useTranslations("ServerActions");
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const form = useForm({
-    resolver: zodResolver(updateProfileSchema),
+    resolver: zodResolver(updateAccountSchema),
     defaultValues: {
       name,
     },
@@ -74,8 +74,8 @@ export function ProfileForm({
     minute: "2-digit",
   });
 
-  async function onSubmit(data: UpdateProfileForm) {
-    const result = await updateProfile(data);
+  async function onSubmit(data: UpdateAccountForm) {
+    const result = await updateAccount(data);
     if (result.success) {
       form.reset({ name: data.name });
       toast.success(t("toast_success"));
@@ -89,23 +89,23 @@ export function ProfileForm({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>{t("profile_title")}</CardTitle>
-          <CardDescription>{t("profile_description")}</CardDescription>
+          <CardTitle>{t("account_title")}</CardTitle>
+          <CardDescription>{t("account_description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form id="form-profile" onSubmit={form.handleSubmit(onSubmit)}>
+          <form id="form-account" onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">
               <Controller
                 name="name"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="form-profile-name">
+                    <FieldLabel htmlFor="form-account-name">
                       {t("name_label")}
                     </FieldLabel>
                     <Input
                       {...field}
-                      id="form-profile-name"
+                      id="form-account-name"
                       type="text"
                       placeholder={t("name_placeholder")}
                       aria-invalid={fieldState.invalid}
@@ -119,11 +119,11 @@ export function ProfileForm({
               />
 
               <Field>
-                <FieldLabel htmlFor="form-profile-email">
+                <FieldLabel htmlFor="form-account-email">
                   {t("email_label")}
                 </FieldLabel>
                 <Input
-                  id="form-profile-email"
+                  id="form-account-email"
                   value={email}
                   type="email"
                   disabled
@@ -146,7 +146,7 @@ export function ProfileForm({
 
               <Button
                 type="submit"
-                form="form-profile"
+                form="form-account"
                 disabled={form.formState.isSubmitting}
                 className="w-full sm:w-fit"
               >

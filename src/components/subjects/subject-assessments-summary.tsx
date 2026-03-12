@@ -20,6 +20,7 @@ export function SubjectAssessmentsSummary({
   const t = useTranslations("SubjectAssessmentsSummary");
   const average = getAssessmentAverage(assessments);
   const assessmentCount = assessments.length;
+  const hasAssessments = assessmentCount > 0;
   const averageToneClasses =
     average === null ? null : getStatusToneClasses(getScoreTone(average));
   const cardClassName =
@@ -60,7 +61,11 @@ export function SubjectAssessmentsSummary({
                 : (averageToneClasses?.text ?? "text-foreground")
             }`}
           >
-            {average !== null ? t("status_ready") : t("status_empty")}
+            {average !== null
+              ? t("status_ready")
+              : hasAssessments
+                ? t("status_no_grade")
+                : t("status_empty")}
           </p>
           {average !== null ? (
             <p className="text-sm text-muted-foreground">
@@ -89,7 +94,7 @@ export function SubjectAssessmentsSummary({
             </div>
           ) : null}
           <p className="text-sm text-muted-foreground">
-            {assessmentCount > 0
+            {average !== null
               ? t("assessment_count", { count: assessmentCount })
               : t("empty_helper")}
           </p>

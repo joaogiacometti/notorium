@@ -22,7 +22,7 @@ import {
   editNoteSchema,
 } from "@/features/notes/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
-import { parseActionInput } from "@/lib/server/action-input";
+import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MutationResult, NoteEntity } from "@/lib/server/api-contracts";
 
 export async function getNotesBySubject(
@@ -40,58 +40,54 @@ export async function getNoteById(id: string): Promise<NoteEntity | null> {
 export async function createNote(
   data: CreateNoteForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(createNoteSchema, data, "notes.invalidData");
+  return runValidatedUserAction(
+    createNoteSchema,
+    data,
+    "notes.invalidData",
+    async (userId, parsedData) => {
+      const result = await createNoteForUser(userId, parsedData);
 
-  if (!parsed.success) {
-    return parsed.error;
-  }
+      if (result.success) {
+        revalidateNoteSubjectPaths(result.subjectId);
+      }
 
-  const result = await createNoteForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateNoteSubjectPaths(result.subjectId);
-  }
-
-  return result;
+      return result;
+    },
+  );
 }
 
 export async function editNote(data: EditNoteForm): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(editNoteSchema, data, "notes.invalidData");
+  return runValidatedUserAction(
+    editNoteSchema,
+    data,
+    "notes.invalidData",
+    async (userId, parsedData) => {
+      const result = await editNoteForUser(userId, parsedData);
 
-  if (!parsed.success) {
-    return parsed.error;
-  }
+      if (result.success) {
+        revalidateNoteDetailPaths(result.subjectId, parsedData.id);
+      }
 
-  const result = await editNoteForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateNoteDetailPaths(result.subjectId, parsed.data.id);
-  }
-
-  return result;
+      return result;
+    },
+  );
 }
 
 export async function deleteNote(
   data: DeleteNoteForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const parsed = parseActionInput(
+  return runValidatedUserAction(
     deleteNoteSchema,
     data,
     "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await deleteNoteForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateNoteSubjectPaths(result.subjectId);
+      }
+
+      return result;
+    },
   );
-
-  if (!parsed.success) {
-    return parsed.error;
-  }
-
-  const result = await deleteNoteForUser(userId, parsed.data);
-
-  if (result.success) {
-    revalidateNoteSubjectPaths(result.subjectId);
-  }
-
-  return result;
 }

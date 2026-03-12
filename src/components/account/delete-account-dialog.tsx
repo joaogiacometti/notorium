@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { deleteAccount } from "@/app/actions/profile";
+import { deleteAccount } from "@/app/actions/account";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
