@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import type {
@@ -89,6 +89,28 @@ export async function getFlashcardRecordForUser(
     .limit(1);
 
   return results[0] ?? null;
+}
+
+export async function getFlashcardRecordsForUser(
+  userId: string,
+  flashcardIds: string[],
+): Promise<Array<Pick<FlashcardEntity, "id" | "subjectId">>> {
+  if (flashcardIds.length === 0) {
+    return [];
+  }
+
+  return db
+    .select({ id: flashcard.id, subjectId: flashcard.subjectId })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .where(
+      and(
+        inArray(flashcard.id, flashcardIds),
+        eq(flashcard.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
 }
 
 export async function countFlashcardsBySubjectForUser(

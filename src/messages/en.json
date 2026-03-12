@@ -169,7 +169,11 @@
     "subject_all": "All Subjects",
     "new_flashcard": "New Flashcard",
     "results_count": "{filtered} of {total} flashcards",
+    "selected_count": "{count, plural, one {# selected} other {# selected}}",
     "selected_subject_count": "{count}/{max} flashcards in this subject",
+    "bulk_move": "Move",
+    "bulk_delete": "Delete",
+    "clear_selection": "Clear selection",
     "limit_tooltip": "You cannot create more flashcards for this subject",
     "limit_message": "You've reached the limit of {max} flashcards per subject. Please delete existing ones to create more.",
     "empty_title": "No flashcards yet",
@@ -178,10 +182,23 @@
     "table_back": "Back",
     "table_subject": "Subject",
     "table_actions": "Actions",
+    "select_flashcard": "Select flashcard",
     "no_results": "No flashcards match your filters.",
     "prev": "Previous",
     "next": "Next",
     "page": "Page {current} of {total}"
+  },
+  "BulkDeleteFlashcardsDialog": {
+    "title": "Delete Flashcards",
+    "description": "Delete {count, plural, one {# flashcard} other {# flashcards}} permanently.",
+    "confirm": "Delete"
+  },
+  "BulkMoveFlashcardsDialog": {
+    "title": "Move Flashcards",
+    "description": "Move {count, plural, one {# selected flashcard} other {# selected flashcards}} to another subject.",
+    "field_subject": "Subject",
+    "field_subject_placeholder": "Select a subject",
+    "confirm": "Move"
   },
   "FlashcardReviewPage": {
     "title": "Flashcard Review",
@@ -557,6 +574,8 @@
   },
   "EditFlashcardDialog": {
     "title": "Edit Flashcard",
+    "field_subject": "Subject",
+    "field_subject_placeholder": "Select a subject",
     "field_front": "Front",
     "field_back": "Back",
     "field_front_placeholder": "e.g. What is photosynthesis?",

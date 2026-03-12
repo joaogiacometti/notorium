@@ -169,7 +169,11 @@
     "subject_all": "Todas as Matérias",
     "new_flashcard": "Novo Flashcard",
     "results_count": "{filtered} de {total} flashcards",
+    "selected_count": "{count, plural, one {# selecionado} other {# selecionados}}",
     "selected_subject_count": "{count}/{max} flashcards nesta matéria",
+    "bulk_move": "Mover",
+    "bulk_delete": "Excluir",
+    "clear_selection": "Limpar seleção",
     "limit_tooltip": "Você não pode criar mais flashcards para esta matéria",
     "limit_message": "Você atingiu o limite de {max} flashcards por matéria. Por favor, exclua flashcards existentes para criar mais.",
     "empty_title": "Ainda não há flashcards",
@@ -178,10 +182,23 @@
     "table_back": "Verso",
     "table_subject": "Matéria",
     "table_actions": "Ações",
+    "select_flashcard": "Selecionar flashcard",
     "no_results": "Nenhum flashcard corresponde aos seus filtros.",
     "prev": "Anterior",
     "next": "Próxima",
     "page": "Página {current} de {total}"
+  },
+  "BulkDeleteFlashcardsDialog": {
+    "title": "Excluir Flashcards",
+    "description": "Excluir permanentemente {count, plural, one {# flashcard} other {# flashcards}}.",
+    "confirm": "Excluir"
+  },
+  "BulkMoveFlashcardsDialog": {
+    "title": "Mover Flashcards",
+    "description": "Mover {count, plural, one {# flashcard selecionado} other {# flashcards selecionados}} para outra matéria.",
+    "field_subject": "Matéria",
+    "field_subject_placeholder": "Selecione uma matéria",
+    "confirm": "Mover"
   },
   "FlashcardReviewPage": {
     "title": "Revisão de Flashcards",
@@ -557,6 +574,8 @@
   },
   "EditFlashcardDialog": {
     "title": "Editar Flashcard",
+    "field_subject": "Matéria",
+    "field_subject_placeholder": "Selecione uma matéria",
     "field_front": "Frente",
     "field_back": "Verso",
     "field_front_placeholder": "ex.: O que é fotossíntese?",

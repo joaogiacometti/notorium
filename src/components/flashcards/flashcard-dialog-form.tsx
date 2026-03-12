@@ -226,7 +226,7 @@ export function FlashcardDialogForm({
           </DialogHeader>
           <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">
-              {mode === "create" && subjects && subjects.length > 0 ? (
+              {subjects && subjects.length > 0 ? (
                 <Controller
                   name="subjectId"
                   control={form.control}

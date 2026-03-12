@@ -1,8 +1,18 @@
 "use client";
 
-import { Layers3, Lock, Plus, Search } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Layers3,
+  Lock,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { BulkDeleteFlashcardsDialog } from "@/components/flashcards/bulk-delete-flashcards-dialog";
+import { BulkMoveFlashcardsDialog } from "@/components/flashcards/bulk-move-flashcards-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
 import { FlashcardsManagerTable } from "@/components/flashcards/flashcards-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -25,6 +35,7 @@ import type {
   FlashcardListEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
+import { cn } from "@/lib/utils";
 
 interface FlashcardsManagerProps {
   flashcards: FlashcardListEntity[];
@@ -42,8 +53,13 @@ export function FlashcardsManager({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
+    [],
+  );
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [localFlashcards, setLocalFlashcards] = useState(
     sortFlashcards(flashcards),
@@ -75,6 +91,16 @@ export function FlashcardsManager({
     subjectId: selectedSubjectId,
   });
   const hasSubjects = subjects.length > 0;
+
+  useEffect(() => {
+    const filteredIds = new Set(
+      filteredFlashcards.map((flashcard) => flashcard.id),
+    );
+
+    setSelectedFlashcardIds((current) =>
+      current.filter((flashcardId) => filteredIds.has(flashcardId)),
+    );
+  }, [filteredFlashcards]);
 
   function updateSubjectFilter(nextSubjectId: string | undefined) {
     setSelectedSubjectId(nextSubjectId);
@@ -116,7 +142,63 @@ export function FlashcardsManager({
     setLocalFlashcards((current) =>
       current.filter((flashcard) => flashcard.id !== id),
     );
+    setSelectedFlashcardIds((current) =>
+      current.filter((flashcardId) => flashcardId !== id),
+    );
     setPageIndex(0);
+  }
+
+  function handleBulkDeleted(ids: string[]) {
+    setLocalFlashcards((current) => {
+      const nextFlashcards = current.filter(
+        (flashcard) => !ids.includes(flashcard.id),
+      );
+
+      setPageIndex((currentPageIndex) =>
+        getValidPageIndex(
+          filterFlashcards({
+            flashcards: nextFlashcards,
+            searchQuery: deferredSearchQuery,
+            subjectId: selectedSubjectId,
+          }).length,
+          currentPageIndex,
+        ),
+      );
+
+      return nextFlashcards;
+    });
+    setSelectedFlashcardIds([]);
+  }
+
+  function handleBulkMoved(ids: string[], subjectId: string) {
+    setLocalFlashcards((current) => {
+      const nextFlashcards = sortFlashcards(
+        current.map((flashcard) =>
+          ids.includes(flashcard.id)
+            ? {
+                ...flashcard,
+                subjectId,
+                subjectName:
+                  subjectNameById[subjectId] ?? flashcard.subjectName,
+              }
+            : flashcard,
+        ),
+      );
+
+      setPageIndex((currentPageIndex) =>
+        getValidPageIndex(
+          filterFlashcards({
+            flashcards: nextFlashcards,
+            searchQuery: deferredSearchQuery,
+            subjectId: selectedSubjectId,
+          }).length,
+          currentPageIndex,
+        ),
+      );
+
+      return nextFlashcards;
+    });
+    setSelectedFlashcardIds([]);
   }
 
   return (
@@ -178,29 +260,87 @@ export function FlashcardsManager({
                 </Select>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge
-                variant="outline"
-                className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-muted-foreground"
-              >
-                <Search className="size-3.5" />
-                {t("results_count", {
-                  filtered: filteredFlashcards.length,
-                  total: localFlashcards.length,
-                })}
-              </Badge>
-              {selectedSubjectId ? (
+            <div className="flex flex-wrap items-center gap-2 sm:justify-between">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
                 <Badge
                   variant="outline"
-                  className="rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground"
+                  className={cn(
+                    "rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px]",
+                    selectedFlashcardIds.length > 0
+                      ? "text-foreground"
+                      : "text-muted-foreground",
+                  )}
                 >
-                  <Layers3 className="size-3.5 text-primary" />
-                  {t("selected_subject_count", {
-                    count: selectedSubjectCardCount,
-                    max: LIMITS.maxFlashcardsPerSubject,
-                  })}
+                  {selectedFlashcardIds.length > 0 ? null : (
+                    <Search className="size-3.5" />
+                  )}
+                  {selectedFlashcardIds.length > 0
+                    ? t("selected_count", {
+                        count: selectedFlashcardIds.length,
+                      })
+                    : t("results_count", {
+                        filtered: filteredFlashcards.length,
+                        total: localFlashcards.length,
+                      })}
                 </Badge>
-              ) : null}
+                {selectedSubjectId ? (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground transition-opacity",
+                      selectedFlashcardIds.length > 0
+                        ? "pointer-events-none invisible opacity-0"
+                        : "visible opacity-100",
+                    )}
+                  >
+                    <Layers3 className="size-3.5 text-primary" />
+                    {t("selected_subject_count", {
+                      count: selectedSubjectCardCount,
+                      max: LIMITS.maxFlashcardsPerSubject,
+                    })}
+                  </Badge>
+                ) : null}
+              </div>
+              <div
+                className={cn(
+                  "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-[8.5rem]",
+                  selectedFlashcardIds.length > 0
+                    ? "visible opacity-100"
+                    : "pointer-events-none invisible opacity-0",
+                )}
+              >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setBulkMoveOpen(true)}
+                  className="rounded-md text-muted-foreground hover:text-foreground"
+                  aria-label={t("bulk_move")}
+                >
+                  <ArrowRightLeft className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setBulkDeleteOpen(true)}
+                  className="rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  aria-label={t("bulk_delete")}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+                <div className="hidden h-5 w-px bg-border/60 sm:block" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setSelectedFlashcardIds([])}
+                  className="rounded-md text-muted-foreground hover:text-foreground"
+                  aria-label={t("clear_selection")}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -217,10 +357,13 @@ export function FlashcardsManager({
         {localFlashcards.length > 0 ? (
           <FlashcardsManagerTable
             flashcards={filteredFlashcards}
+            selectedFlashcardIds={selectedFlashcardIds}
+            subjects={subjects}
             pageIndex={pageIndex}
             onPageIndexChange={setPageIndex}
             onUpdated={handleUpdated}
             onDeleted={handleDeleted}
+            onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           />
         ) : (
           <CardContent className="flex flex-col items-center justify-center px-6 py-14 text-center sm:px-10">
@@ -252,6 +395,19 @@ export function FlashcardsManager({
         subjectId={selectedSubjectId}
         subjects={subjects}
       />
+      <BulkDeleteFlashcardsDialog
+        ids={selectedFlashcardIds}
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        onDeleted={handleBulkDeleted}
+      />
+      <BulkMoveFlashcardsDialog
+        ids={selectedFlashcardIds}
+        open={bulkMoveOpen}
+        onOpenChange={setBulkMoveOpen}
+        onMoved={handleBulkMoved}
+        subjects={subjects}
+      />
     </div>
   );
 }
@@ -275,4 +431,15 @@ function upsertFlashcard(
   const withoutNext = current.filter((flashcard) => flashcard.id !== next.id);
 
   return sortFlashcards([...withoutNext, next]);
+}
+
+function getValidPageIndex(
+  totalItems: number,
+  currentPageIndex: number,
+  pageSize: number = 25,
+): number {
+  return Math.max(
+    0,
+    Math.min(currentPageIndex, Math.ceil(totalItems / pageSize) - 1),
+  );
 }

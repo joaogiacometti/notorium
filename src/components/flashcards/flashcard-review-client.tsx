@@ -39,12 +39,16 @@ import {
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
-import type { FlashcardReviewState } from "@/lib/server/api-contracts";
+import type {
+  FlashcardReviewState,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import { EditFlashcardDialog } from "./edit-flashcard-dialog";
 
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;
+  subjects: SubjectEntity[];
   subjectId?: string;
   embedded?: boolean;
 }
@@ -69,6 +73,7 @@ const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
 
 export function FlashcardReviewClient({
   initialState,
+  subjects,
   subjectId,
   embedded = false,
 }: Readonly<FlashcardReviewClientProps>) {
@@ -97,9 +102,20 @@ export function FlashcardReviewClient({
       })
     : null;
 
-  function handleFlashcardUpdated(
+  async function handleFlashcardUpdated(
     updatedFlashcard: FlashcardReviewState["cards"][number],
   ) {
+    if (subjectId && updatedFlashcard.subjectId !== subjectId) {
+      const nextState = await getFlashcardReviewState({
+        subjectId,
+        limit: reviewBatchLimit,
+      });
+
+      setReviewState(nextState);
+      setRevealed(false);
+      return;
+    }
+
     setReviewState((currentState) =>
       replaceFlashcardInReviewState(currentState, updatedFlashcard),
     );
@@ -356,6 +372,7 @@ export function FlashcardReviewClient({
         <EditFlashcardDialog
           key={currentCard.id}
           flashcard={currentCard}
+          subjects={subjects}
           open={editOpen}
           onOpenChange={setEditOpen}
           onUpdated={handleFlashcardUpdated}

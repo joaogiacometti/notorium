@@ -6,11 +6,13 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   type PaginationState,
+  type RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -37,7 +39,10 @@ interface ManagerDataTableProps<TRow> {
   footerLeading?: ReactNode;
   getBodyCellClassName?: (columnId: string) => string;
   getHeaderCellClassName?: (columnId: string) => string;
+  onSelectedRowIdsChange?: (rowIds: string[]) => void;
   pageSize?: number;
+  selectedRowIds?: string[];
+  selectionAriaLabel?: string;
   scrollAreaClassName?: string;
   showColumnWidths?: boolean;
   tableClassName?: string;
@@ -60,7 +65,10 @@ export function ManagerDataTable<TRow>({
   footerLeading,
   getBodyCellClassName,
   getHeaderCellClassName,
+  onSelectedRowIdsChange,
   pageSize = 25,
+  selectedRowIds,
+  selectionAriaLabel = "Select row",
   scrollAreaClassName,
   showColumnWidths = false,
   tableClassName,
@@ -70,10 +78,52 @@ export function ManagerDataTable<TRow>({
     pageIndex,
     pageSize,
   };
+  const rowSelection = Object.fromEntries(
+    (selectedRowIds ?? []).map((rowId) => [rowId, true]),
+  ) as RowSelectionState;
 
   const table = useReactTable({
     data,
-    columns,
+    columns: onSelectedRowIdsChange
+      ? [
+          {
+            id: "select",
+            size: 36,
+            header: ({ table }) => (
+              <div className="flex items-center justify-center">
+                <Checkbox
+                  checked={
+                    table.getIsAllPageRowsSelected()
+                      ? true
+                      : table.getIsSomePageRowsSelected()
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={(checked) =>
+                    table.toggleAllPageRowsSelected(Boolean(checked))
+                  }
+                  aria-label={selectionAriaLabel}
+                  className="border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+                />
+              </div>
+            ),
+            cell: ({ row }) => (
+              <div className="flex items-center justify-center">
+                <Checkbox
+                  checked={row.getIsSelected()}
+                  onCheckedChange={(checked) =>
+                    row.toggleSelected(Boolean(checked))
+                  }
+                  aria-label={selectionAriaLabel}
+                  className="border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+                />
+              </div>
+            ),
+            enableHiding: false,
+          },
+          ...columns,
+        ]
+      : columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: (updater) => {
@@ -81,9 +131,24 @@ export function ManagerDataTable<TRow>({
         typeof updater === "function" ? updater(pagination) : updater;
       onPageIndexChange(nextPagination.pageIndex);
     },
+    enableRowSelection: Boolean(onSelectedRowIdsChange),
     getRowId,
+    onRowSelectionChange: (updater) => {
+      if (!onSelectedRowIdsChange) {
+        return;
+      }
+
+      const nextSelection =
+        typeof updater === "function" ? updater(rowSelection) : updater;
+      const nextRowIds = Object.entries(nextSelection)
+        .filter(([, selected]) => selected)
+        .map(([rowId]) => rowId);
+
+      onSelectedRowIdsChange(nextRowIds);
+    },
     state: {
       pagination,
+      rowSelection,
     },
     columnResizeMode,
   });
@@ -111,7 +176,9 @@ export function ManagerDataTable<TRow>({
                   <TableHead
                     key={header.id}
                     className={cn(
-                      "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-3",
+                      header.column.id === "select"
+                        ? "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-2"
+                        : "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-3",
                       getHeaderCellClassName?.(header.column.id),
                     )}
                     style={
@@ -138,13 +205,18 @@ export function ManagerDataTable<TRow>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-b border-border/50 transition-colors duration-150 hover:bg-muted/20"
+                  className={cn(
+                    "border-b border-border/50 transition-colors duration-150 hover:bg-muted/20",
+                    row.getIsSelected() ? "bg-muted/10" : null,
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
                       className={cn(
-                        "px-3 py-3 align-middle",
+                        cell.column.id === "select"
+                          ? "px-2 py-3 align-middle"
+                          : "px-3 py-3 align-middle",
                         getBodyCellClassName?.(cell.column.id),
                       )}
                       style={

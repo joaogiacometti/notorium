@@ -13,13 +13,20 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/routing";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 
 interface FlashcardDetailProps {
   flashcard: FlashcardEntity;
+  subjects: SubjectEntity[];
 }
 
-export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
+export function FlashcardDetail({
+  flashcard,
+  subjects,
+}: Readonly<FlashcardDetailProps>) {
   const t = useTranslations("FlashcardDetail");
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
@@ -103,9 +110,18 @@ export function FlashcardDetail({ flashcard }: Readonly<FlashcardDetailProps>) {
 
       <EditFlashcardDialog
         flashcard={currentFlashcard}
+        subjects={subjects}
         open={editOpen}
         onOpenChange={setEditOpen}
-        onUpdated={(updated) => setCurrentFlashcard(updated)}
+        onUpdated={(updated) => {
+          setCurrentFlashcard(updated);
+
+          if (updated.subjectId !== currentFlashcard.subjectId) {
+            router.replace(
+              `/subjects/${updated.subjectId}/flashcards/${updated.id}`,
+            );
+          }
+        }}
       />
       <ResetFlashcardDialog
         flashcardId={currentFlashcard.id}

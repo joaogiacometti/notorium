@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  bulkDeleteFlashcardsSchema,
+  bulkMoveFlashcardsSchema,
   createFlashcardSchema,
   deleteFlashcardSchema,
   editFlashcardSchema,
@@ -131,6 +133,16 @@ describe("editFlashcardSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects missing subjectId", () => {
+    const result = editFlashcardSchema.safeParse({
+      id: "flashcard-1",
+      front: "Front",
+      back: "Back",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects back with only empty rich text markup", () => {
     const result = editFlashcardSchema.safeParse({
       id: "flashcard-1",
@@ -183,6 +195,70 @@ describe("deleteFlashcardSchema", () => {
 
   it("rejects empty id", () => {
     const result = deleteFlashcardSchema.safeParse({ id: "" });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("bulkDeleteFlashcardsSchema", () => {
+  it("accepts valid ids", () => {
+    const result = bulkDeleteFlashcardsSchema.safeParse({
+      ids: ["flashcard-1", "flashcard-2"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty ids", () => {
+    const result = bulkDeleteFlashcardsSchema.safeParse({
+      ids: [],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects duplicate ids", () => {
+    const result = bulkDeleteFlashcardsSchema.safeParse({
+      ids: ["flashcard-1", "flashcard-1"],
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("bulkMoveFlashcardsSchema", () => {
+  it("accepts valid ids and subjectId", () => {
+    const result = bulkMoveFlashcardsSchema.safeParse({
+      ids: ["flashcard-1", "flashcard-2"],
+      subjectId: "subject-1",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty ids", () => {
+    const result = bulkMoveFlashcardsSchema.safeParse({
+      ids: [],
+      subjectId: "subject-1",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing subjectId", () => {
+    const result = bulkMoveFlashcardsSchema.safeParse({
+      ids: ["flashcard-1"],
+      subjectId: "",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects duplicate ids", () => {
+    const result = bulkMoveFlashcardsSchema.safeParse({
+      ids: ["flashcard-1", "flashcard-1"],
+      subjectId: "subject-1",
+    });
 
     expect(result.success).toBe(false);
   });

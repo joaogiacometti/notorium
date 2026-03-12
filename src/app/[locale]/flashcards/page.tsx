@@ -51,6 +51,7 @@ export default async function FlashcardsPage({
       >
         <FlashcardReviewClient
           initialState={reviewState}
+          subjects={subjects}
           subjectId={scopedSubjectId}
           embedded
         />

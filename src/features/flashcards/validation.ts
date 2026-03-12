@@ -63,6 +63,28 @@ export const deleteFlashcardSchema = z.object({
 
 export type DeleteFlashcardForm = z.infer<typeof deleteFlashcardSchema>;
 
+const bulkFlashcardIdsSchema = z
+  .array(z.string().min(1))
+  .min(1)
+  .refine((ids) => new Set(ids).size === ids.length);
+
+export const bulkDeleteFlashcardsSchema = z.object({
+  ids: bulkFlashcardIdsSchema,
+});
+
+export type BulkDeleteFlashcardsForm = z.infer<
+  typeof bulkDeleteFlashcardsSchema
+>;
+
+export const bulkMoveFlashcardsSchema = z.object({
+  ids: bulkFlashcardIdsSchema,
+  subjectId: z
+    .string()
+    .min(1, validationMessage("Validation.flashcards.subjectRequired")),
+});
+
+export type BulkMoveFlashcardsForm = z.infer<typeof bulkMoveFlashcardsSchema>;
+
 export const resetFlashcardSchema = z.object({
   id: z.string().min(1),
 });

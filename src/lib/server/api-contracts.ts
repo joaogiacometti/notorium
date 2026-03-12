@@ -133,6 +133,7 @@ export type EditFlashcardResult =
   | {
       success: true;
       flashcard: FlashcardEntity;
+      previousSubjectId: string;
     }
   | ActionErrorResult;
 export type GenerateFlashcardBackResult =
@@ -145,6 +146,21 @@ export type DeleteFlashcardResult =
   | {
       success: true;
       id: string;
+    }
+  | ActionErrorResult;
+export type BulkDeleteFlashcardsResult =
+  | {
+      success: true;
+      ids: string[];
+      subjectIds: string[];
+    }
+  | ActionErrorResult;
+export type BulkMoveFlashcardsResult =
+  | {
+      success: true;
+      ids: string[];
+      subjectId: string;
+      previousSubjectIds: string[];
     }
   | ActionErrorResult;
 export type ResetFlashcardResult =

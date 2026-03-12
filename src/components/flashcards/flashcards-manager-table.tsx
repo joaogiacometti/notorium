@@ -9,18 +9,41 @@ import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type {
   FlashcardEntity,
   FlashcardListEntity,
+  SubjectEntity,
 } from "@/lib/server/api-contracts";
+import { cn } from "@/lib/utils";
 import { FlashcardsTableRowActions } from "./flashcards-table-row-actions";
 
 interface FlashcardsManagerTableProps {
   flashcards: FlashcardListEntity[];
+  selectedFlashcardIds: string[];
+  subjects: SubjectEntity[];
   pageIndex: number;
   onPageIndexChange: (pageIndex: number) => void;
   onDeleted: (id: string) => void;
+  onSelectedFlashcardIdsChange: (ids: string[]) => void;
   onUpdated: (flashcard: FlashcardEntity) => void;
 }
 
+function getColumnClassName(columnId: string) {
+  switch (columnId) {
+    case "select":
+      return "w-9 min-w-9";
+    case "front":
+      return "w-full min-w-[14rem]";
+    case "back":
+      return "min-w-[10rem]";
+    case "subjectName":
+      return "min-w-[8rem]";
+    case "actions":
+      return "w-14 min-w-14";
+    default:
+      return "";
+  }
+}
+
 function getColumns(
+  subjects: SubjectEntity[],
   onUpdated: (flashcard: FlashcardEntity) => void,
   onDeleted: (id: string) => void,
   t: ReturnType<typeof useTranslations>,
@@ -88,9 +111,10 @@ function getColumns(
       size: 56,
       header: () => <div className="flex w-14 min-w-14 justify-start" />,
       cell: ({ row }) => (
-        <div className="flex w-14 min-w-14 items-center justify-start">
+        <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
             flashcard={row.original}
+            subjects={subjects}
             onUpdated={onUpdated}
             onDeleted={onDeleted}
           />
@@ -103,18 +127,24 @@ function getColumns(
 
 export function FlashcardsManagerTable({
   flashcards,
+  selectedFlashcardIds,
+  subjects,
   pageIndex,
   onPageIndexChange,
   onDeleted,
+  onSelectedFlashcardIdsChange,
   onUpdated,
 }: Readonly<FlashcardsManagerTableProps>) {
   const t = useTranslations("FlashcardsManager");
   return (
     <ManagerDataTable
       data={flashcards}
-      columns={getColumns(onUpdated, onDeleted, t)}
+      columns={getColumns(subjects, onUpdated, onDeleted, t)}
       pageIndex={pageIndex}
       onPageIndexChange={onPageIndexChange}
+      selectedRowIds={selectedFlashcardIds}
+      onSelectedRowIdsChange={onSelectedFlashcardIdsChange}
+      selectionAriaLabel={t("select_flashcard")}
       pageLabel={(current, total) =>
         t("page", {
           current,
@@ -125,10 +155,11 @@ export function FlashcardsManagerTable({
       nextLabel={t("next")}
       emptyLabel={t("no_results")}
       getRowId={(row) => row.id}
-      tableClassName="w-full table-fixed"
-      getBodyCellClassName={() => "px-3 py-3 align-middle"}
-      showColumnWidths
-      columnResizeMode="onChange"
+      tableClassName="w-full min-w-160"
+      getHeaderCellClassName={getColumnClassName}
+      getBodyCellClassName={(columnId) =>
+        cn("px-3 py-3 align-middle", getColumnClassName(columnId))
+      }
     />
   );
 }

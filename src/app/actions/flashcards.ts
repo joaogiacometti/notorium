@@ -1,6 +1,8 @@
 "use server";
 
 import {
+  bulkDeleteFlashcardsForUser,
+  bulkMoveFlashcardsForUser,
   createFlashcardForUser,
   deleteFlashcardForUser,
   editFlashcardForUser,
@@ -8,11 +10,18 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
+  revalidateFlashcardBulkDeletePaths,
+  revalidateFlashcardBulkMovePaths,
   revalidateFlashcardDetailPaths,
+  revalidateFlashcardMovePaths,
   revalidateFlashcardReviewPaths,
   revalidateFlashcardSubjectPaths,
 } from "@/features/flashcards/revalidation";
 import {
+  type BulkDeleteFlashcardsForm,
+  type BulkMoveFlashcardsForm,
+  bulkDeleteFlashcardsSchema,
+  bulkMoveFlashcardsSchema,
   type CreateFlashcardForm as CreateFlashcardInput,
   createFlashcardSchema as createFlashcardInputSchema,
   type DeleteFlashcardForm,
@@ -26,6 +35,8 @@ import {
 } from "@/features/flashcards/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
+  BulkDeleteFlashcardsResult,
+  BulkMoveFlashcardsResult,
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
@@ -63,10 +74,18 @@ export async function editFlashcard(
       const result = await editFlashcardForUser(userId, parsedData);
 
       if (result.success) {
-        revalidateFlashcardReviewPaths(
-          result.flashcard.subjectId,
-          parsedData.id,
-        );
+        if (result.previousSubjectId === result.flashcard.subjectId) {
+          revalidateFlashcardReviewPaths(
+            result.flashcard.subjectId,
+            parsedData.id,
+          );
+        } else {
+          revalidateFlashcardMovePaths(
+            result.previousSubjectId,
+            result.flashcard.subjectId,
+            parsedData.id,
+          );
+        }
       }
 
       return result;
@@ -102,6 +121,47 @@ export async function deleteFlashcard(
 
       revalidateFlashcardDetailPaths(result.subjectId, parsedData.id);
       return { success: true, id: parsedData.id };
+    },
+  );
+}
+
+export async function bulkDeleteFlashcards(
+  data: BulkDeleteFlashcardsForm,
+): Promise<BulkDeleteFlashcardsResult> {
+  return runValidatedUserAction(
+    bulkDeleteFlashcardsSchema,
+    data,
+    "common.invalidRequest",
+    async (userId, parsedData) => {
+      const result = await bulkDeleteFlashcardsForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateFlashcardBulkDeletePaths(result.subjectIds);
+      }
+
+      return result;
+    },
+  );
+}
+
+export async function bulkMoveFlashcards(
+  data: BulkMoveFlashcardsForm,
+): Promise<BulkMoveFlashcardsResult> {
+  return runValidatedUserAction(
+    bulkMoveFlashcardsSchema,
+    data,
+    "flashcards.invalidData",
+    async (userId, parsedData) => {
+      const result = await bulkMoveFlashcardsForUser(userId, parsedData);
+
+      if (result.success) {
+        revalidateFlashcardBulkMovePaths(
+          result.previousSubjectIds,
+          result.subjectId,
+        );
+      }
+
+      return result;
     },
   );
 }

@@ -14,16 +14,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 
 interface FlashcardsTableRowActionsProps {
   flashcard: FlashcardEntity;
+  subjects: SubjectEntity[];
   onUpdated: (flashcard: FlashcardEntity) => void;
   onDeleted: (id: string) => void;
 }
 
 export function FlashcardsTableRowActions({
   flashcard,
+  subjects,
   onUpdated,
   onDeleted,
 }: Readonly<FlashcardsTableRowActionsProps>) {
@@ -73,6 +78,7 @@ export function FlashcardsTableRowActions({
 
       <EditFlashcardDialog
         flashcard={flashcard}
+        subjects={subjects}
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdated={onUpdated}

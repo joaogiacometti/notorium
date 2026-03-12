@@ -14,16 +14,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 
 interface FlashcardCardProps {
   flashcard: FlashcardEntity;
+  subjects?: SubjectEntity[];
   onUpdated?: (flashcard: FlashcardEntity) => void;
   onDeleted?: (id: string) => void;
 }
 
 export function FlashcardCard({
   flashcard,
+  subjects,
   onUpdated,
   onDeleted,
 }: Readonly<FlashcardCardProps>) {
@@ -75,6 +80,7 @@ export function FlashcardCard({
 
       <EditFlashcardDialog
         flashcard={flashcard}
+        subjects={subjects}
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdated={onUpdated}
