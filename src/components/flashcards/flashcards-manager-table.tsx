@@ -9,7 +9,6 @@ import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type {
   FlashcardEntity,
   FlashcardListEntity,
-  SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 import { FlashcardsTableRowActions } from "./flashcards-table-row-actions";
@@ -17,8 +16,8 @@ import { FlashcardsTableRowActions } from "./flashcards-table-row-actions";
 interface FlashcardsManagerTableProps {
   flashcards: FlashcardListEntity[];
   selectedFlashcardIds: string[];
-  subjects: SubjectEntity[];
   pageIndex: number;
+  onEditRequested: (flashcard: FlashcardEntity) => void;
   onPageIndexChange: (pageIndex: number) => void;
   onDeleted: (id: string) => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
@@ -43,7 +42,7 @@ function getColumnClassName(columnId: string) {
 }
 
 function getColumns(
-  subjects: SubjectEntity[],
+  onEditRequested: (flashcard: FlashcardEntity) => void,
   onUpdated: (flashcard: FlashcardEntity) => void,
   onDeleted: (id: string) => void,
   t: ReturnType<typeof useTranslations>,
@@ -114,7 +113,7 @@ function getColumns(
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
             flashcard={row.original}
-            subjects={subjects}
+            onEditRequested={onEditRequested}
             onUpdated={onUpdated}
             onDeleted={onDeleted}
           />
@@ -128,8 +127,8 @@ function getColumns(
 export function FlashcardsManagerTable({
   flashcards,
   selectedFlashcardIds,
-  subjects,
   pageIndex,
+  onEditRequested,
   onPageIndexChange,
   onDeleted,
   onSelectedFlashcardIdsChange,
@@ -139,7 +138,7 @@ export function FlashcardsManagerTable({
   return (
     <ManagerDataTable
       data={flashcards}
-      columns={getColumns(subjects, onUpdated, onDeleted, t)}
+      columns={getColumns(onEditRequested, onUpdated, onDeleted, t)}
       pageIndex={pageIndex}
       onPageIndexChange={onPageIndexChange}
       selectedRowIds={selectedFlashcardIds}

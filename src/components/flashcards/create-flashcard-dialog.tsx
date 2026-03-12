@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
 import type { CreateFlashcardForm } from "@/features/flashcards/validation";
@@ -33,13 +34,18 @@ export function CreateFlashcardDialog({
   onOpenChange,
   onCreated,
 }: Readonly<CreateFlashcardDialogProps>) {
+  const values = useMemo(
+    () => getCreateFlashcardFormValues(subjectId ?? ""),
+    [subjectId],
+  );
+
   return (
     <FlashcardDialogForm
       mode="create"
       open={open}
       onOpenChange={onOpenChange}
       trigger={trigger}
-      values={getCreateFlashcardFormValues(subjectId ?? "")}
+      values={values}
       subjects={subjects}
       onSubmitAction={(values) =>
         createFlashcard(values as CreateFlashcardForm)

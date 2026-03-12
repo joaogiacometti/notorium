@@ -4,7 +4,6 @@ import { MoreVertical, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
-import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
 
 import { Button } from "@/components/ui/button";
@@ -14,27 +13,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type {
-  FlashcardEntity,
-  SubjectEntity,
-} from "@/lib/server/api-contracts";
+import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 interface FlashcardsTableRowActionsProps {
   flashcard: FlashcardEntity;
-  subjects: SubjectEntity[];
+  onEditRequested: (flashcard: FlashcardEntity) => void;
   onUpdated: (flashcard: FlashcardEntity) => void;
   onDeleted: (id: string) => void;
 }
 
 export function FlashcardsTableRowActions({
   flashcard,
-  subjects,
+  onEditRequested,
   onUpdated,
   onDeleted,
 }: Readonly<FlashcardsTableRowActionsProps>) {
   const t = useTranslations("FlashcardsList");
 
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
 
@@ -53,7 +48,7 @@ export function FlashcardsTableRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={() => setEditOpen(true)}
+            onClick={() => onEditRequested(flashcard)}
             className="cursor-pointer"
           >
             <Pencil className="size-4" />
@@ -76,13 +71,6 @@ export function FlashcardsTableRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <EditFlashcardDialog
-        flashcard={flashcard}
-        subjects={subjects}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onUpdated={onUpdated}
-      />
       <ResetFlashcardDialog
         flashcardId={flashcard.id}
         flashcardFront={flashcard.front}

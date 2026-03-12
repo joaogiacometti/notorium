@@ -14,6 +14,7 @@ import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import { BulkDeleteFlashcardsDialog } from "@/components/flashcards/bulk-delete-flashcards-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/bulk-move-flashcards-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
+import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { FlashcardsManagerTable } from "@/components/flashcards/flashcards-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,9 @@ export function FlashcardsManager({
   const [createOpen, setCreateOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [editingFlashcardId, setEditingFlashcardId] = useState<string | null>(
+    null,
+  );
   const [pageIndex, setPageIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
@@ -91,6 +95,12 @@ export function FlashcardsManager({
     subjectId: selectedSubjectId,
   });
   const hasSubjects = subjects.length > 0;
+  const editingFlashcard =
+    editingFlashcardId === null
+      ? null
+      : (localFlashcards.find(
+          (currentFlashcard) => currentFlashcard.id === editingFlashcardId,
+        ) ?? null);
 
   useEffect(() => {
     const filteredIds = new Set(
@@ -142,6 +152,7 @@ export function FlashcardsManager({
     setLocalFlashcards((current) =>
       current.filter((flashcard) => flashcard.id !== id),
     );
+    setEditingFlashcardId((current) => (current === id ? null : current));
     setSelectedFlashcardIds((current) =>
       current.filter((flashcardId) => flashcardId !== id),
     );
@@ -167,6 +178,9 @@ export function FlashcardsManager({
 
       return nextFlashcards;
     });
+    setEditingFlashcardId((current) =>
+      current !== null && ids.includes(current) ? null : current,
+    );
     setSelectedFlashcardIds([]);
   }
 
@@ -199,6 +213,12 @@ export function FlashcardsManager({
       return nextFlashcards;
     });
     setSelectedFlashcardIds([]);
+  }
+
+  function handleEditOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setEditingFlashcardId(null);
+    }
   }
 
   return (
@@ -358,8 +378,8 @@ export function FlashcardsManager({
           <FlashcardsManagerTable
             flashcards={filteredFlashcards}
             selectedFlashcardIds={selectedFlashcardIds}
-            subjects={subjects}
             pageIndex={pageIndex}
+            onEditRequested={(flashcard) => setEditingFlashcardId(flashcard.id)}
             onPageIndexChange={setPageIndex}
             onUpdated={handleUpdated}
             onDeleted={handleDeleted}
@@ -395,6 +415,15 @@ export function FlashcardsManager({
         subjectId={selectedSubjectId}
         subjects={subjects}
       />
+      {editingFlashcard ? (
+        <EditFlashcardDialog
+          flashcard={editingFlashcard}
+          subjects={subjects}
+          open={editingFlashcardId !== null}
+          onOpenChange={handleEditOpenChange}
+          onUpdated={handleUpdated}
+        />
+      ) : null}
       <BulkDeleteFlashcardsDialog
         ids={selectedFlashcardIds}
         open={bulkDeleteOpen}

@@ -102,8 +102,10 @@ export function FlashcardDialogForm({
   const form = useFlashcardForm(mode, values);
 
   useEffect(() => {
-    form.reset(values);
-  }, [form, values]);
+    if (!open || !form.formState.isDirty) {
+      form.reset(values);
+    }
+  }, [form, open, values, form.formState.isDirty]);
 
   useBeforeUnload(
     open && form.formState.isDirty && !form.formState.isSubmitting,
