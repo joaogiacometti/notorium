@@ -39,6 +39,7 @@ import type {
   FlashcardManagePage,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
 interface FlashcardsManagerProps {
@@ -56,6 +57,7 @@ export function FlashcardsManager({
   initialSubjectId,
 }: Readonly<FlashcardsManagerProps>) {
   const t = useTranslations("FlashcardsManager");
+  const warningTone = getStatusToneClasses("warning");
   const pathname = usePathname();
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -330,9 +332,11 @@ export function FlashcardsManager({
         </CardContent>
       </Card>
       {selectedSubjectId && isAtSubjectLimit ? (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-linear-to-r from-amber-500/12 via-amber-500/8 to-transparent px-4 py-2.5 text-sm shadow-xs">
-          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-amber-800 dark:text-amber-200">
+        <div
+          className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 text-sm shadow-xs ${warningTone.border} ${warningTone.bg}`}
+        >
+          <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
+          <p className={warningTone.text}>
             {t("limit_message", { max: LIMITS.maxFlashcardsPerSubject })}
           </p>
         </div>

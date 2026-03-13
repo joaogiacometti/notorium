@@ -113,6 +113,7 @@ export function GradesSummary({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const t = useTranslations("GradesSummary");
+  const dangerTone = getStatusToneClasses("danger");
   const [editTarget, setEditTarget] = useState<AssessmentEntity | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AssessmentEntity | null>(
     null,
@@ -168,7 +169,7 @@ export function GradesSummary({
           item.status === "completed"
             ? "border-border bg-muted/20"
             : overdue
-              ? "border-red-500/40 bg-card"
+              ? `${dangerTone.border} bg-card`
               : "border-border bg-card"
         }
         onEdit={setEditTarget}

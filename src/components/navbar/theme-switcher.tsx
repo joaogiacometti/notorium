@@ -43,6 +43,12 @@ export function ModeToggle() {
           {t("dark")}
         </DropdownMenuItem>
         <DropdownMenuItem
+          onClick={() => setTheme("halloween")}
+          className="cursor-pointer"
+        >
+          {t("halloween")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
           onClick={() => setTheme("system")}
           className="cursor-pointer"
         >

@@ -59,10 +59,10 @@ const reviewContentFrameClassName = "mx-auto flex min-h-0 w-full max-w-5xl";
 const reviewContentMeasureClassName = "w-full max-w-[58rem]";
 const gradeButtonStyles: Record<ReviewGrade, string> = {
   again:
-    "border-destructive/45 bg-destructive/10 text-destructive hover:border-destructive/60 hover:bg-destructive/15",
-  hard: "border-amber-500/40 bg-amber-500/10 text-amber-700 hover:border-amber-500/55 hover:bg-amber-500/15 dark:text-amber-300",
-  good: "border-primary/45 bg-primary/10 text-primary hover:border-primary/60 hover:bg-primary/15",
-  easy: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:border-emerald-500/55 hover:bg-emerald-500/15 dark:text-emerald-300",
+    "border-[color:var(--review-again-border)] bg-[color:var(--review-again-bg)] text-[color:var(--review-again-text)] hover:border-[color:var(--review-again-border-hover)] hover:bg-[color:var(--review-again-bg-hover)]",
+  hard: "border-[color:var(--review-hard-border)] bg-[color:var(--review-hard-bg)] text-[color:var(--review-hard-text)] hover:border-[color:var(--review-hard-border-hover)] hover:bg-[color:var(--review-hard-bg-hover)]",
+  good: "border-[color:var(--review-good-border)] bg-[color:var(--review-good-bg)] text-[color:var(--review-good-text)] hover:border-[color:var(--review-good-border-hover)] hover:bg-[color:var(--review-good-bg-hover)]",
+  easy: "border-[color:var(--review-easy-border)] bg-[color:var(--review-easy-bg)] text-[color:var(--review-easy-text)] hover:border-[color:var(--review-easy-border-hover)] hover:bg-[color:var(--review-easy-bg-hover)]",
 };
 const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
   again: CircleAlert,

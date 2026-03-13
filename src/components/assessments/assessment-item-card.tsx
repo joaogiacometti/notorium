@@ -154,7 +154,7 @@ export function AssessmentItemCard({
             className={cn(
               "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs",
               overdue
-                ? "border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400"
+                ? `${STATUS_TONE.overdue.border} ${STATUS_TONE.overdue.bg} ${STATUS_TONE.overdue.text}`
                 : "border-border/50 bg-muted/30 text-muted-foreground",
             )}
           >

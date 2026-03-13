@@ -32,53 +32,39 @@ import {
   resolveCalendarDate,
 } from "@/lib/dates/calendar";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { getStatusToneClasses, type StatusTone } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
-type EventTone = "amber" | "emerald" | "red";
+type EventTone = StatusTone;
 
 function getEventTone(event: CalendarEvent, todayIso: string): EventTone {
   if (event.kind === "miss") {
-    return "red";
+    return "danger";
   }
 
   const status = event.meta?.status;
   if (status === "pending" && event.date < todayIso) {
-    return "red";
+    return "danger";
   }
 
   if (status === "completed") {
-    return "emerald";
+    return "success";
   }
 
-  return "amber";
+  return "warning";
 }
 
 function EventDot({ event }: Readonly<{ event: CalendarEvent }>) {
   const todayIso = format(new Date(), "yyyy-MM-dd");
   const tone = getEventTone(event, todayIso);
-
-  const toneClass =
-    tone === "red"
-      ? "bg-red-500"
-      : tone === "emerald"
-        ? "bg-emerald-500"
-        : "bg-amber-500";
+  const toneClass = getStatusToneClasses(tone).fill;
 
   return <span className={cn("inline-block size-2 rounded-full", toneClass)} />;
 }
 
 function getEventChipToneClass(event: CalendarEvent, todayIso: string) {
-  const tone = getEventTone(event, todayIso);
-
-  if (tone === "red") {
-    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
-  }
-
-  if (tone === "emerald") {
-    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-  }
-
-  return "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+  const tone = getStatusToneClasses(getEventTone(event, todayIso));
+  return `${tone.border} ${tone.bg} ${tone.text}`;
 }
 
 function getAssessmentTypeLabel(

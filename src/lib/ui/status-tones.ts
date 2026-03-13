@@ -9,22 +9,22 @@ interface StatusToneClasses {
 
 const STATUS_TONE_CLASSES: Record<StatusTone, StatusToneClasses> = {
   success: {
-    text: "text-emerald-600 dark:text-emerald-400",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/30",
-    fill: "bg-emerald-500",
+    text: "text-[color:var(--status-success-text)]",
+    bg: "bg-[color:var(--status-success-bg)]",
+    border: "border-[color:var(--status-success-border)]",
+    fill: "bg-[color:var(--status-success-fill)]",
   },
   warning: {
-    text: "text-amber-600 dark:text-amber-400",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/30",
-    fill: "bg-amber-500",
+    text: "text-[color:var(--status-warning-text)]",
+    bg: "bg-[color:var(--status-warning-bg)]",
+    border: "border-[color:var(--status-warning-border)]",
+    fill: "bg-[color:var(--status-warning-fill)]",
   },
   danger: {
-    text: "text-red-600 dark:text-red-400",
-    bg: "bg-red-500/10",
-    border: "border-red-500/30",
-    fill: "bg-red-500",
+    text: "text-[color:var(--status-danger-text)]",
+    bg: "bg-[color:var(--status-danger-bg)]",
+    border: "border-[color:var(--status-danger-border)]",
+    fill: "bg-[color:var(--status-danger-fill)]",
   },
 };
 

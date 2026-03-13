@@ -37,7 +37,13 @@ export default async function RootLayout({
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
-            themes={["light", "dark", "catppuccin-mocha", "catppuccin-latte"]}
+            themes={[
+              "light",
+              "dark",
+              "halloween",
+              "catppuccin-mocha",
+              "catppuccin-latte",
+            ]}
           >
             <QueryProvider>
               {children}

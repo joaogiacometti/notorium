@@ -10,6 +10,7 @@ import { getTotalSubjectCount } from "@/features/subjects/subjects-count";
 import { Link } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface SubjectsListProps {
   subjects: SubjectEntity[];
@@ -22,6 +23,7 @@ export function SubjectsList({
 }: Readonly<SubjectsListProps>) {
   const t = useTranslations("SubjectsList");
   const [createOpen, setCreateOpen] = useState(false);
+  const warningTone = getStatusToneClasses("warning");
 
   const totalSubjects = getTotalSubjectCount(subjects.length, archivedCount);
   const isAtLimit = totalSubjects >= LIMITS.maxSubjects;
@@ -60,9 +62,11 @@ export function SubjectsList({
       </div>
 
       {isAtLimit && (
-        <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
-          <Lock className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-amber-800 dark:text-amber-200">
+        <div
+          className={`mb-6 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm ${warningTone.border} ${warningTone.bg}`}
+        >
+          <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
+          <p className={warningTone.text}>
             {t("limit_message", { max: LIMITS.maxSubjects })}
           </p>
         </div>
