@@ -24,7 +24,9 @@
     "toggle_theme": "Toggle theme",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "catppuccin_mocha": "Catppuccin mocha",
+    "catppuccin_latte": "Catppuccin latte"
   },
   "Index": {
     "badge": "100% Free & Open Source",

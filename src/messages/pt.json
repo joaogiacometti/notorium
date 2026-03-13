@@ -24,7 +24,9 @@
     "toggle_theme": "Alternar tema",
     "light": "Claro",
     "dark": "Escuro",
-    "system": "Sistema"
+    "system": "Sistema",
+    "catppuccin_mocha": "Catppuccin mocha",
+    "catppuccin_latte": "Catppuccin latte"
   },
   "Index": {
     "badge": "100% Gratuito e Código Aberto",

@@ -38,6 +38,7 @@ export default async function RootLayout({
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
+            themes={["light", "dark", "catppuccin-mocha", "catppuccin-latte"]}
           >
             <QueryProvider>
               <Navbar />

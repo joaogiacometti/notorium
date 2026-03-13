@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, Monitor, Moon, Palette, Settings, Sun } from "lucide-react";
+import { Globe, Palette, Settings } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,47 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { usePathname, useRouter } from "@/i18n/routing";
-import { cn } from "@/lib/utils";
 
 type AppLocale = "en" | "pt";
-type AppTheme = "light" | "dark" | "system";
+type AppTheme =
+  | "system"
+  | "light"
+  | "dark"
+  | "catppuccin-mocha"
+  | "catppuccin-latte";
+type ThemeOption = {
+  id: AppTheme;
+  labelKey:
+    | "system"
+    | "light"
+    | "dark"
+    | "catppuccin_mocha"
+    | "catppuccin_latte";
+};
+
+const themeOptions: ThemeOption[] = [
+  { id: "system", labelKey: "system" },
+  { id: "light", labelKey: "light" },
+  { id: "dark", labelKey: "dark" },
+  { id: "catppuccin-mocha", labelKey: "catppuccin_mocha" },
+  { id: "catppuccin-latte", labelKey: "catppuccin_latte" },
+];
+const appThemes: AppTheme[] = themeOptions.map((option) => option.id);
 
 function isLocale(value: string): value is AppLocale {
   return value === "en" || value === "pt";
+}
+
+function isAppTheme(value: string | undefined): value is AppTheme {
+  return value !== undefined && appThemes.some((theme) => theme === value);
 }
 
 export function PreferencesDialog() {
@@ -31,10 +64,7 @@ export function PreferencesDialog() {
   const { theme, setTheme } = useTheme();
 
   const currentLocale = isLocale(locale) ? locale : "en";
-  const currentTheme =
-    theme === "light" || theme === "dark" || theme === "system"
-      ? theme
-      : "system";
+  const currentTheme = isAppTheme(theme) ? theme : "system";
 
   const handleLocaleChange = (nextLocale: AppLocale) => {
     if (nextLocale === currentLocale) {
@@ -113,38 +143,32 @@ export function PreferencesDialog() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <Button
-                type="button"
-                variant={currentTheme === "light" ? "default" : "outline"}
-                className="h-10 justify-start sm:justify-center"
-                onClick={() => handleThemeChange("light")}
+            <Select
+              value={currentTheme}
+              onValueChange={(value) => {
+                if (!isAppTheme(value)) {
+                  return;
+                }
+
+                handleThemeChange(value);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                align="start"
+                className="z-[60] w-[var(--radix-select-trigger-width)]"
               >
-                <Sun className="size-4" />
-                <span>{t("light")}</span>
-              </Button>
-              <Button
-                type="button"
-                variant={currentTheme === "dark" ? "default" : "outline"}
-                className="h-10 justify-start sm:justify-center"
-                onClick={() => handleThemeChange("dark")}
-              >
-                <Moon className="size-4" />
-                <span>{t("dark")}</span>
-              </Button>
-              <Button
-                type="button"
-                variant={currentTheme === "system" ? "default" : "outline"}
-                className={cn(
-                  "h-10 justify-start sm:justify-center",
-                  currentTheme !== "system" && "text-muted-foreground",
-                )}
-                onClick={() => handleThemeChange("system")}
-              >
-                <Monitor className="size-4" />
-                <span>{t("system")}</span>
-              </Button>
-            </div>
+                {themeOptions.map((option) => {
+                  return (
+                    <SelectItem key={option.id} value={option.id}>
+                      {t(option.labelKey)}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </section>
           <p className="text-xs text-muted-foreground">
             {t("preferences_hint")}

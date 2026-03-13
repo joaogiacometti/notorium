@@ -48,6 +48,18 @@ export function ModeToggle() {
         >
           {t("system")}
         </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setTheme("catppuccin-mocha")}
+          className="cursor-pointer"
+        >
+          {t("catppuccin_mocha")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setTheme("catppuccin-latte")}
+          className="cursor-pointer"
+        >
+          {t("catppuccin_latte")}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
