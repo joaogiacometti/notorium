@@ -61,6 +61,15 @@ export async function getOptionalSession() {
   return state.session;
 }
 
+export async function getOptionalSessionAccess() {
+  const state = await getSessionAccess();
+  if (!state || state.account.accessStatus !== "approved") {
+    return null;
+  }
+
+  return state;
+}
+
 export async function requireSession() {
   const state = await getSessionAccess();
 

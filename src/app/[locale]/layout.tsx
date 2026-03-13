@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { Navbar } from "@/components/navbar/navbar";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -41,7 +40,6 @@ export default async function RootLayout({
             themes={["light", "dark", "catppuccin-mocha", "catppuccin-latte"]}
           >
             <QueryProvider>
-              <Navbar />
               {children}
               <Toaster />
             </QueryProvider>

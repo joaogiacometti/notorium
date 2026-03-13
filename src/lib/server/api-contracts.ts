@@ -19,6 +19,19 @@ export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 export type FlashcardListEntity = FlashcardEntity & {
   subjectName: string;
 };
+export type FlashcardManageItem = Pick<
+  FlashcardEntity,
+  "id" | "subjectId" | "updatedAt"
+> & {
+  frontExcerpt: string;
+  backExcerpt: string;
+  subjectName: string;
+};
+export interface FlashcardManagePage {
+  items: FlashcardManageItem[];
+  total: number;
+  subjectCardCount: number | null;
+}
 export type FlashcardReviewLogEntity = InferSelectModel<
   typeof flashcardReviewLog
 >;

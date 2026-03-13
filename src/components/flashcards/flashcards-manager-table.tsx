@@ -5,23 +5,23 @@ import { CreditCard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
-import { getRichTextExcerpt } from "@/lib/editor/rich-text";
-import type {
-  FlashcardEntity,
-  FlashcardListEntity,
-} from "@/lib/server/api-contracts";
+import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 import { FlashcardsTableRowActions } from "./flashcards-table-row-actions";
 
 interface FlashcardsManagerTableProps {
-  flashcards: FlashcardListEntity[];
+  flashcards: FlashcardManageItem[];
+  total: number;
   selectedFlashcardIds: string[];
   pageIndex: number;
-  onEditRequested: (flashcard: FlashcardEntity) => void;
+  pageSize: number;
+  isLoading: boolean;
+  loadingLabel: string;
+  onEditRequested: (flashcardId: string) => void;
   onPageIndexChange: (pageIndex: number) => void;
-  onDeleted: (id: string) => void;
+  onDeleted: () => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
-  onUpdated: (flashcard: FlashcardEntity) => void;
+  onUpdated: () => void;
 }
 
 function getColumnClassName(columnId: string) {
@@ -42,11 +42,11 @@ function getColumnClassName(columnId: string) {
 }
 
 function getColumns(
-  onEditRequested: (flashcard: FlashcardEntity) => void,
-  onUpdated: (flashcard: FlashcardEntity) => void,
-  onDeleted: (id: string) => void,
+  onEditRequested: (flashcardId: string) => void,
+  onUpdated: () => void,
+  onDeleted: () => void,
   t: ReturnType<typeof useTranslations>,
-): ColumnDef<FlashcardListEntity>[] {
+): ColumnDef<FlashcardManageItem>[] {
   return [
     {
       accessorKey: "front",
@@ -64,9 +64,9 @@ function getColumns(
           <div className="min-w-0 flex-1">
             <div
               className="truncate text-sm font-semibold leading-6 text-foreground/95"
-              title={getRichTextExcerpt(row.original.front, 240)}
+              title={row.original.frontExcerpt}
             >
-              {getRichTextExcerpt(row.original.front, 25)}
+              {row.original.frontExcerpt}
             </div>
           </div>
         </div>
@@ -83,9 +83,9 @@ function getColumns(
       cell: ({ row }) => (
         <div
           className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
-          title={getRichTextExcerpt(row.original.back, 280)}
+          title={row.original.backExcerpt}
         >
-          {getRichTextExcerpt(row.original.back, 25)}
+          {row.original.backExcerpt}
         </div>
       ),
     },
@@ -113,7 +113,7 @@ function getColumns(
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
             flashcard={row.original}
-            onEditRequested={onEditRequested}
+            onEditRequested={() => onEditRequested(row.original.id)}
             onUpdated={onUpdated}
             onDeleted={onDeleted}
           />
@@ -126,8 +126,12 @@ function getColumns(
 
 export function FlashcardsManagerTable({
   flashcards,
+  total,
   selectedFlashcardIds,
   pageIndex,
+  pageSize,
+  isLoading,
+  loadingLabel,
   onEditRequested,
   onPageIndexChange,
   onDeleted,
@@ -140,6 +144,10 @@ export function FlashcardsManagerTable({
       data={flashcards}
       columns={getColumns(onEditRequested, onUpdated, onDeleted, t)}
       pageIndex={pageIndex}
+      pageCount={Math.max(1, Math.ceil(total / pageSize))}
+      pageSize={pageSize}
+      isLoading={isLoading}
+      loadingLabel={loadingLabel}
       onPageIndexChange={onPageIndexChange}
       selectedRowIds={selectedFlashcardIds}
       onSelectedRowIdsChange={onSelectedFlashcardIdsChange}

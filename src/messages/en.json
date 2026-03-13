@@ -186,6 +186,7 @@
     "table_actions": "Actions",
     "select_flashcard": "Select flashcard",
     "no_results": "No flashcards match your filters.",
+    "loading_table": "Loading flashcards...",
     "prev": "Previous",
     "next": "Next",
     "page": "Page {current} of {total}"
@@ -341,6 +342,7 @@
     "input_placeholder": "Search subjects, notes, and flashcards...",
     "empty_has_data": "No subjects, notes, or flashcards yet.",
     "empty_sign_in": "Sign in to search.",
+    "recent_prefix": "Recent",
     "subjects_group": "Subjects",
     "notes_group": "Notes",
     "flashcards_group": "Flashcards",

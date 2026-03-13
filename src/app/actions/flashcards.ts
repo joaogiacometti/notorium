@@ -10,6 +10,10 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
+  getFlashcardByIdForUser,
+  getFlashcardsManagePageForUser,
+} from "@/features/flashcards/queries";
+import {
   revalidateFlashcardBulkDeletePaths,
   revalidateFlashcardBulkMovePaths,
   revalidateFlashcardDetailPaths,
@@ -28,6 +32,8 @@ import {
   deleteFlashcardSchema,
   type EditFlashcardForm,
   editFlashcardSchema,
+  type FlashcardsManageQueryInput,
+  flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
   generateFlashcardBackSchema,
   type ResetFlashcardForm,
@@ -40,9 +46,15 @@ import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
+  FlashcardEntity,
+  FlashcardManagePage,
   GenerateFlashcardBackResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
+import {
+  type ActionErrorResult,
+  actionError,
+} from "@/lib/server/server-action-errors";
 
 export async function createFlashcard(
   data: CreateFlashcardInput,
@@ -184,6 +196,37 @@ export async function resetFlashcard(
       }
 
       return result;
+    },
+  );
+}
+
+export async function getFlashcardsManagePage(
+  data: FlashcardsManageQueryInput,
+): Promise<FlashcardManagePage | ActionErrorResult> {
+  return runValidatedUserAction(
+    flashcardsManageQuerySchema,
+    data,
+    "common.invalidRequest",
+    async (userId, parsedData) =>
+      getFlashcardsManagePageForUser(userId, parsedData),
+  );
+}
+
+export async function getFlashcardForManage(
+  data: DeleteFlashcardForm,
+): Promise<{ flashcard: FlashcardEntity } | ActionErrorResult> {
+  return runValidatedUserAction(
+    deleteFlashcardSchema,
+    data,
+    "common.invalidRequest",
+    async (userId, parsedData) => {
+      const flashcard = await getFlashcardByIdForUser(userId, parsedData.id);
+
+      if (!flashcard) {
+        return actionError("flashcards.notFound");
+      }
+
+      return { flashcard };
     },
   );
 }

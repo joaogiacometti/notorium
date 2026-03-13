@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileText, Layers, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { getSearchData } from "@/app/actions/search";
+import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/command";
 import { useRouter } from "@/i18n/routing";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
+import { searchMinQueryLength } from "@/lib/validations/search";
 
 interface GlobalSearchProps {
   userId: string;
@@ -41,7 +42,20 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const { data, isPending } = useQuery({
     queryKey: ["search-data", userId, debouncedQuery],
     queryFn: () => getSearchData(debouncedQuery),
-    enabled: open && userId.length > 0,
+    enabled:
+      open &&
+      userId.length > 0 &&
+      debouncedQuery.trim().length >= searchMinQueryLength,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
+  });
+  const recentQuery = useQuery({
+    queryKey: ["search-data", "recent", userId],
+    queryFn: () => getRecentSearchData(),
+    enabled:
+      open &&
+      userId.length > 0 &&
+      debouncedQuery.trim().length < searchMinQueryLength,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
   });
@@ -72,12 +86,17 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
     }
   }
 
-  const subjects = data?.subjects ?? [];
-  const notes = data?.notes ?? [];
-  const flashcards = data?.flashcards ?? [];
+  const canSearch =
+    userId.length > 0 && debouncedQuery.trim().length >= searchMinQueryLength;
+  const isAuthenticated = userId.length > 0;
+  const showingRecents = isAuthenticated && !canSearch;
+  const currentData = canSearch ? data : recentQuery.data;
+  const isResultsPending = canSearch ? isPending : recentQuery.isPending;
+  const subjects = currentData?.subjects ?? [];
+  const notes = currentData?.notes ?? [];
+  const flashcards = currentData?.flashcards ?? [];
   const hasData =
     subjects.length > 0 || notes.length > 0 || flashcards.length > 0;
-  const canSearch = userId.length > 0;
 
   return (
     <>
@@ -106,15 +125,22 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
           placeholder={t("input_placeholder")}
         />
         <CommandList>
-          {isPending && <SearchSkeleton />}
-          {!isPending && !hasData && (
-            <CommandEmpty>
-              {canSearch ? t("empty_has_data") : t("empty_sign_in")}
-            </CommandEmpty>
+          {canSearch && isPending && <SearchSkeleton />}
+          {!isResultsPending && !isAuthenticated && (
+            <CommandEmpty>{t("empty_sign_in")}</CommandEmpty>
+          )}
+          {!isResultsPending && isAuthenticated && !hasData && (
+            <CommandEmpty>{t("empty_has_data")}</CommandEmpty>
           )}
 
           {subjects.length > 0 && (
-            <CommandGroup heading={t("subjects_group")}>
+            <CommandGroup
+              heading={
+                showingRecents
+                  ? `${t("recent_prefix")} ${t("subjects_group")}`
+                  : t("subjects_group")
+              }
+            >
               {subjects.map((subj) => (
                 <CommandItem
                   key={subj.id}
@@ -141,7 +167,13 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
           )}
 
           {notes.length > 0 && (
-            <CommandGroup heading={t("notes_group")}>
+            <CommandGroup
+              heading={
+                showingRecents
+                  ? `${t("recent_prefix")} ${t("notes_group")}`
+                  : t("notes_group")
+              }
+            >
               {notes.map((n) => (
                 <CommandItem
                   key={n.id}
@@ -174,7 +206,13 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
           )}
 
           {flashcards.length > 0 && (
-            <CommandGroup heading={t("flashcards_group")}>
+            <CommandGroup
+              heading={
+                showingRecents
+                  ? `${t("recent_prefix")} ${t("flashcards_group")}`
+                  : t("flashcards_group")
+              }
+            >
               {flashcards.map((fc) => (
                 <CommandItem
                   key={fc.id}

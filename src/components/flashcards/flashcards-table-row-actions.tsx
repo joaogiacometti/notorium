@@ -13,13 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 
 interface FlashcardsTableRowActionsProps {
-  flashcard: FlashcardEntity;
-  onEditRequested: (flashcard: FlashcardEntity) => void;
-  onUpdated: (flashcard: FlashcardEntity) => void;
-  onDeleted: (id: string) => void;
+  flashcard: FlashcardManageItem;
+  onEditRequested: () => void;
+  onUpdated: () => void;
+  onDeleted: () => void;
 }
 
 export function FlashcardsTableRowActions({
@@ -48,7 +48,7 @@ export function FlashcardsTableRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={() => onEditRequested(flashcard)}
+            onClick={onEditRequested}
             className="cursor-pointer"
           >
             <Pencil className="size-4" />
@@ -73,17 +73,17 @@ export function FlashcardsTableRowActions({
 
       <ResetFlashcardDialog
         flashcardId={flashcard.id}
-        flashcardFront={flashcard.front}
+        flashcardFront={flashcard.frontExcerpt}
         open={resetOpen}
         onOpenChange={setResetOpen}
-        onReset={onUpdated}
+        onReset={() => onUpdated()}
       />
       <DeleteFlashcardDialog
         flashcardId={flashcard.id}
-        flashcardFront={flashcard.front}
+        flashcardFront={flashcard.frontExcerpt}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onDeleted={onDeleted}
+        onDeleted={() => onDeleted()}
       />
     </>
   );

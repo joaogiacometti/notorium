@@ -111,9 +111,7 @@ export async function reviewFlashcardForUser(
     return actionError("flashcards.review.notFound");
   }
 
-  try {
-    await maybeOptimizeFsrsParameters(userId);
-  } catch {}
+  void maybeOptimizeFsrsParameters(userId).catch(() => {});
 
   return {
     success: true,

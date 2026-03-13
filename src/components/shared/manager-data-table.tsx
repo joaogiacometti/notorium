@@ -9,6 +9,7 @@ import {
   type RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
+import { Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,10 @@ interface ManagerDataTableProps<TRow> {
   footerLeading?: ReactNode;
   getBodyCellClassName?: (columnId: string) => string;
   getHeaderCellClassName?: (columnId: string) => string;
+  isLoading?: boolean;
+  loadingLabel?: string;
   onSelectedRowIdsChange?: (rowIds: string[]) => void;
+  pageCount?: number;
   pageSize?: number;
   selectedRowIds?: string[];
   selectionAriaLabel?: string;
@@ -65,7 +69,10 @@ export function ManagerDataTable<TRow>({
   footerLeading,
   getBodyCellClassName,
   getHeaderCellClassName,
+  isLoading = false,
+  loadingLabel = "Loading...",
   onSelectedRowIdsChange,
+  pageCount,
   pageSize = 25,
   selectedRowIds,
   selectionAriaLabel = "Select row",
@@ -150,10 +157,12 @@ export function ManagerDataTable<TRow>({
       pagination,
       rowSelection,
     },
+    manualPagination: typeof pageCount === "number",
+    pageCount,
     columnResizeMode,
   });
 
-  const pageCount = Math.max(table.getPageCount(), 1);
+  const totalPageCount = Math.max(table.getPageCount(), 1);
 
   return (
     <div
@@ -161,9 +170,13 @@ export function ManagerDataTable<TRow>({
         "flex h-full flex-col lg:min-h-0 lg:flex-1",
         wrapperClassName,
       )}
+      aria-busy={isLoading}
     >
       <div
-        className={cn("min-h-0 flex-1 overflow-y-auto", scrollAreaClassName)}
+        className={cn(
+          "relative min-h-0 flex-1 overflow-y-auto",
+          scrollAreaClassName,
+        )}
       >
         <Table className={tableClassName}>
           <TableHeader>
@@ -247,6 +260,14 @@ export function ManagerDataTable<TRow>({
             )}
           </TableBody>
         </Table>
+        {isLoading ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/65 backdrop-blur-[1px]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-sm text-muted-foreground shadow-xs">
+              <Loader2 className="size-4 animate-spin" />
+              <span>{loadingLabel}</span>
+            </div>
+          </div>
+        ) : null}
       </div>
       <div
         className={cn(
@@ -265,14 +286,14 @@ export function ManagerDataTable<TRow>({
             variant="outline"
             className="rounded-full border-border/70 bg-background/80 px-3 py-1 text-muted-foreground"
           >
-            {pageLabel(pagination.pageIndex + 1, pageCount)}
+            {pageLabel(pagination.pageIndex + 1, totalPageCount)}
           </Badge>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            disabled={isLoading || !table.getCanPreviousPage()}
             className="rounded-full border-border/70 bg-background/80 px-4"
           >
             {prevLabel}
@@ -282,7 +303,7 @@ export function ManagerDataTable<TRow>({
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            disabled={isLoading || !table.getCanNextPage()}
             className="rounded-full border-border/70 bg-background/80 px-4"
           >
             {nextLabel}

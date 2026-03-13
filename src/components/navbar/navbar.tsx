@@ -22,16 +22,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/routing";
-import { isAdminUser } from "@/lib/auth/access-control";
-import { getOptionalSession } from "@/lib/auth/auth";
+import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
 export async function Navbar() {
-  const session = await getOptionalSession();
+  const authState = await getOptionalSessionAccess();
+  const session = authState?.session ?? null;
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
   const logoHref = session ? "/subjects" : "/";
   const t = await getTranslations("Navigation");
-  const isAdmin = session ? await isAdminUser(session.user.id) : false;
+  const isAdmin = authState?.account.isAdmin ?? false;
 
   return (
     <nav className="sticky top-0 z-50 box-border h-14 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">

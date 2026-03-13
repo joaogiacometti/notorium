@@ -114,3 +114,51 @@ export async function consumeUserDailyRateLimit({
     resetAt: resetAt.toISOString(),
   };
 }
+
+interface TryAcquireUserExpiringLockOptions {
+  prefix: string;
+  userId: string;
+  ttlSeconds: number;
+}
+
+async function tryAcquireExpiringLockWithRedis(
+  key: string,
+  ttlSeconds: number,
+): Promise<boolean> {
+  const { client, connection } = getRedisClient();
+  await connection;
+  const result = await client.set(key, "1", {
+    NX: true,
+    EX: ttlSeconds,
+  });
+  return result === "OK";
+}
+
+async function tryAcquireExpiringLockWithUpstash(
+  key: string,
+  ttlSeconds: number,
+): Promise<boolean> {
+  if (!upstashRedis) {
+    throw new Error("Upstash Redis is not configured");
+  }
+
+  const result = await upstashRedis.set(key, "1", {
+    nx: true,
+    ex: ttlSeconds,
+  });
+
+  return result === "OK";
+}
+
+export async function tryAcquireUserExpiringLock({
+  prefix,
+  userId,
+  ttlSeconds,
+}: TryAcquireUserExpiringLockOptions): Promise<boolean> {
+  const normalizedUserId = normalizeRateLimitKeyPart(userId);
+  const key = `${prefix}:${normalizedUserId}`;
+
+  return appEnv.RATE_LIMIT_BACKEND === "redis"
+    ? tryAcquireExpiringLockWithRedis(key, ttlSeconds)
+    : tryAcquireExpiringLockWithUpstash(key, ttlSeconds);
+}

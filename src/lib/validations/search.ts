@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
+export const searchMinQueryLength = 2;
+
 export const searchQuerySchema = z
   .string()
   .trim()

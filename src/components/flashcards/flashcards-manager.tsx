@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
   Layers3,
@@ -10,7 +11,11 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import {
+  getFlashcardForManage,
+  getFlashcardsManagePage,
+} from "@/app/actions/flashcards";
 import { BulkDeleteFlashcardsDialog } from "@/components/flashcards/bulk-delete-flashcards-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/bulk-move-flashcards-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
@@ -28,24 +33,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { filterFlashcards } from "@/features/flashcards/flashcard-filters";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
-  FlashcardEntity,
-  FlashcardListEntity,
+  FlashcardManagePage,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 interface FlashcardsManagerProps {
-  flashcards: FlashcardListEntity[];
+  initialPageData: FlashcardManagePage;
   subjects: SubjectEntity[];
   initialSubjectId?: string;
 }
 
+const managePageSize = 25;
+const flashcardManagerSearchDebounceMs = 200;
+
 export function FlashcardsManager({
-  flashcards,
+  initialPageData,
   subjects,
   initialSubjectId,
 }: Readonly<FlashcardsManagerProps>) {
@@ -61,60 +67,110 @@ export function FlashcardsManager({
   );
   const [pageIndex, setPageIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-  const [localFlashcards, setLocalFlashcards] = useState(
-    sortFlashcards(flashcards),
-  );
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubjectId);
-  const subjectNameById = Object.fromEntries(
-    subjects.map((subject) => [subject.id, subject.name]),
-  );
 
   useEffect(() => {
-    setLocalFlashcards(sortFlashcards(flashcards));
-    setPageIndex(0);
+    const timeout = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, flashcardManagerSearchDebounceMs);
+
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const managePageQuery = useQuery({
+    queryKey: [
+      "flashcards-manage-page",
+      pageIndex,
+      managePageSize,
+      selectedSubjectId ?? "all",
+      debouncedSearchQuery,
+    ],
+    queryFn: async () => {
+      const result = await getFlashcardsManagePage({
+        pageIndex,
+        pageSize: managePageSize,
+        subjectId: selectedSubjectId,
+        search: debouncedSearchQuery,
+      });
+
+      if ("errorCode" in result) {
+        return { items: [], total: 0, subjectCardCount: null };
+      }
+
+      return result;
+    },
+    initialData:
+      pageIndex === 0 &&
+      (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
+      debouncedSearchQuery.trim().length === 0
+        ? initialPageData
+        : undefined,
+    placeholderData: (previousData) => previousData,
+    staleTime: 1000 * 20,
+  });
+
+  const editFlashcardQuery = useQuery({
+    queryKey: ["flashcard-manage-edit", editingFlashcardId],
+    queryFn: async () => {
+      if (!editingFlashcardId) {
+        return null;
+      }
+
+      const result = await getFlashcardForManage({ id: editingFlashcardId });
+      if ("errorCode" in result) {
+        return null;
+      }
+
+      return result.flashcard;
+    },
+    enabled: editingFlashcardId !== null,
+  });
+
+  const pageData = managePageQuery.data ?? initialPageData;
+  const flashcards = pageData.items;
+  const total = pageData.total;
+  const selectedSubjectCardCount = pageData.subjectCardCount ?? 0;
+  const isAtSubjectLimit =
+    selectedSubjectId !== undefined &&
+    selectedSubjectCardCount >= LIMITS.maxFlashcardsPerSubject;
+  const hasSubjects = subjects.length > 0;
+
+  useEffect(() => {
+    const pageIds = new Set(flashcards.map((flashcard) => flashcard.id));
+
+    setSelectedFlashcardIds((current) =>
+      current.filter((flashcardId) => pageIds.has(flashcardId)),
+    );
   }, [flashcards]);
+
+  useEffect(() => {
+    const pageCount = Math.max(1, Math.ceil(total / managePageSize));
+    const maxIndex = pageCount - 1;
+
+    if (pageIndex > maxIndex) {
+      setPageIndex(maxIndex);
+    }
+  }, [pageIndex, total]);
 
   useEffect(() => {
     setSelectedSubjectId(initialSubjectId);
     setPageIndex(0);
+    setSelectedFlashcardIds([]);
   }, [initialSubjectId]);
 
-  const selectedSubjectCardCount = selectedSubjectId
-    ? localFlashcards.filter((card) => card.subjectId === selectedSubjectId)
-        .length
-    : 0;
-  const isAtSubjectLimit =
-    selectedSubjectCardCount >= LIMITS.maxFlashcardsPerSubject;
-  const filteredFlashcards = filterFlashcards({
-    flashcards: localFlashcards,
-    searchQuery: deferredSearchQuery,
-    subjectId: selectedSubjectId,
-  });
-  const hasSubjects = subjects.length > 0;
-  const editingFlashcard =
-    editingFlashcardId === null
-      ? null
-      : (localFlashcards.find(
-          (currentFlashcard) => currentFlashcard.id === editingFlashcardId,
-        ) ?? null);
-
-  useEffect(() => {
-    const filteredIds = new Set(
-      filteredFlashcards.map((flashcard) => flashcard.id),
-    );
-
-    setSelectedFlashcardIds((current) =>
-      current.filter((flashcardId) => filteredIds.has(flashcardId)),
-    );
-  }, [filteredFlashcards]);
+  function refreshManagePage() {
+    setSelectedFlashcardIds([]);
+    void managePageQuery.refetch();
+  }
 
   function updateSubjectFilter(nextSubjectId: string | undefined) {
     setSelectedSubjectId(nextSubjectId);
     setPageIndex(0);
+    setSelectedFlashcardIds([]);
 
     const query = new URLSearchParams();
     query.set("view", "manage");
@@ -126,99 +182,6 @@ export function FlashcardsManager({
     startTransition(() => {
       router.replace(`${pathname}?${query.toString()}`);
     });
-  }
-
-  function handleCreated(flashcard: FlashcardEntity) {
-    setLocalFlashcards((current) =>
-      upsertFlashcard(current, {
-        ...flashcard,
-        subjectName: subjectNameById[flashcard.subjectId] ?? "",
-      }),
-    );
-    setPageIndex(0);
-  }
-
-  function handleUpdated(flashcard: FlashcardEntity) {
-    setLocalFlashcards((current) =>
-      upsertFlashcard(current, {
-        ...flashcard,
-        subjectName: subjectNameById[flashcard.subjectId] ?? "",
-      }),
-    );
-    setPageIndex(0);
-  }
-
-  function handleDeleted(id: string) {
-    setLocalFlashcards((current) =>
-      current.filter((flashcard) => flashcard.id !== id),
-    );
-    setEditingFlashcardId((current) => (current === id ? null : current));
-    setSelectedFlashcardIds((current) =>
-      current.filter((flashcardId) => flashcardId !== id),
-    );
-    setPageIndex(0);
-  }
-
-  function handleBulkDeleted(ids: string[]) {
-    setLocalFlashcards((current) => {
-      const nextFlashcards = current.filter(
-        (flashcard) => !ids.includes(flashcard.id),
-      );
-
-      setPageIndex((currentPageIndex) =>
-        getValidPageIndex(
-          filterFlashcards({
-            flashcards: nextFlashcards,
-            searchQuery: deferredSearchQuery,
-            subjectId: selectedSubjectId,
-          }).length,
-          currentPageIndex,
-        ),
-      );
-
-      return nextFlashcards;
-    });
-    setEditingFlashcardId((current) =>
-      current !== null && ids.includes(current) ? null : current,
-    );
-    setSelectedFlashcardIds([]);
-  }
-
-  function handleBulkMoved(ids: string[], subjectId: string) {
-    setLocalFlashcards((current) => {
-      const nextFlashcards = sortFlashcards(
-        current.map((flashcard) =>
-          ids.includes(flashcard.id)
-            ? {
-                ...flashcard,
-                subjectId,
-                subjectName:
-                  subjectNameById[subjectId] ?? flashcard.subjectName,
-              }
-            : flashcard,
-        ),
-      );
-
-      setPageIndex((currentPageIndex) =>
-        getValidPageIndex(
-          filterFlashcards({
-            flashcards: nextFlashcards,
-            searchQuery: deferredSearchQuery,
-            subjectId: selectedSubjectId,
-          }).length,
-          currentPageIndex,
-        ),
-      );
-
-      return nextFlashcards;
-    });
-    setSelectedFlashcardIds([]);
-  }
-
-  function handleEditOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
-      setEditingFlashcardId(null);
-    }
   }
 
   return (
@@ -236,6 +199,7 @@ export function FlashcardsManager({
                     onChange={(event) => {
                       setSearchQuery(event.target.value);
                       setPageIndex(0);
+                      setSelectedFlashcardIds([]);
                     }}
                     placeholder={t("search_placeholder")}
                     className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
@@ -299,8 +263,8 @@ export function FlashcardsManager({
                         count: selectedFlashcardIds.length,
                       })
                     : t("results_count", {
-                        filtered: filteredFlashcards.length,
-                        total: localFlashcards.length,
+                        filtered: total,
+                        total,
                       })}
                 </Badge>
                 {selectedSubjectId ? (
@@ -374,101 +338,60 @@ export function FlashcardsManager({
         </div>
       ) : null}
       <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
-        {localFlashcards.length > 0 ? (
-          <FlashcardsManagerTable
-            flashcards={filteredFlashcards}
-            selectedFlashcardIds={selectedFlashcardIds}
-            pageIndex={pageIndex}
-            onEditRequested={(flashcard) => setEditingFlashcardId(flashcard.id)}
-            onPageIndexChange={setPageIndex}
-            onUpdated={handleUpdated}
-            onDeleted={handleDeleted}
-            onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
-          />
-        ) : (
-          <CardContent className="flex flex-col items-center justify-center px-6 py-14 text-center sm:px-10">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
-              <Layers3 className="size-6" />
-            </div>
-            <h2 className="text-lg font-semibold tracking-tight">
-              {t("empty_title")}
-            </h2>
-            <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-              {t("empty_description")}
-            </p>
-            <Button
-              type="button"
-              onClick={() => setCreateOpen(true)}
-              disabled={!hasSubjects}
-              className="mt-6 h-10 gap-2 rounded-lg px-4 shadow-sm"
-            >
-              <Plus className="size-4" />
-              {t("new_flashcard")}
-            </Button>
-          </CardContent>
-        )}
+        <FlashcardsManagerTable
+          flashcards={flashcards}
+          total={total}
+          selectedFlashcardIds={selectedFlashcardIds}
+          pageIndex={pageIndex}
+          pageSize={managePageSize}
+          isLoading={managePageQuery.isFetching}
+          loadingLabel={t("loading_table")}
+          onEditRequested={setEditingFlashcardId}
+          onPageIndexChange={setPageIndex}
+          onUpdated={refreshManagePage}
+          onDeleted={refreshManagePage}
+          onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
+        />
       </Card>
       <CreateFlashcardDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={handleCreated}
+        onCreated={refreshManagePage}
         subjectId={selectedSubjectId}
         subjects={subjects}
       />
-      {editingFlashcard ? (
+      {editingFlashcardId !== null && editFlashcardQuery.data ? (
         <EditFlashcardDialog
-          flashcard={editingFlashcard}
+          flashcard={editFlashcardQuery.data}
           subjects={subjects}
           open={editingFlashcardId !== null}
-          onOpenChange={handleEditOpenChange}
-          onUpdated={handleUpdated}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setEditingFlashcardId(null);
+            }
+          }}
+          onUpdated={refreshManagePage}
         />
       ) : null}
       <BulkDeleteFlashcardsDialog
         ids={selectedFlashcardIds}
         open={bulkDeleteOpen}
         onOpenChange={setBulkDeleteOpen}
-        onDeleted={handleBulkDeleted}
+        onDeleted={(_ids) => {
+          refreshManagePage();
+          setBulkDeleteOpen(false);
+        }}
       />
       <BulkMoveFlashcardsDialog
         ids={selectedFlashcardIds}
         open={bulkMoveOpen}
         onOpenChange={setBulkMoveOpen}
-        onMoved={handleBulkMoved}
+        onMoved={(_ids, _subjectId) => {
+          refreshManagePage();
+          setBulkMoveOpen(false);
+        }}
         subjects={subjects}
       />
     </div>
-  );
-}
-
-function toTimestamp(value: Date | string): number {
-  return new Date(value).getTime();
-}
-
-function sortFlashcards(
-  flashcards: FlashcardListEntity[],
-): FlashcardListEntity[] {
-  return [...flashcards].sort(
-    (left, right) => toTimestamp(right.updatedAt) - toTimestamp(left.updatedAt),
-  );
-}
-
-function upsertFlashcard(
-  current: FlashcardListEntity[],
-  next: FlashcardListEntity,
-): FlashcardListEntity[] {
-  const withoutNext = current.filter((flashcard) => flashcard.id !== next.id);
-
-  return sortFlashcards([...withoutNext, next]);
-}
-
-function getValidPageIndex(
-  totalItems: number,
-  currentPageIndex: number,
-  pageSize: number = 25,
-): number {
-  return Math.max(
-    0,
-    Math.min(currentPageIndex, Math.ceil(totalItems / pageSize) - 1),
   );
 }

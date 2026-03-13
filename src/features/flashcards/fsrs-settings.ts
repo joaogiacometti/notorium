@@ -9,6 +9,7 @@ import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
   getInitialFlashcardSchedulingState,
+  normalizeFsrsDesiredRetention,
   parseFsrsWeights,
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
@@ -16,19 +17,18 @@ import {
   optimizeFsrsParameters,
   shouldOptimizeFsrsParameters,
 } from "@/features/flashcards/fsrs-optimizer";
+import { tryAcquireUserExpiringLock } from "@/lib/rate-limit/user-rate-limit";
 import type {
   FlashcardReviewLogEntity,
   FlashcardSchedulerSettingsEntity,
 } from "@/lib/server/api-contracts";
 
+const fsrsOptimizationLockPrefix = "lock:fsrs-optimize";
+const fsrsOptimizationLockTtlSeconds = 45;
 interface FsrsSettings {
   row: FlashcardSchedulerSettingsEntity;
   desiredRetention: number;
   weights: number[];
-}
-
-function parseDesiredRetention(value: string | number): number {
-  return typeof value === "number" ? value : Number.parseFloat(value);
 }
 
 function normalizeSettings(
@@ -36,7 +36,7 @@ function normalizeSettings(
 ): FsrsSettings {
   return {
     row,
-    desiredRetention: parseDesiredRetention(row.desiredRetention),
+    desiredRetention: normalizeFsrsDesiredRetention(row.desiredRetention),
     weights: parseFsrsWeights(row.weights),
   };
 }
@@ -113,14 +113,17 @@ export async function getFlashcardReviewLogsForOptimization(
   return db
     .select()
     .from(flashcardReviewLog)
-    .where(eq(flashcardReviewLog.userId, userId));
+    .where(eq(flashcardReviewLog.userId, userId))
+    .orderBy(flashcardReviewLog.reviewedAt);
 }
 
 export async function maybeOptimizeFsrsParameters(
   userId: string,
 ): Promise<void> {
-  const settings = await ensureFsrsSettings(userId);
-  const reviewCount = await getFlashcardReviewLogCount(userId);
+  const [settings, reviewCount] = await Promise.all([
+    ensureFsrsSettings(userId),
+    getFlashcardReviewLogCount(userId),
+  ]);
 
   if (
     !shouldOptimizeFsrsParameters(
@@ -128,6 +131,16 @@ export async function maybeOptimizeFsrsParameters(
       settings.row.optimizedReviewCount,
     )
   ) {
+    return;
+  }
+
+  const acquiredLock = await tryAcquireUserExpiringLock({
+    prefix: fsrsOptimizationLockPrefix,
+    userId,
+    ttlSeconds: fsrsOptimizationLockTtlSeconds,
+  });
+
+  if (!acquiredLock) {
     return;
   }
 

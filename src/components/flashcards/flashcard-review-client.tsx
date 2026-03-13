@@ -80,6 +80,7 @@ export function FlashcardReviewClient({
   const t = useTranslations("FlashcardReviewPage");
   const tErrors = useTranslations("ServerActions");
   const [reviewState, setReviewState] = useState(initialState);
+  const reviewStateRef = useRef(initialState);
   const [revealed, setRevealed] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
@@ -102,6 +103,11 @@ export function FlashcardReviewClient({
       })
     : null;
 
+  function commitReviewState(nextState: FlashcardReviewState) {
+    reviewStateRef.current = nextState;
+    setReviewState(nextState);
+  }
+
   async function handleFlashcardUpdated(
     updatedFlashcard: FlashcardReviewState["cards"][number],
   ) {
@@ -111,13 +117,13 @@ export function FlashcardReviewClient({
         limit: reviewBatchLimit,
       });
 
-      setReviewState(nextState);
+      commitReviewState(nextState);
       setRevealed(false);
       return;
     }
 
-    setReviewState((currentState) =>
-      replaceFlashcardInReviewState(currentState, updatedFlashcard),
+    commitReviewState(
+      replaceFlashcardInReviewState(reviewStateRef.current, updatedFlashcard),
     );
     setRevealed(false);
   }
@@ -135,8 +141,8 @@ export function FlashcardReviewClient({
       return;
     }
 
-    setReviewState((currentState) =>
-      mergeFlashcardReviewStates(currentState, nextState),
+    commitReviewState(
+      mergeFlashcardReviewStates(reviewStateRef.current, nextState),
     );
   }
 
@@ -156,12 +162,12 @@ export function FlashcardReviewClient({
         }
 
         const nextState = applyReviewedFlashcardToState(
-          reviewState,
+          reviewStateRef.current,
           result.reviewedCardId,
           result.flashcard,
         );
 
-        setReviewState(nextState);
+        commitReviewState(nextState);
         setRevealed(false);
         setEditOpen(false);
 

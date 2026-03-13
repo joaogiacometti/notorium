@@ -209,12 +209,33 @@ export function getDefaultFsrsDesiredRetention(): number {
   return defaultSchedulerParameters.request_retention;
 }
 
+export function normalizeFsrsDesiredRetention(
+  value: string | number | null | undefined,
+): number {
+  const parsed =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number.parseFloat(value)
+        : Number.NaN;
+
+  return Number.isFinite(parsed) && parsed > 0 && parsed < 1
+    ? parsed
+    : getDefaultFsrsDesiredRetention();
+}
+
 export function serializeFsrsWeights(weights: number[]): string {
   return JSON.stringify(weights);
 }
 
 export function parseFsrsWeights(value: string): number[] {
-  const parsed = JSON.parse(value) as unknown;
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    return getDefaultFsrsWeights();
+  }
 
   if (!Array.isArray(parsed)) {
     return getDefaultFsrsWeights();

@@ -119,6 +119,11 @@ export const subject = pgTable(
   (table) => [
     index("subject_userId_idx").on(table.userId),
     index("subject_userId_archivedAt_idx").on(table.userId, table.archivedAt),
+    index("subject_userId_archivedAt_updatedAt_idx").on(
+      table.userId,
+      table.archivedAt,
+      table.updatedAt,
+    ),
   ],
 );
 
@@ -144,6 +149,10 @@ export const attendanceMiss = pgTable(
   (table) => [
     index("attendance_miss_subjectId_idx").on(table.subjectId),
     index("attendance_miss_userId_idx").on(table.userId),
+    index("attendance_miss_userId_missDate_idx").on(
+      table.userId,
+      table.missDate,
+    ),
     unique("attendance_miss_unique").on(
       table.subjectId,
       table.missDate,
@@ -175,6 +184,7 @@ export const note = pgTable(
   (table) => [
     index("note_subjectId_idx").on(table.subjectId),
     index("note_userId_idx").on(table.userId),
+    index("note_userId_updatedAt_idx").on(table.userId, table.updatedAt),
   ],
 );
 
@@ -236,6 +246,7 @@ export const assessment = pgTable(
   (table) => [
     index("assessment_subjectId_idx").on(table.subjectId),
     index("assessment_userId_idx").on(table.userId),
+    index("assessment_userId_dueDate_idx").on(table.userId, table.dueDate),
     index("assessment_status_idx").on(table.status),
     index("assessment_dueDate_idx").on(table.dueDate),
   ],
@@ -276,6 +287,12 @@ export const flashcard = pgTable(
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
+    index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),
+    index("flashcard_userId_subjectId_updatedAt_idx").on(
+      table.userId,
+      table.subjectId,
+      table.updatedAt,
+    ),
   ],
 );
 

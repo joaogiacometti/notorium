@@ -12,6 +12,8 @@ import type { ImportData } from "@/features/data-transfer/validation";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
+  normalizeFsrsDesiredRetention,
+  parseFsrsWeights,
 } from "@/features/flashcards/fsrs";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
@@ -97,10 +99,10 @@ export async function exportDataForUser(
     exportedAt: new Date().toISOString(),
     flashcardScheduler: schedulerSettings
       ? {
-          desiredRetention: Number.parseFloat(
-            String(schedulerSettings.desiredRetention),
+          desiredRetention: normalizeFsrsDesiredRetention(
+            schedulerSettings.desiredRetention,
           ),
-          weights: JSON.parse(schedulerSettings.weights) as number[],
+          weights: parseFsrsWeights(schedulerSettings.weights),
         }
       : {
           desiredRetention: getDefaultFsrsDesiredRetention(),

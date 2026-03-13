@@ -113,6 +113,38 @@ describe("applyReviewedFlashcardToState", () => {
       "card-2",
     ]);
   });
+
+  it("preserves cards added by a concurrent refill when removing the reviewed card", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const state = makeState(
+      [
+        makeCard("card-1", new Date("2026-03-07T11:00:00.000Z")),
+        makeCard("card-2", new Date("2026-03-07T11:05:00.000Z")),
+        makeCard("card-3", new Date("2026-03-07T11:10:00.000Z")),
+      ],
+      3,
+    );
+
+    const nextState = applyReviewedFlashcardToState(
+      state,
+      "card-1",
+      makeCard("card-1", new Date("2026-03-07T12:10:00.000Z"), {
+        state: "learning",
+        learningStep: 0,
+        reviewCount: 1,
+      }),
+      now,
+    );
+
+    expect(nextState.cards.map((card) => card.id)).toEqual([
+      "card-2",
+      "card-3",
+    ]);
+    expect(nextState.summary).toEqual({
+      dueCount: 2,
+      totalCount: 3,
+    });
+  });
 });
 
 describe("mergeFlashcardReviewStates", () => {

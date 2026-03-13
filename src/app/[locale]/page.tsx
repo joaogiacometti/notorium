@@ -90,7 +90,7 @@ export default async function Home() {
 
   return (
     <main className="flex flex-col">
-      <section className="flex flex-col items-center gap-6 px-4 pt-20 pb-16 text-center sm:px-6 sm:pt-28 sm:pb-20 lg:px-8">
+      <section className="flex flex-col items-center gap-6 px-4 pb-16 text-center sm:px-6 pt-8 sm:pb-20 lg:px-8">
         <div className="flex max-w-88 items-center justify-center gap-2 rounded-xl border border-border/70 bg-muted/70 px-4 py-2 text-center text-sm leading-snug text-foreground/90 sm:max-w-none hover:bg-muted/90 transition-colors backdrop-blur-sm shadow-sm cursor-default">
           <Sparkles className="size-4 shrink-0 text-primary animate-pulse" />
           <span className="font-medium">{t("badge")}</span>

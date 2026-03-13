@@ -3,7 +3,7 @@ import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-
 import { FlashcardsManager } from "@/components/flashcards/flashcards-manager";
 import { FlashcardsPageShell } from "@/components/flashcards/flashcards-page-shell";
 import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
-import { getFlashcardsForUser } from "@/features/flashcards/queries";
+import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
 import { getSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
@@ -59,7 +59,15 @@ export default async function FlashcardsPage({
     );
   }
 
-  const flashcards = await getFlashcardsForUser(session.user.id);
+  const initialPageData = await getFlashcardsManagePageForUser(
+    session.user.id,
+    {
+      pageIndex: 0,
+      pageSize: 25,
+      subjectId: scopedSubjectId,
+      search: "",
+    },
+  );
 
   return (
     <FlashcardsPageShell
@@ -71,7 +79,7 @@ export default async function FlashcardsPage({
       title={t("title")}
     >
       <FlashcardsManager
-        flashcards={flashcards}
+        initialPageData={initialPageData}
         subjects={subjects}
         initialSubjectId={scopedSubjectId}
       />

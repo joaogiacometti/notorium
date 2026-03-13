@@ -1,10 +1,31 @@
-import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
+import {
+  getFlashcardManageExcerpt,
+  getFlashcardManageExcerptSourceLength,
+} from "@/features/flashcards/manage-excerpts";
+import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import type {
   FlashcardEntity,
   FlashcardListEntity,
+  FlashcardManagePage,
 } from "@/lib/server/api-contracts";
+
+function escapeIlike(value: string): string {
+  return value.replaceAll(/[\\%_]/g, String.raw`\$&`);
+}
 
 export async function getFlashcardsBySubjectForUser(
   userId: string,
@@ -47,6 +68,87 @@ export async function getFlashcardsForUser(
         subjectName: row.subjectName,
       })),
     );
+}
+
+export async function getFlashcardsManagePageForUser(
+  userId: string,
+  { pageIndex, pageSize, subjectId, search }: FlashcardsManageQueryInput,
+): Promise<FlashcardManagePage> {
+  const normalizedSearch = search?.trim() ?? "";
+  const searchPattern = `%${escapeIlike(normalizedSearch)}%`;
+  const offset = pageIndex * pageSize;
+  const excerptSourceLength = getFlashcardManageExcerptSourceLength();
+  const filters: SQL<unknown>[] = [
+    eq(flashcard.userId, userId),
+    eq(subject.userId, userId),
+    isNull(subject.archivedAt),
+  ];
+
+  if (subjectId) {
+    filters.push(eq(flashcard.subjectId, subjectId));
+  }
+
+  const totalFilters =
+    normalizedSearch.length > 0
+      ? [
+          ...filters,
+          or(
+            ilike(flashcard.front, searchPattern),
+            ilike(flashcard.back, searchPattern),
+            ilike(subject.name, searchPattern),
+          ),
+        ]
+      : filters;
+
+  const [itemRows, totalRows, subjectCountRows] = await Promise.all([
+    db
+      .select({
+        id: flashcard.id,
+        subjectId: flashcard.subjectId,
+        updatedAt: flashcard.updatedAt,
+        front: sql<string>`left(${flashcard.front}, ${excerptSourceLength})`,
+        back: sql<string>`left(${flashcard.back}, ${excerptSourceLength})`,
+        subjectName: subject.name,
+      })
+      .from(flashcard)
+      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .where(and(...totalFilters))
+      .orderBy(desc(flashcard.updatedAt))
+      .limit(pageSize)
+      .offset(offset),
+    db
+      .select({ total: count() })
+      .from(flashcard)
+      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .where(and(...totalFilters)),
+    subjectId
+      ? db
+          .select({ total: count() })
+          .from(flashcard)
+          .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+          .where(
+            and(
+              eq(flashcard.userId, userId),
+              eq(subject.userId, userId),
+              isNull(subject.archivedAt),
+              eq(flashcard.subjectId, subjectId),
+            ),
+          )
+      : Promise.resolve([]),
+  ]);
+
+  return {
+    items: itemRows.map((row) => ({
+      id: row.id,
+      subjectId: row.subjectId,
+      updatedAt: row.updatedAt,
+      frontExcerpt: getFlashcardManageExcerpt(row.front),
+      backExcerpt: getFlashcardManageExcerpt(row.back),
+      subjectName: row.subjectName,
+    })),
+    total: totalRows[0]?.total ?? 0,
+    subjectCardCount: subjectId ? (subjectCountRows[0]?.total ?? 0) : null,
+  };
 }
 
 export async function getFlashcardByIdForUser(
