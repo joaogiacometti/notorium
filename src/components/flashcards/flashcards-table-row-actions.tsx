@@ -73,14 +73,14 @@ export function FlashcardsTableRowActions({
 
       <ResetFlashcardDialog
         flashcardId={flashcard.id}
-        flashcardFront={flashcard.frontExcerpt}
+        flashcardFront={flashcard.front}
         open={resetOpen}
         onOpenChange={setResetOpen}
         onReset={() => onUpdated()}
       />
       <DeleteFlashcardDialog
         flashcardId={flashcard.id}
-        flashcardFront={flashcard.frontExcerpt}
+        flashcardFront={flashcard.front}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onDeleted={() => onDeleted()}

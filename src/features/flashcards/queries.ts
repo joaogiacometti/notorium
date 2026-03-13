@@ -13,8 +13,8 @@ import {
 import { db } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import {
-  getFlashcardManageExcerpt,
-  getFlashcardManageExcerptSourceLength,
+  getFlashcardManageBackExcerpt,
+  getFlashcardManageBackExcerptSourceLength,
 } from "@/features/flashcards/manage-excerpts";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import type {
@@ -77,7 +77,7 @@ export async function getFlashcardsManagePageForUser(
   const normalizedSearch = search?.trim() ?? "";
   const searchPattern = `%${escapeIlike(normalizedSearch)}%`;
   const offset = pageIndex * pageSize;
-  const excerptSourceLength = getFlashcardManageExcerptSourceLength();
+  const backExcerptSourceLength = getFlashcardManageBackExcerptSourceLength();
   const filters: SQL<unknown>[] = [
     eq(flashcard.userId, userId),
     eq(subject.userId, userId),
@@ -106,8 +106,8 @@ export async function getFlashcardsManagePageForUser(
         id: flashcard.id,
         subjectId: flashcard.subjectId,
         updatedAt: flashcard.updatedAt,
-        front: sql<string>`left(${flashcard.front}, ${excerptSourceLength})`,
-        back: sql<string>`left(${flashcard.back}, ${excerptSourceLength})`,
+        front: flashcard.front,
+        back: sql<string>`left(${flashcard.back}, ${backExcerptSourceLength})`,
         subjectName: subject.name,
       })
       .from(flashcard)
@@ -142,8 +142,8 @@ export async function getFlashcardsManagePageForUser(
       id: row.id,
       subjectId: row.subjectId,
       updatedAt: row.updatedAt,
-      frontExcerpt: getFlashcardManageExcerpt(row.front),
-      backExcerpt: getFlashcardManageExcerpt(row.back),
+      front: row.front,
+      backExcerpt: getFlashcardManageBackExcerpt(row.back),
       subjectName: row.subjectName,
     })),
     total: totalRows[0]?.total ?? 0,

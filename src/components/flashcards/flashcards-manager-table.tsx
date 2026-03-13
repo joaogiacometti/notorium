@@ -5,6 +5,10 @@ import { CreditCard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
+import {
+  getRichTextExcerpt,
+  richTextToPlainText,
+} from "@/lib/editor/rich-text";
 import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 import { FlashcardsTableRowActions } from "./flashcards-table-row-actions";
@@ -22,6 +26,16 @@ interface FlashcardsManagerTableProps {
   onDeleted: () => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
   onUpdated: () => void;
+}
+
+const flashcardFrontPreviewLength = 30;
+
+function getFlashcardFrontPreview(front: string) {
+  return getRichTextExcerpt(front, flashcardFrontPreviewLength);
+}
+
+function getFlashcardFrontTitle(front: string) {
+  return richTextToPlainText(front) || undefined;
 }
 
 function getColumnClassName(columnId: string) {
@@ -64,9 +78,9 @@ function getColumns(
           <div className="min-w-0 flex-1">
             <div
               className="truncate text-sm font-semibold leading-6 text-foreground/95"
-              title={row.original.frontExcerpt}
+              title={getFlashcardFrontTitle(row.original.front)}
             >
-              {row.original.frontExcerpt}
+              {getFlashcardFrontPreview(row.original.front)}
             </div>
           </div>
         </div>

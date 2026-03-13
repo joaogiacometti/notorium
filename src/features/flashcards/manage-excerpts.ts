@@ -1,12 +1,12 @@
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 
-const flashcardManageExcerptLength = 25;
-const flashcardManageExcerptSourceLength = 300;
+const flashcardManageBackExcerptLength = 25;
+const flashcardManageBackExcerptSourceLength = 300;
 
-export function getFlashcardManageExcerpt(value: string) {
-  return getRichTextExcerpt(value, flashcardManageExcerptLength);
+export function getFlashcardManageBackExcerpt(value: string) {
+  return getRichTextExcerpt(value, flashcardManageBackExcerptLength);
 }
 
-export function getFlashcardManageExcerptSourceLength() {
-  return flashcardManageExcerptSourceLength;
+export function getFlashcardManageBackExcerptSourceLength() {
+  return flashcardManageBackExcerptSourceLength;
 }

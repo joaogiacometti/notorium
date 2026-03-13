@@ -23,7 +23,7 @@ export type FlashcardManageItem = Pick<
   FlashcardEntity,
   "id" | "subjectId" | "updatedAt"
 > & {
-  frontExcerpt: string;
+  front: string;
   backExcerpt: string;
   subjectName: string;
 };
