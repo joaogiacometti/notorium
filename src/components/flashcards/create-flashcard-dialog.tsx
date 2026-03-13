@@ -1,9 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
-import type { CreateFlashcardForm } from "@/features/flashcards/validation";
+import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
+import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
+import {
+  type CreateFlashcardForm,
+  createFlashcardSchema,
+} from "@/features/flashcards/validation";
 import type {
   FlashcardEntity,
   SubjectEntity,
@@ -34,27 +40,48 @@ export function CreateFlashcardDialog({
   onOpenChange,
   onCreated,
 }: Readonly<CreateFlashcardDialogProps>) {
-  const values = useMemo(
-    () => getCreateFlashcardFormValues(subjectId ?? ""),
-    [subjectId],
-  );
+  const values = getCreateFlashcardFormValues(subjectId ?? "");
+  const form = useForm<CreateFlashcardForm>({
+    resolver: zodResolver(createFlashcardSchema),
+    defaultValues: values,
+  });
+  const dialog = useFlashcardDialogState({
+    mode: "create",
+    open,
+    onOpenChange,
+    values,
+    form,
+    onSubmitAction: createFlashcard,
+    onSuccess: (flashcard) => {
+      if (flashcard) {
+        onCreated?.(flashcard);
+      }
+    },
+    getSuccessValues: (submittedValues, keepValues) =>
+      getCreateFlashcardResetValues(submittedValues, keepValues),
+    closeOnSuccess: false,
+  });
 
   return (
     <FlashcardDialogForm
       mode="create"
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={dialog.handleOpenChange}
       trigger={trigger}
-      values={values}
+      form={form}
+      formId="form-create-flashcard"
       subjects={subjects}
-      onSubmitAction={(values) =>
-        createFlashcard(values as CreateFlashcardForm)
-      }
-      onSuccess={(flashcard) => {
-        if (flashcard) {
-          onCreated?.(flashcard);
-        }
-      }}
+      onSubmit={dialog.handleSubmit}
+      discardDialogOpen={dialog.discardDialogOpen}
+      onDiscardDialogOpenChange={dialog.setDiscardDialogOpen}
+      onDiscard={dialog.handleDiscardChanges}
+      isGeneratingBack={dialog.isGeneratingBack}
+      canGenerateBack={dialog.canGenerateBack}
+      onGenerateBack={dialog.handleGenerateBack}
+      keepFrontAfterSubmit={dialog.keepFrontAfterSubmit}
+      onKeepFrontAfterSubmitChange={dialog.setKeepFrontAfterSubmit}
+      keepBackAfterSubmit={dialog.keepBackAfterSubmit}
+      onKeepBackAfterSubmitChange={dialog.setKeepBackAfterSubmit}
     />
   );
 }

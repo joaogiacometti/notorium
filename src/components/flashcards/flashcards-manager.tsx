@@ -22,6 +22,7 @@ import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-
 import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { FlashcardsManagerTable } from "@/components/flashcards/flashcards-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
+import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,21 +68,41 @@ export function FlashcardsManager({
   const [editingFlashcardId, setEditingFlashcardId] = useState<string | null>(
     null,
   );
-  const [pageIndex, setPageIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
-  const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubjectId);
+  const {
+    filter: selectedSubjectId,
+    pageIndex,
+    resolvedSearchQuery,
+    searchQuery,
+    setFilter: setSelectedSubjectId,
+    setPageIndex,
+    setSearchQuery,
+  } = useManagerPageState({
+    initialFilter: initialSubjectId,
+    searchDebounceMs: flashcardManagerSearchDebounceMs,
+    onSearchChange: () => {
+      setSelectedFlashcardIds([]);
+    },
+    onFilterChange: (nextSubjectId) => {
+      setSelectedFlashcardIds([]);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, flashcardManagerSearchDebounceMs);
+      const query = new URLSearchParams();
+      query.set("view", "manage");
 
-    return () => clearTimeout(timeout);
-  }, [searchQuery]);
+      if (nextSubjectId) {
+        query.set("subjectId", nextSubjectId);
+      }
+
+      startTransition(() => {
+        router.replace(`${pathname}?${query.toString()}`);
+      });
+    },
+    onInitialFilterChange: () => {
+      setSelectedFlashcardIds([]);
+    },
+  });
 
   const managePageQuery = useQuery({
     queryKey: [
@@ -89,14 +110,14 @@ export function FlashcardsManager({
       pageIndex,
       managePageSize,
       selectedSubjectId ?? "all",
-      debouncedSearchQuery,
+      resolvedSearchQuery,
     ],
     queryFn: async () => {
       const result = await getFlashcardsManagePage({
         pageIndex,
         pageSize: managePageSize,
         subjectId: selectedSubjectId,
-        search: debouncedSearchQuery,
+        search: resolvedSearchQuery,
       });
 
       if ("errorCode" in result) {
@@ -108,7 +129,7 @@ export function FlashcardsManager({
     initialData:
       pageIndex === 0 &&
       (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
-      debouncedSearchQuery.trim().length === 0
+      resolvedSearchQuery.trim().length === 0
         ? initialPageData
         : undefined,
     placeholderData: (previousData) => previousData,
@@ -156,34 +177,11 @@ export function FlashcardsManager({
     if (pageIndex > maxIndex) {
       setPageIndex(maxIndex);
     }
-  }, [pageIndex, total]);
-
-  useEffect(() => {
-    setSelectedSubjectId(initialSubjectId);
-    setPageIndex(0);
-    setSelectedFlashcardIds([]);
-  }, [initialSubjectId]);
+  }, [pageIndex, total, setPageIndex]);
 
   function refreshManagePage() {
     setSelectedFlashcardIds([]);
     void managePageQuery.refetch();
-  }
-
-  function updateSubjectFilter(nextSubjectId: string | undefined) {
-    setSelectedSubjectId(nextSubjectId);
-    setPageIndex(0);
-    setSelectedFlashcardIds([]);
-
-    const query = new URLSearchParams();
-    query.set("view", "manage");
-
-    if (nextSubjectId) {
-      query.set("subjectId", nextSubjectId);
-    }
-
-    startTransition(() => {
-      router.replace(`${pathname}?${query.toString()}`);
-    });
   }
 
   return (
@@ -198,11 +196,7 @@ export function FlashcardsManager({
                   <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchQuery}
-                    onChange={(event) => {
-                      setSearchQuery(event.target.value);
-                      setPageIndex(0);
-                      setSelectedFlashcardIds([]);
-                    }}
+                    onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder={t("search_placeholder")}
                     className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                   />
@@ -223,7 +217,7 @@ export function FlashcardsManager({
                 <Select
                   value={selectedSubjectId ?? "all"}
                   onValueChange={(value) =>
-                    updateSubjectFilter(value === "all" ? undefined : value)
+                    setSelectedSubjectId(value === "all" ? undefined : value)
                   }
                 >
                   <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">

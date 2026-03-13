@@ -2,10 +2,11 @@
 
 import { ClipboardList, Lock, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
+import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -55,30 +56,44 @@ export function PlanningAssessmentsTable({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
-  const [pageIndex, setPageIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-  const [subjectFilter, setSubjectFilter] = useState(initialSubjectId ?? "all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("smart");
   const [localAssessments, setLocalAssessments] = useState(() =>
     sortAssessments(assessments),
   );
+  const {
+    filter: subjectFilter,
+    pageIndex,
+    resolvedSearchQuery,
+    searchQuery,
+    setFilter: setSubjectFilter,
+    setPageIndex,
+    setSearchQuery,
+  } = useManagerPageState({
+    initialFilter: initialSubjectId ?? "all",
+    onFilterChange: (nextSubjectFilter) => {
+      const query = new URLSearchParams();
+      query.set("view", "assessments");
+
+      if (nextSubjectFilter !== "all") {
+        query.set("subject", nextSubjectFilter);
+      }
+
+      startTransition(() => {
+        router.replace(`${pathname}?${query.toString()}`);
+      });
+    },
+  });
 
   useEffect(() => {
     setLocalAssessments(sortAssessments(assessments));
     setPageIndex(0);
-  }, [assessments]);
-
-  useEffect(() => {
-    setSubjectFilter(initialSubjectId ?? "all");
-    setPageIndex(0);
-  }, [initialSubjectId]);
+  }, [assessments, setPageIndex]);
 
   const filteredAssessments = filterAndSortAssessments({
     assessments: localAssessments,
-    searchQuery: deferredSearchQuery,
+    searchQuery: resolvedSearchQuery,
     subjectFilter,
     statusFilter,
     typeFilter,
@@ -105,22 +120,6 @@ export function PlanningAssessmentsTable({
     ? getAssessmentAverage(subjectAssessments)
     : null;
   const hasSubjects = subjects.length > 0;
-
-  function updateSubjectFilter(nextSubjectFilter: string) {
-    setSubjectFilter(nextSubjectFilter);
-    setPageIndex(0);
-
-    const query = new URLSearchParams();
-    query.set("view", "assessments");
-
-    if (nextSubjectFilter !== "all") {
-      query.set("subject", nextSubjectFilter);
-    }
-
-    startTransition(() => {
-      router.replace(`${pathname}?${query.toString()}`);
-    });
-  }
 
   function handleCreated(assessment: AssessmentEntity) {
     setLocalAssessments((current) => upsertAssessment(current, assessment));
@@ -151,10 +150,7 @@ export function PlanningAssessmentsTable({
                   <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchQuery}
-                    onChange={(event) => {
-                      setSearchQuery(event.target.value);
-                      setPageIndex(0);
-                    }}
+                    onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder={t("search_placeholder")}
                     className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                   />
@@ -172,10 +168,7 @@ export function PlanningAssessmentsTable({
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="min-w-0">
-                <Select
-                  value={subjectFilter}
-                  onValueChange={updateSubjectFilter}
-                >
+                <Select value={subjectFilter} onValueChange={setSubjectFilter}>
                   <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
                     <SelectValue placeholder={t("subject_placeholder")} />
                   </SelectTrigger>

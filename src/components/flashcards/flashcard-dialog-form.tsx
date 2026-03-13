@@ -1,17 +1,12 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Pin, PinOff, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 import {
   Controller,
+  type FieldPath,
   type UseFormReturn,
-  useForm,
-  useWatch,
 } from "react-hook-form";
-import { toast } from "sonner";
-import { generateFlashcardBack } from "@/app/actions/flashcards";
 import { SubjectText } from "@/components/shared/subject-text";
 import { TiptapEditor } from "@/components/shared/tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
@@ -36,165 +31,58 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
-import {
-  type CreateFlashcardForm,
-  createFlashcardSchema,
-  type EditFlashcardForm,
-  editFlashcardSchema,
-  hasRichTextContent,
-} from "@/features/flashcards/validation";
-import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type {
-  FlashcardEntity,
-  SubjectEntity,
-} from "@/lib/server/api-contracts";
-import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+  CreateFlashcardForm,
+  EditFlashcardForm,
+} from "@/features/flashcards/validation";
+import type { SubjectEntity } from "@/lib/server/api-contracts";
 
 type FlashcardFormValues = CreateFlashcardForm | EditFlashcardForm;
 
-interface FlashcardDialogFormProps {
+interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
   mode: "create" | "edit";
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trigger?: React.ReactNode;
-  values: FlashcardFormValues;
+  form: UseFormReturn<TValues>;
+  formId: string;
   subjects?: SubjectEntity[];
-  onSubmitAction: (
-    values: FlashcardFormValues,
-  ) => Promise<
-    { success: true; flashcard?: FlashcardEntity } | ActionErrorResult
-  >;
-  onSuccess?: (flashcard?: FlashcardEntity) => void | Promise<void>;
+  onSubmit: (values: TValues) => Promise<void>;
+  discardDialogOpen: boolean;
+  onDiscardDialogOpenChange: (open: boolean) => void;
+  onDiscard: () => void;
+  isGeneratingBack: boolean;
+  canGenerateBack: boolean;
+  onGenerateBack: () => Promise<void>;
+  keepFrontAfterSubmit: boolean;
+  onKeepFrontAfterSubmitChange: (value: boolean) => void;
+  keepBackAfterSubmit: boolean;
+  onKeepBackAfterSubmitChange: (value: boolean) => void;
 }
 
-function useFlashcardForm(
-  mode: "create" | "edit",
-  values: FlashcardFormValues,
-): UseFormReturn<FlashcardFormValues> {
-  return useForm<FlashcardFormValues>({
-    resolver: zodResolver(
-      mode === "create" ? createFlashcardSchema : editFlashcardSchema,
-    ),
-    defaultValues: values,
-  });
-}
-
-export function FlashcardDialogForm({
+export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   mode,
   open,
   onOpenChange,
   trigger,
-  values,
+  form,
+  formId,
   subjects,
-  onSubmitAction,
-  onSuccess,
-}: Readonly<FlashcardDialogFormProps>) {
+  onSubmit,
+  discardDialogOpen,
+  onDiscardDialogOpenChange,
+  onDiscard,
+  isGeneratingBack,
+  canGenerateBack,
+  onGenerateBack,
+  keepFrontAfterSubmit,
+  onKeepFrontAfterSubmitChange,
+  keepBackAfterSubmit,
+  onKeepBackAfterSubmitChange,
+}: Readonly<FlashcardDialogFormProps<TValues>>) {
   const t = useTranslations(
     mode === "create" ? "CreateFlashcardDialog" : "EditFlashcardDialog",
   );
-  const tErrors = useTranslations("ServerActions");
-  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
-  const [isGeneratingBack, setIsGeneratingBack] = useState(false);
-  const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
-  const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
-  const form = useFlashcardForm(mode, values);
-
-  useEffect(() => {
-    if (!open || !form.formState.isDirty) {
-      form.reset(values);
-    }
-  }, [form, open, values, form.formState.isDirty]);
-
-  useBeforeUnload(
-    open && form.formState.isDirty && !form.formState.isSubmitting,
-  );
-
-  function handleDiscardChanges() {
-    form.reset(values);
-    setDiscardDialogOpen(false);
-    onOpenChange(false);
-  }
-
-  function handleOpenChange(nextOpen: boolean) {
-    if (nextOpen) {
-      setDiscardDialogOpen(false);
-      if (mode === "create") {
-        setKeepFrontAfterSubmit(false);
-        setKeepBackAfterSubmit(false);
-      }
-      onOpenChange(true);
-      return;
-    }
-
-    if (form.formState.isDirty && !form.formState.isSubmitting) {
-      setDiscardDialogOpen(true);
-      return;
-    }
-
-    form.reset(values);
-    setDiscardDialogOpen(false);
-    onOpenChange(false);
-  }
-
-  async function onSubmit(data: FlashcardFormValues) {
-    const result = await onSubmitAction(data);
-    if (result.success) {
-      if (mode === "create") {
-        form.reset(
-          getCreateFlashcardResetValues(data as CreateFlashcardForm, {
-            keepFrontAfterSubmit,
-            keepBackAfterSubmit,
-          }),
-        );
-        setDiscardDialogOpen(false);
-        await onSuccess?.(result.flashcard);
-        return;
-      }
-
-      form.reset(data);
-      setDiscardDialogOpen(false);
-      await onSuccess?.(result.flashcard);
-      onOpenChange(false);
-      return;
-    }
-
-    toast.error(resolveActionErrorMessage(result, tErrors));
-  }
-
-  async function handleGenerateBack() {
-    const currentValues = form.getValues();
-
-    if (
-      !("subjectId" in currentValues) ||
-      !hasRichTextContent(currentValues.front) ||
-      hasRichTextContent(currentValues.back) ||
-      isGeneratingBack
-    ) {
-      return;
-    }
-
-    setIsGeneratingBack(true);
-
-    const result = await generateFlashcardBack({
-      subjectId: currentValues.subjectId,
-      front: currentValues.front,
-    });
-
-    setIsGeneratingBack(false);
-
-    if (!result.success) {
-      toast.error(resolveActionErrorMessage(result, tErrors));
-      return;
-    }
-
-    form.setValue("back", result.back, {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-  }
 
   function handleCtrlEnter() {
     if (form.formState.isSubmitting) {
@@ -204,23 +92,9 @@ export function FlashcardDialogForm({
     void form.handleSubmit(onSubmit)();
   }
 
-  const formId =
-    mode === "create" ? "form-create-flashcard" : "form-edit-flashcard";
-  const [subjectIdValue, frontValue, backValue] = useWatch({
-    control: form.control,
-    name: ["subjectId", "front", "back"],
-  });
-  const canGenerateBack =
-    typeof subjectIdValue === "string" &&
-    subjectIdValue.length > 0 &&
-    hasRichTextContent(frontValue ?? "") &&
-    !hasRichTextContent(backValue ?? "") &&
-    !isGeneratingBack &&
-    !form.formState.isSubmitting;
-
   return (
     <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
         <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
           <DialogHeader>
@@ -230,7 +104,7 @@ export function FlashcardDialogForm({
             <FieldGroup className="gap-4">
               {subjects && subjects.length > 0 ? (
                 <Controller
-                  name="subjectId"
+                  name={"subjectId" as FieldPath<TValues>}
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -269,7 +143,7 @@ export function FlashcardDialogForm({
                 />
               ) : null}
               <Controller
-                name="front"
+                name={"front" as FieldPath<TValues>}
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -295,7 +169,9 @@ export function FlashcardDialogForm({
                             }
                             aria-pressed={keepFrontAfterSubmit}
                             onClick={() =>
-                              setKeepFrontAfterSubmit((current) => !current)
+                              onKeepFrontAfterSubmitChange(
+                                !keepFrontAfterSubmit,
+                              )
                             }
                             disabled={form.formState.isSubmitting}
                           >
@@ -325,7 +201,7 @@ export function FlashcardDialogForm({
                 )}
               />
               <Controller
-                name="back"
+                name={"back" as FieldPath<TValues>}
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -340,7 +216,7 @@ export function FlashcardDialogForm({
                             variant="ghost"
                             size="xs"
                             className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                            onClick={() => void handleGenerateBack()}
+                            onClick={() => void onGenerateBack()}
                             disabled={!canGenerateBack}
                           >
                             {isGeneratingBack ? (
@@ -369,7 +245,9 @@ export function FlashcardDialogForm({
                               }
                               aria-pressed={keepBackAfterSubmit}
                               onClick={() =>
-                                setKeepBackAfterSubmit((current) => !current)
+                                onKeepBackAfterSubmitChange(
+                                  !keepBackAfterSubmit,
+                                )
                               }
                               disabled={form.formState.isSubmitting}
                             >
@@ -415,8 +293,8 @@ export function FlashcardDialogForm({
       </Dialog>
       <UnsavedChangesDialog
         open={discardDialogOpen}
-        onOpenChange={setDiscardDialogOpen}
-        onDiscard={handleDiscardChanges}
+        onOpenChange={onDiscardDialogOpenChange}
+        onDiscard={onDiscard}
       />
     </>
   );

@@ -2,7 +2,6 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -192,42 +191,44 @@ function FieldError({
   errors?: Array<{ message?: string } | undefined>;
 }) {
   const t = useTranslations();
-  const content = useMemo(() => {
-    if (children) {
-      return children;
-    }
-
-    if (!errors?.length) {
-      return null;
-    }
-
-    const uniqueErrors = [
-      ...new Map(errors.map((error) => [error?.message, error])).values(),
-    ];
-    const resolvedMessages = uniqueErrors
-      .map((error) => resolveValidationMessage(error?.message, t))
-      .filter((message): message is string => Boolean(message));
-
-    if (resolvedMessages.length === 0) {
-      return null;
-    }
-
-    if (resolvedMessages.length === 1) {
-      return resolvedMessages[0];
-    }
-
+  if (children) {
     return (
+      <div
+        role="alert"
+        data-slot="field-error"
+        className={cn("text-destructive text-sm font-normal", className)}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  if (!errors?.length) {
+    return null;
+  }
+
+  const uniqueErrors = [
+    ...new Map(errors.map((error) => [error?.message, error])).values(),
+  ];
+  const resolvedMessages = uniqueErrors
+    .map((error) => resolveValidationMessage(error?.message, t))
+    .filter((message): message is string => Boolean(message));
+
+  if (resolvedMessages.length === 0) {
+    return null;
+  }
+
+  const content =
+    resolvedMessages.length === 1 ? (
+      resolvedMessages[0]
+    ) : (
       <ul className="ml-4 flex list-disc flex-col gap-1">
         {resolvedMessages.map((message) => (
           <li key={message}>{message}</li>
         ))}
       </ul>
     );
-  }, [children, errors, t]);
-
-  if (!content) {
-    return null;
-  }
 
   return (
     <div
