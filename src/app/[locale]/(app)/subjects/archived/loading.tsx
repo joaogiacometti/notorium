@@ -14,7 +14,7 @@ export default function ArchivedSubjectsLoading() {
           <Skeleton className="h-9 w-40" />
         </div>
 
-        <div className="mb-8 flex items-start gap-3">
+        <div className="mb-6 flex items-start gap-3">
           <Skeleton className="size-10 rounded-lg" />
           <div>
             <Skeleton className="h-8 w-56" />

@@ -12,7 +12,7 @@ export function PlanningLoadingShell({
   return (
     <main className="lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden">
       <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
-        <div className="mb-10 flex min-w-0 items-start gap-4">
+        <div className="mb-6 flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />
           <div className="min-w-0">
             <Skeleton className="h-8 w-32" />
@@ -20,7 +20,7 @@ export function PlanningLoadingShell({
           </div>
         </div>
 
-        <div className="mb-6 flex h-10 w-fit items-center gap-2 rounded-md border border-border/60 px-1">
+        <div className="mb-4 flex h-10 w-fit items-center gap-2 rounded-md border border-border/60 px-1">
           <Skeleton className="h-8 w-28 rounded-sm" />
           <Skeleton className="h-8 w-24 rounded-sm" />
         </div>

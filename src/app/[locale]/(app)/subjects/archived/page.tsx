@@ -29,7 +29,7 @@ export default async function ArchivedSubjectsPage() {
           </Button>
         </div>
 
-        <div className="mb-10 flex min-w-0 items-start gap-4">
+        <div className="mb-6 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Archive className="size-5" />
           </div>

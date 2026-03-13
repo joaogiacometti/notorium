@@ -30,6 +30,7 @@ export function FlashcardsPageShell({
       description={description}
       headerMeta={headerMeta}
       icon={Layers3}
+      lockViewport={currentView === "review"}
       switcher={
         <FlashcardsViewSwitch
           currentView={currentView}

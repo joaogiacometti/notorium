@@ -30,7 +30,7 @@ export function SubjectsList({
 
   return (
     <div>
-      <div className="mb-10 flex flex-wrap items-start justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
           <Button variant="outline" className="gap-1.5" asChild>
             <Link href="/subjects/archived">

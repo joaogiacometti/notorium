@@ -13,7 +13,7 @@ export default async function AccountPage() {
   return (
     <main>
       <AppPageContainer maxWidth="3xl">
-        <div className="mb-10 flex min-w-0 items-start gap-4">
+        <div className="mb-6 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <UserCircle className="size-5" />
           </div>

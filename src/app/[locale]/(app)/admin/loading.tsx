@@ -5,7 +5,7 @@ export default function AdminLoading() {
   return (
     <main>
       <AppPageContainer maxWidth="3xl">
-        <div className="mb-10 flex min-w-0 items-start gap-4">
+        <div className="mb-6 flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />
           <div className="min-w-0">
             <Skeleton className="h-8 w-40" />

@@ -3,11 +3,14 @@ import { FlashcardsLoadingShell } from "./flashcards-loading-shell";
 
 export function FlashcardReviewLoading() {
   return (
-    <FlashcardsLoadingShell>
-      <div className="space-y-6" data-testid="flashcards-review-loading">
+    <FlashcardsLoadingShell lockViewport>
+      <div
+        className="flex h-full min-h-0 flex-col space-y-6"
+        data-testid="flashcards-review-loading"
+      >
         <Skeleton className="h-5 w-40" />
 
-        <div className="rounded-xl border border-border/60 bg-card">
+        <div className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border/60 bg-card">
           <div className="space-y-6 p-6 sm:p-8">
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">

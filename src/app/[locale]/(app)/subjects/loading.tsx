@@ -10,7 +10,7 @@ export default function SubjectsLoading() {
   return (
     <main>
       <AppPageContainer>
-        <div className="mb-10 flex min-w-0 items-start gap-4">
+        <div className="mb-6 flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />
           <div className="min-w-0">
             <Skeleton className="h-8 w-32" />
@@ -18,7 +18,7 @@ export default function SubjectsLoading() {
           </div>
         </div>
 
-        <div className="mb-10 flex flex-wrap items-start justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
             <Skeleton className="h-10 w-28 rounded-md" />
             <Skeleton className="h-10 w-32 rounded-md" />

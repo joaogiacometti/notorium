@@ -55,6 +55,7 @@ interface FlashcardReviewClientProps {
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
 const reviewBatchLimit = 50;
+const reviewCardHeightClassName = "flex-1 min-h-0 gap-0 overflow-hidden";
 const reviewContentFrameClassName = "mx-auto flex min-h-0 w-full max-w-5xl";
 const reviewContentMeasureClassName = "w-full max-w-[58rem]";
 const gradeButtonStyles: Record<ReviewGrade, string> = {
@@ -221,13 +222,7 @@ export function FlashcardReviewClient({
 
   if (currentCard) {
     reviewContent = (
-      <Card
-        className={
-          revealed
-            ? "max-h-[calc(100svh-16rem)] gap-0 overflow-hidden sm:max-h-[calc(100svh-18rem)]"
-            : "gap-0"
-        }
-      >
+      <Card className={reviewCardHeightClassName}>
         <CardContent className="flex min-h-0 flex-1 flex-col p-0">
           <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 sm:px-8">
             <div
@@ -391,7 +386,7 @@ export function FlashcardReviewClient({
   );
 
   return embedded ? (
-    <div className="space-y-6">{content}</div>
+    <div className="flex h-full min-h-0 flex-col">{content}</div>
   ) : (
     <AppPageContainer>{content}</AppPageContainer>
   );
