@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,12 +24,46 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
+function shouldIgnoreRowClick(
+  target: EventTarget | null,
+  currentTarget: EventTarget | null,
+) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  const interactiveAncestor = target.closest(
+    [
+      "a",
+      "button",
+      "input",
+      "select",
+      "textarea",
+      "[role='button']",
+      "[role='link']",
+      "[role='menuitem']",
+      "[role='checkbox']",
+      "[role='radio']",
+      "[data-no-row-click]",
+    ].join(", "),
+  );
+
+  return Boolean(
+    interactiveAncestor &&
+      interactiveAncestor instanceof HTMLElement &&
+      interactiveAncestor !== currentTarget,
+  );
+}
+
 interface ManagerDataTableProps<TRow> {
   data: TRow[];
   columns: ColumnDef<TRow>[];
   emptyLabel: string;
   getRowId: (row: TRow) => string;
+  getRowAriaLabel?: (row: TRow) => string;
+  getRowClassName?: (row: TRow) => string;
   nextLabel: string;
+  onRowClick?: (row: TRow) => void;
   onPageIndexChange: (pageIndex: number) => void;
   pageIndex: number;
   pageLabel: (current: number, total: number) => string;
@@ -58,7 +92,10 @@ export function ManagerDataTable<TRow>({
   columns,
   emptyLabel,
   getRowId,
+  getRowAriaLabel,
+  getRowClassName,
   nextLabel,
+  onRowClick,
   onPageIndexChange,
   pageIndex,
   pageLabel,
@@ -164,6 +201,20 @@ export function ManagerDataTable<TRow>({
 
   const totalPageCount = Math.max(table.getPageCount(), 1);
 
+  function handleRowClick(
+    event: ReactMouseEvent<HTMLTableRowElement>,
+    row: TRow,
+  ) {
+    if (
+      !onRowClick ||
+      shouldIgnoreRowClick(event.target, event.currentTarget)
+    ) {
+      return;
+    }
+
+    onRowClick(row);
+  }
+
   return (
     <div
       className={cn(
@@ -221,7 +272,42 @@ export function ManagerDataTable<TRow>({
                   className={cn(
                     "border-b border-border/50 transition-colors duration-150 hover:bg-muted/20",
                     row.getIsSelected() ? "bg-muted/10" : null,
+                    onRowClick
+                      ? "cursor-pointer focus-visible:bg-muted/20 focus-visible:outline-none"
+                      : null,
+                    getRowClassName?.(row.original),
                   )}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  role={onRowClick ? "link" : undefined}
+                  aria-label={getRowAriaLabel?.(row.original)}
+                  onClick={
+                    onRowClick
+                      ? (event) => handleRowClick(event, row.original)
+                      : undefined
+                  }
+                  onKeyDown={
+                    onRowClick
+                      ? (event) => {
+                          if (
+                            shouldIgnoreRowClick(
+                              event.target,
+                              event.currentTarget,
+                            )
+                          ) {
+                            return;
+                          }
+
+                          if (
+                            event.key === "Enter" ||
+                            event.key === " " ||
+                            event.key === "Spacebar"
+                          ) {
+                            event.preventDefault();
+                            onRowClick(row.original);
+                          }
+                        }
+                      : undefined
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell

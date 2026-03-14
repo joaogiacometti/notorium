@@ -10,6 +10,7 @@ import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
+import { useRouter } from "@/i18n/routing";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
@@ -19,7 +20,6 @@ interface PlanningAssessmentsManagerTableProps {
   assessments: AssessmentEntity[];
   finalGrade: number | null;
   pageIndex: number;
-  showSubjectDetails: boolean;
   subjectNamesById: Record<string, string>;
   onPageIndexChange: (pageIndex: number) => void;
   onUpdated: (assessment: AssessmentEntity) => void;
@@ -85,20 +85,28 @@ function formatGradeWeight(score: string | null, weight: string | null) {
   return `${formatScore(score)}/${formatWeight(weight)}`;
 }
 
-function getColumnClassName(columnId: string, showSubjectDetails: boolean) {
+function getPreviewText(value: string, maxLength = 15) {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength).trimEnd()}...`;
+}
+
+function getColumnClassName(columnId: string) {
   switch (columnId) {
     case "title":
-      return "w-full min-w-[10rem]";
+      return "min-w-[7rem]";
     case "type":
-      return "min-w-[7rem]";
+      return "min-w-[5.5rem]";
     case "status":
-      return "min-w-[7.5rem]";
+      return "min-w-[5rem]";
     case "dueDate":
-      return "min-w-[7rem]";
+      return "min-w-[4.5rem]";
     case "gradeWeight":
-      return "min-w-[6.5rem]";
+      return "min-w-[5rem]";
     case "subject":
-      return showSubjectDetails ? "" : "min-w-[10rem]";
+      return "min-w-[6rem]";
     case "actions":
       return "w-14 min-w-14";
     default:
@@ -109,7 +117,6 @@ function getColumnClassName(columnId: string, showSubjectDetails: boolean) {
 function getColumns(
   onUpdated: (assessment: AssessmentEntity) => void,
   onDeleted: (id: string) => void,
-  showSubjectDetails: boolean,
   subjectNamesById: Record<string, string>,
   todayIso: string,
   dateLocale: ReturnType<typeof getDateFnsLocale>,
@@ -125,23 +132,23 @@ function getColumns(
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-2.5 py-1">
+        <div className="flex min-w-0 max-w-full items-center gap-2.5 py-1">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
             <ClipboardList className="size-4" />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 max-w-full flex-1 overflow-hidden">
             <div
-              className="truncate text-sm font-semibold leading-5.5 text-foreground/95"
+              className="max-w-full truncate text-sm font-semibold leading-5.5 text-foreground/95"
               title={row.original.title}
             >
-              {row.original.title}
+              {getPreviewText(row.original.title)}
             </div>
             {row.original.description ? (
               <div
-                className="truncate text-xs leading-5 text-muted-foreground"
+                className="max-w-full truncate text-xs leading-5 text-muted-foreground"
                 title={row.original.description}
               >
-                {row.original.description}
+                {getPreviewText(row.original.description)}
               </div>
             ) : null}
           </div>
@@ -217,7 +224,10 @@ function getColumns(
       id: "actions",
       header: () => <div className="flex w-14 min-w-14 justify-start" />,
       cell: ({ row }) => (
-        <div className="flex w-14 min-w-14 items-center justify-start pl-1">
+        <div
+          className="flex w-14 min-w-14 items-center justify-start pl-1"
+          data-no-row-click
+        >
           <AssessmentsTableRowActions
             assessment={row.original}
             onUpdated={onUpdated}
@@ -229,38 +239,40 @@ function getColumns(
     },
   ];
 
-  if (!showSubjectDetails) {
-    columns.splice(columns.length - 1, 0, {
-      id: "subject",
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {tTable("table_subject")}
-        </div>
-      ),
-      cell: ({ row }) => {
-        const subjectName = subjectNamesById[row.original.subjectId];
+  columns.splice(columns.length - 1, 0, {
+    id: "subject",
+    header: () => (
+      <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+        {tTable("table_subject")}
+      </div>
+    ),
+    cell: ({ row }) => {
+      const subjectName = subjectNamesById[row.original.subjectId];
 
-        if (!subjectName) {
-          return (
-            <SubjectChip
-              label={tTable("unknown_subject")}
-              maxWidthClassName="max-w-[10rem]"
-            />
-          );
-        }
-
+      if (!subjectName) {
         return (
           <SubjectChip
-            href={`/subjects/${row.original.subjectId}`}
-            label={subjectName}
-            maxWidthClassName="max-w-[10rem]"
+            label={tTable("unknown_subject")}
+            maxWidthClassName="max-w-[7.5rem]"
           />
         );
-      },
-    });
+      }
 
-    return columns;
-  }
+      return (
+        <SubjectChip
+          href={`/subjects/${row.original.subjectId}`}
+          label={subjectName}
+          maxWidthClassName="max-w-[7.5rem]"
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+          onKeyDown={(event) => {
+            event.stopPropagation();
+          }}
+        />
+      );
+    },
+  });
 
   return columns;
 }
@@ -269,7 +281,6 @@ export function PlanningAssessmentsManagerTable({
   assessments,
   finalGrade,
   pageIndex,
-  showSubjectDetails,
   subjectNamesById,
   onPageIndexChange,
   onUpdated,
@@ -280,6 +291,7 @@ export function PlanningAssessmentsManagerTable({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const todayIso = format(new Date(), "yyyy-MM-dd");
+  const router = useRouter();
   const finalGradeTone =
     finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
 
@@ -289,7 +301,6 @@ export function PlanningAssessmentsManagerTable({
       columns={getColumns(
         onUpdated,
         onDeleted,
-        showSubjectDetails,
         subjectNamesById,
         todayIso,
         dateLocale,
@@ -308,27 +319,22 @@ export function PlanningAssessmentsManagerTable({
       nextLabel={tTable("next")}
       emptyLabel={tTable("no_results")}
       getRowId={(row) => row.id}
-      tableClassName={cn(
-        "w-full",
-        showSubjectDetails ? "min-w-160" : "min-w-210",
-      )}
-      getHeaderCellClassName={(columnId) =>
-        getColumnClassName(columnId, showSubjectDetails)
+      getRowAriaLabel={(row) =>
+        tTable("open_details_for", { title: row.title })
       }
+      onRowClick={(row) => router.push(`/assessments/${row.id}`)}
+      tableClassName="w-full min-w-160"
+      getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
-        cn(
-          "align-middle",
-          getColumnClassName(columnId, showSubjectDetails),
-          showSubjectDetails ? "px-2 py-3" : "px-3 py-3",
-        )
+        cn("align-middle px-3 py-3", getColumnClassName(columnId))
       }
       footerClassName={cn(
         "sm:items-center",
-        showSubjectDetails ? "sm:justify-between" : "sm:justify-end",
+        finalGrade !== null ? "sm:justify-between" : "sm:justify-end",
       )}
       controlsClassName="sm:items-center"
       footerLeading={
-        showSubjectDetails ? (
+        finalGrade !== null ? (
           <div className="min-w-0 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">
               {tTable("footer_final_grade")}:

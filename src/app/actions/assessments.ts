@@ -69,7 +69,7 @@ export async function editAssessment(
       const result = await editAssessmentForUser(userId, parsedData);
 
       if (result.success) {
-        revalidateAssessmentPaths(result.subjectId);
+        revalidateAssessmentPaths(result.subjectId, result.assessment.id);
       }
 
       return result;
@@ -88,7 +88,7 @@ export async function deleteAssessment(
       const result = await deleteAssessmentForUser(userId, parsedData);
 
       if (result.success) {
-        revalidateAssessmentPaths(result.subjectId);
+        revalidateAssessmentPaths(result.subjectId, result.id);
       }
 
       return result;

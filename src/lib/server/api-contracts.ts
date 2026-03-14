@@ -15,6 +15,10 @@ export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
+export interface AssessmentDetailEntity {
+  assessment: AssessmentEntity;
+  subject: Pick<SubjectEntity, "id" | "name">;
+}
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 export type FlashcardListEntity = FlashcardEntity & {
   subjectName: string;

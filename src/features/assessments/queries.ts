@@ -1,7 +1,10 @@
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
-import type { AssessmentEntity } from "@/lib/server/api-contracts";
+import type {
+  AssessmentDetailEntity,
+  AssessmentEntity,
+} from "@/lib/server/api-contracts";
 
 export async function getAssessmentsForUser(
   userId: string,
@@ -61,6 +64,33 @@ export async function getAssessmentRecordForUser(
 ): Promise<{ id: string; subjectId: string } | null> {
   const results = await db
     .select({ id: assessment.id, subjectId: assessment.subjectId })
+    .from(assessment)
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
+    .where(
+      and(
+        eq(assessment.id, assessmentId),
+        eq(assessment.userId, userId),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .limit(1);
+
+  return results[0] ?? null;
+}
+
+export async function getAssessmentDetailForUser(
+  userId: string,
+  assessmentId: string,
+): Promise<AssessmentDetailEntity | null> {
+  const results = await db
+    .select({
+      assessment,
+      subject: {
+        id: subject.id,
+        name: subject.name,
+      },
+    })
     .from(assessment)
     .innerJoin(subject, eq(assessment.subjectId, subject.id))
     .where(

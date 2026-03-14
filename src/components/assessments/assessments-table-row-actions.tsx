@@ -2,7 +2,7 @@
 
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type KeyboardEvent, useState } from "react";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { EditAssessmentDialog } from "@/components/assessments/edit-assessment-dialog";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,14 @@ export function AssessmentsTableRowActions({
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+  }
+
+  function handleMenuClick(event: { stopPropagation: () => void }) {
+    event.stopPropagation();
+  }
+
   return (
     <>
       <DropdownMenu>
@@ -39,20 +47,30 @@ export function AssessmentsTableRowActions({
             size="icon"
             className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
             aria-label={t("open_actions")}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            onKeyDown={handleKeyDown}
           >
             <MoreVertical className="size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={() => setEditOpen(true)}
+            onSelect={(event) => {
+              handleMenuClick(event);
+              setEditOpen(true);
+            }}
             className="cursor-pointer"
           >
             <Pencil className="size-4" />
             {t("edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => setDeleteOpen(true)}
+            onSelect={(event) => {
+              handleMenuClick(event);
+              setDeleteOpen(true);
+            }}
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             <Trash2 className="size-4" />

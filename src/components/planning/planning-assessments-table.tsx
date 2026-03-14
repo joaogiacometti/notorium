@@ -303,7 +303,6 @@ export function PlanningAssessmentsTable({
             assessments={filteredAssessments}
             finalGrade={finalGrade}
             pageIndex={pageIndex}
-            showSubjectDetails={isSingleSubjectMode}
             subjectNamesById={subjectNamesById}
             onPageIndexChange={setPageIndex}
             onUpdated={handleUpdated}
