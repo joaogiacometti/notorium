@@ -26,6 +26,7 @@ interface FlashcardsManagerTableProps {
   onDeleted: () => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
   onUpdated: () => void;
+  onRowClick?: (flashcard: FlashcardManageItem) => void;
 }
 
 const flashcardFrontPreviewLength = 30;
@@ -151,6 +152,7 @@ export function FlashcardsManagerTable({
   onDeleted,
   onSelectedFlashcardIdsChange,
   onUpdated,
+  onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
   const t = useTranslations("FlashcardsManager");
   return (
@@ -176,6 +178,7 @@ export function FlashcardsManagerTable({
       nextLabel={t("next")}
       emptyLabel={t("no_results")}
       getRowId={(row) => row.id}
+      onRowClick={onRowClick}
       tableClassName="w-full min-w-160"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>

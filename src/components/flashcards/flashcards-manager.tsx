@@ -283,7 +283,7 @@ export function FlashcardsManager({
               </div>
               <div
                 className={cn(
-                  "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-[8.5rem]",
+                  "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34",
                   selectedFlashcardIds.length > 0
                     ? "visible opacity-100"
                     : "pointer-events-none invisible opacity-0",
@@ -349,6 +349,9 @@ export function FlashcardsManager({
           onUpdated={refreshManagePage}
           onDeleted={refreshManagePage}
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
+          onRowClick={(row) =>
+            router.push(`/subjects/${row.subjectId}/flashcards/${row.id}`)
+          }
         />
       </Card>
       <CreateFlashcardDialog
