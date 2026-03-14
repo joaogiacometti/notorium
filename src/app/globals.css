@@ -2,7 +2,12 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(
+    .dark *,
+    .tokyo-night *,
+    .halloween *,
+    .catppuccin-mocha *
+  ));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -284,6 +289,96 @@
   --review-easy-bg: oklch(0.75 0.14 155 / 10%);
   --review-easy-bg-hover: oklch(0.75 0.14 155 / 15%);
   --review-easy-text: oklch(0.8 0.1 158);
+}
+
+.tokyo-night {
+  --background: hsl(235 21% 15%);
+  --foreground: hsl(220 39% 76%);
+  --card: hsl(235 19% 18%);
+  --card-foreground: hsl(220 39% 76%);
+  --popover: hsl(235 19% 18%);
+  --popover-foreground: hsl(220 39% 76%);
+  --primary: hsl(221 74% 70%);
+  --primary-foreground: hsl(235 21% 15%);
+  --secondary: hsl(234 18% 24%);
+  --secondary-foreground: hsl(220 39% 76%);
+  --muted: hsl(233 17% 22%);
+  --muted-foreground: hsl(230 18% 62%);
+  --accent: hsl(191 69% 50% / 0.18);
+  --accent-foreground: hsl(189 70% 71%);
+  --destructive: hsl(349 89% 71%);
+  --border: hsl(233 17% 28%);
+  --input: hsl(235 17% 20%);
+  --ring: hsl(221 74% 70% / 0.55);
+  --chart-1: hsl(27 93% 69%);
+  --chart-2: hsl(174 54% 65%);
+  --chart-3: hsl(221 74% 70%);
+  --chart-4: hsl(267 83% 79%);
+  --chart-5: hsl(189 95% 74%);
+  --sidebar: hsl(235 21% 13%);
+  --sidebar-foreground: hsl(220 39% 76%);
+  --sidebar-primary: hsl(221 74% 70%);
+  --sidebar-primary-foreground: hsl(235 21% 15%);
+  --sidebar-accent: hsl(234 18% 22%);
+  --sidebar-accent-foreground: hsl(220 39% 76%);
+  --sidebar-border: hsl(233 17% 24%);
+  --sidebar-ring: hsl(221 74% 70% / 0.5);
+  --status-success-border: hsl(174 54% 65% / 0.35);
+  --status-success-bg: hsl(174 54% 65% / 0.1);
+  --status-success-text: hsl(174 54% 72%);
+  --status-success-fill: hsl(174 54% 65%);
+  --status-warning-border: hsl(36 69% 65% / 0.35);
+  --status-warning-bg: hsl(36 69% 65% / 0.1);
+  --status-warning-text: hsl(36 69% 72%);
+  --status-warning-fill: hsl(36 69% 65%);
+  --status-danger-border: hsl(349 89% 71% / 0.35);
+  --status-danger-bg: hsl(349 89% 71% / 0.1);
+  --status-danger-text: hsl(349 89% 71%);
+  --status-danger-fill: hsl(349 89% 71%);
+  --assessment-exam-border: hsl(267 83% 79% / 0.3);
+  --assessment-exam-bg: hsl(267 83% 79% / 0.1);
+  --assessment-exam-text: hsl(267 83% 82%);
+  --assessment-exam-icon: hsl(267 83% 79%);
+  --assessment-assignment-border: hsl(221 74% 70% / 0.3);
+  --assessment-assignment-bg: hsl(221 74% 70% / 0.1);
+  --assessment-assignment-text: hsl(221 74% 77%);
+  --assessment-assignment-icon: hsl(221 74% 70%);
+  --assessment-project-border: hsl(349 89% 71% / 0.28);
+  --assessment-project-bg: hsl(349 89% 71% / 0.1);
+  --assessment-project-text: hsl(349 89% 76%);
+  --assessment-project-icon: hsl(349 89% 71%);
+  --assessment-presentation-border: hsl(27 93% 69% / 0.3);
+  --assessment-presentation-bg: hsl(27 93% 69% / 0.1);
+  --assessment-presentation-text: hsl(27 93% 74%);
+  --assessment-presentation-icon: hsl(27 93% 69%);
+  --assessment-homework-border: hsl(189 95% 74% / 0.28);
+  --assessment-homework-bg: hsl(189 95% 74% / 0.1);
+  --assessment-homework-text: hsl(189 80% 78%);
+  --assessment-homework-icon: hsl(189 95% 74%);
+  --assessment-other-border: hsl(230 18% 62% / 0.24);
+  --assessment-other-bg: hsl(230 18% 62% / 0.08);
+  --assessment-other-text: hsl(220 39% 76%);
+  --assessment-other-icon: hsl(230 18% 62%);
+  --review-again-border: hsl(349 89% 71% / 0.4);
+  --review-again-border-hover: hsl(349 89% 71% / 0.55);
+  --review-again-bg: hsl(349 89% 71% / 0.1);
+  --review-again-bg-hover: hsl(349 89% 71% / 0.15);
+  --review-again-text: hsl(349 89% 71%);
+  --review-hard-border: hsl(36 69% 65% / 0.4);
+  --review-hard-border-hover: hsl(36 69% 65% / 0.55);
+  --review-hard-bg: hsl(36 69% 65% / 0.1);
+  --review-hard-bg-hover: hsl(36 69% 65% / 0.15);
+  --review-hard-text: hsl(36 69% 72%);
+  --review-good-border: hsl(221 74% 70% / 0.4);
+  --review-good-border-hover: hsl(221 74% 70% / 0.55);
+  --review-good-bg: hsl(221 74% 70% / 0.1);
+  --review-good-bg-hover: hsl(221 74% 70% / 0.15);
+  --review-good-text: hsl(221 74% 70%);
+  --review-easy-border: hsl(174 54% 65% / 0.4);
+  --review-easy-border-hover: hsl(174 54% 65% / 0.55);
+  --review-easy-bg: hsl(174 54% 65% / 0.1);
+  --review-easy-bg-hover: hsl(174 54% 65% / 0.15);
+  --review-easy-text: hsl(174 54% 72%);
 }
 
 .halloween {
@@ -587,6 +682,11 @@
 }
 
 @layer base {
+  html,
+  body {
+    min-height: 100%;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -609,6 +709,18 @@
   background-color: color-mix(in oklab, var(--background) 84%, black);
   border-bottom-color: color-mix(in oklab, var(--primary) 22%, var(--border));
   box-shadow: 0 1px 0 color-mix(in oklab, var(--primary) 12%, transparent);
+}
+
+.tokyo-night body {
+  background:
+    linear-gradient(180deg, hsl(235 20% 16%), hsl(235 21% 14%)),
+    linear-gradient(180deg, hsl(221 74% 70% / 0.06), transparent 22%);
+}
+
+.tokyo-night nav {
+  background-color: color-mix(in srgb, var(--background) 90%, black);
+  border-bottom-color: color-mix(in srgb, var(--border) 88%, var(--primary));
+  box-shadow: 0 1px 0 hsl(233 17% 24% / 0.7);
 }
 
 .halloween main > section:first-child {
@@ -724,6 +836,13 @@
   @apply mb-3 overflow-x-auto rounded-lg bg-muted p-4 last:mb-0;
 }
 
+.tokyo-night .tiptap-content pre,
+.tokyo-night .tiptap-wrapper .tiptap pre {
+  background-color: hsl(234 23% 12%);
+  border: 1px solid hsl(233 17% 24%);
+  box-shadow: inset 0 1px 0 hsl(221 74% 70% / 0.06);
+}
+
 .tiptap-content pre code,
 .tiptap-wrapper .tiptap pre code {
   @apply bg-transparent p-0;
@@ -741,6 +860,18 @@
   @apply text-muted-foreground italic;
 }
 
+.tokyo-night .tiptap-content .hljs,
+.tokyo-night .tiptap-wrapper .tiptap .hljs {
+  color: hsl(220 39% 76%);
+}
+
+.tokyo-night .tiptap-content .hljs-comment,
+.tokyo-night .tiptap-content .hljs-quote,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-comment,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-quote {
+  color: hsl(230 18% 62%);
+}
+
 .tiptap-content .hljs-keyword,
 .tiptap-content .hljs-selector-tag,
 .tiptap-content .hljs-literal,
@@ -752,6 +883,19 @@
 .tiptap-wrapper .tiptap .hljs-section,
 .tiptap-wrapper .tiptap .hljs-link {
   color: color-mix(in oklab, var(--foreground) 82%, var(--chart-3));
+}
+
+.tokyo-night .tiptap-content .hljs-keyword,
+.tokyo-night .tiptap-content .hljs-selector-tag,
+.tokyo-night .tiptap-content .hljs-literal,
+.tokyo-night .tiptap-content .hljs-section,
+.tokyo-night .tiptap-content .hljs-link,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-keyword,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-selector-tag,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-literal,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-section,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-link {
+  color: hsl(267 83% 79%);
 }
 
 .tiptap-content .hljs-string,
@@ -771,6 +915,23 @@
   color: color-mix(in oklab, var(--foreground) 78%, var(--chart-2));
 }
 
+.tokyo-night .tiptap-content .hljs-string,
+.tokyo-night .tiptap-content .hljs-title,
+.tokyo-night .tiptap-content .hljs-name,
+.tokyo-night .tiptap-content .hljs-attribute,
+.tokyo-night .tiptap-content .hljs-symbol,
+.tokyo-night .tiptap-content .hljs-bullet,
+.tokyo-night .tiptap-content .hljs-addition,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-string,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-title,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-name,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-attribute,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-symbol,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-bullet,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-addition {
+  color: hsl(102 57% 65%);
+}
+
 .tiptap-content .hljs-number,
 .tiptap-content .hljs-meta,
 .tiptap-content .hljs-variable,
@@ -788,6 +949,23 @@
   color: color-mix(in oklab, var(--foreground) 74%, var(--chart-1));
 }
 
+.tokyo-night .tiptap-content .hljs-number,
+.tokyo-night .tiptap-content .hljs-meta,
+.tokyo-night .tiptap-content .hljs-variable,
+.tokyo-night .tiptap-content .hljs-template-variable,
+.tokyo-night .tiptap-content .hljs-type,
+.tokyo-night .tiptap-content .hljs-params,
+.tokyo-night .tiptap-content .hljs-attr,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-number,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-meta,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-variable,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-template-variable,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-type,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-params,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-attr {
+  color: hsl(36 69% 65%);
+}
+
 .tiptap-content .hljs-regexp,
 .tiptap-content .hljs-selector-attr,
 .tiptap-content .hljs-selector-pseudo,
@@ -797,6 +975,15 @@
   color: color-mix(in oklab, var(--foreground) 78%, var(--chart-5));
 }
 
+.tokyo-night .tiptap-content .hljs-regexp,
+.tokyo-night .tiptap-content .hljs-selector-attr,
+.tokyo-night .tiptap-content .hljs-selector-pseudo,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-regexp,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-selector-attr,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-selector-pseudo {
+  color: hsl(189 95% 74%);
+}
+
 .tiptap-content .hljs-built_in,
 .tiptap-content .hljs-function,
 .tiptap-content .hljs-class,
@@ -804,6 +991,15 @@
 .tiptap-wrapper .tiptap .hljs-function,
 .tiptap-wrapper .tiptap .hljs-class {
   color: color-mix(in oklab, var(--foreground) 78%, var(--chart-4));
+}
+
+.tokyo-night .tiptap-content .hljs-built_in,
+.tokyo-night .tiptap-content .hljs-function,
+.tokyo-night .tiptap-content .hljs-class,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-built_in,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-function,
+.tokyo-night .tiptap-wrapper .tiptap .hljs-class {
+  color: hsl(221 74% 70%);
 }
 
 .tiptap-content hr,
@@ -875,6 +1071,12 @@
 .tiptap-content mark,
 .tiptap-wrapper .tiptap mark {
   @apply rounded-sm bg-yellow-200/60 px-0.5 dark:bg-yellow-500/30;
+}
+
+.tokyo-night .tiptap-content mark,
+.tokyo-night .tiptap-wrapper .tiptap mark {
+  background-color: hsl(36 69% 65% / 0.28);
+  color: hsl(45 40% 88%);
 }
 
 /* Task list styles */

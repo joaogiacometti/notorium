@@ -31,6 +31,12 @@ export function ModeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
+          onClick={() => setTheme("system")}
+          className="cursor-pointer"
+        >
+          {t("system")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
           onClick={() => setTheme("light")}
           className="cursor-pointer"
         >
@@ -43,16 +49,16 @@ export function ModeToggle() {
           {t("dark")}
         </DropdownMenuItem>
         <DropdownMenuItem
+          onClick={() => setTheme("tokyo-night")}
+          className="cursor-pointer"
+        >
+          {t("tokyo_night")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
           onClick={() => setTheme("halloween")}
           className="cursor-pointer"
         >
           {t("halloween")}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme("system")}
-          className="cursor-pointer"
-        >
-          {t("system")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("catppuccin-mocha")}

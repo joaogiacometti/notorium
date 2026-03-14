@@ -40,6 +40,7 @@ export default async function RootLayout({
             themes={[
               "light",
               "dark",
+              "tokyo-night",
               "halloween",
               "catppuccin-mocha",
               "catppuccin-latte",

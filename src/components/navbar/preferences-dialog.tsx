@@ -27,6 +27,7 @@ type AppTheme =
   | "system"
   | "light"
   | "dark"
+  | "tokyo-night"
   | "halloween"
   | "catppuccin-mocha"
   | "catppuccin-latte";
@@ -36,6 +37,7 @@ type ThemeOption = {
     | "system"
     | "light"
     | "dark"
+    | "tokyo_night"
     | "halloween"
     | "catppuccin_mocha"
     | "catppuccin_latte";
@@ -45,6 +47,7 @@ const themeOptions: ThemeOption[] = [
   { id: "system", labelKey: "system" },
   { id: "light", labelKey: "light" },
   { id: "dark", labelKey: "dark" },
+  { id: "tokyo-night", labelKey: "tokyo_night" },
   { id: "halloween", labelKey: "halloween" },
   { id: "catppuccin-mocha", labelKey: "catppuccin_mocha" },
   { id: "catppuccin-latte", labelKey: "catppuccin_latte" },
