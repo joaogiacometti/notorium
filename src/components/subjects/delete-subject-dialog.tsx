@@ -79,6 +79,7 @@ export function DeleteSubjectDialog({
         <DialogFooter className="gap-2 sm:gap-2">
           <Button
             variant="outline"
+            data-testid="cancel-delete-subject"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
@@ -86,6 +87,11 @@ export function DeleteSubjectDialog({
           </Button>
           <Button
             variant={mode === "archive" ? "default" : "destructive"}
+            data-testid={
+              mode === "archive"
+                ? "confirm-archive-subject"
+                : "confirm-delete-subject"
+            }
             onClick={handleConfirm}
             disabled={isPending}
           >

@@ -33,10 +33,14 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
 
   return (
     <>
-      <Card className="group relative transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
+      <Card
+        data-testid="subject-card"
+        className="group relative transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"
+      >
         <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
           <Link
             href={`/subjects/${subject.id}`}
+            data-testid="subject-card-link"
             className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
@@ -55,6 +59,7 @@ export function SubjectCard({ subject }: Readonly<SubjectCardProps>) {
               <Button
                 variant="ghost"
                 size="icon"
+                data-testid="subject-card-actions"
                 className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
                 aria-label={t("open_actions")}
               >

@@ -163,6 +163,9 @@ Defined in `src/env.ts`:
 | `bun run test`              | Run Vitest suite                     |
 | `bun run test:watch`        | Run Vitest in watch mode             |
 | `bun run test:coverage`     | Run Vitest with coverage             |
+| `bun run test:e2e`          | Run Playwright end-to-end tests      |
+| `bun run test:e2e:ui`       | Run Playwright in UI mode            |
+| `bun run test:e2e:headed`   | Run Playwright in headed mode        |
 | `bun run db:generate`       | Generate Drizzle migrations          |
 | `bun run db:migrate`        | Apply Drizzle migrations             |
 | `bun run db:push`           | Push schema directly to DB           |
@@ -206,3 +209,24 @@ bun run lint
 bun run test
 bun run build
 ```
+
+## End-to-End Tests
+
+Playwright e2e coverage lives under `tests/e2e` and currently covers approved, pending, and blocked login states plus basic subject CRUD.
+
+Before the first run, install Playwright browsers:
+
+```bash
+bunx playwright install
+```
+
+The suite expects the app environment to be configured and the local database to be migrated. It will start the app with `bun dev` unless one is already running.
+
+The Playwright auth fixtures use fixed internal test identities for approved, pending, and blocked users. The e2e-specific environment variables are:
+
+| Variable | Required | Description |
+| -------- | -------- | ----------- |
+| `E2E_USER_PASSWORD` | Yes | Password for end-to-end test users (approved, pending, blocked) |
+| `PLAYWRIGHT_BASE_URL` | No | Overrides the base URL used by Playwright. Defaults to `BETTER_AUTH_URL` or `http://localhost:3000`. |
+
+On startup, the auth helpers ensure the e2e users exist and set their access states directly so the suite does not depend on manual admin approval.

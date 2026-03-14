@@ -50,6 +50,7 @@ export function SubjectDetail({
           <Button
             variant="outline"
             size="sm"
+            data-testid="subject-detail-edit"
             className="flex-1 gap-1.5 sm:flex-none"
             onClick={() => setEditOpen(true)}
           >
@@ -59,6 +60,7 @@ export function SubjectDetail({
           <Button
             variant="outline"
             size="sm"
+            data-testid="subject-detail-archive"
             className="flex-1 gap-1.5 sm:flex-none"
             onClick={() => setArchiveOpen(true)}
           >
@@ -68,6 +70,7 @@ export function SubjectDetail({
           <Button
             variant="outline"
             size="sm"
+            data-testid="subject-detail-delete"
             className="flex-1 gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground sm:flex-none"
             onClick={() => setDeleteOpen(true)}
           >
