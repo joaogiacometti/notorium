@@ -125,7 +125,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
           placeholder={t("input_placeholder")}
         />
         <CommandList>
-          {canSearch && isPending && <SearchSkeleton />}
+          {isResultsPending && <SearchSkeleton />}
           {!isResultsPending && !isAuthenticated && (
             <CommandEmpty>{t("empty_sign_in")}</CommandEmpty>
           )}
