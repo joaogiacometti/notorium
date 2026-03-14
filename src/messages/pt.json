@@ -121,6 +121,11 @@
     "archive": "Arquivar",
     "delete": "Excluir"
   },
+  "DetailBackLink": {
+    "flashcards": "Voltar para Flashcards",
+    "planning": "Voltar para Planejamento",
+    "subject": "Voltar para Matéria"
+  },
   "SubjectAssessmentsSummary": {
     "title": "Avaliações",
     "description": "Acompanhe como suas avaliações concluídas formam a nota final.",
@@ -651,14 +656,12 @@
     "delete": "Excluir"
   },
   "NoteDetail": {
-    "back": "Voltar para Matéria",
     "created_label": "Criado",
     "empty": "Nenhum conteúdo ainda. Clique em Editar para adicionar notas.",
     "edit": "Editar",
     "delete": "Excluir"
   },
   "AssessmentDetail": {
-    "back": "Voltar para Matéria",
     "created_label": "Criado",
     "updated_label": "Atualizado",
     "details_heading": "Detalhes",
@@ -681,7 +684,6 @@
     "delete": "Excluir"
   },
   "FlashcardDetail": {
-    "back": "Voltar para Matéria",
     "created_label": "Criado",
     "front_label": "Frente",
     "back_label": "Verso",

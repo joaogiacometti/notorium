@@ -121,6 +121,11 @@
     "archive": "Archive",
     "delete": "Delete"
   },
+  "DetailBackLink": {
+    "flashcards": "Back to Flashcards",
+    "planning": "Back to Planning",
+    "subject": "Back to Subject"
+  },
   "SubjectAssessmentsSummary": {
     "title": "Assessments",
     "description": "Track how your completed assessments shape the final grade.",
@@ -651,14 +656,12 @@
     "delete": "Delete"
   },
   "NoteDetail": {
-    "back": "Back to Subject",
     "created_label": "Created",
     "empty": "No content yet. Click Edit to add some notes.",
     "edit": "Edit",
     "delete": "Delete"
   },
   "AssessmentDetail": {
-    "back": "Back to Subject",
     "created_label": "Created",
     "updated_label": "Updated",
     "details_heading": "Details",
@@ -681,7 +684,6 @@
     "delete": "Delete"
   },
   "FlashcardDetail": {
-    "back": "Back to Subject",
     "created_label": "Created",
     "front_label": "Front",
     "back_label": "Back",

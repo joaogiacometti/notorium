@@ -16,6 +16,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  getFlashcardDetailHref,
+  getNoteDetailHref,
+} from "@/features/navigation/detail-page-back-link";
 import { useRouter } from "@/i18n/routing";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import { searchMinQueryLength } from "@/lib/validations/search";
@@ -179,7 +183,11 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   key={n.id}
                   value={n.id}
                   onSelect={() =>
-                    handleSelect(`/subjects/${n.subjectId}/notes/${n.id}`)
+                    handleSelect(
+                      getNoteDetailHref(n.subjectId, n.id, {
+                        from: "subject",
+                      }),
+                    )
                   }
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
@@ -219,7 +227,10 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   value={fc.id}
                   onSelect={() =>
                     handleSelect(
-                      `/subjects/${fc.subjectId}/flashcards/${fc.id}`,
+                      getFlashcardDetailHref(fc.subjectId, fc.id, {
+                        from: "flashcards-manage",
+                        subjectId: fc.subjectId,
+                      }),
                     )
                   }
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"

@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getFlashcardDetailHref } from "@/features/navigation/detail-page-back-link";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -350,7 +351,12 @@ export function FlashcardsManager({
           onDeleted={refreshManagePage}
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           onRowClick={(row) =>
-            router.push(`/subjects/${row.subjectId}/flashcards/${row.id}`)
+            router.push(
+              getFlashcardDetailHref(row.subjectId, row.id, {
+                from: "flashcards-manage",
+                subjectId: selectedSubjectId,
+              }),
+            )
           }
         />
       </Card>

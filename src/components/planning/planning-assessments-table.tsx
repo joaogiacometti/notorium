@@ -303,6 +303,9 @@ export function PlanningAssessmentsTable({
             assessments={filteredAssessments}
             finalGrade={finalGrade}
             pageIndex={pageIndex}
+            selectedSubjectId={
+              subjectFilter === "all" ? undefined : subjectFilter
+            }
             subjectNamesById={subjectNamesById}
             onPageIndexChange={setPageIndex}
             onUpdated={handleUpdated}

@@ -2,6 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, CreditCard, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
@@ -19,11 +20,15 @@ import type {
 } from "@/lib/server/api-contracts";
 
 interface FlashcardDetailProps {
+  backHref: string;
+  backLabel: string;
   flashcard: FlashcardEntity;
   subjects: SubjectEntity[];
 }
 
 export function FlashcardDetail({
+  backHref,
+  backLabel,
   flashcard,
   subjects,
 }: Readonly<FlashcardDetailProps>) {
@@ -31,6 +36,7 @@ export function FlashcardDetail({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [currentFlashcard, setCurrentFlashcard] =
     useState<FlashcardEntity>(flashcard);
@@ -71,9 +77,9 @@ export function FlashcardDetail({
           </Button>
         </>
       }
-      backHref={`/subjects/${currentFlashcard.subjectId}`}
+      backHref={backHref}
       backIcon={ArrowLeft}
-      backLabel={t("back")}
+      backLabel={backLabel}
       meta={
         <span>
           {t("created_label")}{" "}
@@ -117,8 +123,11 @@ export function FlashcardDetail({
           setCurrentFlashcard(updated);
 
           if (updated.subjectId !== currentFlashcard.subjectId) {
+            const query = searchParams.toString();
+            const nextPath = `/subjects/${updated.subjectId}/flashcards/${updated.id}`;
+
             router.replace(
-              `/subjects/${updated.subjectId}/flashcards/${updated.id}`,
+              query.length > 0 ? `${nextPath}?${query}` : nextPath,
             );
           }
         }}
@@ -137,7 +146,7 @@ export function FlashcardDetail({
         onOpenChange={setDeleteOpen}
         onDeleted={() => {
           setDeleteOpen(false);
-          router.push(`/subjects/${currentFlashcard.subjectId}`);
+          router.push(backHref);
         }}
       />
     </DetailPageLayout>

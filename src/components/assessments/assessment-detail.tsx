@@ -28,6 +28,8 @@ import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
 interface AssessmentDetailProps {
+  backHref: string;
+  backLabel: string;
   detail: AssessmentDetailEntity;
 }
 
@@ -53,7 +55,11 @@ function formatNumber(value: string | null, suffix = "") {
   return `${Number.isInteger(numericValue) ? numericValue : numericValue.toFixed(1)}${suffix}`;
 }
 
-export function AssessmentDetail({ detail }: Readonly<AssessmentDetailProps>) {
+export function AssessmentDetail({
+  backHref,
+  backLabel,
+  detail,
+}: Readonly<AssessmentDetailProps>) {
   const t = useTranslations("AssessmentDetail");
   const tAssessment = useTranslations("AssessmentItemCard");
   const locale = useLocale();
@@ -109,9 +115,9 @@ export function AssessmentDetail({ detail }: Readonly<AssessmentDetailProps>) {
           </Button>
         </>
       }
-      backHref={`/subjects/${detail.subject.id}`}
+      backHref={backHref}
       backIcon={ArrowLeft}
-      backLabel={t("back")}
+      backLabel={backLabel}
       meta={
         <>
           <span>
@@ -274,7 +280,7 @@ export function AssessmentDetail({ detail }: Readonly<AssessmentDetailProps>) {
         onOpenChange={setDeleteOpen}
         onDeleted={() => {
           setDeleteOpen(false);
-          router.push(`/subjects/${detail.subject.id}`);
+          router.push(backHref);
         }}
       />
     </DetailPageLayout>

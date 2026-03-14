@@ -14,10 +14,16 @@ import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type { NoteEntity } from "@/lib/server/api-contracts";
 
 interface NoteDetailProps {
+  backHref: string;
+  backLabel: string;
   note: NoteEntity;
 }
 
-export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
+export function NoteDetail({
+  backHref,
+  backLabel,
+  note,
+}: Readonly<NoteDetailProps>) {
   const t = useTranslations("NoteDetail");
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
@@ -49,9 +55,9 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
           </Button>
         </>
       }
-      backHref={`/subjects/${note.subjectId}`}
+      backHref={backHref}
       backIcon={ArrowLeft}
-      backLabel={t("back")}
+      backLabel={backLabel}
       meta={
         <span>
           {t("created_label")}
@@ -87,7 +93,7 @@ export function NoteDetail({ note }: Readonly<NoteDetailProps>) {
         onOpenChange={setDeleteOpen}
         onSuccess={() => {
           setDeleteOpen(false);
-          router.push(`/subjects/${note.subjectId}`);
+          router.push(backHref);
         }}
       />
     </DetailPageLayout>

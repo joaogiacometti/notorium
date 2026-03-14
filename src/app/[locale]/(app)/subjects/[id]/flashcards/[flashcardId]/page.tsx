@@ -1,17 +1,25 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { FlashcardDetail } from "@/components/flashcards/flashcard-detail";
 import { getFlashcardByIdForUser } from "@/features/flashcards/queries";
+import { resolveFlashcardDetailBackLink } from "@/features/navigation/detail-page-back-link";
 import { getSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 
 interface FlashcardPageProps {
   params: Promise<{ id: string; flashcardId: string }>;
+  searchParams: Promise<{ from?: string; subjectId?: string }>;
 }
 
-export default async function FlashcardPage({ params }: FlashcardPageProps) {
+export default async function FlashcardPage({
+  params,
+  searchParams,
+}: FlashcardPageProps) {
   const session = await requireSession();
+  const tBack = await getTranslations("DetailBackLink");
 
   const { id, flashcardId } = await params;
+  const returnContext = await searchParams;
   const [flashcard, subjects] = await Promise.all([
     getFlashcardByIdForUser(session.user.id, flashcardId),
     getSubjectsForUser(session.user.id),
@@ -21,9 +29,19 @@ export default async function FlashcardPage({ params }: FlashcardPageProps) {
     notFound();
   }
 
+  const backLink = resolveFlashcardDetailBackLink(
+    returnContext,
+    flashcard.subjectId,
+  );
+
   return (
     <main>
-      <FlashcardDetail flashcard={flashcard} subjects={subjects} />
+      <FlashcardDetail
+        backHref={backLink.href}
+        backLabel={tBack(backLink.label)}
+        flashcard={flashcard}
+        subjects={subjects}
+      />
     </main>
   );
 }

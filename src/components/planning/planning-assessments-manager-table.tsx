@@ -10,6 +10,7 @@ import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
+import { getAssessmentDetailHref } from "@/features/navigation/detail-page-back-link";
 import { useRouter } from "@/i18n/routing";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
@@ -20,6 +21,7 @@ interface PlanningAssessmentsManagerTableProps {
   assessments: AssessmentEntity[];
   finalGrade: number | null;
   pageIndex: number;
+  selectedSubjectId?: string;
   subjectNamesById: Record<string, string>;
   onPageIndexChange: (pageIndex: number) => void;
   onUpdated: (assessment: AssessmentEntity) => void;
@@ -281,6 +283,7 @@ export function PlanningAssessmentsManagerTable({
   assessments,
   finalGrade,
   pageIndex,
+  selectedSubjectId,
   subjectNamesById,
   onPageIndexChange,
   onUpdated,
@@ -322,7 +325,14 @@ export function PlanningAssessmentsManagerTable({
       getRowAriaLabel={(row) =>
         tTable("open_details_for", { title: row.title })
       }
-      onRowClick={(row) => router.push(`/assessments/${row.id}`)}
+      onRowClick={(row) =>
+        router.push(
+          getAssessmentDetailHref(row.id, {
+            from: "planning-assessments",
+            subjectId: selectedSubjectId,
+          }),
+        )
+      }
       tableClassName="w-full min-w-160"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
