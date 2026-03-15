@@ -174,6 +174,7 @@ export function AttendanceSummary({
                             variant="ghost"
                             size="icon"
                             className="size-8 shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+                            data-testid={`attendance-miss-delete-${miss.missDate}`}
                             onClick={() =>
                               setDeleteTarget({
                                 id: miss.id,

@@ -2,7 +2,14 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/index";
-import { account, session, subject, user, verification } from "@/db/schema";
+import {
+  account,
+  attendanceMiss,
+  session,
+  subject,
+  user,
+  verification,
+} from "@/db/schema";
 import { type E2EUserKind, getE2ECredentials } from "./env";
 
 const auth = betterAuth({
@@ -82,7 +89,10 @@ export async function clearUserSubjects(userId: string) {
   await db.delete(subject).where(eq(subject.userId, userId));
 }
 
-export async function clearUserSubjectsByNames(userId: string, names: string[]) {
+export async function clearUserSubjectsByNames(
+  userId: string,
+  names: string[],
+) {
   if (names.length === 0) {
     return;
   }
@@ -94,6 +104,52 @@ export async function clearUserSubjectsByNames(userId: string, names: string[]) 
 
 export async function clearUserSessions(userId: string) {
   await db.delete(session).where(eq(session.userId, userId));
+}
+
+export async function clearUserAttendanceMissesBySubject(
+  userId: string,
+  subjectId: string,
+) {
+  await db
+    .delete(attendanceMiss)
+    .where(
+      and(
+        eq(attendanceMiss.userId, userId),
+        eq(attendanceMiss.subjectId, subjectId),
+      ),
+    );
+}
+
+export async function createAttendanceMiss(
+  userId: string,
+  subjectId: string,
+  missDate: string,
+) {
+  const [newAttendanceMiss] = await db
+    .insert(attendanceMiss)
+    .values({
+      userId,
+      subjectId,
+      missDate,
+    })
+    .returning({ id: attendanceMiss.id });
+
+  return newAttendanceMiss;
+}
+
+export async function updateSubjectAttendanceSettings(
+  userId: string,
+  subjectId: string,
+  totalClasses: number,
+  maxMisses: number,
+) {
+  await db
+    .update(subject)
+    .set({
+      totalClasses,
+      maxMisses,
+    })
+    .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)));
 }
 
 export async function createSubject(

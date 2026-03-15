@@ -10,11 +10,11 @@ export function getE2ECredentials(
   kind: E2EUserKind = "approved",
 ): E2ECredentials {
   const password = process.env.E2E_USER_PASSWORD;
-  
+
   if (!password) {
     throw new Error(
       "E2E_USER_PASSWORD environment variable is required for end-to-end tests. " +
-      "Please set it in your environment or .env.local file."
+        "Please set it in your environment or .env.local file.",
     );
   }
 
