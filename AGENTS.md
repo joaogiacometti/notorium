@@ -178,6 +178,22 @@ src/
 - Zod schema tests should reject invalid inputs thoroughly.
 - Add or update regression tests when changing auth, AI, account, or data-transfer code so sensitive fields cannot leak into exports, imports, logs, or client-visible payloads.
 
+### E2E Testing
+
+- Focus E2E tests on essential user flows and critical paths only.
+- Test core functionality: create, read, update, delete operations for each feature.
+- Assert user-meaningful outcomes (behavior, permissions, persistence, and error handling), not implementation details.
+- Avoid testing UI variations, styling, spacing, colors, typography, or non-critical interactions.
+- Avoid assertions on exact URLs, exact copy, CSS classes, or DOM structure unless they are explicit product requirements in `SPEC.md`.
+- For each assertion, use this filter: if it fails, a meaningful user outcome must be broken.
+- Prefer asserting post-action state over route shape (for example, assert destination content or disabled/enabled actions after redirects).
+- If asserting navigation is necessary, assert intent-level behavior rather than tightly coupled URL formatting whenever possible.
+- Treat limit-warning message copy as secondary; primary assertions should confirm the limit is enforced (for example, creation actions are blocked).
+- Prioritize user journeys that impact data integrity and core business logic.
+- Keep E2E tests parallel-safe with unique test data and proper cleanup.
+- Split combined CRUD operations into separate tests (e.g., edit and delete should be different tests).
+- Prefer resilient, accessibility-oriented selectors (`getByRole`, labels, test ids) over brittle structural selectors.
+
 ### Styling
 
 - Use Tailwind CSS 4 for styling.
@@ -190,5 +206,5 @@ src/
 - Follow `SPEC.md` as the source of truth for product behavior.
 - Do not copy detailed feature behavior from `SPEC.md` into `README.md` or `AGENTS.md`.
 - Keep changes small and focused.
-- Test after changes. Verify the dev server still runs with `bun dev` and check lint errors with `bun run lint` when the environment supports it.
+- Test after changes. Verify the dev server still runs with `bun dev` and run `bun run lint --fix` when the environment supports it.
 - Follow existing commit message patterns.

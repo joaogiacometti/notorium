@@ -38,7 +38,7 @@ export default defineConfig({
     },
     {
       name: "authenticated",
-      testMatch: /(subjects|attendance)\.spec\.ts/,
+      testMatch: /(subjects|attendance|notes|assessments|flashcards)\.spec\.ts/,
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],

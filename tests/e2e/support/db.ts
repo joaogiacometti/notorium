@@ -4,12 +4,16 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/index";
 import {
   account,
+  assessment,
   attendanceMiss,
+  flashcard,
+  note,
   session,
   subject,
   user,
   verification,
 } from "@/db/schema";
+import { LIMITS } from "@/lib/config/limits";
 import { type E2EUserKind, getE2ECredentials } from "./env";
 
 const auth = betterAuth({
@@ -120,6 +124,54 @@ export async function clearUserAttendanceMissesBySubject(
     );
 }
 
+export async function clearUserNotesBySubject(
+  userId: string,
+  subjectId: string,
+) {
+  await db
+    .delete(note)
+    .where(and(eq(note.userId, userId), eq(note.subjectId, subjectId)));
+}
+
+export async function clearUserNotesByTitles(
+  userId: string,
+  subjectId: string,
+  titles: string[],
+) {
+  if (titles.length === 0) {
+    return;
+  }
+
+  await db
+    .delete(note)
+    .where(
+      and(
+        eq(note.userId, userId),
+        eq(note.subjectId, subjectId),
+        inArray(note.title, titles),
+      ),
+    );
+}
+
+export async function createNote(
+  userId: string,
+  subjectId: string,
+  title: string,
+  content: string,
+) {
+  const [newNote] = await db
+    .insert(note)
+    .values({
+      userId,
+      subjectId,
+      title,
+      content,
+    })
+    .returning({ id: note.id });
+
+  return newNote;
+}
+
 export async function createAttendanceMiss(
   userId: string,
   subjectId: string,
@@ -135,6 +187,74 @@ export async function createAttendanceMiss(
     .returning({ id: attendanceMiss.id });
 
   return newAttendanceMiss;
+}
+
+export async function clearUserAssessmentsBySubject(
+  userId: string,
+  subjectId: string,
+) {
+  await db
+    .delete(assessment)
+    .where(
+      and(eq(assessment.userId, userId), eq(assessment.subjectId, subjectId)),
+    );
+}
+
+export async function clearUserAssessmentsByTitles(
+  userId: string,
+  subjectId: string,
+  titles: string[],
+) {
+  if (titles.length === 0) {
+    return;
+  }
+
+  await db
+    .delete(assessment)
+    .where(
+      and(
+        eq(assessment.userId, userId),
+        eq(assessment.subjectId, subjectId),
+        inArray(assessment.title, titles),
+      ),
+    );
+}
+
+export async function createAssessment(
+  userId: string,
+  subjectId: string,
+  title: string,
+  options?: {
+    description?: string | null;
+    type?:
+      | "exam"
+      | "assignment"
+      | "project"
+      | "presentation"
+      | "homework"
+      | "other";
+    status?: "pending" | "completed";
+    dueDate?: string | null;
+    score?: string | null;
+    weight?: string | null;
+  },
+) {
+  const [newAssessment] = await db
+    .insert(assessment)
+    .values({
+      userId,
+      subjectId,
+      title,
+      description: options?.description ?? null,
+      type: options?.type ?? "other",
+      status: options?.status ?? "pending",
+      dueDate: options?.dueDate ?? null,
+      score: options?.score ?? null,
+      weight: options?.weight ?? null,
+    })
+    .returning({ id: assessment.id });
+
+  return newAssessment;
 }
 
 export async function updateSubjectAttendanceSettings(
@@ -167,4 +287,100 @@ export async function createSubject(
     .returning({ id: subject.id });
 
   return newSubject;
+}
+
+export async function clearUserFlashcardsBySubject(
+  userId: string,
+  subjectId: string,
+) {
+  await db
+    .delete(flashcard)
+    .where(
+      and(eq(flashcard.userId, userId), eq(flashcard.subjectId, subjectId)),
+    );
+}
+
+export async function clearUserFlashcardsByFrontText(
+  userId: string,
+  subjectId: string,
+  frontTexts: string[],
+) {
+  if (frontTexts.length === 0) {
+    return;
+  }
+
+  await db
+    .delete(flashcard)
+    .where(
+      and(
+        eq(flashcard.userId, userId),
+        eq(flashcard.subjectId, subjectId),
+        inArray(flashcard.front, frontTexts),
+      ),
+    );
+}
+
+export async function createFlashcard(
+  userId: string,
+  subjectId: string,
+  front: string,
+  back: string,
+) {
+  const [newFlashcard] = await db
+    .insert(flashcard)
+    .values({
+      userId,
+      subjectId,
+      front,
+      back,
+    })
+    .returning({ id: flashcard.id });
+
+  return newFlashcard;
+}
+
+async function createMany(
+  count: number,
+  create: (index: number) => Promise<unknown>,
+) {
+  for (let index = 0; index < count; index += 1) {
+    await create(index);
+  }
+}
+
+export async function createMaxFlashcardsForSubject(
+  userId: string,
+  subjectId: string,
+) {
+  await createMany(LIMITS.maxFlashcardsPerSubject, async (index) => {
+    await createFlashcard(
+      userId,
+      subjectId,
+      `E2E limit flashcard front ${index}`,
+      `E2E limit flashcard back ${index}`,
+    );
+  });
+}
+
+export async function createMaxNotesForSubject(
+  userId: string,
+  subjectId: string,
+) {
+  await createMany(LIMITS.maxNotesPerSubject, async (index) => {
+    await createNote(
+      userId,
+      subjectId,
+      `E2E limit note ${index}`,
+      `E2E limit note content ${index}`,
+    );
+  });
+}
+
+export async function createMaxAssessmentsForSubject(
+  userId: string,
+  subjectId: string,
+) {
+  await createMany(LIMITS.maxAssessmentsPerSubject, async (index) => {
+    await createAssessment(userId, subjectId, `E2E limit assessment ${index}`);
+  });
 }
