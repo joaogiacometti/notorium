@@ -24,10 +24,29 @@ describe("getFlashcardReviewShortcutAction", () => {
     ).toEqual({ type: "reveal" });
   });
 
+  it("reveals the back on Space when the answer is hidden", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: " ",
+      }),
+    ).toEqual({ type: "reveal" });
+  });
+
   it("grades good on Enter when the answer is visible", () => {
     expect(
       getFlashcardReviewShortcutAction({
         ...defaultInput,
+        revealed: true,
+      }),
+    ).toEqual({ type: "grade", grade: "good" });
+  });
+
+  it("grades good on Space when the answer is visible", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: " ",
         revealed: true,
       }),
     ).toEqual({ type: "grade", grade: "good" });

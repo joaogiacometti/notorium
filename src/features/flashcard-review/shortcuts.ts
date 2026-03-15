@@ -51,7 +51,7 @@ export function getFlashcardReviewShortcutAction({
     return null;
   }
 
-  if (key === "Enter") {
+  if (key === "Enter" || key === " ") {
     return revealed ? { type: "grade", grade: "good" } : { type: "reveal" };
   }
 
