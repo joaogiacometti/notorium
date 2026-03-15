@@ -51,6 +51,7 @@
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
@@ -167,6 +168,17 @@
   --review-easy-bg: oklch(0.68 0.14 155 / 10%);
   --review-easy-bg-hover: oklch(0.68 0.14 155 / 15%);
   --review-easy-text: oklch(0.52 0.11 156);
+}
+
+.dark,
+.tokyo-night,
+.halloween,
+.catppuccin-mocha {
+  color-scheme: dark;
+}
+
+.catppuccin-latte {
+  color-scheme: light;
 }
 
 .dark {
