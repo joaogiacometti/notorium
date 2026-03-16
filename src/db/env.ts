@@ -16,9 +16,14 @@ const databaseEnvResult = process.env.SKIP_ENV_VALIDATION
   : databaseEnvSchema.safeParse(process.env);
 
 if (!databaseEnvResult.success) {
-  console.error("Invalid environment variables:");
-  console.error(z.treeifyError(databaseEnvResult.error));
-  throw new Error("Invalid environment variables");
+  const errorMessages = databaseEnvResult.error.issues.map((issue) => {
+    const path = issue.path.join(".");
+    return `${path}: ${issue.message}`;
+  });
+
+  throw new Error(
+    `Invalid database environment variables:\n${errorMessages.join("\n")}`,
+  );
 }
 
 export const databaseEnv = databaseEnvResult.data;

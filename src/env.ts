@@ -67,9 +67,14 @@ const appEnvResult = process.env.SKIP_ENV_VALIDATION
   : appEnvSchema.safeParse(process.env);
 
 if (!appEnvResult.success) {
-  console.error("Invalid environment variables:");
-  console.error(z.treeifyError(appEnvResult.error));
-  throw new Error("Invalid environment variables");
+  const errorMessages = appEnvResult.error.issues.map((issue) => {
+    const path = issue.path.join(".");
+    return `${path}: ${issue.message}`;
+  });
+
+  throw new Error(
+    `Invalid environment variables:\n${errorMessages.join("\n")}`,
+  );
 }
 
 export const appEnv = appEnvResult.data;

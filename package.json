@@ -1,7 +1,8 @@
 {
   "name": "notorium",
   "version": "0.1.0",
-  "private": true,
+  "description": "A study management app for students with subjects, notes, flashcards, attendance, and assessments",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -82,12 +83,20 @@
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },
-  "ignoreScripts": [
-    "sharp",
-    "unrs-resolver"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joaogiacometti/notorium.git"
+  },
+  "keywords": [
+    "study",
+    "education",
+    "flashcards",
+    "notes",
+    "spaced-repetition"
   ],
-  "trustedDependencies": [
-    "sharp",
-    "unrs-resolver"
-  ]
+  "author": "João Pedro Giacometti Guerreiro <j.guerreiro@unesp.br>",
+  "bugs": {
+    "url": "https://github.com/joaogiacometti/notorium/issues"
+  },
+  "homepage": "https://github.com/joaogiacometti/notorium#readme"
 }

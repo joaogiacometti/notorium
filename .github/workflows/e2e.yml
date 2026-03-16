@@ -17,6 +17,7 @@ concurrency:
 jobs:
   e2e:
     name: Playwright E2E
+    if: github.repository == 'joaogiacometti/notorium'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 

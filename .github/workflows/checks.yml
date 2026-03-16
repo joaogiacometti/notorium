@@ -16,6 +16,7 @@ concurrency:
 jobs:
   ci:
     name: Lint, Type Check & Test
+    if: github.repository == 'joaogiacometti/notorium'
     runs-on: ubuntu-latest
 
     steps:

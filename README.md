@@ -2,6 +2,8 @@
 
 Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, assessments, and personal search in one place with private, user-scoped data.
 
+**AI Integration**: This project uses a Bring Your Own Key (BYOK) model for AI features. Users provide their own OpenRouter API key to access AI-powered flashcard generation.
+
 This document covers project setup, local development, and repository operations. For product behavior, UX rules, and feature acceptance criteria, use `SPEC.md`.
 
 ## High-Level Features
@@ -46,10 +48,14 @@ cp .env.example .env
 
 Set `USER_AI_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte key so user-provided OpenRouter credentials can be stored securely.
 
-Generate a secure auth secret before first run:
+Generate required secrets:
 
 ```bash
+# Generate auth secret
 openssl rand -hex 32
+
+# Generate encryption key (base64-encoded 32 bytes)
+openssl rand -base64 32
 ```
 
 3. Start the production-like stack:
@@ -59,6 +65,10 @@ docker compose up --build -d
 ```
 
 Open `http://localhost:3000`.
+
+## User Management
+
+Notorium uses an admin approval system to prevent spam. For complete setup instructions, see [USER_APPROVAL_SETUP.md](./USER_APPROVAL_SETUP.md).
 
 The Compose stack runs:
 
@@ -230,3 +240,15 @@ The Playwright auth fixtures use fixed internal test identities for approved, pe
 | `PLAYWRIGHT_BASE_URL` | No | Overrides the base URL used by Playwright. Defaults to `BETTER_AUTH_URL` or `http://localhost:3000`. |
 
 On startup, the auth helpers ensure the e2e users exist and set their access states directly so the suite does not depend on manual admin approval.
+
+## AI Integration
+
+Notorium uses a Bring Your Own Key (BYOK) model for AI features. Users provide their own OpenRouter API key for flashcard generation.
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
