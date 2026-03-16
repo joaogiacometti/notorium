@@ -44,6 +44,7 @@ import type {
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { DeleteFlashcardDialog } from "./delete-flashcard-dialog";
 import { EditFlashcardDialog } from "./edit-flashcard-dialog";
 
 interface FlashcardReviewClientProps {
@@ -84,6 +85,7 @@ export function FlashcardReviewClient({
   const reviewStateRef = useRef(initialState);
   const [revealed, setRevealed] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
   const [isPending, startTransition] = useTransition();
   const refillRequestIdRef = useRef(0);
@@ -127,6 +129,27 @@ export function FlashcardReviewClient({
       replaceFlashcardInReviewState(reviewStateRef.current, updatedFlashcard),
     );
     setRevealed(false);
+  }
+
+  async function handleFlashcardDeleted(deletedId: string) {
+    const nextState = {
+      ...reviewStateRef.current,
+      cards: reviewStateRef.current.cards.filter(
+        (card) => card.id !== deletedId,
+      ),
+      summary: {
+        ...reviewStateRef.current.summary,
+        dueCount: Math.max(0, reviewStateRef.current.summary.dueCount - 1),
+        totalCount: Math.max(0, reviewStateRef.current.summary.totalCount - 1),
+      },
+    };
+
+    commitReviewState(nextState);
+    setRevealed(false);
+
+    if (shouldRefillFlashcardReviewState(nextState)) {
+      void refillReviewState();
+    }
   }
 
   async function refillReviewState() {
@@ -187,7 +210,7 @@ export function FlashcardReviewClient({
       revealed,
       hasCurrentCard: currentCard !== null,
       isPending,
-      isDialogOpen: editOpen,
+      isDialogOpen: editOpen || deleteOpen,
       isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
       hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
       isRepeat: event.repeat,
@@ -206,6 +229,11 @@ export function FlashcardReviewClient({
 
     if (action.type === "edit") {
       setEditOpen(true);
+      return;
+    }
+
+    if (action.type === "delete") {
+      setDeleteOpen(true);
       return;
     }
 
@@ -373,14 +401,23 @@ export function FlashcardReviewClient({
 
       {reviewContent}
       {currentCard ? (
-        <EditFlashcardDialog
-          key={currentCard.id}
-          flashcard={currentCard}
-          subjects={subjects}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          onUpdated={handleFlashcardUpdated}
-        />
+        <>
+          <EditFlashcardDialog
+            key={currentCard.id}
+            flashcard={currentCard}
+            subjects={subjects}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            onUpdated={handleFlashcardUpdated}
+          />
+          <DeleteFlashcardDialog
+            flashcardId={currentCard.id}
+            flashcardFront={currentCard.front}
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+            onDeleted={handleFlashcardDeleted}
+          />
+        </>
       ) : null}
     </>
   );

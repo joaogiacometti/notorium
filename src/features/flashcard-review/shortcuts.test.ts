@@ -71,6 +71,25 @@ describe("getFlashcardReviewShortcutAction", () => {
     ).toEqual({ type: "edit" });
   });
 
+  it("opens delete on d when shortcuts are allowed", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "d",
+      }),
+    ).toEqual({ type: "delete" });
+  });
+
+  it("opens delete on d when the answer is visible", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "d",
+        revealed: true,
+      }),
+    ).toEqual({ type: "delete" });
+  });
+
   it("maps 1 through 4 to the expected grades when revealed", () => {
     expect(
       getFlashcardReviewShortcutAction({
@@ -116,6 +135,15 @@ describe("getFlashcardReviewShortcutAction", () => {
       getFlashcardReviewShortcutAction({
         ...defaultInput,
         key: "E",
+      }),
+    ).toBeNull();
+  });
+
+  it("ignores uppercase D", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "D",
       }),
     ).toBeNull();
   });
