@@ -25,6 +25,7 @@ import {
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { SubjectText } from "@/components/shared/subject-text";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
+import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
@@ -81,6 +82,7 @@ export function FlashcardReviewClient({
 }: Readonly<FlashcardReviewClientProps>) {
   const t = useTranslations("FlashcardReviewPage");
   const tErrors = useTranslations("ServerActions");
+  const shortcutsSuspended = useShortcutsDialogOpen();
   const [reviewState, setReviewState] = useState(initialState);
   const reviewStateRef = useRef(initialState);
   const [revealed, setRevealed] = useState(false);
@@ -205,6 +207,10 @@ export function FlashcardReviewClient({
   }
 
   const handleReviewKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (shortcutsSuspended) {
+      return;
+    }
+
     const action = getFlashcardReviewShortcutAction({
       key: event.key,
       revealed,

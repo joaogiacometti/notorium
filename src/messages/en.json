@@ -857,6 +857,40 @@
       "queryMaxLength": "Search query must be at most 200 characters."
     }
   },
+  "Shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Quick keyboard shortcuts to navigate the app faster.",
+    "category": {
+      "global": "Global",
+      "flashcard_review": "Flashcard Review"
+    },
+    "global_search": {
+      "description": "Open search"
+    },
+    "flashcard_review": {
+      "reveal_grade": {
+        "description": "Reveal answer / Grade Good"
+      },
+      "grade_again": {
+        "description": "Grade Again"
+      },
+      "grade_hard": {
+        "description": "Grade Hard"
+      },
+      "grade_good": {
+        "description": "Grade Good"
+      },
+      "grade_easy": {
+        "description": "Grade Easy"
+      },
+      "edit": {
+        "description": "Edit flashcard"
+      },
+      "delete": {
+        "description": "Delete flashcard"
+      }
+    }
+  },
   "Common": {
     "save": "Save",
     "cancel": "Cancel",

@@ -857,6 +857,40 @@
       "queryMaxLength": "A busca deve ter no maximo 200 caracteres."
     }
   },
+  "Shortcuts": {
+    "title": "Atalhos de teclado",
+    "description": "Atalhos de teclado rapidos para navegar no aplicativo mais rapido.",
+    "category": {
+      "global": "Global",
+      "flashcard_review": "Revisao de Flashcards"
+    },
+    "global_search": {
+      "description": "Abrir busca"
+    },
+    "flashcard_review": {
+      "reveal_grade": {
+        "description": "Revelar resposta / Avaliar Bom"
+      },
+      "grade_again": {
+        "description": "Avaliar Novamente"
+      },
+      "grade_hard": {
+        "description": "Avaliar Dificil"
+      },
+      "grade_good": {
+        "description": "Avaliar Bom"
+      },
+      "grade_easy": {
+        "description": "Avaliar Facil"
+      },
+      "edit": {
+        "description": "Editar flashcard"
+      },
+      "delete": {
+        "description": "Excluir flashcard"
+      }
+    }
+  },
   "Common": {
     "save": "Salvar",
     "cancel": "Cancelar",

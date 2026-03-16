@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
 import { SubjectText } from "@/components/shared/subject-text";
+import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
@@ -30,6 +31,7 @@ interface GlobalSearchProps {
 
 export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const t = useTranslations("GlobalSearch");
+  const shortcutsSuspended = useShortcutsDialogOpen();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -66,6 +68,10 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (shortcutsSuspended) {
+        return;
+      }
+
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((prev) => !prev);
@@ -74,7 +80,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [shortcutsSuspended]);
 
   function handleSelect(path: string) {
     setOpen(false);
