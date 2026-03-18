@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Controller,
@@ -8,6 +7,7 @@ import {
   type FieldValues,
   type UseFormReturn,
 } from "react-hook-form";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +57,7 @@ interface AssessmentDialogFormProps<
   title: string;
   description: string;
   submitLabel: string;
+  pendingSubmitLabel: string;
   onSubmit: (values: TSubmitValues) => Promise<void>;
   subjects?: SubjectEntity[];
 }
@@ -72,6 +73,7 @@ export function AssessmentDialogForm<
   title,
   description,
   submitLabel,
+  pendingSubmitLabel,
   onSubmit,
   subjects,
 }: Readonly<AssessmentDialogFormProps<TValues, TSubmitValues>>) {
@@ -361,10 +363,11 @@ export function AssessmentDialogForm<
               disabled={form.formState.isSubmitting}
               className="w-full"
             >
-              {form.formState.isSubmitting && (
-                <Loader2 className="size-4 animate-spin" />
-              )}
-              {submitLabel}
+              <AsyncButtonContent
+                pending={form.formState.isSubmitting}
+                idleLabel={submitLabel}
+                pendingLabel={pendingSubmitLabel}
+              />
             </Button>
           </FieldGroup>
         </form>

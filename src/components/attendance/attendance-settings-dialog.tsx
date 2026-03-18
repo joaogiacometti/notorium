@@ -1,11 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAttendanceSettings } from "@/app/actions/attendance";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,6 +45,7 @@ export function AttendanceSettingsDialog({
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
   const t = useTranslations("AttendanceSettingsDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
@@ -142,10 +144,11 @@ export function AttendanceSettingsDialog({
               disabled={form.formState.isSubmitting}
               className="w-full"
             >
-              {form.formState.isSubmitting && (
-                <Loader2 className="size-4 animate-spin" />
-              )}
-              {t("submit")}
+              <AsyncButtonContent
+                pending={form.formState.isSubmitting}
+                idleLabel={t("submit")}
+                pendingLabel={tCommon("saving")}
+              />
             </Button>
           </FieldGroup>
         </form>

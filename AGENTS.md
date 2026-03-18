@@ -144,6 +144,9 @@ src/
 - When the project has the underlying shadcn-compatible dependency available but the primitive is missing from `src/components/ui/`, add the standard shadcn primitive first, then use it.
 - Put custom components in `src/components/`.
 - Keep components focused and single-purpose.
+- For user-triggered async actions, buttons must show a consistent pending state while the action is in flight: disable the button, show a spinner, and swap to a localized pending label.
+- Reuse shared app-level helpers for async button feedback (for example `src/components/shared/async-button-content.tsx`) instead of duplicating spinner/label logic or modifying `src/components/ui/button.tsx`.
+- Prefer common pending-action translation keys in `src/messages/en.json` and `src/messages/pt.json` for generic states such as creating, saving, deleting, moving, resetting, restoring, archiving, importing, exporting, and clearing.
 - Do not keep speculative scaffolding, placeholder modules, or "might use later" components in the repo.
 - When a new implementation replaces an old path, remove the old unreachable code in the same change unless the user explicitly asks to keep it.
 - Before finishing, verify that new files and touched modules are reachable from active app code using search or project checks.

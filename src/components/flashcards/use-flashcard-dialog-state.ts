@@ -60,6 +60,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const tErrors = useTranslations("ServerActions");
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isGeneratingBack, setIsGeneratingBack] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingDuplicateFront, setIsCheckingDuplicateFront] =
     useState(false);
   const [isDuplicateFront, setIsDuplicateFront] = useState(false);
@@ -73,9 +74,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
   }, [form, open, values, form.formState.isDirty]);
 
-  useBeforeUnload(
-    open && form.formState.isDirty && !form.formState.isSubmitting,
-  );
+  useBeforeUnload(open && form.formState.isDirty && !isSubmitting);
 
   useEffect(() => {
     let active = true;
@@ -143,7 +142,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       return;
     }
 
-    if (form.formState.isDirty && !form.formState.isSubmitting) {
+    if (form.formState.isDirty && !isSubmitting) {
       setDiscardDialogOpen(true);
       return;
     }
@@ -154,32 +153,38 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }
 
   async function handleSubmit(data: TValues) {
-    if (isDuplicateFront || isCheckingDuplicateFront) {
+    if (isDuplicateFront || isCheckingDuplicateFront || isSubmitting) {
       return;
     }
 
-    const result = await onSubmitAction(data);
-    if (!result.success) {
-      if (result.errorCode === "flashcards.duplicateFront") {
-        setIsDuplicateFront(true);
+    setIsSubmitting(true);
+
+    try {
+      const result = await onSubmitAction(data);
+      if (!result.success) {
+        if (result.errorCode === "flashcards.duplicateFront") {
+          setIsDuplicateFront(true);
+          return;
+        }
+
+        toast.error(resolveActionErrorMessage(result, tErrors));
         return;
       }
 
-      toast.error(resolveActionErrorMessage(result, tErrors));
-      return;
-    }
+      form.reset(
+        getSuccessValues(data, {
+          keepFrontAfterSubmit,
+          keepBackAfterSubmit,
+        }),
+      );
+      setDiscardDialogOpen(false);
+      await onSuccess?.(result.flashcard);
 
-    form.reset(
-      getSuccessValues(data, {
-        keepFrontAfterSubmit,
-        keepBackAfterSubmit,
-      }),
-    );
-    setDiscardDialogOpen(false);
-    await onSuccess?.(result.flashcard);
-
-    if (closeOnSuccess) {
-      onOpenChange(false);
+      if (closeOnSuccess) {
+        onOpenChange(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -222,12 +227,13 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     hasRichTextContent(currentValues.front) &&
     !hasRichTextContent(currentValues.back) &&
     !isGeneratingBack &&
-    !form.formState.isSubmitting;
+    !isSubmitting;
 
   return {
     discardDialogOpen,
     setDiscardDialogOpen,
     isGeneratingBack,
+    isSubmitting,
     keepFrontAfterSubmit,
     setKeepFrontAfterSubmit,
     keepBackAfterSubmit,

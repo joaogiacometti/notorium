@@ -1,11 +1,11 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { archiveSubject, deleteSubject } from "@/app/actions/subjects";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,7 @@ export function DeleteSubjectDialog({
   mode = "delete",
 }: Readonly<DeleteSubjectDialogProps>) {
   const t = useTranslations("DeleteSubjectDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
@@ -83,7 +84,7 @@ export function DeleteSubjectDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {t("cancel")}
+            {tCommon("cancel")}
           </Button>
           <Button
             variant={mode === "archive" ? "default" : "destructive"}
@@ -95,8 +96,15 @@ export function DeleteSubjectDialog({
             onClick={handleConfirm}
             disabled={isPending}
           >
-            {isPending && <Loader2 className="size-4 animate-spin" />}
-            {mode === "archive" ? t("archive_action") : t("delete_action")}
+            <AsyncButtonContent
+              pending={isPending}
+              idleLabel={
+                mode === "archive" ? t("archive_action") : t("delete_action")
+              }
+              pendingLabel={
+                mode === "archive" ? tCommon("archiving") : tCommon("deleting")
+              }
+            />
           </Button>
         </DialogFooter>
       </DialogContent>

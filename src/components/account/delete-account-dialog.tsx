@@ -1,10 +1,10 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAccount } from "@/app/actions/account";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +26,7 @@ export function DeleteAccountDialog({
   onOpenChange,
 }: Readonly<DeleteAccountDialogProps>) {
   const t = useTranslations("DeleteAccountDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
 
@@ -51,15 +52,18 @@ export function DeleteAccountDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
             disabled={isPending}
           >
-            {isPending && <Loader2 className="size-4 animate-spin" />}
-            Delete Account
+            <AsyncButtonContent
+              pending={isPending}
+              idleLabel={t("title")}
+              pendingLabel={tCommon("deleting")}
+            />
           </Button>
         </DialogFooter>
       </DialogContent>

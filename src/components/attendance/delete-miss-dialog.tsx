@@ -1,10 +1,10 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteMiss } from "@/app/actions/attendance";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -70,8 +70,11 @@ export function DeleteMissDialog({
             onClick={handleDelete}
             disabled={isPending}
           >
-            {isPending && <Loader2 className="size-4 animate-spin" />}
-            {t("confirm")}
+            <AsyncButtonContent
+              pending={isPending}
+              idleLabel={t("confirm")}
+              pendingLabel={tCommon("deleting")}
+            />
           </Button>
         </DialogFooter>
       </DialogContent>

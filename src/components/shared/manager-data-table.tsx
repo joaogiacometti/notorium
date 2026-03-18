@@ -6,7 +6,9 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   type PaginationState,
+  type Row,
   type RowSelectionState,
+  type Table as TanstackTable,
   useReactTable,
 } from "@tanstack/react-table";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
@@ -21,7 +23,54 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import { cn } from "@/lib/utils";
+
+interface SelectColumnHeaderProps {
+  selectionAriaLabel: string;
+}
+
+function SelectColumnHeader<TRow>({
+  table,
+  selectionAriaLabel,
+}: Readonly<SelectColumnHeaderProps & { table: TanstackTable<TRow> }>) {
+  let checked: boolean | "indeterminate" = false;
+  if (table.getIsAllPageRowsSelected()) checked = true;
+  else if (table.getIsSomePageRowsSelected()) checked = "indeterminate";
+
+  return (
+    <div className="flex items-center justify-center">
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(checked) =>
+          table.toggleAllPageRowsSelected(Boolean(checked))
+        }
+        aria-label={selectionAriaLabel}
+        className="border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+      />
+    </div>
+  );
+}
+
+interface SelectColumnCellProps {
+  selectionAriaLabel: string;
+}
+
+function SelectColumnCell<TRow>({
+  row,
+  selectionAriaLabel,
+}: Readonly<SelectColumnCellProps & { row: Row<TRow> }>) {
+  return (
+    <div className="flex items-center justify-center">
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(checked) => row.toggleSelected(Boolean(checked))}
+        aria-label={selectionAriaLabel}
+        className="border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+      />
+    </div>
+  );
+}
 
 function shouldIgnoreRowClick(
   target: EventTarget | null,
@@ -52,6 +101,26 @@ function shouldIgnoreRowClick(
       interactiveAncestor instanceof HTMLElement &&
       interactiveAncestor !== currentTarget,
   );
+}
+
+function getSelectColumn<TRow>(selectionAriaLabel: string): ColumnDef<TRow> {
+  return {
+    id: "select",
+    size: 36,
+    header: ({ table }) => (
+      <SelectColumnHeader<TRow>
+        table={table}
+        selectionAriaLabel={selectionAriaLabel}
+      />
+    ),
+    cell: ({ row }) => (
+      <SelectColumnCell<TRow>
+        row={row}
+        selectionAriaLabel={selectionAriaLabel}
+      />
+    ),
+    enableHiding: false,
+  };
 }
 
 interface ManagerDataTableProps<TRow> {
@@ -117,6 +186,10 @@ export function ManagerDataTable<TRow>({
   tableClassName,
   wrapperClassName,
 }: Readonly<ManagerDataTableProps<TRow>>) {
+  const showLoadingSkeleton = useSmoothedLoadingState(isLoading, {
+    delayMs: 150,
+    minimumVisibleMs: 250,
+  });
   const pagination: PaginationState = {
     pageIndex,
     pageSize,
@@ -128,44 +201,7 @@ export function ManagerDataTable<TRow>({
   const table = useReactTable({
     data,
     columns: onSelectedRowIdsChange
-      ? [
-          {
-            id: "select",
-            size: 36,
-            header: ({ table }) => (
-              <div className="flex items-center justify-center">
-                <Checkbox
-                  checked={
-                    table.getIsAllPageRowsSelected()
-                      ? true
-                      : table.getIsSomePageRowsSelected()
-                        ? "indeterminate"
-                        : false
-                  }
-                  onCheckedChange={(checked) =>
-                    table.toggleAllPageRowsSelected(Boolean(checked))
-                  }
-                  aria-label={selectionAriaLabel}
-                  className="border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
-                />
-              </div>
-            ),
-            cell: ({ row }) => (
-              <div className="flex items-center justify-center">
-                <Checkbox
-                  checked={row.getIsSelected()}
-                  onCheckedChange={(checked) =>
-                    row.toggleSelected(Boolean(checked))
-                  }
-                  aria-label={selectionAriaLabel}
-                  className="border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
-                />
-              </div>
-            ),
-            enableHiding: false,
-          },
-          ...columns,
-        ]
+      ? [getSelectColumn<TRow>(selectionAriaLabel), ...columns]
       : columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -199,7 +235,9 @@ export function ManagerDataTable<TRow>({
   });
 
   const totalPageCount = Math.max(table.getPageCount(), 1);
-  const showLoadingSkeleton = isLoading && data.length === 0 && loadingSkeleton;
+  const shouldRenderLoadingSkeleton = Boolean(
+    showLoadingSkeleton && loadingSkeleton,
+  );
 
   function handleRowClick(
     event: ReactMouseEvent<HTMLTableRowElement>,
@@ -223,7 +261,7 @@ export function ManagerDataTable<TRow>({
       )}
       aria-busy={isLoading}
     >
-      {showLoadingSkeleton ? (
+      {shouldRenderLoadingSkeleton ? (
         loadingSkeleton
       ) : (
         <>

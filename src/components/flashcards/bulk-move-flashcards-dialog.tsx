@@ -1,12 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { bulkMoveFlashcards } from "@/app/actions/flashcards";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
@@ -164,8 +164,11 @@ export function BulkMoveFlashcardsDialog({
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-                {t("confirm")}
+                <AsyncButtonContent
+                  pending={isPending}
+                  idleLabel={t("confirm")}
+                  pendingLabel={tCommon("moving")}
+                />
               </Button>
             </DialogFooter>
           </FieldGroup>

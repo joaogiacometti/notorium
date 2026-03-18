@@ -9,6 +9,7 @@ import { updateAccount } from "@/app/actions/account";
 import { AiSettingsCard } from "@/components/account/ai-settings-card";
 import { DataTransferActions } from "@/components/account/data-transfer-actions";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,6 +52,7 @@ export function AccountForm({
   const locale = useLocale();
   const intlLocale = getIntlLocale(locale);
   const t = useTranslations("AccountForm");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -150,7 +152,11 @@ export function AccountForm({
                 disabled={form.formState.isSubmitting}
                 className="w-full sm:w-fit"
               >
-                {form.formState.isSubmitting ? t("saving") : t("save_changes")}
+                <AsyncButtonContent
+                  pending={form.formState.isSubmitting}
+                  idleLabel={t("save_changes")}
+                  pendingLabel={tCommon("saving")}
+                />
               </Button>
             </FieldGroup>
           </form>

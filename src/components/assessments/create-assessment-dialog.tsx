@@ -48,6 +48,7 @@ export function CreateAssessmentDialog({
   onCreated,
 }: Readonly<CreateAssessmentDialogProps>) {
   const t = useTranslations("CreateAssessmentDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const form = useForm<
     CreateAssessmentFormInput,
@@ -84,6 +85,7 @@ export function CreateAssessmentDialog({
       title={t("title")}
       description={t("description")}
       submitLabel={t("submit")}
+      pendingSubmitLabel={tCommon("creating")}
       onSubmit={onSubmit}
       subjects={subjects}
     />

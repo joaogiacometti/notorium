@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { KeyRound, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { KeyRound, Sparkles, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { startTransition, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -10,6 +10,7 @@ import {
   clearUserAiSettings,
   updateUserAiSettings,
 } from "@/app/actions/account";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,6 +44,7 @@ export function AiSettingsCard({
   initialAiSettings,
 }: Readonly<AiSettingsCardProps>) {
   const t = useTranslations("AccountForm");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [aiSettings, setAiSettings] = useState(initialAiSettings);
   const [isSavingAi, startSavingAi] = useTransition();
@@ -206,10 +208,13 @@ export function AiSettingsCard({
                 disabled={isSavingAi || isClearingAi}
                 className="w-full sm:w-fit"
               >
-                {isSavingAi ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                {aiSettings?.hasApiKey ? t("ai_update") : t("ai_save")}
+                <AsyncButtonContent
+                  pending={isSavingAi}
+                  idleLabel={
+                    aiSettings?.hasApiKey ? t("ai_update") : t("ai_save")
+                  }
+                  pendingLabel={tCommon("saving")}
+                />
               </Button>
               <Button
                 type="button"
@@ -218,12 +223,12 @@ export function AiSettingsCard({
                 disabled={!aiSettings?.hasApiKey || isSavingAi || isClearingAi}
                 className="w-full sm:w-fit"
               >
-                {isClearingAi ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Trash2 className="size-4" />
-                )}
-                {t("ai_clear")}
+                <AsyncButtonContent
+                  pending={isClearingAi}
+                  idleLabel={t("ai_clear")}
+                  pendingLabel={tCommon("clearing")}
+                  idleIcon={<Trash2 className="size-4" />}
+                />
               </Button>
             </div>
           </FieldGroup>

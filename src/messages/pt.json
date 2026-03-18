@@ -583,6 +583,7 @@
     "keep_back_off": "Limpar verso após enviar",
     "generate_back": "Gerar com IA",
     "generating_back": "Gerando...",
+    "submitting": "Criando...",
     "submit": "Criar Flashcard"
   },
   "EditFlashcardDialog": {
@@ -898,6 +899,13 @@
     "creating": "Criando...",
     "saving": "Salvando...",
     "deleting": "Excluindo...",
+    "moving": "Movendo...",
+    "resetting": "Resetando...",
+    "restoring": "Restaurando...",
+    "archiving": "Arquivando...",
+    "importing": "Importando...",
+    "exporting": "Exportando...",
+    "clearing": "Removendo...",
     "uploading": "Enviando..."
   }
 }

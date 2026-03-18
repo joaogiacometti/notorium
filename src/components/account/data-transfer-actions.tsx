@@ -1,10 +1,11 @@
 "use client";
 
-import { ChevronDown, Download, Loader2, Upload } from "lucide-react";
+import { ChevronDown, Download, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { exportData, importData } from "@/app/actions/data-transfer";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,6 +36,7 @@ function downloadJson(data: unknown, filename: string) {
 
 export function DataTransferActions() {
   const t = useTranslations("DataTransferActions");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [isExporting, startExport] = useTransition();
   const [isImporting, startImport] = useTransition();
@@ -107,12 +109,12 @@ export function DataTransferActions() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" disabled={isBusy}>
-              {isExporting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Download className="size-4" />
-              )}
-              {t("export_data")}
+              <AsyncButtonContent
+                pending={isExporting}
+                idleLabel={t("export_data")}
+                pendingLabel={tCommon("exporting")}
+                idleIcon={<Download className="size-4" />}
+              />
               <ChevronDown className="size-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -130,12 +132,12 @@ export function DataTransferActions() {
           onClick={() => fileInputRef.current?.click()}
           disabled={isBusy}
         >
-          {isImporting ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Upload className="size-4" />
-          )}
-          {t("import_data")}
+          <AsyncButtonContent
+            pending={isImporting}
+            idleLabel={t("import_data")}
+            pendingLabel={tCommon("importing")}
+            idleIcon={<Upload className="size-4" />}
+          />
         </Button>
         <input
           ref={fileInputRef}
@@ -163,8 +165,11 @@ export function DataTransferActions() {
               {t("cancel")}
             </Button>
             <Button onClick={handleImportConfirm} disabled={isImporting}>
-              {isImporting && <Loader2 className="size-4 animate-spin" />}
-              {t("confirm_import")}
+              <AsyncButtonContent
+                pending={isImporting}
+                idleLabel={t("confirm_import")}
+                pendingLabel={tCommon("importing")}
+              />
             </Button>
           </DialogFooter>
         </DialogContent>

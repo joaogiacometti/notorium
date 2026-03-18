@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { recordMiss } from "@/app/actions/attendance";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +38,7 @@ export function RecordMissDialog({
   onOpenChange,
 }: Readonly<RecordMissDialogProps>) {
   const t = useTranslations("RecordMissDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const today = new Date().toISOString().split("T")[0];
 
@@ -97,10 +98,11 @@ export function RecordMissDialog({
               disabled={form.formState.isSubmitting}
               className="w-full"
             >
-              {form.formState.isSubmitting && (
-                <Loader2 className="size-4 animate-spin" />
-              )}
-              {t("submit")}
+              <AsyncButtonContent
+                pending={form.formState.isSubmitting}
+                idleLabel={t("submit")}
+                pendingLabel={tCommon("creating")}
+              />
             </Button>
           </FieldGroup>
         </form>

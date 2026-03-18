@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { loginAction } from "@/app/actions/auth";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -128,7 +129,11 @@ export function LoginForm({
                   disabled={isSubmitting}
                   className="w-full"
                 >
-                  {isSubmitting ? t("submitting") : t("submit")}
+                  <AsyncButtonContent
+                    pending={isSubmitting}
+                    idleLabel={t("submit")}
+                    pendingLabel={t("submitting")}
+                  />
                 </Button>
               </Field>
               <FieldDescription className="text-center">

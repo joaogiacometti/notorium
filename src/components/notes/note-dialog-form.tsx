@@ -2,11 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { TiptapEditor } from "@/components/shared/tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,7 @@ export function NoteDialogForm({
   const t = useTranslations(
     mode === "create" ? "CreateNoteDialog" : "EditNoteDialog",
   );
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
@@ -194,10 +195,13 @@ export function NoteDialogForm({
                 disabled={form.formState.isSubmitting}
                 className="w-full"
               >
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                {t("submit")}
+                <AsyncButtonContent
+                  pending={form.formState.isSubmitting}
+                  idleLabel={t("submit")}
+                  pendingLabel={
+                    mode === "create" ? tCommon("creating") : tCommon("saving")
+                  }
+                />
               </Button>
             </FieldGroup>
           </form>

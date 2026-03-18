@@ -7,6 +7,7 @@ import {
   type FieldPath,
   type UseFormReturn,
 } from "react-hook-form";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectText } from "@/components/shared/subject-text";
 import { TiptapEditor } from "@/components/shared/tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
@@ -52,6 +53,7 @@ interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
   onDiscardDialogOpenChange: (open: boolean) => void;
   onDiscard: () => void;
   isGeneratingBack: boolean;
+  isSubmitting: boolean;
   canGenerateBack: boolean;
   onGenerateBack: () => Promise<void>;
   keepFrontAfterSubmit: boolean;
@@ -76,6 +78,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   onDiscardDialogOpenChange,
   onDiscard,
   isGeneratingBack,
+  isSubmitting,
   canGenerateBack,
   onGenerateBack,
   keepFrontAfterSubmit,
@@ -89,14 +92,18 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   const t = useTranslations(
     mode === "create" ? "CreateFlashcardDialog" : "EditFlashcardDialog",
   );
+  const tCommon = useTranslations("Common");
 
   function handleCtrlEnter() {
-    if (form.formState.isSubmitting) {
+    if (isSubmitting) {
       return;
     }
 
     void form.handleSubmit(onSubmit)();
   }
+
+  const pendingSubmitLabel =
+    mode === "create" ? tCommon("creating") : tCommon("saving");
 
   return (
     <>
@@ -193,7 +200,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                                   !keepFrontAfterSubmit,
                                 )
                               }
-                              disabled={form.formState.isSubmitting}
+                              disabled={isSubmitting}
                             >
                               {keepFrontAfterSubmit ? (
                                 <Pin className="size-3.5" />
@@ -268,7 +275,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                                   !keepBackAfterSubmit,
                                 )
                               }
-                              disabled={form.formState.isSubmitting}
+                              disabled={isSubmitting}
                             >
                               {keepBackAfterSubmit ? (
                                 <Pin className="size-3.5" />
@@ -299,17 +306,18 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                 type="submit"
                 form={formId}
                 disabled={
-                  form.formState.isSubmitting ||
+                  isSubmitting ||
                   isGeneratingBack ||
                   isCheckingDuplicateFront ||
                   isDuplicateFront
                 }
                 className="w-full"
               >
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                {t("submit")}
+                <AsyncButtonContent
+                  pending={isSubmitting}
+                  idleLabel={t("submit")}
+                  pendingLabel={pendingSubmitLabel}
+                />
               </Button>
             </FieldGroup>
           </form>

@@ -43,6 +43,7 @@ export function EditAssessmentDialog({
   onUpdated,
 }: Readonly<EditAssessmentDialogProps>) {
   const t = useTranslations("EditAssessmentDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const form = useForm<EditAssessmentFormInput, unknown, EditAssessmentForm>({
     resolver: zodResolver(editAssessmentSchema),
@@ -74,6 +75,7 @@ export function EditAssessmentDialog({
       title={t("title")}
       description={t("description")}
       submitLabel={t("submit")}
+      pendingSubmitLabel={tCommon("saving")}
       onSubmit={onSubmit}
     />
   );

@@ -2,11 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -69,6 +69,7 @@ export function SubjectDialogForm({
     mode === "create" ? "CreateSubjectDialog" : "EditSubjectDialog",
   );
   const tFields = useTranslations("CreateSubjectDialog");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const form = useSubjectForm(mode, values);
@@ -150,10 +151,13 @@ export function SubjectDialogForm({
               disabled={form.formState.isSubmitting}
               className="w-full"
             >
-              {form.formState.isSubmitting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              {t("submit")}
+              <AsyncButtonContent
+                pending={form.formState.isSubmitting}
+                idleLabel={t("submit")}
+                pendingLabel={
+                  mode === "create" ? tCommon("creating") : tCommon("saving")
+                }
+              />
             </Button>
           </FieldGroup>
         </form>

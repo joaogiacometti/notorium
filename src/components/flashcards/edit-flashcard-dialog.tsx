@@ -80,6 +80,7 @@ export function EditFlashcardDialog({
       onDiscardDialogOpenChange={dialog.setDiscardDialogOpen}
       onDiscard={dialog.handleDiscardChanges}
       isGeneratingBack={dialog.isGeneratingBack}
+      isSubmitting={dialog.isSubmitting}
       canGenerateBack={dialog.canGenerateBack}
       onGenerateBack={dialog.handleGenerateBack}
       keepFrontAfterSubmit={dialog.keepFrontAfterSubmit}

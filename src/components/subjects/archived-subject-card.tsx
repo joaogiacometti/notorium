@@ -2,11 +2,12 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ArchiveRestore, Loader2, Trash2 } from "lucide-react";
+import { ArchiveRestore, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { restoreSubject } from "@/app/actions/subjects";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function ArchivedSubjectCard({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const t = useTranslations("ArchivedSubjectCard");
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isRestoring, startRestoreTransition] = useTransition();
@@ -80,12 +82,12 @@ export function ArchivedSubjectCard({
               onClick={handleRestore}
               disabled={isRestoring}
             >
-              {isRestoring ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <ArchiveRestore className="size-4" />
-              )}
-              {t("restore")}
+              <AsyncButtonContent
+                pending={isRestoring}
+                idleLabel={t("restore")}
+                pendingLabel={tCommon("restoring")}
+                idleIcon={<ArchiveRestore className="size-4" />}
+              />
             </Button>
             <Button
               variant="destructive"
