@@ -26,9 +26,9 @@ import { Link } from "@/i18n/routing";
 import {
   buildCalendarEvents,
   type CalendarEvent,
-  filterEventsByDate,
   getMonthGridDates,
   getMonthRange,
+  groupEventsByDate,
   resolveCalendarDate,
 } from "@/lib/dates/calendar";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
@@ -54,8 +54,10 @@ function getEventTone(event: CalendarEvent, todayIso: string): EventTone {
   return "warning";
 }
 
-function EventDot({ event }: Readonly<{ event: CalendarEvent }>) {
-  const todayIso = format(new Date(), "yyyy-MM-dd");
+function EventDot({
+  event,
+  todayIso,
+}: Readonly<{ event: CalendarEvent; todayIso: string }>) {
   const tone = getEventTone(event, todayIso);
   const toneClass = getStatusToneClasses(tone).fill;
 
@@ -87,9 +89,11 @@ function getAssessmentTypeLabel(
   );
 }
 
-function EventChip({ event }: Readonly<{ event: CalendarEvent }>) {
+function EventChip({
+  event,
+  todayIso,
+}: Readonly<{ event: CalendarEvent; todayIso: string }>) {
   const tAssessment = useTranslations("AssessmentItemCard");
-  const todayIso = format(new Date(), "yyyy-MM-dd");
   const chipToneClass = getEventChipToneClass(event, todayIso);
   const assessmentTypeLabel = getAssessmentTypeLabel(event, tAssessment);
   const subtitle = assessmentTypeLabel
@@ -119,25 +123,24 @@ function EventChip({ event }: Readonly<{ event: CalendarEvent }>) {
   );
 }
 
-function getDayEvents(events: CalendarEvent[], date: Date) {
-  return filterEventsByDate(events, format(date, "yyyy-MM-dd"));
-}
+const emptyEvents: CalendarEvent[] = [];
 
 function DayCell({
   date,
-  events,
+  dayEvents,
   isCurrentMonth,
   selected,
+  todayIso,
   onSelect,
 }: Readonly<{
   date: Date;
-  events: CalendarEvent[];
+  dayEvents: CalendarEvent[];
   isCurrentMonth: boolean;
   selected: boolean;
+  todayIso: string;
   onSelect: (d: Date) => void;
 }>) {
   const today = isToday(date);
-  const dayEvents = getDayEvents(events, date);
 
   return (
     <button
@@ -165,7 +168,7 @@ function DayCell({
         <div className="mt-0.5 flex flex-col gap-0.5 lg:mt-1">
           <div className="flex flex-wrap items-center gap-0.5 lg:gap-1">
             {dayEvents.slice(0, 3).map((e) => (
-              <EventDot key={e.id} event={e} />
+              <EventDot key={e.id} event={e} todayIso={todayIso} />
             ))}
             {dayEvents.length > 3 && (
               <span className="text-[10px] leading-none text-muted-foreground">
@@ -181,19 +184,19 @@ function DayCell({
 
 function DayDetail({
   date,
-  events,
+  dayEvents,
+  todayIso,
   dateLocale,
   emptyLabel,
   className,
 }: Readonly<{
   date: Date;
-  events: CalendarEvent[];
+  dayEvents: CalendarEvent[];
+  todayIso: string;
   dateLocale: ReturnType<typeof getDateFnsLocale>;
   emptyLabel: string;
   className?: string;
 }>) {
-  const dayEvents = getDayEvents(events, date);
-
   return (
     <section
       className={cn(
@@ -212,7 +215,7 @@ function DayDetail({
               href={`/subjects/${e.subjectId}`}
               className="block min-w-0 w-full max-w-full transition-opacity hover:opacity-80"
             >
-              <EventChip event={e} />
+              <EventChip event={e} todayIso={todayIso} />
             </Link>
           ))}
         </div>
@@ -225,18 +228,9 @@ function DayDetail({
   );
 }
 
-function DayDetailSkeleton({
-  className,
-}: Readonly<{
-  className?: string;
-}>) {
+function DayDetailSkeleton() {
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-border/70 bg-card/85 p-4",
-        className,
-      )}
-    >
+    <div className="rounded-xl border border-border/70 bg-card/85 p-4 lg:min-h-0 lg:overflow-y-auto">
       <Skeleton className="h-5 w-40" />
       <div className="mt-4 space-y-3">
         {Array.from({ length: 4 }, (_, index) => (
@@ -299,7 +293,9 @@ export function CalendarView({
     });
   }, [rangeEndIso, rangeKey, rangeStartIso]);
 
+  const todayIso = format(new Date(), "yyyy-MM-dd");
   const dates = getMonthGridDates(anchor);
+  const eventsByDate = groupEventsByDate(events);
   const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
     format(addDays(startOfWeek(anchor, { weekStartsOn: 1 }), index), "EEE", {
       locale: dateLocale,
@@ -389,9 +385,12 @@ export function CalendarView({
                 <DayCell
                   key={date.toISOString()}
                   date={date}
-                  events={events}
+                  dayEvents={
+                    eventsByDate.get(format(date, "yyyy-MM-dd")) ?? emptyEvents
+                  }
                   isCurrentMonth={isSameMonth(date, anchor)}
                   selected={isSameDay(date, selectedDate)}
+                  todayIso={todayIso}
                   onSelect={setSelectedDate}
                 />
               ))}
@@ -401,27 +400,18 @@ export function CalendarView({
       </div>
 
       {isPending ? (
-        <>
-          <DayDetailSkeleton className="lg:hidden" />
-          <DayDetailSkeleton className="hidden lg:block lg:min-h-0 lg:overflow-y-auto" />
-        </>
+        <DayDetailSkeleton />
       ) : (
-        <>
-          <DayDetail
-            date={selectedDate}
-            events={events}
-            dateLocale={dateLocale}
-            emptyLabel={t("empty")}
-            className="lg:hidden"
-          />
-          <DayDetail
-            date={selectedDate}
-            events={events}
-            dateLocale={dateLocale}
-            emptyLabel={t("empty")}
-            className="hidden lg:block lg:min-h-0 lg:overflow-y-auto"
-          />
-        </>
+        <DayDetail
+          date={selectedDate}
+          dayEvents={
+            eventsByDate.get(format(selectedDate, "yyyy-MM-dd")) ?? emptyEvents
+          }
+          todayIso={todayIso}
+          dateLocale={dateLocale}
+          emptyLabel={t("empty")}
+          className="lg:min-h-0 lg:overflow-y-auto"
+        />
       )}
     </div>
   );

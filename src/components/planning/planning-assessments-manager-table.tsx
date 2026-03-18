@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format, parseISO } from "date-fns";
 import { CalendarDays, ClipboardList } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
@@ -245,7 +246,7 @@ function getColumns(
     },
   ];
 
-  columns.splice(columns.length - 1, 0, {
+  columns.splice(- 1, 0, {
     id: "subject",
     header: () => (
       <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
@@ -300,7 +301,7 @@ export function PlanningAssessmentsManagerTable({
   const tAssessment = useTranslations("AssessmentItemCard");
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
-  const todayIso = format(new Date(), "yyyy-MM-dd");
+  const [todayIso] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const router = useRouter();
   const finalGradeTone =
     finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
@@ -351,11 +352,11 @@ export function PlanningAssessmentsManagerTable({
       }
       footerClassName={cn(
         "sm:items-center",
-        finalGrade !== null ? "sm:justify-between" : "sm:justify-end",
+        finalGrade === null ? "sm:justify-end" : "sm:justify-between",
       )}
       controlsClassName="sm:items-center"
       footerLeading={
-        finalGrade !== null ? (
+        finalGrade === null ? null : (
           <div className="min-w-0 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">
               {tTable("footer_final_grade")}:
@@ -364,7 +365,7 @@ export function PlanningAssessmentsManagerTable({
               {finalGrade === null ? "—" : finalGrade.toFixed(1)}
             </span>
           </div>
-        ) : null
+        )
       }
     />
   );

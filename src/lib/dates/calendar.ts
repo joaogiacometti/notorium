@@ -113,3 +113,18 @@ export function filterEventsByDate(
 ): CalendarEvent[] {
   return events.filter((e) => e.date === dateIso);
 }
+
+export function groupEventsByDate(
+  events: CalendarEvent[],
+): Map<string, CalendarEvent[]> {
+  const map = new Map<string, CalendarEvent[]>();
+  for (const event of events) {
+    const existing = map.get(event.date);
+    if (existing) {
+      existing.push(event);
+    } else {
+      map.set(event.date, [event]);
+    }
+  }
+  return map;
+}
