@@ -1,8 +1,10 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, Lock, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
+import { getPlanningAssessmentsPage } from "@/app/actions/assessments";
 import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -18,33 +20,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  filterAndSortAssessments,
-  getDueDateBounds,
-  type SortBy,
-  type StatusFilter,
-  type TypeFilter,
+import type {
+  SortBy,
+  StatusFilter,
+  TypeFilter,
 } from "@/features/assessments/assessment-filters";
-import { getAssessmentAverage } from "@/features/assessments/assessments";
+import { getTodayIso } from "@/features/assessments/assessments";
 import { assessmentTypeValues } from "@/features/assessments/constants";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
-  AssessmentEntity,
+  PlanningAssessmentsPage,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface PlanningAssessmentsTableProps {
-  assessments: AssessmentEntity[];
   initialSubjectId?: string;
+  initialPageData: PlanningAssessmentsPage;
   subjects: SubjectEntity[];
   subjectNamesById: Record<string, string>;
 }
 
+const planningAssessmentsPageSize = 25;
+
 export function PlanningAssessmentsTable({
-  assessments,
   initialSubjectId,
+  initialPageData,
   subjects,
   subjectNamesById,
 }: Readonly<PlanningAssessmentsTableProps>) {
@@ -59,9 +61,6 @@ export function PlanningAssessmentsTable({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("smart");
-  const [localAssessments, setLocalAssessments] = useState(() =>
-    sortAssessments(assessments),
-  );
   const {
     filter: subjectFilter,
     pageIndex,
@@ -86,56 +85,88 @@ export function PlanningAssessmentsTable({
     },
   });
 
-  useEffect(() => {
-    setLocalAssessments(sortAssessments(assessments));
-    setPageIndex(0);
-  }, [assessments, setPageIndex]);
+  const assessmentsQuery = useQuery({
+    queryKey: [
+      "planning-assessments-page",
+      pageIndex,
+      planningAssessmentsPageSize,
+      subjectFilter,
+      resolvedSearchQuery,
+      statusFilter,
+      typeFilter,
+      sortBy,
+    ],
+    queryFn: async () => {
+      const result = await getPlanningAssessmentsPage({
+        pageIndex,
+        pageSize: planningAssessmentsPageSize,
+        search: resolvedSearchQuery,
+        subjectId: subjectFilter === "all" ? undefined : subjectFilter,
+        statusFilter,
+        typeFilter,
+        sortBy,
+        todayIso: getTodayIso(),
+      });
 
-  const filteredAssessments = filterAndSortAssessments({
-    assessments: localAssessments,
-    searchQuery: resolvedSearchQuery,
-    subjectFilter,
-    statusFilter,
-    typeFilter,
-    dueDateFilter: "all",
-    sortBy,
-    dueDateBounds: getDueDateBounds(),
+      if ("errorCode" in result) {
+        return {
+          items: [],
+          total: 0,
+          allCount: 0,
+          subjectAssessmentCount: null,
+          subjectFinalGrade: null,
+        } satisfies PlanningAssessmentsPage;
+      }
+
+      return result;
+    },
+    initialData:
+      pageIndex === 0 &&
+      subjectFilter === (initialSubjectId ?? "all") &&
+      resolvedSearchQuery.trim().length === 0 &&
+      statusFilter === "all" &&
+      typeFilter === "all" &&
+      sortBy === "smart"
+        ? initialPageData
+        : undefined,
+    placeholderData: (previousData) => previousData,
+    staleTime: 1000 * 20,
   });
-  const selectedSubjectCount =
-    subjectFilter === "all"
-      ? 0
-      : localAssessments.filter(
-          (assessment) => assessment.subjectId === subjectFilter,
-        ).length;
+
+  const pageData = assessmentsQuery.data ?? initialPageData;
+  const assessments = pageData.items;
+  const total = pageData.total;
+  const hasAnyAssessments = pageData.allCount > 0;
+  const selectedSubjectCount = pageData.subjectAssessmentCount ?? 0;
   const isAtSubjectLimit =
     subjectFilter !== "all" &&
     selectedSubjectCount >= LIMITS.maxAssessmentsPerSubject;
-  const isSingleSubjectMode = subjectFilter !== "all";
-  const subjectAssessments = isSingleSubjectMode
-    ? localAssessments.filter(
-        (assessment) => assessment.subjectId === subjectFilter,
-      )
-    : [];
-  const finalGrade = isSingleSubjectMode
-    ? getAssessmentAverage(subjectAssessments)
-    : null;
+  const finalGrade = pageData.subjectFinalGrade;
   const hasSubjects = subjects.length > 0;
 
-  function handleCreated(assessment: AssessmentEntity) {
-    setLocalAssessments((current) => upsertAssessment(current, assessment));
-    setPageIndex(0);
-  }
-
-  function handleUpdated(assessment: AssessmentEntity) {
-    setLocalAssessments((current) => upsertAssessment(current, assessment));
-    setPageIndex(0);
-  }
-
-  function handleDeleted(id: string) {
-    setLocalAssessments((current) =>
-      current.filter((assessment) => assessment.id !== id),
+  useEffect(() => {
+    const pageCount = Math.max(
+      1,
+      Math.ceil(
+        (assessmentsQuery.data?.total ?? initialPageData.total) /
+          planningAssessmentsPageSize,
+      ),
     );
+    const maxIndex = pageCount - 1;
+
+    if (pageIndex > maxIndex) {
+      setPageIndex(maxIndex);
+    }
+  }, [
+    assessmentsQuery.data?.total,
+    initialPageData.total,
+    pageIndex,
+    setPageIndex,
+  ]);
+
+  function refreshAssessments() {
     setPageIndex(0);
+    void assessmentsQuery.refetch();
   }
 
   return (
@@ -266,7 +297,7 @@ export function PlanningAssessmentsTable({
               >
                 <Search className="size-3.5" />
                 {tOverview("items_no_limit", {
-                  count: filteredAssessments.length,
+                  count: total,
                 })}
               </Badge>
               {subjectFilter !== "all" ? (
@@ -298,18 +329,21 @@ export function PlanningAssessmentsTable({
         </div>
       ) : null}
       <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
-        {localAssessments.length > 0 ? (
+        {hasAnyAssessments ? (
           <PlanningAssessmentsManagerTable
-            assessments={filteredAssessments}
+            assessments={assessments}
+            total={total}
             finalGrade={finalGrade}
+            isLoading={assessmentsQuery.isFetching}
             pageIndex={pageIndex}
+            pageSize={planningAssessmentsPageSize}
             selectedSubjectId={
               subjectFilter === "all" ? undefined : subjectFilter
             }
             subjectNamesById={subjectNamesById}
             onPageIndexChange={setPageIndex}
-            onUpdated={handleUpdated}
-            onDeleted={handleDeleted}
+            onUpdated={refreshAssessments}
+            onDeleted={refreshAssessments}
           />
         ) : (
           <CardContent className="flex flex-col items-center justify-center px-6 py-14 text-center sm:px-10">
@@ -337,25 +371,10 @@ export function PlanningAssessmentsTable({
       <CreateAssessmentDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={handleCreated}
+        onCreated={refreshAssessments}
         subjects={subjects}
         subjectId={subjectFilter === "all" ? undefined : subjectFilter}
       />
     </div>
-  );
-}
-
-function sortAssessments(assessments: AssessmentEntity[]): AssessmentEntity[] {
-  return [...assessments].sort(
-    (left, right) => right.updatedAt.getTime() - left.updatedAt.getTime(),
-  );
-}
-
-function upsertAssessment(
-  current: AssessmentEntity[],
-  next: AssessmentEntity,
-): AssessmentEntity[] {
-  return sortAssessments(
-    current.filter((assessment) => assessment.id !== next.id).concat(next),
   );
 }

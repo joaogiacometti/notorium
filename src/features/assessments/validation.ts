@@ -70,3 +70,36 @@ export const deleteAssessmentSchema = z.object({
 });
 
 export type DeleteAssessmentForm = z.infer<typeof deleteAssessmentSchema>;
+
+const planningAssessmentStatusFilterValues = [
+  "all",
+  "pending",
+  "completed",
+  "overdue",
+] as const;
+const planningAssessmentTypeFilterValues = [
+  "all",
+  ...assessmentTypeValues,
+] as const;
+const planningAssessmentSortValues = [
+  "smart",
+  "dueDateAsc",
+  "dueDateDesc",
+  "updatedAtDesc",
+  "scoreDesc",
+] as const;
+
+export const planningAssessmentsQuerySchema = z.object({
+  pageIndex: z.number().int().min(0),
+  pageSize: z.number().int().min(1).max(100),
+  search: z.string().max(100).optional(),
+  subjectId: z.string().min(1).optional(),
+  statusFilter: z.enum(planningAssessmentStatusFilterValues),
+  typeFilter: z.enum(planningAssessmentTypeFilterValues),
+  sortBy: z.enum(planningAssessmentSortValues),
+  todayIso: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export type PlanningAssessmentsQueryInput = z.infer<
+  typeof planningAssessmentsQuerySchema
+>;

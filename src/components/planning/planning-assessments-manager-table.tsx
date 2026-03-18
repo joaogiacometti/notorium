@@ -8,6 +8,7 @@ import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-pr
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
 import { getAssessmentDetailHref } from "@/features/navigation/detail-page-back-link";
@@ -20,7 +21,10 @@ import { cn } from "@/lib/utils";
 interface PlanningAssessmentsManagerTableProps {
   assessments: AssessmentEntity[];
   finalGrade: number | null;
+  total: number;
+  isLoading: boolean;
   pageIndex: number;
+  pageSize: number;
   selectedSubjectId?: string;
   subjectNamesById: Record<string, string>;
   onPageIndexChange: (pageIndex: number) => void;
@@ -282,7 +286,10 @@ function getColumns(
 export function PlanningAssessmentsManagerTable({
   assessments,
   finalGrade,
+  total,
+  isLoading,
   pageIndex,
+  pageSize,
   selectedSubjectId,
   subjectNamesById,
   onPageIndexChange,
@@ -311,6 +318,10 @@ export function PlanningAssessmentsManagerTable({
         tAssessment,
       )}
       pageIndex={pageIndex}
+      pageCount={Math.max(1, Math.ceil(total / pageSize))}
+      pageSize={pageSize}
+      isLoading={isLoading}
+      loadingSkeleton={<PlanningAssessmentsManagerTableSkeleton />}
       onPageIndexChange={onPageIndexChange}
       pageLabel={(current, total) =>
         tTable("page", {
@@ -355,6 +366,38 @@ export function PlanningAssessmentsManagerTable({
           </div>
         ) : null
       }
+    />
+  );
+}
+
+export function PlanningAssessmentsManagerTableSkeleton() {
+  return (
+    <TableSkeleton
+      columnTemplate="0.96fr 0.7fr 0.62fr 0.68fr 0.72fr 3.5rem"
+      headers={[
+        { className: "h-4 w-16" },
+        { className: "h-4 w-14" },
+        { className: "h-4 w-16" },
+        { className: "h-4 w-20" },
+        { className: "h-4 w-16" },
+        { content: <div /> },
+      ]}
+      rows={[
+        { className: "h-14 w-full" },
+        { className: "h-7 w-24 rounded-full" },
+        { className: "h-7 w-24 rounded-full" },
+        { className: "h-6 w-full" },
+        { className: "h-7 w-24 rounded-full" },
+        {
+          className: "h-10 w-10 self-center justify-self-start rounded-full",
+        },
+      ]}
+      rowCount={4}
+      footer={[
+        { className: "h-7 w-28 rounded-full" },
+        { className: "h-8 w-24 rounded-full" },
+        { className: "h-8 w-24 rounded-full" },
+      ]}
     />
   );
 }

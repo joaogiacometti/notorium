@@ -3,6 +3,7 @@ import {
   createAssessmentSchema,
   deleteAssessmentSchema,
   editAssessmentSchema,
+  planningAssessmentsQuerySchema,
 } from "@/features/assessments/validation";
 
 describe("createAssessmentSchema", () => {
@@ -178,5 +179,35 @@ describe("deleteAssessmentSchema", () => {
     const result = deleteAssessmentSchema.safeParse({ id: "a1" });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("planningAssessmentsQuerySchema", () => {
+  it("accepts valid page and filter input", () => {
+    const result = planningAssessmentsQuerySchema.safeParse({
+      pageIndex: 0,
+      pageSize: 25,
+      search: "math",
+      subjectId: "subject-1",
+      statusFilter: "overdue",
+      typeFilter: "exam",
+      sortBy: "smart",
+      todayIso: "2026-03-18",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid paging and filter values", () => {
+    const result = planningAssessmentsQuerySchema.safeParse({
+      pageIndex: -1,
+      pageSize: 0,
+      statusFilter: "archived",
+      typeFilter: "quiz",
+      sortBy: "random",
+      todayIso: "18-03-2026",
+    });
+
+    expect(result.success).toBe(false);
   });
 });

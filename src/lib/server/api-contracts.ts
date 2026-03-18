@@ -19,6 +19,13 @@ export interface AssessmentDetailEntity {
   assessment: AssessmentEntity;
   subject: Pick<SubjectEntity, "id" | "name">;
 }
+export interface PlanningAssessmentsPage {
+  items: AssessmentEntity[];
+  total: number;
+  allCount: number;
+  subjectAssessmentCount: number | null;
+  subjectFinalGrade: number | null;
+}
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 export type FlashcardListEntity = FlashcardEntity & {
   subjectName: string;

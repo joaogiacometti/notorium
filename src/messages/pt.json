@@ -321,6 +321,7 @@
     "empty_title": "Ainda não há avaliações",
     "empty_description": "As avaliações que você adicionar às suas matérias aparecerão aqui.",
     "no_results": "Nenhuma avaliação corresponde aos seus filtros.",
+    "loading_table": "Carregando avaliações...",
     "open_actions": "Abrir ações",
     "open_details_for": "Abrir detalhes de {title}",
     "edit": "Editar",

@@ -8,6 +8,7 @@ import {
 import {
   getAssessmentsBySubjectForUser,
   getAssessmentsForUser,
+  getPlanningAssessmentsPageForUser,
 } from "@/features/assessments/queries";
 import { revalidateAssessmentPaths } from "@/features/assessments/revalidation";
 import {
@@ -17,6 +18,8 @@ import {
   deleteAssessmentSchema,
   type EditAssessmentForm,
   editAssessmentSchema,
+  type PlanningAssessmentsQueryInput,
+  planningAssessmentsQuerySchema,
 } from "@/features/assessments/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
@@ -25,7 +28,9 @@ import type {
   CreateAssessmentResult,
   DeleteAssessmentResult,
   EditAssessmentResult,
+  PlanningAssessmentsPage,
 } from "@/lib/server/api-contracts";
+import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export async function getAssessmentsBySubject(
   subjectId: string,
@@ -37,6 +42,18 @@ export async function getAssessmentsBySubject(
 export async function getAssessments(): Promise<AssessmentEntity[]> {
   const userId = await getAuthenticatedUserId();
   return getAssessmentsForUser(userId);
+}
+
+export async function getPlanningAssessmentsPage(
+  data: PlanningAssessmentsQueryInput,
+): Promise<PlanningAssessmentsPage | ActionErrorResult> {
+  return runValidatedUserAction(
+    planningAssessmentsQuerySchema,
+    data,
+    "common.invalidRequest",
+    async (userId, parsedData) =>
+      getPlanningAssessmentsPageForUser(userId, parsedData),
+  );
 }
 
 export async function createAssessment(
