@@ -30,12 +30,13 @@ export async function runValidatedUserAction<
     data: z.infer<TSchema>,
   ) => Promise<TResult> | TResult,
 ): Promise<TResult | ActionErrorResult> {
-  const userId = await getAuthenticatedUserId();
   const parsed = parseActionInput(schema, input, errorCode);
 
   if (!parsed.success) {
     return parsed.error;
   }
+
+  const userId = await getAuthenticatedUserId();
 
   return action(userId, parsed.data);
 }

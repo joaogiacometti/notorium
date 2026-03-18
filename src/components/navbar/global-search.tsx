@@ -23,6 +23,7 @@ import {
 } from "@/features/navigation/detail-page-back-link";
 import { useRouter } from "@/i18n/routing";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
+import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import { searchMinQueryLength } from "@/lib/validations/search";
 
 interface GlobalSearchProps {
@@ -34,16 +35,8 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const shortcutsSuspended = useShortcutsDialogOpen();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 200);
   const router = useRouter();
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 200);
-
-    return () => clearTimeout(timeout);
-  }, [query]);
 
   const { data, isPending } = useQuery({
     queryKey: ["search-data", userId, debouncedQuery],
@@ -92,7 +85,6 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
     if (!nextOpen) {
       setQuery("");
-      setDebouncedQuery("");
     }
   }
 

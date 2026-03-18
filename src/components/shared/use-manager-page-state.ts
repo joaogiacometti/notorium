@@ -1,6 +1,7 @@
 "use client";
 
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 
 interface UseManagerPageStateOptions<TFilter> {
   initialFilter: TFilter;
@@ -19,8 +20,7 @@ export function useManagerPageState<TFilter>({
 }: Readonly<UseManagerPageStateOptions<TFilter>>) {
   const [pageIndex, setPageIndex] = useState(0);
   const [searchQuery, setSearchQueryState] = useState("");
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  const resolvedSearchQuery = useDebouncedValue(searchQuery, searchDebounceMs);
   const [filter, setFilterState] = useState(initialFilter);
 
   useEffect(() => {
@@ -28,19 +28,6 @@ export function useManagerPageState<TFilter>({
     setPageIndex(0);
     onInitialFilterChange?.(initialFilter);
   }, [initialFilter, onInitialFilterChange]);
-
-  useEffect(() => {
-    if (searchDebounceMs === undefined) {
-      setDebouncedSearchQuery(searchQuery);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, searchDebounceMs);
-
-    return () => clearTimeout(timeout);
-  }, [searchDebounceMs, searchQuery]);
 
   function setSearchQuery(value: string) {
     setSearchQueryState(value);
@@ -57,10 +44,7 @@ export function useManagerPageState<TFilter>({
   return {
     filter,
     pageIndex,
-    resolvedSearchQuery:
-      searchDebounceMs === undefined
-        ? deferredSearchQuery
-        : debouncedSearchQuery,
+    resolvedSearchQuery,
     searchQuery,
     setFilter,
     setPageIndex,

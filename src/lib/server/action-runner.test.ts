@@ -54,7 +54,6 @@ describe("action runner", () => {
   });
 
   it("returns an action error for invalid user action input", async () => {
-    getAuthenticatedUserIdMock.mockResolvedValueOnce("user-1");
     const { runValidatedUserAction } = await import(
       "@/lib/server/action-runner"
     );
@@ -76,6 +75,7 @@ describe("action runner", () => {
       errorMessage: undefined,
     });
     expect(action).not.toHaveBeenCalled();
+    expect(getAuthenticatedUserIdMock).not.toHaveBeenCalled();
   });
 
   it("passes user id and parsed data to user action", async () => {
