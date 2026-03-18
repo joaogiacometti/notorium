@@ -29,6 +29,7 @@ export const user = pgTable("user", {
     .notNull()
     .default("pending"),
   isAdmin: boolean("is_admin").notNull().default(false),
+  preferredTheme: text("preferred_theme").default("system").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

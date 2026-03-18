@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
+import { getUserThemeServerSide } from "@/app/actions/theme";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -27,6 +28,7 @@ export default async function RootLayout({
   }
 
   const messages = await getMessages();
+  const userTheme = await getUserThemeServerSide();
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -34,9 +36,10 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme={userTheme}
             enableSystem
             disableTransitionOnChange
+            storageKey="theme"
             themes={[
               "light",
               "dark",

@@ -2,15 +2,14 @@ import {
   BookOpenText,
   ChevronDown,
   LogIn,
-  LogOut,
   Shield,
   User,
   UserPlus,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { logoutAction } from "@/app/actions/auth";
 import { AppSectionNav } from "@/components/navbar/app-section-nav";
 import { GlobalSearch } from "@/components/navbar/global-search";
+import { LogoutButton } from "@/components/navbar/logout-button";
 import { PreferencesDialog } from "@/components/navbar/preferences-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,22 +107,7 @@ export async function Navbar() {
                 )}
                 <PreferencesDialog />
                 <DropdownMenuSeparator />
-                <form action={logoutAction}>
-                  <DropdownMenuItem
-                    asChild
-                    className="cursor-pointer"
-                    variant="destructive"
-                  >
-                    <button
-                      type="submit"
-                      data-testid="account-menu-logout"
-                      className="flex w-full items-center gap-2 text-left"
-                    >
-                      <LogOut className="size-4" />
-                      {t("logout")}
-                    </button>
-                  </DropdownMenuItem>
-                </form>
+                <LogoutButton />
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

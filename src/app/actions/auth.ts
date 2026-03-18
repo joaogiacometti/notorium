@@ -5,11 +5,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { getUserAccessStatusByEmail } from "@/features/auth/queries";
+import { getUserPreferredTheme } from "@/features/user/queries";
 import { auth } from "@/lib/auth/auth";
 import { checkAuthRateLimit } from "@/lib/auth/rate-limit";
 import { runValidatedAction } from "@/lib/server/action-runner";
 import type { MutationResult } from "@/lib/server/api-contracts";
-import { actionError } from "@/lib/server/server-action-errors";
+import {
+  type ActionErrorResult,
+  actionError,
+} from "@/lib/server/server-action-errors";
 import {
   type LoginForm,
   loginSchema,
@@ -18,8 +22,16 @@ import {
 } from "@/lib/validations/auth";
 
 type ActionResult = MutationResult;
+type LoginActionResult =
+  | {
+      success: true;
+      data: { theme: string };
+    }
+  | ActionErrorResult;
 
-export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
+export const loginAction = async (
+  data: LoginForm,
+): Promise<LoginActionResult> => {
   return runValidatedAction(
     loginSchema,
     data,
@@ -40,13 +52,15 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
         return actionError("auth.accessBlocked");
       }
 
+      let userId: string;
       try {
-        await auth.api.signInEmail({
+        const result = await auth.api.signInEmail({
           body: {
             email: parsedData.email,
             password: parsedData.password,
           },
         });
+        userId = result.user.id;
       } catch (error) {
         if (error instanceof APIError) {
           return actionError("auth.loginFailed", {
@@ -56,8 +70,9 @@ export const loginAction = async (data: LoginForm): Promise<ActionResult> => {
         return actionError("auth.loginFailed");
       }
 
-      const locale = await getLocale();
-      redirect(`/${locale}`);
+      const theme = await getUserPreferredTheme(userId);
+
+      return { success: true, data: { theme } };
     },
   );
 };

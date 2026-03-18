@@ -3,6 +3,7 @@
 import { Globe, Palette, Settings } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import { updateUserTheme } from "@/app/actions/theme";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,45 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePathname, useRouter } from "@/i18n/routing";
+import { type AppTheme, isAppTheme, themeOptions } from "@/lib/theme";
 
 type AppLocale = "en" | "pt";
-type AppTheme =
-  | "system"
-  | "light"
-  | "dark"
-  | "tokyo-night"
-  | "halloween"
-  | "catppuccin-mocha"
-  | "catppuccin-latte";
-type ThemeOption = {
-  id: AppTheme;
-  labelKey:
-    | "system"
-    | "light"
-    | "dark"
-    | "tokyo_night"
-    | "halloween"
-    | "catppuccin_mocha"
-    | "catppuccin_latte";
-};
-
-const themeOptions: ThemeOption[] = [
-  { id: "system", labelKey: "system" },
-  { id: "light", labelKey: "light" },
-  { id: "dark", labelKey: "dark" },
-  { id: "tokyo-night", labelKey: "tokyo_night" },
-  { id: "halloween", labelKey: "halloween" },
-  { id: "catppuccin-mocha", labelKey: "catppuccin_mocha" },
-  { id: "catppuccin-latte", labelKey: "catppuccin_latte" },
-];
-const appThemes: AppTheme[] = themeOptions.map((option) => option.id);
 
 function isLocale(value: string): value is AppLocale {
   return value === "en" || value === "pt";
-}
-
-function isAppTheme(value: string | undefined): value is AppTheme {
-  return value !== undefined && appThemes.some((theme) => theme === value);
 }
 
 export function PreferencesDialog() {
@@ -80,12 +48,18 @@ export function PreferencesDialog() {
     router.replace(pathname, { locale: nextLocale });
   };
 
-  const handleThemeChange = (nextTheme: AppTheme) => {
+  const handleThemeChange = async (nextTheme: AppTheme) => {
     if (nextTheme === currentTheme) {
       return;
     }
 
     setTheme(nextTheme);
+    try {
+      await updateUserTheme({ theme: nextTheme });
+    } catch (error) {
+      console.error("Failed to update theme preference:", error);
+      setTheme(currentTheme);
+    }
   };
 
   return (

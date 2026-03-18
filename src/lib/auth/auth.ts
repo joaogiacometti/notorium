@@ -54,7 +54,7 @@ const getSessionAccess = cache(async () => {
 
 export async function getOptionalSession() {
   const state = await getSessionAccess();
-  if (!state || state.account.accessStatus !== "approved") {
+  if (state?.account.accessStatus !== "approved") {
     return null;
   }
 
@@ -63,7 +63,7 @@ export async function getOptionalSession() {
 
 export async function getOptionalSessionAccess() {
   const state = await getSessionAccess();
-  if (!state || state.account.accessStatus !== "approved") {
+  if (state?.account.accessStatus !== "approved") {
     return null;
   }
 
@@ -73,7 +73,7 @@ export async function getOptionalSessionAccess() {
 export async function requireSession() {
   const state = await getSessionAccess();
 
-  if (!state || state.account.accessStatus !== "approved") {
+  if (state?.account.accessStatus !== "approved") {
     const locale = await getLocale();
     redirect(`/${locale}/login`);
   }
@@ -89,7 +89,7 @@ export async function getAuthenticatedUserId(): Promise<string> {
 export async function requireAdminSession() {
   const state = await getSessionAccess();
 
-  if (!state || state.account.accessStatus !== "approved") {
+  if (state?.account.accessStatus !== "approved") {
     const locale = await getLocale();
     redirect(`/${locale}/login`);
   }

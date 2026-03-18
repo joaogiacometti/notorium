@@ -3,7 +3,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-
+import { updateUserTheme } from "@/app/actions/theme";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,10 +11,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { validThemes } from "@/lib/theme";
 
 export function ModeToggle() {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const t = useTranslations("Navigation");
+
+  const handleThemeChange = async (nextTheme: (typeof validThemes)[number]) => {
+    const currentTheme = theme ?? "system";
+    setTheme(nextTheme);
+    try {
+      await updateUserTheme({ theme: nextTheme });
+    } catch (error) {
+      console.error("Failed to update theme preference:", error);
+      setTheme(currentTheme);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -31,43 +43,43 @@ export function ModeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => setTheme("system")}
+          onClick={() => handleThemeChange("system")}
           className="cursor-pointer"
         >
           {t("system")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme("light")}
+          onClick={() => handleThemeChange("light")}
           className="cursor-pointer"
         >
           {t("light")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme("dark")}
+          onClick={() => handleThemeChange("dark")}
           className="cursor-pointer"
         >
           {t("dark")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme("tokyo-night")}
+          onClick={() => handleThemeChange("tokyo-night")}
           className="cursor-pointer"
         >
           {t("tokyo_night")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme("halloween")}
+          onClick={() => handleThemeChange("halloween")}
           className="cursor-pointer"
         >
           {t("halloween")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme("catppuccin-mocha")}
+          onClick={() => handleThemeChange("catppuccin-mocha")}
           className="cursor-pointer"
         >
           {t("catppuccin_mocha")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme("catppuccin-latte")}
+          onClick={() => handleThemeChange("catppuccin-latte")}
           className="cursor-pointer"
         >
           {t("catppuccin_latte")}

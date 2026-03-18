@@ -2,7 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { loginAction } from "@/app/actions/auth";
@@ -30,6 +32,9 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const t = useTranslations("LoginForm");
   const tErrors = useTranslations("ServerActions");
+  const router = useRouter();
+  const locale = useLocale();
+  const { setTheme } = useTheme();
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -44,6 +49,14 @@ export function LoginForm({
     const result = await loginAction(data);
     if (result && !result.success) {
       toast.error(resolveActionErrorMessage(result, tErrors));
+      return;
+    }
+
+    if (result?.success && result.data) {
+      const { theme } = result.data;
+      setTheme(theme);
+
+      router.push(`/${locale}`);
     }
   }
 
