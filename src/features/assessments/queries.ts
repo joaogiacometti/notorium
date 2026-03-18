@@ -9,7 +9,7 @@ import type {
   AssessmentEntity,
   PlanningAssessmentsPage,
 } from "@/lib/server/api-contracts";
-import { getAssessmentAverage } from "./assessments";
+import { getAssessmentAverage, getTodayIso } from "./assessments";
 
 export async function getAssessmentsForUser(
   userId: string,
@@ -154,13 +154,13 @@ function getPlanningAssessmentFilters(
     PlanningAssessmentsQueryInput,
     "search" | "subjectId" | "statusFilter" | "typeFilter"
   >,
-  todayIso: string,
 ): SQL<unknown>[] {
   const filters: SQL<unknown>[] = [
     eq(assessment.userId, userId),
     ...getOwnedActiveSubjectFilters(userId),
   ];
   const normalizedSearch = search?.trim() ?? "";
+  const todayIso = getTodayIso();
 
   if (subjectId) {
     filters.push(eq(assessment.subjectId, subjectId));
@@ -194,8 +194,7 @@ export async function getPlanningAssessmentsPageForUser(
   input: PlanningAssessmentsQueryInput,
 ): Promise<PlanningAssessmentsPage> {
   const offset = input.pageIndex * input.pageSize;
-  const todayIso = input.todayIso;
-  const filters = getPlanningAssessmentFilters(userId, input, todayIso);
+  const filters = getPlanningAssessmentFilters(userId, input);
   const [items, totalRows, allCountRows, subjectCountRows, finalGradeRows] =
     await Promise.all([
       db

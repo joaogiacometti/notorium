@@ -25,7 +25,6 @@ import type {
   StatusFilter,
   TypeFilter,
 } from "@/features/assessments/assessment-filters";
-import { getTodayIso } from "@/features/assessments/assessments";
 import { assessmentTypeValues } from "@/features/assessments/constants";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
@@ -105,7 +104,6 @@ export function PlanningAssessmentsTable({
         statusFilter,
         typeFilter,
         sortBy,
-        todayIso: getTodayIso(),
       });
 
       if ("errorCode" in result) {

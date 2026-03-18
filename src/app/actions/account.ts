@@ -52,9 +52,7 @@ export async function updateAccount(
         });
       } catch (error) {
         if (error instanceof APIError) {
-          return actionError("account.updateFailed", {
-            errorMessage: error.message,
-          });
+          return actionError("account.updateFailed");
         }
         return actionError("account.updateFailed");
       }

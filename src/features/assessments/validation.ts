@@ -97,7 +97,6 @@ export const planningAssessmentsQuerySchema = z.object({
   statusFilter: z.enum(planningAssessmentStatusFilterValues),
   typeFilter: z.enum(planningAssessmentTypeFilterValues),
   sortBy: z.enum(planningAssessmentSortValues),
-  todayIso: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 export type PlanningAssessmentsQueryInput = z.infer<

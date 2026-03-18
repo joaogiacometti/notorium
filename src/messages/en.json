@@ -321,7 +321,6 @@
     "empty_title": "No assessments yet",
     "empty_description": "Assessments you add to your subjects will appear here.",
     "no_results": "No assessments match your filters.",
-    "loading_table": "Loading assessments...",
     "open_actions": "Open actions",
     "open_details_for": "Open details for {title}",
     "edit": "Edit",

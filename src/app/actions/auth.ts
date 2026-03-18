@@ -63,9 +63,7 @@ export const loginAction = async (
         userId = result.user.id;
       } catch (error) {
         if (error instanceof APIError) {
-          return actionError("auth.loginFailed", {
-            errorMessage: error.message,
-          });
+          return actionError("auth.loginFailed");
         }
         return actionError("auth.loginFailed");
       }
@@ -98,9 +96,7 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
         });
       } catch (error) {
         if (error instanceof APIError) {
-          return actionError("auth.signupFailed", {
-            errorMessage: error.message,
-          });
+          return actionError("auth.signupFailed");
         }
         return actionError("auth.signupFailed");
       }

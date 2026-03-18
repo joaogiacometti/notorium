@@ -31,10 +31,6 @@ export function resolveActionErrorMessage(
   try {
     return t(error.errorCode, error.errorParams);
   } catch {
-    if (error.errorMessage) {
-      return error.errorMessage;
-    }
-
     return t("common.generic");
   }
 }

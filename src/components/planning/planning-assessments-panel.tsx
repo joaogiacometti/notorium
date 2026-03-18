@@ -1,5 +1,4 @@
 import { PlanningAssessmentsTable } from "@/components/planning/planning-assessments-table";
-import { getTodayIso } from "@/features/assessments/assessments";
 import { getPlanningAssessmentsPageForUser } from "@/features/assessments/queries";
 import { resolvePlanningSubject } from "@/features/planning/view";
 import { getSubjectsForUser } from "@/features/subjects/queries";
@@ -32,7 +31,6 @@ export async function PlanningAssessmentsPanel({
     statusFilter: "all",
     typeFilter: "all",
     sortBy: "smart",
-    todayIso: getTodayIso(),
   });
 
   return (

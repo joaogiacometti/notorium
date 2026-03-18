@@ -192,7 +192,6 @@ describe("planningAssessmentsQuerySchema", () => {
       statusFilter: "overdue",
       typeFilter: "exam",
       sortBy: "smart",
-      todayIso: "2026-03-18",
     });
 
     expect(result.success).toBe(true);
@@ -205,9 +204,26 @@ describe("planningAssessmentsQuerySchema", () => {
       statusFilter: "archived",
       typeFilter: "quiz",
       sortBy: "random",
-      todayIso: "18-03-2026",
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("strips any unexpected todayIso input", () => {
+    const result = planningAssessmentsQuerySchema.safeParse({
+      pageIndex: 0,
+      pageSize: 25,
+      statusFilter: "all",
+      typeFilter: "all",
+      sortBy: "smart",
+      todayIso: "1900-01-01",
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect("todayIso" in result.data).toBe(false);
   });
 });
