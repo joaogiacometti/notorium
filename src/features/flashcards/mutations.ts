@@ -64,32 +64,59 @@ function isUniqueViolationError(error: unknown): boolean {
   );
 }
 
+async function getCreateFlashcardPreflight(
+  userId: string,
+  subjectId: string,
+  frontNormalized: string,
+) {
+  const [existingSubject, currentCount, hasDuplicate] = await Promise.all([
+    getActiveSubjectRecordForUser(userId, subjectId),
+    countFlashcardsBySubjectForUser(userId, subjectId),
+    hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
+  ]);
+
+  return {
+    existingSubject,
+    currentCount,
+    hasDuplicate,
+  };
+}
+
+async function getEditFlashcardPreflight(
+  userId: string,
+  data: Pick<EditFlashcardForm, "id" | "subjectId" | "front">,
+  frontNormalized: string,
+) {
+  const [existingFlashcard, existingSubject, hasDuplicate] = await Promise.all([
+    getFlashcardRecordForUser(userId, data.id),
+    getActiveSubjectRecordForUser(userId, data.subjectId),
+    hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
+  ]);
+
+  return {
+    existingFlashcard,
+    existingSubject,
+    hasDuplicate,
+  };
+}
+
 export async function createFlashcardForUser(
   userId: string,
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    data.subjectId,
-  );
+  const { existingSubject, currentCount, hasDuplicate } =
+    await getCreateFlashcardPreflight(userId, data.subjectId, frontNormalized);
 
   if (!existingSubject) {
     return actionError("subjects.notFound");
   }
 
-  const current = await countFlashcardsBySubjectForUser(userId, data.subjectId);
-
-  if (current >= LIMITS.maxFlashcardsPerSubject) {
+  if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
     return actionError("limits.flashcardLimit", {
       errorParams: { max: LIMITS.maxFlashcardsPerSubject },
     });
   }
-
-  const hasDuplicate = await hasDuplicateFlashcardFrontForUser(
-    userId,
-    frontNormalized,
-  );
 
   if (hasDuplicate) {
     return actionError("flashcards.duplicateFront");
@@ -133,16 +160,12 @@ export async function editFlashcardForUser(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
-  const existingFlashcard = await getFlashcardRecordForUser(userId, data.id);
+  const { existingFlashcard, existingSubject, hasDuplicate } =
+    await getEditFlashcardPreflight(userId, data, frontNormalized);
 
   if (!existingFlashcard) {
     return actionError("flashcards.notFound");
   }
-
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    data.subjectId,
-  );
 
   if (!existingSubject) {
     return actionError("subjects.notFound");
@@ -160,12 +183,6 @@ export async function editFlashcardForUser(
       });
     }
   }
-
-  const hasDuplicate = await hasDuplicateFlashcardFrontForUser(
-    userId,
-    frontNormalized,
-    data.id,
-  );
 
   if (hasDuplicate) {
     return actionError("flashcards.duplicateFront");

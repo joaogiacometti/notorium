@@ -5,6 +5,7 @@ import { CreditCard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import {
   getRichTextExcerpt,
   richTextToPlainText,
@@ -20,7 +21,6 @@ interface FlashcardsManagerTableProps {
   pageIndex: number;
   pageSize: number;
   isLoading: boolean;
-  loadingLabel: string;
   onEditRequested: (flashcardId: string) => void;
   onPageIndexChange: (pageIndex: number) => void;
   onDeleted: () => void;
@@ -146,7 +146,6 @@ export function FlashcardsManagerTable({
   pageIndex,
   pageSize,
   isLoading,
-  loadingLabel,
   onEditRequested,
   onPageIndexChange,
   onDeleted,
@@ -163,7 +162,11 @@ export function FlashcardsManagerTable({
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}
       isLoading={isLoading}
-      loadingLabel={loadingLabel}
+      loadingSkeleton={
+        <FlashcardsManagerTableSkeleton
+          selectedRow={selectedFlashcardIds.length > 0}
+        />
+      }
       onPageIndexChange={onPageIndexChange}
       selectedRowIds={selectedFlashcardIds}
       onSelectedRowIdsChange={onSelectedFlashcardIdsChange}
@@ -184,6 +187,73 @@ export function FlashcardsManagerTable({
       getBodyCellClassName={(columnId) =>
         cn("px-3 py-3 align-middle", getColumnClassName(columnId))
       }
+    />
+  );
+}
+
+interface FlashcardsManagerTableSkeletonProps {
+  selectedRow?: boolean;
+}
+
+export function FlashcardsManagerTableSkeleton({
+  selectedRow = false,
+}: Readonly<FlashcardsManagerTableSkeletonProps>) {
+  return (
+    <TableSkeleton
+      columnTemplate={
+        selectedRow
+          ? "2.25rem 1.35fr 1fr 0.7fr 3.5rem"
+          : "1.35fr 1fr 0.7fr 3.5rem"
+      }
+      headers={
+        selectedRow
+          ? [
+              { content: <div /> },
+              { className: "h-4 w-16" },
+              { className: "h-4 w-14" },
+              { className: "h-4 w-20" },
+              { content: <div /> },
+            ]
+          : [
+              { className: "h-4 w-16" },
+              { className: "h-4 w-14" },
+              { className: "h-4 w-20" },
+              { content: <div /> },
+            ]
+      }
+      rows={
+        selectedRow
+          ? [
+              [
+                {
+                  className:
+                    "h-4 w-4 rounded-sm self-center justify-self-center",
+                },
+                { className: "h-14 w-full" },
+                { className: "h-6 w-full" },
+                { className: "h-7 w-24 rounded-full" },
+                {
+                  className:
+                    "h-10 w-10 self-center justify-self-center rounded-full",
+                },
+              ],
+            ]
+          : [
+              { className: "h-14 w-full" },
+              { className: "h-6 w-full" },
+              { className: "h-7 w-24 rounded-full" },
+              {
+                className:
+                  "h-10 w-10 self-center justify-self-center rounded-full",
+              },
+            ]
+      }
+      rowCount={3}
+      footer={[
+        { className: "h-7 w-28 rounded-full" },
+        { className: "h-8 w-24 rounded-full" },
+        { className: "h-8 w-24 rounded-full" },
+      ]}
     />
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
   Layers3,
@@ -11,18 +10,13 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useTransition } from "react";
-import {
-  getFlashcardForManage,
-  getFlashcardsManagePage,
-} from "@/app/actions/flashcards";
 import { BulkDeleteFlashcardsDialog } from "@/components/flashcards/bulk-delete-flashcards-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/bulk-move-flashcards-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { FlashcardsManagerTable } from "@/components/flashcards/flashcards-manager-table";
+import { useFlashcardsManagerController } from "@/components/flashcards/use-flashcards-manager-controller";
 import { SubjectText } from "@/components/shared/subject-text";
-import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getFlashcardDetailHref } from "@/features/navigation/detail-page-back-link";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardManagePage,
@@ -50,9 +44,6 @@ interface FlashcardsManagerProps {
   initialSubjectId?: string;
 }
 
-const managePageSize = 25;
-const flashcardManagerSearchDebounceMs = 200;
-
 export function FlashcardsManager({
   initialPageData,
   subjects,
@@ -60,130 +51,38 @@ export function FlashcardsManager({
 }: Readonly<FlashcardsManagerProps>) {
   const t = useTranslations("FlashcardsManager");
   const warningTone = getStatusToneClasses("warning");
-  const pathname = usePathname();
   const router = useRouter();
-  const [, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
-  const [editingFlashcardId, setEditingFlashcardId] = useState<string | null>(
-    null,
-  );
-  const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
-    [],
-  );
   const {
-    filter: selectedSubjectId,
+    bulkDeleteOpen,
+    bulkMoveOpen,
+    createOpen,
+    editingFlashcard,
+    editingFlashcardId,
+    flashcards,
+    isAtSubjectLimit,
+    managePageQuery,
     pageIndex,
-    resolvedSearchQuery,
     searchQuery,
-    setFilter: setSelectedSubjectId,
+    refreshManagePage,
+    selectedFlashcardIds,
+    selectedSubjectCardCount,
+    selectedSubjectId,
+    setBulkDeleteOpen,
+    setBulkMoveOpen,
+    setCreateOpen,
+    setEditingFlashcardId,
     setPageIndex,
     setSearchQuery,
-  } = useManagerPageState({
-    initialFilter: initialSubjectId,
-    searchDebounceMs: flashcardManagerSearchDebounceMs,
-    onSearchChange: () => {
-      setSelectedFlashcardIds([]);
-    },
-    onFilterChange: (nextSubjectId) => {
-      setSelectedFlashcardIds([]);
-
-      const query = new URLSearchParams();
-      query.set("view", "manage");
-
-      if (nextSubjectId) {
-        query.set("subjectId", nextSubjectId);
-      }
-
-      startTransition(() => {
-        router.replace(`${pathname}?${query.toString()}`);
-      });
-    },
-    onInitialFilterChange: () => {
-      setSelectedFlashcardIds([]);
-    },
+    setSelectedFlashcardIds,
+    setSelectedSubjectId,
+    total,
+    pageSize,
+  } = useFlashcardsManagerController({
+    initialPageData,
+    initialSubjectId,
+    subjects,
   });
-
-  const managePageQuery = useQuery({
-    queryKey: [
-      "flashcards-manage-page",
-      pageIndex,
-      managePageSize,
-      selectedSubjectId ?? "all",
-      resolvedSearchQuery,
-    ],
-    queryFn: async () => {
-      const result = await getFlashcardsManagePage({
-        pageIndex,
-        pageSize: managePageSize,
-        subjectId: selectedSubjectId,
-        search: resolvedSearchQuery,
-      });
-
-      if ("errorCode" in result) {
-        return { items: [], total: 0, subjectCardCount: null };
-      }
-
-      return result;
-    },
-    initialData:
-      pageIndex === 0 &&
-      (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
-      resolvedSearchQuery.trim().length === 0
-        ? initialPageData
-        : undefined,
-    placeholderData: (previousData) => previousData,
-    staleTime: 1000 * 20,
-  });
-
-  const editFlashcardQuery = useQuery({
-    queryKey: ["flashcard-manage-edit", editingFlashcardId],
-    queryFn: async () => {
-      if (!editingFlashcardId) {
-        return null;
-      }
-
-      const result = await getFlashcardForManage({ id: editingFlashcardId });
-      if ("errorCode" in result) {
-        return null;
-      }
-
-      return result.flashcard;
-    },
-    enabled: editingFlashcardId !== null,
-  });
-
-  const pageData = managePageQuery.data ?? initialPageData;
-  const flashcards = pageData.items;
-  const total = pageData.total;
-  const selectedSubjectCardCount = pageData.subjectCardCount ?? 0;
-  const isAtSubjectLimit =
-    selectedSubjectId !== undefined &&
-    selectedSubjectCardCount >= LIMITS.maxFlashcardsPerSubject;
   const hasSubjects = subjects.length > 0;
-
-  useEffect(() => {
-    const pageIds = new Set(flashcards.map((flashcard) => flashcard.id));
-
-    setSelectedFlashcardIds((current) =>
-      current.filter((flashcardId) => pageIds.has(flashcardId)),
-    );
-  }, [flashcards]);
-
-  useEffect(() => {
-    const pageCount = Math.max(1, Math.ceil(total / managePageSize));
-    const maxIndex = pageCount - 1;
-
-    if (pageIndex > maxIndex) {
-      setPageIndex(maxIndex);
-    }
-  }, [pageIndex, total, setPageIndex]);
-
-  function refreshManagePage() {
-    setSelectedFlashcardIds([]);
-    void managePageQuery.refetch();
-  }
 
   return (
     <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
@@ -342,9 +241,8 @@ export function FlashcardsManager({
           total={total}
           selectedFlashcardIds={selectedFlashcardIds}
           pageIndex={pageIndex}
-          pageSize={managePageSize}
+          pageSize={pageSize}
           isLoading={managePageQuery.isFetching}
-          loadingLabel={t("loading_table")}
           onEditRequested={setEditingFlashcardId}
           onPageIndexChange={setPageIndex}
           onUpdated={refreshManagePage}
@@ -367,9 +265,9 @@ export function FlashcardsManager({
         subjectId={selectedSubjectId}
         subjects={subjects}
       />
-      {editingFlashcardId !== null && editFlashcardQuery.data ? (
+      {editingFlashcardId !== null && editingFlashcard ? (
         <EditFlashcardDialog
-          flashcard={editFlashcardQuery.data}
+          flashcard={editingFlashcard}
           subjects={subjects}
           open={editingFlashcardId !== null}
           onOpenChange={(nextOpen) => {
