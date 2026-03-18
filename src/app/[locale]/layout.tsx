@@ -1,3 +1,4 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
@@ -52,6 +53,7 @@ export default async function RootLayout({
             <QueryProvider>
               {children}
               <Toaster />
+              <SpeedInsights />
             </QueryProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
