@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
@@ -125,6 +125,11 @@ export const subject = pgTable(
       table.archivedAt,
       table.updatedAt,
     ),
+    index("subject_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
+    index("subject_description_trgm_idx").using(
+      "gin",
+      sql`coalesce(${table.description}, '') gin_trgm_ops`,
+    ),
   ],
 );
 
@@ -186,6 +191,11 @@ export const note = pgTable(
     index("note_subjectId_idx").on(table.subjectId),
     index("note_userId_idx").on(table.userId),
     index("note_userId_updatedAt_idx").on(table.userId, table.updatedAt),
+    index("note_title_trgm_idx").using("gin", table.title.op("gin_trgm_ops")),
+    index("note_content_trgm_idx").using(
+      "gin",
+      sql`coalesce(${table.content}, '') gin_trgm_ops`,
+    ),
   ],
 );
 
@@ -298,6 +308,14 @@ export const flashcard = pgTable(
       table.userId,
       table.subjectId,
       table.updatedAt,
+    ),
+    index("flashcard_front_trgm_idx").using(
+      "gin",
+      table.front.op("gin_trgm_ops"),
+    ),
+    index("flashcard_back_trgm_idx").using(
+      "gin",
+      table.back.op("gin_trgm_ops"),
     ),
   ],
 );

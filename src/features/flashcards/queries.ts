@@ -18,15 +18,13 @@ import {
   getFlashcardManageBackExcerptSourceLength,
 } from "@/features/flashcards/manage-excerpts";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
+import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
+import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
   FlashcardEntity,
   FlashcardListEntity,
   FlashcardManagePage,
 } from "@/lib/server/api-contracts";
-
-function escapeIlike(value: string): string {
-  return value.replaceAll(/[\\%_]/g, String.raw`\$&`);
-}
 
 export async function getFlashcardsBySubjectForUser(
   userId: string,
@@ -40,8 +38,7 @@ export async function getFlashcardsBySubjectForUser(
       and(
         eq(flashcard.subjectId, subjectId),
         eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     )
     .orderBy(desc(flashcard.updatedAt))
@@ -58,8 +55,7 @@ export async function getFlashcardsForUser(
     .where(
       and(
         eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     )
     .orderBy(desc(flashcard.updatedAt))
@@ -76,13 +72,12 @@ export async function getFlashcardsManagePageForUser(
   { pageIndex, pageSize, subjectId, search }: FlashcardsManageQueryInput,
 ): Promise<FlashcardManagePage> {
   const normalizedSearch = search?.trim() ?? "";
-  const searchPattern = `%${escapeIlike(normalizedSearch)}%`;
+  const searchPattern = buildContainsSearchPattern(normalizedSearch);
   const offset = pageIndex * pageSize;
   const backExcerptSourceLength = getFlashcardManageBackExcerptSourceLength();
   const filters: SQL<unknown>[] = [
     eq(flashcard.userId, userId),
-    eq(subject.userId, userId),
-    isNull(subject.archivedAt),
+    ...getOwnedActiveSubjectFilters(userId),
   ];
 
   if (subjectId) {
@@ -164,8 +159,7 @@ export async function getFlashcardByIdForUser(
       and(
         eq(flashcard.id, flashcardId),
         eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     )
     .limit(1);
@@ -185,8 +179,7 @@ export async function getFlashcardRecordForUser(
       and(
         eq(flashcard.id, flashcardId),
         eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     )
     .limit(1);
@@ -210,8 +203,7 @@ export async function getFlashcardRecordsForUser(
       and(
         inArray(flashcard.id, flashcardIds),
         eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     );
 }

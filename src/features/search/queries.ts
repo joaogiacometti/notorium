@@ -1,6 +1,7 @@
 import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard, note, subject } from "@/db/schema";
+import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type { SearchData } from "@/lib/server/api-contracts";
 
 const searchSubjectsLimit = 20;
@@ -10,15 +11,11 @@ const recentSubjectsLimit = 5;
 const recentNotesLimit = 5;
 const recentFlashcardsLimit = 5;
 
-function escapeIlike(value: string): string {
-  return value.replaceAll(/[\\%_]/g, String.raw`\$&`);
-}
-
 export async function getSearchDataForUser(
   userId: string,
   searchQuery: string,
 ): Promise<SearchData> {
-  const searchPattern = `%${escapeIlike(searchQuery)}%`;
+  const searchPattern = buildContainsSearchPattern(searchQuery);
 
   const [allSubjects, allNotes, allFlashcards] = await Promise.all([
     db

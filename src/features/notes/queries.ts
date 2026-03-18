@@ -1,6 +1,7 @@
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { note, subject } from "@/db/schema";
+import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import type { NoteEntity } from "@/lib/server/api-contracts";
 
 export async function getNotesBySubjectForUser(
@@ -15,8 +16,7 @@ export async function getNotesBySubjectForUser(
       and(
         eq(note.subjectId, subjectId),
         eq(note.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     )
     .orderBy(desc(note.updatedAt))
@@ -35,8 +35,7 @@ export async function getNoteByIdForUser(
       and(
         eq(note.id, noteId),
         eq(note.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     )
     .limit(1);
@@ -56,8 +55,7 @@ export async function getNoteRecordForUser(
       and(
         eq(note.id, noteId),
         eq(note.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...getOwnedActiveSubjectFilters(userId),
       ),
     )
     .limit(1);
