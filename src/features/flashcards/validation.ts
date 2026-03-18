@@ -55,7 +55,16 @@ export type GenerateFlashcardBackForm = z.infer<
   typeof generateFlashcardBackSchema
 >;
 
-export { hasRichTextContent };
+export const checkFlashcardDuplicateSchema = z.object({
+  id: z.string().min(1).optional(),
+  front: flashcardFrontSchema,
+});
+
+export type CheckFlashcardDuplicateForm = z.infer<
+  typeof checkFlashcardDuplicateSchema
+>;
+
+export { hasRichTextContent } from "@/lib/editor/rich-text";
 
 export const deleteFlashcardSchema = z.object({
   id: z.string().min(1),

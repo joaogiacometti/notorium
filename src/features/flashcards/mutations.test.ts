@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LIMITS } from "@/lib/config/limits";
 
+const insertReturningMock = vi.fn();
+const insertValuesMock = vi.fn(() => ({
+  returning: insertReturningMock,
+}));
+const insertMock = vi.fn(() => ({
+  values: insertValuesMock,
+}));
 const returningMock = vi.fn();
 const whereMock = vi.fn(() => ({
   returning: returningMock,
@@ -22,9 +29,12 @@ const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
 const countFlashcardsBySubjectForUserMock = vi.fn();
 const getActiveSubjectRecordForUserMock = vi.fn();
+const hasDuplicateFlashcardFrontForUserMock = vi.fn();
+const getInitialFlashcardSchedulingStateMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   db: {
+    insert: insertMock,
     delete: deleteMock,
     update: updateMock,
   },
@@ -47,6 +57,7 @@ vi.mock("@/features/flashcards/queries", () => ({
   countFlashcardsBySubjectForUser: countFlashcardsBySubjectForUserMock,
   getFlashcardRecordForUser: getFlashcardRecordForUserMock,
   getFlashcardRecordsForUser: getFlashcardRecordsForUserMock,
+  hasDuplicateFlashcardFrontForUser: hasDuplicateFlashcardFrontForUserMock,
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
@@ -58,12 +69,113 @@ vi.mock("@/features/flashcards/ai-service", () => ({
 }));
 
 vi.mock("@/features/flashcards/fsrs", () => ({
-  getInitialFlashcardSchedulingState: vi.fn(),
+  getInitialFlashcardSchedulingState: getInitialFlashcardSchedulingStateMock,
 }));
+
+describe("createFlashcardForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    hasDuplicateFlashcardFrontForUserMock.mockResolvedValue(false);
+  });
+
+  it("returns duplicate error when a flashcard with the same normalized front already exists", async () => {
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(2);
+    hasDuplicateFlashcardFrontForUserMock.mockResolvedValueOnce(true);
+
+    const { createFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await createFlashcardForUser("user-1", {
+      subjectId: "subject-1",
+      front: "<p>Same Front</p>",
+      back: "<p>Back</p>",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "flashcards.duplicateFront",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("persists normalized front content on insert", async () => {
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(2);
+    hasDuplicateFlashcardFrontForUserMock.mockResolvedValueOnce(false);
+    getInitialFlashcardSchedulingStateMock.mockReturnValueOnce({
+      state: "new",
+      dueAt: new Date("2026-03-18T10:00:00.000Z"),
+      stability: null,
+      difficulty: null,
+      ease: 250,
+      intervalDays: 0,
+      learningStep: null,
+      lastReviewedAt: null,
+      reviewCount: 0,
+      lapseCount: 0,
+    });
+    insertReturningMock.mockResolvedValueOnce([
+      {
+        id: "flashcard-1",
+        subjectId: "subject-1",
+        front: "<p>Front</p>",
+        frontNormalized: "front",
+        back: "<p>Back</p>",
+      },
+    ]);
+
+    const { createFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await createFlashcardForUser("user-1", {
+      subjectId: "subject-1",
+      front: "<p>Front</p>",
+      back: "<p>Back</p>",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      flashcard: {
+        id: "flashcard-1",
+        subjectId: "subject-1",
+        front: "<p>Front</p>",
+        frontNormalized: "front",
+        back: "<p>Back</p>",
+      },
+    });
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      subjectId: "subject-1",
+      userId: "user-1",
+      front: "<p>Front</p>",
+      frontNormalized: "front",
+      back: "<p>Back</p>",
+      state: "new",
+      dueAt: new Date("2026-03-18T10:00:00.000Z"),
+      stability: null,
+      difficulty: null,
+      ease: 250,
+      intervalDays: 0,
+      learningStep: null,
+      lastReviewedAt: null,
+      reviewCount: 0,
+      lapseCount: 0,
+    });
+  });
+});
 
 describe("editFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    hasDuplicateFlashcardFrontForUserMock.mockResolvedValue(false);
   });
 
   it("updates front and back without changing the subject", async () => {
@@ -108,6 +220,7 @@ describe("editFlashcardForUser", () => {
     expect(setMock).toHaveBeenCalledWith({
       subjectId: "subject-1",
       front: "<p>Updated front</p>",
+      frontNormalized: "updated front",
       back: "<p>Updated back</p>",
     });
   });
@@ -155,6 +268,36 @@ describe("editFlashcardForUser", () => {
       "user-1",
       "subject-2",
     );
+  });
+
+  it("returns duplicate error when editing to a normalized front used by another card", async () => {
+    getFlashcardRecordForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+    });
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    hasDuplicateFlashcardFrontForUserMock.mockResolvedValueOnce(true);
+
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await editFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front: "<p>Duplicate</p>",
+      back: "<p>Back</p>",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "flashcards.duplicateFront",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+    expect(updateMock).not.toHaveBeenCalled();
   });
 
   it("rejects moves to nonexistent or archived subjects", async () => {
@@ -255,6 +398,12 @@ describe("editFlashcardForUser", () => {
       previousSubjectId: "subject-1",
     });
     expect(countFlashcardsBySubjectForUserMock).not.toHaveBeenCalled();
+    expect(setMock).toHaveBeenCalledWith({
+      subjectId: "subject-1",
+      front: "<p>Front</p>",
+      frontNormalized: "front",
+      back: "<p>Back</p>",
+    });
   });
 });
 

@@ -3,6 +3,7 @@ import {
   getRichTextExcerpt,
   hasRichTextContent,
   normalizeRichTextForRendering,
+  normalizeRichTextForUniqueness,
   richTextToPlainText,
 } from "@/lib/editor/rich-text";
 
@@ -100,5 +101,36 @@ describe("normalizeRichTextForRendering", () => {
     );
 
     expect(result).toBe('<img src="https://img.test/a.png" alt="">');
+  });
+});
+
+describe("normalizeRichTextForUniqueness", () => {
+  it("normalizes formatting-only front differences to the same canonical value", () => {
+    const first = normalizeRichTextForUniqueness(
+      "<p>Hello <strong>World</strong></p>",
+    );
+    const second = normalizeRichTextForUniqueness("<p>  hello world  </p>");
+
+    expect(first).toBe("hello world");
+    expect(second).toBe("hello world");
+  });
+
+  it("keeps image URLs in canonical output", () => {
+    expect(
+      normalizeRichTextForUniqueness(
+        '<p><img src="https://img.test/flashcard.png" alt="A"></p>',
+      ),
+    ).toBe("image:https://img.test/flashcard.png");
+  });
+
+  it("treats wrapped image markup with the same URL as duplicates", () => {
+    const first = normalizeRichTextForUniqueness(
+      '<p><img src="https://img.test/flashcard.png"></p>',
+    );
+    const second = normalizeRichTextForUniqueness(
+      '<div><p><img alt="x" src="https://img.test/flashcard.png"></p></div>',
+    );
+
+    expect(first).toBe(second);
   });
 });

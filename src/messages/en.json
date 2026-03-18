@@ -759,6 +759,7 @@
     "flashcards": {
       "invalidData": "Invalid flashcard data.",
       "notFound": "Flashcard not found.",
+      "duplicateFront": "A flashcard with this front already exists.",
       "ai": {
         "invalidData": "Invalid flashcard input for AI generation.",
         "notConfigured": "AI flashcard generation is not configured. Add your OpenRouter key and model in your account page.",

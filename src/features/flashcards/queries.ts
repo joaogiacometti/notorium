@@ -6,6 +6,7 @@ import {
   ilike,
   inArray,
   isNull,
+  ne,
   or,
   type SQL,
   sql,
@@ -227,4 +228,27 @@ export async function countFlashcardsBySubjectForUser(
     );
 
   return result[0]?.total ?? 0;
+}
+
+export async function hasDuplicateFlashcardFrontForUser(
+  userId: string,
+  frontNormalized: string,
+  excludedFlashcardId?: string,
+): Promise<boolean> {
+  const filters: SQL<unknown>[] = [
+    eq(flashcard.userId, userId),
+    eq(flashcard.frontNormalized, frontNormalized),
+  ];
+
+  if (excludedFlashcardId) {
+    filters.push(ne(flashcard.id, excludedFlashcardId));
+  }
+
+  const result = await db
+    .select({ id: flashcard.id })
+    .from(flashcard)
+    .where(and(...filters))
+    .limit(1);
+
+  return result.length > 0;
 }

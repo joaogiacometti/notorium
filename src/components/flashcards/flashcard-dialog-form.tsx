@@ -58,6 +58,9 @@ interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
   onKeepFrontAfterSubmitChange: (value: boolean) => void;
   keepBackAfterSubmit: boolean;
   onKeepBackAfterSubmitChange: (value: boolean) => void;
+  isCheckingDuplicateFront: boolean;
+  isDuplicateFront: boolean;
+  duplicateFrontMessage: string;
 }
 
 export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
@@ -79,6 +82,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   onKeepFrontAfterSubmitChange,
   keepBackAfterSubmit,
   onKeepBackAfterSubmitChange,
+  isCheckingDuplicateFront,
+  isDuplicateFront,
+  duplicateFrontMessage,
 }: Readonly<FlashcardDialogFormProps<TValues>>) {
   const t = useTranslations(
     mode === "create" ? "CreateFlashcardDialog" : "EditFlashcardDialog",
@@ -145,60 +151,73 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
               <Controller
                 name={"front" as FieldPath<TValues>}
                 control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <div className="flex h-9 items-center justify-between gap-3">
-                      <FieldLabel htmlFor={`${formId}-front`}>
-                        {t("field_front")}
-                      </FieldLabel>
-                      <div className="flex items-center gap-1">
-                        {mode === "create" ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={
-                              keepFrontAfterSubmit
-                                ? t("keep_front_off")
-                                : t("keep_front_on")
-                            }
-                            title={
-                              keepFrontAfterSubmit
-                                ? t("keep_front_off")
-                                : t("keep_front_on")
-                            }
-                            aria-pressed={keepFrontAfterSubmit}
-                            onClick={() =>
-                              onKeepFrontAfterSubmitChange(
-                                !keepFrontAfterSubmit,
-                              )
-                            }
-                            disabled={form.formState.isSubmitting}
-                          >
-                            {keepFrontAfterSubmit ? (
-                              <Pin className="size-3.5" />
-                            ) : (
-                              <PinOff className="size-3.5" />
-                            )}
-                          </Button>
-                        ) : null}
+                render={({ field, fieldState }) => {
+                  const frontInvalid = fieldState.invalid || isDuplicateFront;
+                  let frontFeedback: React.ReactNode = null;
+
+                  if (fieldState.invalid) {
+                    frontFeedback = <FieldError errors={[fieldState.error]} />;
+                  } else if (isDuplicateFront) {
+                    frontFeedback = (
+                      <p className="text-destructive text-sm">
+                        {duplicateFrontMessage}
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <Field data-invalid={frontInvalid}>
+                      <div className="flex h-9 items-center justify-between gap-3">
+                        <FieldLabel htmlFor={`${formId}-front`}>
+                          {t("field_front")}
+                        </FieldLabel>
+                        <div className="flex items-center gap-1">
+                          {mode === "create" ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              aria-label={
+                                keepFrontAfterSubmit
+                                  ? t("keep_front_off")
+                                  : t("keep_front_on")
+                              }
+                              title={
+                                keepFrontAfterSubmit
+                                  ? t("keep_front_off")
+                                  : t("keep_front_on")
+                              }
+                              aria-pressed={keepFrontAfterSubmit}
+                              onClick={() =>
+                                onKeepFrontAfterSubmitChange(
+                                  !keepFrontAfterSubmit,
+                                )
+                              }
+                              disabled={form.formState.isSubmitting}
+                            >
+                              {keepFrontAfterSubmit ? (
+                                <Pin className="size-3.5" />
+                              ) : (
+                                <PinOff className="size-3.5" />
+                              )}
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                    <TiptapEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      placeholder={t("field_front_placeholder")}
-                      id={`${formId}-front`}
-                      aria-invalid={fieldState.invalid}
-                      contentClassName="min-h-11 max-h-[40svh]"
-                      showToolbar={false}
-                      onCtrlEnter={handleCtrlEnter}
-                    />
-                    {fieldState.invalid ? (
-                      <FieldError errors={[fieldState.error]} />
-                    ) : null}
-                  </Field>
-                )}
+                      <TiptapEditor
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder={t("field_front_placeholder")}
+                        id={`${formId}-front`}
+                        aria-invalid={frontInvalid}
+                        contentClassName="min-h-11 max-h-[40svh]"
+                        showToolbar={false}
+                        onCtrlEnter={handleCtrlEnter}
+                      />
+                      {frontFeedback}
+                    </Field>
+                  );
+                }}
               />
               <Controller
                 name={"back" as FieldPath<TValues>}
@@ -279,7 +298,12 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
               <Button
                 type="submit"
                 form={formId}
-                disabled={form.formState.isSubmitting || isGeneratingBack}
+                disabled={
+                  form.formState.isSubmitting ||
+                  isGeneratingBack ||
+                  isCheckingDuplicateFront ||
+                  isDuplicateFront
+                }
                 className="w-full"
               >
                 {form.formState.isSubmitting ? (

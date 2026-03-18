@@ -7,6 +7,7 @@ import {
   countFlashcardsBySubjectForUser,
   getFlashcardRecordForUser,
   getFlashcardRecordsForUser,
+  hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
 import type {
   BulkDeleteFlashcardsForm,
@@ -22,6 +23,7 @@ import {
   getActiveSubjectRecordForUser,
 } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
+import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import type {
   BulkDeleteFlashcardsResult,
   BulkMoveFlashcardsResult,
@@ -47,10 +49,26 @@ function getUniqueSubjectIds(subjectIds: string[]): string[] {
   return [...new Set(subjectIds)];
 }
 
+function isUniqueViolationError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  return (
+    "code" in error &&
+    (
+      error as {
+        code?: string;
+      }
+    ).code === "23505"
+  );
+}
+
 export async function createFlashcardForUser(
   userId: string,
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
+  const frontNormalized = normalizeRichTextForUniqueness(data.front);
   const existingSubject = await getActiveSubjectRecordForUser(
     userId,
     data.subjectId,
@@ -68,34 +86,53 @@ export async function createFlashcardForUser(
     });
   }
 
-  const schedulingState = getInitialFlashcardSchedulingState();
-  const inserted = await db
-    .insert(flashcard)
-    .values({
-      subjectId: data.subjectId,
-      userId,
-      front: data.front,
-      back: data.back,
-      state: schedulingState.state,
-      dueAt: schedulingState.dueAt,
-      stability: schedulingState.stability,
-      difficulty: schedulingState.difficulty,
-      ease: schedulingState.ease,
-      intervalDays: schedulingState.intervalDays,
-      learningStep: schedulingState.learningStep,
-      lastReviewedAt: schedulingState.lastReviewedAt,
-      reviewCount: schedulingState.reviewCount,
-      lapseCount: schedulingState.lapseCount,
-    })
-    .returning();
+  const hasDuplicate = await hasDuplicateFlashcardFrontForUser(
+    userId,
+    frontNormalized,
+  );
 
-  return { success: true, flashcard: inserted[0] };
+  if (hasDuplicate) {
+    return actionError("flashcards.duplicateFront");
+  }
+
+  const schedulingState = getInitialFlashcardSchedulingState();
+  try {
+    const inserted = await db
+      .insert(flashcard)
+      .values({
+        subjectId: data.subjectId,
+        userId,
+        front: data.front,
+        frontNormalized,
+        back: data.back,
+        state: schedulingState.state,
+        dueAt: schedulingState.dueAt,
+        stability: schedulingState.stability,
+        difficulty: schedulingState.difficulty,
+        ease: schedulingState.ease,
+        intervalDays: schedulingState.intervalDays,
+        learningStep: schedulingState.learningStep,
+        lastReviewedAt: schedulingState.lastReviewedAt,
+        reviewCount: schedulingState.reviewCount,
+        lapseCount: schedulingState.lapseCount,
+      })
+      .returning();
+
+    return { success: true, flashcard: inserted[0] };
+  } catch (error) {
+    if (isUniqueViolationError(error)) {
+      return actionError("flashcards.duplicateFront");
+    }
+
+    throw error;
+  }
 }
 
 export async function editFlashcardForUser(
   userId: string,
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
+  const frontNormalized = normalizeRichTextForUniqueness(data.front);
   const existingFlashcard = await getFlashcardRecordForUser(userId, data.id);
 
   if (!existingFlashcard) {
@@ -124,21 +161,40 @@ export async function editFlashcardForUser(
     }
   }
 
-  const updated = await db
-    .update(flashcard)
-    .set({
-      subjectId: data.subjectId,
-      front: data.front,
-      back: data.back,
-    })
-    .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)))
-    .returning();
+  const hasDuplicate = await hasDuplicateFlashcardFrontForUser(
+    userId,
+    frontNormalized,
+    data.id,
+  );
 
-  return {
-    success: true,
-    flashcard: updated[0],
-    previousSubjectId: existingFlashcard.subjectId,
-  };
+  if (hasDuplicate) {
+    return actionError("flashcards.duplicateFront");
+  }
+
+  try {
+    const updated = await db
+      .update(flashcard)
+      .set({
+        subjectId: data.subjectId,
+        front: data.front,
+        frontNormalized,
+        back: data.back,
+      })
+      .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)))
+      .returning();
+
+    return {
+      success: true,
+      flashcard: updated[0],
+      previousSubjectId: existingFlashcard.subjectId,
+    };
+  } catch (error) {
+    if (isUniqueViolationError(error)) {
+      return actionError("flashcards.duplicateFront");
+    }
+
+    throw error;
+  }
 }
 
 export async function generateFlashcardBackForUserInput(

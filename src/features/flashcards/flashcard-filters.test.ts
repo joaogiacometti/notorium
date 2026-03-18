@@ -8,6 +8,7 @@ function makeFlashcard(
   return {
     id: "fc-1",
     front: "<p>Card front</p>",
+    frontNormalized: "card front",
     back: "<p>Card back</p>",
     state: "new",
     dueAt: new Date("2026-03-01T00:00:00.000Z"),

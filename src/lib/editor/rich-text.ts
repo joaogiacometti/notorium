@@ -6,6 +6,42 @@ export function richTextToPlainText(value: string): string {
     .trim();
 }
 
+function normalizeImageSourceForUniqueness(value: string): string {
+  try {
+    return new URL(value).toString();
+  } catch {
+    return value;
+  }
+}
+
+export function normalizeRichTextForUniqueness(value: string): string {
+  const withImageTokens = value.replaceAll(
+    /<img\b([^>]*)>/gi,
+    (_, attributes: string) => {
+      const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
+
+      if (!srcMatch) {
+        return " ";
+      }
+
+      const src = decodeHtmlEntities(srcMatch[1]).trim();
+
+      if (src.length === 0) {
+        return " ";
+      }
+
+      return ` image:${normalizeImageSourceForUniqueness(src)} `;
+    },
+  );
+
+  return decodeHtmlEntities(withImageTokens)
+    .replaceAll(/<[^>]*>/g, " ")
+    .replaceAll("&nbsp;", " ")
+    .replaceAll(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 export function hasRichTextContent(value: string): boolean {
   return /<img\b/i.test(value) || richTextToPlainText(value).length > 0;
 }
@@ -38,8 +74,8 @@ function escapeHtmlAttribute(value: string): string {
 }
 
 function extractImageFallbackText(attributes: string): string | null {
-  const altMatch = attributes.match(/\balt\s*=\s*["']([^"']*)["']/i);
-  const srcMatch = attributes.match(/\bsrc\s*=\s*["']([^"']*)["']/i);
+  const altMatch = /\balt\s*=\s*["']([^"']*)["']/i.exec(attributes);
+  const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
   const alt = altMatch ? decodeHtmlEntities(altMatch[1]).trim() : "";
   const src = srcMatch ? decodeHtmlEntities(srcMatch[1]).trim() : "";
 
@@ -65,7 +101,7 @@ function isRelativeImageSource(value: string): boolean {
 
 function normalizeUnsupportedImageMarkup(value: string): string {
   return value.replaceAll(/<img\b([^>]*)>/gi, (imageHtml, attributes) => {
-    const srcMatch = attributes.match(/\bsrc\s*=\s*["']([^"']*)["']/i);
+    const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
     if (!srcMatch) {
       return imageHtml;
     }
@@ -96,9 +132,8 @@ function extractImageUrlCandidate(innerHtml: string): string | null {
     }
   }
 
-  const anchorMatch = trimmed.match(
-    /^<a\s+[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*<\/a>$/i,
-  );
+  const anchorMatch =
+    /^<a\s+[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*<\/a>$/i.exec(trimmed);
 
   return anchorMatch ? decodeHtmlEntities(anchorMatch[1]).trim() : null;
 }

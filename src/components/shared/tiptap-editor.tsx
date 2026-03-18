@@ -390,6 +390,8 @@ export function TiptapEditor({
       className={cn(
         "w-full min-w-0 rounded-md border border-input shadow-xs transition-colors",
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+        ariaInvalid &&
+          "border-destructive focus-within:border-destructive focus-within:ring-destructive/20",
       )}
     >
       {showToolbar && <EditorToolbar editor={editor} t={t} />}

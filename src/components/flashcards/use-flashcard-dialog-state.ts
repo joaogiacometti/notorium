@@ -2,9 +2,17 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import type { Path, PathValue, UseFormReturn } from "react-hook-form";
+import {
+  type Path,
+  type PathValue,
+  type UseFormReturn,
+  useWatch,
+} from "react-hook-form";
 import { toast } from "sonner";
-import { generateFlashcardBack } from "@/app/actions/flashcards";
+import {
+  checkFlashcardDuplicate,
+  generateFlashcardBack,
+} from "@/app/actions/flashcards";
 import {
   type CreateFlashcardForm,
   hasRichTextContent,
@@ -52,9 +60,12 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const tErrors = useTranslations("ServerActions");
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isGeneratingBack, setIsGeneratingBack] = useState(false);
+  const [isCheckingDuplicateFront, setIsCheckingDuplicateFront] =
+    useState(false);
+  const [isDuplicateFront, setIsDuplicateFront] = useState(false);
   const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
   const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
-  const currentValues = form.watch();
+  const currentValues = useWatch({ control: form.control }) as TValues;
 
   useEffect(() => {
     if (!open || !form.formState.isDirty) {
@@ -65,6 +76,55 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   useBeforeUnload(
     open && form.formState.isDirty && !form.formState.isSubmitting,
   );
+
+  useEffect(() => {
+    let active = true;
+
+    if (!open) {
+      setIsCheckingDuplicateFront(false);
+      setIsDuplicateFront(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    if (
+      !hasRichTextContent(currentValues.front) ||
+      form.getFieldState("front" as Path<TValues>).invalid
+    ) {
+      setIsCheckingDuplicateFront(false);
+      setIsDuplicateFront(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    setIsCheckingDuplicateFront(true);
+    const timeoutId = globalThis.setTimeout(() => {
+      void checkFlashcardDuplicate({
+        id: currentValues.id,
+        front: currentValues.front,
+      }).then((result) => {
+        if (!active) {
+          return;
+        }
+
+        setIsCheckingDuplicateFront(false);
+
+        if (!result.success) {
+          setIsDuplicateFront(false);
+          return;
+        }
+
+        setIsDuplicateFront(result.duplicate);
+      });
+    }, 400);
+
+    return () => {
+      active = false;
+      globalThis.clearTimeout(timeoutId);
+    };
+  }, [currentValues.front, currentValues.id, form, open]);
 
   function handleDiscardChanges() {
     form.reset(values);
@@ -94,8 +154,17 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }
 
   async function handleSubmit(data: TValues) {
+    if (isDuplicateFront || isCheckingDuplicateFront) {
+      return;
+    }
+
     const result = await onSubmitAction(data);
     if (!result.success) {
+      if (result.errorCode === "flashcards.duplicateFront") {
+        setIsDuplicateFront(true);
+        return;
+      }
+
       toast.error(resolveActionErrorMessage(result, tErrors));
       return;
     }
@@ -164,6 +233,9 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     keepBackAfterSubmit,
     setKeepBackAfterSubmit,
     canGenerateBack,
+    isDuplicateFront,
+    isCheckingDuplicateFront,
+    duplicateFrontMessage: tErrors("flashcards.duplicateFront"),
     handleDiscardChanges,
     handleOpenChange,
     handleSubmit,

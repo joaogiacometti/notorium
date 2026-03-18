@@ -82,6 +82,9 @@ export function CreateFlashcardDialog({
       onKeepFrontAfterSubmitChange={dialog.setKeepFrontAfterSubmit}
       keepBackAfterSubmit={dialog.keepBackAfterSubmit}
       onKeepBackAfterSubmitChange={dialog.setKeepBackAfterSubmit}
+      isCheckingDuplicateFront={dialog.isCheckingDuplicateFront}
+      isDuplicateFront={dialog.isDuplicateFront}
+      duplicateFrontMessage={dialog.duplicateFrontMessage}
     />
   );
 }

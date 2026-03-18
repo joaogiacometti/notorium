@@ -260,6 +260,7 @@ export const flashcard = pgTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     front: text("front").notNull(),
+    frontNormalized: text("front_normalized").notNull(),
     back: text("back").notNull(),
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
@@ -284,6 +285,10 @@ export const flashcard = pgTable(
       .notNull(),
   },
   (table) => [
+    unique("flashcard_userId_frontNormalized_unique").on(
+      table.userId,
+      table.frontNormalized,
+    ),
     index("flashcard_subjectId_idx").on(table.subjectId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_dueAt_idx").on(table.dueAt),

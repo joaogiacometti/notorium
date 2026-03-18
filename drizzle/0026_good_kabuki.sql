@@ -1,0 +1,2 @@
+ALTER TABLE "flashcard" ALTER COLUMN "front_normalized" SET NOT NULL;--> statement-breakpoint
+ALTER TABLE "flashcard" ADD CONSTRAINT "flashcard_userId_frontNormalized_unique" UNIQUE("user_id","front_normalized");

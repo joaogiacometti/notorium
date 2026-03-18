@@ -14,6 +14,7 @@ import {
   verification,
 } from "@/db/schema";
 import { LIMITS } from "@/lib/config/limits";
+import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { type E2EUserKind, getE2ECredentials } from "./env";
 
 const auth = betterAuth({
@@ -332,6 +333,7 @@ export async function createFlashcard(
       userId,
       subjectId,
       front,
+      frontNormalized: normalizeRichTextForUniqueness(front),
       back,
     })
     .returning({ id: flashcard.id });

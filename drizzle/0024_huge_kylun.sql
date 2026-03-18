@@ -1,0 +1,1 @@
+ALTER TABLE "flashcard" ADD COLUMN "front_normalized" text;

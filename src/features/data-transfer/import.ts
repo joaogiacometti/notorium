@@ -24,6 +24,7 @@ import {
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
 import { LIMITS } from "@/lib/config/limits";
+import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { parseActionInput } from "@/lib/server/action-input";
 import type { MutationResult } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
@@ -155,6 +156,9 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
           importedSubject.flashcards.map((currentFlashcard) => ({
             ...getImportedFlashcardSchedulingState(currentFlashcard),
             front: currentFlashcard.front,
+            frontNormalized: normalizeRichTextForUniqueness(
+              currentFlashcard.front,
+            ),
             back: currentFlashcard.back,
             subjectId,
             userId,
