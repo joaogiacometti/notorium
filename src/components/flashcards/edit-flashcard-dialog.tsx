@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { editFlashcard } from "@/app/actions/flashcards";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
@@ -31,31 +30,16 @@ export function EditFlashcardDialog({
   onUpdated,
 }: Readonly<EditFlashcardDialogProps>) {
   const incomingValues = getEditFlashcardFormValues(flashcard);
-  const [sessionValues, setSessionValues] = useState<EditFlashcardForm>(
-    () => incomingValues,
-  );
-  const previousOpenRef = useRef(false);
   const form = useForm<EditFlashcardForm>({
     resolver: zodResolver(editFlashcardSchema),
-    defaultValues: sessionValues,
+    defaultValues: incomingValues,
   });
-
-  useEffect(() => {
-    const openedNow = open && !previousOpenRef.current;
-    const changedFlashcard = incomingValues.id !== sessionValues.id;
-
-    if (openedNow || (open && changedFlashcard)) {
-      setSessionValues(incomingValues);
-    }
-
-    previousOpenRef.current = open;
-  }, [incomingValues, open, sessionValues.id]);
 
   const dialog = useFlashcardDialogState({
     mode: "edit",
     open,
     onOpenChange,
-    values: sessionValues,
+    values: incomingValues,
     form,
     onSubmitAction: editFlashcard,
     onSuccess: (updatedFlashcard) => {

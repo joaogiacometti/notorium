@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   type Path,
   type PathValue,
@@ -13,6 +13,7 @@ import {
   checkFlashcardDuplicate,
   generateFlashcardBack,
 } from "@/app/actions/flashcards";
+import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
 import {
   type CreateFlashcardForm,
   hasRichTextContent,
@@ -64,20 +65,39 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const [isCheckingDuplicateFront, setIsCheckingDuplicateFront] =
     useState(false);
   const [isDuplicateFront, setIsDuplicateFront] = useState(false);
+  const [duplicateCheckVersion, setDuplicateCheckVersion] = useState(0);
   const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
   const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
+  const latestDuplicateCheckVersionRef = useRef(duplicateCheckVersion);
+  const previousOpenRef = useRef(false);
+  const previousValuesRef = useRef<TValues | null>(null);
   const currentValues = useWatch({ control: form.control }) as TValues;
 
   useEffect(() => {
-    if (!open || !form.formState.isDirty) {
+    latestDuplicateCheckVersionRef.current = duplicateCheckVersion;
+  }, [duplicateCheckVersion]);
+
+  useEffect(() => {
+    if (
+      shouldSyncFlashcardDialogValues({
+        open,
+        wasOpen: previousOpenRef.current,
+        previousValues: previousValuesRef.current,
+        nextValues: values,
+      })
+    ) {
       form.reset(values);
     }
-  }, [form, open, values, form.formState.isDirty]);
+
+    previousOpenRef.current = open;
+    previousValuesRef.current = values;
+  }, [form, open, values]);
 
   useBeforeUnload(open && form.formState.isDirty && !isSubmitting);
 
   useEffect(() => {
     let active = true;
+    const currentDuplicateCheckVersion = duplicateCheckVersion;
 
     if (!open) {
       setIsCheckingDuplicateFront(false);
@@ -104,7 +124,11 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
         id: currentValues.id,
         front: currentValues.front,
       }).then((result) => {
-        if (!active) {
+        if (
+          !active ||
+          currentDuplicateCheckVersion !==
+            latestDuplicateCheckVersionRef.current
+        ) {
           return;
         }
 
@@ -123,7 +147,13 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       active = false;
       globalThis.clearTimeout(timeoutId);
     };
-  }, [currentValues.front, currentValues.id, form, open]);
+  }, [
+    currentValues.front,
+    currentValues.id,
+    duplicateCheckVersion,
+    form,
+    open,
+  ]);
 
   function handleDiscardChanges() {
     form.reset(values);
@@ -177,6 +207,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
           keepBackAfterSubmit,
         }),
       );
+      setDuplicateCheckVersion((currentVersion) => currentVersion + 1);
       setDiscardDialogOpen(false);
       await onSuccess?.(result.flashcard);
 
