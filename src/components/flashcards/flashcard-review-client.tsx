@@ -23,8 +23,8 @@ import {
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { SubjectText } from "@/components/shared/subject-text";
-import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

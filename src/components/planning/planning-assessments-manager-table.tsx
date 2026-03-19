@@ -246,7 +246,7 @@ function getColumns(
     },
   ];
 
-  columns.splice(- 1, 0, {
+  columns.splice(-1, 0, {
     id: "subject",
     header: () => (
       <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">

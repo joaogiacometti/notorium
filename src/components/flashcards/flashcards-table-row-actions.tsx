@@ -2,9 +2,6 @@
 
 import { MoreVertical, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
-import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,78 +10,49 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 
 interface FlashcardsTableRowActionsProps {
-  flashcard: FlashcardManageItem;
   onEditRequested: () => void;
-  onUpdated: () => void;
-  onDeleted: () => void;
+  onResetRequested: () => void;
+  onDeleteRequested: () => void;
 }
 
 export function FlashcardsTableRowActions({
-  flashcard,
   onEditRequested,
-  onUpdated,
-  onDeleted,
+  onResetRequested,
+  onDeleteRequested,
 }: Readonly<FlashcardsTableRowActionsProps>) {
   const t = useTranslations("FlashcardsList");
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
-
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
-            aria-label={t("open_actions")}
-          >
-            <MoreVertical className="size-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={onEditRequested}
-            className="cursor-pointer"
-          >
-            <Pencil className="size-4" />
-            {t("edit")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setResetOpen(true)}
-            className="cursor-pointer"
-          >
-            <RotateCcw className="size-4" />
-            {t("reset")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setDeleteOpen(true)}
-            className="cursor-pointer text-destructive focus:text-destructive"
-          >
-            <Trash2 className="size-4" />
-            {t("delete")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <ResetFlashcardDialog
-        flashcardId={flashcard.id}
-        flashcardFront={flashcard.front}
-        open={resetOpen}
-        onOpenChange={setResetOpen}
-        onReset={() => onUpdated()}
-      />
-      <DeleteFlashcardDialog
-        flashcardId={flashcard.id}
-        flashcardFront={flashcard.front}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onDeleted={() => onDeleted()}
-      />
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
+          aria-label={t("open_actions")}
+        >
+          <MoreVertical className="size-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onEditRequested} className="cursor-pointer">
+          <Pencil className="size-4" />
+          {t("edit")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onResetRequested} className="cursor-pointer">
+          <RotateCcw className="size-4" />
+          {t("reset")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onDeleteRequested}
+          className="cursor-pointer text-destructive focus:text-destructive"
+        >
+          <Trash2 className="size-4" />
+          {t("delete")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

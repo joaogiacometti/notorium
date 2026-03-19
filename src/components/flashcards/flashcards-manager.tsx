@@ -13,8 +13,10 @@ import { useTranslations } from "next-intl";
 import { BulkDeleteFlashcardsDialog } from "@/components/flashcards/bulk-delete-flashcards-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/bulk-move-flashcards-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
+import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { FlashcardsManagerTable } from "@/components/flashcards/flashcards-manager-table";
+import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
 import { useFlashcardsManagerController } from "@/components/flashcards/use-flashcards-manager-controller";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +58,7 @@ export function FlashcardsManager({
     bulkDeleteOpen,
     bulkMoveOpen,
     createOpen,
+    deleteTarget,
     editingFlashcard,
     editingFlashcardId,
     flashcards,
@@ -64,14 +67,17 @@ export function FlashcardsManager({
     pageIndex,
     searchQuery,
     refreshManagePage,
+    resetTarget,
     selectedFlashcardIds,
     selectedSubjectCardCount,
     selectedSubjectId,
     setBulkDeleteOpen,
     setBulkMoveOpen,
     setCreateOpen,
+    setDeleteTarget,
     setEditingFlashcardId,
     setPageIndex,
+    setResetTarget,
     setSearchQuery,
     setSelectedFlashcardIds,
     setSelectedSubjectId,
@@ -245,8 +251,8 @@ export function FlashcardsManager({
           isLoading={managePageQuery.isFetching}
           onEditRequested={setEditingFlashcardId}
           onPageIndexChange={setPageIndex}
-          onUpdated={refreshManagePage}
-          onDeleted={refreshManagePage}
+          onDeleteRequested={setDeleteTarget}
+          onResetRequested={setResetTarget}
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           onRowClick={(row) =>
             router.push(
@@ -297,6 +303,34 @@ export function FlashcardsManager({
         }}
         subjects={subjects}
       />
+      {deleteTarget && (
+        <DeleteFlashcardDialog
+          flashcardId={deleteTarget.id}
+          flashcardFront={deleteTarget.front}
+          open
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          onDeleted={() => {
+            setDeleteTarget(null);
+            refreshManagePage();
+          }}
+        />
+      )}
+      {resetTarget && (
+        <ResetFlashcardDialog
+          flashcardId={resetTarget.id}
+          flashcardFront={resetTarget.front}
+          open
+          onOpenChange={(open) => {
+            if (!open) setResetTarget(null);
+          }}
+          onReset={() => {
+            setResetTarget(null);
+            refreshManagePage();
+          }}
+        />
+      )}
     </div>
   );
 }

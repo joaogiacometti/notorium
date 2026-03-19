@@ -4,12 +4,14 @@ import { Archive, BookOpen, Lock, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
+import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
+import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { SubjectCard } from "@/components/subjects/subject-card";
 import { Button } from "@/components/ui/button";
 import { getTotalSubjectCount } from "@/features/subjects/subjects-count";
 import { Link } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
-import type { SubjectEntity } from "@/lib/server/api-contracts";
+import type { SubjectEditDto, SubjectEntity } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface SubjectsListProps {
@@ -17,12 +19,20 @@ interface SubjectsListProps {
   archivedCount: number;
 }
 
+type SubjectActionTarget =
+  | { action: "edit"; subject: SubjectEditDto }
+  | { action: "archive"; subject: { id: string; name: string } }
+  | { action: "delete"; subject: { id: string; name: string } };
+
 export function SubjectsList({
   subjects,
   archivedCount,
 }: Readonly<SubjectsListProps>) {
   const t = useTranslations("SubjectsList");
   const [createOpen, setCreateOpen] = useState(false);
+  const [activeAction, setActiveAction] = useState<SubjectActionTarget | null>(
+    null,
+  );
   const warningTone = getStatusToneClasses("warning");
 
   const totalSubjects = getTotalSubjectCount(subjects.length, archivedCount);
@@ -89,9 +99,66 @@ export function SubjectsList({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {subjects.map((subj) => (
-            <SubjectCard key={subj.id} subject={subj} />
+            <SubjectCard
+              key={subj.id}
+              subject={subj}
+              onEditRequested={() =>
+                setActiveAction({
+                  action: "edit",
+                  subject: {
+                    id: subj.id,
+                    name: subj.name,
+                    description: subj.description,
+                  },
+                })
+              }
+              onArchiveRequested={() =>
+                setActiveAction({
+                  action: "archive",
+                  subject: { id: subj.id, name: subj.name },
+                })
+              }
+              onDeleteRequested={() =>
+                setActiveAction({
+                  action: "delete",
+                  subject: { id: subj.id, name: subj.name },
+                })
+              }
+            />
           ))}
         </div>
+      )}
+
+      {activeAction?.action === "edit" && (
+        <EditSubjectDialog
+          subject={activeAction.subject}
+          open
+          onOpenChange={(open) => {
+            if (!open) setActiveAction(null);
+          }}
+        />
+      )}
+      {activeAction?.action === "archive" && (
+        <DeleteSubjectDialog
+          subjectId={activeAction.subject.id}
+          subjectName={activeAction.subject.name}
+          open
+          onOpenChange={(open) => {
+            if (!open) setActiveAction(null);
+          }}
+          mode="archive"
+        />
+      )}
+      {activeAction?.action === "delete" && (
+        <DeleteSubjectDialog
+          subjectId={activeAction.subject.id}
+          subjectName={activeAction.subject.name}
+          open
+          onOpenChange={(open) => {
+            if (!open) setActiveAction(null);
+          }}
+          mode="delete"
+        />
       )}
     </div>
   );

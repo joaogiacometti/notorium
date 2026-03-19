@@ -4,6 +4,8 @@ import { Lock, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
+import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
+import { EditNoteDialog } from "@/components/notes/edit-note-dialog";
 import { NoteCard } from "@/components/notes/note-card";
 import { Button } from "@/components/ui/button";
 import { LIMITS } from "@/lib/config/limits";
@@ -15,9 +17,18 @@ interface NotesListProps {
   notes: NoteEntity[];
 }
 
+type NoteDeleteTarget = {
+  id: string;
+  title: string;
+};
+
 export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
   const t = useTranslations("NotesList");
   const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<NoteEntity | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<NoteDeleteTarget | null>(
+    null,
+  );
   const warningTone = getStatusToneClasses("warning");
 
   const isAtLimit = notes.length >= LIMITS.maxNotesPerSubject;
@@ -83,9 +94,36 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {notes.map((n) => (
-            <NoteCard key={n.id} note={n} />
+            <NoteCard
+              key={n.id}
+              note={n}
+              onEditRequested={() => setEditTarget(n)}
+              onDeleteRequested={() =>
+                setDeleteTarget({ id: n.id, title: n.title })
+              }
+            />
           ))}
         </div>
+      )}
+
+      {editTarget && (
+        <EditNoteDialog
+          note={editTarget}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditTarget(null);
+          }}
+        />
+      )}
+      {deleteTarget && (
+        <DeleteNoteDialog
+          noteId={deleteTarget.id}
+          noteTitle={deleteTarget.title}
+          open
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+        />
       )}
     </div>
   );

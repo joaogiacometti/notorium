@@ -13,6 +13,7 @@ import {
 import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 import { FlashcardsTableRowActions } from "./flashcards-table-row-actions";
+import type { FlashcardTarget } from "./use-flashcards-manager-controller";
 
 interface FlashcardsManagerTableProps {
   flashcards: FlashcardManageItem[];
@@ -23,9 +24,9 @@ interface FlashcardsManagerTableProps {
   isLoading: boolean;
   onEditRequested: (flashcardId: string) => void;
   onPageIndexChange: (pageIndex: number) => void;
-  onDeleted: () => void;
+  onDeleteRequested: (flashcard: FlashcardTarget) => void;
+  onResetRequested: (flashcard: FlashcardTarget) => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
-  onUpdated: () => void;
   onRowClick?: (flashcard: FlashcardManageItem) => void;
 }
 
@@ -58,8 +59,8 @@ function getColumnClassName(columnId: string) {
 
 function getColumns(
   onEditRequested: (flashcardId: string) => void,
-  onUpdated: () => void,
-  onDeleted: () => void,
+  onDeleteRequested: (flashcard: FlashcardTarget) => void,
+  onResetRequested: (flashcard: FlashcardTarget) => void,
   t: ReturnType<typeof useTranslations>,
 ): ColumnDef<FlashcardManageItem>[] {
   return [
@@ -127,10 +128,19 @@ function getColumns(
       cell: ({ row }) => (
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
-            flashcard={row.original}
             onEditRequested={() => onEditRequested(row.original.id)}
-            onUpdated={onUpdated}
-            onDeleted={onDeleted}
+            onResetRequested={() =>
+              onResetRequested({
+                id: row.original.id,
+                front: row.original.front,
+              })
+            }
+            onDeleteRequested={() =>
+              onDeleteRequested({
+                id: row.original.id,
+                front: row.original.front,
+              })
+            }
           />
         </div>
       ),
@@ -148,16 +158,21 @@ export function FlashcardsManagerTable({
   isLoading,
   onEditRequested,
   onPageIndexChange,
-  onDeleted,
+  onDeleteRequested,
+  onResetRequested,
   onSelectedFlashcardIdsChange,
-  onUpdated,
   onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
   const t = useTranslations("FlashcardsManager");
   return (
     <ManagerDataTable
       data={flashcards}
-      columns={getColumns(onEditRequested, onUpdated, onDeleted, t)}
+      columns={getColumns(
+        onEditRequested,
+        onDeleteRequested,
+        onResetRequested,
+        t,
+      )}
       pageIndex={pageIndex}
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}

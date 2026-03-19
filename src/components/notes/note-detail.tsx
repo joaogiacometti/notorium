@@ -7,7 +7,7 @@ import { useState } from "react";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { EditNoteDialog } from "@/components/notes/edit-note-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
-import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
+import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/routing";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";

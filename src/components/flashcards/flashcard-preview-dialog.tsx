@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
+import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import {
   Dialog,
   DialogContent,

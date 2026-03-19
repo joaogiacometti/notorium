@@ -8,8 +8,8 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectText } from "@/components/shared/subject-text";
-import { TiptapEditor } from "@/components/shared/tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
 import {

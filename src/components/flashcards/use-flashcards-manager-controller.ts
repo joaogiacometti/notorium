@@ -23,6 +23,11 @@ interface UseFlashcardsManagerControllerOptions {
   subjects: SubjectEntity[];
 }
 
+export type FlashcardTarget = {
+  id: string;
+  front: string;
+};
+
 export function useFlashcardsManagerController({
   initialPageData,
   initialSubjectId,
@@ -36,6 +41,10 @@ export function useFlashcardsManagerController({
   const [editingFlashcardId, setEditingFlashcardId] = useState<string | null>(
     null,
   );
+  const [deleteTarget, setDeleteTarget] = useState<FlashcardTarget | null>(
+    null,
+  );
+  const [resetTarget, setResetTarget] = useState<FlashcardTarget | null>(null);
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
@@ -155,6 +164,7 @@ export function useFlashcardsManagerController({
     bulkDeleteOpen,
     bulkMoveOpen,
     createOpen,
+    deleteTarget,
     editFlashcardQuery,
     editingFlashcardId,
     flashcards,
@@ -162,6 +172,7 @@ export function useFlashcardsManagerController({
     managePageQuery,
     pageIndex,
     refreshManagePage,
+    resetTarget,
     resolvedSearchQuery,
     searchQuery,
     selectedFlashcardIds,
@@ -170,8 +181,10 @@ export function useFlashcardsManagerController({
     setBulkDeleteOpen,
     setBulkMoveOpen,
     setCreateOpen,
+    setDeleteTarget,
     setEditingFlashcardId,
     setPageIndex,
+    setResetTarget,
     setSearchQuery,
     setSelectedFlashcardIds,
     setSelectedSubjectId,

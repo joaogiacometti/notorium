@@ -9,7 +9,7 @@ import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-
 import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
-import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
+import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/routing";
 import { getDateFnsLocale } from "@/lib/dates/date-locale";
