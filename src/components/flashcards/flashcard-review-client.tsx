@@ -57,8 +57,8 @@ interface FlashcardReviewClientProps {
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
 const reviewBatchLimit = 50;
-const reviewCardHeightClassName = "flex-1 min-h-0 gap-0 overflow-hidden";
-const reviewContentFrameClassName = "mx-auto flex min-h-0 w-full max-w-5xl";
+const reviewCardHeightClassName = "flex h-full min-h-0 gap-0 overflow-hidden";
+const reviewContentFrameClassName = "mx-auto flex w-full max-w-5xl";
 const reviewContentMeasureClassName = "w-full max-w-[58rem]";
 const gradeButtonStyles: Record<ReviewGrade, string> = {
   again:
@@ -256,11 +256,14 @@ export function FlashcardReviewClient({
 
   if (currentCard) {
     reviewContent = (
-      <Card className={reviewCardHeightClassName}>
+      <Card
+        className={reviewCardHeightClassName}
+        data-testid="flashcard-review-card"
+      >
         <CardContent className="flex min-h-0 flex-1 flex-col p-0">
-          <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 sm:px-8">
+          <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 pb-3 sm:px-8">
             <div
-              className={`${reviewContentFrameClassName} flex-1 flex-col space-y-3 pb-3`}
+              className={`${reviewContentFrameClassName} min-h-0 flex-1 flex-col`}
             >
               <div className="shrink-0 space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
@@ -291,6 +294,11 @@ export function FlashcardReviewClient({
                 <h2 className="text-sm font-semibold text-muted-foreground">
                   {t("front_label")}
                 </h2>
+              </div>
+              <div
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pt-1.5 pb-5"
+                data-testid="flashcard-review-front-scroll"
+              >
                 <div className={reviewContentMeasureClassName}>
                   <TiptapRenderer
                     content={currentCard.front}
@@ -298,23 +306,28 @@ export function FlashcardReviewClient({
                   />
                 </div>
               </div>
+            </div>
 
-              {revealed && (
-                <div className="flex min-h-0 flex-1 flex-col space-y-2 border-t border-border/60 pt-2">
-                  <h3 className="shrink-0 text-sm font-semibold text-muted-foreground">
-                    {t("back_label")}
-                  </h3>
-                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-                    <div className={reviewContentMeasureClassName}>
-                      <TiptapRenderer
-                        content={currentCard.back}
-                        className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-                      />
-                    </div>
+            {revealed && (
+              <div
+                className={`${reviewContentFrameClassName} min-h-0 flex-1 flex-col space-y-2 border-t border-border/60 pt-2`}
+              >
+                <h3 className="shrink-0 text-sm font-semibold text-muted-foreground">
+                  {t("back_label")}
+                </h3>
+                <div
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pb-5"
+                  data-testid="flashcard-review-back-scroll"
+                >
+                  <div className={reviewContentMeasureClassName}>
+                    <TiptapRenderer
+                      content={currentCard.back}
+                      className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
+                    />
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">

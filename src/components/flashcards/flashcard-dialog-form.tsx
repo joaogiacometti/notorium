@@ -109,199 +109,209 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-        <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
+          <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>{t("title")}</DialogTitle>
           </DialogHeader>
-          <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-            <FieldGroup className="gap-4">
-              {subjects && subjects.length > 0 ? (
+          <form
+            id={formId}
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-col"
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
+              <FieldGroup className="gap-5">
+                {subjects && subjects.length > 0 ? (
+                  <Controller
+                    name={"subjectId" as FieldPath<TValues>}
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={`${formId}-subject`}>
+                          {t("field_subject")}
+                        </FieldLabel>
+                        <Select
+                          value={field.value ?? ""}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger
+                            id={`${formId}-subject`}
+                            aria-invalid={fieldState.invalid}
+                          >
+                            <SelectValue
+                              placeholder={t("field_subject_placeholder")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {subjects.map((subject) => (
+                              <SelectItem key={subject.id} value={subject.id}>
+                                <SubjectText
+                                  value={subject.name}
+                                  mode="truncate"
+                                  className="block max-w-full"
+                                />
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {fieldState.invalid ? (
+                          <FieldError errors={[fieldState.error]} />
+                        ) : null}
+                      </Field>
+                    )}
+                  />
+                ) : null}
                 <Controller
-                  name={"subjectId" as FieldPath<TValues>}
+                  name={"front" as FieldPath<TValues>}
+                  control={form.control}
+                  render={({ field, fieldState }) => {
+                    const frontInvalid = fieldState.invalid || isDuplicateFront;
+                    let frontFeedback: React.ReactNode = null;
+
+                    if (fieldState.invalid) {
+                      frontFeedback = (
+                        <FieldError errors={[fieldState.error]} />
+                      );
+                    } else if (isDuplicateFront) {
+                      frontFeedback = (
+                        <p className="text-destructive text-sm">
+                          {duplicateFrontMessage}
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <Field data-invalid={frontInvalid}>
+                        <div className="flex h-9 items-center justify-between gap-3">
+                          <FieldLabel htmlFor={`${formId}-front`}>
+                            {t("field_front")}
+                          </FieldLabel>
+                          <div className="flex items-center gap-1">
+                            {mode === "create" ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-xs"
+                                aria-label={
+                                  keepFrontAfterSubmit
+                                    ? t("keep_front_off")
+                                    : t("keep_front_on")
+                                }
+                                title={
+                                  keepFrontAfterSubmit
+                                    ? t("keep_front_off")
+                                    : t("keep_front_on")
+                                }
+                                aria-pressed={keepFrontAfterSubmit}
+                                onClick={() =>
+                                  onKeepFrontAfterSubmitChange(
+                                    !keepFrontAfterSubmit,
+                                  )
+                                }
+                                disabled={isSubmitting}
+                              >
+                                {keepFrontAfterSubmit ? (
+                                  <Pin className="size-3.5" />
+                                ) : (
+                                  <PinOff className="size-3.5" />
+                                )}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                        <TiptapEditor
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          placeholder={t("field_front_placeholder")}
+                          id={`${formId}-front`}
+                          aria-invalid={frontInvalid}
+                          contentClassName="min-h-11 max-h-[40svh]"
+                          showToolbar={false}
+                          onCtrlEnter={handleCtrlEnter}
+                        />
+                        {frontFeedback}
+                      </Field>
+                    );
+                  }}
+                />
+                <Controller
+                  name={"back" as FieldPath<TValues>}
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor={`${formId}-subject`}>
-                        {t("field_subject")}
-                      </FieldLabel>
-                      <Select
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <FieldLabel htmlFor={`${formId}-back`}>
+                            {t("field_back")}
+                          </FieldLabel>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="xs"
+                              className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
+                              onClick={() => void onGenerateBack()}
+                              disabled={!canGenerateBack}
+                            >
+                              {isGeneratingBack ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <Sparkles className="size-3.5" />
+                              )}
+                              {isGeneratingBack
+                                ? t("generating_back")
+                                : t("generate_back")}
+                            </Button>
+                            {mode === "create" ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-xs"
+                                aria-label={
+                                  keepBackAfterSubmit
+                                    ? t("keep_back_off")
+                                    : t("keep_back_on")
+                                }
+                                title={
+                                  keepBackAfterSubmit
+                                    ? t("keep_back_off")
+                                    : t("keep_back_on")
+                                }
+                                aria-pressed={keepBackAfterSubmit}
+                                onClick={() =>
+                                  onKeepBackAfterSubmitChange(
+                                    !keepBackAfterSubmit,
+                                  )
+                                }
+                                disabled={isSubmitting}
+                              >
+                                {keepBackAfterSubmit ? (
+                                  <Pin className="size-3.5" />
+                                ) : (
+                                  <PinOff className="size-3.5" />
+                                )}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                      <TiptapEditor
                         value={field.value ?? ""}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger
-                          id={`${formId}-subject`}
-                          aria-invalid={fieldState.invalid}
-                        >
-                          <SelectValue
-                            placeholder={t("field_subject_placeholder")}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subjects.map((subject) => (
-                            <SelectItem key={subject.id} value={subject.id}>
-                              <SubjectText
-                                value={subject.name}
-                                mode="truncate"
-                                className="block max-w-full"
-                              />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={field.onChange}
+                        placeholder={t("field_back_placeholder")}
+                        id={`${formId}-back`}
+                        aria-invalid={fieldState.invalid}
+                        contentClassName="max-h-[10lh]"
+                        onCtrlEnter={handleCtrlEnter}
+                      />
                       {fieldState.invalid ? (
                         <FieldError errors={[fieldState.error]} />
                       ) : null}
                     </Field>
                   )}
                 />
-              ) : null}
-              <Controller
-                name={"front" as FieldPath<TValues>}
-                control={form.control}
-                render={({ field, fieldState }) => {
-                  const frontInvalid = fieldState.invalid || isDuplicateFront;
-                  let frontFeedback: React.ReactNode = null;
-
-                  if (fieldState.invalid) {
-                    frontFeedback = <FieldError errors={[fieldState.error]} />;
-                  } else if (isDuplicateFront) {
-                    frontFeedback = (
-                      <p className="text-destructive text-sm">
-                        {duplicateFrontMessage}
-                      </p>
-                    );
-                  }
-
-                  return (
-                    <Field data-invalid={frontInvalid}>
-                      <div className="flex h-9 items-center justify-between gap-3">
-                        <FieldLabel htmlFor={`${formId}-front`}>
-                          {t("field_front")}
-                        </FieldLabel>
-                        <div className="flex items-center gap-1">
-                          {mode === "create" ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={
-                                keepFrontAfterSubmit
-                                  ? t("keep_front_off")
-                                  : t("keep_front_on")
-                              }
-                              title={
-                                keepFrontAfterSubmit
-                                  ? t("keep_front_off")
-                                  : t("keep_front_on")
-                              }
-                              aria-pressed={keepFrontAfterSubmit}
-                              onClick={() =>
-                                onKeepFrontAfterSubmitChange(
-                                  !keepFrontAfterSubmit,
-                                )
-                              }
-                              disabled={isSubmitting}
-                            >
-                              {keepFrontAfterSubmit ? (
-                                <Pin className="size-3.5" />
-                              ) : (
-                                <PinOff className="size-3.5" />
-                              )}
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                      <TiptapEditor
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        placeholder={t("field_front_placeholder")}
-                        id={`${formId}-front`}
-                        aria-invalid={frontInvalid}
-                        contentClassName="min-h-11 max-h-[40svh]"
-                        showToolbar={false}
-                        onCtrlEnter={handleCtrlEnter}
-                      />
-                      {frontFeedback}
-                    </Field>
-                  );
-                }}
-              />
-              <Controller
-                name={"back" as FieldPath<TValues>}
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <FieldLabel htmlFor={`${formId}-back`}>
-                          {t("field_back")}
-                        </FieldLabel>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                            onClick={() => void onGenerateBack()}
-                            disabled={!canGenerateBack}
-                          >
-                            {isGeneratingBack ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <Sparkles className="size-3.5" />
-                            )}
-                            {isGeneratingBack
-                              ? t("generating_back")
-                              : t("generate_back")}
-                          </Button>
-                          {mode === "create" ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={
-                                keepBackAfterSubmit
-                                  ? t("keep_back_off")
-                                  : t("keep_back_on")
-                              }
-                              title={
-                                keepBackAfterSubmit
-                                  ? t("keep_back_off")
-                                  : t("keep_back_on")
-                              }
-                              aria-pressed={keepBackAfterSubmit}
-                              onClick={() =>
-                                onKeepBackAfterSubmitChange(
-                                  !keepBackAfterSubmit,
-                                )
-                              }
-                              disabled={isSubmitting}
-                            >
-                              {keepBackAfterSubmit ? (
-                                <Pin className="size-3.5" />
-                              ) : (
-                                <PinOff className="size-3.5" />
-                              )}
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                    <TiptapEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      placeholder={t("field_back_placeholder")}
-                      id={`${formId}-back`}
-                      aria-invalid={fieldState.invalid}
-                      contentClassName="max-h-[10lh]"
-                      onCtrlEnter={handleCtrlEnter}
-                    />
-                    {fieldState.invalid ? (
-                      <FieldError errors={[fieldState.error]} />
-                    ) : null}
-                  </Field>
-                )}
-              />
+              </FieldGroup>
+            </div>
+            <div className="shrink-0 border-t px-4 py-4 sm:px-6">
               <Button
                 type="submit"
                 form={formId}
@@ -319,7 +329,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   pendingLabel={pendingSubmitLabel}
                 />
               </Button>
-            </FieldGroup>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
