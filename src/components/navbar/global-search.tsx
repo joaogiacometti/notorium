@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileText, Layers, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -37,6 +37,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 200);
   const router = useRouter();
+  const [, startNavTransition] = useTransition();
 
   const { data, isPending } = useQuery({
     queryKey: ["search-data", userId, debouncedQuery],
@@ -77,7 +78,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
   function handleSelect(path: string) {
     setOpen(false);
-    router.push(path);
+    startNavTransition(() => router.push(path));
   }
 
   function handleOpenChange(nextOpen: boolean) {

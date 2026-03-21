@@ -4,7 +4,7 @@ import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type KeyboardEvent, useState } from "react";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
-import { EditAssessmentDialog } from "@/components/assessments/edit-assessment-dialog";
+import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +20,14 @@ interface AssessmentsTableRowActionsProps {
   onDeleted?: (id: string) => void;
 }
 
+function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+  event.stopPropagation();
+}
+
+function handleMenuClick(event: { stopPropagation: () => void }) {
+  event.stopPropagation();
+}
+
 export function AssessmentsTableRowActions({
   assessment,
   onUpdated,
@@ -29,14 +37,6 @@ export function AssessmentsTableRowActions({
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-
-  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    event.stopPropagation();
-  }
-
-  function handleMenuClick(event: { stopPropagation: () => void }) {
-    event.stopPropagation();
-  }
 
   return (
     <>
@@ -79,19 +79,23 @@ export function AssessmentsTableRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <EditAssessmentDialog
-        assessment={assessment}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onUpdated={onUpdated}
-      />
-      <DeleteAssessmentDialog
-        assessmentId={assessment.id}
-        assessmentTitle={assessment.title}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onDeleted={onDeleted}
-      />
+      {editOpen && (
+        <EditAssessmentDialog
+          assessment={assessment}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onUpdated={onUpdated}
+        />
+      )}
+      {deleteOpen && (
+        <DeleteAssessmentDialog
+          assessmentId={assessment.id}
+          assessmentTitle={assessment.title}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onDeleted={onDeleted}
+        />
+      )}
     </>
   );
 }

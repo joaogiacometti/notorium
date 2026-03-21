@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format, parseISO } from "date-fns";
 import { CalendarDays, ClipboardList } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
@@ -303,6 +303,7 @@ export function PlanningAssessmentsManagerTable({
   const dateLocale = getDateFnsLocale(locale);
   const [todayIso] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const router = useRouter();
+  const [, startNavTransition] = useTransition();
   const finalGradeTone =
     finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
 
@@ -338,11 +339,13 @@ export function PlanningAssessmentsManagerTable({
         tTable("open_details_for", { title: row.title })
       }
       onRowClick={(row) =>
-        router.push(
-          getAssessmentDetailHref(row.id, {
-            from: "planning-assessments",
-            subjectId: selectedSubjectId,
-          }),
+        startNavTransition(() =>
+          router.push(
+            getAssessmentDetailHref(row.id, {
+              from: "planning-assessments",
+              subjectId: selectedSubjectId,
+            }),
+          ),
         )
       }
       tableClassName="w-full min-w-160"

@@ -9,10 +9,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
-import { EditAssessmentDialog } from "@/components/assessments/edit-assessment-dialog";
+import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,7 @@ export function AssessmentDetail({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
+  const [, startNavTransition] = useTransition();
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentEntity>(
     detail.assessment,
   );
@@ -74,16 +75,23 @@ export function AssessmentDetail({
     currentAssessment,
     format(new Date(), "yyyy-MM-dd"),
   );
-  const statusTone = overdue
-    ? getStatusToneClasses("danger")
-    : currentAssessment.status === "completed"
-      ? getStatusToneClasses("success")
-      : getStatusToneClasses("warning");
-  const statusLabel = overdue
-    ? tAssessment("status_overdue")
-    : currentAssessment.status === "completed"
-      ? tAssessment("status_completed")
-      : tAssessment("status_pending");
+  let statusTone: ReturnType<typeof getStatusToneClasses>;
+  if (overdue) {
+    statusTone = getStatusToneClasses("danger");
+  } else if (currentAssessment.status === "completed") {
+    statusTone = getStatusToneClasses("success");
+  } else {
+    statusTone = getStatusToneClasses("warning");
+  }
+
+  let statusLabel: string;
+  if (overdue) {
+    statusLabel = tAssessment("status_overdue");
+  } else if (currentAssessment.status === "completed") {
+    statusLabel = tAssessment("status_completed");
+  } else {
+    statusLabel = tAssessment("status_pending");
+  }
   const score = formatNumber(currentAssessment.score);
   const weight = formatNumber(currentAssessment.weight, "%");
   const scoreTone =
@@ -280,7 +288,7 @@ export function AssessmentDetail({
         onOpenChange={setDeleteOpen}
         onDeleted={() => {
           setDeleteOpen(false);
-          router.push(backHref);
+          startNavTransition(() => router.push(backHref));
         }}
       />
     </DetailPageLayout>

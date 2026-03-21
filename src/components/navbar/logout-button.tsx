@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import { useTransition } from "react";
 import { logoutAction } from "@/app/actions/auth";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
@@ -12,12 +13,13 @@ export function LogoutButton() {
   const router = useRouter();
   const locale = useLocale();
   const { setTheme } = useTheme();
+  const [, startNavTransition] = useTransition();
 
   const handleLogout = async () => {
     await logoutAction();
 
     setTheme("system");
-    router.push(`/${locale}/login`);
+    startNavTransition(() => router.push(`/${locale}/login`));
   };
 
   return (

@@ -10,12 +10,13 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { BulkDeleteFlashcardsDialog } from "@/components/flashcards/bulk-delete-flashcards-dialog";
-import { BulkMoveFlashcardsDialog } from "@/components/flashcards/bulk-move-flashcards-dialog";
-import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
+import { useTransition } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
-import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
 import { FlashcardsManagerTable } from "@/components/flashcards/flashcards-manager-table";
+import { LazyBulkDeleteFlashcardsDialog as BulkDeleteFlashcardsDialog } from "@/components/flashcards/lazy-bulk-delete-flashcards-dialog";
+import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/components/flashcards/lazy-bulk-move-flashcards-dialog";
+import { LazyCreateFlashcardDialog as CreateFlashcardDialog } from "@/components/flashcards/lazy-create-flashcard-dialog";
+import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/lazy-edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
 import { useFlashcardsManagerController } from "@/components/flashcards/use-flashcards-manager-controller";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -54,6 +55,7 @@ export function FlashcardsManager({
   const t = useTranslations("FlashcardsManager");
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
+  const [, startNavTransition] = useTransition();
   const {
     bulkDeleteOpen,
     bulkMoveOpen,
@@ -255,11 +257,13 @@ export function FlashcardsManager({
           onResetRequested={setResetTarget}
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           onRowClick={(row) =>
-            router.push(
-              getFlashcardDetailHref(row.subjectId, row.id, {
-                from: "flashcards-manage",
-                subjectId: selectedSubjectId,
-              }),
+            startNavTransition(() =>
+              router.push(
+                getFlashcardDetailHref(row.subjectId, row.id, {
+                  from: "flashcards-manage",
+                  subjectId: selectedSubjectId,
+                }),
+              ),
             )
           }
         />

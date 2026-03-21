@@ -5,6 +5,7 @@ import { BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { loginAction } from "@/app/actions/auth";
@@ -36,6 +37,7 @@ export function LoginForm({
   const router = useRouter();
   const locale = useLocale();
   const { setTheme } = useTheme();
+  const [, startNavTransition] = useTransition();
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -57,7 +59,7 @@ export function LoginForm({
       const { theme } = result.data;
       setTheme(theme);
 
-      router.push(`/${locale}`);
+      startNavTransition(() => router.push(`/${locale}`));
     }
   }
 

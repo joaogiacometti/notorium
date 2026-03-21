@@ -3,9 +3,9 @@
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
-import { EditNoteDialog } from "@/components/notes/edit-note-dialog";
+import { LazyEditNoteDialog as EditNoteDialog } from "@/components/notes/lazy-edit-note-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export function NoteDetail({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
+  const [, startNavTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -93,7 +94,7 @@ export function NoteDetail({
         onOpenChange={setDeleteOpen}
         onSuccess={() => {
           setDeleteOpen(false);
-          router.push(backHref);
+          startNavTransition(() => router.push(backHref));
         }}
       />
     </DetailPageLayout>

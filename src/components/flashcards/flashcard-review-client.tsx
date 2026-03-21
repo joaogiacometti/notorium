@@ -46,7 +46,7 @@ import type {
 } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import { DeleteFlashcardDialog } from "./delete-flashcard-dialog";
-import { EditFlashcardDialog } from "./edit-flashcard-dialog";
+import { LazyEditFlashcardDialog as EditFlashcardDialog } from "./lazy-edit-flashcard-dialog";
 
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;

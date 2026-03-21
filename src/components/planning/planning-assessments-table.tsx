@@ -5,7 +5,7 @@ import { ClipboardList, Lock, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { getPlanningAssessmentsPage } from "@/app/actions/assessments";
-import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
+import { LazyCreateAssessmentDialog as CreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
 import { SubjectText } from "@/components/shared/subject-text";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
@@ -120,11 +120,11 @@ export function PlanningAssessmentsTable({
     },
     initialData:
       pageIndex === 0 &&
-      subjectFilter === (initialSubjectId ?? "all") &&
-      resolvedSearchQuery.trim().length === 0 &&
-      statusFilter === "all" &&
-      typeFilter === "all" &&
-      sortBy === "smart"
+        subjectFilter === (initialSubjectId ?? "all") &&
+        resolvedSearchQuery.trim().length === 0 &&
+        statusFilter === "all" &&
+        typeFilter === "all" &&
+        sortBy === "smart"
         ? initialPageData
         : undefined,
     placeholderData: (previousData) => previousData,
@@ -147,7 +147,7 @@ export function PlanningAssessmentsTable({
       1,
       Math.ceil(
         (assessmentsQuery.data?.total ?? initialPageData.total) /
-          planningAssessmentsPageSize,
+        planningAssessmentsPageSize,
       ),
     );
     const maxIndex = pageCount - 1;
@@ -298,7 +298,7 @@ export function PlanningAssessmentsTable({
                   count: total,
                 })}
               </Badge>
-              {subjectFilter !== "all" ? (
+              {subjectFilter === "all" ? null : (
                 <Badge
                   variant="outline"
                   className="rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground"
@@ -309,7 +309,7 @@ export function PlanningAssessmentsTable({
                     max: LIMITS.maxAssessmentsPerSubject,
                   })}
                 </Badge>
-              ) : null}
+              )}
             </div>
           </div>
         </CardContent>

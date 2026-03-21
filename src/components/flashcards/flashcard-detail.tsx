@@ -4,9 +4,9 @@ import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, CreditCard, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
-import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
+import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/lazy-edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
@@ -36,6 +36,7 @@ export function FlashcardDetail({
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
+  const [, startNavTransition] = useTransition();
   const searchParams = useSearchParams();
 
   const [currentFlashcard, setCurrentFlashcard] =
@@ -146,7 +147,7 @@ export function FlashcardDetail({
         onOpenChange={setDeleteOpen}
         onDeleted={() => {
           setDeleteOpen(false);
-          router.push(backHref);
+          startNavTransition(() => router.push(backHref));
         }}
       />
     </DetailPageLayout>

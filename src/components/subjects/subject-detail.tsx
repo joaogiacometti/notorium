@@ -3,7 +3,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
 import { NotesList } from "@/components/notes/notes-list";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
@@ -39,6 +39,7 @@ export function SubjectDetail({
   const dateLocale = getDateFnsLocale(locale);
   const t = useTranslations("SubjectDetail");
   const router = useRouter();
+  const [, startNavTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -124,7 +125,7 @@ export function SubjectDetail({
         mode="archive"
         onSuccess={() => {
           setArchiveOpen(false);
-          router.push("/subjects");
+          startNavTransition(() => router.push("/subjects"));
         }}
       />
       <DeleteSubjectDialog
@@ -135,7 +136,7 @@ export function SubjectDetail({
         mode="delete"
         onSuccess={() => {
           setDeleteOpen(false);
-          router.push("/subjects");
+          startNavTransition(() => router.push("/subjects"));
         }}
       />
     </DetailPageLayout>
