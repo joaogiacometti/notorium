@@ -74,15 +74,14 @@ export function NoteDialogForm({
   const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useNoteForm(mode, values);
 
   useEffect(() => {
     form.reset(values);
   }, [form, values]);
 
-  useBeforeUnload(
-    open && form.formState.isDirty && !form.formState.isSubmitting,
-  );
+  useBeforeUnload(open && form.formState.isDirty && !isSubmitting);
 
   function handleDiscardChanges() {
     form.reset(values);
@@ -97,7 +96,7 @@ export function NoteDialogForm({
       return;
     }
 
-    if (form.formState.isDirty && !form.formState.isSubmitting) {
+    if (form.formState.isDirty && !isSubmitting) {
       setDiscardDialogOpen(true);
       return;
     }
@@ -108,26 +107,36 @@ export function NoteDialogForm({
   }
 
   async function onSubmit(data: NoteFormValues) {
-    const result = await onSubmitAction(data);
-    if (result.success) {
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      form.reset(
-        mode === "create"
-          ? "subjectId" in values
-            ? { subjectId: values.subjectId, title: "", content: "" }
-            : values
-          : data,
-      );
-      setDiscardDialogOpen(false);
-      onOpenChange(false);
+    if (isSubmitting) {
       return;
     }
 
-    toast.error(resolveActionErrorMessage(result, tErrors));
+    setIsSubmitting(true);
+
+    try {
+      const result = await onSubmitAction(data);
+      if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+        form.reset(
+          mode === "create"
+            ? "subjectId" in values
+              ? { subjectId: values.subjectId, title: "", content: "" }
+              : values
+            : data,
+        );
+        setDiscardDialogOpen(false);
+        onOpenChange(false);
+        return;
+      }
+
+      toast.error(resolveActionErrorMessage(result, tErrors));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleCtrlEnter() {
-    if (form.formState.isSubmitting) {
+    if (isSubmitting) {
       return;
     }
 
@@ -192,11 +201,11 @@ export function NoteDialogForm({
               <Button
                 type="submit"
                 form={formId}
-                disabled={form.formState.isSubmitting}
+                disabled={isSubmitting}
                 className="w-full"
               >
                 <AsyncButtonContent
-                  pending={form.formState.isSubmitting}
+                  pending={isSubmitting}
                   idleLabel={t("submit")}
                   pendingLabel={
                     mode === "create" ? tCommon("creating") : tCommon("saving")

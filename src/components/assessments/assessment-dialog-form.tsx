@@ -60,6 +60,7 @@ interface AssessmentDialogFormProps<
   pendingSubmitLabel: string;
   onSubmit: (values: TSubmitValues) => Promise<void>;
   subjects?: SubjectEntity[];
+  isSubmitting: boolean;
 }
 
 export function AssessmentDialogForm<
@@ -76,6 +77,7 @@ export function AssessmentDialogForm<
   pendingSubmitLabel,
   onSubmit,
   subjects,
+  isSubmitting,
 }: Readonly<AssessmentDialogFormProps<TValues, TSubmitValues>>) {
   const t = useTranslations("CreateAssessmentDialog");
   const tAssessment = useTranslations("AssessmentItemCard");
@@ -360,11 +362,11 @@ export function AssessmentDialogForm<
             <Button
               type="submit"
               form={formId}
-              disabled={form.formState.isSubmitting}
+              disabled={isSubmitting}
               className="w-full"
             >
               <AsyncButtonContent
-                pending={form.formState.isSubmitting}
+                pending={isSubmitting}
                 idleLabel={submitLabel}
                 pendingLabel={pendingSubmitLabel}
               />

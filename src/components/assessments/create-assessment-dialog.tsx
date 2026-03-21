@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { createAssessment } from "@/app/actions/assessments";
 import { AssessmentDialogForm } from "@/components/assessments/assessment-dialog-form";
@@ -50,6 +50,7 @@ export function CreateAssessmentDialog({
   const t = useTranslations("CreateAssessmentDialog");
   const tCommon = useTranslations("Common");
   const tErrors = useTranslations("ServerActions");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<
     CreateAssessmentFormInput,
     unknown,
@@ -64,15 +65,25 @@ export function CreateAssessmentDialog({
   }, [form, subjectId]);
 
   async function onSubmit(data: CreateAssessmentForm) {
-    const result = await createAssessment(data);
-    if (result.success) {
-      form.reset(getCreateAssessmentFormValues(subjectId));
-      onCreated?.(result.assessment);
-      onOpenChange(false);
-    } else {
-      form.setError("title", {
-        message: resolveActionErrorMessage(result, tErrors),
-      });
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await createAssessment(data);
+      if (result.success) {
+        form.reset(getCreateAssessmentFormValues(subjectId));
+        onCreated?.(result.assessment);
+        onOpenChange(false);
+      } else {
+        form.setError("title", {
+          message: resolveActionErrorMessage(result, tErrors),
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -88,6 +99,7 @@ export function CreateAssessmentDialog({
       pendingSubmitLabel={tCommon("creating")}
       onSubmit={onSubmit}
       subjects={subjects}
+      isSubmitting={isSubmitting}
     />
   );
 }

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -73,21 +73,32 @@ export function SubjectDialogForm({
   const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const form = useSubjectForm(mode, values);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     form.reset(values);
   }, [form, values]);
 
   async function onSubmit(data: SubjectFormValues) {
-    const result = await onSubmitAction(data);
-    if (result.success) {
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      form.reset(mode === "create" ? { name: "", description: "" } : data);
-      onOpenChange(false);
+    if (isSubmitting) {
       return;
     }
 
-    toast.error(resolveActionErrorMessage(result, tErrors));
+    setIsSubmitting(true);
+
+    try {
+      const result = await onSubmitAction(data);
+      if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+        form.reset(mode === "create" ? { name: "", description: "" } : data);
+        onOpenChange(false);
+        return;
+      }
+
+      toast.error(resolveActionErrorMessage(result, tErrors));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const formId =
@@ -148,11 +159,11 @@ export function SubjectDialogForm({
             <Button
               type="submit"
               form={formId}
-              disabled={form.formState.isSubmitting}
+              disabled={isSubmitting}
               className="w-full"
             >
               <AsyncButtonContent
-                pending={form.formState.isSubmitting}
+                pending={isSubmitting}
                 idleLabel={t("submit")}
                 pendingLabel={
                   mode === "create" ? tCommon("creating") : tCommon("saving")
