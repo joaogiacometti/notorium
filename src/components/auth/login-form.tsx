@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Clock3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -29,9 +29,12 @@ import {
 } from "@/lib/validations/auth";
 
 export function LoginForm({
+  showPendingApprovalNotice = false,
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & {
+  showPendingApprovalNotice?: boolean;
+}) {
   const t = useTranslations("LoginForm");
   const tErrors = useTranslations("ServerActions");
   const router = useRouter();
@@ -76,6 +79,14 @@ export function LoginForm({
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">{t("title")}</h1>
               </div>
+              {showPendingApprovalNotice ? (
+                <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+                  <Clock3 className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <p className="text-left text-foreground/90">
+                    {t("pending_approval_notice")}
+                  </p>
+                </div>
+              ) : null}
               <Controller
                 name="email"
                 control={form.control}
@@ -144,7 +155,7 @@ export function LoginForm({
             </FieldGroup>
           </form>
           <div className="relative hidden bg-muted md:block">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-muted/40 to-background" />
+            <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-muted/40 to-background" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="rounded-full border border-primary/20 bg-primary/10 p-5">
                 <BookOpen className="size-10 text-primary" />

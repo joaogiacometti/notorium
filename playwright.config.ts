@@ -22,8 +22,16 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "bootstrap",
+      testMatch: /signup-bootstrap\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+    {
       name: "setup",
       testMatch: /auth\.setup\.ts/,
+      dependencies: ["bootstrap"],
       use: {
         ...devices["Desktop Chrome"],
       },

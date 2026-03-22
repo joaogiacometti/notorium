@@ -4,6 +4,7 @@ import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
+import { claimInitialAdminAccess } from "@/features/auth/mutations";
 import { getUserAccessStatusByEmail } from "@/features/auth/queries";
 import { getUserPreferredTheme } from "@/features/user/queries";
 import { auth } from "@/lib/auth/auth";
@@ -86,14 +87,16 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
         return actionError(rateLimit.errorCode);
       }
 
+      let createdUserId: string;
       try {
-        await auth.api.signUpEmail({
+        const result = await auth.api.signUpEmail({
           body: {
             email: parsedData.email,
             password: parsedData.password,
             name: parsedData.name,
           },
         });
+        createdUserId = result.user.id;
       } catch (error) {
         if (error instanceof APIError) {
           return actionError("auth.signupFailed");
@@ -101,8 +104,28 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
         return actionError("auth.signupFailed");
       }
 
+      const isInitialAdmin = await claimInitialAdminAccess(createdUserId);
       const locale = await getLocale();
-      redirect(`/${locale}/login`);
+
+      if (isInitialAdmin) {
+        try {
+          await auth.api.signInEmail({
+            body: {
+              email: parsedData.email,
+              password: parsedData.password,
+            },
+          });
+        } catch (error) {
+          if (error instanceof APIError) {
+            return actionError("auth.signupFailed");
+          }
+          return actionError("auth.signupFailed");
+        }
+
+        redirect(`/${locale}/subjects`);
+      }
+
+      redirect(`/${locale}/login?pendingApproval=1`);
     },
   );
 };

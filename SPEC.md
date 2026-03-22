@@ -27,7 +27,8 @@ Students who want a private, lightweight study management workspace.
 
 - Email/password sign up, sign in, and sign out.
 - Session-based access control across the app.
-- New accounts start with pending access status.
+- The first account on a new instance becomes an approved admin automatically.
+- Later accounts start with pending access status and require admin approval.
 - Only approved users can access authenticated app routes and server actions.
 - Blocked and pending users are denied sign in with an access-status error.
 - Admin users can manage user access status (`pending`, `approved`, `blocked`) from an Admin Panel in the account menu.
@@ -143,6 +144,8 @@ Students who want a private, lightweight study management workspace.
 
 - `user`
   - `id`, `name`, `email`, `accessStatus` (`pending` | `approved` | `blocked`), `isAdmin`, timestamps
+- `instance_state`
+  - `id`, `initialAdminUserId`, `initialAdminAssignedAt`, timestamps
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`
 - `flashcard`

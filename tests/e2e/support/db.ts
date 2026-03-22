@@ -7,6 +7,7 @@ import {
   assessment,
   attendanceMiss,
   flashcard,
+  instanceState,
   note,
   session,
   subject,
@@ -84,6 +85,28 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
     ...credentials,
     userId: existingUser.id,
   };
+}
+
+export async function resetE2EInstanceAuthState() {
+  await db.delete(instanceState);
+  await db.delete(verification);
+  await db.delete(account);
+  await db.delete(session);
+  await db.delete(user);
+}
+
+export async function getUserAccessSnapshotByEmail(email: string) {
+  const [result] = await db
+    .select({
+      id: user.id,
+      accessStatus: user.accessStatus,
+      isAdmin: user.isAdmin,
+    })
+    .from(user)
+    .where(eq(user.email, email))
+    .limit(1);
+
+  return result ?? null;
 }
 
 export async function ensureApprovedE2EUser() {

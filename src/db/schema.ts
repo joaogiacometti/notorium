@@ -37,6 +37,17 @@ export const user = pgTable("user", {
     .notNull(),
 });
 
+export const instanceState = pgTable("instance_state", {
+  id: text("id").primaryKey(),
+  initialAdminUserId: text("initial_admin_user_id").notNull(),
+  initialAdminAssignedAt: timestamp("initial_admin_assigned_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
 export const session = pgTable(
   "session",
   {

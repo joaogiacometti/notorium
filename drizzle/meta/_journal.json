@@ -197,6 +197,13 @@
       "when": 1773860763998,
       "tag": "0027_puzzling_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1774191873803,
+      "tag": "0028_sudden_thunderbolt",
+      "breakpoints": true
     }
   ]
 }

@@ -120,11 +120,11 @@ export function PlanningAssessmentsTable({
     },
     initialData:
       pageIndex === 0 &&
-        subjectFilter === (initialSubjectId ?? "all") &&
-        resolvedSearchQuery.trim().length === 0 &&
-        statusFilter === "all" &&
-        typeFilter === "all" &&
-        sortBy === "smart"
+      subjectFilter === (initialSubjectId ?? "all") &&
+      resolvedSearchQuery.trim().length === 0 &&
+      statusFilter === "all" &&
+      typeFilter === "all" &&
+      sortBy === "smart"
         ? initialPageData
         : undefined,
     placeholderData: (previousData) => previousData,
@@ -147,7 +147,7 @@ export function PlanningAssessmentsTable({
       1,
       Math.ceil(
         (assessmentsQuery.data?.total ?? initialPageData.total) /
-        planningAssessmentsPageSize,
+          planningAssessmentsPageSize,
       ),
     );
     const maxIndex = pageCount - 1;

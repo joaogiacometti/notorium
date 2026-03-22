@@ -62,6 +62,7 @@
   },
   "LoginForm": {
     "title": "Login to your account",
+    "pending_approval_notice": "Your account was created successfully and is now waiting for administrator approval.",
     "email_label": "Email",
     "email_placeholder": "m@example.com",
     "password_label": "Password",
