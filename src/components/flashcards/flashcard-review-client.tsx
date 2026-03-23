@@ -263,7 +263,7 @@ export function FlashcardReviewClient({
         <CardContent className="flex min-h-0 flex-1 flex-col p-0">
           <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 pb-3 sm:px-8">
             <div
-              className={`${reviewContentFrameClassName} min-h-0 flex-1 flex-col`}
+              className={`${reviewContentFrameClassName} min-h-0 flex-none flex-col max-h-[50%]`}
             >
               <div className="shrink-0 space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
