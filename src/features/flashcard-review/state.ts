@@ -9,6 +9,10 @@ function isStillDue(card: FlashcardReviewEntity, now: Date): boolean {
   return card.dueAt.getTime() <= now.getTime();
 }
 
+function countDueCards(cards: FlashcardReviewEntity[], now: Date): number {
+  return cards.filter((card) => isStillDue(card, now)).length;
+}
+
 function insertCardByDueAt(
   cards: FlashcardReviewEntity[],
   card: FlashcardReviewEntity,
@@ -58,9 +62,17 @@ export function applyReviewedFlashcardToState(
 export function mergeFlashcardReviewStates(
   current: FlashcardReviewState,
   incoming: FlashcardReviewState,
+  now: Date,
 ): FlashcardReviewState {
   if (current.cards.length === 0) {
-    return incoming;
+    const actualDueCount = countDueCards(incoming.cards, now);
+    return {
+      ...incoming,
+      summary: {
+        ...incoming.summary,
+        dueCount: actualDueCount,
+      },
+    };
   }
 
   const seenIds = new Set(current.cards.map((card) => card.id));
@@ -75,9 +87,14 @@ export function mergeFlashcardReviewStates(
     cards.push(card);
   }
 
+  const actualDueCount = countDueCards(cards, now);
+
   return {
     cards,
-    summary: incoming.summary,
+    summary: {
+      ...incoming.summary,
+      dueCount: actualDueCount,
+    },
     scheduler: incoming.scheduler,
   };
 }

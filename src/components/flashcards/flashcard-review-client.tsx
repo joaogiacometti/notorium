@@ -91,6 +91,7 @@ export function FlashcardReviewClient({
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
   const [isPending, startTransition] = useTransition();
   const refillRequestIdRef = useRef(0);
+  const isRefillingRef = useRef(false);
 
   const currentCard = reviewState.cards[0] ?? null;
 
@@ -154,22 +155,43 @@ export function FlashcardReviewClient({
     }
   }
 
-  async function refillReviewState() {
-    const requestId = refillRequestIdRef.current + 1;
-    refillRequestIdRef.current = requestId;
-
-    const nextState = await getFlashcardReviewState({
-      subjectId,
-      limit: reviewBatchLimit,
-    });
-
-    if (refillRequestIdRef.current !== requestId) {
+  async function refillReviewState(retryCount = 0) {
+    if (isRefillingRef.current) {
       return;
     }
+    isRefillingRef.current = true;
 
-    commitReviewState(
-      mergeFlashcardReviewStates(reviewStateRef.current, nextState),
-    );
+    try {
+      const requestId = refillRequestIdRef.current + 1;
+      refillRequestIdRef.current = requestId;
+
+      const nextState = await getFlashcardReviewState({
+        subjectId,
+        limit: reviewBatchLimit,
+      });
+
+      if (refillRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      commitReviewState(
+        mergeFlashcardReviewStates(
+          reviewStateRef.current,
+          nextState,
+          new Date(),
+        ),
+      );
+    } finally {
+      isRefillingRef.current = false;
+      if (
+        shouldRefillFlashcardReviewState(reviewStateRef.current) &&
+        retryCount < 3
+      ) {
+        void refillReviewState(retryCount + 1).catch((error) => {
+          console.error("Failed to refill review state recursively:", error);
+        });
+      }
+    }
   }
 
   function handleGrade(grade: ReviewGrade) {
