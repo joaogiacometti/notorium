@@ -148,7 +148,8 @@ describe("applyReviewedFlashcardToState", () => {
 });
 
 describe("mergeFlashcardReviewStates", () => {
-  it("appends unique refill cards and replaces the summary", () => {
+  it("appends unique refill cards and recalculates dueCount based on merged cards", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
     const current = makeState(
       [
         makeCard("card-1", new Date("2026-03-07T11:00:00.000Z")),
@@ -168,14 +169,63 @@ describe("mergeFlashcardReviewStates", () => {
       scheduler,
     };
 
-    const nextState = mergeFlashcardReviewStates(current, incoming);
+    const nextState = mergeFlashcardReviewStates(current, incoming, now);
 
     expect(nextState.cards.map((card) => card.id)).toEqual([
       "card-1",
       "card-2",
       "card-3",
     ]);
-    expect(nextState.summary).toEqual(incoming.summary);
+    expect(nextState.summary.dueCount).toBe(3);
+    expect(nextState.summary.totalCount).toBe(8);
+  });
+
+  it("prevents race condition by recalculating dueCount when server returns empty cards but non-zero summary", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const current = makeState([], 0);
+    const incoming = {
+      cards: [],
+      summary: {
+        dueCount: 5,
+        totalCount: 10,
+      },
+      scheduler,
+    };
+
+    const nextState = mergeFlashcardReviewStates(current, incoming, now);
+
+    expect(nextState.cards).toEqual([]);
+    expect(nextState.summary.dueCount).toBe(0);
+    expect(nextState.summary.totalCount).toBe(10);
+  });
+
+  it("correctly counts only due cards when some cards are not yet due", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const current = makeState(
+      [makeCard("card-1", new Date("2026-03-07T11:00:00.000Z"))],
+      3,
+    );
+    const incoming = {
+      cards: [
+        makeCard("card-2", new Date("2026-03-07T11:30:00.000Z")),
+        makeCard("card-3", new Date("2026-03-07T13:00:00.000Z")),
+      ],
+      summary: {
+        dueCount: 3,
+        totalCount: 5,
+      },
+      scheduler,
+    };
+
+    const nextState = mergeFlashcardReviewStates(current, incoming, now);
+
+    expect(nextState.cards.map((card) => card.id)).toEqual([
+      "card-1",
+      "card-2",
+      "card-3",
+    ]);
+    expect(nextState.summary.dueCount).toBe(2);
+    expect(nextState.summary.totalCount).toBe(5);
   });
 });
 
