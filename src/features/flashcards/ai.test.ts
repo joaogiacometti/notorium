@@ -4,7 +4,9 @@ process.env.SKIP_ENV_VALIDATION = "1";
 
 const {
   buildGenerateFlashcardBackPrompt,
+  buildImproveFlashcardBackPrompt,
   flashcardBackSystemPrompt,
+  flashcardBackImproveSystemPrompt,
   normalizeGeneratedBack,
   plainTextToRichText,
 } = await import("@/features/flashcards/ai");
@@ -112,6 +114,19 @@ describe("normalizeGeneratedBack", () => {
       ),
     ).toBe("1. Point one\n2. Point two");
   });
+
+  it("splits inline bullet separators into newlines", () => {
+    expect(
+      normalizeGeneratedBack("- Point one - Point two - Point three"),
+    ).toBe("- Point one\n- Point two\n- Point three");
+    expect(
+      normalizeGeneratedBack(
+        "Queue implements point-to-point delivery where each message is processed by exactly one consumer. - Topic implements publish-subscribe delivery where one message is broadcast to all subscribed consumers. - Queues are optimized for task distribution and load balancing among workers. - Topics are optimized for event notification and broadcasting data to multiple independent systems.",
+      ),
+    ).toBe(
+      "Queue implements point-to-point delivery where each message is processed by exactly one consumer.\n- Topic implements publish-subscribe delivery where one message is broadcast to all subscribed consumers.\n- Queues are optimized for task distribution and load balancing among workers.\n- Topics are optimized for event notification and broadcasting data to multiple independent systems.",
+    );
+  });
 });
 
 describe("plainTextToRichText", () => {
@@ -137,5 +152,55 @@ describe("plainTextToRichText", () => {
     const result = plainTextToRichText("<script>alert(1)</script>");
 
     expect(result).toBe("<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>");
+  });
+});
+
+describe("buildImproveFlashcardBackPrompt", () => {
+  it("includes subject, front, and current back content", () => {
+    const result = buildImproveFlashcardBackPrompt({
+      subjectName: "Biology",
+      front: "What is ATP?",
+      currentBack: "ATP stores energy.",
+    });
+
+    expect(result).toContain("Subject context: Biology");
+    expect(result).toContain("Front: What is ATP?");
+    expect(result).toContain("Current back: ATP stores energy.");
+  });
+});
+
+describe("flashcardBackImproveSystemPrompt", () => {
+  it("requires always producing an improved version", () => {
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "You MUST produce a different, improved version.",
+    );
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "Never echo the original back unchanged.",
+    );
+  });
+
+  it("forbids inventing new facts", () => {
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "Do not invent facts not implied by the original back.",
+    );
+  });
+
+  it("requires matching the language of the front", () => {
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "Match the language of the front.",
+    );
+  });
+
+  it("bans labels and wrappers in output", () => {
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      'Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", "Key points:", or "Improved:".',
+    );
+  });
+
+  it("includes good and bad improvement examples", () => {
+    expect(flashcardBackImproveSystemPrompt).toContain("Good improvements:");
+    expect(flashcardBackImproveSystemPrompt).toContain("Bad improvements:");
+    expect(flashcardBackImproveSystemPrompt).toContain("Current back:");
+    expect(flashcardBackImproveSystemPrompt).toContain("Improved:");
   });
 });

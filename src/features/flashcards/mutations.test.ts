@@ -29,6 +29,7 @@ const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
 const countFlashcardsBySubjectForUserMock = vi.fn();
 const getActiveSubjectRecordForUserMock = vi.fn();
+const getActiveSubjectByIdForUserMock = vi.fn();
 const hasDuplicateFlashcardFrontForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 
@@ -62,10 +63,12 @@ vi.mock("@/features/flashcards/queries", () => ({
 
 vi.mock("@/features/subjects/queries", () => ({
   getActiveSubjectRecordForUser: getActiveSubjectRecordForUserMock,
+  getActiveSubjectByIdForUser: getActiveSubjectByIdForUserMock,
 }));
 
 vi.mock("@/features/flashcards/ai-service", () => ({
   generateFlashcardBackForUser: vi.fn(),
+  improveFlashcardBackForUser: vi.fn(),
 }));
 
 vi.mock("@/features/flashcards/fsrs", () => ({
@@ -579,5 +582,130 @@ describe("bulkMoveFlashcardsForUser", () => {
       "user-1",
       "subject-3",
     );
+  });
+});
+
+describe("generateFlashcardBackForUserInput", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("calls generate when currentBack is absent", async () => {
+    const { generateFlashcardBackForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    vi.mocked(generateFlashcardBackForUser).mockResolvedValueOnce({
+      success: true,
+      back: "<p>Generated back</p>",
+    });
+    getActiveSubjectByIdForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      name: "Biology",
+    });
+
+    const result = await generateFlashcardBackForUserInput("user-1", {
+      subjectId: "subject-1",
+      front: "<p>What is ATP?</p>",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      back: "<p>Generated back</p>",
+    });
+    expect(generateFlashcardBackForUser).toHaveBeenCalledWith({
+      userId: "user-1",
+      subjectName: "Biology",
+      front: "<p>What is ATP?</p>",
+    });
+  });
+
+  it("calls improve when currentBack is present", async () => {
+    const { improveFlashcardBackForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    vi.mocked(improveFlashcardBackForUser).mockResolvedValueOnce({
+      success: true,
+      back: "<p>Improved back</p>",
+    });
+    getActiveSubjectByIdForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      name: "Biology",
+    });
+
+    const result = await generateFlashcardBackForUserInput("user-1", {
+      subjectId: "subject-1",
+      front: "<p>What is ATP?</p>",
+      currentBack: "<p>ATP stores energy.</p>",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      back: "<p>Improved back</p>",
+    });
+    expect(improveFlashcardBackForUser).toHaveBeenCalledWith({
+      userId: "user-1",
+      subjectName: "Biology",
+      front: "<p>What is ATP?</p>",
+      currentBack: "<p>ATP stores energy.</p>",
+    });
+  });
+
+  it("returns notFound when subject does not exist", async () => {
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    getActiveSubjectByIdForUserMock.mockResolvedValueOnce(null);
+
+    const result = await generateFlashcardBackForUserInput("user-1", {
+      subjectId: "nonexistent",
+      front: "<p>Front</p>",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "subjects.notFound",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+  });
+
+  it("returns ai error when improve service fails", async () => {
+    const { improveFlashcardBackForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    vi.mocked(improveFlashcardBackForUser).mockResolvedValueOnce({
+      success: false,
+      errorCode: "flashcards.ai.notConfigured",
+    });
+    getActiveSubjectByIdForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      name: "Biology",
+    });
+
+    const result = await generateFlashcardBackForUserInput("user-1", {
+      subjectId: "subject-1",
+      front: "<p>Front</p>",
+      currentBack: "<p>Existing back</p>",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "flashcards.ai.notConfigured",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
   });
 });

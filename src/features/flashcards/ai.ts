@@ -5,6 +5,7 @@ import { generateStructuredOutput } from "@/lib/ai/generate-structured";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 
 const MAX_BACK_TOKENS = 100;
+const IMPROVE_MAX_TOKENS = 300;
 
 const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(400),
@@ -105,6 +106,67 @@ Back:
 Answer: Domain Name System.
 `;
 
+export const flashcardBackImproveSystemPrompt = `You are rewriting a flashcard back to be significantly better. You MUST produce a different, improved version. Never echo the original back unchanged.
+
+Rules:
+- Always rewrite the content. If the original is a list of fragments, convert to a proper structured list with complete, testable points.
+- If the original is already well-structured, improve precision, remove redundancy, and sharpen each point.
+- If the answer is a single atomic fact, output one concise sentence only.
+- Otherwise output a list with 3 to 5 lines.
+- In list mode, every line must start with "- ".
+- In list mode, each line must be one complete, directly testable point.
+- In list mode, do not write any text before or after the list.
+- In list mode, do not use inline separators like " - " inside a line.
+- In list mode, do not use numbering.
+- Do not use HTML tags. Output plain text only.
+- Do not repeat, restate, or paraphrase the front.
+- Do not start with generic definition wrappers such as "An approach where...", "A method that...", or "It is...".
+- Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", "Key points:", or "Improved:".
+- Do not add filler, disclaimers, study tips, or long explanations.
+- Do not invent facts not implied by the original back.
+- Match the language of the front. If the front is in Portuguese, respond in Portuguese. If the front is in English, respond in English.
+
+Subject context is allowed only as background context.
+
+Good improvements:
+Front: Componentes se comunicam trocando mensagens
+Current back: Sender and receiver are decoupled (no direct call). Communication can be asynchronous. Focus: loose coupling and scalability.
+Improved:
+- Emissor e receptor se comunicam por mensagens sem referências diretas
+- Mensagens são enfileiradas ou roteadas por um intermediário
+- Componentes operam de forma independente e processam mensagens de forma assíncrona
+- O desacoplamento permite escalabilidade horizontal e deploy independente
+
+Front: Observable pattern
+Current back: Observable: Source of events. Observers: Register interests on observable. Event occur → observable call the defined function for each observers. func(event);
+Improved:
+- Observable é uma fonte que emite eventos para observadores registrados
+- Observadores se inscrevem para receber notificações quando eventos ocorrem
+- Quando um evento dispara, o observable invoca a função callback de cada observador
+- Permite programação reativa e orientada a eventos sem acoplamento forte
+
+Front: O que significa DNS?
+Current back: Domain Name System.
+Improved:
+Domain Name System.
+
+Front: What is a CPU?
+Current back: The central processing unit is the brain of the computer that executes instructions.
+Improved:
+- Executes program instructions
+- Performs arithmetic and logic operations
+- Coordinates data flow between components
+
+Bad improvements:
+Front: O que significa DNS?
+Current back: Domain Name System.
+Improved: Here is a detailed explanation of DNS which is a very important system.
+
+Front: What is DNS?
+Current back: Resolves domain names to IP addresses.
+Improved: DNS is a complex distributed system that has many components and works in many different ways.
+`;
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -123,6 +185,8 @@ const LABEL_PREFIX_RE = /^(Back:|Answer:|Definition:|Response:)\s*/i;
 const PROSE_HEADER_RE =
   /^(Here (?:are|is)\s+(?:the\s+)?(?:key\s+)?(?:points?|answer)|Key points?|Summary|Definition)\s*:\s*\n(?=(?:[-*]\s+|\d+\.\s+))/i;
 
+const INLINE_BULLET_RE = /(?<!\n) - /g;
+
 export function normalizeGeneratedBack(value: string): string {
   let normalized = value.replaceAll("\r\n", "\n").trim();
 
@@ -132,7 +196,10 @@ export function normalizeGeneratedBack(value: string): string {
     normalized = normalized.replace(LABEL_PREFIX_RE, "").trim();
   } while (normalized !== prev);
 
-  return normalized.replace(PROSE_HEADER_RE, "").trim();
+  normalized = normalized.replace(PROSE_HEADER_RE, "").trim();
+  normalized = normalized.replace(INLINE_BULLET_RE, "\n- ");
+
+  return normalized;
 }
 
 type BlockType = "bullet" | "ordered" | "paragraph";
@@ -198,6 +265,18 @@ export function buildGenerateFlashcardBackPrompt(input: {
   ].join("\n");
 }
 
+export function buildImproveFlashcardBackPrompt(input: {
+  subjectName: string;
+  front: string;
+  currentBack: string;
+}): string {
+  return [
+    `Subject context: ${input.subjectName}`,
+    `Front: ${input.front}`,
+    `Current back: ${input.currentBack}`,
+  ].join("\n");
+}
+
 export async function generateFlashcardBackContent(input: {
   settings: ResolvedUserAiSettings;
   subjectName: string;
@@ -214,6 +293,39 @@ export async function generateFlashcardBackContent(input: {
       front: frontText,
     }),
     maxOutputTokens: MAX_BACK_TOKENS,
+  });
+
+  const back = plainTextToRichText(normalizeGeneratedBack(output.backText));
+  const parsedBack = flashcardBackSchema.safeParse(back);
+
+  if (!parsedBack.success) {
+    throw new Error(
+      `Invalid flashcard back generated: ${parsedBack.error.message}`,
+    );
+  }
+
+  return parsedBack.data;
+}
+
+export async function improveFlashcardBackContent(input: {
+  settings: ResolvedUserAiSettings;
+  subjectName: string;
+  front: string;
+  currentBack: string;
+}): Promise<string> {
+  const frontText = normalizeLine(richTextToPlainText(input.front));
+  const backText = normalizeLine(richTextToPlainText(input.currentBack));
+
+  const output = await generateStructuredOutput({
+    settings: input.settings,
+    schema: generatedFlashcardBackSchema,
+    system: flashcardBackImproveSystemPrompt,
+    prompt: buildImproveFlashcardBackPrompt({
+      subjectName: input.subjectName,
+      front: frontText,
+      currentBack: backText,
+    }),
+    maxOutputTokens: IMPROVE_MAX_TOKENS,
   });
 
   const back = plainTextToRichText(normalizeGeneratedBack(output.backText));

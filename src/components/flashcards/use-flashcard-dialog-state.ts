@@ -61,6 +61,8 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const tErrors = useTranslations("ServerActions");
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isGeneratingBack, setIsGeneratingBack] = useState(false);
+  const [previousBack, setPreviousBack] = useState<string | null>(null);
+  const [proposedBack, setProposedBack] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingDuplicateFront, setIsCheckingDuplicateFront] =
     useState(false);
@@ -76,6 +78,15 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   useEffect(() => {
     latestDuplicateCheckVersionRef.current = duplicateCheckVersion;
   }, [duplicateCheckVersion]);
+
+  const previousFrontRef = useRef(currentValues.front);
+  useEffect(() => {
+    if (previousFrontRef.current !== currentValues.front) {
+      previousFrontRef.current = currentValues.front;
+      setPreviousBack(null);
+      setProposedBack(null);
+    }
+  }, [currentValues.front]);
 
   useEffect(() => {
     if (
@@ -172,7 +183,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       return;
     }
 
-    if (form.formState.isDirty && !isSubmitting) {
+    if ((form.formState.isDirty || proposedBack) && !isSubmitting) {
       setDiscardDialogOpen(true);
       return;
     }
@@ -185,6 +196,20 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   async function handleSubmit(data: TValues) {
     if (isDuplicateFront || isCheckingDuplicateFront || isSubmitting) {
       return;
+    }
+
+    if (proposedBack) {
+      form.setValue(
+        "back" as Path<TValues>,
+        proposedBack as PathValue<TValues, Path<TValues>>,
+        {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        },
+      );
+      setPreviousBack(null);
+      setProposedBack(null);
     }
 
     setIsSubmitting(true);
@@ -220,12 +245,14 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }
 
   async function handleGenerateBack() {
-    if (
-      !hasRichTextContent(currentValues.front) ||
-      hasRichTextContent(currentValues.back) ||
-      isGeneratingBack
-    ) {
+    const hasBack = hasRichTextContent(currentValues.back);
+
+    if (!hasRichTextContent(currentValues.front) || isGeneratingBack) {
       return;
+    }
+
+    if (hasBack) {
+      setPreviousBack(currentValues.back);
     }
 
     setIsGeneratingBack(true);
@@ -233,30 +260,56 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     const result = await generateFlashcardBack({
       subjectId: currentValues.subjectId,
       front: currentValues.front,
+      currentBack: hasBack ? currentValues.back : undefined,
     });
 
     setIsGeneratingBack(false);
 
     if (!result.success) {
+      setPreviousBack(null);
+      setProposedBack(null);
       toast.error(resolveActionErrorMessage(result, tErrors));
       return;
     }
 
+    if (hasBack) {
+      setProposedBack(result.back);
+    } else {
+      form.setValue(
+        "back" as Path<TValues>,
+        result.back as PathValue<TValues, Path<TValues>>,
+        {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        },
+      );
+    }
+  }
+
+  function handleAcceptBack() {
+    if (!proposedBack) return;
     form.setValue(
       "back" as Path<TValues>,
-      result.back as PathValue<TValues, Path<TValues>>,
+      proposedBack as PathValue<TValues, Path<TValues>>,
       {
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: true,
       },
     );
+    setPreviousBack(null);
+    setProposedBack(null);
   }
 
-  const canGenerateBack =
+  function handleRejectBack() {
+    setPreviousBack(null);
+    setProposedBack(null);
+  }
+
+  const canUseAiBack =
     currentValues.subjectId.length > 0 &&
     hasRichTextContent(currentValues.front) &&
-    !hasRichTextContent(currentValues.back) &&
     !isGeneratingBack &&
     !isSubmitting;
 
@@ -265,11 +318,13 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     setDiscardDialogOpen,
     isGeneratingBack,
     isSubmitting,
+    previousBack,
+    proposedBack,
     keepFrontAfterSubmit,
     setKeepFrontAfterSubmit,
     keepBackAfterSubmit,
     setKeepBackAfterSubmit,
-    canGenerateBack,
+    canUseAiBack,
     isDuplicateFront,
     isCheckingDuplicateFront,
     duplicateFrontMessage: tErrors("flashcards.duplicateFront"),
@@ -277,5 +332,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     handleOpenChange,
     handleSubmit,
     handleGenerateBack,
+    handleAcceptBack,
+    handleRejectBack,
   };
 }

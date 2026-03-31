@@ -1,7 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/index";
 import { flashcard } from "@/db/schema";
-import { generateFlashcardBackForUser } from "@/features/flashcards/ai-service";
+import {
+  generateFlashcardBackForUser,
+  improveFlashcardBackForUser,
+} from "@/features/flashcards/ai-service";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   countFlashcardsBySubjectForUser,
@@ -214,6 +217,18 @@ export async function editFlashcardForUser(
   }
 }
 
+function mapAiServiceResult(
+  result:
+    | { success: true; back: string }
+    | { success: false; errorCode: string },
+): GenerateFlashcardBackResult {
+  if (!result.success) {
+    return actionError(result.errorCode);
+  }
+
+  return { success: true, back: result.back };
+}
+
 export async function generateFlashcardBackForUserInput(
   userId: string,
   data: GenerateFlashcardBackForm,
@@ -227,17 +242,24 @@ export async function generateFlashcardBackForUserInput(
     return actionError("subjects.notFound");
   }
 
+  if (data.currentBack) {
+    const result = await improveFlashcardBackForUser({
+      userId,
+      subjectName: existingSubject.name,
+      front: data.front,
+      currentBack: data.currentBack,
+    });
+
+    return mapAiServiceResult(result);
+  }
+
   const result = await generateFlashcardBackForUser({
     userId,
     subjectName: existingSubject.name,
     front: data.front,
   });
 
-  if (!result.success) {
-    return actionError(result.errorCode);
-  }
-
-  return { success: true, back: result.back };
+  return mapAiServiceResult(result);
 }
 
 export async function deleteFlashcardForUser(

@@ -592,7 +592,12 @@
     "keep_back_off": "Clear back after submit",
     "generate_back": "Generate with AI",
     "generating_back": "Generating...",
-    "submitting": "Creating...",
+    "improve_back": "Improve with AI",
+    "improving_back": "Improving...",
+    "original_back_label": "Original",
+    "proposed_back_label": "Proposed",
+    "accept_back": "Accept",
+    "reject_back": "Reject",
     "submit": "Create Flashcard"
   },
   "EditFlashcardDialog": {
@@ -605,6 +610,12 @@
     "field_back_placeholder": "e.g. Process plants use to convert light into energy.",
     "generate_back": "Generate with AI",
     "generating_back": "Generating...",
+    "improve_back": "Improve with AI",
+    "improving_back": "Improving...",
+    "original_back_label": "Original",
+    "proposed_back_label": "Proposed",
+    "accept_back": "Accept",
+    "reject_back": "Reject",
     "submit": "Save Changes"
   },
   "DeleteFlashcardDialog": {

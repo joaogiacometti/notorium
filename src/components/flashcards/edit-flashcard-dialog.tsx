@@ -65,7 +65,7 @@ export function EditFlashcardDialog({
       onDiscard={dialog.handleDiscardChanges}
       isGeneratingBack={dialog.isGeneratingBack}
       isSubmitting={dialog.isSubmitting}
-      canGenerateBack={dialog.canGenerateBack}
+      canUseAiBack={dialog.canUseAiBack}
       onGenerateBack={dialog.handleGenerateBack}
       keepFrontAfterSubmit={dialog.keepFrontAfterSubmit}
       onKeepFrontAfterSubmitChange={dialog.setKeepFrontAfterSubmit}
@@ -74,6 +74,10 @@ export function EditFlashcardDialog({
       isCheckingDuplicateFront={dialog.isCheckingDuplicateFront}
       isDuplicateFront={dialog.isDuplicateFront}
       duplicateFrontMessage={dialog.duplicateFrontMessage}
+      previousBack={dialog.previousBack}
+      proposedBack={dialog.proposedBack}
+      onAcceptBack={dialog.handleAcceptBack}
+      onRejectBack={dialog.handleRejectBack}
     />
   );
 }

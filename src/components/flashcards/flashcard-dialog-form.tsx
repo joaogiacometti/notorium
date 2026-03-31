@@ -7,6 +7,7 @@ import {
   type FieldPath,
   type UseFormReturn,
 } from "react-hook-form";
+import { FlashcardBackDiff } from "@/components/flashcards/flashcard-back-diff";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -32,9 +33,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type {
-  CreateFlashcardForm,
-  EditFlashcardForm,
+import {
+  type CreateFlashcardForm,
+  type EditFlashcardForm,
+  hasRichTextContent,
 } from "@/features/flashcards/validation";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
 
@@ -54,8 +56,12 @@ interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
   onDiscard: () => void;
   isGeneratingBack: boolean;
   isSubmitting: boolean;
-  canGenerateBack: boolean;
+  canUseAiBack: boolean;
   onGenerateBack: () => Promise<void>;
+  previousBack: string | null;
+  proposedBack: string | null;
+  onAcceptBack: () => void;
+  onRejectBack: () => void;
   keepFrontAfterSubmit: boolean;
   onKeepFrontAfterSubmitChange: (value: boolean) => void;
   keepBackAfterSubmit: boolean;
@@ -79,8 +85,12 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   onDiscard,
   isGeneratingBack,
   isSubmitting,
-  canGenerateBack,
+  canUseAiBack,
   onGenerateBack,
+  previousBack,
+  proposedBack,
+  onAcceptBack,
+  onRejectBack,
   keepFrontAfterSubmit,
   onKeepFrontAfterSubmitChange,
   keepBackAfterSubmit,
@@ -104,6 +114,10 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
 
   const pendingSubmitLabel =
     mode === "create" ? tCommon("creating") : tCommon("saving");
+
+  const hasBack = hasRichTextContent(form.watch("back" as FieldPath<TValues>));
+  const generateLabel = hasBack ? t("improve_back") : t("generate_back");
+  const generatingLabel = hasBack ? t("improving_back") : t("generating_back");
 
   return (
     <>
@@ -250,7 +264,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                               size="xs"
                               className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
                               onClick={() => void onGenerateBack()}
-                              disabled={!canGenerateBack}
+                              disabled={!canUseAiBack}
                             >
                               {isGeneratingBack ? (
                                 <Loader2 className="size-4 animate-spin" />
@@ -258,8 +272,8 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                                 <Sparkles className="size-3.5" />
                               )}
                               {isGeneratingBack
-                                ? t("generating_back")
-                                : t("generate_back")}
+                                ? generatingLabel
+                                : generateLabel}
                             </Button>
                             {mode === "create" ? (
                               <Button
@@ -294,15 +308,28 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                           </div>
                         </div>
                       </div>
-                      <TiptapEditor
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        placeholder={t("field_back_placeholder")}
-                        id={`${formId}-back`}
-                        aria-invalid={fieldState.invalid}
-                        contentClassName="max-h-[10lh]"
-                        onCtrlEnter={handleCtrlEnter}
-                      />
+                      {proposedBack && previousBack ? (
+                        <FlashcardBackDiff
+                          previousBack={previousBack}
+                          proposedBack={proposedBack}
+                          originalLabel={t("original_back_label")}
+                          proposedLabel={t("proposed_back_label")}
+                          acceptLabel={t("accept_back")}
+                          rejectLabel={t("reject_back")}
+                          onAccept={onAcceptBack}
+                          onReject={onRejectBack}
+                        />
+                      ) : (
+                        <TiptapEditor
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          placeholder={t("field_back_placeholder")}
+                          id={`${formId}-back`}
+                          aria-invalid={fieldState.invalid}
+                          contentClassName="max-h-[10lh]"
+                          onCtrlEnter={handleCtrlEnter}
+                        />
+                      )}
                       {fieldState.invalid ? (
                         <FieldError errors={[fieldState.error]} />
                       ) : null}

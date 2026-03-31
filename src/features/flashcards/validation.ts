@@ -49,6 +49,7 @@ export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
 export const generateFlashcardBackSchema = z.object({
   subjectId: z.string().min(1),
   front: flashcardFrontSchema,
+  currentBack: flashcardBackSchema.optional(),
 });
 
 export type GenerateFlashcardBackForm = z.infer<
