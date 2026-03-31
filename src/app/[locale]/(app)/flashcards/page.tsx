@@ -46,7 +46,6 @@ export default async function FlashcardsPage({
         headerMeta={headerMeta}
         manageLabel={t("manage")}
         reviewLabel={t("review")}
-        subjectId={scopedSubjectId}
         title={t("title")}
       >
         <FlashcardReviewClient
@@ -75,7 +74,6 @@ export default async function FlashcardsPage({
       description={t("description")}
       manageLabel={t("manage")}
       reviewLabel={t("review")}
-      subjectId={scopedSubjectId}
       title={t("title")}
     >
       <FlashcardsManager

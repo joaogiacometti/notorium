@@ -227,6 +227,8 @@
     "empty_title": "Tudo em dia",
     "empty_description": "Não há flashcards vencidos para revisar.",
     "subject_prefix": "Matéria:",
+    "subject_selector_all": "Todos os assuntos",
+    "subject_selector_label": "Filtrar por assunto",
     "front_label": "Frente",
     "back_label": "Verso",
     "edit": "Editar",

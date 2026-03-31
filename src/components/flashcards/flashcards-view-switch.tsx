@@ -8,34 +8,25 @@ interface FlashcardsViewSwitchProps {
   currentView: FlashcardsView;
   manageLabel: string;
   reviewLabel: string;
-  subjectId?: string;
 }
 
-function getViewHref(view: FlashcardsView, subjectId?: string) {
-  const params = new URLSearchParams();
-  params.set("view", view);
-
-  if (subjectId) {
-    params.set("subjectId", subjectId);
-  }
-
-  return `/flashcards?${params.toString()}`;
+function getViewHref(view: FlashcardsView) {
+  return `/flashcards?view=${view}`;
 }
 
 export function FlashcardsViewSwitch({
   currentView,
   manageLabel,
   reviewLabel,
-  subjectId,
 }: Readonly<FlashcardsViewSwitchProps>) {
   return (
     <Tabs value={currentView}>
       <TabsList>
         <TabsTrigger value="review" asChild>
-          <Link href={getViewHref("review", subjectId)}>{reviewLabel}</Link>
+          <Link href={getViewHref("review")}>{reviewLabel}</Link>
         </TabsTrigger>
         <TabsTrigger value="manage" asChild>
-          <Link href={getViewHref("manage", subjectId)}>{manageLabel}</Link>
+          <Link href={getViewHref("manage")}>{manageLabel}</Link>
         </TabsTrigger>
       </TabsList>
     </Tabs>

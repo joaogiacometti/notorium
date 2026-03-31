@@ -28,6 +28,13 @@ import { SubjectText } from "@/components/shared/subject-text";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {
   getFlashcardReviewShortcutAction,
@@ -40,6 +47,7 @@ import {
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
+import { useRouter } from "@/i18n/routing";
 import type {
   FlashcardReviewState,
   SubjectEntity,
@@ -92,6 +100,13 @@ export function FlashcardReviewClient({
   const [isPending, startTransition] = useTransition();
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
+  const router = useRouter();
+  const [selectedSubjectId, setSelectedSubjectId] = useState(subjectId);
+  const subjectChangeRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    setSelectedSubjectId(subjectId);
+  }, [subjectId]);
 
   const currentCard = reviewState.cards[0] ?? null;
 
@@ -153,6 +168,35 @@ export function FlashcardReviewClient({
     if (shouldRefillFlashcardReviewState(nextState)) {
       void refillReviewState();
     }
+  }
+
+  function handleSubjectChange(value: string) {
+    const newSubjectId = value === "all" ? undefined : value;
+    setSelectedSubjectId(newSubjectId);
+
+    const params = new URLSearchParams();
+    params.set("view", "review");
+    if (newSubjectId) {
+      params.set("subjectId", newSubjectId);
+    }
+    router.replace(`/flashcards?${params.toString()}`);
+
+    const requestId = subjectChangeRequestIdRef.current + 1;
+    subjectChangeRequestIdRef.current = requestId;
+
+    startTransition(async () => {
+      const nextState = await getFlashcardReviewState({
+        subjectId: newSubjectId,
+        limit: reviewBatchLimit,
+      });
+
+      if (subjectChangeRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      commitReviewState(nextState);
+      setRevealed(false);
+    });
   }
 
   async function refillReviewState(retryCount = 0) {
@@ -419,6 +463,29 @@ export function FlashcardReviewClient({
 
   const content = (
     <>
+      <div className="mb-3 flex min-w-0 items-center gap-3">
+        <Select
+          value={selectedSubjectId ?? "all"}
+          onValueChange={handleSubjectChange}
+        >
+          <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
+            <SelectValue placeholder={t("subject_selector_label")} />
+          </SelectTrigger>
+          <SelectContent align="start">
+            <SelectItem value="all">{t("subject_selector_all")}</SelectItem>
+            {subjects.map((subject) => (
+              <SelectItem key={subject.id} value={subject.id}>
+                <SubjectText
+                  value={subject.name}
+                  mode="truncate"
+                  className="block max-w-full"
+                />
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {embedded ? null : (
         <div
           className={`flex min-w-0 items-start gap-4 ${currentCard ? "mb-10" : "mb-6"}`}

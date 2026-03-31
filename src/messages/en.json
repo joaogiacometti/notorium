@@ -227,6 +227,8 @@
     "empty_title": "All caught up",
     "empty_description": "There are no due flashcards to review.",
     "subject_prefix": "Subject:",
+    "subject_selector_all": "All subjects",
+    "subject_selector_label": "Filter by subject",
     "front_label": "Front",
     "back_label": "Back",
     "edit": "Edit",
