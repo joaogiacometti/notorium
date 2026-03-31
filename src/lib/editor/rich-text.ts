@@ -6,6 +6,18 @@ export function richTextToPlainText(value: string): string {
     .trim();
 }
 
+export function richTextToPlainTextWithImagePlaceholders(
+  value: string,
+): string {
+  const withImagePlaceholders = value.replaceAll(/<img\b[^>]*>/gi, " [Image] ");
+
+  return withImagePlaceholders
+    .replaceAll(/<[^>]*>/g, " ")
+    .replaceAll("&nbsp;", " ")
+    .replaceAll(/\s+/g, " ")
+    .trim();
+}
+
 function normalizeImageSourceForUniqueness(value: string): string {
   try {
     return new URL(value).toString();

@@ -177,6 +177,14 @@
     "search_placeholder": "Search front, back, or subject...",
     "subject_filter_placeholder": "Filter by Subject",
     "subject_all": "All Subjects",
+    "validate_button": "Validate",
+    "validation_issues_count": "{count} {count, plural, one {card} other {cards}} with issues",
+    "exit_validation": "Exit Validation",
+    "validate_again": "Validate Again",
+    "validate_again_title": "Re-validate Flashcards?",
+    "validate_again_description": "Re-validate {count} {count, plural, one {flashcard} other {flashcards}}?",
+    "validate_again_confirm": "Re-validate",
+    "validating": "Validating...",
     "new_flashcard": "New Flashcard",
     "results_count": "{filtered} of {total} flashcards",
     "selected_count": "{count, plural, one {# selected} other {# selected}}",
@@ -767,6 +775,11 @@
         "notConfigured": "AI flashcard generation is not configured. Add your OpenRouter key and model in your account page.",
         "unavailable": "AI flashcard generation is temporarily unavailable."
       },
+      "validation": {
+        "notConfigured": "AI validation is not configured. Add your OpenRouter key and model in your account page.",
+        "unavailable": "AI validation is temporarily unavailable. Please try again later.",
+        "noCards": "No flashcards to validate."
+      },
       "review": {
         "invalidData": "Invalid review input.",
         "notFound": "Flashcard not found for review.",
@@ -860,6 +873,28 @@
       "queryMaxLength": "Search query must be at most 200 characters."
     }
   },
+  "ValidateFlashcardsDialog": {
+    "title": "Validate Flashcards",
+    "description": "Use AI to check for incorrect information, confusing content, or duplicate cards.",
+    "field_subject": "Subject",
+    "option_all_subjects": "All Subjects",
+    "option_subject": "Specific subject",
+    "confirm": "Validate",
+    "validating": "Validating...",
+    "error_no_cards": "No flashcards to validate.",
+    "error_too_many_cards": "Too many flashcards. Maximum 500 cards per validation.",
+    "success_no_issues": "No issues found! All flashcards look good.",
+    "success_issues_found": "{count} {count, plural, one {card} other {cards}} with issues found."
+  },
+  "FlashcardValidation": {
+    "no_issues_description": "All validated flashcards look good!",
+    "table_front": "Front",
+    "table_issue": "Issue",
+    "table_subject": "Subject",
+    "validate_again": "Validate Again",
+    "prev": "Previous",
+    "next": "Next"
+  },
   "Shortcuts": {
     "title": "Keyboard shortcuts",
     "description": "Quick keyboard shortcuts to navigate the app faster.",
@@ -897,6 +932,7 @@
   "Common": {
     "save": "Save",
     "cancel": "Cancel",
+    "close": "Close",
     "creating": "Creating...",
     "saving": "Saving...",
     "deleting": "Deleting...",

@@ -177,6 +177,14 @@
     "search_placeholder": "Buscar frente, verso ou matéria...",
     "subject_filter_placeholder": "Filtrar por Matéria",
     "subject_all": "Todas as Matérias",
+    "validate_button": "Validar",
+    "validation_issues_count": "{count} {count, plural, one {cartão} other {cartões}} com problemas",
+    "exit_validation": "Sair da Validação",
+    "validate_again": "Validar Novamente",
+    "validate_again_title": "Revalidar Flashcards?",
+    "validate_again_description": "Revalidar {count} {count, plural, one {flashcard} other {flashcards}}?",
+    "validate_again_confirm": "Revalidar",
+    "validating": "Validando...",
     "new_flashcard": "Novo Flashcard",
     "results_count": "{filtered} de {total} flashcards",
     "selected_count": "{count, plural, one {# selecionado} other {# selecionados}}",
@@ -767,6 +775,11 @@
         "notConfigured": "A geracao de flashcards com IA nao esta configurada. Adicione sua chave e modelo da OpenRouter na pagina da sua conta.",
         "unavailable": "A geracao de flashcards com IA esta temporariamente indisponivel."
       },
+      "validation": {
+        "notConfigured": "A validação com IA não está configurada. Adicione sua chave e modelo da OpenRouter na página da sua conta.",
+        "unavailable": "A validação com IA está temporariamente indisponível. Tente novamente mais tarde.",
+        "noCards": "Nenhum flashcard para validar."
+      },
       "review": {
         "invalidData": "Dados de revisão inválidos.",
         "notFound": "Flashcard não encontrado para revisão.",
@@ -860,6 +873,28 @@
       "queryMaxLength": "A busca deve ter no maximo 200 caracteres."
     }
   },
+  "ValidateFlashcardsDialog": {
+    "title": "Validar Flashcards",
+    "description": "Use IA para verificar informações incorretas, conteúdo confuso ou cartões duplicados.",
+    "field_subject": "Matéria",
+    "option_all_subjects": "Todas as Matérias",
+    "option_subject": "Matéria específica",
+    "confirm": "Validar",
+    "validating": "Validando...",
+    "error_no_cards": "Nenhum flashcard para validar.",
+    "error_too_many_cards": "Muitos flashcards. Máximo de 500 cartões por validação.",
+    "success_no_issues": "Nenhum problema encontrado! Todos os flashcards parecem bons.",
+    "success_issues_found": "{count} {count, plural, one {cartão} other {cartões}} com problemas encontrado."
+  },
+  "FlashcardValidation": {
+    "no_issues_description": "Todos os flashcards validados parecem bons!",
+    "table_front": "Frente",
+    "table_issue": "Problema",
+    "table_subject": "Matéria",
+    "validate_again": "Validar Novamente",
+    "prev": "Anterior",
+    "next": "Próximo"
+  },
   "Shortcuts": {
     "title": "Atalhos de teclado",
     "description": "Atalhos de teclado rapidos para navegar no aplicativo mais rapido.",
@@ -897,6 +932,7 @@
   "Common": {
     "save": "Salvar",
     "cancel": "Cancelar",
+    "close": "Fechar",
     "creating": "Criando...",
     "saving": "Salvando...",
     "deleting": "Excluindo...",

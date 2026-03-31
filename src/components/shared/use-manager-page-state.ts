@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 
 interface UseManagerPageStateOptions<TFilter> {
@@ -22,12 +22,14 @@ export function useManagerPageState<TFilter>({
   const [searchQuery, setSearchQueryState] = useState("");
   const resolvedSearchQuery = useDebouncedValue(searchQuery, searchDebounceMs);
   const [filter, setFilterState] = useState(initialFilter);
+  const onInitialFilterChangeRef = useRef(onInitialFilterChange);
+  onInitialFilterChangeRef.current = onInitialFilterChange;
 
   useEffect(() => {
     setFilterState(initialFilter);
     setPageIndex(0);
-    onInitialFilterChange?.(initialFilter);
-  }, [initialFilter, onInitialFilterChange]);
+    onInitialFilterChangeRef.current?.(initialFilter);
+  }, [initialFilter]);
 
   function setSearchQuery(value: string) {
     setSearchQueryState(value);

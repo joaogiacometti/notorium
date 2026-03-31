@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import {
   bulkDeleteFlashcardsForUser,
   bulkMoveFlashcardsForUser,
@@ -10,7 +11,10 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
+  getAllFlashcardIdsForSubject,
+  getAllFlashcardIdsForUser,
   getFlashcardByIdForUser,
+  getFlashcardsByIdsForValidation,
   getFlashcardsManagePageForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
@@ -38,10 +42,15 @@ import {
   type FlashcardsManageQueryInput,
   flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
+  type GetFlashcardIdsForSubjectForm,
   generateFlashcardBackSchema,
+  getFlashcardIdsForSubjectSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
+  type ValidateFlashcardsForm,
+  validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
+import { validateFlashcardsForUser } from "@/features/flashcards/validation-ai-service";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
@@ -251,6 +260,114 @@ export async function getFlashcardForManage(
       }
 
       return { flashcard };
+    },
+  );
+}
+
+export async function getFlashcardIdsForSubject(
+  data: GetFlashcardIdsForSubjectForm,
+): Promise<{ success: true; flashcardIds: string[] } | ActionErrorResult> {
+  return runValidatedUserAction(
+    getFlashcardIdsForSubjectSchema,
+    data,
+    "common.invalidRequest",
+    async (userId, parsedData) => {
+      const flashcardIds = await getAllFlashcardIdsForSubject(
+        userId,
+        parsedData.subjectId,
+      );
+
+      return { success: true, flashcardIds };
+    },
+  );
+}
+
+export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
+  | {
+      success: true;
+      issues: Array<{
+        id: string;
+        issueType: "incorrect" | "confusing" | "duplicate";
+        explanation: string;
+        relatedFlashcardId?: string;
+      }>;
+      flashcards: Array<{
+        id: string;
+        front: string;
+        subjectName: string;
+        subjectId: string;
+      }>;
+    }
+  | ActionErrorResult
+> {
+  return runValidatedUserAction(
+    validateFlashcardsSchema,
+    data,
+    "common.invalidRequest",
+    async (userId, parsedData) => {
+      const flashcards = await getFlashcardsByIdsForValidation(
+        userId,
+        parsedData.flashcardIds,
+      );
+
+      if (flashcards.length === 0) {
+        return actionError("flashcards.validation.noCards");
+      }
+
+      const result = await validateFlashcardsForUser({
+        userId,
+        flashcards,
+      });
+
+      if (!result.success) {
+        return actionError(result.errorCode);
+      }
+
+      const flashcardsMap = new Map(flashcards.map((card) => [card.id, card]));
+
+      const richTextToPlainText = (await import("@/lib/editor/rich-text"))
+        .richTextToPlainText;
+
+      return {
+        success: true,
+        issues: result.validation.issues.map((issue) => {
+          let explanation = issue.explanation;
+          if (issue.relatedFlashcardId) {
+            const relatedCard = flashcardsMap.get(issue.relatedFlashcardId);
+            if (relatedCard) {
+              const frontText = richTextToPlainText(relatedCard.front);
+              const frontPreview = frontText.substring(0, 50);
+              explanation = `${explanation} Similar to: "${frontPreview}${frontText.length > 50 ? "..." : ""}"`;
+            }
+          }
+          return {
+            id: issue.flashcardId,
+            issueType: issue.issueType,
+            explanation,
+            relatedFlashcardId: issue.relatedFlashcardId,
+          };
+        }),
+        flashcards: flashcards.map((card) => ({
+          id: card.id,
+          front: card.front,
+          subjectName: card.subjectName,
+          subjectId: card.subjectId,
+        })),
+      };
+    },
+  );
+}
+
+export async function getAllFlashcardIds(): Promise<
+  { success: true; flashcardIds: string[] } | ActionErrorResult
+> {
+  return runValidatedUserAction(
+    z.object({}),
+    {},
+    "common.invalidRequest",
+    async (userId) => {
+      const flashcardIds = await getAllFlashcardIdsForUser(userId);
+      return { success: true, flashcardIds };
     },
   );
 }

@@ -5,6 +5,7 @@ import {
   normalizeRichTextForRendering,
   normalizeRichTextForUniqueness,
   richTextToPlainText,
+  richTextToPlainTextWithImagePlaceholders,
 } from "@/lib/editor/rich-text";
 
 describe("richTextToPlainText", () => {
@@ -16,6 +17,52 @@ describe("richTextToPlainText", () => {
 
   it("converts non-breaking spaces", () => {
     expect(richTextToPlainText("<p>Hello&nbsp;world</p>")).toBe("Hello world");
+  });
+});
+
+describe("richTextToPlainTextWithImagePlaceholders", () => {
+  it("replaces single image with [Image] placeholder", () => {
+    expect(
+      richTextToPlainTextWithImagePlaceholders(
+        '<p><img src="https://example.com/image.png" alt="test"></p>',
+      ),
+    ).toBe("[Image]");
+  });
+
+  it("replaces multiple images with [Image] placeholders", () => {
+    expect(
+      richTextToPlainTextWithImagePlaceholders(
+        '<p><img src="a.png"><img src="b.png"></p>',
+      ),
+    ).toBe("[Image] [Image]");
+  });
+
+  it("preserves text content alongside image placeholders", () => {
+    expect(
+      richTextToPlainTextWithImagePlaceholders(
+        '<p>Text before <img src="test.png"> text after</p>',
+      ),
+    ).toBe("Text before [Image] text after");
+  });
+
+  it("handles complex mixed content", () => {
+    expect(
+      richTextToPlainTextWithImagePlaceholders(
+        '<p><strong>SMART</strong> objectives:</p><p><img src="smart.png"></p>',
+      ),
+    ).toBe("SMART objectives: [Image]");
+  });
+
+  it("returns empty string for empty content", () => {
+    expect(richTextToPlainTextWithImagePlaceholders("<p></p>")).toBe("");
+  });
+
+  it("normalizes whitespace around image placeholders", () => {
+    expect(
+      richTextToPlainTextWithImagePlaceholders(
+        '<p>  <img src="a.png">  <img src="b.png">  </p>',
+      ),
+    ).toBe("[Image] [Image]");
   });
 });
 

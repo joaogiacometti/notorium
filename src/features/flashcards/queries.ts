@@ -244,3 +244,78 @@ export async function hasDuplicateFlashcardFrontForUser(
 
   return result.length > 0;
 }
+
+export async function getFlashcardsByIdsForValidation(
+  userId: string,
+  flashcardIds: string[],
+): Promise<
+  Array<{
+    id: string;
+    front: string;
+    back: string;
+    subjectName: string;
+    subjectId: string;
+  }>
+> {
+  if (flashcardIds.length === 0) {
+    return [];
+  }
+
+  const results = await db
+    .select({
+      id: flashcard.id,
+      front: flashcard.front,
+      back: flashcard.back,
+      subjectName: subject.name,
+      subjectId: flashcard.subjectId,
+    })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .where(
+      and(
+        inArray(flashcard.id, flashcardIds),
+        eq(flashcard.userId, userId),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
+    );
+
+  return results;
+}
+
+export async function getAllFlashcardIdsForUser(
+  userId: string,
+): Promise<string[]> {
+  const results = await db
+    .select({ id: flashcard.id })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .where(
+      and(
+        eq(flashcard.userId, userId),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
+    )
+    .orderBy(desc(flashcard.updatedAt));
+
+  return results.map((row) => row.id);
+}
+
+export async function getAllFlashcardIdsForSubject(
+  userId: string,
+  subjectId: string,
+): Promise<string[]> {
+  const results = await db
+    .select({ id: flashcard.id })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .where(
+      and(
+        eq(flashcard.userId, userId),
+        eq(flashcard.subjectId, subjectId),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
+    )
+    .orderBy(desc(flashcard.updatedAt));
+
+  return results.map((row) => row.id);
+}

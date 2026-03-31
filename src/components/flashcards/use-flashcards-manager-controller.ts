@@ -5,12 +5,15 @@ import { useEffect, useState, useTransition } from "react";
 import {
   getFlashcardForManage,
   getFlashcardsManagePage,
+  validateFlashcards,
 } from "@/app/actions/flashcards";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardManagePage,
+  FlashcardValidationIssue,
+  FlashcardValidationItem,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 
@@ -48,6 +51,16 @@ export function useFlashcardsManagerController({
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
+  const [validationMode, setValidationMode] = useState(false);
+  const [validationIssues, setValidationIssues] = useState<
+    FlashcardValidationIssue[]
+  >([]);
+  const [validationFlashcards, setValidationFlashcards] = useState<
+    FlashcardValidationItem[]
+  >([]);
+  const [validateDialogOpen, setValidateDialogOpen] = useState(false);
+  const [validateAgainDialogOpen, setValidateAgainDialogOpen] = useState(false);
+  const [isValidatingAgain, setIsValidatingAgain] = useState(false);
   const {
     filter: selectedSubjectId,
     pageIndex,
@@ -160,6 +173,81 @@ export function useFlashcardsManagerController({
     void managePageQuery.refetch();
   }
 
+  function handleValidationStarted(
+    issues: FlashcardValidationIssue[],
+    flashcards: FlashcardValidationItem[],
+  ) {
+    setValidationIssues(issues);
+    setValidationFlashcards(flashcards);
+    setValidationMode(true);
+    setValidateDialogOpen(false);
+  }
+
+  async function handleValidateAgain() {
+    const flashcardIdsToValidate = validationIssues.map((issue) => issue.id);
+
+    if (flashcardIdsToValidate.length === 0) {
+      return;
+    }
+
+    setIsValidatingAgain(true);
+
+    try {
+      const result = await validateFlashcards({
+        flashcardIds: flashcardIdsToValidate,
+      });
+
+      if ("errorCode" in result) {
+        return;
+      }
+
+      setValidationIssues(result.issues);
+      setValidationFlashcards(result.flashcards);
+    } finally {
+      setIsValidatingAgain(false);
+    }
+  }
+
+  async function handleConfirmValidateAgain() {
+    setValidateAgainDialogOpen(false);
+    await handleValidateAgain();
+  }
+
+  function exitValidation() {
+    setValidationMode(false);
+    setValidationIssues([]);
+    setValidationFlashcards([]);
+  }
+
+  function removeValidationFlashcard(flashcardId: string) {
+    setValidationIssues((prev) =>
+      prev.filter((issue) => issue.id !== flashcardId),
+    );
+    setValidationFlashcards((prev) =>
+      prev.filter((card) => card.id !== flashcardId),
+    );
+  }
+
+  function updateValidationFlashcard(updated: {
+    id: string;
+    front: string;
+    subjectName: string;
+    subjectId: string;
+  }) {
+    setValidationFlashcards((prev) =>
+      prev.map((card) => (card.id === updated.id ? updated : card)),
+    );
+  }
+
+  function checkValidationEmpty() {
+    setValidationIssues((prev) => {
+      if (prev.length === 0) {
+        exitValidation();
+      }
+      return prev;
+    });
+  }
+
   return {
     bulkDeleteOpen,
     bulkMoveOpen,
@@ -191,5 +279,20 @@ export function useFlashcardsManagerController({
     total,
     pageSize: managePageSize,
     editingFlashcard: editFlashcardQuery.data,
+    validationMode,
+    validationIssues,
+    validationFlashcards,
+    validateDialogOpen,
+    setValidateDialogOpen,
+    handleValidationStarted,
+    handleValidateAgain,
+    isValidatingAgain,
+    exitValidation,
+    validateAgainDialogOpen,
+    setValidateAgainDialogOpen,
+    handleConfirmValidateAgain,
+    removeValidationFlashcard,
+    updateValidationFlashcard,
+    checkValidationEmpty,
   };
 }

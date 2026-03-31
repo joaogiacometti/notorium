@@ -199,3 +199,25 @@ export type CheckFlashcardDuplicateResult =
       duplicate: boolean;
     }
   | ActionErrorResult;
+
+export interface FlashcardValidationIssue {
+  id: string;
+  issueType: "incorrect" | "confusing" | "duplicate";
+  explanation: string;
+  relatedFlashcardId?: string;
+}
+
+export interface FlashcardValidationItem {
+  id: string;
+  front: string;
+  subjectName: string;
+  subjectId: string;
+}
+
+export type ValidateFlashcardsResult =
+  | {
+      success: true;
+      issues: FlashcardValidationIssue[];
+      flashcards: FlashcardValidationItem[];
+    }
+  | ActionErrorResult;

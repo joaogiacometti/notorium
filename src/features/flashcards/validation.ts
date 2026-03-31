@@ -110,3 +110,21 @@ export const flashcardsManageQuerySchema = z.object({
 export type FlashcardsManageQueryInput = z.infer<
   typeof flashcardsManageQuerySchema
 >;
+
+export const validateFlashcardsSchema = z.object({
+  flashcardIds: z
+    .array(z.string().min(1))
+    .min(1)
+    .max(500)
+    .refine((ids) => new Set(ids).size === ids.length),
+});
+
+export type ValidateFlashcardsForm = z.infer<typeof validateFlashcardsSchema>;
+
+export const getFlashcardIdsForSubjectSchema = z.object({
+  subjectId: z.string().min(1),
+});
+
+export type GetFlashcardIdsForSubjectForm = z.infer<
+  typeof getFlashcardIdsForSubjectSchema
+>;
