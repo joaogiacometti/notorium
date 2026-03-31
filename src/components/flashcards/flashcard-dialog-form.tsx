@@ -6,6 +6,7 @@ import {
   Controller,
   type FieldPath,
   type UseFormReturn,
+  useWatch,
 } from "react-hook-form";
 import { FlashcardBackDiff } from "@/components/flashcards/flashcard-back-diff";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -115,7 +116,11 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   const pendingSubmitLabel =
     mode === "create" ? tCommon("creating") : tCommon("saving");
 
-  const hasBack = hasRichTextContent(form.watch("back" as FieldPath<TValues>));
+  const watchedBack = useWatch({
+    control: form.control,
+    name: "back" as FieldPath<TValues>,
+  });
+  const hasBack = hasRichTextContent(watchedBack);
   const generateLabel = hasBack ? t("improve_back") : t("generate_back");
   const generatingLabel = hasBack ? t("improving_back") : t("generating_back");
 
