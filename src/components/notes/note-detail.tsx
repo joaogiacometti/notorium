@@ -1,16 +1,14 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { LazyEditNoteDialog as EditNoteDialog } from "@/components/notes/lazy-edit-note-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "@/i18n/routing";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatRelativeTime } from "@/lib/dates/format";
 import type { NoteEntity } from "@/lib/server/api-contracts";
 
 interface NoteDetailProps {
@@ -24,9 +22,6 @@ export function NoteDetail({
   backLabel,
   note,
 }: Readonly<NoteDetailProps>) {
-  const t = useTranslations("NoteDetail");
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
   const [, startNavTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
@@ -43,7 +38,7 @@ export function NoteDetail({
             onClick={() => setEditOpen(true)}
           >
             <Pencil className="size-3.5" />
-            {t("edit")}
+            Edit
           </Button>
           <Button
             variant="outline"
@@ -52,22 +47,14 @@ export function NoteDetail({
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" />
-            {t("delete")}
+            Delete
           </Button>
         </>
       }
       backHref={backHref}
       backIcon={ArrowLeft}
       backLabel={backLabel}
-      meta={
-        <span>
-          {t("created_label")}
-          {formatDistanceToNow(new Date(note.createdAt), {
-            addSuffix: true,
-            locale: dateLocale,
-          })}
-        </span>
-      }
+      meta={<span>Created {formatRelativeTime(note.createdAt)}</span>}
       title={note.title}
       titleIcon={FileText}
     >
@@ -80,7 +67,7 @@ export function NoteDetail({
             />
           ) : (
             <p className="text-sm italic text-muted-foreground sm:text-base">
-              {t("empty")}
+              No content yet. Click Edit to add some notes.
             </p>
           )}
         </div>

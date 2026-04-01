@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen } from "lucide-react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { signUpAction } from "@/app/actions/auth";
@@ -17,7 +17,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Link } from "@/i18n/routing";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 import {
@@ -29,8 +28,6 @@ export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const t = useTranslations("SignupForm");
-  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -46,7 +43,7 @@ export function SignupForm({
   async function onSubmit(data: SignupFormValues) {
     const result = await signUpAction(data);
     if (result && !result.success) {
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(resolveActionErrorMessage(result));
     }
   }
 
@@ -61,7 +58,7 @@ export function SignupForm({
           >
             <FieldGroup className="gap-4 md:gap-6">
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">{t("title")}</h1>
+                <h1 className="text-2xl font-bold">Create an account</h1>
               </div>
               <Controller
                 name="name"
@@ -69,13 +66,13 @@ export function SignupForm({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-signup-name">
-                      {t("name_label")}
+                      Full Name
                     </FieldLabel>
                     <Input
                       {...field}
                       id="form-signup-name"
                       type="text"
-                      placeholder={t("name_placeholder")}
+                      placeholder="John Doe"
                       aria-invalid={fieldState.invalid}
                       autoComplete="name"
                     />
@@ -90,14 +87,12 @@ export function SignupForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="form-signup-email">
-                      {t("email_label")}
-                    </FieldLabel>
+                    <FieldLabel htmlFor="form-signup-email">Email</FieldLabel>
                     <Input
                       {...field}
                       id="form-signup-email"
                       type="email"
-                      placeholder={t("email_placeholder")}
+                      placeholder="m@example.com"
                       aria-invalid={fieldState.invalid}
                       autoComplete="email"
                     />
@@ -114,7 +109,7 @@ export function SignupForm({
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-signup-password">
-                        {t("password_label")}
+                        Password
                       </FieldLabel>
                       <Input
                         {...field}
@@ -135,7 +130,7 @@ export function SignupForm({
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-signup-confirm-password">
-                        {t("confirm_password_label")}
+                        Confirm Password
                       </FieldLabel>
                       <Input
                         {...field}
@@ -160,13 +155,13 @@ export function SignupForm({
                 >
                   <AsyncButtonContent
                     pending={isSubmitting}
-                    idleLabel={t("submit")}
-                    pendingLabel={t("submitting")}
+                    idleLabel="Create Account"
+                    pendingLabel="Creating account..."
                   />
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                {t("has_account")} <Link href="/login">{t("sign_in")}</Link>
+                Already have an account? <Link href="/login">Sign in</Link>
               </FieldDescription>
             </FieldGroup>
           </form>

@@ -185,12 +185,6 @@ describe("flashcardBackImproveSystemPrompt", () => {
     );
   });
 
-  it("requires matching the language of the front", () => {
-    expect(flashcardBackImproveSystemPrompt).toContain(
-      "Match the language of the front.",
-    );
-  });
-
   it("bans labels and wrappers in output", () => {
     expect(flashcardBackImproveSystemPrompt).toContain(
       'Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", "Key points:", or "Improved:".',

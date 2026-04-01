@@ -1,6 +1,6 @@
 "use client";
 
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import {
   ArrowLeft,
   CalendarDays,
@@ -8,7 +8,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
@@ -18,8 +18,7 @@ import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
-import { useRouter } from "@/i18n/routing";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatIsoDate, formatRelativeTime } from "@/lib/dates/format";
 import type {
   AssessmentDetailEntity,
   AssessmentEntity,
@@ -33,16 +32,12 @@ interface AssessmentDetailProps {
   detail: AssessmentDetailEntity;
 }
 
-function formatDate(
-  value: Date | string | null,
-  dateLocale: ReturnType<typeof getDateFnsLocale>,
-  emptyLabel: string,
-) {
+function formatDate(value: Date | string | null, emptyLabel: string) {
   if (!value) {
     return emptyLabel;
   }
 
-  return format(new Date(value), "PPP", { locale: dateLocale });
+  return format(new Date(value), "PPP");
 }
 
 function formatNumber(value: string | null, suffix = "") {
@@ -60,10 +55,6 @@ export function AssessmentDetail({
   backLabel,
   detail,
 }: Readonly<AssessmentDetailProps>) {
-  const t = useTranslations("AssessmentDetail");
-  const tAssessment = useTranslations("AssessmentItemCard");
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
   const [, startNavTransition] = useTransition();
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentEntity>(
@@ -73,7 +64,7 @@ export function AssessmentDetail({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const overdue = isAssessmentOverdue(
     currentAssessment,
-    format(new Date(), "yyyy-MM-dd"),
+    formatIsoDate(new Date()),
   );
   let statusTone: ReturnType<typeof getStatusToneClasses>;
   if (overdue) {
@@ -86,12 +77,26 @@ export function AssessmentDetail({
 
   let statusLabel: string;
   if (overdue) {
-    statusLabel = tAssessment("status_overdue");
+    statusLabel = "Overdue";
   } else if (currentAssessment.status === "completed") {
-    statusLabel = tAssessment("status_completed");
+    statusLabel = "Completed";
   } else {
-    statusLabel = tAssessment("status_pending");
+    statusLabel = "Pending";
   }
+
+  const typeLabel =
+    currentAssessment.type === "exam"
+      ? "Exam"
+      : currentAssessment.type === "assignment"
+        ? "Assignment"
+        : currentAssessment.type === "project"
+          ? "Project"
+          : currentAssessment.type === "presentation"
+            ? "Presentation"
+            : currentAssessment.type === "homework"
+              ? "Homework"
+              : "Other";
+
   const score = formatNumber(currentAssessment.score);
   const weight = formatNumber(currentAssessment.weight, "%");
   const scoreTone =
@@ -110,7 +115,7 @@ export function AssessmentDetail({
             onClick={() => setEditOpen(true)}
           >
             <Pencil className="size-3.5" />
-            {t("edit")}
+            Edit
           </Button>
           <Button
             variant="outline"
@@ -119,7 +124,7 @@ export function AssessmentDetail({
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" />
-            {t("delete")}
+            Delete
           </Button>
         </>
       }
@@ -128,20 +133,8 @@ export function AssessmentDetail({
       backLabel={backLabel}
       meta={
         <>
-          <span>
-            {t("created_label")}{" "}
-            {formatDistanceToNow(new Date(currentAssessment.createdAt), {
-              addSuffix: true,
-              locale: dateLocale,
-            })}
-          </span>
-          <span>
-            {t("updated_label")}{" "}
-            {formatDistanceToNow(new Date(currentAssessment.updatedAt), {
-              addSuffix: true,
-              locale: dateLocale,
-            })}
-          </span>
+          <span>Created {formatRelativeTime(currentAssessment.createdAt)}</span>
+          <span>Updated {formatRelativeTime(currentAssessment.updatedAt)}</span>
         </>
       }
       title={currentAssessment.title}
@@ -174,35 +167,31 @@ export function AssessmentDetail({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-5">
             <h2 className="mb-3 text-sm font-semibold text-foreground/80">
-              {t("details_heading")}
+              Details
             </h2>
             <dl className="space-y-3 text-sm">
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">{t("subject_label")}</dt>
+                <dt className="text-muted-foreground">Subject</dt>
                 <dd className="text-right font-medium text-foreground">
                   {detail.subject.name}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">{t("type_label")}</dt>
+                <dt className="text-muted-foreground">Type</dt>
                 <dd className="text-right font-medium text-foreground">
-                  {tAssessment(`type_${currentAssessment.type}`)}
+                  {typeLabel}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">{t("status_label")}</dt>
+                <dt className="text-muted-foreground">Status</dt>
                 <dd className={cn("text-right font-medium", statusTone.text)}>
                   {statusLabel}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">{t("due_date_label")}</dt>
+                <dt className="text-muted-foreground">Due Date</dt>
                 <dd className="text-right font-medium text-foreground">
-                  {formatDate(
-                    currentAssessment.dueDate,
-                    dateLocale,
-                    t("no_due_date"),
-                  )}
+                  {formatDate(currentAssessment.dueDate, "No due date")}
                 </dd>
               </div>
             </dl>
@@ -210,48 +199,36 @@ export function AssessmentDetail({
 
           <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-5">
             <h2 className="mb-3 text-sm font-semibold text-foreground/80">
-              {t("grading_heading")}
+              Grading
             </h2>
             <dl className="space-y-3 text-sm">
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">{t("score_label")}</dt>
+                <dt className="text-muted-foreground">Score</dt>
                 <dd
                   className={cn(
                     "text-right font-medium",
                     scoreTone?.text ?? "text-foreground",
                   )}
                 >
-                  {score ?? t("no_score")}
+                  {score ?? "No score"}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">{t("weight_label")}</dt>
+                <dt className="text-muted-foreground">Weight</dt>
                 <dd className="text-right font-medium text-foreground">
-                  {weight ?? t("no_weight")}
+                  {weight ?? "No weight"}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">
-                  {t("created_on_label")}
-                </dt>
+                <dt className="text-muted-foreground">Created on</dt>
                 <dd className="text-right font-medium text-foreground">
-                  {formatDate(
-                    currentAssessment.createdAt,
-                    dateLocale,
-                    t("no_date"),
-                  )}
+                  {formatDate(currentAssessment.createdAt, "No date")}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">
-                  {t("updated_on_label")}
-                </dt>
+                <dt className="text-muted-foreground">Updated on</dt>
                 <dd className="text-right font-medium text-foreground">
-                  {formatDate(
-                    currentAssessment.updatedAt,
-                    dateLocale,
-                    t("no_date"),
-                  )}
+                  {formatDate(currentAssessment.updatedAt, "No date")}
                 </dd>
               </div>
             </dl>
@@ -261,7 +238,7 @@ export function AssessmentDetail({
         <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-5">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground/80">
             <CalendarDays className="size-4 text-muted-foreground" />
-            {t("description_label")}
+            Description
           </h2>
           {currentAssessment.description ? (
             <p className="wrap-break-word hyphens-auto text-sm leading-6 text-foreground/90">
@@ -269,7 +246,7 @@ export function AssessmentDetail({
             </p>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {t("no_description")}
+              No description provided.
             </p>
           )}
         </div>

@@ -13,7 +13,7 @@ This document covers project setup, local development, and repository operations
 - Flashcard review with spaced repetition
 - Attendance tracking
 - Assessment tracking
-- English (`en`) and Portuguese (`pt`) localization
+- English-only interface
 
 ## Tech Stack
 
@@ -186,16 +186,16 @@ Defined in `src/env.ts`:
 src/
   api/               API route handlers
   app/               Next.js App Router pages and layouts
-  app/[locale]/      Localized routes (en, pt)
+  app/(app)/         Authenticated route group
   app/actions/       Server Actions
+  app/login/         Login page
+  app/signup/        Signup page
   components/        Feature-first UI components
   components/ui/     shadcn/ui primitives
   components/shared/ Shared cross-feature UI
   components/navbar/ Global navigation and preferences
   features/          Feature-scoped queries, mappers, and business logic
   db/                Drizzle client and schema
-  i18n/              next-intl routing and request config
-  messages/          Translation dictionaries (en.json, pt.json)
   lib/               Cross-feature infrastructure and shared utilities
   env.ts             Environment validation
 ```

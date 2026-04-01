@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteMiss } from "@/app/actions/attendance";
@@ -29,10 +28,6 @@ export function DeleteMissDialog({
   open,
   onOpenChange,
 }: Readonly<DeleteMissDialogProps>) {
-  const t = useTranslations("DeleteMissDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
-
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -41,7 +36,7 @@ export function DeleteMissDialog({
       if (result.success) {
         onOpenChange(false);
       } else {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(resolveActionErrorMessage(result));
       }
     });
   }
@@ -50,11 +45,11 @@ export function DeleteMissDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>Remove Miss</DialogTitle>
           <DialogDescription>
-            {t("prompt_prefix")}
-            <span className="font-semibold text-foreground">{missDate}</span>
-            {t("prompt_suffix")}
+            Are you sure you want to remove the miss recorded for{" "}
+            <span className="font-semibold text-foreground">{missDate}</span>?
+            This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -63,7 +58,7 @@ export function DeleteMissDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button
             variant="destructive"
@@ -72,8 +67,8 @@ export function DeleteMissDialog({
           >
             <AsyncButtonContent
               pending={isPending}
-              idleLabel={t("confirm")}
-              pendingLabel={tCommon("deleting")}
+              idleLabel="Remove"
+              pendingLabel="Deleting..."
             />
           </Button>
         </DialogFooter>

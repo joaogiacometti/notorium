@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreditCard } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
@@ -61,7 +60,6 @@ function getColumns(
   onEditRequested: (flashcardId: string) => void,
   onDeleteRequested: (flashcard: FlashcardTarget) => void,
   onResetRequested: (flashcard: FlashcardTarget) => void,
-  t: ReturnType<typeof useTranslations>,
 ): ColumnDef<FlashcardManageItem>[] {
   return [
     {
@@ -69,7 +67,7 @@ function getColumns(
       size: 160,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {t("table_front")}
+          Front
         </div>
       ),
       cell: ({ row }) => (
@@ -93,7 +91,7 @@ function getColumns(
       size: 140,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {t("table_back")}
+          Back
         </div>
       ),
       cell: ({ row }) => (
@@ -110,7 +108,7 @@ function getColumns(
       size: 112,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {t("table_subject")}
+          Subject
         </div>
       ),
       cell: ({ row }) => (
@@ -163,16 +161,10 @@ export function FlashcardsManagerTable({
   onSelectedFlashcardIdsChange,
   onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
-  const t = useTranslations("FlashcardsManager");
   return (
     <ManagerDataTable
       data={flashcards}
-      columns={getColumns(
-        onEditRequested,
-        onDeleteRequested,
-        onResetRequested,
-        t,
-      )}
+      columns={getColumns(onEditRequested, onDeleteRequested, onResetRequested)}
       pageIndex={pageIndex}
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}
@@ -185,16 +177,11 @@ export function FlashcardsManagerTable({
       onPageIndexChange={onPageIndexChange}
       selectedRowIds={selectedFlashcardIds}
       onSelectedRowIdsChange={onSelectedFlashcardIdsChange}
-      selectionAriaLabel={t("select_flashcard")}
-      pageLabel={(current, total) =>
-        t("page", {
-          current,
-          total,
-        })
-      }
-      prevLabel={t("prev")}
-      nextLabel={t("next")}
-      emptyLabel={t("no_results")}
+      selectionAriaLabel="Select flashcard"
+      pageLabel={(current, total) => `Page ${current} of ${total}`}
+      prevLabel="Previous"
+      nextLabel="Next"
+      emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
       tableClassName="w-full min-w-160"

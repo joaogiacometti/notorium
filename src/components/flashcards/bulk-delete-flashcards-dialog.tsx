@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { bulkDeleteFlashcards } from "@/app/actions/flashcards";
@@ -14,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface BulkDeleteFlashcardsDialogProps {
   ids: string[];
@@ -29,9 +28,6 @@ export function BulkDeleteFlashcardsDialog({
   onDeleted,
   onOpenChange,
 }: Readonly<BulkDeleteFlashcardsDialogProps>) {
-  const t = useTranslations("BulkDeleteFlashcardsDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -44,18 +40,22 @@ export function BulkDeleteFlashcardsDialog({
         return;
       }
 
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(tErrors(result.errorCode, result.errorParams));
     });
   }
+
+  const count = ids.length;
+  const descriptionText =
+    count === 1
+      ? "Delete 1 flashcard permanently."
+      : `Delete ${count} flashcards permanently.`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>
-            {t("description", { count: ids.length })}
-          </DialogDescription>
+          <DialogTitle>Delete Flashcards</DialogTitle>
+          <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button
@@ -63,7 +63,7 @@ export function BulkDeleteFlashcardsDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button
             variant="destructive"
@@ -72,8 +72,8 @@ export function BulkDeleteFlashcardsDialog({
           >
             <AsyncButtonContent
               pending={isPending}
-              idleLabel={t("confirm")}
-              pendingLabel={tCommon("deleting")}
+              idleLabel="Delete"
+              pendingLabel="Deleting..."
             />
           </Button>
         </DialogFooter>

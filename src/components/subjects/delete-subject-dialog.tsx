@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { archiveSubject, deleteSubject } from "@/app/actions/subjects";
@@ -16,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface DeleteSubjectDialogProps {
   subjectId: string;
@@ -35,9 +34,6 @@ export function DeleteSubjectDialog({
   onSuccess,
   mode = "delete",
 }: Readonly<DeleteSubjectDialogProps>) {
-  const t = useTranslations("DeleteSubjectDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -55,7 +51,7 @@ export function DeleteSubjectDialog({
           onOpenChange(false);
         }
       } else {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(tErrors(result.errorCode, result.errorParams));
       }
     });
   }
@@ -65,16 +61,20 @@ export function DeleteSubjectDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "archive" ? t("archive_title") : t("delete_title")}
+            {mode === "archive" ? "Archive Subject" : "Delete Subject"}
           </DialogTitle>
           <DialogDescription>
-            {mode === "archive" ? t("archive_prompt") : t("delete_prompt")}
+            {mode === "archive"
+              ? "Are you sure you want to archive "
+              : "Are you sure you want to delete "}
             <SubjectText
               value={subjectName}
               mode="wrap"
               className="font-semibold text-foreground"
             />
-            {mode === "archive" ? t("archive_suffix") : t("delete_suffix")}
+            {mode === "archive"
+              ? "? You can restore it later from archived subjects."
+              : "? This action cannot be undone. All associated notes will also be deleted."}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -84,7 +84,7 @@ export function DeleteSubjectDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button
             variant={mode === "archive" ? "default" : "destructive"}
@@ -98,12 +98,8 @@ export function DeleteSubjectDialog({
           >
             <AsyncButtonContent
               pending={isPending}
-              idleLabel={
-                mode === "archive" ? t("archive_action") : t("delete_action")
-              }
-              pendingLabel={
-                mode === "archive" ? tCommon("archiving") : tCommon("deleting")
-              }
+              idleLabel={mode === "archive" ? "Archive" : "Delete"}
+              pendingLabel={mode === "archive" ? "Archiving..." : "Deleting..."}
             />
           </Button>
         </DialogFooter>

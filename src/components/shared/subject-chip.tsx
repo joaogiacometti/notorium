@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import type { KeyboardEventHandler, MouseEventHandler } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 interface SubjectChipProps {

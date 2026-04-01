@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2, Pin, PinOff, Sparkles } from "lucide-react";
-import { useTranslations } from "next-intl";
 import {
   Controller,
   type FieldPath,
@@ -100,11 +99,6 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   isDuplicateFront,
   duplicateFrontMessage,
 }: Readonly<FlashcardDialogFormProps<TValues>>) {
-  const t = useTranslations(
-    mode === "create" ? "CreateFlashcardDialog" : "EditFlashcardDialog",
-  );
-  const tCommon = useTranslations("Common");
-
   function handleCtrlEnter() {
     if (isSubmitting) {
       return;
@@ -113,16 +107,15 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
     void form.handleSubmit(onSubmit)();
   }
 
-  const pendingSubmitLabel =
-    mode === "create" ? tCommon("creating") : tCommon("saving");
+  const pendingSubmitLabel = mode === "create" ? "Creating..." : "Saving...";
 
   const watchedBack = useWatch({
     control: form.control,
     name: "back" as FieldPath<TValues>,
   });
   const hasBack = hasRichTextContent(watchedBack);
-  const generateLabel = hasBack ? t("improve_back") : t("generate_back");
-  const generatingLabel = hasBack ? t("improving_back") : t("generating_back");
+  const generateLabel = hasBack ? "Improve with AI" : "Generate with AI";
+  const generatingLabel = hasBack ? "Improving..." : "Generating...";
 
   return (
     <>
@@ -130,7 +123,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
         <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
-            <DialogTitle>{t("title")}</DialogTitle>
+            <DialogTitle>
+              {mode === "create" ? "Create Flashcard" : "Edit Flashcard"}
+            </DialogTitle>
           </DialogHeader>
           <form
             id={formId}
@@ -146,7 +141,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor={`${formId}-subject`}>
-                          {t("field_subject")}
+                          Subject
                         </FieldLabel>
                         <Select
                           value={field.value ?? ""}
@@ -156,9 +151,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                             id={`${formId}-subject`}
                             aria-invalid={fieldState.invalid}
                           >
-                            <SelectValue
-                              placeholder={t("field_subject_placeholder")}
-                            />
+                            <SelectValue placeholder="Select a subject" />
                           </SelectTrigger>
                           <SelectContent>
                             {subjects.map((subject) => (
@@ -202,7 +195,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                       <Field data-invalid={frontInvalid}>
                         <div className="flex h-9 items-center justify-between gap-3">
                           <FieldLabel htmlFor={`${formId}-front`}>
-                            {t("field_front")}
+                            Front
                           </FieldLabel>
                           <div className="flex items-center gap-1">
                             {mode === "create" ? (
@@ -212,13 +205,13 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                                 size="icon-xs"
                                 aria-label={
                                   keepFrontAfterSubmit
-                                    ? t("keep_front_off")
-                                    : t("keep_front_on")
+                                    ? "Clear front after submit"
+                                    : "Keep front after submit"
                                 }
                                 title={
                                   keepFrontAfterSubmit
-                                    ? t("keep_front_off")
-                                    : t("keep_front_on")
+                                    ? "Clear front after submit"
+                                    : "Keep front after submit"
                                 }
                                 aria-pressed={keepFrontAfterSubmit}
                                 onClick={() =>
@@ -240,7 +233,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                         <TiptapEditor
                           value={field.value ?? ""}
                           onChange={field.onChange}
-                          placeholder={t("field_front_placeholder")}
+                          placeholder="e.g. What is photosynthesis?"
                           id={`${formId}-front`}
                           aria-invalid={frontInvalid}
                           contentClassName="min-h-11 max-h-[40svh]"
@@ -260,7 +253,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between gap-3">
                           <FieldLabel htmlFor={`${formId}-back`}>
-                            {t("field_back")}
+                            Back
                           </FieldLabel>
                           <div className="flex items-center gap-1">
                             <Button
@@ -287,13 +280,13 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                                 size="icon-xs"
                                 aria-label={
                                   keepBackAfterSubmit
-                                    ? t("keep_back_off")
-                                    : t("keep_back_on")
+                                    ? "Clear back after submit"
+                                    : "Keep back after submit"
                                 }
                                 title={
                                   keepBackAfterSubmit
-                                    ? t("keep_back_off")
-                                    : t("keep_back_on")
+                                    ? "Clear back after submit"
+                                    : "Keep back after submit"
                                 }
                                 aria-pressed={keepBackAfterSubmit}
                                 onClick={() =>
@@ -317,10 +310,10 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                         <FlashcardBackDiff
                           previousBack={previousBack}
                           proposedBack={proposedBack}
-                          originalLabel={t("original_back_label")}
-                          proposedLabel={t("proposed_back_label")}
-                          acceptLabel={t("accept_back")}
-                          rejectLabel={t("reject_back")}
+                          originalLabel="Original"
+                          proposedLabel="Proposed"
+                          acceptLabel="Accept"
+                          rejectLabel="Reject"
                           onAccept={onAcceptBack}
                           onReject={onRejectBack}
                         />
@@ -328,7 +321,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                         <TiptapEditor
                           value={field.value ?? ""}
                           onChange={field.onChange}
-                          placeholder={t("field_back_placeholder")}
+                          placeholder="e.g. Process plants use to convert light into energy."
                           id={`${formId}-back`}
                           aria-invalid={fieldState.invalid}
                           contentClassName="max-h-[10lh]"
@@ -357,7 +350,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
               >
                 <AsyncButtonContent
                   pending={isSubmitting}
-                  idleLabel={t("submit")}
+                  idleLabel={
+                    mode === "create" ? "Create Flashcard" : "Save Changes"
+                  }
                   pendingLabel={pendingSubmitLabel}
                 />
               </Button>

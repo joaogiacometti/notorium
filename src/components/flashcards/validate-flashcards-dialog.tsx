@@ -1,7 +1,6 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -34,7 +33,7 @@ import type {
   FlashcardValidationItem,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface ValidateFlashcardsDialogProps {
   open: boolean;
@@ -54,9 +53,6 @@ export function ValidateFlashcardsDialog({
   subjects,
   currentSubjectId,
 }: Readonly<ValidateFlashcardsDialogProps>) {
-  const t = useTranslations("ValidateFlashcardsDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isValidating, setIsValidating] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<
     string | "all" | undefined
@@ -70,7 +66,7 @@ export function ValidateFlashcardsDialog({
 
   const handleValidate = async () => {
     if (!selectedSubjectId) {
-      toast.error(t("error_no_cards"));
+      toast.error("No flashcards to validate.");
       return;
     }
 
@@ -83,7 +79,7 @@ export function ValidateFlashcardsDialog({
         const idsResult = await getAllFlashcardIds();
 
         if ("errorCode" in idsResult) {
-          toast.error(resolveActionErrorMessage(idsResult, tErrors));
+          toast.error(tErrors(idsResult.errorCode, idsResult.errorParams));
           setIsValidating(false);
           return;
         }
@@ -95,7 +91,7 @@ export function ValidateFlashcardsDialog({
         });
 
         if ("errorCode" in idsResult) {
-          toast.error(resolveActionErrorMessage(idsResult, tErrors));
+          toast.error(tErrors(idsResult.errorCode, idsResult.errorParams));
           setIsValidating(false);
           return;
         }
@@ -104,13 +100,13 @@ export function ValidateFlashcardsDialog({
       }
 
       if (flashcardIds.length === 0) {
-        toast.error(t("error_no_cards"));
+        toast.error("No flashcards to validate.");
         setIsValidating(false);
         return;
       }
 
       if (flashcardIds.length > LIMITS.maxFlashcardsPerSubject) {
-        toast.error(t("error_too_many_cards"));
+        toast.error("Too many flashcards. Maximum 500 cards per validation.");
         setIsValidating(false);
         return;
       }
@@ -118,7 +114,7 @@ export function ValidateFlashcardsDialog({
       const result = await validateFlashcards({ flashcardIds });
 
       if ("errorCode" in result) {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(tErrors(result.errorCode, result.errorParams));
         return;
       }
 
@@ -126,14 +122,15 @@ export function ValidateFlashcardsDialog({
       onOpenChange(false);
 
       if (result.issues.length === 0) {
-        toast.success(t("success_no_issues"));
+        toast.success("No issues found! All flashcards look good.");
       } else {
+        const count = result.issues.length;
         toast.success(
-          t("success_issues_found", { count: result.issues.length }),
+          `${count} ${count === 1 ? "card" : "cards"} with issues found.`,
         );
       }
     } catch (_error) {
-      toast.error(tCommon("error_generic"));
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsValidating(false);
     }
@@ -143,14 +140,15 @@ export function ValidateFlashcardsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>Validate Flashcards</DialogTitle>
+          <DialogDescription>
+            Use AI to check for incorrect information, confusing content, or
+            duplicate cards.
+          </DialogDescription>
         </DialogHeader>
         <FieldGroup className="gap-3">
           <Field>
-            <FieldLabel htmlFor="validation-subject">
-              {t("field_subject")}
-            </FieldLabel>
+            <FieldLabel htmlFor="validation-subject">Subject</FieldLabel>
             <Select
               value={selectedSubjectId ?? "all"}
               onValueChange={(value) => setSelectedSubjectId(value || "all")}
@@ -160,10 +158,10 @@ export function ValidateFlashcardsDialog({
                 id="validation-subject"
                 className="h-10 rounded-lg"
               >
-                <SelectValue placeholder={t("field_subject")} />
+                <SelectValue placeholder="Subject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("option_all_subjects")}</SelectItem>
+                <SelectItem value="all">All Subjects</SelectItem>
                 {subjects.map((subject) => (
                   <SelectItem key={subject.id} value={subject.id}>
                     <SubjectText
@@ -183,7 +181,7 @@ export function ValidateFlashcardsDialog({
               onClick={() => onOpenChange(false)}
               disabled={isValidating}
             >
-              {tCommon("cancel")}
+              Cancel
             </Button>
             <Button
               type="button"
@@ -192,8 +190,8 @@ export function ValidateFlashcardsDialog({
             >
               <AsyncButtonContent
                 pending={isValidating}
-                idleLabel={t("confirm")}
-                pendingLabel={t("validating")}
+                idleLabel="Validate"
+                pendingLabel="Validating..."
                 idleIcon={<Sparkles className="size-4" />}
               />
             </Button>

@@ -23,10 +23,15 @@ For product behavior, UX rules, and acceptance criteria, use `SPEC.md`. This fil
 src/
 ├── api/              API route handlers (Better Auth)
 ├── app/              Next.js App Router pages and layouts
-│   ├── [locale]/     Locale-prefixed app routes (en, pt)
+│   ├── (app)/        Authenticated route group
 │   ├── actions/      Server Actions
 │   ├── api/          App Router API routes
-│   └── globals.css   Global styles (Tailwind)
+│   ├── login/        Login page
+│   ├── signup/       Signup page
+│   ├── globals.css   Global styles (Tailwind)
+│   ├── layout.tsx    Root layout
+│   ├── page.tsx      Landing page
+│   └── not-found.tsx 404 page
 ├── components/       Feature-first UI components
 │   ├── ui/           shadcn/ui primitives (do not edit manually)
 │   ├── navbar/       Global navigation, search, theme, preferences
@@ -37,8 +42,6 @@ src/
 ├── db/               Database layer
 │   ├── index.ts      Drizzle client instance
 │   └── schema.ts     Drizzle schema definitions
-├── i18n/             next-intl routing and request setup
-├── messages/         Locale dictionaries (en.json, pt.json)
 ├── lib/              Cross-feature infrastructure
 │   ├── auth/         Better Auth config, client, access control, rate limiting
 │   ├── server/       Server action helpers, contracts, revalidation
@@ -129,14 +132,6 @@ src/
 - Use `@hookform/resolvers/zod` with React Hook Form.
 - Validate on both client and server sides.
 
-### Localization
-
-- Supported locales are `en` and `pt`.
-- Any user-facing text change must be applied to both `src/messages/en.json` and `src/messages/pt.json`.
-- Keep translation key structures aligned between locale files.
-- Any new page or route must work under locale-prefixed routing in `src/app/[locale]/`.
-- Keep localization requirements explicit in documentation, but keep feature behavior details in `SPEC.md`.
-
 ### Components
 
 - Use shadcn/ui components from `src/components/ui/`. Do not modify those files directly.
@@ -144,9 +139,9 @@ src/
 - When the project has the underlying shadcn-compatible dependency available but the primitive is missing from `src/components/ui/`, add the standard shadcn primitive first, then use it.
 - Put custom components in `src/components/`.
 - Keep components focused and single-purpose.
-- For user-triggered async actions, buttons must show a consistent pending state while the action is in flight: disable the button, show a spinner, and swap to a localized pending label.
+- For user-triggered async actions, buttons must show a consistent pending state while the action is in flight: disable the button, show a spinner, and swap to a pending label.
 - Reuse shared app-level helpers for async button feedback (for example `src/components/shared/async-button-content.tsx`) instead of duplicating spinner/label logic or modifying `src/components/ui/button.tsx`.
-- Prefer common pending-action translation keys in `src/messages/en.json` and `src/messages/pt.json` for generic states such as creating, saving, deleting, moving, resetting, restoring, archiving, importing, exporting, and clearing.
+- Prefer common pending-action labels in components for generic states such as creating, saving, deleting, moving, resetting, restoring, archiving, importing, exporting, and clearing.
 - Do not keep speculative scaffolding, placeholder modules, or "might use later" components in the repo.
 - When a new implementation replaces an old path, remove the old unreachable code in the same change unless the user explicitly asks to keep it.
 - Before finishing, verify that new files and touched modules are reachable from active app code using search or project checks.
@@ -211,3 +206,62 @@ src/
 - Keep changes small and focused.
 - Test after changes. Verify the dev server still runs with `bun dev` and run `bun run lint --fix` when the environment supports it.
 - Follow existing commit message patterns.
+
+# context-mode — MANDATORY routing rules
+
+You have context-mode MCP tools available. These rules are NOT optional — they protect your context window from flooding. A single unrouted command can dump 56 KB into context and waste the entire session.
+
+## BLOCKED commands — do NOT attempt these
+
+### curl / wget — BLOCKED
+Any shell command containing `curl` or `wget` will be intercepted and blocked by the context-mode plugin. Do NOT retry.
+Instead use:
+- `context-mode_ctx_fetch_and_index(url, source)` to fetch and index web pages
+- `context-mode_ctx_execute(language: "javascript", code: "const r = await fetch(...)")` to run HTTP calls in sandbox
+
+### Inline HTTP — BLOCKED
+Any shell command containing `fetch('http`, `requests.get(`, `requests.post(`, `http.get(`, or `http.request(` will be intercepted and blocked. Do NOT retry with shell.
+Instead use:
+- `context-mode_ctx_execute(language, code)` to run HTTP calls in sandbox — only stdout enters context
+
+### Direct web fetching — BLOCKED
+Do NOT use any direct URL fetching tool. Use the sandbox equivalent.
+Instead use:
+- `context-mode_ctx_fetch_and_index(url, source)` then `context-mode_ctx_search(queries)` to query the indexed content
+
+## REDIRECTED tools — use sandbox equivalents
+
+### Shell (>20 lines output)
+Shell is ONLY for: `git`, `mkdir`, `rm`, `mv`, `cd`, `ls`, `npm install`, `pip install`, and other short-output commands.
+For everything else, use:
+- `context-mode_ctx_batch_execute(commands, queries)` — run multiple commands + search in ONE call
+- `context-mode_ctx_execute(language: "shell", code: "...")` — run in sandbox, only stdout enters context
+
+### File reading (for analysis)
+If you are reading a file to **edit** it → reading is correct (edit needs content in context).
+If you are reading to **analyze, explore, or summarize** → use `context-mode_ctx_execute_file(path, language, code)` instead. Only your printed summary enters context.
+
+### grep / search (large results)
+Search results can flood context. Use `context-mode_ctx_execute(language: "shell", code: "grep ...")` to run searches in sandbox. Only your printed summary enters context.
+
+## Tool selection hierarchy
+
+1. **GATHER**: `context-mode_ctx_batch_execute(commands, queries)` — Primary tool. Runs all commands, auto-indexes output, returns search results. ONE call replaces 30+ individual calls.
+2. **FOLLOW-UP**: `context-mode_ctx_search(queries: ["q1", "q2", ...])` — Query indexed content. Pass ALL questions as array in ONE call.
+3. **PROCESSING**: `context-mode_ctx_execute(language, code)` | `context-mode_ctx_execute_file(path, language, code)` — Sandbox execution. Only stdout enters context.
+4. **WEB**: `context-mode_ctx_fetch_and_index(url, source)` then `context-mode_ctx_search(queries)` — Fetch, chunk, index, query. Raw HTML never enters context.
+5. **INDEX**: `context-mode_ctx_index(content, source)` — Store content in FTS5 knowledge base for later search.
+
+## Output constraints
+
+- Keep responses under 500 words.
+- Write artifacts (code, configs, PRDs) to FILES — never return them as inline text. Return only: file path + 1-line description.
+- When indexing content, use descriptive source labels so others can `search(source: "label")` later.
+
+## ctx commands
+
+| Command | Action |
+|---------|--------|
+| `ctx stats` | Call the `stats` MCP tool and display the full output verbatim |
+| `ctx doctor` | Call the `doctor` MCP tool, run the returned shell command, display as checklist |
+| `ctx upgrade` | Call the `upgrade` MCP tool, run the returned shell command, display as checklist |

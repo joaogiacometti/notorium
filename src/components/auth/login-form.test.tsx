@@ -15,17 +15,9 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
-}));
-
-vi.mock("next-intl", () => ({
-  useLocale: () => "en",
-  useTranslations: () => (key: string) => {
-    if (key === "pending_approval_notice") {
-      return "Pending approval notice";
-    }
-
-    return key;
-  },
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 vi.mock("next-themes", () => ({
@@ -38,12 +30,6 @@ vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
   },
-}));
-
-vi.mock("@/i18n/routing", () => ({
-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
 }));
 
 function queryByText(container: HTMLElement, text: string) {
@@ -76,7 +62,12 @@ describe("LoginForm", () => {
       root.render(<LoginForm showPendingApprovalNotice />);
     });
 
-    expect(queryByText(container, "Pending approval notice")).toBeTruthy();
+    expect(
+      queryByText(
+        container,
+        "Your account was created successfully and is now waiting for administrator approval.",
+      ),
+    ).toBeTruthy();
   });
 
   it("omits the pending approval notice by default", async () => {
@@ -84,6 +75,11 @@ describe("LoginForm", () => {
       root.render(<LoginForm />);
     });
 
-    expect(queryByText(container, "Pending approval notice")).toBeUndefined();
+    expect(
+      queryByText(
+        container,
+        "Your account was created successfully and is now waiting for administrator approval.",
+      ),
+    ).toBeUndefined();
   });
 });

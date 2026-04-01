@@ -1,7 +1,6 @@
 "use client";
 
 import { CreditCard, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
@@ -32,7 +31,6 @@ export function FlashcardCard({
   onUpdated,
   onDeleted,
 }: Readonly<FlashcardCardProps>) {
-  const t = useTranslations("FlashcardCard");
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const frontPreview = getRichTextExcerpt(flashcard.front, 120);
@@ -54,7 +52,7 @@ export function FlashcardCard({
               variant="ghost"
               size="icon"
               className="size-7 shrink-0 rounded-md text-muted-foreground/80 transition-all hover:text-foreground"
-              aria-label={t("open_actions")}
+              aria-label="Open flashcard actions"
             >
               <MoreVertical className="size-3.5" />
             </Button>
@@ -65,14 +63,14 @@ export function FlashcardCard({
               className="cursor-pointer"
             >
               <Pencil className="size-4" />
-              {t("edit")}
+              Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setDeleteOpen(true)}
               className="cursor-pointer text-destructive focus:text-destructive"
             >
               <Trash2 className="size-4" />
-              {t("delete")}
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

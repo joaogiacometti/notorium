@@ -16,13 +16,12 @@ import {
   CircleAlert,
   ClipboardList,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { getCalendarEvents } from "@/app/actions/calendar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { assessmentTypeLabels } from "@/features/assessments/assessments";
-import { Link } from "@/i18n/routing";
 import {
   buildCalendarEvents,
   type CalendarEvent,
@@ -31,7 +30,6 @@ import {
   groupEventsByDate,
   resolveCalendarDate,
 } from "@/lib/dates/calendar";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
 import { getStatusToneClasses, type StatusTone } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
@@ -69,17 +67,9 @@ function getEventChipToneClass(event: CalendarEvent, todayIso: string) {
   return `${tone.border} ${tone.bg} ${tone.text}`;
 }
 
-function getAssessmentTypeLabel(
-  event: CalendarEvent,
-  tAssessment: ReturnType<typeof useTranslations>,
-) {
+function getAssessmentTypeLabel(event: CalendarEvent) {
   if (event.kind !== "assessment" || !event.meta?.type) {
     return null;
-  }
-
-  const key = `type_${event.meta.type}`;
-  if (tAssessment.has(key)) {
-    return tAssessment(key);
   }
 
   return (
@@ -93,9 +83,8 @@ function EventChip({
   event,
   todayIso,
 }: Readonly<{ event: CalendarEvent; todayIso: string }>) {
-  const tAssessment = useTranslations("AssessmentItemCard");
   const chipToneClass = getEventChipToneClass(event, todayIso);
-  const assessmentTypeLabel = getAssessmentTypeLabel(event, tAssessment);
+  const assessmentTypeLabel = getAssessmentTypeLabel(event);
   const subtitle = assessmentTypeLabel
     ? `${event.subjectName} · ${assessmentTypeLabel}`
     : event.subjectName;
@@ -186,14 +175,12 @@ function DayDetail({
   date,
   dayEvents,
   todayIso,
-  dateLocale,
   emptyLabel,
   className,
 }: Readonly<{
   date: Date;
   dayEvents: CalendarEvent[];
   todayIso: string;
-  dateLocale: ReturnType<typeof getDateFnsLocale>;
   emptyLabel: string;
   className?: string;
 }>) {
@@ -205,7 +192,7 @@ function DayDetail({
       )}
     >
       <h3 className="text-sm font-medium text-muted-foreground">
-        {format(date, "EEEE, MMMM d, yyyy", { locale: dateLocale })}
+        {format(date, "EEEE, MMMM d, yyyy")}
       </h3>
       {dayEvents.length > 0 ? (
         <div className="mt-4 min-w-0 space-y-2">
@@ -255,9 +242,6 @@ export function CalendarView({
   initialSelectedDateIso,
   initialEvents,
 }: Readonly<CalendarViewProps>) {
-  const locale = useLocale();
-  const t = useTranslations("CalendarView");
-  const dateLocale = getDateFnsLocale(locale);
   const [anchor, setAnchor] = useState(() =>
     resolveCalendarDate(initialAnchorIso),
   );
@@ -297,9 +281,7 @@ export function CalendarView({
   const dates = getMonthGridDates(anchor);
   const eventsByDate = groupEventsByDate(events);
   const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
-    format(addDays(startOfWeek(anchor, { weekStartsOn: 1 }), index), "EEE", {
-      locale: dateLocale,
-    }),
+    format(addDays(startOfWeek(anchor, { weekStartsOn: 1 }), index), "EEE"),
   );
 
   function goBack() {
@@ -318,7 +300,7 @@ export function CalendarView({
     setSelectedDate(today);
   }
 
-  const title = format(anchor, "MMMM yyyy", { locale: dateLocale });
+  const title = format(anchor, "MMMM yyyy");
 
   return (
     <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.6fr)_22rem]">
@@ -352,7 +334,7 @@ export function CalendarView({
             className="h-7 text-xs"
             onClick={goToday}
           >
-            {t("today")}
+            Today
           </Button>
         </div>
 
@@ -408,8 +390,7 @@ export function CalendarView({
             eventsByDate.get(format(selectedDate, "yyyy-MM-dd")) ?? emptyEvents
           }
           todayIso={todayIso}
-          dateLocale={dateLocale}
-          emptyLabel={t("empty")}
+          emptyLabel="No assessments or attendance misses on this day."
           className="lg:min-h-0 lg:overflow-y-auto"
         />
       )}

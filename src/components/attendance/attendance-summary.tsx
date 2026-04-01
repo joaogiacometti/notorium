@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import {
   AlertTriangle,
   CalendarDays,
@@ -9,7 +8,6 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { AttendanceSettingsDialog } from "@/components/attendance/attendance-settings-dialog";
 import { DeleteMissDialog } from "@/components/attendance/delete-miss-dialog";
@@ -22,7 +20,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatDateShort } from "@/lib/dates/format";
 import type { AttendanceMissEntity } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
@@ -88,9 +86,6 @@ export function AttendanceSummary({
   maxMisses,
   misses,
 }: Readonly<AttendanceSummaryProps>) {
-  const locale = useLocale();
-  const t = useTranslations("AttendanceSummary");
-  const dateLocale = getDateFnsLocale(locale);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -105,11 +100,11 @@ export function AttendanceSummary({
     <div>
       <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Attendance</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {isConfigured
-              ? t("description_configured")
-              : t("description_unconfigured")}
+              ? "Track your attendance status and recorded misses."
+              : "Set attendance limits to begin tracking."}
           </p>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -121,7 +116,7 @@ export function AttendanceSummary({
               id="btn-record-miss"
             >
               <Plus className="size-4" />
-              <span>{t("record_miss")}</span>
+              <span>Record Miss</span>
             </Button>
           )}
           <AttendanceSettingsDialog
@@ -146,15 +141,13 @@ export function AttendanceSummary({
             <Accordion type="single" collapsible>
               <AccordionItem value="misses">
                 <AccordionTrigger className="text-sm font-medium text-muted-foreground hover:no-underline">
-                  {t("recorded_misses")}
+                  Recorded Misses
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-2 pt-3">
                     {misses.map((miss) => {
-                      const formattedMissDate = format(
-                        new Date(`${miss.missDate}T12:00:00`),
-                        "MMMM d, yyyy",
-                        { locale: dateLocale },
+                      const formattedMissDate = formatDateShort(
+                        `${miss.missDate}T12:00:00`,
                       );
 
                       return (
@@ -196,9 +189,11 @@ export function AttendanceSummary({
       ) : (
         <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
           <div>
-            <h3 className="text-base font-semibold">{t("empty_title")}</h3>
+            <h3 className="text-base font-semibold">
+              No attendance settings yet
+            </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {t("empty_description")}
+              Start by adding total classes and allowed misses.
             </p>
           </div>
         </div>
@@ -235,17 +230,15 @@ function AttendanceProgressCard({
   maxMisses,
   totalClasses,
 }: Readonly<AttendanceProgressCardProps>) {
-  const t = useTranslations("AttendanceSummary");
   const status = getStatusInfo(missCount, maxMisses);
 
-  // Replace static label logic with translation keys mapping
   let statusLabel = "";
   if (missCount >= maxMisses) {
-    statusLabel = t("status_limit");
+    statusLabel = "Limit Reached";
   } else if (missCount / maxMisses >= 0.75) {
-    statusLabel = t("status_warning");
+    statusLabel = "Warning";
   } else {
-    statusLabel = t("status_track");
+    statusLabel = "On Track";
   }
 
   const StatusIcon = status.icon;
@@ -255,6 +248,11 @@ function AttendanceProgressCard({
     totalClasses > 0
       ? Math.round(((totalClasses - missCount) / totalClasses) * 100)
       : 100;
+
+  const remainingLabel =
+    missCount >= maxMisses
+      ? "No misses left"
+      : `${status.remaining} ${status.remaining === 1 ? "miss remaining" : "misses remaining"}`;
 
   return (
     <div
@@ -268,9 +266,7 @@ function AttendanceProgressCard({
           </span>
         </div>
         <Badge variant={status.badgeVariant} className="text-xs">
-          {missCount >= maxMisses
-            ? t("badge_no_misses")
-            : t("badge_remaining", { count: status.remaining })}
+          {remainingLabel}
         </Badge>
       </div>
 
@@ -283,9 +279,7 @@ function AttendanceProgressCard({
           </span>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted-foreground">
-            {t("attendance_rate")}
-          </p>
+          <p className="text-xs text-muted-foreground">Attendance Rate</p>
           <p className="text-lg font-semibold">{attendanceRate}%</p>
         </div>
       </div>

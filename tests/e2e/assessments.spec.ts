@@ -26,7 +26,7 @@ async function openPlanningAssessments(page: Page, subjectId?: string) {
     searchParams.set("subject", subjectId);
   }
 
-  await page.goto(`/en/planning?${searchParams.toString()}`);
+  await page.goto(`/planning?${searchParams.toString()}`);
   await expect(
     page.getByRole("heading", { name: "Planning", exact: true }),
   ).toBeVisible();
@@ -92,7 +92,7 @@ test("can create and open an assessment from planning", async ({ page }) => {
     await expect(assessmentRow).toBeVisible();
     await assessmentRow.click();
 
-    await expect(page).toHaveURL(/\/en\/assessments\/.+/);
+    await expect(page).toHaveURL(/\/assessments\/.+/);
     await expect(
       page.getByRole("heading", { name: assessmentTitle, exact: true }),
     ).toBeVisible();
@@ -130,7 +130,7 @@ test("can edit an assessment from detail page", async ({ page }) => {
     );
 
     await page.goto(
-      `/en/assessments/${createdAssessment.id}?from=planning-assessments&subjectId=${createdSubject.id}`,
+      `/assessments/${createdAssessment.id}?from=planning-assessments&subjectId=${createdSubject.id}`,
     );
 
     await expect(
@@ -196,7 +196,7 @@ test("can delete an assessment from detail page", async ({ page }) => {
     );
 
     await page.goto(
-      `/en/assessments/${createdAssessment.id}?from=planning-assessments&subjectId=${createdSubject.id}`,
+      `/assessments/${createdAssessment.id}?from=planning-assessments&subjectId=${createdSubject.id}`,
     );
 
     await expect(

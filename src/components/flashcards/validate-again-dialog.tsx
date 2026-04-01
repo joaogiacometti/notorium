@@ -1,7 +1,6 @@
 "use client";
 
 import { RotateCw } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,17 +27,17 @@ export function ValidateAgainDialog({
   isValidating,
   count,
 }: Readonly<ValidateAgainDialogProps>) {
-  const t = useTranslations("FlashcardsManager");
-  const tCommon = useTranslations("Common");
+  const descriptionText =
+    count === 1
+      ? "Re-validate 1 flashcard?"
+      : `Re-validate ${count} flashcards?`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("validate_again_title")}</DialogTitle>
-          <DialogDescription>
-            {t("validate_again_description", { count })}
-          </DialogDescription>
+          <DialogTitle>Re-validate Flashcards?</DialogTitle>
+          <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button
@@ -47,13 +46,13 @@ export function ValidateAgainDialog({
             onClick={() => onOpenChange(false)}
             disabled={isValidating}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button type="button" onClick={onConfirm} disabled={isValidating}>
             <AsyncButtonContent
               pending={isValidating}
-              idleLabel={t("validate_again_confirm")}
-              pendingLabel={t("validating")}
+              idleLabel="Re-validate"
+              pendingLabel="Validating..."
               idleIcon={<RotateCw className="size-4" />}
             />
           </Button>

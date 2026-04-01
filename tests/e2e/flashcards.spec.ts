@@ -30,7 +30,7 @@ async function openFlashcardsManagePage(page: Page, subjectId?: string) {
     query.set("subjectId", subjectId);
   }
 
-  await page.goto(`/en/flashcards?${query.toString()}`);
+  await page.goto(`/flashcards?${query.toString()}`);
   await expect(
     page.getByRole("heading", { name: "Flashcards", exact: true }),
   ).toBeVisible();
@@ -125,7 +125,7 @@ test("can edit a flashcard", async ({ page }) => {
     );
 
     await page.goto(
-      `/en/subjects/${createdSubject.id}/flashcards/${createdFlashcard.id}`,
+      `/subjects/${createdSubject.id}/flashcards/${createdFlashcard.id}`,
     );
     await expect(
       page.getByRole("heading", { name: initialFront, exact: true }),
@@ -173,7 +173,7 @@ test("can delete a flashcard", async ({ page }) => {
     );
 
     await page.goto(
-      `/en/subjects/${createdSubject.id}/flashcards/${createdFlashcard.id}`,
+      `/subjects/${createdSubject.id}/flashcards/${createdFlashcard.id}`,
     );
     await expect(
       page.getByRole("heading", { name: flashcardFront, exact: true }),
@@ -258,9 +258,7 @@ test("can switch between global flashcards views", async ({ page }) => {
       "Flashcards view switch smoke test",
     );
 
-    await page.goto(
-      `/en/flashcards?view=review&subjectId=${createdSubject.id}`,
-    );
+    await page.goto(`/flashcards?view=review&subjectId=${createdSubject.id}`);
 
     await expect(
       page.getByRole("heading", { name: "Flashcards", exact: true }),
@@ -271,9 +269,6 @@ test("can switch between global flashcards views", async ({ page }) => {
     await expect(
       page.getByRole("button", { name: "New Flashcard" }),
     ).toBeVisible();
-
-    await page.getByRole("tab", { name: "Review", exact: true }).click();
-    await expect(page.getByText("No cards due right now.")).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

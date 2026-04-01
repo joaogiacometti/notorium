@@ -1,6 +1,4 @@
-import { format, parseISO } from "date-fns";
 import { CalendarDays, Pencil, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import {
   AssessmentTypeBadge,
@@ -8,7 +6,7 @@ import {
 } from "@/components/assessments/assessment-type-presentation";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatDateShort } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
@@ -55,12 +53,14 @@ export function AssessmentItemCard({
   onEdit,
   onDelete,
 }: Readonly<AssessmentItemCardProps>) {
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
-  const t = useTranslations("AssessmentItemCard");
   const assessmentStatus = resolveAssessmentStatus(overdue, item.status);
   const statusTone = STATUS_TONE[assessmentStatus];
-  const statusLabel = t(`status_${assessmentStatus}`);
+  const statusLabel =
+    assessmentStatus === "overdue"
+      ? "Overdue"
+      : assessmentStatus === "completed"
+        ? "Completed"
+        : "Pending";
   const typeStyle = assessmentTypeStyles[item.type];
   const TypeIcon = typeStyle.icon;
   const scoreTone =
@@ -76,7 +76,7 @@ export function AssessmentItemCard({
           size="icon"
           className="size-7 text-muted-foreground hover:text-foreground"
           onClick={() => onEdit(item)}
-          aria-label={t("edit")}
+          aria-label="Edit"
         >
           <Pencil className="size-3.5" />
         </Button>
@@ -85,7 +85,7 @@ export function AssessmentItemCard({
           size="icon"
           className="size-7 text-muted-foreground hover:text-destructive"
           onClick={() => onDelete(item)}
-          aria-label={t("delete")}
+          aria-label="Delete"
         >
           <Trash2 className="size-3.5" />
         </Button>
@@ -132,7 +132,7 @@ export function AssessmentItemCard({
         {showSubject && (
           <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
             <SubjectText
-              value={subjectName ?? t("unknown_subject")}
+              value={subjectName ?? "Unknown Subject"}
               mode="truncate"
               className="inline-block max-w-48 align-bottom"
             />
@@ -159,9 +159,7 @@ export function AssessmentItemCard({
             )}
           >
             <CalendarDays className="size-3" />
-            {format(parseISO(item.dueDate), "MMM d, yyyy", {
-              locale: dateLocale,
-            })}
+            {formatDateShort(item.dueDate)}
             {dueDetail && <span className="opacity-75">· {dueDetail}</span>}
           </span>
         )}

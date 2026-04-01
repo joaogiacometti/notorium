@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "@/i18n/routing";
 
 interface PlanningViewSwitchProps {
   currentView: "assessments" | "calendar";

@@ -1,9 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
 import { ArchiveRestore, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { restoreSubject } from "@/app/actions/subjects";
@@ -12,9 +10,9 @@ import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatRelativeTime } from "@/lib/dates/format";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface ArchivedSubjectCardProps {
   subject: SubjectEntity;
@@ -23,20 +21,12 @@ interface ArchivedSubjectCardProps {
 export function ArchivedSubjectCard({
   subject,
 }: Readonly<ArchivedSubjectCardProps>) {
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
-  const t = useTranslations("ArchivedSubjectCard");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isRestoring, startRestoreTransition] = useTransition();
   const queryClient = useQueryClient();
 
   const archivedLabel = subject.archivedAt
-    ? formatDistanceToNow(new Date(subject.archivedAt), {
-        addSuffix: true,
-        locale: dateLocale,
-      })
+    ? formatRelativeTime(subject.archivedAt)
     : null;
 
   function handleRestore() {
@@ -48,7 +38,7 @@ export function ArchivedSubjectCard({
         return;
       }
 
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(tErrors(result.errorCode, result.errorParams));
     });
   }
 
@@ -72,7 +62,7 @@ export function ArchivedSubjectCard({
           )}
           {archivedLabel && (
             <p className="text-xs text-muted-foreground/60">
-              {t("archived")} {archivedLabel}
+              Archived {archivedLabel}
             </p>
           )}
           <div className="flex gap-2">
@@ -84,8 +74,8 @@ export function ArchivedSubjectCard({
             >
               <AsyncButtonContent
                 pending={isRestoring}
-                idleLabel={t("restore")}
-                pendingLabel={tCommon("restoring")}
+                idleLabel="Restore"
+                pendingLabel="Restoring..."
                 idleIcon={<ArchiveRestore className="size-4" />}
               />
             </Button>
@@ -96,7 +86,7 @@ export function ArchivedSubjectCard({
               disabled={isRestoring}
             >
               <Trash2 className="size-4" />
-              {t("delete")}
+              Delete
             </Button>
           </div>
         </CardContent>

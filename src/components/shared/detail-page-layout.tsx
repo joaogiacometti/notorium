@@ -1,8 +1,8 @@
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/routing";
 
 interface DetailPageLayoutProps {
   actions?: ReactNode;

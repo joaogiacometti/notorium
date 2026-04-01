@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen, Clock3 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -20,7 +20,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Link } from "@/i18n/routing";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 import {
@@ -35,10 +34,7 @@ export function LoginForm({
 }: React.ComponentProps<"div"> & {
   showPendingApprovalNotice?: boolean;
 }) {
-  const t = useTranslations("LoginForm");
-  const tErrors = useTranslations("ServerActions");
   const router = useRouter();
-  const locale = useLocale();
   const { setTheme } = useTheme();
   const [, startNavTransition] = useTransition();
   const form = useForm({
@@ -54,7 +50,7 @@ export function LoginForm({
   async function onSubmit(data: LoginFormValues) {
     const result = await loginAction(data);
     if (result && !result.success) {
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(resolveActionErrorMessage(result));
       return;
     }
 
@@ -62,7 +58,7 @@ export function LoginForm({
       const { theme } = result.data;
       setTheme(theme);
 
-      startNavTransition(() => router.push(`/${locale}`));
+      startNavTransition(() => router.push("/subjects"));
     }
   }
 
@@ -77,13 +73,14 @@ export function LoginForm({
           >
             <FieldGroup className="gap-4 md:gap-6">
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">{t("title")}</h1>
+                <h1 className="text-2xl font-bold">Login to your account</h1>
               </div>
               {showPendingApprovalNotice ? (
                 <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
                   <Clock3 className="mt-0.5 size-4 shrink-0 text-primary" />
                   <p className="text-left text-foreground/90">
-                    {t("pending_approval_notice")}
+                    Your account was created successfully and is now waiting for
+                    administrator approval.
                   </p>
                 </div>
               ) : null}
@@ -92,14 +89,12 @@ export function LoginForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="form-login-email">
-                      {t("email_label")}
-                    </FieldLabel>
+                    <FieldLabel htmlFor="form-login-email">Email</FieldLabel>
                     <Input
                       {...field}
                       id="form-login-email"
                       type="email"
-                      placeholder={t("email_placeholder")}
+                      placeholder="m@example.com"
                       aria-invalid={fieldState.invalid}
                       autoComplete="email"
                     />
@@ -116,10 +111,10 @@ export function LoginForm({
                   <Field data-invalid={fieldState.invalid}>
                     <div className="flex items-center">
                       <FieldLabel htmlFor="form-login-password">
-                        {t("password_label")}
+                        Password
                       </FieldLabel>
                       <span className="ml-auto text-sm text-muted-foreground">
-                        {t("forgot_password")}
+                        Forgot your password?
                       </span>
                     </div>
                     <Input
@@ -144,13 +139,13 @@ export function LoginForm({
                 >
                   <AsyncButtonContent
                     pending={isSubmitting}
-                    idleLabel={t("submit")}
-                    pendingLabel={t("submitting")}
+                    idleLabel="Login"
+                    pendingLabel="Logging in..."
                   />
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                {t("no_account")} <Link href="/signup">{t("sign_up")}</Link>
+                Don&apos;t have an account? <Link href="/signup">Sign up</Link>
               </FieldDescription>
             </FieldGroup>
           </form>

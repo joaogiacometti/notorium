@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
   type Path,
@@ -20,8 +19,8 @@ import {
 } from "@/features/flashcards/validation";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import { tErrors } from "@/lib/server/error-messages";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 type FlashcardFormValues = CreateFlashcardForm & { id?: string };
 
@@ -58,7 +57,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   getSuccessValues,
   closeOnSuccess,
 }: Readonly<UseFlashcardDialogStateOptions<TValues>>) {
-  const tErrors = useTranslations("ServerActions");
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isGeneratingBack, setIsGeneratingBack] = useState(false);
   const [previousBack, setPreviousBack] = useState<string | null>(null);
@@ -222,7 +220,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
           return;
         }
 
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(tErrors(result.errorCode, result.errorParams));
         return;
       }
 
@@ -268,7 +266,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     if (!result.success) {
       setPreviousBack(null);
       setProposedBack(null);
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(tErrors(result.errorCode, result.errorParams));
       return;
     }
 

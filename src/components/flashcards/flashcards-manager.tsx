@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { getFlashcardForManage } from "@/app/actions/flashcards";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
@@ -38,7 +38,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getFlashcardDetailHref } from "@/features/navigation/detail-page-back-link";
-import { useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardManagePage,
@@ -58,7 +57,6 @@ export function FlashcardsManager({
   subjects,
   initialSubjectId,
 }: Readonly<FlashcardsManagerProps>) {
-  const t = useTranslations("FlashcardsManager");
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
   const [, startNavTransition] = useTransition();
@@ -112,6 +110,216 @@ export function FlashcardsManager({
   });
   const hasSubjects = subjects.length > 0;
 
+  const selectedCountText =
+    selectedFlashcardIds.length === 1
+      ? "1 selected"
+      : `${selectedFlashcardIds.length} selected`;
+
+  const resultsCountText = `${total} of ${total} flashcards`;
+
+  const selectedSubjectCountText =
+    selectedSubjectCardCount === 1
+      ? `1/${LIMITS.maxFlashcardsPerSubject} flashcard in this subject`
+      : `${selectedSubjectCardCount}/${LIMITS.maxFlashcardsPerSubject} flashcards in this subject`;
+
+  const validationIssuesCountText =
+    validationIssues.length === 1
+      ? "1 card with issues"
+      : `${validationIssues.length} cards with issues`;
+
+  const isActionBarVisible = validationMode || selectedFlashcardIds.length > 0;
+  const actionBarVisibilityClasses = isActionBarVisible
+    ? "visible opacity-100"
+    : "pointer-events-none invisible opacity-0";
+
+  const renderSubjectFilter = () => {
+    if (validationMode) return null;
+
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="min-w-0">
+          <Select
+            value={selectedSubjectId ?? "all"}
+            onValueChange={(value) =>
+              setSelectedSubjectId(value === "all" ? undefined : value)
+            }
+          >
+            <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+              <SelectValue placeholder="Filter by Subject" />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="all">All Subjects</SelectItem>
+              {subjects.map((subject) => (
+                <SelectItem key={subject.id} value={subject.id}>
+                  <SubjectText
+                    value={subject.name}
+                    mode="truncate"
+                    className="block max-w-full"
+                  />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStatusBadges = () => {
+    if (validationMode) {
+      return (
+        <Badge
+          variant="destructive"
+          className="rounded-full px-2.5 py-0.5 text-[11px]"
+        >
+          {validationIssuesCountText}
+        </Badge>
+      );
+    }
+
+    return (
+      <>
+        <Badge
+          variant="outline"
+          className={cn(
+            "rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px]",
+            selectedFlashcardIds.length > 0
+              ? "text-foreground"
+              : "text-muted-foreground",
+          )}
+        >
+          {selectedFlashcardIds.length > 0 ? null : (
+            <Search className="size-3.5" />
+          )}
+          {selectedFlashcardIds.length > 0
+            ? selectedCountText
+            : resultsCountText}
+        </Badge>
+        {selectedSubjectId && (
+          <Badge
+            variant="outline"
+            className={cn(
+              "rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground transition-opacity",
+              selectedFlashcardIds.length > 0
+                ? "pointer-events-none invisible opacity-0"
+                : "visible opacity-100",
+            )}
+          >
+            <Layers3 className="size-3.5 text-primary" />
+            {selectedSubjectCountText}
+          </Badge>
+        )}
+      </>
+    );
+  };
+
+  const renderActionBar = () => {
+    if (validationMode) {
+      return (
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setValidateAgainDialogOpen(true)}
+            disabled={isValidatingAgain}
+            className="rounded-md text-muted-foreground hover:text-foreground"
+            aria-label="Validate Again"
+          >
+            <RotateCw className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={exitValidation}
+            className="rounded-md text-muted-foreground hover:text-foreground"
+            aria-label="Exit Validation"
+          >
+            <X className="size-4" />
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setBulkMoveOpen(true)}
+          className="rounded-md text-muted-foreground hover:text-foreground"
+          aria-label="Move"
+        >
+          <ArrowRightLeft className="size-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setBulkDeleteOpen(true)}
+          className="rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
+          aria-label="Delete"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+        <div className="hidden h-5 w-px bg-border/60 sm:block" />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setSelectedFlashcardIds([])}
+          className="rounded-md text-muted-foreground hover:text-foreground"
+          aria-label="Clear selection"
+        >
+          <X className="size-4" />
+        </Button>
+      </>
+    );
+  };
+
+  const renderMainContent = () => {
+    if (validationMode) {
+      return (
+        <FlashcardsValidationResults
+          issues={validationIssues}
+          flashcards={validationFlashcards}
+          onEdit={setEditingFlashcardId}
+          onDelete={setDeleteTarget}
+        />
+      );
+    }
+
+    return (
+      <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
+        <FlashcardsManagerTable
+          flashcards={flashcards}
+          total={total}
+          selectedFlashcardIds={selectedFlashcardIds}
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          isLoading={managePageQuery.isFetching}
+          onEditRequested={setEditingFlashcardId}
+          onPageIndexChange={setPageIndex}
+          onDeleteRequested={setDeleteTarget}
+          onResetRequested={setResetTarget}
+          onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
+          onRowClick={(row) =>
+            startNavTransition(() =>
+              router.push(
+                getFlashcardDetailHref(row.subjectId, row.id, {
+                  from: "flashcards-manage",
+                  subjectId: selectedSubjectId,
+                }),
+              ),
+            )
+          }
+        />
+      </Card>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       <Card className="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
@@ -125,7 +333,7 @@ export function FlashcardsManager({
                   <Input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder={t("search_placeholder")}
+                    placeholder="Search front, back, or subject..."
                     className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                   />
                 </div>
@@ -139,9 +347,7 @@ export function FlashcardsManager({
                   className="h-10 shrink-0 gap-2 rounded-lg px-3 shadow-sm sm:px-4"
                 >
                   <Sparkles className="size-4" />
-                  <span className="hidden sm:inline">
-                    {t("validate_button")}
-                  </span>
+                  <span className="hidden sm:inline">Validate</span>
                 </Button>
                 <Button
                   type="button"
@@ -150,212 +356,38 @@ export function FlashcardsManager({
                   className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
                 >
                   <Plus className="size-4" />
-                  {t("new_flashcard")}
+                  New Flashcard
                 </Button>
               </div>
             </div>
-            {!validationMode && (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="min-w-0">
-                  <Select
-                    value={selectedSubjectId ?? "all"}
-                    onValueChange={(value) =>
-                      setSelectedSubjectId(value === "all" ? undefined : value)
-                    }
-                  >
-                    <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
-                      <SelectValue
-                        placeholder={t("subject_filter_placeholder")}
-                      />
-                    </SelectTrigger>
-                    <SelectContent align="start">
-                      <SelectItem value="all">{t("subject_all")}</SelectItem>
-                      {subjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id}>
-                          <SubjectText
-                            value={subject.name}
-                            mode="truncate"
-                            className="block max-w-full"
-                          />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+            {renderSubjectFilter()}
             <div className="flex flex-wrap items-center gap-2 sm:justify-between">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
-                {validationMode ? (
-                  <Badge
-                    variant="destructive"
-                    className="rounded-full px-2.5 py-0.5 text-[11px]"
-                  >
-                    {t("validation_issues_count", {
-                      count: validationIssues.length,
-                    })}
-                  </Badge>
-                ) : (
-                  <>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px]",
-                        selectedFlashcardIds.length > 0
-                          ? "text-foreground"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {selectedFlashcardIds.length > 0 ? null : (
-                        <Search className="size-3.5" />
-                      )}
-                      {selectedFlashcardIds.length > 0
-                        ? t("selected_count", {
-                            count: selectedFlashcardIds.length,
-                          })
-                        : t("results_count", {
-                            filtered: total,
-                            total,
-                          })}
-                    </Badge>
-                    {selectedSubjectId ? (
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground transition-opacity",
-                          selectedFlashcardIds.length > 0
-                            ? "pointer-events-none invisible opacity-0"
-                            : "visible opacity-100",
-                        )}
-                      >
-                        <Layers3 className="size-3.5 text-primary" />
-                        {t("selected_subject_count", {
-                          count: selectedSubjectCardCount,
-                          max: LIMITS.maxFlashcardsPerSubject,
-                        })}
-                      </Badge>
-                    ) : null}
-                  </>
-                )}
+                {renderStatusBadges()}
               </div>
               <div
                 className={cn(
                   "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34",
-                  validationMode
-                    ? "visible opacity-100"
-                    : selectedFlashcardIds.length > 0
-                      ? "visible opacity-100"
-                      : "pointer-events-none invisible opacity-0",
+                  actionBarVisibilityClasses,
                 )}
               >
-                {validationMode ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setValidateAgainDialogOpen(true)}
-                      disabled={isValidatingAgain}
-                      className="rounded-md text-muted-foreground hover:text-foreground"
-                      aria-label={t("validate_again")}
-                    >
-                      <RotateCw className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={exitValidation}
-                      className="rounded-md text-muted-foreground hover:text-foreground"
-                      aria-label={t("exit_validation")}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setBulkMoveOpen(true)}
-                      className="rounded-md text-muted-foreground hover:text-foreground"
-                      aria-label={t("bulk_move")}
-                    >
-                      <ArrowRightLeft className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setBulkDeleteOpen(true)}
-                      className="rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      aria-label={t("bulk_delete")}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                    <div className="hidden h-5 w-px bg-border/60 sm:block" />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setSelectedFlashcardIds([])}
-                      className="rounded-md text-muted-foreground hover:text-foreground"
-                      aria-label={t("clear_selection")}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </>
-                )}
+                {renderActionBar()}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
-      {selectedSubjectId && isAtSubjectLimit ? (
+      {selectedSubjectId && isAtSubjectLimit && (
         <div
           className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 text-sm shadow-xs ${warningTone.border} ${warningTone.bg}`}
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {t("limit_message", { max: LIMITS.maxFlashcardsPerSubject })}
+            {`You've reached the limit of ${LIMITS.maxFlashcardsPerSubject} flashcards per subject. Please delete existing ones to create more.`}
           </p>
         </div>
-      ) : null}
-      {validationMode ? (
-        <FlashcardsValidationResults
-          issues={validationIssues}
-          flashcards={validationFlashcards}
-          onEdit={setEditingFlashcardId}
-          onDelete={setDeleteTarget}
-        />
-      ) : (
-        <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
-          <FlashcardsManagerTable
-            flashcards={flashcards}
-            total={total}
-            selectedFlashcardIds={selectedFlashcardIds}
-            pageIndex={pageIndex}
-            pageSize={pageSize}
-            isLoading={managePageQuery.isFetching}
-            onEditRequested={setEditingFlashcardId}
-            onPageIndexChange={setPageIndex}
-            onDeleteRequested={setDeleteTarget}
-            onResetRequested={setResetTarget}
-            onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
-            onRowClick={(row) =>
-              startNavTransition(() =>
-                router.push(
-                  getFlashcardDetailHref(row.subjectId, row.id, {
-                    from: "flashcards-manage",
-                    subjectId: selectedSubjectId,
-                  }),
-                ),
-              )
-            }
-          />
-        </Card>
       )}
+      {renderMainContent()}
       <CreateFlashcardDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
@@ -363,7 +395,7 @@ export function FlashcardsManager({
         subjectId={selectedSubjectId}
         subjects={subjects}
       />
-      {editingFlashcardId !== null && editingFlashcard ? (
+      {editingFlashcardId !== null && editingFlashcard && (
         <EditFlashcardDialog
           flashcard={editingFlashcard}
           subjects={subjects}
@@ -393,7 +425,7 @@ export function FlashcardsManager({
             }
           }}
         />
-      ) : null}
+      )}
       <BulkDeleteFlashcardsDialog
         ids={selectedFlashcardIds}
         open={bulkDeleteOpen}

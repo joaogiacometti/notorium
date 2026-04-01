@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import {
   useEffect,
   useEffectEvent,
@@ -47,12 +47,11 @@ import {
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
-import { useRouter } from "@/i18n/routing";
 import type {
   FlashcardReviewState,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 import { DeleteFlashcardDialog } from "./delete-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "./lazy-edit-flashcard-dialog";
 
@@ -81,6 +80,12 @@ const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
   good: CheckCircle2,
   easy: Sparkles,
 };
+const gradeLabels: Record<ReviewGrade, string> = {
+  again: "Again",
+  hard: "Hard",
+  good: "Good",
+  easy: "Easy",
+};
 
 export function FlashcardReviewClient({
   initialState,
@@ -88,8 +93,6 @@ export function FlashcardReviewClient({
   subjectId,
   embedded = false,
 }: Readonly<FlashcardReviewClientProps>) {
-  const t = useTranslations("FlashcardReviewPage");
-  const tErrors = useTranslations("ServerActions");
   const shortcutsSuspended = useShortcutsDialogOpen();
   const [reviewState, setReviewState] = useState(initialState);
   const reviewStateRef = useRef(initialState);
@@ -112,11 +115,8 @@ export function FlashcardReviewClient({
 
   const dueCountText =
     reviewState.summary.dueCount === 0
-      ? t("due_empty")
-      : t("due_count", {
-          due: reviewState.summary.dueCount,
-          total: reviewState.summary.totalCount,
-        });
+      ? "No cards due right now."
+      : `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards.`;
   const previewLabels = currentCard
     ? getFlashcardReviewPreviewLabels({
         card: currentCard,
@@ -249,7 +249,7 @@ export function FlashcardReviewClient({
         const result = await reviewFlashcard({ id: currentCard.id, grade });
 
         if (!result.success) {
-          toast.error(resolveActionErrorMessage(result, tErrors));
+          toast.error(tErrors(result.errorCode, result.errorParams));
           return;
         }
 
@@ -335,7 +335,7 @@ export function FlashcardReviewClient({
                 <div className="flex items-center justify-between gap-3">
                   {currentCard.subjectName ? (
                     <p className="flex min-w-0 items-baseline gap-1 text-sm font-medium text-foreground/70">
-                      <span className="shrink-0">{t("subject_prefix")}</span>
+                      <span className="shrink-0">Subject:</span>
                       <SubjectText
                         value={currentCard.subjectName}
                         mode="truncate"
@@ -352,13 +352,13 @@ export function FlashcardReviewClient({
                     className="size-8 shrink-0"
                     onClick={() => setEditOpen(true)}
                     disabled={isPending}
-                    aria-label={t("edit")}
+                    aria-label="Edit"
                   >
                     <Pencil className="size-3.5" />
                   </Button>
                 </div>
                 <h2 className="text-sm font-semibold text-muted-foreground">
-                  {t("front_label")}
+                  Front
                 </h2>
               </div>
               <div
@@ -379,7 +379,7 @@ export function FlashcardReviewClient({
                 className={`${reviewContentFrameClassName} min-h-0 flex-1 flex-col space-y-2 border-t border-border/60 pt-2`}
               >
                 <h3 className="shrink-0 text-sm font-semibold text-muted-foreground">
-                  {t("back_label")}
+                  Back
                 </h3>
                 <div
                   className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pb-5"
@@ -421,7 +421,7 @@ export function FlashcardReviewClient({
                               <Icon className="hidden size-4 sm:inline-flex" />
                             )}
                             <span className="truncate">
-                              {t(`grade_${grade}`)}
+                              {gradeLabels[grade]}
                             </span>
                           </span>
                           {previewLabels ? (
@@ -440,7 +440,7 @@ export function FlashcardReviewClient({
                   disabled={isPending}
                   className="w-full"
                 >
-                  {t("show_answer")}
+                  Show Answer
                 </Button>
               )}
             </div>
@@ -452,9 +452,9 @@ export function FlashcardReviewClient({
     reviewContent = (
       <Card>
         <CardContent className="pt-0">
-          <h2 className="text-base font-semibold">{t("empty_title")}</h2>
+          <h2 className="text-base font-semibold">All caught up</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("empty_description")}
+            There are no due flashcards to review.
           </p>
         </CardContent>
       </Card>
@@ -469,10 +469,10 @@ export function FlashcardReviewClient({
           onValueChange={handleSubjectChange}
         >
           <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
-            <SelectValue placeholder={t("subject_selector_label")} />
+            <SelectValue placeholder="Filter by subject" />
           </SelectTrigger>
           <SelectContent align="start">
-            <SelectItem value="all">{t("subject_selector_all")}</SelectItem>
+            <SelectItem value="all">All subjects</SelectItem>
             {subjects.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>
                 <SubjectText
@@ -495,10 +495,10 @@ export function FlashcardReviewClient({
           </div>
           <div className="min-w-0">
             <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
-              {t("title")}
+              Flashcard Review
             </h1>
             <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
-              {t("description")}
+              Review your due flashcards with spaced repetition.
             </p>
             <p className="mt-2 text-sm font-medium text-foreground">
               {dueCountText}

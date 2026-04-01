@@ -4,7 +4,6 @@ import { nextCookies } from "better-auth/next-js";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getLocale } from "next-intl/server";
 import { cache } from "react";
 import { db } from "@/db/index";
 import * as schema from "@/db/schema";
@@ -74,8 +73,7 @@ export async function requireSession() {
   const state = await getSessionAccess();
 
   if (state?.account.accessStatus !== "approved") {
-    const locale = await getLocale();
-    redirect(`/${locale}/login`);
+    redirect("/login");
   }
 
   return state.session;
@@ -90,13 +88,11 @@ export async function requireAdminSession() {
   const state = await getSessionAccess();
 
   if (state?.account.accessStatus !== "approved") {
-    const locale = await getLocale();
-    redirect(`/${locale}/login`);
+    redirect("/login");
   }
 
   if (!state.account.isAdmin) {
-    const locale = await getLocale();
-    redirect(`/${locale}`);
+    redirect("/");
   }
 
   return state.session;

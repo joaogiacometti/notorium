@@ -1,7 +1,7 @@
 "use client";
 
 import { Archive, BookOpen, Lock, Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useState } from "react";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
@@ -9,7 +9,6 @@ import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { SubjectCard } from "@/components/subjects/subject-card";
 import { Button } from "@/components/ui/button";
 import { getTotalSubjectCount } from "@/features/subjects/subjects-count";
-import { Link } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type { SubjectEditDto, SubjectEntity } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
@@ -28,7 +27,6 @@ export function SubjectsList({
   subjects,
   archivedCount,
 }: Readonly<SubjectsListProps>) {
-  const t = useTranslations("SubjectsList");
   const [createOpen, setCreateOpen] = useState(false);
   const [activeAction, setActiveAction] = useState<SubjectActionTarget | null>(
     null,
@@ -45,7 +43,7 @@ export function SubjectsList({
           <Button variant="outline" className="gap-1.5" asChild>
             <Link href="/subjects/archived">
               <Archive className="size-4" />
-              {t("archived")}
+              Archived
               {archivedCount > 0 ? (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
                   {archivedCount}
@@ -59,10 +57,12 @@ export function SubjectsList({
                 className="gap-1.5"
                 id="btn-create-subject"
                 disabled={isAtLimit}
-                title={isAtLimit ? t("limit_tooltip") : undefined}
+                title={
+                  isAtLimit ? "You cannot create more subjects" : undefined
+                }
               >
                 <Plus className="size-4" />
-                <span className="hidden sm:inline">{t("new_subject")}</span>
+                <span className="hidden sm:inline">New Subject</span>
               </Button>
             }
             open={createOpen}
@@ -77,7 +77,7 @@ export function SubjectsList({
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {t("limit_message", { max: LIMITS.maxSubjects })}
+            {`You've reached the system limit of ${LIMITS.maxSubjects} subjects. Please archive or delete subjects to create more.`}
           </p>
         </div>
       )}
@@ -87,13 +87,14 @@ export function SubjectsList({
           <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
             <BookOpen className="size-6 text-primary" />
           </div>
-          <h2 className="mb-1 text-lg font-semibold">{t("empty_title")}</h2>
+          <h2 className="mb-1 text-lg font-semibold">No subjects yet</h2>
           <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-            {t("empty_description")}
+            Create your first subject to start organizing your notes and
+            tracking your academic progress.
           </p>
           <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
-            {t("create_subject")}
+            Create Subject
           </Button>
         </div>
       ) : (

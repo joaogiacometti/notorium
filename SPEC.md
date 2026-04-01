@@ -17,12 +17,6 @@ Students who want a private, lightweight study management workspace.
 
 ## Core Scope
 
-### Localization
-
-- Full product localization in English (`en`) and Portuguese (`pt`).
-- All user-facing copy must exist in both locale dictionaries with aligned key paths.
-- Locale-aware routing is required for all app pages.
-
 ### Authentication
 
 - Email/password sign up, sign in, and sign out.

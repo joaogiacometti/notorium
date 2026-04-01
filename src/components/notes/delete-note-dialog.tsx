@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteNote } from "@/app/actions/notes";
@@ -15,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface DeleteNoteDialogProps {
   noteId: string;
@@ -32,9 +31,6 @@ export function DeleteNoteDialog({
   onOpenChange,
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
-  const t = useTranslations("DeleteNoteDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -49,7 +45,7 @@ export function DeleteNoteDialog({
           onOpenChange(false);
         }
       } else {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(tErrors(result.errorCode, result.errorParams));
       }
     });
   }
@@ -58,11 +54,11 @@ export function DeleteNoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>Delete Note</DialogTitle>
           <DialogDescription>
-            {t("prompt_prefix")}
-            <span className="font-semibold text-foreground">{noteTitle}</span>
-            {t("prompt_suffix")}
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-foreground">{noteTitle}</span>?
+            This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -71,7 +67,7 @@ export function DeleteNoteDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button
             variant="destructive"
@@ -80,8 +76,8 @@ export function DeleteNoteDialog({
           >
             <AsyncButtonContent
               pending={isPending}
-              idleLabel={t("confirm")}
-              pendingLabel={tCommon("deleting")}
+              idleLabel="Delete"
+              pendingLabel="Deleting..."
             />
           </Button>
         </DialogFooter>

@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { createAssessment } from "@/app/actions/assessments";
@@ -47,9 +46,6 @@ export function CreateAssessmentDialog({
   onOpenChange,
   onCreated,
 }: Readonly<CreateAssessmentDialogProps>) {
-  const t = useTranslations("CreateAssessmentDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<
     CreateAssessmentFormInput,
@@ -79,7 +75,7 @@ export function CreateAssessmentDialog({
         onOpenChange(false);
       } else {
         form.setError("title", {
-          message: resolveActionErrorMessage(result, tErrors),
+          message: resolveActionErrorMessage(result),
         });
       }
     } finally {
@@ -93,10 +89,10 @@ export function CreateAssessmentDialog({
       formId="form-create-assessment"
       open={open}
       onOpenChange={onOpenChange}
-      title={t("title")}
-      description={t("description")}
-      submitLabel={t("submit")}
-      pendingSubmitLabel={tCommon("creating")}
+      title="Add Assessment"
+      description="Track an upcoming or completed assessment for this subject."
+      submitLabel="Add Assessment"
+      pendingSubmitLabel="Creating..."
       onSubmit={onSubmit}
       subjects={subjects}
       isSubmitting={isSubmitting}

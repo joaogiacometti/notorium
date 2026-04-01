@@ -9,7 +9,6 @@ import {
   Presentation,
   Rocket,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +68,15 @@ export const assessmentTypeStyles: Record<AssessmentType, AssessmentTypeStyle> =
     },
   };
 
+const TYPE_LABELS: Record<AssessmentType, string> = {
+  exam: "Exam",
+  assignment: "Assignment",
+  project: "Project",
+  presentation: "Presentation",
+  homework: "Homework",
+  other: "Other",
+};
+
 interface AssessmentTypeBadgeProps {
   type: AssessmentType;
   className?: string;
@@ -78,7 +86,6 @@ export function AssessmentTypeBadge({
   type,
   className,
 }: Readonly<AssessmentTypeBadgeProps>) {
-  const t = useTranslations("AssessmentItemCard");
   const typeStyle = assessmentTypeStyles[type];
   const TypeIcon = typeStyle.icon;
 
@@ -93,7 +100,7 @@ export function AssessmentTypeBadge({
       )}
     >
       <TypeIcon className="size-3" />
-      {t(`type_${type}`)}
+      {TYPE_LABELS[type]}
     </span>
   );
 }

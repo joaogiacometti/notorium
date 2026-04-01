@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown, Download, Upload } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { exportData, importData } from "@/app/actions/data-transfer";
@@ -35,9 +34,6 @@ function downloadJson(data: unknown, filename: string) {
 }
 
 export function DataTransferActions() {
-  const t = useTranslations("DataTransferActions");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isExporting, startExport] = useTransition();
   const [isImporting, startImport] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -50,16 +46,16 @@ export function DataTransferActions() {
       try {
         const result = await exportData({ templateOnly });
         if ("success" in result && result.success === false) {
-          toast.error(resolveActionErrorMessage(result, tErrors));
+          toast.error(resolveActionErrorMessage(result));
           return;
         }
 
         const suffix = templateOnly ? "template" : "full";
         const filename = `notorium-export-${suffix}-${new Date().toISOString().slice(0, 10)}.json`;
         downloadJson(result, filename);
-        toast.success(t("export_success"));
+        toast.success("Study data exported successfully.");
       } catch {
-        toast.error(t("export_error"));
+        toast.error("Failed to export data.");
       }
     });
   }
@@ -85,12 +81,15 @@ export function DataTransferActions() {
         const result = await importData(json);
 
         if (result.success) {
-          toast.success(t("import_success", { count: result.imported ?? 0 }));
+          const count = result.imported ?? 0;
+          toast.success(
+            `Imported ${count} ${count === 1 ? "subject" : "subjects"} successfully.`,
+          );
         } else {
-          toast.error(resolveActionErrorMessage(result, tErrors));
+          toast.error(resolveActionErrorMessage(result));
         }
       } catch {
-        toast.error(t("import_read_error"));
+        toast.error("Failed to read the import file.");
       } finally {
         pendingFileRef.current = null;
         setConfirmOpen(false);
@@ -111,8 +110,8 @@ export function DataTransferActions() {
             <Button variant="outline" disabled={isBusy}>
               <AsyncButtonContent
                 pending={isExporting}
-                idleLabel={t("export_data")}
-                pendingLabel={tCommon("exporting")}
+                idleLabel="Export Data"
+                pendingLabel="Exporting..."
                 idleIcon={<Download className="size-4" />}
               />
               <ChevronDown className="size-4" />
@@ -120,10 +119,10 @@ export function DataTransferActions() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={() => handleExport(false)}>
-              {t("export_all")}
+              Export All
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExport(true)}>
-              {t("export_template")}
+              Export Template
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -134,8 +133,8 @@ export function DataTransferActions() {
         >
           <AsyncButtonContent
             pending={isImporting}
-            idleLabel={t("import_data")}
-            pendingLabel={tCommon("importing")}
+            idleLabel="Import Data"
+            pendingLabel="Importing..."
             idleIcon={<Upload className="size-4" />}
           />
         </Button>
@@ -151,9 +150,11 @@ export function DataTransferActions() {
       <Dialog open={confirmOpen} onOpenChange={handleImportCancel}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("import_dialog_title")}</DialogTitle>
+            <DialogTitle>Import Data</DialogTitle>
             <DialogDescription>
-              {t("import_dialog_description")}
+              This will create new subjects from the import file with their
+              study data only. Account details, API keys, sessions, and other
+              sensitive information are ignored.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">
@@ -162,13 +163,13 @@ export function DataTransferActions() {
               onClick={handleImportCancel}
               disabled={isImporting}
             >
-              {t("cancel")}
+              Cancel
             </Button>
             <Button onClick={handleImportConfirm} disabled={isImporting}>
               <AsyncButtonContent
                 pending={isImporting}
-                idleLabel={t("confirm_import")}
-                pendingLabel={tCommon("importing")}
+                idleLabel="Confirm Import"
+                pendingLabel="Importing..."
               />
             </Button>
           </DialogFooter>

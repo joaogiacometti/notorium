@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { KeyRound, Sparkles, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { startTransition, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -43,9 +42,6 @@ interface AiSettingsCardProps {
 export function AiSettingsCard({
   initialAiSettings,
 }: Readonly<AiSettingsCardProps>) {
-  const t = useTranslations("AccountForm");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [aiSettings, setAiSettings] = useState(initialAiSettings);
   const [isSavingAi, startSavingAi] = useTransition();
   const [isClearingAi, startClearingAi] = useTransition();
@@ -82,7 +78,7 @@ export function AiSettingsCard({
       const result = await updateUserAiSettings(data);
 
       if (!result.success) {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(resolveActionErrorMessage(result));
         return;
       }
 
@@ -93,7 +89,7 @@ export function AiSettingsCard({
         model: result.settings?.model ?? data.model,
         apiKey: "",
       });
-      toast.success(t("ai_saved"));
+      toast.success("AI settings updated.");
     });
   });
 
@@ -102,7 +98,7 @@ export function AiSettingsCard({
       const result = await clearUserAiSettings();
 
       if (!result.success) {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(resolveActionErrorMessage(result));
         return;
       }
 
@@ -113,7 +109,7 @@ export function AiSettingsCard({
         model: "",
         apiKey: "",
       });
-      toast.success(t("ai_cleared"));
+      toast.success("AI settings cleared.");
     });
   };
 
@@ -125,8 +121,11 @@ export function AiSettingsCard({
             <Sparkles className="size-4" />
           </div>
           <div className="space-y-2">
-            <CardTitle>{t("ai_title")}</CardTitle>
-            <CardDescription>{t("ai_description")}</CardDescription>
+            <CardTitle>AI Settings</CardTitle>
+            <CardDescription>
+              Bring your own OpenRouter key and model for flashcard generation.
+              Your key is encrypted at rest and never shown again after saving.
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -134,9 +133,7 @@ export function AiSettingsCard({
         <form id="form-account-ai" onSubmit={handleAiSubmit}>
           <FieldGroup className="gap-4">
             <Field>
-              <FieldLabel htmlFor="account-ai-provider">
-                {t("ai_provider")}
-              </FieldLabel>
+              <FieldLabel htmlFor="account-ai-provider">Provider</FieldLabel>
               <div
                 id="account-ai-provider"
                 className="flex h-10 items-center rounded-md border bg-muted/30 px-3 text-sm"
@@ -149,19 +146,19 @@ export function AiSettingsCard({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="account-ai-model">
-                    {t("ai_model")}
-                  </FieldLabel>
+                  <FieldLabel htmlFor="account-ai-model">Model</FieldLabel>
                   <Input
                     {...field}
                     id="account-ai-model"
                     type="text"
-                    placeholder={t("ai_model_placeholder")}
+                    placeholder="openai/gpt-4.1-mini"
                     aria-invalid={fieldState.invalid}
                     autoComplete="off"
                     spellCheck={false}
                   />
-                  <FieldDescription>{t("ai_model_hint")}</FieldDescription>
+                  <FieldDescription>
+                    Enter any OpenRouter model ID.
+                  </FieldDescription>
                   {fieldState.invalid ? (
                     <FieldError errors={[fieldState.error]} />
                   ) : null}
@@ -174,7 +171,7 @@ export function AiSettingsCard({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="account-ai-api-key">
-                    {t("ai_api_key")}
+                    OpenRouter API Key
                   </FieldLabel>
                   <div className="relative">
                     <KeyRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -182,7 +179,7 @@ export function AiSettingsCard({
                       {...field}
                       id="account-ai-api-key"
                       type="password"
-                      placeholder={t("ai_api_key_placeholder")}
+                      placeholder="sk-or-v1-..."
                       aria-invalid={fieldState.invalid}
                       autoComplete="new-password"
                       className="pl-9"
@@ -190,10 +187,8 @@ export function AiSettingsCard({
                   </div>
                   <FieldDescription>
                     {aiSettings?.hasApiKey && aiSettings.apiKeyLastFour
-                      ? t("ai_saved_key", {
-                          suffix: aiSettings.apiKeyLastFour,
-                        })
-                      : t("ai_no_key")}
+                      ? `Saved key ending in ${aiSettings.apiKeyLastFour}. Leave the field blank to keep it unchanged.`
+                      : "No API key saved yet. AI generation will stay unavailable until you add one."}
                   </FieldDescription>
                   {fieldState.invalid ? (
                     <FieldError errors={[fieldState.error]} />
@@ -211,9 +206,11 @@ export function AiSettingsCard({
                 <AsyncButtonContent
                   pending={isSavingAi}
                   idleLabel={
-                    aiSettings?.hasApiKey ? t("ai_update") : t("ai_save")
+                    aiSettings?.hasApiKey
+                      ? "Update AI Settings"
+                      : "Save AI Settings"
                   }
-                  pendingLabel={tCommon("saving")}
+                  pendingLabel="Saving..."
                 />
               </Button>
               <Button
@@ -225,8 +222,8 @@ export function AiSettingsCard({
               >
                 <AsyncButtonContent
                   pending={isClearingAi}
-                  idleLabel={t("ai_clear")}
-                  pendingLabel={tCommon("clearing")}
+                  idleLabel="Clear Saved Key"
+                  pendingLabel="Clearing..."
                   idleIcon={<Trash2 className="size-4" />}
                 />
               </Button>

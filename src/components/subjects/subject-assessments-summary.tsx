@@ -1,10 +1,9 @@
 "use client";
 
 import { ClipboardList } from "lucide-react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getAssessmentAverage } from "@/features/assessments/assessments";
-import { Link } from "@/i18n/routing";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 
@@ -17,7 +16,6 @@ export function SubjectAssessmentsSummary({
   assessments,
   subjectId,
 }: Readonly<SubjectAssessmentsSummaryProps>) {
-  const t = useTranslations("SubjectAssessmentsSummary");
   const average = getAssessmentAverage(assessments);
   const assessmentCount = assessments.length;
   const hasAssessments = assessmentCount > 0;
@@ -32,9 +30,9 @@ export function SubjectAssessmentsSummary({
     <div>
       <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Assessments</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {t("description")}
+            Track how your completed assessments shape the final grade.
           </p>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -46,7 +44,7 @@ export function SubjectAssessmentsSummary({
           >
             <Link href={`/planning?view=assessments&subject=${subjectId}`}>
               <ClipboardList className="size-3.5" />
-              {t("manage_in_planning")}
+              Manage assessments
             </Link>
           </Button>
         </div>
@@ -62,15 +60,13 @@ export function SubjectAssessmentsSummary({
             }`}
           >
             {average !== null
-              ? t("status_ready")
+              ? "Assessment summary"
               : hasAssessments
-                ? t("status_no_grade")
-                : t("status_empty")}
+                ? "No grade yet"
+                : "No assessments yet"}
           </p>
           {average !== null ? (
-            <p className="text-sm text-muted-foreground">
-              {t("subject_average")}
-            </p>
+            <p className="text-sm text-muted-foreground">Final grade</p>
           ) : null}
         </div>
 
@@ -95,8 +91,8 @@ export function SubjectAssessmentsSummary({
           ) : null}
           <p className="text-sm text-muted-foreground">
             {average !== null
-              ? t("assessment_count", { count: assessmentCount })
-              : t("empty_helper")}
+              ? `Based on ${assessmentCount} ${assessmentCount === 1 ? "assessment" : "assessments"}`
+              : "Add completed assessments with a score to track your final grade."}
           </p>
         </div>
       </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { type KeyboardEvent, useState } from "react";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
@@ -33,8 +32,6 @@ export function AssessmentsTableRowActions({
   onUpdated,
   onDeleted,
 }: Readonly<AssessmentsTableRowActionsProps>) {
-  const t = useTranslations("PlanningAssessmentsTable");
-
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -46,7 +43,7 @@ export function AssessmentsTableRowActions({
             variant="ghost"
             size="icon"
             className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
-            aria-label={t("open_actions")}
+            aria-label="Open actions"
             onClick={(event) => {
               event.stopPropagation();
             }}
@@ -64,7 +61,7 @@ export function AssessmentsTableRowActions({
             className="cursor-pointer"
           >
             <Pencil className="size-4" />
-            {t("edit")}
+            Edit
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(event) => {
@@ -74,7 +71,7 @@ export function AssessmentsTableRowActions({
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             <Trash2 className="size-4" />
-            {t("delete")}
+            Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

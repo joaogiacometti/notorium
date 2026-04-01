@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import {
   Controller,
   type FieldPath,
@@ -79,9 +78,6 @@ export function AssessmentDialogForm<
   subjects,
   isSubmitting,
 }: Readonly<AssessmentDialogFormProps<TValues, TSubmitValues>>) {
-  const t = useTranslations("CreateAssessmentDialog");
-  const tAssessment = useTranslations("AssessmentItemCard");
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -102,7 +98,7 @@ export function AssessmentDialogForm<
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={`${formId}-subject`}>
-                      {t("field_subject")}
+                      Subject
                     </FieldLabel>
                     <Select
                       value={field.value || undefined}
@@ -118,9 +114,7 @@ export function AssessmentDialogForm<
                         className="w-full"
                         aria-invalid={fieldState.invalid}
                       >
-                        <SelectValue
-                          placeholder={t("field_subject_placeholder")}
-                        />
+                        <SelectValue placeholder="Select a subject" />
                       </SelectTrigger>
                       <SelectContent>
                         {subjects.map((subject) => (
@@ -146,13 +140,11 @@ export function AssessmentDialogForm<
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-title`}>
-                    {t("field_title")}
-                  </FieldLabel>
+                  <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
                   <Input
                     {...field}
                     id={`${formId}-title`}
-                    placeholder={t("field_title_placeholder")}
+                    placeholder="e.g. Midterm 1"
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />
@@ -168,12 +160,12 @@ export function AssessmentDialogForm<
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`${formId}-description`}>
-                    {t("field_description")}
+                    Description (optional)
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id={`${formId}-description`}
-                    placeholder={t("field_description_placeholder")}
+                    placeholder="Extra details..."
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
@@ -189,9 +181,7 @@ export function AssessmentDialogForm<
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-type`}>
-                    {t("field_type")}
-                  </FieldLabel>
+                  <FieldLabel htmlFor={`${formId}-type`}>Type</FieldLabel>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
@@ -211,7 +201,17 @@ export function AssessmentDialogForm<
                     <SelectContent>
                       {assessmentTypeValues.map((value) => (
                         <SelectItem key={value} value={value}>
-                          {tAssessment(`type_${value}`)}
+                          {value === "exam"
+                            ? "Exam"
+                            : value === "assignment"
+                              ? "Assignment"
+                              : value === "project"
+                                ? "Project"
+                                : value === "presentation"
+                                  ? "Presentation"
+                                  : value === "homework"
+                                    ? "Homework"
+                                    : "Other"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -227,9 +227,7 @@ export function AssessmentDialogForm<
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-status`}>
-                    {t("field_status")}
-                  </FieldLabel>
+                  <FieldLabel htmlFor={`${formId}-status`}>Status</FieldLabel>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
@@ -247,12 +245,8 @@ export function AssessmentDialogForm<
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">
-                        {tAssessment("status_pending")}
-                      </SelectItem>
-                      <SelectItem value="completed">
-                        {tAssessment("status_completed")}
-                      </SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && (
@@ -267,7 +261,7 @@ export function AssessmentDialogForm<
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`${formId}-due-date`}>
-                    {t("field_due_date")}
+                    Due Date (optional)
                   </FieldLabel>
                   <Input
                     id={`${formId}-due-date`}
@@ -297,7 +291,7 @@ export function AssessmentDialogForm<
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`${formId}-score`}>
-                    {t("field_score")}
+                    Score (optional)
                   </FieldLabel>
                   <Input
                     id={`${formId}-score`}
@@ -305,7 +299,7 @@ export function AssessmentDialogForm<
                     min={0}
                     max={100}
                     step={0.01}
-                    placeholder={t("field_score_placeholder")}
+                    placeholder="e.g. 84"
                     aria-invalid={fieldState.invalid}
                     value={field.value ?? ""}
                     onChange={(event) =>
@@ -331,7 +325,7 @@ export function AssessmentDialogForm<
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`${formId}-weight`}>
-                    {t("field_weight")}
+                    Weight (optional)
                   </FieldLabel>
                   <Input
                     id={`${formId}-weight`}
@@ -339,7 +333,7 @@ export function AssessmentDialogForm<
                     min={0}
                     max={100}
                     step={0.01}
-                    placeholder={t("field_weight_placeholder")}
+                    placeholder="e.g. 40"
                     aria-invalid={fieldState.invalid}
                     value={field.value ?? ""}
                     onChange={(event) =>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteFlashcard } from "@/app/actions/flashcards";
@@ -15,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface DeleteFlashcardDialogProps {
   flashcardId: string;
@@ -32,9 +31,6 @@ export function DeleteFlashcardDialog({
   onOpenChange,
   onDeleted,
 }: Readonly<DeleteFlashcardDialogProps>) {
-  const t = useTranslations("DeleteFlashcardDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
 
@@ -45,7 +41,7 @@ export function DeleteFlashcardDialog({
         onDeleted?.(result.id);
         onOpenChange(false);
       } else {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(tErrors(result.errorCode, result.errorParams));
       }
     });
   }
@@ -54,13 +50,13 @@ export function DeleteFlashcardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>Delete Flashcard</DialogTitle>
           <DialogDescription>
-            {t("prompt_prefix")}
+            Are you sure you want to delete{" "}
             <span className="font-semibold text-foreground">
               {flashcardFrontPreview}
             </span>
-            {t("prompt_suffix")}
+            ? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -69,7 +65,7 @@ export function DeleteFlashcardDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button
             variant="destructive"
@@ -78,8 +74,8 @@ export function DeleteFlashcardDialog({
           >
             <AsyncButtonContent
               pending={isPending}
-              idleLabel={t("confirm")}
-              pendingLabel={tCommon("deleting")}
+              idleLabel="Delete"
+              pendingLabel="Deleting..."
             />
           </Button>
         </DialogFooter>

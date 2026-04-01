@@ -30,14 +30,14 @@ test.afterAll(async () => {
 });
 
 test("first signup becomes approved admin immediately", async ({ page }) => {
-  await page.goto("/en/signup");
+  await page.goto("/signup");
   await page.locator("#form-signup-name").fill(firstUser.name);
   await page.locator("#form-signup-email").fill(firstUser.email);
   await page.locator("#form-signup-password").fill(firstUser.password);
   await page.locator("#form-signup-confirm-password").fill(firstUser.password);
   await page.getByRole("button", { name: "Create Account" }).click();
 
-  await expect(page).toHaveURL(/\/en\/subjects$/);
+  await expect(page).toHaveURL(/\/subjects$/);
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
@@ -54,14 +54,14 @@ test("first signup becomes approved admin immediately", async ({ page }) => {
 test("later signup stays pending and shows approval notice", async ({
   page,
 }) => {
-  await page.goto("/en/signup");
+  await page.goto("/signup");
   await page.locator("#form-signup-name").fill(secondUser.name);
   await page.locator("#form-signup-email").fill(secondUser.email);
   await page.locator("#form-signup-password").fill(secondUser.password);
   await page.locator("#form-signup-confirm-password").fill(secondUser.password);
   await page.getByRole("button", { name: "Create Account" }).click();
 
-  await expect(page).toHaveURL(/\/en\/login\?pendingApproval=1$/);
+  await expect(page).toHaveURL(/\/login\?pendingApproval=1$/);
   await expect(
     page.getByText(
       "Your account was created successfully and is now waiting for administrator approval.",

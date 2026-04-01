@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileText, Layers, Search } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
@@ -21,7 +21,6 @@ import {
   getFlashcardDetailHref,
   getNoteDetailHref,
 } from "@/features/navigation/detail-page-back-link";
-import { useRouter } from "@/i18n/routing";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import { searchMinQueryLength } from "@/lib/validations/search";
@@ -31,7 +30,6 @@ interface GlobalSearchProps {
 }
 
 export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
-  const t = useTranslations("GlobalSearch");
   const shortcutsSuspended = useShortcutsDialogOpen();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -110,7 +108,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
         onClick={() => setOpen(true)}
       >
         <Search className="size-4" />
-        <span className="hidden xl:inline-flex">{t("trigger")}</span>
+        <span className="hidden xl:inline-flex">Search...</span>
         <kbd className="pointer-events-none absolute right-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 xl:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
@@ -118,31 +116,27 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
       <CommandDialog
         open={open}
         onOpenChange={handleOpenChange}
-        title={t("dialog_title")}
-        description={t("dialog_description")}
+        title="Global Search"
+        description="Search across all your subjects, notes, and flashcards"
         commandProps={{ shouldFilter: false }}
       >
         <CommandInput
           value={query}
           onValueChange={setQuery}
-          placeholder={t("input_placeholder")}
+          placeholder="Search subjects, notes, and flashcards..."
         />
         <CommandList>
           {isResultsPending && <SearchSkeleton />}
           {!isResultsPending && !isAuthenticated && (
-            <CommandEmpty>{t("empty_sign_in")}</CommandEmpty>
+            <CommandEmpty>Sign in to search.</CommandEmpty>
           )}
           {!isResultsPending && isAuthenticated && !hasData && (
-            <CommandEmpty>{t("empty_has_data")}</CommandEmpty>
+            <CommandEmpty>No subjects, notes, or flashcards yet.</CommandEmpty>
           )}
 
           {subjects.length > 0 && (
             <CommandGroup
-              heading={
-                showingRecents
-                  ? `${t("recent_prefix")} ${t("subjects_group")}`
-                  : t("subjects_group")
-              }
+              heading={showingRecents ? `Recent Subjects` : "Subjects"}
             >
               {subjects.map((subj) => (
                 <CommandItem
@@ -170,13 +164,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
           )}
 
           {notes.length > 0 && (
-            <CommandGroup
-              heading={
-                showingRecents
-                  ? `${t("recent_prefix")} ${t("notes_group")}`
-                  : t("notes_group")
-              }
-            >
+            <CommandGroup heading={showingRecents ? `Recent Notes` : "Notes"}>
               {notes.map((n) => (
                 <CommandItem
                   key={n.id}
@@ -194,7 +182,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                     <FileText className="size-4 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate">{n.title}</span>
                     <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                      <span className="shrink-0">{t("in_subject")}</span>
+                      <span className="shrink-0">in</span>
                       <SubjectText
                         value={n.subjectName}
                         mode="truncate"
@@ -214,11 +202,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
           {flashcards.length > 0 && (
             <CommandGroup
-              heading={
-                showingRecents
-                  ? `${t("recent_prefix")} ${t("flashcards_group")}`
-                  : t("flashcards_group")
-              }
+              heading={showingRecents ? `Recent Flashcards` : "Flashcards"}
             >
               {flashcards.map((fc) => (
                 <CommandItem
@@ -240,7 +224,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                       {getRichTextExcerpt(fc.front, 80)}
                     </span>
                     <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                      <span className="shrink-0">{t("in_subject")}</span>
+                      <span className="shrink-0">in</span>
                       <SubjectText
                         value={fc.subjectName}
                         mode="truncate"

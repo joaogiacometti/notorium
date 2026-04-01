@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -31,8 +30,8 @@ import {
   editNoteSchema,
 } from "@/features/notes/validation";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { tErrors } from "@/lib/server/error-messages";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 type NoteFormValues = CreateNoteForm | EditNoteForm;
 
@@ -67,11 +66,6 @@ export function NoteDialogForm({
   values,
   onSubmitAction,
 }: Readonly<NoteDialogFormProps>) {
-  const t = useTranslations(
-    mode === "create" ? "CreateNoteDialog" : "EditNoteDialog",
-  );
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,7 +123,7 @@ export function NoteDialogForm({
         return;
       }
 
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(tErrors(result.errorCode, result.errorParams));
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +145,9 @@ export function NoteDialogForm({
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
         <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
           <DialogHeader>
-            <DialogTitle>{t("title")}</DialogTitle>
+            <DialogTitle>
+              {mode === "create" ? "Create Note" : "Edit Note"}
+            </DialogTitle>
           </DialogHeader>
           <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">
@@ -160,13 +156,11 @@ export function NoteDialogForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-title`}>
-                      {t("field_title")}
-                    </FieldLabel>
+                    <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
                     <Input
                       {...field}
                       id={`${formId}-title`}
-                      placeholder={t("field_title_placeholder")}
+                      placeholder="e.g. Chapter 3 Summary"
                       aria-invalid={fieldState.invalid}
                       autoFocus
                     />
@@ -182,12 +176,12 @@ export function NoteDialogForm({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={`${formId}-content`}>
-                      {t("field_content")}
+                      Content
                     </FieldLabel>
                     <TiptapEditor
                       value={field.value ?? ""}
                       onChange={field.onChange}
-                      placeholder={t("field_content_placeholder")}
+                      placeholder="Write your notes here..."
                       id={`${formId}-content`}
                       aria-invalid={fieldState.invalid}
                       onCtrlEnter={handleCtrlEnter}
@@ -206,10 +200,8 @@ export function NoteDialogForm({
               >
                 <AsyncButtonContent
                   pending={isSubmitting}
-                  idleLabel={t("submit")}
-                  pendingLabel={
-                    mode === "create" ? tCommon("creating") : tCommon("saving")
-                  }
+                  idleLabel={mode === "create" ? "Create Note" : "Save Changes"}
+                  pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
                 />
               </Button>
             </FieldGroup>

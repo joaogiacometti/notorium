@@ -1,8 +1,7 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import { FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,8 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "@/i18n/routing";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatRelativeTime } from "@/lib/dates/format";
 import type { NoteEntity } from "@/lib/server/api-contracts";
 
 interface NoteCardProps {
@@ -26,10 +24,6 @@ export function NoteCard({
   onEditRequested,
   onDeleteRequested,
 }: Readonly<NoteCardProps>) {
-  const t = useTranslations("NoteCard");
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
-
   return (
     <Card className="group relative min-w-0 overflow-hidden transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
@@ -50,7 +44,7 @@ export function NoteCard({
               variant="ghost"
               size="icon"
               className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
-              aria-label={t("open_actions")}
+              aria-label="Open note actions"
             >
               <MoreVertical className="size-4" />
             </Button>
@@ -61,14 +55,14 @@ export function NoteCard({
               className="cursor-pointer"
             >
               <Pencil className="size-4" />
-              {t("edit")}
+              Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onDeleteRequested}
               className="cursor-pointer text-destructive focus:text-destructive"
             >
               <Trash2 className="size-4" />
-              {t("delete")}
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -79,11 +73,7 @@ export function NoteCard({
       >
         <CardContent className="pt-0">
           <p className="text-xs text-muted-foreground/60">
-            {t("created_label")}{" "}
-            {formatDistanceToNow(new Date(note.createdAt), {
-              addSuffix: true,
-              locale: dateLocale,
-            })}
+            Created {formatRelativeTime(note.createdAt)}
           </p>
         </CardContent>
       </Link>

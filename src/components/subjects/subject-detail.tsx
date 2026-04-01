@@ -1,8 +1,7 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
 import { NotesList } from "@/components/notes/notes-list";
@@ -13,8 +12,7 @@ import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { SubjectAssessmentsSummary } from "@/components/subjects/subject-assessments-summary";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useRouter } from "@/i18n/routing";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatRelativeTime } from "@/lib/dates/format";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
@@ -35,9 +33,6 @@ export function SubjectDetail({
   misses,
   assessments,
 }: Readonly<SubjectDetailProps>) {
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
-  const t = useTranslations("SubjectDetail");
   const router = useRouter();
   const [, startNavTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
@@ -56,7 +51,7 @@ export function SubjectDetail({
             onClick={() => setEditOpen(true)}
           >
             <Pencil className="size-3.5" />
-            {t("edit")}
+            Edit
           </Button>
           <Button
             variant="outline"
@@ -66,7 +61,7 @@ export function SubjectDetail({
             onClick={() => setArchiveOpen(true)}
           >
             <Archive className="size-3.5" />
-            {t("archive")}
+            Archive
           </Button>
           <Button
             variant="outline"
@@ -76,23 +71,15 @@ export function SubjectDetail({
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" />
-            {t("delete")}
+            Delete
           </Button>
         </>
       }
       backHref="/subjects"
       backIcon={ArrowLeft}
-      backLabel={t("back")}
+      backLabel="Back to Subjects"
       description={subject.description}
-      meta={
-        <span>
-          {t("created")}{" "}
-          {formatDistanceToNow(new Date(subject.createdAt), {
-            addSuffix: true,
-            locale: dateLocale,
-          })}
-        </span>
-      }
+      meta={<span>Created {formatRelativeTime(subject.createdAt)}</span>}
       title={<SubjectText value={subject.name} mode="wrap" />}
       titleIcon={BookOpen}
     >

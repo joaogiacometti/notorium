@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { recordMiss } from "@/app/actions/attendance";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -37,9 +36,6 @@ export function RecordMissDialog({
   open,
   onOpenChange,
 }: Readonly<RecordMissDialogProps>) {
-  const t = useTranslations("RecordMissDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const today = new Date().toISOString().split("T")[0];
 
   const form = useForm({
@@ -57,7 +53,7 @@ export function RecordMissDialog({
       onOpenChange(false);
     } else {
       form.setError("missDate", {
-        message: resolveActionErrorMessage(result, tErrors),
+        message: resolveActionErrorMessage(result),
       });
     }
   }
@@ -66,8 +62,10 @@ export function RecordMissDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>Record a Miss</DialogTitle>
+          <DialogDescription>
+            Select the date you missed a class for this subject.
+          </DialogDescription>
         </DialogHeader>
         <form id="form-record-miss" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-4">
@@ -76,9 +74,7 @@ export function RecordMissDialog({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-record-miss-date">
-                    {t("field_date")}
-                  </FieldLabel>
+                  <FieldLabel htmlFor="form-record-miss-date">Date</FieldLabel>
                   <Input
                     {...field}
                     id="form-record-miss-date"
@@ -100,8 +96,8 @@ export function RecordMissDialog({
             >
               <AsyncButtonContent
                 pending={form.formState.isSubmitting}
-                idleLabel={t("submit")}
-                pendingLabel={tCommon("creating")}
+                idleLabel="Record Miss"
+                pendingLabel="Creating..."
               />
             </Button>
           </FieldGroup>

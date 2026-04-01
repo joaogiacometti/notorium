@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAccount } from "@/app/actions/account";
@@ -25,16 +24,13 @@ export function DeleteAccountDialog({
   open,
   onOpenChange,
 }: Readonly<DeleteAccountDialogProps>) {
-  const t = useTranslations("DeleteAccountDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
     startTransition(async () => {
       const result = await deleteAccount();
       if (result && !result.success) {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(resolveActionErrorMessage(result));
       }
     });
   }
@@ -43,8 +39,11 @@ export function DeleteAccountDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>Delete Account</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete your account? This action cannot be
+            undone.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button
@@ -52,7 +51,7 @@ export function DeleteAccountDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button
             variant="destructive"
@@ -61,8 +60,8 @@ export function DeleteAccountDialog({
           >
             <AsyncButtonContent
               pending={isPending}
-              idleLabel={t("title")}
-              pendingLabel={tCommon("deleting")}
+              idleLabel="Delete Account"
+              pendingLabel="Deleting..."
             />
           </Button>
         </DialogFooter>

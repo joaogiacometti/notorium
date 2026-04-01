@@ -1,10 +1,8 @@
 "use client";
 
-import { Globe, Palette, Settings } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { Palette, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { updateUserTheme } from "@/app/actions/theme";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -21,32 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePathname, useRouter } from "@/i18n/routing";
 import { type AppTheme, isAppTheme, themeOptions } from "@/lib/theme";
 
-type AppLocale = "en" | "pt";
-
-function isLocale(value: string): value is AppLocale {
-  return value === "en" || value === "pt";
-}
-
 export function PreferencesDialog() {
-  const t = useTranslations("Navigation");
-  const locale = useLocale();
-  const pathname = usePathname();
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
 
-  const currentLocale = isLocale(locale) ? locale : "en";
   const currentTheme = isAppTheme(theme) ? theme : "system";
-
-  const handleLocaleChange = (nextLocale: AppLocale) => {
-    if (nextLocale === currentLocale) {
-      return;
-    }
-
-    router.replace(pathname, { locale: nextLocale });
-  };
 
   const handleThemeChange = async (nextTheme: AppTheme) => {
     if (nextTheme === currentTheme) {
@@ -71,55 +49,24 @@ export function PreferencesDialog() {
           data-testid="account-menu-preferences"
         >
           <Settings className="size-4" />
-          {t("preferences")}
+          Preferences
         </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto p-0 sm:max-w-lg">
         <DialogHeader className="border-b bg-muted/40 px-4 py-4 sm:px-6 sm:py-5">
-          <DialogTitle>{t("preferences_title")}</DialogTitle>
-          <DialogDescription>{t("preferences_description")}</DialogDescription>
+          <DialogTitle>Preferences</DialogTitle>
+          <DialogDescription>Update your theme settings.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
-          <section className="rounded-lg border bg-card p-3.5 sm:p-4">
-            <div className="mb-3 flex items-start gap-3">
-              <div className="rounded-md bg-primary/10 p-2 text-primary">
-                <Globe className="size-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">{t("language")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("preferences_language_description")}
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <Button
-                type="button"
-                variant={currentLocale === "en" ? "default" : "outline"}
-                className="h-10 justify-start"
-                onClick={() => handleLocaleChange("en")}
-              >
-                {t("english")}
-              </Button>
-              <Button
-                type="button"
-                variant={currentLocale === "pt" ? "default" : "outline"}
-                className="h-10 justify-start"
-                onClick={() => handleLocaleChange("pt")}
-              >
-                {t("portuguese")}
-              </Button>
-            </div>
-          </section>
           <section className="rounded-lg border bg-card p-3.5 sm:p-4">
             <div className="mb-3 flex items-start gap-3">
               <div className="rounded-md bg-primary/10 p-2 text-primary">
                 <Palette className="size-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold">{t("theme")}</p>
+                <p className="text-sm font-semibold">Theme</p>
                 <p className="text-sm text-muted-foreground">
-                  {t("preferences_theme_description")}
+                  Control how the interface looks.
                 </p>
               </div>
             </div>
@@ -141,9 +88,25 @@ export function PreferencesDialog() {
                 className="z-[60] w-[var(--radix-select-trigger-width)]"
               >
                 {themeOptions.map((option) => {
+                  const label =
+                    option.labelKey === "system"
+                      ? "System"
+                      : option.labelKey === "light"
+                        ? "Light"
+                        : option.labelKey === "dark"
+                          ? "Dark"
+                          : option.labelKey === "tokyo_night"
+                            ? "Tokyo Night"
+                            : option.labelKey === "halloween"
+                              ? "Halloween"
+                              : option.labelKey === "catppuccin_mocha"
+                                ? "Catppuccin mocha"
+                                : option.labelKey === "catppuccin_latte"
+                                  ? "Catppuccin latte"
+                                  : option.labelKey;
                   return (
                     <SelectItem key={option.id} value={option.id}>
-                      {t(option.labelKey)}
+                      {label}
                     </SelectItem>
                   );
                 })}
@@ -151,7 +114,7 @@ export function PreferencesDialog() {
             </Select>
           </section>
           <p className="text-xs text-muted-foreground">
-            {t("preferences_hint")}
+            Changes are applied immediately.
           </p>
         </div>
       </DialogContent>

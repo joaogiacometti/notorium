@@ -1,7 +1,7 @@
 "use client";
 
 import { MoreVertical } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateUserAccessStatus } from "@/app/actions/account";
@@ -36,7 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useRouter } from "@/i18n/routing";
 import type { ManagedUser } from "@/lib/auth/access-control";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
@@ -49,8 +48,6 @@ const PAGE_SIZE = 25;
 export function UserAccessManagementCard({
   users,
 }: Readonly<UserAccessManagementCardProps>) {
-  const t = useTranslations("UserAccessManagement");
-  const tErrors = useTranslations("ServerActions");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
@@ -101,11 +98,11 @@ export function UserAccessManagementCard({
     startTransition(async () => {
       const result = await updateUserAccessStatus({ userId, accessStatus });
       if (!result.success) {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(resolveActionErrorMessage(result));
         setUpdatingUserId(null);
         return;
       }
-      toast.success(t("updated"));
+      toast.success("Access status updated.");
       setUpdatingUserId(null);
       router.refresh();
     });
@@ -114,12 +111,12 @@ export function UserAccessManagementCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>Access Control</CardTitle>
+        <CardDescription>Approve, hold, or block user access.</CardDescription>
       </CardHeader>
       <CardContent>
         {users.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("empty")}</p>
+          <p className="text-sm text-muted-foreground">No other users yet.</p>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
@@ -130,7 +127,7 @@ export function UserAccessManagementCard({
                     setSearchQuery(event.target.value);
                     setPage(1);
                   }}
-                  placeholder={t("search_placeholder")}
+                  placeholder="Search name or email..."
                   className="w-full"
                 />
                 <Select
@@ -143,45 +140,36 @@ export function UserAccessManagementCard({
                   }}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t("filter_status")} />
+                    <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("filter_all")}</SelectItem>
-                    <SelectItem value="pending">
-                      {t("status_pending")}
-                    </SelectItem>
-                    <SelectItem value="approved">
-                      {t("status_approved")}
-                    </SelectItem>
-                    <SelectItem value="blocked">
-                      {t("status_blocked")}
-                    </SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="blocked">Blocked</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <p className="text-sm whitespace-nowrap text-muted-foreground lg:text-right">
-                {t("results_count", {
-                  filtered: filteredUsers.length,
-                  total: users.length,
-                })}
+                {filteredUsers.length} of {users.length} users
               </p>
             </div>
 
-            <div className="max-h-[28rem] overflow-auto rounded-md border">
+            <div className="max-h-112 overflow-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="sticky top-0 z-10 bg-card sm:w-[38%]">
-                      {t("name")}
+                      Name
                     </TableHead>
                     <TableHead className="sticky top-0 z-10 hidden bg-card sm:table-cell sm:w-[38%]">
-                      {t("email")}
+                      Email
                     </TableHead>
                     <TableHead className="sticky top-0 z-10 bg-card sm:w-[16%]">
-                      {t("status")}
+                      Status
                     </TableHead>
                     <TableHead className="sticky top-0 z-10 bg-card text-right sm:w-[8%]">
-                      {t("actions")}
+                      Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -192,12 +180,18 @@ export function UserAccessManagementCard({
                         colSpan={4}
                         className="py-8 text-center text-sm text-muted-foreground"
                       >
-                        {t("no_results")}
+                        No users match your current search or filter.
                       </TableCell>
                     </TableRow>
                   ) : (
                     paginatedUsers.map((managedUser) => {
                       const isUpdating = updatingUserId === managedUser.id;
+                      const statusLabel =
+                        managedUser.accessStatus === "pending"
+                          ? "Pending"
+                          : managedUser.accessStatus === "approved"
+                            ? "Approved"
+                            : "Blocked";
                       return (
                         <TableRow
                           key={managedUser.id}
@@ -220,7 +214,7 @@ export function UserAccessManagementCard({
                             <Badge
                               variant={statusToneMap[managedUser.accessStatus]}
                             >
-                              {t(`status_${managedUser.accessStatus}`)}
+                              {statusLabel}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -231,7 +225,7 @@ export function UserAccessManagementCard({
                                     variant="ghost"
                                     size="icon"
                                     className="size-9 rounded-md"
-                                    aria-label={t("open_actions")}
+                                    aria-label="Open user actions"
                                     disabled={isPending || isUpdating}
                                   >
                                     <MoreVertical className="size-4" />
@@ -245,7 +239,7 @@ export function UserAccessManagementCard({
                                       updateStatus(managedUser.id, "approved")
                                     }
                                   >
-                                    {t("approve")}
+                                    Approve
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     className="cursor-pointer"
@@ -254,7 +248,7 @@ export function UserAccessManagementCard({
                                       updateStatus(managedUser.id, "pending")
                                     }
                                   >
-                                    {t("set_pending")}
+                                    Set Pending
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     className="cursor-pointer text-destructive focus:text-destructive"
@@ -263,7 +257,7 @@ export function UserAccessManagementCard({
                                       updateStatus(managedUser.id, "blocked")
                                     }
                                   >
-                                    {t("block")}
+                                    Block
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -285,10 +279,10 @@ export function UserAccessManagementCard({
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={clampedPage <= 1}
               >
-                {t("prev")}
+                Previous
               </Button>
               <p className="text-sm text-muted-foreground">
-                {t("page", { current: clampedPage, total: totalPages })}
+                Page {clampedPage} of {totalPages}
               </p>
               <Button
                 type="button"
@@ -299,7 +293,7 @@ export function UserAccessManagementCard({
                 }
                 disabled={clampedPage >= totalPages}
               >
-                {t("next")}
+                Next
               </Button>
             </div>
           </div>

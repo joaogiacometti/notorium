@@ -1,9 +1,8 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { format, parseISO } from "date-fns";
 import { CalendarDays, ClipboardList } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
@@ -13,8 +12,7 @@ import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
 import { getAssessmentDetailHref } from "@/features/navigation/detail-page-back-link";
-import { useRouter } from "@/i18n/routing";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatDateShort, formatIsoDate } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
@@ -33,41 +31,33 @@ interface PlanningAssessmentsManagerTableProps {
   onDeleted: (id: string) => void;
 }
 
-function getStatusMeta(
-  assessment: AssessmentEntity,
-  todayIso: string,
-  tTable: ReturnType<typeof useTranslations>,
-  tAssessment: ReturnType<typeof useTranslations>,
-) {
+function getStatusMeta(assessment: AssessmentEntity, todayIso: string) {
   if (isAssessmentOverdue(assessment, todayIso)) {
     return {
-      label: tTable("status_overdue"),
+      label: "Overdue",
       tone: getStatusToneClasses("danger"),
     };
   }
 
   if (assessment.status === "completed") {
     return {
-      label: tAssessment("status_completed"),
+      label: "Completed",
       tone: getStatusToneClasses("success"),
     };
   }
 
   return {
-    label: tAssessment("status_pending"),
+    label: "Pending",
     tone: getStatusToneClasses("warning"),
   };
 }
 
-function formatDueDate(
-  dueDate: string | null,
-  dateLocale: ReturnType<typeof getDateFnsLocale>,
-) {
+function formatDueDate(dueDate: string | null) {
   if (dueDate === null) {
     return "—";
   }
 
-  return format(parseISO(dueDate), "PP", { locale: dateLocale });
+  return formatDateShort(dueDate);
 }
 
 function formatScore(score: string | null) {
@@ -126,16 +116,13 @@ function getColumns(
   onDeleted: (id: string) => void,
   subjectNamesById: Record<string, string>,
   todayIso: string,
-  dateLocale: ReturnType<typeof getDateFnsLocale>,
-  tTable: ReturnType<typeof useTranslations>,
-  tAssessment: ReturnType<typeof useTranslations>,
 ): ColumnDef<AssessmentEntity>[] {
   const columns: ColumnDef<AssessmentEntity>[] = [
     {
       accessorKey: "title",
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {tTable("table_title")}
+          Title
         </div>
       ),
       cell: ({ row }) => (
@@ -166,7 +153,7 @@ function getColumns(
       accessorKey: "type",
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {tTable("table_type")}
+          Type
         </div>
       ),
       cell: ({ row }) => (
@@ -177,16 +164,11 @@ function getColumns(
       accessorKey: "status",
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {tTable("table_status")}
+          Status
         </div>
       ),
       cell: ({ row }) => {
-        const status = getStatusMeta(
-          row.original,
-          todayIso,
-          tTable,
-          tAssessment,
-        );
+        const status = getStatusMeta(row.original, todayIso);
 
         return (
           <Badge
@@ -202,14 +184,14 @@ function getColumns(
       accessorKey: "dueDate",
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {tTable("table_due_date")}
+          Due Date
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-1.5 py-1 text-xs text-muted-foreground">
           <CalendarDays className="size-3.5 shrink-0 text-muted-foreground/70" />
           <span className="truncate leading-5">
-            {formatDueDate(row.original.dueDate, dateLocale)}
+            {formatDueDate(row.original.dueDate)}
           </span>
         </div>
       ),
@@ -218,7 +200,7 @@ function getColumns(
       id: "gradeWeight",
       header: () => (
         <div className="px-1 text-center text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {tTable("table_grade_weight")}
+          Grade/Weight
         </div>
       ),
       cell: ({ row }) => (
@@ -250,7 +232,7 @@ function getColumns(
     id: "subject",
     header: () => (
       <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-        {tTable("table_subject")}
+        Subject
       </div>
     ),
     cell: ({ row }) => {
@@ -259,7 +241,7 @@ function getColumns(
       if (!subjectName) {
         return (
           <SubjectChip
-            label={tTable("unknown_subject")}
+            label="Unknown Subject"
             maxWidthClassName="max-w-[7.5rem]"
           />
         );
@@ -297,11 +279,7 @@ export function PlanningAssessmentsManagerTable({
   onUpdated,
   onDeleted,
 }: Readonly<PlanningAssessmentsManagerTableProps>) {
-  const tTable = useTranslations("PlanningAssessmentsTable");
-  const tAssessment = useTranslations("AssessmentItemCard");
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
-  const [todayIso] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [todayIso] = useState(() => formatIsoDate(new Date()));
   const router = useRouter();
   const [, startNavTransition] = useTransition();
   const finalGradeTone =
@@ -310,34 +288,19 @@ export function PlanningAssessmentsManagerTable({
   return (
     <ManagerDataTable
       data={assessments}
-      columns={getColumns(
-        onUpdated,
-        onDeleted,
-        subjectNamesById,
-        todayIso,
-        dateLocale,
-        tTable,
-        tAssessment,
-      )}
+      columns={getColumns(onUpdated, onDeleted, subjectNamesById, todayIso)}
       pageIndex={pageIndex}
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}
       isLoading={isLoading}
       loadingSkeleton={<PlanningAssessmentsManagerTableSkeleton />}
       onPageIndexChange={onPageIndexChange}
-      pageLabel={(current, total) =>
-        tTable("page", {
-          current,
-          total,
-        })
-      }
-      prevLabel={tTable("prev")}
-      nextLabel={tTable("next")}
-      emptyLabel={tTable("no_results")}
+      pageLabel={(current, total) => `Page ${current} of ${total}`}
+      prevLabel="Previous"
+      nextLabel="Next"
+      emptyLabel="No assessments match your filters."
       getRowId={(row) => row.id}
-      getRowAriaLabel={(row) =>
-        tTable("open_details_for", { title: row.title })
-      }
+      getRowAriaLabel={(row) => `Open details for ${row.title}`}
       onRowClick={(row) =>
         startNavTransition(() =>
           router.push(
@@ -361,9 +324,7 @@ export function PlanningAssessmentsManagerTable({
       footerLeading={
         finalGrade === null ? null : (
           <div className="min-w-0 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">
-              {tTable("footer_final_grade")}:
-            </span>{" "}
+            <span className="font-medium text-foreground">Final grade:</span>{" "}
             <span className={finalGradeTone?.text}>
               {finalGrade === null ? "—" : finalGrade.toFixed(1)}
             </span>

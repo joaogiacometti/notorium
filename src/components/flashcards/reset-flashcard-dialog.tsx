@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { resetFlashcard } from "@/app/actions/flashcards";
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface ResetFlashcardDialogProps {
   flashcardId: string;
@@ -33,9 +32,6 @@ export function ResetFlashcardDialog({
   onOpenChange,
   onReset,
 }: Readonly<ResetFlashcardDialogProps>) {
-  const t = useTranslations("ResetFlashcardDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
 
@@ -46,7 +42,7 @@ export function ResetFlashcardDialog({
         onReset?.(result.flashcard);
         onOpenChange(false);
       } else {
-        toast.error(resolveActionErrorMessage(result, tErrors));
+        toast.error(tErrors(result.errorCode, result.errorParams));
       }
     });
   }
@@ -55,13 +51,14 @@ export function ResetFlashcardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>Reset Flashcard</DialogTitle>
           <DialogDescription>
-            {t("prompt_prefix")}
+            Are you sure you want to reset{" "}
             <span className="font-semibold text-foreground">
               {flashcardFrontPreview}
             </span>
-            {t("prompt_suffix")}
+            ? All review progress will be lost and the card will be treated as
+            new.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -70,13 +67,13 @@ export function ResetFlashcardDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            {tCommon("cancel")}
+            Cancel
           </Button>
           <Button onClick={handleReset} disabled={isPending}>
             <AsyncButtonContent
               pending={isPending}
-              idleLabel={t("confirm")}
-              pendingLabel={tCommon("resetting")}
+              idleLabel="Reset"
+              pendingLabel="Resetting..."
             />
           </Button>
         </DialogFooter>

@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -29,8 +28,8 @@ import {
   type EditSubjectForm,
   editSubjectSchema,
 } from "@/features/subjects/validation";
+import { tErrors } from "@/lib/server/error-messages";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 type SubjectFormValues = CreateSubjectForm | EditSubjectForm;
 
@@ -65,12 +64,6 @@ export function SubjectDialogForm({
   values,
   onSubmitAction,
 }: Readonly<SubjectDialogFormProps>) {
-  const t = useTranslations(
-    mode === "create" ? "CreateSubjectDialog" : "EditSubjectDialog",
-  );
-  const tFields = useTranslations("CreateSubjectDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const queryClient = useQueryClient();
   const form = useSubjectForm(mode, values);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,7 +88,7 @@ export function SubjectDialogForm({
         return;
       }
 
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(tErrors(result.errorCode, result.errorParams));
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +102,9 @@ export function SubjectDialogForm({
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>
+            {mode === "create" ? "Create Subject" : "Edit Subject"}
+          </DialogTitle>
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-4">
@@ -118,13 +113,11 @@ export function SubjectDialogForm({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-name`}>
-                    {tFields("field_name")}
-                  </FieldLabel>
+                  <FieldLabel htmlFor={`${formId}-name`}>Name</FieldLabel>
                   <Input
                     {...field}
                     id={`${formId}-name`}
-                    placeholder={tFields("field_name_placeholder")}
+                    placeholder="e.g. Calculus I"
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />
@@ -140,12 +133,12 @@ export function SubjectDialogForm({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`${formId}-description`}>
-                    {tFields("field_description")}
+                    Description
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id={`${formId}-description`}
-                    placeholder={tFields("field_description_placeholder")}
+                    placeholder="Optional description..."
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
@@ -164,10 +157,10 @@ export function SubjectDialogForm({
             >
               <AsyncButtonContent
                 pending={isSubmitting}
-                idleLabel={t("submit")}
-                pendingLabel={
-                  mode === "create" ? tCommon("creating") : tCommon("saving")
+                idleLabel={
+                  mode === "create" ? "Create Subject" : "Save Changes"
                 }
+                pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
               />
             </Button>
           </FieldGroup>

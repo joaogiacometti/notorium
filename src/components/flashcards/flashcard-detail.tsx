@@ -1,9 +1,7 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, CreditCard, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/lazy-edit-flashcard-dialog";
@@ -11,8 +9,7 @@ import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-di
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "@/i18n/routing";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatRelativeTime } from "@/lib/dates/format";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type {
   FlashcardEntity,
@@ -32,9 +29,6 @@ export function FlashcardDetail({
   flashcard,
   subjects,
 }: Readonly<FlashcardDetailProps>) {
-  const t = useTranslations("FlashcardDetail");
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
   const router = useRouter();
   const [, startNavTransition] = useTransition();
   const searchParams = useSearchParams();
@@ -56,7 +50,7 @@ export function FlashcardDetail({
             onClick={() => setEditOpen(true)}
           >
             <Pencil className="size-3.5" />
-            {t("edit")}
+            Edit
           </Button>
           <Button
             variant="outline"
@@ -65,7 +59,7 @@ export function FlashcardDetail({
             onClick={() => setResetOpen(true)}
           >
             <RotateCcw className="size-3.5" />
-            {t("reset")}
+            Reset
           </Button>
           <Button
             variant="outline"
@@ -74,7 +68,7 @@ export function FlashcardDetail({
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" />
-            {t("delete")}
+            Delete
           </Button>
         </>
       }
@@ -82,13 +76,7 @@ export function FlashcardDetail({
       backIcon={ArrowLeft}
       backLabel={backLabel}
       meta={
-        <span>
-          {t("created_label")}{" "}
-          {formatDistanceToNow(new Date(currentFlashcard.createdAt), {
-            addSuffix: true,
-            locale: dateLocale,
-          })}
-        </span>
+        <span>Created {formatRelativeTime(currentFlashcard.createdAt)}</span>
       }
       title={getRichTextExcerpt(currentFlashcard.front, 120)}
       titleIcon={CreditCard}
@@ -96,7 +84,7 @@ export function FlashcardDetail({
       <div className="space-y-4">
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">
           <h2 className="mb-2 text-sm font-semibold text-foreground/80">
-            {t("front_label")}
+            Front
           </h2>
           <TiptapRenderer
             content={currentFlashcard.front}
@@ -106,7 +94,7 @@ export function FlashcardDetail({
 
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">
           <h2 className="mb-2 text-sm font-semibold text-foreground/80">
-            {t("back_label")}
+            Back
           </h2>
           <TiptapRenderer
             content={currentFlashcard.back}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
   getFlashcardForManage,
@@ -8,7 +9,6 @@ import {
   validateFlashcards,
 } from "@/app/actions/flashcards";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
-import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardManagePage,

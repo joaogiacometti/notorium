@@ -32,7 +32,6 @@ Keep the answer narrow and atomic.
 If the front is broad, ambiguous, or asks for too much, answer only the most central directly testable fact — the one a student would most likely be tested on.
 Do not invent extra context beyond what is needed to answer the front.
 Prefer concrete wording over general wording.
-Match the language of the front.
 Do not use markdown fences.
 
 Good patterns:
@@ -124,28 +123,11 @@ Rules:
 - Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", "Key points:", or "Improved:".
 - Do not add filler, disclaimers, study tips, or long explanations.
 - Do not invent facts not implied by the original back.
-- Match the language of the front. If the front is in Portuguese, respond in Portuguese. If the front is in English, respond in English.
 
 Subject context is allowed only as background context.
 
 Good improvements:
-Front: Componentes se comunicam trocando mensagens
-Current back: Sender and receiver are decoupled (no direct call). Communication can be asynchronous. Focus: loose coupling and scalability.
-Improved:
-- Emissor e receptor se comunicam por mensagens sem referências diretas
-- Mensagens são enfileiradas ou roteadas por um intermediário
-- Componentes operam de forma independente e processam mensagens de forma assíncrona
-- O desacoplamento permite escalabilidade horizontal e deploy independente
-
-Front: Observable pattern
-Current back: Observable: Source of events. Observers: Register interests on observable. Event occur → observable call the defined function for each observers. func(event);
-Improved:
-- Observable é uma fonte que emite eventos para observadores registrados
-- Observadores se inscrevem para receber notificações quando eventos ocorrem
-- Quando um evento dispara, o observable invoca a função callback de cada observador
-- Permite programação reativa e orientada a eventos sem acoplamento forte
-
-Front: O que significa DNS?
+Front: What does DNS stand for?
 Current back: Domain Name System.
 Improved:
 Domain Name System.
@@ -158,7 +140,7 @@ Improved:
 - Coordinates data flow between components
 
 Bad improvements:
-Front: O que significa DNS?
+Front: What does DNS stand for?
 Current back: Domain Name System.
 Improved: Here is a detailed explanation of DNS which is a very important system.
 

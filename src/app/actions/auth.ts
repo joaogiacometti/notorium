@@ -3,7 +3,6 @@
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getLocale } from "next-intl/server";
 import { claimInitialAdminAccess } from "@/features/auth/mutations";
 import { getUserAccessStatusByEmail } from "@/features/auth/queries";
 import { getUserPreferredTheme } from "@/features/user/queries";
@@ -105,7 +104,6 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
       }
 
       const isInitialAdmin = await claimInitialAdminAccess(createdUserId);
-      const locale = await getLocale();
 
       if (isInitialAdmin) {
         try {
@@ -122,10 +120,10 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
           return actionError("auth.signupFailed");
         }
 
-        redirect(`/${locale}/subjects`);
+        redirect("/subjects");
       }
 
-      redirect(`/${locale}/login?pendingApproval=1`);
+      redirect("/login?pendingApproval=1");
     },
   );
 };
@@ -134,6 +132,5 @@ export const logoutAction = async () => {
   await auth.api.signOut({
     headers: await headers(),
   });
-  const locale = await getLocale();
-  redirect(`/${locale}/login`);
+  redirect("/login");
 };

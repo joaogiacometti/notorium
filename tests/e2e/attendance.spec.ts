@@ -15,7 +15,7 @@ function getUniqueSubjectName(testTitle: string) {
 }
 
 async function openSubjectDetailByName(page: Page, subjectName: string) {
-  await page.goto("/en/subjects");
+  await page.goto("/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
@@ -70,7 +70,6 @@ test("can record a miss and rejects duplicate dates", async ({ page }) => {
   const user = await ensureApprovedE2EUser();
   const subjectName = getUniqueSubjectName("record-duplicate");
   const missDate = "2026-03-10";
-  const formattedMissDate = "March 10, 2026";
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
@@ -99,7 +98,7 @@ test("can record a miss and rejects duplicate dates", async ({ page }) => {
     await expect(recordDialog).toHaveCount(0);
 
     await page.getByRole("button", { name: "Recorded Misses" }).click();
-    await expect(page.getByText(formattedMissDate)).toBeVisible();
+    await expect(page.getByText(/Mar 10, 2026/)).toBeVisible();
 
     await page.locator("#btn-record-miss").click();
     const duplicateDialog = page.getByRole("dialog", { name: "Record a Miss" });
@@ -118,7 +117,6 @@ test("can delete a recorded miss", async ({ page }) => {
   const user = await ensureApprovedE2EUser();
   const subjectName = getUniqueSubjectName("delete");
   const missDate = "2026-03-11";
-  const formattedMissDate = "March 11, 2026";
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
@@ -141,7 +139,7 @@ test("can delete a recorded miss", async ({ page }) => {
     await openSubjectDetailByName(page, subjectName);
 
     await page.getByRole("button", { name: "Recorded Misses" }).click();
-    const missDateText = page.getByText(formattedMissDate, { exact: true });
+    const missDateText = page.getByText(/Mar 11, 2026/);
     await expect(missDateText).toBeVisible();
     await page.getByTestId(`attendance-miss-delete-${missDate}`).click();
 
@@ -149,7 +147,7 @@ test("can delete a recorded miss", async ({ page }) => {
     await deleteDialog.getByRole("button", { name: "Remove" }).click();
 
     await expect(deleteDialog).toHaveCount(0);
-    await expect(page.getByText(formattedMissDate)).toHaveCount(0);
+    await expect(page.getByText(/Mar 11, 2026/)).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

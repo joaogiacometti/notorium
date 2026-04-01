@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +21,6 @@ export function ShortcutsHelpDialog({
   open,
   onOpenChange,
 }: Readonly<ShortcutsHelpDialogProps>) {
-  const t = useTranslations("Shortcuts");
-
   const globalShortcuts = getShortcutsByCategory(ShortcutCategory.Global);
   const flashcardShortcuts = getShortcutsByCategory(
     ShortcutCategory.FlashcardReview,
@@ -33,17 +30,17 @@ export function ShortcutsHelpDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogTitle className="text-lg font-semibold">
-          {t("title")}
+          Keyboard shortcuts
         </DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
-          {t("description")}
+          Quick keyboard shortcuts to navigate the app faster.
         </DialogDescription>
 
         <div className="space-y-6 mt-4">
           {globalShortcuts.length > 0 && (
             <div>
               <h3 className="text-sm font-medium text-foreground mb-3">
-                {t("category.global")}
+                Global
               </h3>
               <div className="space-y-2">
                 {globalShortcuts.map((shortcut) => (
@@ -51,7 +48,7 @@ export function ShortcutsHelpDialog({
                     key={shortcut.id}
                     className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50"
                   >
-                    <span className="text-sm">{t(shortcut.description)}</span>
+                    <span className="text-sm">{shortcut.description}</span>
                     <div className="flex gap-1">
                       {formatShortcutKeys(shortcut.keys).map((key) => (
                         <kbd
@@ -71,7 +68,7 @@ export function ShortcutsHelpDialog({
           {flashcardShortcuts.length > 0 && (
             <div>
               <h3 className="text-sm font-medium text-foreground mb-3">
-                {t("category.flashcard_review")}
+                Flashcard Review
               </h3>
               <div className="space-y-2">
                 {flashcardShortcuts.map((shortcut) => (
@@ -79,7 +76,7 @@ export function ShortcutsHelpDialog({
                     key={shortcut.id}
                     className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50"
                   >
-                    <span className="text-sm">{t(shortcut.description)}</span>
+                    <span className="text-sm">{shortcut.description}</span>
                     <div className="flex gap-1">
                       {formatShortcutKeys(shortcut.keys).map((key) => (
                         <kbd

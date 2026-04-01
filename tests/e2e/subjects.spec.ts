@@ -21,7 +21,7 @@ test("can create a subject", async ({ page }) => {
   const initialSubjectName = getUniqueSubjectName("create");
   await clearUserSubjectsByNames(user.userId, [initialSubjectName]);
 
-  await page.goto("/en/subjects");
+  await page.goto("/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
@@ -67,7 +67,7 @@ test("can edit a subject", async ({ page }) => {
     initialSubjectDescription,
   );
 
-  await page.goto("/en/subjects");
+  await page.goto("/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
@@ -113,7 +113,7 @@ test("can delete a subject", async ({ page }) => {
     initialSubjectDescription,
   );
 
-  await page.goto("/en/subjects");
+  await page.goto("/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
@@ -131,7 +131,7 @@ test("can delete a subject", async ({ page }) => {
   await page.getByTestId("subject-detail-delete").click();
   await page.getByTestId("confirm-delete-subject").click();
 
-  await page.waitForURL("**/en/subjects");
+  await page.waitForURL("**/subjects");
   await expect(
     page.getByTestId("subject-card").filter({ hasText: initialSubjectName }),
   ).toHaveCount(0);

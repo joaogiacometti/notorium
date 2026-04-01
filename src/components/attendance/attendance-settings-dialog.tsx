@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Settings } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAttendanceSettings } from "@/app/actions/attendance";
@@ -44,9 +43,6 @@ export function AttendanceSettingsDialog({
   open,
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
-  const t = useTranslations("AttendanceSettingsDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {
@@ -61,7 +57,7 @@ export function AttendanceSettingsDialog({
     if (result.success) {
       onOpenChange(false);
     } else {
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(resolveActionErrorMessage(result));
     }
   }
 
@@ -70,13 +66,16 @@ export function AttendanceSettingsDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Settings className="size-3.5" />
-          {t("trigger")}
+          Settings
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>Attendance Settings</DialogTitle>
+          <DialogDescription>
+            Configure the total number of classes and maximum allowed misses for
+            this subject.
+          </DialogDescription>
         </DialogHeader>
         <form
           id="form-attendance-settings"
@@ -89,14 +88,14 @@ export function AttendanceSettingsDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-attendance-total-classes">
-                    {t("total_classes")}
+                    Total Classes
                   </FieldLabel>
                   <Input
                     id="form-attendance-total-classes"
                     type="number"
                     min={1}
                     max={365}
-                    placeholder={t("total_classes_placeholder")}
+                    placeholder="e.g. 15"
                     aria-invalid={fieldState.invalid}
                     autoFocus
                     value={field.value}
@@ -117,14 +116,14 @@ export function AttendanceSettingsDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-attendance-max-misses">
-                    {t("max_misses")}
+                    Max Allowed Misses
                   </FieldLabel>
                   <Input
                     id="form-attendance-max-misses"
                     type="number"
                     min={0}
                     max={365}
-                    placeholder={t("max_misses_placeholder")}
+                    placeholder="e.g. 4"
                     aria-invalid={fieldState.invalid}
                     value={field.value}
                     onBlur={field.onBlur}
@@ -146,8 +145,8 @@ export function AttendanceSettingsDialog({
             >
               <AsyncButtonContent
                 pending={form.formState.isSubmitting}
-                idleLabel={t("submit")}
-                pendingLabel={tCommon("saving")}
+                idleLabel="Save Settings"
+                pendingLabel="Saving..."
               />
             </Button>
           </FieldGroup>

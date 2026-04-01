@@ -20,7 +20,7 @@ function getUniqueNoteTitle(testTitle: string) {
 }
 
 async function openSubjectDetailByName(page: Page, subjectName: string) {
-  await page.goto("/en/subjects");
+  await page.goto("/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();

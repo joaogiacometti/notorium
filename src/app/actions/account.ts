@@ -3,7 +3,6 @@
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getLocale } from "next-intl/server";
 import {
   deleteAccountForUser,
   updateUserAccessStatusForUser,
@@ -129,8 +128,7 @@ export async function deleteAccount(): Promise<MutationResult> {
     headers: await headers(),
   });
 
-  const locale = await getLocale();
-  redirect(`/${locale}/login`);
+  redirect("/login");
 }
 
 async function getAdminUserId() {

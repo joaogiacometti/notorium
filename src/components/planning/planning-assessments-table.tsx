@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, Lock, Plus, Search } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getPlanningAssessmentsPage } from "@/app/actions/assessments";
 import { LazyCreateAssessmentDialog as CreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
@@ -26,7 +26,6 @@ import type {
   TypeFilter,
 } from "@/features/assessments/assessment-filters";
 import { assessmentTypeValues } from "@/features/assessments/constants";
-import { usePathname, useRouter } from "@/i18n/routing";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   PlanningAssessmentsPage,
@@ -49,9 +48,6 @@ export function PlanningAssessmentsTable({
   subjects,
   subjectNamesById,
 }: Readonly<PlanningAssessmentsTableProps>) {
-  const t = useTranslations("PlanningAssessmentsTable");
-  const tOverview = useTranslations("AssessmentsOverview");
-  const tAssessment = useTranslations("AssessmentItemCard");
   const warningTone = getStatusToneClasses("warning");
   const pathname = usePathname();
   const router = useRouter();
@@ -167,6 +163,15 @@ export function PlanningAssessmentsTable({
     void assessmentsQuery.refetch();
   }
 
+  const typeLabels: Record<string, string> = {
+    exam: "Exam",
+    assignment: "Assignment",
+    project: "Project",
+    presentation: "Presentation",
+    homework: "Homework",
+    other: "Other",
+  };
+
   return (
     <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       <Card className="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
@@ -180,7 +185,7 @@ export function PlanningAssessmentsTable({
                   <Input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder={t("search_placeholder")}
+                    placeholder="Search title or description..."
                     className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                   />
                 </div>
@@ -192,17 +197,17 @@ export function PlanningAssessmentsTable({
                 className="h-10 w-full shrink-0 gap-2 rounded-lg px-4 shadow-sm sm:w-auto"
               >
                 <Plus className="size-4" />
-                {tOverview("add_assessment")}
+                Add Assessment
               </Button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="min-w-0">
                 <Select value={subjectFilter} onValueChange={setSubjectFilter}>
                   <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
-                    <SelectValue placeholder={t("subject_placeholder")} />
+                    <SelectValue placeholder="Filter by subject" />
                   </SelectTrigger>
                   <SelectContent align="start">
-                    <SelectItem value="all">{t("subject_all")}</SelectItem>
+                    <SelectItem value="all">All Subjects</SelectItem>
                     {subjects.map((subject) => (
                       <SelectItem key={subject.id} value={subject.id}>
                         <SubjectText
@@ -224,19 +229,13 @@ export function PlanningAssessmentsTable({
                   }}
                 >
                   <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
-                    <SelectValue placeholder={t("status_all")} />
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent align="start">
-                    <SelectItem value="all">{t("status_all")}</SelectItem>
-                    <SelectItem value="pending">
-                      {t("status_pending")}
-                    </SelectItem>
-                    <SelectItem value="completed">
-                      {t("status_completed")}
-                    </SelectItem>
-                    <SelectItem value="overdue">
-                      {t("status_overdue")}
-                    </SelectItem>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -249,13 +248,13 @@ export function PlanningAssessmentsTable({
                   }}
                 >
                   <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
-                    <SelectValue placeholder={t("type_all")} />
+                    <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent align="start">
-                    <SelectItem value="all">{t("type_all")}</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     {assessmentTypeValues.map((value) => (
                       <SelectItem key={value} value={value}>
-                        {tAssessment(`type_${value}`)}
+                        {typeLabels[value]}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -273,17 +272,13 @@ export function PlanningAssessmentsTable({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent align="start">
-                    <SelectItem value="smart">{t("sort_smart")}</SelectItem>
-                    <SelectItem value="dueDateAsc">
-                      {t("sort_due_asc")}
-                    </SelectItem>
-                    <SelectItem value="dueDateDesc">
-                      {t("sort_due_desc")}
-                    </SelectItem>
+                    <SelectItem value="smart">Smart</SelectItem>
+                    <SelectItem value="dueDateAsc">Due Date Asc</SelectItem>
+                    <SelectItem value="dueDateDesc">Due Date Desc</SelectItem>
                     <SelectItem value="updatedAtDesc">
-                      {t("sort_updated")}
+                      Recently Updated
                     </SelectItem>
-                    <SelectItem value="scoreDesc">{t("sort_score")}</SelectItem>
+                    <SelectItem value="scoreDesc">Score Desc</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -294,9 +289,7 @@ export function PlanningAssessmentsTable({
                 className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-muted-foreground"
               >
                 <Search className="size-3.5" />
-                {tOverview("items_no_limit", {
-                  count: total,
-                })}
+                {total} {total === 1 ? "item" : "items"}
               </Badge>
               {subjectFilter === "all" ? null : (
                 <Badge
@@ -304,10 +297,7 @@ export function PlanningAssessmentsTable({
                   className="rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground"
                 >
                   <ClipboardList className="size-3.5 text-primary" />
-                  {tOverview("items_with_limit", {
-                    count: selectedSubjectCount,
-                    max: LIMITS.maxAssessmentsPerSubject,
-                  })}
+                  {selectedSubjectCount}/{LIMITS.maxAssessmentsPerSubject} items
                 </Badge>
               )}
             </div>
@@ -320,9 +310,8 @@ export function PlanningAssessmentsTable({
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {tOverview("limit_message", {
-              max: LIMITS.maxAssessmentsPerSubject,
-            })}
+            You've reached the limit of {LIMITS.maxAssessmentsPerSubject}{" "}
+            assessments per subject. Please delete existing ones to add more.
           </p>
         </div>
       ) : null}
@@ -349,10 +338,10 @@ export function PlanningAssessmentsTable({
               <ClipboardList className="size-6" />
             </div>
             <h2 className="text-lg font-semibold tracking-tight">
-              {t("empty_title")}
+              No assessments yet
             </h2>
             <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-              {t("empty_description")}
+              Assessments you add to your subjects will appear here.
             </p>
             <Button
               type="button"
@@ -361,7 +350,7 @@ export function PlanningAssessmentsTable({
               className="mt-6 h-10 gap-2 rounded-lg px-4 shadow-sm"
             >
               <Plus className="size-4" />
-              {tOverview("add_assessment")}
+              Add Assessment
             </Button>
           </CardContent>
         )}

@@ -1,7 +1,6 @@
 "use client";
 
 import { MoreVertical, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +21,6 @@ export function FlashcardsTableRowActions({
   onResetRequested,
   onDeleteRequested,
 }: Readonly<FlashcardsTableRowActionsProps>) {
-  const t = useTranslations("FlashcardsList");
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -31,7 +28,7 @@ export function FlashcardsTableRowActions({
           variant="ghost"
           size="icon"
           className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
-          aria-label={t("open_actions")}
+          aria-label="Open flashcard actions"
         >
           <MoreVertical className="size-3.5" />
         </Button>
@@ -39,18 +36,18 @@ export function FlashcardsTableRowActions({
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={onEditRequested} className="cursor-pointer">
           <Pencil className="size-4" />
-          {t("edit")}
+          Edit
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onResetRequested} className="cursor-pointer">
           <RotateCcw className="size-4" />
-          {t("reset")}
+          Reset
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={onDeleteRequested}
           className="cursor-pointer text-destructive focus:text-destructive"
         >
           <Trash2 className="size-4" />
-          {t("delete")}
+          Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

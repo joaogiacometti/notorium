@@ -1,11 +1,10 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { resolveValidationMessage } from "@/lib/validations/validation-messages";
+import { resolveValidationMessages } from "@/lib/validations/validation-messages";
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   return (
@@ -190,7 +189,6 @@ function FieldError({
 }: React.ComponentProps<"div"> & {
   errors?: Array<{ message?: string } | undefined>;
 }) {
-  const t = useTranslations();
   if (children) {
     return (
       <div
@@ -212,7 +210,7 @@ function FieldError({
     ...new Map(errors.map((error) => [error?.message, error])).values(),
   ];
   const resolvedMessages = uniqueErrors
-    .map((error) => resolveValidationMessage(error?.message, t))
+    .map((error) => resolveValidationMessages(error?.message))
     .filter((message): message is string => Boolean(message));
 
   if (resolvedMessages.length === 0) {

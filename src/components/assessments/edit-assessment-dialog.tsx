@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { editAssessment } from "@/app/actions/assessments";
@@ -42,9 +41,6 @@ export function EditAssessmentDialog({
   onOpenChange,
   onUpdated,
 }: Readonly<EditAssessmentDialogProps>) {
-  const t = useTranslations("EditAssessmentDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<EditAssessmentFormInput, unknown, EditAssessmentForm>({
     resolver: zodResolver(editAssessmentSchema),
@@ -69,7 +65,7 @@ export function EditAssessmentDialog({
         onOpenChange(false);
       } else {
         form.setError("title", {
-          message: resolveActionErrorMessage(result, tErrors),
+          message: resolveActionErrorMessage(result),
         });
       }
     } finally {
@@ -83,10 +79,10 @@ export function EditAssessmentDialog({
       formId="form-edit-assessment"
       open={open}
       onOpenChange={onOpenChange}
-      title={t("title")}
-      description={t("description")}
-      submitLabel={t("submit")}
-      pendingSubmitLabel={tCommon("saving")}
+      title="Edit Assessment"
+      description="Update details, status, dates, and grading values."
+      submitLabel="Save Changes"
+      pendingSubmitLabel="Saving..."
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
     />

@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreditCard } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { FlashcardsTableRowActions } from "@/components/flashcards/flashcards-table-row-actions";
 import { ValidationIssueTooltip } from "@/components/flashcards/validation-issue-tooltip";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
@@ -92,7 +91,6 @@ function getColumnClassName(columnId: string) {
 function getColumns(
   onEdit: (flashcardId: string) => void,
   onDelete: (flashcard: { id: string; front: string }) => void,
-  t: ReturnType<typeof useTranslations>,
 ): ColumnDef<ValidationResultRow>[] {
   return [
     {
@@ -100,7 +98,7 @@ function getColumns(
       size: 160,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {t("table_front")}
+          Front
         </div>
       ),
       cell: ({ row }) => (
@@ -124,7 +122,7 @@ function getColumns(
       size: 200,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {t("table_issue")}
+          Issue
         </div>
       ),
       cell: ({ row }) => (
@@ -144,7 +142,7 @@ function getColumns(
       size: 112,
       header: () => (
         <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          {t("table_subject")}
+          Subject
         </div>
       ),
       cell: ({ row }) => (
@@ -184,8 +182,6 @@ export function FlashcardsValidationResults({
   onEdit,
   onDelete,
 }: Readonly<FlashcardsValidationResultsProps>) {
-  const t = useTranslations("FlashcardValidation");
-
   const flashcardsMap = new Map(flashcards.map((card) => [card.id, card]));
 
   const tableData: ValidationResultRow[] = issues
@@ -207,7 +203,7 @@ export function FlashcardsValidationResults({
     <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
       <ManagerDataTable
         data={tableData}
-        columns={getColumns(onEdit, onDelete, t)}
+        columns={getColumns(onEdit, onDelete)}
         pageIndex={0}
         pageCount={1}
         pageSize={tableData.length}
@@ -238,9 +234,9 @@ export function FlashcardsValidationResults({
         selectedRowIds={[]}
         selectionAriaLabel=""
         pageLabel={(current, total) => `Page ${current} of ${total}`}
-        prevLabel={t("prev") || "Previous"}
-        nextLabel={t("next") || "Next"}
-        emptyLabel={t("no_issues_description")}
+        prevLabel="Previous"
+        nextLabel="Next"
+        emptyLabel="All validated flashcards look good!"
         getRowId={(row) => row.id}
         tableClassName="w-full min-w-[40rem]"
         getHeaderCellClassName={getColumnClassName}

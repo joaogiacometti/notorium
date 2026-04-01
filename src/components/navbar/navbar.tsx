@@ -6,7 +6,7 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { AppSectionNav } from "@/components/navbar/app-section-nav";
 import { GlobalSearch } from "@/components/navbar/global-search";
 import { LogoutButton } from "@/components/navbar/logout-button";
@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "@/i18n/routing";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
 export async function Navbar() {
@@ -29,7 +28,6 @@ export async function Navbar() {
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
   const logoHref = session ? "/subjects" : "/";
-  const t = await getTranslations("Navigation");
   const isAdmin = authState?.account.isAdmin ?? false;
 
   return (
@@ -87,7 +85,7 @@ export async function Navbar() {
                       className="flex w-full items-center gap-2 text-left"
                     >
                       <User className="size-4" />
-                      {t("account")}
+                      Account
                     </button>
                   </DropdownMenuItem>
                 </form>
@@ -100,7 +98,7 @@ export async function Navbar() {
                         className="flex w-full items-center gap-2 text-left"
                       >
                         <Shield className="size-4" />
-                        {t("admin_panel")}
+                        Admin Panel
                       </button>
                     </DropdownMenuItem>
                   </form>
@@ -120,13 +118,13 @@ export async function Navbar() {
               >
                 <Link href="/login">
                   <LogIn className="size-4" />
-                  <span className="hidden sm:inline">{t("login")}</span>
+                  <span className="hidden sm:inline">Log In</span>
                 </Link>
               </Button>
               <Button size="sm" className="gap-1.5" asChild>
                 <Link href="/signup">
                   <UserPlus className="size-4" />
-                  <span className="hidden sm:inline">{t("signup")}</span>
+                  <span className="hidden sm:inline">Sign Up</span>
                 </Link>
               </Button>
             </>

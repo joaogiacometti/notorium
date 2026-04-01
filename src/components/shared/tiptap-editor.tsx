@@ -31,7 +31,6 @@ import {
   UnderlineIcon,
   Undo,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -136,10 +135,7 @@ function ToolbarButton({
   );
 }
 
-function EditorToolbar({
-  editor,
-  t,
-}: Readonly<{ editor: Editor | null; t: ReturnType<typeof useTranslations> }>) {
+function EditorToolbar({ editor }: Readonly<{ editor: Editor | null }>) {
   if (!editor) return null;
 
   return (
@@ -147,49 +143,49 @@ function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive("bold")}
-        title={t("bold")}
+        title="Bold (Ctrl+B)"
       >
         <Bold className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive("italic")}
-        title={t("italic")}
+        title="Italic (Ctrl+I)"
       >
         <Italic className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive("underline")}
-        title={t("underline")}
+        title="Underline (Ctrl+U)"
       >
         <UnderlineIcon className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive("strike")}
-        title={t("strikethrough")}
+        title="Strikethrough"
       >
         <Strikethrough className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHighlight().run()}
         isActive={editor.isActive("highlight")}
-        title={t("highlight")}
+        title="Highlight"
       >
         <Highlighter className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCode().run()}
         isActive={editor.isActive("code")}
-        title={t("inline_code")}
+        title="Inline Code"
       >
         <Code className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         isActive={editor.isActive("codeBlock")}
-        title={t("code_block")}
+        title="Code Block"
       >
         <SquareCode className="size-3.5" />
       </ToolbarButton>
@@ -199,21 +195,21 @@ function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isActive={editor.isActive("heading", { level: 1 })}
-        title={t("heading_1")}
+        title="Heading 1"
       >
         <Heading1 className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isActive={editor.isActive("heading", { level: 2 })}
-        title={t("heading_2")}
+        title="Heading 2"
       >
         <Heading2 className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isActive={editor.isActive("heading", { level: 3 })}
-        title={t("heading_3")}
+        title="Heading 3"
       >
         <Heading3 className="size-3.5" />
       </ToolbarButton>
@@ -223,21 +219,21 @@ function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive("bulletList")}
-        title={t("bullet_list")}
+        title="Bullet List"
       >
         <List className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive("orderedList")}
-        title={t("numbered_list")}
+        title="Numbered List"
       >
         <ListOrdered className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleTaskList().run()}
         isActive={editor.isActive("taskList")}
-        title={t("task_list")}
+        title="Task List"
       >
         <ListChecks className="size-3.5" />
       </ToolbarButton>
@@ -247,13 +243,13 @@ function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive("blockquote")}
-        title={t("quote")}
+        title="Quote"
       >
         <Quote className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        title={t("divider")}
+        title="Divider"
       >
         <Minus className="size-3.5" />
       </ToolbarButton>
@@ -263,14 +259,14 @@ function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
-        title={t("undo")}
+        title="Undo (Ctrl+Z)"
       >
         <Undo className="size-3.5" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
-        title={t("redo")}
+        title="Redo (Ctrl+Shift+Z)"
       >
         <Redo className="size-3.5" />
       </ToolbarButton>
@@ -288,8 +284,7 @@ export function TiptapEditor({
   showToolbar = true,
   onCtrlEnter,
 }: Readonly<TiptapEditorProps>) {
-  const t = useTranslations("TiptapEditor");
-  const resolvedPlaceholder = placeholder ?? t("placeholder");
+  const resolvedPlaceholder = placeholder ?? "Start writing your notes...";
   const onCtrlEnterRef = useRef(onCtrlEnter);
   const [resolvedValue, setResolvedValue] = useState(value);
   onCtrlEnterRef.current = onCtrlEnter;
@@ -394,7 +389,7 @@ export function TiptapEditor({
           "border-destructive focus-within:border-destructive focus-within:ring-destructive/20",
       )}
     >
-      {showToolbar && <EditorToolbar editor={editor} t={t} />}
+      {showToolbar && <EditorToolbar editor={editor} />}
       <EditorContent
         editor={editor}
         className={cn(

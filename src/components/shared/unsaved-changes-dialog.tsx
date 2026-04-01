@@ -1,7 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,20 +21,22 @@ export function UnsavedChangesDialog({
   onOpenChange,
   onDiscard,
 }: Readonly<UnsavedChangesDialogProps>) {
-  const t = useTranslations("UnsavedChangesDialog");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>Discard changes?</DialogTitle>
+          <DialogDescription>
+            You have unsaved edits. If you discard now, those changes will be
+            lost.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("keep")}
+            Keep Editing
           </Button>
           <Button variant="destructive" onClick={onDiscard}>
-            {t("discard")}
+            Discard
           </Button>
         </DialogFooter>
       </DialogContent>

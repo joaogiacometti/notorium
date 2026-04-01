@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
 import { useEffect, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,7 +35,7 @@ import {
   bulkMoveFlashcardsSchema,
 } from "@/features/flashcards/validation";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { tErrors } from "@/lib/server/error-messages";
 
 interface BulkMoveFlashcardsDialogProps {
   ids: string[];
@@ -53,9 +52,6 @@ export function BulkMoveFlashcardsDialog({
   onOpenChange,
   subjects,
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
-  const t = useTranslations("BulkMoveFlashcardsDialog");
-  const tCommon = useTranslations("Common");
-  const tErrors = useTranslations("ServerActions");
   const [isPending, startTransition] = useTransition();
   const form = useForm<BulkMoveFlashcardsForm>({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
@@ -101,18 +97,22 @@ export function BulkMoveFlashcardsDialog({
         return;
       }
 
-      toast.error(resolveActionErrorMessage(result, tErrors));
+      toast.error(tErrors(result.errorCode, result.errorParams));
     });
   }
+
+  const count = ids.length;
+  const descriptionText =
+    count === 1
+      ? "Move 1 selected flashcard to another subject."
+      : `Move ${count} selected flashcards to another subject.`;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>
-            {t("description", { count: ids.length })}
-          </DialogDescription>
+          <DialogTitle>Move Flashcards</DialogTitle>
+          <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-3">
@@ -122,7 +122,7 @@ export function BulkMoveFlashcardsDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="bulk-move-flashcards-subject">
-                    {t("field_subject")}
+                    Subject
                   </FieldLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger
@@ -130,9 +130,7 @@ export function BulkMoveFlashcardsDialog({
                       aria-invalid={fieldState.invalid}
                       className="h-10 rounded-lg"
                     >
-                      <SelectValue
-                        placeholder={t("field_subject_placeholder")}
-                      />
+                      <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -161,13 +159,13 @@ export function BulkMoveFlashcardsDialog({
                 onClick={() => handleOpenChange(false)}
                 disabled={isPending}
               >
-                {tCommon("cancel")}
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
                 <AsyncButtonContent
                   pending={isPending}
-                  idleLabel={t("confirm")}
-                  pendingLabel={tCommon("moving")}
+                  idleLabel="Move"
+                  pendingLabel="Moving..."
                 />
               </Button>
             </DialogFooter>

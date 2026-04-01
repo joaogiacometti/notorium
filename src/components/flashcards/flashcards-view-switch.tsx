@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { FlashcardsView } from "@/features/flashcards/view";
-import { Link } from "@/i18n/routing";
 
 interface FlashcardsViewSwitchProps {
   currentView: FlashcardsView;

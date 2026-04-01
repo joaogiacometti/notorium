@@ -1,14 +1,7 @@
 "use client";
 
-import type { Locale } from "date-fns";
-import {
-  format,
-  formatDistanceToNowStrict,
-  parseISO,
-  startOfToday,
-} from "date-fns";
+import { parseISO, startOfToday } from "date-fns";
 import { CheckCircle2, Clock3 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { AssessmentItemCard } from "@/components/assessments/assessment-item-card";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
@@ -34,7 +27,7 @@ import {
   getAssessmentAverage,
   isAssessmentOverdue,
 } from "@/features/assessments/assessments";
-import { getDateFnsLocale } from "@/lib/dates/date-locale";
+import { formatIsoDate, formatRelativeTimeStrict } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 
@@ -79,26 +72,20 @@ function getAverageTone(value: number): string {
   return `${tone.text} ${tone.bg} ${tone.border}`;
 }
 
-function getCountdownLabel(
-  dueDate: string,
-  t: (key: string, values?: Record<string, string | number>) => string,
-  locale: Locale,
-): string {
+function getCountdownLabel(dueDate: string): string {
   const due = parseISO(dueDate);
   const today = startOfToday();
-  const distance = formatDistanceToNowStrict(due, { addSuffix: false, locale });
-  const countMatch = distance.match(/^(\d+)/u);
-  const count = countMatch ? Number(countMatch[1]) : 0;
+  const distance = formatRelativeTimeStrict(due.toISOString());
 
   if (due < today) {
-    return t("due_overdue", { distance });
+    return `${distance} overdue`;
   }
 
-  if (format(due, "yyyy-MM-dd") === format(today, "yyyy-MM-dd")) {
-    return t("due_today");
+  if (formatIsoDate(due) === formatIsoDate(today)) {
+    return "Due today";
   }
 
-  return t("due_in", { distance, count });
+  return `Due in ${distance}`;
 }
 
 export function GradesSummary({
@@ -110,9 +97,6 @@ export function GradesSummary({
   showHeader = true,
   subjectNamesById,
 }: Readonly<GradesSummaryProps>) {
-  const locale = useLocale();
-  const dateLocale = getDateFnsLocale(locale);
-  const t = useTranslations("GradesSummary");
   const dangerTone = getStatusToneClasses("danger");
   const [editTarget, setEditTarget] = useState<AssessmentEntity | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AssessmentEntity | null>(
@@ -153,7 +137,7 @@ export function GradesSummary({
     const overdue = isAssessmentOverdue(item, dueDateBounds.todayIso);
     const dueDetail =
       item.dueDate !== null && item.status === "pending"
-        ? getCountdownLabel(item.dueDate, t, dateLocale)
+        ? getCountdownLabel(item.dueDate)
         : null;
 
     return (
@@ -184,13 +168,13 @@ export function GradesSummary({
         <div className="mb-6">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">
-              {heading ?? t("heading")}
+              {heading ?? "Assessments"}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {description ??
                 (assessments.length === 0
-                  ? t("header_empty")
-                  : t("header_count", { count: assessments.length }))}
+                  ? "No assessments found."
+                  : `${assessments.length} total assessments`)}
             </p>
           </div>
         </div>
@@ -203,11 +187,11 @@ export function GradesSummary({
       >
         {showSubjectFilter && (
           <FilterSelectField
-            label={t("subject")}
+            label="Subject"
             value={subjectFilter}
             onValueChange={setSubjectFilter}
           >
-            <SelectItem value="all">{t("subject_all")}</SelectItem>
+            <SelectItem value="all">All Subjects</SelectItem>
             {subjectFilterOptions.map((subjectId) => (
               <SelectItem key={subjectId} value={subjectId}>
                 <SubjectText
@@ -220,50 +204,50 @@ export function GradesSummary({
           </FilterSelectField>
         )}
         <FilterSelectField
-          label={t("status")}
+          label="Status"
           value={statusFilter}
           onValueChange={(value) => setStatusFilter(value as StatusFilter)}
         >
-          <SelectItem value="all">{t("status_all")}</SelectItem>
-          <SelectItem value="pending">{t("status_pending")}</SelectItem>
-          <SelectItem value="completed">{t("status_completed")}</SelectItem>
-          <SelectItem value="overdue">{t("status_overdue")}</SelectItem>
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="overdue">Overdue</SelectItem>
         </FilterSelectField>
         <FilterSelectField
-          label={t("due_date")}
+          label="Due Date"
           value={dueDateFilter}
           onValueChange={(value) => setDueDateFilter(value as DueDateFilter)}
         >
-          <SelectItem value="all">{t("due_any")}</SelectItem>
-          <SelectItem value="past">{t("due_past")}</SelectItem>
-          <SelectItem value="today">{t("due_today_option")}</SelectItem>
-          <SelectItem value="next7Days">{t("due_next_7")}</SelectItem>
-          <SelectItem value="next30Days">{t("due_next_30")}</SelectItem>
-          <SelectItem value="none">{t("due_none")}</SelectItem>
+          <SelectItem value="all">Any Due Date</SelectItem>
+          <SelectItem value="past">Past Due Date</SelectItem>
+          <SelectItem value="today">Due Today</SelectItem>
+          <SelectItem value="next7Days">Next 7 Days</SelectItem>
+          <SelectItem value="next30Days">Next 30 Days</SelectItem>
+          <SelectItem value="none">No Due Date</SelectItem>
         </FilterSelectField>
         <FilterSelectField
-          label={t("type")}
+          label="Type"
           value={typeFilter}
           onValueChange={(value) => setTypeFilter(value as TypeFilter)}
         >
-          <SelectItem value="all">{t("type_all")}</SelectItem>
-          <SelectItem value="exam">{t("type_exam")}</SelectItem>
-          <SelectItem value="assignment">{t("type_assignment")}</SelectItem>
-          <SelectItem value="project">{t("type_project")}</SelectItem>
-          <SelectItem value="presentation">{t("type_presentation")}</SelectItem>
-          <SelectItem value="homework">{t("type_homework")}</SelectItem>
-          <SelectItem value="other">{t("type_other")}</SelectItem>
+          <SelectItem value="all">All Types</SelectItem>
+          <SelectItem value="exam">Exam</SelectItem>
+          <SelectItem value="assignment">Assignment</SelectItem>
+          <SelectItem value="project">Project</SelectItem>
+          <SelectItem value="presentation">Presentation</SelectItem>
+          <SelectItem value="homework">Homework</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
         </FilterSelectField>
         <FilterSelectField
-          label={t("sort")}
+          label="Sort"
           value={sortBy}
           onValueChange={(value) => setSortBy(value as SortBy)}
         >
-          <SelectItem value="smart">{t("sort_smart")}</SelectItem>
-          <SelectItem value="dueDateAsc">{t("sort_due_asc")}</SelectItem>
-          <SelectItem value="dueDateDesc">{t("sort_due_desc")}</SelectItem>
-          <SelectItem value="updatedAtDesc">{t("sort_updated")}</SelectItem>
-          <SelectItem value="scoreDesc">{t("sort_score")}</SelectItem>
+          <SelectItem value="smart">Smart</SelectItem>
+          <SelectItem value="dueDateAsc">Due Date Asc</SelectItem>
+          <SelectItem value="dueDateDesc">Due Date Desc</SelectItem>
+          <SelectItem value="updatedAtDesc">Recently Updated</SelectItem>
+          <SelectItem value="scoreDesc">Score Desc</SelectItem>
         </FilterSelectField>
       </div>
 
@@ -272,7 +256,7 @@ export function GradesSummary({
           className={`mb-6 rounded-xl border p-4 ${getAverageTone(average)}`}
         >
           <div className="mb-2">
-            <p className="text-sm font-medium">{t("average")}</p>
+            <p className="text-sm font-medium">Average</p>
           </div>
           <p className="text-3xl font-semibold tracking-tight text-white">
             {average.toFixed(1)}
@@ -285,12 +269,12 @@ export function GradesSummary({
           <div className="mb-3 flex items-center gap-2">
             <Clock3 className="size-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("pending")} ({pending.length})
+              Pending ({pending.length})
             </h3>
           </div>
           {pending.length === 0 ? (
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              {t("pending_empty")}
+              No pending assessments.
             </div>
           ) : (
             <div className="space-y-3">
@@ -303,12 +287,12 @@ export function GradesSummary({
           <div className="mb-3 flex items-center gap-2">
             <CheckCircle2 className="size-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("completed")} ({completed.length})
+              Completed ({completed.length})
             </h3>
           </div>
           {completed.length === 0 ? (
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              {t("completed_empty")}
+              No completed assessments.
             </div>
           ) : (
             <div className="space-y-3">

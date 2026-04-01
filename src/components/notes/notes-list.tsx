@@ -1,7 +1,6 @@
 "use client";
 
 import { Lock, Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
@@ -23,7 +22,6 @@ type NoteDeleteTarget = {
 };
 
 export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
-  const t = useTranslations("NotesList");
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<NoteEntity | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NoteDeleteTarget | null>(
@@ -35,19 +33,16 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
 
   function getNoteCountText() {
     if (notes.length === 0) {
-      return t("count_empty");
+      return "Capture what you learn, one note at a time.";
     }
-    return t("count_with_limit", {
-      count: notes.length,
-      max: LIMITS.maxNotesPerSubject,
-    });
+    return `${notes.length}/${LIMITS.maxNotesPerSubject} notes`;
   }
 
   return (
     <div>
       <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Notes</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {getNoteCountText()}
           </p>
@@ -60,10 +55,14 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
               className="w-full gap-1.5 sm:w-auto"
               id="btn-create-note"
               disabled={isAtLimit}
-              title={isAtLimit ? t("limit_tooltip") : undefined}
+              title={
+                isAtLimit
+                  ? "You cannot create more notes for this subject"
+                  : undefined
+              }
             >
               <Plus className="size-4" />
-              <span>{t("new_note")}</span>
+              <span>New Note</span>
             </Button>
           }
           open={createOpen}
@@ -77,7 +76,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {t("limit_message", { max: LIMITS.maxNotesPerSubject })}
+            {`You've reached the limit of ${LIMITS.maxNotesPerSubject} notes per subject. Please delete existing ones to create more.`}
           </p>
         </div>
       )}
@@ -85,9 +84,9 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
       {notes.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
           <div>
-            <h3 className="text-base font-semibold">{t("empty_title")}</h3>
+            <h3 className="text-base font-semibold">No notes yet</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {t("empty_description")}
+              Start by creating your first note.
             </p>
           </div>
         </div>
