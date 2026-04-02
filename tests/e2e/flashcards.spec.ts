@@ -1,25 +1,24 @@
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { LIMITS } from "@/lib/config/limits";
+import { expect, test } from "./support/authenticated-test";
+import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
   createFlashcard,
   createMaxFlashcardsForSubject,
   createSubject,
-  ensureApprovedE2EUser,
 } from "./support/db";
 
 function getUniqueSubjectName(testTitle: string) {
-  return `E2E Flashcards ${testTitle} ${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return getPrefixedValue("flashcard-subject", testTitle);
 }
 
 function getUniqueFlashcardFront(testTitle: string) {
-  return `FC-${testTitle}-${Math.random().toString(36).slice(2, 6)}`;
+  return getPrefixedValue("flashcard-front", testTitle);
 }
 
 function getUniqueFlashcardBack(testTitle: string) {
-  return `Back ${testTitle} ${Math.random().toString(36).slice(2, 7)}`;
+  return getPrefixedValue("flashcard-back", testTitle);
 }
 
 async function openFlashcardsManagePage(page: Page, subjectId?: string) {
@@ -38,12 +37,12 @@ async function openFlashcardsManagePage(page: Page, subjectId?: string) {
 
 async function fillFlashcardEditors(
   dialog: Locator,
+  formId: "form-create-flashcard" | "form-edit-flashcard",
   front: string,
   back: string,
 ) {
-  const editors = dialog.locator(".ProseMirror");
-  await editors.nth(0).fill(front);
-  await editors.nth(1).fill(back);
+  await dialog.locator(`#${formId}-front`).fill(front);
+  await dialog.locator(`#${formId}-back`).fill(back);
 }
 
 async function createFlashcardFromManageDialog(
@@ -53,25 +52,29 @@ async function createFlashcardFromManageDialog(
 ) {
   await page.getByRole("button", { name: "New Flashcard" }).click();
   const createDialog = page.getByRole("dialog", { name: "Create Flashcard" });
-  await fillFlashcardEditors(createDialog, front, back);
+  await fillFlashcardEditors(
+    createDialog,
+    "form-create-flashcard",
+    front,
+    back,
+  );
   await createDialog.getByRole("button", { name: "Create Flashcard" }).click();
-
+  await expect(page.getByTitle(front, { exact: true }).first()).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(createDialog).toHaveCount(0);
-  await expect(page.getByText(front, { exact: true }).first()).toBeVisible();
 }
 
 async function openFlashcardDetailFromManage(page: Page, front: string) {
-  const row = page.getByText(front, { exact: true }).first();
-  await expect(row).toBeVisible();
-  await row.click();
+  const frontPreview = page.getByTitle(front, { exact: true }).first();
+  await expect(frontPreview).toBeVisible();
+  await frontPreview.click();
   await expect(
     page.getByRole("heading", { name: front, exact: true }),
   ).toBeVisible();
 }
 
-test("can create and open a flashcard", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can create and open a flashcard", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("create-open");
   const flashcardFront = getUniqueFlashcardFront("create-open");
   const flashcardBack = getUniqueFlashcardBack("create-open");
@@ -100,8 +103,8 @@ test("can create and open a flashcard", async ({ page }) => {
   }
 });
 
-test("can edit a flashcard", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can edit a flashcard", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("edit");
   const initialFront = getUniqueFlashcardFront("edit-initial");
   const initialBack = getUniqueFlashcardBack("edit-initial");
@@ -137,7 +140,12 @@ test("can edit a flashcard", async ({ page }) => {
       .click();
 
     const editDialog = page.getByRole("dialog", { name: "Edit Flashcard" });
-    await fillFlashcardEditors(editDialog, updatedFront, updatedBack);
+    await fillFlashcardEditors(
+      editDialog,
+      "form-edit-flashcard",
+      updatedFront,
+      updatedBack,
+    );
     await editDialog.getByRole("button", { name: "Save Changes" }).click();
 
     await expect(editDialog).toHaveCount(0);
@@ -150,8 +158,8 @@ test("can edit a flashcard", async ({ page }) => {
   }
 });
 
-test("can delete a flashcard", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can delete a flashcard", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("delete");
   const flashcardFront = getUniqueFlashcardFront("delete");
   const flashcardBack = getUniqueFlashcardBack("delete");
@@ -200,8 +208,9 @@ test("can delete a flashcard", async ({ page }) => {
 
 test("shows flashcard limit warning when subject limit is reached", async ({
   page,
+  e2eUser,
 }) => {
-  const user = await ensureApprovedE2EUser();
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("limit");
   const attemptedFront = getUniqueFlashcardFront("limit-attempt");
   const attemptedBack = getUniqueFlashcardBack("limit-attempt");
@@ -227,7 +236,12 @@ test("shows flashcard limit warning when subject limit is reached", async ({
 
     await page.getByRole("button", { name: "New Flashcard" }).click();
     const createDialog = page.getByRole("dialog", { name: "Create Flashcard" });
-    await fillFlashcardEditors(createDialog, attemptedFront, attemptedBack);
+    await fillFlashcardEditors(
+      createDialog,
+      "form-create-flashcard",
+      attemptedFront,
+      attemptedBack,
+    );
     await createDialog
       .getByRole("button", { name: "Create Flashcard" })
       .click();
@@ -245,8 +259,11 @@ test("shows flashcard limit warning when subject limit is reached", async ({
   }
 });
 
-test("can switch between global flashcards views", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can switch between global flashcards views", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("view-switch");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);

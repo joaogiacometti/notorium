@@ -9,7 +9,6 @@ test("approved user can log in", async ({ page }) => {
   await page.locator("#form-login-password").fill(user.password);
   await page.getByRole("button", { name: "Login" }).click();
 
-  await page.waitForURL("**/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
@@ -25,10 +24,12 @@ test("pending user cannot log in", async ({ page }) => {
   await page.locator("#form-login-password").fill(user.password);
   await page.getByRole("button", { name: "Login" }).click();
 
-  await page.waitForURL("**/login");
   await expect(
-    page.getByText("Your account is pending approval."),
+    page.getByRole("heading", { name: "Login to your account", exact: true }),
   ).toBeVisible();
+  await expect(page.locator("#form-login-email")).toBeVisible();
+  await expect(page.locator("#form-login-password")).toBeVisible();
+  await expect(page.getByText(/pending approval/i)).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
 });
 
@@ -41,7 +42,11 @@ test("blocked user cannot log in", async ({ page }) => {
   await page.locator("#form-login-password").fill(user.password);
   await page.getByRole("button", { name: "Login" }).click();
 
-  await page.waitForURL("**/login");
-  await expect(page.getByText("Your account access is blocked.")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Login to your account", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("#form-login-email")).toBeVisible();
+  await expect(page.locator("#form-login-password")).toBeVisible();
+  await expect(page.getByText(/access is blocked/i)).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
 });

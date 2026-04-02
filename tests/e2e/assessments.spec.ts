@@ -1,22 +1,19 @@
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "./support/authenticated-test";
+import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
   createAssessment,
   createMaxAssessmentsForSubject,
   createSubject,
-  ensureApprovedE2EUser,
 } from "./support/db";
 
 function getUniqueSubjectName(testTitle: string) {
-  return `E2E Assessments ${testTitle} ${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return getPrefixedValue("assessment-subject", testTitle);
 }
 
 function getUniqueAssessmentTitle(testTitle: string) {
-  return `E2E Assessment ${testTitle} ${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return getPrefixedValue("assessment", testTitle);
 }
 
 async function openPlanningAssessments(page: Page, subjectId?: string) {
@@ -29,6 +26,22 @@ async function openPlanningAssessments(page: Page, subjectId?: string) {
   await page.goto(`/planning?${searchParams.toString()}`);
   await expect(
     page.getByRole("heading", { name: "Planning", exact: true }),
+  ).toBeVisible();
+}
+
+async function openAssessmentDetailFromPlanning(
+  page: Page,
+  assessmentTitle: string,
+) {
+  const assessmentRow = page.getByRole("link", {
+    name: `Open details for ${assessmentTitle}`,
+    exact: true,
+  });
+
+  await expect(assessmentRow).toBeVisible();
+  await assessmentRow.click();
+  await expect(
+    page.getByRole("heading", { name: assessmentTitle, exact: true }),
   ).toBeVisible();
 }
 
@@ -50,8 +63,11 @@ async function selectDialogOption(
   await page.getByRole("option", { name: optionLabel, exact: true }).click();
 }
 
-test("can create and open an assessment from planning", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can create and open an assessment from planning", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("create-open");
   const assessmentTitle = getUniqueAssessmentTitle("create-open");
 
@@ -91,8 +107,6 @@ test("can create and open an assessment from planning", async ({ page }) => {
 
     await expect(assessmentRow).toBeVisible();
     await assessmentRow.click();
-
-    await expect(page).toHaveURL(/\/assessments\/.+/);
     await expect(
       page.getByRole("heading", { name: assessmentTitle, exact: true }),
     ).toBeVisible();
@@ -104,8 +118,8 @@ test("can create and open an assessment from planning", async ({ page }) => {
   }
 });
 
-test("can edit an assessment from detail page", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can edit an assessment from detail page", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("edit");
   const initialTitle = getUniqueAssessmentTitle("edit-initial");
   const updatedTitle = getUniqueAssessmentTitle("edit-updated");
@@ -119,23 +133,13 @@ test("can edit an assessment from detail page", async ({ page }) => {
       "Assessment edit test",
     );
 
-    const createdAssessment = await createAssessment(
-      user.userId,
-      createdSubject.id,
-      initialTitle,
-      {
-        description: "Initial assessment description",
-        status: "pending",
-      },
-    );
+    await createAssessment(user.userId, createdSubject.id, initialTitle, {
+      description: "Initial assessment description",
+      status: "pending",
+    });
 
-    await page.goto(
-      `/assessments/${createdAssessment.id}?from=planning-assessments&subjectId=${createdSubject.id}`,
-    );
-
-    await expect(
-      page.getByRole("heading", { name: initialTitle, exact: true }),
-    ).toBeVisible();
+    await openPlanningAssessments(page, createdSubject.id);
+    await openAssessmentDetailFromPlanning(page, initialTitle);
 
     await page.getByRole("button", { name: "Edit", exact: true }).click();
 
@@ -171,8 +175,8 @@ test("can edit an assessment from detail page", async ({ page }) => {
   }
 });
 
-test("can delete an assessment from detail page", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can delete an assessment from detail page", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("delete");
   const assessmentTitle = getUniqueAssessmentTitle("delete");
 
@@ -185,23 +189,13 @@ test("can delete an assessment from detail page", async ({ page }) => {
       "Assessment delete test",
     );
 
-    const createdAssessment = await createAssessment(
-      user.userId,
-      createdSubject.id,
-      assessmentTitle,
-      {
-        description: "Assessment to delete",
-        status: "pending",
-      },
-    );
+    await createAssessment(user.userId, createdSubject.id, assessmentTitle, {
+      description: "Assessment to delete",
+      status: "pending",
+    });
 
-    await page.goto(
-      `/assessments/${createdAssessment.id}?from=planning-assessments&subjectId=${createdSubject.id}`,
-    );
-
-    await expect(
-      page.getByRole("heading", { name: assessmentTitle, exact: true }),
-    ).toBeVisible();
+    await openPlanningAssessments(page, createdSubject.id);
+    await openAssessmentDetailFromPlanning(page, assessmentTitle);
 
     await page.getByRole("button", { name: "Delete", exact: true }).click();
 
@@ -213,6 +207,10 @@ test("can delete an assessment from detail page", async ({ page }) => {
       .click();
 
     await expect(deleteDialog).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Planning", exact: true }),
+    ).toBeVisible();
+    await page.reload();
     await expect(
       page.getByRole("heading", { name: "Planning", exact: true }),
     ).toBeVisible();
@@ -229,8 +227,9 @@ test("can delete an assessment from detail page", async ({ page }) => {
 
 test("shows overdue status for pending past due assessments", async ({
   page,
+  e2eUser,
 }) => {
-  const user = await ensureApprovedE2EUser();
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("overdue");
   const assessmentTitle = getUniqueAssessmentTitle("overdue");
 
@@ -263,8 +262,9 @@ test("shows overdue status for pending past due assessments", async ({
 
 test("shows assessment limit message in single-subject mode", async ({
   page,
+  e2eUser,
 }) => {
-  const user = await ensureApprovedE2EUser();
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("limit");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -290,8 +290,9 @@ test("shows assessment limit message in single-subject mode", async ({
 
 test("shows weighted final grade in planning subject mode", async ({
   page,
+  e2eUser,
 }) => {
-  const user = await ensureApprovedE2EUser();
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("final-grade");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);

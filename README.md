@@ -237,9 +237,12 @@ The Playwright auth fixtures use fixed internal test identities for approved, pe
 | Variable | Required | Description |
 | -------- | -------- | ----------- |
 | `E2E_USER_PASSWORD` | Yes | Password for end-to-end test users (approved, pending, blocked) |
+| `E2E_EMAIL_PREFIX` | No | Prefix used for generated e2e user emails. Defaults to `e2e-`. |
+| `E2E_ALLOW_DESTRUCTIVE_RESET` | Yes | Must be `true` to start Playwright e2e. This enables guarded bootstrap auth resets that clear only e2e-prefixed users and instance auth state. |
 | `PLAYWRIGHT_BASE_URL` | No | Overrides the base URL used by Playwright. Defaults to `BETTER_AUTH_URL` or `http://localhost:3000`. |
 
 On startup, the auth helpers ensure the e2e users exist and set their access states directly so the suite does not depend on manual admin approval.
+Bootstrap reset and global teardown cleanup are scoped to e2e-prefixed identities so e2e users and auth state are cleaned after the run.
 
 ## AI Integration
 

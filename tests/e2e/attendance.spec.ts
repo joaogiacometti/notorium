@@ -1,17 +1,16 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./support/authenticated-test";
+import { getPrefixedValue } from "./support/data";
 import {
   clearUserAttendanceMissesBySubject,
   clearUserSubjectsByNames,
   createAttendanceMiss,
   createSubject,
-  ensureApprovedE2EUser,
   updateSubjectAttendanceSettings,
 } from "./support/db";
 
 function getUniqueSubjectName(testTitle: string) {
-  return `E2E Attendance ${testTitle} ${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return getPrefixedValue("attendance-subject", testTitle);
 }
 
 async function openSubjectDetailByName(page: Page, subjectName: string) {
@@ -30,8 +29,8 @@ async function openSubjectDetailByName(page: Page, subjectName: string) {
   await expect(page.getByRole("heading", { name: subjectName })).toBeVisible();
 }
 
-test("can configure attendance settings", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can configure attendance settings", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("settings");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -66,8 +65,11 @@ test("can configure attendance settings", async ({ page }) => {
   }
 });
 
-test("can record a miss and rejects duplicate dates", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can record a miss and rejects duplicate dates", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("record-duplicate");
   const missDate = "2026-03-10";
 
@@ -113,8 +115,8 @@ test("can record a miss and rejects duplicate dates", async ({ page }) => {
   }
 });
 
-test("can delete a recorded miss", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can delete a recorded miss", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("delete");
   const missDate = "2026-03-11";
 
@@ -155,8 +157,9 @@ test("can delete a recorded miss", async ({ page }) => {
 
 test("shows warning and limit reached attendance statuses", async ({
   page,
+  e2eUser,
 }) => {
-  const user = await ensureApprovedE2EUser();
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("statuses");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);

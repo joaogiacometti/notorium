@@ -1,9 +1,7 @@
-import { expect, test } from "@playwright/test";
-import {
-  clearUserSubjectsByNames,
-  createSubject,
-  ensureApprovedE2EUser,
-} from "./support/db";
+import { expect, test } from "./support/authenticated-test";
+import { runWithCleanup } from "./support/cleanup";
+import { getPrefixedValue } from "./support/data";
+import { clearUserSubjectsByNames, createSubject } from "./support/db";
 
 const initialSubjectDescription =
   "Initial subject description for e2e coverage.";
@@ -11,128 +9,138 @@ const updatedSubjectDescription =
   "Updated subject description for e2e coverage.";
 
 function getUniqueSubjectName(testTitle: string) {
-  return `E2E Subject ${testTitle} ${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return getPrefixedValue("subject", testTitle);
 }
 
-test("can create a subject", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
-  const initialSubjectName = getUniqueSubjectName("create");
-  await clearUserSubjectsByNames(user.userId, [initialSubjectName]);
+test("can create a subject", async ({ page, e2eUser }) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const initialSubjectName = getUniqueSubjectName("create");
+    const cleanupNames = [initialSubjectName];
 
-  await page.goto("/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
+    await clearUserSubjectsByNames(user.userId, cleanupNames);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-  await page.locator("#btn-create-subject").click();
-  const createDialog = page.getByRole("dialog", { name: "Create Subject" });
-  await createDialog
-    .locator("#form-create-subject-name")
-    .fill(initialSubjectName);
-  await createDialog
-    .locator("#form-create-subject-description")
-    .fill(initialSubjectDescription);
-  await createDialog.getByRole("button", { name: "Create Subject" }).click();
+    await page.goto("/subjects");
+    await expect(
+      page.getByRole("heading", { name: "Subjects", exact: true }),
+    ).toBeVisible();
 
-  const subjectCard = page
-    .getByTestId("subject-card")
-    .filter({ hasText: initialSubjectName })
-    .first();
+    await page.locator("#btn-create-subject").click();
+    const createDialog = page.getByRole("dialog", { name: "Create Subject" });
+    await createDialog
+      .locator("#form-create-subject-name")
+      .fill(initialSubjectName);
+    await createDialog
+      .locator("#form-create-subject-description")
+      .fill(initialSubjectDescription);
+    await createDialog.getByRole("button", { name: "Create Subject" }).click();
 
-  await expect(subjectCard).toBeVisible();
-  await expect(subjectCard).toContainText(initialSubjectDescription);
+    const subjectCard = page
+      .getByTestId("subject-card")
+      .filter({ hasText: initialSubjectName })
+      .first();
 
-  await subjectCard.getByTestId("subject-card-link").click();
-  await expect(
-    page.getByRole("heading", { name: initialSubjectName }),
-  ).toBeVisible();
-  await expect(page.getByText(initialSubjectDescription)).toBeVisible();
+    await expect(subjectCard).toBeVisible();
+    await expect(subjectCard).toContainText(initialSubjectDescription);
 
-  await clearUserSubjectsByNames(user.userId, [initialSubjectName]);
+    await subjectCard.getByTestId("subject-card-link").click();
+    await expect(
+      page.getByRole("heading", { name: initialSubjectName }),
+    ).toBeVisible();
+    await expect(page.getByText(initialSubjectDescription)).toBeVisible();
+  });
 });
 
-test("can edit a subject", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
-  const initialSubjectName = getUniqueSubjectName("edit-initial");
-  const updatedSubjectName = getUniqueSubjectName("edit-updated");
-  await clearUserSubjectsByNames(user.userId, [
-    initialSubjectName,
-    updatedSubjectName,
-  ]);
-  await createSubject(
-    user.userId,
-    initialSubjectName,
-    initialSubjectDescription,
-  );
+test("can edit a subject", async ({ page, e2eUser }) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const initialSubjectName = getUniqueSubjectName("edit-initial");
+    const updatedSubjectName = getUniqueSubjectName("edit-updated");
+    const cleanupNames = [initialSubjectName, updatedSubjectName];
 
-  await page.goto("/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
+    await clearUserSubjectsByNames(user.userId, cleanupNames);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-  const subjectCard = page
-    .getByTestId("subject-card")
-    .filter({ hasText: initialSubjectName })
-    .first();
+    await createSubject(
+      user.userId,
+      initialSubjectName,
+      initialSubjectDescription,
+    );
 
-  await subjectCard.getByTestId("subject-card-actions").click();
-  await page.getByRole("menuitem", { name: "Edit" }).click();
-  const editDialog = page.getByRole("dialog", { name: "Edit Subject" });
-  await editDialog.locator("#form-edit-subject-name").fill(updatedSubjectName);
-  await editDialog
-    .locator("#form-edit-subject-description")
-    .fill(updatedSubjectDescription);
-  await editDialog.getByRole("button", { name: "Save Changes" }).click();
+    await page.goto("/subjects");
+    await expect(
+      page.getByRole("heading", { name: "Subjects", exact: true }),
+    ).toBeVisible();
 
-  const editedCard = page
-    .getByTestId("subject-card")
-    .filter({ hasText: updatedSubjectName })
-    .first();
+    const subjectCard = page
+      .getByTestId("subject-card")
+      .filter({ hasText: initialSubjectName })
+      .first();
 
-  await expect(editedCard).toBeVisible();
-  await expect(editedCard).toContainText(updatedSubjectDescription);
+    await subjectCard.getByTestId("subject-card-actions").click();
+    await page.getByRole("menuitem", { name: "Edit" }).click();
+    const editDialog = page.getByRole("dialog", { name: "Edit Subject" });
+    await editDialog
+      .locator("#form-edit-subject-name")
+      .fill(updatedSubjectName);
+    await editDialog
+      .locator("#form-edit-subject-description")
+      .fill(updatedSubjectDescription);
+    await editDialog.getByRole("button", { name: "Save Changes" }).click();
 
-  await editedCard.getByTestId("subject-card-link").click();
-  await expect(
-    page.getByRole("heading", { name: updatedSubjectName }),
-  ).toBeVisible();
-  await expect(page.getByText(updatedSubjectDescription)).toBeVisible();
+    const editedCard = page
+      .getByTestId("subject-card")
+      .filter({ hasText: updatedSubjectName })
+      .first();
 
-  await clearUserSubjectsByNames(user.userId, [updatedSubjectName]);
+    await expect(editedCard).toBeVisible();
+    await expect(editedCard).toContainText(updatedSubjectDescription);
+
+    await editedCard.getByTestId("subject-card-link").click();
+    await expect(
+      page.getByRole("heading", { name: updatedSubjectName }),
+    ).toBeVisible();
+    await expect(page.getByText(updatedSubjectDescription)).toBeVisible();
+  });
 });
 
-test("can delete a subject", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
-  const initialSubjectName = getUniqueSubjectName("delete");
-  await clearUserSubjectsByNames(user.userId, [initialSubjectName]);
-  await createSubject(
-    user.userId,
-    initialSubjectName,
-    initialSubjectDescription,
-  );
+test("can delete a subject", async ({ page, e2eUser }) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const initialSubjectName = getUniqueSubjectName("delete");
+    const cleanupNames = [initialSubjectName];
 
-  await page.goto("/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
+    await clearUserSubjectsByNames(user.userId, cleanupNames);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-  const subjectCard = page
-    .getByTestId("subject-card")
-    .filter({ hasText: initialSubjectName })
-    .first();
+    await createSubject(
+      user.userId,
+      initialSubjectName,
+      initialSubjectDescription,
+    );
 
-  await subjectCard.getByTestId("subject-card-link").click();
-  await expect(
-    page.getByRole("heading", { name: initialSubjectName }),
-  ).toBeVisible();
+    await page.goto("/subjects");
+    await expect(
+      page.getByRole("heading", { name: "Subjects", exact: true }),
+    ).toBeVisible();
 
-  await page.getByTestId("subject-detail-delete").click();
-  await page.getByTestId("confirm-delete-subject").click();
+    const subjectCard = page
+      .getByTestId("subject-card")
+      .filter({ hasText: initialSubjectName })
+      .first();
 
-  await page.waitForURL("**/subjects");
-  await expect(
-    page.getByTestId("subject-card").filter({ hasText: initialSubjectName }),
-  ).toHaveCount(0);
+    await subjectCard.getByTestId("subject-card-link").click();
+    await expect(
+      page.getByRole("heading", { name: initialSubjectName }),
+    ).toBeVisible();
+
+    await page.getByTestId("subject-detail-delete").click();
+    await page.getByTestId("confirm-delete-subject").click();
+
+    await page.waitForURL("**/subjects");
+    await expect(
+      page.getByTestId("subject-card").filter({ hasText: initialSubjectName }),
+    ).toHaveCount(0);
+  });
 });

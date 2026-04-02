@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/index";
 import {
   account,
@@ -16,7 +16,12 @@ import {
 } from "@/db/schema";
 import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
-import { type E2EUserKind, getE2ECredentials } from "./env";
+import {
+  type E2EUserKind,
+  getE2ECredentials,
+  getE2EEmailPrefix,
+  getE2EWorkerCredentials,
+} from "./env";
 
 const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -34,6 +39,13 @@ const auth = betterAuth({
 });
 
 type AccessStatus = "approved" | "pending" | "blocked";
+
+export interface E2EUserAccount {
+  email: string;
+  name: string;
+  password: string;
+  userId: string;
+}
 
 function getAccessStatus(kind: E2EUserKind): AccessStatus {
   if (kind === "pending") {
@@ -84,15 +96,17 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
   return {
     ...credentials,
     userId: existingUser.id,
-  };
+  } satisfies E2EUserAccount;
 }
 
 export async function resetE2EInstanceAuthState() {
+  const e2eEmailPattern = `${getE2EEmailPrefix()}%`;
+
   await db.delete(instanceState);
-  await db.delete(verification);
-  await db.delete(account);
-  await db.delete(session);
-  await db.delete(user);
+  await db
+    .delete(verification)
+    .where(sql`${verification.identifier} like ${e2eEmailPattern}`);
+  await db.delete(user).where(sql`${user.email} like ${e2eEmailPattern}`);
 }
 
 export async function getUserAccessSnapshotByEmail(email: string) {
@@ -109,8 +123,43 @@ export async function getUserAccessSnapshotByEmail(email: string) {
   return result ?? null;
 }
 
-export async function ensureApprovedE2EUser() {
-  return ensureE2EUser("approved");
+export async function ensureApprovedE2EWorkerUser(workerIndex: number) {
+  const credentials = getE2EWorkerCredentials(workerIndex, "approved");
+
+  let [existingUser] = await db
+    .select({
+      id: user.id,
+    })
+    .from(user)
+    .where(eq(user.email, credentials.email))
+    .limit(1);
+
+  if (!existingUser) {
+    const result = await auth.api.signUpEmail({
+      body: {
+        email: credentials.email,
+        name: credentials.name,
+        password: credentials.password,
+      },
+    });
+
+    existingUser = {
+      id: result.user.id,
+    };
+  }
+
+  await db
+    .update(user)
+    .set({
+      accessStatus: "approved",
+      name: credentials.name,
+    })
+    .where(eq(user.id, existingUser.id));
+
+  return {
+    ...credentials,
+    userId: existingUser.id,
+  } satisfies E2EUserAccount;
 }
 
 export async function clearUserSubjects(userId: string) {
@@ -377,12 +426,14 @@ export async function createMaxFlashcardsForSubject(
   userId: string,
   subjectId: string,
 ) {
+  const prefix = getE2EEmailPrefix();
+
   await createMany(LIMITS.maxFlashcardsPerSubject, async (index) => {
     await createFlashcard(
       userId,
       subjectId,
-      `E2E limit flashcard front ${index}`,
-      `E2E limit flashcard back ${index}`,
+      `${prefix}limit-flashcard-front-${index}`,
+      `${prefix}limit-flashcard-back-${index}`,
     );
   });
 }
@@ -391,12 +442,14 @@ export async function createMaxNotesForSubject(
   userId: string,
   subjectId: string,
 ) {
+  const prefix = getE2EEmailPrefix();
+
   await createMany(LIMITS.maxNotesPerSubject, async (index) => {
     await createNote(
       userId,
       subjectId,
-      `E2E limit note ${index}`,
-      `E2E limit note content ${index}`,
+      `${prefix}limit-note-${index}`,
+      `${prefix}limit-note-content-${index}`,
     );
   });
 }
@@ -405,7 +458,13 @@ export async function createMaxAssessmentsForSubject(
   userId: string,
   subjectId: string,
 ) {
+  const prefix = getE2EEmailPrefix();
+
   await createMany(LIMITS.maxAssessmentsPerSubject, async (index) => {
-    await createAssessment(userId, subjectId, `E2E limit assessment ${index}`);
+    await createAssessment(
+      userId,
+      subjectId,
+      `${prefix}limit-assessment-${index}`,
+    );
   });
 }

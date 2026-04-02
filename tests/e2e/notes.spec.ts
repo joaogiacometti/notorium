@@ -1,22 +1,19 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./support/authenticated-test";
+import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
   createMaxNotesForSubject,
   createNote,
   createSubject,
-  ensureApprovedE2EUser,
 } from "./support/db";
 
 function getUniqueSubjectName(testTitle: string) {
-  return `E2E Notes ${testTitle} ${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return getPrefixedValue("note-subject", testTitle);
 }
 
 function getUniqueNoteTitle(testTitle: string) {
-  return `E2E Note ${testTitle} ${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return getPrefixedValue("note", testTitle);
 }
 
 async function openSubjectDetailByName(page: Page, subjectName: string) {
@@ -58,8 +55,8 @@ async function openNoteDetailByTitle(page: Page, noteTitle: string) {
   ).toBeVisible();
 }
 
-test("can create and open a note", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can create and open a note", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("create-open");
   const noteTitle = getUniqueNoteTitle("create-open");
   const noteContent = "Cell membranes regulate transport and communication.";
@@ -79,8 +76,8 @@ test("can create and open a note", async ({ page }) => {
   }
 });
 
-test("can edit a note", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can edit a note", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("edit");
   const initialTitle = getUniqueNoteTitle("edit-initial");
   const updatedTitle = getUniqueNoteTitle("edit-updated");
@@ -120,8 +117,8 @@ test("can edit a note", async ({ page }) => {
   }
 });
 
-test("can delete a note", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("can delete a note", async ({ page, e2eUser }) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("delete");
   const noteTitle = getUniqueNoteTitle("delete");
 
@@ -160,8 +157,11 @@ test("can delete a note", async ({ page }) => {
   }
 });
 
-test("disables creating notes when limit is reached", async ({ page }) => {
-  const user = await ensureApprovedE2EUser();
+test("disables creating notes when limit is reached", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
   const subjectName = getUniqueSubjectName("limit");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);

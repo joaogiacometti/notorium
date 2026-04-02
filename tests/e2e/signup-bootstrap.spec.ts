@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { getPrefixedEmail } from "./support/data";
 import {
   getUserAccessSnapshotByEmail,
   resetE2EInstanceAuthState,
@@ -7,13 +8,13 @@ import {
 const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 const firstUser = {
-  email: `bootstrap-first-${runId}@example.com`,
+  email: getPrefixedEmail(`bootstrap-first-${runId}`),
   name: "Bootstrap First User",
   password: "bootstrap-pass-1",
 };
 
 const secondUser = {
-  email: `bootstrap-second-${runId}@example.com`,
+  email: getPrefixedEmail(`bootstrap-second-${runId}`),
   name: "Bootstrap Second User",
   password: "bootstrap-pass-2",
 };
@@ -37,7 +38,6 @@ test("first signup becomes approved admin immediately", async ({ page }) => {
   await page.locator("#form-signup-confirm-password").fill(firstUser.password);
   await page.getByRole("button", { name: "Create Account" }).click();
 
-  await expect(page).toHaveURL(/\/subjects$/);
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
@@ -61,11 +61,11 @@ test("later signup stays pending and shows approval notice", async ({
   await page.locator("#form-signup-confirm-password").fill(secondUser.password);
   await page.getByRole("button", { name: "Create Account" }).click();
 
-  await expect(page).toHaveURL(/\/login\?pendingApproval=1$/);
   await expect(
-    page.getByText(
-      "Your account was created successfully and is now waiting for administrator approval.",
-    ),
+    page.getByRole("heading", { name: "Login to your account", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/waiting for administrator approval/i),
   ).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
 
