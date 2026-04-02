@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { user } from "@/db/schema";
 import {
   type ActionErrorResult,
@@ -12,14 +12,14 @@ export type AccountMutationResult = { success: true } | ActionErrorResult;
 export async function deleteAccountForUser(
   userId: string,
 ): Promise<AccountMutationResult> {
-  await db.delete(user).where(eq(user.id, userId));
+  await getDb().delete(user).where(eq(user.id, userId));
   return { success: true };
 }
 
 export async function updateUserAccessStatusForUser(
   data: UpdateUserAccessInput,
 ): Promise<AccountMutationResult> {
-  const [targetUser] = await db
+  const [targetUser] = await getDb()
     .select({
       id: user.id,
     })
@@ -31,7 +31,7 @@ export async function updateUserAccessStatusForUser(
     return actionError("auth.userNotFound");
   }
 
-  await db
+  await getDb()
     .update(user)
     .set({
       accessStatus: data.accessStatus,

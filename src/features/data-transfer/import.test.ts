@@ -24,10 +24,10 @@ const validateSubjectImportLimitsMock = vi.fn();
 const parseActionInputMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     select: selectMock,
     transaction: transactionMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

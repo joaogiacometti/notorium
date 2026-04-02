@@ -10,7 +10,7 @@ function isBase64Length(length: number) {
   };
 }
 
-const appEnvSchema = z
+const serverEnvSchema = z
   .object({
     DATABASE_URL: z.url(),
   })
@@ -59,22 +59,33 @@ const appEnvSchema = z
     }
   });
 
-const appEnvResult = process.env.SKIP_ENV_VALIDATION
-  ? {
-      success: true as const,
-      data: process.env as unknown as z.output<typeof appEnvSchema>,
-    }
-  : appEnvSchema.safeParse(process.env);
+type ServerEnv = z.output<typeof serverEnvSchema>;
 
-if (!appEnvResult.success) {
-  const errorMessages = appEnvResult.error.issues.map((issue) => {
-    const path = issue.path.join(".");
-    return `${path}: ${issue.message}`;
-  });
+let cachedServerEnv: ServerEnv | null = null;
 
-  throw new Error(
-    `Invalid environment variables:\n${errorMessages.join("\n")}`,
-  );
+export function getServerEnv(): ServerEnv {
+  if (cachedServerEnv) {
+    return cachedServerEnv;
+  }
+
+  const serverEnvResult = process.env.SKIP_ENV_VALIDATION
+    ? {
+        success: true as const,
+        data: process.env as unknown as ServerEnv,
+      }
+    : serverEnvSchema.safeParse(process.env);
+
+  if (!serverEnvResult.success) {
+    const errorMessages = serverEnvResult.error.issues.map((issue) => {
+      const path = issue.path.join(".");
+      return `${path}: ${issue.message}`;
+    });
+
+    throw new Error(
+      `Invalid environment variables:\n${errorMessages.join("\n")}`,
+    );
+  }
+
+  cachedServerEnv = serverEnvResult.data;
+  return cachedServerEnv;
 }
-
-export const appEnv = appEnvResult.data;

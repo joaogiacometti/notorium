@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { claimInitialAdminAccess } from "@/features/auth/mutations";
 import { getUserAccessStatusByEmail } from "@/features/auth/queries";
 import { getUserPreferredTheme } from "@/features/user/queries";
-import { auth } from "@/lib/auth/auth";
+import { getAuth } from "@/lib/auth/auth";
 import { checkAuthRateLimit } from "@/lib/auth/rate-limit";
 import { runValidatedAction } from "@/lib/server/action-runner";
 import type { MutationResult } from "@/lib/server/api-contracts";
@@ -54,7 +54,7 @@ export const loginAction = async (
 
       let userId: string;
       try {
-        const result = await auth.api.signInEmail({
+        const result = await getAuth().api.signInEmail({
           body: {
             email: parsedData.email,
             password: parsedData.password,
@@ -88,7 +88,7 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
 
       let createdUserId: string;
       try {
-        const result = await auth.api.signUpEmail({
+        const result = await getAuth().api.signUpEmail({
           body: {
             email: parsedData.email,
             password: parsedData.password,
@@ -107,7 +107,7 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
 
       if (isInitialAdmin) {
         try {
-          await auth.api.signInEmail({
+          await getAuth().api.signInEmail({
             body: {
               email: parsedData.email,
               password: parsedData.password,
@@ -129,7 +129,7 @@ export const signUpAction = async (data: SignupForm): Promise<ActionResult> => {
 };
 
 export const logoutAction = async () => {
-  await auth.api.signOut({
+  await getAuth().api.signOut({
     headers: await headers(),
   });
   redirect("/login");

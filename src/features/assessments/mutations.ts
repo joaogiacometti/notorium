@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { assessment } from "@/db/schema";
 import {
   countAssessmentsBySubjectForUser,
@@ -79,7 +79,7 @@ export async function createAssessmentForUser(
     });
   }
 
-  const [createdAssessment] = await db
+  const [createdAssessment] = await getDb()
     .insert(assessment)
     .values({
       subjectId: data.subjectId,
@@ -105,7 +105,7 @@ export async function editAssessmentForUser(
     return actionError("assessments.notFound");
   }
 
-  const [updatedAssessment] = await db
+  const [updatedAssessment] = await getDb()
     .update(assessment)
     .set(getAssessmentMutationValues(data))
     .where(eq(assessment.id, data.id))
@@ -128,7 +128,7 @@ export async function deleteAssessmentForUser(
     return actionError("assessments.notFound");
   }
 
-  await db.delete(assessment).where(eq(assessment.id, data.id));
+  await getDb().delete(assessment).where(eq(assessment.id, data.id));
 
   return {
     success: true,

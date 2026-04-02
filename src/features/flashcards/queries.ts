@@ -11,7 +11,7 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import {
   getFlashcardManageBackExcerpt,
@@ -30,7 +30,7 @@ export async function getFlashcardsBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<FlashcardEntity[]> {
-  return db
+  return getDb()
     .select({ flashcard })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -48,7 +48,7 @@ export async function getFlashcardsBySubjectForUser(
 export async function getFlashcardsForUser(
   userId: string,
 ): Promise<FlashcardListEntity[]> {
-  return db
+  return getDb()
     .select({ flashcard, subjectName: subject.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -97,7 +97,7 @@ export async function getFlashcardsManagePageForUser(
       : filters;
 
   const [itemRows, totalRows, subjectCountRows] = await Promise.all([
-    db
+    getDb()
       .select({
         id: flashcard.id,
         subjectId: flashcard.subjectId,
@@ -112,13 +112,13 @@ export async function getFlashcardsManagePageForUser(
       .orderBy(desc(flashcard.updatedAt))
       .limit(pageSize)
       .offset(offset),
-    db
+    getDb()
       .select({ total: count() })
       .from(flashcard)
       .innerJoin(subject, eq(flashcard.subjectId, subject.id))
       .where(and(...totalFilters)),
     subjectId
-      ? db
+      ? getDb()
           .select({ total: count() })
           .from(flashcard)
           .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -151,7 +151,7 @@ export async function getFlashcardByIdForUser(
   userId: string,
   flashcardId: string,
 ): Promise<FlashcardEntity | null> {
-  const results = await db
+  const results = await getDb()
     .select({ flashcard })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -171,7 +171,7 @@ export async function getFlashcardRecordForUser(
   userId: string,
   flashcardId: string,
 ): Promise<Pick<FlashcardEntity, "id" | "subjectId"> | null> {
-  const results = await db
+  const results = await getDb()
     .select({ id: flashcard.id, subjectId: flashcard.subjectId })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -195,7 +195,7 @@ export async function getFlashcardRecordsForUser(
     return [];
   }
 
-  return db
+  return getDb()
     .select({ id: flashcard.id, subjectId: flashcard.subjectId })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -212,7 +212,7 @@ export async function countFlashcardsBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<number> {
-  const result = await db
+  const result = await getDb()
     .select({ total: count() })
     .from(flashcard)
     .where(
@@ -236,7 +236,7 @@ export async function hasDuplicateFlashcardFrontForUser(
     filters.push(ne(flashcard.id, excludedFlashcardId));
   }
 
-  const result = await db
+  const result = await getDb()
     .select({ id: flashcard.id })
     .from(flashcard)
     .where(and(...filters))
@@ -261,7 +261,7 @@ export async function getFlashcardsByIdsForValidation(
     return [];
   }
 
-  const results = await db
+  const results = await getDb()
     .select({
       id: flashcard.id,
       front: flashcard.front,
@@ -285,7 +285,7 @@ export async function getFlashcardsByIdsForValidation(
 export async function getAllFlashcardIdsForUser(
   userId: string,
 ): Promise<string[]> {
-  const results = await db
+  const results = await getDb()
     .select({ id: flashcard.id })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -304,7 +304,7 @@ export async function getAllFlashcardIdsForSubject(
   userId: string,
   subjectId: string,
 ): Promise<string[]> {
-  const results = await db
+  const results = await getDb()
     .select({ id: flashcard.id })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))

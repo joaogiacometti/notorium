@@ -16,10 +16,10 @@ const shouldOptimizeFsrsParametersMock = vi.fn();
 const tryAcquireUserExpiringLockMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     select: selectMock,
     update: updateMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

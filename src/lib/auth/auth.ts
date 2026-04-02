@@ -5,24 +5,35 @@ import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import * as schema from "@/db/schema";
 import { user } from "@/db/schema";
 
-export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema,
-  }),
-  emailAndPassword: {
-    enabled: true,
-  },
-  plugins: [nextCookies()],
-});
+function createAuth() {
+  return betterAuth({
+    database: drizzleAdapter(getDb(), {
+      provider: "pg",
+      schema,
+    }),
+    emailAndPassword: {
+      enabled: true,
+    },
+    plugins: [nextCookies()],
+  });
+}
+
+type AuthInstance = ReturnType<typeof createAuth>;
+let cachedAuth: AuthInstance | null = null;
+
+export function getAuth(): AuthInstance {
+  cachedAuth ??= createAuth();
+  return cachedAuth;
+}
 
 const getSession = cache(async () => {
-  return auth.api.getSession({
-    headers: await headers(),
+  const requestHeaders = await headers();
+  return getAuth().api.getSession({
+    headers: requestHeaders,
   });
 });
 
@@ -32,7 +43,7 @@ const getSessionAccess = cache(async () => {
     return null;
   }
 
-  const [account] = await db
+  const [account] = await getDb()
     .select({
       accessStatus: user.accessStatus,
       isAdmin: user.isAdmin,

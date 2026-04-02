@@ -44,9 +44,12 @@ test("can create a subject", async ({ page, e2eUser }) => {
     await expect(subjectCard).toBeVisible();
     await expect(subjectCard).toContainText(initialSubjectDescription);
 
-    await subjectCard.getByTestId("subject-card-link").click();
+    await Promise.all([
+      page.waitForURL(/\/subjects\/[^/]+$/),
+      page.getByRole("link", { name: initialSubjectName, exact: true }).click(),
+    ]);
     await expect(
-      page.getByRole("heading", { name: initialSubjectName }),
+      page.getByRole("heading", { name: initialSubjectName, exact: true }),
     ).toBeVisible();
     await expect(page.getByText(initialSubjectDescription)).toBeVisible();
   });
@@ -97,9 +100,12 @@ test("can edit a subject", async ({ page, e2eUser }) => {
     await expect(editedCard).toBeVisible();
     await expect(editedCard).toContainText(updatedSubjectDescription);
 
-    await editedCard.getByTestId("subject-card-link").click();
+    await Promise.all([
+      page.waitForURL(/\/subjects\/[^/]+$/),
+      page.getByRole("link", { name: updatedSubjectName, exact: true }).click(),
+    ]);
     await expect(
-      page.getByRole("heading", { name: updatedSubjectName }),
+      page.getByRole("heading", { name: updatedSubjectName, exact: true }),
     ).toBeVisible();
     await expect(page.getByText(updatedSubjectDescription)).toBeVisible();
   });
@@ -125,14 +131,12 @@ test("can delete a subject", async ({ page, e2eUser }) => {
       page.getByRole("heading", { name: "Subjects", exact: true }),
     ).toBeVisible();
 
-    const subjectCard = page
-      .getByTestId("subject-card")
-      .filter({ hasText: initialSubjectName })
-      .first();
-
-    await subjectCard.getByTestId("subject-card-link").click();
+    await Promise.all([
+      page.waitForURL(/\/subjects\/[^/]+$/),
+      page.getByRole("link", { name: initialSubjectName, exact: true }).click(),
+    ]);
     await expect(
-      page.getByRole("heading", { name: initialSubjectName }),
+      page.getByRole("heading", { name: initialSubjectName, exact: true }),
     ).toBeVisible();
 
     await page.getByTestId("subject-detail-delete").click();

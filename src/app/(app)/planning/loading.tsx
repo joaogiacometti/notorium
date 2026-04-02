@@ -1,5 +1,5 @@
-import { PlanningLoading as PlanningLoadingContent } from "@/components/planning/planning-loading";
+import { PlanningAssessmentsLoading } from "@/components/planning/planning-assessments-loading";
 
 export default function PlanningLoading() {
-  return <PlanningLoadingContent />;
+  return <PlanningAssessmentsLoading />;
 }

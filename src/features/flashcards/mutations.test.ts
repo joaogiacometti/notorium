@@ -34,11 +34,11 @@ const hasDuplicateFlashcardFrontForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     insert: insertMock,
     delete: deleteMock,
     update: updateMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

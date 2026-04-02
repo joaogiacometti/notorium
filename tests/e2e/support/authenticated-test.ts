@@ -28,7 +28,8 @@ export const test = base.extend<
   AuthenticatedWorkerFixtures
 >({
   workerE2EUser: [
-    async (_fixtures, use, workerInfo) => {
+    // biome-ignore lint/correctness/noEmptyPattern: Playwright requires destructuring syntax
+    async ({}, use, workerInfo) => {
       const user = await ensureApprovedE2EWorkerUser(workerInfo.workerIndex);
       await clearUserSessions(user.userId);
       await use(user);

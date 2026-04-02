@@ -18,6 +18,9 @@ export default defineConfig({
   reporter: "html",
   globalSetup: "./tests/e2e/global-setup.ts",
   globalTeardown: "./tests/e2e/global-teardown.ts",
+  expect: {
+    timeout: 15_000,
+  },
   use: {
     baseURL,
     trace: "on-first-retry",

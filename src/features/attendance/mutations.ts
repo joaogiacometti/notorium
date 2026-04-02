@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
 import {
   getMissRecordForUser,
@@ -37,7 +37,7 @@ export async function updateAttendanceSettingsForUser(
     return actionError("subjects.notFound");
   }
 
-  await db
+  await getDb()
     .update(subject)
     .set({
       totalClasses: data.totalClasses,
@@ -71,7 +71,7 @@ export async function recordMissForUser(
     return actionError("attendance.missAlreadyRecorded");
   }
 
-  await db.insert(attendanceMiss).values({
+  await getDb().insert(attendanceMiss).values({
     missDate: data.missDate,
     subjectId: data.subjectId,
     userId,
@@ -90,7 +90,7 @@ export async function deleteMissForUser(
     return actionError("attendance.missNotFound");
   }
 
-  await db
+  await getDb()
     .delete(attendanceMiss)
     .where(
       and(eq(attendanceMiss.id, data.id), eq(attendanceMiss.userId, userId)),

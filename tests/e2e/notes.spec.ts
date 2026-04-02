@@ -22,14 +22,18 @@ async function openSubjectDetailByName(page: Page, subjectName: string) {
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
 
-  const subjectCard = page
-    .getByTestId("subject-card")
-    .filter({ hasText: subjectName })
+  const subjectLink = page
+    .getByRole("link", { name: subjectName, exact: true })
     .first();
 
-  await expect(subjectCard).toBeVisible();
-  await subjectCard.getByTestId("subject-card-link").click();
-  await expect(page.getByRole("heading", { name: subjectName })).toBeVisible();
+  await expect(subjectLink).toBeVisible();
+  await Promise.all([
+    page.waitForURL(/\/subjects\/[^/]+$/),
+    subjectLink.click(),
+  ]);
+  await expect(
+    page.getByRole("heading", { name: subjectName, exact: true }),
+  ).toBeVisible();
 }
 
 async function createNoteFromDialog(

@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { user } from "@/db/schema";
 import type { AccessStatus } from "@/lib/validations/access-control";
 
 export async function getUserAccessStatusByEmail(
   email: string,
 ): Promise<AccessStatus | null> {
-  const [existingUser] = await db
+  const [existingUser] = await getDb()
     .select({
       accessStatus: user.accessStatus,
     })

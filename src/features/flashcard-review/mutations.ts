@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { flashcard, flashcardReviewLog } from "@/db/schema";
 import { getReviewableFlashcardForUser } from "@/features/flashcard-review/queries";
 import type { ReviewFlashcardForm } from "@/features/flashcard-review/validation";
@@ -69,7 +69,7 @@ export async function reviewFlashcardForUser(
   let updatedCard: FlashcardReviewEntity | undefined;
 
   try {
-    updatedCard = await db.transaction(async (tx) => {
+    updatedCard = await getDb().transaction(async (tx) => {
       const updatedCards = await tx
         .update(flashcard)
         .set(getFlashcardReviewUpdateValues(nextState))

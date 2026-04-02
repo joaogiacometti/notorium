@@ -1,5 +1,5 @@
 import { and, eq, gte, isNull, lte } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { assessment, attendanceMiss, subject } from "@/db/schema";
 import type {
   AssessmentEntity,
@@ -19,7 +19,7 @@ export async function getPlanningCalendarDataForUser(
   rangeEnd: string,
 ): Promise<PlanningCalendarData> {
   const [assessmentRows, missRows, subjectRows] = await Promise.all([
-    db
+    getDb()
       .select({ assessment, subjectName: subject.name })
       .from(assessment)
       .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -32,7 +32,7 @@ export async function getPlanningCalendarDataForUser(
           lte(assessment.dueDate, rangeEnd),
         ),
       ),
-    db
+    getDb()
       .select({ attendanceMiss, subjectName: subject.name })
       .from(attendanceMiss)
       .innerJoin(subject, eq(attendanceMiss.subjectId, subject.id))
@@ -45,7 +45,7 @@ export async function getPlanningCalendarDataForUser(
           lte(attendanceMiss.missDate, rangeEnd),
         ),
       ),
-    db
+    getDb()
       .select({ id: subject.id, name: subject.name })
       .from(subject)
       .where(and(eq(subject.userId, userId), isNull(subject.archivedAt))),

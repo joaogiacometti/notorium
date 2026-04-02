@@ -19,7 +19,7 @@ import {
   updateUserAiSettings as updateUserAiSettingsForUser,
 } from "@/features/ai/settings";
 import { isAdminUser } from "@/lib/auth/access-control";
-import { auth, getAuthenticatedUserId } from "@/lib/auth/auth";
+import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import {
   runValidatedAction,
   runValidatedUserAction,
@@ -43,7 +43,7 @@ export async function updateAccount(
     "account.invalidData",
     async (parsedData) => {
       try {
-        await auth.api.updateUser({
+        await getAuth().api.updateUser({
           headers: await headers(),
           body: {
             name: parsedData.name,
@@ -124,7 +124,7 @@ export async function deleteAccount(): Promise<MutationResult> {
     return result;
   }
 
-  await auth.api.signOut({
+  await getAuth().api.signOut({
     headers: await headers(),
   });
 

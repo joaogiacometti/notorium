@@ -1,13 +1,13 @@
 import "server-only";
 
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { appEnv } from "@/env";
+import { getServerEnv } from "@/env";
 
 const algorithm = "aes-256-gcm";
 const ivLength = 12;
 
 function getEncryptionKey() {
-  return Buffer.from(appEnv.USER_AI_SETTINGS_ENCRYPTION_KEY, "base64");
+  return Buffer.from(getServerEnv().USER_AI_SETTINGS_ENCRYPTION_KEY, "base64");
 }
 
 export interface EncryptedSecret {

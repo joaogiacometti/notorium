@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import {
   generateFlashcardBackForUser,
@@ -127,7 +127,7 @@ export async function createFlashcardForUser(
 
   const schedulingState = getInitialFlashcardSchedulingState();
   try {
-    const inserted = await db
+    const inserted = await getDb()
       .insert(flashcard)
       .values({
         subjectId: data.subjectId,
@@ -192,7 +192,7 @@ export async function editFlashcardForUser(
   }
 
   try {
-    const updated = await db
+    const updated = await getDb()
       .update(flashcard)
       .set({
         subjectId: data.subjectId,
@@ -272,7 +272,7 @@ export async function deleteFlashcardForUser(
     return actionError("flashcards.notFound");
   }
 
-  await db
+  await getDb()
     .delete(flashcard)
     .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)));
 
@@ -289,7 +289,7 @@ export async function bulkDeleteFlashcardsForUser(
     return actionError("flashcards.notFound");
   }
 
-  await db
+  await getDb()
     .delete(flashcard)
     .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
@@ -338,7 +338,7 @@ export async function bulkMoveFlashcardsForUser(
     }
   }
 
-  await db
+  await getDb()
     .update(flashcard)
     .set({
       subjectId: data.subjectId,
@@ -368,7 +368,7 @@ export async function resetFlashcardForUser(
   const now = new Date();
   const schedulingState = getInitialFlashcardSchedulingState(now);
 
-  const updated = await db
+  const updated = await getDb()
     .update(flashcard)
     .set({
       state: schedulingState.state,

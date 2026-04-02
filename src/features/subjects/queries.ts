@@ -1,12 +1,12 @@
 import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
 
 export async function getSubjectsForUser(
   userId: string,
 ): Promise<SubjectEntity[]> {
-  return db
+  return getDb()
     .select()
     .from(subject)
     .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)))
@@ -17,7 +17,7 @@ export async function getActiveSubjectByIdForUser(
   userId: string,
   subjectId: string,
 ): Promise<SubjectEntity | null> {
-  const results = await db
+  const results = await getDb()
     .select()
     .from(subject)
     .where(
@@ -36,7 +36,7 @@ export async function getActiveSubjectRecordForUser(
   userId: string,
   subjectId: string,
 ): Promise<{ id: string } | null> {
-  const results = await db
+  const results = await getDb()
     .select({ id: subject.id })
     .from(subject)
     .where(
@@ -54,7 +54,7 @@ export async function getActiveSubjectRecordForUser(
 export async function getArchivedSubjectsForUser(
   userId: string,
 ): Promise<SubjectEntity[]> {
-  return db
+  return getDb()
     .select()
     .from(subject)
     .where(and(eq(subject.userId, userId), isNotNull(subject.archivedAt)))
@@ -65,7 +65,7 @@ export async function getArchivedSubjectRecordForUser(
   userId: string,
   subjectId: string,
 ): Promise<{ id: string } | null> {
-  const results = await db
+  const results = await getDb()
     .select({ id: subject.id })
     .from(subject)
     .where(
@@ -84,7 +84,7 @@ export async function getSubjectRecordForUser(
   userId: string,
   subjectId: string,
 ): Promise<{ id: string } | null> {
-  const results = await db
+  const results = await getDb()
     .select({ id: subject.id })
     .from(subject)
     .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)))
@@ -94,7 +94,7 @@ export async function getSubjectRecordForUser(
 }
 
 export async function countSubjectsForUser(userId: string): Promise<number> {
-  const result = await db
+  const result = await getDb()
     .select({ total: count() })
     .from(subject)
     .where(eq(subject.userId, userId));

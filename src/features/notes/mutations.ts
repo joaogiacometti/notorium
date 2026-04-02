@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { note } from "@/db/schema";
 import {
   countNotesBySubjectForUser,
@@ -53,11 +53,13 @@ export async function createNoteForUser(
     });
   }
 
-  await db.insert(note).values({
-    ...getNoteMutationValues(data),
-    subjectId: data.subjectId,
-    userId,
-  });
+  await getDb()
+    .insert(note)
+    .values({
+      ...getNoteMutationValues(data),
+      subjectId: data.subjectId,
+      userId,
+    });
 
   return { success: true, subjectId: data.subjectId };
 }
@@ -72,7 +74,7 @@ export async function editNoteForUser(
     return actionError("notes.notFound");
   }
 
-  await db
+  await getDb()
     .update(note)
     .set(getNoteMutationValues(data))
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
@@ -90,7 +92,7 @@ export async function deleteNoteForUser(
     return actionError("notes.notFound");
   }
 
-  await db
+  await getDb()
     .delete(note)
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 

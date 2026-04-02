@@ -1,5 +1,5 @@
 import { count, eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import {
   assessment,
   attendanceMiss,
@@ -59,7 +59,7 @@ export async function importDataForUser(
     return actionError("dataTransfer.noSubjectsToImport");
   }
 
-  const subjectCountResult = await db
+  const subjectCountResult = await getDb()
     .select({ total: count() })
     .from(subject)
     .where(eq(subject.userId, userId));
@@ -86,7 +86,7 @@ export async function importDataForUser(
 }
 
 async function importSubjectsFromData(userId: string, data: ImportData) {
-  return db.transaction(async (tx) => {
+  return getDb().transaction(async (tx) => {
     let importedCount = 0;
     const importedScheduler = data.flashcardScheduler ?? {
       desiredRetention: getDefaultFsrsDesiredRetention(),

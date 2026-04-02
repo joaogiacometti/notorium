@@ -1,5 +1,5 @@
 import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { flashcard, note, subject } from "@/db/schema";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type { SearchData } from "@/lib/server/api-contracts";
@@ -18,7 +18,7 @@ export async function getSearchDataForUser(
   const searchPattern = buildContainsSearchPattern(searchQuery);
 
   const [allSubjects, allNotes, allFlashcards] = await Promise.all([
-    db
+    getDb()
       .select({
         id: subject.id,
         name: subject.name,
@@ -37,7 +37,7 @@ export async function getSearchDataForUser(
       )
       .orderBy(desc(subject.updatedAt))
       .limit(searchSubjectsLimit),
-    db
+    getDb()
       .select({
         id: note.id,
         title: note.title,
@@ -61,7 +61,7 @@ export async function getSearchDataForUser(
       )
       .orderBy(desc(note.updatedAt))
       .limit(searchNotesLimit),
-    db
+    getDb()
       .select({
         id: flashcard.id,
         front: flashcard.front,
@@ -93,7 +93,7 @@ export async function getRecentSearchDataForUser(
   userId: string,
 ): Promise<SearchData> {
   const [allSubjects, allNotes, allFlashcards] = await Promise.all([
-    db
+    getDb()
       .select({
         id: subject.id,
         name: subject.name,
@@ -103,7 +103,7 @@ export async function getRecentSearchDataForUser(
       .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)))
       .orderBy(desc(subject.updatedAt))
       .limit(recentSubjectsLimit),
-    db
+    getDb()
       .select({
         id: note.id,
         title: note.title,
@@ -122,7 +122,7 @@ export async function getRecentSearchDataForUser(
       )
       .orderBy(desc(note.updatedAt))
       .limit(recentNotesLimit),
-    db
+    getDb()
       .select({
         id: flashcard.id,
         front: flashcard.front,

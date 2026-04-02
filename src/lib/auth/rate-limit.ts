@@ -2,19 +2,38 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
 import { createClient as createRedisClient, type RedisClientType } from "redis";
-import { appEnv } from "@/env";
+import { getServerEnv } from "@/env";
 import { LIMITS } from "@/lib/config/limits";
 
 const authRateLimitMaxAttempts = LIMITS.authRateLimitMaxAttempts;
 const authRateLimitWindowSeconds = LIMITS.authRateLimitWindowSeconds;
 const authRateLimitPrefix = LIMITS.authRateLimitPrefix;
 
-const authRateLimit = (() => {
+type AuthRateLimitCache = {
+  backend: "upstash" | "redis";
+  rateLimit: Ratelimit | null;
+};
+
+let authRateLimitCache: AuthRateLimitCache | null = null;
+
+function getAuthRateLimit() {
+  const appEnv = getServerEnv();
+  if (
+    authRateLimitCache &&
+    authRateLimitCache.backend === appEnv.RATE_LIMIT_BACKEND
+  ) {
+    return authRateLimitCache.rateLimit;
+  }
+
   if (appEnv.RATE_LIMIT_BACKEND !== "upstash") {
+    authRateLimitCache = {
+      backend: appEnv.RATE_LIMIT_BACKEND,
+      rateLimit: null,
+    };
     return null;
   }
 
-  return new Ratelimit({
+  const rateLimit = new Ratelimit({
     redis: new Redis({
       url: appEnv.UPSTASH_REDIS_REST_URL,
       token: appEnv.UPSTASH_REDIS_REST_TOKEN,
@@ -25,7 +44,12 @@ const authRateLimit = (() => {
     ),
     prefix: authRateLimitPrefix,
   });
-})();
+  authRateLimitCache = {
+    backend: appEnv.RATE_LIMIT_BACKEND,
+    rateLimit,
+  };
+  return rateLimit;
+}
 
 let redisClient: RedisClientType | null = null;
 let redisClientConnection: Promise<RedisClientType> | null = null;
@@ -76,6 +100,7 @@ async function getAuthRateLimitKey(identifier?: string) {
 }
 
 function getRedisClient() {
+  const appEnv = getServerEnv();
   redisClient ??= createRedisClient({
     url: appEnv.REDIS_URL,
   });
@@ -143,18 +168,20 @@ export async function checkAuthRateLimit(
   identifier?: string,
 ): Promise<{ limited: false } | { limited: true; errorCode: string }> {
   const key = await getAuthRateLimitKey(identifier);
+  const appEnv = getServerEnv();
 
   if (appEnv.RATE_LIMIT_BACKEND === "redis") {
     return checkAuthRateLimitWithRedis(key);
   }
 
-  if (!authRateLimit) {
+  const rateLimit = getAuthRateLimit();
+  if (!rateLimit) {
     return {
       limited: false,
     };
   }
 
-  const { success } = await authRateLimit.limit(key);
+  const { success } = await rateLimit.limit(key);
   return success
     ? { limited: false }
     : {

@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
 import {
   countSubjectsForUser,
@@ -48,7 +48,7 @@ export async function createSubjectForUser(
     });
   }
 
-  await db
+  await getDb()
     .insert(subject)
     .values({ ...getSubjectMutationValues(data), userId });
 
@@ -65,7 +65,7 @@ export async function editSubjectForUser(
     return actionError("subjects.notFound");
   }
 
-  await db
+  await getDb()
     .update(subject)
     .set(getSubjectMutationValues(data))
     .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
@@ -83,7 +83,7 @@ export async function archiveSubjectForUser(
     return actionError("subjects.notFound");
   }
 
-  await db
+  await getDb()
     .update(subject)
     .set({
       archivedAt: new Date(),
@@ -103,7 +103,7 @@ export async function restoreSubjectForUser(
     return actionError("subjects.notFound");
   }
 
-  await db
+  await getDb()
     .update(subject)
     .set({
       archivedAt: null,
@@ -123,7 +123,7 @@ export async function deleteSubjectForUser(
     return actionError("subjects.notFound");
   }
 
-  await db
+  await getDb()
     .delete(subject)
     .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
 

@@ -49,9 +49,9 @@ const sqlMock = Object.assign(
 );
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     transaction: transactionMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

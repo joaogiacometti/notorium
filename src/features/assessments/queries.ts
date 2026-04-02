@@ -1,5 +1,5 @@
 import { and, count, desc, eq, type SQL, sql } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { PlanningAssessmentsQueryInput } from "@/features/assessments/validation";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
@@ -14,7 +14,7 @@ import { getAssessmentAverage, getTodayIso } from "./assessments";
 export async function getAssessmentsForUser(
   userId: string,
 ): Promise<AssessmentEntity[]> {
-  return db
+  return getDb()
     .select({ assessment })
     .from(assessment)
     .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -32,7 +32,7 @@ export async function getAssessmentsBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<AssessmentEntity[]> {
-  return db
+  return getDb()
     .select({ assessment })
     .from(assessment)
     .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -51,7 +51,7 @@ export async function countAssessmentsBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<number> {
-  const result = await db
+  const result = await getDb()
     .select({ total: count() })
     .from(assessment)
     .where(
@@ -65,7 +65,7 @@ export async function getAssessmentRecordForUser(
   userId: string,
   assessmentId: string,
 ): Promise<{ id: string; subjectId: string } | null> {
-  const results = await db
+  const results = await getDb()
     .select({ id: assessment.id, subjectId: assessment.subjectId })
     .from(assessment)
     .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -85,7 +85,7 @@ export async function getAssessmentDetailForUser(
   userId: string,
   assessmentId: string,
 ): Promise<AssessmentDetailEntity | null> {
-  const results = await db
+  const results = await getDb()
     .select({
       assessment,
       subject: {
@@ -197,7 +197,7 @@ export async function getPlanningAssessmentsPageForUser(
   const filters = getPlanningAssessmentFilters(userId, input);
   const [items, totalRows, allCountRows, subjectCountRows, finalGradeRows] =
     await Promise.all([
-      db
+      getDb()
         .select({ assessment })
         .from(assessment)
         .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -206,12 +206,12 @@ export async function getPlanningAssessmentsPageForUser(
         .limit(input.pageSize)
         .offset(offset)
         .then((rows) => rows.map((row) => row.assessment)),
-      db
+      getDb()
         .select({ total: count() })
         .from(assessment)
         .innerJoin(subject, eq(assessment.subjectId, subject.id))
         .where(and(...filters)),
-      db
+      getDb()
         .select({ total: count() })
         .from(assessment)
         .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -222,7 +222,7 @@ export async function getPlanningAssessmentsPageForUser(
           ),
         ),
       input.subjectId
-        ? db
+        ? getDb()
             .select({ total: count() })
             .from(assessment)
             .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -235,7 +235,7 @@ export async function getPlanningAssessmentsPageForUser(
             )
         : Promise.resolve([]),
       input.subjectId
-        ? db
+        ? getDb()
             .select({
               status: assessment.status,
               score: assessment.score,

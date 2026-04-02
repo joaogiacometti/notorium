@@ -23,9 +23,9 @@ const ensureFsrsSettingsMock = vi.fn();
 const maybeOptimizeFsrsParametersMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     transaction: transactionMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

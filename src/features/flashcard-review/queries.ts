@@ -1,5 +1,5 @@
 import { and, asc, count, eq, isNull, lte, type SQL } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
 import type {
@@ -44,7 +44,7 @@ export async function getDueFlashcardsForUser(
       ? Math.min(options.limit, 200)
       : defaultDueLimit;
 
-  return db
+  return getDb()
     .select({ flashcard, subjectName: subject.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -75,12 +75,12 @@ export async function getFlashcardReviewSummaryForUser(
   }
 
   const [dueResult, totalResult] = await Promise.all([
-    db
+    getDb()
       .select({ total: count() })
       .from(flashcard)
       .innerJoin(subject, eq(flashcard.subjectId, subject.id))
       .where(and(...baseFilters, lte(flashcard.dueAt, now))),
-    db
+    getDb()
       .select({ total: count() })
       .from(flashcard)
       .innerJoin(subject, eq(flashcard.subjectId, subject.id))
@@ -118,7 +118,7 @@ export async function getReviewableFlashcardForUser(
   userId: string,
   flashcardId: string,
 ) {
-  return db
+  return getDb()
     .select({ flashcard, subjectName: subject.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))

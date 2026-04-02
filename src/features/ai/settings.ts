@@ -1,7 +1,7 @@
 import "server-only";
 
 import { eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { userAiSettings } from "@/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/ai/crypto";
 import { AiConfigurationError, AiStoredCredentialError } from "@/lib/ai/errors";
@@ -34,7 +34,7 @@ function toSummary(
 export async function getUserAiSettingsSummary(
   userId: string,
 ): Promise<UserAiSettingsSummary | null> {
-  const [settings] = await db
+  const [settings] = await getDb()
     .select({
       model: userAiSettings.model,
       apiKeyLastFour: userAiSettings.apiKeyLastFour,
@@ -49,7 +49,7 @@ export async function getUserAiSettingsSummary(
 export async function resolveUserAiSettings(
   userId: string,
 ): Promise<ResolvedUserAiSettings | null> {
-  const [settings] = await db
+  const [settings] = await getDb()
     .select()
     .from(userAiSettings)
     .where(eq(userAiSettings.userId, userId))
@@ -110,7 +110,7 @@ export async function saveUserAiSettings(
   const encryptedApiKey = encryptSecret(input.apiKey);
   const apiKeyLastFour = input.apiKey.slice(-4);
 
-  await db
+  await getDb()
     .insert(userAiSettings)
     .values({
       userId,
@@ -149,7 +149,7 @@ export async function updateUserAiSettings(
     apiKey: string;
   },
 ): Promise<UserAiSettingsSummary | null> {
-  const [existing] = await db
+  const [existing] = await getDb()
     .select({
       apiKeyLastFour: userAiSettings.apiKeyLastFour,
     })
@@ -162,7 +162,7 @@ export async function updateUserAiSettings(
   }
 
   if (input.apiKey.length === 0 && existing) {
-    await db
+    await getDb()
       .update(userAiSettings)
       .set({
         model: input.model,
@@ -185,5 +185,5 @@ export async function updateUserAiSettings(
 }
 
 export async function clearUserAiSettings(userId: string) {
-  await db.delete(userAiSettings).where(eq(userAiSettings.userId, userId));
+  await getDb().delete(userAiSettings).where(eq(userAiSettings.userId, userId));
 }

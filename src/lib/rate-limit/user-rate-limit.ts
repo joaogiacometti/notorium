@@ -1,19 +1,47 @@
 import { Redis } from "@upstash/redis";
 import { createClient as createRedisClient, type RedisClientType } from "redis";
-import { appEnv } from "@/env";
+import { getServerEnv } from "@/env";
 
-const upstashRedis =
-  appEnv.RATE_LIMIT_BACKEND === "upstash"
-    ? new Redis({
-        url: appEnv.UPSTASH_REDIS_REST_URL,
-        token: appEnv.UPSTASH_REDIS_REST_TOKEN,
-      })
-    : null;
+type UpstashRedisCache = {
+  backend: "upstash" | "redis";
+  client: Redis | null;
+};
+
+let upstashRedisCache: UpstashRedisCache | null = null;
 
 let redisClient: RedisClientType | null = null;
 let redisClientConnection: Promise<RedisClientType> | null = null;
 
+function getUpstashRedis() {
+  const appEnv = getServerEnv();
+  if (
+    upstashRedisCache &&
+    upstashRedisCache.backend === appEnv.RATE_LIMIT_BACKEND
+  ) {
+    return upstashRedisCache.client;
+  }
+
+  if (appEnv.RATE_LIMIT_BACKEND !== "upstash") {
+    upstashRedisCache = {
+      backend: appEnv.RATE_LIMIT_BACKEND,
+      client: null,
+    };
+    return null;
+  }
+
+  const client = new Redis({
+    url: appEnv.UPSTASH_REDIS_REST_URL,
+    token: appEnv.UPSTASH_REDIS_REST_TOKEN,
+  });
+  upstashRedisCache = {
+    backend: appEnv.RATE_LIMIT_BACKEND,
+    client,
+  };
+  return client;
+}
+
 function getRedisClient() {
+  const appEnv = getServerEnv();
   redisClient ??= createRedisClient({
     url: appEnv.REDIS_URL,
   });
@@ -59,14 +87,15 @@ async function incrementDailyLimitWithRedis(key: string, resetAt: Date) {
 }
 
 async function incrementDailyLimitWithUpstash(key: string, resetAt: Date) {
-  if (!upstashRedis) {
+  const redis = getUpstashRedis();
+  if (!redis) {
     throw new Error("Upstash Redis is not configured");
   }
 
-  const count = await upstashRedis.incr(key);
+  const count = await redis.incr(key);
 
   if (Number(count) === 1) {
-    await upstashRedis.expireat(key, Math.floor(resetAt.getTime() / 1000));
+    await redis.expireat(key, Math.floor(resetAt.getTime() / 1000));
   }
 
   return Number(count);
@@ -94,6 +123,7 @@ export async function consumeUserDailyRateLimit({
   const dayKey = getUtcDayKey(now);
   const resetAt = getUtcDayResetAt(now);
   const key = `${prefix}:${dayKey}:${normalizedUserId}`;
+  const appEnv = getServerEnv();
   const count =
     appEnv.RATE_LIMIT_BACKEND === "redis"
       ? await incrementDailyLimitWithRedis(key, resetAt)
@@ -138,11 +168,12 @@ async function tryAcquireExpiringLockWithUpstash(
   key: string,
   ttlSeconds: number,
 ): Promise<boolean> {
-  if (!upstashRedis) {
+  const redis = getUpstashRedis();
+  if (!redis) {
     throw new Error("Upstash Redis is not configured");
   }
 
-  const result = await upstashRedis.set(key, "1", {
+  const result = await redis.set(key, "1", {
     nx: true,
     ex: ttlSeconds,
   });
@@ -157,6 +188,7 @@ export async function tryAcquireUserExpiringLock({
 }: TryAcquireUserExpiringLockOptions): Promise<boolean> {
   const normalizedUserId = normalizeRateLimitKeyPart(userId);
   const key = `${prefix}:${normalizedUserId}`;
+  const appEnv = getServerEnv();
 
   return appEnv.RATE_LIMIT_BACKEND === "redis"
     ? tryAcquireExpiringLockWithRedis(key, ttlSeconds)

@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import {
   account,
   assessment,
@@ -23,20 +23,35 @@ import {
   getE2EWorkerCredentials,
 } from "./env";
 
-const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: {
-      account,
-      session,
-      user,
-      verification,
+function createTestAuth() {
+  return betterAuth({
+    database: drizzleAdapter(getDb(), {
+      provider: "pg",
+      schema: {
+        account,
+        session,
+        user,
+        verification,
+      },
+    }),
+    emailAndPassword: {
+      enabled: true,
     },
-  }),
-  emailAndPassword: {
-    enabled: true,
-  },
-});
+  });
+}
+
+type TestAuth = ReturnType<typeof createTestAuth>;
+let testAuth: TestAuth | null = null;
+
+function getTestAuth(): TestAuth {
+  if (testAuth) {
+    return testAuth;
+  }
+
+  testAuth = createTestAuth();
+
+  return testAuth;
+}
 
 type AccessStatus = "approved" | "pending" | "blocked";
 
@@ -63,7 +78,7 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
   const credentials = getE2ECredentials(kind);
   const accessStatus = getAccessStatus(kind);
 
-  let [existingUser] = await db
+  let [existingUser] = await getDb()
     .select({
       id: user.id,
     })
@@ -72,7 +87,7 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
     .limit(1);
 
   if (!existingUser) {
-    const result = await auth.api.signUpEmail({
+    const result = await getTestAuth().api.signUpEmail({
       body: {
         email: credentials.email,
         name: credentials.name,
@@ -85,7 +100,7 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
     };
   }
 
-  await db
+  await getDb()
     .update(user)
     .set({
       accessStatus,
@@ -102,15 +117,15 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
 export async function resetE2EInstanceAuthState() {
   const e2eEmailPattern = `${getE2EEmailPrefix()}%`;
 
-  await db.delete(instanceState);
-  await db
+  await getDb().delete(instanceState);
+  await getDb()
     .delete(verification)
     .where(sql`${verification.identifier} like ${e2eEmailPattern}`);
-  await db.delete(user).where(sql`${user.email} like ${e2eEmailPattern}`);
+  await getDb().delete(user).where(sql`${user.email} like ${e2eEmailPattern}`);
 }
 
 export async function getUserAccessSnapshotByEmail(email: string) {
-  const [result] = await db
+  const [result] = await getDb()
     .select({
       id: user.id,
       accessStatus: user.accessStatus,
@@ -126,7 +141,7 @@ export async function getUserAccessSnapshotByEmail(email: string) {
 export async function ensureApprovedE2EWorkerUser(workerIndex: number) {
   const credentials = getE2EWorkerCredentials(workerIndex, "approved");
 
-  let [existingUser] = await db
+  let [existingUser] = await getDb()
     .select({
       id: user.id,
     })
@@ -135,7 +150,7 @@ export async function ensureApprovedE2EWorkerUser(workerIndex: number) {
     .limit(1);
 
   if (!existingUser) {
-    const result = await auth.api.signUpEmail({
+    const result = await getTestAuth().api.signUpEmail({
       body: {
         email: credentials.email,
         name: credentials.name,
@@ -148,7 +163,7 @@ export async function ensureApprovedE2EWorkerUser(workerIndex: number) {
     };
   }
 
-  await db
+  await getDb()
     .update(user)
     .set({
       accessStatus: "approved",
@@ -163,7 +178,7 @@ export async function ensureApprovedE2EWorkerUser(workerIndex: number) {
 }
 
 export async function clearUserSubjects(userId: string) {
-  await db.delete(subject).where(eq(subject.userId, userId));
+  await getDb().delete(subject).where(eq(subject.userId, userId));
 }
 
 export async function clearUserSubjectsByNames(
@@ -174,20 +189,20 @@ export async function clearUserSubjectsByNames(
     return;
   }
 
-  await db
+  await getDb()
     .delete(subject)
     .where(and(eq(subject.userId, userId), inArray(subject.name, names)));
 }
 
 export async function clearUserSessions(userId: string) {
-  await db.delete(session).where(eq(session.userId, userId));
+  await getDb().delete(session).where(eq(session.userId, userId));
 }
 
 export async function clearUserAttendanceMissesBySubject(
   userId: string,
   subjectId: string,
 ) {
-  await db
+  await getDb()
     .delete(attendanceMiss)
     .where(
       and(
@@ -201,7 +216,7 @@ export async function clearUserNotesBySubject(
   userId: string,
   subjectId: string,
 ) {
-  await db
+  await getDb()
     .delete(note)
     .where(and(eq(note.userId, userId), eq(note.subjectId, subjectId)));
 }
@@ -215,7 +230,7 @@ export async function clearUserNotesByTitles(
     return;
   }
 
-  await db
+  await getDb()
     .delete(note)
     .where(
       and(
@@ -232,7 +247,7 @@ export async function createNote(
   title: string,
   content: string,
 ) {
-  const [newNote] = await db
+  const [newNote] = await getDb()
     .insert(note)
     .values({
       userId,
@@ -250,7 +265,7 @@ export async function createAttendanceMiss(
   subjectId: string,
   missDate: string,
 ) {
-  const [newAttendanceMiss] = await db
+  const [newAttendanceMiss] = await getDb()
     .insert(attendanceMiss)
     .values({
       userId,
@@ -266,7 +281,7 @@ export async function clearUserAssessmentsBySubject(
   userId: string,
   subjectId: string,
 ) {
-  await db
+  await getDb()
     .delete(assessment)
     .where(
       and(eq(assessment.userId, userId), eq(assessment.subjectId, subjectId)),
@@ -282,7 +297,7 @@ export async function clearUserAssessmentsByTitles(
     return;
   }
 
-  await db
+  await getDb()
     .delete(assessment)
     .where(
       and(
@@ -312,7 +327,7 @@ export async function createAssessment(
     weight?: string | null;
   },
 ) {
-  const [newAssessment] = await db
+  const [newAssessment] = await getDb()
     .insert(assessment)
     .values({
       userId,
@@ -336,7 +351,7 @@ export async function updateSubjectAttendanceSettings(
   totalClasses: number,
   maxMisses: number,
 ) {
-  await db
+  await getDb()
     .update(subject)
     .set({
       totalClasses,
@@ -350,7 +365,7 @@ export async function createSubject(
   name: string,
   description: string,
 ) {
-  const [newSubject] = await db
+  const [newSubject] = await getDb()
     .insert(subject)
     .values({
       userId,
@@ -366,7 +381,7 @@ export async function clearUserFlashcardsBySubject(
   userId: string,
   subjectId: string,
 ) {
-  await db
+  await getDb()
     .delete(flashcard)
     .where(
       and(eq(flashcard.userId, userId), eq(flashcard.subjectId, subjectId)),
@@ -382,7 +397,7 @@ export async function clearUserFlashcardsByFrontText(
     return;
   }
 
-  await db
+  await getDb()
     .delete(flashcard)
     .where(
       and(
@@ -399,7 +414,7 @@ export async function createFlashcard(
   front: string,
   back: string,
 ) {
-  const [newFlashcard] = await db
+  const [newFlashcard] = await getDb()
     .insert(flashcard)
     .values({
       userId,

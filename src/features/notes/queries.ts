@@ -1,5 +1,5 @@
 import { and, count, desc, eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { note, subject } from "@/db/schema";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import type { NoteEntity } from "@/lib/server/api-contracts";
@@ -8,7 +8,7 @@ export async function getNotesBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<NoteEntity[]> {
-  return db
+  return getDb()
     .select({ note })
     .from(note)
     .innerJoin(subject, eq(note.subjectId, subject.id))
@@ -27,7 +27,7 @@ export async function getNoteByIdForUser(
   userId: string,
   noteId: string,
 ): Promise<NoteEntity | null> {
-  const results = await db
+  const results = await getDb()
     .select({ note })
     .from(note)
     .innerJoin(subject, eq(note.subjectId, subject.id))
@@ -47,7 +47,7 @@ export async function getNoteRecordForUser(
   userId: string,
   noteId: string,
 ): Promise<Pick<NoteEntity, "id" | "subjectId"> | null> {
-  const results = await db
+  const results = await getDb()
     .select({ id: note.id, subjectId: note.subjectId })
     .from(note)
     .innerJoin(subject, eq(note.subjectId, subject.id))
@@ -67,7 +67,7 @@ export async function countNotesBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<number> {
-  const result = await db
+  const result = await getDb()
     .select({ total: count() })
     .from(note)
     .where(and(eq(note.subjectId, subjectId), eq(note.userId, userId)));

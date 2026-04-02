@@ -7,9 +7,9 @@ const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const isNullMock = vi.fn((column) => ({ column }));
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     select: selectMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

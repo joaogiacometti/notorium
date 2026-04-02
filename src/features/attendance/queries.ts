@@ -1,5 +1,5 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
 import type { AttendanceMissEntity } from "@/lib/server/api-contracts";
 
@@ -7,7 +7,7 @@ export async function getMissesBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<AttendanceMissEntity[]> {
-  return db
+  return getDb()
     .select({ attendanceMiss })
     .from(attendanceMiss)
     .innerJoin(subject, eq(attendanceMiss.subjectId, subject.id))
@@ -27,7 +27,7 @@ export async function getMissRecordForUser(
   userId: string,
   missId: string,
 ): Promise<Pick<AttendanceMissEntity, "id" | "subjectId"> | null> {
-  const results = await db
+  const results = await getDb()
     .select({ id: attendanceMiss.id, subjectId: attendanceMiss.subjectId })
     .from(attendanceMiss)
     .innerJoin(subject, eq(attendanceMiss.subjectId, subject.id))
@@ -49,7 +49,7 @@ export async function hasMissOnDateForUser(
   subjectId: string,
   missDate: string,
 ): Promise<boolean> {
-  const results = await db
+  const results = await getDb()
     .select({ id: attendanceMiss.id })
     .from(attendanceMiss)
     .where(

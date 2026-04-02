@@ -1,5 +1,5 @@
 import { asc, eq, sql } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { instanceState, user } from "@/db/schema";
 
 const INSTANCE_STATE_ID = "primary";
@@ -8,7 +8,7 @@ const INITIAL_ADMIN_LOCK_ID = 482_103_917;
 export async function claimInitialAdminAccess(
   userId: string,
 ): Promise<boolean> {
-  return db.transaction(async (tx) => {
+  return getDb().transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(${INITIAL_ADMIN_LOCK_ID})`,
     );

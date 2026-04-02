@@ -1,5 +1,5 @@
 import { asc, eq, ne } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import { user } from "@/db/schema";
 import type { AccessStatus } from "@/lib/validations/access-control";
 
@@ -12,7 +12,7 @@ export type ManagedUser = {
 };
 
 export async function isAdminUser(userId: string) {
-  const [currentUser] = await db
+  const [currentUser] = await getDb()
     .select({
       isAdmin: user.isAdmin,
     })
@@ -26,7 +26,7 @@ export async function isAdminUser(userId: string) {
 export async function getManagedUsers(
   adminUserId: string,
 ): Promise<ManagedUser[]> {
-  return db
+  return getDb()
     .select({
       id: user.id,
       name: user.name,

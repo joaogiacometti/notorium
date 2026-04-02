@@ -32,12 +32,12 @@ const encryptSecretMock = vi.fn();
 const decryptSecretMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     select: selectMock,
     insert: insertMock,
     update: updateMock,
     delete: deleteMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import {
   assessment,
   attendanceMiss,
@@ -26,13 +26,13 @@ export async function exportDataForUser(
   options: ExportOptions = {},
 ): Promise<ImportData | ActionErrorResult> {
   const { templateOnly = false } = options;
-  const [schedulerSettings] = await db
+  const [schedulerSettings] = await getDb()
     .select()
     .from(flashcardSchedulerSettings)
     .where(eq(flashcardSchedulerSettings.userId, userId))
     .limit(1);
 
-  const subjects = await db
+  const subjects = await getDb()
     .select()
     .from(subject)
     .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)));
@@ -50,7 +50,7 @@ export async function exportDataForUser(
   const [notes, misses, assessments, flashcards] = await Promise.all([
     templateOnly
       ? Promise.resolve([])
-      : db
+      : getDb()
           .select()
           .from(note)
           .where(
@@ -58,7 +58,7 @@ export async function exportDataForUser(
           ),
     templateOnly
       ? Promise.resolve([])
-      : db
+      : getDb()
           .select()
           .from(attendanceMiss)
           .where(
@@ -67,7 +67,7 @@ export async function exportDataForUser(
               inArray(attendanceMiss.subjectId, subjectIds),
             ),
           ),
-    db
+    getDb()
       .select()
       .from(assessment)
       .where(
@@ -78,7 +78,7 @@ export async function exportDataForUser(
       ),
     templateOnly
       ? Promise.resolve([])
-      : db
+      : getDb()
           .select()
           .from(flashcard)
           .where(

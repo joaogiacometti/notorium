@@ -18,9 +18,9 @@ const eqMock = vi.fn((column, value) => ({ column, value }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 
 vi.mock("@/db/index", () => ({
-  db: {
+  getDb: () => ({
     select: selectMock,
-  },
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({

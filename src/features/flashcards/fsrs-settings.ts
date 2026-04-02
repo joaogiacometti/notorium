@@ -1,5 +1,5 @@
 import { and, count, eq } from "drizzle-orm";
-import { db } from "@/db/index";
+import { getDb } from "@/db/index";
 import {
   flashcard,
   flashcardReviewLog,
@@ -44,7 +44,7 @@ function normalizeSettings(
 async function createDefaultSettings(userId: string) {
   const now = new Date();
   const resetState = getInitialFlashcardSchedulingState(now);
-  return db.transaction(async (tx) => {
+  return getDb().transaction(async (tx) => {
     const [created] = await tx
       .insert(flashcardSchedulerSettings)
       .values({
@@ -83,7 +83,7 @@ async function createDefaultSettings(userId: string) {
 export async function ensureFsrsSettings(
   userId: string,
 ): Promise<FsrsSettings> {
-  const [existing] = await db
+  const [existing] = await getDb()
     .select()
     .from(flashcardSchedulerSettings)
     .where(eq(flashcardSchedulerSettings.userId, userId))
@@ -99,7 +99,7 @@ export async function ensureFsrsSettings(
 export async function getFlashcardReviewLogCount(
   userId: string,
 ): Promise<number> {
-  const result = await db
+  const result = await getDb()
     .select({ total: count() })
     .from(flashcardReviewLog)
     .where(eq(flashcardReviewLog.userId, userId));
@@ -110,7 +110,7 @@ export async function getFlashcardReviewLogCount(
 export async function getFlashcardReviewLogsForOptimization(
   userId: string,
 ): Promise<FlashcardReviewLogEntity[]> {
-  return db
+  return getDb()
     .select()
     .from(flashcardReviewLog)
     .where(eq(flashcardReviewLog.userId, userId))
@@ -151,7 +151,7 @@ export async function maybeOptimizeFsrsParameters(
     return;
   }
 
-  await db
+  await getDb()
     .update(flashcardSchedulerSettings)
     .set({
       weights: serializeFsrsWeights(weights),
