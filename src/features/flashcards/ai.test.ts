@@ -8,10 +8,12 @@ const {
   buildImproveFlashcardBackPrompt,
   flashcardBackSystemPrompt,
   flashcardBackImproveSystemPrompt,
-  normalizeGeneratedBack,
   normalizeGeneratedCards,
-  plainTextToRichText,
-} = await import("@/features/flashcards/ai");
+} = await import("@/features/flashcards/ai-prompts");
+
+const { normalizeGeneratedBack, plainTextToRichText } = await import(
+  "@/features/flashcards/ai-utils"
+);
 
 describe("buildGenerateFlashcardBackPrompt", () => {
   it("includes subject and plain front content", () => {

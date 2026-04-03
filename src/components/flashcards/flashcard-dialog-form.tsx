@@ -11,7 +11,7 @@ import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
 import { FlashcardBackDiff } from "@/components/flashcards/flashcard-back-diff";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
-import { SubjectText } from "@/components/shared/subject-text";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,13 +27,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   type CreateFlashcardForm,
   type EditFlashcardForm,
@@ -139,34 +132,14 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
               name={"subjectId" as FieldPath<TValues>}
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-subject`}>Subject</FieldLabel>
-                  <Select
-                    value={field.value ?? ""}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger
-                      id={`${formId}-subject`}
-                      aria-invalid={fieldState.invalid}
-                    >
-                      <SelectValue placeholder="Select a subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id}>
-                          <SubjectText
-                            value={subject.name}
-                            mode="truncate"
-                            className="block max-w-full"
-                          />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : null}
-                </Field>
+                <SubjectSelect
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  subjects={subjects}
+                  id={`${formId}-subject`}
+                  error={fieldState.error?.message as string}
+                  ariaInvalid={fieldState.invalid}
+                />
               )}
             />
           ) : null}

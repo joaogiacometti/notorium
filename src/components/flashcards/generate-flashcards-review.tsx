@@ -3,10 +3,11 @@
 import { ArrowLeft, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
+import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
+import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
 
 interface GeneratedCard {
   id: string;
@@ -169,22 +170,24 @@ export function GenerateFlashcardsReview({
                         <FieldLabel htmlFor={`edit-front-${index}`}>
                           Front
                         </FieldLabel>
-                        <Textarea
-                          id={`edit-front-${index}`}
+                        <TiptapEditor
                           value={editFront}
-                          onChange={(e) => setEditFront(e.target.value)}
-                          rows={2}
+                          onChange={setEditFront}
+                          id={`edit-front-${index}`}
+                          contentClassName="min-h-11 max-h-[20vh]"
+                          showToolbar={false}
                         />
                       </Field>
                       <Field>
                         <FieldLabel htmlFor={`edit-back-${index}`}>
                           Back
                         </FieldLabel>
-                        <Textarea
-                          id={`edit-back-${index}`}
+                        <TiptapEditor
                           value={editBack}
-                          onChange={(e) => setEditBack(e.target.value)}
-                          rows={3}
+                          onChange={setEditBack}
+                          id={`edit-back-${index}`}
+                          contentClassName="min-h-11 max-h-[20vh]"
+                          showToolbar={false}
                         />
                       </Field>
                       <div className="flex gap-2">
@@ -205,11 +208,17 @@ export function GenerateFlashcardsReview({
                     <>
                       <div className="mb-1">
                         <p className="text-sm font-medium">Front</p>
-                        <p className="text-sm">{card.front}</p>
+                        <TiptapRenderer
+                          content={card.front}
+                          className="text-sm"
+                        />
                       </div>
                       <div className="mb-2">
                         <p className="text-sm font-medium">Back</p>
-                        <p className="text-sm">{card.back}</p>
+                        <TiptapRenderer
+                          content={card.back}
+                          className="text-sm"
+                        />
                       </div>
                     </>
                   )}

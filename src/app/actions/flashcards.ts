@@ -1,7 +1,10 @@
 "use server";
 
 import { z } from "zod";
-import { generateFlashcardsForUser as generateFlashcardsForUserService } from "@/features/flashcards/ai-service";
+import {
+  generateFlashcardsForUser as generateFlashcardsForUserService,
+  validateFlashcardsForUser,
+} from "@/features/flashcards/ai-service";
 import {
   bulkDeleteFlashcardsForUser,
   bulkMoveFlashcardsForUser,
@@ -54,7 +57,6 @@ import {
   type ValidateFlashcardsForm,
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import { validateFlashcardsForUser } from "@/features/flashcards/validation-ai-service";
 import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";

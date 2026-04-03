@@ -10,6 +10,8 @@ import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
 import { GenerateFlashcardsReview } from "@/components/flashcards/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
+import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,14 +27,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import {
   type CreateFlashcardForm,
@@ -227,6 +221,17 @@ export function CreateFlashcardDialog({
       setDiscardOnModeSwitchDialogOpen(true);
       return;
     }
+    if (mode === "single" && newMode === "ai") {
+      const subjectId = singleForm.getValues("subjectId");
+      if (subjectId) {
+        aiForm.setValue("subjectId", subjectId);
+      }
+    } else if (mode === "ai" && newMode === "single") {
+      const subjectId = aiForm.getValues("subjectId");
+      if (subjectId) {
+        singleForm.setValue("subjectId", subjectId);
+      }
+    }
     setMode(newMode);
   }
 
@@ -318,44 +323,26 @@ export function CreateFlashcardDialog({
               <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
                 <FieldGroup className="gap-5">
                   {subjects && subjects.length > 0 ? (
-                    <Field>
-                      <FieldLabel htmlFor="ai-subject">Subject</FieldLabel>
-                      <Select
-                        value={aiForm.watch("subjectId")}
-                        onValueChange={(value) =>
-                          aiForm.setValue("subjectId", value)
-                        }
-                      >
-                        <SelectTrigger id="ai-subject">
-                          <SelectValue placeholder="Select a subject" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subjects.map((subject) => (
-                            <SelectItem key={subject.id} value={subject.id}>
-                              {subject.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {aiForm.formState.errors.subjectId ? (
-                        <FieldError
-                          errors={[aiForm.formState.errors.subjectId]}
-                        />
-                      ) : null}
-                    </Field>
+                    <SubjectSelect
+                      value={aiForm.watch("subjectId")}
+                      onChange={(value) => aiForm.setValue("subjectId", value)}
+                      subjects={subjects}
+                      id="ai-subject"
+                      error={
+                        aiForm.formState.errors.subjectId?.message as string
+                      }
+                    />
                   ) : null}
                   <CreateModeToggle mode="ai" onModeChange={handleModeSwitch} />
                   <Field>
-                    <FieldLabel htmlFor="ai-text">
-                      Paste text to generate flashcards from
-                    </FieldLabel>
-                    <Textarea
-                      id="ai-text"
+                    <FieldLabel htmlFor="ai-text">Resources</FieldLabel>
+                    <TiptapEditor
                       value={aiForm.watch("text")}
-                      onChange={(e) => aiForm.setValue("text", e.target.value)}
-                      placeholder="Paste your study material here..."
-                      rows={10}
-                      className="min-h-50 resize-none"
+                      onChange={(value) => aiForm.setValue("text", value)}
+                      placeholder="e.g. Textbook excerpts, lecture notes, or any study material..."
+                      id="ai-text"
+                      contentClassName="min-h-50 max-h-[40svh]"
+                      showToolbar
                     />
                     {aiForm.formState.errors.text ? (
                       <FieldError errors={[aiForm.formState.errors.text]} />

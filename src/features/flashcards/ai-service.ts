@@ -1,10 +1,14 @@
 import { resolveRequiredUserAiSettings } from "@/features/ai/settings";
 import {
+  type FlashcardForValidation,
+  type FlashcardValidationOutput,
   generateFlashcardBackContent,
   generateFlashcardsFromText,
   improveFlashcardBackContent,
+  validateFlashcardsWithAi,
 } from "@/features/flashcards/ai";
 import { AiConfigurationError, AiStoredCredentialError } from "@/lib/ai/errors";
+import { richTextToPlainTextWithImagePlaceholders } from "@/lib/editor/rich-text";
 
 interface GenerateFlashcardBackForUserInput {
   userId: string;
@@ -159,6 +163,86 @@ export async function generateFlashcardsForUser({
     return {
       success: false,
       errorCode: "flashcards.ai.unavailable",
+    };
+  }
+}
+
+interface ValidateFlashcardsForUserInput {
+  userId: string;
+  flashcards: FlashcardForValidation[];
+}
+
+type ValidateFlashcardsForUserResult =
+  | { success: true; validation: FlashcardValidationOutput }
+  | {
+      success: false;
+      errorCode:
+        | "flashcards.validation.notConfigured"
+        | "flashcards.validation.unavailable"
+        | "flashcards.validation.noCards";
+    };
+
+export async function validateFlashcardsForUser({
+  userId,
+  flashcards,
+}: ValidateFlashcardsForUserInput): Promise<ValidateFlashcardsForUserResult> {
+  if (flashcards.length === 0) {
+    return {
+      success: false,
+      errorCode: "flashcards.validation.noCards",
+    };
+  }
+
+  try {
+    const settings = await resolveRequiredUserAiSettings(userId);
+
+    const flashcardsForValidation = flashcards.map((card) => ({
+      id: card.id,
+      front: richTextToPlainTextWithImagePlaceholders(card.front),
+      back: richTextToPlainTextWithImagePlaceholders(card.back),
+      subjectName: card.subjectName,
+    }));
+
+    const validation = await validateFlashcardsWithAi({
+      settings,
+      flashcards: flashcardsForValidation,
+    });
+
+    const validIds = new Set(flashcards.map((card) => card.id));
+
+    const validIssues = validation.issues
+      .map((issue) => {
+        if (!validIds.has(issue.flashcardId)) {
+          return null;
+        }
+        if (
+          issue.relatedFlashcardId &&
+          !validIds.has(issue.relatedFlashcardId)
+        ) {
+          return { ...issue, relatedFlashcardId: undefined };
+        }
+        return issue;
+      })
+      .filter((issue): issue is NonNullable<typeof issue> => issue !== null);
+
+    return {
+      success: true,
+      validation: { issues: validIssues },
+    };
+  } catch (error) {
+    if (
+      error instanceof AiConfigurationError ||
+      error instanceof AiStoredCredentialError
+    ) {
+      return {
+        success: false,
+        errorCode: "flashcards.validation.notConfigured",
+      };
+    }
+
+    return {
+      success: false,
+      errorCode: "flashcards.validation.unavailable",
     };
   }
 }
