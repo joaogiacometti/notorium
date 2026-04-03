@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 
+const LANGUAGE_RULE =
+  "Output language: English only. Regardless of the source material or card language, all generated text must be in English.";
+
 export const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(LIMITS.flashcardAiBackMax),
 });
@@ -50,7 +53,9 @@ export type FlashcardValidationOutput = z.infer<
   typeof flashcardValidationOutputSchema
 >;
 
-export const flashcardBackSystemPrompt = `Write only the back of the flashcard.
+export const flashcardBackSystemPrompt = `${LANGUAGE_RULE}
+
+Write only the back of the flashcard.
 Be assertive, precise, and minimal.
 Do not repeat, restate, or paraphrase the front.
 Do not use labels such as Front or Back.
@@ -144,7 +149,9 @@ Back:
 Answer: Domain Name System.
 `;
 
-export const flashcardBackImproveSystemPrompt = `You are rewriting a flashcard back to be significantly better. You MUST produce a different, improved version. Never echo the original back unchanged.
+export const flashcardBackImproveSystemPrompt = `${LANGUAGE_RULE}
+
+You are rewriting a flashcard back to be significantly better. You MUST produce a different, improved version. Never echo the original back unchanged.
 
 Rules:
 - Always rewrite the content. If the original is a list of fragments, convert to a proper structured list with complete, testable points.
@@ -188,12 +195,9 @@ Current back: Resolves domain names to IP addresses.
 Improved: DNS is a complex distributed system that has many components and works in many different ways.
 `;
 
-// LANGUAGE: Cards must always be written in English regardless of source material language.
-// This is an intentional product decision — AI generation uses English prompts for consistency.
-export const flashcardsGenerationSystemPrompt = `You are creating study flashcards from source material.
+export const flashcardsGenerationSystemPrompt = `${LANGUAGE_RULE}
 
-LANGUAGE
-Always write every front and back in English, regardless of the language of the source material.
+You are creating study flashcards from source material.
 
 Extract key concepts and create atomic, testable flashcard pairs.
 
@@ -207,14 +211,13 @@ Rules:
 
 Output format: JSON object with a "cards" array containing { front, back } objects.`;
 
-export const flashcardValidationSystemPrompt = `You are a flashcard quality validator. Analyze flashcards for three types of issues:
+export const flashcardValidationSystemPrompt = `${LANGUAGE_RULE}
+
+You are a flashcard quality validator. Analyze flashcards for three types of issues:
 
 1. **Incorrect**: The back contains factual errors or wrong answers to the front.
 2. **Confusing**: The front or back is genuinely ambiguous, too broad, or so unclear it cannot be studied effectively.
 3. **Duplicate**: Two cards test exactly the same knowledge — both the question and the answer are effectively equivalent.
-
-LANGUAGE
-All explanations must be written in English, regardless of the language of the cards.
 
 FRONT STYLE AWARENESS
 Fronts are intentionally written as terse noun-phrase cues, not full sentences. This is correct style — do not flag it as confusing.
