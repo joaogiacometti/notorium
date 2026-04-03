@@ -37,7 +37,7 @@ jobs:
       REDIS_URL: redis://localhost:6379
       USER_AI_SETTINGS_ENCRYPTION_KEY: ${{ secrets.USER_AI_SETTINGS_ENCRYPTION_KEY }}
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
-      E2E_ALLOW_DESTRUCTIVE_RESET=true
+      E2E_ALLOW_DESTRUCTIVE_RESET: true
 
     steps:
       - name: Checkout
