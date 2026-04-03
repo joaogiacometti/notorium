@@ -1,15 +1,9 @@
 import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, note, subject } from "@/db/schema";
+import { LIMITS } from "@/lib/config/limits";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type { SearchData } from "@/lib/server/api-contracts";
-
-const searchSubjectsLimit = 20;
-const searchNotesLimit = 20;
-const searchFlashcardsLimit = 20;
-const recentSubjectsLimit = 5;
-const recentNotesLimit = 5;
-const recentFlashcardsLimit = 5;
 
 export async function getSearchDataForUser(
   userId: string,
@@ -36,12 +30,12 @@ export async function getSearchDataForUser(
         ),
       )
       .orderBy(desc(subject.updatedAt))
-      .limit(searchSubjectsLimit),
+      .limit(LIMITS.searchResultsLimit),
     getDb()
       .select({
         id: note.id,
         title: note.title,
-        content: sql<string>`left(coalesce(${note.content}, ''), 100)`,
+        content: sql<string>`left(coalesce(${note.content}, ''), ${LIMITS.contentPreviewTruncate})`,
         subjectId: note.subjectId,
         subjectName: subject.name,
       })
@@ -60,12 +54,12 @@ export async function getSearchDataForUser(
         ),
       )
       .orderBy(desc(note.updatedAt))
-      .limit(searchNotesLimit),
+      .limit(LIMITS.searchResultsLimit),
     getDb()
       .select({
         id: flashcard.id,
         front: flashcard.front,
-        back: sql<string>`left(${flashcard.back}, 100)`,
+        back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
         subjectId: flashcard.subjectId,
         subjectName: subject.name,
       })
@@ -83,7 +77,7 @@ export async function getSearchDataForUser(
         ),
       )
       .orderBy(desc(flashcard.updatedAt))
-      .limit(searchFlashcardsLimit),
+      .limit(LIMITS.searchResultsLimit),
   ]);
 
   return { subjects: allSubjects, notes: allNotes, flashcards: allFlashcards };
@@ -102,12 +96,12 @@ export async function getRecentSearchDataForUser(
       .from(subject)
       .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)))
       .orderBy(desc(subject.updatedAt))
-      .limit(recentSubjectsLimit),
+      .limit(LIMITS.recentItemsLimit),
     getDb()
       .select({
         id: note.id,
         title: note.title,
-        content: sql<string>`left(coalesce(${note.content}, ''), 100)`,
+        content: sql<string>`left(coalesce(${note.content}, ''), ${LIMITS.contentPreviewTruncate})`,
         subjectId: note.subjectId,
         subjectName: subject.name,
       })
@@ -121,12 +115,12 @@ export async function getRecentSearchDataForUser(
         ),
       )
       .orderBy(desc(note.updatedAt))
-      .limit(recentNotesLimit),
+      .limit(LIMITS.recentItemsLimit),
     getDb()
       .select({
         id: flashcard.id,
         front: flashcard.front,
-        back: sql<string>`left(${flashcard.back}, 100)`,
+        back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
         subjectId: flashcard.subjectId,
         subjectName: subject.name,
       })
@@ -140,7 +134,7 @@ export async function getRecentSearchDataForUser(
         ),
       )
       .orderBy(desc(flashcard.updatedAt))
-      .limit(recentFlashcardsLimit),
+      .limit(LIMITS.recentItemsLimit),
   ]);
 
   return { subjects: allSubjects, notes: allNotes, flashcards: allFlashcards };

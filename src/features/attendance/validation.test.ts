@@ -4,6 +4,7 @@ import {
   deleteMissSchema,
   recordMissSchema,
 } from "@/features/attendance/validation";
+import { LIMITS } from "@/lib/config/limits";
 
 describe("attendanceSettingsSchema", () => {
   it("accepts valid input", () => {
@@ -16,7 +17,7 @@ describe("attendanceSettingsSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts boundary values (totalClasses=1, maxMisses=0)", () => {
+  it("accepts boundary values at minimum", () => {
     const result = attendanceSettingsSchema.safeParse({
       subjectId: "s1",
       totalClasses: 1,
@@ -26,17 +27,17 @@ describe("attendanceSettingsSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts boundary values (totalClasses=365, maxMisses=365)", () => {
+  it("accepts boundary values at maximum", () => {
     const result = attendanceSettingsSchema.safeParse({
       subjectId: "s1",
-      totalClasses: 365,
-      maxMisses: 365,
+      totalClasses: LIMITS.attendanceTotalClassesMax,
+      maxMisses: LIMITS.attendanceMaxMissesMax,
     });
 
     expect(result.success).toBe(true);
   });
 
-  it("rejects totalClasses below 1", () => {
+  it("rejects totalClasses below minimum", () => {
     const result = attendanceSettingsSchema.safeParse({
       subjectId: "s1",
       totalClasses: 0,
@@ -46,10 +47,10 @@ describe("attendanceSettingsSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects totalClasses above 365", () => {
+  it("rejects totalClasses above maximum", () => {
     const result = attendanceSettingsSchema.safeParse({
       subjectId: "s1",
-      totalClasses: 366,
+      totalClasses: LIMITS.attendanceTotalClassesMax + 1,
       maxMisses: 0,
     });
 
@@ -66,11 +67,11 @@ describe("attendanceSettingsSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects maxMisses above 365", () => {
+  it("rejects maxMisses above maximum", () => {
     const result = attendanceSettingsSchema.safeParse({
       subjectId: "s1",
       totalClasses: 10,
-      maxMisses: 366,
+      maxMisses: LIMITS.attendanceMaxMissesMax + 1,
     });
 
     expect(result.success).toBe(false);

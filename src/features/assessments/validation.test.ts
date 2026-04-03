@@ -5,6 +5,7 @@ import {
   editAssessmentSchema,
   planningAssessmentsQuerySchema,
 } from "@/features/assessments/validation";
+import { LIMITS } from "@/lib/config/limits";
 
 describe("createAssessmentSchema", () => {
   it("accepts valid input with required fields only", () => {
@@ -44,10 +45,10 @@ describe("createAssessmentSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects title longer than 100 characters", () => {
+  it("rejects title longer than max characters", () => {
     const result = createAssessmentSchema.safeParse({
       subjectId: "s1",
-      title: "a".repeat(101),
+      title: "a".repeat(LIMITS.assessmentTitleMax + 1),
     });
 
     expect(result.success).toBe(false);
@@ -87,30 +88,30 @@ describe("createAssessmentSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects score above 100", () => {
+  it("rejects score above max", () => {
     const result = createAssessmentSchema.safeParse({
       subjectId: "s1",
       title: "Test",
-      score: 101,
+      score: LIMITS.assessmentScoreMax + 1,
     });
 
     expect(result.success).toBe(false);
   });
 
-  it("accepts score at boundaries (0 and 100)", () => {
+  it("accepts score at boundaries", () => {
     const zero = createAssessmentSchema.safeParse({
       subjectId: "s1",
       title: "Test",
       score: 0,
     });
-    const hundred = createAssessmentSchema.safeParse({
+    const max = createAssessmentSchema.safeParse({
       subjectId: "s1",
       title: "Test",
-      score: 100,
+      score: LIMITS.assessmentScoreMax,
     });
 
     expect(zero.success).toBe(true);
-    expect(hundred.success).toBe(true);
+    expect(max.success).toBe(true);
   });
 
   it("rejects negative weight", () => {

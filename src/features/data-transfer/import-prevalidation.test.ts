@@ -4,7 +4,6 @@ import {
   preValidateImportStructure,
   validateSubjectImportLimits,
 } from "@/features/data-transfer/import-prevalidation";
-import { LIMITS } from "@/lib/config/limits";
 
 const validSubject = {
   name: "Mathematics",
@@ -28,7 +27,7 @@ describe("getImportPayloadBytes", () => {
 describe("preValidateImportStructure", () => {
   it("rejects raw payloads with too many subjects before schema parsing", () => {
     const result = preValidateImportStructure({
-      subjects: Array.from({ length: LIMITS.maxSubjects + 1 }, () => ({
+      subjects: Array.from({ length: 51 }, () => ({
         ...validSubject,
       })),
     });
@@ -41,10 +40,7 @@ describe("preValidateImportStructure", () => {
       subjects: [
         {
           ...validSubject,
-          flashcards: Array.from(
-            { length: LIMITS.maxFlashcardsPerSubject + 1 },
-            () => ({}),
-          ),
+          flashcards: Array.from({ length: 2001 }, () => ({})),
         },
       ],
     });
@@ -58,7 +54,7 @@ describe("validateSubjectImportLimits", () => {
     const result = validateSubjectImportLimits([
       {
         ...validSubject,
-        notes: Array.from({ length: LIMITS.maxNotesPerSubject + 1 }, () => ({
+        notes: Array.from({ length: 101 }, () => ({
           title: "Lecture",
           content: null,
           createdAt: "2026-01-01T00:00:00.000Z",

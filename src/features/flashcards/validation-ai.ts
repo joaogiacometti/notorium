@@ -1,8 +1,7 @@
 import { z } from "zod";
 import type { ResolvedUserAiSettings } from "@/features/ai/settings";
 import { generateStructuredOutput } from "@/lib/ai/generate-structured";
-
-const MAX_VALIDATION_TOKENS = 500;
+import { AI_LIMITS } from "@/lib/config/limits";
 
 export const flashcardValidationIssueTypeEnum = z.enum([
   "incorrect",
@@ -17,7 +16,11 @@ export type FlashcardValidationIssueType = z.infer<
 const flashcardValidationIssueSchema = z.object({
   flashcardId: z.string(),
   issueType: flashcardValidationIssueTypeEnum,
-  explanation: z.string().trim().min(1).max(300),
+  explanation: z
+    .string()
+    .trim()
+    .min(1)
+    .max(AI_LIMITS.maxValidationExplanationLength),
   relatedFlashcardId: z.string().optional(),
 });
 
@@ -58,7 +61,7 @@ Rules:
 Output format:
 - Array of issues with flashcardId, issueType, explanation
 - For duplicate issues, include relatedFlashcardId pointing to the similar card
-- Keep explanations concise (under 300 characters)
+- Keep explanations concise (under ${AI_LIMITS.maxValidationExplanationLength} characters)
 - Explanations must be actionable and specific
 - **Use exact IDs**: When reporting issues, use the exact ID value from the input. If the input shows "Card 1 (ID: abc123)", use flashcardId: "abc123" (not "1", not "Card 1", not "Card 1 (ID: abc123)").`;
 
@@ -96,7 +99,7 @@ export async function validateFlashcardsWithAi(input: {
     schema: flashcardValidationOutputSchema,
     system: flashcardValidationSystemPrompt,
     prompt: buildValidateFlashcardsPrompt(input.flashcards),
-    maxOutputTokens: MAX_VALIDATION_TOKENS,
+    maxOutputTokens: AI_LIMITS.maxValidationTokens,
   });
 
   return output;

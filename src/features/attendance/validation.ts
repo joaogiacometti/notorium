@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const attendanceSettingsSchema = z.object({
@@ -7,12 +8,18 @@ export const attendanceSettingsSchema = z.object({
     .number()
     .int(validationMessage("Validation.attendance.totalClasses.integer"))
     .min(1, validationMessage("Validation.attendance.totalClasses.min"))
-    .max(365, validationMessage("Validation.attendance.totalClasses.max")),
+    .max(
+      LIMITS.attendanceTotalClassesMax,
+      validationMessage("Validation.attendance.totalClasses.max"),
+    ),
   maxMisses: z
     .number()
     .int(validationMessage("Validation.attendance.maxMisses.integer"))
     .min(0, validationMessage("Validation.attendance.maxMisses.min"))
-    .max(365, validationMessage("Validation.attendance.maxMisses.max")),
+    .max(
+      LIMITS.attendanceMaxMissesMax,
+      validationMessage("Validation.attendance.maxMisses.max"),
+    ),
 });
 
 export type AttendanceSettingsForm = z.infer<typeof attendanceSettingsSchema>;

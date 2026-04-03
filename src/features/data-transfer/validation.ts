@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 
 function isValidDateString(value: string) {
   return !Number.isNaN(new Date(value).getTime());
@@ -13,14 +14,14 @@ const attendanceMissSchema = z.object({
 });
 
 const noteSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(LIMITS.noteTitleMax),
   content: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 
 const assessmentSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(LIMITS.assessmentTitleMax),
   description: z.string().nullable(),
   type: z.enum([
     "exam",
@@ -39,8 +40,8 @@ const assessmentSchema = z.object({
 });
 
 const flashcardSchema = z.object({
-  front: z.string().min(1).max(500),
-  back: z.string().min(1).max(2000),
+  front: z.string().min(1).max(LIMITS.flashcardFrontMax),
+  back: z.string().min(1).max(LIMITS.flashcardBackMax),
   state: z.enum(["new", "learning", "review", "relearning"]),
   dueAt: isoDateStringSchema,
   stability: finiteNumberSchema.nullable().optional(),
@@ -56,7 +57,7 @@ const flashcardSchema = z.object({
 });
 
 const subjectSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(LIMITS.subjectNameMax),
   description: z.string().nullable(),
   totalClasses: z.number().int().positive().nullable(),
   maxMisses: z.number().int().nonnegative().nullable(),

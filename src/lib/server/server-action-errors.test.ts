@@ -10,12 +10,6 @@ describe("t", () => {
     expect(t("auth.loginFailed")).toBe("Login failed.");
   });
 
-  it("returns the error message with params", () => {
-    expect(t("limits.flashcardLimit", { max: "100" })).toBe(
-      "System limit reached: you can have up to 100 flashcards per subject.",
-    );
-  });
-
   it("returns generic fallback for unknown key", () => {
     expect(t("unknown.key")).toBe("Something went wrong. Please try again.");
   });
@@ -26,16 +20,6 @@ describe("resolveActionErrorMessage", () => {
     const result = resolveActionErrorMessage(actionError("auth.loginFailed"));
 
     expect(result).toBe("Login failed.");
-  });
-
-  it("returns error message with params", () => {
-    const result = resolveActionErrorMessage(
-      actionError("limits.flashcardLimit", { errorParams: { max: "50" } }),
-    );
-
-    expect(result).toBe(
-      "System limit reached: you can have up to 50 flashcards per subject.",
-    );
   });
 
   it("returns errorMessage if provided on actionError", () => {

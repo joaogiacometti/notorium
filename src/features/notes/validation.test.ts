@@ -4,6 +4,7 @@ import {
   deleteNoteSchema,
   editNoteSchema,
 } from "@/features/notes/validation";
+import { LIMITS } from "@/lib/config/limits";
 
 describe("createNoteSchema", () => {
   it("accepts valid input with required fields only", () => {
@@ -31,39 +32,39 @@ describe("createNoteSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects title longer than 200 characters", () => {
+  it("rejects title longer than max characters", () => {
     const result = createNoteSchema.safeParse({
-      title: "a".repeat(201),
+      title: "a".repeat(LIMITS.noteTitleMax + 1),
       subjectId: "s1",
     });
 
     expect(result.success).toBe(false);
   });
 
-  it("accepts title at exactly 200 characters", () => {
+  it("accepts title at exactly max characters", () => {
     const result = createNoteSchema.safeParse({
-      title: "a".repeat(200),
+      title: "a".repeat(LIMITS.noteTitleMax),
       subjectId: "s1",
     });
 
     expect(result.success).toBe(true);
   });
 
-  it("rejects content longer than 10000 characters", () => {
+  it("rejects content longer than max characters", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
       subjectId: "s1",
-      content: "x".repeat(10001),
+      content: "x".repeat(LIMITS.noteContentMax + 1),
     });
 
     expect(result.success).toBe(false);
   });
 
-  it("accepts content at exactly 10000 characters", () => {
+  it("accepts content at exactly max characters", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
       subjectId: "s1",
-      content: "x".repeat(10000),
+      content: "x".repeat(LIMITS.noteContentMax),
     });
 
     expect(result.success).toBe(true);

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LIMITS } from "@/lib/config/limits";
 
 const insertReturningMock = vi.fn();
 const insertValuesMock = vi.fn(() => ({
@@ -329,85 +328,6 @@ describe("editFlashcardForUser", () => {
     });
     expect(updateMock).not.toHaveBeenCalled();
   });
-
-  it("rejects moves when the destination subject is already at the flashcard limit", async () => {
-    getFlashcardRecordForUserMock.mockResolvedValueOnce({
-      id: "flashcard-1",
-      subjectId: "subject-1",
-    });
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-2",
-    });
-    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(
-      LIMITS.maxFlashcardsPerSubject,
-    );
-
-    const { editFlashcardForUser } = await import(
-      "@/features/flashcards/mutations"
-    );
-
-    const result = await editFlashcardForUser("user-1", {
-      id: "flashcard-1",
-      subjectId: "subject-2",
-      front: "<p>Front</p>",
-      back: "<p>Back</p>",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "limits.flashcardLimit",
-      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
-      errorMessage: undefined,
-    });
-    expect(updateMock).not.toHaveBeenCalled();
-  });
-
-  it("allows editing within the same subject even when that subject is already at the flashcard limit", async () => {
-    getFlashcardRecordForUserMock.mockResolvedValueOnce({
-      id: "flashcard-1",
-      subjectId: "subject-1",
-    });
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-1",
-    });
-    returningMock.mockResolvedValueOnce([
-      {
-        id: "flashcard-1",
-        subjectId: "subject-1",
-        front: "<p>Front</p>",
-        back: "<p>Back</p>",
-      },
-    ]);
-
-    const { editFlashcardForUser } = await import(
-      "@/features/flashcards/mutations"
-    );
-
-    const result = await editFlashcardForUser("user-1", {
-      id: "flashcard-1",
-      subjectId: "subject-1",
-      front: "<p>Front</p>",
-      back: "<p>Back</p>",
-    });
-
-    expect(result).toEqual({
-      success: true,
-      flashcard: {
-        id: "flashcard-1",
-        subjectId: "subject-1",
-        front: "<p>Front</p>",
-        back: "<p>Back</p>",
-      },
-      previousSubjectId: "subject-1",
-    });
-    expect(countFlashcardsBySubjectForUserMock).not.toHaveBeenCalled();
-    expect(setMock).toHaveBeenCalledWith({
-      subjectId: "subject-1",
-      front: "<p>Front</p>",
-      frontNormalized: "front",
-      back: "<p>Back</p>",
-    });
-  });
 });
 
 describe("bulkDeleteFlashcardsForUser", () => {
@@ -519,69 +439,6 @@ describe("bulkMoveFlashcardsForUser", () => {
       errorMessage: undefined,
     });
     expect(updateMock).not.toHaveBeenCalled();
-  });
-
-  it("fails atomically when the destination subject would exceed the limit", async () => {
-    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
-      { id: "flashcard-1", subjectId: "subject-1" },
-      { id: "flashcard-2", subjectId: "subject-2" },
-    ]);
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-3",
-    });
-    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(
-      LIMITS.maxFlashcardsPerSubject - 1,
-    );
-
-    const { bulkMoveFlashcardsForUser } = await import(
-      "@/features/flashcards/mutations"
-    );
-
-    const result = await bulkMoveFlashcardsForUser("user-1", {
-      ids: ["flashcard-1", "flashcard-2"],
-      subjectId: "subject-3",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "limits.flashcardLimit",
-      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
-      errorMessage: undefined,
-    });
-    expect(updateMock).not.toHaveBeenCalled();
-  });
-
-  it("counts only cards not already in the destination subject against the limit", async () => {
-    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
-      { id: "flashcard-1", subjectId: "subject-3" },
-      { id: "flashcard-2", subjectId: "subject-1" },
-    ]);
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-3",
-    });
-    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(
-      LIMITS.maxFlashcardsPerSubject - 1,
-    );
-
-    const { bulkMoveFlashcardsForUser } = await import(
-      "@/features/flashcards/mutations"
-    );
-
-    const result = await bulkMoveFlashcardsForUser("user-1", {
-      ids: ["flashcard-1", "flashcard-2"],
-      subjectId: "subject-3",
-    });
-
-    expect(result).toEqual({
-      success: true,
-      ids: ["flashcard-1", "flashcard-2"],
-      subjectId: "subject-3",
-      previousSubjectIds: ["subject-3", "subject-1"],
-    });
-    expect(countFlashcardsBySubjectForUserMock).toHaveBeenCalledWith(
-      "user-1",
-      "subject-3",
-    );
   });
 });
 

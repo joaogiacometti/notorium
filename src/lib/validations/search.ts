@@ -1,11 +1,13 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
-
-export const searchMinQueryLength = 2;
 
 export const searchQuerySchema = z
   .string()
   .trim()
-  .max(200, validationMessage("Validation.search.queryMaxLength"))
+  .max(
+    LIMITS.searchQueryMax,
+    validationMessage("Validation.search.queryMaxLength"),
+  )
   .optional()
   .transform((value) => value ?? "");

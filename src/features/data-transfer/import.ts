@@ -35,7 +35,7 @@ export async function importDataForUser(
 ): Promise<MutationResult & { imported?: number }> {
   const importBytes = getImportPayloadBytes(raw);
 
-  if (importBytes > LIMITS.maxImportBytes) {
+  if (importBytes > LIMITS.importMaxBytes) {
     return actionError("dataTransfer.invalidImportFormat");
   }
 

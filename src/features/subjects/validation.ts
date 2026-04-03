@@ -1,14 +1,21 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const createSubjectSchema = z.object({
   name: z
     .string()
     .min(1, validationMessage("Validation.subjects.nameRequired"))
-    .max(100, validationMessage("Validation.subjects.nameMaxLength")),
+    .max(
+      LIMITS.subjectNameMax,
+      validationMessage("Validation.subjects.nameMaxLength"),
+    ),
   description: z
     .string()
-    .max(500, validationMessage("Validation.subjects.descriptionMaxLength"))
+    .max(
+      LIMITS.subjectDescriptionMax,
+      validationMessage("Validation.subjects.descriptionMaxLength"),
+    )
     .optional(),
 });
 
@@ -19,10 +26,16 @@ export const editSubjectSchema = z.object({
   name: z
     .string()
     .min(1, validationMessage("Validation.subjects.nameRequired"))
-    .max(100, validationMessage("Validation.subjects.nameMaxLength")),
+    .max(
+      LIMITS.subjectNameMax,
+      validationMessage("Validation.subjects.nameMaxLength"),
+    ),
   description: z
     .string()
-    .max(500, validationMessage("Validation.subjects.descriptionMaxLength"))
+    .max(
+      LIMITS.subjectDescriptionMax,
+      validationMessage("Validation.subjects.descriptionMaxLength"),
+    )
     .optional(),
 });
 

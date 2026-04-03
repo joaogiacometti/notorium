@@ -1,12 +1,19 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const updateAccountSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, validationMessage("Validation.account.nameMinLength"))
-    .max(100, validationMessage("Validation.account.nameMaxLength")),
+    .min(
+      LIMITS.authNameMin,
+      validationMessage("Validation.account.nameMinLength"),
+    )
+    .max(
+      LIMITS.accountNameMax,
+      validationMessage("Validation.account.nameMaxLength"),
+    ),
 });
 
 export type UpdateAccountForm = z.infer<typeof updateAccountSchema>;
@@ -15,17 +22,28 @@ export const aiModelSchema = z
   .string()
   .trim()
   .min(1, validationMessage("Validation.account.aiModelRequired"))
-  .max(150, validationMessage("Validation.account.aiModelMaxLength"));
+  .max(
+    LIMITS.accountAiModelMax,
+    validationMessage("Validation.account.aiModelMaxLength"),
+  );
 
 export const aiApiKeySchema = z
   .string()
   .trim()
   .min(1, validationMessage("Validation.account.aiApiKeyRequired"))
-  .max(500, validationMessage("Validation.account.aiApiKeyMaxLength"));
+  .max(
+    LIMITS.accountAiApiKeyMax,
+    validationMessage("Validation.account.aiApiKeyMaxLength"),
+  );
 
 export const updateUserAiSettingsSchema = z.object({
   model: aiModelSchema,
-  apiKey: z.string().trim().max(500).optional().default(""),
+  apiKey: z
+    .string()
+    .trim()
+    .max(LIMITS.accountAiApiKeyMax)
+    .optional()
+    .default(""),
 });
 
 export const createUserAiSettingsSchema = z.object({

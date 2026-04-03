@@ -9,6 +9,7 @@ import {
   generateFlashcardsSchema,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
+import { LIMITS } from "@/lib/config/limits";
 
 describe("createFlashcardSchema", () => {
   it("accepts valid input", () => {
@@ -41,21 +42,21 @@ describe("createFlashcardSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects front longer than 500 characters", () => {
+  it("rejects front longer than max characters", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "subject-1",
-      front: "a".repeat(501),
+      front: "a".repeat(LIMITS.flashcardFrontMax + 1),
       back: "Answer",
     });
 
     expect(result.success).toBe(false);
   });
 
-  it("rejects back longer than 2000 characters", () => {
+  it("rejects back longer than max characters", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "subject-1",
       front: "Question",
-      back: "a".repeat(2001),
+      back: "a".repeat(LIMITS.flashcardBackMax + 1),
     });
 
     expect(result.success).toBe(false);
@@ -74,7 +75,7 @@ describe("createFlashcardSchema", () => {
   it("accepts rich text when plain text length is within limit", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "subject-1",
-      front: `<p>${"a".repeat(500)}</p>`,
+      front: `<p>${"a".repeat(LIMITS.flashcardFrontMax)}</p>`,
       back: "<p>Answer</p>",
     });
 
@@ -91,21 +92,21 @@ describe("createFlashcardSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects rich text front when plain text exceeds 500 characters", () => {
+  it("rejects rich text front when plain text exceeds max characters", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "subject-1",
-      front: `<p>${"a".repeat(501)}</p>`,
+      front: `<p>${"a".repeat(LIMITS.flashcardFrontMax + 1)}</p>`,
       back: "Answer",
     });
 
     expect(result.success).toBe(false);
   });
 
-  it("rejects rich text back when plain text exceeds 2000 characters", () => {
+  it("rejects rich text back when plain text exceeds max characters", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "subject-1",
       front: "Question",
-      back: `<p>${"a".repeat(2001)}</p>`,
+      back: `<p>${"a".repeat(LIMITS.flashcardBackMax + 1)}</p>`,
     });
 
     expect(result.success).toBe(false);
@@ -304,18 +305,18 @@ describe("generateFlashcardsSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects text longer than 10000 characters", () => {
+  it("rejects text longer than max characters", () => {
     const result = generateFlashcardsSchema.safeParse({
       subjectId: "subject-123",
-      text: "a".repeat(10001),
+      text: "a".repeat(LIMITS.flashcardAiMaxInput + 1),
     });
     expect(result.success).toBe(false);
   });
 
-  it("accepts text exactly 10000 characters", () => {
+  it("accepts text at exactly max characters", () => {
     const result = generateFlashcardsSchema.safeParse({
       subjectId: "subject-123",
-      text: "a".repeat(10000),
+      text: "a".repeat(LIMITS.flashcardAiMaxInput),
     });
     expect(result.success).toBe(true);
   });

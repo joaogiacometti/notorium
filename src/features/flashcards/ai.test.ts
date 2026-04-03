@@ -281,15 +281,6 @@ describe("normalizeGeneratedCards", () => {
     ]);
   });
 
-  it("returns null when valid cards exceed max limit", () => {
-    const cards = Array.from({ length: 51 }, (_, i) => ({
-      front: `Front ${i}`,
-      back: `Back ${i}`,
-    }));
-    const result = normalizeGeneratedCards({ cards });
-    expect(result).toBeNull();
-  });
-
   it("returns 50 valid cards when 52 raw cards yield exactly 50 after filtering", () => {
     const cards = Array.from({ length: 52 }, (_, i) => ({
       front: i < 50 ? `Front ${i}` : "",

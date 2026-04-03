@@ -3,6 +3,7 @@ import {
   assessmentStatusValues,
   assessmentTypeValues,
 } from "@/features/assessments/constants";
+import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const assessmentTypeSchema = z.enum(assessmentTypeValues);
@@ -22,7 +23,10 @@ const optionalNumberSchema = (field: "score" | "weight") =>
       message: validationMessage(`Validation.assessments.${field}.notNumber`),
     })
     .min(0, validationMessage(`Validation.assessments.${field}.minValue`))
-    .max(100, validationMessage(`Validation.assessments.${field}.maxValue`))
+    .max(
+      LIMITS.assessmentScoreMax,
+      validationMessage(`Validation.assessments.${field}.maxValue`),
+    )
     .optional();
 
 export const createAssessmentSchema = z.object({
@@ -30,10 +34,16 @@ export const createAssessmentSchema = z.object({
   title: z
     .string()
     .min(1, validationMessage("Validation.assessments.titleRequired"))
-    .max(100, validationMessage("Validation.assessments.titleMaxLength")),
+    .max(
+      LIMITS.assessmentTitleMax,
+      validationMessage("Validation.assessments.titleMaxLength"),
+    ),
   description: z
     .string()
-    .max(1000, validationMessage("Validation.assessments.descriptionMaxLength"))
+    .max(
+      LIMITS.assessmentDescriptionMax,
+      validationMessage("Validation.assessments.descriptionMaxLength"),
+    )
     .optional(),
   type: assessmentTypeSchema.default("other"),
   status: assessmentStatusSchema.default("pending"),
@@ -50,10 +60,16 @@ export const editAssessmentSchema = z.object({
   title: z
     .string()
     .min(1, validationMessage("Validation.assessments.titleRequired"))
-    .max(100, validationMessage("Validation.assessments.titleMaxLength")),
+    .max(
+      LIMITS.assessmentTitleMax,
+      validationMessage("Validation.assessments.titleMaxLength"),
+    ),
   description: z
     .string()
-    .max(1000, validationMessage("Validation.assessments.descriptionMaxLength"))
+    .max(
+      LIMITS.assessmentDescriptionMax,
+      validationMessage("Validation.assessments.descriptionMaxLength"),
+    )
     .optional(),
   type: assessmentTypeSchema,
   status: assessmentStatusSchema,
@@ -91,8 +107,8 @@ const planningAssessmentSortValues = [
 
 export const planningAssessmentsQuerySchema = z.object({
   pageIndex: z.number().int().min(0),
-  pageSize: z.number().int().min(1).max(100),
-  search: z.string().max(100).optional(),
+  pageSize: z.number().int().min(LIMITS.pageSizeMin).max(LIMITS.pageSizeMax),
+  search: z.string().max(LIMITS.searchQueryMax).optional(),
   subjectId: z.string().min(1).optional(),
   statusFilter: z.enum(planningAssessmentStatusFilterValues),
   typeFilter: z.enum(planningAssessmentTypeFilterValues),

@@ -2,6 +2,7 @@ import { and, asc, count, eq, isNull, lte, type SQL } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
+import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -12,8 +13,6 @@ export interface GetDueFlashcardsOptions {
   subjectId?: string;
   limit?: number;
 }
-
-const defaultDueLimit = 50;
 
 function getDueFilters(
   userId: string,
@@ -41,8 +40,8 @@ export async function getDueFlashcardsForUser(
 ): Promise<FlashcardReviewEntity[]> {
   const limit =
     options.limit && options.limit > 0
-      ? Math.min(options.limit, 200)
-      : defaultDueLimit;
+      ? Math.min(options.limit, LIMITS.reviewDueLimitMax)
+      : LIMITS.reviewDueLimitDefault;
 
   return getDb()
     .select({ flashcard, subjectName: subject.name })

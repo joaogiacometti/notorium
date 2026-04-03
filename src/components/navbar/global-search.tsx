@@ -21,9 +21,9 @@ import {
   getFlashcardDetailHref,
   getNoteDetailHref,
 } from "@/features/navigation/detail-page-back-link";
+import { LIMITS } from "@/lib/config/limits";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
-import { searchMinQueryLength } from "@/lib/validations/search";
 
 interface GlobalSearchProps {
   userId: string;
@@ -43,7 +43,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
     enabled:
       open &&
       userId.length > 0 &&
-      debouncedQuery.trim().length >= searchMinQueryLength,
+      debouncedQuery.trim().length >= LIMITS.searchQueryMin,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
   });
@@ -53,7 +53,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
     enabled:
       open &&
       userId.length > 0 &&
-      debouncedQuery.trim().length < searchMinQueryLength,
+      debouncedQuery.trim().length < LIMITS.searchQueryMin,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
   });
@@ -88,7 +88,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   }
 
   const canSearch =
-    userId.length > 0 && debouncedQuery.trim().length >= searchMinQueryLength;
+    userId.length > 0 && debouncedQuery.trim().length >= LIMITS.searchQueryMin;
   const isAuthenticated = userId.length > 0;
   const showingRecents = isAuthenticated && !canSearch;
   const currentData = canSearch ? data : recentQuery.data;

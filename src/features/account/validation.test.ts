@@ -4,6 +4,7 @@ import {
   updateAccountSchema,
   updateUserAiSettingsSchema,
 } from "@/features/account/validation";
+import { LIMITS } from "@/lib/config/limits";
 
 describe("updateAccountSchema", () => {
   it("accepts valid name", () => {
@@ -21,8 +22,10 @@ describe("updateAccountSchema", () => {
     }
   });
 
-  it("rejects name shorter than 2 characters", () => {
-    const result = updateAccountSchema.safeParse({ name: "A" });
+  it("rejects name shorter than minimum", () => {
+    const result = updateAccountSchema.safeParse({
+      name: "a".repeat(LIMITS.authNameMin - 1),
+    });
 
     expect(result.success).toBe(false);
   });
@@ -33,20 +36,26 @@ describe("updateAccountSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects name longer than 100 characters", () => {
-    const result = updateAccountSchema.safeParse({ name: "a".repeat(101) });
+  it("rejects name longer than maximum", () => {
+    const result = updateAccountSchema.safeParse({
+      name: "a".repeat(LIMITS.accountNameMax + 1),
+    });
 
     expect(result.success).toBe(false);
   });
 
-  it("accepts name at exactly 2 characters", () => {
-    const result = updateAccountSchema.safeParse({ name: "Al" });
+  it("accepts name at exactly minimum characters", () => {
+    const result = updateAccountSchema.safeParse({
+      name: "a".repeat(LIMITS.authNameMin),
+    });
 
     expect(result.success).toBe(true);
   });
 
-  it("accepts name at exactly 100 characters", () => {
-    const result = updateAccountSchema.safeParse({ name: "a".repeat(100) });
+  it("accepts name at exactly maximum characters", () => {
+    const result = updateAccountSchema.safeParse({
+      name: "a".repeat(LIMITS.accountNameMax),
+    });
 
     expect(result.success).toBe(true);
   });
@@ -87,9 +96,9 @@ describe("updateUserAiSettingsSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects overlong model", () => {
+  it("rejects model longer than max characters", () => {
     const result = updateUserAiSettingsSchema.safeParse({
-      model: "a".repeat(151),
+      model: "a".repeat(LIMITS.accountAiModelMax + 1),
       apiKey: "",
     });
 

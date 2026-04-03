@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 import {
   hasRichTextContent,
   richTextToPlainText,
@@ -12,7 +13,7 @@ export const flashcardFrontSchema = z
     validationMessage("Validation.flashcards.frontRequired"),
   )
   .refine(
-    (value) => richTextToPlainText(value).length <= 500,
+    (value) => richTextToPlainText(value).length <= LIMITS.flashcardFrontMax,
     validationMessage("Validation.flashcards.frontMaxLength"),
   );
 
@@ -23,7 +24,7 @@ export const flashcardBackSchema = z
     validationMessage("Validation.flashcards.backRequired"),
   )
   .refine(
-    (value) => richTextToPlainText(value).length <= 2000,
+    (value) => richTextToPlainText(value).length <= LIMITS.flashcardBackMax,
     validationMessage("Validation.flashcards.backMaxLength"),
   );
 
@@ -103,9 +104,14 @@ export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;
 
 export const flashcardsManageQuerySchema = z.object({
   pageIndex: z.number().int().min(0).default(0),
-  pageSize: z.number().int().min(1).max(100).default(25),
+  pageSize: z
+    .number()
+    .int()
+    .min(LIMITS.pageSizeMin)
+    .max(LIMITS.pageSizeMax)
+    .default(25),
   subjectId: z.string().min(1).optional(),
-  search: z.string().trim().max(200).optional(),
+  search: z.string().trim().max(LIMITS.searchQueryMax).optional(),
 });
 
 export type FlashcardsManageQueryInput = z.infer<
@@ -116,7 +122,7 @@ export const validateFlashcardsSchema = z.object({
   flashcardIds: z
     .array(z.string().min(1))
     .min(1)
-    .max(500)
+    .max(LIMITS.flashcardBatchSize)
     .refine((ids) => new Set(ids).size === ids.length),
 });
 
@@ -137,7 +143,10 @@ export const generateFlashcardsSchema = z.object({
   text: z
     .string()
     .min(1, validationMessage("Validation.flashcards.textRequired"))
-    .max(10000, validationMessage("Validation.flashcards.textMaxLength")),
+    .max(
+      LIMITS.flashcardAiMaxInput,
+      validationMessage("Validation.flashcards.textMaxLength"),
+    ),
 });
 
 export type GenerateFlashcardsForm = z.infer<typeof generateFlashcardsSchema>;

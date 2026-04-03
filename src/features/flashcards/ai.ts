@@ -2,27 +2,23 @@ import { z } from "zod";
 import type { ResolvedUserAiSettings } from "@/features/ai/settings";
 import { flashcardBackSchema } from "@/features/flashcards/validation";
 import { generateStructuredOutput } from "@/lib/ai/generate-structured";
+import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 
-const MAX_BACK_TOKENS = 100;
-const IMPROVE_MAX_TOKENS = 300;
-export const MAX_GENERATED_CARDS = 50;
-const MAX_GENERATION_TOKENS = 4000;
-
 const generatedFlashcardBackSchema = z.object({
-  backText: z.string().trim().min(1).max(400),
+  backText: z.string().trim().min(1).max(LIMITS.flashcardAiBackMax),
 });
 
 export const generatedFlashcardsSchema = z.object({
   cards: z
     .array(
       z.object({
-        front: z.string().min(1).max(500),
-        back: z.string().min(1).max(400),
+        front: z.string().min(1).max(LIMITS.flashcardAiFrontMax),
+        back: z.string().min(1).max(LIMITS.flashcardAiBackMax),
       }),
     )
     .min(1)
-    .max(MAX_GENERATED_CARDS),
+    .max(LIMITS.flashcardAiMaxOutput),
 });
 
 export const flashcardBackSystemPrompt = `Write only the back of the flashcard.
@@ -288,7 +284,7 @@ export async function generateFlashcardBackContent(input: {
       subjectName: input.subjectName,
       front: frontText,
     }),
-    maxOutputTokens: MAX_BACK_TOKENS,
+    maxOutputTokens: AI_LIMITS.maxBackTokens,
   });
 
   const back = plainTextToRichText(normalizeGeneratedBack(output.backText));
@@ -321,7 +317,7 @@ export async function improveFlashcardBackContent(input: {
       front: frontText,
       currentBack: backText,
     }),
-    maxOutputTokens: IMPROVE_MAX_TOKENS,
+    maxOutputTokens: AI_LIMITS.improveMaxTokens,
   });
 
   const back = plainTextToRichText(normalizeGeneratedBack(output.backText));
@@ -380,7 +376,7 @@ export function normalizeGeneratedCards(
     cards.push({ front, back });
   }
 
-  if (cards.length > MAX_GENERATED_CARDS) {
+  if (cards.length > LIMITS.flashcardAiMaxOutput) {
     return null;
   }
 
@@ -400,7 +396,7 @@ export async function generateFlashcardsFromText(input: {
       subjectName: input.subjectName,
       text: input.text,
     }),
-    maxOutputTokens: MAX_GENERATION_TOKENS,
+    maxOutputTokens: AI_LIMITS.maxGenerationTokens,
   });
 
   const cards = normalizeGeneratedCards(output);

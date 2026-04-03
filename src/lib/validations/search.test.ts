@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LIMITS } from "@/lib/config/limits";
 import { searchQuerySchema } from "@/lib/validations/search";
 
 describe("searchQuerySchema", () => {
@@ -38,14 +39,18 @@ describe("searchQuerySchema", () => {
     }
   });
 
-  it("accepts string at exactly 200 characters", () => {
-    const result = searchQuerySchema.safeParse("a".repeat(200));
+  it("accepts string at exactly max characters", () => {
+    const result = searchQuerySchema.safeParse(
+      "a".repeat(LIMITS.searchQueryMax),
+    );
 
     expect(result.success).toBe(true);
   });
 
-  it("rejects string longer than 200 characters", () => {
-    const result = searchQuerySchema.safeParse("a".repeat(201));
+  it("rejects string longer than max characters", () => {
+    const result = searchQuerySchema.safeParse(
+      "a".repeat(LIMITS.searchQueryMax + 1),
+    );
 
     expect(result.success).toBe(false);
   });

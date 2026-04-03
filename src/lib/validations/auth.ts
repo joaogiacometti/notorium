@@ -1,18 +1,28 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const loginSchema = z.object({
   email: z
     .string()
     .trim()
-    .max(254, validationMessage("Validation.auth.emailMaxLength"))
+    .max(
+      LIMITS.authEmailMax,
+      validationMessage("Validation.auth.emailMaxLength"),
+    )
     .pipe(
       z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
     ),
   password: z
     .string()
-    .min(8, validationMessage("Validation.auth.passwordMinLength"))
-    .max(128, validationMessage("Validation.auth.passwordMaxLength")),
+    .min(
+      LIMITS.authPasswordMin,
+      validationMessage("Validation.auth.passwordMinLength"),
+    )
+    .max(
+      LIMITS.authPasswordMax,
+      validationMessage("Validation.auth.passwordMaxLength"),
+    ),
 });
 
 export type LoginForm = z.infer<typeof loginSchema>;
@@ -22,19 +32,34 @@ export const signupSchema = z
     name: z
       .string()
       .trim()
-      .min(2, validationMessage("Validation.auth.nameMinLength"))
-      .max(100, validationMessage("Validation.auth.nameMaxLength")),
+      .min(
+        LIMITS.authNameMin,
+        validationMessage("Validation.auth.nameMinLength"),
+      )
+      .max(
+        LIMITS.authNameMax,
+        validationMessage("Validation.auth.nameMaxLength"),
+      ),
     email: z
       .string()
       .trim()
-      .max(254, validationMessage("Validation.auth.emailMaxLength"))
+      .max(
+        LIMITS.authEmailMax,
+        validationMessage("Validation.auth.emailMaxLength"),
+      )
       .pipe(
         z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
       ),
     password: z
       .string()
-      .min(8, validationMessage("Validation.auth.passwordMinLength"))
-      .max(128, validationMessage("Validation.auth.passwordMaxLength")),
+      .min(
+        LIMITS.authPasswordMin,
+        validationMessage("Validation.auth.passwordMinLength"),
+      )
+      .max(
+        LIMITS.authPasswordMax,
+        validationMessage("Validation.auth.passwordMaxLength"),
+      ),
     confirmPassword: z
       .string()
       .min(1, validationMessage("Validation.auth.confirmPasswordRequired")),

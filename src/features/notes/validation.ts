@@ -1,14 +1,21 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const createNoteSchema = z.object({
   title: z
     .string()
     .min(1, validationMessage("Validation.notes.titleRequired"))
-    .max(200, validationMessage("Validation.notes.titleMaxLength")),
+    .max(
+      LIMITS.noteTitleMax,
+      validationMessage("Validation.notes.titleMaxLength"),
+    ),
   content: z
     .string()
-    .max(10000, validationMessage("Validation.notes.contentMaxLength"))
+    .max(
+      LIMITS.noteContentMax,
+      validationMessage("Validation.notes.contentMaxLength"),
+    )
     .optional(),
   subjectId: z.string().min(1),
 });
@@ -20,10 +27,16 @@ export const editNoteSchema = z.object({
   title: z
     .string()
     .min(1, validationMessage("Validation.notes.titleRequired"))
-    .max(200, validationMessage("Validation.notes.titleMaxLength")),
+    .max(
+      LIMITS.noteTitleMax,
+      validationMessage("Validation.notes.titleMaxLength"),
+    ),
   content: z
     .string()
-    .max(10000, validationMessage("Validation.notes.contentMaxLength"))
+    .max(
+      LIMITS.noteContentMax,
+      validationMessage("Validation.notes.contentMaxLength"),
+    )
     .optional(),
 });
 

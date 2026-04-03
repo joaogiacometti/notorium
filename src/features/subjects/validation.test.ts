@@ -6,6 +6,7 @@ import {
   editSubjectSchema,
   restoreSubjectSchema,
 } from "@/features/subjects/validation";
+import { LIMITS } from "@/lib/config/limits";
 
 describe("createSubjectSchema", () => {
   it("accepts valid input with required fields only", () => {
@@ -32,25 +33,27 @@ describe("createSubjectSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects name longer than 100 characters", () => {
-    const result = createSubjectSchema.safeParse({ name: "a".repeat(101) });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects description longer than 500 characters", () => {
+  it("rejects name longer than max characters", () => {
     const result = createSubjectSchema.safeParse({
-      name: "Valid",
-      description: "x".repeat(501),
+      name: "a".repeat(LIMITS.subjectNameMax + 1),
     });
 
     expect(result.success).toBe(false);
   });
 
-  it("accepts description at exactly 500 characters", () => {
+  it("rejects description longer than max characters", () => {
     const result = createSubjectSchema.safeParse({
       name: "Valid",
-      description: "x".repeat(500),
+      description: "x".repeat(LIMITS.subjectDescriptionMax + 1),
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts description at exactly max characters", () => {
+    const result = createSubjectSchema.safeParse({
+      name: "Valid",
+      description: "x".repeat(LIMITS.subjectDescriptionMax),
     });
 
     expect(result.success).toBe(true);
