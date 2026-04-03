@@ -39,6 +39,10 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "account.aiApiKeyRequired": "API key is required.",
   "account.aiApiKeyMaxLength": "API key must be at most 500 characters.",
   "search.queryMaxLength": "Search query must be at most 200 characters.",
+  "Validation.flashcards.subjectRequired": "Subject is required.",
+  "Validation.flashcards.textRequired": "Text is required.",
+  "Validation.flashcards.textMaxLength":
+    "Text must be 10,000 characters or less.",
 };
 
 function resolveMessage(key: string, values?: ValidationMessageValues): string {

@@ -1,6 +1,7 @@
 import { resolveRequiredUserAiSettings } from "@/features/ai/settings";
 import {
   generateFlashcardBackContent,
+  generateFlashcardsFromText,
   improveFlashcardBackContent,
 } from "@/features/flashcards/ai";
 import { AiConfigurationError, AiStoredCredentialError } from "@/lib/ai/errors";
@@ -85,6 +86,64 @@ export async function improveFlashcardBackForUser({
     return {
       success: true,
       back,
+    };
+  } catch (error) {
+    if (
+      error instanceof AiConfigurationError ||
+      error instanceof AiStoredCredentialError
+    ) {
+      return {
+        success: false,
+        errorCode: "flashcards.ai.notConfigured",
+      };
+    }
+
+    return {
+      success: false,
+      errorCode: "flashcards.ai.unavailable",
+    };
+  }
+}
+
+interface GenerateFlashcardsForUserInput {
+  userId: string;
+  subjectName: string;
+  text: string;
+}
+
+type GenerateFlashcardsForUserResult =
+  | { success: true; cards: Array<{ front: string; back: string }> }
+  | {
+      success: false;
+      errorCode:
+        | "flashcards.ai.notConfigured"
+        | "flashcards.ai.unavailable"
+        | "flashcards.ai.emptyGeneration";
+    };
+
+export async function generateFlashcardsForUser({
+  userId,
+  subjectName,
+  text,
+}: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
+  try {
+    const settings = await resolveRequiredUserAiSettings(userId);
+    const cards = await generateFlashcardsFromText({
+      settings,
+      subjectName,
+      text,
+    });
+
+    if (cards.length === 0) {
+      return {
+        success: false,
+        errorCode: "flashcards.ai.emptyGeneration",
+      };
+    }
+
+    return {
+      success: true,
+      cards,
     };
   } catch (error) {
     if (

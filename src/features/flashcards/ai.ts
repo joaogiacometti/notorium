@@ -6,9 +6,23 @@ import { richTextToPlainText } from "@/lib/editor/rich-text";
 
 const MAX_BACK_TOKENS = 100;
 const IMPROVE_MAX_TOKENS = 300;
+export const MAX_GENERATED_CARDS = 50;
+const MAX_GENERATION_TOKENS = 4000;
 
 const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(400),
+});
+
+export const generatedFlashcardsSchema = z.object({
+  cards: z
+    .array(
+      z.object({
+        front: z.string().min(1).max(500),
+        back: z.string().min(1).max(400),
+      }),
+    )
+    .min(1)
+    .max(MAX_GENERATED_CARDS),
 });
 
 export const flashcardBackSystemPrompt = `Write only the back of the flashcard.
@@ -320,4 +334,80 @@ export async function improveFlashcardBackContent(input: {
   }
 
   return parsedBack.data;
+}
+
+export const flashcardsGenerationSystemPrompt = `You are creating study flashcards from source material.
+
+Extract key concepts and create atomic, testable flashcard pairs.
+
+Rules:
+- Each card must have one clear, testable question on the front
+- Each answer must be concise (1-5 bullet points or one sentence)
+- Focus on facts, definitions, processes, and relationships
+- Avoid creating cards for trivial or obvious information
+- Do not repeat context across cards unnecessarily
+- Output as many cards as the material warrants
+
+Output format: JSON object with a "cards" array containing { front, back } objects.`;
+
+export function buildGenerateFlashcardsPrompt(input: {
+  subjectName: string;
+  text: string;
+}): string {
+  return [
+    `Subject: ${input.subjectName}`,
+    "",
+    "Source material:",
+    input.text,
+    "",
+    "Create flashcards from this material.",
+  ].join("\n");
+}
+
+export function normalizeGeneratedCards(
+  output: z.infer<typeof generatedFlashcardsSchema>,
+): Array<{ front: string; back: string }> | null {
+  const cards: Array<{ front: string; back: string }> = [];
+
+  for (const card of output.cards) {
+    const front = card.front.trim();
+    const back = card.back.trim();
+
+    if (front.length === 0 || back.length === 0) {
+      continue;
+    }
+
+    cards.push({ front, back });
+  }
+
+  if (cards.length > MAX_GENERATED_CARDS) {
+    return null;
+  }
+
+  return cards;
+}
+
+export async function generateFlashcardsFromText(input: {
+  settings: ResolvedUserAiSettings;
+  subjectName: string;
+  text: string;
+}): Promise<Array<{ front: string; back: string }>> {
+  const output = await generateStructuredOutput({
+    settings: input.settings,
+    schema: generatedFlashcardsSchema,
+    system: flashcardsGenerationSystemPrompt,
+    prompt: buildGenerateFlashcardsPrompt({
+      subjectName: input.subjectName,
+      text: input.text,
+    }),
+    maxOutputTokens: MAX_GENERATION_TOKENS,
+  });
+
+  const cards = normalizeGeneratedCards(output);
+
+  if (!cards) {
+    throw new Error("Generated flashcards failed validation");
+  }
+
+  return cards;
 }

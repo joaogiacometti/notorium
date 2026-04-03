@@ -4,10 +4,12 @@ process.env.SKIP_ENV_VALIDATION = "1";
 
 const {
   buildGenerateFlashcardBackPrompt,
+  buildGenerateFlashcardsPrompt,
   buildImproveFlashcardBackPrompt,
   flashcardBackSystemPrompt,
   flashcardBackImproveSystemPrompt,
   normalizeGeneratedBack,
+  normalizeGeneratedCards,
   plainTextToRichText,
 } = await import("@/features/flashcards/ai");
 
@@ -196,5 +198,105 @@ describe("flashcardBackImproveSystemPrompt", () => {
     expect(flashcardBackImproveSystemPrompt).toContain("Bad improvements:");
     expect(flashcardBackImproveSystemPrompt).toContain("Current back:");
     expect(flashcardBackImproveSystemPrompt).toContain("Improved:");
+  });
+});
+
+describe("buildGenerateFlashcardsPrompt", () => {
+  it("builds prompt with subject name and text", () => {
+    const prompt = buildGenerateFlashcardsPrompt({
+      subjectName: "Computer Science",
+      text: "DNS translates domain names to IP addresses.",
+    });
+    expect(prompt).toContain("Subject: Computer Science");
+    expect(prompt).toContain("DNS translates domain names to IP addresses.");
+  });
+});
+
+describe("normalizeGeneratedCards", () => {
+  it("validates and returns valid cards", () => {
+    const result = normalizeGeneratedCards({
+      cards: [{ front: "What is DNS?", back: "Domain Name System" }],
+    });
+    expect(result).toEqual([
+      { front: "What is DNS?", back: "Domain Name System" },
+    ]);
+  });
+
+  it("trims whitespace from front and back", () => {
+    const result = normalizeGeneratedCards({
+      cards: [{ front: "  What is DNS?  ", back: "  Domain Name System  " }],
+    });
+    expect(result).toEqual([
+      { front: "What is DNS?", back: "Domain Name System" },
+    ]);
+  });
+
+  it("filters out empty front", () => {
+    const result = normalizeGeneratedCards({
+      cards: [{ front: "", back: "Some answer" }],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it("filters out empty back", () => {
+    const result = normalizeGeneratedCards({
+      cards: [{ front: "What is DNS?", back: "" }],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it("filters out whitespace-only front after trim", () => {
+    const result = normalizeGeneratedCards({
+      cards: [{ front: "   ", back: "Some answer" }],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it("filters out whitespace-only back after trim", () => {
+    const result = normalizeGeneratedCards({
+      cards: [{ front: "What is DNS?", back: "   " }],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array when all cards are filtered out", () => {
+    const result = normalizeGeneratedCards({
+      cards: [],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it("filters out invalid cards and keeps valid ones", () => {
+    const result = normalizeGeneratedCards({
+      cards: [
+        { front: "", back: "Invalid - empty front" },
+        { front: "Valid", back: "Answer" },
+        { front: "  ", back: "Invalid - whitespace only front" },
+        { front: "Another valid", back: "Another answer" },
+      ],
+    });
+    expect(result).toEqual([
+      { front: "Valid", back: "Answer" },
+      { front: "Another valid", back: "Another answer" },
+    ]);
+  });
+
+  it("returns null when valid cards exceed max limit", () => {
+    const cards = Array.from({ length: 51 }, (_, i) => ({
+      front: `Front ${i}`,
+      back: `Back ${i}`,
+    }));
+    const result = normalizeGeneratedCards({ cards });
+    expect(result).toBeNull();
+  });
+
+  it("returns 50 valid cards when 52 raw cards yield exactly 50 after filtering", () => {
+    const cards = Array.from({ length: 52 }, (_, i) => ({
+      front: i < 50 ? `Front ${i}` : "",
+      back: `Back ${i}`,
+    }));
+    const result = normalizeGeneratedCards({ cards });
+    expect(result).not.toBeNull();
+    expect(result).toHaveLength(50);
   });
 });

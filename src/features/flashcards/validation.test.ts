@@ -6,6 +6,7 @@ import {
   deleteFlashcardSchema,
   editFlashcardSchema,
   generateFlashcardBackSchema,
+  generateFlashcardsSchema,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
 
@@ -275,5 +276,47 @@ describe("resetFlashcardSchema", () => {
     const result = resetFlashcardSchema.safeParse({ id: "" });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("generateFlashcardsSchema", () => {
+  it("accepts valid subject and text", () => {
+    const result = generateFlashcardsSchema.safeParse({
+      subjectId: "subject-123",
+      text: "Some text to generate flashcards from.",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty subjectId", () => {
+    const result = generateFlashcardsSchema.safeParse({
+      subjectId: "",
+      text: "Some text",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty text", () => {
+    const result = generateFlashcardsSchema.safeParse({
+      subjectId: "subject-123",
+      text: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects text longer than 10000 characters", () => {
+    const result = generateFlashcardsSchema.safeParse({
+      subjectId: "subject-123",
+      text: "a".repeat(10001),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts text exactly 10000 characters", () => {
+    const result = generateFlashcardsSchema.safeParse({
+      subjectId: "subject-123",
+      text: "a".repeat(10000),
+    });
+    expect(result.success).toBe(true);
   });
 });

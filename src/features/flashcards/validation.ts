@@ -129,3 +129,15 @@ export const getFlashcardIdsForSubjectSchema = z.object({
 export type GetFlashcardIdsForSubjectForm = z.infer<
   typeof getFlashcardIdsForSubjectSchema
 >;
+
+export const generateFlashcardsSchema = z.object({
+  subjectId: z
+    .string()
+    .min(1, validationMessage("Validation.flashcards.subjectRequired")),
+  text: z
+    .string()
+    .min(1, validationMessage("Validation.flashcards.textRequired"))
+    .max(10000, validationMessage("Validation.flashcards.textMaxLength")),
+});
+
+export type GenerateFlashcardsForm = z.infer<typeof generateFlashcardsSchema>;

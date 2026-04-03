@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { generateFlashcardsForUser as generateFlashcardsForUserService } from "@/features/flashcards/ai-service";
 import {
   bulkDeleteFlashcardsForUser,
   bulkMoveFlashcardsForUser,
@@ -11,6 +12,7 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
+  countFlashcardsBySubjectForUser,
   getAllFlashcardIdsForSubject,
   getAllFlashcardIdsForUser,
   getFlashcardByIdForUser,
@@ -42,8 +44,10 @@ import {
   type FlashcardsManageQueryInput,
   flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
+  type GenerateFlashcardsForm,
   type GetFlashcardIdsForSubjectForm,
   generateFlashcardBackSchema,
+  generateFlashcardsSchema,
   getFlashcardIdsForSubjectSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
@@ -51,6 +55,8 @@ import {
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
 import { validateFlashcardsForUser } from "@/features/flashcards/validation-ai-service";
+import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
+import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
@@ -368,6 +374,48 @@ export async function getAllFlashcardIds(): Promise<
     async (userId) => {
       const flashcardIds = await getAllFlashcardIdsForUser(userId);
       return { success: true, flashcardIds };
+    },
+  );
+}
+
+export async function generateFlashcards(
+  data: GenerateFlashcardsForm,
+): Promise<
+  | { success: true; cards: Array<{ front: string; back: string }> }
+  | ActionErrorResult
+> {
+  return runValidatedUserAction(
+    generateFlashcardsSchema,
+    data,
+    "flashcards.ai.invalidData",
+    async (userId, parsedData) => {
+      const subject = await getActiveSubjectByIdForUser(
+        userId,
+        parsedData.subjectId,
+      );
+
+      if (!subject) {
+        return actionError("subjects.notFound");
+      }
+
+      const currentCount = await countFlashcardsBySubjectForUser(
+        userId,
+        parsedData.subjectId,
+      );
+
+      if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
+        return actionError("limits.flashcardLimit", {
+          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+        });
+      }
+
+      const result = await generateFlashcardsForUserService({
+        userId,
+        subjectName: subject.name,
+        text: parsedData.text,
+      });
+
+      return result;
     },
   );
 }

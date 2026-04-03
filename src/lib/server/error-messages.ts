@@ -18,6 +18,8 @@ const errorMessages: Record<
     "AI flashcard generation is not configured. Add your OpenRouter key and model in your account page.",
   "flashcards.ai.unavailable":
     "AI flashcard generation is temporarily unavailable.",
+  "flashcards.ai.emptyGeneration":
+    "Could not extract flashcards from this text. Try adding more content.",
   "flashcards.validation.notConfigured":
     "AI validation is not configured. Add your OpenRouter key and model in your account page.",
   "flashcards.validation.unavailable":
