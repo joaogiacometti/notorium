@@ -79,7 +79,7 @@ export async function deleteNote(
   return runValidatedUserAction(
     deleteNoteSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await deleteNoteForUser(userId, parsedData);
 

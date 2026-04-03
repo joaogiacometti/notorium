@@ -73,7 +73,7 @@ export async function deleteMiss(
   return runValidatedUserAction(
     deleteMissSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await deleteMissForUser(userId, parsedData);
 

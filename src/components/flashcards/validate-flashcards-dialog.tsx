@@ -33,7 +33,7 @@ import type {
   FlashcardValidationItem,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface ValidateFlashcardsDialogProps {
   open: boolean;
@@ -79,7 +79,7 @@ export function ValidateFlashcardsDialog({
         const idsResult = await getAllFlashcardIds();
 
         if ("errorCode" in idsResult) {
-          toast.error(tErrors(idsResult.errorCode, idsResult.errorParams));
+          toast.error(t(idsResult.errorCode, idsResult.errorParams));
           setIsValidating(false);
           return;
         }
@@ -91,7 +91,7 @@ export function ValidateFlashcardsDialog({
         });
 
         if ("errorCode" in idsResult) {
-          toast.error(tErrors(idsResult.errorCode, idsResult.errorParams));
+          toast.error(t(idsResult.errorCode, idsResult.errorParams));
           setIsValidating(false);
           return;
         }
@@ -114,7 +114,7 @@ export function ValidateFlashcardsDialog({
       const result = await validateFlashcards({ flashcardIds });
 
       if ("errorCode" in result) {
-        toast.error(tErrors(result.errorCode, result.errorParams));
+        toast.error(t(result.errorCode, result.errorParams));
         return;
       }
 

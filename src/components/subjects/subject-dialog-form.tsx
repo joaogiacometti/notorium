@@ -28,8 +28,8 @@ import {
   type EditSubjectForm,
   editSubjectSchema,
 } from "@/features/subjects/validation";
-import { tErrors } from "@/lib/server/error-messages";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
+import { t } from "@/lib/server/server-action-errors";
 
 type SubjectFormValues = CreateSubjectForm | EditSubjectForm;
 
@@ -88,7 +88,7 @@ export function SubjectDialogForm({
         return;
       }
 
-      toast.error(tErrors(result.errorCode, result.errorParams));
+      toast.error(t(result.errorCode, result.errorParams));
     } finally {
       setIsSubmitting(false);
     }

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface ResetFlashcardDialogProps {
   flashcardId: string;
@@ -42,7 +42,7 @@ export function ResetFlashcardDialog({
         onReset?.(result.flashcard);
         onOpenChange(false);
       } else {
-        toast.error(tErrors(result.errorCode, result.errorParams));
+        toast.error(t(result.errorCode, result.errorParams));
       }
     });
   }

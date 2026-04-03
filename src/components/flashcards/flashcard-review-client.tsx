@@ -51,7 +51,7 @@ import type {
   FlashcardReviewState,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 import { DeleteFlashcardDialog } from "./delete-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "./lazy-edit-flashcard-dialog";
 
@@ -249,7 +249,7 @@ export function FlashcardReviewClient({
         const result = await reviewFlashcard({ id: currentCard.id, grade });
 
         if (!result.success) {
-          toast.error(tErrors(result.errorCode, result.errorParams));
+          toast.error(t(result.errorCode, result.errorParams));
           return;
         }
 

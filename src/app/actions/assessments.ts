@@ -50,7 +50,7 @@ export async function getPlanningAssessmentsPage(
   return runValidatedUserAction(
     planningAssessmentsQuerySchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) =>
       getPlanningAssessmentsPageForUser(userId, parsedData),
   );
@@ -100,7 +100,7 @@ export async function deleteAssessment(
   return runValidatedUserAction(
     deleteAssessmentSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await deleteAssessmentForUser(userId, parsedData);
 

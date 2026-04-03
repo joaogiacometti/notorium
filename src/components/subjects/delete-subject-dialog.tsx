@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface DeleteSubjectDialogProps {
   subjectId: string;
@@ -51,7 +51,7 @@ export function DeleteSubjectDialog({
           onOpenChange(false);
         }
       } else {
-        toast.error(tErrors(result.errorCode, result.errorParams));
+        toast.error(t(result.errorCode, result.errorParams));
       }
     });
   }

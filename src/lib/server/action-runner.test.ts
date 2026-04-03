@@ -64,13 +64,13 @@ describe("action runner", () => {
         id: z.string().min(1),
       }),
       { id: "" },
-      "common.invalidRequest",
+      "ServerErrors.common.invalidRequest",
       action,
     );
 
     expect(result).toEqual({
       success: false,
-      errorCode: "common.invalidRequest",
+      errorCode: "ServerErrors.common.invalidRequest",
       errorParams: undefined,
       errorMessage: undefined,
     });
@@ -94,7 +94,7 @@ describe("action runner", () => {
         id: z.string().min(1),
       }),
       { id: "note-1" },
-      "common.invalidRequest",
+      "ServerErrors.common.invalidRequest",
       action,
     );
 

@@ -94,7 +94,7 @@ export async function archiveSubject(
   return runValidatedUserAction(
     archiveSubjectSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await archiveSubjectForUser(userId, parsedData);
 
@@ -113,7 +113,7 @@ export async function restoreSubject(
   return runValidatedUserAction(
     restoreSubjectSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await restoreSubjectForUser(userId, parsedData);
 
@@ -132,7 +132,7 @@ export async function deleteSubject(
   return runValidatedUserAction(
     deleteSubjectSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await deleteSubjectForUser(userId, parsedData);
 

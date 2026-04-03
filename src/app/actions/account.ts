@@ -152,7 +152,7 @@ export async function updateUserAccessStatus(
   return runValidatedAction(
     updateUserAccessSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (parsedData) => {
       if (parsedData.userId === adminUserId) {
         return actionError("auth.forbidden");

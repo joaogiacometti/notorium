@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface BulkDeleteFlashcardsDialogProps {
   ids: string[];
@@ -40,7 +40,7 @@ export function BulkDeleteFlashcardsDialog({
         return;
       }
 
-      toast.error(tErrors(result.errorCode, result.errorParams));
+      toast.error(t(result.errorCode, result.errorParams));
     });
   }
 

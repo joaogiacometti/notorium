@@ -162,7 +162,7 @@ export async function deleteFlashcard(
   return runValidatedUserAction(
     deleteFlashcardSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await deleteFlashcardForUser(userId, parsedData);
 
@@ -182,7 +182,7 @@ export async function bulkDeleteFlashcards(
   return runValidatedUserAction(
     bulkDeleteFlashcardsSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await bulkDeleteFlashcardsForUser(userId, parsedData);
 
@@ -223,7 +223,7 @@ export async function resetFlashcard(
   return runValidatedUserAction(
     resetFlashcardSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const result = await resetFlashcardForUser(userId, parsedData);
 
@@ -245,7 +245,7 @@ export async function getFlashcardsManagePage(
   return runValidatedUserAction(
     flashcardsManageQuerySchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) =>
       getFlashcardsManagePageForUser(userId, parsedData),
   );
@@ -257,7 +257,7 @@ export async function getFlashcardForManage(
   return runValidatedUserAction(
     deleteFlashcardSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const flashcard = await getFlashcardByIdForUser(userId, parsedData.id);
 
@@ -276,7 +276,7 @@ export async function getFlashcardIdsForSubject(
   return runValidatedUserAction(
     getFlashcardIdsForSubjectSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const flashcardIds = await getAllFlashcardIdsForSubject(
         userId,
@@ -309,7 +309,7 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
   return runValidatedUserAction(
     validateFlashcardsSchema,
     data,
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
       const flashcards = await getFlashcardsByIdsForValidation(
         userId,
@@ -370,7 +370,7 @@ export async function getAllFlashcardIds(): Promise<
   return runValidatedUserAction(
     z.object({}),
     {},
-    "common.invalidRequest",
+    "ServerErrors.common.invalidRequest",
     async (userId) => {
       const flashcardIds = await getAllFlashcardIdsForUser(userId);
       return { success: true, flashcardIds };

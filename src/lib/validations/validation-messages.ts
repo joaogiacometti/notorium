@@ -14,35 +14,65 @@ export function validationMessage(
 }
 
 const VALIDATION_MESSAGES: Record<string, string> = {
-  "assessments.dueDateInvalid": "Due date must be a valid date.",
-  "assessments.titleRequired": "Title is required.",
-  "assessments.titleMaxLength": "Title must be at most 100 characters.",
-  "assessments.descriptionMaxLength":
+  "Validation.common.invalidRequest": "Invalid request.",
+  "Validation.account.aiApiKeyMaxLength":
+    "API key must be at most 500 characters.",
+  "Validation.account.aiApiKeyRequired": "API key is required.",
+  "Validation.account.aiModelMaxLength":
+    "Model must be at most 150 characters.",
+  "Validation.account.aiModelRequired": "Model is required.",
+  "Validation.account.nameMaxLength": "Name must be at most 100 characters.",
+  "Validation.account.nameMinLength": "Name must be at least 2 characters.",
+  "Validation.assessments.descriptionMaxLength":
     "Description must be at most 1000 characters.",
-  "assessments.score.notNumber": "Score must be a number.",
-  "assessments.score.minValue": "Score cannot be negative.",
-  "assessments.score.maxValue": "Score cannot exceed 100.",
-  "assessments.weight.notNumber": "Weight must be a number.",
-  "assessments.weight.minValue": "Weight cannot be negative.",
-  "assessments.weight.maxValue": "Weight cannot exceed 100.",
-  "attendance.totalClasses.integer": "Must be a whole number.",
-  "attendance.totalClasses.min": "Must have at least 1 class.",
-  "attendance.totalClasses.max": "Cannot exceed 365 classes.",
-  "attendance.maxMisses.integer": "Must be a whole number.",
-  "attendance.maxMisses.min": "Cannot be negative.",
-  "attendance.maxMisses.max": "Cannot exceed 365 misses.",
-  "attendance.dateRequired": "Date is required.",
-  "account.nameMinLength": "Name must be at least 2 characters.",
-  "account.nameMaxLength": "Name must be at most 100 characters.",
-  "account.aiModelRequired": "Model is required.",
-  "account.aiModelMaxLength": "Model must be at most 150 characters.",
-  "account.aiApiKeyRequired": "API key is required.",
-  "account.aiApiKeyMaxLength": "API key must be at most 500 characters.",
-  "search.queryMaxLength": "Search query must be at most 200 characters.",
+  "Validation.assessments.dueDateInvalid": "Due date must be a valid date.",
+  "Validation.assessments.score.maxValue": "Score cannot exceed 100.",
+  "Validation.assessments.score.minValue": "Score cannot be negative.",
+  "Validation.assessments.score.notNumber": "Score must be a number.",
+  "Validation.assessments.titleMaxLength":
+    "Title must be at most 100 characters.",
+  "Validation.assessments.titleRequired": "Title is required.",
+  "Validation.assessments.weight.maxValue": "Weight cannot exceed 100.",
+  "Validation.assessments.weight.minValue": "Weight cannot be negative.",
+  "Validation.assessments.weight.notNumber": "Weight must be a number.",
+  "Validation.attendance.dateRequired": "Date is required.",
+  "Validation.attendance.maxMisses.max": "Cannot exceed 365 misses.",
+  "Validation.attendance.maxMisses.min": "Cannot be negative.",
+  "Validation.attendance.maxMisses.integer": "Must be a whole number.",
+  "Validation.attendance.totalClasses.max": "Cannot exceed 365 classes.",
+  "Validation.attendance.totalClasses.min": "Must have at least 1 class.",
+  "Validation.attendance.totalClasses.integer": "Must be a whole number.",
+  "Validation.auth.confirmPasswordRequired": "Please confirm your password.",
+  "Validation.auth.emailInvalid": "Invalid email address.",
+  "Validation.auth.emailMaxLength": "Email must be at most 254 characters.",
+  "Validation.auth.nameMaxLength": "Name must be at most 100 characters.",
+  "Validation.auth.nameMinLength": "Name must be at least 2 characters.",
+  "Validation.auth.passwordMaxLength":
+    "Password must be at most 128 characters.",
+  "Validation.auth.passwordMinLength":
+    "Password must be at least 8 characters.",
+  "Validation.auth.passwordsDoNotMatch": "Passwords do not match.",
+  "Validation.flashcards.backMaxLength":
+    "Back must be at most 10,000 characters.",
+  "Validation.flashcards.backRequired": "Back is required.",
+  "Validation.flashcards.frontMaxLength":
+    "Front must be at most 10,000 characters.",
+  "Validation.flashcards.frontRequired": "Front is required.",
   "Validation.flashcards.subjectRequired": "Subject is required.",
-  "Validation.flashcards.textRequired": "Text is required.",
   "Validation.flashcards.textMaxLength":
     "Text must be 10,000 characters or less.",
+  "Validation.flashcards.textRequired": "Text is required.",
+  "Validation.notes.contentMaxLength":
+    "Content must be at most 10,000 characters.",
+  "Validation.notes.titleMaxLength": "Title must be at most 200 characters.",
+  "Validation.notes.titleRequired": "Title is required.",
+  "Validation.search.queryMaxLength":
+    "Search query must be at most 200 characters.",
+  "Validation.subjects.descriptionMaxLength":
+    "Description must be at most 500 characters.",
+  "Validation.subjects.nameMaxLength": "Name must be at most 100 characters.",
+  "Validation.subjects.nameRequired": "Name is required.",
+  "Validation.theme.invalid": "Invalid theme.",
 };
 
 function resolveMessage(key: string, values?: ValidationMessageValues): string {

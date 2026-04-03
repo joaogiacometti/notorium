@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface DeleteFlashcardDialogProps {
   flashcardId: string;
@@ -41,7 +41,7 @@ export function DeleteFlashcardDialog({
         onDeleted?.(result.id);
         onOpenChange(false);
       } else {
-        toast.error(tErrors(result.errorCode, result.errorParams));
+        toast.error(t(result.errorCode, result.errorParams));
       }
     });
   }

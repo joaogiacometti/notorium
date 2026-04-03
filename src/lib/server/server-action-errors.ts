@@ -7,8 +7,6 @@ export type ActionErrorResult = {
   errorMessage?: string;
 };
 
-type TranslateActionError = (key: string, values?: ActionErrorParams) => string;
-
 export function actionError(
   errorCode: string,
   options: {
@@ -24,9 +22,11 @@ export function actionError(
   };
 }
 
-const HARDCODED_ERROR_MESSAGES: Record<string, string> = {
+type ErrorMessageEntry = string | ((params?: ActionErrorParams) => string);
+
+const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "common.generic": "Something went wrong. Please try again.",
-  "common.invalidRequest": "Invalid request.",
+  "ServerErrors.common.invalidRequest": "Invalid request.",
   "auth.rateLimited": "Too many attempts. Please try again later.",
   "auth.invalidInput": "Invalid input.",
   "auth.loginFailed": "Login failed.",
@@ -35,8 +35,11 @@ const HARDCODED_ERROR_MESSAGES: Record<string, string> = {
   "auth.accessBlocked": "Your account access is blocked.",
   "auth.forbidden": "You are not allowed to do this.",
   "auth.userNotFound": "User not found.",
-  "notes.invalidData": "Invalid note data.",
-  "notes.notFound": "Note not found.",
+  "account.invalidData": "Invalid account data.",
+  "account.updateFailed": "Failed to update account.",
+  "account.ai.invalidData": "Invalid AI settings.",
+  "account.ai.updateFailed": "Failed to update AI settings.",
+  "account.ai.clearFailed": "Failed to clear AI settings.",
   "assessments.invalidData": "Invalid assessment data.",
   "assessments.notFound": "Assessment not found.",
   "attendance.invalidSettings": "Invalid attendance settings.",
@@ -47,32 +50,53 @@ const HARDCODED_ERROR_MESSAGES: Record<string, string> = {
   "dataTransfer.invalidImportFormat": "Invalid import file format.",
   "dataTransfer.noSubjectsToImport": "No subjects to import.",
   "dataTransfer.importFailed": "Failed to import data.",
-  "account.invalidData": "Invalid account data.",
-  "account.updateFailed": "Failed to update account.",
-  "account.ai.invalidData": "Invalid AI settings.",
-  "account.ai.updateFailed": "Failed to update AI settings.",
-  "account.ai.clearFailed": "Failed to clear AI settings.",
+  "flashcards.invalidData": "Invalid flashcard data.",
+  "flashcards.notFound": "Flashcard not found.",
+  "flashcards.duplicateFront": "A flashcard with this front already exists.",
+  "flashcards.ai.invalidData": "Invalid flashcard input for AI generation.",
+  "flashcards.ai.notConfigured":
+    "AI flashcard generation is not configured. Add your OpenRouter key and model in your account page.",
+  "flashcards.ai.unavailable":
+    "AI flashcard generation is temporarily unavailable.",
+  "flashcards.ai.emptyGeneration":
+    "Could not extract flashcards from this text. Try adding more content.",
+  "flashcards.validation.notConfigured":
+    "AI validation is not configured. Add your OpenRouter key and model in your account page.",
+  "flashcards.validation.unavailable":
+    "AI validation is temporarily unavailable. Please try again later.",
+  "flashcards.validation.noCards": "No flashcards to validate.",
+  "flashcards.review.invalidData": "Invalid review input.",
+  "flashcards.review.notFound": "Flashcard not found for review.",
+  "flashcards.review.notDue": "This flashcard is not due yet.",
+  "flashcards.review.unavailable":
+    "Review submission is temporarily unavailable. Try again in a moment.",
+  "limits.subjectLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} subjects.`,
+  "limits.subjectImportLimit": (params) =>
+    `Import failed: you can only have up to ${params?.max} subjects.`,
+  "limits.noteLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} notes per subject.`,
+  "limits.assessmentLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} assessments per subject.`,
+  "limits.flashcardLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
+  "notes.invalidData": "Invalid note data.",
+  "notes.notFound": "Note not found.",
+  "subjects.invalidData": "Invalid subject data.",
+  "subjects.notFound": "Subject not found.",
 };
 
-function defaultTranslator(key: string, values?: ActionErrorParams): string {
-  let message =
-    HARDCODED_ERROR_MESSAGES[key] ?? "Something went wrong. Please try again.";
-  if (values) {
-    for (const [paramKey, paramValue] of Object.entries(values)) {
-      message = message.replace(`{${paramKey}}`, String(paramValue));
-    }
+export function t(key: string, values?: ActionErrorParams): string {
+  const entry = ERROR_MESSAGES[key];
+  if (typeof entry === "function") {
+    return entry(values);
   }
-  return message;
+  return entry ?? "Something went wrong. Please try again.";
 }
 
-export function resolveActionErrorMessage(
-  error: ActionErrorResult,
-  t?: TranslateActionError,
-): string {
-  const translator = t ?? defaultTranslator;
-  try {
-    return translator(error.errorCode, error.errorParams);
-  } catch {
-    return translator("common.generic");
+export function resolveActionErrorMessage(error: ActionErrorResult): string {
+  if (error.errorMessage) {
+    return error.errorMessage;
   }
+  return t(error.errorCode, error.errorParams);
 }

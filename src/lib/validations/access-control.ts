@@ -2,14 +2,14 @@ import { z } from "zod";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const accessStatusSchema = z.enum(["pending", "approved", "blocked"], {
-  error: validationMessage("ServerActions.common.invalidRequest"),
+  error: validationMessage("Validation.common.invalidRequest"),
 });
 
 export const updateUserAccessSchema = z.object({
   userId: z
     .string()
     .trim()
-    .min(1, validationMessage("ServerActions.common.invalidRequest")),
+    .min(1, validationMessage("Validation.common.invalidRequest")),
   accessStatus: accessStatusSchema,
 });
 

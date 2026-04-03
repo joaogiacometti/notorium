@@ -30,8 +30,8 @@ import {
   editNoteSchema,
 } from "@/features/notes/validation";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import { tErrors } from "@/lib/server/error-messages";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
+import { t } from "@/lib/server/server-action-errors";
 
 type NoteFormValues = CreateNoteForm | EditNoteForm;
 
@@ -123,7 +123,7 @@ export function NoteDialogForm({
         return;
       }
 
-      toast.error(tErrors(result.errorCode, result.errorParams));
+      toast.error(t(result.errorCode, result.errorParams));
     } finally {
       setIsSubmitting(false);
     }

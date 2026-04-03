@@ -35,7 +35,7 @@ import {
   bulkMoveFlashcardsSchema,
 } from "@/features/flashcards/validation";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface BulkMoveFlashcardsDialogProps {
   ids: string[];
@@ -97,7 +97,7 @@ export function BulkMoveFlashcardsDialog({
         return;
       }
 
-      toast.error(tErrors(result.errorCode, result.errorParams));
+      toast.error(t(result.errorCode, result.errorParams));
     });
   }
 

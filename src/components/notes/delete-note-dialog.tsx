@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface DeleteNoteDialogProps {
   noteId: string;
@@ -45,7 +45,7 @@ export function DeleteNoteDialog({
           onOpenChange(false);
         }
       } else {
-        toast.error(tErrors(result.errorCode, result.errorParams));
+        toast.error(t(result.errorCode, result.errorParams));
       }
     });
   }

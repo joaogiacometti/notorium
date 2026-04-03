@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/dates/format";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
-import { tErrors } from "@/lib/server/error-messages";
+import { t } from "@/lib/server/server-action-errors";
 
 interface ArchivedSubjectCardProps {
   subject: SubjectEntity;
@@ -38,7 +38,7 @@ export function ArchivedSubjectCard({
         return;
       }
 
-      toast.error(tErrors(result.errorCode, result.errorParams));
+      toast.error(t(result.errorCode, result.errorParams));
     });
   }
 
