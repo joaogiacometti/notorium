@@ -6,7 +6,7 @@ const resolveRequiredUserAiSettingsMock = vi.fn();
 const generateFlashcardBackContentMock = vi.fn();
 const improveFlashcardBackContentMock = vi.fn();
 
-vi.mock("@/features/ai/settings", () => ({
+vi.mock("@/features/ai/queries", () => ({
   resolveRequiredUserAiSettings: resolveRequiredUserAiSettingsMock,
 }));
 

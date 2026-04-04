@@ -1,4 +1,4 @@
-import type { ResolvedUserAiSettings } from "@/features/ai/settings";
+import type { ResolvedUserAiSettings } from "@/features/ai/queries";
 import {
   buildGenerateFlashcardBackPrompt,
   buildGenerateFlashcardsPrompt,

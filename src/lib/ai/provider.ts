@@ -1,5 +1,5 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { ResolvedUserAiSettings } from "@/features/ai/settings";
+import type { ResolvedUserAiSettings } from "@/features/ai/queries";
 
 export function getUserAiModel(settings: ResolvedUserAiSettings | null) {
   if (!settings || settings.provider !== "openrouter") {

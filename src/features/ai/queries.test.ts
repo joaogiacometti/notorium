@@ -75,7 +75,7 @@ describe("ai settings helpers", () => {
       },
     ]);
 
-    const { getUserAiSettingsSummary } = await import("@/features/ai/settings");
+    const { getUserAiSettingsSummary } = await import("@/features/ai/queries");
 
     const result = await getUserAiSettingsSummary("user-1");
 
@@ -92,7 +92,7 @@ describe("ai settings helpers", () => {
   it("scopes summary reads by the authenticated user id", async () => {
     selectLimitMock.mockResolvedValueOnce([]);
 
-    const { getUserAiSettingsSummary } = await import("@/features/ai/settings");
+    const { getUserAiSettingsSummary } = await import("@/features/ai/queries");
 
     await getUserAiSettingsSummary("user-42");
 
@@ -106,7 +106,7 @@ describe("ai settings helpers", () => {
       },
     ]);
 
-    const { updateUserAiSettings } = await import("@/features/ai/settings");
+    const { updateUserAiSettings } = await import("@/features/ai/mutations");
 
     const result = await updateUserAiSettings("user-1", {
       model: "anthropic/claude-sonnet-4",
@@ -124,7 +124,7 @@ describe("ai settings helpers", () => {
   });
 
   it("clears settings using the provided user id", async () => {
-    const { clearUserAiSettings } = await import("@/features/ai/settings");
+    const { clearUserAiSettings } = await import("@/features/ai/mutations");
 
     await clearUserAiSettings("user-clear");
 
@@ -147,7 +147,7 @@ describe("ai settings helpers", () => {
       throw new Error("bad tag");
     });
 
-    const { resolveUserAiSettings } = await import("@/features/ai/settings");
+    const { resolveUserAiSettings } = await import("@/features/ai/queries");
 
     await expect(resolveUserAiSettings("user-1")).rejects.toMatchObject({
       name: "AiStoredCredentialError",

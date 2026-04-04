@@ -17,7 +17,7 @@ import {
 import {
   clearUserAiSettings as clearUserAiSettingsForUser,
   updateUserAiSettings as updateUserAiSettingsForUser,
-} from "@/features/ai/settings";
+} from "@/features/ai/mutations";
 import { isAdminUser } from "@/lib/auth/access-control";
 import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import {

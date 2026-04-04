@@ -1,6 +1,6 @@
 import { generateObject } from "ai";
 import type { z } from "zod";
-import type { ResolvedUserAiSettings } from "@/features/ai/settings";
+import type { ResolvedUserAiSettings } from "@/features/ai/queries";
 import { AiConfigurationError } from "@/lib/ai/errors";
 import { getUserAiModel } from "@/lib/ai/provider";
 

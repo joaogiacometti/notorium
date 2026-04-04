@@ -1,7 +1,7 @@
 import { UserCircle } from "lucide-react";
 import { AccountForm } from "@/components/account/account-form";
 import { AppPageContainer } from "@/components/shared/app-page-container";
-import { getUserAiSettingsSummary } from "@/features/ai/settings";
+import { getUserAiSettingsSummary } from "@/features/ai/queries";
 import { requireSession } from "@/lib/auth/auth";
 
 export default async function AccountPage() {

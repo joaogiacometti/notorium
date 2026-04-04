@@ -1,4 +1,4 @@
-import { resolveRequiredUserAiSettings } from "@/features/ai/settings";
+import { resolveRequiredUserAiSettings } from "@/features/ai/queries";
 import {
   type FlashcardForValidation,
   type FlashcardValidationOutput,
