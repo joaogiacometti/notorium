@@ -54,6 +54,44 @@ export function normalizeRichTextForUniqueness(value: string): string {
     .toLowerCase();
 }
 
+export function replaceImagesWithPlaceholders(value: string): {
+  text: string;
+  images: string[];
+} {
+  const images: string[] = [];
+  let index = 0;
+  const text = value.replaceAll(/<img\b[^>]*>/gi, (match) => {
+    images.push(match);
+    const placeholder = `{{IMAGE_${index}}}`;
+    index++;
+    return placeholder;
+  });
+  return { text, images };
+}
+
+export function restoreImagePlaceholders(
+  value: string,
+  images: string[],
+): string {
+  let result = value;
+  const unrestored: string[] = [];
+
+  images.forEach((img, index) => {
+    const placeholder = `{{IMAGE_${index}}}`;
+    if (result.includes(placeholder)) {
+      result = result.replaceAll(placeholder, img);
+    } else {
+      unrestored.push(img);
+    }
+  });
+
+  if (unrestored.length > 0) {
+    result += unrestored.join("");
+  }
+
+  return result;
+}
+
 export function hasRichTextContent(value: string): boolean {
   return /<img\b/i.test(value) || richTextToPlainText(value).length > 0;
 }

@@ -4,6 +4,8 @@ import {
   hasRichTextContent,
   normalizeRichTextForRendering,
   normalizeRichTextForUniqueness,
+  replaceImagesWithPlaceholders,
+  restoreImagePlaceholders,
   richTextToPlainText,
   richTextToPlainTextWithImagePlaceholders,
 } from "@/lib/editor/rich-text";
@@ -179,5 +181,73 @@ describe("normalizeRichTextForUniqueness", () => {
     );
 
     expect(first).toBe(second);
+  });
+});
+
+describe("replaceImagesWithPlaceholders", () => {
+  it("replaces single image with placeholder", () => {
+    const { text, images } = replaceImagesWithPlaceholders(
+      '<p>Some text <img src="test.png"> more text</p>',
+    );
+    expect(text).toBe("<p>Some text {{IMAGE_0}} more text</p>");
+    expect(images).toEqual(['<img src="test.png">']);
+  });
+
+  it("replaces multiple images with sequential placeholders", () => {
+    const { text, images } = replaceImagesWithPlaceholders(
+      '<p><img src="a.png"> middle <img src="b.png"> end</p>',
+    );
+    expect(text).toBe("<p>{{IMAGE_0}} middle {{IMAGE_1}} end</p>");
+    expect(images).toEqual(['<img src="a.png">', '<img src="b.png">']);
+  });
+
+  it("returns original text when no images", () => {
+    const { text, images } = replaceImagesWithPlaceholders("<p>No images</p>");
+    expect(text).toBe("<p>No images</p>");
+    expect(images).toEqual([]);
+  });
+
+  it("handles img tags with different attributes", () => {
+    const { text, images } = replaceImagesWithPlaceholders(
+      '<p><img src="a.png" alt="test" class="foo"> text</p>',
+    );
+    expect(text).toBe("<p>{{IMAGE_0}} text</p>");
+    expect(images).toEqual(['<img src="a.png" alt="test" class="foo">']);
+  });
+});
+
+describe("restoreImagePlaceholders", () => {
+  it("restores single placeholder to image in paragraph", () => {
+    const result = restoreImagePlaceholders("<p>Content {{IMAGE_0}} end</p>", [
+      '<img src="test.png">',
+    ]);
+    expect(result).toBe('<p>Content <img src="test.png"> end</p>');
+  });
+
+  it("restores multiple placeholders", () => {
+    const result = restoreImagePlaceholders(
+      "<p>{{IMAGE_0}} and {{IMAGE_1}}</p>",
+      ['<img src="a.png">', '<img src="b.png">'],
+    );
+    expect(result).toBe('<p><img src="a.png"> and <img src="b.png"></p>');
+  });
+
+  it("returns original text when no images", () => {
+    const result = restoreImagePlaceholders("<p>No placeholders</p>", []);
+    expect(result).toBe("<p>No placeholders</p>");
+  });
+
+  it("handles placeholder at start", () => {
+    const result = restoreImagePlaceholders("{{IMAGE_0}}<p>after</p>", [
+      '<img src="first.png">',
+    ]);
+    expect(result).toBe('<img src="first.png"><p>after</p>');
+  });
+
+  it("appends image at end when placeholder is missing from output", () => {
+    const result = restoreImagePlaceholders("<p>AI rewrote everything</p>", [
+      '<img src="diagram.png">',
+    ]);
+    expect(result).toBe('<p>AI rewrote everything</p><img src="diagram.png">');
   });
 });

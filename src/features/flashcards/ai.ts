@@ -22,7 +22,11 @@ import {
 import { flashcardBackSchema } from "@/features/flashcards/validation";
 import { generateStructuredOutput } from "@/lib/ai/generate-structured";
 import { AI_LIMITS } from "@/lib/config/limits";
-import { richTextToPlainText } from "@/lib/editor/rich-text";
+import {
+  replaceImagesWithPlaceholders,
+  restoreImagePlaceholders,
+  richTextToPlainText,
+} from "@/lib/editor/rich-text";
 
 export type { FlashcardValidationOutput };
 export type { FlashcardForValidation };
@@ -68,7 +72,12 @@ export async function improveFlashcardBackContent(input: {
   currentBack: string;
 }): Promise<string> {
   const frontText = normalizeLine(richTextToPlainText(input.front));
-  const backText = normalizeLine(richTextToPlainText(input.currentBack));
+  const { text: backWithPlaceholders, images } = replaceImagesWithPlaceholders(
+    input.currentBack,
+  );
+  // Note: richTextToPlainText preserves text nodes like {{IMAGE_N}},
+  // which is required for image placeholder restoration after AI generation.
+  const backText = normalizeLine(richTextToPlainText(backWithPlaceholders));
 
   const output = await generateStructuredOutput({
     settings: input.settings,
@@ -91,7 +100,7 @@ export async function improveFlashcardBackContent(input: {
     );
   }
 
-  return parsedBack.data;
+  return restoreImagePlaceholders(parsedBack.data, images);
 }
 
 export async function generateFlashcardsFromText(input: {

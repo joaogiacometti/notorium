@@ -272,6 +272,8 @@ export function buildImproveFlashcardBackPrompt(input: {
     `Subject context: ${input.subjectName}`,
     `Front: ${input.front}`,
     `Current back: ${input.currentBack}`,
+    "",
+    `Important: The back may contain image placeholders like {{IMAGE_0}}, {{IMAGE_1}}, etc. Treat these as opaque tokens that MUST appear in your output exactly as-is. Do not remove, rename, or modify them.`,
   ].join("\n");
 }
 

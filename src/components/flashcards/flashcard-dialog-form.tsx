@@ -310,7 +310,8 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
             isSubmitting ||
             isGeneratingBack ||
             isCheckingDuplicateFront ||
-            isDuplicateFront
+            isDuplicateFront ||
+            Boolean(proposedBack && previousBack)
           }
           className="w-full"
         >

@@ -176,6 +176,21 @@ src/
 - Zod schema tests should reject invalid inputs thoroughly.
 - Add or update regression tests when changing auth, AI, account, or data-transfer code so sensitive fields cannot leak into exports, imports, logs, or client-visible payloads.
 
+### Test-Driven Development (TDD)
+
+Follow the Red, Green, Refactor cycle for all new features and bug fixes:
+
+1. **Red** — Write a failing test that describes the expected behavior
+2. **Green** — Write the minimal code needed to make the test pass
+3. **Refactor** — Improve code quality while keeping tests green
+
+When adding new utility functions, helpers, or business logic:
+- Write tests that cover normal cases, edge cases, and error cases **before** implementing
+- Tests should be in a `.test.ts` file co-located with the source file
+
+When fixing bugs:
+- Write a regression test that reproduces the bug **before** applying the fix
+
 ### E2E Testing
 
 - Focus E2E tests on essential user flows and critical paths only.

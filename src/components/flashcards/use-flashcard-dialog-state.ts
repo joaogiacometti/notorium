@@ -166,6 +166,8 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
   function handleDiscardChanges() {
     form.reset(values);
+    setPreviousBack(null);
+    setProposedBack(null);
     setDiscardDialogOpen(false);
     onOpenChange(false);
   }
@@ -187,6 +189,8 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
 
     form.reset(values);
+    setPreviousBack(null);
+    setProposedBack(null);
     setDiscardDialogOpen(false);
     onOpenChange(false);
   }
@@ -309,7 +313,9 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     currentValues.subjectId.length > 0 &&
     hasRichTextContent(currentValues.front) &&
     !isGeneratingBack &&
-    !isSubmitting;
+    !isSubmitting &&
+    !proposedBack &&
+    !previousBack;
 
   return {
     discardDialogOpen,
