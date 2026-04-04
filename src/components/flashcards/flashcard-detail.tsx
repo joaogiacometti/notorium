@@ -120,6 +120,10 @@ export function FlashcardDetail({
             );
           }
         }}
+        onDeleted={() => {
+          setEditOpen(false);
+          startNavTransition(() => router.push(backHref));
+        }}
       />
       <ResetFlashcardDialog
         flashcardId={currentFlashcard.id}

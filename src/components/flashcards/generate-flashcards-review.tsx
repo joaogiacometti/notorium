@@ -22,9 +22,10 @@ interface GenerateFlashcardsReviewProps {
   onBack?: () => void;
   isCreating: boolean;
   typeToggle?: {
-    mode: "single" | "ai";
-    onModeChange: (mode: "single" | "ai") => void;
+    mode: string;
+    onModeChange: (mode: string) => void;
     disabled?: boolean;
+    options?: Array<{ value: string; label: string }>;
   };
 }
 
@@ -102,6 +103,14 @@ export function GenerateFlashcardsReview({
     }
   }
 
+  let buttonText = `Create ${selectedCount} Cards`;
+  if (selectedCount === 1) {
+    buttonText = "Create 1 Card";
+  }
+  if (isCreating) {
+    buttonText = `Creating ${selectedCount} cards...`;
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {typeToggle ? (
@@ -109,6 +118,7 @@ export function GenerateFlashcardsReview({
           mode={typeToggle.mode}
           onModeChange={typeToggle.onModeChange}
           disabled={typeToggle.disabled}
+          options={typeToggle.options}
         />
       ) : null}
       <div className="flex items-center justify-between">
@@ -248,9 +258,7 @@ export function GenerateFlashcardsReview({
         disabled={selectedCount === 0 || isCreating}
         className="w-full"
       >
-        {isCreating
-          ? `Creating ${selectedCount} cards...`
-          : `Create ${selectedCount} Card${selectedCount !== 1 ? "s" : ""}`}
+        {buttonText}
       </Button>
     </div>
   );

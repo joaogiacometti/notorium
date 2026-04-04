@@ -517,6 +517,7 @@ export function FlashcardReviewClient({
             open={editOpen}
             onOpenChange={setEditOpen}
             onUpdated={handleFlashcardUpdated}
+            onDeleted={handleFlashcardDeleted}
           />
           <DeleteFlashcardDialog
             flashcardId={currentCard.id}

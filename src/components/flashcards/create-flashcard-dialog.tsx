@@ -147,13 +147,15 @@ export function CreateFlashcardDialog({
     setIsGenerating(false);
 
     if (!result.success) {
-      toast.error(
-        result.errorCode === "flashcards.ai.notConfigured"
-          ? "Configure your AI settings in Account to use this feature."
-          : result.errorCode === "flashcards.ai.emptyGeneration"
-            ? "Could not extract flashcards from this text. Try adding more content."
-            : "AI service temporarily unavailable. Try again later.",
-      );
+      let errorMessage = "AI service temporarily unavailable. Try again later.";
+      if (result.errorCode === "flashcards.ai.notConfigured") {
+        errorMessage =
+          "Configure your AI settings in Account to use this feature.";
+      } else if (result.errorCode === "flashcards.ai.emptyGeneration") {
+        errorMessage =
+          "Could not extract flashcards from this text. Try adding more content.";
+      }
+      toast.error(errorMessage);
       return;
     }
 
@@ -167,8 +169,7 @@ export function CreateFlashcardDialog({
     let hitLimit = false;
     const createdFlashcards: FlashcardEntity[] = [];
 
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i];
+    for (const card of cards) {
       const result = await createFlashcard({
         subjectId: aiForm.getValues().subjectId,
         front: card.front,
@@ -192,7 +193,7 @@ export function CreateFlashcardDialog({
 
     if (createdCount === cards.length) {
       toast.success(
-        `Created ${createdCount} flashcard${createdCount !== 1 ? "s" : ""}`,
+        `Created ${createdCount} flashcard${createdCount === 1 ? "" : "s"}`,
       );
       setGeneratedCards(null);
       aiForm.reset(
@@ -253,6 +254,129 @@ export function CreateFlashcardDialog({
     setGeneratedCards(null);
   }
 
+  let dialogContent: React.ReactNode;
+
+  if (mode === "single") {
+    dialogContent = (
+      <FlashcardDialogForm
+        mode="create"
+        open={open}
+        onOpenChange={dialog.handleOpenChange}
+        trigger={null}
+        form={singleForm}
+        formId="form-create-flashcard"
+        subjects={subjects}
+        onSubmit={dialog.handleSubmit}
+        discardDialogOpen={dialog.discardDialogOpen}
+        onDiscardDialogOpenChange={dialog.setDiscardDialogOpen}
+        onDiscard={dialog.handleDiscardChanges}
+        isGeneratingBack={dialog.isGeneratingBack}
+        isSubmitting={dialog.isSubmitting}
+        canUseAiBack={dialog.canUseAiBack}
+        onGenerateBack={dialog.handleGenerateBack}
+        previousBack={dialog.previousBack}
+        proposedBack={dialog.proposedBack}
+        onAcceptBack={dialog.handleAcceptBack}
+        onRejectBack={dialog.handleRejectBack}
+        keepFrontAfterSubmit={dialog.keepFrontAfterSubmit}
+        onKeepFrontAfterSubmitChange={dialog.setKeepFrontAfterSubmit}
+        keepBackAfterSubmit={dialog.keepBackAfterSubmit}
+        onKeepBackAfterSubmitChange={dialog.setKeepBackAfterSubmit}
+        isCheckingDuplicateFront={dialog.isCheckingDuplicateFront}
+        isDuplicateFront={dialog.isDuplicateFront}
+        duplicateFrontMessage={dialog.duplicateFrontMessage}
+        noDialog
+        typeToggle={{
+          mode: "single",
+          onModeChange: handleModeSwitch as (mode: string) => void,
+        }}
+      />
+    );
+  } else if (generatedCards) {
+    dialogContent = (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3 pb-5 sm:px-6">
+        <p className="mb-3 text-sm text-muted-foreground">
+          Review and edit generated flashcards before creating.
+        </p>
+        <GenerateFlashcardsReview
+          cards={generatedCards}
+          onCreate={handleCreateCards}
+          onBack={handleBackToInput}
+          isCreating={isCreating}
+          typeToggle={{
+            mode: "ai",
+            onModeChange: handleModeSwitch as (mode: string) => void,
+          }}
+        />
+      </div>
+    );
+  } else {
+    dialogContent = (
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleGenerate();
+        }}
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      >
+        <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
+          <FieldGroup className="gap-5">
+            {subjects && subjects.length > 0 ? (
+              <SubjectSelect
+                value={aiForm.watch("subjectId")}
+                onChange={(value) => aiForm.setValue("subjectId", value)}
+                subjects={subjects}
+                id="ai-subject"
+                error={aiForm.formState.errors.subjectId?.message as string}
+              />
+            ) : null}
+            <CreateModeToggle
+              mode="ai"
+              onModeChange={handleModeSwitch as (mode: string) => void}
+            />
+            <Field>
+              <FieldLabel htmlFor="ai-text">Resources</FieldLabel>
+              <TiptapEditor
+                value={aiForm.watch("text")}
+                onChange={(value) => aiForm.setValue("text", value)}
+                placeholder="e.g. Textbook excerpts, lecture notes, or any study material..."
+                id="ai-text"
+                contentClassName="min-h-50 max-h-[40svh]"
+                showToolbar
+              />
+              {aiForm.formState.errors.text ? (
+                <FieldError errors={[aiForm.formState.errors.text]} />
+              ) : null}
+            </Field>
+          </FieldGroup>
+        </div>
+        <div className="shrink-0 border-t px-4 py-4 sm:px-6">
+          <Button
+            type="submit"
+            disabled={
+              isGenerating ||
+              !aiForm.watch("text") ||
+              !aiForm.watch("subjectId")
+            }
+            className="w-full"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 size-4" />
+                Generate Flashcards
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
@@ -262,119 +386,7 @@ export function CreateFlashcardDialog({
             <DialogTitle>Create Flashcard</DialogTitle>
           </DialogHeader>
 
-          {mode === "single" ? (
-            <FlashcardDialogForm
-              mode="create"
-              open={open}
-              onOpenChange={dialog.handleOpenChange}
-              trigger={null}
-              form={singleForm}
-              formId="form-create-flashcard"
-              subjects={subjects}
-              onSubmit={dialog.handleSubmit}
-              discardDialogOpen={dialog.discardDialogOpen}
-              onDiscardDialogOpenChange={dialog.setDiscardDialogOpen}
-              onDiscard={dialog.handleDiscardChanges}
-              isGeneratingBack={dialog.isGeneratingBack}
-              isSubmitting={dialog.isSubmitting}
-              canUseAiBack={dialog.canUseAiBack}
-              onGenerateBack={dialog.handleGenerateBack}
-              previousBack={dialog.previousBack}
-              proposedBack={dialog.proposedBack}
-              onAcceptBack={dialog.handleAcceptBack}
-              onRejectBack={dialog.handleRejectBack}
-              keepFrontAfterSubmit={dialog.keepFrontAfterSubmit}
-              onKeepFrontAfterSubmitChange={dialog.setKeepFrontAfterSubmit}
-              keepBackAfterSubmit={dialog.keepBackAfterSubmit}
-              onKeepBackAfterSubmitChange={dialog.setKeepBackAfterSubmit}
-              isCheckingDuplicateFront={dialog.isCheckingDuplicateFront}
-              isDuplicateFront={dialog.isDuplicateFront}
-              duplicateFrontMessage={dialog.duplicateFrontMessage}
-              noDialog
-              typeToggle={{
-                mode: "single",
-                onModeChange: handleModeSwitch,
-              }}
-            />
-          ) : generatedCards ? (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3 pb-5 sm:px-6">
-              <p className="mb-3 text-sm text-muted-foreground">
-                Review and edit generated flashcards before creating.
-              </p>
-              <GenerateFlashcardsReview
-                cards={generatedCards}
-                onCreate={handleCreateCards}
-                onBack={handleBackToInput}
-                isCreating={isCreating}
-                typeToggle={{
-                  mode: "ai",
-                  onModeChange: handleModeSwitch,
-                }}
-              />
-            </div>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void handleGenerate();
-              }}
-              className="flex min-h-0 flex-1 flex-col overflow-hidden"
-            >
-              <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
-                <FieldGroup className="gap-5">
-                  {subjects && subjects.length > 0 ? (
-                    <SubjectSelect
-                      value={aiForm.watch("subjectId")}
-                      onChange={(value) => aiForm.setValue("subjectId", value)}
-                      subjects={subjects}
-                      id="ai-subject"
-                      error={
-                        aiForm.formState.errors.subjectId?.message as string
-                      }
-                    />
-                  ) : null}
-                  <CreateModeToggle mode="ai" onModeChange={handleModeSwitch} />
-                  <Field>
-                    <FieldLabel htmlFor="ai-text">Resources</FieldLabel>
-                    <TiptapEditor
-                      value={aiForm.watch("text")}
-                      onChange={(value) => aiForm.setValue("text", value)}
-                      placeholder="e.g. Textbook excerpts, lecture notes, or any study material..."
-                      id="ai-text"
-                      contentClassName="min-h-50 max-h-[40svh]"
-                      showToolbar
-                    />
-                    {aiForm.formState.errors.text ? (
-                      <FieldError errors={[aiForm.formState.errors.text]} />
-                    ) : null}
-                  </Field>
-                </FieldGroup>
-              </div>
-              <div className="shrink-0 border-t px-4 py-4 sm:px-6">
-                <Button
-                  type="submit"
-                  disabled={
-                    isGenerating ||
-                    !aiForm.watch("text") ||
-                    !aiForm.watch("subjectId")
-                  }
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 size-4" />
-                      Generate Flashcards
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          )}
+          {dialogContent}
         </DialogContent>
       </Dialog>
       <UnsavedChangesDialog

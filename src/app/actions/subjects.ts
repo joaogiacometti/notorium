@@ -14,7 +14,6 @@ import {
 } from "@/features/subjects/queries";
 import {
   revalidateAllSubjectPaths,
-  revalidateSubjectDetailPaths,
   revalidateSubjectListPaths,
 } from "@/features/subjects/revalidation";
 import {
@@ -80,7 +79,7 @@ export async function editSubject(
       const result = await editSubjectForUser(userId, parsedData);
 
       if (result.success) {
-        revalidateSubjectDetailPaths(parsedData.id);
+        revalidateAllSubjectPaths(parsedData.id);
       }
 
       return result;

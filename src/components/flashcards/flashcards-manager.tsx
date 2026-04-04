@@ -424,6 +424,14 @@ export function FlashcardsManager({
               }
             }
           }}
+          onDeleted={(deletedId) => {
+            setEditingFlashcardId(null);
+            refreshManagePage();
+            if (validationMode) {
+              removeValidationFlashcard(deletedId);
+              checkValidationEmpty();
+            }
+          }}
         />
       )}
       <BulkDeleteFlashcardsDialog

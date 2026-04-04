@@ -82,6 +82,7 @@ export function FlashcardCard({
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdated={onUpdated}
+        onDeleted={onDeleted}
       />
       <DeleteFlashcardDialog
         flashcardId={flashcard.id}

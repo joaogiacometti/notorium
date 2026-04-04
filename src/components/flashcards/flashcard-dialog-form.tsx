@@ -65,9 +65,10 @@ interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
   duplicateFrontMessage: string;
   noDialog?: boolean;
   typeToggle?: {
-    mode: "single" | "ai";
-    onModeChange: (mode: "single" | "ai") => void;
+    mode: string;
+    onModeChange: (mode: string) => void;
     disabled?: boolean;
+    options?: Array<{ value: string; label: string }>;
   };
 }
 
@@ -148,6 +149,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
               mode={typeToggle.mode}
               onModeChange={typeToggle.onModeChange}
               disabled={typeToggle.disabled}
+              options={typeToggle.options}
             />
           ) : null}
           <Controller
