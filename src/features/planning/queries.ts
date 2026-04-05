@@ -1,6 +1,7 @@
-import { and, eq, gte, isNull, lte } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment, attendanceMiss, subject } from "@/db/schema";
+import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
@@ -18,6 +19,8 @@ export async function getPlanningCalendarDataForUser(
   rangeStart: string,
   rangeEnd: string,
 ): Promise<PlanningCalendarData> {
+  const subjectFilters = getOwnedActiveSubjectFilters(userId);
+
   const [assessmentRows, missRows, subjectRows] = await Promise.all([
     getDb()
       .select({ assessment, subjectName: subject.name })
@@ -26,8 +29,7 @@ export async function getPlanningCalendarDataForUser(
       .where(
         and(
           eq(assessment.userId, userId),
-          eq(subject.userId, userId),
-          isNull(subject.archivedAt),
+          ...subjectFilters,
           gte(assessment.dueDate, rangeStart),
           lte(assessment.dueDate, rangeEnd),
         ),
@@ -39,8 +41,7 @@ export async function getPlanningCalendarDataForUser(
       .where(
         and(
           eq(attendanceMiss.userId, userId),
-          eq(subject.userId, userId),
-          isNull(subject.archivedAt),
+          ...subjectFilters,
           gte(attendanceMiss.missDate, rangeStart),
           lte(attendanceMiss.missDate, rangeEnd),
         ),
@@ -48,7 +49,7 @@ export async function getPlanningCalendarDataForUser(
     getDb()
       .select({ id: subject.id, name: subject.name })
       .from(subject)
-      .where(and(eq(subject.userId, userId), isNull(subject.archivedAt))),
+      .where(and(eq(subject.userId, userId), ...subjectFilters)),
   ]);
 
   return {

@@ -7,12 +7,12 @@ import {
   getFlashcardReviewStateForUser,
   getFlashcardReviewSummaryForUser,
 } from "@/features/flashcard-review/queries";
-import { revalidateFlashcardReviewSubjectPaths } from "@/features/flashcard-review/revalidation";
 import {
   type ReviewFlashcardForm,
   reviewFlashcardSchema,
 } from "@/features/flashcard-review/validation";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
+import { revalidateFlashcardSubjectPaths } from "@/features/flashcards/revalidation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
@@ -56,7 +56,7 @@ export async function reviewFlashcard(
       const result = await reviewFlashcardForUser(userId, parsedData);
 
       if (result.success) {
-        revalidateFlashcardReviewSubjectPaths(result.flashcard.subjectId);
+        revalidateFlashcardSubjectPaths(result.flashcard.subjectId);
       }
 
       return result;

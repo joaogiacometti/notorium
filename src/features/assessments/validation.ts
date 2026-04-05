@@ -24,7 +24,9 @@ const optionalNumberSchema = (field: "score" | "weight") =>
     })
     .min(0, validationMessage(`Validation.assessments.${field}.minValue`))
     .max(
-      LIMITS.assessmentScoreMax,
+      field === "score"
+        ? LIMITS.assessmentScoreMax
+        : LIMITS.assessmentWeightMax,
       validationMessage(`Validation.assessments.${field}.maxValue`),
     )
     .optional();
@@ -104,6 +106,14 @@ const planningAssessmentSortValues = [
   "updatedAtDesc",
   "scoreDesc",
 ] as const;
+const planningAssessmentDueDateFilterValues = [
+  "all",
+  "past",
+  "today",
+  "next7Days",
+  "next30Days",
+  "none",
+] as const;
 
 export const planningAssessmentsQuerySchema = z.object({
   pageIndex: z.number().int().min(0),
@@ -113,6 +123,7 @@ export const planningAssessmentsQuerySchema = z.object({
   statusFilter: z.enum(planningAssessmentStatusFilterValues),
   typeFilter: z.enum(planningAssessmentTypeFilterValues),
   sortBy: z.enum(planningAssessmentSortValues),
+  dueDateFilter: z.enum(planningAssessmentDueDateFilterValues).optional(),
 });
 
 export type PlanningAssessmentsQueryInput = z.infer<

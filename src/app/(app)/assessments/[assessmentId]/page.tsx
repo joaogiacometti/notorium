@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { AssessmentDetail } from "@/components/assessments/assessment-detail";
 import { getAssessmentDetailForUser } from "@/features/assessments/queries";
-import { resolveAssessmentDetailBackLink } from "@/features/navigation/detail-page-back-link";
 import { requireSession } from "@/lib/auth/auth";
+import { resolveAssessmentDetailBackLink } from "@/lib/navigation/detail-page-back-link";
 
 interface AssessmentPageProps {
   params: Promise<{ assessmentId: string }>;

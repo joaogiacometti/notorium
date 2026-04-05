@@ -97,7 +97,7 @@ export async function countSubjectsForUser(userId: string): Promise<number> {
   const result = await getDb()
     .select({ total: count() })
     .from(subject)
-    .where(eq(subject.userId, userId));
+    .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)));
 
   return result[0]?.total ?? 0;
 }

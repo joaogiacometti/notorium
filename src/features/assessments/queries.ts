@@ -1,3 +1,4 @@
+import { addDays } from "date-fns";
 import { and, count, desc, eq, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
@@ -150,9 +151,10 @@ function getPlanningAssessmentFilters(
     subjectId,
     statusFilter,
     typeFilter,
+    dueDateFilter,
   }: Pick<
     PlanningAssessmentsQueryInput,
-    "search" | "subjectId" | "statusFilter" | "typeFilter"
+    "search" | "subjectId" | "statusFilter" | "typeFilter" | "dueDateFilter"
   >,
 ): SQL<unknown>[] {
   const filters: SQL<unknown>[] = [
@@ -184,6 +186,28 @@ function getPlanningAssessmentFilters(
 
   if (typeFilter !== "all") {
     filters.push(eq(assessment.type, typeFilter));
+  }
+
+  if (dueDateFilter && dueDateFilter !== "all") {
+    if (dueDateFilter === "none") {
+      filters.push(sql<boolean>`${assessment.dueDate} is null`);
+    } else if (dueDateFilter === "past") {
+      filters.push(
+        sql<boolean>`${assessment.dueDate} is not null and ${assessment.dueDate} < ${todayIso}`,
+      );
+    } else if (dueDateFilter === "today") {
+      filters.push(eq(assessment.dueDate, todayIso));
+    } else if (dueDateFilter === "next7Days") {
+      const next7Iso = getTodayIso(addDays(new Date(), 7));
+      filters.push(
+        sql<boolean>`${assessment.dueDate} >= ${todayIso} and ${assessment.dueDate} <= ${next7Iso}`,
+      );
+    } else if (dueDateFilter === "next30Days") {
+      const next30Iso = getTodayIso(addDays(new Date(), 30));
+      filters.push(
+        sql<boolean>`${assessment.dueDate} >= ${todayIso} and ${assessment.dueDate} <= ${next30Iso}`,
+      );
+    }
   }
 
   return filters;

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { FlashcardDetail } from "@/components/flashcards/flashcard-detail";
 import { getFlashcardByIdForUser } from "@/features/flashcards/queries";
-import { resolveFlashcardDetailBackLink } from "@/features/navigation/detail-page-back-link";
 import { getSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
+import { resolveFlashcardDetailBackLink } from "@/lib/navigation/detail-page-back-link";
 
 interface FlashcardPageProps {
   params: Promise<{ id: string; flashcardId: string }>;

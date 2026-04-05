@@ -1,6 +1,7 @@
-import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, note, subject } from "@/db/schema";
+import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { LIMITS } from "@/lib/config/limits";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type { SearchData } from "@/lib/server/api-contracts";
@@ -10,6 +11,7 @@ export async function getSearchDataForUser(
   searchQuery: string,
 ): Promise<SearchData> {
   const searchPattern = buildContainsSearchPattern(searchQuery);
+  const subjectFilters = getOwnedActiveSubjectFilters(userId);
 
   const [allSubjects, allNotes, allFlashcards] = await Promise.all([
     getDb()
@@ -22,7 +24,7 @@ export async function getSearchDataForUser(
       .where(
         and(
           eq(subject.userId, userId),
-          isNull(subject.archivedAt),
+          ...subjectFilters,
           or(
             ilike(subject.name, searchPattern),
             ilike(subject.description, searchPattern),
@@ -44,8 +46,7 @@ export async function getSearchDataForUser(
       .where(
         and(
           eq(note.userId, userId),
-          eq(subject.userId, userId),
-          isNull(subject.archivedAt),
+          ...subjectFilters,
           or(
             ilike(note.title, searchPattern),
             ilike(note.content, searchPattern),
@@ -68,8 +69,7 @@ export async function getSearchDataForUser(
       .where(
         and(
           eq(flashcard.userId, userId),
-          eq(subject.userId, userId),
-          isNull(subject.archivedAt),
+          ...subjectFilters,
           or(
             ilike(flashcard.front, searchPattern),
             ilike(flashcard.back, searchPattern),
@@ -86,6 +86,8 @@ export async function getSearchDataForUser(
 export async function getRecentSearchDataForUser(
   userId: string,
 ): Promise<SearchData> {
+  const subjectFilters = getOwnedActiveSubjectFilters(userId);
+
   const [allSubjects, allNotes, allFlashcards] = await Promise.all([
     getDb()
       .select({
@@ -94,7 +96,7 @@ export async function getRecentSearchDataForUser(
         description: subject.description,
       })
       .from(subject)
-      .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)))
+      .where(and(eq(subject.userId, userId), ...subjectFilters))
       .orderBy(desc(subject.updatedAt))
       .limit(LIMITS.recentItemsLimit),
     getDb()
@@ -107,13 +109,7 @@ export async function getRecentSearchDataForUser(
       })
       .from(note)
       .innerJoin(subject, eq(note.subjectId, subject.id))
-      .where(
-        and(
-          eq(note.userId, userId),
-          eq(subject.userId, userId),
-          isNull(subject.archivedAt),
-        ),
-      )
+      .where(and(eq(note.userId, userId), ...subjectFilters))
       .orderBy(desc(note.updatedAt))
       .limit(LIMITS.recentItemsLimit),
     getDb()
@@ -126,13 +122,7 @@ export async function getRecentSearchDataForUser(
       })
       .from(flashcard)
       .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-      .where(
-        and(
-          eq(flashcard.userId, userId),
-          eq(subject.userId, userId),
-          isNull(subject.archivedAt),
-        ),
-      )
+      .where(and(eq(flashcard.userId, userId), ...subjectFilters))
       .orderBy(desc(flashcard.updatedAt))
       .limit(LIMITS.recentItemsLimit),
   ]);

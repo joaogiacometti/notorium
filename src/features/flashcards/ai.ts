@@ -17,6 +17,7 @@ import {
 } from "@/features/flashcards/ai-prompts";
 import {
   normalizeGeneratedBack,
+  normalizeLine,
   plainTextToRichText,
 } from "@/features/flashcards/ai-utils";
 import { flashcardBackSchema } from "@/features/flashcards/validation";
@@ -30,10 +31,6 @@ import {
 
 export type { FlashcardValidationOutput };
 export type { FlashcardForValidation };
-
-function normalizeLine(value: string) {
-  return value.replaceAll(/\s+/g, " ").trim();
-}
 
 export async function generateFlashcardBackContent(input: {
   settings: ResolvedUserAiSettings;

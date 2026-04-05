@@ -116,7 +116,22 @@ export async function getFlashcardReviewStateForUser(
 export async function getReviewableFlashcardForUser(
   userId: string,
   flashcardId: string,
-) {
+): Promise<{
+  id: string;
+  subjectId: string;
+  userId: string;
+  state: FlashcardReviewEntity["state"];
+  dueAt: Date;
+  stability: string | null;
+  difficulty: string | null;
+  ease: number;
+  intervalDays: number;
+  learningStep: number | null;
+  lastReviewedAt: Date | null;
+  reviewCount: number;
+  lapseCount: number;
+  subjectName: string;
+} | null> {
   return getDb()
     .select({ flashcard, subjectName: subject.name })
     .from(flashcard)

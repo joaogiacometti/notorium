@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { getTodayIso } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
 export const assessmentTypeLabels: Record<AssessmentEntity["type"], string> = {
@@ -10,9 +10,7 @@ export const assessmentTypeLabels: Record<AssessmentEntity["type"], string> = {
   other: "Other",
 };
 
-export function getTodayIso(): string {
-  return format(new Date(), "yyyy-MM-dd");
-}
+export { getTodayIso };
 
 export function isAssessmentOverdue(
   item: AssessmentEntity,

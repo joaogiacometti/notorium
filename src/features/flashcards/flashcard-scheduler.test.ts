@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getInitialFlashcardSchedulingState,
   scheduleFlashcardReview,
-} from "@/features/flashcards/flashcard-scheduler";
+} from "@/features/flashcards/fsrs";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 const now = new Date("2026-03-04T12:00:00.000Z");

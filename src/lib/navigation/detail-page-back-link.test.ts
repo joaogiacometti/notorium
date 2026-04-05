@@ -9,7 +9,7 @@ import {
   resolveDetailPageReturnContext,
   resolveFlashcardDetailBackLink,
   resolveNoteDetailBackLink,
-} from "@/features/navigation/detail-page-back-link";
+} from "@/lib/navigation/detail-page-back-link";
 
 describe("resolveDetailPageReturnContext", () => {
   it("returns the parsed context for supported origins", () => {
@@ -94,16 +94,8 @@ describe("resolveFlashcardDetailBackLink", () => {
 });
 
 describe("resolveNoteDetailBackLink", () => {
-  it("always returns the owning subject", () => {
-    expect(
-      resolveNoteDetailBackLink(
-        {
-          from: "subject",
-          subjectId: "subject-1",
-        },
-        "subject-2",
-      ),
-    ).toEqual({
+  it("returns the owning subject", () => {
+    expect(resolveNoteDetailBackLink("subject-2")).toEqual({
       href: "/subjects/subject-2",
       label: "subject",
     });

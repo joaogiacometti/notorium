@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { reviewGradeValues } from "@/features/flashcards/fsrs";
 
-export const reviewGradeSchema = z.enum(["again", "hard", "good", "easy"]);
+export const reviewGradeSchema = z.enum(reviewGradeValues);
 
 export const reviewFlashcardSchema = z.object({
   id: z.string().min(1),

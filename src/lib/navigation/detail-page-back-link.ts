@@ -137,11 +137,8 @@ export function resolveFlashcardDetailBackLink(
 }
 
 export function resolveNoteDetailBackLink(
-  input: DetailPageReturnContextInput,
   subjectId: string,
 ): DetailPageBackLink {
-  resolveDetailPageReturnContext(input);
-
   return {
     href: `/subjects/${subjectId}`,
     label: "subject",

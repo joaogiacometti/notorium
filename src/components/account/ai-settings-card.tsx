@@ -31,7 +31,7 @@ import {
   type UpdateUserAiSettingsForm,
   type UpdateUserAiSettingsFormInput,
   updateUserAiSettingsSchema,
-} from "@/features/account/validation";
+} from "@/features/ai/validation";
 import type { UserAiSettingsSummary } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 

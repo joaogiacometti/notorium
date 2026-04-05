@@ -1,12 +1,15 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
+import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import type { AttendanceMissEntity } from "@/lib/server/api-contracts";
 
 export async function getMissesBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<AttendanceMissEntity[]> {
+  const subjectFilters = getOwnedActiveSubjectFilters(userId);
+
   return getDb()
     .select({ attendanceMiss })
     .from(attendanceMiss)
@@ -15,8 +18,7 @@ export async function getMissesBySubjectForUser(
       and(
         eq(attendanceMiss.subjectId, subjectId),
         eq(attendanceMiss.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...subjectFilters,
       ),
     )
     .orderBy(asc(attendanceMiss.missDate))
@@ -27,6 +29,8 @@ export async function getMissRecordForUser(
   userId: string,
   missId: string,
 ): Promise<Pick<AttendanceMissEntity, "id" | "subjectId"> | null> {
+  const subjectFilters = getOwnedActiveSubjectFilters(userId);
+
   const results = await getDb()
     .select({ id: attendanceMiss.id, subjectId: attendanceMiss.subjectId })
     .from(attendanceMiss)
@@ -35,8 +39,7 @@ export async function getMissRecordForUser(
       and(
         eq(attendanceMiss.id, missId),
         eq(attendanceMiss.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
+        ...subjectFilters,
       ),
     )
     .limit(1);

@@ -37,6 +37,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "auth.userNotFound": "User not found.",
   "account.invalidData": "Invalid account data.",
   "account.updateFailed": "Failed to update account.",
+  "account.deleteFailed": "Failed to delete account.",
   "account.ai.invalidData": "Invalid AI settings.",
   "account.ai.updateFailed": "Failed to update AI settings.",
   "account.ai.clearFailed": "Failed to clear AI settings.",

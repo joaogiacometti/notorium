@@ -1,4 +1,7 @@
-import type { ReviewGrade } from "@/features/flashcards/fsrs";
+import {
+  type ReviewGrade,
+  reviewGradeValues,
+} from "@/features/flashcards/fsrs";
 
 export type FlashcardReviewShortcutAction =
   | {
@@ -26,12 +29,9 @@ interface GetFlashcardReviewShortcutActionInput {
   isRepeat: boolean;
 }
 
-const gradeKeyMap: Record<string, ReviewGrade> = {
-  "1": "again",
-  "2": "hard",
-  "3": "good",
-  "4": "easy",
-};
+const gradeKeyMap: Record<string, ReviewGrade> = Object.fromEntries(
+  reviewGradeValues.map((grade, index) => [String(index + 1), grade]),
+) as Record<string, ReviewGrade>;
 
 export function getFlashcardReviewShortcutAction({
   key,

@@ -2,25 +2,30 @@ import { z } from "zod";
 import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
-export const attendanceSettingsSchema = z.object({
-  subjectId: z.string().min(1),
-  totalClasses: z
-    .number()
-    .int(validationMessage("Validation.attendance.totalClasses.integer"))
-    .min(1, validationMessage("Validation.attendance.totalClasses.min"))
-    .max(
-      LIMITS.attendanceTotalClassesMax,
-      validationMessage("Validation.attendance.totalClasses.max"),
-    ),
-  maxMisses: z
-    .number()
-    .int(validationMessage("Validation.attendance.maxMisses.integer"))
-    .min(0, validationMessage("Validation.attendance.maxMisses.min"))
-    .max(
-      LIMITS.attendanceMaxMissesMax,
-      validationMessage("Validation.attendance.maxMisses.max"),
-    ),
-});
+export const attendanceSettingsSchema = z
+  .object({
+    subjectId: z.string().min(1),
+    totalClasses: z
+      .number()
+      .int(validationMessage("Validation.attendance.totalClasses.integer"))
+      .min(1, validationMessage("Validation.attendance.totalClasses.min"))
+      .max(
+        LIMITS.attendanceTotalClassesMax,
+        validationMessage("Validation.attendance.totalClasses.max"),
+      ),
+    maxMisses: z
+      .number()
+      .int(validationMessage("Validation.attendance.maxMisses.integer"))
+      .min(0, validationMessage("Validation.attendance.maxMisses.min"))
+      .max(
+        LIMITS.attendanceMaxMissesMax,
+        validationMessage("Validation.attendance.maxMisses.max"),
+      ),
+  })
+  .refine((data) => data.maxMisses <= data.totalClasses, {
+    message: validationMessage("Validation.attendance.maxMisses.exceedsTotal"),
+    path: ["maxMisses"],
+  });
 
 export type AttendanceSettingsForm = z.infer<typeof attendanceSettingsSchema>;
 

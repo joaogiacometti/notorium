@@ -70,7 +70,14 @@ export async function countNotesBySubjectForUser(
   const result = await getDb()
     .select({ total: count() })
     .from(note)
-    .where(and(eq(note.subjectId, subjectId), eq(note.userId, userId)));
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.subjectId, subjectId),
+        eq(note.userId, userId),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
+    );
 
   return result[0]?.total ?? 0;
 }

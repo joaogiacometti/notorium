@@ -17,12 +17,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { LIMITS } from "@/lib/config/limits";
+import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import {
   getFlashcardDetailHref,
   getNoteDetailHref,
-} from "@/features/navigation/detail-page-back-link";
-import { LIMITS } from "@/lib/config/limits";
-import { getRichTextExcerpt } from "@/lib/editor/rich-text";
+} from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 
 interface GlobalSearchProps {

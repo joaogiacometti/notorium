@@ -7,7 +7,7 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-function normalizeLine(value: string) {
+export function normalizeLine(value: string) {
   return value.replaceAll(/\s+/g, " ").trim();
 }
 

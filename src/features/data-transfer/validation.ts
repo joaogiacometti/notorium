@@ -1,59 +1,59 @@
 import { z } from "zod";
+import {
+  assessmentStatusValues,
+  assessmentTypeValues,
+} from "@/features/assessments/constants";
 import { LIMITS } from "@/lib/config/limits";
 
 function isValidDateString(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return false;
+  }
   return !Number.isNaN(new Date(value).getTime());
 }
 
 const finiteNumberSchema = z.number().finite();
 const nonNegativeIntegerSchema = z.number().int().nonnegative();
-const isoDateStringSchema = z.string().refine(isValidDateString);
+const dateStringSchema = z.string().refine(isValidDateString);
 
 const attendanceMissSchema = z.object({
-  missDate: z.string(),
+  missDate: dateStringSchema,
 });
 
 const noteSchema = z.object({
   title: z.string().min(1).max(LIMITS.noteTitleMax),
   content: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  createdAt: dateStringSchema,
+  updatedAt: dateStringSchema,
 });
 
 const assessmentSchema = z.object({
   title: z.string().min(1).max(LIMITS.assessmentTitleMax),
   description: z.string().nullable(),
-  type: z.enum([
-    "exam",
-    "assignment",
-    "project",
-    "presentation",
-    "homework",
-    "other",
-  ]),
-  status: z.enum(["pending", "completed"]),
+  type: z.enum(assessmentTypeValues),
+  status: z.enum(assessmentStatusValues),
   dueDate: z.string().nullable(),
   score: z.string().nullable(),
   weight: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  createdAt: dateStringSchema,
+  updatedAt: dateStringSchema,
 });
 
 const flashcardSchema = z.object({
   front: z.string().min(1).max(LIMITS.flashcardFrontMax),
   back: z.string().min(1).max(LIMITS.flashcardBackMax),
   state: z.enum(["new", "learning", "review", "relearning"]),
-  dueAt: isoDateStringSchema,
+  dueAt: dateStringSchema,
   stability: finiteNumberSchema.nullable().optional(),
   difficulty: finiteNumberSchema.nullable().optional(),
   ease: z.number().int(),
   intervalDays: nonNegativeIntegerSchema,
   learningStep: nonNegativeIntegerSchema.nullable(),
-  lastReviewedAt: isoDateStringSchema.nullable(),
+  lastReviewedAt: dateStringSchema.nullable(),
   reviewCount: nonNegativeIntegerSchema,
   lapseCount: nonNegativeIntegerSchema,
-  createdAt: isoDateStringSchema,
-  updatedAt: isoDateStringSchema,
+  createdAt: dateStringSchema,
+  updatedAt: dateStringSchema,
 });
 
 const subjectSchema = z.object({
@@ -61,8 +61,8 @@ const subjectSchema = z.object({
   description: z.string().nullable(),
   totalClasses: z.number().int().positive().nullable(),
   maxMisses: z.number().int().nonnegative().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  createdAt: dateStringSchema,
+  updatedAt: dateStringSchema,
   notes: z.array(noteSchema).optional().default([]),
   attendanceMisses: z.array(attendanceMissSchema),
   assessments: z.array(assessmentSchema),
@@ -76,7 +76,7 @@ const flashcardSchedulerSchema = z.object({
 
 export const importDataSchema = z.object({
   version: z.literal(1),
-  exportedAt: z.string(),
+  exportedAt: dateStringSchema,
   flashcardScheduler: flashcardSchedulerSchema.optional(),
   subjects: z.array(subjectSchema),
 });

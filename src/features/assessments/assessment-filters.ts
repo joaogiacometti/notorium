@@ -1,5 +1,5 @@
-import { addDays, format } from "date-fns";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
+import type { DueDateBounds } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
 export type StatusFilter = "all" | "pending" | "completed" | "overdue";
@@ -25,12 +25,6 @@ export type SortBy =
   | "updatedAtDesc"
   | "scoreDesc";
 
-interface DueDateBounds {
-  todayIso: string;
-  next7DaysIso: string;
-  next30DaysIso: string;
-}
-
 interface FilterAndSortAssessmentsInput {
   assessments: AssessmentEntity[];
   searchQuery: string;
@@ -42,15 +36,7 @@ interface FilterAndSortAssessmentsInput {
   dueDateBounds: DueDateBounds;
 }
 
-export function getDueDateBounds(now = new Date()): DueDateBounds {
-  const todayIso = format(now, "yyyy-MM-dd");
-
-  return {
-    todayIso,
-    next7DaysIso: format(addDays(now, 7), "yyyy-MM-dd"),
-    next30DaysIso: format(addDays(now, 30), "yyyy-MM-dd"),
-  };
-}
+export { getDueDateBounds } from "@/lib/dates/format";
 
 export function getSubjectFilterOptions(
   assessments: AssessmentEntity[],

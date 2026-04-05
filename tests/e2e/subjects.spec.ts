@@ -91,6 +91,7 @@ test("can edit a subject", async ({ page, e2eUser }) => {
       .locator("#form-edit-subject-description")
       .fill(updatedSubjectDescription);
     await editDialog.getByRole("button", { name: "Save Changes" }).click();
+    await expect(editDialog).not.toBeVisible();
 
     const editedCard = page
       .getByTestId("subject-card")

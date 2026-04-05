@@ -134,7 +134,7 @@ export async function exportDataForUser(
             : currentAssessment.status,
           dueDate: currentAssessment.dueDate,
           score: templateOnly ? null : currentAssessment.score,
-          weight: currentAssessment.weight,
+          weight: templateOnly ? null : currentAssessment.weight,
           createdAt: currentAssessment.createdAt.toISOString(),
           updatedAt: currentAssessment.updatedAt.toISOString(),
         }),

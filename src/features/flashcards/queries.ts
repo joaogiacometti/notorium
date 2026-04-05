@@ -215,8 +215,13 @@ export async function countFlashcardsBySubjectForUser(
   const result = await getDb()
     .select({ total: count() })
     .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(
-      and(eq(flashcard.subjectId, subjectId), eq(flashcard.userId, userId)),
+      and(
+        eq(flashcard.subjectId, subjectId),
+        eq(flashcard.userId, userId),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
     );
 
   return result[0]?.total ?? 0;
@@ -230,6 +235,7 @@ export async function hasDuplicateFlashcardFrontForUser(
   const filters: SQL<unknown>[] = [
     eq(flashcard.userId, userId),
     eq(flashcard.frontNormalized, frontNormalized),
+    ...getOwnedActiveSubjectFilters(userId),
   ];
 
   if (excludedFlashcardId) {
@@ -239,6 +245,7 @@ export async function hasDuplicateFlashcardFrontForUser(
   const result = await getDb()
     .select({ id: flashcard.id })
     .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(and(...filters))
     .limit(1);
 

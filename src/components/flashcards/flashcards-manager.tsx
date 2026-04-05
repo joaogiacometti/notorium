@@ -37,8 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getFlashcardDetailHref } from "@/features/navigation/detail-page-back-link";
 import { LIMITS } from "@/lib/config/limits";
+import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type {
   FlashcardManagePage,
   SubjectEntity,

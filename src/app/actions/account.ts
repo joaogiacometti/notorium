@@ -3,21 +3,21 @@
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { deleteAccountForUser } from "@/features/account/mutations";
 import {
-  deleteAccountForUser,
-  updateUserAccessStatusForUser,
-} from "@/features/account/mutations";
-import {
-  createUserAiSettingsSchema,
   type UpdateAccountForm,
-  type UpdateUserAiSettingsForm,
   updateAccountSchema,
-  updateUserAiSettingsSchema,
 } from "@/features/account/validation";
 import {
   clearUserAiSettings as clearUserAiSettingsForUser,
   updateUserAiSettings as updateUserAiSettingsForUser,
 } from "@/features/ai/mutations";
+import {
+  createUserAiSettingsSchema,
+  type UpdateUserAiSettingsForm,
+  updateUserAiSettingsSchema,
+} from "@/features/ai/validation";
+import { updateUserAccessStatusForUser } from "@/features/user/mutations";
 import { isAdminUser } from "@/lib/auth/access-control";
 import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import {
@@ -117,16 +117,11 @@ export async function clearUserAiSettings(): Promise<MutationResult> {
 }
 
 export async function deleteAccount(): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const result = await deleteAccountForUser(userId);
+  const result = await deleteAccountForUser();
 
   if (!result.success) {
     return result;
   }
-
-  await getAuth().api.signOut({
-    headers: await headers(),
-  });
 
   redirect("/login");
 }
@@ -158,7 +153,7 @@ export async function updateUserAccessStatus(
         return actionError("auth.forbidden");
       }
 
-      return updateUserAccessStatusForUser(parsedData);
+      return updateUserAccessStatusForUser(adminUserId, parsedData);
     },
   );
 }

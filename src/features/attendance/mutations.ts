@@ -27,10 +27,6 @@ export async function updateAttendanceSettingsForUser(
   userId: string,
   data: AttendanceSettingsForm,
 ): Promise<AttendanceMutationResult> {
-  if (data.maxMisses > data.totalClasses) {
-    return actionError("attendance.maxMissesExceeded");
-  }
-
   const existing = await getActiveSubjectRecordForUser(userId, data.subjectId);
 
   if (!existing) {

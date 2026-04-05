@@ -18,6 +18,11 @@ function createAuth() {
     emailAndPassword: {
       enabled: true,
     },
+    user: {
+      deleteUser: {
+        enabled: true,
+      },
+    },
     plugins: [nextCookies()],
   });
 }

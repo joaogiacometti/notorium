@@ -9,7 +9,8 @@ import {
 } from "ts-fsrs";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
-export type ReviewGrade = "again" | "hard" | "good" | "easy";
+export const reviewGradeValues = ["again", "hard", "good", "easy"] as const;
+export type ReviewGrade = (typeof reviewGradeValues)[number];
 export interface FlashcardReviewPreview {
   grade: ReviewGrade;
   nextState: FlashcardEntity["state"];

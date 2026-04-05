@@ -1,4 +1,5 @@
 import {
+  addDays,
   format,
   formatDistanceToNow,
   formatDistanceToNowStrict,
@@ -22,4 +23,24 @@ export function formatRelativeTimeStrict(date: Date | string): string {
 
 export function formatIsoDate(date: Date): string {
   return format(date, "yyyy-MM-dd");
+}
+
+export function getTodayIso(now = new Date()): string {
+  return formatIsoDate(now);
+}
+
+export interface DueDateBounds {
+  todayIso: string;
+  next7DaysIso: string;
+  next30DaysIso: string;
+}
+
+export function getDueDateBounds(now = new Date()): DueDateBounds {
+  const todayIso = formatIsoDate(now);
+
+  return {
+    todayIso,
+    next7DaysIso: formatIsoDate(addDays(now, 7)),
+    next30DaysIso: formatIsoDate(addDays(now, 30)),
+  };
 }
