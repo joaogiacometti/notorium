@@ -25,19 +25,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   type EditFlashcardForm,
   editFlashcardSchema,
-  type GenerateFlashcardsForm,
-  generateFlashcardsSchema,
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
+import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type {
   FlashcardEntity,
   SubjectEntity,
@@ -80,17 +74,20 @@ export function EditFlashcardDialog({
   const [isCreating, setIsCreating] = useState(false);
   const [discardOnModeSwitchDialogOpen, setDiscardOnModeSwitchDialogOpen] =
     useState(false);
+  const [discardOnCloseDialogOpen, setDiscardOnCloseDialogOpen] =
+    useState(false);
+  const [splitSubjectId, setSplitSubjectId] = useState(flashcard.subjectId);
+  const [splitFront, setSplitFront] = useState(flashcard.front);
+  const [splitBack, setSplitBack] = useState(flashcard.back);
+
+  const isSplitDirty =
+    splitFront !== flashcard.front || splitBack !== flashcard.back;
 
   const incomingValues = getEditFlashcardFormValues(flashcard);
 
   const form = useForm<EditFlashcardForm>({
     resolver: zodResolver(editFlashcardSchema),
     defaultValues: incomingValues,
-  });
-
-  const aiForm = useForm<GenerateFlashcardsForm>({
-    resolver: zodResolver(generateFlashcardsSchema),
-    defaultValues: { subjectId: flashcard.subjectId, text: "" },
   });
 
   const dialog = useFlashcardDialogState({
@@ -100,6 +97,9 @@ export function EditFlashcardDialog({
       if (!nextOpen) {
         setGeneratedCards(null);
         setMode("edit");
+        setSplitFront(flashcard.front);
+        setSplitBack(flashcard.back);
+        setSplitSubjectId(flashcard.subjectId);
       }
       onOpenChange(nextOpen);
     },
@@ -115,17 +115,42 @@ export function EditFlashcardDialog({
     closeOnSuccess: true,
   });
 
-  async function handleGenerate() {
-    const isValid = await aiForm.trigger();
-    if (!isValid) {
+  useBeforeUnload(
+    open && mode === "split" && isSplitDirty && !isGenerating && !isCreating,
+  );
+
+  function handleDialogOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      dialog.handleOpenChange(true);
       return;
     }
+    if (mode === "split" && isSplitDirty && !isGenerating && !isCreating) {
+      setDiscardOnCloseDialogOpen(true);
+      return;
+    }
+    dialog.handleOpenChange(false);
+  }
 
-    const values = aiForm.getValues();
+  function handleDiscardOnClose() {
+    setDiscardOnCloseDialogOpen(false);
+    setGeneratedCards(null);
+    setMode("edit");
+    setSplitFront(flashcard.front);
+    setSplitBack(flashcard.back);
+    setSplitSubjectId(flashcard.subjectId);
+    onOpenChange(false);
+  }
+
+  async function handleGenerate() {
+    const combinedText = `Front:\n${richTextToPlainText(splitFront)}\n\nBack:\n${richTextToPlainText(splitBack)}`;
+
     setIsGenerating(true);
     setGeneratedCards(null);
 
-    const result = await generateFlashcards(values);
+    const result = await generateFlashcards({
+      subjectId: splitSubjectId,
+      text: combinedText,
+    });
 
     setIsGenerating(false);
 
@@ -154,7 +179,7 @@ export function EditFlashcardDialog({
 
     for (const card of cards) {
       const result = await createFlashcard({
-        subjectId: aiForm.getValues().subjectId,
+        subjectId: splitSubjectId,
         front: card.front,
         back: card.back,
       });
@@ -196,21 +221,13 @@ export function EditFlashcardDialog({
       return;
     }
     if (mode === "edit" && newMode === "split") {
-      const subjectId = form.getValues("subjectId");
-      if (subjectId) {
-        aiForm.setValue("subjectId", subjectId);
-      }
-      if (!aiForm.getValues("text")) {
-        const text = `Front:\n${richTextToPlainText(
-          flashcard.front,
-        )}\n\nBack:\n${richTextToPlainText(flashcard.back)}`;
-        aiForm.setValue("text", text);
-      }
+      setSplitFront(form.getValues("front"));
+      setSplitBack(form.getValues("back"));
+      setSplitSubjectId(form.getValues("subjectId") || flashcard.subjectId);
     } else if (mode === "split" && newMode === "edit") {
-      const subjectId = aiForm.getValues("subjectId");
-      if (subjectId) {
-        form.setValue("subjectId", subjectId);
-      }
+      form.setValue("front", splitFront, { shouldDirty: true });
+      form.setValue("back", splitBack, { shouldDirty: true });
+      form.setValue("subjectId", splitSubjectId);
     }
     setMode(newMode);
   }
@@ -285,6 +302,9 @@ export function EditFlashcardDialog({
       );
     }
 
+    const hasFrontContent = splitFront.trim().length > 0;
+    const hasBackContent = splitBack.trim().length > 0;
+
     return (
       <form
         onSubmit={(e) => {
@@ -297,11 +317,10 @@ export function EditFlashcardDialog({
           <FieldGroup className="gap-5">
             {subjects && subjects.length > 0 ? (
               <SubjectSelect
-                value={aiForm.watch("subjectId")}
-                onChange={(value) => aiForm.setValue("subjectId", value)}
+                value={splitSubjectId}
+                onChange={setSplitSubjectId}
                 subjects={subjects}
-                id="ai-subject"
-                error={aiForm.formState.errors.subjectId?.message as string}
+                id="split-subject"
               />
             ) : null}
             <CreateModeToggle
@@ -310,18 +329,32 @@ export function EditFlashcardDialog({
               options={modeOptions}
             />
             <Field>
-              <FieldLabel htmlFor="ai-text">Content to Split</FieldLabel>
+              <div className="flex h-9 items-center justify-between gap-3">
+                <FieldLabel htmlFor="split-front">Front</FieldLabel>
+              </div>
               <TiptapEditor
-                value={aiForm.watch("text")}
-                onChange={(value) => aiForm.setValue("text", value)}
-                placeholder="Content to be divided into multiple flashcards..."
-                id="ai-text"
-                contentClassName="min-h-50 max-h-[40svh]"
+                value={splitFront}
+                onChange={setSplitFront}
+                placeholder="e.g. What is photosynthesis?"
+                id="split-front"
+                contentClassName="min-h-11 max-h-[40svh]"
+                showToolbar={false}
+              />
+            </Field>
+            <Field>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <FieldLabel htmlFor="split-back">Back</FieldLabel>
+                </div>
+              </div>
+              <TiptapEditor
+                value={splitBack}
+                onChange={setSplitBack}
+                placeholder="e.g. Process plants use to convert light into energy."
+                id="split-back"
+                contentClassName="max-h-[10lh]"
                 showToolbar
               />
-              {aiForm.formState.errors.text ? (
-                <FieldError errors={[aiForm.formState.errors.text]} />
-              ) : null}
             </Field>
           </FieldGroup>
         </div>
@@ -330,8 +363,9 @@ export function EditFlashcardDialog({
             type="submit"
             disabled={
               isGenerating ||
-              !aiForm.watch("text") ||
-              !aiForm.watch("subjectId")
+              !hasFrontContent ||
+              !hasBackContent ||
+              !splitSubjectId
             }
             className="w-full"
           >
@@ -354,7 +388,7 @@ export function EditFlashcardDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Edit Flashcard</DialogTitle>
@@ -367,6 +401,11 @@ export function EditFlashcardDialog({
         open={discardOnModeSwitchDialogOpen}
         onOpenChange={setDiscardOnModeSwitchDialogOpen}
         onDiscard={handleDiscardOnModeSwitch}
+      />
+      <UnsavedChangesDialog
+        open={discardOnCloseDialogOpen}
+        onOpenChange={setDiscardOnCloseDialogOpen}
+        onDiscard={handleDiscardOnClose}
       />
     </>
   );
