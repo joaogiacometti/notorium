@@ -15,6 +15,7 @@ const validSubject = {
   notes: [],
   attendanceMisses: [],
   assessments: [],
+  decks: [],
   flashcards: [],
 };
 

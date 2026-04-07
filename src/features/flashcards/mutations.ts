@@ -1,6 +1,8 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
+import { ensureDefaultDeckForSubject } from "@/features/decks/mutations";
+import { getDeckRecordForUser } from "@/features/decks/queries";
 import {
   generateFlashcardBackForUser,
   improveFlashcardBackForUser,
@@ -70,36 +72,43 @@ function isUniqueViolationError(error: unknown): boolean {
 async function getCreateFlashcardPreflight(
   userId: string,
   subjectId: string,
+  deckId: string | undefined,
   frontNormalized: string,
 ) {
-  const [existingSubject, currentCount, hasDuplicate] = await Promise.all([
-    getActiveSubjectRecordForUser(userId, subjectId),
-    countFlashcardsBySubjectForUser(userId, subjectId),
-    hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
-  ]);
+  const [existingSubject, currentCount, hasDuplicate, existingDeck] =
+    await Promise.all([
+      getActiveSubjectRecordForUser(userId, subjectId),
+      countFlashcardsBySubjectForUser(userId, subjectId),
+      hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
+      deckId ? getDeckRecordForUser(userId, deckId) : null,
+    ]);
 
   return {
     existingSubject,
     currentCount,
     hasDuplicate,
+    existingDeck,
   };
 }
 
 async function getEditFlashcardPreflight(
   userId: string,
-  data: Pick<EditFlashcardForm, "id" | "subjectId" | "front">,
+  data: Pick<EditFlashcardForm, "id" | "subjectId" | "deckId" | "front">,
   frontNormalized: string,
 ) {
-  const [existingFlashcard, existingSubject, hasDuplicate] = await Promise.all([
-    getFlashcardRecordForUser(userId, data.id),
-    getActiveSubjectRecordForUser(userId, data.subjectId),
-    hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
-  ]);
+  const [existingFlashcard, existingSubject, hasDuplicate, existingDeck] =
+    await Promise.all([
+      getFlashcardRecordForUser(userId, data.id),
+      getActiveSubjectRecordForUser(userId, data.subjectId),
+      hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
+      data.deckId ? getDeckRecordForUser(userId, data.deckId) : null,
+    ]);
 
   return {
     existingFlashcard,
     existingSubject,
     hasDuplicate,
+    existingDeck,
   };
 }
 
@@ -108,8 +117,14 @@ export async function createFlashcardForUser(
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
-  const { existingSubject, currentCount, hasDuplicate } =
-    await getCreateFlashcardPreflight(userId, data.subjectId, frontNormalized);
+  const inputDeckId = data.deckId ?? undefined;
+  const { existingSubject, currentCount, hasDuplicate, existingDeck } =
+    await getCreateFlashcardPreflight(
+      userId,
+      data.subjectId,
+      inputDeckId,
+      frontNormalized,
+    );
 
   if (!existingSubject) {
     return actionError("subjects.notFound");
@@ -125,12 +140,24 @@ export async function createFlashcardForUser(
     return actionError("flashcards.duplicateFront");
   }
 
+  if (data.deckId && !existingDeck) {
+    return actionError("decks.notFound");
+  }
+
+  if (existingDeck && existingDeck.subjectId !== data.subjectId) {
+    return actionError("decks.wrongSubject");
+  }
+
+  const defaultDeck = await ensureDefaultDeckForSubject(userId, data.subjectId);
+  const deckId = data.deckId ?? defaultDeck.id;
+
   const schedulingState = getInitialFlashcardSchedulingState();
   try {
     const inserted = await getDb()
       .insert(flashcard)
       .values({
         subjectId: data.subjectId,
+        deckId,
         userId,
         front: data.front,
         frontNormalized,
@@ -163,7 +190,7 @@ export async function editFlashcardForUser(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
-  const { existingFlashcard, existingSubject, hasDuplicate } =
+  const { existingFlashcard, existingSubject, hasDuplicate, existingDeck } =
     await getEditFlashcardPreflight(userId, data, frontNormalized);
 
   if (!existingFlashcard) {
@@ -191,11 +218,20 @@ export async function editFlashcardForUser(
     return actionError("flashcards.duplicateFront");
   }
 
+  if (data.deckId && !existingDeck) {
+    return actionError("decks.notFound");
+  }
+
+  if (existingDeck && existingDeck.subjectId !== data.subjectId) {
+    return actionError("decks.wrongSubject");
+  }
+
   try {
     const updated = await getDb()
       .update(flashcard)
       .set({
         subjectId: data.subjectId,
+        deckId: data.deckId ?? null,
         front: data.front,
         frontNormalized,
         back: data.back,
@@ -321,6 +357,26 @@ export async function bulkMoveFlashcardsForUser(
     return actionError("subjects.notFound");
   }
 
+  const inputDeckId = data.deckId ?? undefined;
+  let targetDeckId: string;
+
+  if (inputDeckId) {
+    const existingDeck = await getDeckRecordForUser(userId, inputDeckId);
+    if (!existingDeck) {
+      return actionError("decks.notFound");
+    }
+    if (existingDeck.subjectId !== data.subjectId) {
+      return actionError("decks.notFound");
+    }
+    targetDeckId = inputDeckId;
+  } else {
+    const defaultDeck = await ensureDefaultDeckForSubject(
+      userId,
+      data.subjectId,
+    );
+    targetDeckId = defaultDeck.id;
+  }
+
   const nextCount = existingFlashcards.filter(
     (flashcard) => flashcard.subjectId !== data.subjectId,
   ).length;
@@ -342,6 +398,7 @@ export async function bulkMoveFlashcardsForUser(
     .update(flashcard)
     .set({
       subjectId: data.subjectId,
+      deckId: targetDeckId,
     })
     .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 

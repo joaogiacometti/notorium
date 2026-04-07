@@ -3,6 +3,7 @@ import { getDb } from "@/db/index";
 import {
   assessment,
   attendanceMiss,
+  deck,
   flashcard,
   flashcardSchedulerSettings,
   note,
@@ -47,7 +48,7 @@ export async function exportDataForUser(
 
   const subjectIds = subjects.map((item) => item.id);
 
-  const [notes, misses, assessments, flashcards] = await Promise.all([
+  const [notes, misses, assessments, flashcards, decks] = await Promise.all([
     templateOnly
       ? Promise.resolve([])
       : getDb()
@@ -87,12 +88,22 @@ export async function exportDataForUser(
               inArray(flashcard.subjectId, subjectIds),
             ),
           ),
+    templateOnly
+      ? Promise.resolve([])
+      : getDb()
+          .select()
+          .from(deck)
+          .where(
+            and(eq(deck.userId, userId), inArray(deck.subjectId, subjectIds)),
+          ),
   ]);
 
   const notesBySubjectId = groupRowsBySubjectId(notes);
   const missesBySubjectId = groupRowsBySubjectId(misses);
   const assessmentsBySubjectId = groupRowsBySubjectId(assessments);
   const flashcardsBySubjectId = groupRowsBySubjectId(flashcards);
+  const decksBySubjectId = groupRowsBySubjectId(decks);
+  const deckNameById = new Map(decks.map((d) => [d.id, d.name]));
 
   return {
     version: 1,
@@ -143,6 +154,10 @@ export async function exportDataForUser(
         (currentFlashcard) => ({
           front: currentFlashcard.front,
           back: currentFlashcard.back,
+          deckName:
+            currentFlashcard.deckId === null
+              ? undefined
+              : (deckNameById.get(currentFlashcard.deckId) ?? undefined),
           state: currentFlashcard.state,
           dueAt: currentFlashcard.dueAt.toISOString(),
           stability:
@@ -164,6 +179,11 @@ export async function exportDataForUser(
           updatedAt: currentFlashcard.updatedAt.toISOString(),
         }),
       ),
+      decks: (decksBySubjectId.get(item.id) ?? []).map((d) => ({
+        name: d.name,
+        description: d.description ?? null,
+        isDefault: d.isDefault,
+      })),
     })),
   };
 }

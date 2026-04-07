@@ -23,6 +23,7 @@ const flashcardManagerSearchDebounceMs = 200;
 interface UseFlashcardsManagerControllerOptions {
   initialPageData: FlashcardManagePage;
   initialSubjectId?: string;
+  initialDeckId?: string;
   subjects: SubjectEntity[];
 }
 
@@ -34,6 +35,7 @@ export type FlashcardTarget = {
 export function useFlashcardsManagerController({
   initialPageData,
   initialSubjectId,
+  initialDeckId,
 }: Readonly<UseFlashcardsManagerControllerOptions>) {
   const pathname = usePathname();
   const router = useRouter();
@@ -61,6 +63,9 @@ export function useFlashcardsManagerController({
   const [validateDialogOpen, setValidateDialogOpen] = useState(false);
   const [validateAgainDialogOpen, setValidateAgainDialogOpen] = useState(false);
   const [isValidatingAgain, setIsValidatingAgain] = useState(false);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | undefined>(
+    initialDeckId,
+  );
   const {
     filter: selectedSubjectId,
     pageIndex,
@@ -77,6 +82,7 @@ export function useFlashcardsManagerController({
     },
     onFilterChange: (nextSubjectId) => {
       setSelectedFlashcardIds([]);
+      setSelectedDeckId(undefined);
 
       const query = new URLSearchParams();
       query.set("view", "manage");
@@ -100,6 +106,7 @@ export function useFlashcardsManagerController({
       pageIndex,
       managePageSize,
       selectedSubjectId ?? "all",
+      selectedDeckId ?? "all",
       resolvedSearchQuery,
     ],
     queryFn: async () => {
@@ -107,6 +114,7 @@ export function useFlashcardsManagerController({
         pageIndex,
         pageSize: managePageSize,
         subjectId: selectedSubjectId,
+        deckId: selectedDeckId,
         search: resolvedSearchQuery,
       });
 
@@ -119,6 +127,7 @@ export function useFlashcardsManagerController({
     initialData:
       pageIndex === 0 &&
       (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
+      (selectedDeckId ?? undefined) === (initialDeckId ?? undefined) &&
       resolvedSearchQuery.trim().length === 0
         ? initialPageData
         : undefined,
@@ -263,6 +272,7 @@ export function useFlashcardsManagerController({
     resetTarget,
     resolvedSearchQuery,
     searchQuery,
+    selectedDeckId,
     selectedFlashcardIds,
     selectedSubjectCardCount,
     selectedSubjectId,
@@ -274,6 +284,7 @@ export function useFlashcardsManagerController({
     setPageIndex,
     setResetTarget,
     setSearchQuery,
+    setSelectedDeckId,
     setSelectedFlashcardIds,
     setSelectedSubjectId,
     total,

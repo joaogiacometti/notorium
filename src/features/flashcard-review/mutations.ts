@@ -91,6 +91,7 @@ export async function reviewFlashcardForUser(
           lastReviewedAt: flashcard.lastReviewedAt,
           reviewCount: flashcard.reviewCount,
           lapseCount: flashcard.lapseCount,
+          deckId: flashcard.deckId,
         });
 
       await tx.insert(flashcardReviewLog).values({

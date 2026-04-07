@@ -51,6 +51,13 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "dataTransfer.invalidImportFormat": "Invalid import file format.",
   "dataTransfer.noSubjectsToImport": "No subjects to import.",
   "dataTransfer.importFailed": "Failed to import data.",
+  "decks.invalidData": "Invalid deck data.",
+  "decks.notFound": "Deck not found.",
+  "decks.duplicateName":
+    "A deck with this name already exists in this subject.",
+  "decks.cannotDeleteDefault": "Cannot delete the default deck.",
+  "decks.defaultNotFound": "Default deck not found for this subject.",
+  "decks.wrongSubject": "Deck does not belong to the selected subject.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
   "flashcards.duplicateFront": "A flashcard with this front already exists.",
@@ -81,6 +88,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} assessments per subject.`,
   "limits.flashcardLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
+  "limits.deckLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} decks per subject.`,
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
   "subjects.invalidData": "Invalid subject data.",

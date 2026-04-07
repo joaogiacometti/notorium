@@ -10,6 +10,7 @@ This document covers project setup, local development, and repository operations
 
 - Subject organization
 - Rich text notes and flashcards
+- Deck organization for flashcards
 - Flashcard review with spaced repetition
 - Attendance tracking
 - Assessment tracking

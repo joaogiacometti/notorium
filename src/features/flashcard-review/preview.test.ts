@@ -27,6 +27,7 @@ function makeCard(
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
+    deckId: null,
     ...overrides,
   };
 }

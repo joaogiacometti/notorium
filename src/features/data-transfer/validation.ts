@@ -52,8 +52,15 @@ const flashcardSchema = z.object({
   lastReviewedAt: dateStringSchema.nullable(),
   reviewCount: nonNegativeIntegerSchema,
   lapseCount: nonNegativeIntegerSchema,
+  deckName: z.string().min(1).max(LIMITS.deckNameMax).optional(),
   createdAt: dateStringSchema,
   updatedAt: dateStringSchema,
+});
+
+const deckSchema = z.object({
+  name: z.string().min(1).max(LIMITS.deckNameMax),
+  description: z.string().max(LIMITS.deckDescriptionMax).nullable().optional(),
+  isDefault: z.boolean(),
 });
 
 const subjectSchema = z.object({
@@ -66,6 +73,7 @@ const subjectSchema = z.object({
   notes: z.array(noteSchema).optional().default([]),
   attendanceMisses: z.array(attendanceMissSchema),
   assessments: z.array(assessmentSchema),
+  decks: z.array(deckSchema).optional().default([]),
   flashcards: z.array(flashcardSchema).optional().default([]),
 });
 

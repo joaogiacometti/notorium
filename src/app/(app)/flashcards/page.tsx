@@ -1,6 +1,7 @@
 import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-client";
 import { FlashcardsManager } from "@/components/flashcards/flashcards-manager";
 import { FlashcardsPageShell } from "@/components/flashcards/flashcards-page-shell";
+import { getDecksBySubjectForUser } from "@/features/decks/queries";
 import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
@@ -8,14 +9,14 @@ import { getSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 
 interface FlashcardsPageProps {
-  searchParams: Promise<{ view?: string; subjectId?: string }>;
+  searchParams: Promise<{ view?: string; subjectId?: string; deckId?: string }>;
 }
 
 export default async function FlashcardsPage({
   searchParams,
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
-  const { view, subjectId } = await searchParams;
+  const { view, subjectId, deckId } = await searchParams;
   const currentView = resolveFlashcardsView(view);
   const subjects = await getSubjectsForUser(session.user.id);
 
@@ -23,9 +24,17 @@ export default async function FlashcardsPage({
     ? subjectId
     : undefined;
 
+  const decks = scopedSubjectId
+    ? await getDecksBySubjectForUser(session.user.id, scopedSubjectId)
+    : [];
+
+  const scopedDeckId =
+    deckId && decks.some((deck) => deck.id === deckId) ? deckId : undefined;
+
   if (currentView === "review") {
     const reviewState = await getFlashcardReviewStateForUser(session.user.id, {
       subjectId: scopedSubjectId,
+      deckId: scopedDeckId,
       limit: 50,
     });
     const dueCount = reviewState.summary.dueCount;
@@ -48,6 +57,8 @@ export default async function FlashcardsPage({
           initialState={reviewState}
           subjects={subjects}
           subjectId={scopedSubjectId}
+          deckId={scopedDeckId}
+          decks={decks}
           embedded
         />
       </FlashcardsPageShell>
@@ -60,6 +71,7 @@ export default async function FlashcardsPage({
       pageIndex: 0,
       pageSize: 25,
       subjectId: scopedSubjectId,
+      deckId: scopedDeckId,
       search: "",
     },
   );
@@ -75,7 +87,9 @@ export default async function FlashcardsPage({
       <FlashcardsManager
         initialPageData={initialPageData}
         subjects={subjects}
+        decks={decks}
         initialSubjectId={scopedSubjectId}
+        initialDeckId={scopedDeckId}
       />
     </FlashcardsPageShell>
   );

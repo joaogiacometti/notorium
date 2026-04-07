@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import type {
   assessment,
   attendanceMiss,
+  deck,
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
@@ -15,6 +16,10 @@ export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
+export type DeckEntity = InferSelectModel<typeof deck>;
+export interface DeckWithCount extends DeckEntity {
+  flashcardCount: number;
+}
 export interface AssessmentDetailEntity {
   assessment: AssessmentEntity;
   subject: Pick<SubjectEntity, "id" | "name">;
@@ -29,14 +34,16 @@ export interface PlanningAssessmentsPage {
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 export type FlashcardListEntity = FlashcardEntity & {
   subjectName: string;
+  deckName: string | null;
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "subjectId" | "updatedAt"
+  "id" | "subjectId" | "deckId" | "updatedAt"
 > & {
   front: string;
   backExcerpt: string;
   subjectName: string;
+  deckName: string | null;
 };
 export interface FlashcardManagePage {
   items: FlashcardManageItem[];
@@ -62,6 +69,7 @@ export type FlashcardReviewEntity = Pick<
   | "front"
   | "back"
   | "subjectId"
+  | "deckId"
   | "state"
   | "dueAt"
   | "stability"
@@ -74,6 +82,7 @@ export type FlashcardReviewEntity = Pick<
   | "lapseCount"
 > & {
   subjectName?: string;
+  deckName?: string | null;
 };
 
 export interface FlashcardReviewSummary {
@@ -219,5 +228,25 @@ export type ValidateFlashcardsResult =
       success: true;
       issues: FlashcardValidationIssue[];
       flashcards: FlashcardValidationItem[];
+    }
+  | ActionErrorResult;
+
+export type CreateDeckResult =
+  | {
+      success: true;
+      deck: DeckEntity;
+    }
+  | ActionErrorResult;
+export type EditDeckResult =
+  | {
+      success: true;
+      deck: DeckEntity;
+    }
+  | ActionErrorResult;
+export type DeleteDeckResult =
+  | {
+      success: true;
+      id: string;
+      subjectId: string;
     }
   | ActionErrorResult;

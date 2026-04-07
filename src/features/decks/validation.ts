@@ -1,0 +1,40 @@
+import { z } from "zod";
+import { LIMITS } from "@/lib/config/limits";
+import { validationMessage } from "@/lib/validations/validation-messages";
+
+export const deckNameSchema = z
+  .string()
+  .min(1, validationMessage("Validation.decks.nameRequired"))
+  .max(LIMITS.deckNameMax, validationMessage("Validation.decks.nameMaxLength"));
+
+export const deckDescriptionSchema = z
+  .string()
+  .max(
+    LIMITS.deckDescriptionMax,
+    validationMessage("Validation.decks.descriptionMaxLength"),
+  )
+  .optional();
+
+export const createDeckSchema = z.object({
+  subjectId: z
+    .string()
+    .min(1, validationMessage("Validation.decks.subjectRequired")),
+  name: deckNameSchema,
+  description: deckDescriptionSchema,
+});
+
+export type CreateDeckForm = z.infer<typeof createDeckSchema>;
+
+export const editDeckSchema = z.object({
+  id: z.string().min(1),
+  name: deckNameSchema,
+  description: deckDescriptionSchema,
+});
+
+export type EditDeckForm = z.infer<typeof editDeckSchema>;
+
+export const deleteDeckSchema = z.object({
+  id: z.string().min(1),
+});
+
+export type DeleteDeckForm = z.infer<typeof deleteDeckSchema>;

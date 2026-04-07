@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { getDecks } from "@/app/actions/decks";
 import { createFlashcard, generateFlashcards } from "@/app/actions/flashcards";
 import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
@@ -35,6 +36,7 @@ import {
   generateFlashcardsSchema,
 } from "@/features/flashcards/validation";
 import type {
+  DeckEntity,
   FlashcardEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
@@ -46,9 +48,13 @@ interface GeneratedCard {
   back: string;
 }
 
-function getCreateFlashcardFormValues(subjectId: string): CreateFlashcardForm {
+function getCreateFlashcardFormValues(
+  subjectId: string,
+  deckId?: string | null,
+): CreateFlashcardForm {
   return {
     subjectId,
+    deckId: deckId ?? undefined,
     front: "",
     back: "",
   };
@@ -90,6 +96,8 @@ export function CreateFlashcardDialog({
     useState(false);
   const [discardOnModeSwitchDialogOpen, setDiscardOnModeSwitchDialogOpen] =
     useState(false);
+  const [decks, setDecks] = useState<DeckEntity[]>([]);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
 
   const singleForm = useForm<CreateFlashcardForm>({
     resolver: zodResolver(createFlashcardSchema),
@@ -100,6 +108,30 @@ export function CreateFlashcardDialog({
     resolver: zodResolver(generateFlashcardsSchema),
     defaultValues: getGenerateFlashcardsFormValues(subjectId ?? ""),
   });
+
+  useEffect(() => {
+    const subscription = singleForm.watch((value, { name }) => {
+      if (name === "subjectId") {
+        const currentSubjectId = value.subjectId;
+        if (currentSubjectId) {
+          void getDecks(currentSubjectId).then((fetchedDecks) => {
+            setDecks(fetchedDecks);
+          });
+        } else {
+          setDecks([]);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [singleForm]);
+
+  useEffect(() => {
+    if (subjectId) {
+      void getDecks(subjectId).then((fetchedDecks) => {
+        setDecks(fetchedDecks);
+      });
+    }
+  }, [subjectId]);
 
   const dialog = useFlashcardDialogState({
     mode: "create",
@@ -172,6 +204,7 @@ export function CreateFlashcardDialog({
     for (const card of cards) {
       const result = await createFlashcard({
         subjectId: aiForm.getValues().subjectId,
+        deckId: selectedDeckId ?? undefined,
         front: card.front,
         back: card.back,
       });
@@ -223,17 +256,25 @@ export function CreateFlashcardDialog({
       return;
     }
     if (mode === "single" && newMode === "ai") {
-      const subjectId = singleForm.getValues("subjectId");
-      if (subjectId) {
-        aiForm.setValue("subjectId", subjectId);
+      const currentSubjectId = singleForm.getValues("subjectId");
+      if (currentSubjectId) {
+        aiForm.setValue("subjectId", currentSubjectId);
       }
+      setSelectedDeckId(singleForm.getValues("deckId") ?? null);
     } else if (mode === "ai" && newMode === "single") {
-      const subjectId = aiForm.getValues("subjectId");
-      if (subjectId) {
-        singleForm.setValue("subjectId", subjectId);
+      const currentSubjectId = aiForm.getValues("subjectId");
+      if (currentSubjectId) {
+        singleForm.setValue("subjectId", currentSubjectId);
       }
+      singleForm.setValue("deckId", selectedDeckId ?? undefined);
     }
     setMode(newMode);
+  }
+
+  function handleSubjectChange(newSubjectId: string) {
+    void getDecks(newSubjectId).then((fetchedDecks) => {
+      setDecks(fetchedDecks);
+    });
   }
 
   function handleDiscardOnClose() {
@@ -266,6 +307,8 @@ export function CreateFlashcardDialog({
         form={singleForm}
         formId="form-create-flashcard"
         subjects={subjects}
+        decks={decks}
+        onSubjectChange={handleSubjectChange}
         onSubmit={dialog.handleSubmit}
         discardDialogOpen={dialog.discardDialogOpen}
         onDiscardDialogOpenChange={dialog.setDiscardDialogOpen}

@@ -4,6 +4,7 @@ import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
+import { DecksList } from "@/components/decks/decks-list";
 import { NotesList } from "@/components/notes/notes-list";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -16,6 +17,7 @@ import { formatRelativeTime } from "@/lib/dates/format";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
+  DeckWithCount,
   NoteEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
@@ -25,6 +27,7 @@ interface SubjectDetailProps {
   notes: NoteEntity[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
+  decks: DeckWithCount[];
 }
 
 export function SubjectDetail({
@@ -32,6 +35,7 @@ export function SubjectDetail({
   notes,
   misses,
   assessments,
+  decks,
 }: Readonly<SubjectDetailProps>) {
   const router = useRouter();
   const [, startNavTransition] = useTransition();
@@ -95,6 +99,9 @@ export function SubjectDetail({
         assessments={assessments}
         subjectId={subject.id}
       />
+
+      <Separator className="my-8" />
+      <DecksList subjectId={subject.id} decks={decks} />
 
       <Separator className="my-8" />
       <NotesList subjectId={subject.id} notes={notes} />

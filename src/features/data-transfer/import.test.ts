@@ -38,6 +38,11 @@ vi.mock("drizzle-orm", () => ({
 vi.mock("@/db/schema", () => ({
   assessment: {},
   attendanceMiss: {},
+  deck: {
+    id: "deck_id_column",
+    name: "deck_name_column",
+    isDefault: "deck_is_default_column",
+  },
   flashcard: {},
   flashcardSchedulerSettings: {
     userId: "flashcard_scheduler_user_id_column",
@@ -90,6 +95,7 @@ describe("importDataForUser", () => {
           notes: [],
           attendanceMisses: [],
           assessments: [],
+          decks: [],
           flashcards: [
             {
               front: "<p>Front</p>",
@@ -138,6 +144,7 @@ describe("importDataForUser", () => {
       }),
     );
     returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
+    returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
 
     const { importDataForUser } = await import(
       "@/features/data-transfer/import"
@@ -153,6 +160,7 @@ describe("importDataForUser", () => {
           front: "<p>Front</p>",
           reviewCount: 3,
           subjectId: "subject-1",
+          deckId: "default-deck-1",
         }),
       ]),
     );

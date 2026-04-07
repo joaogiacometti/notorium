@@ -12,7 +12,7 @@ import {
   sql,
 } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, subject } from "@/db/schema";
+import { deck, flashcard, subject } from "@/db/schema";
 import {
   getFlashcardManageBackExcerpt,
   getFlashcardManageBackExcerptSourceLength,
@@ -49,9 +49,10 @@ export async function getFlashcardsForUser(
   userId: string,
 ): Promise<FlashcardListEntity[]> {
   return getDb()
-    .select({ flashcard, subjectName: subject.name })
+    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .leftJoin(deck, eq(flashcard.deckId, deck.id))
     .where(
       and(
         eq(flashcard.userId, userId),
@@ -63,13 +64,20 @@ export async function getFlashcardsForUser(
       rows.map((row) => ({
         ...row.flashcard,
         subjectName: row.subjectName,
+        deckName: row.deckName,
       })),
     );
 }
 
 export async function getFlashcardsManagePageForUser(
   userId: string,
-  { pageIndex, pageSize, subjectId, search }: FlashcardsManageQueryInput,
+  {
+    pageIndex,
+    pageSize,
+    subjectId,
+    deckId,
+    search,
+  }: FlashcardsManageQueryInput,
 ): Promise<FlashcardManagePage> {
   const normalizedSearch = search?.trim() ?? "";
   const searchPattern = buildContainsSearchPattern(normalizedSearch);
@@ -82,6 +90,10 @@ export async function getFlashcardsManagePageForUser(
 
   if (subjectId) {
     filters.push(eq(flashcard.subjectId, subjectId));
+  }
+
+  if (deckId) {
+    filters.push(eq(flashcard.deckId, deckId));
   }
 
   const totalFilters =
@@ -101,13 +113,16 @@ export async function getFlashcardsManagePageForUser(
       .select({
         id: flashcard.id,
         subjectId: flashcard.subjectId,
+        deckId: flashcard.deckId,
         updatedAt: flashcard.updatedAt,
         front: flashcard.front,
         back: sql<string>`left(${flashcard.back}, ${backExcerptSourceLength})`,
         subjectName: subject.name,
+        deckName: deck.name,
       })
       .from(flashcard)
       .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .leftJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...totalFilters))
       .orderBy(desc(flashcard.updatedAt))
       .limit(pageSize)
@@ -116,6 +131,7 @@ export async function getFlashcardsManagePageForUser(
       .select({ total: count() })
       .from(flashcard)
       .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .leftJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...totalFilters)),
     subjectId
       ? getDb()
@@ -137,10 +153,12 @@ export async function getFlashcardsManagePageForUser(
     items: itemRows.map((row) => ({
       id: row.id,
       subjectId: row.subjectId,
+      deckId: row.deckId,
       updatedAt: row.updatedAt,
       front: row.front,
       backExcerpt: getFlashcardManageBackExcerpt(row.back),
       subjectName: row.subjectName,
+      deckName: row.deckName,
     })),
     total: totalRows[0]?.total ?? 0,
     subjectCardCount: subjectId ? (subjectCountRows[0]?.total ?? 0) : null,

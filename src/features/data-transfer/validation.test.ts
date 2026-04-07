@@ -33,6 +33,12 @@ const validSubject = {
   flashcards: [],
 };
 
+const validDeck = {
+  name: "Lecture Notes",
+  description: null,
+  isDefault: false,
+};
+
 const validPayload = {
   version: 1,
   exportedAt: "2026-03-01T00:00:00.000Z",
@@ -67,7 +73,7 @@ describe("importDataSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts a full subject with notes, assessments, attendance, and flashcards", () => {
+  it("accepts a full subject with notes, assessments, attendance, decks, and flashcards", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
       subjects: [
@@ -76,6 +82,21 @@ describe("importDataSchema", () => {
           notes: [validNote],
           assessments: [validAssessment],
           attendanceMisses: [{ missDate: "2026-02-10" }],
+          decks: [validDeck],
+          flashcards: [{ ...validFlashcard, deckName: "Lecture Notes" }],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a flashcard without deckName (backward-compatible)", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
           flashcards: [validFlashcard],
         },
       ],
@@ -84,8 +105,8 @@ describe("importDataSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects wrong version number", () => {
-    const result = importDataSchema.safeParse({ ...validPayload, version: 2 });
+  it("rejects an unsupported version number", () => {
+    const result = importDataSchema.safeParse({ ...validPayload, version: 99 });
 
     expect(result.success).toBe(false);
   });

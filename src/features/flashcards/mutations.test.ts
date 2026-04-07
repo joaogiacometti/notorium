@@ -31,6 +31,8 @@ const getActiveSubjectRecordForUserMock = vi.fn();
 const getActiveSubjectByIdForUserMock = vi.fn();
 const hasDuplicateFlashcardFrontForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
+const getDeckRecordForUserMock = vi.fn();
+const ensureDefaultDeckForSubjectMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -65,6 +67,14 @@ vi.mock("@/features/subjects/queries", () => ({
   getActiveSubjectByIdForUser: getActiveSubjectByIdForUserMock,
 }));
 
+vi.mock("@/features/decks/queries", () => ({
+  getDeckRecordForUser: getDeckRecordForUserMock,
+}));
+
+vi.mock("@/features/decks/mutations", () => ({
+  ensureDefaultDeckForSubject: ensureDefaultDeckForSubjectMock,
+}));
+
 vi.mock("@/features/flashcards/ai-service", () => ({
   generateFlashcardBackForUser: vi.fn(),
   improveFlashcardBackForUser: vi.fn(),
@@ -78,6 +88,7 @@ describe("createFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hasDuplicateFlashcardFrontForUserMock.mockResolvedValue(false);
+    ensureDefaultDeckForSubjectMock.mockResolvedValue({ id: "default-deck-1" });
   });
 
   it("returns duplicate error when a flashcard with the same normalized front already exists", async () => {
@@ -170,6 +181,7 @@ describe("createFlashcardForUser", () => {
       lastReviewedAt: null,
       reviewCount: 0,
       lapseCount: 0,
+      deckId: "default-deck-1",
     });
   });
 });
@@ -224,6 +236,7 @@ describe("editFlashcardForUser", () => {
       front: "<p>Updated front</p>",
       frontNormalized: "updated front",
       back: "<p>Updated back</p>",
+      deckId: null,
     });
   });
 

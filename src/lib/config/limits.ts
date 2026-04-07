@@ -3,6 +3,10 @@ export const LIMITS = {
   maxNotesPerSubject: 100,
   maxAssessmentsPerSubject: 50,
   maxFlashcardsPerSubject: 2000,
+  maxDecksPerSubject: 20,
+
+  deckNameMax: 100,
+  deckDescriptionMax: 500,
 
   noteTitleMax: 200,
   noteContentMax: 100000,

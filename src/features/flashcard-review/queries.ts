@@ -1,6 +1,6 @@
 import { and, asc, count, eq, isNull, lte, type SQL } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, subject } from "@/db/schema";
+import { deck, flashcard, subject } from "@/db/schema";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -11,6 +11,7 @@ import type {
 
 export interface GetDueFlashcardsOptions {
   subjectId?: string;
+  deckId?: string;
   limit?: number;
 }
 
@@ -30,6 +31,10 @@ function getDueFilters(
     filters.push(eq(flashcard.subjectId, options.subjectId));
   }
 
+  if (options.deckId) {
+    filters.push(eq(flashcard.deckId, options.deckId));
+  }
+
   return filters;
 }
 
@@ -44,9 +49,10 @@ export async function getDueFlashcardsForUser(
       : LIMITS.reviewDueLimitDefault;
 
   return getDb()
-    .select({ flashcard, subjectName: subject.name })
+    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .leftJoin(deck, eq(flashcard.deckId, deck.id))
     .where(and(...getDueFilters(userId, now, options)))
     .orderBy(asc(flashcard.dueAt), asc(flashcard.createdAt))
     .limit(limit)
@@ -54,6 +60,7 @@ export async function getDueFlashcardsForUser(
       rows.map((row) => ({
         ...row.flashcard,
         subjectName: row.subjectName,
+        deckName: row.deckName,
       })),
     );
 }
@@ -61,7 +68,7 @@ export async function getDueFlashcardsForUser(
 export async function getFlashcardReviewSummaryForUser(
   userId: string,
   now: Date,
-  options: Pick<GetDueFlashcardsOptions, "subjectId"> = {},
+  options: Pick<GetDueFlashcardsOptions, "subjectId" | "deckId"> = {},
 ): Promise<FlashcardReviewSummary> {
   const baseFilters: SQL<unknown>[] = [
     eq(flashcard.userId, userId),
@@ -71,6 +78,10 @@ export async function getFlashcardReviewSummaryForUser(
 
   if (options.subjectId) {
     baseFilters.push(eq(flashcard.subjectId, options.subjectId));
+  }
+
+  if (options.deckId) {
+    baseFilters.push(eq(flashcard.deckId, options.deckId));
   }
 
   const [dueResult, totalResult] = await Promise.all([

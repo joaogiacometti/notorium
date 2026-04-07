@@ -6,6 +6,7 @@ import {
   account,
   assessment,
   attendanceMiss,
+  deck,
   flashcard,
   instanceState,
   note,
@@ -482,4 +483,54 @@ export async function createMaxAssessmentsForSubject(
       `${prefix}limit-assessment-${index}`,
     );
   });
+}
+
+export async function createDeck(
+  userId: string,
+  subjectId: string,
+  name: string,
+  description?: string | null,
+) {
+  const [newDeck] = await getDb()
+    .insert(deck)
+    .values({
+      userId,
+      subjectId,
+      name,
+      description: description ?? null,
+      isDefault: false,
+    })
+    .returning({ id: deck.id, name: deck.name });
+
+  return newDeck;
+}
+
+export async function createMaxDecksForSubject(
+  userId: string,
+  subjectId: string,
+) {
+  const prefix = getE2EEmailPrefix();
+
+  await createMany(LIMITS.maxDecksPerSubject, async (index) => {
+    await createDeck(userId, subjectId, `${prefix}limit-deck-${index}`, null);
+  });
+}
+
+export async function getDefaultDeckForSubject(
+  userId: string,
+  subjectId: string,
+) {
+  const [defaultDeck] = await getDb()
+    .select({ id: deck.id, name: deck.name })
+    .from(deck)
+    .where(
+      and(
+        eq(deck.userId, userId),
+        eq(deck.subjectId, subjectId),
+        eq(deck.isDefault, true),
+      ),
+    )
+    .limit(1);
+
+  return defaultDeck ?? null;
 }

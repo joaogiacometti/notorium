@@ -3,6 +3,7 @@ import { getDb } from "@/db/index";
 import {
   assessment,
   attendanceMiss,
+  deck,
   flashcard,
   flashcardSchedulerSettings,
   note,
@@ -152,6 +153,13 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
       }
 
       if (importedSubject.flashcards.length > 0) {
+        const { deckNameToId, defaultDeckId } = await importDecksForSubject(
+          tx,
+          userId,
+          subjectId,
+          importedSubject.decks,
+        );
+
         await tx.insert(flashcard).values(
           importedSubject.flashcards.map((currentFlashcard) => ({
             ...getImportedFlashcardSchedulingState(currentFlashcard),
@@ -160,6 +168,12 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
               currentFlashcard.front,
             ),
             back: currentFlashcard.back,
+            deckId:
+              currentFlashcard.deckName === undefined
+                ? (defaultDeckId ?? null)
+                : (deckNameToId.get(currentFlashcard.deckName) ??
+                  defaultDeckId ??
+                  null),
             subjectId,
             userId,
           })),
@@ -187,4 +201,65 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
 
     return importedCount;
   });
+}
+
+type Tx = Parameters<ReturnType<typeof getDb>["transaction"]>[0] extends (
+  tx: infer T,
+) => unknown
+  ? T
+  : never;
+
+type ImportedDeck = ImportData["subjects"][number]["decks"][number];
+
+async function importDecksForSubject(
+  tx: Tx,
+  userId: string,
+  subjectId: string,
+  importedDecks: ImportedDeck[],
+): Promise<{
+  deckNameToId: Map<string, string>;
+  defaultDeckId: string | undefined;
+}> {
+  const deckNameToId = new Map<string, string>();
+  let defaultDeckId: string | undefined;
+
+  if (importedDecks.length > 0) {
+    const insertedDecks = await tx
+      .insert(deck)
+      .values(
+        importedDecks.map((d) => ({
+          name: d.name,
+          description: d.description ?? undefined,
+          isDefault: d.isDefault,
+          subjectId,
+          userId,
+        })),
+      )
+      .returning({ id: deck.id, name: deck.name, isDefault: deck.isDefault });
+
+    for (const insertedDeck of insertedDecks) {
+      deckNameToId.set(insertedDeck.name, insertedDeck.id);
+      if (insertedDeck.isDefault) {
+        defaultDeckId = insertedDeck.id;
+      }
+    }
+  }
+
+  if (defaultDeckId === undefined) {
+    const [insertedDefault] = await tx
+      .insert(deck)
+      .values({
+        name: "General",
+        isDefault: true,
+        subjectId,
+        userId,
+      })
+      .returning({ id: deck.id });
+    defaultDeckId = insertedDefault?.id;
+    if (defaultDeckId !== undefined) {
+      deckNameToId.set("General", defaultDeckId);
+    }
+  }
+
+  return { deckNameToId, defaultDeckId };
 }

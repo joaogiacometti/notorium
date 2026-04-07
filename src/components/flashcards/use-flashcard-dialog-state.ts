@@ -183,7 +183,18 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       return;
     }
 
-    if ((form.formState.isDirty || proposedBack) && !isSubmitting) {
+    const hasFrontContent = hasRichTextContent(currentValues.front);
+    const hasBackContent = hasRichTextContent(currentValues.back);
+    const hasContent = hasFrontContent || hasBackContent;
+    const hasUnsavedChanges =
+      mode === "edit"
+        ? currentValues.front !== values.front ||
+          currentValues.back !== values.back ||
+          currentValues.subjectId !== values.subjectId ||
+          currentValues.deckId !== values.deckId
+        : hasContent;
+
+    if ((hasUnsavedChanges || proposedBack) && !isSubmitting) {
       setDiscardDialogOpen(true);
       return;
     }

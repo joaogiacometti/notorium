@@ -28,6 +28,11 @@ vi.mock("@/db/schema", () => ({
     userId: "attendance_user_id_column",
     subjectId: "attendance_subject_id_column",
   },
+  deck: {
+    userId: "deck_user_id_column",
+    subjectId: "deck_subject_id_column",
+    id: "deck_id_column",
+  },
   flashcard: {
     userId: "flashcard_user_id_column",
     subjectId: "flashcard_subject_id_column",
@@ -82,6 +87,7 @@ describe("exportDataForUser", () => {
         updatedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
+    mockSelectWhereOnce([]);
     mockSelectWhereOnce([]);
     mockSelectWhereOnce([]);
     mockSelectWhereOnce([]);

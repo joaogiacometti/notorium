@@ -40,6 +40,7 @@ import {
 import { LIMITS } from "@/lib/config/limits";
 import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type {
+  DeckEntity,
   FlashcardManagePage,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
@@ -49,13 +50,17 @@ import { cn } from "@/lib/utils";
 interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
   subjects: SubjectEntity[];
+  decks: DeckEntity[];
   initialSubjectId?: string;
+  initialDeckId?: string;
 }
 
 export function FlashcardsManager({
   initialPageData,
   subjects,
+  decks,
   initialSubjectId,
+  initialDeckId,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
@@ -74,6 +79,7 @@ export function FlashcardsManager({
     searchQuery,
     refreshManagePage,
     resetTarget,
+    selectedDeckId,
     selectedFlashcardIds,
     selectedSubjectCardCount,
     selectedSubjectId,
@@ -85,6 +91,7 @@ export function FlashcardsManager({
     setPageIndex,
     setResetTarget,
     setSearchQuery,
+    setSelectedDeckId,
     setSelectedFlashcardIds,
     setSelectedSubjectId,
     total,
@@ -106,6 +113,7 @@ export function FlashcardsManager({
   } = useFlashcardsManagerController({
     initialPageData,
     initialSubjectId,
+    initialDeckId,
     subjects,
   });
   const hasSubjects = subjects.length > 0;
@@ -135,6 +143,10 @@ export function FlashcardsManager({
   const renderSubjectFilter = () => {
     if (validationMode) return null;
 
+    const filteredDecks = selectedSubjectId
+      ? decks.filter((d) => d.subjectId === selectedSubjectId)
+      : [];
+
     return (
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="min-w-0">
@@ -161,6 +173,28 @@ export function FlashcardsManager({
             </SelectContent>
           </Select>
         </div>
+        {selectedSubjectId && filteredDecks.length > 0 && (
+          <div className="min-w-0">
+            <Select
+              value={selectedDeckId ?? "all"}
+              onValueChange={(value) =>
+                setSelectedDeckId(value === "all" ? undefined : value)
+              }
+            >
+              <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+                <SelectValue placeholder="Filter by Deck" />
+              </SelectTrigger>
+              <SelectContent align="start">
+                <SelectItem value="all">All Decks</SelectItem>
+                {filteredDecks.map((deck) => (
+                  <SelectItem key={deck.id} value={deck.id}>
+                    {deck.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
     );
   };

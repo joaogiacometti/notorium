@@ -62,6 +62,16 @@ Students who want a private, lightweight study management workspace.
 - Flashcard review remains available as the second view in the global flashcards page.
 - User AI API keys are encrypted at rest, never shown back to the user after saving, and excluded from data export/import.
 
+### Decks
+
+- Flashcards belong to a deck within a subject.
+- Each subject has a default deck named "General" created automatically when the first flashcard is added.
+- Users can create, rename, and delete additional decks per subject.
+- Deleting a non-default deck moves all its flashcards to the subject's default deck.
+- The default deck cannot be deleted.
+- The management and review views both support filtering by deck.
+- When creating or editing a flashcard, the user can select any deck belonging to the same subject; unspecified deck assignments fall back to the subject's default deck.
+
 ### Flashcard Review
 
 - Global review page with a spaced repetition queue.
@@ -108,7 +118,7 @@ Students who want a private, lightweight study management workspace.
 - View account details.
 - Update display name.
 - Admin-only access management page to approve, block, or set pending for users.
-- Export study data as JSON, including subjects, notes, attendance, assessments, flashcards, and flashcard review settings.
+- Export study data as JSON, including subjects, notes, attendance, assessments, flashcards (with deck assignment), decks, and flashcard review settings.
 - Export template JSON with subject structure only, excluding notes, attendance records, flashcards, and all account/security data.
 - Import user data from a previous Notorium export.
 - Delete account and all user-owned data.
@@ -123,10 +133,11 @@ Students who want a private, lightweight study management workspace.
 
 ## Resource Limits
 
-- A user can create a maximum of 20 subjects.
-- A user can create a maximum of 30 notes per subject.
-- A user can create a maximum of 15 assessments per subject.
-- A user can create a maximum of 500 flashcards per subject.
+- A user can create a maximum of 50 subjects.
+- A user can create a maximum of 100 notes per subject.
+- A user can create a maximum of 50 assessments per subject.
+- A user can create a maximum of 2000 flashcards per subject.
+- A user can create a maximum of 20 decks per subject.
 
 ## Data Ownership and Security Rules
 
@@ -142,8 +153,10 @@ Students who want a private, lightweight study management workspace.
   - `id`, `initialAdminUserId`, `initialAdminAssignedAt`, timestamps
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`
+- `deck`
+  - `id`, `name`, `description`, `isDefault`, `subjectId`, timestamps, `userId`
 - `flashcard`
-  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`
+  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, `deckId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
   - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, optimization timestamps
 - `flashcard_review_log`

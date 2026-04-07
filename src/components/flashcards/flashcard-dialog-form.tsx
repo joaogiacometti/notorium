@@ -10,6 +10,7 @@ import {
 import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
 import { FlashcardBackDiff } from "@/components/flashcards/flashcard-back-diff";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { DeckSelect } from "@/components/shared/deck-select";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
@@ -32,7 +33,7 @@ import {
   type EditFlashcardForm,
   hasRichTextContent,
 } from "@/features/flashcards/validation";
-import type { SubjectEntity } from "@/lib/server/api-contracts";
+import type { DeckEntity, SubjectEntity } from "@/lib/server/api-contracts";
 
 type FlashcardFormValues = CreateFlashcardForm | EditFlashcardForm;
 
@@ -44,6 +45,9 @@ interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
   form: UseFormReturn<TValues>;
   formId: string;
   subjects?: SubjectEntity[];
+  decks?: DeckEntity[];
+  selectedSubjectId?: string;
+  onSubjectChange?: (subjectId: string) => void;
   onSubmit: (values: TValues) => Promise<void>;
   discardDialogOpen: boolean;
   onDiscardDialogOpenChange: (open: boolean) => void;
@@ -80,6 +84,8 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   form,
   formId,
   subjects,
+  decks,
+  onSubjectChange,
   onSubmit,
   discardDialogOpen,
   onDiscardDialogOpenChange,
@@ -116,7 +122,12 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
     control: form.control,
     name: "back" as FieldPath<TValues>,
   });
-  const hasBack = hasRichTextContent(watchedBack);
+  const watchedSubjectId = useWatch({
+    control: form.control,
+    name: "subjectId" as FieldPath<TValues>,
+  });
+
+  const hasBack = hasRichTextContent(watchedBack ?? "");
   const generateLabel = hasBack ? "Improve with AI" : "Generate with AI";
   const generatingLabel = hasBack ? "Improving..." : "Generating...";
 
@@ -129,20 +140,47 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
         <FieldGroup className="gap-5">
           {subjects && subjects.length > 0 ? (
-            <Controller
-              name={"subjectId" as FieldPath<TValues>}
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <SubjectSelect
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  subjects={subjects}
-                  id={`${formId}-subject`}
-                  error={fieldState.error?.message as string}
-                  ariaInvalid={fieldState.invalid}
+            <div className="flex flex-col gap-5 sm:flex-row sm:gap-4">
+              <Controller
+                name={"subjectId" as FieldPath<TValues>}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <div className="flex-1">
+                    <SubjectSelect
+                      value={field.value ?? ""}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        onSubjectChange?.(value);
+                      }}
+                      subjects={subjects}
+                      id={`${formId}-subject`}
+                      error={fieldState.error?.message as string}
+                      ariaInvalid={fieldState.invalid}
+                    />
+                  </div>
+                )}
+              />
+              {watchedSubjectId ? (
+                <Controller
+                  name={"deckId" as FieldPath<TValues>}
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <div className="flex-1">
+                      <DeckSelect
+                        value={field.value ?? null}
+                        onChange={field.onChange}
+                        decks={decks ?? []}
+                        id={`${formId}-deck`}
+                        error={fieldState.error?.message as string}
+                        ariaInvalid={fieldState.invalid}
+                      />
+                    </div>
+                  )}
                 />
+              ) : (
+                <div className="flex-1" />
               )}
-            />
+            </div>
           ) : null}
           {typeToggle ? (
             <CreateModeToggle

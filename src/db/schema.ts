@@ -231,6 +231,39 @@ export const flashcardStateEnum = pgEnum("flashcard_state", [
   "relearning",
 ]);
 
+export const deck = pgTable(
+  "deck",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    name: text("name").notNull(),
+    description: text("description"),
+    isDefault: boolean("is_default").notNull().default(false),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    unique("deck_userId_subjectId_name_unique").on(
+      table.userId,
+      table.subjectId,
+      table.name,
+    ),
+    index("deck_subjectId_idx").on(table.subjectId),
+    index("deck_userId_idx").on(table.userId),
+    index("deck_userId_subjectId_idx").on(table.userId, table.subjectId),
+  ],
+);
+
 export const flashcardReviewRatingEnum = pgEnum("flashcard_review_rating", [
   "again",
   "hard",
@@ -296,6 +329,9 @@ export const flashcard = pgTable(
     subjectId: text("subject_id")
       .notNull()
       .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    deckId: text("deck_id").references((): AnyPgColumn => deck.id, {
+      onDelete: "set null",
+    }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -311,6 +347,7 @@ export const flashcard = pgTable(
       table.frontNormalized,
     ),
     index("flashcard_subjectId_idx").on(table.subjectId),
+    index("flashcard_deckId_idx").on(table.deckId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
@@ -318,6 +355,11 @@ export const flashcard = pgTable(
     index("flashcard_userId_subjectId_updatedAt_idx").on(
       table.userId,
       table.subjectId,
+      table.updatedAt,
+    ),
+    index("flashcard_userId_deckId_updatedAt_idx").on(
+      table.userId,
+      table.deckId,
       table.updatedAt,
     ),
     index("flashcard_front_trgm_idx").using(
@@ -432,6 +474,7 @@ export const userRelations = relations(user, ({ many }) => ({
   flashcards: many(flashcard),
   flashcardReviewLogs: many(flashcardReviewLog),
   aiSettings: many(userAiSettings),
+  decks: many(deck),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -457,6 +500,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
   flashcards: many(flashcard),
+  decks: many(deck),
 }));
 
 export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
@@ -492,10 +536,26 @@ export const assessmentRelations = relations(assessment, ({ one }) => ({
   }),
 }));
 
+export const deckRelations = relations(deck, ({ one, many }) => ({
+  subject: one(subject, {
+    fields: [deck.subjectId],
+    references: [subject.id],
+  }),
+  user: one(user, {
+    fields: [deck.userId],
+    references: [user.id],
+  }),
+  flashcards: many(flashcard),
+}));
+
 export const flashcardRelations = relations(flashcard, ({ one }) => ({
   subject: one(subject, {
     fields: [flashcard.subjectId],
     references: [subject.id],
+  }),
+  deck: one(deck, {
+    fields: [flashcard.deckId],
+    references: [deck.id],
   }),
   user: one(user, {
     fields: [flashcard.userId],

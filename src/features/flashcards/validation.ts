@@ -32,6 +32,7 @@ export const createFlashcardSchema = z.object({
   subjectId: z
     .string()
     .min(1, validationMessage("Validation.flashcards.subjectRequired")),
+  deckId: z.string().min(1).nullable().optional(),
   front: flashcardFrontSchema,
   back: flashcardBackSchema,
 });
@@ -41,6 +42,7 @@ export type CreateFlashcardForm = z.infer<typeof createFlashcardSchema>;
 export const editFlashcardSchema = z.object({
   id: z.string().min(1),
   subjectId: z.string().min(1),
+  deckId: z.string().nullable().optional(),
   front: flashcardFrontSchema,
   back: flashcardBackSchema,
 });
@@ -92,6 +94,7 @@ export const bulkMoveFlashcardsSchema = z.object({
   subjectId: z
     .string()
     .min(1, validationMessage("Validation.flashcards.subjectRequired")),
+  deckId: z.string().min(1).nullable().optional(),
 });
 
 export type BulkMoveFlashcardsForm = z.infer<typeof bulkMoveFlashcardsSchema>;
@@ -111,6 +114,7 @@ export const flashcardsManageQuerySchema = z.object({
     .max(LIMITS.pageSizeMax)
     .default(25),
   subjectId: z.string().min(1).optional(),
+  deckId: z.string().min(1).optional(),
   search: z.string().trim().max(LIMITS.searchQueryMax).optional(),
 });
 

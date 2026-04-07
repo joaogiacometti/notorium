@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { getDecks } from "@/app/actions/decks";
 import {
   createFlashcard,
   deleteFlashcard,
@@ -33,6 +34,7 @@ import {
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type {
+  DeckEntity,
   FlashcardEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
@@ -50,7 +52,10 @@ interface GeneratedCard {
 }
 
 interface EditFlashcardDialogProps {
-  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">;
+  flashcard: Pick<
+    FlashcardEntity,
+    "id" | "subjectId" | "deckId" | "front" | "back"
+  >;
   subjects?: SubjectEntity[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,6 +84,7 @@ export function EditFlashcardDialog({
   const [splitSubjectId, setSplitSubjectId] = useState(flashcard.subjectId);
   const [splitFront, setSplitFront] = useState(flashcard.front);
   const [splitBack, setSplitBack] = useState(flashcard.back);
+  const [decks, setDecks] = useState<DeckEntity[]>([]);
 
   const isSplitDirty =
     splitFront !== flashcard.front || splitBack !== flashcard.back;
@@ -89,6 +95,28 @@ export function EditFlashcardDialog({
     resolver: zodResolver(editFlashcardSchema),
     defaultValues: incomingValues,
   });
+
+  useEffect(() => {
+    if (open && flashcard.subjectId) {
+      void getDecks(flashcard.subjectId).then((fetchedDecks) => {
+        setDecks(fetchedDecks);
+      });
+    }
+  }, [open, flashcard.subjectId]);
+
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "subjectId") {
+        const currentSubjectId = value.subjectId;
+        if (currentSubjectId && currentSubjectId !== flashcard.subjectId) {
+          void getDecks(currentSubjectId).then((fetchedDecks) => {
+            setDecks(fetchedDecks);
+          });
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, flashcard.subjectId]);
 
   const dialog = useFlashcardDialogState({
     mode: "edit",
@@ -114,6 +142,12 @@ export function EditFlashcardDialog({
     getSuccessValues: (submittedValues) => submittedValues,
     closeOnSuccess: true,
   });
+
+  function handleSubjectChange(newSubjectId: string) {
+    void getDecks(newSubjectId).then((fetchedDecks) => {
+      setDecks(fetchedDecks);
+    });
+  }
 
   useBeforeUnload(
     open && mode === "split" && isSplitDirty && !isGenerating && !isCreating,
@@ -252,6 +286,8 @@ export function EditFlashcardDialog({
           form={form}
           formId="form-edit-flashcard"
           subjects={subjects}
+          decks={decks}
+          onSubjectChange={handleSubjectChange}
           onSubmit={dialog.handleSubmit}
           discardDialogOpen={dialog.discardDialogOpen}
           onDiscardDialogOpenChange={dialog.setDiscardDialogOpen}
@@ -412,11 +448,15 @@ export function EditFlashcardDialog({
 }
 
 function getEditFlashcardFormValues(
-  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">,
+  flashcard: Pick<
+    FlashcardEntity,
+    "id" | "subjectId" | "deckId" | "front" | "back"
+  >,
 ): EditFlashcardForm {
   return {
     id: flashcard.id,
     subjectId: flashcard.subjectId,
+    deckId: flashcard.deckId ?? undefined,
     front: flashcard.front,
     back: flashcard.back,
   };

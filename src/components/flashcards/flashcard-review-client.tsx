@@ -48,6 +48,7 @@ import {
 } from "@/features/flashcard-review/state";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
+  DeckEntity,
   FlashcardReviewState,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
@@ -58,7 +59,9 @@ import { LazyEditFlashcardDialog as EditFlashcardDialog } from "./lazy-edit-flas
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;
   subjects: SubjectEntity[];
+  decks: DeckEntity[];
   subjectId?: string;
+  deckId?: string;
   embedded?: boolean;
 }
 
@@ -90,7 +93,9 @@ const gradeLabels: Record<ReviewGrade, string> = {
 export function FlashcardReviewClient({
   initialState,
   subjects,
+  decks,
   subjectId,
+  deckId,
   embedded = false,
 }: Readonly<FlashcardReviewClientProps>) {
   const shortcutsSuspended = useShortcutsDialogOpen();
@@ -105,11 +110,13 @@ export function FlashcardReviewClient({
   const isRefillingRef = useRef(false);
   const router = useRouter();
   const [selectedSubjectId, setSelectedSubjectId] = useState(subjectId);
+  const [selectedDeckId, setSelectedDeckId] = useState(deckId);
   const subjectChangeRequestIdRef = useRef(0);
 
   useEffect(() => {
     setSelectedSubjectId(subjectId);
-  }, [subjectId]);
+    setSelectedDeckId(deckId);
+  }, [subjectId, deckId]);
 
   const currentCard = reviewState.cards[0] ?? null;
 
@@ -135,6 +142,7 @@ export function FlashcardReviewClient({
     if (subjectId && updatedFlashcard.subjectId !== subjectId) {
       const nextState = await getFlashcardReviewState({
         subjectId,
+        deckId: selectedDeckId,
         limit: reviewBatchLimit,
       });
 
@@ -173,6 +181,7 @@ export function FlashcardReviewClient({
   function handleSubjectChange(value: string) {
     const newSubjectId = value === "all" ? undefined : value;
     setSelectedSubjectId(newSubjectId);
+    setSelectedDeckId(undefined);
 
     const params = new URLSearchParams();
     params.set("view", "review");
@@ -187,6 +196,40 @@ export function FlashcardReviewClient({
     startTransition(async () => {
       const nextState = await getFlashcardReviewState({
         subjectId: newSubjectId,
+        deckId: undefined,
+        limit: reviewBatchLimit,
+      });
+
+      if (subjectChangeRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      commitReviewState(nextState);
+      setRevealed(false);
+    });
+  }
+
+  function handleDeckChange(value: string) {
+    const newDeckId = value === "all" ? undefined : value;
+    setSelectedDeckId(newDeckId);
+
+    const params = new URLSearchParams();
+    params.set("view", "review");
+    if (selectedSubjectId) {
+      params.set("subjectId", selectedSubjectId);
+    }
+    if (newDeckId) {
+      params.set("deckId", newDeckId);
+    }
+    router.replace(`/flashcards?${params.toString()}`);
+
+    const requestId = subjectChangeRequestIdRef.current + 1;
+    subjectChangeRequestIdRef.current = requestId;
+
+    startTransition(async () => {
+      const nextState = await getFlashcardReviewState({
+        subjectId: selectedSubjectId,
+        deckId: newDeckId,
         limit: reviewBatchLimit,
       });
 
@@ -210,7 +253,8 @@ export function FlashcardReviewClient({
       refillRequestIdRef.current = requestId;
 
       const nextState = await getFlashcardReviewState({
-        subjectId,
+        subjectId: selectedSubjectId,
+        deckId: selectedDeckId,
         limit: reviewBatchLimit,
       });
 
@@ -231,9 +275,7 @@ export function FlashcardReviewClient({
         shouldRefillFlashcardReviewState(reviewStateRef.current) &&
         retryCount < 3
       ) {
-        void refillReviewState(retryCount + 1).catch((error) => {
-          console.error("Failed to refill review state recursively:", error);
-        });
+        void refillReviewState(retryCount + 1);
       }
     }
   }
@@ -463,7 +505,7 @@ export function FlashcardReviewClient({
 
   const content = (
     <>
-      <div className="mb-3 flex min-w-0 items-center gap-3">
+      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-3">
         <Select
           value={selectedSubjectId ?? "all"}
           onValueChange={handleSubjectChange}
@@ -484,6 +526,26 @@ export function FlashcardReviewClient({
             ))}
           </SelectContent>
         </Select>
+        {selectedSubjectId && decks.length > 0 && (
+          <Select
+            value={selectedDeckId ?? "all"}
+            onValueChange={handleDeckChange}
+          >
+            <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
+              <SelectValue placeholder="Filter by deck" />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="all">All decks</SelectItem>
+              {decks
+                .filter((d) => d.subjectId === selectedSubjectId)
+                .map((deck) => (
+                  <SelectItem key={deck.id} value={deck.id}>
+                    {deck.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {embedded ? null : (

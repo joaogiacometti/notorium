@@ -1,11 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { getDecks } from "@/app/actions/decks";
 import { bulkMoveFlashcards } from "@/app/actions/flashcards";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { DeckSelect } from "@/components/shared/deck-select";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +36,7 @@ import {
   type BulkMoveFlashcardsForm,
   bulkMoveFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import type { SubjectEntity } from "@/lib/server/api-contracts";
+import type { DeckEntity, SubjectEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface BulkMoveFlashcardsDialogProps {
@@ -53,11 +55,13 @@ export function BulkMoveFlashcardsDialog({
   subjects,
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
   const [isPending, startTransition] = useTransition();
+  const [decks, setDecks] = useState<DeckEntity[]>([]);
   const form = useForm<BulkMoveFlashcardsForm>({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
     defaultValues: {
       ids,
       subjectId: "",
+      deckId: undefined,
     },
   });
 
@@ -69,15 +73,36 @@ export function BulkMoveFlashcardsDialog({
     form.reset({
       ids,
       subjectId: "",
+      deckId: undefined,
     });
+    setDecks([]);
   }, [form, ids, open]);
+
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "subjectId") {
+        const currentSubjectId = value.subjectId;
+        if (currentSubjectId) {
+          void getDecks(currentSubjectId).then((fetchedDecks) => {
+            setDecks(fetchedDecks);
+          });
+          form.setValue("deckId", undefined);
+        } else {
+          setDecks([]);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       form.reset({
         ids,
         subjectId: "",
+        deckId: undefined,
       });
+      setDecks([]);
     }
 
     onOpenChange(nextOpen);
@@ -115,44 +140,64 @@ export function BulkMoveFlashcardsDialog({
           <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup className="gap-3">
-            <Controller
-              name="subjectId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="bulk-move-flashcards-subject">
-                    Subject
-                  </FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger
-                      id="bulk-move-flashcards-subject"
-                      aria-invalid={fieldState.invalid}
-                      className="h-10 rounded-lg"
-                    >
-                      <SelectValue placeholder="Select a subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {subjects.map((subject) => (
-                          <SelectItem key={subject.id} value={subject.id}>
-                            <SubjectText
-                              value={subject.name}
-                              mode="truncate"
-                              className="block max-w-full"
-                            />
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : null}
-                </Field>
-              )}
-            />
-            <DialogFooter className="gap-2 sm:gap-2">
+          <FieldGroup className="gap-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:gap-4">
+              <Controller
+                name="subjectId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid} className="flex-1">
+                    <FieldLabel htmlFor="bulk-move-flashcards-subject">
+                      Subject
+                    </FieldLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger
+                        id="bulk-move-flashcards-subject"
+                        aria-invalid={fieldState.invalid}
+                        className="h-10 rounded-lg"
+                      >
+                        <SelectValue placeholder="Select a subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {subjects.map((subject) => (
+                            <SelectItem key={subject.id} value={subject.id}>
+                              <SubjectText
+                                value={subject.name}
+                                mode="truncate"
+                                className="block max-w-full"
+                              />
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </Field>
+                )}
+              />
+              <div className="flex-1">
+                {form.watch("subjectId") ? (
+                  <Controller
+                    name="deckId"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <DeckSelect
+                        value={field.value ?? null}
+                        onChange={field.onChange}
+                        decks={decks}
+                        id="bulk-move-flashcards-deck"
+                        error={fieldState.error?.message as string}
+                        ariaInvalid={fieldState.invalid}
+                      />
+                    )}
+                  />
+                ) : null}
+              </div>
+            </div>
+            <DialogFooter className="gap-3 sm:gap-3">
               <Button
                 type="button"
                 variant="outline"
