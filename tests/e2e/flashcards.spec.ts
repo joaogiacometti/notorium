@@ -290,3 +290,86 @@ test("can switch between global flashcards views", async ({
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }
 });
+
+test("can enter and exit Focus Mode", async ({ page, e2eUser }) => {
+  const user = e2eUser;
+  const subjectName = getUniqueSubjectName("focus-mode");
+  const flashcardFront = getUniqueFlashcardFront("focus-mode");
+  const flashcardBack = getUniqueFlashcardBack("focus-mode");
+
+  await clearUserSubjectsByNames(user.userId, [subjectName]);
+
+  try {
+    const createdSubject = await createSubject(
+      user.userId,
+      subjectName,
+      "Focus Mode smoke test",
+    );
+
+    await createFlashcard(
+      user.userId,
+      createdSubject.id,
+      flashcardFront,
+      flashcardBack,
+    );
+
+    await page.goto(`/flashcards?view=review&subjectId=${createdSubject.id}`);
+
+    await expect(page.getByRole("link", { name: "Focus Mode" })).toBeVisible();
+    await page.getByRole("link", { name: "Focus Mode" }).click();
+
+    await expect(page.getByText(/due of \d+ total cards/)).toBeVisible();
+    await expect(page.getByText(flashcardFront)).toBeVisible();
+
+    await page.getByRole("link", { name: "Exit Focus Mode" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Flashcards", exact: true }),
+    ).toBeVisible();
+  } finally {
+    await clearUserSubjectsByNames(user.userId, [subjectName]);
+  }
+});
+
+test("can complete a review in Focus Mode", async ({ page, e2eUser }) => {
+  const user = e2eUser;
+  const subjectName = getUniqueSubjectName("focus-review");
+  const flashcardFront = getUniqueFlashcardFront("focus-review");
+  const flashcardBack = getUniqueFlashcardBack("focus-review");
+
+  await clearUserSubjectsByNames(user.userId, [subjectName]);
+
+  try {
+    const createdSubject = await createSubject(
+      user.userId,
+      subjectName,
+      "Focus Mode review smoke test",
+    );
+
+    await createFlashcard(
+      user.userId,
+      createdSubject.id,
+      flashcardFront,
+      flashcardBack,
+    );
+
+    await page.goto(
+      `/flashcards?view=review&focus=true&subjectId=${createdSubject.id}`,
+    );
+
+    await expect(page.getByText(/due of \d+ total cards/)).toBeVisible();
+    await expect(page.getByText(flashcardFront)).toBeVisible();
+
+    await page.getByRole("button", { name: "Show Answer" }).click();
+
+    await expect(page.getByText(flashcardBack)).toBeVisible();
+    await expect(page.getByRole("button", { name: /Good/i })).toBeVisible();
+
+    await page.getByRole("button", { name: /Good/i }).click();
+
+    await expect(page.getByText("All caught up!")).toBeVisible();
+    await expect(page.getByText("You reviewed 1 card")).toBeVisible();
+  } finally {
+    await clearUserSubjectsByNames(user.userId, [subjectName]);
+  }
+});

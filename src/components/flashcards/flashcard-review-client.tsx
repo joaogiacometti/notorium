@@ -3,12 +3,14 @@
 import {
   CheckCircle2,
   CircleAlert,
+  Focus,
   Gauge,
   Loader2,
   Pencil,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -130,6 +132,15 @@ export function FlashcardReviewClient({
         scheduler: reviewState.scheduler,
       })
     : null;
+
+  function buildFocusModeUrl() {
+    const params = new URLSearchParams();
+    params.set("view", "review");
+    params.set("focus", "true");
+    if (selectedSubjectId) params.set("subjectId", selectedSubjectId);
+    if (selectedDeckId) params.set("deckId", selectedDeckId);
+    return `/flashcards?${params.toString()}`;
+  }
 
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
@@ -377,12 +388,19 @@ export function FlashcardReviewClient({
                 <div className="flex items-center justify-between gap-3">
                   {currentCard.subjectName ? (
                     <p className="flex min-w-0 items-baseline gap-1 text-sm font-medium text-foreground/70">
-                      <span className="shrink-0">Subject:</span>
                       <SubjectText
                         value={currentCard.subjectName}
                         mode="truncate"
                         className="block max-w-full"
                       />
+                      {currentCard.deckName ? (
+                        <>
+                          <span className="shrink-0 text-foreground/40">·</span>
+                          <span className="truncate text-foreground/70">
+                            {currentCard.deckName}
+                          </span>
+                        </>
+                      ) : null}
                     </p>
                   ) : (
                     <span className="min-h-5" />
@@ -505,46 +523,61 @@ export function FlashcardReviewClient({
 
   const content = (
     <>
-      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-3">
-        <Select
-          value={selectedSubjectId ?? "all"}
-          onValueChange={handleSubjectChange}
-        >
-          <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
-            <SelectValue placeholder="Filter by subject" />
-          </SelectTrigger>
-          <SelectContent align="start">
-            <SelectItem value="all">All subjects</SelectItem>
-            {subjects.map((subject) => (
-              <SelectItem key={subject.id} value={subject.id}>
-                <SubjectText
-                  value={subject.name}
-                  mode="truncate"
-                  className="block max-w-full"
-                />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedSubjectId && decks.length > 0 && (
+      <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <Select
-            value={selectedDeckId ?? "all"}
-            onValueChange={handleDeckChange}
+            value={selectedSubjectId ?? "all"}
+            onValueChange={handleSubjectChange}
           >
             <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
-              <SelectValue placeholder="Filter by deck" />
+              <SelectValue placeholder="Filter by subject" />
             </SelectTrigger>
             <SelectContent align="start">
-              <SelectItem value="all">All decks</SelectItem>
-              {decks
-                .filter((d) => d.subjectId === selectedSubjectId)
-                .map((deck) => (
-                  <SelectItem key={deck.id} value={deck.id}>
-                    {deck.name}
-                  </SelectItem>
-                ))}
+              <SelectItem value="all">All subjects</SelectItem>
+              {subjects.map((subject) => (
+                <SelectItem key={subject.id} value={subject.id}>
+                  <SubjectText
+                    value={subject.name}
+                    mode="truncate"
+                    className="block max-w-full"
+                  />
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          {selectedSubjectId && decks.length > 0 && (
+            <Select
+              value={selectedDeckId ?? "all"}
+              onValueChange={handleDeckChange}
+            >
+              <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
+                <SelectValue placeholder="Filter by deck" />
+              </SelectTrigger>
+              <SelectContent align="start">
+                <SelectItem value="all">All decks</SelectItem>
+                {decks
+                  .filter((d) => d.subjectId === selectedSubjectId)
+                  .map((deck) => (
+                    <SelectItem key={deck.id} value={deck.id}>
+                      {deck.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        {reviewState.summary.dueCount > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 shrink-0"
+            asChild
+          >
+            <Link href={buildFocusModeUrl()}>
+              <Focus className="size-4" />
+              <span className="hidden sm:inline">Focus Mode</span>
+            </Link>
+          </Button>
         )}
       </div>
 
