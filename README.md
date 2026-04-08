@@ -174,9 +174,9 @@ Defined in `src/env.ts`:
 | `bun run test`              | Run Vitest suite                     |
 | `bun run test:watch`        | Run Vitest in watch mode             |
 | `bun run test:coverage`     | Run Vitest with coverage             |
-| `bun run test:e2e`          | Run Playwright end-to-end tests      |
-| `bun run test:e2e:ui`       | Run Playwright in UI mode            |
-| `bun run test:e2e:headed`   | Run Playwright in headed mode        |
+| `bun run test:e2e`          | Run E2E tests (auto setup & cleanup) |
+| `bun run test:e2e:ui`       | Run E2E tests in UI mode             |
+| `bun run test:e2e:headed`   | Run E2E tests in headed mode         |
 | `bun run db:generate`       | Generate Drizzle migrations          |
 | `bun run db:migrate`        | Apply Drizzle migrations             |
 | `bun run db:push`           | Push schema directly to DB           |
@@ -225,25 +225,47 @@ bun run build
 
 Playwright e2e coverage lives under `tests/e2e` and currently covers approved, pending, and blocked login states plus basic subject CRUD.
 
+E2E tests use an isolated database (`notorium_e2e`) that is completely separate from your development database. Test credentials are generated automatically at runtime, so no environment configuration is needed.
+
+### Setup
+
 Before the first run, install Playwright browsers:
 
 ```bash
 bunx playwright install
 ```
 
-The suite expects the app environment to be configured and the local database to be migrated. It will start the app with `bun dev` unless one is already running.
+### Running Tests
 
-The Playwright auth fixtures use fixed internal test identities for approved, pending, and blocked users. The e2e-specific environment variables are:
+Run the complete E2E test suite (automatic setup and cleanup):
 
-| Variable | Required | Description |
-| -------- | -------- | ----------- |
-| `E2E_USER_PASSWORD` | Yes | Password for end-to-end test users (approved, pending, blocked) |
-| `E2E_EMAIL_PREFIX` | No | Prefix used for generated e2e user emails. Defaults to `e2e-`. |
-| `E2E_ALLOW_DESTRUCTIVE_RESET` | Yes | Must be `true` to start Playwright e2e. This enables guarded bootstrap auth resets that clear only e2e-prefixed users and instance auth state. |
-| `PLAYWRIGHT_BASE_URL` | No | Overrides the base URL used by Playwright. Defaults to `BETTER_AUTH_URL` or `http://localhost:3000`. |
+```bash
+bun run test:e2e
+```
 
-On startup, the auth helpers ensure the e2e users exist and set their access states directly so the suite does not depend on manual admin approval.
-Bootstrap reset and global teardown cleanup are scoped to e2e-prefixed identities so e2e users and auth state are cleaned after the run.
+This command automatically:
+- Starts E2E infrastructure (PostgreSQL on `5433` + Redis on `6380`)
+- Runs database migrations
+- Executes Playwright tests
+- Cleans up infrastructure
+
+The suite starts an isolated production server on `127.0.0.1:3001` (`next start`), so it can run while your normal `bun dev` server is active on `3000`.
+
+**UI mode:**
+
+```bash
+bun run test:e2e:ui
+```
+
+**For faster iteration during development**, you can keep infrastructure running manually:
+
+```bash
+docker compose -f compose.e2e.yml up -d
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/notorium_e2e bun run db:migrate
+REDIS_URL=redis://localhost:6380 BETTER_AUTH_URL=http://127.0.0.1:3001 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3001 playwright test --ui
+```
+
+The E2E database is completely isolated from your development data, so tests can safely reset the entire database without affecting your work.
 
 ## AI Integration
 

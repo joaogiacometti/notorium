@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { bulkDeleteFlashcards } from "@/app/actions/flashcards";
@@ -28,6 +29,7 @@ export function BulkDeleteFlashcardsDialog({
   onDeleted,
   onOpenChange,
 }: Readonly<BulkDeleteFlashcardsDialogProps>) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -37,6 +39,7 @@ export function BulkDeleteFlashcardsDialog({
       if (result.success) {
         onDeleted(result.ids);
         onOpenChange(false);
+        router.refresh();
         return;
       }
 

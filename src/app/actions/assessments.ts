@@ -10,7 +10,6 @@ import {
   getAssessmentsForUser,
   getPlanningAssessmentsPageForUser,
 } from "@/features/assessments/queries";
-import { revalidateAssessmentPaths } from "@/features/assessments/revalidation";
 import {
   type CreateAssessmentForm,
   createAssessmentSchema,
@@ -63,15 +62,7 @@ export async function createAssessment(
     createAssessmentSchema,
     data,
     "assessments.invalidData",
-    async (userId, parsedData) => {
-      const result = await createAssessmentForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAssessmentPaths(result.subjectId);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => createAssessmentForUser(userId, parsedData),
   );
 }
 
@@ -82,15 +73,7 @@ export async function editAssessment(
     editAssessmentSchema,
     data,
     "assessments.invalidData",
-    async (userId, parsedData) => {
-      const result = await editAssessmentForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAssessmentPaths(result.subjectId, result.assessment.id);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => editAssessmentForUser(userId, parsedData),
   );
 }
 
@@ -101,14 +84,6 @@ export async function deleteAssessment(
     deleteAssessmentSchema,
     data,
     "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const result = await deleteAssessmentForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAssessmentPaths(result.subjectId, result.id);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => deleteAssessmentForUser(userId, parsedData),
   );
 }

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { KeyRound, Sparkles, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { startTransition, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ export function AiSettingsCard({
   initialAiSettings,
 }: Readonly<AiSettingsCardProps>) {
   const [aiSettings, setAiSettings] = useState(initialAiSettings);
+  const router = useRouter();
   const [isSavingAi, startSavingAi] = useTransition();
   const [isClearingAi, startClearingAi] = useTransition();
   const form = useForm<
@@ -89,6 +91,7 @@ export function AiSettingsCard({
         model: result.settings?.model ?? data.model,
         apiKey: "",
       });
+      router.refresh();
       toast.success("AI settings updated.");
     });
   });
@@ -109,6 +112,7 @@ export function AiSettingsCard({
         model: "",
         apiKey: "",
       });
+      router.refresh();
       toast.success("AI settings cleared.");
     });
   };

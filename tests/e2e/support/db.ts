@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import {
   account,
@@ -20,7 +20,6 @@ import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import {
   type E2EUserKind,
   getE2ECredentials,
-  getE2EEmailPrefix,
   getE2EWorkerCredentials,
 } from "./env";
 
@@ -116,13 +115,9 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
 }
 
 export async function resetE2EInstanceAuthState() {
-  const e2eEmailPattern = `${getE2EEmailPrefix()}%`;
-
   await getDb().delete(instanceState);
-  await getDb()
-    .delete(verification)
-    .where(sql`${verification.identifier} like ${e2eEmailPattern}`);
-  await getDb().delete(user).where(sql`${user.email} like ${e2eEmailPattern}`);
+  await getDb().delete(verification);
+  await getDb().delete(user);
 }
 
 export async function getUserAccessSnapshotByEmail(email: string) {
@@ -442,14 +437,12 @@ export async function createMaxFlashcardsForSubject(
   userId: string,
   subjectId: string,
 ) {
-  const prefix = getE2EEmailPrefix();
-
   await createMany(LIMITS.maxFlashcardsPerSubject, async (index) => {
     await createFlashcard(
       userId,
       subjectId,
-      `${prefix}limit-flashcard-front-${index}`,
-      `${prefix}limit-flashcard-back-${index}`,
+      `e2e-limit-flashcard-front-${index}`,
+      `e2e-limit-flashcard-back-${index}`,
     );
   });
 }
@@ -458,14 +451,12 @@ export async function createMaxNotesForSubject(
   userId: string,
   subjectId: string,
 ) {
-  const prefix = getE2EEmailPrefix();
-
   await createMany(LIMITS.maxNotesPerSubject, async (index) => {
     await createNote(
       userId,
       subjectId,
-      `${prefix}limit-note-${index}`,
-      `${prefix}limit-note-content-${index}`,
+      `e2e-limit-note-${index}`,
+      `e2e-limit-note-content-${index}`,
     );
   });
 }
@@ -474,14 +465,8 @@ export async function createMaxAssessmentsForSubject(
   userId: string,
   subjectId: string,
 ) {
-  const prefix = getE2EEmailPrefix();
-
   await createMany(LIMITS.maxAssessmentsPerSubject, async (index) => {
-    await createAssessment(
-      userId,
-      subjectId,
-      `${prefix}limit-assessment-${index}`,
-    );
+    await createAssessment(userId, subjectId, `e2e-limit-assessment-${index}`);
   });
 }
 
@@ -509,10 +494,8 @@ export async function createMaxDecksForSubject(
   userId: string,
   subjectId: string,
 ) {
-  const prefix = getE2EEmailPrefix();
-
   await createMany(LIMITS.maxDecksPerSubject, async (index) => {
-    await createDeck(userId, subjectId, `${prefix}limit-deck-${index}`, null);
+    await createDeck(userId, subjectId, `e2e-limit-deck-${index}`, null);
   });
 }
 

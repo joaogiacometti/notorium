@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -50,6 +51,7 @@ export function CreateDeckDialog({
   open,
   onOpenChange,
 }: Readonly<CreateDeckDialogProps>) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<CreateDeckForm>({
     resolver: zodResolver(createDeckSchema),
@@ -72,6 +74,7 @@ export function CreateDeckDialog({
       if (result.success) {
         form.reset(getCreateDeckFormValues(subjectId));
         onOpenChange(false);
+        router.refresh();
         return;
       }
 

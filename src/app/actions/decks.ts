@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   createDeckForUser,
   deleteDeckForUser,
@@ -36,16 +35,7 @@ export async function createDeck(
     createDeckSchema,
     data,
     "decks.invalidData",
-    async (userId, parsedData) => {
-      const result = await createDeckForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidatePath(`/subjects/${parsedData.subjectId}`);
-        revalidatePath("/flashcards");
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => createDeckForUser(userId, parsedData),
   );
 }
 
@@ -54,16 +44,7 @@ export async function editDeck(data: EditDeckForm): Promise<EditDeckResult> {
     editDeckSchema,
     data,
     "decks.invalidData",
-    async (userId, parsedData) => {
-      const result = await editDeckForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidatePath(`/subjects/${result.deck.subjectId}`);
-        revalidatePath("/flashcards");
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => editDeckForUser(userId, parsedData),
   );
 }
 
@@ -74,15 +55,6 @@ export async function deleteDeck(
     deleteDeckSchema,
     data,
     "decks.invalidData",
-    async (userId, parsedData) => {
-      const result = await deleteDeckForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidatePath(`/subjects/${result.subjectId}`);
-        revalidatePath("/flashcards");
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => deleteDeckForUser(userId, parsedData),
   );
 }

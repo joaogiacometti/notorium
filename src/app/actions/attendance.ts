@@ -6,7 +6,6 @@ import {
   updateAttendanceSettingsForUser,
 } from "@/features/attendance/mutations";
 import { getMissesBySubjectForUser } from "@/features/attendance/queries";
-import { revalidateAttendancePaths } from "@/features/attendance/revalidation";
 import {
   type AttendanceSettingsForm,
   attendanceSettingsSchema,
@@ -29,15 +28,8 @@ export async function updateAttendanceSettings(
     attendanceSettingsSchema,
     data,
     "attendance.invalidSettings",
-    async (userId, parsedData) => {
-      const result = await updateAttendanceSettingsForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAttendancePaths(result.subjectId);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) =>
+      updateAttendanceSettingsForUser(userId, parsedData),
   );
 }
 
@@ -55,15 +47,7 @@ export async function recordMiss(
     recordMissSchema,
     data,
     "attendance.invalidMissData",
-    async (userId, parsedData) => {
-      const result = await recordMissForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAttendancePaths(result.subjectId);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => recordMissForUser(userId, parsedData),
   );
 }
 
@@ -74,14 +58,6 @@ export async function deleteMiss(
     deleteMissSchema,
     data,
     "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const result = await deleteMissForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAttendancePaths(result.subjectId);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => deleteMissForUser(userId, parsedData),
   );
 }

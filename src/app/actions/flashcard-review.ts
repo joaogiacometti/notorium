@@ -12,7 +12,6 @@ import {
   reviewFlashcardSchema,
 } from "@/features/flashcard-review/validation";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
-import { revalidateFlashcardSubjectPaths } from "@/features/flashcards/revalidation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
@@ -52,14 +51,6 @@ export async function reviewFlashcard(
     reviewFlashcardSchema,
     data,
     "flashcards.review.invalidData",
-    async (userId, parsedData) => {
-      const result = await reviewFlashcardForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateFlashcardSubjectPaths(result.flashcard.subjectId);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => reviewFlashcardForUser(userId, parsedData),
   );
 }

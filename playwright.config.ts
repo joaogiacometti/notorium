@@ -1,16 +1,16 @@
 import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
-if (process.env.E2E_ALLOW_DESTRUCTIVE_RESET !== "true") {
-  throw new Error(
-    "Refusing to start Playwright E2E tests. Set E2E_ALLOW_DESTRUCTIVE_RESET=true to run e2e safely.",
-  );
-}
-
 const baseURL =
   process.env.PLAYWRIGHT_BASE_URL ??
   process.env.BETTER_AUTH_URL ??
-  "http://localhost:3000";
+  "http://127.0.0.1:3001";
+
+const e2eDatabaseUrl =
+  process.env.DATABASE_URL ||
+  "postgresql://postgres:postgres@localhost:5433/notorium_e2e";
+
+process.env.DATABASE_URL = e2eDatabaseUrl;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -26,7 +26,8 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "bunx next dev --hostname 127.0.0.1 --port 3000",
+    command:
+      "bun run build && bun run start -- --hostname 127.0.0.1 --port 3001",
     url: baseURL,
     reuseExistingServer: true,
     timeout: 120_000,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteFlashcard } from "@/app/actions/flashcards";
@@ -31,6 +32,7 @@ export function DeleteFlashcardDialog({
   onOpenChange,
   onDeleted,
 }: Readonly<DeleteFlashcardDialogProps>) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
 
@@ -40,6 +42,7 @@ export function DeleteFlashcardDialog({
       if (result.success) {
         onDeleted?.(result.id);
         onOpenChange(false);
+        router.refresh();
       } else {
         toast.error(t(result.errorCode, result.errorParams));
       }

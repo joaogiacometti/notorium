@@ -2,6 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { restoreSubject } from "@/app/actions/subjects";
@@ -21,6 +22,7 @@ interface ArchivedSubjectCardProps {
 export function ArchivedSubjectCard({
   subject,
 }: Readonly<ArchivedSubjectCardProps>) {
+  const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isRestoring, startRestoreTransition] = useTransition();
   const queryClient = useQueryClient();
@@ -35,6 +37,7 @@ export function ArchivedSubjectCard({
 
       if (result.success) {
         await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+        router.refresh();
         return;
       }
 

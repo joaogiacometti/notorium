@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { resetFlashcard } from "@/app/actions/flashcards";
@@ -32,6 +33,7 @@ export function ResetFlashcardDialog({
   onOpenChange,
   onReset,
 }: Readonly<ResetFlashcardDialogProps>) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
 
@@ -41,6 +43,7 @@ export function ResetFlashcardDialog({
       if (result.success) {
         onReset?.(result.flashcard);
         onOpenChange(false);
+        router.refresh();
       } else {
         toast.error(t(result.errorCode, result.errorParams));
       }

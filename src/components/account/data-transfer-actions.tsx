@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Download, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { exportData, importData } from "@/app/actions/data-transfer";
@@ -34,6 +35,7 @@ function downloadJson(data: unknown, filename: string) {
 }
 
 export function DataTransferActions() {
+  const router = useRouter();
   const [isExporting, startExport] = useTransition();
   const [isImporting, startImport] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -85,6 +87,7 @@ export function DataTransferActions() {
           toast.success(
             `Imported ${count} ${count === 1 ? "subject" : "subjects"} successfully.`,
           );
+          router.refresh();
         } else {
           toast.error(resolveActionErrorMessage(result));
         }

@@ -13,10 +13,6 @@ import {
   getSubjectsForUser,
 } from "@/features/subjects/queries";
 import {
-  revalidateAllSubjectPaths,
-  revalidateSubjectListPaths,
-} from "@/features/subjects/revalidation";
-import {
   type ArchiveSubjectForm,
   archiveSubjectSchema,
   type CreateSubjectForm,
@@ -56,15 +52,7 @@ export async function createSubject(
     createSubjectSchema,
     data,
     "subjects.invalidData",
-    async (userId, parsedData) => {
-      const result = await createSubjectForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateSubjectListPaths();
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => createSubjectForUser(userId, parsedData),
   );
 }
 
@@ -75,15 +63,7 @@ export async function editSubject(
     editSubjectSchema,
     data,
     "subjects.invalidData",
-    async (userId, parsedData) => {
-      const result = await editSubjectForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAllSubjectPaths(parsedData.id);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => editSubjectForUser(userId, parsedData),
   );
 }
 
@@ -94,15 +74,7 @@ export async function archiveSubject(
     archiveSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const result = await archiveSubjectForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAllSubjectPaths(parsedData.id);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => archiveSubjectForUser(userId, parsedData),
   );
 }
 
@@ -113,15 +85,7 @@ export async function restoreSubject(
     restoreSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const result = await restoreSubjectForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateAllSubjectPaths(parsedData.id);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => restoreSubjectForUser(userId, parsedData),
   );
 }
 
@@ -132,14 +96,6 @@ export async function deleteSubject(
     deleteSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const result = await deleteSubjectForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateSubjectListPaths();
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => deleteSubjectForUser(userId, parsedData),
   );
 }

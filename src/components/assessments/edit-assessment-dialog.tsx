@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { editAssessment } from "@/app/actions/assessments";
@@ -41,6 +42,7 @@ export function EditAssessmentDialog({
   onOpenChange,
   onUpdated,
 }: Readonly<EditAssessmentDialogProps>) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<EditAssessmentFormInput, unknown, EditAssessmentForm>({
     resolver: zodResolver(editAssessmentSchema),
@@ -63,6 +65,7 @@ export function EditAssessmentDialog({
       if (result.success) {
         onUpdated?.(result.assessment);
         onOpenChange(false);
+        router.refresh();
       } else {
         form.setError("title", {
           message: resolveActionErrorMessage(result),

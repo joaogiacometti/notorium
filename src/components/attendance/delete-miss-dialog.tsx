@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteMiss } from "@/app/actions/attendance";
@@ -28,6 +29,7 @@ export function DeleteMissDialog({
   open,
   onOpenChange,
 }: Readonly<DeleteMissDialogProps>) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -35,6 +37,7 @@ export function DeleteMissDialog({
       const result = await deleteMiss({ id: missId });
       if (result.success) {
         onOpenChange(false);
+        router.refresh();
       } else {
         toast.error(resolveActionErrorMessage(result));
       }

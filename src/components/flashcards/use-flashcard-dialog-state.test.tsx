@@ -15,6 +15,12 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}));
+
 const checkFlashcardDuplicateMock = vi.fn();
 const generateFlashcardBackMock = vi.fn();
 

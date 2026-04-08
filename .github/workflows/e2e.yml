@@ -24,28 +24,23 @@ jobs:
     env:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: notorium
+      POSTGRES_DB: notorium_e2e
       POSTGRES_HOST: localhost
-      POSTGRES_PORT: "5432"
+      POSTGRES_PORT: "5433"
       REDIS_HOST: localhost
-      REDIS_PORT: "6379"
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/notorium
-      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
-      BETTER_AUTH_URL: http://127.0.0.1:3000
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      REDIS_PORT: "6380"
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/notorium_e2e
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3001
+      BETTER_AUTH_URL: http://127.0.0.1:3001
       RATE_LIMIT_BACKEND: redis
-      REDIS_URL: redis://localhost:6379
-      USER_AI_SETTINGS_ENCRYPTION_KEY: ${{ secrets.USER_AI_SETTINGS_ENCRYPTION_KEY }}
-      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
-      E2E_EMAIL_PREFIX: e2e-
-      E2E_ALLOW_DESTRUCTIVE_RESET: true
+      REDIS_URL: redis://localhost:6380
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Start infrastructure
-        run: docker compose -f compose.dev.yml up -d --wait postgres redis
+        run: docker compose -f compose.e2e.yml up -d --wait
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -61,6 +56,11 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Generate E2E secrets
+        run: |
+          echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "USER_AI_SETTINGS_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> $GITHUB_ENV
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -78,12 +78,15 @@ jobs:
         run: bun run db:migrate
 
       - name: Start application
-        run: nohup bun run start > app.log 2>&1 &
+        run: nohup bun run start -- --port 3001 > app.log 2>&1 &
 
       - name: Wait for application to be ready
         run: |
           for i in {1..60}; do
             if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              exit 0
+            fi
+            if curl -fsS http://127.0.0.1:3001/login >/dev/null; then
               exit 0
             fi
             sleep 1
@@ -117,4 +120,4 @@ jobs:
 
       - name: Stop infrastructure
         if: always()
-        run: docker compose -f compose.dev.yml down -v
+        run: docker compose -f compose.e2e.yml down -v

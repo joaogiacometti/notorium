@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAttendanceSettings } from "@/app/actions/attendance";
@@ -43,6 +44,7 @@ export function AttendanceSettingsDialog({
   open,
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
+  const router = useRouter();
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {
@@ -56,6 +58,7 @@ export function AttendanceSettingsDialog({
     const result = await updateAttendanceSettings(data);
     if (result.success) {
       onOpenChange(false);
+      router.refresh();
     } else {
       toast.error(resolveActionErrorMessage(result));
     }

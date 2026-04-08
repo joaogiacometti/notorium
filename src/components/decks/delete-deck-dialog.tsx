@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteDeck } from "@/app/actions/decks";
@@ -29,6 +30,7 @@ export function DeleteDeckDialog({
   open,
   onOpenChange,
 }: Readonly<DeleteDeckDialogProps>) {
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
@@ -42,6 +44,7 @@ export function DeleteDeckDialog({
       const result = await deleteDeck({ id: deckId });
       if (result.success) {
         onOpenChange(false);
+        router.refresh();
         return;
       }
 

@@ -10,10 +10,6 @@ import {
   getNotesBySubjectForUser,
 } from "@/features/notes/queries";
 import {
-  revalidateNoteDetailPaths,
-  revalidateNoteSubjectPaths,
-} from "@/features/notes/revalidation";
-import {
   type CreateNoteForm,
   createNoteSchema,
   type DeleteNoteForm,
@@ -44,15 +40,7 @@ export async function createNote(
     createNoteSchema,
     data,
     "notes.invalidData",
-    async (userId, parsedData) => {
-      const result = await createNoteForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateNoteSubjectPaths(result.subjectId);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => createNoteForUser(userId, parsedData),
   );
 }
 
@@ -61,15 +49,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
     editNoteSchema,
     data,
     "notes.invalidData",
-    async (userId, parsedData) => {
-      const result = await editNoteForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateNoteDetailPaths(result.subjectId, parsedData.id);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => editNoteForUser(userId, parsedData),
   );
 }
 
@@ -80,14 +60,6 @@ export async function deleteNote(
     deleteNoteSchema,
     data,
     "notes.invalidData",
-    async (userId, parsedData) => {
-      const result = await deleteNoteForUser(userId, parsedData);
-
-      if (result.success) {
-        revalidateNoteSubjectPaths(result.subjectId);
-      }
-
-      return result;
-    },
+    async (userId, parsedData) => deleteNoteForUser(userId, parsedData),
   );
 }

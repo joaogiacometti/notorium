@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -64,6 +65,7 @@ export function SubjectDialogForm({
   values,
   onSubmitAction,
 }: Readonly<SubjectDialogFormProps>) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const form = useSubjectForm(mode, values);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +87,7 @@ export function SubjectDialogForm({
         await queryClient.invalidateQueries({ queryKey: ["search-data"] });
         form.reset(mode === "create" ? { name: "", description: "" } : data);
         onOpenChange(false);
+        router.refresh();
         return;
       }
 

@@ -3,7 +3,6 @@
 import type { ExportOptions } from "@/features/data-transfer/export";
 import { exportDataForUser } from "@/features/data-transfer/export";
 import { importDataForUser } from "@/features/data-transfer/import";
-import { revalidateImportedDataPaths } from "@/features/data-transfer/revalidation";
 import type { ImportData } from "@/features/data-transfer/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import type { MutationResult } from "@/lib/server/api-contracts";
@@ -20,9 +19,5 @@ export async function importData(
   raw: unknown,
 ): Promise<MutationResult & { imported?: number }> {
   const userId = await getAuthenticatedUserId();
-  const result = await importDataForUser(userId, raw);
-  if (result.success) {
-    revalidateImportedDataPaths();
-  }
-  return result;
+  return importDataForUser(userId, raw);
 }
