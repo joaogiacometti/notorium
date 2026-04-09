@@ -1,7 +1,6 @@
 import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-client";
 import { FlashcardsManager } from "@/components/flashcards/flashcards-manager";
 import { FlashcardsPageShell } from "@/components/flashcards/flashcards-page-shell";
-import { FocusModeClient } from "@/components/flashcards/focus-mode-client";
 import { getDecksBySubjectForUser } from "@/features/decks/queries";
 import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
@@ -14,7 +13,6 @@ interface FlashcardsPageProps {
     view?: string;
     subjectId?: string;
     deckId?: string;
-    focus?: string;
   }>;
 }
 
@@ -22,9 +20,8 @@ export default async function FlashcardsPage({
   searchParams,
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
-  const { view, subjectId, deckId, focus } = await searchParams;
+  const { view, subjectId, deckId } = await searchParams;
   const currentView = resolveFlashcardsView(view);
-  const isFocusMode = focus === "true";
   const subjects = await getSubjectsForUser(session.user.id);
 
   const scopedSubjectId = subjects.some((subject) => subject.id === subjectId)
@@ -44,18 +41,6 @@ export default async function FlashcardsPage({
       deckId: scopedDeckId,
       limit: 50,
     });
-
-    if (isFocusMode) {
-      return (
-        <FocusModeClient
-          initialState={reviewState}
-          subjects={subjects}
-          decks={decks}
-          subjectId={scopedSubjectId}
-          deckId={scopedDeckId}
-        />
-      );
-    }
 
     const dueCount = reviewState.summary.dueCount;
     const totalCount = reviewState.summary.totalCount;

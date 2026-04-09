@@ -90,19 +90,12 @@ Students who want a private, lightweight study management workspace.
 ### Focus Mode
 
 - Full-screen, distraction-free review experience optimized for mobile.
-- Accessed via "Focus Mode" button on the review page or directly at `/review/focus`.
+- Accessed via the "Focus Mode" button on the flashcard review page.
 - Hides navbar and all non-essential UI elements.
 - Shows progress bar, card content, and rating buttons only.
-- Swipe gestures on mobile:
-  - Swipe right to grade `Good`.
-  - Swipe left to grade `Again`.
-  - Visual feedback (colored tint and rotation) during swipe.
-  - Swipe only activates after answer is revealed.
-- Haptic feedback on rating (where supported by device).
-- Auto-advances to next card after rating with fade-slide transition.
 - Keyboard shortcuts:
   - `Escape` exits Focus Mode.
-- Completion screen shows cards reviewed count with options to check for more cards or exit.
+- Completion screen provides an exit action back to the standard review screen.
 
 ### Attendance
 

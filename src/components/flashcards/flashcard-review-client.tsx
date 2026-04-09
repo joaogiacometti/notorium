@@ -9,8 +9,8 @@ import {
   Pencil,
   RotateCcw,
   Sparkles,
+  X,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -69,6 +69,8 @@ interface FlashcardReviewClientProps {
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
 const reviewBatchLimit = 50;
+const reviewRichTextClassName =
+  "flashcard-review-tiptap-content min-w-0 max-w-full wrap-break-word hyphens-auto";
 const reviewCardHeightClassName = "flex h-full min-h-0 gap-0 overflow-hidden";
 const reviewContentFrameClassName = "mx-auto flex w-full max-w-5xl";
 const reviewContentMeasureClassName = "w-full max-w-[58rem]";
@@ -92,6 +94,362 @@ const gradeLabels: Record<ReviewGrade, string> = {
   easy: "Easy",
 };
 
+type ReviewCard = FlashcardReviewState["cards"][number];
+
+interface ReviewGradeButtonsProps {
+  pendingGrade: ReviewGrade | null;
+  previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
+  isPending: boolean;
+  onGrade: (grade: ReviewGrade) => void;
+}
+
+interface StandardReviewCardProps {
+  currentCard: ReviewCard | null;
+  revealed: boolean;
+  isPending: boolean;
+  pendingGrade: ReviewGrade | null;
+  previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
+  onEdit: () => void;
+  onToggleFocusMode: () => void;
+  onReveal: () => void;
+  onGrade: (grade: ReviewGrade) => void;
+}
+
+interface FocusModeOverlayProps {
+  currentCard: ReviewCard | null;
+  reviewState: FlashcardReviewState;
+  subjects: SubjectEntity[];
+  decks: DeckEntity[];
+  progress: number;
+  revealed: boolean;
+  isPending: boolean;
+  pendingGrade: ReviewGrade | null;
+  previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
+  onReveal: () => void;
+  onGrade: (grade: ReviewGrade) => void;
+  onExitFocusMode: () => void;
+}
+
+function ReviewGradeButtons({
+  pendingGrade,
+  previewLabels,
+  isPending,
+  onGrade,
+}: Readonly<ReviewGradeButtonsProps>) {
+  return (
+    <>
+      {reviewGrades.map((grade) => {
+        const Icon = gradeIcons[grade];
+        const isActivePendingGrade = pendingGrade === grade;
+
+        return (
+          <Button
+            key={grade}
+            variant="outline"
+            size="lg"
+            onClick={() => onGrade(grade)}
+            disabled={isPending}
+            className={`h-auto min-h-14 w-full min-w-0 border-2 px-1 py-0.75 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
+          >
+            <span className="flex min-w-0 flex-col items-center justify-center gap-px text-center">
+              <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+                {isActivePendingGrade ? (
+                  <Loader2 className="size-3.5 animate-spin sm:size-4" />
+                ) : (
+                  <Icon className="hidden size-4 sm:inline-flex" />
+                )}
+                <span className="truncate">{gradeLabels[grade]}</span>
+              </span>
+              {previewLabels ? (
+                <span className="text-pretty whitespace-normal wrap-break-word text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
+                  {previewLabels[grade].durationText}
+                </span>
+              ) : null}
+            </span>
+          </Button>
+        );
+      })}
+    </>
+  );
+}
+
+function StandardReviewCard({
+  currentCard,
+  revealed,
+  isPending,
+  pendingGrade,
+  previewLabels,
+  onEdit,
+  onToggleFocusMode,
+  onReveal,
+  onGrade,
+}: Readonly<StandardReviewCardProps>) {
+  if (!currentCard) {
+    return (
+      <Card>
+        <CardContent className="pt-0">
+          <h2 className="text-base font-semibold">All caught up</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            There are no due flashcards to review.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      className={reviewCardHeightClassName}
+      data-testid="flashcard-review-card"
+    >
+      <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 pb-3 sm:px-8">
+            <div
+              className={`${reviewContentFrameClassName} min-h-0 flex-none flex-col max-h-[50%]`}
+            >
+              <div className="shrink-0 space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  {currentCard.subjectName ? (
+                    <p className="flex min-w-0 items-baseline gap-1 text-sm font-medium text-foreground/70">
+                      <SubjectText
+                        value={currentCard.subjectName}
+                        mode="truncate"
+                        className="block max-w-full"
+                      />
+                      {currentCard.deckName ? (
+                        <>
+                          <span className="shrink-0 text-foreground/40">·</span>
+                          <span className="truncate text-foreground/70">
+                            {currentCard.deckName}
+                          </span>
+                        </>
+                      ) : null}
+                    </p>
+                  ) : (
+                    <span className="min-h-5" />
+                  )}
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={onEdit}
+                      disabled={isPending}
+                      aria-label="Edit"
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={onToggleFocusMode}
+                      disabled={isPending}
+                      aria-label="Enter Focus Mode"
+                    >
+                      <Focus className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  Front
+                </h2>
+              </div>
+              <div
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pt-1.5 pb-5"
+                data-testid="flashcard-review-front-scroll"
+              >
+                <div className={reviewContentMeasureClassName}>
+                  <TiptapRenderer
+                    content={currentCard.front}
+                    className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {revealed && (
+              <div
+                className={`${reviewContentFrameClassName} min-h-0 flex-1 flex-col space-y-2 border-t border-border/60 pt-2`}
+              >
+                <h3 className="shrink-0 text-sm font-semibold text-muted-foreground">
+                  Back
+                </h3>
+                <div
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pb-5"
+                  data-testid="flashcard-review-back-scroll"
+                >
+                  <div className={reviewContentMeasureClassName}>
+                    <TiptapRenderer
+                      content={currentCard.back}
+                      className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
+            <div className={`${reviewContentFrameClassName} pb-0`}>
+              {revealed ? (
+                <div className="mx-auto grid w-full max-w-3xl grid-cols-4 gap-1.5 sm:gap-3">
+                  <ReviewGradeButtons
+                    pendingGrade={pendingGrade}
+                    previewLabels={previewLabels}
+                    isPending={isPending}
+                    onGrade={onGrade}
+                  />
+                </div>
+              ) : (
+                <Button
+                  onClick={onReveal}
+                  disabled={isPending}
+                  className="w-full"
+                >
+                  Show Answer
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FocusModeOverlay({
+  currentCard,
+  reviewState,
+  subjects,
+  decks,
+  progress,
+  revealed,
+  isPending,
+  pendingGrade,
+  previewLabels,
+  onReveal,
+  onGrade,
+  onExitFocusMode,
+}: Readonly<FocusModeOverlayProps>) {
+  const currentSubject = subjects.find(
+    (subject) => subject.id === currentCard?.subjectId,
+  );
+  const currentDeck = decks.find((deck) => deck.id === currentCard?.deckId);
+  const focusDueCountText =
+    reviewState.summary.dueCount === 0
+      ? "No cards due right now"
+      : `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards`;
+
+  if (!currentCard) {
+    return (
+      <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
+        <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+          <h1 className="mb-2 text-2xl font-bold">All caught up!</h1>
+          <p className="mb-8 text-muted-foreground">
+            There are no due flashcards to review.
+          </p>
+          <Button onClick={onExitFocusMode}>Exit Focus Mode</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
+      <div className="flex h-full flex-col">
+        <progress
+          className="h-1 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
+          value={Math.round(progress * 100)}
+          max={100}
+          aria-label="Review progress"
+        />
+
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="size-10" />
+          <span className="text-sm font-medium text-muted-foreground">
+            {focusDueCountText}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-10"
+            aria-label="Exit Focus Mode"
+            onClick={onExitFocusMode}
+          >
+            <X className="size-5" />
+          </Button>
+        </div>
+
+        <div className="flex-1 overflow-hidden px-4 pb-4">
+          {(currentSubject || currentDeck) && (
+            <p className="mb-3 text-xs font-semibold tracking-wider text-primary/80 uppercase">
+              {currentSubject?.name}
+              {currentDeck ? ` · ${currentDeck.name}` : " · General"}
+            </p>
+          )}
+
+          <div className="relative flex h-full flex-col rounded-xl border border-border/60 bg-card">
+            <div className="flex min-h-0 flex-1 flex-col p-6">
+              <div className="flex min-h-0 flex-none flex-col max-h-[50%]">
+                <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  Front
+                </h3>
+                <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 pb-3">
+                  <TiptapRenderer
+                    content={currentCard.front}
+                    className={`${reviewRichTextClassName} text-lg leading-relaxed`}
+                  />
+                </div>
+              </div>
+
+              {revealed ? (
+                <div className="flex min-h-0 flex-1 flex-col border-t border-border/60 pt-4">
+                  <h3 className="mb-2 text-xs font-semibold tracking-wider text-primary/80 uppercase">
+                    Answer
+                  </h3>
+                  <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 pb-3">
+                    <TiptapRenderer
+                      content={currentCard.back}
+                      className={`${reviewRichTextClassName} text-lg leading-relaxed text-primary`}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="shrink-0 border-t border-border/60 px-4 py-4">
+          {revealed ? (
+            <div className="w-full">
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+                <ReviewGradeButtons
+                  pendingGrade={pendingGrade}
+                  previewLabels={previewLabels}
+                  isPending={isPending}
+                  onGrade={onGrade}
+                />
+              </div>
+            </div>
+          ) : (
+            <Button
+              onClick={onReveal}
+              disabled={isPending}
+              className="h-14 w-full text-base"
+            >
+              Show Answer
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function FlashcardReviewClient({
   initialState,
   subjects,
@@ -106,6 +464,7 @@ export function FlashcardReviewClient({
   const [revealed, setRevealed] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
   const [isPending, startTransition] = useTransition();
   const refillRequestIdRef = useRef(0);
@@ -126,21 +485,17 @@ export function FlashcardReviewClient({
     reviewState.summary.dueCount === 0
       ? "No cards due right now."
       : `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards.`;
+  const progress =
+    reviewState.summary.totalCount > 0
+      ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
+        reviewState.summary.totalCount
+      : 0;
   const previewLabels = currentCard
     ? getFlashcardReviewPreviewLabels({
         card: currentCard,
         scheduler: reviewState.scheduler,
       })
     : null;
-
-  function buildFocusModeUrl() {
-    const params = new URLSearchParams();
-    params.set("view", "review");
-    params.set("focus", "true");
-    if (selectedSubjectId) params.set("subjectId", selectedSubjectId);
-    if (selectedDeckId) params.set("deckId", selectedDeckId);
-    return `/flashcards?${params.toString()}`;
-  }
 
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
@@ -330,6 +685,12 @@ export function FlashcardReviewClient({
       return;
     }
 
+    if (isFocusMode && event.key === "Escape") {
+      event.preventDefault();
+      setIsFocusMode(false);
+      return;
+    }
+
     const action = getFlashcardReviewShortcutAction({
       key: event.key,
       revealed,
@@ -339,6 +700,7 @@ export function FlashcardReviewClient({
       isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
       hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
       isRepeat: event.repeat,
+      isFocusMode,
     });
 
     if (!action) {
@@ -371,155 +733,19 @@ export function FlashcardReviewClient({
     return () => document.removeEventListener("keydown", handleReviewKeyDown);
   }, []);
 
-  let reviewContent = null;
-
-  if (currentCard) {
-    reviewContent = (
-      <Card
-        className={reviewCardHeightClassName}
-        data-testid="flashcard-review-card"
-      >
-        <CardContent className="flex min-h-0 flex-1 flex-col p-0">
-          <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 pb-3 sm:px-8">
-            <div
-              className={`${reviewContentFrameClassName} min-h-0 flex-none flex-col max-h-[50%]`}
-            >
-              <div className="shrink-0 space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  {currentCard.subjectName ? (
-                    <p className="flex min-w-0 items-baseline gap-1 text-sm font-medium text-foreground/70">
-                      <SubjectText
-                        value={currentCard.subjectName}
-                        mode="truncate"
-                        className="block max-w-full"
-                      />
-                      {currentCard.deckName ? (
-                        <>
-                          <span className="shrink-0 text-foreground/40">·</span>
-                          <span className="truncate text-foreground/70">
-                            {currentCard.deckName}
-                          </span>
-                        </>
-                      ) : null}
-                    </p>
-                  ) : (
-                    <span className="min-h-5" />
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onClick={() => setEditOpen(true)}
-                    disabled={isPending}
-                    aria-label="Edit"
-                  >
-                    <Pencil className="size-3.5" />
-                  </Button>
-                </div>
-                <h2 className="text-sm font-semibold text-muted-foreground">
-                  Front
-                </h2>
-              </div>
-              <div
-                className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pt-1.5 pb-5"
-                data-testid="flashcard-review-front-scroll"
-              >
-                <div className={reviewContentMeasureClassName}>
-                  <TiptapRenderer
-                    content={currentCard.front}
-                    className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {revealed && (
-              <div
-                className={`${reviewContentFrameClassName} min-h-0 flex-1 flex-col space-y-2 border-t border-border/60 pt-2`}
-              >
-                <h3 className="shrink-0 text-sm font-semibold text-muted-foreground">
-                  Back
-                </h3>
-                <div
-                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pb-5"
-                  data-testid="flashcard-review-back-scroll"
-                >
-                  <div className={reviewContentMeasureClassName}>
-                    <TiptapRenderer
-                      content={currentCard.back}
-                      className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
-            <div className={`${reviewContentFrameClassName} pb-0`}>
-              {revealed ? (
-                <div className="mx-auto grid w-full max-w-3xl grid-cols-4 gap-1.5 sm:gap-3">
-                  {reviewGrades.map((grade) => {
-                    const Icon = gradeIcons[grade];
-                    const isActivePendingGrade = pendingGrade === grade;
-
-                    return (
-                      <Button
-                        key={grade}
-                        variant="outline"
-                        size="lg"
-                        onClick={() => handleGrade(grade)}
-                        disabled={isPending}
-                        className={`h-auto min-h-14 w-full min-w-0 border-2 px-1 py-0.75 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
-                      >
-                        <span className="flex min-w-0 flex-col items-center justify-center gap-px text-center">
-                          <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-                            {isActivePendingGrade ? (
-                              <Loader2 className="size-3.5 animate-spin sm:size-4" />
-                            ) : (
-                              <Icon className="hidden size-4 sm:inline-flex" />
-                            )}
-                            <span className="truncate">
-                              {gradeLabels[grade]}
-                            </span>
-                          </span>
-                          {previewLabels ? (
-                            <span className="text-pretty whitespace-normal wrap-break-word text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
-                              {previewLabels[grade].durationText}
-                            </span>
-                          ) : null}
-                        </span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <Button
-                  onClick={() => setRevealed(true)}
-                  disabled={isPending}
-                  className="w-full"
-                >
-                  Show Answer
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  } else {
-    reviewContent = (
-      <Card>
-        <CardContent className="pt-0">
-          <h2 className="text-base font-semibold">All caught up</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            There are no due flashcards to review.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const reviewContent = (
+    <StandardReviewCard
+      currentCard={currentCard}
+      revealed={revealed}
+      isPending={isPending}
+      pendingGrade={pendingGrade}
+      previewLabels={previewLabels}
+      onEdit={() => setEditOpen(true)}
+      onToggleFocusMode={() => setIsFocusMode((value) => !value)}
+      onReveal={() => setRevealed(true)}
+      onGrade={handleGrade}
+    />
+  );
 
   const content = (
     <>
@@ -566,19 +792,6 @@ export function FlashcardReviewClient({
             </Select>
           )}
         </div>
-        {reviewState.summary.dueCount > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 gap-1.5 shrink-0"
-            asChild
-          >
-            <Link href={buildFocusModeUrl()}>
-              <Focus className="size-4" />
-              <span className="hidden sm:inline">Focus Mode</span>
-            </Link>
-          </Button>
-        )}
       </div>
 
       {embedded ? null : (
@@ -625,6 +838,47 @@ export function FlashcardReviewClient({
       ) : null}
     </>
   );
+
+  if (isFocusMode) {
+    return (
+      <>
+        <FocusModeOverlay
+          currentCard={currentCard}
+          reviewState={reviewState}
+          subjects={subjects}
+          decks={decks}
+          progress={progress}
+          revealed={revealed}
+          isPending={isPending}
+          pendingGrade={pendingGrade}
+          previewLabels={previewLabels}
+          onReveal={() => setRevealed(true)}
+          onGrade={handleGrade}
+          onExitFocusMode={() => setIsFocusMode(false)}
+        />
+        {currentCard ? (
+          <>
+            <EditFlashcardDialog
+              key={currentCard.id}
+              flashcard={currentCard}
+              subjects={subjects}
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              onUpdated={handleFlashcardUpdated}
+              onDeleted={handleFlashcardDeleted}
+            />
+            <DeleteFlashcardDialog
+              flashcardId={currentCard.id}
+              flashcardFront={currentCard.front}
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+              onDeleted={handleFlashcardDeleted}
+            />
+          </>
+        ) : null}
+      </>
+    );
+  }
 
   return embedded ? (
     <div className="flex h-full min-h-0 flex-col">{content}</div>
