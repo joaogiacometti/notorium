@@ -60,7 +60,9 @@ async function selectDialogOption(
   optionLabel: string,
 ) {
   await dialog.locator(triggerSelector).click();
-  await page.getByRole("option", { name: optionLabel, exact: true }).click();
+  const options = page.getByRole("option", { name: optionLabel, exact: true });
+  await expect(options.first()).toBeVisible();
+  await options.first().click();
 }
 
 test("can create and open an assessment from planning", async ({

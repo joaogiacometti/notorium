@@ -16,9 +16,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "bash scripts/test-e2e.sh",
-    "test:e2e:ui": "bash scripts/test-e2e.sh --ui",
-    "test:e2e:headed": "bash scripts/test-e2e.sh --headed"
+    "test:e2e:infra:up": "docker compose -f compose.test.yml --env-file .env.test up -d --wait",
+    "test:e2e:infra:down": "docker compose -f compose.test.yml --env-file .env.test down -v",
+    "test:e2e:migrate": "bun --env-file=.env.test run db:migrate",
+    "test:e2e": "bun --env-file=.env.test run playwright test",
+    "test:e2e:ui": "bun --env-file=.env.test run playwright test --ui",
+    "test:e2e:headed": "bun --env-file=.env.test run playwright test --headed"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -46,7 +49,6 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.575.0",

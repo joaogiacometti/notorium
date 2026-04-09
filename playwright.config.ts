@@ -1,16 +1,9 @@
-import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL =
   process.env.PLAYWRIGHT_BASE_URL ??
   process.env.BETTER_AUTH_URL ??
   "http://127.0.0.1:3001";
-
-const e2eDatabaseUrl =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres:postgres@localhost:5433/notorium_e2e";
-
-process.env.DATABASE_URL = e2eDatabaseUrl;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -27,7 +20,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "bun run build && bun run start -- --hostname 127.0.0.1 --port 3001",
+      "bun --env-file=.env.test run build && bun --env-file=.env.test run start -- --hostname 127.0.0.1 --port 3001",
     url: baseURL,
     reuseExistingServer: true,
     timeout: 120_000,
@@ -50,7 +43,8 @@ export default defineConfig({
     },
     {
       name: "authenticated",
-      testMatch: /(subjects|attendance|notes|assessments|flashcards)\.spec\.ts/,
+      testMatch:
+        /(subjects|attendance|notes|assessments|flashcards|decks)\.spec\.ts/,
       dependencies: ["bootstrap"],
       use: {
         ...devices["Desktop Chrome"],

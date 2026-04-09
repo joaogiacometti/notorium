@@ -517,3 +517,23 @@ export async function getDefaultDeckForSubject(
 
   return defaultDeck ?? null;
 }
+
+export async function ensureDefaultDeckForSubject(
+  userId: string,
+  subjectId: string,
+) {
+  const existing = await getDefaultDeckForSubject(userId, subjectId);
+  if (existing) return existing;
+
+  const [newDeck] = await getDb()
+    .insert(deck)
+    .values({
+      userId,
+      subjectId,
+      name: "General",
+      isDefault: true,
+    })
+    .returning({ id: deck.id, name: deck.name });
+
+  return newDeck;
+}

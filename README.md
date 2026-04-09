@@ -174,7 +174,10 @@ Defined in `src/env.ts`:
 | `bun run test`              | Run Vitest suite                     |
 | `bun run test:watch`        | Run Vitest in watch mode             |
 | `bun run test:coverage`     | Run Vitest with coverage             |
-| `bun run test:e2e`          | Run E2E tests (auto setup & cleanup) |
+| `bun run test:e2e:infra:up` | Start E2E infrastructure            |
+| `bun run test:e2e:infra:down` | Stop E2E infrastructure and remove data |
+| `bun run test:e2e:migrate`  | Run migrations against test database |
+| `bun run test:e2e`          | Run E2E tests                        |
 | `bun run test:e2e:ui`       | Run E2E tests in UI mode             |
 | `bun run test:e2e:headed`   | Run E2E tests in headed mode         |
 | `bun run db:generate`       | Generate Drizzle migrations          |
@@ -225,31 +228,39 @@ bun run build
 
 Playwright e2e coverage lives under `tests/e2e` and currently covers approved, pending, and blocked login states plus basic subject CRUD.
 
-E2E tests use an isolated database (`notorium_e2e`) that is completely separate from your development database. Test credentials are generated automatically at runtime, so no environment configuration is needed.
+E2E tests use an isolated database (`notorium_test`) that is completely separate from your development database. Test credentials are generated automatically at runtime.
 
 ### Setup
 
-Before the first run, install Playwright browsers:
+1. Install Playwright browsers:
 
 ```bash
 bunx playwright install
 ```
 
+2. Create test environment file:
+
+```bash
+cp .env.test.example .env.test
+```
+
+3. Start test infrastructure:
+
+```bash
+bun run test:e2e:infra:up
+```
+
+This starts PostgreSQL (default port `5433`) and Redis (default port `6380`) in isolated Docker containers and runs database migrations automatically.
+
 ### Running Tests
 
-Run the complete E2E test suite (automatic setup and cleanup):
+Run the E2E test suite:
 
 ```bash
 bun run test:e2e
 ```
 
-This command automatically:
-- Starts E2E infrastructure (PostgreSQL on `5433` + Redis on `6380`)
-- Runs database migrations
-- Executes Playwright tests
-- Cleans up infrastructure
-
-The suite starts an isolated production server on `127.0.0.1:3001` (`next start`), so it can run while your normal `bun dev` server is active on `3000`.
+The suite starts an isolated production build on `127.0.0.1:3001`, so it can run while your normal `bun dev` server is active on `3000`.
 
 **UI mode:**
 
@@ -257,12 +268,25 @@ The suite starts an isolated production server on `127.0.0.1:3001` (`next start`
 bun run test:e2e:ui
 ```
 
-**For faster iteration during development**, you can keep infrastructure running manually:
+**Headed mode:**
 
 ```bash
-docker compose -f compose.e2e.yml up -d
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/notorium_e2e bun run db:migrate
-REDIS_URL=redis://localhost:6380 BETTER_AUTH_URL=http://127.0.0.1:3001 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3001 playwright test --ui
+bun run test:e2e:headed
+```
+
+### Manual Infrastructure Control
+
+Start/stop test infrastructure separately:
+
+```bash
+bun run test:e2e:infra:up      # Start PostgreSQL + Redis
+bun run test:e2e:infra:down    # Stop and remove containers + data
+```
+
+Re-run migrations manually (e.g. after schema changes):
+
+```bash
+bun run test:e2e:migrate
 ```
 
 The E2E database is completely isolated from your development data, so tests can safely reset the entire database without affecting your work.

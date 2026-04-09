@@ -156,7 +156,10 @@ export function FlashcardsManager({
               setSelectedSubjectId(value === "all" ? undefined : value)
             }
           >
-            <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+            <SelectTrigger
+              data-testid="subject-filter-select"
+              className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs"
+            >
               <SelectValue placeholder="Filter by Subject" />
             </SelectTrigger>
             <SelectContent align="start">
@@ -181,7 +184,10 @@ export function FlashcardsManager({
                 setSelectedDeckId(value === "all" ? undefined : value)
               }
             >
-              <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+              <SelectTrigger
+                data-testid="deck-filter-select"
+                className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs"
+              >
                 <SelectValue placeholder="Filter by Deck" />
               </SelectTrigger>
               <SelectContent align="start">

@@ -103,6 +103,7 @@ test("can record a miss and rejects duplicate dates", async ({
 
     await expect(recordDialog).toHaveCount(0);
 
+    await expect(page.getByText("3 misses remaining")).toBeVisible();
     await page.getByRole("button", { name: "Recorded Misses" }).click();
     await expect(page.getByText(/Mar 10, 2026/)).toBeVisible();
 

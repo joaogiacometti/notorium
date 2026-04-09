@@ -4,10 +4,9 @@ import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
   createDeck,
-  createFlashcard,
   createMaxDecksForSubject,
   createSubject,
-  getDefaultDeckForSubject,
+  ensureDefaultDeckForSubject,
 } from "./support/db";
 
 function getUniqueSubjectName(testTitle: string) {
@@ -50,7 +49,7 @@ test("can create a custom deck", async ({ page, e2eUser }) => {
     await createDialog
       .locator("#form-create-deck-description")
       .fill(deckDescription);
-    await createDialog.getByRole("button", { name: "Create Deck" }).click();
+    await createDialog.getByRole("button", { name: "Create" }).click();
 
     await expect(createDialog).toHaveCount(0);
     await expect(page.getByText(deckName)).toBeVisible();
@@ -91,7 +90,10 @@ test("can edit a deck", async ({ page, e2eUser }) => {
     const deckCard = page.getByTestId("deck-card").filter({
       hasText: initialName,
     });
-    await deckCard.getByRole("button", { name: "Edit" }).click();
+    await expect(deckCard).toBeVisible();
+    await deckCard.hover();
+    await deckCard.getByRole("button", { name: "Open deck actions" }).click();
+    await page.getByRole("menuitem", { name: "Edit" }).click();
 
     const editDialog = page.getByRole("dialog", { name: "Edit Deck" });
     await editDialog.locator("#form-edit-deck-name").fill(updatedName);
@@ -101,9 +103,9 @@ test("can edit a deck", async ({ page, e2eUser }) => {
     await editDialog.getByRole("button", { name: "Save" }).click();
 
     await expect(editDialog).toHaveCount(0);
+    await expect(page.getByText(initialName)).toHaveCount(0);
     await expect(page.getByText(updatedName)).toBeVisible();
     await expect(page.getByText(updatedDescription)).toBeVisible();
-    await expect(page.getByText(initialName)).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }
@@ -123,6 +125,7 @@ test("can delete a non-default deck", async ({ page, e2eUser }) => {
       "Deck delete test",
     );
 
+    await ensureDefaultDeckForSubject(user.userId, createdSubject.id);
     await createDeck(user.userId, createdSubject.id, deckName, null);
 
     await openSubjectPage(page, createdSubject.id);
@@ -132,12 +135,16 @@ test("can delete a non-default deck", async ({ page, e2eUser }) => {
     const deckCard = page.getByTestId("deck-card").filter({
       hasText: deckName,
     });
-    await deckCard.getByRole("button", { name: "Delete" }).click();
+    await expect(deckCard).toBeVisible();
+    await deckCard.hover();
+    await deckCard.getByRole("button", { name: "Open deck actions" }).click();
+    await page.getByRole("menuitem", { name: "Delete" }).click();
 
     const deleteDialog = page.getByRole("dialog", { name: "Delete Deck" });
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
 
     await expect(deleteDialog).toHaveCount(0);
+    await page.reload();
     await expect(page.getByText(deckName)).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -157,12 +164,7 @@ test("cannot delete default deck", async ({ page, e2eUser }) => {
       "Deck delete default test",
     );
 
-    await createFlashcard(
-      user.userId,
-      createdSubject.id,
-      "Front text",
-      "Back text",
-    );
+    await ensureDefaultDeckForSubject(user.userId, createdSubject.id);
 
     await openSubjectPage(page, createdSubject.id);
 
@@ -173,8 +175,8 @@ test("cannot delete default deck", async ({ page, e2eUser }) => {
     });
 
     await expect(
-      defaultDeckCard.getByRole("button", { name: "Delete" }),
-    ).toBeDisabled();
+      defaultDeckCard.getByRole("button", { name: "Open deck actions" }),
+    ).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }
@@ -199,20 +201,7 @@ test("flashcards move to default deck when custom deck is deleted", async ({
       "Flashcard move test",
     );
 
-    const defaultDeck = await getDefaultDeckForSubject(
-      user.userId,
-      createdSubject.id,
-    );
-
-    if (!defaultDeck) {
-      await createFlashcard(
-        user.userId,
-        createdSubject.id,
-        "Trigger default deck",
-        "Back",
-      );
-    }
-
+    await ensureDefaultDeckForSubject(user.userId, createdSubject.id);
     await createDeck(user.userId, createdSubject.id, deckName, null);
 
     await page.goto(`/flashcards?view=manage&subjectId=${createdSubject.id}`);
@@ -226,14 +215,17 @@ test("flashcards move to default deck when custom deck is deleted", async ({
       .locator("#form-create-flashcard-back")
       .fill(flashcardBack);
     await createDialog.getByRole("combobox", { name: "Deck" }).click();
+    await expect(page.getByRole("option", { name: deckName })).toBeVisible();
     await page.getByRole("option", { name: deckName }).click();
     await createDialog
       .getByRole("button", { name: "Create Flashcard" })
       .click();
 
+    await page.keyboard.press("Escape");
     await expect(createDialog).toHaveCount(0);
 
-    await page.getByRole("combobox").first().click();
+    await page.getByTestId("deck-filter-select").click();
+    await expect(page.getByRole("option", { name: deckName })).toBeVisible();
     await page.getByRole("option", { name: deckName }).click();
 
     await expect(page.getByTitle(flashcardFront)).toBeVisible();
@@ -245,7 +237,9 @@ test("flashcards move to default deck when custom deck is deleted", async ({
     });
     await expect(deckCard.getByText("1 flashcard")).toBeVisible();
 
-    await deckCard.getByRole("button", { name: "Delete" }).click();
+    await deckCard.hover();
+    await deckCard.getByRole("button", { name: "Open deck actions" }).click();
+    await page.getByRole("menuitem", { name: "Delete" }).click();
 
     const deleteDialog = page.getByRole("dialog", { name: "Delete Deck" });
     await expect(
@@ -254,10 +248,12 @@ test("flashcards move to default deck when custom deck is deleted", async ({
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
 
     await expect(deleteDialog).toHaveCount(0);
+    await page.reload();
     await expect(page.getByText(deckName)).toHaveCount(0);
 
     await page.goto(`/flashcards?view=manage&subjectId=${createdSubject.id}`);
-    await page.getByRole("combobox").first().click();
+    await page.getByTestId("deck-filter-select").click();
+    await expect(page.getByRole("option", { name: "General" })).toBeVisible();
     await page.getByRole("option", { name: "General" }).click();
 
     await expect(page.getByTitle(flashcardFront)).toBeVisible();
@@ -272,7 +268,6 @@ test("shows deck limit warning when subject deck limit is reached", async ({
 }) => {
   const user = e2eUser;
   const subjectName = getUniqueSubjectName("deck-limit");
-  const attemptedDeckName = getUniqueDeckName("deck-limit-attempt");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
@@ -287,15 +282,10 @@ test("shows deck limit warning when subject deck limit is reached", async ({
 
     await openSubjectPage(page, createdSubject.id);
 
-    await page.getByRole("button", { name: "New Deck" }).click();
-    const createDialog = page.getByRole("dialog", { name: "Create Deck" });
-    await createDialog
-      .locator("#form-create-deck-name")
-      .fill(attemptedDeckName);
-    await createDialog.getByRole("button", { name: "Create Deck" }).click();
-
+    const newDeckButton = page.getByRole("button", { name: "New Deck" });
+    await expect(newDeckButton).toBeDisabled();
     await expect(
-      page.getByText(/system limit reached: you can have up to .* decks/i),
+      page.getByText(/You've reached the limit of \d+ decks per subject/),
     ).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -331,10 +321,12 @@ test("can filter flashcards by deck", async ({ page, e2eUser }) => {
       .locator("#form-create-flashcard-back")
       .fill("Deck 1 Back");
     await createDialog.getByRole("combobox", { name: "Deck" }).click();
+    await expect(page.getByRole("option", { name: deck1Name })).toBeVisible();
     await page.getByRole("option", { name: deck1Name }).click();
     await createDialog
       .getByRole("button", { name: "Create Flashcard" })
       .click();
+    await page.keyboard.press("Escape");
     await expect(createDialog).toHaveCount(0);
 
     await page.getByRole("button", { name: "New Flashcard" }).click();
@@ -346,25 +338,30 @@ test("can filter flashcards by deck", async ({ page, e2eUser }) => {
       .locator("#form-create-flashcard-back")
       .fill("Deck 2 Back");
     await createDialog.getByRole("combobox", { name: "Deck" }).click();
+    await expect(page.getByRole("option", { name: deck2Name })).toBeVisible();
     await page.getByRole("option", { name: deck2Name }).click();
     await createDialog
       .getByRole("button", { name: "Create Flashcard" })
       .click();
+    await page.keyboard.press("Escape");
     await expect(createDialog).toHaveCount(0);
 
-    await page.getByRole("combobox").first().click();
+    await page.getByTestId("deck-filter-select").click();
+    await expect(page.getByRole("option", { name: deck1Name })).toBeVisible();
     await page.getByRole("option", { name: deck1Name }).click();
 
     await expect(page.getByTitle("Deck 1 Front")).toBeVisible();
     await expect(page.getByTitle("Deck 2 Front")).toHaveCount(0);
 
-    await page.getByRole("combobox").first().click();
+    await page.getByTestId("deck-filter-select").click();
+    await expect(page.getByRole("option", { name: deck2Name })).toBeVisible();
     await page.getByRole("option", { name: deck2Name }).click();
 
     await expect(page.getByTitle("Deck 2 Front")).toBeVisible();
     await expect(page.getByTitle("Deck 1 Front")).toHaveCount(0);
 
-    await page.getByRole("combobox").first().click();
+    await page.getByTestId("deck-filter-select").click();
+    await expect(page.getByRole("option", { name: "All decks" })).toBeVisible();
     await page.getByRole("option", { name: "All decks" }).click();
 
     await expect(page.getByTitle("Deck 1 Front")).toBeVisible();

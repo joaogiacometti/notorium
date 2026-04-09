@@ -315,13 +315,19 @@ test("can enter and exit Focus Mode", async ({ page, e2eUser }) => {
 
     await page.goto(`/flashcards?view=review&subjectId=${createdSubject.id}`);
 
-    await expect(page.getByRole("link", { name: "Focus Mode" })).toBeVisible();
-    await page.getByRole("link", { name: "Focus Mode" }).click();
+    await expect(
+      page.getByRole("button", { name: "Enter Focus Mode", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Enter Focus Mode", exact: true })
+      .click();
 
-    await expect(page.getByText(/due of \d+ total cards/)).toBeVisible();
+    await expect(
+      page.getByText(/due of \d+ total cards/).first(),
+    ).toBeVisible();
     await expect(page.getByText(flashcardFront)).toBeVisible();
 
-    await page.getByRole("link", { name: "Exit Focus Mode" }).click();
+    await page.getByRole("button", { name: "Exit Focus Mode" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Flashcards", exact: true }),
@@ -353,12 +359,15 @@ test("can complete a review in Focus Mode", async ({ page, e2eUser }) => {
       flashcardBack,
     );
 
-    await page.goto(
-      `/flashcards?view=review&focus=true&subjectId=${createdSubject.id}`,
-    );
+    await page.goto(`/flashcards?view=review&subjectId=${createdSubject.id}`);
 
-    await expect(page.getByText(/due of \d+ total cards/)).toBeVisible();
+    await expect(
+      page.getByText(/due of \d+ total cards/).first(),
+    ).toBeVisible();
     await expect(page.getByText(flashcardFront)).toBeVisible();
+    await page
+      .getByRole("button", { name: "Enter Focus Mode", exact: true })
+      .click();
 
     await page.getByRole("button", { name: "Show Answer" }).click();
 
@@ -368,7 +377,9 @@ test("can complete a review in Focus Mode", async ({ page, e2eUser }) => {
     await page.getByRole("button", { name: /Good/i }).click();
 
     await expect(page.getByText("All caught up!")).toBeVisible();
-    await expect(page.getByText("You reviewed 1 card")).toBeVisible();
+    await expect(
+      page.getByText("There are no due flashcards to review."),
+    ).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

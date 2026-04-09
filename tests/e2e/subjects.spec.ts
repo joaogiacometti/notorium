@@ -44,10 +44,10 @@ test("can create a subject", async ({ page, e2eUser }) => {
     await expect(subjectCard).toBeVisible();
     await expect(subjectCard).toContainText(initialSubjectDescription);
 
-    await Promise.all([
-      page.waitForURL(/\/subjects\/[^/]+$/),
-      page.getByRole("link", { name: initialSubjectName, exact: true }).click(),
-    ]);
+    await page
+      .getByRole("link", { name: initialSubjectName, exact: true })
+      .click();
+    await page.waitForURL(/\/subjects\/[^/]+$/);
     await expect(
       page.getByRole("heading", { name: initialSubjectName, exact: true }),
     ).toBeVisible();

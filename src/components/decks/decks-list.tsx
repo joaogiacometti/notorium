@@ -168,7 +168,10 @@ function DeckCard({
   onDeleteRequested,
 }: Readonly<DeckCardProps>) {
   return (
-    <Card className="group relative min-w-0 overflow-hidden transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
+    <Card
+      data-testid="deck-card"
+      className="group relative min-w-0 overflow-hidden transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"
+    >
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
         <Link
           href={`/flashcards?view=manage&subjectId=${subjectId}&deckId=${deck.id}`}

@@ -64,6 +64,12 @@ src/
 | `bun run test`                            | Run Vitest test suite                  |
 | `bun run test:watch`                      | Run Vitest in watch mode               |
 | `bun run test:coverage`                   | Run Vitest with coverage               |
+| `bun run test:e2e:infra:up`               | Start E2E test infrastructure          |
+| `bun run test:e2e:infra:down`             | Stop E2E test infrastructure           |
+| `bun run test:e2e:migrate`                | Run migrations against test database   |
+| `bun run test:e2e`                        | Run Playwright E2E tests               |
+| `bun run test:e2e:ui`                     | Run Playwright E2E tests (UI mode)     |
+| `bun run test:e2e:headed`                 | Run Playwright E2E tests (headed)      |
 | `bun run db:generate`                     | Generate Drizzle migrations            |
 | `bun run db:migrate`                      | Run Drizzle migrations                 |
 | `bun run db:push`                         | Push schema directly to DB             |

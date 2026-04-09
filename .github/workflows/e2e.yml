@@ -24,12 +24,12 @@ jobs:
     env:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: notorium_e2e
+      POSTGRES_DB: notorium_test
       POSTGRES_HOST: localhost
       POSTGRES_PORT: "5433"
       REDIS_HOST: localhost
       REDIS_PORT: "6380"
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/notorium_e2e
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/notorium_test
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:3001
       BETTER_AUTH_URL: http://127.0.0.1:3001
       RATE_LIMIT_BACKEND: redis
@@ -39,8 +39,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create test environment file
+        run: cp .env.test.example .env.test
+
       - name: Start infrastructure
-        run: docker compose -f compose.e2e.yml up -d --wait
+        run: docker compose -f compose.test.yml --env-file .env.test up -d --wait
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -72,13 +75,13 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Build application
-        run: bun run build
+        run: bun --env-file=.env.test run build
 
       - name: Run migrations
-        run: bun run db:migrate
+        run: bun --env-file=.env.test run db:migrate
 
       - name: Start application
-        run: nohup bun run start -- --port 3001 > app.log 2>&1 &
+        run: nohup bun --env-file=.env.test run start -- --port 3001 > app.log 2>&1 &
 
       - name: Wait for application to be ready
         run: |
@@ -120,4 +123,4 @@ jobs:
 
       - name: Stop infrastructure
         if: always()
-        run: docker compose -f compose.e2e.yml down -v
+        run: docker compose -f compose.test.yml --env-file .env.test down -v

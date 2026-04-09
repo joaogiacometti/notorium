@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   createDeckForUser,
   deleteDeckForUser,
@@ -31,30 +32,48 @@ export async function getDecks(subjectId: string): Promise<DeckWithCount[]> {
 export async function createDeck(
   data: CreateDeckForm,
 ): Promise<CreateDeckResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     createDeckSchema,
     data,
     "decks.invalidData",
     async (userId, parsedData) => createDeckForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${data.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function editDeck(data: EditDeckForm): Promise<EditDeckResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     editDeckSchema,
     data,
     "decks.invalidData",
     async (userId, parsedData) => editDeckForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.deck.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function deleteDeck(
   data: DeleteDeckForm,
 ): Promise<DeleteDeckResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     deleteDeckSchema,
     data,
     "decks.invalidData",
     async (userId, parsedData) => deleteDeckForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }
