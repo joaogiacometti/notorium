@@ -51,6 +51,7 @@ export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
 
 export const generateFlashcardBackSchema = z.object({
   subjectId: z.string().min(1),
+  deckId: z.string().min(1).nullable().optional(),
   front: flashcardFrontSchema,
   currentBack: flashcardBackSchema.optional(),
 });
@@ -144,6 +145,7 @@ export const generateFlashcardsSchema = z.object({
   subjectId: z
     .string()
     .min(1, validationMessage("Validation.flashcards.subjectRequired")),
+  deckId: z.string().min(1).nullable().optional(),
   text: z
     .string()
     .min(1, validationMessage("Validation.flashcards.textRequired"))

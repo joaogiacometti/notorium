@@ -186,6 +186,16 @@ describe("generateFlashcardBackSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("accepts optional deckId", () => {
+    const result = generateFlashcardBackSchema.safeParse({
+      subjectId: "subject-1",
+      deckId: "deck-1",
+      front: "<p>What is ATP?</p>",
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("deleteFlashcardSchema", () => {
@@ -317,6 +327,15 @@ describe("generateFlashcardsSchema", () => {
     const result = generateFlashcardsSchema.safeParse({
       subjectId: "subject-123",
       text: "a".repeat(LIMITS.flashcardAiMaxInput),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts optional deckId", () => {
+    const result = generateFlashcardsSchema.safeParse({
+      subjectId: "subject-123",
+      deckId: "deck-123",
+      text: "Some text to generate flashcards from.",
     });
     expect(result.success).toBe(true);
   });

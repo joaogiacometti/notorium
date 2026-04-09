@@ -104,7 +104,9 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     previousValuesRef.current = values;
   }, [form, open, values]);
 
-  useBeforeUnload(open && form.formState.isDirty && !isSubmitting);
+  useBeforeUnload(
+    open && (form.formState.isDirty || Boolean(proposedBack)) && !isSubmitting,
+  );
 
   useEffect(() => {
     let active = true;
@@ -275,6 +277,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
     const result = await generateFlashcardBack({
       subjectId: currentValues.subjectId,
+      deckId: currentValues.deckId ?? null,
       front: currentValues.front,
       currentBack: hasBack ? currentValues.back : undefined,
     });

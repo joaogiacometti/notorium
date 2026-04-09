@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { getDeckRecordForUser } from "@/features/decks/queries";
 import {
   generateFlashcardsForUser as generateFlashcardsForUserService,
   validateFlashcardsForUser,
@@ -346,9 +347,25 @@ export async function generateFlashcards(
         });
       }
 
+      let deckName: string | null = null;
+      if (parsedData.deckId) {
+        const existingDeck = await getDeckRecordForUser(
+          userId,
+          parsedData.deckId,
+        );
+        if (!existingDeck) {
+          return actionError("decks.notFound");
+        }
+        if (existingDeck.subjectId !== parsedData.subjectId) {
+          return actionError("decks.wrongSubject");
+        }
+        deckName = existingDeck.isDefault ? null : existingDeck.name;
+      }
+
       const result = await generateFlashcardsForUserService({
         userId,
         subjectName: subject.name,
+        deckName,
         text: parsedData.text,
       });
 

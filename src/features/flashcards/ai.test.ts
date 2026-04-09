@@ -28,6 +28,16 @@ describe("buildGenerateFlashcardBackPrompt", () => {
     );
     expect(result).toContain("Front: What is photosynthesis?");
   });
+
+  it("includes deck context when provided", () => {
+    const result = buildGenerateFlashcardBackPrompt({
+      subjectName: "Biology",
+      deckName: "Metabolism",
+      front: "What is ATP?",
+    });
+
+    expect(result).toContain("Deck context: Metabolism");
+  });
 });
 
 describe("flashcardBackSystemPrompt", () => {
@@ -212,6 +222,15 @@ describe("buildGenerateFlashcardsPrompt", () => {
     expect(prompt).toContain("Subject: Computer Science");
     expect(prompt).toContain("DNS translates domain names to IP addresses.");
   });
+
+  it("includes deck context when provided", () => {
+    const prompt = buildGenerateFlashcardsPrompt({
+      subjectName: "Computer Science",
+      deckName: "Networking",
+      text: "DNS translates domain names to IP addresses.",
+    });
+    expect(prompt).toContain("Deck: Networking");
+  });
 });
 
 describe("normalizeGeneratedCards", () => {
@@ -291,5 +310,23 @@ describe("normalizeGeneratedCards", () => {
     const result = normalizeGeneratedCards({ cards });
     expect(result).not.toBeNull();
     expect(result).toHaveLength(50);
+  });
+
+  it("normalizes inline separators into plain bullet lines", () => {
+    const result = normalizeGeneratedCards({
+      cards: [
+        {
+          front: "Queue vs Topic",
+          back: "Queue implements point-to-point delivery where each message is processed by exactly one consumer. - Topic implements publish-subscribe delivery where one message is broadcast to all subscribed consumers. - Queues are optimized for task distribution and load balancing among workers. - Topics are optimized for event notification and broadcasting data to multiple independent systems.",
+        },
+      ],
+    });
+
+    expect(result).toEqual([
+      {
+        front: "Queue vs Topic",
+        back: "- Queue implements point-to-point delivery where each message is processed by exactly one consumer.\n- Topic implements publish-subscribe delivery where one message is broadcast to all subscribed consumers.\n- Queues are optimized for task distribution and load balancing among workers.\n- Topics are optimized for event notification and broadcasting data to multiple independent systems.",
+      },
+    ]);
   });
 });

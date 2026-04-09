@@ -59,12 +59,18 @@ export async function getDeckByIdForUser(
 export async function getDeckRecordForUser(
   userId: string,
   deckId: string,
-): Promise<{ id: string; subjectId: string; isDefault: boolean } | null> {
+): Promise<{
+  id: string;
+  subjectId: string;
+  isDefault: boolean;
+  name: string;
+} | null> {
   const results = await getDb()
     .select({
       id: deck.id,
       subjectId: deck.subjectId,
       isDefault: deck.isDefault,
+      name: deck.name,
     })
     .from(deck)
     .innerJoin(subject, eq(deck.subjectId, subject.id))

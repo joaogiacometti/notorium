@@ -94,6 +94,16 @@ describe("generateFlashcardBackForUser", () => {
       back: "<p>ATP stores and transfers cellular energy.</p>",
     });
     expect(calls).toEqual(["resolve", "generate"]);
+    expect(generateFlashcardBackContentMock).toHaveBeenCalledWith({
+      settings: {
+        provider: "openrouter",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-or-v1-test",
+      },
+      subjectName: "Biology",
+      deckName: undefined,
+      front: "What is ATP?",
+    });
   });
 
   it("returns unavailable for non-configuration failures", async () => {

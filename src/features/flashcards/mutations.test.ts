@@ -476,9 +476,16 @@ describe("generateFlashcardBackForUserInput", () => {
       id: "subject-1",
       name: "Biology",
     });
+    getDeckRecordForUserMock.mockResolvedValueOnce({
+      id: "deck-1",
+      subjectId: "subject-1",
+      isDefault: false,
+      name: "Metabolism",
+    });
 
     const result = await generateFlashcardBackForUserInput("user-1", {
       subjectId: "subject-1",
+      deckId: "deck-1",
       front: "<p>What is ATP?</p>",
     });
 
@@ -489,6 +496,7 @@ describe("generateFlashcardBackForUserInput", () => {
     expect(generateFlashcardBackForUser).toHaveBeenCalledWith({
       userId: "user-1",
       subjectName: "Biology",
+      deckName: "Metabolism",
       front: "<p>What is ATP?</p>",
     });
   });
@@ -509,9 +517,16 @@ describe("generateFlashcardBackForUserInput", () => {
       id: "subject-1",
       name: "Biology",
     });
+    getDeckRecordForUserMock.mockResolvedValueOnce({
+      id: "deck-1",
+      subjectId: "subject-1",
+      isDefault: false,
+      name: "Metabolism",
+    });
 
     const result = await generateFlashcardBackForUserInput("user-1", {
       subjectId: "subject-1",
+      deckId: "deck-1",
       front: "<p>What is ATP?</p>",
       currentBack: "<p>ATP stores energy.</p>",
     });
@@ -523,6 +538,7 @@ describe("generateFlashcardBackForUserInput", () => {
     expect(improveFlashcardBackForUser).toHaveBeenCalledWith({
       userId: "user-1",
       subjectName: "Biology",
+      deckName: "Metabolism",
       front: "<p>What is ATP?</p>",
       currentBack: "<p>ATP stores energy.</p>",
     });
@@ -564,9 +580,16 @@ describe("generateFlashcardBackForUserInput", () => {
       id: "subject-1",
       name: "Biology",
     });
+    getDeckRecordForUserMock.mockResolvedValueOnce({
+      id: "deck-1",
+      subjectId: "subject-1",
+      isDefault: false,
+      name: "Metabolism",
+    });
 
     const result = await generateFlashcardBackForUserInput("user-1", {
       subjectId: "subject-1",
+      deckId: "deck-1",
       front: "<p>Front</p>",
       currentBack: "<p>Existing back</p>",
     });
@@ -574,6 +597,36 @@ describe("generateFlashcardBackForUserInput", () => {
     expect(result).toEqual({
       success: false,
       errorCode: "flashcards.ai.notConfigured",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+  });
+
+  it("returns wrongSubject when deck does not belong to subject", async () => {
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    getActiveSubjectByIdForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      name: "Biology",
+    });
+    getDeckRecordForUserMock.mockResolvedValueOnce({
+      id: "deck-2",
+      subjectId: "subject-2",
+      isDefault: false,
+      name: "Other",
+    });
+
+    const result = await generateFlashcardBackForUserInput("user-1", {
+      subjectId: "subject-1",
+      deckId: "deck-2",
+      front: "<p>Front</p>",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "decks.wrongSubject",
       errorParams: undefined,
       errorMessage: undefined,
     });

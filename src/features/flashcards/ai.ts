@@ -35,6 +35,7 @@ export type { FlashcardForValidation };
 export async function generateFlashcardBackContent(input: {
   settings: ResolvedUserAiSettings;
   subjectName: string;
+  deckName?: string | null;
   front: string;
 }): Promise<string> {
   const frontText = normalizeLine(richTextToPlainText(input.front));
@@ -45,6 +46,7 @@ export async function generateFlashcardBackContent(input: {
     system: flashcardBackSystemPrompt,
     prompt: buildGenerateFlashcardBackPrompt({
       subjectName: input.subjectName,
+      deckName: input.deckName,
       front: frontText,
     }),
     maxOutputTokens: AI_LIMITS.maxBackTokens,
@@ -65,6 +67,7 @@ export async function generateFlashcardBackContent(input: {
 export async function improveFlashcardBackContent(input: {
   settings: ResolvedUserAiSettings;
   subjectName: string;
+  deckName?: string | null;
   front: string;
   currentBack: string;
 }): Promise<string> {
@@ -82,6 +85,7 @@ export async function improveFlashcardBackContent(input: {
     system: flashcardBackImproveSystemPrompt,
     prompt: buildImproveFlashcardBackPrompt({
       subjectName: input.subjectName,
+      deckName: input.deckName,
       front: frontText,
       currentBack: backText,
     }),
@@ -103,6 +107,7 @@ export async function improveFlashcardBackContent(input: {
 export async function generateFlashcardsFromText(input: {
   settings: ResolvedUserAiSettings;
   subjectName: string;
+  deckName?: string | null;
   text: string;
 }): Promise<Array<{ front: string; back: string }>> {
   const output = await generateStructuredOutput({
@@ -111,6 +116,7 @@ export async function generateFlashcardsFromText(input: {
     system: flashcardsGenerationSystemPrompt,
     prompt: buildGenerateFlashcardsPrompt({
       subjectName: input.subjectName,
+      deckName: input.deckName,
       text: input.text,
     }),
     maxOutputTokens: AI_LIMITS.maxGenerationTokens,

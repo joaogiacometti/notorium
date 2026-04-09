@@ -11,6 +11,7 @@ import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
 import { GenerateFlashcardsReview } from "@/components/flashcards/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
+import { DeckSelect } from "@/components/shared/deck-select";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
@@ -48,6 +49,17 @@ interface GeneratedCard {
   back: string;
 }
 
+function getDeckValueForSubject(
+  decks: DeckEntity[],
+  deckId: string | null | undefined,
+): string | null | undefined {
+  if (!deckId) {
+    return undefined;
+  }
+
+  return decks.some((deck) => deck.id === deckId) ? deckId : undefined;
+}
+
 function getCreateFlashcardFormValues(
   subjectId: string,
   deckId?: string | null,
@@ -62,9 +74,11 @@ function getCreateFlashcardFormValues(
 
 function getGenerateFlashcardsFormValues(
   subjectId: string,
+  deckId?: string | null,
 ): GenerateFlashcardsForm {
   return {
     subjectId,
+    deckId: deckId ?? undefined,
     text: "",
   };
 }
@@ -106,32 +120,55 @@ export function CreateFlashcardDialog({
 
   const aiForm = useForm<GenerateFlashcardsForm>({
     resolver: zodResolver(generateFlashcardsSchema),
-    defaultValues: getGenerateFlashcardsFormValues(subjectId ?? ""),
+    defaultValues: getGenerateFlashcardsFormValues(subjectId ?? "", null),
   });
+  const watchedSingleSubjectId = singleForm.watch("subjectId");
 
   useEffect(() => {
-    const subscription = singleForm.watch((value, { name }) => {
-      if (name === "subjectId") {
-        const currentSubjectId = value.subjectId;
-        if (currentSubjectId) {
-          void getDecks(currentSubjectId).then((fetchedDecks) => {
-            setDecks(fetchedDecks);
-          });
-        } else {
-          setDecks([]);
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [singleForm]);
+    const currentSubjectId = watchedSingleSubjectId;
 
-  useEffect(() => {
-    if (subjectId) {
-      void getDecks(subjectId).then((fetchedDecks) => {
-        setDecks(fetchedDecks);
-      });
+    if (!currentSubjectId) {
+      setDecks([]);
+      singleForm.setValue("deckId", undefined);
+      setSelectedDeckId(null);
+      return;
     }
-  }, [subjectId]);
+
+    let active = true;
+
+    void getDecks(currentSubjectId).then((fetchedDecks) => {
+      if (!active) {
+        return;
+      }
+
+      setDecks(fetchedDecks);
+      const currentDeckId = singleForm.getValues("deckId");
+      const nextDeckId = getDeckValueForSubject(fetchedDecks, currentDeckId);
+      singleForm.setValue("deckId", nextDeckId);
+      setSelectedDeckId(nextDeckId ?? null);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [singleForm, watchedSingleSubjectId]);
+
+  useEffect(() => {
+    if (!subjectId) {
+      return;
+    }
+
+    singleForm.setValue("subjectId", subjectId, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+    aiForm.setValue("subjectId", subjectId, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [aiForm.setValue, singleForm.setValue, subjectId]);
 
   const dialog = useFlashcardDialogState({
     mode: "create",
@@ -147,7 +184,9 @@ export function CreateFlashcardDialog({
         }
         setGeneratedCards(null);
         setMode("single");
-        aiForm.reset(getGenerateFlashcardsFormValues(subjectId ?? ""));
+        aiForm.reset(
+          getGenerateFlashcardsFormValues(subjectId ?? "", selectedDeckId),
+        );
       }
       onOpenChange(nextOpen);
     },
@@ -230,7 +269,10 @@ export function CreateFlashcardDialog({
       );
       setGeneratedCards(null);
       aiForm.reset(
-        getGenerateFlashcardsFormValues(aiForm.getValues().subjectId),
+        getGenerateFlashcardsFormValues(
+          aiForm.getValues().subjectId,
+          selectedDeckId,
+        ),
       );
     } else if (hitLimit) {
       toast.error(
@@ -257,30 +299,81 @@ export function CreateFlashcardDialog({
     }
     if (mode === "single" && newMode === "ai") {
       const currentSubjectId = singleForm.getValues("subjectId");
-      if (currentSubjectId) {
-        aiForm.setValue("subjectId", currentSubjectId);
-      }
+      aiForm.setValue("subjectId", currentSubjectId, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
+      aiForm.setValue("deckId", singleForm.getValues("deckId") ?? null, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
       setSelectedDeckId(singleForm.getValues("deckId") ?? null);
     } else if (mode === "ai" && newMode === "single") {
       const currentSubjectId = aiForm.getValues("subjectId");
-      if (currentSubjectId) {
-        singleForm.setValue("subjectId", currentSubjectId);
-      }
-      singleForm.setValue("deckId", selectedDeckId ?? undefined);
+      singleForm.setValue("subjectId", currentSubjectId, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
+      singleForm.setValue("deckId", selectedDeckId ?? undefined, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
     }
     setMode(newMode);
   }
 
   function handleSubjectChange(newSubjectId: string) {
-    void getDecks(newSubjectId).then((fetchedDecks) => {
-      setDecks(fetchedDecks);
+    singleForm.setValue("deckId", undefined, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+    setSelectedDeckId(null);
+    aiForm.setValue("deckId", null, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
+    });
+    aiForm.setValue("subjectId", newSubjectId, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  }
+
+  function handleAiSubjectChange(newSubjectId: string) {
+    aiForm.setValue("subjectId", newSubjectId, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    singleForm.setValue("subjectId", newSubjectId, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+    singleForm.setValue("deckId", undefined, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+    setSelectedDeckId(null);
+    aiForm.setValue("deckId", null, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
     });
   }
 
   function handleDiscardOnClose() {
     setGeneratedCards(null);
     setDiscardOnCloseDialogOpen(false);
-    aiForm.reset(getGenerateFlashcardsFormValues(subjectId ?? ""));
+    setSelectedDeckId(null);
+    aiForm.reset(getGenerateFlashcardsFormValues(subjectId ?? "", null));
     onOpenChange(false);
   }
 
@@ -288,7 +381,8 @@ export function CreateFlashcardDialog({
     setGeneratedCards(null);
     setDiscardOnModeSwitchDialogOpen(false);
     setMode("single");
-    aiForm.reset(getGenerateFlashcardsFormValues(subjectId ?? ""));
+    setSelectedDeckId(null);
+    aiForm.reset(getGenerateFlashcardsFormValues(subjectId ?? "", null));
   }
 
   function handleBackToInput() {
@@ -365,13 +459,36 @@ export function CreateFlashcardDialog({
         <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
           <FieldGroup className="gap-5">
             {subjects && subjects.length > 0 ? (
-              <SubjectSelect
-                value={aiForm.watch("subjectId")}
-                onChange={(value) => aiForm.setValue("subjectId", value)}
-                subjects={subjects}
-                id="ai-subject"
-                error={aiForm.formState.errors.subjectId?.message as string}
-              />
+              <div className="flex flex-col gap-5 sm:flex-row sm:gap-4">
+                <div className="flex-1">
+                  <SubjectSelect
+                    value={aiForm.watch("subjectId")}
+                    onChange={handleAiSubjectChange}
+                    subjects={subjects}
+                    id="ai-subject"
+                    error={aiForm.formState.errors.subjectId?.message as string}
+                  />
+                </div>
+                {aiForm.watch("subjectId") ? (
+                  <div className="flex-1">
+                    <DeckSelect
+                      value={selectedDeckId}
+                      onChange={(value) => {
+                        setSelectedDeckId(value);
+                        aiForm.setValue("deckId", value, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: false,
+                        });
+                      }}
+                      decks={decks}
+                      id="ai-deck"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-1" />
+                )}
+              </div>
             ) : null}
             <CreateModeToggle
               mode="ai"

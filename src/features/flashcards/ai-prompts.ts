@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeGeneratedBack } from "@/features/flashcards/ai-utils";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 
 const LANGUAGE_RULE =
@@ -253,10 +254,17 @@ Array of issues with flashcardId, issueType, explanation, and relatedFlashcardId
 
 export function buildGenerateFlashcardBackPrompt(input: {
   subjectName: string;
+  deckName?: string | null;
   front: string;
 }): string {
+  const deckContext =
+    input.deckName && input.deckName.trim().length > 0
+      ? [`Deck context: ${input.deckName}`]
+      : [];
+
   return [
     `Subject context: ${input.subjectName}`,
+    ...deckContext,
     "Task: Write the back of a study flashcard for the front below.",
     "Use the subject only as background context. Answer only what the front asks.",
     `Front: ${input.front}`,
@@ -265,11 +273,18 @@ export function buildGenerateFlashcardBackPrompt(input: {
 
 export function buildImproveFlashcardBackPrompt(input: {
   subjectName: string;
+  deckName?: string | null;
   front: string;
   currentBack: string;
 }): string {
+  const deckContext =
+    input.deckName && input.deckName.trim().length > 0
+      ? [`Deck context: ${input.deckName}`]
+      : [];
+
   return [
     `Subject context: ${input.subjectName}`,
+    ...deckContext,
     `Front: ${input.front}`,
     `Current back: ${input.currentBack}`,
     "",
@@ -279,10 +294,17 @@ export function buildImproveFlashcardBackPrompt(input: {
 
 export function buildGenerateFlashcardsPrompt(input: {
   subjectName: string;
+  deckName?: string | null;
   text: string;
 }): string {
+  const deckContext =
+    input.deckName && input.deckName.trim().length > 0
+      ? [`Deck: ${input.deckName}`]
+      : [];
+
   return [
     `Subject: ${input.subjectName}`,
+    ...deckContext,
     "",
     "Source material:",
     input.text,
@@ -329,7 +351,21 @@ export function normalizeGeneratedCards(
       continue;
     }
 
-    cards.push({ front, back });
+    const normalizedBack = normalizeGeneratedBack(back);
+    const normalizedBackLines = normalizedBack.split("\n");
+    const hasBulletLines = normalizedBackLines.some((line) =>
+      /^[-*]\s+/.test(line.trim()),
+    );
+    const firstLine = normalizedBackLines[0]?.trim() ?? "";
+    const backWithConsistentBullets =
+      hasBulletLines && firstLine.length > 0 && !/^[-*]\s+/.test(firstLine)
+        ? `- ${firstLine}\n${normalizedBackLines.slice(1).join("\n")}`
+        : normalizedBack;
+
+    cards.push({
+      front,
+      back: backWithConsistentBullets,
+    });
   }
 
   if (cards.length > LIMITS.flashcardAiMaxOutput) {

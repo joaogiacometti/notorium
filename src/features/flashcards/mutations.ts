@@ -269,19 +269,28 @@ export async function generateFlashcardBackForUserInput(
   userId: string,
   data: GenerateFlashcardBackForm,
 ): Promise<GenerateFlashcardBackResult> {
-  const existingSubject = await getActiveSubjectByIdForUser(
-    userId,
-    data.subjectId,
-  );
+  const [existingSubject, existingDeck] = await Promise.all([
+    getActiveSubjectByIdForUser(userId, data.subjectId),
+    data.deckId ? getDeckRecordForUser(userId, data.deckId) : null,
+  ]);
 
   if (!existingSubject) {
     return actionError("subjects.notFound");
+  }
+
+  if (data.deckId && !existingDeck) {
+    return actionError("decks.notFound");
+  }
+
+  if (existingDeck && existingDeck.subjectId !== data.subjectId) {
+    return actionError("decks.wrongSubject");
   }
 
   if (data.currentBack) {
     const result = await improveFlashcardBackForUser({
       userId,
       subjectName: existingSubject.name,
+      deckName: existingDeck?.isDefault ? null : (existingDeck?.name ?? null),
       front: data.front,
       currentBack: data.currentBack,
     });
@@ -292,6 +301,7 @@ export async function generateFlashcardBackForUserInput(
   const result = await generateFlashcardBackForUser({
     userId,
     subjectName: existingSubject.name,
+    deckName: existingDeck?.isDefault ? null : (existingDeck?.name ?? null),
     front: data.front,
   });
 

@@ -23,6 +23,8 @@ vi.mock("next/navigation", () => ({
 
 const checkFlashcardDuplicateMock = vi.fn();
 const generateFlashcardBackMock = vi.fn();
+const addEventListenerSpy = vi.spyOn(window, "addEventListener");
+const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
 vi.mock("@/app/actions/flashcards", () => ({
   checkFlashcardDuplicate: (...args: unknown[]) =>
@@ -113,6 +115,8 @@ describe("useFlashcardDialogState", () => {
       success: true,
       duplicate: false,
     });
+    addEventListenerSpy.mockClear();
+    removeEventListenerSpy.mockClear();
   });
 
   afterEach(async () => {
@@ -195,5 +199,57 @@ describe("useFlashcardDialogState", () => {
       id: undefined,
       front: "<p>Front A</p>",
     });
+  });
+
+  it("registers beforeunload when AI back proposal is pending", async () => {
+    generateFlashcardBackMock.mockResolvedValueOnce({
+      success: true,
+      back: "<p>Generated improved back</p>",
+    });
+
+    function ProposalHarness() {
+      const form = useForm<CreateFlashcardForm>({
+        defaultValues: {
+          subjectId: "subject-1",
+          front: "<p>Front A</p>",
+          back: "<p>Back A</p>",
+        },
+      });
+      const dialog = useFlashcardDialogState({
+        mode: "create",
+        open: true,
+        onOpenChange: () => {},
+        values: {
+          subjectId: "subject-1",
+          front: "<p>Front A</p>",
+          back: "<p>Back A</p>",
+        },
+        form,
+        onSubmitAction: async () => ({ success: true }),
+        getSuccessValues: (currentValues) => currentValues,
+        closeOnSuccess: false,
+      });
+
+      return (
+        <button
+          type="button"
+          data-testid="generate-back"
+          onClick={() => void dialog.handleGenerateBack()}
+        />
+      );
+    }
+
+    await act(async () => {
+      root.render(<ProposalHarness />);
+    });
+
+    await act(async () => {
+      getByTestId(container, "generate-back").click();
+    });
+
+    expect(addEventListenerSpy).toHaveBeenCalledWith(
+      "beforeunload",
+      expect.any(Function),
+    );
   });
 });

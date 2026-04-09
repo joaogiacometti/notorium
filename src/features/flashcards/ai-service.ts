@@ -13,6 +13,7 @@ import { richTextToPlainTextWithImagePlaceholders } from "@/lib/editor/rich-text
 interface GenerateFlashcardBackForUserInput {
   userId: string;
   subjectName: string;
+  deckName?: string | null;
   front: string;
 }
 
@@ -26,6 +27,7 @@ type GenerateFlashcardBackForUserResult =
 export async function generateFlashcardBackForUser({
   userId,
   subjectName,
+  deckName,
   front,
 }: GenerateFlashcardBackForUserInput): Promise<GenerateFlashcardBackForUserResult> {
   try {
@@ -33,6 +35,7 @@ export async function generateFlashcardBackForUser({
     const back = await generateFlashcardBackContent({
       settings,
       subjectName,
+      deckName,
       front,
     });
 
@@ -61,6 +64,7 @@ export async function generateFlashcardBackForUser({
 interface ImproveFlashcardBackForUserInput {
   userId: string;
   subjectName: string;
+  deckName?: string | null;
   front: string;
   currentBack: string;
 }
@@ -75,6 +79,7 @@ type ImproveFlashcardBackForUserResult =
 export async function improveFlashcardBackForUser({
   userId,
   subjectName,
+  deckName,
   front,
   currentBack,
 }: ImproveFlashcardBackForUserInput): Promise<ImproveFlashcardBackForUserResult> {
@@ -83,6 +88,7 @@ export async function improveFlashcardBackForUser({
     const back = await improveFlashcardBackContent({
       settings,
       subjectName,
+      deckName,
       front,
       currentBack,
     });
@@ -112,6 +118,7 @@ export async function improveFlashcardBackForUser({
 interface GenerateFlashcardsForUserInput {
   userId: string;
   subjectName: string;
+  deckName?: string | null;
   text: string;
 }
 
@@ -128,6 +135,7 @@ type GenerateFlashcardsForUserResult =
 export async function generateFlashcardsForUser({
   userId,
   subjectName,
+  deckName,
   text,
 }: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
   try {
@@ -135,6 +143,7 @@ export async function generateFlashcardsForUser({
     const cards = await generateFlashcardsFromText({
       settings,
       subjectName,
+      deckName,
       text,
     });
 
