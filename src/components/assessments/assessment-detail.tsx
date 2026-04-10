@@ -18,7 +18,11 @@ import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
-import { formatIsoDate, formatRelativeTime } from "@/lib/dates/format";
+import {
+  formatIsoDate,
+  formatRelativeTime,
+  toUtcDate,
+} from "@/lib/dates/format";
 import type {
   AssessmentDetailEntity,
   AssessmentEntity,
@@ -37,7 +41,7 @@ function formatDate(value: Date | string | null, emptyLabel: string) {
     return emptyLabel;
   }
 
-  return format(new Date(value), "PPP");
+  return format(toUtcDate(value), "PPP");
 }
 
 function formatNumber(value: string | null, suffix = "") {

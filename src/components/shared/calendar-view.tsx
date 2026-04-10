@@ -30,6 +30,7 @@ import {
   groupEventsByDate,
   resolveCalendarDate,
 } from "@/lib/dates/calendar";
+import { formatIsoDate } from "@/lib/dates/format";
 import { getStatusToneClasses, type StatusTone } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
@@ -277,7 +278,7 @@ export function CalendarView({
     });
   }, [rangeEndIso, rangeKey, rangeStartIso]);
 
-  const todayIso = format(new Date(), "yyyy-MM-dd");
+  const todayIso = formatIsoDate(new Date());
   const dates = getMonthGridDates(anchor);
   const eventsByDate = groupEventsByDate(events);
   const weekdayLabels = Array.from({ length: 7 }, (_, index) =>

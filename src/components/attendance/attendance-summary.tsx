@@ -146,9 +146,7 @@ export function AttendanceSummary({
                 <AccordionContent>
                   <div className="space-y-2 pt-3">
                     {misses.map((miss) => {
-                      const formattedMissDate = formatDateShort(
-                        `${miss.missDate}T12:00:00`,
-                      );
+                      const formattedMissDate = formatDateShort(miss.missDate);
 
                       return (
                         <div

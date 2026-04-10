@@ -80,8 +80,7 @@ export function resolveCalendarDate(dateIso?: string): Date {
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) {
-    const [year, month, day] = dateIso.split("-").map(Number);
-    return new Date(year, month - 1, day);
+    return new Date(`${dateIso}T12:00:00Z`);
   }
 
   return new Date(dateIso);

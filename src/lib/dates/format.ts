@@ -6,11 +6,23 @@ import {
 } from "date-fns";
 
 export function formatDateLong(date: Date | string): string {
-  return format(new Date(date), "MMMM d, yyyy");
+  return format(toUtcDate(date), "MMMM d, yyyy");
+}
+
+export function toUtcDate(date: Date | string): Date {
+  if (typeof date === "string" && date.length === 10) {
+    return new Date(`${date}T12:00:00Z`);
+  }
+
+  return new Date(date);
 }
 
 export function formatDateShort(date: Date | string): string {
-  return format(new Date(date), "MMM d, yyyy, h:mm a");
+  if (typeof date === "string" && date.length === 10) {
+    return format(toUtcDate(date), "MMM d, yyyy");
+  }
+
+  return format(toUtcDate(date), "MMM d, yyyy, h:mm a");
 }
 
 export function formatRelativeTime(date: Date | string): string {
