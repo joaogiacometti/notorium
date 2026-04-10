@@ -165,3 +165,37 @@ export async function getReviewableFlashcardForUser(
         : null,
     );
 }
+
+export async function getAllFlashcardsForExam(
+  userId: string,
+  options: Pick<GetDueFlashcardsOptions, "subjectId" | "deckId"> = {},
+): Promise<FlashcardReviewEntity[]> {
+  const filters: SQL<unknown>[] = [
+    eq(flashcard.userId, userId),
+    eq(subject.userId, userId),
+    isNull(subject.archivedAt),
+  ];
+
+  if (options.subjectId) {
+    filters.push(eq(flashcard.subjectId, options.subjectId));
+  }
+
+  if (options.deckId) {
+    filters.push(eq(flashcard.deckId, options.deckId));
+  }
+
+  return getDb()
+    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .leftJoin(deck, eq(flashcard.deckId, deck.id))
+    .where(and(...filters))
+    .orderBy(asc(flashcard.createdAt))
+    .then((rows) =>
+      rows.map((row) => ({
+        ...row.flashcard,
+        subjectName: row.subjectName,
+        deckName: row.deckName,
+      })),
+    );
+}

@@ -5,6 +5,7 @@ import {
   CircleAlert,
   Focus,
   Gauge,
+  GraduationCap,
   Loader2,
   Pencil,
   RotateCcw,
@@ -21,6 +22,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import {
+  getExamFlashcards,
   getFlashcardReviewState,
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
@@ -31,12 +33,26 @@ import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspens
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {
   getFlashcardReviewShortcutAction,
@@ -51,12 +67,15 @@ import {
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
   DeckEntity,
+  FlashcardReviewEntity,
   FlashcardReviewState,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { DeleteFlashcardDialog } from "./delete-flashcard-dialog";
+import { ExamResultsScreen } from "./exam-results-screen";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "./lazy-edit-flashcard-dialog";
+import { useExamSession } from "./use-exam-session";
 
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;
@@ -128,6 +147,9 @@ interface FocusModeOverlayProps {
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
   onExitFocusMode: () => void;
+  isExamMode?: boolean;
+  examCurrentIndex?: number;
+  examTotalCards?: number;
 }
 
 function ReviewGradeButtons({
@@ -334,6 +356,9 @@ function FocusModeOverlay({
   onReveal,
   onGrade,
   onExitFocusMode,
+  isExamMode = false,
+  examCurrentIndex = 0,
+  examTotalCards = 0,
 }: Readonly<FocusModeOverlayProps>) {
   const currentSubject = subjects.find(
     (subject) => subject.id === currentCard?.subjectId,
@@ -343,6 +368,9 @@ function FocusModeOverlay({
     reviewState.summary.dueCount === 0
       ? "No cards due right now"
       : `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards`;
+  const headerText = isExamMode
+    ? `Card ${examCurrentIndex + 1} of ${examTotalCards}`
+    : focusDueCountText;
 
   if (!currentCard) {
     return (
@@ -369,9 +397,16 @@ function FocusModeOverlay({
         />
 
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="size-10" />
+          {isExamMode ? (
+            <div className="flex items-center gap-1.5 rounded-md border-2 border-[var(--assessment-exam-border)] bg-[var(--assessment-exam-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--assessment-exam-text)] uppercase">
+              <GraduationCap className="size-3.5" />
+              <span>EXAM</span>
+            </div>
+          ) : (
+            <div className="size-10" />
+          )}
           <span className="text-sm font-medium text-muted-foreground">
-            {focusDueCountText}
+            {headerText}
           </span>
           <Button
             variant="ghost"
@@ -473,20 +508,61 @@ export function FlashcardReviewClient({
   const [selectedSubjectId, setSelectedSubjectId] = useState(subjectId);
   const [selectedDeckId, setSelectedDeckId] = useState(deckId);
   const subjectChangeRequestIdRef = useRef(0);
+  const [examCards, setExamCards] = useState<FlashcardReviewEntity[] | null>(
+    null,
+  );
+  const [isLoadingExamCards, setIsLoadingExamCards] = useState(false);
+  const examScopeRef = useRef<{ subjectId?: string; deckId?: string }>({});
+  const examSession = useExamSession();
+  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
   useEffect(() => {
     setSelectedSubjectId(subjectId);
     setSelectedDeckId(deckId);
   }, [subjectId, deckId]);
 
-  const currentCard = reviewState.cards[0] ?? null;
+  useEffect(() => {
+    const scopeChanged =
+      examScopeRef.current.subjectId !== selectedSubjectId ||
+      examScopeRef.current.deckId !== selectedDeckId;
+
+    if (scopeChanged) {
+      setExamCards(null);
+      examScopeRef.current = {
+        subjectId: selectedSubjectId,
+        deckId: selectedDeckId,
+      };
+    }
+  }, [selectedSubjectId, selectedDeckId]);
+
+  async function fetchExamCardsLazy() {
+    if (examCards !== null || isLoadingExamCards) {
+      return;
+    }
+
+    setIsLoadingExamCards(true);
+    try {
+      const cards = await getExamFlashcards({
+        subjectId: selectedSubjectId,
+        deckId: selectedDeckId,
+      });
+      setExamCards(cards);
+    } finally {
+      setIsLoadingExamCards(false);
+    }
+  }
+
+  const currentCard = examSession.session
+    ? examSession.currentCard
+    : (reviewState.cards[0] ?? null);
 
   const dueCountText =
     reviewState.summary.dueCount === 0
       ? "No cards due right now."
       : `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards.`;
-  const progress =
-    reviewState.summary.totalCount > 0
+  const progress = examSession.session
+    ? examSession.progress
+    : reviewState.summary.totalCount > 0
       ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
         reviewState.summary.totalCount
       : 0;
@@ -646,7 +722,80 @@ export function FlashcardReviewClient({
     }
   }
 
+  async function handleStartExamMode() {
+    if (!examCards) {
+      await fetchExamCardsLazy();
+      return;
+    }
+
+    examSession.startSession(examCards, {
+      subjectId: selectedSubjectId,
+      deckId: selectedDeckId,
+    });
+    setRevealed(false);
+    setIsFocusMode(true);
+  }
+
+  function handleGradeInExamMode(grade: ReviewGrade) {
+    if (!currentCard || isPending) {
+      return;
+    }
+
+    examSession.rateCard(grade);
+    setRevealed(false);
+  }
+
+  function handleExitExamMode() {
+    if (examSession.hasStarted && !examSession.sessionComplete) {
+      setShowExitConfirmation(true);
+    } else {
+      examSession.endSession();
+      setIsFocusMode(false);
+      setRevealed(false);
+    }
+  }
+
+  function handleConfirmExitExam() {
+    setShowExitConfirmation(false);
+    examSession.endSession();
+    setIsFocusMode(false);
+    setRevealed(false);
+  }
+
+  function handleCloseResults() {
+    examSession.endSession();
+    setIsFocusMode(false);
+    setRevealed(false);
+  }
+
+  function handleRetryWeakCards() {
+    if (!examSession.session) {
+      return;
+    }
+
+    const weakCards = examSession.session.cards.filter((_card, index) => {
+      const rating = examSession.session?.ratings[index];
+      return rating === "again" || rating === "hard";
+    });
+
+    if (weakCards.length === 0) {
+      return;
+    }
+
+    examSession.startSession(weakCards, {
+      subjectId: selectedSubjectId,
+      deckId: selectedDeckId,
+    });
+    setRevealed(false);
+    setIsFocusMode(true);
+  }
+
   function handleGrade(grade: ReviewGrade) {
+    if (examSession.session) {
+      handleGradeInExamMode(grade);
+      return;
+    }
+
     if (!currentCard || isPending) {
       return;
     }
@@ -792,6 +941,36 @@ export function FlashcardReviewClient({
             </Select>
           )}
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartExamMode}
+                onMouseEnter={() => void fetchExamCardsLazy()}
+                onFocus={() => void fetchExamCardsLazy()}
+                disabled={
+                  isLoadingExamCards ||
+                  (examCards !== null && examCards.length === 0)
+                }
+                className={`gap-2 ${examSession.session ? "border-[var(--assessment-exam-border)] bg-[var(--assessment-exam-bg)] text-[var(--assessment-exam-text)] hover:bg-[var(--assessment-exam-bg)]" : ""}`}
+              >
+                <GraduationCap className="size-4" />
+                <span>Exam mode</span>
+                {examSession.session ? (
+                  <span className="flex size-1.5 rounded-full bg-[var(--assessment-exam-text)]" />
+                ) : null}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={8}>
+              <p>
+                Study for exams with all cards without interfering with your
+                regular reviews
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {embedded ? null : (
@@ -854,7 +1033,14 @@ export function FlashcardReviewClient({
           previewLabels={previewLabels}
           onReveal={() => setRevealed(true)}
           onGrade={handleGrade}
-          onExitFocusMode={() => setIsFocusMode(false)}
+          onExitFocusMode={
+            examSession.session
+              ? handleExitExamMode
+              : () => setIsFocusMode(false)
+          }
+          isExamMode={!!examSession.session}
+          examCurrentIndex={examSession.session?.currentIndex ?? 0}
+          examTotalCards={examSession.session?.cards.length ?? 0}
         />
         {currentCard ? (
           <>
@@ -876,6 +1062,39 @@ export function FlashcardReviewClient({
             />
           </>
         ) : null}
+        {examSession.sessionComplete && examSession.session ? (
+          <ExamResultsScreen
+            totalCards={examSession.session.cards.length}
+            ratings={examSession.session.ratings}
+            duration={Math.floor(
+              (Date.now() - examSession.session.startedAt.getTime()) / 1000,
+            )}
+            onClose={handleCloseResults}
+            onRetryWeak={handleRetryWeakCards}
+          />
+        ) : null}
+        <Dialog
+          open={showExitConfirmation}
+          onOpenChange={setShowExitConfirmation}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Exit exam?</DialogTitle>
+              <DialogDescription>
+                Your progress won&apos;t be saved.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowExitConfirmation(false)}
+              >
+                Keep reviewing
+              </Button>
+              <Button onClick={handleConfirmExitExam}>Exit</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     );
   }

@@ -3,6 +3,7 @@
 import { reviewFlashcardForUser } from "@/features/flashcard-review/mutations";
 import {
   type GetDueFlashcardsOptions,
+  getAllFlashcardsForExam,
   getDueFlashcardsForUser,
   getFlashcardReviewStateForUser,
   getFlashcardReviewSummaryForUser,
@@ -53,4 +54,12 @@ export async function reviewFlashcard(
     "flashcards.review.invalidData",
     async (userId, parsedData) => reviewFlashcardForUser(userId, parsedData),
   );
+}
+
+export async function getExamFlashcards(
+  options: Pick<GetDueFlashcardsOptions, "subjectId" | "deckId"> = {},
+): Promise<FlashcardReviewEntity[]> {
+  const userId = await getAuthenticatedUserId();
+  await ensureFsrsSettings(userId);
+  return getAllFlashcardsForExam(userId, options);
 }
