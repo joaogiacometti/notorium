@@ -186,22 +186,6 @@ export function ExamResultsScreen({
           })}
         </div>
 
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-          <div className="flex h-full">
-            {(["again", "hard", "good", "easy"] as const).map((grade) => {
-              const width =
-                totalCards > 0 ? (counts[grade] / totalCards) * 100 : 0;
-              return width > 0 ? (
-                <div
-                  key={grade}
-                  className={gradeColors[grade]}
-                  style={{ width: `${width}%` }}
-                />
-              ) : null;
-            })}
-          </div>
-        </div>
-
         <div className="flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1 gap-2">
             <X className="size-4" />
