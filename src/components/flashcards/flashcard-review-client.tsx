@@ -836,7 +836,11 @@ export function FlashcardReviewClient({
 
     if (isFocusMode && event.key === "Escape") {
       event.preventDefault();
-      setIsFocusMode(false);
+      if (examSession.session) {
+        handleExitExamMode();
+      } else {
+        setIsFocusMode(false);
+      }
       return;
     }
 
@@ -953,13 +957,10 @@ export function FlashcardReviewClient({
                   isLoadingExamCards ||
                   (examCards !== null && examCards.length === 0)
                 }
-                className={`gap-2 ${examSession.session ? "border-[var(--assessment-exam-border)] bg-[var(--assessment-exam-bg)] text-[var(--assessment-exam-text)] hover:bg-[var(--assessment-exam-bg)]" : ""}`}
+                className="gap-2"
               >
                 <GraduationCap className="size-4" />
                 <span>Exam mode</span>
-                {examSession.session ? (
-                  <span className="flex size-1.5 rounded-full bg-[var(--assessment-exam-text)]" />
-                ) : null}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={8}>
@@ -1076,21 +1077,28 @@ export function FlashcardReviewClient({
           open={showExitConfirmation}
           onOpenChange={setShowExitConfirmation}
         >
-          <DialogContent>
+          <DialogContent
+            className="z-[120] sm:max-w-md"
+            overlayClassName="z-[120]"
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
             <DialogHeader>
-              <DialogTitle>Exit exam?</DialogTitle>
+              <DialogTitle>Exit Exam</DialogTitle>
               <DialogDescription>
-                Your progress won&apos;t be saved.
+                Are you sure you want to exit? Your progress won&apos;t be
+                saved.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-2">
               <Button
                 variant="outline"
                 onClick={() => setShowExitConfirmation(false)}
               >
-                Keep reviewing
+                Cancel
               </Button>
-              <Button onClick={handleConfirmExitExam}>Exit</Button>
+              <Button variant="destructive" onClick={handleConfirmExitExam}>
+                Exit
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
