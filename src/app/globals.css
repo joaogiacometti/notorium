@@ -1,3 +1,25 @@
+/**
+ * CRITICAL: Color Theming
+ *
+ * This file defines theme-aware color variables for light and dark themes.
+ * NEVER use hardcoded Tailwind colors (bg-red-500, text-yellow-600, etc.) in components.
+ * ALWAYS use these CSS custom properties via Tailwind arbitrary values.
+ *
+ * Examples:
+ *   - bg-[var(--status-danger-fill)] instead of bg-red-500
+ *   - text-[var(--assessment-exam-text)] instead of text-yellow-600
+ *   - border-[var(--status-warning-border)] instead of border-orange-500
+ *
+ * Available theme variable categories:
+ *   - Semantic: --primary, --secondary, --accent, --destructive, --muted, etc.
+ *   - Status: --status-danger-*, --status-warning-*, --status-success-*
+ *   - Assessment: --assessment-exam-border, --assessment-exam-bg, --assessment-exam-text
+ *   - Charts: --chart-1 through --chart-5
+ *
+ * This ensures colors adapt properly to user-selected themes (Catppuccin Mocha, Tokyo Night, etc.)
+ * and provides consistent, accessible color schemes across light and dark modes.
+ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

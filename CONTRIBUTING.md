@@ -41,6 +41,13 @@ bun run build        # Production build check
 - Follow Biome rules and TypeScript strict mode
 - Use Server Components by default, add `"use client"` only when required
 
+### Color Theming (CRITICAL)
+- **Never use hardcoded Tailwind color classes** like `bg-red-500`, `text-yellow-600`, etc.
+- Always use theme-aware CSS custom properties: `bg-[var(--status-danger-fill)]`, `text-[var(--assessment-exam-text)]`
+- Available theme variables are defined in `src/app/globals.css`
+- This ensures colors adapt to light/dark themes (Catppuccin Mocha, Tokyo Night, etc.)
+- See `AGENTS.md` for complete list of available theme variables and usage patterns
+
 ### Database
 - Define tables in `src/db/schema.ts` with Drizzle
 - Include `createdAt` and `updatedAt` timestamps on every table
