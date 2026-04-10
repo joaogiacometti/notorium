@@ -849,7 +849,6 @@ export function FlashcardReviewClient({
       isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
       hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
       isRepeat: event.repeat,
-      isFocusMode,
     });
 
     if (!action) {

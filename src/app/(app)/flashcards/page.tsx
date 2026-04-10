@@ -57,6 +57,8 @@ export default async function FlashcardsPage({
         manageLabel="Manage"
         reviewLabel="Review"
         title="Flashcards"
+        subjectId={scopedSubjectId}
+        deckId={scopedDeckId}
       >
         <FlashcardReviewClient
           initialState={reviewState}
@@ -88,6 +90,8 @@ export default async function FlashcardsPage({
       manageLabel="Manage"
       reviewLabel="Review"
       title="Flashcards"
+      subjectId={scopedSubjectId}
+      deckId={scopedDeckId}
     >
       <FlashcardsManager
         initialPageData={initialPageData}

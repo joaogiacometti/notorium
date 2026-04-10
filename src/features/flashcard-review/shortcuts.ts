@@ -27,7 +27,6 @@ interface GetFlashcardReviewShortcutActionInput {
   isEditableTarget: boolean;
   hasModifierKey: boolean;
   isRepeat: boolean;
-  isFocusMode: boolean;
 }
 
 const gradeKeyMap: Record<string, ReviewGrade> = Object.fromEntries(
@@ -43,7 +42,6 @@ export function getFlashcardReviewShortcutAction({
   isEditableTarget,
   hasModifierKey,
   isRepeat,
-  isFocusMode,
 }: GetFlashcardReviewShortcutActionInput): FlashcardReviewShortcutAction | null {
   if (
     !hasCurrentCard ||
@@ -58,10 +56,6 @@ export function getFlashcardReviewShortcutAction({
 
   if (key === "Enter" || key === " ") {
     return revealed ? { type: "grade", grade: "good" } : { type: "reveal" };
-  }
-
-  if (isFocusMode) {
-    return null;
   }
 
   if (key === "e") {

@@ -159,7 +159,7 @@ export function GenerateFlashcardsReview({
         </p>
       </div>
 
-      <div className="max-h-[50vh] overflow-y-auto">
+      <div className="max-h-[50vh] overflow-y-auto overscroll-contain">
         <FieldGroup className="gap-3">
           {cards.map((card, index) => (
             <div

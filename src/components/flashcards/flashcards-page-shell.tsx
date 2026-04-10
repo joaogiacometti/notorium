@@ -12,6 +12,8 @@ interface FlashcardsPageShellProps {
   manageLabel: string;
   reviewLabel: string;
   title: string;
+  subjectId?: string;
+  deckId?: string;
 }
 
 export function FlashcardsPageShell({
@@ -22,6 +24,8 @@ export function FlashcardsPageShell({
   manageLabel,
   reviewLabel,
   title,
+  subjectId,
+  deckId,
 }: Readonly<FlashcardsPageShellProps>) {
   return (
     <FeaturePageShell
@@ -34,6 +38,8 @@ export function FlashcardsPageShell({
           currentView={currentView}
           manageLabel={manageLabel}
           reviewLabel={reviewLabel}
+          subjectId={subjectId}
+          deckId={deckId}
         />
       }
       title={title}

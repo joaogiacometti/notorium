@@ -10,13 +10,6 @@ interface ExamResultsScreenProps {
   onRetryWeak?: () => void;
 }
 
-const gradeColors: Record<ReviewGrade, string> = {
-  again: "bg-[var(--status-danger-fill)]",
-  hard: "bg-[var(--status-warning-fill)]",
-  good: "bg-[var(--chart-3)]",
-  easy: "bg-[var(--status-success-fill)]",
-};
-
 const gradeLabels: Record<ReviewGrade, string> = {
   again: "Again",
   hard: "Hard",

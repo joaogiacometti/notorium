@@ -100,6 +100,26 @@ export function useFlashcardsManagerController({
     },
   });
 
+  function handleDeckChange(nextDeckId: string | undefined) {
+    setSelectedFlashcardIds([]);
+    setSelectedDeckId(nextDeckId);
+
+    const query = new URLSearchParams();
+    query.set("view", "manage");
+
+    if (selectedSubjectId) {
+      query.set("subjectId", selectedSubjectId);
+    }
+
+    if (nextDeckId) {
+      query.set("deckId", nextDeckId);
+    }
+
+    startTransition(() => {
+      router.replace(`${pathname}?${query.toString()}`);
+    });
+  }
+
   const managePageQuery = useQuery({
     queryKey: [
       "flashcards-manage-page",
@@ -287,6 +307,7 @@ export function useFlashcardsManagerController({
     setSelectedDeckId,
     setSelectedFlashcardIds,
     setSelectedSubjectId,
+    handleDeckChange,
     total,
     pageSize: managePageSize,
     editingFlashcard: editFlashcardQuery.data,

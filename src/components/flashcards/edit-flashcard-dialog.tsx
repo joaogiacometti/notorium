@@ -16,6 +16,7 @@ import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
 import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
 import { GenerateFlashcardsReview } from "@/components/flashcards/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
+import { DeckSelect } from "@/components/shared/deck-select";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
@@ -82,9 +83,13 @@ export function EditFlashcardDialog({
   const [discardOnCloseDialogOpen, setDiscardOnCloseDialogOpen] =
     useState(false);
   const [splitSubjectId, setSplitSubjectId] = useState(flashcard.subjectId);
+  const [splitDeckId, setSplitDeckId] = useState<string | null>(
+    flashcard.deckId ?? null,
+  );
   const [splitFront, setSplitFront] = useState(flashcard.front);
   const [splitBack, setSplitBack] = useState(flashcard.back);
   const [decks, setDecks] = useState<DeckEntity[]>([]);
+  const [splitDecks, setSplitDecks] = useState<DeckEntity[]>([]);
 
   const isSplitDirty =
     splitFront !== flashcard.front || splitBack !== flashcard.back;
@@ -103,6 +108,16 @@ export function EditFlashcardDialog({
       });
     }
   }, [open, flashcard.subjectId]);
+
+  useEffect(() => {
+    if (splitSubjectId) {
+      void getDecks(splitSubjectId).then((fetchedDecks) => {
+        setSplitDecks(fetchedDecks);
+      });
+    } else {
+      setSplitDecks([]);
+    }
+  }, [splitSubjectId]);
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
@@ -128,6 +143,7 @@ export function EditFlashcardDialog({
         setSplitFront(flashcard.front);
         setSplitBack(flashcard.back);
         setSplitSubjectId(flashcard.subjectId);
+        setSplitDeckId(flashcard.deckId ?? null);
       }
       onOpenChange(nextOpen);
     },
@@ -147,6 +163,11 @@ export function EditFlashcardDialog({
     void getDecks(newSubjectId).then((fetchedDecks) => {
       setDecks(fetchedDecks);
     });
+  }
+
+  function handleSplitSubjectChange(newSubjectId: string) {
+    setSplitSubjectId(newSubjectId);
+    setSplitDeckId(null);
   }
 
   useBeforeUnload(
@@ -172,6 +193,7 @@ export function EditFlashcardDialog({
     setSplitFront(flashcard.front);
     setSplitBack(flashcard.back);
     setSplitSubjectId(flashcard.subjectId);
+    setSplitDeckId(flashcard.deckId ?? null);
     onOpenChange(false);
   }
 
@@ -183,6 +205,7 @@ export function EditFlashcardDialog({
 
     const result = await generateFlashcards({
       subjectId: splitSubjectId,
+      deckId: splitDeckId ?? undefined,
       text: combinedText,
     });
 
@@ -214,6 +237,7 @@ export function EditFlashcardDialog({
     for (const card of cards) {
       const result = await createFlashcard({
         subjectId: splitSubjectId,
+        deckId: splitDeckId ?? undefined,
         front: card.front,
         back: card.back,
       });
@@ -258,10 +282,12 @@ export function EditFlashcardDialog({
       setSplitFront(form.getValues("front"));
       setSplitBack(form.getValues("back"));
       setSplitSubjectId(form.getValues("subjectId") || flashcard.subjectId);
+      setSplitDeckId(form.getValues("deckId") ?? flashcard.deckId ?? null);
     } else if (mode === "split" && newMode === "edit") {
       form.setValue("front", splitFront, { shouldDirty: true });
       form.setValue("back", splitBack, { shouldDirty: true });
       form.setValue("subjectId", splitSubjectId);
+      form.setValue("deckId", splitDeckId ?? undefined);
     }
     setMode(newMode);
   }
@@ -349,15 +375,31 @@ export function EditFlashcardDialog({
         }}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-5 sm:px-6">
           <FieldGroup className="gap-5">
             {subjects && subjects.length > 0 ? (
-              <SubjectSelect
-                value={splitSubjectId}
-                onChange={setSplitSubjectId}
-                subjects={subjects}
-                id="split-subject"
-              />
+              <div className="flex flex-col gap-5 sm:flex-row sm:gap-4">
+                <div className="flex-1">
+                  <SubjectSelect
+                    value={splitSubjectId}
+                    onChange={handleSplitSubjectChange}
+                    subjects={subjects}
+                    id="split-subject"
+                  />
+                </div>
+                {splitSubjectId ? (
+                  <div className="flex-1">
+                    <DeckSelect
+                      value={splitDeckId}
+                      onChange={setSplitDeckId}
+                      decks={splitDecks}
+                      id="split-deck"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-1" />
+                )}
+              </div>
             ) : null}
             <CreateModeToggle
               mode="split"

@@ -208,41 +208,6 @@ describe("getFlashcardReviewShortcutAction", () => {
     ).toBeNull();
   });
 
-  it("ignores edit and delete shortcuts in focus mode", () => {
-    expect(
-      getFlashcardReviewShortcutAction({
-        ...defaultInput,
-        key: "e",
-        isFocusMode: true,
-      }),
-    ).toBeNull();
-    expect(
-      getFlashcardReviewShortcutAction({
-        ...defaultInput,
-        key: "d",
-        isFocusMode: true,
-      }),
-    ).toBeNull();
-  });
-
-  it("allows reveal and grade shortcuts in focus mode", () => {
-    expect(
-      getFlashcardReviewShortcutAction({
-        ...defaultInput,
-        key: "Enter",
-        isFocusMode: true,
-      }),
-    ).toEqual({ type: "reveal" });
-    expect(
-      getFlashcardReviewShortcutAction({
-        ...defaultInput,
-        key: "Enter",
-        revealed: true,
-        isFocusMode: true,
-      }),
-    ).toEqual({ type: "grade", grade: "good" });
-  });
-
   it("ignores unrelated keys", () => {
     expect(
       getFlashcardReviewShortcutAction({

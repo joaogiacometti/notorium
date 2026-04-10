@@ -91,9 +91,9 @@ export function FlashcardsManager({
     setPageIndex,
     setResetTarget,
     setSearchQuery,
-    setSelectedDeckId,
     setSelectedFlashcardIds,
     setSelectedSubjectId,
+    handleDeckChange,
     total,
     pageSize,
     validationMode,
@@ -181,7 +181,7 @@ export function FlashcardsManager({
             <Select
               value={selectedDeckId ?? "all"}
               onValueChange={(value) =>
-                setSelectedDeckId(value === "all" ? undefined : value)
+                handleDeckChange(value === "all" ? undefined : value)
               }
             >
               <SelectTrigger
@@ -433,6 +433,7 @@ export function FlashcardsManager({
         onOpenChange={setCreateOpen}
         onCreated={refreshManagePage}
         subjectId={selectedSubjectId}
+        deckId={selectedDeckId}
         subjects={subjects}
       />
       {editingFlashcardId !== null && editingFlashcard && (

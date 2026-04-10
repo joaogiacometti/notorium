@@ -85,6 +85,7 @@ function getGenerateFlashcardsFormValues(
 
 interface CreateFlashcardDialogProps {
   subjectId?: string;
+  deckId?: string;
   subjects?: SubjectEntity[];
   trigger?: React.ReactNode;
   open: boolean;
@@ -94,6 +95,7 @@ interface CreateFlashcardDialogProps {
 
 export function CreateFlashcardDialog({
   subjectId,
+  deckId,
   subjects,
   trigger,
   open,
@@ -111,16 +113,21 @@ export function CreateFlashcardDialog({
   const [discardOnModeSwitchDialogOpen, setDiscardOnModeSwitchDialogOpen] =
     useState(false);
   const [decks, setDecks] = useState<DeckEntity[]>([]);
-  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(
+    deckId ?? null,
+  );
 
   const singleForm = useForm<CreateFlashcardForm>({
     resolver: zodResolver(createFlashcardSchema),
-    defaultValues: getCreateFlashcardFormValues(subjectId ?? ""),
+    defaultValues: getCreateFlashcardFormValues(subjectId ?? "", deckId),
   });
 
   const aiForm = useForm<GenerateFlashcardsForm>({
     resolver: zodResolver(generateFlashcardsSchema),
-    defaultValues: getGenerateFlashcardsFormValues(subjectId ?? "", null),
+    defaultValues: getGenerateFlashcardsFormValues(
+      subjectId ?? "",
+      deckId ?? null,
+    ),
   });
   const watchedSingleSubjectId = singleForm.watch("subjectId");
 
@@ -456,7 +463,7 @@ export function CreateFlashcardDialog({
         }}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-5 sm:px-6">
           <FieldGroup className="gap-5">
             {subjects && subjects.length > 0 ? (
               <div className="flex flex-col gap-5 sm:flex-row sm:gap-4">
