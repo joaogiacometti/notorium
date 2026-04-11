@@ -54,6 +54,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {
@@ -198,6 +199,44 @@ function ReviewGradeButtons({
         );
       })}
     </>
+  );
+}
+
+function ReviewCardLoading() {
+  return (
+    <Card
+      className={reviewCardHeightClassName}
+      data-testid="flashcard-review-card-loading"
+    >
+      <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+        <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 pb-3 sm:px-8">
+          <div
+            className={`${reviewContentFrameClassName} min-h-0 flex-none flex-col max-h-[50%]`}
+          >
+            <div className="shrink-0 space-y-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="size-8 rounded-md" />
+              </div>
+              <Skeleton className="h-4 w-14" />
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden pt-2">
+              <div className={`${reviewContentMeasureClassName} space-y-2`}>
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-11/12" />
+                <Skeleton className="h-5 w-2/3" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
+          <div className={`${reviewContentFrameClassName} pb-0`}>
+            <Skeleton className="h-10 w-full rounded-md" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -511,7 +550,11 @@ export function FlashcardReviewClient({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isScopeLoading, setIsScopeLoading] = useState(false);
+  const [isScopeSwitchPending, startScopeSwitchTransition] = useTransition();
+  const [isActionPending, startActionTransition] = useTransition();
+  const isScopeSwitchLoading = isScopeLoading || isScopeSwitchPending;
+  const isPending = isScopeSwitchLoading || isActionPending;
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
   const router = useRouter();
@@ -682,6 +725,7 @@ export function FlashcardReviewClient({
     const newSubjectId = value === "all" ? undefined : value;
     setSelectedSubjectId(newSubjectId);
     setSelectedDeckId(undefined);
+    setIsScopeLoading(true);
 
     const params = new URLSearchParams();
     params.set("view", "review");
@@ -693,25 +737,32 @@ export function FlashcardReviewClient({
     const requestId = subjectChangeRequestIdRef.current + 1;
     subjectChangeRequestIdRef.current = requestId;
 
-    startTransition(async () => {
-      const nextState = await getFlashcardReviewState({
-        subjectId: newSubjectId,
-        deckId: undefined,
-        limit: reviewBatchLimit,
-      });
+    startScopeSwitchTransition(async () => {
+      try {
+        const nextState = await getFlashcardReviewState({
+          subjectId: newSubjectId,
+          deckId: undefined,
+          limit: reviewBatchLimit,
+        });
 
-      if (subjectChangeRequestIdRef.current !== requestId) {
-        return;
+        if (subjectChangeRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        commitReviewState(nextState);
+        setRevealed(false);
+      } finally {
+        if (subjectChangeRequestIdRef.current === requestId) {
+          setIsScopeLoading(false);
+        }
       }
-
-      commitReviewState(nextState);
-      setRevealed(false);
     });
   }
 
   function handleDeckChange(value: string) {
     const newDeckId = value === "all" ? undefined : value;
     setSelectedDeckId(newDeckId);
+    setIsScopeLoading(true);
 
     const params = new URLSearchParams();
     params.set("view", "review");
@@ -726,19 +777,25 @@ export function FlashcardReviewClient({
     const requestId = subjectChangeRequestIdRef.current + 1;
     subjectChangeRequestIdRef.current = requestId;
 
-    startTransition(async () => {
-      const nextState = await getFlashcardReviewState({
-        subjectId: selectedSubjectId,
-        deckId: newDeckId,
-        limit: reviewBatchLimit,
-      });
+    startScopeSwitchTransition(async () => {
+      try {
+        const nextState = await getFlashcardReviewState({
+          subjectId: selectedSubjectId,
+          deckId: newDeckId,
+          limit: reviewBatchLimit,
+        });
 
-      if (subjectChangeRequestIdRef.current !== requestId) {
-        return;
+        if (subjectChangeRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        commitReviewState(nextState);
+        setRevealed(false);
+      } finally {
+        if (subjectChangeRequestIdRef.current === requestId) {
+          setIsScopeLoading(false);
+        }
       }
-
-      commitReviewState(nextState);
-      setRevealed(false);
     });
   }
 
@@ -860,7 +917,7 @@ export function FlashcardReviewClient({
     }
 
     setPendingGrade(grade);
-    startTransition(async () => {
+    startActionTransition(async () => {
       try {
         const result = await reviewFlashcard({ id: currentCard.id, grade });
 
@@ -944,7 +1001,9 @@ export function FlashcardReviewClient({
     return () => document.removeEventListener("keydown", handleReviewKeyDown);
   }, []);
 
-  const reviewContent = (
+  const reviewContent = isScopeSwitchLoading ? (
+    <ReviewCardLoading />
+  ) : (
     <StandardReviewCard
       currentCard={currentCard}
       revealed={revealed}
@@ -966,8 +1025,12 @@ export function FlashcardReviewClient({
             <Select
               value={selectedSubjectId ?? "all"}
               onValueChange={handleSubjectChange}
+              disabled={isScopeSwitchLoading}
             >
-              <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64">
+              <SelectTrigger
+                className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
+                data-testid="flashcard-review-subject-filter"
+              >
                 <SelectValue placeholder="Filter by subject" />
               </SelectTrigger>
               <SelectContent align="start">
@@ -989,8 +1052,12 @@ export function FlashcardReviewClient({
               <Select
                 value={selectedDeckId ?? "all"}
                 onValueChange={handleDeckChange}
+                disabled={isScopeSwitchLoading}
               >
-                <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64">
+                <SelectTrigger
+                  className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
+                  data-testid="flashcard-review-deck-filter"
+                >
                   <SelectValue placeholder="Filter by deck" />
                 </SelectTrigger>
                 <SelectContent align="start">
@@ -1015,6 +1082,7 @@ export function FlashcardReviewClient({
                   onClick={() => void handleStartExamMode()}
                   disabled={
                     isLoadingExamCards ||
+                    isScopeSwitchLoading ||
                     (examCards !== null && examCards.length === 0)
                   }
                   className="h-10 w-full gap-2 sm:w-auto"
@@ -1038,6 +1106,24 @@ export function FlashcardReviewClient({
         </div>
       </div>
 
+      {embedded ? (
+        <div className="mb-3 flex items-center">
+          {isScopeSwitchLoading ? (
+            <Skeleton
+              className="h-5 w-56"
+              data-testid="flashcard-review-summary-loading"
+            />
+          ) : (
+            <p
+              className="text-sm font-medium text-foreground"
+              data-testid="flashcard-review-summary-text"
+            >
+              {dueCountText}
+            </p>
+          )}
+        </div>
+      ) : null}
+
       {embedded ? null : (
         <div
           className={`flex min-w-0 items-start gap-4 ${currentCard ? "mb-10" : "mb-6"}`}
@@ -1052,9 +1138,19 @@ export function FlashcardReviewClient({
             <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
               Review your due flashcards with spaced repetition.
             </p>
-            <p className="mt-2 text-sm font-medium text-foreground">
-              {dueCountText}
-            </p>
+            {isScopeSwitchLoading ? (
+              <Skeleton
+                className="mt-2 h-5 w-56"
+                data-testid="flashcard-review-summary-loading"
+              />
+            ) : (
+              <p
+                className="mt-2 text-sm font-medium text-foreground"
+                data-testid="flashcard-review-summary-text"
+              >
+                {dueCountText}
+              </p>
+            )}
           </div>
         </div>
       )}

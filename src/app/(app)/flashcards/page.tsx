@@ -42,18 +42,10 @@ export default async function FlashcardsPage({
       limit: 50,
     });
 
-    const dueCount = reviewState.summary.dueCount;
-    const totalCount = reviewState.summary.totalCount;
-    const headerMeta =
-      dueCount === 0
-        ? "No cards due right now."
-        : `${dueCount} due of ${totalCount} total cards.`;
-
     return (
       <FlashcardsPageShell
         currentView={currentView}
         description="Manage all your flashcards or switch to due-card review."
-        headerMeta={headerMeta}
         manageLabel="Manage"
         reviewLabel="Review"
         title="Flashcards"
