@@ -48,13 +48,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {

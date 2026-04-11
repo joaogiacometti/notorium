@@ -188,10 +188,14 @@ export function FlashcardsManagerTable({
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}
       isLoading={isLoading}
+      loadingDelayMs={0}
+      loadingMinimumVisibleMs={250}
       loadingSkeleton={
-        <FlashcardsManagerTableSkeleton
-          selectedRow={selectedFlashcardIds.length > 0}
-        />
+        <div className="h-full" data-testid="flashcards-manage-table-loading">
+          <FlashcardsManagerTableSkeleton
+            selectedRow={selectedFlashcardIds.length > 0}
+          />
+        </div>
       }
       onPageIndexChange={onPageIndexChange}
       selectedRowIds={selectedFlashcardIds}
@@ -213,14 +217,17 @@ export function FlashcardsManagerTable({
 }
 
 interface FlashcardsManagerTableSkeletonProps {
+  className?: string;
   selectedRow?: boolean;
 }
 
 export function FlashcardsManagerTableSkeleton({
+  className,
   selectedRow = false,
 }: Readonly<FlashcardsManagerTableSkeletonProps>) {
   return (
     <TableSkeleton
+      className={cn("flex h-full flex-col", className)}
       columnTemplate={
         selectedRow
           ? "2.25rem 1.35fr 1fr 0.7fr 0.7fr 3.5rem"
@@ -279,6 +286,7 @@ export function FlashcardsManagerTableSkeleton({
         { className: "h-8 w-24 rounded-full" },
         { className: "h-8 w-24 rounded-full" },
       ]}
+      footerClassName="mt-auto"
     />
   );
 }

@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   SortBy,
   StatusFilter,
@@ -135,6 +136,8 @@ export function PlanningAssessmentsTable({
   const total = pageData.total;
   const hasAnyAssessments = pageData.allCount > 0;
   const selectedSubjectCount = pageData.subjectAssessmentCount ?? 0;
+  const isAssessmentsScopeLoading =
+    assessmentsQuery.isFetching && assessmentsQuery.isPlaceholderData;
   const isAtSubjectLimit =
     subjectFilter !== "all" &&
     selectedSubjectCount >= LIMITS.maxAssessmentsPerSubject;
@@ -196,7 +199,11 @@ export function PlanningAssessmentsTable({
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="min-w-0">
-                <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+                <Select
+                  value={subjectFilter}
+                  onValueChange={setSubjectFilter}
+                  disabled={isAssessmentsScopeLoading}
+                >
                   <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
                     <SelectValue placeholder="Filter by subject" />
                   </SelectTrigger>
@@ -217,6 +224,7 @@ export function PlanningAssessmentsTable({
               <div className="min-w-0">
                 <Select
                   value={statusFilter}
+                  disabled={isAssessmentsScopeLoading}
                   onValueChange={(value) => {
                     setStatusFilter(value as StatusFilter);
                     setPageIndex(0);
@@ -236,6 +244,7 @@ export function PlanningAssessmentsTable({
               <div className="min-w-0">
                 <Select
                   value={typeFilter}
+                  disabled={isAssessmentsScopeLoading}
                   onValueChange={(value) => {
                     setTypeFilter(value as TypeFilter);
                     setPageIndex(0);
@@ -257,6 +266,7 @@ export function PlanningAssessmentsTable({
               <div className="min-w-0">
                 <Select
                   value={sortBy}
+                  disabled={isAssessmentsScopeLoading}
                   onValueChange={(value) => {
                     setSortBy(value as SortBy);
                     setPageIndex(0);
@@ -278,21 +288,36 @@ export function PlanningAssessmentsTable({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <Badge
-                variant="outline"
-                className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-muted-foreground"
-              >
-                <Search className="size-3.5" />
-                {total} {total === 1 ? "item" : "items"}
-              </Badge>
-              {subjectFilter === "all" ? null : (
-                <Badge
-                  variant="outline"
-                  className="rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground"
-                >
-                  <ClipboardList className="size-3.5 text-primary" />
-                  {selectedSubjectCount}/{LIMITS.maxAssessmentsPerSubject} items
-                </Badge>
+              {isAssessmentsScopeLoading ? (
+                <>
+                  <Skeleton
+                    className="h-6 w-32 rounded-full"
+                    data-testid="planning-assessments-count-loading"
+                  />
+                  {subjectFilter === "all" ? null : (
+                    <Skeleton className="h-6 w-44 rounded-full" />
+                  )}
+                </>
+              ) : (
+                <>
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-muted-foreground"
+                  >
+                    <Search className="size-3.5" />
+                    {total} {total === 1 ? "item" : "items"}
+                  </Badge>
+                  {subjectFilter === "all" ? null : (
+                    <Badge
+                      variant="outline"
+                      className="rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground"
+                    >
+                      <ClipboardList className="size-3.5 text-primary" />
+                      {selectedSubjectCount}/{LIMITS.maxAssessmentsPerSubject}{" "}
+                      items
+                    </Badge>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -315,7 +340,7 @@ export function PlanningAssessmentsTable({
             assessments={assessments}
             total={total}
             finalGrade={finalGrade}
-            isLoading={assessmentsQuery.isFetching}
+            isLoading={isAssessmentsScopeLoading}
             pageIndex={pageIndex}
             pageSize={planningAssessmentsPageSize}
             selectedSubjectId={

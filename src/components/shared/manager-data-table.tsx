@@ -143,6 +143,8 @@ interface ManagerDataTableProps<TRow> {
   getBodyCellClassName?: (columnId: string) => string;
   getHeaderCellClassName?: (columnId: string) => string;
   isLoading?: boolean;
+  loadingDelayMs?: number;
+  loadingMinimumVisibleMs?: number;
   loadingSkeleton?: ReactNode;
   onSelectedRowIdsChange?: (rowIds: string[]) => void;
   pageCount?: number;
@@ -175,6 +177,8 @@ export function ManagerDataTable<TRow>({
   getBodyCellClassName,
   getHeaderCellClassName,
   isLoading = false,
+  loadingDelayMs = 150,
+  loadingMinimumVisibleMs = 250,
   loadingSkeleton,
   onSelectedRowIdsChange,
   pageCount,
@@ -187,8 +191,8 @@ export function ManagerDataTable<TRow>({
   wrapperClassName,
 }: Readonly<ManagerDataTableProps<TRow>>) {
   const showLoadingSkeleton = useSmoothedLoadingState(isLoading, {
-    delayMs: 150,
-    minimumVisibleMs: 250,
+    delayMs: loadingDelayMs,
+    minimumVisibleMs: loadingMinimumVisibleMs,
   });
   const pagination: PaginationState = {
     pageIndex,

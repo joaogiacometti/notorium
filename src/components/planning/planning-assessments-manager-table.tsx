@@ -293,6 +293,8 @@ export function PlanningAssessmentsManagerTable({
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}
       isLoading={isLoading}
+      loadingDelayMs={0}
+      loadingMinimumVisibleMs={250}
       loadingSkeleton={<PlanningAssessmentsManagerTableSkeleton />}
       onPageIndexChange={onPageIndexChange}
       pageLabel={(current, total) => `Page ${current} of ${total}`}

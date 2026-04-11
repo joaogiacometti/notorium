@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LIMITS } from "@/lib/config/limits";
 import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type {
@@ -117,6 +118,8 @@ export function FlashcardsManager({
     subjects,
   });
   const hasSubjects = subjects.length > 0;
+  const isManageScopeLoading =
+    managePageQuery.isFetching && managePageQuery.isPlaceholderData;
 
   const selectedCountText =
     selectedFlashcardIds.length === 1
@@ -155,6 +158,7 @@ export function FlashcardsManager({
             onValueChange={(value) =>
               setSelectedSubjectId(value === "all" ? undefined : value)
             }
+            disabled={isManageScopeLoading}
           >
             <SelectTrigger
               data-testid="subject-filter-select"
@@ -183,6 +187,7 @@ export function FlashcardsManager({
               onValueChange={(value) =>
                 handleDeckChange(value === "all" ? undefined : value)
               }
+              disabled={isManageScopeLoading}
             >
               <SelectTrigger
                 data-testid="deck-filter-select"
@@ -214,6 +219,20 @@ export function FlashcardsManager({
         >
           {validationIssuesCountText}
         </Badge>
+      );
+    }
+
+    if (isManageScopeLoading) {
+      return (
+        <>
+          <Skeleton
+            className="h-6 w-44 rounded-full"
+            data-testid="flashcards-manage-count-loading"
+          />
+          {selectedSubjectId ? (
+            <Skeleton className="h-6 w-52 rounded-full" />
+          ) : null}
+        </>
       );
     }
 
@@ -339,7 +358,7 @@ export function FlashcardsManager({
           selectedFlashcardIds={selectedFlashcardIds}
           pageIndex={pageIndex}
           pageSize={pageSize}
-          isLoading={managePageQuery.isFetching}
+          isLoading={isManageScopeLoading}
           onEditRequested={setEditingFlashcardId}
           onPageIndexChange={setPageIndex}
           onDeleteRequested={setDeleteTarget}
