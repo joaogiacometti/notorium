@@ -87,7 +87,7 @@ export function BulkMoveFlashcardsDialog({
         if (currentSubjectId) {
           void getDecks(currentSubjectId).then((fetchedDecks) => {
             setDecks(fetchedDecks);
-            form.setValue("deckId", fetchedDecks.find(d => d.isDefault)?.id);
+            form.setValue("deckId", fetchedDecks.find((d) => d.isDefault)?.id);
           });
         } else {
           setDecks([]);

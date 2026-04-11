@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
 import { runWithCleanup } from "./support/cleanup";
 import { getPrefixedValue } from "./support/data";
@@ -10,6 +11,25 @@ const updatedSubjectDescription =
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("subject", testTitle);
+}
+
+async function openSubjectDetailByName(page: Page, subjectName: string) {
+  const subjectLink = page
+    .getByRole("link", { name: subjectName, exact: true })
+    .first();
+
+  await expect(subjectLink).toBeVisible();
+
+  await Promise.all([
+    page.waitForURL(/\/subjects\/[^/]+$/),
+    subjectLink.click(),
+  ]);
+
+  await expect(
+    page.locator("h1", { hasText: subjectName }).first(),
+  ).toBeVisible({
+    timeout: 30000,
+  });
 }
 
 test("can create a subject", async ({ page, e2eUser }) => {
@@ -44,13 +64,7 @@ test("can create a subject", async ({ page, e2eUser }) => {
     await expect(subjectCard).toBeVisible();
     await expect(subjectCard).toContainText(initialSubjectDescription);
 
-    await page
-      .getByRole("link", { name: initialSubjectName, exact: true })
-      .click();
-    await page.waitForURL(/\/subjects\/[^/]+$/);
-    await expect(
-      page.getByRole("heading", { name: initialSubjectName, exact: true }),
-    ).toBeVisible();
+    await openSubjectDetailByName(page, initialSubjectName);
     await expect(page.getByText(initialSubjectDescription)).toBeVisible();
   });
 });
@@ -101,13 +115,7 @@ test("can edit a subject", async ({ page, e2eUser }) => {
     await expect(editedCard).toBeVisible();
     await expect(editedCard).toContainText(updatedSubjectDescription);
 
-    await Promise.all([
-      page.waitForURL(/\/subjects\/[^/]+$/),
-      page.getByRole("link", { name: updatedSubjectName, exact: true }).click(),
-    ]);
-    await expect(
-      page.getByRole("heading", { name: updatedSubjectName, exact: true }),
-    ).toBeVisible();
+    await openSubjectDetailByName(page, updatedSubjectName);
     await expect(page.getByText(updatedSubjectDescription)).toBeVisible();
   });
 });
@@ -132,13 +140,7 @@ test("can delete a subject", async ({ page, e2eUser }) => {
       page.getByRole("heading", { name: "Subjects", exact: true }),
     ).toBeVisible();
 
-    await Promise.all([
-      page.waitForURL(/\/subjects\/[^/]+$/),
-      page.getByRole("link", { name: initialSubjectName, exact: true }).click(),
-    ]);
-    await expect(
-      page.getByRole("heading", { name: initialSubjectName, exact: true }),
-    ).toBeVisible();
+    await openSubjectDetailByName(page, initialSubjectName);
 
     await page.getByTestId("subject-detail-delete").click();
     await page.getByTestId("confirm-delete-subject").click();

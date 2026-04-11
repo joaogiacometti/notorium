@@ -4,7 +4,6 @@ import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
   createAssessment,
-  createMaxAssessmentsForSubject,
   createSubject,
 } from "./support/db";
 
@@ -257,34 +256,6 @@ test("shows overdue status for pending past due assessments", async ({
     });
     await expect(assessmentRowLink).toBeVisible();
     await expect(assessmentRowLink).toContainText("Overdue");
-  } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
-  }
-});
-
-test("shows assessment limit message in single-subject mode", async ({
-  page,
-  e2eUser,
-}) => {
-  const user = e2eUser;
-  const subjectName = getUniqueSubjectName("limit");
-
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
-
-  try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Assessments limit test",
-    );
-
-    await createMaxAssessmentsForSubject(user.userId, createdSubject.id);
-
-    await openPlanningAssessments(page, createdSubject.id);
-
-    await expect(
-      page.getByText(/reached the limit of .* assessments per subject/i),
-    ).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

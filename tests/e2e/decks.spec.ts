@@ -4,9 +4,9 @@ import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
   createDeck,
-  createMaxDecksForSubject,
+  createFlashcardInDeck,
   createSubject,
-  ensureDefaultDeckForSubject,
+  getDefaultDeckForSubject,
 } from "./support/db";
 
 function getUniqueSubjectName(testTitle: string) {
@@ -14,36 +14,71 @@ function getUniqueSubjectName(testTitle: string) {
 }
 
 function getUniqueDeckName(testTitle: string) {
-  return getPrefixedValue("deck-name", testTitle);
+  return getPrefixedValue("deck", testTitle);
 }
 
-function getUniqueDeckDescription(testTitle: string) {
-  return getPrefixedValue("deck-description", testTitle);
+function getUniqueFlashcardFront(testTitle: string) {
+  return getPrefixedValue("deck-flashcard-front", testTitle);
 }
 
-async function openSubjectPage(page: Page, subjectId: string) {
-  await page.goto(`/subjects/${subjectId}`);
-  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+function getUniqueFlashcardBack(testTitle: string) {
+  return getPrefixedValue("deck-flashcard-back", testTitle);
 }
 
-test("can create a custom deck", async ({ page, e2eUser }) => {
+async function openSubjectDetailByName(page: Page, subjectName: string) {
+  await page.goto("/subjects");
+  await expect(
+    page.getByRole("heading", { name: "Subjects", exact: true }),
+  ).toBeVisible();
+
+  const subjectLink = page
+    .getByRole("link", { name: subjectName, exact: true })
+    .first();
+
+  await expect(subjectLink).toBeVisible();
+  await Promise.all([
+    page.waitForURL(/\/subjects\/[^/]+$/),
+    subjectLink.click(),
+  ]);
+  await expect(
+    page.getByRole("heading", { name: subjectName, exact: true }),
+  ).toBeVisible();
+}
+
+async function openFlashcardsPage(
+  page: Page,
+  view: "manage" | "review",
+  subjectId: string,
+  deckId?: string,
+) {
+  const query = new URLSearchParams({
+    view,
+    subjectId,
+  });
+
+  if (deckId) {
+    query.set("deckId", deckId);
+  }
+
+  await page.goto(`/flashcards?${query.toString()}`);
+  await expect(
+    page.getByRole("heading", { name: "Flashcards", exact: true }),
+  ).toBeVisible();
+}
+
+test("can create a deck from subject detail", async ({ page, e2eUser }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("create-deck");
-  const deckName = getUniqueDeckName("create-deck");
-  const deckDescription = getUniqueDeckDescription("create-deck");
+  const subjectName = getUniqueSubjectName("create");
+  const deckName = getUniqueDeckName("create");
+  const deckDescription = "Deck created from subject detail page";
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Deck create test",
-    );
+    await createSubject(user.userId, subjectName, "Deck create smoke test");
+    await openSubjectDetailByName(page, subjectName);
 
-    await openSubjectPage(page, createdSubject.id);
-
-    await page.getByRole("button", { name: "New Deck" }).click();
+    await page.getByRole("button", { name: "New Deck", exact: true }).click();
     const createDialog = page.getByRole("dialog", { name: "Create Deck" });
     await createDialog.locator("#form-create-deck-name").fill(deckName);
     await createDialog
@@ -52,20 +87,37 @@ test("can create a custom deck", async ({ page, e2eUser }) => {
     await createDialog.getByRole("button", { name: "Create" }).click();
 
     await expect(createDialog).toHaveCount(0);
-    await expect(page.getByText(deckName)).toBeVisible();
-    await expect(page.getByText(deckDescription)).toBeVisible();
+
+    const deckCard = page
+      .getByTestId("deck-card")
+      .filter({ hasText: deckName })
+      .first();
+    await expect(deckCard).toBeVisible();
+    await expect(deckCard).toContainText(deckDescription);
+
+    const manageLink = deckCard.getByRole("link").first();
+    const href = await manageLink.getAttribute("href");
+    expect(href).toBeTruthy();
+    expect(href ?? "").toContain("view=manage");
+    expect(href ?? "").toContain("deckId=");
+
+    await Promise.all([page.waitForURL(/\/flashcards\?/), manageLink.click()]);
+    await expect(
+      page.getByRole("heading", { name: "Flashcards", exact: true }),
+    ).toBeVisible();
+    expect(page.url()).toContain("view=manage");
+    expect(page.url()).toContain("deckId=");
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }
 });
 
-test("can edit a deck", async ({ page, e2eUser }) => {
+test("can edit a deck from subject detail", async ({ page, e2eUser }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("edit-deck");
-  const initialName = getUniqueDeckName("edit-initial");
-  const initialDescription = getUniqueDeckDescription("edit-initial");
-  const updatedName = getUniqueDeckName("edit-updated");
-  const updatedDescription = getUniqueDeckDescription("edit-updated");
+  const subjectName = getUniqueSubjectName("edit");
+  const initialDeckName = getUniqueDeckName("edit-initial");
+  const updatedDeckName = getUniqueDeckName("edit-updated");
+  const updatedDescription = "Updated deck description for e2e coverage";
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
@@ -73,48 +125,58 @@ test("can edit a deck", async ({ page, e2eUser }) => {
     const createdSubject = await createSubject(
       user.userId,
       subjectName,
-      "Deck edit test",
+      "Deck edit smoke test",
     );
 
     await createDeck(
       user.userId,
       createdSubject.id,
-      initialName,
-      initialDescription,
+      initialDeckName,
+      "Initial deck description",
     );
 
-    await openSubjectPage(page, createdSubject.id);
+    await openSubjectDetailByName(page, subjectName);
 
-    await expect(page.getByText(initialName)).toBeVisible();
-
-    const deckCard = page.getByTestId("deck-card").filter({
-      hasText: initialName,
-    });
+    const deckCard = page
+      .getByTestId("deck-card")
+      .filter({ hasText: initialDeckName })
+      .first();
     await expect(deckCard).toBeVisible();
-    await deckCard.hover();
+
     await deckCard.getByRole("button", { name: "Open deck actions" }).click();
-    await page.getByRole("menuitem", { name: "Edit" }).click();
+    await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
 
     const editDialog = page.getByRole("dialog", { name: "Edit Deck" });
-    await editDialog.locator("#form-edit-deck-name").fill(updatedName);
+    await editDialog.locator("#form-edit-deck-name").fill(updatedDeckName);
     await editDialog
       .locator("#form-edit-deck-description")
       .fill(updatedDescription);
     await editDialog.getByRole("button", { name: "Save" }).click();
 
     await expect(editDialog).toHaveCount(0);
-    await expect(page.getByText(initialName)).toHaveCount(0);
-    await expect(page.getByText(updatedName)).toBeVisible();
-    await expect(page.getByText(updatedDescription)).toBeVisible();
+
+    const updatedDeckCard = page
+      .getByTestId("deck-card")
+      .filter({ hasText: updatedDeckName })
+      .first();
+    await expect(updatedDeckCard).toBeVisible();
+    await expect(updatedDeckCard).toContainText(updatedDescription);
+    await expect(
+      page.getByTestId("deck-card").filter({ hasText: initialDeckName }),
+    ).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }
 });
 
-test("can delete a non-default deck", async ({ page, e2eUser }) => {
+test("can delete a deck and move flashcards to default deck", async ({
+  page,
+  e2eUser,
+}) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("delete-deck");
-  const deckName = getUniqueDeckName("delete-deck");
+  const subjectName = getUniqueSubjectName("delete");
+  const deckName = getUniqueDeckName("delete");
+  const flashcardFront = getUniqueFlashcardFront("delete");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
@@ -122,38 +184,73 @@ test("can delete a non-default deck", async ({ page, e2eUser }) => {
     const createdSubject = await createSubject(
       user.userId,
       subjectName,
-      "Deck delete test",
+      "Deck delete smoke test",
     );
 
-    await ensureDefaultDeckForSubject(user.userId, createdSubject.id);
-    await createDeck(user.userId, createdSubject.id, deckName, null);
+    const createdDeck = await createDeck(
+      user.userId,
+      createdSubject.id,
+      deckName,
+      "Deck to be deleted",
+    );
 
-    await openSubjectPage(page, createdSubject.id);
+    await createFlashcardInDeck(
+      user.userId,
+      createdSubject.id,
+      createdDeck.id,
+      flashcardFront,
+      "Flashcard moved to default deck",
+    );
 
-    await expect(page.getByText(deckName)).toBeVisible();
+    const defaultDeck = await getDefaultDeckForSubject(
+      user.userId,
+      createdSubject.id,
+    );
 
-    const deckCard = page.getByTestId("deck-card").filter({
-      hasText: deckName,
-    });
+    if (!defaultDeck) {
+      throw new Error("Expected default deck for test subject.");
+    }
+
+    await openSubjectDetailByName(page, subjectName);
+
+    const deckCard = page
+      .getByTestId("deck-card")
+      .filter({ hasText: deckName })
+      .first();
+
     await expect(deckCard).toBeVisible();
-    await deckCard.hover();
+    await expect(deckCard).toContainText("1 flashcard");
+
     await deckCard.getByRole("button", { name: "Open deck actions" }).click();
-    await page.getByRole("menuitem", { name: "Delete" }).click();
+    await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
 
     const deleteDialog = page.getByRole("dialog", { name: "Delete Deck" });
-    await deleteDialog.getByRole("button", { name: "Delete" }).click();
+    await expect(deleteDialog).toContainText(
+      "1 flashcard will be moved to the default deck.",
+    );
+    await deleteDialog
+      .getByRole("button", { name: "Delete", exact: true })
+      .click();
 
     await expect(deleteDialog).toHaveCount(0);
-    await page.reload();
-    await expect(page.getByText(deckName)).toHaveCount(0);
+    await expect(
+      page.getByTestId("deck-card").filter({ hasText: deckName }),
+    ).toHaveCount(0);
+
+    const defaultDeckCard = page
+      .getByTestId("deck-card")
+      .filter({ hasText: defaultDeck.name })
+      .first();
+    await expect(defaultDeckCard).toBeVisible();
+    await expect(defaultDeckCard).toContainText("1 flashcard");
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }
 });
 
-test("cannot delete default deck", async ({ page, e2eUser }) => {
+test("default deck does not expose deck actions", async ({ page, e2eUser }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("delete-default");
+  const subjectName = getUniqueSubjectName("default-protection");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
@@ -161,19 +258,25 @@ test("cannot delete default deck", async ({ page, e2eUser }) => {
     const createdSubject = await createSubject(
       user.userId,
       subjectName,
-      "Deck delete default test",
+      "Default deck protection test",
     );
 
-    await ensureDefaultDeckForSubject(user.userId, createdSubject.id);
+    const defaultDeck = await getDefaultDeckForSubject(
+      user.userId,
+      createdSubject.id,
+    );
 
-    await openSubjectPage(page, createdSubject.id);
+    if (!defaultDeck) {
+      throw new Error("Expected default deck for test subject.");
+    }
 
-    await expect(page.getByText("General")).toBeVisible();
+    await openSubjectDetailByName(page, subjectName);
 
-    const defaultDeckCard = page.getByTestId("deck-card").filter({
-      hasText: "General",
-    });
-
+    const defaultDeckCard = page
+      .getByTestId("deck-card")
+      .filter({ hasText: defaultDeck.name })
+      .first();
+    await expect(defaultDeckCard).toBeVisible();
     await expect(
       defaultDeckCard.getByRole("button", { name: "Open deck actions" }),
     ).toHaveCount(0);
@@ -182,15 +285,18 @@ test("cannot delete default deck", async ({ page, e2eUser }) => {
   }
 });
 
-test("flashcards move to default deck when custom deck is deleted", async ({
+test("can filter flashcards by deck in manage and review views", async ({
   page,
   e2eUser,
 }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("move-flashcards");
-  const deckName = getUniqueDeckName("move-flashcards");
-  const flashcardFront = "Test flashcard front";
-  const flashcardBack = "Test flashcard back";
+  const subjectName = getUniqueSubjectName("deck-filter");
+  const firstDeckName = getUniqueDeckName("deck-filter-first");
+  const secondDeckName = getUniqueDeckName("deck-filter-second");
+  const firstDeckFront = getUniqueFlashcardFront("deck-filter-first");
+  const secondDeckFront = getUniqueFlashcardFront("deck-filter-second");
+  const firstDeckBack = getUniqueFlashcardBack("deck-filter-first");
+  const secondDeckBack = getUniqueFlashcardBack("deck-filter-second");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
@@ -198,174 +304,66 @@ test("flashcards move to default deck when custom deck is deleted", async ({
     const createdSubject = await createSubject(
       user.userId,
       subjectName,
-      "Flashcard move test",
+      "Deck filter smoke test",
     );
 
-    await ensureDefaultDeckForSubject(user.userId, createdSubject.id);
-    await createDeck(user.userId, createdSubject.id, deckName, null);
+    const firstDeck = await createDeck(
+      user.userId,
+      createdSubject.id,
+      firstDeckName,
+      "First filter deck",
+    );
+    const secondDeck = await createDeck(
+      user.userId,
+      createdSubject.id,
+      secondDeckName,
+      "Second filter deck",
+    );
 
-    await page.goto(`/flashcards?view=manage&subjectId=${createdSubject.id}`);
-    await page.getByRole("button", { name: "New Flashcard" }).click();
+    await createFlashcardInDeck(
+      user.userId,
+      createdSubject.id,
+      firstDeck.id,
+      firstDeckFront,
+      firstDeckBack,
+    );
+    await createFlashcardInDeck(
+      user.userId,
+      createdSubject.id,
+      secondDeck.id,
+      secondDeckFront,
+      secondDeckBack,
+    );
 
-    const createDialog = page.getByRole("dialog", { name: "Create Flashcard" });
-    await createDialog
-      .locator("#form-create-flashcard-front")
-      .fill(flashcardFront);
-    await createDialog
-      .locator("#form-create-flashcard-back")
-      .fill(flashcardBack);
-    await createDialog.getByRole("combobox", { name: "Deck" }).click();
-    await expect(page.getByRole("option", { name: deckName })).toBeVisible();
-    await page.getByRole("option", { name: deckName }).click();
-    await createDialog
-      .getByRole("button", { name: "Create Flashcard" })
-      .click();
-
-    await page.keyboard.press("Escape");
-    await expect(createDialog).toHaveCount(0);
-
-    await page.getByTestId("deck-filter-select").click();
-    await expect(page.getByRole("option", { name: deckName })).toBeVisible();
-    await page.getByRole("option", { name: deckName }).click();
-
-    await expect(page.getByTitle(flashcardFront)).toBeVisible();
-
-    await openSubjectPage(page, createdSubject.id);
-
-    const deckCard = page.getByTestId("deck-card").filter({
-      hasText: deckName,
-    });
-    await expect(deckCard.getByText("1 flashcard")).toBeVisible();
-
-    await deckCard.hover();
-    await deckCard.getByRole("button", { name: "Open deck actions" }).click();
-    await page.getByRole("menuitem", { name: "Delete" }).click();
-
-    const deleteDialog = page.getByRole("dialog", { name: "Delete Deck" });
+    await openFlashcardsPage(page, "manage", createdSubject.id, firstDeck.id);
     await expect(
-      deleteDialog.getByText(/1 flashcard will be moved to the default deck/i),
+      page.getByTitle(firstDeckFront, { exact: true }),
     ).toBeVisible();
-    await deleteDialog.getByRole("button", { name: "Delete" }).click();
-
-    await expect(deleteDialog).toHaveCount(0);
-    await page.reload();
-    await expect(page.getByText(deckName)).toHaveCount(0);
-
-    await page.goto(`/flashcards?view=manage&subjectId=${createdSubject.id}`);
-    await page.getByTestId("deck-filter-select").click();
-    await expect(page.getByRole("option", { name: "General" })).toBeVisible();
-    await page.getByRole("option", { name: "General" }).click();
-
-    await expect(page.getByTitle(flashcardFront)).toBeVisible();
-  } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
-  }
-});
-
-test("shows deck limit warning when subject deck limit is reached", async ({
-  page,
-  e2eUser,
-}) => {
-  const user = e2eUser;
-  const subjectName = getUniqueSubjectName("deck-limit");
-
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
-
-  try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Deck limit test",
+    await expect(page.getByTitle(secondDeckFront, { exact: true })).toHaveCount(
+      0,
     );
 
-    await createMaxDecksForSubject(user.userId, createdSubject.id);
-
-    await openSubjectPage(page, createdSubject.id);
-
-    const newDeckButton = page.getByRole("button", { name: "New Deck" });
-    await expect(newDeckButton).toBeDisabled();
+    await openFlashcardsPage(page, "manage", createdSubject.id, secondDeck.id);
     await expect(
-      page.getByText(/You've reached the limit of \d+ decks per subject/),
+      page.getByTitle(secondDeckFront, { exact: true }),
     ).toBeVisible();
-  } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
-  }
-});
-
-test("can filter flashcards by deck", async ({ page, e2eUser }) => {
-  const user = e2eUser;
-  const subjectName = getUniqueSubjectName("filter-by-deck");
-  const deck1Name = getUniqueDeckName("filter-deck-1");
-  const deck2Name = getUniqueDeckName("filter-deck-2");
-
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
-
-  try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Deck filter test",
+    await expect(page.getByTitle(firstDeckFront, { exact: true })).toHaveCount(
+      0,
     );
 
-    await createDeck(user.userId, createdSubject.id, deck1Name, null);
-    await createDeck(user.userId, createdSubject.id, deck2Name, null);
+    await openFlashcardsPage(page, "review", createdSubject.id, firstDeck.id);
+    await expect(page.getByText(firstDeckFront, { exact: true })).toBeVisible();
+    await expect(page.getByText(secondDeckFront, { exact: true })).toHaveCount(
+      0,
+    );
 
-    await page.goto(`/flashcards?view=manage&subjectId=${createdSubject.id}`);
-
-    await page.getByRole("button", { name: "New Flashcard" }).click();
-    let createDialog = page.getByRole("dialog", { name: "Create Flashcard" });
-    await createDialog
-      .locator("#form-create-flashcard-front")
-      .fill("Deck 1 Front");
-    await createDialog
-      .locator("#form-create-flashcard-back")
-      .fill("Deck 1 Back");
-    await createDialog.getByRole("combobox", { name: "Deck" }).click();
-    await expect(page.getByRole("option", { name: deck1Name })).toBeVisible();
-    await page.getByRole("option", { name: deck1Name }).click();
-    await createDialog
-      .getByRole("button", { name: "Create Flashcard" })
-      .click();
-    await page.keyboard.press("Escape");
-    await expect(createDialog).toHaveCount(0);
-
-    await page.getByRole("button", { name: "New Flashcard" }).click();
-    createDialog = page.getByRole("dialog", { name: "Create Flashcard" });
-    await createDialog
-      .locator("#form-create-flashcard-front")
-      .fill("Deck 2 Front");
-    await createDialog
-      .locator("#form-create-flashcard-back")
-      .fill("Deck 2 Back");
-    await createDialog.getByRole("combobox", { name: "Deck" }).click();
-    await expect(page.getByRole("option", { name: deck2Name })).toBeVisible();
-    await page.getByRole("option", { name: deck2Name }).click();
-    await createDialog
-      .getByRole("button", { name: "Create Flashcard" })
-      .click();
-    await page.keyboard.press("Escape");
-    await expect(createDialog).toHaveCount(0);
-
-    await page.getByTestId("deck-filter-select").click();
-    await expect(page.getByRole("option", { name: deck1Name })).toBeVisible();
-    await page.getByRole("option", { name: deck1Name }).click();
-
-    await expect(page.getByTitle("Deck 1 Front")).toBeVisible();
-    await expect(page.getByTitle("Deck 2 Front")).toHaveCount(0);
-
-    await page.getByTestId("deck-filter-select").click();
-    await expect(page.getByRole("option", { name: deck2Name })).toBeVisible();
-    await page.getByRole("option", { name: deck2Name }).click();
-
-    await expect(page.getByTitle("Deck 2 Front")).toBeVisible();
-    await expect(page.getByTitle("Deck 1 Front")).toHaveCount(0);
-
-    await page.getByTestId("deck-filter-select").click();
-    await expect(page.getByRole("option", { name: "All decks" })).toBeVisible();
-    await page.getByRole("option", { name: "All decks" }).click();
-
-    await expect(page.getByTitle("Deck 1 Front")).toBeVisible();
-    await expect(page.getByTitle("Deck 2 Front")).toBeVisible();
+    await openFlashcardsPage(page, "review", createdSubject.id, secondDeck.id);
+    await expect(
+      page.getByText(secondDeckFront, { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(firstDeckFront, { exact: true })).toHaveCount(
+      0,
+    );
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

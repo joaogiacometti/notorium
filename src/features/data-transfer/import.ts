@@ -19,6 +19,7 @@ import {
   type ImportData,
   importDataSchema,
 } from "@/features/data-transfer/validation";
+import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
@@ -26,7 +27,6 @@ import {
 } from "@/features/flashcards/fsrs";
 import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
-import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { parseActionInput } from "@/lib/server/action-input";
 import type { MutationResult } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";

@@ -146,8 +146,9 @@ describe("importDataForUser", () => {
     returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
     returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
 
-    const { importDataForUser } =
-      await import("@/features/data-transfer/import");
+    const { importDataForUser } = await import(
+      "@/features/data-transfer/import"
+    );
 
     const result = await importDataForUser("user-1", input);
 
@@ -204,8 +205,9 @@ describe("importDataForUser", () => {
     returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
     returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
 
-    const { importDataForUser } =
-      await import("@/features/data-transfer/import");
+    const { importDataForUser } = await import(
+      "@/features/data-transfer/import"
+    );
 
     const result = await importDataForUser("user-1", input);
 

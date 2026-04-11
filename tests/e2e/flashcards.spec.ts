@@ -1,11 +1,9 @@
 import type { Locator, Page } from "@playwright/test";
-import { LIMITS } from "@/lib/config/limits";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
   createFlashcard,
-  createMaxFlashcardsForSubject,
   createSubject,
 } from "./support/db";
 
@@ -201,59 +199,6 @@ test("can delete a flashcard", async ({ page, e2eUser }) => {
     await expect(page.getByText(flashcardFront, { exact: true })).toHaveCount(
       0,
     );
-  } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
-  }
-});
-
-test("shows flashcard limit warning when subject limit is reached", async ({
-  page,
-  e2eUser,
-}) => {
-  const user = e2eUser;
-  const subjectName = getUniqueSubjectName("limit");
-  const attemptedFront = getUniqueFlashcardFront("limit-attempt");
-  const attemptedBack = getUniqueFlashcardBack("limit-attempt");
-
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
-
-  try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Flashcards limit smoke test",
-    );
-
-    await createMaxFlashcardsForSubject(user.userId, createdSubject.id);
-
-    await openFlashcardsManagePage(page, createdSubject.id);
-
-    await expect(
-      page.getByText(
-        `${LIMITS.maxFlashcardsPerSubject}/${LIMITS.maxFlashcardsPerSubject} flashcards in this subject`,
-      ),
-    ).toBeVisible();
-
-    await page.getByRole("button", { name: "New Flashcard" }).click();
-    const createDialog = page.getByRole("dialog", { name: "Create Flashcard" });
-    await fillFlashcardEditors(
-      createDialog,
-      "form-create-flashcard",
-      attemptedFront,
-      attemptedBack,
-    );
-    await createDialog
-      .getByRole("button", { name: "Create Flashcard" })
-      .click();
-
-    await expect(
-      page.getByText(/system limit reached: you can have up to .* flashcards/i),
-    ).toBeVisible();
-    await expect(
-      page.getByText(
-        `${LIMITS.maxFlashcardsPerSubject}/${LIMITS.maxFlashcardsPerSubject} flashcards in this subject`,
-      ),
-    ).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

@@ -2,10 +2,10 @@
 
 ## Documentation Ownership
 
-| File | Owns |
-|------|------|
-| `SPEC.md` | Product behavior, UX rules, feature constraints, acceptance criteria |
-| `README.md` | Setup, runtime, local development, commands, environment |
+| File        | Owns                                                                            |
+| ----------- | ------------------------------------------------------------------------------- |
+| `SPEC.md`   | Product behavior, UX rules, feature constraints, acceptance criteria            |
+| `README.md` | Setup, runtime, local development, commands, environment                        |
 | `AGENTS.md` | Coding rules, architecture guidance, testing expectations, contributor workflow |
 
 When behavior changes → update `SPEC.md`. When setup/commands change → update `README.md`. When engineering rules change → update `AGENTS.md`. Never duplicate detailed feature behavior across files.
@@ -144,22 +144,23 @@ Use Tailwind CSS 4. Use `cn()` from `src/lib/utils.ts` for conditional class mer
 
 ```tsx
 // ❌ Wrong
-className="bg-red-500 text-yellow-600 border-orange-500/60"
+className = "bg-red-500 text-yellow-600 border-orange-500/60";
 
 // ✅ Correct
-className="bg-[var(--status-danger-fill)] text-[var(--assessment-exam-text)] border-[var(--status-warning-border)]"
+className =
+  "bg-(--status-danger-fill) text-(--assessment-exam-text) border-(--status-warning-border)";
 ```
 
 **Available theme variables** (defined in `src/app/globals.css`):
 
-| Group | Variables |
-|-------|-----------|
-| Assessment | `--assessment-exam-border`, `--assessment-exam-bg`, `--assessment-exam-text` |
-| Danger/Again | `--status-danger-border`, `--status-danger-bg`, `--status-danger-text`, `--status-danger-fill` |
-| Warning/Hard | `--status-warning-border`, `--status-warning-bg`, `--status-warning-text`, `--status-warning-fill` |
-| Success/Easy | `--status-success-border`, `--status-success-bg`, `--status-success-text`, `--status-success-fill` |
-| Charts | `--chart-1` through `--chart-5` |
-| Semantic | `--primary`, `--secondary`, `--accent`, `--destructive`, `--muted`, `--background`, `--foreground`, `--border` |
+| Group        | Variables                                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| Assessment   | `--assessment-exam-border`, `--assessment-exam-bg`, `--assessment-exam-text`                                   |
+| Danger/Again | `--status-danger-border`, `--status-danger-bg`, `--status-danger-text`, `--status-danger-fill`                 |
+| Warning/Hard | `--status-warning-border`, `--status-warning-bg`, `--status-warning-text`, `--status-warning-fill`             |
+| Success/Easy | `--status-success-border`, `--status-success-bg`, `--status-success-text`, `--status-success-fill`             |
+| Charts       | `--chart-1` through `--chart-5`                                                                                |
+| Semantic     | `--primary`, `--secondary`, `--accent`, `--destructive`, `--muted`, `--background`, `--foreground`, `--border` |
 
 Usage: `bg-[var(--x)]`, `text-[var(--x)]`, `border-[var(--x)]`, `bg-[var(--x)]/90`. For SVG: `stroke="currentColor"` with `className="text-[var(--x)]"`.
 
@@ -172,6 +173,7 @@ Usage: `bg-[var(--x)]`, `text-[var(--x)]`, `border-[var(--x)]`, `bg-[var(--x)]/9
 - Don't test Server Actions, queries, mutations directly.
 - Zod tests must reject invalid inputs.
 - Add regression tests for auth/AI/account/data-transfer changes.
+- Put limit/quota enforcement tests here (subject, note, assessment, flashcard, deck limits).
 
 ### TDD Cycle
 
@@ -185,6 +187,7 @@ Usage: `bg-[var(--x)]`, `text-[var(--x)]`, `border-[var(--x)]`, `bg-[var(--x)]/9
 - Assert outcomes: behavior, permissions, persistence, errors.
 - Use resilient selectors (`getByRole`, labels, test ids).
 - Parallel-safe with unique data and cleanup.
+- Do not add limit/quota tests in Playwright. Keep e2e focused on user flows; enforce limits with Vitest.
 
 ### Definition of Done
 
@@ -218,18 +221,21 @@ features/[feature-name]/
 ```
 
 **Queries:**
+
 - Called directly from Server Components
 - Return domain objects, not raw DB rows
 - Use Drizzle queries with proper joins and filtering
 - Always filter by `userId` for user-owned data
 
 **Mutations:**
+
 - Called by Server Actions in `src/app/actions/`
 - Contain write-side business logic
 - Return success/error objects, never throw
 - Handle transactions when needed
 
 **Validation:**
+
 - Export Zod schemas for Server Action inputs
 - Schemas used with React Hook Form via `@hookform/resolvers/zod`
 - Must have matching TypeScript types via `z.infer<>`
@@ -246,6 +252,7 @@ features/[feature-name]/
 ### Focus Areas
 
 AI agents should focus on:
+
 - **Coding** — Writing, modifying, and refactoring code
 - **Architecture** — Designing feature structure, choosing patterns, organizing modules **with the user**
 - **Documentation** — Updating `AGENTS.md`, `SPEC.md`, `README.md` when patterns change
@@ -254,6 +261,7 @@ AI agents should focus on:
 ### What NOT to Do
 
 **Do NOT run verification commands** — User handles these manually for token efficiency:
+
 - ❌ Do not run `bun run lint` or `bun run lint --fix`
 - ❌ Do not run `bun run test` (except for TDD, see below)
 - ❌ Do not run `bun run typecheck`

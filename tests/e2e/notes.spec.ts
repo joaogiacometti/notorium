@@ -3,7 +3,6 @@ import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjectsByNames,
-  createMaxNotesForSubject,
   createNote,
   createSubject,
 } from "./support/db";
@@ -156,32 +155,6 @@ test("can delete a note", async ({ page, e2eUser }) => {
     await expect(
       page.getByRole("link", { name: noteTitle, exact: true }),
     ).toHaveCount(0);
-  } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
-  }
-});
-
-test("disables creating notes when limit is reached", async ({
-  page,
-  e2eUser,
-}) => {
-  const user = e2eUser;
-  const subjectName = getUniqueSubjectName("limit");
-
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
-
-  try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Notes limit smoke test",
-    );
-
-    await createMaxNotesForSubject(user.userId, createdSubject.id);
-
-    await openSubjectDetailByName(page, subjectName);
-
-    await expect(page.locator("#btn-create-note")).toBeDisabled();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

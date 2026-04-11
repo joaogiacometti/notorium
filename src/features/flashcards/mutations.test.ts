@@ -95,8 +95,9 @@ describe("createFlashcardForUser", () => {
     countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(2);
     hasDuplicateFlashcardFrontForUserMock.mockResolvedValueOnce(true);
 
-    const { createFlashcardForUser } =
-      await import("@/features/flashcards/mutations");
+    const { createFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await createFlashcardForUser("user-1", {
       subjectId: "subject-1",
@@ -141,8 +142,9 @@ describe("createFlashcardForUser", () => {
       },
     ]);
 
-    const { createFlashcardForUser } =
-      await import("@/features/flashcards/mutations");
+    const { createFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await createFlashcardForUser("user-1", {
       subjectId: "subject-1",
@@ -205,8 +207,9 @@ describe("editFlashcardForUser", () => {
       },
     ]);
 
-    const { editFlashcardForUser } =
-      await import("@/features/flashcards/mutations");
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
@@ -253,8 +256,9 @@ describe("editFlashcardForUser", () => {
       },
     ]);
 
-    const { editFlashcardForUser } =
-      await import("@/features/flashcards/mutations");
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
@@ -289,8 +293,9 @@ describe("editFlashcardForUser", () => {
     });
     hasDuplicateFlashcardFrontForUserMock.mockResolvedValueOnce(true);
 
-    const { editFlashcardForUser } =
-      await import("@/features/flashcards/mutations");
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
@@ -315,8 +320,9 @@ describe("editFlashcardForUser", () => {
     });
     getActiveSubjectRecordForUserMock.mockResolvedValueOnce(null);
 
-    const { editFlashcardForUser } =
-      await import("@/features/flashcards/mutations");
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
@@ -346,8 +352,9 @@ describe("bulkDeleteFlashcardsForUser", () => {
       { id: "flashcard-2", subjectId: "subject-2" },
     ]);
 
-    const { bulkDeleteFlashcardsForUser } =
-      await import("@/features/flashcards/mutations");
+    const { bulkDeleteFlashcardsForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await bulkDeleteFlashcardsForUser("user-1", {
       ids: ["flashcard-1", "flashcard-2"],
@@ -370,8 +377,9 @@ describe("bulkDeleteFlashcardsForUser", () => {
       { id: "flashcard-1", subjectId: "subject-1" },
     ]);
 
-    const { bulkDeleteFlashcardsForUser } =
-      await import("@/features/flashcards/mutations");
+    const { bulkDeleteFlashcardsForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await bulkDeleteFlashcardsForUser("user-1", {
       ids: ["flashcard-1", "flashcard-2"],
@@ -402,8 +410,9 @@ describe("bulkMoveFlashcardsForUser", () => {
     });
     countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(5);
 
-    const { bulkMoveFlashcardsForUser } =
-      await import("@/features/flashcards/mutations");
+    const { bulkMoveFlashcardsForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await bulkMoveFlashcardsForUser("user-1", {
       ids: ["flashcard-1", "flashcard-2"],
@@ -425,8 +434,9 @@ describe("bulkMoveFlashcardsForUser", () => {
     ]);
     getActiveSubjectRecordForUserMock.mockResolvedValueOnce(null);
 
-    const { bulkMoveFlashcardsForUser } =
-      await import("@/features/flashcards/mutations");
+    const { bulkMoveFlashcardsForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     const result = await bulkMoveFlashcardsForUser("user-1", {
       ids: ["flashcard-1"],
@@ -449,10 +459,12 @@ describe("generateFlashcardBackForUserInput", () => {
   });
 
   it("calls generate when currentBack is absent", async () => {
-    const { generateFlashcardBackForUser } =
-      await import("@/features/flashcards/ai-service");
-    const { generateFlashcardBackForUserInput } =
-      await import("@/features/flashcards/mutations");
+    const { generateFlashcardBackForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     vi.mocked(generateFlashcardBackForUser).mockResolvedValueOnce({
       success: true,
@@ -488,10 +500,12 @@ describe("generateFlashcardBackForUserInput", () => {
   });
 
   it("calls improve when currentBack is present", async () => {
-    const { improveFlashcardBackForUser } =
-      await import("@/features/flashcards/ai-service");
-    const { generateFlashcardBackForUserInput } =
-      await import("@/features/flashcards/mutations");
+    const { improveFlashcardBackForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     vi.mocked(improveFlashcardBackForUser).mockResolvedValueOnce({
       success: true,
@@ -529,8 +543,9 @@ describe("generateFlashcardBackForUserInput", () => {
   });
 
   it("returns notFound when subject does not exist", async () => {
-    const { generateFlashcardBackForUserInput } =
-      await import("@/features/flashcards/mutations");
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     getActiveSubjectByIdForUserMock.mockResolvedValueOnce(null);
 
@@ -548,10 +563,12 @@ describe("generateFlashcardBackForUserInput", () => {
   });
 
   it("returns ai error when improve service fails", async () => {
-    const { improveFlashcardBackForUser } =
-      await import("@/features/flashcards/ai-service");
-    const { generateFlashcardBackForUserInput } =
-      await import("@/features/flashcards/mutations");
+    const { improveFlashcardBackForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     vi.mocked(improveFlashcardBackForUser).mockResolvedValueOnce({
       success: false,
@@ -584,8 +601,9 @@ describe("generateFlashcardBackForUserInput", () => {
   });
 
   it("returns wrongSubject when deck does not belong to subject", async () => {
-    const { generateFlashcardBackForUserInput } =
-      await import("@/features/flashcards/mutations");
+    const { generateFlashcardBackForUserInput } = await import(
+      "@/features/flashcards/mutations"
+    );
 
     getActiveSubjectByIdForUserMock.mockResolvedValueOnce({
       id: "subject-1",

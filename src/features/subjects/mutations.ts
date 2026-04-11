@@ -1,13 +1,13 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { deck, subject } from "@/db/schema";
+import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import {
   countSubjectsForUser,
   getActiveSubjectRecordForUser,
   getArchivedSubjectRecordForUser,
   getSubjectRecordForUser,
 } from "@/features/subjects/queries";
-import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import type {
   ArchiveSubjectForm,
   CreateSubjectForm,

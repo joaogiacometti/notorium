@@ -15,7 +15,7 @@ import {
   user,
   verification,
 } from "@/db/schema";
-import { LIMITS } from "@/lib/config/limits";
+import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import {
   type E2EUserKind,
@@ -361,16 +361,25 @@ export async function createSubject(
   name: string,
   description: string,
 ) {
-  const [newSubject] = await getDb()
-    .insert(subject)
-    .values({
-      userId,
-      name,
-      description,
-    })
-    .returning({ id: subject.id });
+  return getDb().transaction(async (tx) => {
+    const [newSubject] = await tx
+      .insert(subject)
+      .values({
+        userId,
+        name,
+        description,
+      })
+      .returning({ id: subject.id });
 
-  return newSubject;
+    await tx.insert(deck).values({
+      userId,
+      subjectId: newSubject.id,
+      name: DEFAULT_DECK_NAME,
+      isDefault: true,
+    });
+
+    return newSubject;
+  });
 }
 
 export async function clearUserFlashcardsBySubject(
@@ -410,11 +419,14 @@ export async function createFlashcard(
   front: string,
   back: string,
 ) {
+  const defaultDeck = await ensureDefaultDeckForSubject(userId, subjectId);
+
   const [newFlashcard] = await getDb()
     .insert(flashcard)
     .values({
       userId,
       subjectId,
+      deckId: defaultDeck.id,
       front,
       frontNormalized: normalizeRichTextForUniqueness(front),
       back,
@@ -424,50 +436,26 @@ export async function createFlashcard(
   return newFlashcard;
 }
 
-async function createMany(
-  count: number,
-  create: (index: number) => Promise<unknown>,
-) {
-  for (let index = 0; index < count; index += 1) {
-    await create(index);
-  }
-}
-
-export async function createMaxFlashcardsForSubject(
+export async function createFlashcardInDeck(
   userId: string,
   subjectId: string,
+  deckId: string,
+  front: string,
+  back: string,
 ) {
-  await createMany(LIMITS.maxFlashcardsPerSubject, async (index) => {
-    await createFlashcard(
+  const [newFlashcard] = await getDb()
+    .insert(flashcard)
+    .values({
       userId,
       subjectId,
-      `e2e-limit-flashcard-front-${index}`,
-      `e2e-limit-flashcard-back-${index}`,
-    );
-  });
-}
+      deckId,
+      front,
+      frontNormalized: normalizeRichTextForUniqueness(front),
+      back,
+    })
+    .returning({ id: flashcard.id });
 
-export async function createMaxNotesForSubject(
-  userId: string,
-  subjectId: string,
-) {
-  await createMany(LIMITS.maxNotesPerSubject, async (index) => {
-    await createNote(
-      userId,
-      subjectId,
-      `e2e-limit-note-${index}`,
-      `e2e-limit-note-content-${index}`,
-    );
-  });
-}
-
-export async function createMaxAssessmentsForSubject(
-  userId: string,
-  subjectId: string,
-) {
-  await createMany(LIMITS.maxAssessmentsPerSubject, async (index) => {
-    await createAssessment(userId, subjectId, `e2e-limit-assessment-${index}`);
-  });
+  return newFlashcard;
 }
 
 export async function createDeck(
@@ -488,15 +476,6 @@ export async function createDeck(
     .returning({ id: deck.id, name: deck.name });
 
   return newDeck;
-}
-
-export async function createMaxDecksForSubject(
-  userId: string,
-  subjectId: string,
-) {
-  await createMany(LIMITS.maxDecksPerSubject, async (index) => {
-    await createDeck(userId, subjectId, `e2e-limit-deck-${index}`, null);
-  });
 }
 
 export async function getDefaultDeckForSubject(
@@ -530,7 +509,7 @@ export async function ensureDefaultDeckForSubject(
     .values({
       userId,
       subjectId,
-      name: "General",
+      name: DEFAULT_DECK_NAME,
       isDefault: true,
     })
     .returning({ id: deck.id, name: deck.name });
