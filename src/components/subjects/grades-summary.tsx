@@ -140,6 +140,15 @@ export function GradesSummary({
         ? getCountdownLabel(item.dueDate)
         : null;
 
+    let cardClassName: string;
+    if (item.status === "completed") {
+      cardClassName = "border-border bg-muted/20";
+    } else if (overdue) {
+      cardClassName = `${dangerTone.border} bg-card`;
+    } else {
+      cardClassName = "border-border bg-card";
+    }
+
     return (
       <AssessmentItemCard
         key={item.id}
@@ -149,13 +158,7 @@ export function GradesSummary({
         showSubject={showSubjectFilter}
         showScore={false}
         subjectName={subjectNamesById?.[item.subjectId]}
-        className={
-          item.status === "completed"
-            ? "border-border bg-muted/20"
-            : overdue
-              ? `${dangerTone.border} bg-card`
-              : "border-border bg-card"
-        }
+        className={cardClassName}
         onEdit={setEditTarget}
         onDelete={setDeleteTarget}
       />

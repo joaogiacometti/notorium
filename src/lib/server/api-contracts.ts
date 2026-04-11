@@ -179,6 +179,7 @@ export type DeleteFlashcardResult =
   | {
       success: true;
       id: string;
+      subjectId: string;
     }
   | ActionErrorResult;
 export type BulkDeleteFlashcardsResult =

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { FlashcardDetail } from "@/components/flashcards/flashcard-detail";
 import { getFlashcardByIdForUser } from "@/features/flashcards/queries";
 import { getSubjectsForUser } from "@/features/subjects/queries";
@@ -13,7 +13,7 @@ interface FlashcardPageProps {
 export default async function FlashcardPage({
   params,
   searchParams,
-}: FlashcardPageProps) {
+}: Readonly<FlashcardPageProps>) {
   const session = await requireSession();
 
   const { id, flashcardId } = await params;
@@ -23,14 +23,11 @@ export default async function FlashcardPage({
     getSubjectsForUser(session.user.id),
   ]);
 
-  if (!flashcard || flashcard.subjectId !== id) {
-    notFound();
-  }
+  const backLink = resolveFlashcardDetailBackLink(returnContext, id);
 
-  const backLink = resolveFlashcardDetailBackLink(
-    returnContext,
-    flashcard.subjectId,
-  );
+  if (!flashcard) {
+    redirect(backLink.href);
+  }
 
   return (
     <main>

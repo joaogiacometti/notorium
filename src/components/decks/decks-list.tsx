@@ -86,6 +86,15 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
           }
           open={createOpen}
           onOpenChange={setCreateOpen}
+          onCreated={(createdDeck) => {
+            setDeckItems((currentDecks) => [
+              ...currentDecks,
+              {
+                ...createdDeck,
+                flashcardCount: 0,
+              },
+            ]);
+          }}
         />
       </div>
 
@@ -152,6 +161,30 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
           deckName={deleteTarget.name}
           flashcardCount={deleteTarget.flashcardCount}
           open
+          onDeleted={(deletedDeckId) => {
+            setDeckItems((currentDecks) => {
+              const deletedDeck = currentDecks.find(
+                (currentDeck) => currentDeck.id === deletedDeckId,
+              );
+
+              if (!deletedDeck) {
+                return currentDecks;
+              }
+
+              return currentDecks
+                .filter((currentDeck) => currentDeck.id !== deletedDeckId)
+                .map((currentDeck) =>
+                  currentDeck.isDefault
+                    ? {
+                        ...currentDeck,
+                        flashcardCount:
+                          currentDeck.flashcardCount +
+                          deletedDeck.flashcardCount,
+                      }
+                    : currentDeck,
+                );
+            });
+          }}
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null);
           }}

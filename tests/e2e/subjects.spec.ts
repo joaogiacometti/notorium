@@ -1,8 +1,8 @@
-import type { Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
 import { runWithCleanup } from "./support/cleanup";
 import { getPrefixedValue } from "./support/data";
 import { clearUserSubjectsByNames, createSubject } from "./support/db";
+import { openSubjectDetailByName } from "./support/subjects";
 
 const initialSubjectDescription =
   "Initial subject description for e2e coverage.";
@@ -11,25 +11,6 @@ const updatedSubjectDescription =
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("subject", testTitle);
-}
-
-async function openSubjectDetailByName(page: Page, subjectName: string) {
-  const subjectLink = page
-    .getByRole("link", { name: subjectName, exact: true })
-    .first();
-
-  await expect(subjectLink).toBeVisible();
-
-  await Promise.all([
-    page.waitForURL(/\/subjects\/[^/]+$/),
-    subjectLink.click(),
-  ]);
-
-  await expect(
-    page.locator("h1", { hasText: subjectName }).first(),
-  ).toBeVisible({
-    timeout: 30000,
-  });
 }
 
 test("can create a subject", async ({ page, e2eUser }) => {

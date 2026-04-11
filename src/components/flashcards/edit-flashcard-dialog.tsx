@@ -113,22 +113,13 @@ export function EditFlashcardDialog({
     if (splitSubjectId) {
       void getDecks(splitSubjectId).then((fetchedDecks) => {
         setSplitDecks(fetchedDecks);
-        setSplitDeckId((currentDeckId) => {
-          if (
-            currentDeckId &&
-            fetchedDecks.some((d) => d.id === currentDeckId)
-          ) {
-            return currentDeckId;
-          }
-
-          return fetchedDecks.find((d) => d.isDefault)?.id ?? null;
-        });
+        setSplitDeckId(selectDeckId(fetchedDecks, flashcard.deckId));
       });
     } else {
       setSplitDecks([]);
       setSplitDeckId(null);
     }
-  }, [splitSubjectId]);
+  }, [splitSubjectId, flashcard.deckId]);
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
@@ -164,11 +155,7 @@ export function EditFlashcardDialog({
     values: incomingValues,
     form,
     onSubmitAction: editFlashcard,
-    onSuccess: (updatedFlashcard) => {
-      if (updatedFlashcard) {
-        return onUpdated?.(updatedFlashcard);
-      }
-    },
+    onSuccess: handleFlashcardUpdated,
     getSuccessValues: (submittedValues) => submittedValues,
     closeOnSuccess: true,
   });
@@ -177,6 +164,30 @@ export function EditFlashcardDialog({
     void getDecks(newSubjectId).then((fetchedDecks) => {
       setDecks(fetchedDecks);
     });
+  }
+
+  function _handleDialogClose(nextOpen: boolean) {
+    if (!nextOpen) {
+      resetSplitState();
+    }
+    onOpenChange(nextOpen);
+  }
+
+  function handleFlashcardUpdated(
+    updatedFlashcard: FlashcardEntity | undefined,
+  ) {
+    if (updatedFlashcard) {
+      return onUpdated?.(updatedFlashcard);
+    }
+  }
+
+  function resetSplitState() {
+    setGeneratedCards(null);
+    setMode("edit");
+    setSplitFront(flashcard.front);
+    setSplitBack(flashcard.back);
+    setSplitSubjectId(flashcard.subjectId);
+    setSplitDeckId(flashcard.deckId ?? null);
   }
 
   function handleSplitSubjectChange(newSubjectId: string) {
@@ -203,12 +214,7 @@ export function EditFlashcardDialog({
 
   function handleDiscardOnClose() {
     setDiscardOnCloseDialogOpen(false);
-    setGeneratedCards(null);
-    setMode("edit");
-    setSplitFront(flashcard.front);
-    setSplitBack(flashcard.back);
-    setSplitSubjectId(flashcard.subjectId);
-    setSplitDeckId(flashcard.deckId ?? null);
+    resetSplitState();
     onOpenChange(false);
   }
 
@@ -317,6 +323,11 @@ export function EditFlashcardDialog({
     setGeneratedCards(null);
   }
 
+  function handleFormSubmit(e: React.SyntheticEvent) {
+    e.preventDefault();
+    void handleGenerate();
+  }
+
   function renderContent() {
     if (mode === "edit") {
       return (
@@ -384,10 +395,7 @@ export function EditFlashcardDialog({
 
     return (
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void handleGenerate();
-        }}
+        onSubmit={handleFormSubmit}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-5 sm:px-6">
@@ -502,6 +510,16 @@ export function EditFlashcardDialog({
       />
     </>
   );
+}
+
+function selectDeckId(
+  decks: DeckEntity[],
+  currentDeckId: string | null,
+): string | null {
+  if (currentDeckId && decks.some((d) => d.id === currentDeckId)) {
+    return currentDeckId;
+  }
+  return decks.find((d) => d.isDefault)?.id ?? null;
 }
 
 function getEditFlashcardFormValues(

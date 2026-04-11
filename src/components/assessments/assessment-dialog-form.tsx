@@ -31,7 +31,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { assessmentTypeValues } from "@/features/assessments/constants";
+import {
+  assessmentTypeValues,
+  getAssessmentTypeLabel,
+} from "@/features/assessments/constants";
 import type {
   CreateAssessmentFormInput,
   EditAssessmentFormInput,
@@ -201,17 +204,7 @@ export function AssessmentDialogForm<
                     <SelectContent>
                       {assessmentTypeValues.map((value) => (
                         <SelectItem key={value} value={value}>
-                          {value === "exam"
-                            ? "Exam"
-                            : value === "assignment"
-                              ? "Assignment"
-                              : value === "project"
-                                ? "Project"
-                                : value === "presentation"
-                                  ? "Presentation"
-                                  : value === "homework"
-                                    ? "Homework"
-                                    : "Other"}
+                          {getAssessmentTypeLabel(value)}
                         </SelectItem>
                       ))}
                     </SelectContent>

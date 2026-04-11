@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e:infra:up": "docker compose -f compose.test.yml --env-file .env.test up -d --wait",
+    "test:e2e:infra:up": "docker compose -f compose.test.yml --env-file .env.test up -d",
     "test:e2e:infra:down": "docker compose -f compose.test.yml --env-file .env.test down -v",
     "test:e2e:migrate": "bun --env-file=.env.test run db:migrate",
     "test:e2e": "bun --env-file=.env.test run playwright test",

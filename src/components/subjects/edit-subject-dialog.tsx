@@ -9,6 +9,7 @@ interface EditSubjectDialogProps {
   subject: SubjectEditDto;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaved?: (subject: SubjectEditDto) => void;
 }
 
 function getEditSubjectFormValues(subject: SubjectEditDto): EditSubjectForm {
@@ -23,6 +24,7 @@ export function EditSubjectDialog({
   subject,
   open,
   onOpenChange,
+  onSaved,
 }: Readonly<EditSubjectDialogProps>) {
   return (
     <SubjectDialogForm
@@ -31,6 +33,14 @@ export function EditSubjectDialog({
       onOpenChange={onOpenChange}
       values={getEditSubjectFormValues(subject)}
       onSubmitAction={(values) => editSubject(values as EditSubjectForm)}
+      onSuccess={(values) => {
+        const nextValues = values as EditSubjectForm;
+        onSaved?.({
+          id: nextValues.id,
+          name: nextValues.name,
+          description: nextValues.description ?? null,
+        });
+      }}
     />
   );
 }

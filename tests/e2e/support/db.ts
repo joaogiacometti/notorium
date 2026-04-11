@@ -418,6 +418,7 @@ export async function createFlashcard(
   subjectId: string,
   front: string,
   back: string,
+  dueAt: Date = new Date(Date.now() - 60_000),
 ) {
   const defaultDeck = await ensureDefaultDeckForSubject(userId, subjectId);
 
@@ -430,6 +431,7 @@ export async function createFlashcard(
       front,
       frontNormalized: normalizeRichTextForUniqueness(front),
       back,
+      dueAt,
     })
     .returning({ id: flashcard.id });
 
@@ -442,6 +444,7 @@ export async function createFlashcardInDeck(
   deckId: string,
   front: string,
   back: string,
+  dueAt: Date = new Date(Date.now() - 60_000),
 ) {
   const [newFlashcard] = await getDb()
     .insert(flashcard)
@@ -452,6 +455,7 @@ export async function createFlashcardInDeck(
       front,
       frontNormalized: normalizeRichTextForUniqueness(front),
       back,
+      dueAt,
     })
     .returning({ id: flashcard.id });
 

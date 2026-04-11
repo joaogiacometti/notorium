@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { NoteDetail } from "@/components/notes/note-detail";
 import { getNoteByIdForUser } from "@/features/notes/queries";
 import { requireSession } from "@/lib/auth/auth";
@@ -11,11 +11,11 @@ interface NotePageProps {
 export default async function NotePage({ params }: NotePageProps) {
   const session = await requireSession();
 
-  const { noteId } = await params;
+  const { id, noteId } = await params;
   const note = await getNoteByIdForUser(session.user.id, noteId);
 
   if (!note) {
-    notFound();
+    redirect(`/subjects/${id}`);
   }
 
   const backLink = resolveNoteDetailBackLink(note.subjectId);

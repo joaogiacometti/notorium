@@ -6,6 +6,7 @@ import {
   createNote,
   createSubject,
 } from "./support/db";
+import { openSubjectDetailByName } from "./support/subjects";
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("note-subject", testTitle);
@@ -13,26 +14,6 @@ function getUniqueSubjectName(testTitle: string) {
 
 function getUniqueNoteTitle(testTitle: string) {
   return getPrefixedValue("note", testTitle);
-}
-
-async function openSubjectDetailByName(page: Page, subjectName: string) {
-  await page.goto("/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
-
-  const subjectLink = page
-    .getByRole("link", { name: subjectName, exact: true })
-    .first();
-
-  await expect(subjectLink).toBeVisible();
-  await Promise.all([
-    page.waitForURL(/\/subjects\/[^/]+$/),
-    subjectLink.click(),
-  ]);
-  await expect(
-    page.getByRole("heading", { name: subjectName, exact: true }),
-  ).toBeVisible();
 }
 
 async function createNoteFromDialog(

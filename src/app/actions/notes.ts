@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   createNoteForUser,
   deleteNoteForUser,
@@ -36,30 +37,48 @@ export async function getNoteById(id: string): Promise<NoteEntity | null> {
 export async function createNote(
   data: CreateNoteForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     createNoteSchema,
     data,
     "notes.invalidData",
     async (userId, parsedData) => createNoteForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function editNote(data: EditNoteForm): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     editNoteSchema,
     data,
     "notes.invalidData",
     async (userId, parsedData) => editNoteForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function deleteNote(
   data: DeleteNoteForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     deleteNoteSchema,
     data,
     "notes.invalidData",
     async (userId, parsedData) => deleteNoteForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }

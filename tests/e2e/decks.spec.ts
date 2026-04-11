@@ -8,6 +8,7 @@ import {
   createSubject,
   getDefaultDeckForSubject,
 } from "./support/db";
+import { openSubjectDetailByName } from "./support/subjects";
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("deck-subject", testTitle);
@@ -23,26 +24,6 @@ function getUniqueFlashcardFront(testTitle: string) {
 
 function getUniqueFlashcardBack(testTitle: string) {
   return getPrefixedValue("deck-flashcard-back", testTitle);
-}
-
-async function openSubjectDetailByName(page: Page, subjectName: string) {
-  await page.goto("/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
-
-  const subjectLink = page
-    .getByRole("link", { name: subjectName, exact: true })
-    .first();
-
-  await expect(subjectLink).toBeVisible();
-  await Promise.all([
-    page.waitForURL(/\/subjects\/[^/]+$/),
-    subjectLink.click(),
-  ]);
-  await expect(
-    page.getByRole("heading", { name: subjectName, exact: true }),
-  ).toBeVisible();
 }
 
 async function openFlashcardsPage(

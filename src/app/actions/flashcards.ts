@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDeckRecordForUser } from "@/features/decks/queries";
 import {
@@ -74,12 +75,18 @@ import {
 export async function createFlashcard(
   data: CreateFlashcardInput,
 ): Promise<CreateFlashcardResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     createFlashcardInputSchema,
     data,
     "flashcards.invalidData",
     async (userId, parsedData) => createFlashcardForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.flashcard.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function checkFlashcardDuplicate(
@@ -104,12 +111,21 @@ export async function checkFlashcardDuplicate(
 export async function editFlashcard(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     editFlashcardSchema,
     data,
     "flashcards.invalidData",
     async (userId, parsedData) => editFlashcardForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.flashcard.subjectId}`);
+    if (result.previousSubjectId !== result.flashcard.subjectId) {
+      revalidatePath(`/subjects/${result.previousSubjectId}`);
+    }
+  }
+
+  return result;
 }
 
 export async function generateFlashcardBack(
@@ -127,54 +143,89 @@ export async function generateFlashcardBack(
 export async function deleteFlashcard(
   data: DeleteFlashcardForm,
 ): Promise<DeleteFlashcardResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     deleteFlashcardSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
-      const result = await deleteFlashcardForUser(userId, parsedData);
+      const mutationResult = await deleteFlashcardForUser(userId, parsedData);
 
-      if (result.success !== true) {
-        return result;
+      if (mutationResult.success !== true) {
+        return mutationResult;
       }
 
-      return { success: true, id: parsedData.id };
+      return {
+        success: true as const,
+        id: parsedData.id,
+        subjectId: mutationResult.subjectId,
+      };
     },
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function bulkDeleteFlashcards(
   data: BulkDeleteFlashcardsForm,
 ): Promise<BulkDeleteFlashcardsResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     bulkDeleteFlashcardsSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) =>
       bulkDeleteFlashcardsForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    for (const subjectId of result.subjectIds) {
+      revalidatePath(`/subjects/${subjectId}`);
+    }
+  }
+
+  return result;
 }
 
 export async function bulkMoveFlashcards(
   data: BulkMoveFlashcardsForm,
 ): Promise<BulkMoveFlashcardsResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     bulkMoveFlashcardsSchema,
     data,
     "flashcards.invalidData",
     async (userId, parsedData) => bulkMoveFlashcardsForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+    for (const previousSubjectId of result.previousSubjectIds) {
+      if (previousSubjectId !== result.subjectId) {
+        revalidatePath(`/subjects/${previousSubjectId}`);
+      }
+    }
+  }
+
+  return result;
 }
 
 export async function resetFlashcard(
   data: ResetFlashcardForm,
 ): Promise<ResetFlashcardResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     resetFlashcardSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => resetFlashcardForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.flashcard.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function getFlashcardsManagePage(

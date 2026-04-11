@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { recordMiss } from "@/app/actions/attendance";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -37,7 +37,7 @@ export function RecordMissDialog({
   open,
   onOpenChange,
 }: Readonly<RecordMissDialogProps>) {
-  const router = useRouter();
+  const [_isPending, _startTransition] = useTransition();
   const today = new Date().toISOString().split("T")[0];
 
   const form = useForm({
@@ -53,7 +53,6 @@ export function RecordMissDialog({
     if (result.success) {
       form.reset({ subjectId, missDate: today });
       onOpenChange(false);
-      router.refresh();
     } else {
       form.setError("missDate", {
         message: resolveActionErrorMessage(result),

@@ -2,7 +2,8 @@
 
 import { Archive, BookOpen, Lock, Plus } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getSubjects } from "@/app/actions/subjects";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
@@ -27,14 +28,32 @@ export function SubjectsList({
   subjects,
   archivedCount,
 }: Readonly<SubjectsListProps>) {
+  const [subjectItems, setSubjectItems] = useState(subjects);
+  const [archivedItemsCount, setArchivedItemsCount] = useState(archivedCount);
   const [createOpen, setCreateOpen] = useState(false);
   const [activeAction, setActiveAction] = useState<SubjectActionTarget | null>(
     null,
   );
   const warningTone = getStatusToneClasses("warning");
 
-  const totalSubjects = getTotalSubjectCount(subjects.length, archivedCount);
+  useEffect(() => {
+    setSubjectItems(subjects);
+  }, [subjects]);
+
+  useEffect(() => {
+    setArchivedItemsCount(archivedCount);
+  }, [archivedCount]);
+
+  const totalSubjects = getTotalSubjectCount(
+    subjectItems.length,
+    archivedItemsCount,
+  );
   const isAtLimit = totalSubjects >= LIMITS.maxSubjects;
+
+  async function refreshSubjectsList() {
+    const latestSubjects = await getSubjects();
+    setSubjectItems(latestSubjects);
+  }
 
   return (
     <div>
@@ -44,9 +63,9 @@ export function SubjectsList({
             <Link href="/subjects/archived">
               <Archive className="size-4" />
               Archived
-              {archivedCount > 0 ? (
+              {archivedItemsCount > 0 ? (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                  {archivedCount}
+                  {archivedItemsCount}
                 </span>
               ) : null}
             </Link>
@@ -67,6 +86,9 @@ export function SubjectsList({
             }
             open={createOpen}
             onOpenChange={setCreateOpen}
+            onCreated={() => {
+              void refreshSubjectsList();
+            }}
           />
         </div>
       </div>
@@ -82,7 +104,7 @@ export function SubjectsList({
         </div>
       )}
 
-      {subjects.length === 0 && archivedCount === 0 ? (
+      {subjectItems.length === 0 && archivedItemsCount === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 py-20">
           <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
             <BookOpen className="size-6 text-primary" />
@@ -99,7 +121,7 @@ export function SubjectsList({
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {subjects.map((subj) => (
+          {subjectItems.map((subj) => (
             <SubjectCard
               key={subj.id}
               subject={subj}
@@ -134,6 +156,19 @@ export function SubjectsList({
         <EditSubjectDialog
           subject={activeAction.subject}
           open
+          onSaved={(updatedSubject) => {
+            setSubjectItems((currentSubjects) =>
+              currentSubjects.map((currentSubject) =>
+                currentSubject.id === updatedSubject.id
+                  ? {
+                      ...currentSubject,
+                      name: updatedSubject.name,
+                      description: updatedSubject.description,
+                    }
+                  : currentSubject,
+              ),
+            );
+          }}
           onOpenChange={(open) => {
             if (!open) setActiveAction(null);
           }}
@@ -148,6 +183,16 @@ export function SubjectsList({
             if (!open) setActiveAction(null);
           }}
           mode="archive"
+          onSuccess={() => {
+            const archivedSubjectId = activeAction.subject.id;
+            setSubjectItems((currentSubjects) =>
+              currentSubjects.filter(
+                (currentSubject) => currentSubject.id !== archivedSubjectId,
+              ),
+            );
+            setArchivedItemsCount((currentCount) => currentCount + 1);
+            setActiveAction(null);
+          }}
         />
       )}
       {activeAction?.action === "delete" && (
@@ -159,6 +204,15 @@ export function SubjectsList({
             if (!open) setActiveAction(null);
           }}
           mode="delete"
+          onSuccess={() => {
+            const deletedSubjectId = activeAction.subject.id;
+            setSubjectItems((currentSubjects) =>
+              currentSubjects.filter(
+                (currentSubject) => currentSubject.id !== deletedSubjectId,
+              ),
+            );
+            setActiveAction(null);
+          }}
         />
       )}
     </div>

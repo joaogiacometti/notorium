@@ -8,6 +8,7 @@ interface CreateSubjectDialogProps {
   trigger: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: () => void;
 }
 
 function getCreateSubjectFormValues(): CreateSubjectForm {
@@ -21,6 +22,7 @@ export function CreateSubjectDialog({
   trigger,
   open,
   onOpenChange,
+  onCreated,
 }: Readonly<CreateSubjectDialogProps>) {
   return (
     <SubjectDialogForm
@@ -30,6 +32,9 @@ export function CreateSubjectDialog({
       trigger={trigger}
       values={getCreateSubjectFormValues()}
       onSubmitAction={(values) => createSubject(values as CreateSubjectForm)}
+      onSuccess={() => {
+        onCreated?.();
+      }}
     />
   );
 }

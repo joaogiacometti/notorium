@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { archiveSubject, deleteSubject } from "@/app/actions/subjects";
@@ -35,7 +34,6 @@ export function DeleteSubjectDialog({
   onSuccess,
   mode = "delete",
 }: Readonly<DeleteSubjectDialogProps>) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -51,7 +49,6 @@ export function DeleteSubjectDialog({
           onSuccess();
         } else {
           onOpenChange(false);
-          router.refresh();
         }
       } else {
         toast.error(t(result.errorCode, result.errorParams));

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   type Path,
@@ -58,7 +57,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   getSuccessValues,
   closeOnSuccess,
 }: Readonly<UseFlashcardDialogStateOptions<TValues>>) {
-  const router = useRouter();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isGeneratingBack, setIsGeneratingBack] = useState(false);
   const [previousBack, setPreviousBack] = useState<string | null>(null);
@@ -255,7 +253,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
       if (closeOnSuccess) {
         onOpenChange(false);
-        router.refresh();
       }
     } finally {
       setIsSubmitting(false);

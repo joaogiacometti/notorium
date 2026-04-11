@@ -2,8 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -67,8 +66,8 @@ export function NoteDialogForm({
   values,
   onSubmitAction,
 }: Readonly<NoteDialogFormProps>) {
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const [_isPending, _startTransition] = useTransition();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useNoteForm(mode, values);
@@ -122,7 +121,6 @@ export function NoteDialogForm({
         );
         setDiscardDialogOpen(false);
         onOpenChange(false);
-        router.refresh();
         return;
       }
 

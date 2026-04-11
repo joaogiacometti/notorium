@@ -60,11 +60,10 @@ export function useExamSession() {
   const sessionComplete = session
     ? session.currentIndex >= session.cards.length
     : false;
-  const progress = session
-    ? session.cards.length > 0
-      ? session.currentIndex / session.cards.length
-      : 0
-    : 0;
+  let progress = 0;
+  if (session && session.cards.length > 0) {
+    progress = session.currentIndex / session.cards.length;
+  }
 
   return {
     session,

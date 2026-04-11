@@ -62,6 +62,11 @@ export function UserAccessManagementCard({
     approved: "default",
     blocked: "destructive",
   } as const;
+  const statusLabelMap = {
+    pending: "Pending",
+    approved: "Approved",
+    blocked: "Blocked",
+  } as const;
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const statusFilteredUsers =
     statusFilter === "all"
@@ -187,11 +192,7 @@ export function UserAccessManagementCard({
                     paginatedUsers.map((managedUser) => {
                       const isUpdating = updatingUserId === managedUser.id;
                       const statusLabel =
-                        managedUser.accessStatus === "pending"
-                          ? "Pending"
-                          : managedUser.accessStatus === "approved"
-                            ? "Approved"
-                            : "Blocked";
+                        statusLabelMap[managedUser.accessStatus];
                       return (
                         <TableRow
                           key={managedUser.id}

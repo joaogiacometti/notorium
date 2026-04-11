@@ -18,6 +18,12 @@ import { SubjectChip } from "@/components/shared/subject-chip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
+import { getAssessmentTypeLabel } from "@/features/assessments/constants";
+import {
+  ASSESSMENT_STATUS_LABEL,
+  ASSESSMENT_STATUS_TONE,
+  resolveAssessmentStatus,
+} from "@/features/assessments/status";
 import {
   formatIsoDate,
   formatRelativeTime,
@@ -70,36 +76,14 @@ export function AssessmentDetail({
     currentAssessment,
     formatIsoDate(new Date()),
   );
-  let statusTone: ReturnType<typeof getStatusToneClasses>;
-  if (overdue) {
-    statusTone = getStatusToneClasses("danger");
-  } else if (currentAssessment.status === "completed") {
-    statusTone = getStatusToneClasses("success");
-  } else {
-    statusTone = getStatusToneClasses("warning");
-  }
+  const assessmentStatus = resolveAssessmentStatus(
+    overdue,
+    currentAssessment.status,
+  );
+  const statusTone = ASSESSMENT_STATUS_TONE[assessmentStatus];
+  const statusLabel = ASSESSMENT_STATUS_LABEL[assessmentStatus];
 
-  let statusLabel: string;
-  if (overdue) {
-    statusLabel = "Overdue";
-  } else if (currentAssessment.status === "completed") {
-    statusLabel = "Completed";
-  } else {
-    statusLabel = "Pending";
-  }
-
-  const typeLabel =
-    currentAssessment.type === "exam"
-      ? "Exam"
-      : currentAssessment.type === "assignment"
-        ? "Assignment"
-        : currentAssessment.type === "project"
-          ? "Project"
-          : currentAssessment.type === "presentation"
-            ? "Presentation"
-            : currentAssessment.type === "homework"
-              ? "Homework"
-              : "Other";
+  const typeLabel = getAssessmentTypeLabel(currentAssessment.type);
 
   const score = formatNumber(currentAssessment.score);
   const weight = formatNumber(currentAssessment.weight, "%");

@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteNote } from "@/app/actions/notes";
@@ -32,7 +31,6 @@ export function DeleteNoteDialog({
   onOpenChange,
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
@@ -45,7 +43,6 @@ export function DeleteNoteDialog({
           onSuccess();
         } else {
           onOpenChange(false);
-          router.refresh();
         }
       } else {
         toast.error(t(result.errorCode, result.errorParams));

@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -55,7 +54,6 @@ export function BulkMoveFlashcardsDialog({
   onOpenChange,
   subjects,
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [decks, setDecks] = useState<DeckEntity[]>([]);
   const form = useForm<BulkMoveFlashcardsForm>({
@@ -117,7 +115,6 @@ export function BulkMoveFlashcardsDialog({
       if (result.success) {
         onMoved(result.ids, result.subjectId);
         onOpenChange(false);
-        router.refresh();
         form.reset({
           ids: [],
           subjectId: "",

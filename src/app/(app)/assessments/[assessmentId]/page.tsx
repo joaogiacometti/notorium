@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { AssessmentDetail } from "@/components/assessments/assessment-detail";
 import { getAssessmentDetailForUser } from "@/features/assessments/queries";
 import { requireSession } from "@/lib/auth/auth";
@@ -22,7 +22,11 @@ export default async function AssessmentPage({
   );
 
   if (!detail) {
-    notFound();
+    const backLink = resolveAssessmentDetailBackLink(
+      returnContext,
+      returnContext.subjectId ?? "",
+    );
+    redirect(backLink.href);
   }
 
   const backLink = resolveAssessmentDetailBackLink(

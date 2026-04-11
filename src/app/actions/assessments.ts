@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   createAssessmentForUser,
   deleteAssessmentForUser,
@@ -58,32 +59,50 @@ export async function getPlanningAssessmentsPage(
 export async function createAssessment(
   data: CreateAssessmentForm,
 ): Promise<CreateAssessmentResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     createAssessmentSchema,
     data,
     "assessments.invalidData",
     async (userId, parsedData) => createAssessmentForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.assessment.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function editAssessment(
   data: EditAssessmentForm,
 ): Promise<EditAssessmentResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     editAssessmentSchema,
     data,
     "assessments.invalidData",
     async (userId, parsedData) => editAssessmentForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.assessment.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function deleteAssessment(
   data: DeleteAssessmentForm,
 ): Promise<DeleteAssessmentResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     deleteAssessmentSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => deleteAssessmentForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }

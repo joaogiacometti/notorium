@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   archiveSubjectForUser,
   createSubjectForUser,
@@ -48,54 +49,85 @@ export async function getSubjectById(
 export async function createSubject(
   data: CreateSubjectForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     createSubjectSchema,
     data,
     "subjects.invalidData",
     async (userId, parsedData) => createSubjectForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+  }
+
+  return result;
 }
 
 export async function editSubject(
   data: EditSubjectForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     editSubjectSchema,
     data,
     "subjects.invalidData",
     async (userId, parsedData) => editSubjectForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+    revalidatePath(`/subjects/${data.id}`);
+  }
+
+  return result;
 }
 
 export async function archiveSubject(
   data: ArchiveSubjectForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     archiveSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => archiveSubjectForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+  }
+
+  return result;
 }
 
 export async function restoreSubject(
   data: RestoreSubjectForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     restoreSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => restoreSubjectForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+  }
+
+  return result;
 }
 
 export async function deleteSubject(
   data: DeleteSubjectForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     deleteSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => deleteSubjectForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+  }
+
+  return result;
 }

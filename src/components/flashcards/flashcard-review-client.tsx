@@ -565,12 +565,17 @@ export function FlashcardReviewClient({
     reviewState.summary.dueCount === 0
       ? "No cards due right now."
       : `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards.`;
-  const progress = examSession.session
-    ? examSession.progress
-    : reviewState.summary.totalCount > 0
-      ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
-        reviewState.summary.totalCount
-      : 0;
+
+  let progress: number;
+  if (examSession.session) {
+    progress = examSession.progress;
+  } else if (reviewState.summary.totalCount > 0) {
+    progress =
+      (reviewState.summary.totalCount - reviewState.summary.dueCount) /
+      reviewState.summary.totalCount;
+  } else {
+    progress = 0;
+  }
   const previewLabels = currentCard
     ? getFlashcardReviewPreviewLabels({
         card: currentCard,

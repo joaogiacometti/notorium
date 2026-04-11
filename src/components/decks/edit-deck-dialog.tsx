@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editDeck } from "@/app/actions/decks";
@@ -54,7 +53,7 @@ export function EditDeckDialog({
   onOpenChange,
   onSaved,
 }: Readonly<EditDeckDialogProps>) {
-  const router = useRouter();
+  const [_isPending, _startTransition] = useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<EditDeckForm>({
     resolver: zodResolver(editDeckSchema),
@@ -78,7 +77,6 @@ export function EditDeckDialog({
         form.reset(getEditDeckFormValues(result.deck));
         onSaved?.(result.deck);
         onOpenChange(false);
-        router.refresh();
         return;
       }
 

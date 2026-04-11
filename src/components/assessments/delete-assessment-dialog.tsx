@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAssessment } from "@/app/actions/assessments";
@@ -31,7 +30,6 @@ export function DeleteAssessmentDialog({
   onOpenChange,
   onDeleted,
 }: Readonly<DeleteAssessmentDialogProps>) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -40,7 +38,6 @@ export function DeleteAssessmentDialog({
       if (result.success) {
         onDeleted?.(result.id);
         onOpenChange(false);
-        router.refresh();
       } else {
         toast.error(resolveActionErrorMessage(result));
       }

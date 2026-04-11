@@ -92,9 +92,11 @@ export function AttendanceSummary({
     id: string;
     date: string;
   } | null>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const isConfigured = totalClasses !== null && maxMisses !== null;
-  const missCount = misses.length;
+  const activeMisses = misses.filter((m) => !deletedIds.has(m.id));
+  const missCount = activeMisses.length;
 
   return (
     <div>
@@ -137,7 +139,7 @@ export function AttendanceSummary({
             totalClasses={totalClasses}
           />
 
-          {misses.length > 0 && (
+          {activeMisses.length > 0 && (
             <Accordion type="single" collapsible>
               <AccordionItem value="misses">
                 <AccordionTrigger className="text-sm font-medium text-muted-foreground hover:no-underline">
@@ -145,7 +147,7 @@ export function AttendanceSummary({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-2 pt-3">
-                    {misses.map((miss) => {
+                    {activeMisses.map((miss) => {
                       const formattedMissDate = formatDateShort(miss.missDate);
 
                       return (
@@ -211,6 +213,9 @@ export function AttendanceSummary({
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null);
           }}
+          onDeleted={(id) => {
+            setDeletedIds((prev) => new Set(prev).add(id));
+          }}
         />
       )}
     </div>
@@ -247,10 +252,12 @@ function AttendanceProgressCard({
       ? Math.round(((totalClasses - missCount) / totalClasses) * 100)
       : 100;
 
+  const remainingText =
+    status.remaining === 1 ? "miss remaining" : "misses remaining";
   const remainingLabel =
     missCount >= maxMisses
       ? "No misses left"
-      : `${status.remaining} ${status.remaining === 1 ? "miss remaining" : "misses remaining"}`;
+      : `${status.remaining} ${remainingText}`;
 
   return (
     <div

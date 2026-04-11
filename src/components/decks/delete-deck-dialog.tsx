@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteDeck } from "@/app/actions/decks";
@@ -21,6 +20,7 @@ interface DeleteDeckDialogProps {
   flashcardCount: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (deckId: string) => void;
 }
 
 export function DeleteDeckDialog({
@@ -29,8 +29,8 @@ export function DeleteDeckDialog({
   flashcardCount,
   open,
   onOpenChange,
+  onDeleted,
 }: Readonly<DeleteDeckDialogProps>) {
-  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
@@ -43,8 +43,8 @@ export function DeleteDeckDialog({
     try {
       const result = await deleteDeck({ id: deckId });
       if (result.success) {
+        onDeleted?.(result.id);
         onOpenChange(false);
-        router.refresh();
         return;
       }
 

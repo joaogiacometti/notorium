@@ -6,27 +6,15 @@ import {
 } from "@/components/assessments/assessment-type-presentation";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
+import {
+  ASSESSMENT_STATUS_LABEL,
+  ASSESSMENT_STATUS_TONE,
+  resolveAssessmentStatus,
+} from "@/features/assessments/status";
 import { formatDateShort } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
-
-type AssessmentStatus = "overdue" | "completed" | "pending";
-
-function resolveAssessmentStatus(
-  overdue: boolean,
-  status: AssessmentEntity["status"],
-): AssessmentStatus {
-  if (overdue) return "overdue";
-  if (status === "completed") return "completed";
-  return "pending";
-}
-
-const STATUS_TONE = {
-  overdue: getStatusToneClasses("danger"),
-  completed: getStatusToneClasses("success"),
-  pending: getStatusToneClasses("warning"),
-} as const;
 
 interface AssessmentItemCardProps {
   item: AssessmentEntity;
@@ -54,13 +42,8 @@ export function AssessmentItemCard({
   onDelete,
 }: Readonly<AssessmentItemCardProps>) {
   const assessmentStatus = resolveAssessmentStatus(overdue, item.status);
-  const statusTone = STATUS_TONE[assessmentStatus];
-  const statusLabel =
-    assessmentStatus === "overdue"
-      ? "Overdue"
-      : assessmentStatus === "completed"
-        ? "Completed"
-        : "Pending";
+  const statusTone = ASSESSMENT_STATUS_TONE[assessmentStatus];
+  const statusLabel = ASSESSMENT_STATUS_LABEL[assessmentStatus];
   const typeStyle = assessmentTypeStyles[item.type];
   const TypeIcon = typeStyle.icon;
   const scoreTone =
@@ -154,7 +137,7 @@ export function AssessmentItemCard({
             className={cn(
               "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs",
               overdue
-                ? `${STATUS_TONE.overdue.border} ${STATUS_TONE.overdue.bg} ${STATUS_TONE.overdue.text}`
+                ? `${ASSESSMENT_STATUS_TONE.overdue.border} ${ASSESSMENT_STATUS_TONE.overdue.bg} ${ASSESSMENT_STATUS_TONE.overdue.text}`
                 : "border-border/50 bg-muted/30 text-muted-foreground",
             )}
           >

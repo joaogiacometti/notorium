@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   deleteMissForUser,
   recordMissForUser,
@@ -24,13 +25,19 @@ import type {
 export async function updateAttendanceSettings(
   data: AttendanceSettingsForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     attendanceSettingsSchema,
     data,
     "attendance.invalidSettings",
     async (userId, parsedData) =>
       updateAttendanceSettingsForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function getMissesBySubject(
@@ -43,21 +50,33 @@ export async function getMissesBySubject(
 export async function recordMiss(
   data: RecordMissForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     recordMissSchema,
     data,
     "attendance.invalidMissData",
     async (userId, parsedData) => recordMissForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }
 
 export async function deleteMiss(
   data: DeleteMissForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     deleteMissSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => deleteMissForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
 }

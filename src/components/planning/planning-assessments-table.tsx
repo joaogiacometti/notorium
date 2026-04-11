@@ -25,7 +25,10 @@ import type {
   StatusFilter,
   TypeFilter,
 } from "@/features/assessments/assessment-filters";
-import { assessmentTypeValues } from "@/features/assessments/constants";
+import {
+  assessmentTypeValues,
+  getAssessmentTypeLabel,
+} from "@/features/assessments/constants";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   PlanningAssessmentsPage,
@@ -163,15 +166,6 @@ export function PlanningAssessmentsTable({
     void assessmentsQuery.refetch();
   }
 
-  const typeLabels: Record<string, string> = {
-    exam: "Exam",
-    assignment: "Assignment",
-    project: "Project",
-    presentation: "Presentation",
-    homework: "Homework",
-    other: "Other",
-  };
-
   return (
     <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       <Card className="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
@@ -254,7 +248,7 @@ export function PlanningAssessmentsTable({
                     <SelectItem value="all">All Types</SelectItem>
                     {assessmentTypeValues.map((value) => (
                       <SelectItem key={value} value={value}>
-                        {typeLabels[value]}
+                        {getAssessmentTypeLabel(value)}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -26,7 +26,9 @@ export async function getDecksWithCountBySubjectForUser(
   const counts = await getDb()
     .select({ deckId: flashcard.deckId, count: count() })
     .from(flashcard)
-    .where(eq(flashcard.userId, userId))
+    .where(
+      and(eq(flashcard.userId, userId), eq(flashcard.subjectId, subjectId)),
+    )
     .groupBy(flashcard.deckId)
     .then((rows) => new Map(rows.map((r) => [r.deckId, r.count])));
 

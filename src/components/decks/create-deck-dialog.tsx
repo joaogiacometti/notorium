@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createDeck } from "@/app/actions/decks";
@@ -28,6 +27,7 @@ import {
   createDeckSchema,
 } from "@/features/decks/validation";
 import { LIMITS } from "@/lib/config/limits";
+import type { DeckEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface CreateDeckDialogProps {
@@ -35,6 +35,7 @@ interface CreateDeckDialogProps {
   trigger: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: (deck: DeckEntity) => void;
 }
 
 function getCreateDeckFormValues(subjectId: string): CreateDeckForm {
@@ -50,8 +51,9 @@ export function CreateDeckDialog({
   trigger,
   open,
   onOpenChange,
+  onCreated,
 }: Readonly<CreateDeckDialogProps>) {
-  const router = useRouter();
+  const [_isPending, _startTransition] = useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<CreateDeckForm>({
     resolver: zodResolver(createDeckSchema),
@@ -73,8 +75,8 @@ export function CreateDeckDialog({
       const result = await createDeck(data);
       if (result.success) {
         form.reset(getCreateDeckFormValues(subjectId));
+        onCreated?.(result.deck);
         onOpenChange(false);
-        router.refresh();
         return;
       }
 
