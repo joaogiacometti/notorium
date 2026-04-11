@@ -24,21 +24,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { type EditDeckForm, editDeckSchema } from "@/features/decks/validation";
 import { LIMITS } from "@/lib/config/limits";
+import type { DeckEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
+type EditDeckDialogDeck = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
 interface EditDeckDialogProps {
-  deck: {
-    id: string;
-    name: string;
-    description: string | null;
-  };
+  deck: EditDeckDialogDeck;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaved?: (deck: DeckEntity) => void;
 }
 
-function getEditDeckFormValues(
-  deck: EditDeckDialogProps["deck"],
-): EditDeckForm {
+function getEditDeckFormValues(deck: EditDeckDialogDeck): EditDeckForm {
   return {
     id: deck.id,
     name: deck.name,
@@ -50,6 +52,7 @@ export function EditDeckDialog({
   deck,
   open,
   onOpenChange,
+  onSaved,
 }: Readonly<EditDeckDialogProps>) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,7 +75,8 @@ export function EditDeckDialog({
     try {
       const result = await editDeck(data);
       if (result.success) {
-        form.reset(getEditDeckFormValues(deck));
+        form.reset(getEditDeckFormValues(result.deck));
+        onSaved?.(result.deck);
         onOpenChange(false);
         router.refresh();
         return;

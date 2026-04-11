@@ -52,12 +52,11 @@ interface GeneratedCard {
 function getDeckValueForSubject(
   decks: DeckEntity[],
   deckId: string | null | undefined,
-): string | null | undefined {
-  if (!deckId) {
-    return undefined;
+): string | undefined {
+  if (deckId && decks.some((deck) => deck.id === deckId)) {
+    return deckId;
   }
-
-  return decks.some((deck) => deck.id === deckId) ? deckId : undefined;
+  return decks.find((deck) => deck.isDefault)?.id;
 }
 
 function getCreateFlashcardFormValues(

@@ -113,9 +113,20 @@ export function EditFlashcardDialog({
     if (splitSubjectId) {
       void getDecks(splitSubjectId).then((fetchedDecks) => {
         setSplitDecks(fetchedDecks);
+        setSplitDeckId((currentDeckId) => {
+          if (
+            currentDeckId &&
+            fetchedDecks.some((d) => d.id === currentDeckId)
+          ) {
+            return currentDeckId;
+          }
+
+          return fetchedDecks.find((d) => d.isDefault)?.id ?? null;
+        });
       });
     } else {
       setSplitDecks([]);
+      setSplitDeckId(null);
     }
   }, [splitSubjectId]);
 
@@ -126,6 +137,9 @@ export function EditFlashcardDialog({
         if (currentSubjectId && currentSubjectId !== flashcard.subjectId) {
           void getDecks(currentSubjectId).then((fetchedDecks) => {
             setDecks(fetchedDecks);
+            form.setValue("deckId", fetchedDecks.find((d) => d.isDefault)?.id, {
+              shouldDirty: true,
+            });
           });
         }
       }
@@ -167,6 +181,7 @@ export function EditFlashcardDialog({
 
   function handleSplitSubjectChange(newSubjectId: string) {
     setSplitSubjectId(newSubjectId);
+    setSplitDecks([]);
     setSplitDeckId(null);
   }
 

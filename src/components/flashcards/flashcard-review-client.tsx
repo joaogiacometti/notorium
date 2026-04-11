@@ -53,6 +53,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {
   getFlashcardReviewShortcutAction,
@@ -386,6 +387,8 @@ function FocusModeOverlay({
     );
   }
 
+  const newLocal =
+    "flex items-center gap-1.5 rounded-md border-2 border-(--assessment-exam-border) bg-(--assessment-exam-bg) px-2 py-1 text-xs font-bold tracking-wider text-[var(--assessment-exam-text)] uppercase";
   return (
     <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
       <div className="flex h-full flex-col">
@@ -398,7 +401,7 @@ function FocusModeOverlay({
 
         <div className="flex items-center justify-between px-4 py-3">
           {isExamMode ? (
-            <div className="flex items-center gap-1.5 rounded-md border-2 border-[var(--assessment-exam-border)] bg-[var(--assessment-exam-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--assessment-exam-text)] uppercase">
+            <div className={newLocal}>
               <GraduationCap className="size-3.5" />
               <span>EXAM</span>
             </div>
@@ -423,7 +426,9 @@ function FocusModeOverlay({
           {(currentSubject || currentDeck) && (
             <p className="mb-3 text-xs font-semibold tracking-wider text-primary/80 uppercase">
               {currentSubject?.name}
-              {currentDeck ? ` · ${currentDeck.name}` : " · General"}
+              {currentDeck
+                ? ` · ${currentDeck.name}`
+                : ` · ${DEFAULT_DECK_NAME}`}
             </p>
           )}
 
@@ -1078,8 +1083,8 @@ export function FlashcardReviewClient({
           onOpenChange={setShowExitConfirmation}
         >
           <DialogContent
-            className="z-[120] sm:max-w-md"
-            overlayClassName="z-[120]"
+            className="z-120 sm:max-w-md"
+            overlayClassName="z-120"
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
             <DialogHeader>

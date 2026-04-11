@@ -42,7 +42,9 @@ export function DeleteFlashcardDialog({
       if (result.success) {
         onDeleted?.(result.id);
         onOpenChange(false);
-        router.refresh();
+        if (!onDeleted) {
+          router.refresh();
+        }
       } else {
         toast.error(t(result.errorCode, result.errorParams));
       }

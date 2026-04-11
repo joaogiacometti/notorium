@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import type { DeckEntity } from "@/lib/server/api-contracts";
 
 interface DeckSelectProps {
@@ -26,7 +27,7 @@ export function DeckSelect({
   value,
   onChange,
   decks,
-  placeholder = "General",
+  placeholder = DEFAULT_DECK_NAME,
   id,
   label = "Deck",
   error,
@@ -36,35 +37,23 @@ export function DeckSelect({
   const defaultDeck = decks.find((d) => d.isDefault);
   const nonDefaultDecks = decks.filter((d) => !d.isDefault);
 
-  function handleValueChange(newValue: string) {
-    if (newValue === "__default__") {
-      onChange(null);
-    } else {
-      onChange(newValue);
-    }
-  }
-
-  const isDefaultDeckSelected = value !== null && value === defaultDeck?.id;
-  const selectValue =
-    value === null || isDefaultDeckSelected ? "__default__" : value;
-
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Select
-        value={selectValue}
-        onValueChange={handleValueChange}
+        value={value ?? undefined}
+        onValueChange={onChange}
         disabled={disabled}
       >
         <SelectTrigger id={id} aria-invalid={ariaInvalid}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__default__">
-            <span className="text-muted-foreground">
-              {defaultDeck ? defaultDeck.name : "General"}
-            </span>
-          </SelectItem>
+          {defaultDeck && (
+            <SelectItem value={defaultDeck.id}>
+              <span className="text-muted-foreground">{defaultDeck.name}</span>
+            </SelectItem>
+          )}
           {nonDefaultDecks.map((deck) => (
             <SelectItem key={deck.id} value={deck.id}>
               {deck.name}

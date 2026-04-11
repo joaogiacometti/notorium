@@ -92,6 +92,17 @@ describe("createFlashcardSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts empty-string deckId by normalizing it", () => {
+    const result = createFlashcardSchema.safeParse({
+      subjectId: "subject-1",
+      deckId: "",
+      front: "What is 2 + 2?",
+      back: "4",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects rich text front when plain text exceeds max characters", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "subject-1",
@@ -196,6 +207,16 @@ describe("generateFlashcardBackSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("accepts empty-string deckId by normalizing it", () => {
+    const result = generateFlashcardBackSchema.safeParse({
+      subjectId: "subject-1",
+      deckId: "",
+      front: "<p>What is ATP?</p>",
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("deleteFlashcardSchema", () => {
@@ -235,6 +256,16 @@ describe("bulkDeleteFlashcardsSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("accepts empty-string deckId by normalizing it", () => {
+    const result = bulkMoveFlashcardsSchema.safeParse({
+      ids: ["flashcard-1", "flashcard-2"],
+      subjectId: "subject-1",
+      deckId: "",
+    });
+
+    expect(result.success).toBe(true);
   });
 });
 
@@ -337,6 +368,16 @@ describe("generateFlashcardsSchema", () => {
       deckId: "deck-123",
       text: "Some text to generate flashcards from.",
     });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts empty-string deckId by normalizing it", () => {
+    const result = generateFlashcardsSchema.safeParse({
+      subjectId: "subject-123",
+      deckId: "",
+      text: "Some text to generate flashcards from.",
+    });
+
     expect(result.success).toBe(true);
   });
 });

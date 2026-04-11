@@ -1,8 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
-import { ensureDefaultDeckForSubject } from "@/features/decks/mutations";
-import { getDeckRecordForUser } from "@/features/decks/queries";
+import {
+  getDeckRecordForUser,
+  getDefaultDeckForSubject,
+} from "@/features/decks/queries";
 import {
   generateFlashcardBackForUser,
   improveFlashcardBackForUser,
@@ -69,6 +71,18 @@ function isUniqueViolationError(error: unknown): boolean {
   );
 }
 
+function normalizeOptionalDeckId(
+  deckId: string | null | undefined,
+): string | undefined {
+  if (!deckId) {
+    return undefined;
+  }
+
+  const trimmedDeckId = deckId.trim();
+
+  return trimmedDeckId.length > 0 ? trimmedDeckId : undefined;
+}
+
 async function getCreateFlashcardPreflight(
   userId: string,
   subjectId: string,
@@ -117,7 +131,7 @@ export async function createFlashcardForUser(
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
-  const inputDeckId = data.deckId ?? undefined;
+  const inputDeckId = normalizeOptionalDeckId(data.deckId);
   const { existingSubject, currentCount, hasDuplicate, existingDeck } =
     await getCreateFlashcardPreflight(
       userId,
@@ -140,7 +154,7 @@ export async function createFlashcardForUser(
     return actionError("flashcards.duplicateFront");
   }
 
-  if (data.deckId && !existingDeck) {
+  if (inputDeckId && !existingDeck) {
     return actionError("decks.notFound");
   }
 
@@ -148,8 +162,8 @@ export async function createFlashcardForUser(
     return actionError("decks.wrongSubject");
   }
 
-  const defaultDeck = await ensureDefaultDeckForSubject(userId, data.subjectId);
-  const deckId = data.deckId ?? defaultDeck.id;
+  const defaultDeck = await getDefaultDeckForSubject(userId, data.subjectId);
+  const deckId = inputDeckId ?? defaultDeck.id;
 
   const schedulingState = getInitialFlashcardSchedulingState();
   try {
@@ -190,8 +204,13 @@ export async function editFlashcardForUser(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
+  const inputDeckId = normalizeOptionalDeckId(data.deckId);
   const { existingFlashcard, existingSubject, hasDuplicate, existingDeck } =
-    await getEditFlashcardPreflight(userId, data, frontNormalized);
+    await getEditFlashcardPreflight(
+      userId,
+      { ...data, deckId: inputDeckId },
+      frontNormalized,
+    );
 
   if (!existingFlashcard) {
     return actionError("flashcards.notFound");
@@ -218,7 +237,7 @@ export async function editFlashcardForUser(
     return actionError("flashcards.duplicateFront");
   }
 
-  if (data.deckId && !existingDeck) {
+  if (inputDeckId && !existingDeck) {
     return actionError("decks.notFound");
   }
 
@@ -226,12 +245,16 @@ export async function editFlashcardForUser(
     return actionError("decks.wrongSubject");
   }
 
+  const targetDeckId = inputDeckId
+    ? inputDeckId
+    : (await getDefaultDeckForSubject(userId, data.subjectId)).id;
+
   try {
     const updated = await getDb()
       .update(flashcard)
       .set({
         subjectId: data.subjectId,
-        deckId: data.deckId ?? null,
+        deckId: targetDeckId,
         front: data.front,
         frontNormalized,
         back: data.back,
@@ -367,7 +390,7 @@ export async function bulkMoveFlashcardsForUser(
     return actionError("subjects.notFound");
   }
 
-  const inputDeckId = data.deckId ?? undefined;
+  const inputDeckId = normalizeOptionalDeckId(data.deckId);
   let targetDeckId: string;
 
   if (inputDeckId) {
@@ -380,10 +403,7 @@ export async function bulkMoveFlashcardsForUser(
     }
     targetDeckId = inputDeckId;
   } else {
-    const defaultDeck = await ensureDefaultDeckForSubject(
-      userId,
-      data.subjectId,
-    );
+    const defaultDeck = await getDefaultDeckForSubject(userId, data.subjectId);
     targetDeckId = defaultDeck.id;
   }
 

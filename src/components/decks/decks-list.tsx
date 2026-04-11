@@ -2,7 +2,7 @@
 
 import { Layers, Lock, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CreateDeckDialog } from "@/components/decks/create-deck-dialog";
 import { DeleteDeckDialog } from "@/components/decks/delete-deck-dialog";
 import { EditDeckDialog } from "@/components/decks/edit-deck-dialog";
@@ -36,6 +36,7 @@ type DeckDeleteTarget = {
 };
 
 export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
+  const [deckItems, setDeckItems] = useState(decks);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DeckEditTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeckDeleteTarget | null>(
@@ -43,14 +44,18 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
   );
   const warningTone = getStatusToneClasses("warning");
 
-  const isAtLimit = decks.length >= LIMITS.maxDecksPerSubject;
-  const totalFlashcards = decks.reduce((sum, d) => sum + d.flashcardCount, 0);
+  useEffect(() => {
+    setDeckItems(decks);
+  }, [decks]);
+
+  const isAtLimit = deckItems.length >= LIMITS.maxDecksPerSubject;
+  const totalFlashcards = deckItems.reduce(
+    (sum, d) => sum + d.flashcardCount,
+    0,
+  );
 
   function getDeckCountText() {
-    if (decks.length === 0) {
-      return "Organize your flashcards into topic-based decks.";
-    }
-    return `${decks.length}/${LIMITS.maxDecksPerSubject} decks · ${totalFlashcards} flashcards`;
+    return `${deckItems.length}/${LIMITS.maxDecksPerSubject} decks · ${totalFlashcards} flashcards`;
   }
 
   return (
@@ -95,45 +100,47 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
         </div>
       )}
 
-      {decks.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
-          <div>
-            <h3 className="text-base font-semibold">No decks yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create your first deck to organize flashcards by topic.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {decks.map((deck) => (
-            <DeckCard
-              key={deck.id}
-              deck={deck}
-              subjectId={subjectId}
-              onEditRequested={() =>
-                setEditTarget({
-                  id: deck.id,
-                  name: deck.name,
-                  description: deck.description,
-                })
-              }
-              onDeleteRequested={() =>
-                setDeleteTarget({
-                  id: deck.id,
-                  name: deck.name,
-                  flashcardCount: deck.flashcardCount,
-                })
-              }
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {deckItems.map((deck) => (
+          <DeckCard
+            key={deck.id}
+            deck={deck}
+            subjectId={subjectId}
+            onEditRequested={() =>
+              setEditTarget({
+                id: deck.id,
+                name: deck.name,
+                description: deck.description,
+              })
+            }
+            onDeleteRequested={() =>
+              setDeleteTarget({
+                id: deck.id,
+                name: deck.name,
+                flashcardCount: deck.flashcardCount,
+              })
+            }
+          />
+        ))}
+      </div>
 
       {editTarget && (
         <EditDeckDialog
           deck={editTarget}
           open
+          onSaved={(updatedDeck) => {
+            setDeckItems((currentDecks) =>
+              currentDecks.map((currentDeck) =>
+                currentDeck.id === updatedDeck.id
+                  ? {
+                      ...currentDeck,
+                      ...updatedDeck,
+                      flashcardCount: currentDeck.flashcardCount,
+                    }
+                  : currentDeck,
+              ),
+            );
+          }}
           onOpenChange={(open) => {
             if (!open) setEditTarget(null);
           }}
