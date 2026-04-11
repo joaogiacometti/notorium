@@ -11,6 +11,7 @@ export function getCreateFlashcardResetValues(
 ): CreateFlashcardForm {
   return {
     subjectId: values.subjectId,
+    deckId: values.deckId,
     front: options.keepFrontAfterSubmit ? values.front : "",
     back: options.keepBackAfterSubmit ? values.back : "",
   };

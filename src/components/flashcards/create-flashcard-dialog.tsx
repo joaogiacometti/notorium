@@ -52,7 +52,11 @@ interface GeneratedCard {
 function getDeckValueForSubject(
   decks: DeckEntity[],
   deckId: string | null | undefined,
+  propDeckId?: string | null,
 ): string | undefined {
+  if (propDeckId && decks.some((deck) => deck.id === propDeckId)) {
+    return propDeckId;
+  }
   if (deckId && decks.some((deck) => deck.id === deckId)) {
     return deckId;
   }
@@ -149,7 +153,11 @@ export function CreateFlashcardDialog({
 
       setDecks(fetchedDecks);
       const currentDeckId = singleForm.getValues("deckId");
-      const nextDeckId = getDeckValueForSubject(fetchedDecks, currentDeckId);
+      const nextDeckId = getDeckValueForSubject(
+        fetchedDecks,
+        currentDeckId,
+        deckId,
+      );
       singleForm.setValue("deckId", nextDeckId);
       setSelectedDeckId(nextDeckId ?? null);
     });
@@ -157,7 +165,7 @@ export function CreateFlashcardDialog({
     return () => {
       active = false;
     };
-  }, [singleForm, watchedSingleSubjectId]);
+  }, [singleForm, watchedSingleSubjectId, deckId]);
 
   useEffect(() => {
     if (!subjectId) {
@@ -196,7 +204,7 @@ export function CreateFlashcardDialog({
       }
       onOpenChange(nextOpen);
     },
-    values: getCreateFlashcardFormValues(subjectId ?? ""),
+    values: getCreateFlashcardFormValues(subjectId ?? "", deckId),
     form: singleForm,
     onSubmitAction: createFlashcard,
     onSuccess: (flashcard) => {
