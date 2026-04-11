@@ -27,6 +27,7 @@ import {
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { SubjectText } from "@/components/shared/subject-text";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
@@ -85,6 +86,10 @@ interface FlashcardReviewClientProps {
   subjectId?: string;
   deckId?: string;
   embedded?: boolean;
+}
+
+function getExamScopeKey(subjectId?: string, deckId?: string) {
+  return `${subjectId ?? "all"}:${deckId ?? "all"}`;
 }
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
@@ -518,6 +523,11 @@ export function FlashcardReviewClient({
   );
   const [isLoadingExamCards, setIsLoadingExamCards] = useState(false);
   const examScopeRef = useRef<{ subjectId?: string; deckId?: string }>({});
+  const examCardsRequestIdRef = useRef(0);
+  const examCardsRequestRef = useRef<{
+    scopeKey: string;
+    promise: Promise<FlashcardReviewEntity[] | null>;
+  } | null>(null);
   const examSession = useExamSession();
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
@@ -537,24 +547,59 @@ export function FlashcardReviewClient({
         subjectId: selectedSubjectId,
         deckId: selectedDeckId,
       };
+      examCardsRequestIdRef.current += 1;
+      examCardsRequestRef.current = null;
+      setIsLoadingExamCards(false);
     }
   }, [selectedSubjectId, selectedDeckId]);
 
-  async function fetchExamCardsLazy() {
-    if (examCards !== null || isLoadingExamCards) {
-      return;
+  async function ensureExamCardsLoaded(): Promise<
+    FlashcardReviewEntity[] | null
+  > {
+    if (examCards !== null) {
+      return examCards;
     }
 
-    setIsLoadingExamCards(true);
-    try {
-      const cards = await getExamFlashcards({
-        subjectId: selectedSubjectId,
-        deckId: selectedDeckId,
-      });
-      setExamCards(cards);
-    } finally {
-      setIsLoadingExamCards(false);
+    const scopeKey = getExamScopeKey(selectedSubjectId, selectedDeckId);
+    if (examCardsRequestRef.current?.scopeKey === scopeKey) {
+      return examCardsRequestRef.current.promise;
     }
+
+    const requestId = examCardsRequestIdRef.current + 1;
+    examCardsRequestIdRef.current = requestId;
+
+    setIsLoadingExamCards(true);
+    const request = getExamFlashcards({
+      subjectId: selectedSubjectId,
+      deckId: selectedDeckId,
+    })
+      .then((cards) => {
+        if (examCardsRequestIdRef.current === requestId) {
+          setExamCards(cards);
+        }
+
+        return cards;
+      })
+      .catch(() => {
+        if (examCardsRequestIdRef.current === requestId) {
+          toast.error("Could not load exam cards. Please try again.");
+        }
+
+        return null;
+      })
+      .finally(() => {
+        if (examCardsRequestIdRef.current === requestId) {
+          setIsLoadingExamCards(false);
+          examCardsRequestRef.current = null;
+        }
+      });
+
+    examCardsRequestRef.current = {
+      scopeKey,
+      promise: request,
+    };
+
+    return request;
   }
 
   const currentCard = examSession.session
@@ -582,6 +627,9 @@ export function FlashcardReviewClient({
         scheduler: reviewState.scheduler,
       })
     : null;
+  const filteredDecks = selectedSubjectId
+    ? decks.filter((deck) => deck.subjectId === selectedSubjectId)
+    : [];
 
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
@@ -733,12 +781,13 @@ export function FlashcardReviewClient({
   }
 
   async function handleStartExamMode() {
-    if (!examCards) {
-      await fetchExamCardsLazy();
+    const cards = examCards ?? (await ensureExamCardsLoaded());
+
+    if (!cards || cards.length === 0) {
       return;
     }
 
-    examSession.startSession(examCards, {
+    examSession.startSession(cards, {
       subjectId: selectedSubjectId,
       deckId: selectedDeckId,
     });
@@ -911,76 +960,82 @@ export function FlashcardReviewClient({
 
   const content = (
     <>
-      <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <Select
-            value={selectedSubjectId ?? "all"}
-            onValueChange={handleSubjectChange}
-          >
-            <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
-              <SelectValue placeholder="Filter by subject" />
-            </SelectTrigger>
-            <SelectContent align="start">
-              <SelectItem value="all">All subjects</SelectItem>
-              {subjects.map((subject) => (
-                <SelectItem key={subject.id} value={subject.id}>
-                  <SubjectText
-                    value={subject.name}
-                    mode="truncate"
-                    className="block max-w-full"
-                  />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedSubjectId && decks.length > 0 && (
+      <div className="mb-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="grid min-w-0 w-full gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+          <div className="min-w-0">
             <Select
-              value={selectedDeckId ?? "all"}
-              onValueChange={handleDeckChange}
+              value={selectedSubjectId ?? "all"}
+              onValueChange={handleSubjectChange}
             >
-              <SelectTrigger className="h-9 w-auto min-w-32 max-w-64 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs">
-                <SelectValue placeholder="Filter by deck" />
+              <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64">
+                <SelectValue placeholder="Filter by subject" />
               </SelectTrigger>
               <SelectContent align="start">
-                <SelectItem value="all">All decks</SelectItem>
-                {decks
-                  .filter((d) => d.subjectId === selectedSubjectId)
-                  .map((deck) => (
+                <SelectItem value="all">All subjects</SelectItem>
+                {subjects.map((subject) => (
+                  <SelectItem key={subject.id} value={subject.id}>
+                    <SubjectText
+                      value={subject.name}
+                      mode="truncate"
+                      className="block max-w-full"
+                    />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedSubjectId && filteredDecks.length > 0 && (
+            <div className="min-w-0">
+              <Select
+                value={selectedDeckId ?? "all"}
+                onValueChange={handleDeckChange}
+              >
+                <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64">
+                  <SelectValue placeholder="Filter by deck" />
+                </SelectTrigger>
+                <SelectContent align="start">
+                  <SelectItem value="all">All decks</SelectItem>
+                  {filteredDecks.map((deck) => (
                     <SelectItem key={deck.id} value={deck.id}>
                       {deck.name}
                     </SelectItem>
                   ))}
-              </SelectContent>
-            </Select>
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleStartExamMode}
-                onMouseEnter={() => void fetchExamCardsLazy()}
-                onFocus={() => void fetchExamCardsLazy()}
-                disabled={
-                  isLoadingExamCards ||
-                  (examCards !== null && examCards.length === 0)
-                }
-                className="gap-2"
-              >
-                <GraduationCap className="size-4" />
-                <span>Exam mode</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={8}>
-              <p>
-                Study for exams with all cards without interfering with your
-                regular reviews
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="w-full sm:w-auto">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleStartExamMode()}
+                  disabled={
+                    isLoadingExamCards ||
+                    (examCards !== null && examCards.length === 0)
+                  }
+                  className="h-10 w-full gap-2 sm:w-auto"
+                >
+                  <AsyncButtonContent
+                    pending={isLoadingExamCards}
+                    idleLabel="Exam mode"
+                    pendingLabel="Loading exam..."
+                    idleIcon={<GraduationCap className="size-4" />}
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={8}>
+                <p>
+                  Study for exams with all cards without interfering with your
+                  regular reviews
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       {embedded ? null : (

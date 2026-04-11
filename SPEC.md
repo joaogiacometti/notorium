@@ -97,6 +97,15 @@ Students who want a private, lightweight study management workspace.
   - `Escape` exits Focus Mode.
 - Completion screen provides an exit action back to the standard review screen.
 
+### Exam Mode
+
+- Accessed from the flashcard review page via the "Exam mode" action.
+- Uses the active subject and deck filters as the exam scope.
+- The first tap/click on "Exam mode" loads scoped exam cards and enters exam mode in a single interaction.
+- Runs in focus-mode UI with exam progress shown as `Card X of Y`.
+- Exam sessions do not modify due-card scheduling state for regular spaced-repetition reviews.
+- Exam completion provides a summary screen with a close action and retry-weak-cards action when applicable.
+
 ### Attendance
 
 - Configure `totalClasses` and `maxMisses` per subject.
