@@ -113,7 +113,7 @@ export async function countFlashcardsByDeckForUser(
 export async function getDefaultDeckForSubject(
   userId: string,
   subjectId: string,
-): Promise<DeckEntity | null> {
+): Promise<DeckEntity> {
   const results = await getDb()
     .select()
     .from(deck)
@@ -126,7 +126,12 @@ export async function getDefaultDeckForSubject(
     )
     .limit(1);
 
-  return results[0] ?? null;
+  const defaultDeck = results[0];
+  if (!defaultDeck) {
+    throw new Error("Invariant violation: default deck missing for subject");
+  }
+
+  return defaultDeck;
 }
 
 export async function getDeckWithSubjectForUser(

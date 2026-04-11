@@ -1,12 +1,13 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { subject } from "@/db/schema";
+import { deck, subject } from "@/db/schema";
 import {
   countSubjectsForUser,
   getActiveSubjectRecordForUser,
   getArchivedSubjectRecordForUser,
   getSubjectRecordForUser,
 } from "@/features/subjects/queries";
+import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import type {
   ArchiveSubjectForm,
   CreateSubjectForm,
@@ -48,9 +49,19 @@ export async function createSubjectForUser(
     });
   }
 
-  await getDb()
-    .insert(subject)
-    .values({ ...getSubjectMutationValues(data), userId });
+  await getDb().transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(subject)
+      .values({ ...getSubjectMutationValues(data), userId })
+      .returning();
+
+    await tx.insert(deck).values({
+      subjectId: inserted.id,
+      userId,
+      name: DEFAULT_DECK_NAME,
+      isDefault: true,
+    });
+  });
 
   return { success: true };
 }

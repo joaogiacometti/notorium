@@ -65,7 +65,7 @@ Students who want a private, lightweight study management workspace.
 ### Decks
 
 - Flashcards belong to a deck within a subject.
-- Each subject has a default deck named "General" created automatically when the first flashcard is added.
+- Each subject has a default deck named "General" created automatically when the subject is created.
 - Users can create, rename, and delete additional decks per subject.
 - Deleting a non-default deck moves all its flashcards to the subject's default deck.
 - The default deck cannot be deleted.

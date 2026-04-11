@@ -146,9 +146,8 @@ describe("importDataForUser", () => {
     returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
     returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
 
-    const { importDataForUser } = await import(
-      "@/features/data-transfer/import"
-    );
+    const { importDataForUser } =
+      await import("@/features/data-transfer/import");
 
     const result = await importDataForUser("user-1", input);
 
@@ -163,6 +162,61 @@ describe("importDataForUser", () => {
           deckId: "default-deck-1",
         }),
       ]),
+    );
+  });
+
+  it("creates a default deck for imported subjects without flashcards", async () => {
+    const input = {
+      version: 1,
+      exportedAt: "2026-03-13T00:00:00.000Z",
+      subjects: [
+        {
+          name: "History",
+          description: null,
+          totalClasses: null,
+          maxMisses: null,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          notes: [],
+          attendanceMisses: [],
+          assessments: [],
+          decks: [],
+          flashcards: [],
+        },
+      ],
+    };
+
+    parseActionInputMock.mockReturnValueOnce({
+      success: true,
+      data: input,
+    });
+    whereMock.mockResolvedValueOnce([{ total: 0 }]);
+
+    const txInsertMock = vi.fn(() => ({
+      values: insertValuesMock,
+    }));
+    transactionMock.mockImplementationOnce(async (callback) =>
+      callback({
+        insert: txInsertMock,
+      }),
+    );
+
+    returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
+    returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
+
+    const { importDataForUser } =
+      await import("@/features/data-transfer/import");
+
+    const result = await importDataForUser("user-1", input);
+
+    expect(result).toEqual({ success: true, imported: 1 });
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "General",
+        isDefault: true,
+        subjectId: "subject-1",
+        userId: "user-1",
+      }),
     );
   });
 });

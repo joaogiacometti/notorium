@@ -26,6 +26,7 @@ import {
 } from "@/features/flashcards/fsrs";
 import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
+import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { parseActionInput } from "@/lib/server/action-input";
 import type { MutationResult } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
@@ -152,14 +153,14 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
         );
       }
 
-      if (importedSubject.flashcards.length > 0) {
-        const { deckNameToId, defaultDeckId } = await importDecksForSubject(
-          tx,
-          userId,
-          subjectId,
-          importedSubject.decks,
-        );
+      const { deckNameToId, defaultDeckId } = await importDecksForSubject(
+        tx,
+        userId,
+        subjectId,
+        importedSubject.decks,
+      );
 
+      if (importedSubject.flashcards.length > 0) {
         await tx.insert(flashcard).values(
           importedSubject.flashcards.map((currentFlashcard) => ({
             ...getImportedFlashcardSchedulingState(currentFlashcard),
@@ -170,10 +171,9 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
             back: currentFlashcard.back,
             deckId:
               currentFlashcard.deckName === undefined
-                ? (defaultDeckId ?? null)
+                ? defaultDeckId
                 : (deckNameToId.get(currentFlashcard.deckName) ??
-                  defaultDeckId ??
-                  null),
+                  defaultDeckId),
             subjectId,
             userId,
           })),
@@ -218,10 +218,10 @@ async function importDecksForSubject(
   importedDecks: ImportedDeck[],
 ): Promise<{
   deckNameToId: Map<string, string>;
-  defaultDeckId: string | undefined;
+  defaultDeckId: string;
 }> {
   const deckNameToId = new Map<string, string>();
-  let defaultDeckId: string | undefined;
+  let defaultDeckId: string | null = null;
 
   if (importedDecks.length > 0) {
     const insertedDecks = await tx
@@ -245,20 +245,23 @@ async function importDecksForSubject(
     }
   }
 
-  if (defaultDeckId === undefined) {
+  if (defaultDeckId === null) {
     const [insertedDefault] = await tx
       .insert(deck)
       .values({
-        name: "General",
+        name: DEFAULT_DECK_NAME,
         isDefault: true,
         subjectId,
         userId,
       })
       .returning({ id: deck.id });
-    defaultDeckId = insertedDefault?.id;
-    if (defaultDeckId !== undefined) {
-      deckNameToId.set("General", defaultDeckId);
+
+    if (!insertedDefault) {
+      throw new Error("Failed to insert default deck for imported subject");
     }
+
+    defaultDeckId = insertedDefault.id;
+    deckNameToId.set(DEFAULT_DECK_NAME, defaultDeckId);
   }
 
   return { deckNameToId, defaultDeckId };

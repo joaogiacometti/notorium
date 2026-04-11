@@ -218,6 +218,13 @@
       "when": 1775518000000,
       "tag": "0030_migrate_flashcards_to_default_decks",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1775518100000,
+      "tag": "0031_backfill_empty_subjects_default_decks",
+      "breakpoints": true
     }
   ]
 }

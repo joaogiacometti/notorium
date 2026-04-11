@@ -70,6 +70,10 @@ export async function editDeckForUser(
     return actionError("decks.notFound");
   }
 
+  if (existingDeck.isDefault) {
+    return actionError("decks.cannotEditDefault");
+  }
+
   try {
     const updated = await getDb()
       .update(deck)
@@ -108,10 +112,6 @@ export async function deleteDeckForUser(
     existingDeck.subjectId,
   );
 
-  if (!defaultDeck) {
-    return actionError("decks.defaultNotFound");
-  }
-
   await getDb().transaction(async (tx) => {
     await tx
       .update(flashcard)
@@ -124,29 +124,6 @@ export async function deleteDeckForUser(
   });
 
   return { success: true, id: data.id, subjectId: existingDeck.subjectId };
-}
-
-export async function ensureDefaultDeckForSubject(
-  userId: string,
-  subjectId: string,
-): Promise<{ id: string }> {
-  const existing = await getDefaultDeckForSubject(userId, subjectId);
-
-  if (existing) {
-    return { id: existing.id };
-  }
-
-  const inserted = await getDb()
-    .insert(deck)
-    .values({
-      subjectId,
-      userId,
-      name: "General",
-      isDefault: true,
-    })
-    .returning();
-
-  return { id: inserted[0].id };
 }
 
 function isUniqueViolationError(error: unknown): boolean {

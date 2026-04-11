@@ -55,8 +55,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "decks.notFound": "Deck not found.",
   "decks.duplicateName":
     "A deck with this name already exists in this subject.",
+  "decks.cannotEditDefault": "Cannot edit the default deck.",
   "decks.cannotDeleteDefault": "Cannot delete the default deck.",
-  "decks.defaultNotFound": "Default deck not found for this subject.",
   "decks.wrongSubject": "Deck does not belong to the selected subject.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
