@@ -106,6 +106,14 @@ describe("ensureFsrsSettings", () => {
 
     expect(result.desiredRetention).toBe(getDefaultFsrsDesiredRetention());
     expect(result.weights).toEqual(getDefaultFsrsWeights());
+    expect(updateSetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
+        weights: JSON.stringify(getDefaultFsrsWeights()),
+        optimizedReviewCount: 0,
+        lastOptimizedAt: null,
+      }),
+    );
   });
 });
 
@@ -172,6 +180,73 @@ describe("maybeOptimizeFsrsParameters", () => {
   });
 
   it("updates stored weights when optimization returns new parameters", async () => {
+    const { getDefaultFsrsWeights } = await import(
+      "@/features/flashcards/fsrs"
+    );
+    const optimizedWeights = getDefaultFsrsWeights();
+
+    mockSelectLimitOnce([
+      {
+        id: "settings-1",
+        userId: "user-1",
+        desiredRetention: "0.900",
+        weights: "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]",
+        optimizedReviewCount: 64,
+      },
+    ]);
+    mockSelectWhereOnce([{ total: 96 }]);
+    mockSelectOrderByOnce([
+      {
+        flashcardId: "card-1",
+        rating: "good",
+        daysElapsed: 1,
+        reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(true);
+    tryAcquireUserExpiringLockMock.mockResolvedValueOnce(true);
+    optimizeFsrsParametersMock.mockResolvedValueOnce(optimizedWeights);
+
+    const { maybeOptimizeFsrsParameters } = await import(
+      "@/features/flashcards/fsrs-settings"
+    );
+
+    await maybeOptimizeFsrsParameters("user-1");
+
+    expect(optimizeFsrsParametersMock).toHaveBeenCalled();
+    expect(updateSetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        weights: JSON.stringify(optimizedWeights),
+        optimizedReviewCount: 96,
+        lastOptimizedAt: expect.any(Date),
+      }),
+    );
+    expect(updateWhereMock).toHaveBeenCalled();
+  });
+
+  it("uses reset optimizedReviewCount immediately after invalid settings are normalized", async () => {
+    mockSelectLimitOnce([
+      {
+        id: "settings-1",
+        userId: "user-1",
+        desiredRetention: "Infinity",
+        weights: "{bad json",
+        optimizedReviewCount: 128,
+      },
+    ]);
+    mockSelectWhereOnce([{ total: 96 }]);
+    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(false);
+
+    const { maybeOptimizeFsrsParameters } = await import(
+      "@/features/flashcards/fsrs-settings"
+    );
+
+    await maybeOptimizeFsrsParameters("user-1");
+
+    expect(shouldOptimizeFsrsParametersMock).toHaveBeenCalledWith(96, 0);
+  });
+
+  it("skips optimizer results that fail scheduler validation", async () => {
     mockSelectLimitOnce([
       {
         id: "settings-1",
@@ -201,13 +276,45 @@ describe("maybeOptimizeFsrsParameters", () => {
     await maybeOptimizeFsrsParameters("user-1");
 
     expect(optimizeFsrsParametersMock).toHaveBeenCalled();
-    expect(updateSetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        weights: "[1,2,3]",
-        optimizedReviewCount: 96,
-        lastOptimizedAt: expect.any(Date),
-      }),
+    expect(updateSetMock).not.toHaveBeenCalled();
+  });
+
+  it("skips structurally valid optimizer results that are behaviorally unstable", async () => {
+    const { getDefaultFsrsWeights } = await import(
+      "@/features/flashcards/fsrs"
     );
-    expect(updateWhereMock).toHaveBeenCalled();
+    const unstableWeights = getDefaultFsrsWeights();
+    unstableWeights[3] = 500;
+
+    mockSelectLimitOnce([
+      {
+        id: "settings-1",
+        userId: "user-1",
+        desiredRetention: "0.900",
+        weights: "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]",
+        optimizedReviewCount: 64,
+      },
+    ]);
+    mockSelectWhereOnce([{ total: 96 }]);
+    mockSelectOrderByOnce([
+      {
+        flashcardId: "card-1",
+        rating: "good",
+        daysElapsed: 1,
+        reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(true);
+    tryAcquireUserExpiringLockMock.mockResolvedValueOnce(true);
+    optimizeFsrsParametersMock.mockResolvedValueOnce(unstableWeights);
+
+    const { maybeOptimizeFsrsParameters } = await import(
+      "@/features/flashcards/fsrs-settings"
+    );
+
+    await maybeOptimizeFsrsParameters("user-1");
+
+    expect(optimizeFsrsParametersMock).toHaveBeenCalled();
+    expect(updateSetMock).not.toHaveBeenCalled();
   });
 });

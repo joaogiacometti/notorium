@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  getDefaultFsrsDesiredRetention,
+  getDefaultFsrsWeights,
   getInitialFlashcardSchedulingState,
+  isFsrsSchedulerSettingsValid,
   scheduleFlashcardReview,
+  serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
@@ -192,5 +196,132 @@ describe("scheduleFlashcardReview", () => {
     expect(Number.isNaN(result.learningStep ?? 0)).toBe(false);
     expect(Number.isNaN(result.reviewCount)).toBe(false);
     expect(Number.isNaN(result.lapseCount)).toBe(false);
+  });
+
+  it("uses canonical new-card scheduling even with stale persisted fields", () => {
+    const clean = scheduleFlashcardReview({
+      card: makeCard({
+        state: "new",
+        intervalDays: 0,
+        learningStep: 0,
+        reviewCount: 0,
+        lapseCount: 0,
+        stability: null,
+        difficulty: null,
+        lastReviewedAt: null,
+      }),
+      grade: "easy",
+      now,
+      enableFuzz: false,
+    });
+
+    const stale = scheduleFlashcardReview({
+      card: makeCard({
+        state: "new",
+        intervalDays: 400,
+        learningStep: 9,
+        reviewCount: 120,
+        lapseCount: 12,
+        stability: "99.9999",
+        difficulty: "1.0000",
+        lastReviewedAt: new Date("2025-01-01T12:00:00.000Z"),
+      }),
+      grade: "easy",
+      now,
+      enableFuzz: false,
+    });
+
+    expect(stale.intervalDays).toBe(clean.intervalDays);
+    expect(stale.dueAt.toISOString()).toBe(clean.dueAt.toISOString());
+    expect(stale.state).toBe(clean.state);
+  });
+});
+
+describe("isFsrsSchedulerSettingsValid", () => {
+  it("accepts default scheduler settings", () => {
+    expect(
+      isFsrsSchedulerSettingsValid({
+        desiredRetention: getDefaultFsrsDesiredRetention(),
+        weights: getDefaultFsrsWeights(),
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects obviously unstable scheduler weights", () => {
+    const unstableWeights = getDefaultFsrsWeights();
+    unstableWeights[3] = 500;
+
+    expect(
+      isFsrsSchedulerSettingsValid({
+        desiredRetention: getDefaultFsrsDesiredRetention(),
+        weights: unstableWeights,
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects invalid desired retention values", () => {
+    expect(
+      isFsrsSchedulerSettingsValid({
+        desiredRetention: 0,
+        weights: getDefaultFsrsWeights(),
+      }),
+    ).toBe(false);
+    expect(
+      isFsrsSchedulerSettingsValid({
+        desiredRetention: 1,
+        weights: getDefaultFsrsWeights(),
+      }),
+    ).toBe(false);
+    expect(
+      isFsrsSchedulerSettingsValid({
+        desiredRetention: Number.NaN,
+        weights: getDefaultFsrsWeights(),
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("isFsrsSchedulerSettingsValid exception handling", () => {
+  afterEach(() => {
+    vi.doUnmock("ts-fsrs");
+    vi.resetModules();
+  });
+
+  it("returns false and caches probe failures when scheduler construction throws", async () => {
+    vi.resetModules();
+
+    const fsrsFactoryMock = vi.fn(() => {
+      throw new Error("scheduler init failed");
+    });
+
+    vi.doMock("ts-fsrs", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("ts-fsrs")>();
+
+      return {
+        ...actual,
+        fsrs: fsrsFactoryMock,
+      };
+    });
+
+    const {
+      getDefaultFsrsDesiredRetention,
+      getDefaultFsrsWeights,
+      isFsrsSchedulerSettingsValid,
+    } = await import("@/features/flashcards/fsrs");
+
+    const validationInput = {
+      desiredRetention: getDefaultFsrsDesiredRetention(),
+      weights: getDefaultFsrsWeights(),
+    };
+
+    expect(isFsrsSchedulerSettingsValid(validationInput)).toBe(false);
+    expect(isFsrsSchedulerSettingsValid(validationInput)).toBe(false);
+    expect(fsrsFactoryMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("serializeFsrsWeights", () => {
+  it("serializes provided weights without implicit normalization", () => {
+    expect(serializeFsrsWeights([1, 2, 3])).toBe("[1,2,3]");
   });
 });

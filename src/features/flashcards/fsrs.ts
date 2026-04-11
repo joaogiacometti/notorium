@@ -56,10 +56,26 @@ export interface SchedulerOutput {
   daysElapsed: number;
 }
 
+export interface ParsedFsrsWeightsResult {
+  weights: number[];
+  isValid: boolean;
+}
+
+interface FsrsSchedulerValidationInput {
+  desiredRetention: number;
+  weights: number[];
+  maxNewCardEasyIntervalDays?: number;
+}
+
 const defaultSchedulerParameters = generatorParameters({
   enable_fuzz: true,
   enable_short_term: true,
 });
+const fsrsWeightCount = defaultSchedulerParameters.w.length;
+const schedulerValidationProbeNow = new Date("2026-01-01T00:00:00.000Z");
+const schedulerValidationMaxNewCardEasyIntervalDays = 90;
+const schedulerValidationCacheMaxEntries = 128;
+const schedulerSettingsValidationCache = new Map<string, boolean>();
 
 const defaultEaseValue = 250;
 const defaultDifficultyValue = 5;
@@ -133,6 +149,58 @@ function normalizeFsrsOutputNumber(value: number, fallback: number): number {
   return isFiniteNumber(value) ? value : fallback;
 }
 
+function areFsrsWeightsWellFormed(weights: number[]): boolean {
+  return (
+    weights.length === fsrsWeightCount &&
+    weights.every((weight) => isFiniteNumber(weight) && weight >= 0)
+  );
+}
+
+export function isFsrsDesiredRetentionValid(value: number): boolean {
+  return Number.isFinite(value) && value > 0 && value < 1;
+}
+
+function buildSchedulerValidationCacheKey({
+  desiredRetention,
+  weights,
+  maxNewCardEasyIntervalDays,
+}: FsrsSchedulerValidationInput): string {
+  return [
+    desiredRetention.toString(),
+    maxNewCardEasyIntervalDays?.toString() ?? "",
+    weights.join(","),
+  ].join("|");
+}
+
+function getCachedSchedulerValidationResult(key: string): boolean | undefined {
+  const cached = schedulerSettingsValidationCache.get(key);
+
+  if (cached === undefined) {
+    return undefined;
+  }
+
+  schedulerSettingsValidationCache.delete(key);
+  schedulerSettingsValidationCache.set(key, cached);
+
+  return cached;
+}
+
+function setCachedSchedulerValidationResult(key: string, value: boolean): void {
+  schedulerSettingsValidationCache.delete(key);
+
+  if (
+    schedulerSettingsValidationCache.size >= schedulerValidationCacheMaxEntries
+  ) {
+    const oldestKey = schedulerSettingsValidationCache.keys().next().value;
+
+    if (oldestKey !== undefined) {
+      schedulerSettingsValidationCache.delete(oldestKey);
+    }
+  }
+
+  schedulerSettingsValidationCache.set(key, value);
+}
+
 function mapStateToFsrs(state: FlashcardEntity["state"]): State {
   switch (state) {
     case "learning":
@@ -176,17 +244,27 @@ function buildFsrsCard(
   card: ScheduleFlashcardReviewInput["card"],
   now: Date,
 ): Card {
+  if (card.state === "new") {
+    const due = normalizeDate(card.dueAt, now);
+    const freshCard = createEmptyCard(due);
+
+    return {
+      ...freshCard,
+      due,
+      state: State.New,
+    };
+  }
+
   const due = normalizeDate(card.dueAt, now);
   const lastReview = normalizeOptionalDate(card.lastReviewedAt);
-  const daysElapsed =
-    lastReview && card.state !== "new"
-      ? Math.max(
-          0,
-          Math.round(
-            (now.getTime() - lastReview.getTime()) / (24 * 60 * 60 * 1000),
-          ),
-        )
-      : 0;
+  const daysElapsed = lastReview
+    ? Math.max(
+        0,
+        Math.round(
+          (now.getTime() - lastReview.getTime()) / (24 * 60 * 60 * 1000),
+        ),
+      )
+    : 0;
 
   return {
     due,
@@ -204,6 +282,16 @@ function buildFsrsCard(
 
 export function getDefaultFsrsWeights(): number[] {
   return [...defaultSchedulerParameters.w];
+}
+
+export function normalizeFsrsWeights(
+  weights: number[] | null | undefined,
+): number[] {
+  if (!weights || !areFsrsWeightsWellFormed(weights)) {
+    return getDefaultFsrsWeights();
+  }
+
+  return [...weights];
 }
 
 export function getDefaultFsrsDesiredRetention(): number {
@@ -229,28 +317,160 @@ export function serializeFsrsWeights(weights: number[]): string {
   return JSON.stringify(weights);
 }
 
-export function parseFsrsWeights(value: string): number[] {
+export function parseFsrsWeightsWithValidity(
+  value: string,
+): ParsedFsrsWeightsResult {
   let parsed: unknown;
 
   try {
     parsed = JSON.parse(value) as unknown;
   } catch {
-    return getDefaultFsrsWeights();
+    return {
+      weights: getDefaultFsrsWeights(),
+      isValid: false,
+    };
   }
 
   if (!Array.isArray(parsed)) {
-    return getDefaultFsrsWeights();
+    return {
+      weights: getDefaultFsrsWeights(),
+      isValid: false,
+    };
   }
 
-  const weights = parsed
-    .map((entry) =>
-      typeof entry === "number" ? entry : Number.parseFloat(String(entry)),
-    )
-    .filter((entry) => Number.isFinite(entry));
+  const normalizedWeights = parsed.map((entry) =>
+    typeof entry === "number" ? entry : Number.parseFloat(String(entry)),
+  );
 
-  return weights.length === defaultSchedulerParameters.w.length
-    ? weights
-    : getDefaultFsrsWeights();
+  if (!areFsrsWeightsWellFormed(normalizedWeights)) {
+    return {
+      weights: getDefaultFsrsWeights(),
+      isValid: false,
+    };
+  }
+
+  return {
+    weights: normalizedWeights,
+    isValid: true,
+  };
+}
+
+export function parseFsrsWeights(value: string): number[] {
+  return parseFsrsWeightsWithValidity(value).weights;
+}
+
+function createFsrsScheduler({
+  desiredRetention,
+  weights,
+  enableFuzz,
+}: {
+  desiredRetention: number;
+  weights: number[];
+  enableFuzz: boolean;
+}) {
+  return fsrs(
+    generatorParameters({
+      w: weights,
+      request_retention: desiredRetention,
+      enable_fuzz: enableFuzz,
+      enable_short_term: true,
+      learning_steps: defaultSchedulerParameters.learning_steps,
+      relearning_steps: defaultSchedulerParameters.relearning_steps,
+      maximum_interval: defaultSchedulerParameters.maximum_interval,
+    }),
+  );
+}
+
+export function isFsrsSchedulerSettingsValid({
+  desiredRetention,
+  weights,
+  maxNewCardEasyIntervalDays = schedulerValidationMaxNewCardEasyIntervalDays,
+}: FsrsSchedulerValidationInput): boolean {
+  if (!isFsrsDesiredRetentionValid(desiredRetention)) {
+    return false;
+  }
+
+  if (!areFsrsWeightsWellFormed(weights)) {
+    return false;
+  }
+
+  const cacheKey = buildSchedulerValidationCacheKey({
+    desiredRetention,
+    weights,
+    maxNewCardEasyIntervalDays,
+  });
+  const cachedResult = getCachedSchedulerValidationResult(cacheKey);
+
+  if (cachedResult !== undefined) {
+    return cachedResult;
+  }
+
+  try {
+    const scheduler = createFsrsScheduler({
+      desiredRetention,
+      weights,
+      enableFuzz: false,
+    });
+    const probeCard = createEmptyCard(schedulerValidationProbeNow);
+    const again = scheduler.next(
+      probeCard,
+      schedulerValidationProbeNow,
+      Rating.Again as Grade,
+    ).card;
+    const hard = scheduler.next(
+      probeCard,
+      schedulerValidationProbeNow,
+      Rating.Hard as Grade,
+    ).card;
+    const good = scheduler.next(
+      probeCard,
+      schedulerValidationProbeNow,
+      Rating.Good as Grade,
+    ).card;
+    const easy = scheduler.next(
+      probeCard,
+      schedulerValidationProbeNow,
+      Rating.Easy as Grade,
+    ).card;
+
+    const againDue = normalizeDate(again.due, schedulerValidationProbeNow);
+    const hardDue = normalizeDate(hard.due, schedulerValidationProbeNow);
+    const goodDue = normalizeDate(good.due, schedulerValidationProbeNow);
+    const easyDue = normalizeDate(easy.due, schedulerValidationProbeNow);
+
+    if (
+      !isValidDate(againDue) ||
+      !isValidDate(hardDue) ||
+      !isValidDate(goodDue) ||
+      !isValidDate(easyDue)
+    ) {
+      return false;
+    }
+
+    const easyIntervalDays = normalizeNonNegativeInteger(easy.scheduled_days);
+    const isNewFlowStateValid =
+      mapStateFromFsrs(again.state) === "learning" &&
+      mapStateFromFsrs(hard.state) === "learning" &&
+      mapStateFromFsrs(good.state) === "learning" &&
+      mapStateFromFsrs(easy.state) === "review";
+    const isDueOrderValid =
+      againDue.getTime() <= hardDue.getTime() &&
+      hardDue.getTime() <= goodDue.getTime() &&
+      goodDue.getTime() <= easyDue.getTime();
+    const isEasyIntervalValid =
+      easyIntervalDays > 0 && easyIntervalDays <= maxNewCardEasyIntervalDays;
+
+    const result =
+      isNewFlowStateValid && isDueOrderValid && isEasyIntervalValid;
+
+    setCachedSchedulerValidationResult(cacheKey, result);
+
+    return result;
+  } catch {
+    setCachedSchedulerValidationResult(cacheKey, false);
+
+    return false;
+  }
 }
 
 export function getInitialFlashcardSchedulingState(now: Date = new Date()) {
@@ -279,17 +499,11 @@ export function scheduleFlashcardReview({
   weights = getDefaultFsrsWeights(),
   enableFuzz = true,
 }: ScheduleFlashcardReviewInput): SchedulerOutput {
-  const scheduler = fsrs(
-    generatorParameters({
-      w: weights,
-      request_retention: desiredRetention,
-      enable_fuzz: enableFuzz,
-      enable_short_term: true,
-      learning_steps: defaultSchedulerParameters.learning_steps,
-      relearning_steps: defaultSchedulerParameters.relearning_steps,
-      maximum_interval: defaultSchedulerParameters.maximum_interval,
-    }),
-  );
+  const scheduler = createFsrsScheduler({
+    desiredRetention: normalizeFsrsDesiredRetention(desiredRetention),
+    weights: normalizeFsrsWeights(weights),
+    enableFuzz,
+  });
   const currentCard = buildFsrsCard(card, now);
   const next = scheduler.next(currentCard, now, mapGradeToRating(grade));
   const nextCard = next.card;

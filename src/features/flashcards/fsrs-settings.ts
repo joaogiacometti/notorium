@@ -9,8 +9,10 @@ import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
   getInitialFlashcardSchedulingState,
+  isFsrsDesiredRetentionValid,
+  isFsrsSchedulerSettingsValid,
   normalizeFsrsDesiredRetention,
-  parseFsrsWeights,
+  parseFsrsWeightsWithValidity,
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
 import {
@@ -29,16 +31,75 @@ interface FsrsSettings {
   row: FlashcardSchedulerSettingsEntity;
   desiredRetention: number;
   weights: number[];
+  optimizedReviewCount: number;
+  shouldResetPersistedValues: boolean;
+}
+
+function parseDesiredRetention(value: string | number): number {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  return Number.parseFloat(value);
 }
 
 function normalizeSettings(
   row: FlashcardSchedulerSettingsEntity,
 ): FsrsSettings {
+  const parsedDesiredRetention = parseDesiredRetention(row.desiredRetention);
+  const parsedWeights = parseFsrsWeightsWithValidity(row.weights);
+  const normalizedDesiredRetention = normalizeFsrsDesiredRetention(
+    row.desiredRetention,
+  );
+  const isPersistedDesiredRetentionValid = isFsrsDesiredRetentionValid(
+    parsedDesiredRetention,
+  );
+  const isSchedulerSettingsValid = isFsrsSchedulerSettingsValid({
+    desiredRetention: normalizedDesiredRetention,
+    weights: parsedWeights.weights,
+  });
+  const shouldResetPersistedValues =
+    !isPersistedDesiredRetentionValid ||
+    !parsedWeights.isValid ||
+    !isSchedulerSettingsValid;
+
+  if (shouldResetPersistedValues) {
+    return {
+      row,
+      desiredRetention: getDefaultFsrsDesiredRetention(),
+      weights: getDefaultFsrsWeights(),
+      optimizedReviewCount: 0,
+      shouldResetPersistedValues,
+    };
+  }
+
   return {
     row,
-    desiredRetention: normalizeFsrsDesiredRetention(row.desiredRetention),
-    weights: parseFsrsWeights(row.weights),
+    desiredRetention: normalizedDesiredRetention,
+    weights: parsedWeights.weights,
+    optimizedReviewCount: row.optimizedReviewCount,
+    shouldResetPersistedValues,
   };
+}
+
+async function resetInvalidFsrsSettings(
+  userId: string,
+  settingsId: string,
+): Promise<void> {
+  await getDb()
+    .update(flashcardSchedulerSettings)
+    .set({
+      desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
+      weights: serializeFsrsWeights(getDefaultFsrsWeights()),
+      optimizedReviewCount: 0,
+      lastOptimizedAt: null,
+    })
+    .where(
+      and(
+        eq(flashcardSchedulerSettings.userId, userId),
+        eq(flashcardSchedulerSettings.id, settingsId),
+      ),
+    );
 }
 
 async function createDefaultSettings(userId: string) {
@@ -90,7 +151,13 @@ export async function ensureFsrsSettings(
     .limit(1);
 
   if (existing) {
-    return normalizeSettings(existing);
+    const normalized = normalizeSettings(existing);
+
+    if (normalized.shouldResetPersistedValues) {
+      await resetInvalidFsrsSettings(userId, existing.id);
+    }
+
+    return normalized;
   }
 
   return normalizeSettings(await createDefaultSettings(userId));
@@ -126,10 +193,7 @@ export async function maybeOptimizeFsrsParameters(
   ]);
 
   if (
-    !shouldOptimizeFsrsParameters(
-      reviewCount,
-      settings.row.optimizedReviewCount,
-    )
+    !shouldOptimizeFsrsParameters(reviewCount, settings.optimizedReviewCount)
   ) {
     return;
   }
@@ -148,6 +212,15 @@ export async function maybeOptimizeFsrsParameters(
   const weights = await optimizeFsrsParameters(logs);
 
   if (!weights) {
+    return;
+  }
+
+  if (
+    !isFsrsSchedulerSettingsValid({
+      desiredRetention: settings.desiredRetention,
+      weights,
+    })
+  ) {
     return;
   }
 
