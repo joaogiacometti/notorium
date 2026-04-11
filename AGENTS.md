@@ -185,6 +185,8 @@ Usage: `bg-[var(--x)]`, `text-[var(--x)]`, `border-[var(--x)]`, `bg-[var(--x)]/9
 
 - Cover essential CRUD flows per feature.
 - Assert outcomes: behavior, permissions, persistence, errors.
+- Add or update E2E only when a change impacts a critical user workflow (navigation, auth/permissions, writes/persistence, destructive actions, or cross-page flow integrity).
+- Do not add E2E for presentation-only changes (labels, column visibility/copy tweaks, spacing, styling) unless the user explicitly requests E2E coverage for that change.
 - Use resilient selectors (`getByRole`, labels, test ids).
 - Parallel-safe with unique data and cleanup.
 - Do not add limit/quota tests in Playwright. Keep e2e focused on user flows; enforce limits with Vitest.

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { FlashcardDetail } from "@/components/flashcards/flashcard-detail";
-import { getFlashcardByIdForUser } from "@/features/flashcards/queries";
+import { getFlashcardDetailByIdForUser } from "@/features/flashcards/queries";
 import { getSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 import { resolveFlashcardDetailBackLink } from "@/lib/navigation/detail-page-back-link";
@@ -19,7 +19,7 @@ export default async function FlashcardPage({
   const { id, flashcardId } = await params;
   const returnContext = await searchParams;
   const [flashcard, subjects] = await Promise.all([
-    getFlashcardByIdForUser(session.user.id, flashcardId),
+    getFlashcardDetailByIdForUser(session.user.id, flashcardId),
     getSubjectsForUser(session.user.id),
   ]);
 

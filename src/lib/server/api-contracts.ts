@@ -32,6 +32,10 @@ export interface PlanningAssessmentsPage {
   subjectFinalGrade: number | null;
 }
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
+export type FlashcardDetailEntity = FlashcardEntity & {
+  subjectName: string;
+  deckName: string | null;
+};
 export type FlashcardListEntity = FlashcardEntity & {
   subjectName: string;
   deckName: string | null;

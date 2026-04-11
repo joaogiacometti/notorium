@@ -21,6 +21,7 @@ import type { FlashcardsManageQueryInput } from "@/features/flashcards/validatio
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
+  FlashcardDetailEntity,
   FlashcardEntity,
   FlashcardListEntity,
   FlashcardManagePage,
@@ -183,6 +184,37 @@ export async function getFlashcardByIdForUser(
     .limit(1);
 
   return results[0]?.flashcard ?? null;
+}
+
+export async function getFlashcardDetailByIdForUser(
+  userId: string,
+  flashcardId: string,
+): Promise<FlashcardDetailEntity | null> {
+  const results = await getDb()
+    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
+    .from(flashcard)
+    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .leftJoin(deck, eq(flashcard.deckId, deck.id))
+    .where(
+      and(
+        eq(flashcard.id, flashcardId),
+        eq(flashcard.userId, userId),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
+    )
+    .limit(1);
+
+  const result = results[0];
+
+  if (!result) {
+    return null;
+  }
+
+  return {
+    ...result.flashcard,
+    subjectName: result.subjectName,
+    deckName: result.deckName,
+  };
 }
 
 export async function getFlashcardRecordForUser(

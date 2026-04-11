@@ -3,6 +3,7 @@
 import { ArrowLeft, CreditCard, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { getDecks } from "@/app/actions/decks";
 import { DeleteFlashcardDialog } from "@/components/flashcards/delete-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/lazy-edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
@@ -12,14 +13,14 @@ import { Button } from "@/components/ui/button";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import type {
-  FlashcardEntity,
+  FlashcardDetailEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 
 interface FlashcardDetailProps {
   backHref: string;
   backLabel: string;
-  flashcard: FlashcardEntity;
+  flashcard: FlashcardDetailEntity;
   subjects: SubjectEntity[];
 }
 
@@ -34,7 +35,7 @@ export function FlashcardDetail({
   const searchParams = useSearchParams();
 
   const [currentFlashcard, setCurrentFlashcard] =
-    useState<FlashcardEntity>(flashcard);
+    useState<FlashcardDetailEntity>(flashcard);
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -76,7 +77,17 @@ export function FlashcardDetail({
       backIcon={ArrowLeft}
       backLabel={backLabel}
       meta={
-        <span>Created {formatRelativeTime(currentFlashcard.createdAt)}</span>
+        <>
+          <span className="truncate" title={currentFlashcard.subjectName}>
+            {currentFlashcard.subjectName}
+          </span>
+          {currentFlashcard.deckName ? (
+            <span className="truncate" title={currentFlashcard.deckName}>
+              {currentFlashcard.deckName}
+            </span>
+          ) : null}
+          <span>Created {formatRelativeTime(currentFlashcard.createdAt)}</span>
+        </>
       }
       title={getRichTextExcerpt(currentFlashcard.front, 120)}
       titleIcon={CreditCard}
@@ -108,8 +119,26 @@ export function FlashcardDetail({
         subjects={subjects}
         open={editOpen}
         onOpenChange={setEditOpen}
-        onUpdated={(updated) => {
-          setCurrentFlashcard(updated);
+        onUpdated={async (updated) => {
+          const subjectName =
+            subjects.find((subject) => subject.id === updated.subjectId)
+              ?.name ?? currentFlashcard.subjectName;
+          const requiresDeckRefresh =
+            updated.subjectId !== currentFlashcard.subjectId ||
+            updated.deckId !== currentFlashcard.deckId;
+          let deckName = currentFlashcard.deckName;
+
+          if (requiresDeckRefresh) {
+            const decks = await getDecks(updated.subjectId);
+            deckName =
+              decks.find((deck) => deck.id === updated.deckId)?.name ?? null;
+          }
+
+          setCurrentFlashcard({
+            ...updated,
+            subjectName,
+            deckName,
+          });
 
           if (updated.subjectId !== currentFlashcard.subjectId) {
             const query = searchParams.toString();
@@ -130,7 +159,13 @@ export function FlashcardDetail({
         flashcardFront={currentFlashcard.front}
         open={resetOpen}
         onOpenChange={setResetOpen}
-        onReset={(updated) => setCurrentFlashcard(updated)}
+        onReset={(updated) =>
+          setCurrentFlashcard((current) => ({
+            ...updated,
+            subjectName: current.subjectName,
+            deckName: current.deckName,
+          }))
+        }
       />
       <DeleteFlashcardDialog
         flashcardId={currentFlashcard.id}

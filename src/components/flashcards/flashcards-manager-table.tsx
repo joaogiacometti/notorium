@@ -3,7 +3,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreditCard } from "lucide-react";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
-import { SubjectChip } from "@/components/shared/subject-chip";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import {
   getRichTextExcerpt,
@@ -48,6 +47,8 @@ function getColumnClassName(columnId: string) {
     case "back":
       return "min-w-[8rem]";
     case "subjectName":
+      return "min-w-[8rem]";
+    case "deckName":
       return "min-w-[8rem]";
     case "actions":
       return "w-14 min-w-14";
@@ -112,11 +113,29 @@ function getColumns(
         </div>
       ),
       cell: ({ row }) => (
-        <SubjectChip
-          href={`/subjects/${row.original.subjectId}`}
-          label={row.original.subjectName}
-          maxWidthClassName="max-w-[7.5rem]"
-        />
+        <div
+          className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
+          title={row.original.subjectName}
+        >
+          {row.original.subjectName}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "deckName",
+      size: 112,
+      header: () => (
+        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+          Deck
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div
+          className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
+          title={row.original.deckName ?? undefined}
+        >
+          {row.original.deckName}
+        </div>
       ),
     },
     {
@@ -184,7 +203,7 @@ export function FlashcardsManagerTable({
       emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
-      tableClassName="w-full min-w-160"
+      tableClassName="w-full min-w-176"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
         cn("px-3 py-3 align-middle", getColumnClassName(columnId))
@@ -204,8 +223,8 @@ export function FlashcardsManagerTableSkeleton({
     <TableSkeleton
       columnTemplate={
         selectedRow
-          ? "2.25rem 1.35fr 1fr 0.7fr 3.5rem"
-          : "1.35fr 1fr 0.7fr 3.5rem"
+          ? "2.25rem 1.35fr 1fr 0.7fr 0.7fr 3.5rem"
+          : "1.35fr 1fr 0.7fr 0.7fr 3.5rem"
       }
       headers={
         selectedRow
@@ -214,12 +233,14 @@ export function FlashcardsManagerTableSkeleton({
               { className: "h-4 w-16" },
               { className: "h-4 w-14" },
               { className: "h-4 w-20" },
+              { className: "h-4 w-16" },
               { content: <div /> },
             ]
           : [
               { className: "h-4 w-16" },
               { className: "h-4 w-14" },
               { className: "h-4 w-20" },
+              { className: "h-4 w-16" },
               { content: <div /> },
             ]
       }
@@ -234,6 +255,7 @@ export function FlashcardsManagerTableSkeleton({
                 { className: "h-14 w-full" },
                 { className: "h-6 w-full" },
                 { className: "h-7 w-24 rounded-full" },
+                { className: "h-6 w-full" },
                 {
                   className:
                     "h-10 w-10 self-center justify-self-center rounded-full",
@@ -244,6 +266,7 @@ export function FlashcardsManagerTableSkeleton({
               { className: "h-14 w-full" },
               { className: "h-6 w-full" },
               { className: "h-7 w-24 rounded-full" },
+              { className: "h-6 w-full" },
               {
                 className:
                   "h-10 w-10 self-center justify-self-center rounded-full",
