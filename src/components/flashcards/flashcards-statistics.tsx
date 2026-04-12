@@ -7,6 +7,7 @@ import type {
   FlashcardStatisticsState,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface FlashcardsStatisticsProps {
   statistics: FlashcardStatisticsState;
@@ -29,15 +30,6 @@ const ratingColors: Record<string, string> = {
   good: "bg-[var(--chart-3)]",
   easy: "bg-[var(--status-success-fill)]",
 };
-
-const healthToneClasses = {
-  danger:
-    "border-[color:var(--status-danger-border)] bg-[color:var(--status-danger-bg)] text-[color:var(--status-danger-text)]",
-  warning:
-    "border-[color:var(--status-warning-border)] bg-[color:var(--status-warning-bg)] text-[color:var(--status-warning-text)]",
-  success:
-    "border-[color:var(--status-success-border)] bg-[color:var(--status-success-bg)] text-[color:var(--status-success-text)]",
-} as const;
 
 function formatTrendLabel(date: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -173,6 +165,7 @@ export function FlashcardsStatistics({
 }: Readonly<FlashcardsStatisticsProps>) {
   const { summary, states, ratings, trend } = statistics;
   const studyHealth = getFlashcardStudyHealth(summary);
+  const studyHealthTone = getStatusToneClasses(studyHealth.tone);
 
   return (
     <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
@@ -205,7 +198,7 @@ export function FlashcardsStatistics({
                   </div>
                 </div>
                 <div
-                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${healthToneClasses[studyHealth.tone]}`}
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${studyHealthTone.border} ${studyHealthTone.bg} ${studyHealthTone.text}`}
                 >
                   <CheckCircle2 className="mr-1 size-3.5" />
                   {studyHealth.label}
@@ -215,13 +208,7 @@ export function FlashcardsStatistics({
               <div className="space-y-2">
                 <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    className={
-                      studyHealth.tone === "success"
-                        ? "h-full rounded-full bg-(--status-success-fill)"
-                        : studyHealth.tone === "warning"
-                          ? "h-full rounded-full bg-(--status-warning-fill)"
-                          : "h-full rounded-full bg-(--status-danger-fill)"
-                    }
+                    className={`h-full rounded-full ${studyHealthTone.fill}`}
                     style={{ width: `${studyHealth.score}%` }}
                   />
                 </div>

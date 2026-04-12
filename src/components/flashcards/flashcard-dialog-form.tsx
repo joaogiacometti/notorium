@@ -37,8 +37,36 @@ import type { DeckEntity, SubjectEntity } from "@/lib/server/api-contracts";
 
 type FlashcardFormValues = CreateFlashcardForm | EditFlashcardForm;
 
-interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
-  mode: "create" | "edit";
+interface FlashcardDialogDiscardConfig {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDiscard: () => void;
+}
+
+interface FlashcardDialogAiBackConfig {
+  isGenerating: boolean;
+  canUse: boolean;
+  onGenerate: () => Promise<void>;
+  previousValue: string | null;
+  proposedValue: string | null;
+  onAccept: () => void;
+  onReject: () => void;
+}
+
+interface FlashcardDialogDuplicateConfig {
+  isChecking: boolean;
+  isDuplicate: boolean;
+  message: string;
+}
+
+interface FlashcardDialogCreateOptions {
+  keepFrontAfterSubmit: boolean;
+  onKeepFrontAfterSubmitChange: (value: boolean) => void;
+  keepBackAfterSubmit: boolean;
+  onKeepBackAfterSubmitChange: (value: boolean) => void;
+}
+
+interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trigger?: React.ReactNode;
@@ -46,27 +74,12 @@ interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
   formId: string;
   subjects?: SubjectEntity[];
   decks?: DeckEntity[];
-  selectedSubjectId?: string;
   onSubjectChange?: (subjectId: string) => void;
   onSubmit: (values: TValues) => Promise<void>;
-  discardDialogOpen: boolean;
-  onDiscardDialogOpenChange: (open: boolean) => void;
-  onDiscard: () => void;
-  isGeneratingBack: boolean;
   isSubmitting: boolean;
-  canUseAiBack: boolean;
-  onGenerateBack: () => Promise<void>;
-  previousBack: string | null;
-  proposedBack: string | null;
-  onAcceptBack: () => void;
-  onRejectBack: () => void;
-  keepFrontAfterSubmit: boolean;
-  onKeepFrontAfterSubmitChange: (value: boolean) => void;
-  keepBackAfterSubmit: boolean;
-  onKeepBackAfterSubmitChange: (value: boolean) => void;
-  isCheckingDuplicateFront: boolean;
-  isDuplicateFront: boolean;
-  duplicateFrontMessage: string;
+  discard: FlashcardDialogDiscardConfig;
+  aiBack: FlashcardDialogAiBackConfig;
+  duplicateFront: FlashcardDialogDuplicateConfig;
   noDialog?: boolean;
   typeToggle?: {
     mode: string;
@@ -75,6 +88,16 @@ interface FlashcardDialogFormProps<TValues extends FlashcardFormValues> {
     options?: Array<{ value: string; label: string }>;
   };
 }
+
+type FlashcardDialogFormProps<TValues extends FlashcardFormValues> =
+  | ({
+      mode: "create";
+      createOptions: FlashcardDialogCreateOptions;
+    } & FlashcardDialogFormBaseProps<TValues>)
+  | ({
+      mode: "edit";
+      createOptions?: never;
+    } & FlashcardDialogFormBaseProps<TValues>);
 
 export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   mode,
@@ -87,24 +110,11 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   decks,
   onSubjectChange,
   onSubmit,
-  discardDialogOpen,
-  onDiscardDialogOpenChange,
-  onDiscard,
-  isGeneratingBack,
   isSubmitting,
-  canUseAiBack,
-  onGenerateBack,
-  previousBack,
-  proposedBack,
-  onAcceptBack,
-  onRejectBack,
-  keepFrontAfterSubmit,
-  onKeepFrontAfterSubmitChange,
-  keepBackAfterSubmit,
-  onKeepBackAfterSubmitChange,
-  isCheckingDuplicateFront,
-  isDuplicateFront,
-  duplicateFrontMessage,
+  discard,
+  aiBack,
+  duplicateFront,
+  createOptions,
   noDialog,
   typeToggle,
 }: Readonly<FlashcardDialogFormProps<TValues>>) {
@@ -130,6 +140,8 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   const hasBack = hasRichTextContent(watchedBack ?? "");
   const generateLabel = hasBack ? "Improve with AI" : "Generate with AI";
   const generatingLabel = hasBack ? "Improving..." : "Generating...";
+  const keepFrontAfterSubmit = createOptions?.keepFrontAfterSubmit ?? false;
+  const keepBackAfterSubmit = createOptions?.keepBackAfterSubmit ?? false;
 
   const formContent = (
     <form
@@ -194,15 +206,16 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
             name={"front" as FieldPath<TValues>}
             control={form.control}
             render={({ field, fieldState }) => {
-              const frontInvalid = fieldState.invalid || isDuplicateFront;
+              const frontInvalid =
+                fieldState.invalid || duplicateFront.isDuplicate;
               let frontFeedback: React.ReactNode = null;
 
               if (fieldState.invalid) {
                 frontFeedback = <FieldError errors={[fieldState.error]} />;
-              } else if (isDuplicateFront) {
+              } else if (duplicateFront.isDuplicate) {
                 frontFeedback = (
                   <p className="text-destructive text-sm">
-                    {duplicateFrontMessage}
+                    {duplicateFront.message}
                   </p>
                 );
               }
@@ -212,7 +225,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   <div className="flex h-9 items-center justify-between gap-3">
                     <FieldLabel htmlFor={`${formId}-front`}>Front</FieldLabel>
                     <div className="flex items-center gap-1">
-                      {mode === "create" ? (
+                      {mode === "create" && createOptions ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -229,7 +242,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                           }
                           aria-pressed={keepFrontAfterSubmit}
                           onClick={() =>
-                            onKeepFrontAfterSubmitChange(!keepFrontAfterSubmit)
+                            createOptions.onKeepFrontAfterSubmitChange(
+                              !keepFrontAfterSubmit,
+                            )
                           }
                           disabled={isSubmitting}
                         >
@@ -271,17 +286,17 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                         variant="ghost"
                         size="xs"
                         className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                        onClick={() => void onGenerateBack()}
-                        disabled={!canUseAiBack}
+                        onClick={() => void aiBack.onGenerate()}
+                        disabled={!aiBack.canUse}
                       >
-                        {isGeneratingBack ? (
+                        {aiBack.isGenerating ? (
                           <Loader2 className="size-4 animate-spin" />
                         ) : (
                           <Sparkles className="size-3.5" />
                         )}
-                        {isGeneratingBack ? generatingLabel : generateLabel}
+                        {aiBack.isGenerating ? generatingLabel : generateLabel}
                       </Button>
-                      {mode === "create" ? (
+                      {mode === "create" && createOptions ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -298,7 +313,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                           }
                           aria-pressed={keepBackAfterSubmit}
                           onClick={() =>
-                            onKeepBackAfterSubmitChange(!keepBackAfterSubmit)
+                            createOptions.onKeepBackAfterSubmitChange(
+                              !keepBackAfterSubmit,
+                            )
                           }
                           disabled={isSubmitting}
                         >
@@ -312,16 +329,16 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     </div>
                   </div>
                 </div>
-                {proposedBack && previousBack ? (
+                {aiBack.proposedValue && aiBack.previousValue ? (
                   <FlashcardBackDiff
-                    previousBack={previousBack}
-                    proposedBack={proposedBack}
+                    previousBack={aiBack.previousValue}
+                    proposedBack={aiBack.proposedValue}
                     originalLabel="Original"
                     proposedLabel="Proposed"
                     acceptLabel="Accept"
                     rejectLabel="Reject"
-                    onAccept={onAcceptBack}
-                    onReject={onRejectBack}
+                    onAccept={aiBack.onAccept}
+                    onReject={aiBack.onReject}
                   />
                 ) : (
                   <TiptapEditor
@@ -348,10 +365,10 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
           form={formId}
           disabled={
             isSubmitting ||
-            isGeneratingBack ||
-            isCheckingDuplicateFront ||
-            isDuplicateFront ||
-            Boolean(proposedBack && previousBack)
+            aiBack.isGenerating ||
+            duplicateFront.isChecking ||
+            duplicateFront.isDuplicate ||
+            Boolean(aiBack.proposedValue && aiBack.previousValue)
           }
           className="w-full"
         >
@@ -370,9 +387,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
       <>
         {formContent}
         <UnsavedChangesDialog
-          open={discardDialogOpen}
-          onOpenChange={onDiscardDialogOpenChange}
-          onDiscard={onDiscard}
+          open={discard.open}
+          onOpenChange={discard.onOpenChange}
+          onDiscard={discard.onDiscard}
         />
       </>
     );
@@ -392,9 +409,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
         </DialogContent>
       </Dialog>
       <UnsavedChangesDialog
-        open={discardDialogOpen}
-        onOpenChange={onDiscardDialogOpenChange}
-        onDiscard={onDiscard}
+        open={discard.open}
+        onOpenChange={discard.onOpenChange}
+        onDiscard={discard.onDiscard}
       />
     </>
   );

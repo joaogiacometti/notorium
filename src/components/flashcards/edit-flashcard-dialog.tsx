@@ -345,24 +345,26 @@ export function EditFlashcardDialog({
           decks={decks}
           onSubjectChange={handleSubjectChange}
           onSubmit={dialog.handleSubmit}
-          discardDialogOpen={dialog.discardDialogOpen}
-          onDiscardDialogOpenChange={dialog.setDiscardDialogOpen}
-          onDiscard={dialog.handleDiscardChanges}
-          isGeneratingBack={dialog.isGeneratingBack}
           isSubmitting={dialog.isSubmitting}
-          canUseAiBack={dialog.canUseAiBack}
-          onGenerateBack={dialog.handleGenerateBack}
-          keepFrontAfterSubmit={dialog.keepFrontAfterSubmit}
-          onKeepFrontAfterSubmitChange={dialog.setKeepFrontAfterSubmit}
-          keepBackAfterSubmit={dialog.keepBackAfterSubmit}
-          onKeepBackAfterSubmitChange={dialog.setKeepBackAfterSubmit}
-          isCheckingDuplicateFront={dialog.isCheckingDuplicateFront}
-          isDuplicateFront={dialog.isDuplicateFront}
-          duplicateFrontMessage={dialog.duplicateFrontMessage}
-          previousBack={dialog.previousBack}
-          proposedBack={dialog.proposedBack}
-          onAcceptBack={dialog.handleAcceptBack}
-          onRejectBack={dialog.handleRejectBack}
+          discard={{
+            open: dialog.discardDialogOpen,
+            onOpenChange: dialog.setDiscardDialogOpen,
+            onDiscard: dialog.handleDiscardChanges,
+          }}
+          aiBack={{
+            isGenerating: dialog.isGeneratingBack,
+            canUse: dialog.canUseAiBack,
+            onGenerate: dialog.handleGenerateBack,
+            previousValue: dialog.previousBack,
+            proposedValue: dialog.proposedBack,
+            onAccept: dialog.handleAcceptBack,
+            onReject: dialog.handleRejectBack,
+          }}
+          duplicateFront={{
+            isChecking: dialog.isCheckingDuplicateFront,
+            isDuplicate: dialog.isDuplicateFront,
+            message: dialog.duplicateFrontMessage,
+          }}
           noDialog
           typeToggle={{
             mode: "edit",

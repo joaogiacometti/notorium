@@ -7,14 +7,19 @@ import { useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
+import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { SubjectChip } from "@/components/shared/subject-chip";
+import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
-import { Badge } from "@/components/ui/badge";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
 import { formatDateShort, formatIsoDate } from "@/lib/dates/format";
 import { getAssessmentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
-import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
+import {
+  getScoreTone,
+  getStatusToneClasses,
+  type StatusTone,
+} from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
 interface PlanningAssessmentsManagerTableProps {
@@ -32,23 +37,24 @@ interface PlanningAssessmentsManagerTableProps {
 }
 
 function getStatusMeta(assessment: AssessmentEntity, todayIso: string) {
-  if (isAssessmentOverdue(assessment, todayIso)) {
-    return {
-      label: "Overdue",
-      tone: getStatusToneClasses("danger"),
-    };
-  }
+  let tone: StatusTone;
 
-  if (assessment.status === "completed") {
-    return {
-      label: "Completed",
-      tone: getStatusToneClasses("success"),
-    };
+  if (isAssessmentOverdue(assessment, todayIso)) {
+    tone = "danger";
+  } else if (assessment.status === "completed") {
+    tone = "success";
+  } else {
+    tone = "warning";
   }
 
   return {
-    label: "Pending",
-    tone: getStatusToneClasses("warning"),
+    label:
+      tone === "danger"
+        ? "Overdue"
+        : tone === "success"
+          ? "Completed"
+          : "Pending",
+    tone,
   };
 }
 
@@ -120,11 +126,7 @@ function getColumns(
   const columns: ColumnDef<AssessmentEntity>[] = [
     {
       accessorKey: "title",
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Title
-        </div>
-      ),
+      header: () => <TableHeaderLabel>Title</TableHeaderLabel>,
       cell: ({ row }) => (
         <div className="flex min-w-0 max-w-full items-center gap-2.5 py-1">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
@@ -151,42 +153,25 @@ function getColumns(
     },
     {
       accessorKey: "type",
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Type
-        </div>
-      ),
+      header: () => <TableHeaderLabel>Type</TableHeaderLabel>,
       cell: ({ row }) => (
         <AssessmentTypeBadge type={row.original.type} className="px-2.5 py-1" />
       ),
     },
     {
       accessorKey: "status",
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Status
-        </div>
-      ),
+      header: () => <TableHeaderLabel>Status</TableHeaderLabel>,
       cell: ({ row }) => {
         const status = getStatusMeta(row.original, todayIso);
 
         return (
-          <Badge
-            variant="outline"
-            className={`rounded-full px-2 py-0.5 text-xs ${status.tone.border} ${status.tone.bg} ${status.tone.text}`}
-          >
-            {status.label}
-          </Badge>
+          <StatusToneBadge tone={status.tone}>{status.label}</StatusToneBadge>
         );
       },
     },
     {
       accessorKey: "dueDate",
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Due Date
-        </div>
-      ),
+      header: () => <TableHeaderLabel>Due Date</TableHeaderLabel>,
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-1.5 py-1 text-xs text-muted-foreground">
           <CalendarDays className="size-3.5 shrink-0 text-muted-foreground/70" />
@@ -199,9 +184,7 @@ function getColumns(
     {
       id: "gradeWeight",
       header: () => (
-        <div className="px-1 text-center text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Grade/Weight
-        </div>
+        <TableHeaderLabel align="center">Grade/Weight</TableHeaderLabel>
       ),
       cell: ({ row }) => (
         <div className="py-1 text-center text-sm font-medium whitespace-nowrap text-foreground">
@@ -230,11 +213,7 @@ function getColumns(
 
   columns.splice(-1, 0, {
     id: "subject",
-    header: () => (
-      <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-        Subject
-      </div>
-    ),
+    header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
     cell: ({ row }) => {
       const subjectName = subjectNamesById[row.original.subjectId];
 

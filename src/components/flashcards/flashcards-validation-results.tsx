@@ -6,6 +6,7 @@ import { FlashcardsTableRowActions } from "@/components/flashcards/flashcards-ta
 import { ValidationIssueTooltip } from "@/components/flashcards/validation-issue-tooltip";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
+import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -96,11 +97,7 @@ function getColumns(
     {
       accessorKey: "front",
       size: 160,
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Front
-        </div>
-      ),
+      header: () => <TableHeaderLabel>Front</TableHeaderLabel>,
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-3 py-1">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-destructive/15 bg-destructive/10 text-destructive shadow-xs">
@@ -120,11 +117,7 @@ function getColumns(
     {
       accessorKey: "issue",
       size: 200,
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Issue
-        </div>
-      ),
+      header: () => <TableHeaderLabel>Issue</TableHeaderLabel>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2 py-1">
           <Badge
@@ -140,11 +133,7 @@ function getColumns(
     {
       accessorKey: "subjectName",
       size: 112,
-      header: () => (
-        <div className="px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Subject
-        </div>
-      ),
+      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
       cell: ({ row }) => (
         <SubjectChip
           href={`/subjects/${row.original.subjectId}`}
