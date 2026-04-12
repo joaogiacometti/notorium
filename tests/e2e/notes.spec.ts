@@ -30,10 +30,14 @@ async function createNoteFromDialog(
 }
 
 async function openNoteDetailByTitle(page: Page, noteTitle: string) {
-  await page
+  const noteLink = page
     .getByRole("link", { name: noteTitle, exact: true })
-    .first()
-    .click();
+    .first();
+  const noteHref = await noteLink.getAttribute("href");
+  expect(noteHref).toBeTruthy();
+
+  await Promise.all([page.waitForURL(`**${noteHref}`), noteLink.click()]);
+
   await expect(
     page.getByRole("heading", { name: noteTitle, exact: true }),
   ).toBeVisible();

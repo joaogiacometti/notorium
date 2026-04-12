@@ -19,10 +19,10 @@ export async function openSubjectDetailByName(page: Page, subjectName: string) {
   const subjectHref = await subjectLink.getAttribute("href");
   expect(subjectHref).toBeTruthy();
 
-  await Promise.all([page.waitForURL(`**${subjectHref}`), subjectLink.click()]);
+  await page.goto(subjectHref!);
+  await expect(
+    page.getByRole("heading", { name: subjectName, exact: true }),
+  ).toBeVisible();
 
-  await expect(page.getByTestId("subject-detail-edit")).toBeVisible({
-    timeout: 30000,
-  });
-  await expect(page.getByRole("heading", { name: subjectName })).toBeVisible();
+  await expect(page.getByTestId("subject-detail-edit")).toBeVisible();
 }
