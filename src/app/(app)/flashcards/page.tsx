@@ -1,8 +1,12 @@
 import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-client";
 import { FlashcardsManager } from "@/components/flashcards/flashcards-manager";
 import { FlashcardsPageShell } from "@/components/flashcards/flashcards-page-shell";
+import { FlashcardsStatistics } from "@/components/flashcards/flashcards-statistics";
 import { getDecksBySubjectForUser } from "@/features/decks/queries";
-import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
+import {
+  getFlashcardReviewStateForUser,
+  getFlashcardStatisticsForUser,
+} from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
 import { getSubjectsForUser } from "@/features/subjects/queries";
@@ -45,9 +49,10 @@ export default async function FlashcardsPage({
     return (
       <FlashcardsPageShell
         currentView={currentView}
-        description="Manage all your flashcards or switch to due-card review."
+        description="Review due cards, manage your library, or inspect study statistics."
         manageLabel="Manage"
         reviewLabel="Review"
+        statisticsLabel="Statistics"
         title="Flashcards"
         subjectId={scopedSubjectId}
         deckId={scopedDeckId}
@@ -59,6 +64,38 @@ export default async function FlashcardsPage({
           deckId={scopedDeckId}
           decks={decks}
           embedded
+        />
+      </FlashcardsPageShell>
+    );
+  }
+
+  if (currentView === "statistics") {
+    const statistics = await getFlashcardStatisticsForUser(
+      session.user.id,
+      new Date(),
+      {
+        subjectId: scopedSubjectId,
+        deckId: scopedDeckId,
+      },
+    );
+
+    return (
+      <FlashcardsPageShell
+        currentView={currentView}
+        description="Review due cards, manage your library, or inspect study statistics."
+        manageLabel="Manage"
+        reviewLabel="Review"
+        statisticsLabel="Statistics"
+        title="Flashcards"
+        subjectId={scopedSubjectId}
+        deckId={scopedDeckId}
+      >
+        <FlashcardsStatistics
+          statistics={statistics}
+          subjects={subjects}
+          decks={decks}
+          subjectId={scopedSubjectId}
+          deckId={scopedDeckId}
         />
       </FlashcardsPageShell>
     );
@@ -78,9 +115,10 @@ export default async function FlashcardsPage({
   return (
     <FlashcardsPageShell
       currentView={currentView}
-      description="Manage all your flashcards or switch to due-card review."
+      description="Review due cards, manage your library, or inspect study statistics."
       manageLabel="Manage"
       reviewLabel="Review"
+      statisticsLabel="Statistics"
       title="Flashcards"
       subjectId={scopedSubjectId}
       deckId={scopedDeckId}

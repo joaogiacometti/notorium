@@ -11,6 +11,7 @@ interface FlashcardsViewSwitchProps {
   currentView: FlashcardsView;
   manageLabel: string;
   reviewLabel: string;
+  statisticsLabel: string;
   subjectId?: string;
   deckId?: string;
 }
@@ -35,6 +36,7 @@ export function FlashcardsViewSwitch({
   currentView,
   manageLabel,
   reviewLabel,
+  statisticsLabel,
   subjectId,
   deckId,
 }: Readonly<FlashcardsViewSwitchProps>) {
@@ -92,6 +94,20 @@ export function FlashcardsViewSwitch({
           ) : null}
           <span className={loadingView === "manage" ? "opacity-90" : undefined}>
             {manageLabel}
+          </span>
+        </TabsTrigger>
+        <TabsTrigger
+          value="statistics"
+          disabled={isPending}
+          onClick={() => handleViewSwitch("statistics")}
+        >
+          {loadingView === "statistics" ? (
+            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+          ) : null}
+          <span
+            className={loadingView === "statistics" ? "opacity-90" : undefined}
+          >
+            {statisticsLabel}
           </span>
         </TabsTrigger>
       </TabsList>

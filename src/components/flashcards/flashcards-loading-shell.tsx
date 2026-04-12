@@ -39,6 +39,7 @@ export function FlashcardsLoadingShell({
         <div className="mb-4 flex h-10 w-fit items-center gap-2 rounded-md border border-border/60 px-1">
           <Skeleton className="h-8 w-24 rounded-sm" />
           <Skeleton className="h-8 w-24 rounded-sm" />
+          <Skeleton className="h-8 w-28 rounded-sm" />
         </div>
 
         <div

@@ -56,10 +56,10 @@ Students who want a private, lightweight study management workspace.
   - supported Imgur share links
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
-- Flashcards have a global top-level page with a management view and a review view.
-- The default flashcards page opens in the review view, with management available as the alternate global view for filtering, finding, and editing across subjects.
+- Flashcards have a global top-level page with review, management, and statistics views.
+- The default flashcards page opens in the review view, with management and statistics available as alternate global views.
 - Flashcards have a dedicated detail page nested under subject routes.
-- Flashcard review remains available as the second view in the global flashcards page.
+- Flashcard review remains available in the global flashcards page.
 - User AI API keys are encrypted at rest, never shown back to the user after saving, and excluded from data export/import.
 
 ### Decks
@@ -87,6 +87,12 @@ Students who want a private, lightweight study management workspace.
   - `2` grades `Hard` after reveal.
   - `3` grades `Good` after reveal.
   - `4` grades `Easy` after reveal.
+
+### Flashcard Statistics
+
+- Global statistics view in the flashcards page.
+- Statistics respect the active subject and deck filters.
+- Statistics show overview metrics for cards in scope, including due cards, reviewed vs never-reviewed cards, review/lapse totals, card-state distribution, rating distribution, and recent daily review activity.
 
 ### Focus Mode
 

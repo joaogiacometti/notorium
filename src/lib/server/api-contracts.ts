@@ -105,6 +105,35 @@ export interface FlashcardReviewState {
   scheduler: FlashcardReviewSchedulerSettings;
 }
 
+export interface FlashcardStatisticsSummary {
+  totalCards: number;
+  dueCards: number;
+  reviewedCards: number;
+  neverReviewedCards: number;
+  totalReviews: number;
+  totalLapses: number;
+  averageReviewsPerCard: number;
+  averageLapsesPerReviewedCard: number;
+}
+
+export interface FlashcardStatisticsBreakdownItem {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface FlashcardStatisticsTrendPoint {
+  date: string;
+  count: number;
+}
+
+export interface FlashcardStatisticsState {
+  summary: FlashcardStatisticsSummary;
+  states: FlashcardStatisticsBreakdownItem[];
+  ratings: FlashcardStatisticsBreakdownItem[];
+  trend: FlashcardStatisticsTrendPoint[];
+}
+
 export type SearchSubjectResult = Pick<
   SubjectEntity,
   "id" | "name" | "description"

@@ -11,6 +11,7 @@ interface FlashcardsPageShellProps {
   headerMeta?: string;
   manageLabel: string;
   reviewLabel: string;
+  statisticsLabel: string;
   title: string;
   subjectId?: string;
   deckId?: string;
@@ -23,6 +24,7 @@ export function FlashcardsPageShell({
   headerMeta,
   manageLabel,
   reviewLabel,
+  statisticsLabel,
   title,
   subjectId,
   deckId,
@@ -38,6 +40,7 @@ export function FlashcardsPageShell({
           currentView={currentView}
           manageLabel={manageLabel}
           reviewLabel={reviewLabel}
+          statisticsLabel={statisticsLabel}
           subjectId={subjectId}
           deckId={deckId}
         />

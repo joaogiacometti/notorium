@@ -10,6 +10,10 @@ describe("resolveFlashcardsView", () => {
     expect(resolveFlashcardsView("manage")).toBe("manage");
   });
 
+  it("returns statistics for the statistics view", () => {
+    expect(resolveFlashcardsView("statistics")).toBe("statistics");
+  });
+
   it("falls back to review for invalid values", () => {
     expect(resolveFlashcardsView("invalid")).toBe("review");
   });

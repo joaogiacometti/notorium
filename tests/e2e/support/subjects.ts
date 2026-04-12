@@ -19,7 +19,11 @@ export async function openSubjectDetailByName(page: Page, subjectName: string) {
   const subjectHref = await subjectLink.getAttribute("href");
   expect(subjectHref).toBeTruthy();
 
-  await page.goto(subjectHref!);
+  if (!subjectHref) {
+    throw new Error(`Missing href for subject: ${subjectName}`);
+  }
+
+  await page.goto(subjectHref);
   await expect(
     page.getByRole("heading", { name: subjectName, exact: true }),
   ).toBeVisible();

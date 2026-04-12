@@ -1,9 +1,13 @@
-export const flashcardsViewValues = ["manage", "review"] as const;
+export const flashcardsViewValues = ["manage", "review", "statistics"] as const;
 
 export type FlashcardsView = (typeof flashcardsViewValues)[number];
 
 export function resolveFlashcardsView(
   view: string | undefined,
 ): FlashcardsView {
-  return view === "manage" ? "manage" : "review";
+  if (view === "manage" || view === "statistics") {
+    return view;
+  }
+
+  return "review";
 }
