@@ -22,6 +22,8 @@ interface DeleteFlashcardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted?: (id: string) => void;
+  className?: string;
+  overlayClassName?: string;
 }
 
 export function DeleteFlashcardDialog({
@@ -30,6 +32,8 @@ export function DeleteFlashcardDialog({
   open,
   onOpenChange,
   onDeleted,
+  className,
+  overlayClassName,
 }: Readonly<DeleteFlashcardDialogProps>) {
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
@@ -48,7 +52,10 @@ export function DeleteFlashcardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className={`sm:max-w-md ${className ?? ""}`}
+        overlayClassName={overlayClassName}
+      >
         <DialogHeader>
           <DialogTitle>Delete Flashcard</DialogTitle>
           <DialogDescription>

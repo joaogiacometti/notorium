@@ -62,6 +62,8 @@ interface EditFlashcardDialogProps {
   onOpenChange: (open: boolean) => void;
   onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
   onDeleted?: (deletedId: string) => void | Promise<void>;
+  className?: string;
+  overlayClassName?: string;
 }
 
 export function EditFlashcardDialog({
@@ -71,6 +73,8 @@ export function EditFlashcardDialog({
   onOpenChange,
   onUpdated,
   onDeleted,
+  className,
+  overlayClassName,
 }: Readonly<EditFlashcardDialogProps>) {
   const [mode, setMode] = useState<EditMode>("edit");
   const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(
@@ -490,7 +494,10 @@ export function EditFlashcardDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
+        <DialogContent
+          className={`flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl ${className ?? ""}`}
+          overlayClassName={overlayClassName}
+        >
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Edit Flashcard</DialogTitle>
           </DialogHeader>

@@ -512,6 +512,12 @@ export function FlashcardReviewClient({
   async function handleFlashcardUpdated(
     updatedFlashcard: FlashcardReviewState["cards"][number],
   ) {
+    if (examSession.session) {
+      examSession.updateCard(updatedFlashcard);
+      setRevealed(false);
+      return;
+    }
+
     if (subjectId && updatedFlashcard.subjectId !== subjectId) {
       const nextState = await getFlashcardReviewState({
         subjectId,
@@ -531,6 +537,12 @@ export function FlashcardReviewClient({
   }
 
   async function handleFlashcardDeleted(deletedId: string) {
+    if (examSession.session) {
+      examSession.removeCard(deletedId);
+      setRevealed(false);
+      return;
+    }
+
     const nextState = {
       ...reviewStateRef.current,
       cards: reviewStateRef.current.cards.filter(
@@ -1046,6 +1058,8 @@ export function FlashcardReviewClient({
               onOpenChange={setEditOpen}
               onUpdated={handleFlashcardUpdated}
               onDeleted={handleFlashcardDeleted}
+              className="z-120"
+              overlayClassName="z-120"
             />
             <DeleteFlashcardDialog
               flashcardId={currentCard.id}
@@ -1053,6 +1067,8 @@ export function FlashcardReviewClient({
               open={deleteOpen}
               onOpenChange={setDeleteOpen}
               onDeleted={handleFlashcardDeleted}
+              className="z-120"
+              overlayClassName="z-120"
             />
           </>
         ) : null}
