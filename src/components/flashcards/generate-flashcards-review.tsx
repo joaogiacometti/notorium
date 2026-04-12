@@ -19,6 +19,7 @@ interface GeneratedCard {
 interface GenerateFlashcardsReviewProps {
   cards: Array<{ front: string; back: string }>;
   onCreate: (cards: Array<{ front: string; back: string }>) => Promise<number>;
+  onCardsChange?: (cards: Array<{ front: string; back: string }>) => void;
   onBack?: () => void;
   isCreating: boolean;
   typeToggle?: {
@@ -32,6 +33,7 @@ interface GenerateFlashcardsReviewProps {
 export function GenerateFlashcardsReview({
   cards: initialCards,
   onCreate,
+  onCardsChange,
   onBack,
   isCreating,
   typeToggle,
@@ -58,6 +60,12 @@ export function GenerateFlashcardsReview({
       }));
     });
   }, [initialCards]);
+
+  useEffect(() => {
+    onCardsChange?.(
+      cards.map((card) => ({ front: card.front, back: card.back })),
+    );
+  }, [cards, onCardsChange]);
 
   const selectedCount = cards.filter((c) => c.selected).length;
   const allSelected = cards.every((c) => c.selected);
@@ -186,6 +194,7 @@ export function GenerateFlashcardsReview({
                           id={`edit-front-${index}`}
                           contentClassName="min-h-11 max-h-[20vh]"
                           showToolbar={false}
+                          imageUploadContext="flashcards"
                         />
                       </Field>
                       <Field>
@@ -198,6 +207,7 @@ export function GenerateFlashcardsReview({
                           id={`edit-back-${index}`}
                           contentClassName="min-h-11 max-h-[20vh]"
                           showToolbar={false}
+                          imageUploadContext="flashcards"
                         />
                       </Field>
                       <div className="flex gap-2">

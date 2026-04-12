@@ -1,9 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { note } from "@/db/schema";
+import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
+import { getRemovedAttachmentPathnames } from "@/features/attachments/utils";
 import {
   countNotesBySubjectForUser,
-  getNoteRecordForUser,
+  getNoteByIdForUser,
 } from "@/features/notes/queries";
 import type {
   CreateNoteForm,
@@ -68,7 +70,7 @@ export async function editNoteForUser(
   userId: string,
   data: EditNoteForm,
 ): Promise<NoteMutationResult> {
-  const existing = await getNoteRecordForUser(userId, data.id);
+  const existing = await getNoteByIdForUser(userId, data.id);
 
   if (!existing) {
     return actionError("notes.notFound");
@@ -79,6 +81,12 @@ export async function editNoteForUser(
     .set(getNoteMutationValues(data))
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 
+  const removedPathnames = getRemovedAttachmentPathnames(
+    [existing.content ?? ""],
+    [data.content ?? ""],
+  );
+  await cleanupAttachmentPathnames(userId, removedPathnames);
+
   return { success: true, subjectId: existing.subjectId };
 }
 
@@ -86,7 +94,7 @@ export async function deleteNoteForUser(
   userId: string,
   data: DeleteNoteForm,
 ): Promise<NoteMutationResult> {
-  const existing = await getNoteRecordForUser(userId, data.id);
+  const existing = await getNoteByIdForUser(userId, data.id);
 
   if (!existing) {
     return actionError("notes.notFound");
@@ -95,6 +103,12 @@ export async function deleteNoteForUser(
   await getDb()
     .delete(note)
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
+
+  const removedPathnames = getRemovedAttachmentPathnames(
+    [existing.content ?? ""],
+    [],
+  );
+  await cleanupAttachmentPathnames(userId, removedPathnames);
 
   return { success: true, subjectId: existing.subjectId };
 }

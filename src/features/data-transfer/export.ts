@@ -16,6 +16,7 @@ import {
   normalizeFsrsDesiredRetention,
   parseFsrsWeights,
 } from "@/features/flashcards/fsrs";
+import { removeInternalAttachmentImagesForTransfer } from "@/lib/editor/rich-text";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export interface ExportOptions {
@@ -128,7 +129,10 @@ export async function exportDataForUser(
       updatedAt: item.updatedAt.toISOString(),
       notes: (notesBySubjectId.get(item.id) ?? []).map((currentNote) => ({
         title: currentNote.title,
-        content: currentNote.content,
+        content:
+          currentNote.content === null
+            ? null
+            : removeInternalAttachmentImagesForTransfer(currentNote.content),
         createdAt: currentNote.createdAt.toISOString(),
         updatedAt: currentNote.updatedAt.toISOString(),
       })),
@@ -152,8 +156,12 @@ export async function exportDataForUser(
       ),
       flashcards: (flashcardsBySubjectId.get(item.id) ?? []).map(
         (currentFlashcard) => ({
-          front: currentFlashcard.front,
-          back: currentFlashcard.back,
+          front: removeInternalAttachmentImagesForTransfer(
+            currentFlashcard.front,
+          ),
+          back: removeInternalAttachmentImagesForTransfer(
+            currentFlashcard.back,
+          ),
           deckName:
             currentFlashcard.deckId === null
               ? undefined

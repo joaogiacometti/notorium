@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { LIMITS } from "@/lib/config/limits";
 import {
+  countInternalAttachmentImages,
   hasRichTextContent,
   richTextToPlainText,
 } from "@/lib/editor/rich-text";
@@ -33,24 +34,67 @@ const optionalDeckIdSchema = z
   .nullable()
   .optional();
 
-export const createFlashcardSchema = z.object({
-  subjectId: z
-    .string()
-    .min(1, validationMessage("Validation.flashcards.subjectRequired")),
-  deckId: optionalDeckIdSchema,
-  front: flashcardFrontSchema,
-  back: flashcardBackSchema,
-});
+function hasAllowedFlashcardAttachmentCount(front: string, back: string) {
+  return (
+    countInternalAttachmentImages(front) +
+      countInternalAttachmentImages(back) <=
+    LIMITS.maxAttachmentsPerFlashcard
+  );
+}
+
+function withFlashcardAttachmentLimit<
+  TSchema extends z.ZodRawShape & {
+    front: z.ZodString;
+    back: z.ZodString;
+  },
+>(schema: z.ZodObject<TSchema>) {
+  return schema.refine(
+    (value) => {
+      if (typeof value !== "object" || value === null) {
+        return false;
+      }
+
+      if (!("front" in value) || !("back" in value)) {
+        return false;
+      }
+
+      if (typeof value.front !== "string" || typeof value.back !== "string") {
+        return false;
+      }
+
+      return hasAllowedFlashcardAttachmentCount(value.front, value.back);
+    },
+    {
+      path: ["back"],
+      message: validationMessage("Validation.flashcards.attachmentLimit", {
+        max: LIMITS.maxAttachmentsPerFlashcard,
+      }),
+    },
+  );
+}
+
+export const createFlashcardSchema = withFlashcardAttachmentLimit(
+  z.object({
+    subjectId: z
+      .string()
+      .min(1, validationMessage("Validation.flashcards.subjectRequired")),
+    deckId: optionalDeckIdSchema,
+    front: flashcardFrontSchema,
+    back: flashcardBackSchema,
+  }),
+);
 
 export type CreateFlashcardForm = z.infer<typeof createFlashcardSchema>;
 
-export const editFlashcardSchema = z.object({
-  id: z.string().min(1),
-  subjectId: z.string().min(1),
-  deckId: optionalDeckIdSchema,
-  front: flashcardFrontSchema,
-  back: flashcardBackSchema,
-});
+export const editFlashcardSchema = withFlashcardAttachmentLimit(
+  z.object({
+    id: z.string().min(1),
+    subjectId: z.string().min(1),
+    deckId: optionalDeckIdSchema,
+    front: flashcardFrontSchema,
+    back: flashcardBackSchema,
+  }),
+);
 
 export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
 

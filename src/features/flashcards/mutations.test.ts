@@ -23,6 +23,9 @@ const deleteMock = vi.fn(() => ({
 }));
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
+const getMediaStorageProviderMock = vi.fn();
+const deleteImagesMock = vi.fn();
+const getFlashcardByIdForUserMock = vi.fn();
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
@@ -57,6 +60,7 @@ vi.mock("@/db/schema", () => ({
 
 vi.mock("@/features/flashcards/queries", () => ({
   countFlashcardsBySubjectForUser: countFlashcardsBySubjectForUserMock,
+  getFlashcardByIdForUser: getFlashcardByIdForUserMock,
   getFlashcardRecordForUser: getFlashcardRecordForUserMock,
   getFlashcardRecordsForUser: getFlashcardRecordsForUserMock,
   hasDuplicateFlashcardFrontForUser: hasDuplicateFlashcardFrontForUserMock,
@@ -81,11 +85,18 @@ vi.mock("@/features/flashcards/fsrs", () => ({
   getInitialFlashcardSchedulingState: getInitialFlashcardSchedulingStateMock,
 }));
 
+vi.mock("@/lib/media-storage/provider", () => ({
+  getMediaStorageProvider: getMediaStorageProviderMock,
+}));
+
 describe("createFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hasDuplicateFlashcardFrontForUserMock.mockResolvedValue(false);
     getDefaultDeckForSubjectMock.mockResolvedValue({ id: "default-deck-1" });
+    getMediaStorageProviderMock.mockResolvedValue({
+      deleteImages: deleteImagesMock,
+    });
   });
 
   it("returns duplicate error when a flashcard with the same normalized front already exists", async () => {
@@ -191,9 +202,11 @@ describe("editFlashcardForUser", () => {
   });
 
   it("updates front and back without changing the subject", async () => {
-    getFlashcardRecordForUserMock.mockResolvedValueOnce({
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
       subjectId: "subject-1",
+      front: "<p>Original front</p>",
+      back: "<p>Original back</p>",
     });
     getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
@@ -236,12 +249,136 @@ describe("editFlashcardForUser", () => {
       back: "<p>Updated back</p>",
       deckId: "default-deck-1",
     });
+    expect(deleteImagesMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes removed attachment blobs after updating content", async () => {
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front:
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fold-front.png"></p>',
+      back: "<p>Back</p>",
+    });
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    returningMock.mockResolvedValueOnce([
+      {
+        id: "flashcard-1",
+        subjectId: "subject-1",
+        front: "<p>Updated front</p>",
+        back: "<p>Back</p>",
+      },
+    ]);
+
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await editFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front: "<p>Updated front</p>",
+      back: "<p>Back</p>",
+    });
+
+    expect(result.success).toBe(true);
+    expect(deleteImagesMock).toHaveBeenCalledWith({
+      pathnames: ["notorium/flashcards/user-1/old-front.png"],
+    });
+  });
+
+  it("returns success when attachment cleanup fails after updating content", async () => {
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front:
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fold-front.png"></p>',
+      back: "<p>Back</p>",
+    });
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    returningMock.mockResolvedValueOnce([
+      {
+        id: "flashcard-1",
+        subjectId: "subject-1",
+        front: "<p>Updated front</p>",
+        back: "<p>Back</p>",
+      },
+    ]);
+    deleteImagesMock.mockRejectedValueOnce(new Error("cleanup failed"));
+
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await editFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front: "<p>Updated front</p>",
+      back: "<p>Back</p>",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      flashcard: {
+        id: "flashcard-1",
+        subjectId: "subject-1",
+        front: "<p>Updated front</p>",
+        back: "<p>Back</p>",
+      },
+      previousSubjectId: "subject-1",
+    });
+    expect(deleteImagesMock).toHaveBeenCalledWith({
+      pathnames: ["notorium/flashcards/user-1/old-front.png"],
+    });
+  });
+
+  it("only deletes owned attachment blobs after updating content", async () => {
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front:
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fold-front.png"></p>',
+      back: '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-2%2Fforeign-back.png"></p>',
+    });
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    returningMock.mockResolvedValueOnce([
+      {
+        id: "flashcard-1",
+        subjectId: "subject-1",
+        front: "<p>Updated front</p>",
+        back: "<p>Updated back</p>",
+      },
+    ]);
+
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await editFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front: "<p>Updated front</p>",
+      back: "<p>Updated back</p>",
+    });
+
+    expect(result.success).toBe(true);
+    expect(deleteImagesMock).toHaveBeenCalledWith({
+      pathnames: ["notorium/flashcards/user-1/old-front.png"],
+    });
   });
 
   it("moves the flashcard to another active subject owned by the user", async () => {
-    getFlashcardRecordForUserMock.mockResolvedValueOnce({
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
       subjectId: "subject-1",
+      front: "<p>Front</p>",
+      back: "<p>Back</p>",
     });
     getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-2",
@@ -284,9 +421,11 @@ describe("editFlashcardForUser", () => {
   });
 
   it("returns duplicate error when editing to a normalized front used by another card", async () => {
-    getFlashcardRecordForUserMock.mockResolvedValueOnce({
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
       subjectId: "subject-1",
+      front: "<p>Front</p>",
+      back: "<p>Back</p>",
     });
     getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
@@ -314,9 +453,11 @@ describe("editFlashcardForUser", () => {
   });
 
   it("rejects moves to nonexistent or archived subjects", async () => {
-    getFlashcardRecordForUserMock.mockResolvedValueOnce({
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
       subjectId: "subject-1",
+      front: "<p>Front</p>",
+      back: "<p>Back</p>",
     });
     getActiveSubjectRecordForUserMock.mockResolvedValueOnce(null);
 
@@ -344,13 +485,25 @@ describe("editFlashcardForUser", () => {
 describe("bulkDeleteFlashcardsForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getMediaStorageProviderMock.mockResolvedValue({
+      deleteImages: deleteImagesMock,
+    });
   });
 
   it("deletes all owned flashcards and returns their ids and subject ids", async () => {
-    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
-      { id: "flashcard-1", subjectId: "subject-1" },
-      { id: "flashcard-2", subjectId: "subject-2" },
-    ]);
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front:
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fa.png"></p>',
+      back: "<p>Back</p>",
+    });
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-2",
+      subjectId: "subject-2",
+      front: "<p>Front</p>",
+      back: "<p>/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fb.png</p>",
+    });
 
     const { bulkDeleteFlashcardsForUser } = await import(
       "@/features/flashcards/mutations"
@@ -370,12 +523,59 @@ describe("bulkDeleteFlashcardsForUser", () => {
       "flashcard-1",
       "flashcard-2",
     ]);
+    expect(deleteImagesMock).toHaveBeenCalledWith({
+      pathnames: [
+        "notorium/flashcards/user-1/a.png",
+        "notorium/flashcards/user-1/b.png",
+      ],
+    });
+  });
+
+  it("returns success when cleanup fails after bulk delete", async () => {
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front:
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fa.png"></p>',
+      back: "<p>Back</p>",
+    });
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-2",
+      subjectId: "subject-2",
+      front: "<p>Front</p>",
+      back: "<p>/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fb.png</p>",
+    });
+    deleteImagesMock.mockRejectedValueOnce(new Error("cleanup failed"));
+
+    const { bulkDeleteFlashcardsForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await bulkDeleteFlashcardsForUser("user-1", {
+      ids: ["flashcard-1", "flashcard-2"],
+    });
+
+    expect(result).toEqual({
+      success: true,
+      ids: ["flashcard-1", "flashcard-2"],
+      subjectIds: ["subject-1", "subject-2"],
+    });
+    expect(deleteImagesMock).toHaveBeenCalledWith({
+      pathnames: [
+        "notorium/flashcards/user-1/a.png",
+        "notorium/flashcards/user-1/b.png",
+      ],
+    });
   });
 
   it("fails atomically when any selected flashcard is missing", async () => {
-    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
-      { id: "flashcard-1", subjectId: "subject-1" },
-    ]);
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front: "<p>Front</p>",
+      back: "<p>Back</p>",
+    });
+    getFlashcardByIdForUserMock.mockResolvedValueOnce(null);
 
     const { bulkDeleteFlashcardsForUser } = await import(
       "@/features/flashcards/mutations"
@@ -392,6 +592,44 @@ describe("bulkDeleteFlashcardsForUser", () => {
       errorMessage: undefined,
     });
     expect(deleteMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteFlashcardForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getMediaStorageProviderMock.mockResolvedValue({
+      deleteImages: deleteImagesMock,
+    });
+  });
+
+  it("returns success when cleanup fails after deleting a flashcard", async () => {
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      front:
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fa.png"></p>',
+      back: "<p>Back</p>",
+    });
+    deleteImagesMock.mockRejectedValueOnce(new Error("cleanup failed"));
+
+    const { deleteFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await deleteFlashcardForUser("user-1", {
+      id: "flashcard-1",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      id: "flashcard-1",
+      subjectId: "subject-1",
+    });
+    expect(deleteMock).toHaveBeenCalled();
+    expect(deleteImagesMock).toHaveBeenCalledWith({
+      pathnames: ["notorium/flashcards/user-1/a.png"],
+    });
   });
 });
 

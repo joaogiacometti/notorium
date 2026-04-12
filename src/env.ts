@@ -21,6 +21,7 @@ const serverEnvSchema = z
     UPSTASH_REDIS_REST_URL: z.url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
     REDIS_URL: z.url().optional(),
+    BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
     USER_AI_SETTINGS_ENCRYPTION_KEY: z.string().refine(isBase64Length(32), {
       message:
         "USER_AI_SETTINGS_ENCRYPTION_KEY must be a base64-encoded 32-byte key",

@@ -69,6 +69,38 @@ describe("createNoteSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("accepts content at exactly max internal attachments", () => {
+    const content = Array.from(
+      { length: LIMITS.maxAttachmentsPerNote },
+      (_, index) =>
+        `<img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2F${index}.png">`,
+    ).join("");
+
+    const result = createNoteSchema.safeParse({
+      title: "Valid",
+      subjectId: "s1",
+      content,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects content with too many internal attachments", () => {
+    const content = Array.from(
+      { length: LIMITS.maxAttachmentsPerNote + 1 },
+      (_, index) =>
+        `<img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2F${index}.png">`,
+    ).join("");
+
+    const result = createNoteSchema.safeParse({
+      title: "Valid",
+      subjectId: "s1",
+      content,
+    });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("editNoteSchema", () => {

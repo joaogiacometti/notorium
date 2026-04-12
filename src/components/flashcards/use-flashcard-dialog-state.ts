@@ -12,6 +12,7 @@ import {
   checkFlashcardDuplicate,
   generateFlashcardBack,
 } from "@/app/actions/flashcards";
+import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
 import {
   type CreateFlashcardForm,
@@ -166,7 +167,11 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     open,
   ]);
 
-  function handleDiscardChanges() {
+  async function handleDiscardChanges() {
+    await cleanupDiscardedEditorAttachments(
+      [currentValues.front, currentValues.back],
+      [values.front, values.back],
+    );
     form.reset(values);
     setPreviousBack(null);
     setProposedBack(null);
@@ -174,7 +179,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     onOpenChange(false);
   }
 
-  function handleOpenChange(nextOpen: boolean) {
+  async function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
       setDiscardDialogOpen(false);
       if (mode === "create") {
@@ -201,6 +206,10 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       return;
     }
 
+    await cleanupDiscardedEditorAttachments(
+      [currentValues.front, currentValues.back],
+      [values.front, values.back],
+    );
     form.reset(values);
     setPreviousBack(null);
     setProposedBack(null);

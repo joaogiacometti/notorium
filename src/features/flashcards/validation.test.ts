@@ -122,6 +122,42 @@ describe("createFlashcardSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("accepts flashcards at exactly max internal attachments", () => {
+    const front = Array.from(
+      { length: LIMITS.maxAttachmentsPerFlashcard - 1 },
+      (_, index) =>
+        `<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Ffront-${index}.png">`,
+    ).join("");
+    const back =
+      '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fback.png">';
+
+    const result = createFlashcardSchema.safeParse({
+      subjectId: "subject-1",
+      front,
+      back,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects flashcards with too many internal attachments across front and back", () => {
+    const front = Array.from(
+      { length: LIMITS.maxAttachmentsPerFlashcard },
+      (_, index) =>
+        `<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Ffront-${index}.png">`,
+    ).join("");
+    const back =
+      '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fback-overflow.png">';
+
+    const result = createFlashcardSchema.safeParse({
+      subjectId: "subject-1",
+      front,
+      back,
+    });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("editFlashcardSchema", () => {

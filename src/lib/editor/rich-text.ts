@@ -1,3 +1,5 @@
+import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
+
 export function richTextToPlainText(value: string): string {
   return value
     .replaceAll(/<[^>]*>/g, " ")
@@ -96,6 +98,85 @@ export function hasRichTextContent(value: string): boolean {
   return /<img\b/i.test(value) || richTextToPlainText(value).length > 0;
 }
 
+function normalizeInternalAttachmentSource(value: string): string | null {
+  const trimmed = value.trim();
+  if (!isInternalAttachmentImageSource(trimmed)) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed, "http://localhost");
+    return `${parsed.pathname}?${parsed.searchParams.toString()}`;
+  } catch {
+    return null;
+  }
+}
+
+function getRenderedInternalAttachmentImageSources(value: string): string[] {
+  const sources: string[] = [];
+
+  value.replaceAll(/<img\b([^>]*)>/gi, (_imageHtml, attributes: string) => {
+    const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
+    const normalized = srcMatch
+      ? normalizeInternalAttachmentSource(decodeHtmlEntities(srcMatch[1]))
+      : null;
+
+    if (normalized) {
+      sources.push(normalized);
+    }
+
+    return "";
+  });
+
+  const paragraphPattern = /<p>([\s\S]*?)<\/p>/gi;
+  for (const match of value.matchAll(paragraphPattern)) {
+    const [, innerHtml] = match;
+    const candidate = extractImageUrlCandidate(innerHtml);
+    const normalized = candidate
+      ? normalizeInternalAttachmentSource(candidate)
+      : null;
+
+    if (normalized) {
+      sources.push(normalized);
+    }
+  }
+
+  return sources;
+}
+
+export function countInternalAttachmentImages(value: string): number {
+  return getRenderedInternalAttachmentImageSources(value).length;
+}
+
+function getInternalAttachmentPathnameFromSource(value: string): string | null {
+  const trimmed = value.trim();
+  if (!isInternalAttachmentImageSource(trimmed)) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed, "http://localhost");
+    const pathname = parsed.searchParams.get("pathname")?.trim() ?? "";
+    return pathname.length > 0 ? pathname : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getInternalAttachmentPathnames(value: string): string[] {
+  const pathnames = new Set<string>();
+
+  for (const source of getRenderedInternalAttachmentImageSources(value)) {
+    const pathname = getInternalAttachmentPathnameFromSource(source);
+
+    if (pathname) {
+      pathnames.add(pathname);
+    }
+  }
+
+  return [...pathnames];
+}
+
 export function getRichTextExcerpt(value: string, maxLength: number): string {
   const plainText = richTextToPlainText(value);
   if (plainText.length <= maxLength) {
@@ -136,17 +217,32 @@ function extractImageFallbackText(attributes: string): string | null {
   return src.length > 0 ? src : null;
 }
 
-function isRelativeImageSource(value: string): boolean {
-  if (value.trim().length === 0) {
+const INTERNAL_ATTACHMENT_IMAGE_PATH = "/api/attachments/blob";
+
+function isInternalAttachmentImageSource(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/")) {
     return false;
   }
 
   try {
-    const parsed = new URL(value);
-    return parsed.protocol !== "http:" && parsed.protocol !== "https:";
+    const parsed = new URL(trimmed, "http://localhost");
+    if (parsed.pathname !== INTERNAL_ATTACHMENT_IMAGE_PATH) {
+      return false;
+    }
+
+    const pathname = parsed.searchParams.get("pathname")?.trim() ?? "";
+    return pathname.length > 0;
   } catch {
-    return true;
+    return false;
   }
+}
+
+function isAllowedRenderedImageSource(value: string): boolean {
+  return (
+    isInternalAttachmentImageSource(value) ||
+    resolveEmbeddableImageUrl(value) !== null
+  );
 }
 
 function normalizeUnsupportedImageMarkup(value: string): string {
@@ -157,7 +253,7 @@ function normalizeUnsupportedImageMarkup(value: string): string {
     }
 
     const src = decodeHtmlEntities(srcMatch[1]).trim();
-    if (!isRelativeImageSource(src)) {
+    if (isAllowedRenderedImageSource(src)) {
       return imageHtml;
     }
 
@@ -175,17 +271,60 @@ function extractImageUrlCandidate(innerHtml: string): string | null {
   if (!/<[^>]+>/.test(trimmed)) {
     const decoded = decodeHtmlEntities(trimmed).trim();
 
-    try {
-      return new URL(decoded).toString();
-    } catch {
-      return null;
+    if (isInternalAttachmentImageSource(decoded)) {
+      return decoded;
     }
+
+    return resolveEmbeddableImageUrl(decoded);
   }
 
   const anchorMatch =
     /^<a\s+[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*<\/a>$/i.exec(trimmed);
+  if (!anchorMatch) {
+    return null;
+  }
 
-  return anchorMatch ? decodeHtmlEntities(anchorMatch[1]).trim() : null;
+  const href = decodeHtmlEntities(anchorMatch[1]).trim();
+  const anchorText = richTextToPlainText(trimmed);
+
+  if (isInternalAttachmentImageSource(href) && anchorText === href) {
+    return href;
+  }
+
+  return resolveEmbeddableImageUrl(href);
+}
+
+export function removeInternalAttachmentImagesForTransfer(
+  value: string,
+): string {
+  const withoutAttachmentImages = value.replaceAll(
+    /<img\b([^>]*)>/gi,
+    (imageHtml, attributes: string) => {
+      const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
+      const normalized = srcMatch
+        ? normalizeInternalAttachmentSource(decodeHtmlEntities(srcMatch[1]))
+        : null;
+
+      return normalized ? "" : imageHtml;
+    },
+  );
+
+  const withoutAttachmentParagraphs = withoutAttachmentImages.replaceAll(
+    /<p>([\s\S]*?)<\/p>/gi,
+    (paragraphHtml, innerHtml: string) => {
+      const candidate = extractImageUrlCandidate(innerHtml);
+      const normalized = candidate
+        ? normalizeInternalAttachmentSource(candidate)
+        : null;
+
+      return normalized ? "" : paragraphHtml;
+    },
+  );
+
+  return withoutAttachmentParagraphs.replaceAll(
+    /<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi,
+    "",
+  );
 }
 
 export async function normalizeRichTextForRendering(
@@ -215,10 +354,18 @@ export async function normalizeRichTextForRendering(
     let replacement = paragraphHtml;
 
     if (candidate) {
-      const resolvedImageUrl = await resolveImageUrl(candidate);
-      if (resolvedImageUrl) {
-        replacement = `<img src="${escapeHtmlAttribute(resolvedImageUrl)}" alt="">`;
+      if (isInternalAttachmentImageSource(candidate)) {
+        replacement = `<img src="${escapeHtmlAttribute(candidate)}" alt="">`;
         changed = true;
+      } else {
+        const resolvedImageUrl = await resolveImageUrl(candidate);
+        const directImageUrl =
+          resolvedImageUrl && resolveEmbeddableImageUrl(resolvedImageUrl);
+
+        if (directImageUrl) {
+          replacement = `<img src="${escapeHtmlAttribute(directImageUrl)}" alt="">`;
+          changed = true;
+        }
       }
     }
 

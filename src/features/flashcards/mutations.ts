@@ -1,6 +1,8 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
+import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
+import { getRemovedAttachmentPathnames } from "@/features/attachments/utils";
 import {
   getDeckRecordForUser,
   getDefaultDeckForSubject,
@@ -12,6 +14,7 @@ import {
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   countFlashcardsBySubjectForUser,
+  getFlashcardByIdForUser,
   getFlashcardRecordForUser,
   getFlashcardRecordsForUser,
   hasDuplicateFlashcardFrontForUser,
@@ -112,7 +115,7 @@ async function getEditFlashcardPreflight(
 ) {
   const [existingFlashcard, existingSubject, hasDuplicate, existingDeck] =
     await Promise.all([
-      getFlashcardRecordForUser(userId, data.id),
+      getFlashcardByIdForUser(userId, data.id),
       getActiveSubjectRecordForUser(userId, data.subjectId),
       hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
       data.deckId ? getDeckRecordForUser(userId, data.deckId) : null,
@@ -248,6 +251,12 @@ export async function editFlashcardForUser(
   const targetDeckId = inputDeckId
     ? inputDeckId
     : (await getDefaultDeckForSubject(userId, data.subjectId)).id;
+  const previousAttachmentValues = [
+    existingFlashcard.front,
+    existingFlashcard.back,
+  ];
+
+  let updatedFlashcard: typeof existingFlashcard | undefined;
 
   try {
     const updated = await getDb()
@@ -262,11 +271,7 @@ export async function editFlashcardForUser(
       .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)))
       .returning();
 
-    return {
-      success: true,
-      flashcard: updated[0],
-      previousSubjectId: existingFlashcard.subjectId,
-    };
+    updatedFlashcard = updated[0];
   } catch (error) {
     if (isUniqueViolationError(error)) {
       return actionError("flashcards.duplicateFront");
@@ -274,6 +279,22 @@ export async function editFlashcardForUser(
 
     throw error;
   }
+
+  if (!updatedFlashcard) {
+    return actionError("flashcards.notFound");
+  }
+
+  const removedPathnames = getRemovedAttachmentPathnames(
+    previousAttachmentValues,
+    [data.front, data.back],
+  );
+  await cleanupAttachmentPathnames(userId, removedPathnames);
+
+  return {
+    success: true,
+    flashcard: updatedFlashcard,
+    previousSubjectId: existingFlashcard.subjectId,
+  };
 }
 
 function mapAiServiceResult(
@@ -335,7 +356,7 @@ export async function deleteFlashcardForUser(
   userId: string,
   data: DeleteFlashcardForm,
 ): Promise<DeleteFlashcardMutationResult> {
-  const existingFlashcard = await getFlashcardRecordForUser(userId, data.id);
+  const existingFlashcard = await getFlashcardByIdForUser(userId, data.id);
 
   if (!existingFlashcard) {
     return actionError("flashcards.notFound");
@@ -345,6 +366,12 @@ export async function deleteFlashcardForUser(
     .delete(flashcard)
     .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)));
 
+  const removedPathnames = getRemovedAttachmentPathnames(
+    [existingFlashcard.front, existingFlashcard.back],
+    [],
+  );
+  await cleanupAttachmentPathnames(userId, removedPathnames);
+
   return { success: true, id: data.id, subjectId: existingFlashcard.subjectId };
 }
 
@@ -352,21 +379,31 @@ export async function bulkDeleteFlashcardsForUser(
   userId: string,
   data: BulkDeleteFlashcardsForm,
 ): Promise<BulkDeleteFlashcardsResult> {
-  const existingFlashcards = await getFlashcardRecordsForUser(userId, data.ids);
+  const existingFlashcards = await Promise.all(
+    data.ids.map((id) => getFlashcardByIdForUser(userId, id)),
+  );
 
-  if (existingFlashcards.length !== data.ids.length) {
+  if (existingFlashcards.some((item) => !item)) {
     return actionError("flashcards.notFound");
   }
+
+  const ownedFlashcards = existingFlashcards.filter((item) => item !== null);
 
   await getDb()
     .delete(flashcard)
     .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
+  const removedPathnames = getRemovedAttachmentPathnames(
+    ownedFlashcards.flatMap((flashcard) => [flashcard.front, flashcard.back]),
+    [],
+  );
+  await cleanupAttachmentPathnames(userId, removedPathnames);
+
   return {
     success: true,
     ids: data.ids,
     subjectIds: getUniqueSubjectIds(
-      existingFlashcards.map((flashcard) => flashcard.subjectId),
+      ownedFlashcards.map((flashcard) => flashcard.subjectId),
     ),
   };
 }

@@ -1,5 +1,7 @@
 import { headers } from "next/headers";
-import { getAuth } from "@/lib/auth/auth";
+import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
+import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
+import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import {
   type ActionErrorResult,
   actionError,
@@ -8,6 +10,23 @@ import {
 export type AccountMutationResult = { success: true } | ActionErrorResult;
 
 export async function deleteAccountForUser(): Promise<AccountMutationResult> {
+  const userId = await getAuthenticatedUserId();
+  const provider = await getMediaStorageProvider();
+  let attachmentPathnames: string[] = [];
+
+  if (provider) {
+    try {
+      attachmentPathnames = (
+        await Promise.all([
+          provider.listImagePathnames({ prefix: `notorium/notes/${userId}/` }),
+          provider.listImagePathnames({
+            prefix: `notorium/flashcards/${userId}/`,
+          }),
+        ])
+      ).flat();
+    } catch {}
+  }
+
   try {
     const requestHeaders = await headers();
     await getAuth().api.signOut({ headers: requestHeaders });
@@ -20,6 +39,8 @@ export async function deleteAccountForUser(): Promise<AccountMutationResult> {
   } catch {
     return actionError("account.deleteFailed");
   }
+
+  await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return { success: true };
 }

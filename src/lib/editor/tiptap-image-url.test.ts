@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isSupportedSharedImageUrl,
-  resolveEmbeddableImageUrl,
-} from "@/lib/editor/tiptap-image-url";
+import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 
 describe("resolveEmbeddableImageUrl", () => {
   it("accepts an https image URL", () => {
@@ -23,6 +20,10 @@ describe("resolveEmbeddableImageUrl", () => {
     expect(resolveEmbeddableImageUrl("https://example.com/page")).toBeNull();
   });
 
+  it("rejects shared page URLs", () => {
+    expect(resolveEmbeddableImageUrl("https://example.com/abc123")).toBeNull();
+  });
+
   it("rejects unsupported protocol", () => {
     expect(resolveEmbeddableImageUrl("ftp://example.com/image.png")).toBeNull();
   });
@@ -33,31 +34,5 @@ describe("resolveEmbeddableImageUrl", () => {
 
   it("rejects relative image filenames", () => {
     expect(resolveEmbeddableImageUrl("cisco_switch.jpg")).toBeNull();
-  });
-});
-
-describe("isSupportedSharedImageUrl", () => {
-  it("accepts imgur image page URLs", () => {
-    expect(isSupportedSharedImageUrl("https://imgur.com/abc123")).toBe(true);
-  });
-
-  it("accepts mobile imgur image page URLs", () => {
-    expect(isSupportedSharedImageUrl("https://m.imgur.com/abc123")).toBe(true);
-  });
-
-  it("rejects direct image URLs", () => {
-    expect(isSupportedSharedImageUrl("https://i.imgur.com/abc123.png")).toBe(
-      false,
-    );
-  });
-
-  it("rejects album URLs", () => {
-    expect(isSupportedSharedImageUrl("https://imgur.com/a/abc123")).toBe(false);
-  });
-
-  it("rejects gallery URLs", () => {
-    expect(isSupportedSharedImageUrl("https://imgur.com/gallery/abc123")).toBe(
-      false,
-    );
   });
 });

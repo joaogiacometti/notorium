@@ -8,7 +8,7 @@ const selectMock = vi.fn(() => ({
   from: fromMock,
 }));
 const returningMock = vi.fn();
-const insertValuesMock = vi.fn(() => ({
+const insertValuesMock = vi.fn((_value: unknown) => ({
   returning: returningMock,
   onConflictDoUpdate: vi.fn(),
 }));
@@ -219,6 +219,108 @@ describe("importDataForUser", () => {
         subjectId: "subject-1",
         userId: "user-1",
       }),
+    );
+  });
+
+  it("strips private attachment references before persisting imported content", async () => {
+    const input = {
+      version: 1,
+      exportedAt: "2026-03-13T00:00:00.000Z",
+      subjects: [
+        {
+          name: "Biology",
+          description: null,
+          totalClasses: null,
+          maxMisses: null,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          notes: [
+            {
+              title: "Cells",
+              content:
+                "<p>Intro</p><p>/api/attachments/blob?pathname=notorium%2Fnotes%2Fold-user%2Fa.png</p><p>Outro</p>",
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+          attendanceMisses: [],
+          assessments: [],
+          decks: [],
+          flashcards: [
+            {
+              front:
+                '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fold-user%2Ffront.png" alt=""></p>',
+              back: "<p>Back</p>",
+              state: "review",
+              dueAt: "2026-03-20T00:00:00.000Z",
+              stability: 10,
+              difficulty: 5,
+              ease: 250,
+              intervalDays: 7,
+              learningStep: 0,
+              lastReviewedAt: "2026-03-13T00:00:00.000Z",
+              reviewCount: 3,
+              lapseCount: 1,
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        },
+      ],
+    };
+
+    parseActionInputMock.mockReturnValueOnce({
+      success: true,
+      data: input,
+    });
+    whereMock.mockResolvedValueOnce([{ total: 0 }]);
+    getImportedFlashcardSchedulingStateMock.mockReturnValueOnce({
+      state: "review",
+      dueAt: new Date("2026-03-20T00:00:00.000Z"),
+      stability: "10.0000",
+      difficulty: "5.0000",
+      ease: 250,
+      intervalDays: 7,
+      learningStep: 0,
+      lastReviewedAt: new Date("2026-03-13T00:00:00.000Z"),
+      reviewCount: 3,
+      lapseCount: 1,
+      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    });
+    const txInsertMock = vi.fn(() => ({
+      values: insertValuesMock,
+    }));
+    transactionMock.mockImplementationOnce(async (callback) =>
+      callback({
+        insert: txInsertMock,
+      }),
+    );
+    returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
+    returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
+
+    const { importDataForUser } = await import(
+      "@/features/data-transfer/import"
+    );
+
+    const result = await importDataForUser("user-1", input);
+
+    expect(result).toEqual({ success: true, imported: 1 });
+    expect(insertValuesMock.mock.calls[1]?.[0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "Cells",
+          content: "<p>Intro</p><p>Outro</p>",
+        }),
+      ]),
+    );
+    expect(insertValuesMock.mock.calls[3]?.[0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          front: "",
+          frontNormalized: "",
+          back: "<p>Back</p>",
+        }),
+      ]),
     );
   });
 });

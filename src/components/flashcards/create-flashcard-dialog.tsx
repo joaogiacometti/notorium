@@ -12,6 +12,7 @@ import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-fo
 import { GenerateFlashcardsReview } from "@/components/flashcards/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
 import { DeckSelect } from "@/components/shared/deck-select";
+import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
@@ -383,7 +384,14 @@ export function CreateFlashcardDialog({
     });
   }
 
-  function handleDiscardOnClose() {
+  async function handleDiscardOnClose() {
+    await cleanupDiscardedEditorAttachments(
+      [
+        aiForm.getValues().text ?? "",
+        ...(generatedCards?.flatMap((card) => [card.front, card.back]) ?? []),
+      ],
+      [],
+    );
     setGeneratedCards(null);
     setDiscardOnCloseDialogOpen(false);
     setSelectedDeckId(null);
@@ -391,7 +399,11 @@ export function CreateFlashcardDialog({
     onOpenChange(false);
   }
 
-  function handleDiscardOnModeSwitch() {
+  async function handleDiscardOnModeSwitch() {
+    await cleanupDiscardedEditorAttachments(
+      generatedCards?.flatMap((card) => [card.front, card.back]) ?? [],
+      [],
+    );
     setGeneratedCards(null);
     setDiscardOnModeSwitchDialogOpen(false);
     setMode("single");
@@ -399,7 +411,11 @@ export function CreateFlashcardDialog({
     aiForm.reset(getGenerateFlashcardsFormValues(subjectId ?? "", null));
   }
 
-  function handleBackToInput() {
+  async function handleBackToInput() {
+    await cleanupDiscardedEditorAttachments(
+      generatedCards?.flatMap((card) => [card.front, card.back]) ?? [],
+      [],
+    );
     setGeneratedCards(null);
   }
 
@@ -459,6 +475,7 @@ export function CreateFlashcardDialog({
         </p>
         <GenerateFlashcardsReview
           cards={generatedCards}
+          onCardsChange={setGeneratedCards}
           onCreate={handleCreateCards}
           onBack={handleBackToInput}
           isCreating={isCreating}
@@ -525,6 +542,7 @@ export function CreateFlashcardDialog({
                 id="ai-text"
                 contentClassName="min-h-50 max-h-[40svh]"
                 showToolbar
+                imageUploadContext="flashcards"
               />
               {aiForm.formState.errors.text ? (
                 <FieldError errors={[aiForm.formState.errors.text]} />

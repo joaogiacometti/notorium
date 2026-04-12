@@ -40,7 +40,7 @@ Students who want a private, lightweight study management workspace.
 - Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, and other shared editor formatting exposed by the app.
 - Note content renders images from:
   - pasted direct image URLs
-  - supported Imgur share links
+  - pasted image uploads stored in private blob storage
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
 
@@ -53,7 +53,7 @@ Students who want a private, lightweight study management workspace.
 - Flashcard rich text supports the same shared editor capabilities as notes, including syntax-highlighted code blocks and supported image rendering.
 - Flashcard content renders images from:
   - pasted direct image URLs
-  - supported Imgur share links
+  - pasted image uploads stored in private blob storage
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
 - Flashcards have a global top-level page with review, management, and statistics views.

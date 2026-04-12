@@ -110,4 +110,69 @@ describe("exportDataForUser", () => {
       weights: getDefaultFsrsWeights(),
     });
   });
+
+  it("strips private attachment references from exported notes and flashcards", async () => {
+    mockSelectLimitOnce([]);
+    mockSelectWhereOnce([
+      {
+        id: "subject-1",
+        name: "Math",
+        description: null,
+        totalClasses: null,
+        maxMisses: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+    mockSelectWhereOnce([
+      {
+        title: "Note 1",
+        content:
+          '<p>Keep</p><p>/api/attachments/blob?pathname=notorium%2Fnotes%2Fold-user%2Fa.png</p><p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fold-user%2Fb.png" alt=""></p>',
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+        subjectId: "subject-1",
+      },
+    ]);
+    mockSelectWhereOnce([]);
+    mockSelectWhereOnce([]);
+    mockSelectWhereOnce([
+      {
+        front:
+          '<p><a href="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fold-user%2Ffront.png">/api/attachments/blob?pathname=notorium%2Fflashcards%2Fold-user%2Ffront.png</a></p>',
+        back: "<p>https://cdn.example.com/image.png</p>",
+        deckId: null,
+        state: "review",
+        dueAt: new Date("2026-01-10T00:00:00.000Z"),
+        stability: null,
+        difficulty: null,
+        ease: 250,
+        intervalDays: 5,
+        learningStep: null,
+        lastReviewedAt: null,
+        reviewCount: 1,
+        lapseCount: 0,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+        subjectId: "subject-1",
+      },
+    ]);
+    mockSelectWhereOnce([]);
+
+    const { exportDataForUser } = await import(
+      "@/features/data-transfer/export"
+    );
+
+    const result = await exportDataForUser("user-1");
+
+    if ("errorCode" in result) {
+      throw new Error(`Unexpected export error: ${result.errorCode}`);
+    }
+
+    expect(result.subjects[0]?.notes[0]?.content).toBe("<p>Keep</p>");
+    expect(result.subjects[0]?.flashcards[0]?.front).toBe("");
+    expect(result.subjects[0]?.flashcards[0]?.back).toBe(
+      "<p>https://cdn.example.com/image.png</p>",
+    );
+  });
 });

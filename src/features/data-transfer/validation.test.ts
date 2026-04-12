@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importDataSchema } from "@/features/data-transfer/validation";
+import { LIMITS } from "@/lib/config/limits";
 
 const validAssessment = {
   title: "Midterm",
@@ -169,6 +170,52 @@ describe("importDataSchema", () => {
         {
           ...validSubject,
           flashcards: [{ ...validFlashcard, front: "" }],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects notes with too many internal attachments", () => {
+    const content = Array.from(
+      { length: LIMITS.maxAttachmentsPerNote + 1 },
+      (_, index) =>
+        `<img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2F${index}.png">`,
+    ).join("");
+
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
+          notes: [{ ...validNote, content }],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects flashcards with too many internal attachments", () => {
+    const front = Array.from(
+      { length: LIMITS.maxAttachmentsPerFlashcard },
+      (_, index) =>
+        `<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Ffront-${index}.png">`,
+    ).join("");
+
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      subjects: [
+        {
+          ...validSubject,
+          flashcards: [
+            {
+              ...validFlashcard,
+              front,
+              back: '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Foverflow.png">',
+            },
+          ],
         },
       ],
     });

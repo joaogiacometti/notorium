@@ -265,6 +265,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     aria-invalid={frontInvalid}
                     contentClassName="min-h-11 max-h-[40svh]"
                     showToolbar={false}
+                    imageUploadContext="flashcards"
                     onCtrlEnter={handleCtrlEnter}
                   />
                   {frontFeedback}
@@ -348,6 +349,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     id={`${formId}-back`}
                     aria-invalid={fieldState.invalid}
                     contentClassName="max-h-[10lh]"
+                    imageUploadContext="flashcards"
                     onCtrlEnter={handleCtrlEnter}
                   />
                 )}

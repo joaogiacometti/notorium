@@ -17,6 +17,7 @@ import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-fo
 import { GenerateFlashcardsReview } from "@/components/flashcards/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
 import { DeckSelect } from "@/components/shared/deck-select";
+import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
@@ -216,7 +217,15 @@ export function EditFlashcardDialog({
     dialog.handleOpenChange(false);
   }
 
-  function handleDiscardOnClose() {
+  async function handleDiscardOnClose() {
+    await cleanupDiscardedEditorAttachments(
+      [
+        splitFront,
+        splitBack,
+        ...(generatedCards?.flatMap((card) => [card.front, card.back]) ?? []),
+      ],
+      [flashcard.front, flashcard.back],
+    );
     setDiscardOnCloseDialogOpen(false);
     resetSplitState();
     onOpenChange(false);
@@ -317,13 +326,25 @@ export function EditFlashcardDialog({
     setMode(newMode);
   }
 
-  function handleDiscardOnModeSwitch() {
+  async function handleDiscardOnModeSwitch() {
+    await cleanupDiscardedEditorAttachments(
+      [
+        splitFront,
+        splitBack,
+        ...(generatedCards?.flatMap((card) => [card.front, card.back]) ?? []),
+      ],
+      [flashcard.front, flashcard.back],
+    );
     setGeneratedCards(null);
     setDiscardOnModeSwitchDialogOpen(false);
     setMode("edit");
   }
 
-  function handleBackToInput() {
+  async function handleBackToInput() {
+    await cleanupDiscardedEditorAttachments(
+      generatedCards?.flatMap((card) => [card.front, card.back]) ?? [],
+      [],
+    );
     setGeneratedCards(null);
   }
 
@@ -383,6 +404,7 @@ export function EditFlashcardDialog({
           </p>
           <GenerateFlashcardsReview
             cards={generatedCards}
+            onCardsChange={setGeneratedCards}
             onCreate={handleCreateCards}
             onBack={handleBackToInput}
             isCreating={isCreating}
@@ -446,6 +468,7 @@ export function EditFlashcardDialog({
                 id="split-front"
                 contentClassName="min-h-11 max-h-[40svh]"
                 showToolbar={false}
+                imageUploadContext="flashcards"
               />
             </Field>
             <Field>
@@ -461,6 +484,7 @@ export function EditFlashcardDialog({
                 id="split-back"
                 contentClassName="max-h-[10lh]"
                 showToolbar
+                imageUploadContext="flashcards"
               />
             </Field>
           </FieldGroup>

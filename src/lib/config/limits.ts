@@ -1,6 +1,8 @@
 export const LIMITS = {
   maxSubjects: 50,
   maxNotesPerSubject: 100,
+  maxAttachmentsPerNote: 20,
+  maxAttachmentsPerFlashcard: 10,
   maxAssessmentsPerSubject: 50,
   maxFlashcardsPerSubject: 2000,
   maxDecksPerSubject: 20,
@@ -11,6 +13,10 @@ export const LIMITS = {
   noteTitleMax: 200,
   noteContentMax: 100000,
   noteContentPreviewLength: 100,
+  attachmentMaxBytes: 5242880,
+  attachmentSignedReadTtlSeconds: 300,
+  attachmentUploadRateLimitPrefix: "ratelimit:attachments:upload",
+  attachmentUploadRateLimitPerDay: 200,
 
   flashcardFrontMax: 1000,
   flashcardBackMax: 4000,

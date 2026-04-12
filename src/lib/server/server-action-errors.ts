@@ -48,6 +48,14 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attendance.invalidMissData": "Invalid miss data.",
   "attendance.missAlreadyRecorded": "A miss is already recorded for this date.",
   "attendance.missNotFound": "Miss record not found.",
+  "attachments.invalidData": "Invalid attachment data.",
+  "attachments.notFound": "Attachment not found.",
+  "attachments.uploadFailed": "Failed to upload attachment.",
+  "attachments.deleteFailed": "Failed to delete attachment.",
+  "attachments.readFailed": "Failed to load attachment.",
+  "attachments.mimeTypeNotAllowed": "File type is not allowed.",
+  "attachments.notConfigured":
+    "No media storage is configured. Contact your administrator.",
   "dataTransfer.invalidImportFormat": "Invalid import file format.",
   "dataTransfer.noSubjectsToImport": "No subjects to import.",
   "dataTransfer.importFailed": "Failed to import data.",
@@ -84,6 +92,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `Import failed: you can only have up to ${params?.max} subjects.`,
   "limits.noteLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} notes per subject.`,
+  "limits.attachmentLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} attachments per item.`,
+  "limits.attachmentSizeLimit": (params) =>
+    `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.assessmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} assessments per subject.`,
   "limits.flashcardLimit": (params) =>

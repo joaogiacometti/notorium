@@ -26,7 +26,10 @@ import {
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
 import { LIMITS } from "@/lib/config/limits";
-import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
+import {
+  normalizeRichTextForUniqueness,
+  removeInternalAttachmentImagesForTransfer,
+} from "@/lib/editor/rich-text";
 import { parseActionInput } from "@/lib/server/action-input";
 import type { MutationResult } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
@@ -117,7 +120,12 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
         await tx.insert(note).values(
           importedSubject.notes.map((currentNote) => ({
             title: currentNote.title,
-            content: currentNote.content,
+            content:
+              currentNote.content === null
+                ? null
+                : removeInternalAttachmentImagesForTransfer(
+                    currentNote.content,
+                  ),
             subjectId,
             userId,
           })),
@@ -164,11 +172,15 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
         await tx.insert(flashcard).values(
           importedSubject.flashcards.map((currentFlashcard) => ({
             ...getImportedFlashcardSchedulingState(currentFlashcard),
-            front: currentFlashcard.front,
-            frontNormalized: normalizeRichTextForUniqueness(
+            front: removeInternalAttachmentImagesForTransfer(
               currentFlashcard.front,
             ),
-            back: currentFlashcard.back,
+            frontNormalized: normalizeRichTextForUniqueness(
+              removeInternalAttachmentImagesForTransfer(currentFlashcard.front),
+            ),
+            back: removeInternalAttachmentImagesForTransfer(
+              currentFlashcard.back,
+            ),
             deckId:
               currentFlashcard.deckName === undefined
                 ? defaultDeckId

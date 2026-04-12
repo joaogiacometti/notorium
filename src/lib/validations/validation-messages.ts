@@ -53,17 +53,21 @@ const VALIDATION_MESSAGES: Record<string, string> = {
     "Password must be at least 8 characters.",
   "Validation.auth.passwordsDoNotMatch": "Passwords do not match.",
   "Validation.flashcards.backMaxLength":
-    "Back must be at most 10,000 characters.",
+    "Back must be at most 4,000 characters.",
   "Validation.flashcards.backRequired": "Back is required.",
+  "Validation.flashcards.attachmentLimit":
+    "Flashcard content can include at most {max} attachments.",
   "Validation.flashcards.frontMaxLength":
-    "Front must be at most 10,000 characters.",
+    "Front must be at most 1,000 characters.",
   "Validation.flashcards.frontRequired": "Front is required.",
   "Validation.flashcards.subjectRequired": "Subject is required.",
   "Validation.flashcards.textMaxLength":
     "Text must be 10,000 characters or less.",
   "Validation.flashcards.textRequired": "Text is required.",
   "Validation.notes.contentMaxLength":
-    "Content must be at most 10,000 characters.",
+    "Content must be at most 100,000 characters.",
+  "Validation.notes.attachmentLimit":
+    "Content can include at most {max} attachments.",
   "Validation.notes.titleMaxLength": "Title must be at most 200 characters.",
   "Validation.notes.titleRequired": "Title is required.",
   "Validation.search.queryMaxLength":

@@ -9,7 +9,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useState } from "react";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
-import { resolveSharedEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
+import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +52,8 @@ export function TiptapRenderer({
   useEffect(() => {
     let active = true;
 
-    void normalizeRichTextForRendering(
-      content,
-      resolveSharedEmbeddableImageUrl,
+    void normalizeRichTextForRendering(content, async (candidate) =>
+      resolveEmbeddableImageUrl(candidate),
     ).then((nextContent) => {
       if (active) {
         setResolvedContent(nextContent);

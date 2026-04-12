@@ -1,6 +1,21 @@
 import { z } from "zod";
 import { LIMITS } from "@/lib/config/limits";
+import { countInternalAttachmentImages } from "@/lib/editor/rich-text";
 import { validationMessage } from "@/lib/validations/validation-messages";
+
+const noteContentSchema = z
+  .string()
+  .max(
+    LIMITS.noteContentMax,
+    validationMessage("Validation.notes.contentMaxLength"),
+  )
+  .refine(
+    (value) =>
+      countInternalAttachmentImages(value) <= LIMITS.maxAttachmentsPerNote,
+    validationMessage("Validation.notes.attachmentLimit", {
+      max: LIMITS.maxAttachmentsPerNote,
+    }),
+  );
 
 export const createNoteSchema = z.object({
   title: z
@@ -10,13 +25,7 @@ export const createNoteSchema = z.object({
       LIMITS.noteTitleMax,
       validationMessage("Validation.notes.titleMaxLength"),
     ),
-  content: z
-    .string()
-    .max(
-      LIMITS.noteContentMax,
-      validationMessage("Validation.notes.contentMaxLength"),
-    )
-    .optional(),
+  content: noteContentSchema.optional(),
   subjectId: z.string().min(1),
 });
 
@@ -31,13 +40,7 @@ export const editNoteSchema = z.object({
       LIMITS.noteTitleMax,
       validationMessage("Validation.notes.titleMaxLength"),
     ),
-  content: z
-    .string()
-    .max(
-      LIMITS.noteContentMax,
-      validationMessage("Validation.notes.contentMaxLength"),
-    )
-    .optional(),
+  content: noteContentSchema.optional(),
 });
 
 export type EditNoteForm = z.infer<typeof editNoteSchema>;

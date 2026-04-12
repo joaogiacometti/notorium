@@ -6,6 +6,7 @@ const SNAPSHOT = {
   REDIS_URL: process.env.REDIS_URL,
   USER_AI_SETTINGS_ENCRYPTION_KEY: process.env.USER_AI_SETTINGS_ENCRYPTION_KEY,
   RATE_LIMIT_BACKEND: process.env.RATE_LIMIT_BACKEND,
+  BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
   SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
 };
 
@@ -41,11 +42,27 @@ function restoreEnv() {
     process.env.RATE_LIMIT_BACKEND = SNAPSHOT.RATE_LIMIT_BACKEND;
   }
 
+  if (SNAPSHOT.BLOB_READ_WRITE_TOKEN === undefined) {
+    delete process.env.BLOB_READ_WRITE_TOKEN;
+  } else {
+    process.env.BLOB_READ_WRITE_TOKEN = SNAPSHOT.BLOB_READ_WRITE_TOKEN;
+  }
+
   if (SNAPSHOT.SKIP_ENV_VALIDATION === undefined) {
     delete process.env.SKIP_ENV_VALIDATION;
   } else {
     process.env.SKIP_ENV_VALIDATION = SNAPSHOT.SKIP_ENV_VALIDATION;
   }
+}
+
+function setRequiredServerEnv() {
+  process.env.DATABASE_URL =
+    "postgresql://postgres:postgres@localhost:5432/notorium";
+  process.env.BETTER_AUTH_SECRET = "12345678901234567890123456789012";
+  process.env.REDIS_URL = "redis://localhost:6379";
+  process.env.RATE_LIMIT_BACKEND = "redis";
+  process.env.USER_AI_SETTINGS_ENCRYPTION_KEY =
+    "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=";
 }
 
 describe("server env", () => {
@@ -56,6 +73,7 @@ describe("server env", () => {
     delete process.env.REDIS_URL;
     delete process.env.USER_AI_SETTINGS_ENCRYPTION_KEY;
     delete process.env.RATE_LIMIT_BACKEND;
+    delete process.env.BLOB_READ_WRITE_TOKEN;
     delete process.env.SKIP_ENV_VALIDATION;
   });
 
@@ -71,5 +89,24 @@ describe("server env", () => {
     const { getServerEnv } = await import("@/env");
 
     expect(() => getServerEnv()).toThrowError("Invalid environment variables:");
+  });
+
+  it("allows missing blob token", async () => {
+    setRequiredServerEnv();
+
+    const { getServerEnv } = await import("@/env");
+    const env = getServerEnv();
+
+    expect(env.BLOB_READ_WRITE_TOKEN).toBeUndefined();
+  });
+
+  it("parses blob token when set", async () => {
+    setRequiredServerEnv();
+    process.env.BLOB_READ_WRITE_TOKEN = "token-value";
+
+    const { getServerEnv } = await import("@/env");
+    const env = getServerEnv();
+
+    expect(env.BLOB_READ_WRITE_TOKEN).toBe("token-value");
   });
 });

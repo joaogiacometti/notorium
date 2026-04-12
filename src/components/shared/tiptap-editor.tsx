@@ -32,64 +32,164 @@ import {
   Undo,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { uploadEditorImage } from "@/app/actions/attachments";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { LIMITS } from "@/lib/config/limits";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
-import {
-  isSupportedSharedImageUrl,
-  resolveEmbeddableImageUrl,
-  resolveSharedEmbeddableImageUrl,
-} from "@/lib/editor/tiptap-image-url";
+import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
-import { resolvePastedImageUrl } from "@/lib/editor/tiptap-paste-image-url";
+import { t } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
+
+export type EditorImageUploadContext = "notes" | "flashcards";
 
 function insertImage(editor: Editor, src: string) {
   editor.chain().focus().setImage({ src }).run();
 }
 
-function insertText(editor: Editor, value: string) {
-  editor.chain().focus().insertContent(value).run();
+function getPastedImageFile(event: ClipboardEvent): File | null {
+  const items = event.clipboardData?.items;
+  if (!items) {
+    return null;
+  }
+
+  for (const item of Array.from(items)) {
+    if (item.kind !== "file") {
+      continue;
+    }
+
+    const file = item.getAsFile();
+    if (!file) {
+      continue;
+    }
+
+    if (!file.type.toLowerCase().startsWith("image/")) {
+      continue;
+    }
+
+    return file;
+  }
+
+  return null;
 }
 
-const ImageUrlPasteExtension = Extension.create({
-  name: "imageUrlPaste",
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        props: {
-          handlePaste: (_, event) => {
-            const src =
-              event.clipboardData?.getData("text/plain")?.trim() ?? "";
-            const directImageUrl = resolveEmbeddableImageUrl(src);
-            if (directImageUrl) {
-              insertImage(this.editor, directImageUrl);
-              return true;
-            }
+function readFileAsBase64(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
 
-            if (!isSupportedSharedImageUrl(src)) {
+    reader.onerror = () => {
+      resolve(null);
+    };
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        resolve(null);
+        return;
+      }
+
+      const commaIndex = reader.result.indexOf(",");
+      if (commaIndex < 0 || commaIndex + 1 >= reader.result.length) {
+        resolve(null);
+        return;
+      }
+
+      resolve(reader.result.slice(commaIndex + 1));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function getPastedImageFileName(file: File): string {
+  const name = file.name.trim();
+  if (name.length > 0) {
+    return name;
+  }
+
+  const extension = file.type.split("/")[1] ?? "png";
+  return `pasted-image.${extension}`;
+}
+
+async function uploadPastedImage(
+  editor: Editor,
+  file: File,
+  context: EditorImageUploadContext,
+) {
+  if (file.size > LIMITS.attachmentMaxBytes) {
+    toast.error(
+      t("limits.attachmentSizeLimit", { max: LIMITS.attachmentMaxBytes }),
+    );
+    return;
+  }
+
+  const dataBase64 = await readFileAsBase64(file);
+
+  if (!dataBase64) {
+    toast.error(t("attachments.uploadFailed"));
+    return;
+  }
+
+  let result: Awaited<ReturnType<typeof uploadEditorImage>>;
+
+  try {
+    result = await uploadEditorImage({
+      fileName: getPastedImageFileName(file),
+      mimeType: file.type,
+      dataBase64,
+      context,
+    });
+  } catch {
+    toast.error(t("attachments.uploadFailed"));
+    return;
+  }
+
+  if (!result.success) {
+    toast.error(t(result.errorCode, result.errorParams));
+    return;
+  }
+
+  insertImage(editor, result.url);
+}
+
+function createImageUrlPasteExtension(
+  imageUploadContext: EditorImageUploadContext,
+) {
+  return Extension.create({
+    name: "imageUrlPaste",
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          props: {
+            handlePaste: (_, event) => {
+              const imageFile = getPastedImageFile(event);
+              if (imageFile) {
+                void uploadPastedImage(
+                  this.editor,
+                  imageFile,
+                  imageUploadContext,
+                );
+                return true;
+              }
+
+              const src =
+                event.clipboardData?.getData("text/plain")?.trim() ?? "";
+              const directImageUrl = resolveEmbeddableImageUrl(src);
+              if (directImageUrl) {
+                insertImage(this.editor, directImageUrl);
+                return true;
+              }
+
               return false;
-            }
-
-            void resolvePastedImageUrl(src).then((resolution) => {
-              if (resolution.imageUrl) {
-                insertImage(this.editor, resolution.imageUrl);
-                return;
-              }
-
-              if (resolution.fallbackText) {
-                insertText(this.editor, resolution.fallbackText);
-              }
-            });
-
-            return true;
+            },
           },
-        },
-      }),
-    ];
-  },
-});
+        }),
+      ];
+    },
+  });
+}
 
 interface TiptapEditorProps {
   value: string;
@@ -99,6 +199,7 @@ interface TiptapEditorProps {
   "aria-invalid"?: boolean;
   contentClassName?: string;
   showToolbar?: boolean;
+  imageUploadContext?: EditorImageUploadContext;
   onCtrlEnter?: () => void;
 }
 
@@ -282,6 +383,7 @@ export function TiptapEditor({
   "aria-invalid": ariaInvalid,
   contentClassName,
   showToolbar = true,
+  imageUploadContext = "notes",
   onCtrlEnter,
 }: Readonly<TiptapEditorProps>) {
   const resolvedPlaceholder = placeholder ?? "Start writing your notes...";
@@ -323,7 +425,7 @@ export function TiptapEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       Typography,
-      ImageUrlPasteExtension,
+      createImageUrlPasteExtension(imageUploadContext),
     ],
     content: resolvedValue || "",
     onUpdate: handleUpdate,
@@ -358,9 +460,8 @@ export function TiptapEditor({
   useEffect(() => {
     let active = true;
 
-    void normalizeRichTextForRendering(
-      value,
-      resolveSharedEmbeddableImageUrl,
+    void normalizeRichTextForRendering(value, async (candidate) =>
+      resolveEmbeddableImageUrl(candidate),
     ).then((nextValue) => {
       if (active) {
         setResolvedValue(nextValue);

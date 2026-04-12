@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  countInternalAttachmentImages,
   getRichTextExcerpt,
   hasRichTextContent,
   normalizeRichTextForRendering,
   normalizeRichTextForUniqueness,
+  removeInternalAttachmentImagesForTransfer,
   replaceImagesWithPlaceholders,
   restoreImagePlaceholders,
   richTextToPlainText,
@@ -84,6 +86,40 @@ describe("hasRichTextContent", () => {
   });
 });
 
+describe("countInternalAttachmentImages", () => {
+  it("counts unique internal attachment image sources", () => {
+    expect(
+      countInternalAttachmentImages(
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png"></p><p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fb.png"></p>',
+      ),
+    ).toBe(2);
+  });
+
+  it("counts repeated rendered attachment occurrences", () => {
+    expect(
+      countInternalAttachmentImages(
+        '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png"></p><p>/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png</p>',
+      ),
+    ).toBe(2);
+  });
+
+  it("does not count plain-text attachment URL mentions in prose", () => {
+    expect(
+      countInternalAttachmentImages(
+        "<p>Reference this URL later: /api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png</p>",
+      ),
+    ).toBe(0);
+  });
+
+  it("does not count plain anchor links that do not render as images", () => {
+    expect(
+      countInternalAttachmentImages(
+        '<p><a href="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png">download</a></p>',
+      ),
+    ).toBe(0);
+  });
+});
+
 describe("getRichTextExcerpt", () => {
   it("returns plain text when below max length", () => {
     expect(getRichTextExcerpt("<p>Card front</p>", 20)).toBe("Card front");
@@ -115,32 +151,49 @@ describe("normalizeRichTextForRendering", () => {
 
   it("converts image URL paragraphs into image markup", async () => {
     const result = await normalizeRichTextForRendering(
-      "<p>https://imgur.com/abc123</p>",
-      async (value) =>
-        value === "https://imgur.com/abc123"
-          ? "https://i.imgur.com/abc123.png"
-          : null,
+      "<p>https://cdn.example.com/abc123.png</p>",
+      async (value) => value,
     );
 
-    expect(result).toBe('<img src="https://i.imgur.com/abc123.png" alt="">');
+    expect(result).toBe(
+      '<img src="https://cdn.example.com/abc123.png" alt="">',
+    );
   });
 
   it("preserves existing image markup", async () => {
     const result = await normalizeRichTextForRendering(
       '<p><img src="https://img.test/a.png"></p>',
-      async () => "https://i.imgur.com/abc123.png",
+      async () => "https://cdn.example.com/abc123.png",
     );
 
     expect(result).toBe('<p><img src="https://img.test/a.png"></p>');
   });
 
-  it("leaves mixed-content paragraphs unchanged", async () => {
+  it("replaces unsupported absolute image markup with fallback text", async () => {
     const result = await normalizeRichTextForRendering(
-      "<p>See https://imgur.com/abc123 later</p>",
-      async () => "https://i.imgur.com/abc123.png",
+      '<p><img src="https://example.com/gallery/abc123"></p>',
+      async () => null,
     );
 
-    expect(result).toBe("<p>See https://imgur.com/abc123 later</p>");
+    expect(result).toBe("<p>https://example.com/gallery/abc123</p>");
+  });
+
+  it("keeps unsupported shared links as text", async () => {
+    const result = await normalizeRichTextForRendering(
+      "<p>https://example.com/gallery/abc123</p>",
+      async (value) => value,
+    );
+
+    expect(result).toBe("<p>https://example.com/gallery/abc123</p>");
+  });
+
+  it("leaves mixed-content paragraphs unchanged", async () => {
+    const result = await normalizeRichTextForRendering(
+      "<p>See https://example.com/not-an-image later</p>",
+      async () => "https://cdn.example.com/abc123.png",
+    );
+
+    expect(result).toBe("<p>See https://example.com/not-an-image later</p>");
   });
 
   it("keeps absolute image markup with non-paragraph content unchanged", async () => {
@@ -150,6 +203,33 @@ describe("normalizeRichTextForRendering", () => {
     );
 
     expect(result).toBe('<img src="https://img.test/a.png" alt="">');
+  });
+
+  it("preserves internal attachment image markup", async () => {
+    const result = await normalizeRichTextForRendering(
+      '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fimage.png" alt=""></p>',
+      async () => null,
+    );
+
+    expect(result).toBe(
+      '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fimage.png" alt=""></p>',
+    );
+  });
+
+  it("converts internal attachment URL paragraphs into image markup", async () => {
+    const resolveImageUrl = vi
+      .fn<(value: string) => Promise<string | null>>()
+      .mockResolvedValue(null);
+
+    const result = await normalizeRichTextForRendering(
+      "<p>/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fimage.png</p>",
+      resolveImageUrl,
+    );
+
+    expect(result).toBe(
+      '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fimage.png" alt="">',
+    );
+    expect(resolveImageUrl).not.toHaveBeenCalled();
   });
 });
 
@@ -181,6 +261,42 @@ describe("normalizeRichTextForUniqueness", () => {
     );
 
     expect(first).toBe(second);
+  });
+});
+
+describe("removeInternalAttachmentImagesForTransfer", () => {
+  it("removes internal attachment image markup while preserving text", () => {
+    expect(
+      removeInternalAttachmentImagesForTransfer(
+        '<p>Before <img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png" alt=""> after</p>',
+      ),
+    ).toBe("<p>Before  after</p>");
+  });
+
+  it("removes standalone internal attachment URL paragraphs", () => {
+    expect(
+      removeInternalAttachmentImagesForTransfer(
+        "<p>Keep me</p><p>/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png</p><p>Still here</p>",
+      ),
+    ).toBe("<p>Keep me</p><p>Still here</p>");
+  });
+
+  it("removes anchor-only internal attachment paragraphs", () => {
+    expect(
+      removeInternalAttachmentImagesForTransfer(
+        '<p><a href="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fa.png">/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fa.png</a></p><p>Text</p>',
+      ),
+    ).toBe("<p>Text</p>");
+  });
+
+  it("preserves direct public image URLs and ordinary text", () => {
+    expect(
+      removeInternalAttachmentImagesForTransfer(
+        "<p>https://cdn.example.com/image.png</p><p>Reference /api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png in text</p>",
+      ),
+    ).toBe(
+      "<p>https://cdn.example.com/image.png</p><p>Reference /api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fa.png in text</p>",
+    );
   });
 });
 

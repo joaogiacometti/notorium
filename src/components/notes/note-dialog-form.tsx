@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
@@ -78,13 +79,17 @@ export function NoteDialogForm({
 
   useBeforeUnload(open && form.formState.isDirty && !isSubmitting);
 
-  function handleDiscardChanges() {
+  async function handleDiscardChanges() {
+    await cleanupDiscardedEditorAttachments(
+      [form.getValues("content") ?? ""],
+      [values.content ?? ""],
+    );
     form.reset(values);
     setDiscardDialogOpen(false);
     onOpenChange(false);
   }
 
-  function handleOpenChange(nextOpen: boolean) {
+  async function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
       setDiscardDialogOpen(false);
       onOpenChange(true);
@@ -96,6 +101,10 @@ export function NoteDialogForm({
       return;
     }
 
+    await cleanupDiscardedEditorAttachments(
+      [form.getValues("content") ?? ""],
+      [values.content ?? ""],
+    );
     form.reset(values);
     setDiscardDialogOpen(false);
     onOpenChange(false);
@@ -185,6 +194,7 @@ export function NoteDialogForm({
                       placeholder="Write your notes here..."
                       id={`${formId}-content`}
                       aria-invalid={fieldState.invalid}
+                      imageUploadContext="notes"
                       onCtrlEnter={handleCtrlEnter}
                     />
                     {fieldState.invalid ? (
