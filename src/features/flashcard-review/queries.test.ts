@@ -199,11 +199,15 @@ describe("getFlashcardStatisticsForUser", () => {
       "flashcard_review_log_reviewed_at_column",
       expect.any(Date),
     );
+    const expectedTrendStart = new Date("2026-04-12T15:00:00.000Z");
+    expectedTrendStart.setHours(0, 0, 0, 0);
+    expectedTrendStart.setDate(expectedTrendStart.getDate() - 6);
+
     expect(
       (
         vi.mocked(gteMock).mock.calls[0]?.[1] as Date | undefined
       )?.toISOString(),
-    ).toBe("2026-04-06T03:00:00.000Z");
+    ).toBe(expectedTrendStart.toISOString());
   });
 
   it("returns zeroed statistics when no cards are in scope", async () => {
