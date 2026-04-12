@@ -16,9 +16,13 @@ export async function openSubjectDetailByName(page: Page, subjectName: string) {
   const subjectLink = subjectCard.getByTestId("subject-card-link");
   await expect(subjectLink).toBeVisible();
 
-  await subjectLink.click();
-  await expect(
-    page.getByRole("heading", { name: subjectName, exact: true }),
-  ).toBeVisible({ timeout: 30000 });
-  await expect(page.getByTestId("subject-detail-edit")).toBeVisible();
+  const subjectHref = await subjectLink.getAttribute("href");
+  expect(subjectHref).toBeTruthy();
+
+  await Promise.all([page.waitForURL(`**${subjectHref}`), subjectLink.click()]);
+
+  await expect(page.getByTestId("subject-detail-edit")).toBeVisible({
+    timeout: 30000,
+  });
+  await expect(page.getByRole("heading", { name: subjectName })).toBeVisible();
 }

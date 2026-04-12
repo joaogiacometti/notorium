@@ -75,6 +75,7 @@ Students who want a private, lightweight study management workspace.
 ### Flashcard Review
 
 - Global review page with a spaced repetition queue.
+- Review view is a landing hub with `Start review` and `Start exam` action cards.
 - Review answers are `Again`, `Hard`, `Good`, and `Easy`.
 - Review uses a memory-state scheduler with learning and relearning stages.
 - Review logs are stored per user.
@@ -90,18 +91,18 @@ Students who want a private, lightweight study management workspace.
 ### Focus Mode
 
 - Full-screen, distraction-free review experience optimized for mobile.
-- Accessed via the "Focus Mode" button on the flashcard review page.
+- Due-card review sessions are focus-only and start from the `Start review` action card on the review hub.
 - Hides navbar and all non-essential UI elements.
 - Shows progress bar, card content, and rating buttons only.
 - Keyboard shortcuts:
   - `Escape` exits Focus Mode.
-- Completion screen provides an exit action back to the standard review screen.
+- Completion screen provides an exit action back to the review hub.
 
 ### Exam Mode
 
-- Accessed from the flashcard review page via the "Exam mode" action.
+- Accessed from the flashcard review hub via the `Start exam` action card.
 - Uses the active subject and deck filters as the exam scope.
-- The first tap/click on "Exam mode" loads scoped exam cards and enters exam mode in a single interaction.
+- The first tap/click on `Start exam` loads scoped exam cards and enters exam mode in a single interaction.
 - Runs in focus-mode UI with exam progress shown as `Card X of Y`.
 - Exam sessions do not modify due-card scheduling state for regular spaced-repetition reviews.
 - Exam completion provides a summary screen with a close action and retry-weak-cards action when applicable.

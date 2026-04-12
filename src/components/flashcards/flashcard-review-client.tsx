@@ -3,12 +3,9 @@
 import {
   CheckCircle2,
   CircleAlert,
-  Focus,
   Gauge,
   GraduationCap,
   Loader2,
-  Pencil,
-  RotateCcw,
   Sparkles,
   X,
 } from "lucide-react";
@@ -49,12 +46,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {
@@ -97,9 +88,6 @@ const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
 const reviewBatchLimit = 50;
 const reviewRichTextClassName =
   "flashcard-review-tiptap-content min-w-0 max-w-full wrap-break-word hyphens-auto";
-const reviewCardHeightClassName = "flex h-full min-h-0 gap-0 overflow-hidden";
-const reviewContentFrameClassName = "mx-auto flex w-full max-w-5xl";
-const reviewContentMeasureClassName = "w-full max-w-[58rem]";
 const gradeButtonStyles: Record<ReviewGrade, string> = {
   again:
     "border-[color:var(--review-again-border)] bg-[color:var(--review-again-bg)] text-[color:var(--review-again-text)] hover:border-[color:var(--review-again-border-hover)] hover:bg-[color:var(--review-again-bg-hover)]",
@@ -126,18 +114,6 @@ interface ReviewGradeButtonsProps {
   pendingGrade: ReviewGrade | null;
   previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
   isPending: boolean;
-  onGrade: (grade: ReviewGrade) => void;
-}
-
-interface StandardReviewCardProps {
-  currentCard: ReviewCard | null;
-  revealed: boolean;
-  isPending: boolean;
-  pendingGrade: ReviewGrade | null;
-  previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
-  onEdit: () => void;
-  onToggleFocusMode: () => void;
-  onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
 }
 
@@ -202,189 +178,34 @@ function ReviewGradeButtons({
   );
 }
 
-function ReviewCardLoading() {
+function ReviewHubCardsLoading() {
   return (
-    <Card
-      className={reviewCardHeightClassName}
-      data-testid="flashcard-review-card-loading"
+    <div
+      className="grid gap-4 lg:grid-cols-2"
+      data-testid="flashcard-review-hub-loading"
     >
-      <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0">
-        <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 pb-3 sm:px-8">
-          <div
-            className={`${reviewContentFrameClassName} min-h-0 flex-none flex-col max-h-[50%]`}
-          >
-            <div className="shrink-0 space-y-1.5">
-              <div className="flex items-center justify-between gap-3">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="size-8 rounded-md" />
-              </div>
-              <Skeleton className="h-4 w-14" />
+      {(["review", "exam"] as const).map((key) => (
+        <Card key={key} className="gap-0 rounded-xl py-0 shadow-none">
+          <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <Skeleton className="h-5 w-20 rounded-md" />
+              <Skeleton className="h-5 w-16 rounded-md" />
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden pt-2">
-              <div className={`${reviewContentMeasureClassName} space-y-2`}>
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-11/12" />
-                <Skeleton className="h-5 w-2/3" />
-              </div>
+            <div className="space-y-1">
+              <Skeleton className="h-7 w-32 sm:h-8" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-10/12" />
             </div>
-          </div>
-        </div>
-
-        <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
-          <div className={`${reviewContentFrameClassName} pb-0`}>
-            <Skeleton className="h-10 w-full rounded-md" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StandardReviewCard({
-  currentCard,
-  revealed,
-  isPending,
-  pendingGrade,
-  previewLabels,
-  onEdit,
-  onToggleFocusMode,
-  onReveal,
-  onGrade,
-}: Readonly<StandardReviewCardProps>) {
-  if (!currentCard) {
-    return (
-      <Card>
-        <CardContent className="pt-0">
-          <h2 className="text-base font-semibold">All caught up</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            There are no due flashcards to review.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card
-      className={reviewCardHeightClassName}
-      data-testid="flashcard-review-card"
-    >
-      <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0">
-        <div className="relative flex min-h-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 flex-col px-6 pt-0 pb-3 sm:px-8">
-            <div
-              className={`${reviewContentFrameClassName} min-h-0 flex-none flex-col max-h-[50%]`}
-            >
-              <div className="shrink-0 space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  {currentCard.subjectName ? (
-                    <p className="flex min-w-0 items-baseline gap-1 text-sm font-medium text-foreground/70">
-                      <SubjectText
-                        value={currentCard.subjectName}
-                        mode="truncate"
-                        className="block max-w-full"
-                      />
-                      {currentCard.deckName ? (
-                        <>
-                          <span className="shrink-0 text-foreground/40">·</span>
-                          <span className="truncate text-foreground/70">
-                            {currentCard.deckName}
-                          </span>
-                        </>
-                      ) : null}
-                    </p>
-                  ) : (
-                    <span className="min-h-5" />
-                  )}
-                  <div className="flex shrink-0 items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      onClick={onEdit}
-                      disabled={isPending}
-                      aria-label="Edit"
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      onClick={onToggleFocusMode}
-                      disabled={isPending}
-                      aria-label="Enter Focus Mode"
-                    >
-                      <Focus className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
-                <h2 className="text-sm font-semibold text-muted-foreground">
-                  Front
-                </h2>
-              </div>
-              <div
-                className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pt-1.5 pb-5"
-                data-testid="flashcard-review-front-scroll"
-              >
-                <div className={reviewContentMeasureClassName}>
-                  <TiptapRenderer
-                    content={currentCard.front}
-                    className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-                  />
-                </div>
-              </div>
+            <div className="hidden space-y-1.5 sm:block">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-4 w-36" />
             </div>
-
-            {revealed && (
-              <div
-                className={`${reviewContentFrameClassName} min-h-0 flex-1 flex-col space-y-2 border-t border-border/60 pt-2`}
-              >
-                <h3 className="shrink-0 text-sm font-semibold text-muted-foreground">
-                  Back
-                </h3>
-                <div
-                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pb-5"
-                  data-testid="flashcard-review-back-scroll"
-                >
-                  <div className={reviewContentMeasureClassName}>
-                    <TiptapRenderer
-                      content={currentCard.back}
-                      className="min-w-0 wrap-break-word hyphens-auto text-base leading-relaxed"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-border/60 px-6 pt-4 pb-0 sm:px-8">
-            <div className={`${reviewContentFrameClassName} pb-0`}>
-              {revealed ? (
-                <div className="mx-auto grid w-full max-w-3xl grid-cols-4 gap-1.5 sm:gap-3">
-                  <ReviewGradeButtons
-                    pendingGrade={pendingGrade}
-                    previewLabels={previewLabels}
-                    isPending={isPending}
-                    onGrade={onGrade}
-                  />
-                </div>
-              ) : (
-                <Button
-                  onClick={onReveal}
-                  disabled={isPending}
-                  className="w-full"
-                >
-                  Show Answer
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+            <Skeleton className="mt-auto h-10 w-full rounded-lg sm:h-11" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
 
@@ -648,11 +469,20 @@ export function FlashcardReviewClient({
   const currentCard = examSession.session
     ? examSession.currentCard
     : (reviewState.cards[0] ?? null);
-
-  const dueCountText =
-    reviewState.summary.dueCount === 0
-      ? "No cards due right now."
-      : `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards.`;
+  const hasDueCards = reviewState.summary.dueCount > 0;
+  const hasExamCards = reviewState.summary.totalCount > 0;
+  const dueBadgeText = `${reviewState.summary.dueCount} due`;
+  const examBadgeText = `${reviewState.summary.totalCount} ${
+    reviewState.summary.totalCount === 1 ? "card" : "cards"
+  }`;
+  let examScopeLabel: string;
+  if (selectedDeckId) {
+    examScopeLabel = "All cards in deck";
+  } else if (selectedSubjectId) {
+    examScopeLabel = "All cards in subject";
+  } else {
+    examScopeLabel = "All cards in scope";
+  }
 
   let progress: number;
   if (examSession.session) {
@@ -837,6 +667,12 @@ export function FlashcardReviewClient({
     }
   }
 
+  function handleStartReviewMode() {
+    examSession.endSession();
+    setRevealed(false);
+    setIsFocusMode(true);
+  }
+
   async function handleStartExamMode() {
     const cards = examCards ?? (await ensureExamCardsLoaded());
 
@@ -960,6 +796,10 @@ export function FlashcardReviewClient({
       return;
     }
 
+    if (!isFocusMode) {
+      return;
+    }
+
     const action = getFlashcardReviewShortcutAction({
       key: event.key,
       revealed,
@@ -1001,181 +841,174 @@ export function FlashcardReviewClient({
     return () => document.removeEventListener("keydown", handleReviewKeyDown);
   }, []);
 
-  const reviewContent = isScopeSwitchLoading ? (
-    <ReviewCardLoading />
-  ) : (
-    <StandardReviewCard
-      currentCard={currentCard}
-      revealed={revealed}
-      isPending={isPending}
-      pendingGrade={pendingGrade}
-      previewLabels={previewLabels}
-      onEdit={() => setEditOpen(true)}
-      onToggleFocusMode={() => setIsFocusMode((value) => !value)}
-      onReveal={() => setRevealed(true)}
-      onGrade={handleGrade}
-    />
-  );
-
   const content = (
     <>
-      <div className="mb-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="grid min-w-0 w-full gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+      <div className="mb-4 grid min-w-0 w-full gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+        <div className="min-w-0">
+          <Select
+            value={selectedSubjectId ?? "all"}
+            onValueChange={handleSubjectChange}
+            disabled={isScopeSwitchLoading}
+          >
+            <SelectTrigger
+              className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
+              data-testid="flashcard-review-subject-filter"
+            >
+              <SelectValue placeholder="Filter by subject" />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="all">All subjects</SelectItem>
+              {subjects.map((subject) => (
+                <SelectItem key={subject.id} value={subject.id}>
+                  <SubjectText
+                    value={subject.name}
+                    mode="truncate"
+                    className="block max-w-full"
+                  />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {selectedSubjectId && filteredDecks.length > 0 ? (
           <div className="min-w-0">
             <Select
-              value={selectedSubjectId ?? "all"}
-              onValueChange={handleSubjectChange}
+              value={selectedDeckId ?? "all"}
+              onValueChange={handleDeckChange}
               disabled={isScopeSwitchLoading}
             >
               <SelectTrigger
                 className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
-                data-testid="flashcard-review-subject-filter"
+                data-testid="flashcard-review-deck-filter"
               >
-                <SelectValue placeholder="Filter by subject" />
+                <SelectValue placeholder="Filter by deck" />
               </SelectTrigger>
               <SelectContent align="start">
-                <SelectItem value="all">All subjects</SelectItem>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    <SubjectText
-                      value={subject.name}
-                      mode="truncate"
-                      className="block max-w-full"
-                    />
+                <SelectItem value="all">All decks</SelectItem>
+                {filteredDecks.map((deck) => (
+                  <SelectItem key={deck.id} value={deck.id}>
+                    {deck.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          {selectedSubjectId && filteredDecks.length > 0 && (
-            <div className="min-w-0">
-              <Select
-                value={selectedDeckId ?? "all"}
-                onValueChange={handleDeckChange}
-                disabled={isScopeSwitchLoading}
-              >
-                <SelectTrigger
-                  className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
-                  data-testid="flashcard-review-deck-filter"
-                >
-                  <SelectValue placeholder="Filter by deck" />
-                </SelectTrigger>
-                <SelectContent align="start">
-                  <SelectItem value="all">All decks</SelectItem>
-                  {filteredDecks.map((deck) => (
-                    <SelectItem key={deck.id} value={deck.id}>
-                      {deck.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-        <div className="w-full sm:w-auto">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void handleStartExamMode()}
-                  disabled={
-                    isLoadingExamCards ||
-                    isScopeSwitchLoading ||
-                    (examCards !== null && examCards.length === 0)
-                  }
-                  className="h-10 w-full gap-2 sm:w-auto"
-                >
-                  <AsyncButtonContent
-                    pending={isLoadingExamCards}
-                    idleLabel="Exam mode"
-                    pendingLabel="Loading exam..."
-                    idleIcon={<GraduationCap className="size-4" />}
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" sideOffset={8}>
-                <p>
-                  Study for exams with all cards without interfering with your
-                  regular reviews
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+        ) : null}
       </div>
 
-      {embedded ? (
-        <div className="mb-3 flex items-center">
-          {isScopeSwitchLoading ? (
-            <Skeleton
-              className="h-5 w-56"
-              data-testid="flashcard-review-summary-loading"
-            />
-          ) : (
-            <p
-              className="text-sm font-medium text-foreground"
-              data-testid="flashcard-review-summary-text"
-            >
-              {dueCountText}
-            </p>
-          )}
-        </div>
-      ) : null}
-
-      {embedded ? null : (
+      {isScopeSwitchLoading ? (
+        <ReviewHubCardsLoading />
+      ) : (
         <div
-          className={`flex min-w-0 items-start gap-4 ${currentCard ? "mb-10" : "mb-6"}`}
+          className="grid gap-4 lg:grid-cols-2"
+          data-testid="flashcard-review-hub"
         >
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <RotateCcw className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="wrap-break-word hyphens-auto text-2xl font-bold tracking-tight">
-              Flashcard Review
-            </h1>
-            <p className="mt-1.5 wrap-break-word hyphens-auto text-sm text-muted-foreground">
-              Review your due flashcards with spaced repetition.
-            </p>
-            {isScopeSwitchLoading ? (
-              <Skeleton
-                className="mt-2 h-5 w-56"
-                data-testid="flashcard-review-summary-loading"
-              />
-            ) : (
-              <p
-                className="mt-2 text-sm font-medium text-foreground"
-                data-testid="flashcard-review-summary-text"
+          <Card className="gap-0 rounded-xl border-(--assessment-exam-border) py-0 shadow-none">
+            <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <span className="inline-flex items-center rounded-md border border-(--assessment-exam-border) bg-(--assessment-exam-bg) px-2 py-0.5 text-[10px] font-semibold tracking-wide text-(--assessment-exam-text) uppercase">
+                  {hasDueCards ? "Due now" : "No due cards"}
+                </span>
+                <span className="inline-flex items-center rounded-md border border-(--assessment-exam-border) bg-(--assessment-exam-bg) px-2 py-0.5 text-xs font-medium text-(--assessment-exam-text)">
+                  {dueBadgeText}
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                  Review
+                </h2>
+                <p className="text-pretty text-sm text-muted-foreground">
+                  Go through cards that are due based on your spaced repetition
+                  schedule.
+                </p>
+              </div>
+
+              <ul className="hidden space-y-1.5 text-sm text-muted-foreground sm:block">
+                <li className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-(--assessment-exam-text)" />
+                  <span>Spaced repetition</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-(--assessment-exam-text)" />
+                  <span>Again · Hard · Good · Easy</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-(--assessment-exam-text)" />
+                  <span>Tracks your progress</span>
+                </li>
+              </ul>
+
+              <Button
+                data-testid="flashcard-review-start-button"
+                variant="outline"
+                onClick={handleStartReviewMode}
+                disabled={isPending || !hasDueCards}
+                className="mt-auto h-10 w-full text-base sm:h-11"
               >
-                {dueCountText}
-              </p>
-            )}
-          </div>
+                Start review
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="gap-0 rounded-xl border-(--status-success-border) py-0 shadow-none">
+            <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <span className="inline-flex items-center rounded-md border border-(--status-success-border) bg-(--status-success-bg) px-2 py-0.5 text-[10px] font-semibold tracking-wide text-(--status-success-text) uppercase">
+                  All cards
+                </span>
+                <span className="inline-flex items-center rounded-md border border-(--status-success-border) bg-(--status-success-bg) px-2 py-0.5 text-xs font-medium text-(--status-success-text)">
+                  {examBadgeText}
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                  Exam mode
+                </h2>
+                <p className="text-pretty text-sm text-muted-foreground">
+                  Practice all cards regardless of schedule. Good for cramming
+                  before a test.
+                </p>
+              </div>
+
+              <ul className="hidden space-y-1.5 text-sm text-muted-foreground sm:block">
+                <li className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-(--status-success-fill)" />
+                  <span>{examScopeLabel}</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-(--status-success-fill)" />
+                  <span>No scheduling impact</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-(--status-success-fill)" />
+                  <span>Randomized order</span>
+                </li>
+              </ul>
+
+              <Button
+                data-testid="flashcard-exam-start-button"
+                variant="outline"
+                onClick={() => void handleStartExamMode()}
+                disabled={
+                  isLoadingExamCards ||
+                  isScopeSwitchLoading ||
+                  isPending ||
+                  !hasExamCards
+                }
+                className="mt-auto h-10 w-full text-base sm:h-11"
+              >
+                <AsyncButtonContent
+                  pending={isLoadingExamCards}
+                  idleLabel="Start exam"
+                  pendingLabel="Loading exam..."
+                />
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )}
-
-      {reviewContent}
-      {currentCard ? (
-        <>
-          <EditFlashcardDialog
-            key={currentCard.id}
-            flashcard={currentCard}
-            subjects={subjects}
-            open={editOpen}
-            onOpenChange={setEditOpen}
-            onUpdated={handleFlashcardUpdated}
-            onDeleted={handleFlashcardDeleted}
-          />
-          <DeleteFlashcardDialog
-            flashcardId={currentCard.id}
-            flashcardFront={currentCard.front}
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-            onDeleted={handleFlashcardDeleted}
-          />
-        </>
-      ) : null}
     </>
   );
 
@@ -1268,7 +1101,9 @@ export function FlashcardReviewClient({
   }
 
   return embedded ? (
-    <div className="flex h-full min-h-0 flex-col">{content}</div>
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
+      {content}
+    </div>
   ) : (
     <AppPageContainer>{content}</AppPageContainer>
   );

@@ -333,12 +333,19 @@ test("can filter flashcards by deck in manage and review views", async ({
     );
 
     await openFlashcardsPage(page, "review", createdSubject.id, firstDeck.id);
+    await page
+      .getByRole("button", { name: "Start review", exact: true })
+      .click();
     await expect(page.getByText(firstDeckFront, { exact: true })).toBeVisible();
     await expect(page.getByText(secondDeckFront, { exact: true })).toHaveCount(
       0,
     );
+    await page.getByRole("button", { name: "Exit Focus Mode" }).click();
 
     await openFlashcardsPage(page, "review", createdSubject.id, secondDeck.id);
+    await page
+      .getByRole("button", { name: "Start review", exact: true })
+      .click();
     await expect(
       page.getByText(secondDeckFront, { exact: true }),
     ).toBeVisible();
