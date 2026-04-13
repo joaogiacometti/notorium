@@ -1,5 +1,5 @@
 import { BarChart3, CheckCircle2 } from "lucide-react";
-import { FlashcardsStatisticsFilters } from "@/components/flashcards/flashcards-statistics-filters";
+import { FlashcardsStatisticsFilters } from "@/components/flashcards/shared/flashcards-statistics-filters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFlashcardStudyHealth } from "@/features/flashcards/statistics-health";
 import type {

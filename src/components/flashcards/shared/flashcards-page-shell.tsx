@@ -1,8 +1,8 @@
 import { Layers3 } from "lucide-react";
 import type { ReactNode } from "react";
+import { FlashcardsViewSwitch } from "@/components/flashcards/shared/flashcards-view-switch";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import type { FlashcardsView } from "@/features/flashcards/view";
-import { FlashcardsViewSwitch } from "./flashcards-view-switch";
 
 interface FlashcardsPageShellProps {
   children: ReactNode;

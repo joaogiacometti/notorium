@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
+import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import type { CreateFlashcardForm } from "@/features/flashcards/validation";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {

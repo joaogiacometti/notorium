@@ -2,8 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreditCard } from "lucide-react";
-import { FlashcardsTableRowActions } from "@/components/flashcards/flashcards-table-row-actions";
-import { ValidationIssueTooltip } from "@/components/flashcards/validation-issue-tooltip";
+import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
+import { ValidationIssueTooltip } from "@/components/flashcards/manage/validation-issue-tooltip";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { SubjectChip } from "@/components/shared/subject-chip";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";

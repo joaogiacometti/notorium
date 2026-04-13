@@ -1,6 +1,6 @@
+import { FlashcardsManagerTableSkeleton } from "@/components/flashcards/manage/flashcards-manager-table";
+import { FlashcardsLoadingShell } from "@/components/flashcards/shared/flashcards-loading-shell";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FlashcardsLoadingShell } from "./flashcards-loading-shell";
-import { FlashcardsManagerTableSkeleton } from "./flashcards-manager-table";
 
 export function FlashcardsManageLoading() {
   return (

@@ -8,8 +8,8 @@ import {
   type UseFormReturn,
   useWatch,
 } from "react-hook-form";
-import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
-import { FlashcardBackDiff } from "@/components/flashcards/flashcard-back-diff";
+import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
+import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { DeckSelect } from "@/components/shared/deck-select";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";

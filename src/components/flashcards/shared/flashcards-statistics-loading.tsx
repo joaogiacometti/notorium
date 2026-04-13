@@ -1,6 +1,6 @@
+import { FlashcardsLoadingShell } from "@/components/flashcards/shared/flashcards-loading-shell";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FlashcardsLoadingShell } from "./flashcards-loading-shell";
 
 const topRows = ["top-row-1", "top-row-2", "top-row-3", "top-row-4"];
 const panels = ["panel-1", "panel-2"];

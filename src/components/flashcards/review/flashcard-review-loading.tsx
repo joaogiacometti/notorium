@@ -1,6 +1,6 @@
+import { FlashcardsLoadingShell } from "@/components/flashcards/shared/flashcards-loading-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FlashcardsLoadingShell } from "./flashcards-loading-shell";
 
 export function FlashcardReviewLoading() {
   return (

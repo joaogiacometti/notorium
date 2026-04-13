@@ -1,9 +1,9 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateFlashcardDialog } from "@/components/flashcards/create-flashcard-dialog";
-import { EditFlashcardDialog } from "@/components/flashcards/edit-flashcard-dialog";
-import { GenerateFlashcardsReview } from "@/components/flashcards/generate-flashcards-review";
+import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
+import { EditFlashcardDialog } from "@/components/flashcards/dialogs/edit-flashcard-dialog";
+import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -53,7 +53,7 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
   },
 }));
 
-vi.mock("@/components/flashcards/use-flashcard-dialog-state", () => ({
+vi.mock("@/components/flashcards/dialogs/use-flashcard-dialog-state", () => ({
   useFlashcardDialogState: () => ({
     handleOpenChange: vi.fn(),
     handleSubmit: vi.fn(),
@@ -74,7 +74,7 @@ vi.mock("@/components/flashcards/use-flashcard-dialog-state", () => ({
   }),
 }));
 
-vi.mock("@/components/flashcards/flashcard-dialog-form", () => ({
+vi.mock("@/components/flashcards/dialogs/flashcard-dialog-form", () => ({
   FlashcardDialogForm: ({
     mode,
     typeToggle,

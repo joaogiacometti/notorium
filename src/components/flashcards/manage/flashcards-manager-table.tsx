@@ -2,6 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreditCard } from "lucide-react";
+import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
+import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
@@ -11,8 +13,6 @@ import {
 } from "@/lib/editor/rich-text";
 import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
-import { FlashcardsTableRowActions } from "./flashcards-table-row-actions";
-import type { FlashcardTarget } from "./use-flashcards-manager-controller";
 
 interface FlashcardsManagerTableProps {
   flashcards: FlashcardManageItem[];

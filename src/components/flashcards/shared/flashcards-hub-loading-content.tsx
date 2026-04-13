@@ -1,7 +1,7 @@
+import { FlashcardsManageLoading } from "@/components/flashcards/manage/flashcards-manage-loading";
+import { FlashcardReviewLoading } from "@/components/flashcards/review/flashcard-review-loading";
+import { FlashcardsStatisticsLoading } from "@/components/flashcards/shared/flashcards-statistics-loading";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
-import { FlashcardReviewLoading } from "./flashcard-review-loading";
-import { FlashcardsManageLoading } from "./flashcards-manage-loading";
-import { FlashcardsStatisticsLoading } from "./flashcards-statistics-loading";
 
 interface FlashcardsHubLoadingContentProps {
   view?: string | null;

@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
+import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";

@@ -23,6 +23,10 @@ import {
   getFlashcardReviewState,
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
+import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
+import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/dialogs/lazy-edit-flashcard-dialog";
+import { ExamResultsScreen } from "@/components/flashcards/review/exam-results-screen";
+import { useExamSession } from "@/components/flashcards/review/use-exam-session";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
@@ -66,10 +70,6 @@ import type {
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
-import { DeleteFlashcardDialog } from "./delete-flashcard-dialog";
-import { ExamResultsScreen } from "./exam-results-screen";
-import { LazyEditFlashcardDialog as EditFlashcardDialog } from "./lazy-edit-flashcard-dialog";
-import { useExamSession } from "./use-exam-session";
 
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;

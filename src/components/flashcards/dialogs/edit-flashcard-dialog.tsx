@@ -12,10 +12,10 @@ import {
   editFlashcard,
   generateFlashcards,
 } from "@/app/actions/flashcards";
-import { CreateModeToggle } from "@/components/flashcards/create-mode-toggle";
-import { FlashcardDialogForm } from "@/components/flashcards/flashcard-dialog-form";
-import { GenerateFlashcardsReview } from "@/components/flashcards/generate-flashcards-review";
-import { useFlashcardDialogState } from "@/components/flashcards/use-flashcard-dialog-state";
+import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
+import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
+import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
+import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import { DeckSelect } from "@/components/shared/deck-select";
 import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
