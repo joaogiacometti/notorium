@@ -43,6 +43,7 @@ export function useFlashcardsManagerController({
   const [createOpen, setCreateOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkResetOpen, setBulkResetOpen] = useState(false);
   const [editingFlashcardId, setEditingFlashcardId] = useState<string | null>(
     null,
   );
@@ -280,6 +281,7 @@ export function useFlashcardsManagerController({
   return {
     bulkDeleteOpen,
     bulkMoveOpen,
+    bulkResetOpen,
     createOpen,
     deleteTarget,
     editFlashcardQuery,
@@ -298,6 +300,7 @@ export function useFlashcardsManagerController({
     selectedSubjectId,
     setBulkDeleteOpen,
     setBulkMoveOpen,
+    setBulkResetOpen,
     setCreateOpen,
     setDeleteTarget,
     setEditingFlashcardId,

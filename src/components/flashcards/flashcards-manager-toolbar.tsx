@@ -4,6 +4,7 @@ import {
   ArrowRightLeft,
   Layers3,
   Plus,
+  RotateCcw,
   RotateCw,
   Search,
   Sparkles,
@@ -51,6 +52,7 @@ interface FlashcardsManagerToolbarProps {
   onExitValidation: () => void;
   onOpenBulkMoveDialog: () => void;
   onOpenBulkDeleteDialog: () => void;
+  onOpenBulkResetDialog: () => void;
   onClearSelection: () => void;
 }
 
@@ -77,6 +79,7 @@ export function FlashcardsManagerToolbar({
   onExitValidation,
   onOpenBulkMoveDialog,
   onOpenBulkDeleteDialog,
+  onOpenBulkResetDialog,
   onClearSelection,
 }: Readonly<FlashcardsManagerToolbarProps>) {
   const selectedCountText =
@@ -140,7 +143,7 @@ export function FlashcardsManagerToolbar({
             </div>
           </div>
 
-          {!validationMode ? (
+          {validationMode ? null : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="min-w-0">
                 <Select
@@ -197,7 +200,7 @@ export function FlashcardsManagerToolbar({
                 </div>
               ) : null}
             </div>
-          ) : null}
+          )}
 
           <div className="flex flex-wrap items-center gap-2 sm:justify-between">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
@@ -295,6 +298,16 @@ export function FlashcardsManagerToolbar({
                     aria-label="Move"
                   >
                     <ArrowRightLeft className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={onOpenBulkResetDialog}
+                    className="rounded-md text-muted-foreground hover:text-foreground"
+                    aria-label="Reset"
+                  >
+                    <RotateCcw className="size-4" />
                   </Button>
                   <Button
                     type="button"

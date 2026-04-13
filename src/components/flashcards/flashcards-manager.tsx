@@ -10,6 +10,7 @@ import { FlashcardsManagerToolbar } from "@/components/flashcards/flashcards-man
 import { FlashcardsValidationResults } from "@/components/flashcards/flashcards-validation-results";
 import { LazyBulkDeleteFlashcardsDialog as BulkDeleteFlashcardsDialog } from "@/components/flashcards/lazy-bulk-delete-flashcards-dialog";
 import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/components/flashcards/lazy-bulk-move-flashcards-dialog";
+import { LazyBulkResetFlashcardsDialog as BulkResetFlashcardsDialog } from "@/components/flashcards/lazy-bulk-reset-flashcards-dialog";
 import { LazyCreateFlashcardDialog as CreateFlashcardDialog } from "@/components/flashcards/lazy-create-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/lazy-edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/reset-flashcard-dialog";
@@ -47,6 +48,7 @@ export function FlashcardsManager({
   const {
     bulkDeleteOpen,
     bulkMoveOpen,
+    bulkResetOpen,
     createOpen,
     deleteTarget,
     editingFlashcard,
@@ -64,6 +66,7 @@ export function FlashcardsManager({
     selectedSubjectId,
     setBulkDeleteOpen,
     setBulkMoveOpen,
+    setBulkResetOpen,
     setCreateOpen,
     setDeleteTarget,
     setEditingFlashcardId,
@@ -165,6 +168,7 @@ export function FlashcardsManager({
         onExitValidation={exitValidation}
         onOpenBulkMoveDialog={() => setBulkMoveOpen(true)}
         onOpenBulkDeleteDialog={() => setBulkDeleteOpen(true)}
+        onOpenBulkResetDialog={() => setBulkResetOpen(true)}
         onClearSelection={() => setSelectedFlashcardIds([])}
       />
       {selectedSubjectId && isAtSubjectLimit && (
@@ -243,6 +247,15 @@ export function FlashcardsManager({
           setBulkMoveOpen(false);
         }}
         subjects={subjects}
+      />
+      <BulkResetFlashcardsDialog
+        ids={selectedFlashcardIds}
+        open={bulkResetOpen}
+        onOpenChange={setBulkResetOpen}
+        onReset={(_ids) => {
+          refreshManagePage();
+          setBulkResetOpen(false);
+        }}
       />
       {deleteTarget && (
         <DeleteFlashcardDialog

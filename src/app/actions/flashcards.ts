@@ -10,6 +10,7 @@ import {
 import {
   bulkDeleteFlashcardsForUser,
   bulkMoveFlashcardsForUser,
+  bulkResetFlashcardsForUser,
   createFlashcardForUser,
   deleteFlashcardForUser,
   editFlashcardForUser,
@@ -28,8 +29,10 @@ import {
 import {
   type BulkDeleteFlashcardsForm,
   type BulkMoveFlashcardsForm,
+  type BulkResetFlashcardsForm,
   bulkDeleteFlashcardsSchema,
   bulkMoveFlashcardsSchema,
+  bulkResetFlashcardsSchema,
   type CheckFlashcardDuplicateForm,
   type CreateFlashcardForm as CreateFlashcardInput,
   checkFlashcardDuplicateSchema,
@@ -58,6 +61,7 @@ import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkDeleteFlashcardsResult,
   BulkMoveFlashcardsResult,
+  BulkResetFlashcardsResult,
   CheckFlashcardDuplicateResult,
   CreateFlashcardResult,
   DeleteFlashcardResult,
@@ -205,6 +209,26 @@ export async function bulkMoveFlashcards(
       if (previousSubjectId !== result.subjectId) {
         revalidatePath(`/subjects/${previousSubjectId}`);
       }
+    }
+  }
+
+  return result;
+}
+
+export async function bulkResetFlashcards(
+  data: BulkResetFlashcardsForm,
+): Promise<BulkResetFlashcardsResult> {
+  const result = await runValidatedUserAction(
+    bulkResetFlashcardsSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) =>
+      bulkResetFlashcardsForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    for (const subjectId of result.subjectIds) {
+      revalidatePath(`/subjects/${subjectId}`);
     }
   }
 

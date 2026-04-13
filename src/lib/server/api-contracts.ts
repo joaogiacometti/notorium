@@ -222,6 +222,13 @@ export type BulkDeleteFlashcardsResult =
       subjectIds: string[];
     }
   | ActionErrorResult;
+export type BulkResetFlashcardsResult =
+  | {
+      success: true;
+      ids: string[];
+      subjectIds: string[];
+    }
+  | ActionErrorResult;
 export type BulkMoveFlashcardsResult =
   | {
       success: true;

@@ -22,6 +22,7 @@ import {
 import type {
   BulkDeleteFlashcardsForm,
   BulkMoveFlashcardsForm,
+  BulkResetFlashcardsForm,
   CreateFlashcardForm,
   DeleteFlashcardForm,
   EditFlashcardForm,
@@ -37,6 +38,7 @@ import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import type {
   BulkDeleteFlashcardsResult,
   BulkMoveFlashcardsResult,
+  BulkResetFlashcardsResult,
   CreateFlashcardResult,
   EditFlashcardResult,
   GenerateFlashcardBackResult,
@@ -248,9 +250,8 @@ export async function editFlashcardForUser(
     return actionError("decks.wrongSubject");
   }
 
-  const targetDeckId = inputDeckId
-    ? inputDeckId
-    : (await getDefaultDeckForSubject(userId, data.subjectId)).id;
+  const targetDeckId =
+    inputDeckId || (await getDefaultDeckForSubject(userId, data.subjectId)).id;
   const previousAttachmentValues = [
     existingFlashcard.front,
     existingFlashcard.back,
@@ -474,6 +475,45 @@ export async function bulkMoveFlashcardsForUser(
     ids: data.ids,
     subjectId: data.subjectId,
     previousSubjectIds: getUniqueSubjectIds(
+      existingFlashcards.map((flashcard) => flashcard.subjectId),
+    ),
+  };
+}
+
+export async function bulkResetFlashcardsForUser(
+  userId: string,
+  data: BulkResetFlashcardsForm,
+): Promise<BulkResetFlashcardsResult> {
+  const existingFlashcards = await getFlashcardRecordsForUser(userId, data.ids);
+
+  if (existingFlashcards.length !== data.ids.length) {
+    return actionError("flashcards.notFound");
+  }
+
+  const now = new Date();
+  const schedulingState = getInitialFlashcardSchedulingState(now);
+
+  await getDb()
+    .update(flashcard)
+    .set({
+      state: schedulingState.state,
+      dueAt: schedulingState.dueAt,
+      stability: schedulingState.stability,
+      difficulty: schedulingState.difficulty,
+      ease: schedulingState.ease,
+      intervalDays: schedulingState.intervalDays,
+      learningStep: schedulingState.learningStep,
+      lastReviewedAt: schedulingState.lastReviewedAt,
+      reviewCount: schedulingState.reviewCount,
+      lapseCount: schedulingState.lapseCount,
+      updatedAt: now,
+    })
+    .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
+
+  return {
+    success: true,
+    ids: data.ids,
+    subjectIds: getUniqueSubjectIds(
       existingFlashcards.map((flashcard) => flashcard.subjectId),
     ),
   };

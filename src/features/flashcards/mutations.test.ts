@@ -691,6 +691,87 @@ describe("bulkMoveFlashcardsForUser", () => {
   });
 });
 
+describe("bulkResetFlashcardsForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("resets scheduling state for all selected flashcards and returns ids and subject ids", async () => {
+    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
+      { id: "flashcard-1", subjectId: "subject-1" },
+      { id: "flashcard-2", subjectId: "subject-2" },
+      { id: "flashcard-3", subjectId: "subject-1" },
+    ]);
+    getInitialFlashcardSchedulingStateMock.mockReturnValueOnce({
+      state: "new",
+      dueAt: new Date("2026-03-18T10:00:00.000Z"),
+      stability: null,
+      difficulty: null,
+      ease: 250,
+      intervalDays: 0,
+      learningStep: null,
+      lastReviewedAt: null,
+      reviewCount: 0,
+      lapseCount: 0,
+    });
+
+    const { bulkResetFlashcardsForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await bulkResetFlashcardsForUser("user-1", {
+      ids: ["flashcard-1", "flashcard-2", "flashcard-3"],
+    });
+
+    expect(result).toEqual({
+      success: true,
+      ids: ["flashcard-1", "flashcard-2", "flashcard-3"],
+      subjectIds: ["subject-1", "subject-2"],
+    });
+    expect(updateMock).toHaveBeenCalled();
+    expect(setMock).toHaveBeenCalledWith({
+      state: "new",
+      dueAt: new Date("2026-03-18T10:00:00.000Z"),
+      stability: null,
+      difficulty: null,
+      ease: 250,
+      intervalDays: 0,
+      learningStep: null,
+      lastReviewedAt: null,
+      reviewCount: 0,
+      lapseCount: 0,
+      updatedAt: expect.any(Date),
+    });
+    expect(inArrayMock).toHaveBeenCalledWith("flashcard_id_column", [
+      "flashcard-1",
+      "flashcard-2",
+      "flashcard-3",
+    ]);
+  });
+
+  it("fails atomically when any selected flashcard is missing", async () => {
+    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
+      { id: "flashcard-1", subjectId: "subject-1" },
+    ]);
+
+    const { bulkResetFlashcardsForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+
+    const result = await bulkResetFlashcardsForUser("user-1", {
+      ids: ["flashcard-1", "flashcard-2"],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "flashcards.notFound",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("generateFlashcardBackForUserInput", () => {
   beforeEach(() => {
     vi.clearAllMocks();

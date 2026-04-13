@@ -139,6 +139,14 @@ export type BulkDeleteFlashcardsForm = z.infer<
   typeof bulkDeleteFlashcardsSchema
 >;
 
+export const bulkResetFlashcardsSchema = z.object({
+  ids: bulkFlashcardIdsSchema,
+});
+
+export type BulkResetFlashcardsForm = z.infer<
+  typeof bulkResetFlashcardsSchema
+>;
+
 export const bulkMoveFlashcardsSchema = z.object({
   ids: bulkFlashcardIdsSchema,
   subjectId: z
