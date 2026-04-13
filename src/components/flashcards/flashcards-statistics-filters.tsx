@@ -63,7 +63,7 @@ export function FlashcardsStatisticsFilters({
   }
 
   return (
-    <div className="mb-4 grid min-w-0 w-full gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+    <div className="grid min-w-0 w-full gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
       <div className="min-w-0">
         <Select
           value={subjectId ?? "all"}
