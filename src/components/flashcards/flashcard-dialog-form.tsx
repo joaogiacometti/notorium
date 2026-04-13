@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Pin, PinOff, Sparkles } from "lucide-react";
+import { useState } from "react";
 import {
   Controller,
   type FieldPath,
@@ -118,6 +119,18 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   noDialog,
   typeToggle,
 }: Readonly<FlashcardDialogFormProps<TValues>>) {
+  const [pendingImageUploads, setPendingImageUploads] = useState(0);
+
+  function handleImageUploadPendingChange(pending: boolean) {
+    setPendingImageUploads((current) => {
+      if (pending) {
+        return current + 1;
+      }
+
+      return Math.max(0, current - 1);
+    });
+  }
+
   function handleCtrlEnter() {
     if (isSubmitting) {
       return;
@@ -142,6 +155,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   const generatingLabel = hasBack ? "Improving..." : "Generating...";
   const keepFrontAfterSubmit = createOptions?.keepFrontAfterSubmit ?? false;
   const keepBackAfterSubmit = createOptions?.keepBackAfterSubmit ?? false;
+  const isImageUploading = pendingImageUploads > 0;
 
   const formContent = (
     <form
@@ -267,6 +281,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     showToolbar={false}
                     imageUploadContext="flashcards"
                     onCtrlEnter={handleCtrlEnter}
+                    onImageUploadPendingChange={handleImageUploadPendingChange}
                   />
                   {frontFeedback}
                 </Field>
@@ -351,6 +366,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     contentClassName="max-h-[10lh]"
                     imageUploadContext="flashcards"
                     onCtrlEnter={handleCtrlEnter}
+                    onImageUploadPendingChange={handleImageUploadPendingChange}
                   />
                 )}
                 {fieldState.invalid ? (
@@ -367,6 +383,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
           form={formId}
           disabled={
             isSubmitting ||
+            isImageUploading ||
             aiBack.isGenerating ||
             duplicateFront.isChecking ||
             duplicateFront.isDuplicate ||

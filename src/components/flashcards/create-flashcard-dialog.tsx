@@ -117,6 +117,8 @@ export function CreateFlashcardDialog({
   const [discardOnModeSwitchDialogOpen, setDiscardOnModeSwitchDialogOpen] =
     useState(false);
   const [decks, setDecks] = useState<DeckEntity[]>([]);
+  const [isAiResourcesUploadingImage, setIsAiResourcesUploadingImage] =
+    useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(
     deckId ?? null,
   );
@@ -543,6 +545,7 @@ export function CreateFlashcardDialog({
                 contentClassName="min-h-50 max-h-[40svh]"
                 showToolbar
                 imageUploadContext="flashcards"
+                onImageUploadPendingChange={setIsAiResourcesUploadingImage}
               />
               {aiForm.formState.errors.text ? (
                 <FieldError errors={[aiForm.formState.errors.text]} />
@@ -555,6 +558,7 @@ export function CreateFlashcardDialog({
             type="submit"
             disabled={
               isGenerating ||
+              isAiResourcesUploadingImage ||
               !aiForm.watch("text") ||
               !aiForm.watch("subjectId")
             }
@@ -568,7 +572,9 @@ export function CreateFlashcardDialog({
             ) : (
               <>
                 <Sparkles className="mr-2 size-4" />
-                Generate Flashcards
+                {isAiResourcesUploadingImage
+                  ? "Uploading image..."
+                  : "Generate Flashcards"}
               </>
             )}
           </Button>

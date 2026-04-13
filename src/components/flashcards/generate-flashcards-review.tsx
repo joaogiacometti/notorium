@@ -49,6 +49,7 @@ export function GenerateFlashcardsReview({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editFront, setEditFront] = useState("");
   const [editBack, setEditBack] = useState("");
+  const [pendingImageUploads, setPendingImageUploads] = useState(0);
 
   useEffect(() => {
     setCards((prevCards) => {
@@ -101,6 +102,16 @@ export function GenerateFlashcardsReview({
     setEditingIndex(null);
   }
 
+  function handleImageUploadPendingChange(pending: boolean) {
+    setPendingImageUploads((current) => {
+      if (pending) {
+        return current + 1;
+      }
+
+      return Math.max(0, current - 1);
+    });
+  }
+
   async function handleCreate() {
     const selectedCards = cards
       .filter((c) => c.selected)
@@ -117,6 +128,9 @@ export function GenerateFlashcardsReview({
   }
   if (isCreating) {
     buttonText = `Creating ${selectedCount} cards...`;
+  }
+  if (pendingImageUploads > 0) {
+    buttonText = "Uploading image...";
   }
 
   return (
@@ -195,6 +209,9 @@ export function GenerateFlashcardsReview({
                           contentClassName="min-h-11 max-h-[20vh]"
                           showToolbar={false}
                           imageUploadContext="flashcards"
+                          onImageUploadPendingChange={
+                            handleImageUploadPendingChange
+                          }
                         />
                       </Field>
                       <Field>
@@ -208,10 +225,18 @@ export function GenerateFlashcardsReview({
                           contentClassName="min-h-11 max-h-[20vh]"
                           showToolbar={false}
                           imageUploadContext="flashcards"
+                          onImageUploadPendingChange={
+                            handleImageUploadPendingChange
+                          }
                         />
                       </Field>
                       <div className="flex gap-2">
-                        <Button type="button" size="sm" onClick={saveEdit}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={saveEdit}
+                          disabled={pendingImageUploads > 0}
+                        >
                           Save
                         </Button>
                         <Button
@@ -265,7 +290,7 @@ export function GenerateFlashcardsReview({
       <Button
         type="button"
         onClick={() => void handleCreate()}
-        disabled={selectedCount === 0 || isCreating}
+        disabled={selectedCount === 0 || isCreating || pendingImageUploads > 0}
         className="w-full"
       >
         {buttonText}

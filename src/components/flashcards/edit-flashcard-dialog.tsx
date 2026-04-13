@@ -95,6 +95,7 @@ export function EditFlashcardDialog({
   const [splitBack, setSplitBack] = useState(flashcard.back);
   const [decks, setDecks] = useState<DeckEntity[]>([]);
   const [splitDecks, setSplitDecks] = useState<DeckEntity[]>([]);
+  const [splitEditorPendingUploads, setSplitEditorPendingUploads] = useState(0);
 
   const isSplitDirty =
     splitFront !== flashcard.front || splitBack !== flashcard.back;
@@ -199,6 +200,16 @@ export function EditFlashcardDialog({
     setSplitSubjectId(newSubjectId);
     setSplitDecks([]);
     setSplitDeckId(null);
+  }
+
+  function handleSplitEditorUploadPendingChange(pending: boolean) {
+    setSplitEditorPendingUploads((current) => {
+      if (pending) {
+        return current + 1;
+      }
+
+      return Math.max(0, current - 1);
+    });
   }
 
   useBeforeUnload(
@@ -420,6 +431,7 @@ export function EditFlashcardDialog({
 
     const hasFrontContent = splitFront.trim().length > 0;
     const hasBackContent = splitBack.trim().length > 0;
+    const isSplitImageUploading = splitEditorPendingUploads > 0;
 
     return (
       <form
@@ -469,6 +481,9 @@ export function EditFlashcardDialog({
                 contentClassName="min-h-11 max-h-[40svh]"
                 showToolbar={false}
                 imageUploadContext="flashcards"
+                onImageUploadPendingChange={
+                  handleSplitEditorUploadPendingChange
+                }
               />
             </Field>
             <Field>
@@ -485,6 +500,9 @@ export function EditFlashcardDialog({
                 contentClassName="max-h-[10lh]"
                 showToolbar
                 imageUploadContext="flashcards"
+                onImageUploadPendingChange={
+                  handleSplitEditorUploadPendingChange
+                }
               />
             </Field>
           </FieldGroup>
@@ -494,6 +512,7 @@ export function EditFlashcardDialog({
             type="submit"
             disabled={
               isGenerating ||
+              isSplitImageUploading ||
               !hasFrontContent ||
               !hasBackContent ||
               !splitSubjectId
@@ -508,7 +527,9 @@ export function EditFlashcardDialog({
             ) : (
               <>
                 <Sparkles className="mr-2 size-4" />
-                Split Flashcard
+                {isSplitImageUploading
+                  ? "Uploading image..."
+                  : "Split Flashcard"}
               </>
             )}
           </Button>

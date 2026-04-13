@@ -71,6 +71,7 @@ export function NoteDialogForm({
   const [_isPending, _startTransition] = useTransition();
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const form = useNoteForm(mode, values);
 
   useEffect(() => {
@@ -196,6 +197,7 @@ export function NoteDialogForm({
                       aria-invalid={fieldState.invalid}
                       imageUploadContext="notes"
                       onCtrlEnter={handleCtrlEnter}
+                      onImageUploadPendingChange={setIsImageUploading}
                     />
                     {fieldState.invalid ? (
                       <FieldError errors={[fieldState.error]} />
@@ -206,13 +208,19 @@ export function NoteDialogForm({
               <Button
                 type="submit"
                 form={formId}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isImageUploading}
                 className="w-full"
               >
                 <AsyncButtonContent
-                  pending={isSubmitting}
+                  pending={isSubmitting || isImageUploading}
                   idleLabel={mode === "create" ? "Create Note" : "Save Changes"}
-                  pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
+                  pendingLabel={
+                    isSubmitting
+                      ? mode === "create"
+                        ? "Creating..."
+                        : "Saving..."
+                      : "Uploading image..."
+                  }
                 />
               </Button>
             </FieldGroup>

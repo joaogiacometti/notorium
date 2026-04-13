@@ -23,6 +23,7 @@ import {
   List,
   ListChecks,
   ListOrdered,
+  Loader2,
   Minus,
   Quote,
   Redo,
@@ -45,6 +46,11 @@ import { t } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 
 export type EditorImageUploadContext = "notes" | "flashcards";
+
+export interface EditorImageUploadTracker {
+  start: () => void;
+  finish: () => void;
+}
 
 function insertImage(editor: Editor, src: string) {
   editor.chain().focus().setImage({ src }).run();
@@ -74,6 +80,39 @@ function getPastedImageFile(event: ClipboardEvent): File | null {
   }
 
   return null;
+}
+
+export function handleEditorPaste({
+  editor,
+  event,
+  imageUploadContext,
+  isImageUploadPending,
+  tracker,
+}: {
+  editor: Editor;
+  event: ClipboardEvent;
+  imageUploadContext: EditorImageUploadContext;
+  isImageUploadPending: () => boolean;
+  tracker?: EditorImageUploadTracker;
+}) {
+  const imageFile = getPastedImageFile(event);
+  if (imageFile) {
+    if (isImageUploadPending()) {
+      return true;
+    }
+
+    void uploadPastedImage(editor, imageFile, imageUploadContext, tracker);
+    return true;
+  }
+
+  const src = event.clipboardData?.getData("text/plain")?.trim() ?? "";
+  const directImageUrl = resolveEmbeddableImageUrl(src);
+  if (directImageUrl) {
+    insertImage(editor, directImageUrl);
+    return true;
+  }
+
+  return false;
 }
 
 function readFileAsBase64(file: File): Promise<string | null> {
@@ -113,49 +152,57 @@ function getPastedImageFileName(file: File): string {
   return `pasted-image.${extension}`;
 }
 
-async function uploadPastedImage(
+export async function uploadPastedImage(
   editor: Editor,
   file: File,
   context: EditorImageUploadContext,
+  tracker?: EditorImageUploadTracker,
 ) {
-  if (file.size > LIMITS.attachmentMaxBytes) {
-    toast.error(
-      t("limits.attachmentSizeLimit", { max: LIMITS.attachmentMaxBytes }),
-    );
-    return;
-  }
-
-  const dataBase64 = await readFileAsBase64(file);
-
-  if (!dataBase64) {
-    toast.error(t("attachments.uploadFailed"));
-    return;
-  }
-
-  let result: Awaited<ReturnType<typeof uploadEditorImage>>;
-
+  tracker?.start();
   try {
-    result = await uploadEditorImage({
-      fileName: getPastedImageFileName(file),
-      mimeType: file.type,
-      dataBase64,
-      context,
-    });
-  } catch {
-    toast.error(t("attachments.uploadFailed"));
-    return;
-  }
+    if (file.size > LIMITS.attachmentMaxBytes) {
+      toast.error(
+        t("limits.attachmentSizeLimit", { max: LIMITS.attachmentMaxBytes }),
+      );
+      return;
+    }
 
-  if (!result.success) {
-    toast.error(t(result.errorCode, result.errorParams));
-    return;
-  }
+    const dataBase64 = await readFileAsBase64(file);
 
-  insertImage(editor, result.url);
+    if (!dataBase64) {
+      toast.error(t("attachments.uploadFailed"));
+      return;
+    }
+
+    let result: Awaited<ReturnType<typeof uploadEditorImage>>;
+
+    try {
+      result = await uploadEditorImage({
+        fileName: getPastedImageFileName(file),
+        mimeType: file.type,
+        dataBase64,
+        context,
+      });
+    } catch {
+      toast.error(t("attachments.uploadFailed"));
+      return;
+    }
+
+    if (!result.success) {
+      toast.error(t(result.errorCode, result.errorParams));
+      return;
+    }
+
+    insertImage(editor, result.url);
+  } finally {
+    tracker?.finish();
+  }
 }
 
 function createImageUrlPasteExtension(
   imageUploadContext: EditorImageUploadContext,
+  isImageUploadPending: () => boolean,
+  tracker?: EditorImageUploadTracker,
 ) {
   return Extension.create({
     name: "imageUrlPaste",
@@ -164,25 +211,13 @@ function createImageUrlPasteExtension(
         new Plugin({
           props: {
             handlePaste: (_, event) => {
-              const imageFile = getPastedImageFile(event);
-              if (imageFile) {
-                void uploadPastedImage(
-                  this.editor,
-                  imageFile,
-                  imageUploadContext,
-                );
-                return true;
-              }
-
-              const src =
-                event.clipboardData?.getData("text/plain")?.trim() ?? "";
-              const directImageUrl = resolveEmbeddableImageUrl(src);
-              if (directImageUrl) {
-                insertImage(this.editor, directImageUrl);
-                return true;
-              }
-
-              return false;
+              return handleEditorPaste({
+                editor: this.editor,
+                event,
+                imageUploadContext,
+                isImageUploadPending,
+                tracker,
+              });
             },
           },
         }),
@@ -201,6 +236,7 @@ interface TiptapEditorProps {
   showToolbar?: boolean;
   imageUploadContext?: EditorImageUploadContext;
   onCtrlEnter?: () => void;
+  onImageUploadPendingChange?: (pending: boolean) => void;
 }
 
 interface ToolbarButtonProps {
@@ -385,11 +421,31 @@ export function TiptapEditor({
   showToolbar = true,
   imageUploadContext = "notes",
   onCtrlEnter,
+  onImageUploadPendingChange,
 }: Readonly<TiptapEditorProps>) {
   const resolvedPlaceholder = placeholder ?? "Start writing your notes...";
   const onCtrlEnterRef = useRef(onCtrlEnter);
+  const onImageUploadPendingChangeRef = useRef(onImageUploadPendingChange);
+  const activeUploadsRef = useRef(0);
   const [resolvedValue, setResolvedValue] = useState(value);
+  const [isImageUploadPending, setIsImageUploadPending] = useState(false);
   onCtrlEnterRef.current = onCtrlEnter;
+  onImageUploadPendingChangeRef.current = onImageUploadPendingChange;
+
+  const imageUploadTracker: EditorImageUploadTracker = {
+    start: () => {
+      activeUploadsRef.current += 1;
+      if (activeUploadsRef.current === 1) {
+        setIsImageUploadPending(true);
+      }
+    },
+    finish: () => {
+      activeUploadsRef.current = Math.max(0, activeUploadsRef.current - 1);
+      if (activeUploadsRef.current === 0) {
+        setIsImageUploadPending(false);
+      }
+    },
+  };
 
   const handleUpdate = ({
     editor,
@@ -425,7 +481,11 @@ export function TiptapEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       Typography,
-      createImageUrlPasteExtension(imageUploadContext),
+      createImageUrlPasteExtension(
+        imageUploadContext,
+        () => activeUploadsRef.current > 0,
+        imageUploadTracker,
+      ),
     ],
     content: resolvedValue || "",
     onUpdate: handleUpdate,
@@ -481,6 +541,18 @@ export function TiptapEditor({
     }
   }, [editor, resolvedValue]);
 
+  useEffect(() => {
+    onImageUploadPendingChangeRef.current?.(isImageUploadPending);
+  }, [isImageUploadPending]);
+
+  useEffect(() => {
+    return () => {
+      if (activeUploadsRef.current > 0) {
+        onImageUploadPendingChangeRef.current?.(false);
+      }
+    };
+  }, []);
+
   return (
     <div
       className={cn(
@@ -491,6 +563,12 @@ export function TiptapEditor({
       )}
     >
       {showToolbar && <EditorToolbar editor={editor} />}
+      {isImageUploadPending ? (
+        <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          <span>Uploading image...</span>
+        </div>
+      ) : null}
       <EditorContent
         editor={editor}
         className={cn(
