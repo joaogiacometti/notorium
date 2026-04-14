@@ -10,7 +10,7 @@ import Link from "next/link";
 import { AppSectionNav } from "@/components/navbar/app-section-nav";
 import { GlobalSearch } from "@/components/navbar/global-search";
 import { LogoutButton } from "@/components/navbar/logout-button";
-import { PreferencesDialog } from "@/components/navbar/preferences-dialog";
+import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -55,6 +55,7 @@ export async function Navbar() {
 
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           {session && <GlobalSearch userId={session.user.id} />}
+          {session && <ModeToggle />}
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -103,7 +104,6 @@ export async function Navbar() {
                     </DropdownMenuItem>
                   </form>
                 )}
-                <PreferencesDialog />
                 <DropdownMenuSeparator />
                 <LogoutButton />
               </DropdownMenuContent>

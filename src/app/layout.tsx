@@ -1,9 +1,12 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
-import { getUserThemeServerSide } from "@/app/actions/theme";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
+import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { getUserPreferredTheme } from "@/features/user/queries";
+import { getOptionalSession } from "@/lib/auth/auth";
+import { themeStorageKey } from "@/lib/theme-storage";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +19,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const userTheme = await getUserThemeServerSide();
+  const session = await getOptionalSession();
+  const userTheme = session
+    ? await getUserPreferredTheme(session.user.id)
+    : "system";
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -26,7 +32,7 @@ export default async function RootLayout({
           defaultTheme={userTheme}
           enableSystem
           disableTransitionOnChange
-          storageKey="theme"
+          storageKey={themeStorageKey}
           themes={[
             "light",
             "dark",
@@ -38,6 +44,9 @@ export default async function RootLayout({
         >
           <QueryProvider>
             {children}
+            {!session && (
+              <ModeToggle variant="floating" persistPreference={false} />
+            )}
             <Toaster />
             <SpeedInsights />
           </QueryProvider>

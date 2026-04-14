@@ -13,6 +13,10 @@ test("approved user can log in", async ({ page }) => {
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toBeVisible();
+  await expect(page.getByTestId("theme-switcher-navbar-trigger")).toBeVisible();
+  await expect(page.getByTestId("theme-switcher-floating-trigger")).toHaveCount(
+    0,
+  );
 });
 
 test("pending user cannot log in", async ({ page }) => {
@@ -31,6 +35,12 @@ test("pending user cannot log in", async ({ page }) => {
   await expect(page.locator("#form-login-password")).toBeVisible();
   await expect(page.getByText(/pending approval/i)).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
+  await expect(
+    page.getByTestId("theme-switcher-floating-trigger"),
+  ).toBeVisible();
+  await expect(page.getByTestId("theme-switcher-navbar-trigger")).toHaveCount(
+    0,
+  );
 });
 
 test("blocked user cannot log in", async ({ page }) => {
@@ -49,4 +59,10 @@ test("blocked user cannot log in", async ({ page }) => {
   await expect(page.locator("#form-login-password")).toBeVisible();
   await expect(page.getByText(/access is blocked/i)).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
+  await expect(
+    page.getByTestId("theme-switcher-floating-trigger"),
+  ).toBeVisible();
+  await expect(page.getByTestId("theme-switcher-navbar-trigger")).toHaveCount(
+    0,
+  );
 });

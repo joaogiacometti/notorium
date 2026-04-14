@@ -32,6 +32,7 @@ vi.mock("@/features/notifications/mutations", () => ({
 
 describe("sendAssessmentReminderEmails", () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
     getServerEnvMock.mockReturnValue({
       BETTER_AUTH_URL: "https://notorium.example.com/",

@@ -1,6 +1,11 @@
 import "server-only";
 import { getServerEnv } from "@/env";
 import {
+  claimUnsentAssessments,
+  markAssessmentNotificationsFailed,
+  markAssessmentNotificationsSent,
+} from "@/features/notifications/mutations";
+import {
   getUsersWithUpcomingAssessments,
   type NotificationAssessmentItem,
 } from "@/features/notifications/queries";
@@ -10,11 +15,6 @@ import {
   type AssessmentReminderItem,
   renderAssessmentReminderEmail,
 } from "@/lib/email/templates/assessment-reminder";
-import {
-  claimUnsentAssessments,
-  markAssessmentNotificationsFailed,
-  markAssessmentNotificationsSent,
-} from "./mutations";
 
 export interface NotificationBatchResult {
   sent: number;

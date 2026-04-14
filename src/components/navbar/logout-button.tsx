@@ -1,18 +1,19 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { logoutAction } from "@/app/actions/auth";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { clearPersistedThemePreference } from "@/lib/theme-storage";
 
 export function LogoutButton() {
-  const router = useRouter();
-  const [, startNavTransition] = useTransition();
-
   const handleLogout = async () => {
-    await logoutAction();
-    startNavTransition(() => router.push("/login"));
+    const result = await logoutAction();
+    if (!result.success) {
+      return;
+    }
+
+    clearPersistedThemePreference();
+    window.location.assign("/login");
   };
 
   return (

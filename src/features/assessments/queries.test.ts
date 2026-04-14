@@ -47,6 +47,7 @@ vi.mock("@/db/schema", () => ({
 
 describe("getAssessmentDetailForUser", () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
   });
 

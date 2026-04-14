@@ -10,18 +10,56 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { validThemes } from "@/lib/theme";
+import { type AppTheme, isAppTheme, themeOptions } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 
-export function ModeToggle() {
+interface ModeToggleProps {
+  variant?: "navbar" | "floating";
+  persistPreference?: boolean;
+}
+
+const themeLabelByKey: Record<
+  (typeof themeOptions)[number]["labelKey"],
+  string
+> = {
+  system: "System",
+  light: "Light",
+  dark: "Dark",
+  tokyo_night: "Tokyo Night",
+  halloween: "Halloween",
+  catppuccin_mocha: "Catppuccin mocha",
+  catppuccin_latte: "Catppuccin latte",
+};
+
+export function ModeToggle({
+  variant = "navbar",
+  persistPreference = true,
+}: Readonly<ModeToggleProps>) {
   const { theme, setTheme } = useTheme();
+  const currentTheme = isAppTheme(theme) ? theme : "system";
 
-  const handleThemeChange = async (nextTheme: (typeof validThemes)[number]) => {
-    const currentTheme = theme ?? "system";
+  const dataTestId =
+    variant === "floating"
+      ? "theme-switcher-floating-trigger"
+      : "theme-switcher-navbar-trigger";
+
+  const handleThemeChange = async (nextTheme: AppTheme) => {
+    if (nextTheme === currentTheme) {
+      return;
+    }
+
     setTheme(nextTheme);
+
+    if (!persistPreference) {
+      return;
+    }
+
     try {
-      await updateUserTheme({ theme: nextTheme });
-    } catch (error) {
-      console.error("Failed to update theme preference:", error);
+      const result = await updateUserTheme({ theme: nextTheme });
+      if (!result.success) {
+        setTheme(currentTheme);
+      }
+    } catch {
       setTheme(currentTheme);
     }
   };
@@ -30,58 +68,30 @@ export function ModeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant={variant === "floating" ? "outline" : "ghost"}
           size="icon"
-          className="text-muted-foreground hover:text-foreground"
+          data-testid={dataTestId}
+          className={cn(
+            "text-muted-foreground hover:text-foreground",
+            variant === "floating" &&
+              "fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-[55] border-border/60 bg-background/90 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/70",
+          )}
         >
           <Sun className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
           <Moon className="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          <span className="sr-only">Toggle theme</span>
+          <span className="sr-only">Change theme</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={() => handleThemeChange("system")}
-          className="cursor-pointer"
-        >
-          System
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleThemeChange("light")}
-          className="cursor-pointer"
-        >
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleThemeChange("dark")}
-          className="cursor-pointer"
-        >
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleThemeChange("tokyo-night")}
-          className="cursor-pointer"
-        >
-          Tokyo Night
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleThemeChange("halloween")}
-          className="cursor-pointer"
-        >
-          Halloween
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleThemeChange("catppuccin-mocha")}
-          className="cursor-pointer"
-        >
-          Catppuccin mocha
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleThemeChange("catppuccin-latte")}
-          className="cursor-pointer"
-        >
-          Catppuccin latte
-        </DropdownMenuItem>
+        {themeOptions.map((option) => (
+          <DropdownMenuItem
+            key={option.id}
+            onClick={() => handleThemeChange(option.id)}
+            className="cursor-pointer"
+          >
+            {themeLabelByKey[option.labelKey]}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

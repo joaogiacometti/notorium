@@ -42,6 +42,10 @@ test("first signup becomes approved admin immediately", async ({ page }) => {
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toBeVisible();
+  await expect(page.getByTestId("theme-switcher-navbar-trigger")).toBeVisible();
+  await expect(page.getByTestId("theme-switcher-floating-trigger")).toHaveCount(
+    0,
+  );
 
   const snapshot = await getUserAccessSnapshotByEmail(firstUser.email);
 
@@ -68,6 +72,12 @@ test("later signup stays pending and shows approval notice", async ({
     page.getByText(/waiting for administrator approval/i),
   ).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
+  await expect(
+    page.getByTestId("theme-switcher-floating-trigger"),
+  ).toBeVisible();
+  await expect(page.getByTestId("theme-switcher-navbar-trigger")).toHaveCount(
+    0,
+  );
 
   const snapshot = await getUserAccessSnapshotByEmail(secondUser.email);
 

@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { clearPersistedThemePreference } from "@/lib/theme-storage";
 
 interface DeleteAccountDialogProps {
   open: boolean;
@@ -31,7 +32,11 @@ export function DeleteAccountDialog({
       const result = await deleteAccount();
       if (result && !result.success) {
         toast.error(resolveActionErrorMessage(result));
+        return;
       }
+
+      clearPersistedThemePreference();
+      window.location.assign("/login");
     });
   }
 

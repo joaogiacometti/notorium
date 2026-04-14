@@ -2,7 +2,6 @@
 
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { deleteAccountForUser } from "@/features/account/mutations";
 import {
   type UpdateAccountForm,
@@ -147,7 +146,7 @@ export async function deleteAccount(): Promise<MutationResult> {
     return result;
   }
 
-  redirect("/login");
+  return { success: true };
 }
 
 async function getAdminUserId() {

@@ -132,5 +132,6 @@ export const logoutAction = async () => {
   await getAuth().api.signOut({
     headers: await headers(),
   });
-  redirect("/login");
+
+  return { success: true } as const;
 };
