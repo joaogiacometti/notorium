@@ -80,6 +80,23 @@ Open `http://localhost:3000`.
 
 Notorium uses an admin approval system to prevent spam. For complete setup instructions, see [USER_APPROVAL_SETUP.md](./USER_APPROVAL_SETUP.md).
 
+## Scheduled Assessment Reminders
+
+Notorium can send daily email reminders for upcoming assessments. Users control their notification preferences in account settings, and scheduling is handled by a GitHub Actions workflow that calls the protected notification endpoint once per day.
+
+### GitHub Actions Setup
+
+Configure these GitHub Actions repository secrets:
+
+1. `NOTORIUM_APP_URL` with your deployed app base URL
+2. `CRON_SECRET` with the same secret configured in the app environment
+
+The workflow at `.github/workflows/assessment-reminders.yml` runs daily at 9:00 AM UTC and can also be triggered manually with `workflow_dispatch`.
+
+**Timezone Behavior**: The scheduler runs at 9 AM UTC daily. All users receive emails at the same UTC time regardless of their location. Assessment due dates are stored as ISO date strings (YYYY-MM-DD) without time components, and the notification window is calculated based on the user's `notificationDaysBefore` preference (1, 3, or 7 days).
+
+**Note**: User-level notification preferences (`notificationsEnabled` in account settings) work independently. The GitHub workflow only triggers the job; user preferences control who receives emails when it executes.
+
 The Compose stack runs:
 
 - `postgres` (`postgres:17-alpine`)
@@ -160,7 +177,7 @@ Defined in `src/env.ts`:
 | `BLOB_READ_WRITE_TOKEN`          | No          | Vercel Blob storage token for file uploads. Leave unset to disable attachments            |
 | `RESEND_API_KEY`                 | No          | Resend API key for email notifications. When unset, email notification preferences are hidden |
 | `RESEND_FROM_EMAIL`              | No          | Sender email address for notifications (requires verified domain in Resend)               |
-| `CRON_SECRET`                    | No          | Secret for securing the `/api/notifications/assessments` cron endpoint (min 32 chars)     |
+| `CRON_SECRET`                    | No          | Secret for securing the `/api/notifications/assessments` cron endpoint (min 32 chars). Required to enable scheduled assessment reminders |
 
 ## Scripts
 
@@ -295,6 +312,37 @@ The E2E database is completely isolated from your development data, so tests can
 ## AI Integration
 
 Notorium uses a Bring Your Own Key (BYOK) model for AI features. Users provide their own OpenRouter API key for flashcard generation.
+
+## Email Notifications
+
+Notorium supports optional daily email reminders for upcoming assessments. Users opt in from the Account settings page and choose a lead time (1, 3, or 7 days before the due date).
+
+### Requirements
+
+- `RESEND_API_KEY` — Resend API key for sending emails
+- `RESEND_FROM_EMAIL` — Verified sender email address
+- `CRON_SECRET` — Secret for securing the cron endpoint (min 32 chars)
+
+When `RESEND_API_KEY` is not configured, email notification preferences are hidden from the Account page.
+
+### Scheduler
+
+The notification system requires a daily trigger at 9:00 AM UTC that calls `GET /api/notifications/assessments` with `Authorization: Bearer <CRON_SECRET>`.
+
+This repository includes `.github/workflows/assessment-reminders.yml`, which triggers the endpoint daily and also supports manual runs through `workflow_dispatch`.
+
+Configure these GitHub repository secrets before enabling it:
+
+- `NOTORIUM_APP_URL`
+- `CRON_SECRET`
+
+The workflow performs this request:
+
+```bash
+curl -X GET \
+  -H "Authorization: Bearer <CRON_SECRET>" \
+  https://your-domain.com/api/notifications/assessments
+```
 
 ## Contributing
 

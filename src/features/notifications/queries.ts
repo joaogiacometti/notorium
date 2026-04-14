@@ -1,8 +1,7 @@
 import "server-only";
-import { and, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { assessment, subject, user } from "@/db/schema";
-import { getTodayIso } from "@/lib/dates/format";
+import { assessment, notificationLog, subject, user } from "@/db/schema";
 
 export interface NotificationAssessmentItem {
   id: string;
@@ -19,11 +18,9 @@ export interface UserWithUpcomingAssessments {
   assessments: NotificationAssessmentItem[];
 }
 
-export async function getUsersWithUpcomingAssessments(): Promise<
-  UserWithUpcomingAssessments[]
-> {
-  const todayIso = getTodayIso();
-
+export async function getUsersWithUpcomingAssessments(
+  todayIso: string,
+): Promise<UserWithUpcomingAssessments[]> {
   const rows = await getDb()
     .select({
       userId: user.id,
@@ -38,14 +35,24 @@ export async function getUsersWithUpcomingAssessments(): Promise<
     .from(user)
     .innerJoin(assessment, eq(assessment.userId, user.id))
     .innerJoin(subject, eq(assessment.subjectId, subject.id))
+    .leftJoin(
+      notificationLog,
+      and(
+        eq(notificationLog.assessmentId, assessment.id),
+        eq(notificationLog.userId, user.id),
+        eq(notificationLog.notificationDate, todayIso),
+      ),
+    )
     .where(
       and(
+        eq(user.accessStatus, "approved"),
         eq(user.notificationsEnabled, true),
         eq(assessment.status, "pending"),
         isNotNull(assessment.dueDate),
         isNull(subject.archivedAt),
         gte(assessment.dueDate, todayIso),
-        sql<boolean>`${assessment.dueDate} <= (${todayIso}::date + ${user.notificationDaysBefore} * interval '1 day')::date`,
+        sql`${assessment.dueDate} <= (${todayIso}::date + ${user.notificationDaysBefore} * interval '1 day')::date`,
+        or(isNull(notificationLog.id), eq(notificationLog.status, "failed")),
       ),
     );
 

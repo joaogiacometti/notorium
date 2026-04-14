@@ -8,6 +8,9 @@ const SNAPSHOT = {
   RATE_LIMIT_BACKEND: process.env.RATE_LIMIT_BACKEND,
   BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
   SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
+  CRON_SECRET: process.env.CRON_SECRET,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
 };
 
 function restoreEnv() {
@@ -53,6 +56,24 @@ function restoreEnv() {
   } else {
     process.env.SKIP_ENV_VALIDATION = SNAPSHOT.SKIP_ENV_VALIDATION;
   }
+
+  if (SNAPSHOT.CRON_SECRET === undefined) {
+    delete process.env.CRON_SECRET;
+  } else {
+    process.env.CRON_SECRET = SNAPSHOT.CRON_SECRET;
+  }
+
+  if (SNAPSHOT.RESEND_API_KEY === undefined) {
+    delete process.env.RESEND_API_KEY;
+  } else {
+    process.env.RESEND_API_KEY = SNAPSHOT.RESEND_API_KEY;
+  }
+
+  if (SNAPSHOT.RESEND_FROM_EMAIL === undefined) {
+    delete process.env.RESEND_FROM_EMAIL;
+  } else {
+    process.env.RESEND_FROM_EMAIL = SNAPSHOT.RESEND_FROM_EMAIL;
+  }
 }
 
 function setRequiredServerEnv() {
@@ -75,6 +96,9 @@ describe("server env", () => {
     delete process.env.RATE_LIMIT_BACKEND;
     delete process.env.BLOB_READ_WRITE_TOKEN;
     delete process.env.SKIP_ENV_VALIDATION;
+    delete process.env.CRON_SECRET;
+    delete process.env.RESEND_API_KEY;
+    delete process.env.RESEND_FROM_EMAIL;
   });
 
   afterEach(() => {
@@ -108,5 +132,16 @@ describe("server env", () => {
     const env = getServerEnv();
 
     expect(env.BLOB_READ_WRITE_TOKEN).toBe("token-value");
+  });
+
+  it("allows missing cron and email notification env vars", async () => {
+    setRequiredServerEnv();
+
+    const { getServerEnv } = await import("@/env");
+    const env = getServerEnv();
+
+    expect(env.CRON_SECRET).toBeUndefined();
+    expect(env.RESEND_API_KEY).toBeUndefined();
+    expect(env.RESEND_FROM_EMAIL).toBeUndefined();
   });
 });

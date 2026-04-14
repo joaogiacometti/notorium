@@ -152,13 +152,14 @@ Students who want a private, lightweight study management workspace.
 ### Email Notifications
 
 - Users can opt in to daily email reminders for upcoming pending assessments.
+- Only approved users are eligible to receive reminder emails.
 - Notifications are disabled by default; users enable them from the Account settings page.
 - Users choose a lead time of 1, 3, or 7 days before the assessment due date.
 - An email is triggered by calling `GET /api/notifications/assessments` (secured with `Authorization: Bearer <CRON_SECRET>`).
-- The endpoint is designed to be called once per day by an external scheduler (e.g., Vercel Cron Jobs, GitHub Actions).
+- The endpoint is designed to be called once per day by a GitHub Actions workflow.
 - Each email lists the user's pending assessments that fall within their configured window, along with subject names and due dates.
 - The email contains a link to the planning page.
-- Requires `RESEND_API_KEY` and `CRON_SECRET` environment variables; if unconfigured, the endpoint returns `503`.
+- Requires `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `CRON_SECRET` environment variables; if unconfigured, the endpoint returns `503`.
 - The "Email Notifications" preferences card is hidden on the Account page when `RESEND_API_KEY` is not configured, and notification preferences are not queried from the database.
 
 ### UI/UX Baseline
