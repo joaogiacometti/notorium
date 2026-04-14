@@ -26,6 +26,9 @@ const serverEnvSchema = z
       message:
         "USER_AI_SETTINGS_ENCRYPTION_KEY must be a base64-encoded 32-byte key",
     }),
+    RESEND_API_KEY: z.string().min(1).optional(),
+    RESEND_FROM_EMAIL: z.string().min(1).optional(),
+    CRON_SECRET: z.string().min(32).optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .optional()

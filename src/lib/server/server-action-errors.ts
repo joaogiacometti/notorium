@@ -41,6 +41,9 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "account.ai.invalidData": "Invalid AI settings.",
   "account.ai.updateFailed": "Failed to update AI settings.",
   "account.ai.clearFailed": "Failed to clear AI settings.",
+  "account.notifications.invalidData": "Invalid notification settings.",
+  "account.notifications.updateFailed":
+    "Failed to update notification settings.",
   "assessments.invalidData": "Invalid assessment data.",
   "assessments.notFound": "Assessment not found.",
   "attendance.invalidSettings": "Invalid attendance settings.",

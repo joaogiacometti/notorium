@@ -9,6 +9,7 @@ import { updateAccount } from "@/app/actions/account";
 import { AiSettingsCard } from "@/components/account/ai-settings-card";
 import { DataTransferActions } from "@/components/account/data-transfer-actions";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
+import { NotificationPreferencesCard } from "@/components/account/notification-preferences-card";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,9 @@ interface AccountFormProps {
   createdAt: string;
   updatedAt: string;
   initialAiSettings: UserAiSettingsSummary | null;
+  emailEnabled: boolean;
+  initialNotificationsEnabled: boolean;
+  initialNotificationDaysBefore: number;
 }
 
 export function AccountForm({
@@ -47,6 +51,9 @@ export function AccountForm({
   createdAt,
   updatedAt,
   initialAiSettings,
+  emailEnabled,
+  initialNotificationsEnabled,
+  initialNotificationDaysBefore,
 }: Readonly<AccountFormProps>) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -146,6 +153,13 @@ export function AccountForm({
       </Card>
 
       <AiSettingsCard initialAiSettings={initialAiSettings} />
+
+      {emailEnabled && (
+        <NotificationPreferencesCard
+          initialEnabled={initialNotificationsEnabled}
+          initialDaysBefore={initialNotificationDaysBefore}
+        />
+      )}
 
       <Card className="gap-4">
         <CardHeader>
