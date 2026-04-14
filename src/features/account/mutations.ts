@@ -29,7 +29,6 @@ export async function deleteAccountForUser(): Promise<AccountMutationResult> {
 
   try {
     const requestHeaders = await headers();
-    await getAuth().api.signOut({ headers: requestHeaders });
     await getAuth().api.deleteUser({
       headers: requestHeaders,
       body: {

@@ -31,6 +31,10 @@ describe("deleteAccountForUser", () => {
     vi.clearAllMocks();
     headersMock.mockResolvedValue(new Headers());
     getAuthenticatedUserIdMock.mockResolvedValue("user-1");
+    signOutMock.mockResolvedValue(undefined);
+    deleteUserMock.mockResolvedValue(undefined);
+    deleteImagesMock.mockResolvedValue(undefined);
+    listImagePathnamesMock.mockReset();
     getMediaStorageProviderMock.mockResolvedValue({
       deleteImages: deleteImagesMock,
       listImagePathnames: listImagePathnamesMock,
@@ -55,14 +59,42 @@ describe("deleteAccountForUser", () => {
         "notorium/flashcards/user-1/b.png",
       ],
     });
-    expect(signOutMock).toHaveBeenCalled();
     expect(deleteUserMock).toHaveBeenCalled();
-    expect(signOutMock.mock.invocationCallOrder[0]).toBeLessThan(
-      deleteUserMock.mock.invocationCallOrder[0],
-    );
+    expect(signOutMock).not.toHaveBeenCalled();
     expect(deleteUserMock.mock.invocationCallOrder[0]).toBeLessThan(
       deleteImagesMock.mock.invocationCallOrder[0],
     );
+  });
+
+  it("returns success when no blob provider is configured", async () => {
+    getMediaStorageProviderMock.mockResolvedValueOnce(null);
+
+    const { deleteAccountForUser } = await import(
+      "@/features/account/mutations"
+    );
+
+    const result = await deleteAccountForUser();
+
+    expect(result).toEqual({ success: true });
+    expect(deleteUserMock).toHaveBeenCalled();
+    expect(listImagePathnamesMock).not.toHaveBeenCalled();
+    expect(deleteImagesMock).not.toHaveBeenCalled();
+    expect(signOutMock).not.toHaveBeenCalled();
+  });
+
+  it("returns success when blob listing fails before deleting the user", async () => {
+    listImagePathnamesMock.mockRejectedValueOnce(new Error("listing failed"));
+
+    const { deleteAccountForUser } = await import(
+      "@/features/account/mutations"
+    );
+
+    const result = await deleteAccountForUser();
+
+    expect(result).toEqual({ success: true });
+    expect(deleteUserMock).toHaveBeenCalled();
+    expect(deleteImagesMock).not.toHaveBeenCalled();
+    expect(signOutMock).not.toHaveBeenCalled();
   });
 
   it("returns success when blob cleanup fails after deleting the user", async () => {
@@ -78,8 +110,8 @@ describe("deleteAccountForUser", () => {
     const result = await deleteAccountForUser();
 
     expect(result).toEqual({ success: true });
-    expect(signOutMock).toHaveBeenCalled();
     expect(deleteUserMock).toHaveBeenCalled();
+    expect(signOutMock).not.toHaveBeenCalled();
     expect(deleteImagesMock).toHaveBeenCalledWith({
       pathnames: [
         "notorium/notes/user-1/a.png",
@@ -106,8 +138,8 @@ describe("deleteAccountForUser", () => {
       errorParams: undefined,
       errorMessage: undefined,
     });
-    expect(signOutMock).toHaveBeenCalled();
     expect(deleteUserMock).toHaveBeenCalled();
+    expect(signOutMock).not.toHaveBeenCalled();
     expect(deleteImagesMock).not.toHaveBeenCalled();
   });
 });
