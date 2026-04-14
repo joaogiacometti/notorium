@@ -193,8 +193,9 @@ export function CreateFlashcardDialog({
     onOpenChange: (nextOpen) => {
       if (!nextOpen) {
         if (
-          (generatedCards && generatedCards.length > 0) ||
-          aiForm.formState.isDirty
+          mode === "ai" &&
+          ((generatedCards && generatedCards.length > 0) ||
+            aiForm.formState.isDirty)
         ) {
           setDiscardOnCloseDialogOpen(true);
           return;

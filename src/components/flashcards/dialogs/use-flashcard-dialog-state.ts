@@ -78,6 +78,13 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     latestDuplicateCheckVersionRef.current = duplicateCheckVersion;
   }, [duplicateCheckVersion]);
 
+  useEffect(() => {
+    if (!open && mode === "create") {
+      setKeepFrontAfterSubmit(false);
+      setKeepBackAfterSubmit(false);
+    }
+  }, [mode, open]);
+
   const previousFrontRef = useRef(currentValues.front);
   useEffect(() => {
     if (previousFrontRef.current !== currentValues.front) {
