@@ -80,33 +80,41 @@ export function NotificationPreferencesCard({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="gap-4 py-5">
+      <CardHeader className="pb-0">
         <div className="flex items-start gap-3">
           <div className="rounded-md bg-primary/10 p-2 text-primary">
             <Bell className="size-4" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
             <CardTitle>Email Notifications</CardTitle>
             <CardDescription>
-              Get a daily email reminder when assessments are approaching their
-              due date.
+              Get daily reminders for pending assessments near their due date.
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <form
           id="form-account-notifications"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <FieldGroup className="gap-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1">
+          <FieldGroup className="gap-4">
+            <div className="grid gap-1 rounded-lg border bg-muted/20 px-3 py-2.5 text-sm sm:grid-cols-2 sm:gap-3">
+              <p className="sm:text-left">
+                <span className="text-muted-foreground">Channel:</span> Email
+              </p>
+              <p className="sm:text-right">
+                <span className="text-muted-foreground">Frequency:</span> Daily
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-lg border bg-card px-3 py-2.5">
+              <div className="space-y-0.5">
                 <Label htmlFor="notifications-enabled-toggle">
                   Enable reminders
                 </Label>
-                <FieldDescription>
+                <FieldDescription className="text-xs sm:text-sm">
                   Receive an email when pending assessments are near their due
                   date.
                 </FieldDescription>
@@ -125,7 +133,7 @@ export function NotificationPreferencesCard({
             </div>
 
             {notificationsEnabled && (
-              <div className="space-y-2">
+              <div className="space-y-2 rounded-lg border bg-card px-3 py-2.5">
                 <Label htmlFor="notifications-days-before-select">
                   Remind me
                 </Label>
@@ -150,10 +158,6 @@ export function NotificationPreferencesCard({
                     </Select>
                   )}
                 />
-                <FieldDescription>
-                  You will receive one email per day while assessments fall
-                  within this window.
-                </FieldDescription>
               </div>
             )}
 

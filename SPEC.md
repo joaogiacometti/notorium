@@ -142,6 +142,7 @@ Students who want a private, lightweight study management workspace.
 ### Account
 
 - View account details.
+- Navigate Account settings sections with in-page shortcuts on the Account page.
 - Update display name.
 - Admin-only access management page to approve, block, or set pending for users.
 - Export study data as JSON, including subjects, notes, attendance, assessments, flashcards (with deck assignment), decks, and flashcard review settings.

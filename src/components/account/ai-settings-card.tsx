@@ -118,24 +118,23 @@ export function AiSettingsCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="gap-4 py-5">
+      <CardHeader className="pb-0">
         <div className="flex items-start gap-3">
           <div className="rounded-md bg-primary/10 p-2 text-primary">
             <Sparkles className="size-4" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
             <CardTitle>AI Settings</CardTitle>
             <CardDescription>
-              Bring your own OpenRouter key and model for flashcard generation.
-              Your key is encrypted at rest and never shown again after saving.
+              Configure your OpenRouter model and key for flashcard generation.
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <form id="form-account-ai" onSubmit={handleAiSubmit}>
-          <FieldGroup className="gap-4">
+          <FieldGroup className="gap-3">
             <Field>
               <FieldLabel htmlFor="account-ai-provider">Provider</FieldLabel>
               <div
