@@ -33,6 +33,31 @@ This document covers project setup, local development, and repository operations
 - Bun
 - Docker (for local Docker Compose stack)
 
+## Environment Setup
+
+All setup paths require environment configuration:
+
+1. Copy the example file:
+
+```bash
+cp .env.example .env
+```
+
+2. Generate required secrets:
+
+```bash
+# Generate auth secret (for BETTER_AUTH_SECRET)
+openssl rand -hex 32
+
+# Generate encryption key (for USER_AI_SETTINGS_ENCRYPTION_KEY)
+openssl rand -base64 32
+
+# Generate cron secret (for CRON_SECRET, if using email notifications)
+openssl rand -hex 32
+```
+
+3. Update `.env` with the generated values.
+
 ## Quick Start (Production-like Docker Compose)
 
 1. Install dependencies:
@@ -41,23 +66,7 @@ This document covers project setup, local development, and repository operations
 bun install
 ```
 
-2. Create environment file:
-
-```bash
-cp .env.example .env
-```
-
-Set `USER_AI_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte key so user-provided OpenRouter credentials can be stored securely.
-
-Generate required secrets:
-
-```bash
-# Generate auth secret
-openssl rand -hex 32
-
-# Generate encryption key (base64-encoded 32 bytes)
-openssl rand -base64 32
-```
+2. Configure environment (see [Environment Setup](#environment-setup)).
 
 3. Start the production-like stack:
 
@@ -70,6 +79,23 @@ Open `http://localhost:3000`.
 ## User Management
 
 Notorium uses an admin approval system to prevent spam. For complete setup instructions, see [USER_APPROVAL_SETUP.md](./USER_APPROVAL_SETUP.md).
+
+## Scheduled Assessment Reminders
+
+Notorium can send daily email reminders for upcoming assessments. Users control their notification preferences in account settings, and scheduling is handled by a GitHub Actions workflow that calls the protected notification endpoint once per day.
+
+### GitHub Actions Setup
+
+Configure these GitHub Actions repository secrets:
+
+1. `NOTORIUM_APP_URL` with your deployed app base URL
+2. `CRON_SECRET` with the same secret configured in the app environment
+
+The workflow at `.github/workflows/assessment-reminders.yml` runs daily at 9:00 AM UTC and can also be triggered manually with `workflow_dispatch`.
+
+**Timezone Behavior**: The scheduler runs at 9 AM UTC daily. All users receive emails at the same UTC time regardless of their location. Assessment due dates are stored as ISO date strings (YYYY-MM-DD) without time components, and the notification window is calculated based on the user's `notificationDaysBefore` preference (1, 3, or 7 days).
+
+**Note**: User-level notification preferences (`notificationsEnabled` in account settings) work independently. The GitHub workflow only triggers the job; user preferences control who receives emails when it executes.
 
 The Compose stack runs:
 
@@ -91,13 +117,7 @@ Security defaults in Compose:
 bun install
 ```
 
-2. Create environment file:
-
-```bash
-cp .env.example .env
-```
-
-Set `USER_AI_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte key so user-provided OpenRouter credentials can be stored securely.
+2. Configure environment (see [Environment Setup](#environment-setup)).
 
 3. Start PostgreSQL and Redis:
 
@@ -118,13 +138,7 @@ The development Compose stack runs infrastructure only:
 bun install
 ```
 
-2. Create environment file:
-
-```bash
-cp .env.example .env
-```
-
-Set `USER_AI_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte key so user-provided OpenRouter credentials can be stored securely.
+2. Configure environment (see [Environment Setup](#environment-setup)).
 
 3. Start infrastructure services:
 
@@ -160,6 +174,10 @@ Defined in `src/env.ts`:
 | `UPSTASH_REDIS_REST_TOKEN`       | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
 | `REDIS_URL`                      | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                  |
 | `USER_AI_SETTINGS_ENCRYPTION_KEY` | Yes        | Base64-encoded 32-byte key used to encrypt user BYOK OpenRouter credentials at rest       |
+| `BLOB_READ_WRITE_TOKEN`          | No          | Vercel Blob storage token for file uploads. Leave unset to disable attachments            |
+| `RESEND_API_KEY`                 | No          | Resend API key for email notifications. When unset, email notification preferences are hidden |
+| `RESEND_FROM_EMAIL`              | No          | Sender email address for notifications (requires verified domain in Resend)               |
+| `CRON_SECRET`                    | No          | Secret for securing the `/api/notifications/assessments` cron endpoint (min 32 chars). Required to enable scheduled assessment reminders |
 
 ## Scripts
 
@@ -294,6 +312,37 @@ The E2E database is completely isolated from your development data, so tests can
 ## AI Integration
 
 Notorium uses a Bring Your Own Key (BYOK) model for AI features. Users provide their own OpenRouter API key for flashcard generation.
+
+## Email Notifications
+
+Notorium supports optional daily email reminders for upcoming assessments. Users opt in from the Account settings page and choose a lead time (1, 3, or 7 days before the due date).
+
+### Requirements
+
+- `RESEND_API_KEY` — Resend API key for sending emails
+- `RESEND_FROM_EMAIL` — Verified sender email address
+- `CRON_SECRET` — Secret for securing the cron endpoint (min 32 chars)
+
+When `RESEND_API_KEY` is not configured, email notification preferences are hidden from the Account page.
+
+### Scheduler
+
+The notification system requires a daily trigger at 9:00 AM UTC that calls `GET /api/notifications/assessments` with `Authorization: Bearer <CRON_SECRET>`.
+
+This repository includes `.github/workflows/assessment-reminders.yml`, which triggers the endpoint daily and also supports manual runs through `workflow_dispatch`.
+
+Configure these GitHub repository secrets before enabling it:
+
+- `NOTORIUM_APP_URL`
+- `CRON_SECRET`
+
+The workflow performs this request:
+
+```bash
+curl -X GET \
+  -H "Authorization: Bearer <CRON_SECRET>" \
+  https://your-domain.com/api/notifications/assessments
+```
 
 ## Contributing
 

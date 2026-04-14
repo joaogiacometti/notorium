@@ -17,7 +17,14 @@ import {
   type UpdateUserAiSettingsForm,
   updateUserAiSettingsSchema,
 } from "@/features/ai/validation";
-import { updateUserAccessStatusForUser } from "@/features/user/mutations";
+import {
+  type UpdateNotificationPreferencesForm,
+  updateNotificationPreferencesSchema,
+} from "@/features/notifications/validation";
+import {
+  updateNotificationPreferences as updateNotificationPreferencesForUser,
+  updateUserAccessStatusForUser,
+} from "@/features/user/mutations";
 import { isAdminUser } from "@/lib/auth/access-control";
 import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import {
@@ -114,6 +121,23 @@ export async function clearUserAiSettings(): Promise<MutationResult> {
   }
 
   return { success: true };
+}
+
+export async function updateNotificationPreferences(
+  data: UpdateNotificationPreferencesForm,
+): Promise<MutationResult> {
+  return runValidatedUserAction(
+    updateNotificationPreferencesSchema,
+    data,
+    "account.notifications.invalidData",
+    async (userId, parsedData) => {
+      try {
+        return await updateNotificationPreferencesForUser(userId, parsedData);
+      } catch {
+        return actionError("account.notifications.updateFailed");
+      }
+    },
+  );
 }
 
 export async function deleteAccount(): Promise<MutationResult> {

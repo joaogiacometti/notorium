@@ -1,7 +1,7 @@
-import { FlashcardReviewClient } from "@/components/flashcards/flashcard-review-client";
-import { FlashcardsManager } from "@/components/flashcards/flashcards-manager";
-import { FlashcardsPageShell } from "@/components/flashcards/flashcards-page-shell";
-import { FlashcardsStatistics } from "@/components/flashcards/flashcards-statistics";
+import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
+import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
+import { FlashcardsPageShell } from "@/components/flashcards/shared/flashcards-page-shell";
+import { FlashcardsStatistics } from "@/components/flashcards/shared/flashcards-statistics";
 import { getDecksBySubjectForUser } from "@/features/decks/queries";
 import {
   getFlashcardReviewStateForUser,

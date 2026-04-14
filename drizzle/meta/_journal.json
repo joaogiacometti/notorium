@@ -225,6 +225,20 @@
       "when": 1775518100000,
       "tag": "0031_backfill_empty_subjects_default_decks",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1776130186757,
+      "tag": "0032_rainy_arclight",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1776187497539,
+      "tag": "0033_far_hardball",
+      "breakpoints": true
     }
   ]
 }

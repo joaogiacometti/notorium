@@ -63,6 +63,7 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND}
       REDIS_URL: redis://redis:6379
+      CRON_SECRET: ${CRON_SECRET}
     ports:
       - "${APP_PORT:-3000}:3000"
     read_only: true

@@ -41,6 +41,26 @@ export default function AccountLoading() {
             </div>
           </div>
 
+          <div className="rounded-xl border bg-card p-6">
+            <div className="flex items-start gap-3">
+              <Skeleton className="size-8 shrink-0 rounded-md" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-36" />
+                <Skeleton className="h-4 w-72" />
+              </div>
+            </div>
+            <div className="mt-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-56" />
+                </div>
+                <Skeleton className="h-5 w-9 rounded-full" />
+              </div>
+              <Skeleton className="h-10 w-28 rounded-md" />
+            </div>
+          </div>
+
           <div className="rounded-xl border border-destructive/50 bg-card p-6">
             <Skeleton className="h-6 w-28" />
             <Skeleton className="mt-1 h-4 w-72" />

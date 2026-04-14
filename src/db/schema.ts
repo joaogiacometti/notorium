@@ -30,6 +30,12 @@ export const user = pgTable("user", {
     .default("pending"),
   isAdmin: boolean("is_admin").notNull().default(false),
   preferredTheme: text("preferred_theme").default("system").notNull(),
+  notificationsEnabled: boolean("notifications_enabled")
+    .notNull()
+    .default(false),
+  notificationDaysBefore: integer("notification_days_before")
+    .notNull()
+    .default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -272,6 +278,11 @@ export const flashcardReviewRatingEnum = pgEnum("flashcard_review_rating", [
 ]);
 
 export const aiProviderEnum = pgEnum("ai_provider", ["openrouter"]);
+export const notificationStatusEnum = pgEnum("notification_status", [
+  "claimed",
+  "sent",
+  "failed",
+]);
 
 export const assessment = pgTable(
   "assessment",
@@ -304,6 +315,37 @@ export const assessment = pgTable(
     index("assessment_userId_dueDate_idx").on(table.userId, table.dueDate),
     index("assessment_status_idx").on(table.status),
     index("assessment_dueDate_idx").on(table.dueDate),
+  ],
+);
+
+export const notificationLog = pgTable(
+  "notification_log",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    assessmentId: text("assessment_id")
+      .notNull()
+      .references((): AnyPgColumn => assessment.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    notificationDate: date("notification_date", { mode: "string" }).notNull(),
+    status: notificationStatusEnum("status").notNull().default("claimed"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    unique("notification_log_assessmentId_userId_date_unique").on(
+      table.assessmentId,
+      table.userId,
+      table.notificationDate,
+    ),
+    index("notification_log_userId_idx").on(table.userId),
+    index("notification_log_assessmentId_idx").on(table.assessmentId),
   ],
 );
 
@@ -475,6 +517,7 @@ export const userRelations = relations(user, ({ many }) => ({
   flashcardReviewLogs: many(flashcardReviewLog),
   aiSettings: many(userAiSettings),
   decks: many(deck),
+  notificationLogs: many(notificationLog),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -525,7 +568,7 @@ export const noteRelations = relations(note, ({ one }) => ({
   }),
 }));
 
-export const assessmentRelations = relations(assessment, ({ one }) => ({
+export const assessmentRelations = relations(assessment, ({ one, many }) => ({
   subject: one(subject, {
     fields: [assessment.subjectId],
     references: [subject.id],
@@ -534,6 +577,7 @@ export const assessmentRelations = relations(assessment, ({ one }) => ({
     fields: [assessment.userId],
     references: [user.id],
   }),
+  notificationLogs: many(notificationLog),
 }));
 
 export const deckRelations = relations(deck, ({ one, many }) => ({
@@ -593,3 +637,17 @@ export const userAiSettingsRelations = relations(userAiSettings, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const notificationLogRelations = relations(
+  notificationLog,
+  ({ one }) => ({
+    assessment: one(assessment, {
+      fields: [notificationLog.assessmentId],
+      references: [assessment.id],
+    }),
+    user: one(user, {
+      fields: [notificationLog.userId],
+      references: [user.id],
+    }),
+  }),
+);

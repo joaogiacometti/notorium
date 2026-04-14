@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { user } from "@/db/schema";
+import type { UpdateNotificationPreferencesForm } from "@/features/notifications/validation";
 import { isAdminUser } from "@/lib/auth/access-control";
 import {
   type ActionErrorResult,
@@ -48,6 +49,21 @@ export async function updateUserAccessStatusForUser(
       accessStatus: data.accessStatus,
     })
     .where(eq(user.id, data.userId));
+
+  return { success: true };
+}
+
+export async function updateNotificationPreferences(
+  userId: string,
+  data: UpdateNotificationPreferencesForm,
+): Promise<UserMutationResult> {
+  await getDb()
+    .update(user)
+    .set({
+      notificationsEnabled: data.notificationsEnabled,
+      notificationDaysBefore: Number(data.notificationDaysBefore),
+    })
+    .where(eq(user.id, userId));
 
   return { success: true };
 }

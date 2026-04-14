@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bulkDeleteFlashcardsSchema,
   bulkMoveFlashcardsSchema,
+  bulkResetFlashcardsSchema,
   createFlashcardSchema,
   deleteFlashcardSchema,
   editFlashcardSchema,
@@ -337,6 +338,32 @@ describe("bulkMoveFlashcardsSchema", () => {
     const result = bulkMoveFlashcardsSchema.safeParse({
       ids: ["flashcard-1", "flashcard-1"],
       subjectId: "subject-1",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("bulkResetFlashcardsSchema", () => {
+  it("accepts valid ids", () => {
+    const result = bulkResetFlashcardsSchema.safeParse({
+      ids: ["flashcard-1", "flashcard-2"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty ids", () => {
+    const result = bulkResetFlashcardsSchema.safeParse({
+      ids: [],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects duplicate ids", () => {
+    const result = bulkResetFlashcardsSchema.safeParse({
+      ids: ["flashcard-1", "flashcard-1"],
     });
 
     expect(result.success).toBe(false);
