@@ -84,7 +84,10 @@ describe("getUsersWithUpcomingAssessments", () => {
 
     await getUsersWithUpcomingAssessments("2026-04-14");
 
-    expect(eqMock).toHaveBeenCalledWith("user_access_status_column", "approved");
+    expect(eqMock).toHaveBeenCalledWith(
+      "user_access_status_column",
+      "approved",
+    );
     expect(eqMock).toHaveBeenCalledWith(
       "user_notifications_enabled_column",
       true,

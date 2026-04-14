@@ -56,7 +56,17 @@ openssl rand -base64 32
 openssl rand -hex 32
 ```
 
-3. Update `.env` with the generated values.
+3. Update `.env` with the generated values and set your app URL:
+
+```bash
+# Local development
+BETTER_AUTH_URL=http://localhost:3000
+
+# Production example
+BETTER_AUTH_URL=https://your-domain.com
+```
+
+If you use the assessment reminder GitHub Actions workflow, set the `NOTORIUM_APP_URL` repository secret to the same public base URL.
 
 ## Quick Start (Production-like Docker Compose)
 
@@ -164,43 +174,43 @@ Open `http://localhost:3000`.
 
 Defined in `src/env.ts`:
 
-| Variable                         | Required    | Description                                                                               |
-| -------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                   | Yes         | PostgreSQL connection string. This is the only variable required for `bun run db:migrate` |
-| `BETTER_AUTH_URL`                | Yes         | Base app URL (local: `http://localhost:3000`)                                             |
-| `BETTER_AUTH_SECRET`             | Yes         | Secret used by Better Auth (min 32 chars)                                                 |
-| `RATE_LIMIT_BACKEND`             | No          | Rate-limit backend (`redis` default, or `upstash`)                                        |
-| `UPSTASH_REDIS_REST_URL`         | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
-| `UPSTASH_REDIS_REST_TOKEN`       | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                |
-| `REDIS_URL`                      | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                  |
-| `USER_AI_SETTINGS_ENCRYPTION_KEY` | Yes        | Base64-encoded 32-byte key used to encrypt user BYOK OpenRouter credentials at rest       |
-| `BLOB_READ_WRITE_TOKEN`          | No          | Vercel Blob storage token for file uploads. Leave unset to disable attachments            |
-| `RESEND_API_KEY`                 | No          | Resend API key for email notifications. When unset, email notification preferences are hidden |
-| `RESEND_FROM_EMAIL`              | No          | Sender email address for notifications (requires verified domain in Resend)               |
-| `CRON_SECRET`                    | No          | Secret for securing the `/api/notifications/assessments` cron endpoint (min 32 chars). Required to enable scheduled assessment reminders |
+| Variable                          | Required    | Description                                                                                                                              |
+| --------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                    | Yes         | PostgreSQL connection string. This is the only variable required for `bun run db:migrate`                                                |
+| `BETTER_AUTH_URL`                 | Yes         | Public base app URL used by the app at runtime (local: `http://localhost:3000`)                                                          |
+| `BETTER_AUTH_SECRET`              | Yes         | Secret used by Better Auth (min 32 chars)                                                                                                |
+| `RATE_LIMIT_BACKEND`              | No          | Rate-limit backend (`redis` default, or `upstash`)                                                                                       |
+| `UPSTASH_REDIS_REST_URL`          | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                                                               |
+| `UPSTASH_REDIS_REST_TOKEN`        | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                                                               |
+| `REDIS_URL`                       | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                                                                 |
+| `USER_AI_SETTINGS_ENCRYPTION_KEY` | Yes         | Base64-encoded 32-byte key used to encrypt user BYOK OpenRouter credentials at rest                                                      |
+| `BLOB_READ_WRITE_TOKEN`           | No          | Vercel Blob storage token for file uploads. Leave unset to disable attachments                                                           |
+| `RESEND_API_KEY`                  | No          | Resend API key for email notifications. When unset, email notification preferences are hidden                                            |
+| `RESEND_FROM_EMAIL`               | No          | Sender email address for notifications (requires verified domain in Resend)                                                              |
+| `CRON_SECRET`                     | No          | Secret for securing the `/api/notifications/assessments` cron endpoint (min 32 chars). Required to enable scheduled assessment reminders |
 
 ## Scripts
 
-| Command                     | Description                          |
-| --------------------------- | ------------------------------------ |
-| `bun dev`                   | Start development server             |
-| `bun run build`             | Production build                     |
-| `bun run start`             | Start production server              |
-| `bun run typecheck`         | Run TypeScript checks                |
-| `bun run lint`              | Run Biome checks                     |
-| `bun run format`            | Format files with Biome              |
-| `bun run test`              | Run Vitest suite                     |
-| `bun run test:watch`        | Run Vitest in watch mode             |
-| `bun run test:coverage`     | Run Vitest with coverage             |
-| `bun run test:e2e:infra:up` | Start E2E infrastructure            |
+| Command                       | Description                             |
+| ----------------------------- | --------------------------------------- |
+| `bun dev`                     | Start development server                |
+| `bun run build`               | Production build                        |
+| `bun run start`               | Start production server                 |
+| `bun run typecheck`           | Run TypeScript checks                   |
+| `bun run lint`                | Run Biome checks                        |
+| `bun run format`              | Format files with Biome                 |
+| `bun run test`                | Run Vitest suite                        |
+| `bun run test:watch`          | Run Vitest in watch mode                |
+| `bun run test:coverage`       | Run Vitest with coverage                |
+| `bun run test:e2e:infra:up`   | Start E2E infrastructure                |
 | `bun run test:e2e:infra:down` | Stop E2E infrastructure and remove data |
-| `bun run test:e2e:migrate`  | Run migrations against test database |
-| `bun run test:e2e`          | Run E2E tests                        |
-| `bun run test:e2e:ui`       | Run E2E tests in UI mode             |
-| `bun run test:e2e:headed`   | Run E2E tests in headed mode         |
-| `bun run db:generate`       | Generate Drizzle migrations          |
-| `bun run db:migrate`        | Apply Drizzle migrations             |
-| `bun run db:push`           | Push schema directly to DB           |
+| `bun run test:e2e:migrate`    | Run migrations against test database    |
+| `bun run test:e2e`            | Run E2E tests                           |
+| `bun run test:e2e:ui`         | Run E2E tests in UI mode                |
+| `bun run test:e2e:headed`     | Run E2E tests in headed mode            |
+| `bun run db:generate`         | Generate Drizzle migrations             |
+| `bun run db:migrate`          | Apply Drizzle migrations                |
+| `bun run db:push`             | Push schema directly to DB              |
 
 ## Project Structure
 

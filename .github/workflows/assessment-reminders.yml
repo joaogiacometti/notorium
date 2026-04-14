@@ -17,23 +17,20 @@ jobs:
     name: Trigger Reminder Endpoint
     if: github.repository != 'joaogiacometti/notorium'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Skip when workflow secrets are not configured
-        env:
-          NOTORIUM_APP_URL: ${{ secrets.NOTORIUM_APP_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          if [ -z "$NOTORIUM_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
-            echo "Required secrets are not configured; skipping reminder trigger."
-            exit 0
-          fi
-
       - name: Trigger scheduled assessment reminders
         env:
           NOTORIUM_APP_URL: ${{ secrets.NOTORIUM_APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          if [ -z "$NOTORIUM_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Skipping reminder trigger because required secrets are not configured."
+            exit 0
+          fi
+
           curl --fail-with-body --silent --show-error \
+            --max-time 30 \
             -X GET \
             -H "Authorization: Bearer $CRON_SECRET" \
             "${NOTORIUM_APP_URL%/}/api/notifications/assessments"
