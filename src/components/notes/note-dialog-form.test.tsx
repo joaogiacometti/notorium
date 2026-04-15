@@ -9,17 +9,21 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 const editorCallbacks = new Map<string, (pending: boolean) => void>();
+const editorValues = new Map<string, string>();
 
 vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
   LazyTiptapEditor: ({
     id,
+    value,
     onImageUploadPendingChange,
   }: {
     id?: string;
+    value?: string;
     onImageUploadPendingChange?: (pending: boolean) => void;
   }) => {
     if (id) {
       editorCallbacks.set(id, onImageUploadPendingChange ?? (() => {}));
+      editorValues.set(id, value ?? "");
     }
 
     return <div data-testid={id} />;
@@ -47,6 +51,7 @@ describe("NoteDialogForm", () => {
 
   beforeEach(() => {
     editorCallbacks.clear();
+    editorValues.clear();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -97,5 +102,37 @@ describe("NoteDialogForm", () => {
 
     expect(button.disabled).toBe(false);
     expect(button.textContent).toContain("Create Note");
+  });
+
+  it("preserves edit-mode content while upload pending state changes", async () => {
+    const existingContent = "<p>Legacy note content</p>";
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <NoteDialogForm
+            mode="edit"
+            open
+            onOpenChange={() => {}}
+            values={{ id: "note-1", title: "Aula 2", content: existingContent }}
+            onSubmitAction={async () => ({ success: true })}
+          />
+        </QueryClientProvider>,
+      );
+    });
+
+    expect(editorValues.get("form-edit-note-content")).toBe(existingContent);
+
+    await act(async () => {
+      editorCallbacks.get("form-edit-note-content")?.(true);
+    });
+
+    expect(editorValues.get("form-edit-note-content")).toBe(existingContent);
+
+    await act(async () => {
+      editorCallbacks.get("form-edit-note-content")?.(false);
+    });
+
+    expect(editorValues.get("form-edit-note-content")).toBe(existingContent);
   });
 });

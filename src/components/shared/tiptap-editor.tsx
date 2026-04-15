@@ -52,6 +52,20 @@ export interface EditorImageUploadTracker {
   finish: () => void;
 }
 
+export function isExternalEditorValueChange(
+  value: string,
+  lastEmittedValue: string,
+) {
+  return value !== lastEmittedValue;
+}
+
+export function shouldApplyNormalizedEditorValue(
+  requestedValue: string,
+  latestValue: string,
+) {
+  return latestValue === requestedValue;
+}
+
 function insertImage(editor: Editor, src: string) {
   editor.chain().focus().setImage({ src }).run();
 }
@@ -429,8 +443,11 @@ export function TiptapEditor({
   const activeUploadsRef = useRef(0);
   const [resolvedValue, setResolvedValue] = useState(value);
   const [isImageUploadPending, setIsImageUploadPending] = useState(false);
+  const lastEmittedValueRef = useRef(value);
+  const latestValueRef = useRef(value);
   onCtrlEnterRef.current = onCtrlEnter;
   onImageUploadPendingChangeRef.current = onImageUploadPendingChange;
+  latestValueRef.current = value;
 
   const imageUploadTracker: EditorImageUploadTracker = {
     start: () => {
@@ -453,6 +470,7 @@ export function TiptapEditor({
     editor: { getHTML: () => string; isEmpty: boolean };
   }) => {
     const html = editor.isEmpty ? "" : editor.getHTML();
+    lastEmittedValueRef.current = html;
     onChange(html);
   };
 
@@ -518,12 +536,20 @@ export function TiptapEditor({
   });
 
   useEffect(() => {
-    let active = true;
+    if (!isExternalEditorValueChange(value, lastEmittedValueRef.current)) {
+      return;
+    }
 
-    void normalizeRichTextForRendering(value, async (candidate) =>
+    let active = true;
+    const requestedValue = value;
+
+    void normalizeRichTextForRendering(requestedValue, async (candidate) =>
       resolveEmbeddableImageUrl(candidate),
     ).then((nextValue) => {
-      if (active) {
+      if (
+        active &&
+        shouldApplyNormalizedEditorValue(requestedValue, latestValueRef.current)
+      ) {
         setResolvedValue(nextValue);
       }
     });
