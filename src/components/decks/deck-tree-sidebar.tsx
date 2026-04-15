@@ -100,42 +100,6 @@ function getDeckAncestorIds(nodes: DeckTreeNode[], deckId: string): string[] {
   return [];
 }
 
-function removeDeckTreeNode(
-  nodes: DeckTreeNode[],
-  deckId: string,
-): DeckTreeNode[] {
-  return nodes
-    .filter((node) => node.id !== deckId)
-    .map((node) => ({
-      ...node,
-      children: removeDeckTreeNode(node.children, deckId),
-    }));
-}
-
-function containsDeckId(nodes: DeckTreeNode[], deckId: string): boolean {
-  return nodes.some(
-    (node) => node.id === deckId || containsDeckId(node.children, deckId),
-  );
-}
-
-function findDeckTreeNode(
-  nodes: DeckTreeNode[],
-  deckId: string,
-): DeckTreeNode | null {
-  for (const node of nodes) {
-    if (node.id === deckId) {
-      return node;
-    }
-
-    const match = findDeckTreeNode(node.children, deckId);
-    if (match) {
-      return match;
-    }
-  }
-
-  return null;
-}
-
 interface DeckSidebarRowProps {
   children: ReactNode;
   currentView: FlashcardsView;
@@ -366,7 +330,6 @@ export function DeckTreeSidebar({
 }: Readonly<DeckTreeSidebarProps>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [visibleDeckTree, setVisibleDeckTree] = useState(deckTree);
   const [pendingDeckId, setPendingDeckId] = useState<string | null>(null);
 
   const isPendingVisible = useSmoothedLoadingState(pendingDeckId !== null, {
@@ -382,16 +345,12 @@ export function DeckTreeSidebar({
   const [deleteTarget, setDeleteTarget] = useState<DeleteDeckTarget | null>(
     null,
   );
-  const allFlashcardsTotal = getTotalFlashcardsCount(visibleDeckTree);
+  const allFlashcardsTotal = getTotalFlashcardsCount(deckTree);
   const rootNode: SyntheticDeckTreeRoot = {
     id: rootDeckId,
     name: "Flashcards",
     flashcardCount: allFlashcardsTotal,
   };
-
-  useEffect(() => {
-    setVisibleDeckTree(deckTree);
-  }, [deckTree]);
 
   useEffect(() => {
     const activeDeckId = selectedDeckId ?? "__root__";
@@ -418,9 +377,7 @@ export function DeckTreeSidebar({
     }
 
     const ancestorIds = getDeckAncestorIds(deckTree, selectedDeckId);
-    const isTopLevelSelected = visibleDeckTree.some(
-      (node) => node.id === selectedDeckId,
-    );
+    const isTopLevelSelected = deckTree.some((node) => node.id === selectedDeckId);
 
     if (ancestorIds.length === 0 && !isTopLevelSelected) {
       return;
@@ -435,7 +392,7 @@ export function DeckTreeSidebar({
 
       return next;
     });
-  }, [deckTree, selectedDeckId, visibleDeckTree]);
+  }, [deckTree, selectedDeckId]);
 
   function handleToggle(deckId: string) {
     setExpandedIds((current) => {
@@ -486,13 +443,13 @@ export function DeckTreeSidebar({
           loadingId={isPendingVisible ? pendingDeckId : null}
           onSelectDeck={handleSelectDeck}
         />
-        {visibleDeckTree.length === 0 ? (
+        {deckTree.length === 0 ? (
           <div className="mt-1 rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
             Create your first deck to start organizing flashcards.
           </div>
         ) : (
           <div className="mt-1 space-y-1">
-            {visibleDeckTree.map((childNode) => (
+            {deckTree.map((childNode) => (
               <DeckTreeNodeItem
                 key={childNode.id}
                 node={childNode}
@@ -542,27 +499,8 @@ export function DeckTreeSidebar({
               setDeleteTarget(null);
             }
           }}
-          onDeleted={(deletedDeckId) => {
-            const deletedDeckNode = findDeckTreeNode(
-              visibleDeckTree,
-              deletedDeckId,
-            );
-            const nextDeckTree = removeDeckTreeNode(
-              visibleDeckTree,
-              deletedDeckId,
-            );
-            setVisibleDeckTree(nextDeckTree);
+          onDeleted={() => {
             setDeleteTarget(null);
-
-            if (
-              selectedDeckId &&
-              deletedDeckNode &&
-              (selectedDeckId === deletedDeckId ||
-                containsDeckId(deletedDeckNode.children, selectedDeckId))
-            ) {
-              router.replace(buildDeckViewHref(currentView));
-            }
-
             refreshPage();
           }}
         />
