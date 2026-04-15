@@ -299,6 +299,7 @@ export function CreateFlashcardDialog({
         trigger={null}
         form={singleForm}
         formId="form-create-flashcard"
+        editorResetVersion={dialog.editorResetVersion}
         decks={decks}
         onSubmit={dialog.handleSubmit}
         isSubmitting={dialog.isSubmitting}

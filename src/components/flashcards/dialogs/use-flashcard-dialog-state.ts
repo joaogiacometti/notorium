@@ -69,6 +69,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const [duplicateCheckVersion, setDuplicateCheckVersion] = useState(0);
   const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
   const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
+  const [editorResetVersion, setEditorResetVersion] = useState(0);
   const latestDuplicateCheckVersionRef = useRef(duplicateCheckVersion);
   const previousOpenRef = useRef(false);
   const previousValuesRef = useRef<TValues | null>(null);
@@ -266,6 +267,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
       form.reset(successValues);
       savedValuesRef.current = successValues;
+      setEditorResetVersion((currentVersion) => currentVersion + 1);
       setDuplicateCheckVersion((currentVersion) => currentVersion + 1);
       setDiscardDialogOpen(false);
       await onSuccess?.(result.flashcard);
@@ -356,6 +358,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     isSubmitting,
     previousBack,
     proposedBack,
+    editorResetVersion,
     keepFrontAfterSubmit,
     setKeepFrontAfterSubmit,
     keepBackAfterSubmit,

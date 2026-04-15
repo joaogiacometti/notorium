@@ -72,6 +72,7 @@ interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   trigger?: React.ReactNode;
   form: UseFormReturn<TValues>;
   formId: string;
+  editorResetVersion?: number;
   decks?: DeckEntity[];
   onSubmit: (values: TValues) => Promise<void>;
   isSubmitting: boolean;
@@ -104,6 +105,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   trigger,
   form,
   formId,
+  editorResetVersion,
   decks,
   onSubmit,
   isSubmitting,
@@ -236,6 +238,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     </div>
                   </div>
                   <TiptapEditor
+                    key={`${formId}-front-${editorResetVersion ?? 0}`}
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     placeholder="e.g. What is photosynthesis?"
@@ -322,6 +325,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   />
                 ) : (
                   <TiptapEditor
+                    key={`${formId}-back-${editorResetVersion ?? 0}`}
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     placeholder="e.g. Process plants use to convert light into energy."

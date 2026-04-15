@@ -39,7 +39,10 @@ interface HarnessProps {
   values: CreateFlashcardForm;
   onOpenChange?: (open: boolean) => void;
   onSubmitAction?: (values: CreateFlashcardForm) => Promise<{ success: true }>;
-  getSuccessValues?: (values: CreateFlashcardForm) => CreateFlashcardForm;
+  getSuccessValues?: (
+    values: CreateFlashcardForm,
+    options: { keepFrontAfterSubmit: boolean; keepBackAfterSubmit: boolean },
+  ) => CreateFlashcardForm;
 }
 
 function TestHarness({
@@ -60,7 +63,8 @@ function TestHarness({
     values,
     form,
     onSubmitAction,
-    getSuccessValues: (currentValues) => getSuccessValues(currentValues),
+    getSuccessValues: (currentValues, options) =>
+      getSuccessValues(currentValues, options),
     closeOnSuccess: false,
   });
   const currentValues = form.watch();
@@ -88,6 +92,16 @@ function TestHarness({
         type="button"
         data-testid="close"
         onClick={() => void dialog.handleOpenChange(false)}
+      />
+      <button
+        type="button"
+        data-testid="keep-front-on"
+        onClick={() => dialog.setKeepFrontAfterSubmit(true)}
+      />
+      <button
+        type="button"
+        data-testid="keep-back-on"
+        onClick={() => dialog.setKeepBackAfterSubmit(true)}
       />
     </div>
   );
@@ -209,6 +223,101 @@ describe("useFlashcardDialogState", () => {
       id: undefined,
       front: "<p>Front A</p>",
     });
+  });
+
+  it("clears front and back after submit when both pins are off", async () => {
+    await act(async () => {
+      root.render(
+        <TestHarness
+          open
+          values={{
+            deckId: "deck-1",
+            front: "<p>Front A</p>",
+            back: "<p>Back A</p>",
+          }}
+          getSuccessValues={(currentValues, options) => ({
+            deckId: currentValues.deckId,
+            front: options.keepFrontAfterSubmit ? currentValues.front : "",
+            back: options.keepBackAfterSubmit ? currentValues.back : "",
+          })}
+        />,
+      );
+    });
+
+    await flushTimers();
+
+    await act(async () => {
+      getByTestId(container, "submit").click();
+    });
+
+    expect(getByTestId(container, "front").textContent).toBe("");
+    expect(getByTestId(container, "back").textContent).toBe("");
+  });
+
+  it("keeps only front after submit when front pin is on", async () => {
+    await act(async () => {
+      root.render(
+        <TestHarness
+          open
+          values={{
+            deckId: "deck-1",
+            front: "<p>Front A</p>",
+            back: "<p>Back A</p>",
+          }}
+          getSuccessValues={(currentValues, options) => ({
+            deckId: currentValues.deckId,
+            front: options.keepFrontAfterSubmit ? currentValues.front : "",
+            back: options.keepBackAfterSubmit ? currentValues.back : "",
+          })}
+        />,
+      );
+    });
+
+    await flushTimers();
+
+    await act(async () => {
+      getByTestId(container, "keep-front-on").click();
+    });
+
+    await act(async () => {
+      getByTestId(container, "submit").click();
+    });
+
+    expect(getByTestId(container, "front").textContent).toBe("<p>Front A</p>");
+    expect(getByTestId(container, "back").textContent).toBe("");
+  });
+
+  it("keeps only back after submit when back pin is on", async () => {
+    await act(async () => {
+      root.render(
+        <TestHarness
+          open
+          values={{
+            deckId: "deck-1",
+            front: "<p>Front A</p>",
+            back: "<p>Back A</p>",
+          }}
+          getSuccessValues={(currentValues, options) => ({
+            deckId: currentValues.deckId,
+            front: options.keepFrontAfterSubmit ? currentValues.front : "",
+            back: options.keepBackAfterSubmit ? currentValues.back : "",
+          })}
+        />,
+      );
+    });
+
+    await flushTimers();
+
+    await act(async () => {
+      getByTestId(container, "keep-back-on").click();
+    });
+
+    await act(async () => {
+      getByTestId(container, "submit").click();
+    });
+
+    expect(getByTestId(container, "front").textContent).toBe("");
+    expect(getByTestId(container, "back").textContent).toBe("<p>Back A</p>");
   });
 
   it("registers beforeunload when AI back proposal is pending", async () => {
