@@ -95,6 +95,12 @@ test("can edit a note", async ({ page, e2eUser }) => {
     await editDialog.locator("#form-edit-note-content").fill(updatedContent);
     await editDialog.getByRole("button", { name: "Save Changes" }).click();
 
+    await expect(editDialog).toBeVisible();
+    await expect(editDialog.locator("#form-edit-note-title")).toHaveValue(
+      updatedTitle,
+    );
+    await expect(editDialog.getByText(updatedContent)).toBeVisible();
+    await page.keyboard.press("Escape");
     await expect(editDialog).toHaveCount(0);
     await expect(
       page.getByRole("heading", { name: updatedTitle, exact: true }),

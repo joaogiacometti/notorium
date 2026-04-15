@@ -3,9 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen, Clock3 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
-import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { loginAction } from "@/app/actions/auth";
@@ -34,9 +31,6 @@ export function LoginForm({
 }: React.ComponentProps<"div"> & {
   showPendingApprovalNotice?: boolean;
 }) {
-  const router = useRouter();
-  const { setTheme } = useTheme();
-  const [, startNavTransition] = useTransition();
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -51,14 +45,6 @@ export function LoginForm({
     const result = await loginAction(data);
     if (result && !result.success) {
       toast.error(resolveActionErrorMessage(result));
-      return;
-    }
-
-    if (result?.success && result.data) {
-      const { theme } = result.data;
-      setTheme(theme);
-
-      startNavTransition(() => router.push("/subjects"));
     }
   }
 

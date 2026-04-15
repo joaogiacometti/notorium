@@ -135,4 +135,32 @@ describe("NoteDialogForm", () => {
 
     expect(editorValues.get("form-edit-note-content")).toBe(existingContent);
   });
+
+  it("keeps edit dialog open after successful save", async () => {
+    const onOpenChange = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <NoteDialogForm
+            mode="edit"
+            open
+            onOpenChange={onOpenChange}
+            values={{ id: "note-1", title: "Aula 2", content: "<p>text</p>" }}
+            onSubmitAction={async () => ({ success: true })}
+          />
+        </QueryClientProvider>,
+      );
+    });
+
+    const button = document.body.querySelector(
+      'button[form="form-edit-note"]',
+    ) as HTMLButtonElement;
+
+    await act(async () => {
+      button.click();
+    });
+
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
 });

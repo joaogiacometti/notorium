@@ -12,18 +12,9 @@ vi.mock("@/app/actions/auth", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   ),
-}));
-
-vi.mock("next-themes", () => ({
-  useTheme: () => ({
-    setTheme: vi.fn(),
-  }),
 }));
 
 vi.mock("sonner", () => ({

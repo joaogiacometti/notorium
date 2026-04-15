@@ -34,6 +34,7 @@ vi.mock("@/app/actions/flashcards", () => ({
 }));
 
 interface HarnessProps {
+  mode?: "create" | "edit";
   open: boolean;
   values: CreateFlashcardForm;
   onOpenChange?: (open: boolean) => void;
@@ -42,6 +43,7 @@ interface HarnessProps {
 }
 
 function TestHarness({
+  mode = "create",
   open,
   values,
   onOpenChange = () => {},
@@ -52,7 +54,7 @@ function TestHarness({
     defaultValues: values,
   });
   const dialog = useFlashcardDialogState({
-    mode: "create",
+    mode,
     open,
     onOpenChange,
     values,
@@ -74,10 +76,18 @@ function TestHarness({
       <output data-testid="checking">
         {dialog.isCheckingDuplicateFront ? "true" : "false"}
       </output>
+      <output data-testid="discard">
+        {dialog.discardDialogOpen ? "true" : "false"}
+      </output>
       <button
         type="button"
         data-testid="submit"
         onClick={() => dialog.handleSubmit(form.getValues())}
+      />
+      <button
+        type="button"
+        data-testid="close"
+        onClick={() => void dialog.handleOpenChange(false)}
       />
     </div>
   );
@@ -251,5 +261,40 @@ describe("useFlashcardDialogState", () => {
       "beforeunload",
       expect.any(Function),
     );
+  });
+
+  it("does not show discard confirmation after successful edit save", async () => {
+    const onOpenChange = vi.fn();
+    const onSubmitAction = vi.fn().mockResolvedValue({ success: true });
+
+    await act(async () => {
+      root.render(
+        <TestHarness
+          mode="edit"
+          open
+          onOpenChange={onOpenChange}
+          values={{
+            subjectId: "subject-1",
+            front: "<p>Front A</p>",
+            back: "<p>Back A</p>",
+          }}
+          onSubmitAction={onSubmitAction}
+          getSuccessValues={(currentValues) => currentValues}
+        />,
+      );
+    });
+
+    await flushTimers();
+
+    await act(async () => {
+      getByTestId(container, "submit").click();
+    });
+
+    await act(async () => {
+      getByTestId(container, "close").click();
+    });
+
+    expect(getByTestId(container, "discard").textContent).toBe("false");
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

@@ -163,7 +163,7 @@ export function EditFlashcardDialog({
     onSubmitAction: editFlashcard,
     onSuccess: handleFlashcardUpdated,
     getSuccessValues: (submittedValues) => submittedValues,
-    closeOnSuccess: true,
+    closeOnSuccess: false,
   });
 
   function handleSubjectChange(newSubjectId: string) {

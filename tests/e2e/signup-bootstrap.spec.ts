@@ -38,6 +38,7 @@ test("first signup becomes approved admin immediately", async ({ page }) => {
   await page.locator("#form-signup-confirm-password").fill(firstUser.password);
   await page.getByRole("button", { name: "Create Account" }).click();
 
+  await page.waitForURL("**/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();

@@ -72,6 +72,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const latestDuplicateCheckVersionRef = useRef(duplicateCheckVersion);
   const previousOpenRef = useRef(false);
   const previousValuesRef = useRef<TValues | null>(null);
+  const savedValuesRef = useRef(values);
   const currentValues = useWatch({ control: form.control }) as TValues;
 
   useEffect(() => {
@@ -104,6 +105,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       })
     ) {
       form.reset(values);
+      savedValuesRef.current = values;
     }
 
     previousOpenRef.current = open;
@@ -177,9 +179,9 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   async function handleDiscardChanges() {
     await cleanupDiscardedEditorAttachments(
       [currentValues.front, currentValues.back],
-      [values.front, values.back],
+      [savedValuesRef.current.front, savedValuesRef.current.back],
     );
-    form.reset(values);
+    form.reset(savedValuesRef.current);
     setPreviousBack(null);
     setProposedBack(null);
     setDiscardDialogOpen(false);
@@ -200,12 +202,13 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     const hasFrontContent = hasRichTextContent(currentValues.front);
     const hasBackContent = hasRichTextContent(currentValues.back);
     const hasContent = hasFrontContent || hasBackContent;
+    const savedValues = savedValuesRef.current;
     const hasUnsavedChanges =
       mode === "edit"
-        ? currentValues.front !== values.front ||
-          currentValues.back !== values.back ||
-          currentValues.subjectId !== values.subjectId ||
-          currentValues.deckId !== values.deckId
+        ? currentValues.front !== savedValues.front ||
+          currentValues.back !== savedValues.back ||
+          currentValues.subjectId !== savedValues.subjectId ||
+          currentValues.deckId !== savedValues.deckId
         : hasContent;
 
     if ((hasUnsavedChanges || proposedBack) && !isSubmitting) {
@@ -215,9 +218,9 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
     await cleanupDiscardedEditorAttachments(
       [currentValues.front, currentValues.back],
-      [values.front, values.back],
+      [savedValuesRef.current.front, savedValuesRef.current.back],
     );
-    form.reset(values);
+    form.reset(savedValuesRef.current);
     setPreviousBack(null);
     setProposedBack(null);
     setDiscardDialogOpen(false);
@@ -257,12 +260,13 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
         return;
       }
 
-      form.reset(
-        getSuccessValues(data, {
-          keepFrontAfterSubmit,
-          keepBackAfterSubmit,
-        }),
-      );
+      const successValues = getSuccessValues(data, {
+        keepFrontAfterSubmit,
+        keepBackAfterSubmit,
+      });
+
+      form.reset(successValues);
+      savedValuesRef.current = successValues;
       setDuplicateCheckVersion((currentVersion) => currentVersion + 1);
       setDiscardDialogOpen(false);
       await onSuccess?.(result.flashcard);

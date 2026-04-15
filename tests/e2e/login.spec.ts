@@ -9,6 +9,7 @@ test("approved user can log in", async ({ page }) => {
   await page.locator("#form-login-password").fill(user.password);
   await page.getByRole("button", { name: "Login" }).click();
 
+  await page.waitForURL("**/subjects");
   await expect(
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();

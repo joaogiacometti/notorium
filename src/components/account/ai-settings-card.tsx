@@ -20,6 +20,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Field,
   FieldDescription,
   FieldError,
@@ -44,6 +52,7 @@ export function AiSettingsCard({
   initialAiSettings,
 }: Readonly<AiSettingsCardProps>) {
   const [aiSettings, setAiSettings] = useState(initialAiSettings);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const router = useRouter();
   const [isSavingAi, startSavingAi] = useTransition();
   const [isClearingAi, startClearingAi] = useTransition();
@@ -97,6 +106,10 @@ export function AiSettingsCard({
   });
 
   const handleAiClear = () => {
+    setConfirmClearOpen(true);
+  };
+
+  const handleConfirmAiClear = () => {
     startClearingAi(async () => {
       const result = await clearUserAiSettings();
 
@@ -112,6 +125,7 @@ export function AiSettingsCard({
         model: "",
         apiKey: "",
       });
+      setConfirmClearOpen(false);
       router.refresh();
       toast.success("AI settings cleared.");
     });
@@ -233,6 +247,38 @@ export function AiSettingsCard({
             </div>
           </FieldGroup>
         </form>
+        <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
+          <DialogContent className="sm:max-w-md" showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>Clear saved API key?</DialogTitle>
+              <DialogDescription>
+                This removes your saved OpenRouter key and disables AI
+                generation until you save a new key.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmClearOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleConfirmAiClear}
+                disabled={isSavingAi || isClearingAi}
+              >
+                <AsyncButtonContent
+                  pending={isClearingAi}
+                  idleLabel="Clear Key"
+                  pendingLabel="Clearing..."
+                />
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

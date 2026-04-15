@@ -130,7 +130,9 @@ export function NoteDialogForm({
             : data,
         );
         setDiscardDialogOpen(false);
-        onOpenChange(false);
+        if (mode === "create") {
+          onOpenChange(false);
+        }
         return;
       }
 
