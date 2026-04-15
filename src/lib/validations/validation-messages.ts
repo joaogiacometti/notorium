@@ -39,6 +39,8 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.attendance.maxMisses.max": "Cannot exceed 365 misses.",
   "Validation.attendance.maxMisses.min": "Cannot be negative.",
   "Validation.attendance.maxMisses.integer": "Must be a whole number.",
+  "Validation.attendance.maxMisses.exceedsTotal":
+    "Cannot exceed total classes.",
   "Validation.attendance.totalClasses.max": "Cannot exceed 365 classes.",
   "Validation.attendance.totalClasses.min": "Must have at least 1 class.",
   "Validation.attendance.totalClasses.integer": "Must be a whole number.",
@@ -60,10 +62,15 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.flashcards.frontMaxLength":
     "Front must be at most 1,000 characters.",
   "Validation.flashcards.frontRequired": "Front is required.",
+  "Validation.flashcards.deckRequired": "Deck is required.",
   "Validation.flashcards.subjectRequired": "Subject is required.",
   "Validation.flashcards.textMaxLength":
     "Text must be 10,000 characters or less.",
   "Validation.flashcards.textRequired": "Text is required.",
+  "Validation.decks.nameRequired": "Name is required.",
+  "Validation.decks.nameMaxLength": "Name must be at most 100 characters.",
+  "Validation.decks.descriptionMaxLength":
+    "Description must be at most 500 characters.",
   "Validation.notes.contentMaxLength":
     "Content must be at most 100,000 characters.",
   "Validation.notes.attachmentLimit":
