@@ -242,6 +242,7 @@ export function ManagerDataTable<TRow>({
   const shouldRenderLoadingSkeleton = Boolean(
     showLoadingSkeleton && loadingSkeleton,
   );
+  const isEmpty = table.getRowModel().rows.length === 0;
 
   function handleRowClick(
     event: ReactMouseEvent<HTMLTableRowElement>,
@@ -260,7 +261,7 @@ export function ManagerDataTable<TRow>({
   return (
     <div
       className={cn(
-        "flex h-full flex-col lg:min-h-0 lg:flex-1",
+        "flex h-full min-w-0 flex-col lg:min-h-0 lg:flex-1",
         wrapperClassName,
       )}
       aria-busy={isLoading}
@@ -275,7 +276,7 @@ export function ManagerDataTable<TRow>({
               scrollAreaClassName,
             )}
           >
-            <Table className={tableClassName}>
+            <Table className={cn(isEmpty ? "h-full" : null, tableClassName)}>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
@@ -310,8 +311,8 @@ export function ManagerDataTable<TRow>({
                   </TableRow>
                 ))}
               </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.length > 0 ? (
+              <TableBody className={cn(isEmpty ? "h-full" : null)}>
+                {!isEmpty ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow
                       key={row.id}
@@ -381,12 +382,14 @@ export function ManagerDataTable<TRow>({
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow>
+                  <TableRow className="h-full hover:bg-transparent">
                     <TableCell
                       colSpan={table.getAllColumns().length}
-                      className="h-36 px-6 text-center text-sm text-muted-foreground"
+                      className="h-full p-0"
                     >
-                      {emptyLabel}
+                      <div className="flex min-h-36 h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                        {emptyLabel}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

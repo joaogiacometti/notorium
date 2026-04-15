@@ -3,17 +3,14 @@ import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
 import { getRemovedAttachmentPathnames } from "@/features/attachments/utils";
-import {
-  getDeckRecordForUser,
-  getDefaultDeckForSubject,
-} from "@/features/decks/queries";
+import { getDeckRecordForUser } from "@/features/decks/queries";
 import {
   generateFlashcardBackForUser,
   improveFlashcardBackForUser,
 } from "@/features/flashcards/ai-service";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
-  countFlashcardsBySubjectForUser,
+  countFlashcardsByDeckForUser,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
   getFlashcardRecordsForUser,
@@ -29,10 +26,6 @@ import type {
   GenerateFlashcardBackForm,
   ResetFlashcardForm,
 } from "@/features/flashcards/validation";
-import {
-  getActiveSubjectByIdForUser,
-  getActiveSubjectRecordForUser,
-} from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import type {
@@ -53,12 +46,12 @@ export type DeleteFlashcardMutationResult =
   | {
       success: true;
       id: string;
-      subjectId: string;
+      deckId: string;
     }
   | ActionErrorResult;
 
-function getUniqueSubjectIds(subjectIds: string[]): string[] {
-  return [...new Set(subjectIds)];
+function getUniqueDeckIds(deckIds: string[]): string[] {
+  return [...new Set(deckIds)];
 }
 
 function isUniqueViolationError(error: unknown): boolean {
@@ -76,82 +69,25 @@ function isUniqueViolationError(error: unknown): boolean {
   );
 }
 
-function normalizeOptionalDeckId(
-  deckId: string | null | undefined,
-): string | undefined {
-  if (!deckId) {
-    return undefined;
-  }
-
-  const trimmedDeckId = deckId.trim();
-
-  return trimmedDeckId.length > 0 ? trimmedDeckId : undefined;
-}
-
-async function getCreateFlashcardPreflight(
-  userId: string,
-  subjectId: string,
-  deckId: string | undefined,
-  frontNormalized: string,
-) {
-  const [existingSubject, currentCount, hasDuplicate, existingDeck] =
-    await Promise.all([
-      getActiveSubjectRecordForUser(userId, subjectId),
-      countFlashcardsBySubjectForUser(userId, subjectId),
-      hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
-      deckId ? getDeckRecordForUser(userId, deckId) : null,
-    ]);
-
-  return {
-    existingSubject,
-    currentCount,
-    hasDuplicate,
-    existingDeck,
-  };
-}
-
-async function getEditFlashcardPreflight(
-  userId: string,
-  data: Pick<EditFlashcardForm, "id" | "subjectId" | "deckId" | "front">,
-  frontNormalized: string,
-) {
-  const [existingFlashcard, existingSubject, hasDuplicate, existingDeck] =
-    await Promise.all([
-      getFlashcardByIdForUser(userId, data.id),
-      getActiveSubjectRecordForUser(userId, data.subjectId),
-      hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
-      data.deckId ? getDeckRecordForUser(userId, data.deckId) : null,
-    ]);
-
-  return {
-    existingFlashcard,
-    existingSubject,
-    hasDuplicate,
-    existingDeck,
-  };
-}
-
 export async function createFlashcardForUser(
   userId: string,
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
-  const inputDeckId = normalizeOptionalDeckId(data.deckId);
-  const { existingSubject, currentCount, hasDuplicate, existingDeck } =
-    await getCreateFlashcardPreflight(
-      userId,
-      data.subjectId,
-      inputDeckId,
-      frontNormalized,
-    );
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  const [existingDeck, currentCount, hasDuplicate] = await Promise.all([
+    getDeckRecordForUser(userId, data.deckId),
+    countFlashcardsByDeckForUser(userId, data.deckId),
+    hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
+  ]);
+
+  if (!existingDeck) {
+    return actionError("decks.notFound");
   }
 
-  if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
+  if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
     return actionError("limits.flashcardLimit", {
-      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+      errorParams: { max: LIMITS.maxFlashcardsPerDeck },
     });
   }
 
@@ -159,24 +95,12 @@ export async function createFlashcardForUser(
     return actionError("flashcards.duplicateFront");
   }
 
-  if (inputDeckId && !existingDeck) {
-    return actionError("decks.notFound");
-  }
-
-  if (existingDeck && existingDeck.subjectId !== data.subjectId) {
-    return actionError("decks.wrongSubject");
-  }
-
-  const defaultDeck = await getDefaultDeckForSubject(userId, data.subjectId);
-  const deckId = inputDeckId ?? defaultDeck.id;
-
   const schedulingState = getInitialFlashcardSchedulingState();
   try {
     const inserted = await getDb()
       .insert(flashcard)
       .values({
-        subjectId: data.subjectId,
-        deckId,
+        deckId: data.deckId,
         userId,
         front: data.front,
         frontNormalized,
@@ -209,31 +133,27 @@ export async function editFlashcardForUser(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
-  const inputDeckId = normalizeOptionalDeckId(data.deckId);
-  const { existingFlashcard, existingSubject, hasDuplicate, existingDeck } =
-    await getEditFlashcardPreflight(
-      userId,
-      { ...data, deckId: inputDeckId },
-      frontNormalized,
-    );
+
+  const [existingFlashcard, existingDeck, hasDuplicate] = await Promise.all([
+    getFlashcardByIdForUser(userId, data.id),
+    getDeckRecordForUser(userId, data.deckId),
+    hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
+  ]);
 
   if (!existingFlashcard) {
     return actionError("flashcards.notFound");
   }
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (!existingDeck) {
+    return actionError("decks.notFound");
   }
 
-  if (existingFlashcard.subjectId !== data.subjectId) {
-    const current = await countFlashcardsBySubjectForUser(
-      userId,
-      data.subjectId,
-    );
+  if (existingFlashcard.deckId !== data.deckId) {
+    const current = await countFlashcardsByDeckForUser(userId, data.deckId);
 
-    if (current >= LIMITS.maxFlashcardsPerSubject) {
+    if (current >= LIMITS.maxFlashcardsPerDeck) {
       return actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+        errorParams: { max: LIMITS.maxFlashcardsPerDeck },
       });
     }
   }
@@ -242,16 +162,6 @@ export async function editFlashcardForUser(
     return actionError("flashcards.duplicateFront");
   }
 
-  if (inputDeckId && !existingDeck) {
-    return actionError("decks.notFound");
-  }
-
-  if (existingDeck && existingDeck.subjectId !== data.subjectId) {
-    return actionError("decks.wrongSubject");
-  }
-
-  const targetDeckId =
-    inputDeckId || (await getDefaultDeckForSubject(userId, data.subjectId)).id;
   const previousAttachmentValues = [
     existingFlashcard.front,
     existingFlashcard.back,
@@ -263,8 +173,7 @@ export async function editFlashcardForUser(
     const updated = await getDb()
       .update(flashcard)
       .set({
-        subjectId: data.subjectId,
-        deckId: targetDeckId,
+        deckId: data.deckId,
         front: data.front,
         frontNormalized,
         back: data.back,
@@ -294,7 +203,7 @@ export async function editFlashcardForUser(
   return {
     success: true,
     flashcard: updatedFlashcard,
-    previousSubjectId: existingFlashcard.subjectId,
+    previousDeckId: existingFlashcard.deckId,
   };
 }
 
@@ -314,28 +223,16 @@ export async function generateFlashcardBackForUserInput(
   userId: string,
   data: GenerateFlashcardBackForm,
 ): Promise<GenerateFlashcardBackResult> {
-  const [existingSubject, existingDeck] = await Promise.all([
-    getActiveSubjectByIdForUser(userId, data.subjectId),
-    data.deckId ? getDeckRecordForUser(userId, data.deckId) : null,
-  ]);
+  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
-  }
-
-  if (data.deckId && !existingDeck) {
+  if (!existingDeck) {
     return actionError("decks.notFound");
-  }
-
-  if (existingDeck && existingDeck.subjectId !== data.subjectId) {
-    return actionError("decks.wrongSubject");
   }
 
   if (data.currentBack) {
     const result = await improveFlashcardBackForUser({
       userId,
-      subjectName: existingSubject.name,
-      deckName: existingDeck?.isDefault ? null : (existingDeck?.name ?? null),
+      deckName: existingDeck.name,
       front: data.front,
       currentBack: data.currentBack,
     });
@@ -345,8 +242,7 @@ export async function generateFlashcardBackForUserInput(
 
   const result = await generateFlashcardBackForUser({
     userId,
-    subjectName: existingSubject.name,
-    deckName: existingDeck?.isDefault ? null : (existingDeck?.name ?? null),
+    deckName: existingDeck.name,
     front: data.front,
   });
 
@@ -373,7 +269,7 @@ export async function deleteFlashcardForUser(
   );
   await cleanupAttachmentPathnames(userId, removedPathnames);
 
-  return { success: true, id: data.id, subjectId: existingFlashcard.subjectId };
+  return { success: true, id: data.id, deckId: existingFlashcard.deckId };
 }
 
 export async function bulkDeleteFlashcardsForUser(
@@ -403,8 +299,8 @@ export async function bulkDeleteFlashcardsForUser(
   return {
     success: true,
     ids: data.ids,
-    subjectIds: getUniqueSubjectIds(
-      ownedFlashcards.map((flashcard) => flashcard.subjectId),
+    deckIds: getUniqueDeckIds(
+      ownedFlashcards.map((flashcard) => flashcard.deckId),
     ),
   };
 }
@@ -419,63 +315,37 @@ export async function bulkMoveFlashcardsForUser(
     return actionError("flashcards.notFound");
   }
 
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    data.subjectId,
-  );
+  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (!existingDeck) {
+    return actionError("decks.notFound");
   }
 
-  const inputDeckId = normalizeOptionalDeckId(data.deckId);
-  let targetDeckId: string;
-
-  if (inputDeckId) {
-    const existingDeck = await getDeckRecordForUser(userId, inputDeckId);
-    if (!existingDeck) {
-      return actionError("decks.notFound");
-    }
-    if (existingDeck.subjectId !== data.subjectId) {
-      return actionError("decks.notFound");
-    }
-    targetDeckId = inputDeckId;
-  } else {
-    const defaultDeck = await getDefaultDeckForSubject(userId, data.subjectId);
-    targetDeckId = defaultDeck.id;
-  }
-
-  const nextCount = existingFlashcards.filter(
-    (flashcard) => flashcard.subjectId !== data.subjectId,
+  const movingToNewDeck = existingFlashcards.filter(
+    (fc) => fc.deckId !== data.deckId,
   ).length;
 
-  if (nextCount > 0) {
-    const current = await countFlashcardsBySubjectForUser(
-      userId,
-      data.subjectId,
-    );
+  if (movingToNewDeck > 0) {
+    const current = await countFlashcardsByDeckForUser(userId, data.deckId);
 
-    if (current + nextCount > LIMITS.maxFlashcardsPerSubject) {
+    if (current + movingToNewDeck > LIMITS.maxFlashcardsPerDeck) {
       return actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+        errorParams: { max: LIMITS.maxFlashcardsPerDeck },
       });
     }
   }
 
   await getDb()
     .update(flashcard)
-    .set({
-      subjectId: data.subjectId,
-      deckId: targetDeckId,
-    })
+    .set({ deckId: data.deckId })
     .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
   return {
     success: true,
     ids: data.ids,
-    subjectId: data.subjectId,
-    previousSubjectIds: getUniqueSubjectIds(
-      existingFlashcards.map((flashcard) => flashcard.subjectId),
+    deckId: data.deckId,
+    previousDeckIds: getUniqueDeckIds(
+      existingFlashcards.map((fc) => fc.deckId),
     ),
   };
 }
@@ -513,9 +383,7 @@ export async function bulkResetFlashcardsForUser(
   return {
     success: true,
     ids: data.ids,
-    subjectIds: getUniqueSubjectIds(
-      existingFlashcards.map((flashcard) => flashcard.subjectId),
-    ),
+    deckIds: getUniqueDeckIds(existingFlashcards.map((fc) => fc.deckId)),
   };
 }
 

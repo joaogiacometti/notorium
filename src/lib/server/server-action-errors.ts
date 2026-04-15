@@ -64,11 +64,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "dataTransfer.importFailed": "Failed to import data.",
   "decks.invalidData": "Invalid deck data.",
   "decks.notFound": "Deck not found.",
-  "decks.duplicateName":
-    "A deck with this name already exists in this subject.",
-  "decks.cannotEditDefault": "Cannot edit the default deck.",
-  "decks.cannotDeleteDefault": "Cannot delete the default deck.",
-  "decks.wrongSubject": "Deck does not belong to the selected subject.",
+  "decks.duplicateName": "A deck with this name already exists.",
+  "decks.cannotEditDefault": "Cannot edit this deck.",
+  "decks.cannotDeleteDefault": "Cannot delete this deck.",
+  "decks.wrongSubject": "Deck does not belong to the selected scope.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
   "flashcards.duplicateFront": "A flashcard with this front already exists.",
@@ -102,9 +101,11 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "limits.assessmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} assessments per subject.`,
   "limits.flashcardLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
+    `System limit reached: you can have up to ${params?.max} flashcards per deck.`,
   "limits.deckLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} decks per subject.`,
+    `System limit reached: you can have up to ${params?.max} decks.`,
+  "limits.deckNestingDepthLimit": (params) =>
+    `System limit reached: decks can only be nested up to ${params?.max} levels deep.`,
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
   "subjects.invalidData": "Invalid subject data.",

@@ -19,7 +19,6 @@ import type { DeckWithCount } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface DecksListProps {
-  subjectId: string;
   decks: DeckWithCount[];
 }
 
@@ -35,7 +34,7 @@ type DeckDeleteTarget = {
   flashcardCount: number;
 };
 
-export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
+export function DecksList({ decks }: Readonly<DecksListProps>) {
   const [deckItems, setDeckItems] = useState(decks);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DeckEditTarget | null>(null);
@@ -48,14 +47,14 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
     setDeckItems(decks);
   }, [decks]);
 
-  const isAtLimit = deckItems.length >= LIMITS.maxDecksPerSubject;
+  const isAtLimit = deckItems.length >= LIMITS.maxDecksPerUser;
   const totalFlashcards = deckItems.reduce(
     (sum, d) => sum + d.flashcardCount,
     0,
   );
 
   function getDeckCountText() {
-    return `${deckItems.length}/${LIMITS.maxDecksPerSubject} decks · ${totalFlashcards} flashcards`;
+    return `${deckItems.length}/${LIMITS.maxDecksPerUser} decks · ${totalFlashcards} flashcards`;
   }
 
   return (
@@ -68,17 +67,12 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
           </p>
         </div>
         <CreateDeckDialog
-          subjectId={subjectId}
           trigger={
             <Button
               size="sm"
               className="w-full gap-1.5 sm:w-auto"
               disabled={isAtLimit}
-              title={
-                isAtLimit
-                  ? "You cannot create more decks for this subject"
-                  : undefined
-              }
+              title={isAtLimit ? "You cannot create more decks" : undefined}
             >
               <Plus className="size-4" />
               <span>New Deck</span>
@@ -104,7 +98,7 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {`You've reached the limit of ${LIMITS.maxDecksPerSubject} decks per subject. Please delete existing ones to create more.`}
+            {`You've reached the limit of ${LIMITS.maxDecksPerUser} decks. Please delete existing ones to create more.`}
           </p>
         </div>
       )}
@@ -114,7 +108,7 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
           <div>
             <h3 className="text-base font-semibold">No decks yet</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create your first deck to organize flashcards for this subject.
+              Create your first deck to organize your flashcards.
             </p>
           </div>
         </div>
@@ -124,7 +118,6 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
             <DeckCard
               key={deck.id}
               deck={deck}
-              subjectId={subjectId}
               onEditRequested={() =>
                 setEditTarget({
                   id: deck.id,
@@ -182,18 +175,9 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
                 return currentDecks;
               }
 
-              return currentDecks
-                .filter((currentDeck) => currentDeck.id !== deletedDeckId)
-                .map((currentDeck) =>
-                  currentDeck.isDefault
-                    ? {
-                        ...currentDeck,
-                        flashcardCount:
-                          currentDeck.flashcardCount +
-                          deletedDeck.flashcardCount,
-                      }
-                    : currentDeck,
-                );
+              return currentDecks.filter(
+                (currentDeck) => currentDeck.id !== deletedDeckId,
+              );
             });
           }}
           onOpenChange={(open) => {
@@ -207,14 +191,12 @@ export function DecksList({ subjectId, decks }: Readonly<DecksListProps>) {
 
 interface DeckCardProps {
   deck: DeckWithCount;
-  subjectId: string;
   onEditRequested: () => void;
   onDeleteRequested: () => void;
 }
 
 function DeckCard({
   deck,
-  subjectId,
   onEditRequested,
   onDeleteRequested,
 }: Readonly<DeckCardProps>) {
@@ -225,7 +207,7 @@ function DeckCard({
     >
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
         <Link
-          href={`/flashcards?view=manage&subjectId=${subjectId}&deckId=${deck.id}`}
+          href={`/flashcards?view=manage&deckId=${deck.id}`}
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
@@ -233,46 +215,39 @@ function DeckCard({
           </div>
           <CardTitle className="flex min-w-0 items-center gap-2 text-base leading-tight">
             <span className="truncate">{deck.name}</span>
-            {deck.isDefault && (
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
-                Default
-              </span>
-            )}
           </CardTitle>
         </Link>
-        {!deck.isDefault && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
-                aria-label="Open deck actions"
-              >
-                <MoreVertical className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={onEditRequested}
-                className="cursor-pointer"
-              >
-                <Pencil className="size-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDeleteRequested}
-                className="cursor-pointer text-destructive focus:text-destructive"
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+              aria-label="Open deck actions"
+            >
+              <MoreVertical className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={onEditRequested}
+              className="cursor-pointer"
+            >
+              <Pencil className="size-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onDeleteRequested}
+              className="cursor-pointer text-destructive focus:text-destructive"
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
       <Link
-        href={`/flashcards?view=manage&subjectId=${subjectId}&deckId=${deck.id}`}
+        href={`/flashcards?view=manage&deckId=${deck.id}`}
         className="block rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         <CardContent className="space-y-1.5 pt-0">

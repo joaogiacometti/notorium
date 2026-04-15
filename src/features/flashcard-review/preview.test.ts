@@ -16,7 +16,6 @@ function makeCard(
     id: "card-1",
     front: "<p>Front</p>",
     back: "<p>Back</p>",
-    subjectId: "subject-1",
     state: "new",
     dueAt: new Date("2026-03-04T12:00:00.000Z"),
     stability: null,
@@ -27,7 +26,7 @@ function makeCard(
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
-    deckId: null,
+    deckId: "deck-1",
     ...overrides,
   };
 }

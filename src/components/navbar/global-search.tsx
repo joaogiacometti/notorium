@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileText, Layers, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
@@ -34,7 +34,9 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 200);
+  const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [, startNavTransition] = useTransition();
 
   const { data, isPending } = useQuery({
@@ -98,6 +100,14 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const flashcards = currentData?.flashcards ?? [];
   const hasData =
     subjects.length > 0 || notes.length > 0 || flashcards.length > 0;
+  const flashcardsView =
+    pathname === "/flashcards"
+      ? (searchParams.get("view") ?? undefined)
+      : undefined;
+  const flashcardsDeckId =
+    pathname === "/flashcards"
+      ? (searchParams.get("deckId") ?? undefined)
+      : undefined;
 
   return (
     <>
@@ -210,9 +220,10 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   value={fc.id}
                   onSelect={() =>
                     handleSelect(
-                      getFlashcardDetailHref(fc.subjectId, fc.id, {
-                        from: "flashcards-manage",
-                        subjectId: fc.subjectId,
+                      getFlashcardDetailHref(fc.id, {
+                        from: flashcardsView ? "flashcards-manage" : undefined,
+                        view: flashcardsView,
+                        deckId: flashcardsDeckId,
                       }),
                     )
                   }
@@ -225,11 +236,9 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                     </span>
                     <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
                       <span className="shrink-0">in</span>
-                      <SubjectText
-                        value={fc.subjectName}
-                        mode="truncate"
-                        className="block flex-1"
-                      />
+                      <span className="block flex-1 truncate">
+                        {fc.deckPath}
+                      </span>
                     </span>
                   </div>
                   {fc.back && (

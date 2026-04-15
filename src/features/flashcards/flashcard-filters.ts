@@ -4,21 +4,21 @@ import type { FlashcardListEntity } from "@/lib/server/api-contracts";
 interface FilterFlashcardsInput {
   flashcards: FlashcardListEntity[];
   searchQuery: string;
-  subjectId?: string;
+  deckId?: string;
 }
 
 export function filterFlashcards({
   flashcards,
   searchQuery,
-  subjectId,
+  deckId,
 }: FilterFlashcardsInput): FlashcardListEntity[] {
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
   return flashcards.filter((flashcard) => {
-    const matchesSubject =
-      subjectId === undefined ? true : flashcard.subjectId === subjectId;
+    const matchesDeck =
+      deckId === undefined ? true : flashcard.deckId === deckId;
 
-    if (!matchesSubject) {
+    if (!matchesDeck) {
       return false;
     }
 
@@ -28,12 +28,12 @@ export function filterFlashcards({
 
     const frontText = richTextToPlainText(flashcard.front).toLowerCase();
     const backText = richTextToPlainText(flashcard.back).toLowerCase();
-    const subjectName = flashcard.subjectName.toLowerCase();
+    const deckName = flashcard.deckName.toLowerCase();
 
     return (
       frontText.includes(normalizedSearch) ||
       backText.includes(normalizedSearch) ||
-      subjectName.includes(normalizedSearch)
+      deckName.includes(normalizedSearch)
     );
   });
 }

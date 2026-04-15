@@ -31,38 +31,38 @@ import type { DeckEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface CreateDeckDialogProps {
-  subjectId: string;
   trigger: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  parentDeckId?: string;
   onCreated?: (deck: DeckEntity) => void;
 }
 
-function getCreateDeckFormValues(subjectId: string): CreateDeckForm {
+function getCreateDeckFormValues(parentDeckId?: string): CreateDeckForm {
   return {
-    subjectId,
+    parentDeckId,
     name: "",
     description: "",
   };
 }
 
 export function CreateDeckDialog({
-  subjectId,
   trigger,
   open,
   onOpenChange,
+  parentDeckId,
   onCreated,
 }: Readonly<CreateDeckDialogProps>) {
   const [_isPending, _startTransition] = useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<CreateDeckForm>({
     resolver: zodResolver(createDeckSchema),
-    defaultValues: getCreateDeckFormValues(subjectId),
+    defaultValues: getCreateDeckFormValues(parentDeckId),
   });
 
   useEffect(() => {
-    form.reset(getCreateDeckFormValues(subjectId));
-  }, [form, subjectId]);
+    form.reset(getCreateDeckFormValues(parentDeckId));
+  }, [form, parentDeckId]);
 
   async function onSubmit(data: CreateDeckForm) {
     if (isSubmitting) {
@@ -74,7 +74,7 @@ export function CreateDeckDialog({
     try {
       const result = await createDeck(data);
       if (result.success) {
-        form.reset(getCreateDeckFormValues(subjectId));
+        form.reset(getCreateDeckFormValues(parentDeckId));
         onCreated?.(result.deck);
         onOpenChange(false);
         return;
@@ -93,7 +93,9 @@ export function CreateDeckDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[90svh] overflow-y-auto p-4 sm:max-w-md sm:p-6">
         <DialogHeader>
-          <DialogTitle>Create Deck</DialogTitle>
+          <DialogTitle>
+            {parentDeckId ? "Create Sub-deck" : "Create Deck"}
+          </DialogTitle>
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-4">

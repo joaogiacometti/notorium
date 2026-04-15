@@ -44,13 +44,11 @@ function getColumnClassName(columnId: string) {
     case "select":
       return "w-9 min-w-9";
     case "front":
-      return "min-w-[10rem]";
+      return "min-w-[7rem] sm:min-w-[8rem]";
     case "back":
-      return "min-w-[8rem]";
-    case "subjectName":
-      return "min-w-[8rem]";
-    case "deckName":
-      return "min-w-[8rem]";
+      return "min-w-[5.5rem] sm:min-w-[6.5rem]";
+    case "deckPath":
+      return "min-w-[5.5rem] sm:min-w-[6.5rem]";
     case "actions":
       return "w-14 min-w-14";
     default:
@@ -66,7 +64,7 @@ function getColumns(
   return [
     {
       accessorKey: "front",
-      size: 160,
+      size: 128,
       header: () => <TableHeaderLabel>Front</TableHeaderLabel>,
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-3 py-1">
@@ -86,7 +84,7 @@ function getColumns(
     },
     {
       accessorKey: "back",
-      size: 140,
+      size: 104,
       header: () => <TableHeaderLabel>Back</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
@@ -98,28 +96,15 @@ function getColumns(
       ),
     },
     {
-      accessorKey: "subjectName",
-      size: 112,
-      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
-      cell: ({ row }) => (
-        <div
-          className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
-          title={row.original.subjectName}
-        >
-          {row.original.subjectName}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "deckName",
-      size: 112,
+      accessorKey: "deckPath",
+      size: 104,
       header: () => <TableHeaderLabel>Deck</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
           className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
-          title={row.original.deckName ?? undefined}
+          title={row.original.deckPath ?? undefined}
         >
-          {row.original.deckName}
+          {row.original.deckPath}
         </div>
       ),
     },
@@ -192,11 +177,13 @@ export function FlashcardsManagerTable({
       emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
-      tableClassName="w-full min-w-176"
+      tableClassName="w-full min-w-[30rem] sm:min-w-[34rem] lg:min-w-[36rem]"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
         cn("px-3 py-3 align-middle", getColumnClassName(columnId))
       }
+      scrollAreaClassName="min-w-0 overflow-x-auto overflow-y-auto"
+      wrapperClassName="min-w-0"
     />
   );
 }

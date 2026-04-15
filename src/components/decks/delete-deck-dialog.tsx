@@ -60,11 +60,12 @@ export function DeleteDeckDialog({
         <DialogHeader>
           <DialogTitle>Delete Deck</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete "{deckName}"?{" "}
+            Are you sure you want to delete "{deckName}"? This also deletes all
+            nested sub-decks and their flashcards.{" "}
             {flashcardCount > 0 && (
               <>
-                {flashcardCount} flashcard{flashcardCount === 1 ? "" : "s"} will
-                be moved to the default deck.
+                {flashcardCount} flashcard{flashcardCount === 1 ? "" : "s"} in
+                this deck will also be deleted.
               </>
             )}
           </DialogDescription>

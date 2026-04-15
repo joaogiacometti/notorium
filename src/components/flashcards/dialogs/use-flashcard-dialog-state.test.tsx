@@ -69,7 +69,7 @@ function TestHarness({
     <div>
       <output data-testid="front">{currentValues.front}</output>
       <output data-testid="back">{currentValues.back}</output>
-      <output data-testid="subjectId">{currentValues.subjectId}</output>
+      <output data-testid="deckId">{currentValues.deckId}</output>
       <output data-testid="duplicate">
         {dialog.isDuplicateFront ? "true" : "false"}
       </output>
@@ -144,7 +144,7 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "subject-1",
+            deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
           }}
@@ -159,7 +159,7 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "subject-2",
+            deckId: "deck-2",
             front: "<p>Front B</p>",
             back: "<p>Back B</p>",
           }}
@@ -167,7 +167,7 @@ describe("useFlashcardDialogState", () => {
       );
     });
 
-    expect(getByTestId(container, "subjectId").textContent).toBe("subject-2");
+    expect(getByTestId(container, "deckId").textContent).toBe("deck-2");
     expect(getByTestId(container, "front").textContent).toBe("<p>Front B</p>");
     expect(getByTestId(container, "back").textContent).toBe("<p>Back B</p>");
   });
@@ -180,7 +180,7 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "subject-1",
+            deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
           }}
@@ -200,7 +200,7 @@ describe("useFlashcardDialogState", () => {
     await flushTimers();
 
     expect(onSubmitAction).toHaveBeenCalledWith({
-      subjectId: "subject-1",
+      deckId: "deck-1",
       front: "<p>Front A</p>",
       back: "<p>Back A</p>",
     });
@@ -220,7 +220,7 @@ describe("useFlashcardDialogState", () => {
     function ProposalHarness() {
       const form = useForm<CreateFlashcardForm>({
         defaultValues: {
-          subjectId: "subject-1",
+          deckId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
         },
@@ -230,7 +230,7 @@ describe("useFlashcardDialogState", () => {
         open: true,
         onOpenChange: () => {},
         values: {
-          subjectId: "subject-1",
+          deckId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
         },
@@ -274,7 +274,7 @@ describe("useFlashcardDialogState", () => {
           open
           onOpenChange={onOpenChange}
           values={{
-            subjectId: "subject-1",
+            deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
           }}

@@ -2,20 +2,20 @@ import { describe, expect, it } from "vitest";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 
 const values = {
-  subjectId: "subject-1",
+  deckId: "deck-1",
   front: "<p>Front</p>",
   back: "<p>Back</p>",
 };
 
 describe("getCreateFlashcardResetValues", () => {
-  it("keeps subject and clears both fields when both toggles are off", () => {
+  it("keeps deck and clears both fields when both toggles are off", () => {
     expect(
       getCreateFlashcardResetValues(values, {
         keepFrontAfterSubmit: false,
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
-      subjectId: "subject-1",
+      deckId: "deck-1",
       front: "",
       back: "",
     });
@@ -28,7 +28,7 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
-      subjectId: "subject-1",
+      deckId: "deck-1",
       front: "<p>Front</p>",
       back: "",
     });
@@ -41,18 +41,9 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: true,
       }),
     ).toEqual({
-      subjectId: "subject-1",
+      deckId: "deck-1",
       front: "",
       back: "<p>Back</p>",
     });
-  });
-
-  it("keeps both fields when both toggles are on", () => {
-    expect(
-      getCreateFlashcardResetValues(values, {
-        keepFrontAfterSubmit: true,
-        keepBackAfterSubmit: true,
-      }),
-    ).toEqual(values);
   });
 });

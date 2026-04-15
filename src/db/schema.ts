@@ -11,6 +11,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const userAccessStatusEnum = pgEnum("user_access_status", [
@@ -245,10 +246,10 @@ export const deck = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     description: text("description"),
-    isDefault: boolean("is_default").notNull().default(false),
-    subjectId: text("subject_id")
-      .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    parentDeckId: text("parent_deck_id").references(
+      (): AnyPgColumn => deck.id,
+      { onDelete: "cascade" },
+    ),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -259,14 +260,14 @@ export const deck = pgTable(
       .notNull(),
   },
   (table) => [
-    unique("deck_userId_subjectId_name_unique").on(
+    uniqueIndex("deck_userId_parentDeckId_name_unique").on(
       table.userId,
-      table.subjectId,
+      sql`coalesce(${table.parentDeckId}, '__root_deck__')`,
       table.name,
     ),
-    index("deck_subjectId_idx").on(table.subjectId),
     index("deck_userId_idx").on(table.userId),
-    index("deck_userId_subjectId_idx").on(table.userId, table.subjectId),
+    index("deck_parentDeckId_idx").on(table.parentDeckId),
+    index("deck_userId_parentDeckId_idx").on(table.userId, table.parentDeckId),
   ],
 );
 
@@ -368,12 +369,9 @@ export const flashcard = pgTable(
     lastReviewedAt: timestamp("last_reviewed_at"),
     reviewCount: integer("review_count").notNull().default(0),
     lapseCount: integer("lapse_count").notNull().default(0),
-    subjectId: text("subject_id")
+    deckId: text("deck_id")
       .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
-    deckId: text("deck_id").references((): AnyPgColumn => deck.id, {
-      onDelete: "set null",
-    }),
+      .references((): AnyPgColumn => deck.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -388,17 +386,11 @@ export const flashcard = pgTable(
       table.userId,
       table.frontNormalized,
     ),
-    index("flashcard_subjectId_idx").on(table.subjectId),
     index("flashcard_deckId_idx").on(table.deckId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),
-    index("flashcard_userId_subjectId_updatedAt_idx").on(
-      table.userId,
-      table.subjectId,
-      table.updatedAt,
-    ),
     index("flashcard_userId_deckId_updatedAt_idx").on(
       table.userId,
       table.deckId,
@@ -542,8 +534,6 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   notes: many(note),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
-  flashcards: many(flashcard),
-  decks: many(deck),
 }));
 
 export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
@@ -581,10 +571,12 @@ export const assessmentRelations = relations(assessment, ({ one, many }) => ({
 }));
 
 export const deckRelations = relations(deck, ({ one, many }) => ({
-  subject: one(subject, {
-    fields: [deck.subjectId],
-    references: [subject.id],
+  parentDeck: one(deck, {
+    fields: [deck.parentDeckId],
+    references: [deck.id],
+    relationName: "deckHierarchy",
   }),
+  childDecks: many(deck, { relationName: "deckHierarchy" }),
   user: one(user, {
     fields: [deck.userId],
     references: [user.id],
@@ -593,10 +585,6 @@ export const deckRelations = relations(deck, ({ one, many }) => ({
 }));
 
 export const flashcardRelations = relations(flashcard, ({ one }) => ({
-  subject: one(subject, {
-    fields: [flashcard.subjectId],
-    references: [subject.id],
-  }),
   deck: one(deck, {
     fields: [flashcard.deckId],
     references: [deck.id],

@@ -5,20 +5,22 @@ import {
   eq,
   ilike,
   inArray,
-  isNull,
   ne,
   or,
   type SQL,
   sql,
 } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { deck, flashcard, subject } from "@/db/schema";
+import { deck, flashcard } from "@/db/schema";
+import {
+  getAllDecksWithPathsForUser,
+  getDescendantDeckIds,
+} from "@/features/decks/queries";
 import {
   getFlashcardManageBackExcerpt,
   getFlashcardManageBackExcerptSourceLength,
 } from "@/features/flashcards/manage-excerpts";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
   FlashcardDetailEntity,
@@ -27,74 +29,64 @@ import type {
   FlashcardManagePage,
 } from "@/lib/server/api-contracts";
 
-export async function getFlashcardsBySubjectForUser(
+async function getDeckPathMapForUser(
   userId: string,
-  subjectId: string,
-): Promise<FlashcardEntity[]> {
-  return getDb()
-    .select({ flashcard })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.subjectId, subjectId),
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
-    .orderBy(desc(flashcard.updatedAt))
-    .then((rows) => rows.map((row) => row.flashcard));
+): Promise<Map<string, string>> {
+  const decks = await getAllDecksWithPathsForUser(userId);
+  return new Map(
+    decks.map((currentDeck) => [currentDeck.id, currentDeck.path]),
+  );
+}
+
+async function resolveScopedDeckIds(
+  userId: string,
+  deckId?: string,
+  deckIds?: string[],
+): Promise<string[] | undefined> {
+  if (deckIds && deckIds.length > 0) {
+    return deckIds;
+  }
+
+  if (!deckId) {
+    return undefined;
+  }
+
+  return getDescendantDeckIds(userId, deckId);
 }
 
 export async function getFlashcardsForUser(
   userId: string,
 ): Promise<FlashcardListEntity[]> {
-  return getDb()
-    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .leftJoin(deck, eq(flashcard.deckId, deck.id))
-    .where(
-      and(
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
-    .orderBy(desc(flashcard.updatedAt))
-    .then((rows) =>
-      rows.map((row) => ({
-        ...row.flashcard,
-        subjectName: row.subjectName,
-        deckName: row.deckName,
-      })),
-    );
+  const [rows, deckPathMap] = await Promise.all([
+    getDb()
+      .select({ flashcard, deckName: deck.name })
+      .from(flashcard)
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
+      .where(eq(flashcard.userId, userId))
+      .orderBy(desc(flashcard.updatedAt)),
+    getDeckPathMapForUser(userId),
+  ]);
+
+  return rows.map((row) => ({
+    ...row.flashcard,
+    deckName: row.deckName,
+    deckPath: deckPathMap.get(row.flashcard.deckId) ?? row.deckName,
+  }));
 }
 
 export async function getFlashcardsManagePageForUser(
   userId: string,
-  {
-    pageIndex,
-    pageSize,
-    subjectId,
-    deckId,
-    search,
-  }: FlashcardsManageQueryInput,
+  { pageIndex, pageSize, deckId, deckIds, search }: FlashcardsManageQueryInput,
 ): Promise<FlashcardManagePage> {
   const normalizedSearch = search?.trim() ?? "";
   const searchPattern = buildContainsSearchPattern(normalizedSearch);
   const offset = pageIndex * pageSize;
   const backExcerptSourceLength = getFlashcardManageBackExcerptSourceLength();
-  const filters: SQL<unknown>[] = [
-    eq(flashcard.userId, userId),
-    ...getOwnedActiveSubjectFilters(userId),
-  ];
+  const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
+  const scopedDeckIds = await resolveScopedDeckIds(userId, deckId, deckIds);
 
-  if (subjectId) {
-    filters.push(eq(flashcard.subjectId, subjectId));
-  }
-
-  if (deckId) {
-    filters.push(eq(flashcard.deckId, deckId));
+  if (scopedDeckIds && scopedDeckIds.length > 0) {
+    filters.push(inArray(flashcard.deckId, scopedDeckIds));
   }
 
   const totalFilters =
@@ -104,26 +96,23 @@ export async function getFlashcardsManagePageForUser(
           or(
             ilike(flashcard.front, searchPattern),
             ilike(flashcard.back, searchPattern),
-            ilike(subject.name, searchPattern),
+            ilike(deck.name, searchPattern),
           ),
         ]
       : filters;
 
-  const [itemRows, totalRows, subjectCountRows] = await Promise.all([
+  const [itemRows, totalRows, deckCountRows, deckPathMap] = await Promise.all([
     getDb()
       .select({
         id: flashcard.id,
-        subjectId: flashcard.subjectId,
         deckId: flashcard.deckId,
         updatedAt: flashcard.updatedAt,
         front: flashcard.front,
         back: sql<string>`left(${flashcard.back}, ${backExcerptSourceLength})`,
-        subjectName: subject.name,
         deckName: deck.name,
       })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-      .leftJoin(deck, eq(flashcard.deckId, deck.id))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...totalFilters))
       .orderBy(desc(flashcard.updatedAt))
       .limit(pageSize)
@@ -131,38 +120,31 @@ export async function getFlashcardsManagePageForUser(
     getDb()
       .select({ total: count() })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-      .leftJoin(deck, eq(flashcard.deckId, deck.id))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...totalFilters)),
-    subjectId
+    deckId
       ? getDb()
           .select({ total: count() })
           .from(flashcard)
-          .innerJoin(subject, eq(flashcard.subjectId, subject.id))
           .where(
-            and(
-              eq(flashcard.userId, userId),
-              eq(subject.userId, userId),
-              isNull(subject.archivedAt),
-              eq(flashcard.subjectId, subjectId),
-            ),
+            and(eq(flashcard.userId, userId), eq(flashcard.deckId, deckId)),
           )
       : Promise.resolve([]),
+    getDeckPathMapForUser(userId),
   ]);
 
   return {
     items: itemRows.map((row) => ({
       id: row.id,
-      subjectId: row.subjectId,
       deckId: row.deckId,
       updatedAt: row.updatedAt,
       front: row.front,
       backExcerpt: getFlashcardManageBackExcerpt(row.back),
-      subjectName: row.subjectName,
       deckName: row.deckName,
+      deckPath: deckPathMap.get(row.deckId) ?? row.deckName,
     })),
     total: totalRows[0]?.total ?? 0,
-    subjectCardCount: subjectId ? (subjectCountRows[0]?.total ?? 0) : null,
+    deckCardCount: deckId ? (deckCountRows[0]?.total ?? 0) : null,
   };
 }
 
@@ -173,14 +155,7 @@ export async function getFlashcardByIdForUser(
   const results = await getDb()
     .select({ flashcard })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, flashcardId),
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
+    .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
     .limit(1);
 
   return results[0]?.flashcard ?? null;
@@ -190,48 +165,36 @@ export async function getFlashcardDetailByIdForUser(
   userId: string,
   flashcardId: string,
 ): Promise<FlashcardDetailEntity | null> {
-  const results = await getDb()
-    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .leftJoin(deck, eq(flashcard.deckId, deck.id))
-    .where(
-      and(
-        eq(flashcard.id, flashcardId),
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
-    .limit(1);
+  const [results, deckPathMap] = await Promise.all([
+    getDb()
+      .select({ flashcard, deckName: deck.name })
+      .from(flashcard)
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
+      .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
+      .limit(1),
+    getDeckPathMapForUser(userId),
+  ]);
 
   const result = results[0];
-
   if (!result) {
     return null;
   }
 
   return {
     ...result.flashcard,
-    subjectName: result.subjectName,
     deckName: result.deckName,
+    deckPath: deckPathMap.get(result.flashcard.deckId) ?? result.deckName,
   };
 }
 
 export async function getFlashcardRecordForUser(
   userId: string,
   flashcardId: string,
-): Promise<Pick<FlashcardEntity, "id" | "subjectId"> | null> {
+): Promise<Pick<FlashcardEntity, "id" | "deckId"> | null> {
   const results = await getDb()
-    .select({ id: flashcard.id, subjectId: flashcard.subjectId })
+    .select({ id: flashcard.id, deckId: flashcard.deckId })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, flashcardId),
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
+    .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
     .limit(1);
 
   return results[0] ?? null;
@@ -240,39 +203,27 @@ export async function getFlashcardRecordForUser(
 export async function getFlashcardRecordsForUser(
   userId: string,
   flashcardIds: string[],
-): Promise<Array<Pick<FlashcardEntity, "id" | "subjectId">>> {
+): Promise<Array<Pick<FlashcardEntity, "id" | "deckId">>> {
   if (flashcardIds.length === 0) {
     return [];
   }
 
   return getDb()
-    .select({ id: flashcard.id, subjectId: flashcard.subjectId })
+    .select({ id: flashcard.id, deckId: flashcard.deckId })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(
-      and(
-        inArray(flashcard.id, flashcardIds),
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
+      and(inArray(flashcard.id, flashcardIds), eq(flashcard.userId, userId)),
     );
 }
 
-export async function countFlashcardsBySubjectForUser(
+export async function countFlashcardsByDeckForUser(
   userId: string,
-  subjectId: string,
+  deckId: string,
 ): Promise<number> {
   const result = await getDb()
     .select({ total: count() })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.subjectId, subjectId),
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    );
+    .where(and(eq(flashcard.deckId, deckId), eq(flashcard.userId, userId)));
 
   return result[0]?.total ?? 0;
 }
@@ -285,7 +236,6 @@ export async function hasDuplicateFlashcardFrontForUser(
   const filters: SQL<unknown>[] = [
     eq(flashcard.userId, userId),
     eq(flashcard.frontNormalized, frontNormalized),
-    ...getOwnedActiveSubjectFilters(userId),
   ];
 
   if (excludedFlashcardId) {
@@ -295,7 +245,6 @@ export async function hasDuplicateFlashcardFrontForUser(
   const result = await getDb()
     .select({ id: flashcard.id })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(and(...filters))
     .limit(1);
 
@@ -310,33 +259,36 @@ export async function getFlashcardsByIdsForValidation(
     id: string;
     front: string;
     back: string;
-    subjectName: string;
-    subjectId: string;
+    deckName: string;
+    deckPath?: string;
+    deckId: string;
   }>
 > {
   if (flashcardIds.length === 0) {
     return [];
   }
 
-  const results = await getDb()
-    .select({
-      id: flashcard.id,
-      front: flashcard.front,
-      back: flashcard.back,
-      subjectName: subject.name,
-      subjectId: flashcard.subjectId,
-    })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        inArray(flashcard.id, flashcardIds),
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+  const [results, deckPathMap] = await Promise.all([
+    getDb()
+      .select({
+        id: flashcard.id,
+        front: flashcard.front,
+        back: flashcard.back,
+        deckName: deck.name,
+        deckId: flashcard.deckId,
+      })
+      .from(flashcard)
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
+      .where(
+        and(inArray(flashcard.id, flashcardIds), eq(flashcard.userId, userId)),
       ),
-    );
+    getDeckPathMapForUser(userId),
+  ]);
 
-  return results;
+  return results.map((result) => ({
+    ...result,
+    deckPath: deckPathMap.get(result.deckId) ?? result.deckName,
+  }));
 }
 
 export async function getAllFlashcardIdsForUser(
@@ -345,31 +297,29 @@ export async function getAllFlashcardIdsForUser(
   const results = await getDb()
     .select({ id: flashcard.id })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
+    .where(eq(flashcard.userId, userId))
     .orderBy(desc(flashcard.updatedAt));
 
   return results.map((row) => row.id);
 }
 
-export async function getAllFlashcardIdsForSubject(
+export async function getAllFlashcardIdsForDeck(
   userId: string,
-  subjectId: string,
+  deckId: string,
 ): Promise<string[]> {
+  const scopedDeckIds = await resolveScopedDeckIds(userId, deckId);
+
+  if (!scopedDeckIds || scopedDeckIds.length === 0) {
+    return [];
+  }
+
   const results = await getDb()
     .select({ id: flashcard.id })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(
       and(
         eq(flashcard.userId, userId),
-        eq(flashcard.subjectId, subjectId),
-        ...getOwnedActiveSubjectFilters(userId),
+        inArray(flashcard.deckId, scopedDeckIds),
       ),
     )
     .orderBy(desc(flashcard.updatedAt));

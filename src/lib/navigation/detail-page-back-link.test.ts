@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getAssessmentDetailHref,
   getFlashcardDetailHref,
-  getFlashcardsManageHref,
+  getFlashcardsHref,
   getNoteDetailHref,
   getPlanningAssessmentsHref,
   resolveAssessmentDetailBackLink,
@@ -17,10 +17,14 @@ describe("resolveDetailPageReturnContext", () => {
       resolveDetailPageReturnContext({
         from: "flashcards-manage",
         subjectId: "subject-1",
+        view: "review",
+        deckId: "deck-1",
       }),
     ).toEqual({
       from: "flashcards-manage",
       subjectId: "subject-1",
+      view: "review",
+      deckId: "deck-1",
     });
   });
 
@@ -29,10 +33,14 @@ describe("resolveDetailPageReturnContext", () => {
       resolveDetailPageReturnContext({
         from: "invalid",
         subjectId: "subject-1",
+        view: "invalid",
+        deckId: "deck-1",
       }),
     ).toEqual({
       from: undefined,
       subjectId: "subject-1",
+      view: undefined,
+      deckId: "deck-1",
     });
   });
 });
@@ -40,12 +48,13 @@ describe("resolveDetailPageReturnContext", () => {
 describe("detail href builders", () => {
   it("builds a flashcard detail href with return context", () => {
     expect(
-      getFlashcardDetailHref("subject-1", "flashcard-1", {
+      getFlashcardDetailHref("flashcard-1", {
         from: "flashcards-manage",
-        subjectId: "subject-1",
+        view: "statistics",
+        deckId: "deck-1",
       }),
     ).toBe(
-      "/subjects/subject-1/flashcards/flashcard-1?from=flashcards-manage&subjectId=subject-1",
+      "/flashcards/flashcard-1?from=flashcards-manage&view=statistics&deckId=deck-1",
     );
   });
 
@@ -72,23 +81,30 @@ describe("detail href builders", () => {
 describe("resolveFlashcardDetailBackLink", () => {
   it("returns the flashcards manager destination when opened from manage", () => {
     expect(
-      resolveFlashcardDetailBackLink(
-        {
-          from: "flashcards-manage",
-          subjectId: "subject-1",
-        },
-        "subject-2",
-      ),
+      resolveFlashcardDetailBackLink({ from: "flashcards-manage" }),
     ).toEqual({
-      href: getFlashcardsManageHref("subject-1"),
+      href: getFlashcardsHref(),
       label: "flashcards",
     });
   });
 
-  it("falls back to the owning subject when context is missing", () => {
-    expect(resolveFlashcardDetailBackLink({}, "subject-2")).toEqual({
-      href: "/subjects/subject-2",
-      label: "subject",
+  it("returns the scoped flashcards destination when view context is present", () => {
+    expect(
+      resolveFlashcardDetailBackLink({
+        from: "flashcards-manage",
+        view: "review",
+        deckId: "deck-1",
+      }),
+    ).toEqual({
+      href: getFlashcardsHref("review", "deck-1"),
+      label: "flashcards",
+    });
+  });
+
+  it("falls back to /flashcards when context is missing", () => {
+    expect(resolveFlashcardDetailBackLink({})).toEqual({
+      href: "/flashcards",
+      label: "flashcards",
     });
   });
 });

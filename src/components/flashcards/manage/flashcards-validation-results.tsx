@@ -5,7 +5,6 @@ import { CreditCard } from "lucide-react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import { ValidationIssueTooltip } from "@/components/flashcards/manage/validation-issue-tooltip";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
-import { SubjectChip } from "@/components/shared/subject-chip";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -32,8 +31,8 @@ interface ValidationResultRow {
   front: string;
   issueType: "incorrect" | "confusing" | "duplicate";
   explanation: string;
-  subjectName: string;
-  subjectId: string;
+  deckPath: string;
+  deckId: string;
 }
 
 const flashcardFrontPreviewLength = 30;
@@ -80,7 +79,7 @@ function getColumnClassName(columnId: string) {
       return "min-w-[10rem]";
     case "issue":
       return "min-w-[12rem]";
-    case "subjectName":
+    case "deckPath":
       return "min-w-[8rem]";
     case "actions":
       return "w-14 min-w-14";
@@ -131,15 +130,16 @@ function getColumns(
       ),
     },
     {
-      accessorKey: "subjectName",
+      accessorKey: "deckPath",
       size: 112,
-      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
+      header: () => <TableHeaderLabel>Deck</TableHeaderLabel>,
       cell: ({ row }) => (
-        <SubjectChip
-          href={`/subjects/${row.original.subjectId}`}
-          label={row.original.subjectName}
-          maxWidthClassName="max-w-[7.5rem]"
-        />
+        <span
+          className="truncate text-sm text-muted-foreground"
+          title={row.original.deckPath}
+        >
+          {row.original.deckPath}
+        </span>
       ),
     },
     {
@@ -182,8 +182,8 @@ export function FlashcardsValidationResults({
         front: flashcard.front,
         issueType: issue.issueType,
         explanation: issue.explanation,
-        subjectName: flashcard.subjectName,
-        subjectId: flashcard.subjectId,
+        deckPath: flashcard.deckPath ?? flashcard.deckName,
+        deckId: flashcard.deckId,
       };
     })
     .filter((row): row is ValidationResultRow => row !== null);

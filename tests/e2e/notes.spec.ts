@@ -8,6 +8,10 @@ import {
 } from "./support/db";
 import { openSubjectDetailByName } from "./support/subjects";
 
+function escapeRegex(value: string) {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+}
+
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("note-subject", testTitle);
 }
@@ -33,10 +37,14 @@ async function openNoteDetailByTitle(page: Page, noteTitle: string) {
   const noteLink = page
     .getByRole("link", { name: noteTitle, exact: true })
     .first();
+  await expect(noteLink).toBeVisible();
   const noteHref = await noteLink.getAttribute("href");
   expect(noteHref).toBeTruthy();
 
-  await Promise.all([page.waitForURL(`**${noteHref}`), noteLink.click()]);
+  await expect(noteLink).toHaveAttribute("href", noteHref ?? "");
+  const noteUrlPattern = new RegExp(`${escapeRegex(noteHref ?? "")}$`);
+  await Promise.all([page.waitForURL(noteUrlPattern), noteLink.click()]);
+  await expect(page).toHaveURL(noteUrlPattern);
 
   await expect(
     page.getByRole("heading", { name: noteTitle, exact: true }),

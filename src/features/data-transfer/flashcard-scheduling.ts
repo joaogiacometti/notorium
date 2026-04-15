@@ -30,7 +30,7 @@ function toSafeNonNegativeInteger(
 }
 
 export function getImportedFlashcardSchedulingState(
-  currentFlashcard: ImportData["subjects"][number]["flashcards"][number],
+  currentFlashcard: ImportData["flashcards"][number],
 ) {
   const dueAt = toSafeDate(currentFlashcard.dueAt);
   const updatedAt = toSafeDate(currentFlashcard.updatedAt);

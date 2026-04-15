@@ -13,7 +13,6 @@ interface FlashcardsPageShellProps {
   reviewLabel: string;
   statisticsLabel: string;
   title: string;
-  subjectId?: string;
   deckId?: string;
 }
 
@@ -26,7 +25,6 @@ export function FlashcardsPageShell({
   reviewLabel,
   statisticsLabel,
   title,
-  subjectId,
   deckId,
 }: Readonly<FlashcardsPageShellProps>) {
   return (
@@ -34,14 +32,12 @@ export function FlashcardsPageShell({
       description={description}
       headerMeta={headerMeta}
       icon={Layers3}
-      lockViewport={currentView === "review"}
       switcher={
         <FlashcardsViewSwitch
           currentView={currentView}
           manageLabel={manageLabel}
           reviewLabel={reviewLabel}
           statisticsLabel={statisticsLabel}
-          subjectId={subjectId}
           deckId={deckId}
         />
       }

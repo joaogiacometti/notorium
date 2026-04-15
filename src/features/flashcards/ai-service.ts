@@ -12,8 +12,8 @@ import { richTextToPlainTextWithImagePlaceholders } from "@/lib/editor/rich-text
 
 interface GenerateFlashcardBackForUserInput {
   userId: string;
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   front: string;
 }
 
@@ -63,8 +63,8 @@ export async function generateFlashcardBackForUser({
 
 interface ImproveFlashcardBackForUserInput {
   userId: string;
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   front: string;
   currentBack: string;
 }
@@ -117,8 +117,8 @@ export async function improveFlashcardBackForUser({
 
 interface GenerateFlashcardsForUserInput {
   userId: string;
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   text: string;
 }
 
@@ -209,7 +209,7 @@ export async function validateFlashcardsForUser({
       id: card.id,
       front: richTextToPlainTextWithImagePlaceholders(card.front),
       back: richTextToPlainTextWithImagePlaceholders(card.back),
-      subjectName: card.subjectName,
+      deckName: card.deckName,
     }));
 
     const validation = await validateFlashcardsWithAi({

@@ -6,9 +6,13 @@ const ascMock = vi.fn((value) => value);
 const countMock = vi.fn(() => "count_column");
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const gteMock = vi.fn((column, value) => ({ column, operator: "gte", value }));
+const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const lteMock = vi.fn((column, value) => ({ column, operator: "lte", value }));
 const sqlMock = vi.fn((strings, ...values) => ({ strings, values }));
+const getDescendantDeckIdsMock = vi.fn();
+const getAllDecksWithPathsForUserMock = vi.fn();
+const ensureFsrsSettingsMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -22,9 +26,15 @@ vi.mock("drizzle-orm", () => ({
   count: countMock,
   eq: eqMock,
   gte: gteMock,
+  inArray: inArrayMock,
   isNull: isNullMock,
   lte: lteMock,
   sql: sqlMock,
+}));
+
+vi.mock("@/features/decks/queries", () => ({
+  getAllDecksWithPathsForUser: getAllDecksWithPathsForUserMock,
+  getDescendantDeckIds: getDescendantDeckIdsMock,
 }));
 
 vi.mock("@/db/schema", () => ({
@@ -58,7 +68,7 @@ vi.mock("@/db/schema", () => ({
 }));
 
 vi.mock("@/features/flashcards/fsrs-settings", () => ({
-  ensureFsrsSettings: vi.fn(),
+  ensureFsrsSettings: ensureFsrsSettingsMock,
 }));
 
 function mockFlashcardWhereOnce(value: unknown) {
@@ -117,6 +127,13 @@ describe("getFlashcardStatisticsForUser", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    selectMock.mockReset();
+    getDescendantDeckIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
+    getAllDecksWithPathsForUserMock.mockResolvedValue([]);
+    ensureFsrsSettingsMock.mockResolvedValue({
+      desiredRetention: "0.9",
+      weights: [],
+    });
   });
 
   it("returns aggregated statistics for the scoped flashcards", async () => {
@@ -150,7 +167,6 @@ describe("getFlashcardStatisticsForUser", () => {
       "user-1",
       new Date("2026-04-12T15:00:00.000Z"),
       {
-        subjectId: "subject-1",
         deckId: "deck-1",
       },
     );
@@ -186,11 +202,11 @@ describe("getFlashcardStatisticsForUser", () => {
       { date: "2026-04-11", count: 0 },
       { date: "2026-04-12", count: 2 },
     ]);
-    expect(eqMock).toHaveBeenCalledWith(
-      "flashcard_subject_id_column",
-      "subject-1",
-    );
-    expect(eqMock).toHaveBeenCalledWith("flashcard_deck_id_column", "deck-1");
+    expect(getDescendantDeckIdsMock).toHaveBeenCalledWith("user-1", "deck-1");
+    expect(inArrayMock).toHaveBeenCalledWith("flashcard_deck_id_column", [
+      "deck-1",
+      "deck-1-child",
+    ]);
     expect(eqMock).toHaveBeenCalledWith(
       "flashcard_review_log_user_id_column",
       "user-1",
@@ -248,6 +264,99 @@ describe("getFlashcardStatisticsForUser", () => {
       { date: "2026-04-10", count: 0 },
       { date: "2026-04-11", count: 0 },
       { date: "2026-04-12", count: 0 },
+    ]);
+  });
+});
+
+describe("getFlashcardReviewStateForUser", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    selectMock.mockReset();
+    getDescendantDeckIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
+    getAllDecksWithPathsForUserMock.mockResolvedValue([
+      { id: "deck-1", path: "Deck 1" },
+      { id: "deck-1-child", path: "Deck 1::Child" },
+    ]);
+    ensureFsrsSettingsMock.mockResolvedValue({
+      desiredRetention: "0.9",
+      weights: [["w", 1]],
+    });
+  });
+
+  it("returns deck-scoped due cards and summary for a due new flashcard", async () => {
+    selectMock.mockImplementation((selection) => {
+      if ("total" in selection) {
+        return {
+          from: () => ({
+            where: vi.fn().mockResolvedValue([{ total: 1 }]),
+          }),
+        };
+      }
+
+      return {
+        from: () => ({
+          innerJoin: () => ({
+            where: () => ({
+              orderBy: () => ({
+                limit: vi.fn().mockResolvedValue([
+                  {
+                    flashcard: {
+                      id: "flashcard-1",
+                      deckId: "deck-1",
+                      dueAt: new Date("2026-04-12T14:00:00.000Z"),
+                      front: "Front",
+                      back: "Back",
+                      state: "new",
+                      createdAt: new Date("2026-04-12T13:00:00.000Z"),
+                      ease: 250,
+                      intervalDays: 0,
+                      learningStep: null,
+                      lastReviewedAt: null,
+                      reviewCount: 0,
+                      lapseCount: 0,
+                      stability: null,
+                      difficulty: null,
+                      userId: "user-1",
+                      updatedAt: new Date("2026-04-12T13:00:00.000Z"),
+                      frontNormalized: "front",
+                    },
+                    deckName: "Deck 1",
+                  },
+                ]),
+              }),
+            }),
+          }),
+        }),
+      };
+    });
+
+    const { getFlashcardReviewStateForUser } = await import("./queries");
+    const result = await getFlashcardReviewStateForUser("user-1", {
+      deckId: "deck-1",
+      limit: 50,
+    });
+
+    expect(result.summary).toEqual({
+      dueCount: 1,
+      totalCount: 1,
+    });
+    expect(result.cards).toHaveLength(1);
+    expect(result.cards[0]).toMatchObject({
+      id: "flashcard-1",
+      deckId: "deck-1",
+      deckName: "Deck 1",
+      deckPath: "Deck 1",
+      state: "new",
+    });
+    expect(result.scheduler).toEqual({
+      desiredRetention: "0.9",
+      weights: [["w", 1]],
+    });
+    expect(getDescendantDeckIdsMock).toHaveBeenCalledWith("user-1", "deck-1");
+    expect(inArrayMock).toHaveBeenCalledWith("flashcard_deck_id_column", [
+      "deck-1",
+      "deck-1-child",
     ]);
   });
 });

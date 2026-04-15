@@ -15,8 +15,6 @@ const validSubject = {
   notes: [],
   attendanceMisses: [],
   assessments: [],
-  decks: [],
-  flashcards: [],
 };
 
 describe("getImportPayloadBytes", () => {
@@ -34,19 +32,6 @@ describe("preValidateImportStructure", () => {
     });
 
     expect(result?.errorCode).toBe("limits.subjectImportLimit");
-  });
-
-  it("rejects raw payloads that exceed per-subject flashcard limits", () => {
-    const result = preValidateImportStructure({
-      subjects: [
-        {
-          ...validSubject,
-          flashcards: Array.from({ length: 2001 }, () => ({})),
-        },
-      ],
-    });
-
-    expect(result?.errorCode).toBe("limits.flashcardLimit");
   });
 });
 

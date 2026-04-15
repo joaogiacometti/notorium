@@ -18,8 +18,8 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
-  countFlashcardsBySubjectForUser,
-  getAllFlashcardIdsForSubject,
+  countFlashcardsByDeckForUser,
+  getAllFlashcardIdsForDeck,
   getAllFlashcardIdsForUser,
   getFlashcardByIdForUser,
   getFlashcardsByIdsForValidation,
@@ -45,16 +45,15 @@ import {
   flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
   type GenerateFlashcardsForm,
-  type GetFlashcardIdsForSubjectForm,
+  type GetFlashcardIdsForDeckForm,
   generateFlashcardBackSchema,
   generateFlashcardsSchema,
-  getFlashcardIdsForSubjectSchema,
+  getFlashcardIdsForDeckSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type ValidateFlashcardsForm,
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
@@ -87,7 +86,7 @@ export async function createFlashcard(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.flashcard.subjectId}`);
+    revalidatePath("/flashcards");
   }
 
   return result;
@@ -123,10 +122,7 @@ export async function editFlashcard(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.flashcard.subjectId}`);
-    if (result.previousSubjectId !== result.flashcard.subjectId) {
-      revalidatePath(`/subjects/${result.previousSubjectId}`);
-    }
+    revalidatePath("/flashcards");
   }
 
   return result;
@@ -161,13 +157,13 @@ export async function deleteFlashcard(
       return {
         success: true as const,
         id: parsedData.id,
-        subjectId: mutationResult.subjectId,
+        deckId: mutationResult.deckId,
       };
     },
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidatePath("/flashcards");
   }
 
   return result;
@@ -185,9 +181,7 @@ export async function bulkDeleteFlashcards(
   );
 
   if (result.success) {
-    for (const subjectId of result.subjectIds) {
-      revalidatePath(`/subjects/${subjectId}`);
-    }
+    revalidatePath("/flashcards");
   }
 
   return result;
@@ -204,12 +198,7 @@ export async function bulkMoveFlashcards(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
-    for (const previousSubjectId of result.previousSubjectIds) {
-      if (previousSubjectId !== result.subjectId) {
-        revalidatePath(`/subjects/${previousSubjectId}`);
-      }
-    }
+    revalidatePath("/flashcards");
   }
 
   return result;
@@ -227,9 +216,7 @@ export async function bulkResetFlashcards(
   );
 
   if (result.success) {
-    for (const subjectId of result.subjectIds) {
-      revalidatePath(`/subjects/${subjectId}`);
-    }
+    revalidatePath("/flashcards");
   }
 
   return result;
@@ -246,7 +233,7 @@ export async function resetFlashcard(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.flashcard.subjectId}`);
+    revalidatePath("/flashcards");
   }
 
   return result;
@@ -283,17 +270,17 @@ export async function getFlashcardForManage(
   );
 }
 
-export async function getFlashcardIdsForSubject(
-  data: GetFlashcardIdsForSubjectForm,
+export async function getFlashcardIdsForDeck(
+  data: GetFlashcardIdsForDeckForm,
 ): Promise<{ success: true; flashcardIds: string[] } | ActionErrorResult> {
   return runValidatedUserAction(
-    getFlashcardIdsForSubjectSchema,
+    getFlashcardIdsForDeckSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
-      const flashcardIds = await getAllFlashcardIdsForSubject(
+      const flashcardIds = await getAllFlashcardIdsForDeck(
         userId,
-        parsedData.subjectId,
+        parsedData.deckId,
       );
 
       return { success: true, flashcardIds };
@@ -313,8 +300,9 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
       flashcards: Array<{
         id: string;
         front: string;
-        subjectName: string;
-        subjectId: string;
+        deckName: string;
+        deckPath?: string;
+        deckId: string;
       }>;
     }
   | ActionErrorResult
@@ -369,8 +357,8 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
         flashcards: flashcards.map((card) => ({
           id: card.id,
           front: card.front,
-          subjectName: card.subjectName,
-          subjectId: card.subjectId,
+          deckName: card.deckName,
+          deckId: card.deckId,
         })),
       };
     },
@@ -402,45 +390,29 @@ export async function generateFlashcards(
     data,
     "flashcards.ai.invalidData",
     async (userId, parsedData) => {
-      const subject = await getActiveSubjectByIdForUser(
+      const existingDeck = await getDeckRecordForUser(
         userId,
-        parsedData.subjectId,
+        parsedData.deckId,
       );
 
-      if (!subject) {
-        return actionError("subjects.notFound");
+      if (!existingDeck) {
+        return actionError("decks.notFound");
       }
 
-      const currentCount = await countFlashcardsBySubjectForUser(
+      const currentCount = await countFlashcardsByDeckForUser(
         userId,
-        parsedData.subjectId,
+        parsedData.deckId,
       );
 
-      if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
+      if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
         return actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
         });
-      }
-
-      let deckName: string | null = null;
-      if (parsedData.deckId) {
-        const existingDeck = await getDeckRecordForUser(
-          userId,
-          parsedData.deckId,
-        );
-        if (!existingDeck) {
-          return actionError("decks.notFound");
-        }
-        if (existingDeck.subjectId !== parsedData.subjectId) {
-          return actionError("decks.wrongSubject");
-        }
-        deckName = existingDeck.isDefault ? null : existingDeck.name;
       }
 
       const result = await generateFlashcardsForUserService({
         userId,
-        subjectName: subject.name,
-        deckName,
+        deckName: existingDeck.name,
         text: parsedData.text,
       });
 

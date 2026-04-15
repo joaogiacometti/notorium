@@ -50,12 +50,6 @@ export function validateSubjectImportLimits(
         errorParams: { max: LIMITS.maxAssessmentsPerSubject },
       });
     }
-
-    if (importedSubject.flashcards.length > LIMITS.maxFlashcardsPerSubject) {
-      return actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerSubject },
-      });
-    }
   }
 
   return null;
@@ -86,11 +80,6 @@ function validateRawSubjectLimit(entry: unknown): ActionErrorResult | null {
       rawSubject.assessments,
       LIMITS.maxAssessmentsPerSubject,
       "limits.assessmentLimit",
-    ) ??
-    validateRawCollectionLimit(
-      rawSubject.flashcards,
-      LIMITS.maxFlashcardsPerSubject,
-      "limits.flashcardLimit",
     )
   );
 }
@@ -98,10 +87,7 @@ function validateRawSubjectLimit(entry: unknown): ActionErrorResult | null {
 function validateRawCollectionLimit(
   value: unknown,
   max: number,
-  errorKey:
-    | "limits.noteLimit"
-    | "limits.assessmentLimit"
-    | "limits.flashcardLimit",
+  errorKey: "limits.noteLimit" | "limits.assessmentLimit",
 ): ActionErrorResult | null {
   if (!Array.isArray(value) || value.length <= max) {
     return null;

@@ -29,11 +29,6 @@ export const flashcardBackSchema = z
     validationMessage("Validation.flashcards.backMaxLength"),
   );
 
-const optionalDeckIdSchema = z
-  .union([z.string().min(1), z.literal("")])
-  .nullable()
-  .optional();
-
 function hasAllowedFlashcardAttachmentCount(front: string, back: string) {
   return (
     countInternalAttachmentImages(front) +
@@ -75,10 +70,9 @@ function withFlashcardAttachmentLimit<
 
 export const createFlashcardSchema = withFlashcardAttachmentLimit(
   z.object({
-    subjectId: z
+    deckId: z
       .string()
-      .min(1, validationMessage("Validation.flashcards.subjectRequired")),
-    deckId: optionalDeckIdSchema,
+      .min(1, validationMessage("Validation.flashcards.deckRequired")),
     front: flashcardFrontSchema,
     back: flashcardBackSchema,
   }),
@@ -89,8 +83,9 @@ export type CreateFlashcardForm = z.infer<typeof createFlashcardSchema>;
 export const editFlashcardSchema = withFlashcardAttachmentLimit(
   z.object({
     id: z.string().min(1),
-    subjectId: z.string().min(1),
-    deckId: optionalDeckIdSchema,
+    deckId: z
+      .string()
+      .min(1, validationMessage("Validation.flashcards.deckRequired")),
     front: flashcardFrontSchema,
     back: flashcardBackSchema,
   }),
@@ -99,8 +94,9 @@ export const editFlashcardSchema = withFlashcardAttachmentLimit(
 export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
 
 export const generateFlashcardBackSchema = z.object({
-  subjectId: z.string().min(1),
-  deckId: optionalDeckIdSchema,
+  deckId: z
+    .string()
+    .min(1, validationMessage("Validation.flashcards.deckRequired")),
   front: flashcardFrontSchema,
   currentBack: flashcardBackSchema.optional(),
 });
@@ -147,10 +143,9 @@ export type BulkResetFlashcardsForm = z.infer<typeof bulkResetFlashcardsSchema>;
 
 export const bulkMoveFlashcardsSchema = z.object({
   ids: bulkFlashcardIdsSchema,
-  subjectId: z
+  deckId: z
     .string()
-    .min(1, validationMessage("Validation.flashcards.subjectRequired")),
-  deckId: optionalDeckIdSchema,
+    .min(1, validationMessage("Validation.flashcards.deckRequired")),
 });
 
 export type BulkMoveFlashcardsForm = z.infer<typeof bulkMoveFlashcardsSchema>;
@@ -169,8 +164,8 @@ export const flashcardsManageQuerySchema = z.object({
     .min(LIMITS.pageSizeMin)
     .max(LIMITS.pageSizeMax)
     .default(25),
-  subjectId: z.string().min(1).optional(),
   deckId: z.string().min(1).optional(),
+  deckIds: z.array(z.string().min(1)).optional(),
   search: z.string().trim().max(LIMITS.searchQueryMax).optional(),
 });
 
@@ -188,19 +183,18 @@ export const validateFlashcardsSchema = z.object({
 
 export type ValidateFlashcardsForm = z.infer<typeof validateFlashcardsSchema>;
 
-export const getFlashcardIdsForSubjectSchema = z.object({
-  subjectId: z.string().min(1),
+export const getFlashcardIdsForDeckSchema = z.object({
+  deckId: z.string().min(1),
 });
 
-export type GetFlashcardIdsForSubjectForm = z.infer<
-  typeof getFlashcardIdsForSubjectSchema
+export type GetFlashcardIdsForDeckForm = z.infer<
+  typeof getFlashcardIdsForDeckSchema
 >;
 
 export const generateFlashcardsSchema = z.object({
-  subjectId: z
+  deckId: z
     .string()
-    .min(1, validationMessage("Validation.flashcards.subjectRequired")),
-  deckId: optionalDeckIdSchema,
+    .min(1, validationMessage("Validation.flashcards.deckRequired")),
   text: z
     .string()
     .min(1, validationMessage("Validation.flashcards.textRequired"))

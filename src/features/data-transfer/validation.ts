@@ -61,7 +61,8 @@ const flashcardSchema = z
     lastReviewedAt: dateStringSchema.nullable(),
     reviewCount: nonNegativeIntegerSchema,
     lapseCount: nonNegativeIntegerSchema,
-    deckName: z.string().min(1).max(LIMITS.deckNameMax).optional(),
+    deckName: z.string().min(1).optional(),
+    deckPath: z.string().min(1).optional(),
     createdAt: dateStringSchema,
     updatedAt: dateStringSchema,
   })
@@ -72,11 +73,22 @@ const flashcardSchema = z
       LIMITS.maxAttachmentsPerFlashcard,
   );
 
-const deckSchema = z.object({
-  name: z.string().min(1).max(LIMITS.deckNameMax),
-  description: z.string().max(LIMITS.deckDescriptionMax).nullable().optional(),
-  isDefault: z.boolean(),
-});
+const deckSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    path: z.string().min(1).optional(),
+    description: z
+      .string()
+      .max(LIMITS.deckDescriptionMax)
+      .nullable()
+      .optional(),
+  })
+  .transform((value) => ({
+    ...value,
+    name: value.name ?? value.path ?? "",
+    path: value.path ?? value.name ?? "",
+  }))
+  .refine((value) => value.name.length > 0 && value.path.length > 0);
 
 const subjectSchema = z.object({
   name: z.string().min(1).max(LIMITS.subjectNameMax),
@@ -88,8 +100,6 @@ const subjectSchema = z.object({
   notes: z.array(noteSchema).optional().default([]),
   attendanceMisses: z.array(attendanceMissSchema),
   assessments: z.array(assessmentSchema),
-  decks: z.array(deckSchema).optional().default([]),
-  flashcards: z.array(flashcardSchema).optional().default([]),
 });
 
 const flashcardSchedulerSchema = z.object({
@@ -98,10 +108,12 @@ const flashcardSchedulerSchema = z.object({
 });
 
 export const importDataSchema = z.object({
-  version: z.literal(1),
+  version: z.union([z.literal(1), z.literal(2)]),
   exportedAt: dateStringSchema,
   flashcardScheduler: flashcardSchedulerSchema.optional(),
-  subjects: z.array(subjectSchema),
+  decks: z.array(deckSchema).optional().default([]),
+  flashcards: z.array(flashcardSchema).optional().default([]),
+  subjects: z.array(subjectSchema).optional().default([]),
 });
 
 export type ImportData = z.infer<typeof importDataSchema>;

@@ -18,7 +18,7 @@ export function haveFlashcardDialogValuesChanged<
 
   return (
     previousValues.id !== nextValues.id ||
-    previousValues.subjectId !== nextValues.subjectId ||
+    previousValues.deckId !== nextValues.deckId ||
     previousValues.front !== nextValues.front ||
     previousValues.back !== nextValues.back
   );

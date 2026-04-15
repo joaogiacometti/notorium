@@ -104,22 +104,9 @@ function GenerateFlashcardsReviewHarness() {
   );
 }
 
-const subject = {
-  id: "subject-1",
-  name: "Subject 1",
-  description: null,
-  totalClasses: null,
-  maxMisses: null,
-  archivedAt: null,
-  userId: "user-1",
-  createdAt: new Date("2026-04-13T00:00:00.000Z"),
-  updatedAt: new Date("2026-04-13T00:00:00.000Z"),
-};
-
 const flashcard = {
   id: "flashcard-1",
-  subjectId: "subject-1",
-  deckId: null,
+  deckId: "deck-1",
   front: "<p>Front</p>",
   frontNormalized: "front",
   back: "<p>Back</p>",
@@ -160,13 +147,7 @@ describe("paste-image loading flows", () => {
 
   it("disables AI generation in create dialog while resources editor uploads an image", async () => {
     await act(async () => {
-      root.render(
-        <CreateFlashcardDialog
-          open
-          onOpenChange={() => {}}
-          subjects={[subject]}
-        />,
-      );
+      root.render(<CreateFlashcardDialog open onOpenChange={() => {}} />);
     });
 
     await act(async () => {
@@ -196,7 +177,6 @@ describe("paste-image loading flows", () => {
           open
           onOpenChange={() => {}}
           flashcard={flashcard}
-          subjects={[subject]}
         />,
       );
     });

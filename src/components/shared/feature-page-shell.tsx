@@ -7,7 +7,6 @@ interface FeaturePageShellProps {
   description: string;
   headerMeta?: string;
   icon: LucideIcon;
-  lockViewport?: boolean;
   switcher?: ReactNode;
   title: string;
 }
@@ -17,25 +16,12 @@ export function FeaturePageShell({
   description,
   headerMeta,
   icon: Icon,
-  lockViewport = false,
   switcher,
   title,
 }: Readonly<FeaturePageShellProps>) {
   return (
-    <main
-      className={
-        lockViewport
-          ? "h-[calc(100dvh-3.5rem)] overflow-hidden lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden"
-          : "lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden"
-      }
-    >
-      <AppPageContainer
-        className={
-          lockViewport
-            ? "flex h-full min-h-0 flex-col"
-            : "flex flex-col lg:h-full lg:min-h-0"
-        }
-      >
+    <main className="lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden">
+      <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
         <div className="mb-6 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Icon className="size-5" />
@@ -57,11 +43,7 @@ export function FeaturePageShell({
 
         {switcher ? <div className="mb-4">{switcher}</div> : null}
 
-        <div
-          className={lockViewport ? "flex-1 min-h-0" : "lg:flex-1 lg:min-h-0"}
-        >
-          {children}
-        </div>
+        <div className="lg:flex-1 lg:min-h-0">{children}</div>
       </AppPageContainer>
     </main>
   );

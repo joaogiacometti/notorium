@@ -207,7 +207,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       mode === "edit"
         ? currentValues.front !== savedValues.front ||
           currentValues.back !== savedValues.back ||
-          currentValues.subjectId !== savedValues.subjectId ||
           currentValues.deckId !== savedValues.deckId
         : hasContent;
 
@@ -293,8 +292,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     setIsGeneratingBack(true);
 
     const result = await generateFlashcardBack({
-      subjectId: currentValues.subjectId,
-      deckId: currentValues.deckId ?? null,
+      deckId: currentValues.deckId ?? "",
       front: currentValues.front,
       currentBack: hasBack ? currentValues.back : undefined,
     });
@@ -344,7 +342,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }
 
   const canUseAiBack =
-    currentValues.subjectId.length > 0 &&
+    (currentValues.deckId ?? "").length > 0 &&
     hasRichTextContent(currentValues.front) &&
     !isGeneratingBack &&
     !isSubmitting &&

@@ -30,12 +30,13 @@ vi.mock("@/db/schema", () => ({
   },
   deck: {
     userId: "deck_user_id_column",
-    subjectId: "deck_subject_id_column",
     id: "deck_id_column",
+    name: "deck_name_column",
+    description: "deck_description_column",
+    parentDeckId: "deck_parent_deck_id_column",
   },
   flashcard: {
     userId: "flashcard_user_id_column",
-    subjectId: "flashcard_subject_id_column",
   },
   flashcardSchedulerSettings: { userId: "flashcard_scheduler_user_id_column" },
   note: { userId: "note_user_id_column", subjectId: "note_subject_id_column" },
@@ -141,7 +142,7 @@ describe("exportDataForUser", () => {
         front:
           '<p><a href="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fold-user%2Ffront.png">/api/attachments/blob?pathname=notorium%2Fflashcards%2Fold-user%2Ffront.png</a></p>',
         back: "<p>https://cdn.example.com/image.png</p>",
-        deckId: null,
+        deckId: "deck-1",
         state: "review",
         dueAt: new Date("2026-01-10T00:00:00.000Z"),
         stability: null,
@@ -154,7 +155,6 @@ describe("exportDataForUser", () => {
         lapseCount: 0,
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         updatedAt: new Date("2026-01-02T00:00:00.000Z"),
-        subjectId: "subject-1",
       },
     ]);
     mockSelectWhereOnce([]);
@@ -170,8 +170,8 @@ describe("exportDataForUser", () => {
     }
 
     expect(result.subjects[0]?.notes[0]?.content).toBe("<p>Keep</p>");
-    expect(result.subjects[0]?.flashcards[0]?.front).toBe("");
-    expect(result.subjects[0]?.flashcards[0]?.back).toBe(
+    expect(result.flashcards[0]?.front).toBe("");
+    expect(result.flashcards[0]?.back).toBe(
       "<p>https://cdn.example.com/image.png</p>",
     );
   });

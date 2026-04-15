@@ -1,6 +1,7 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, note, subject } from "@/db/schema";
+import { deck, flashcard, note, subject } from "@/db/schema";
+import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { LIMITS } from "@/lib/config/limits";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
@@ -12,6 +13,10 @@ export async function getSearchDataForUser(
 ): Promise<SearchData> {
   const searchPattern = buildContainsSearchPattern(searchQuery);
   const subjectFilters = getOwnedActiveSubjectFilters(userId);
+  const deckPathMap = await getAllDecksWithPathsForUser(userId).then(
+    (decks) =>
+      new Map(decks.map((currentDeck) => [currentDeck.id, currentDeck.path])),
+  );
 
   const [allSubjects, allNotes, allFlashcards] = await Promise.all([
     getDb()
@@ -61,15 +66,14 @@ export async function getSearchDataForUser(
         id: flashcard.id,
         front: flashcard.front,
         back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
-        subjectId: flashcard.subjectId,
-        subjectName: subject.name,
+        deckId: flashcard.deckId,
+        deckName: deck.name,
       })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(
         and(
           eq(flashcard.userId, userId),
-          ...subjectFilters,
           or(
             ilike(flashcard.front, searchPattern),
             ilike(flashcard.back, searchPattern),
@@ -80,13 +84,24 @@ export async function getSearchDataForUser(
       .limit(LIMITS.searchResultsLimit),
   ]);
 
-  return { subjects: allSubjects, notes: allNotes, flashcards: allFlashcards };
+  return {
+    subjects: allSubjects,
+    notes: allNotes,
+    flashcards: allFlashcards.map((flashcard) => ({
+      ...flashcard,
+      deckPath: deckPathMap.get(flashcard.deckId) ?? flashcard.deckName,
+    })),
+  };
 }
 
 export async function getRecentSearchDataForUser(
   userId: string,
 ): Promise<SearchData> {
   const subjectFilters = getOwnedActiveSubjectFilters(userId);
+  const deckPathMap = await getAllDecksWithPathsForUser(userId).then(
+    (decks) =>
+      new Map(decks.map((currentDeck) => [currentDeck.id, currentDeck.path])),
+  );
 
   const [allSubjects, allNotes, allFlashcards] = await Promise.all([
     getDb()
@@ -117,15 +132,22 @@ export async function getRecentSearchDataForUser(
         id: flashcard.id,
         front: flashcard.front,
         back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
-        subjectId: flashcard.subjectId,
-        subjectName: subject.name,
+        deckId: flashcard.deckId,
+        deckName: deck.name,
       })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-      .where(and(eq(flashcard.userId, userId), ...subjectFilters))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
+      .where(eq(flashcard.userId, userId))
       .orderBy(desc(flashcard.updatedAt))
       .limit(LIMITS.recentItemsLimit),
   ]);
 
-  return { subjects: allSubjects, notes: allNotes, flashcards: allFlashcards };
+  return {
+    subjects: allSubjects,
+    notes: allNotes,
+    flashcards: allFlashcards.map((flashcard) => ({
+      ...flashcard,
+      deckPath: deckPathMap.get(flashcard.deckId) ?? flashcard.deckName,
+    })),
+  };
 }

@@ -15,7 +15,6 @@ import {
   user,
   verification,
 } from "@/db/schema";
-import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import {
   type E2EUserKind,
@@ -361,41 +360,30 @@ export async function createSubject(
   name: string,
   description: string,
 ) {
-  return getDb().transaction(async (tx) => {
-    const [newSubject] = await tx
-      .insert(subject)
-      .values({
-        userId,
-        name,
-        description,
-      })
-      .returning({ id: subject.id });
-
-    await tx.insert(deck).values({
+  const [newSubject] = await getDb()
+    .insert(subject)
+    .values({
       userId,
-      subjectId: newSubject.id,
-      name: DEFAULT_DECK_NAME,
-      isDefault: true,
-    });
+      name,
+      description,
+    })
+    .returning({ id: subject.id });
 
-    return newSubject;
-  });
+  return newSubject;
 }
 
-export async function clearUserFlashcardsBySubject(
+export async function clearUserFlashcardsByDeck(
   userId: string,
-  subjectId: string,
+  deckId: string,
 ) {
   await getDb()
     .delete(flashcard)
-    .where(
-      and(eq(flashcard.userId, userId), eq(flashcard.subjectId, subjectId)),
-    );
+    .where(and(eq(flashcard.userId, userId), eq(flashcard.deckId, deckId)));
 }
 
 export async function clearUserFlashcardsByFrontText(
   userId: string,
-  subjectId: string,
+  deckId: string,
   frontTexts: string[],
 ) {
   if (frontTexts.length === 0) {
@@ -407,27 +395,39 @@ export async function clearUserFlashcardsByFrontText(
     .where(
       and(
         eq(flashcard.userId, userId),
-        eq(flashcard.subjectId, subjectId),
+        eq(flashcard.deckId, deckId),
         inArray(flashcard.front, frontTexts),
       ),
     );
 }
 
+export async function clearUserDecksByNames(userId: string, names: string[]) {
+  if (names.length === 0) {
+    return;
+  }
+
+  await getDb()
+    .delete(deck)
+    .where(and(eq(deck.userId, userId), inArray(deck.name, names)));
+}
+
 export async function createFlashcard(
   userId: string,
-  subjectId: string,
+  deckIdOrSubjectId: string,
   front: string,
   back: string,
   dueAt: Date = new Date(Date.now() - 60_000),
 ) {
-  const defaultDeck = await ensureDefaultDeckForSubject(userId, subjectId);
+  const resolvedDeckId = await resolveDeckIdForFlashcard(
+    userId,
+    deckIdOrSubjectId,
+  );
 
   const [newFlashcard] = await getDb()
     .insert(flashcard)
     .values({
       userId,
-      subjectId,
-      deckId: defaultDeck.id,
+      deckId: resolvedDeckId,
       front,
       frontNormalized: normalizeRichTextForUniqueness(front),
       back,
@@ -438,24 +438,35 @@ export async function createFlashcard(
   return newFlashcard;
 }
 
-export async function createFlashcardInDeck(
+export async function createFlashcardForDeck(
   userId: string,
-  subjectId: string,
   deckId: string,
   front: string,
   back: string,
-  dueAt: Date = new Date(Date.now() - 60_000),
+  dueAt?: Date,
 ) {
+  return createFlashcardInDeck(userId, deckId, front, back, dueAt);
+}
+
+export async function createFlashcardInDeck(
+  userId: string,
+  deckId: string,
+  front: string,
+  back: string,
+  dueAt?: Date,
+): Promise<{ id: string }> {
+  const resolvedDueAt =
+    dueAt instanceof Date ? dueAt : new Date(Date.now() - 86_400_000);
+
   const [newFlashcard] = await getDb()
     .insert(flashcard)
     .values({
       userId,
-      subjectId,
       deckId,
       front,
       frontNormalized: normalizeRichTextForUniqueness(front),
       back,
-      dueAt,
+      dueAt: resolvedDueAt,
     })
     .returning({ id: flashcard.id });
 
@@ -464,59 +475,92 @@ export async function createFlashcardInDeck(
 
 export async function createDeck(
   userId: string,
+  name: string,
+  description?: string | null,
+  parentDeckId?: string | null,
+): Promise<{ id: string; name: string }>;
+export async function createDeck(
+  userId: string,
   subjectId: string,
   name: string,
   description?: string | null,
+): Promise<{ id: string; name: string }>;
+export async function createDeck(
+  userId: string,
+  firstArg: string,
+  secondArg?: string | null,
+  thirdArg?: string | null,
 ) {
+  const usesLegacySubjectSignature =
+    secondArg !== undefined && (await subjectExistsForUser(userId, firstArg));
+  const name = usesLegacySubjectSignature ? secondArg : firstArg;
+  const description = usesLegacySubjectSignature ? thirdArg : secondArg;
+  const parentDeckId = usesLegacySubjectSignature ? null : thirdArg;
+
+  if (!name) {
+    throw new Error("Deck name is required.");
+  }
+
   const [newDeck] = await getDb()
     .insert(deck)
     .values({
       userId,
-      subjectId,
       name,
       description: description ?? null,
-      isDefault: false,
+      parentDeckId: parentDeckId ?? null,
     })
     .returning({ id: deck.id, name: deck.name });
 
   return newDeck;
 }
 
-export async function getDefaultDeckForSubject(
+export async function ensureDeckForUser(
   userId: string,
-  subjectId: string,
+  name: string = "Default",
 ) {
-  const [defaultDeck] = await getDb()
+  const [existingDeck] = await getDb()
     .select({ id: deck.id, name: deck.name })
     .from(deck)
-    .where(
-      and(
-        eq(deck.userId, userId),
-        eq(deck.subjectId, subjectId),
-        eq(deck.isDefault, true),
-      ),
-    )
+    .where(and(eq(deck.userId, userId), eq(deck.name, name)))
     .limit(1);
 
-  return defaultDeck ?? null;
-}
-
-export async function ensureDefaultDeckForSubject(
-  userId: string,
-  subjectId: string,
-) {
-  const existing = await getDefaultDeckForSubject(userId, subjectId);
-  if (existing) return existing;
+  if (existingDeck) return existingDeck;
 
   const [newDeck] = await getDb()
     .insert(deck)
     .values({
       userId,
-      subjectId,
-      name: DEFAULT_DECK_NAME,
-      isDefault: true,
+      name,
     })
     .returning({ id: deck.id, name: deck.name });
 
   return newDeck;
+}
+
+async function resolveDeckIdForFlashcard(
+  userId: string,
+  deckIdOrSubjectId: string,
+) {
+  const [existingDeck] = await getDb()
+    .select({ id: deck.id })
+    .from(deck)
+    .where(and(eq(deck.id, deckIdOrSubjectId), eq(deck.userId, userId)))
+    .limit(1);
+
+  if (existingDeck) {
+    return existingDeck.id;
+  }
+
+  const ensuredDeck = await ensureDeckForUser(userId);
+  return ensuredDeck.id;
+}
+
+async function subjectExistsForUser(userId: string, subjectId: string) {
+  const [existingSubject] = await getDb()
+    .select({ id: subject.id })
+    .from(subject)
+    .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)))
+    .limit(1);
+
+  return Boolean(existingSubject);
 }

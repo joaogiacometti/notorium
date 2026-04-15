@@ -2,7 +2,6 @@
 
 import {
   ArrowRightLeft,
-  Layers3,
   Plus,
   RotateCcw,
   RotateCw,
@@ -13,40 +12,22 @@ import {
 } from "lucide-react";
 import type { JSX } from "react";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
-import { SubjectText } from "@/components/shared/subject-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LIMITS } from "@/lib/config/limits";
-import type { DeckEntity, SubjectEntity } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 interface FlashcardsManagerToolbarProps {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
-  hasSubjects: boolean;
   validationMode: boolean;
-  subjects: SubjectEntity[];
-  decks: DeckEntity[];
-  selectedSubjectId?: string;
-  selectedDeckId?: string;
   isManageScopeLoading: boolean;
   selectedFlashcardIds: string[];
-  selectedSubjectCardCount: number;
   total: number;
   validationIssuesCount: number;
   isValidatingAgain: boolean;
-  onSubjectChange: (subjectId?: string) => void;
-  onDeckChange: (deckId?: string) => void;
   onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
   onOpenValidateAgainDialog: () => void;
@@ -60,32 +41,17 @@ interface FlashcardsManagerToolbarProps {
 interface ToolbarViewModel {
   selectedCountText: string;
   resultsCountText: string;
-  selectedSubjectCountText: string;
   validationIssuesCountText: string;
   actionBarVisibilityClasses: string;
-  filteredDecks: DeckEntity[];
   hasSelection: boolean;
-  hasSelectedSubject: boolean;
-}
-
-interface ToolbarFiltersProps {
-  subjects: SubjectEntity[];
-  filteredDecks: DeckEntity[];
-  selectedSubjectId?: string;
-  selectedDeckId?: string;
-  isManageScopeLoading: boolean;
-  onSubjectChange: (subjectId?: string) => void;
-  onDeckChange: (deckId?: string) => void;
 }
 
 interface ToolbarStatusBadgesProps {
   validationMode: boolean;
   isManageScopeLoading: boolean;
   hasSelection: boolean;
-  hasSelectedSubject: boolean;
   selectedCountText: string;
   resultsCountText: string;
-  selectedSubjectCountText: string;
   validationIssuesCountText: string;
 }
 
@@ -117,35 +83,21 @@ interface SelectionActionButtonsProps {
 function getToolbarViewModel({
   validationMode,
   selectedFlashcardIds,
-  selectedSubjectCardCount,
   total,
   validationIssuesCount,
-  selectedSubjectId,
-  decks,
 }: {
   validationMode: boolean;
   selectedFlashcardIds: string[];
-  selectedSubjectCardCount: number;
   total: number;
   validationIssuesCount: number;
-  selectedSubjectId?: string;
-  decks: DeckEntity[];
 }): ToolbarViewModel {
   const selectedCount = selectedFlashcardIds.length;
   const hasSelection = selectedCount > 0;
-  const hasSelectedSubject = typeof selectedSubjectId === "string";
-  const filteredDecks = hasSelectedSubject
-    ? decks.filter((deck) => deck.subjectId === selectedSubjectId)
-    : [];
 
   return {
     selectedCountText:
       selectedCount === 1 ? "1 selected" : `${selectedCount} selected`,
     resultsCountText: `${total} of ${total} flashcards`,
-    selectedSubjectCountText:
-      selectedSubjectCardCount === 1
-        ? `1/${LIMITS.maxFlashcardsPerSubject} flashcard in this subject`
-        : `${selectedSubjectCardCount}/${LIMITS.maxFlashcardsPerSubject} flashcards in this subject`,
     validationIssuesCountText:
       validationIssuesCount === 1
         ? "1 card with issues"
@@ -154,91 +106,16 @@ function getToolbarViewModel({
       validationMode || hasSelection
         ? "visible opacity-100"
         : "pointer-events-none invisible opacity-0",
-    filteredDecks,
     hasSelection,
-    hasSelectedSubject,
   };
-}
-
-function ToolbarFilters({
-  subjects,
-  filteredDecks,
-  selectedSubjectId,
-  selectedDeckId,
-  isManageScopeLoading,
-  onSubjectChange,
-  onDeckChange,
-}: Readonly<ToolbarFiltersProps>): JSX.Element {
-  const showDeckFilter = Boolean(selectedSubjectId) && filteredDecks.length > 0;
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <div className="min-w-0">
-        <Select
-          value={selectedSubjectId ?? "all"}
-          onValueChange={(value) =>
-            onSubjectChange(value === "all" ? undefined : value)
-          }
-          disabled={isManageScopeLoading}
-        >
-          <SelectTrigger
-            data-testid="subject-filter-select"
-            className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs"
-          >
-            <SelectValue placeholder="Filter by Subject" />
-          </SelectTrigger>
-          <SelectContent align="start">
-            <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map((subject) => (
-              <SelectItem key={subject.id} value={subject.id}>
-                <SubjectText
-                  value={subject.name}
-                  mode="truncate"
-                  className="block max-w-full"
-                />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {showDeckFilter ? (
-        <div className="min-w-0">
-          <Select
-            value={selectedDeckId ?? "all"}
-            onValueChange={(value) =>
-              onDeckChange(value === "all" ? undefined : value)
-            }
-            disabled={isManageScopeLoading}
-          >
-            <SelectTrigger
-              data-testid="deck-filter-select"
-              className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs"
-            >
-              <SelectValue placeholder="Filter by Deck" />
-            </SelectTrigger>
-            <SelectContent align="start">
-              <SelectItem value="all">All Decks</SelectItem>
-              {filteredDecks.map((deck) => (
-                <SelectItem key={deck.id} value={deck.id}>
-                  {deck.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 function ToolbarStatusBadges({
   validationMode,
   isManageScopeLoading,
   hasSelection,
-  hasSelectedSubject,
   selectedCountText,
   resultsCountText,
-  selectedSubjectCountText,
   validationIssuesCountText,
 }: Readonly<ToolbarStatusBadgesProps>): JSX.Element {
   if (validationMode) {
@@ -251,45 +128,24 @@ function ToolbarStatusBadges({
 
   if (isManageScopeLoading) {
     return (
-      <>
-        <Skeleton
-          className="h-6 w-44 rounded-full"
-          data-testid="flashcards-manage-count-loading"
-        />
-        {hasSelectedSubject ? (
-          <Skeleton className="h-6 w-52 rounded-full" />
-        ) : null}
-      </>
+      <Skeleton
+        className="h-6 w-44 rounded-full"
+        data-testid="flashcards-manage-count-loading"
+      />
     );
   }
 
   return (
-    <>
-      <Badge
-        variant="outline"
-        className={cn(
-          "rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px]",
-          hasSelection ? "text-foreground" : "text-muted-foreground",
-        )}
-      >
-        {hasSelection ? null : <Search className="size-3.5" />}
-        {hasSelection ? selectedCountText : resultsCountText}
-      </Badge>
-      {hasSelectedSubject ? (
-        <Badge
-          variant="outline"
-          className={cn(
-            "rounded-full border-primary/20 bg-primary/8 px-2.5 py-0.5 text-[11px] text-foreground transition-opacity",
-            hasSelection
-              ? "pointer-events-none invisible opacity-0"
-              : "visible opacity-100",
-          )}
-        >
-          <Layers3 className="size-3.5 text-primary" />
-          {selectedSubjectCountText}
-        </Badge>
-      ) : null}
-    </>
+    <Badge
+      variant="outline"
+      className={cn(
+        "rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px]",
+        hasSelection ? "text-foreground" : "text-muted-foreground",
+      )}
+    >
+      {hasSelection ? null : <Search className="size-3.5" />}
+      {hasSelection ? selectedCountText : resultsCountText}
+    </Badge>
   );
 }
 
@@ -417,20 +273,12 @@ function ToolbarActionBar({
 export function FlashcardsManagerToolbar({
   searchQuery,
   onSearchQueryChange,
-  hasSubjects,
   validationMode,
-  subjects,
-  decks,
-  selectedSubjectId,
-  selectedDeckId,
   isManageScopeLoading,
   selectedFlashcardIds,
-  selectedSubjectCardCount,
   total,
   validationIssuesCount,
   isValidatingAgain,
-  onSubjectChange,
-  onDeckChange,
   onOpenValidateDialog,
   onOpenCreateDialog,
   onOpenValidateAgainDialog,
@@ -443,11 +291,8 @@ export function FlashcardsManagerToolbar({
   const viewModel = getToolbarViewModel({
     validationMode,
     selectedFlashcardIds,
-    selectedSubjectCardCount,
     total,
     validationIssuesCount,
-    selectedSubjectId,
-    decks,
   });
 
   return (
@@ -462,7 +307,7 @@ export function FlashcardsManagerToolbar({
                 <Input
                   value={searchQuery}
                   onChange={(event) => onSearchQueryChange(event.target.value)}
-                  placeholder="Search front, back, or subject..."
+                  placeholder="Search front, back, or deck path..."
                   className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                 />
               </div>
@@ -471,7 +316,6 @@ export function FlashcardsManagerToolbar({
               <Button
                 type="button"
                 onClick={onOpenValidateDialog}
-                disabled={!hasSubjects}
                 variant="outline"
                 className="h-10 shrink-0 gap-2 rounded-lg px-3 shadow-sm sm:px-4"
               >
@@ -481,7 +325,6 @@ export function FlashcardsManagerToolbar({
               <Button
                 type="button"
                 onClick={onOpenCreateDialog}
-                disabled={!hasSubjects}
                 className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
               >
                 <Plus className="size-4" />
@@ -489,29 +332,14 @@ export function FlashcardsManagerToolbar({
               </Button>
             </div>
           </div>
-
-          {validationMode ? null : (
-            <ToolbarFilters
-              subjects={subjects}
-              filteredDecks={viewModel.filteredDecks}
-              selectedSubjectId={selectedSubjectId}
-              selectedDeckId={selectedDeckId}
-              isManageScopeLoading={isManageScopeLoading}
-              onSubjectChange={onSubjectChange}
-              onDeckChange={onDeckChange}
-            />
-          )}
-
           <div className="flex flex-wrap items-center gap-2 sm:justify-between">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
               <ToolbarStatusBadges
                 validationMode={validationMode}
                 isManageScopeLoading={isManageScopeLoading}
                 hasSelection={viewModel.hasSelection}
-                hasSelectedSubject={viewModel.hasSelectedSubject}
                 selectedCountText={viewModel.selectedCountText}
                 resultsCountText={viewModel.resultsCountText}
-                selectedSubjectCountText={viewModel.selectedSubjectCountText}
                 validationIssuesCountText={viewModel.validationIssuesCountText}
               />
             </div>

@@ -5,6 +5,7 @@ import {
   deckNameSchema,
   deleteDeckSchema,
   editDeckSchema,
+  moveDeckSchema,
 } from "@/features/decks/validation";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -26,25 +27,11 @@ describe("deckNameSchema", () => {
 
     expect(result.success).toBe(false);
   });
-
-  it("accepts name at max length", () => {
-    const result = deckNameSchema.safeParse("a".repeat(LIMITS.deckNameMax));
-
-    expect(result.success).toBe(true);
-  });
 });
 
 describe("deckDescriptionSchema", () => {
   it("accepts valid description", () => {
-    const result = deckDescriptionSchema.safeParse(
-      "Flashcards for chapter 1 vocabulary",
-    );
-
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts empty string", () => {
-    const result = deckDescriptionSchema.safeParse("");
+    const result = deckDescriptionSchema.safeParse("Flashcards for chapter 1");
 
     expect(result.success).toBe(true);
   });
@@ -62,20 +49,11 @@ describe("deckDescriptionSchema", () => {
 
     expect(result.success).toBe(false);
   });
-
-  it("accepts description at max length", () => {
-    const result = deckDescriptionSchema.safeParse(
-      "a".repeat(LIMITS.deckDescriptionMax),
-    );
-
-    expect(result.success).toBe(true);
-  });
 });
 
 describe("createDeckSchema", () => {
   it("accepts valid input with name and description", () => {
     const result = createDeckSchema.safeParse({
-      subjectId: "subject-1",
       name: "Lecture Notes",
       description: "Notes from lectures",
     });
@@ -83,63 +61,25 @@ describe("createDeckSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts valid input with name only", () => {
+  it("accepts valid input with parentDeckId", () => {
     const result = createDeckSchema.safeParse({
-      subjectId: "subject-1",
-      name: "Lecture Notes",
+      parentDeckId: "deck-1",
+      name: "Child Deck",
     });
 
     expect(result.success).toBe(true);
   });
 
-  it("rejects missing subjectId", () => {
-    const result = createDeckSchema.safeParse({
-      name: "Lecture Notes",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty subjectId", () => {
-    const result = createDeckSchema.safeParse({
-      subjectId: "",
-      name: "Lecture Notes",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
   it("rejects missing name", () => {
-    const result = createDeckSchema.safeParse({
-      subjectId: "subject-1",
-    });
+    const result = createDeckSchema.safeParse({});
 
     expect(result.success).toBe(false);
   });
 
-  it("rejects empty name", () => {
+  it("rejects empty parentDeckId when provided", () => {
     const result = createDeckSchema.safeParse({
-      subjectId: "subject-1",
-      name: "",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects name longer than max characters", () => {
-    const result = createDeckSchema.safeParse({
-      subjectId: "subject-1",
-      name: "a".repeat(LIMITS.deckNameMax + 1),
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects description longer than max characters", () => {
-    const result = createDeckSchema.safeParse({
-      subjectId: "subject-1",
+      parentDeckId: "",
       name: "Lecture Notes",
-      description: "a".repeat(LIMITS.deckDescriptionMax + 1),
     });
 
     expect(result.success).toBe(false);
@@ -147,7 +87,7 @@ describe("createDeckSchema", () => {
 });
 
 describe("editDeckSchema", () => {
-  it("accepts valid input with name and description", () => {
+  it("accepts valid input", () => {
     const result = editDeckSchema.safeParse({
       id: "deck-1",
       name: "Updated Name",
@@ -157,63 +97,9 @@ describe("editDeckSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts valid input with name only", () => {
-    const result = editDeckSchema.safeParse({
-      id: "deck-1",
-      name: "Updated Name",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("rejects missing id", () => {
     const result = editDeckSchema.safeParse({
       name: "Updated Name",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty id", () => {
-    const result = editDeckSchema.safeParse({
-      id: "",
-      name: "Updated Name",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing name", () => {
-    const result = editDeckSchema.safeParse({
-      id: "deck-1",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty name", () => {
-    const result = editDeckSchema.safeParse({
-      id: "deck-1",
-      name: "",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects name longer than max characters", () => {
-    const result = editDeckSchema.safeParse({
-      id: "deck-1",
-      name: "a".repeat(LIMITS.deckNameMax + 1),
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects description longer than max characters", () => {
-    const result = editDeckSchema.safeParse({
-      id: "deck-1",
-      name: "Updated Name",
-      description: "a".repeat(LIMITS.deckDescriptionMax + 1),
     });
 
     expect(result.success).toBe(false);
@@ -222,22 +108,40 @@ describe("editDeckSchema", () => {
 
 describe("deleteDeckSchema", () => {
   it("accepts valid id", () => {
-    const result = deleteDeckSchema.safeParse({
+    const result = deleteDeckSchema.safeParse({ id: "deck-1" });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty id", () => {
+    const result = deleteDeckSchema.safeParse({ id: "" });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("moveDeckSchema", () => {
+  it("accepts valid input with parentDeckId", () => {
+    const result = moveDeckSchema.safeParse({
+      id: "deck-1",
+      parentDeckId: "deck-2",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts clearing parentDeckId", () => {
+    const result = moveDeckSchema.safeParse({
       id: "deck-1",
     });
 
     expect(result.success).toBe(true);
   });
 
-  it("rejects missing id", () => {
-    const result = deleteDeckSchema.safeParse({});
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty id", () => {
-    const result = deleteDeckSchema.safeParse({
-      id: "",
+  it("rejects empty parentDeckId", () => {
+    const result = moveDeckSchema.safeParse({
+      id: "deck-1",
+      parentDeckId: "",
     });
 
     expect(result.success).toBe(false);

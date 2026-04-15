@@ -9,7 +9,6 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useEffectEvent,
@@ -30,7 +29,6 @@ import { useExamSession } from "@/components/flashcards/review/use-exam-session"
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
-import { SubjectText } from "@/components/shared/subject-text";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,15 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {
   getFlashcardReviewShortcutAction,
@@ -65,23 +55,21 @@ import {
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
   DeckEntity,
+  DeckOption,
   FlashcardReviewEntity,
   FlashcardReviewState,
-  SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;
-  subjects: SubjectEntity[];
-  decks: DeckEntity[];
-  subjectId?: string;
+  decks: Array<DeckEntity | DeckOption>;
   deckId?: string;
   embedded?: boolean;
 }
 
-function getExamScopeKey(subjectId?: string, deckId?: string) {
-  return `${subjectId ?? "all"}:${deckId ?? "all"}`;
+function getExamScopeKey(deckId?: string) {
+  return deckId ?? "all";
 }
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
@@ -120,7 +108,6 @@ interface ReviewGradeButtonsProps {
 interface FocusModeOverlayProps {
   currentCard: ReviewCard | null;
   reviewState: FlashcardReviewState;
-  subjects: SubjectEntity[];
   decks: DeckEntity[];
   progress: number;
   revealed: boolean;
@@ -133,6 +120,10 @@ interface FocusModeOverlayProps {
   isExamMode?: boolean;
   examCurrentIndex?: number;
   examTotalCards?: number;
+}
+
+function isDeckOption(deck: DeckEntity | DeckOption): deck is DeckOption {
+  return "path" in deck && typeof deck.path === "string";
 }
 
 function ReviewGradeButtons({
@@ -212,7 +203,6 @@ function ReviewHubCardsLoading() {
 function FocusModeOverlay({
   currentCard,
   reviewState,
-  subjects,
   decks,
   progress,
   revealed,
@@ -226,10 +216,14 @@ function FocusModeOverlay({
   examCurrentIndex = 0,
   examTotalCards = 0,
 }: Readonly<FocusModeOverlayProps>) {
-  const currentSubject = subjects.find(
-    (subject) => subject.id === currentCard?.subjectId,
-  );
   const currentDeck = decks.find((deck) => deck.id === currentCard?.deckId);
+  const currentDeckLabel =
+    currentCard?.deckPath ??
+    (currentDeck
+      ? isDeckOption(currentDeck)
+        ? currentDeck.path
+        : currentDeck.name
+      : "");
   const focusDueCountText =
     reviewState.summary.dueCount === 0
       ? "No cards due right now"
@@ -240,7 +234,7 @@ function FocusModeOverlay({
 
   if (!currentCard) {
     return (
-      <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
+      <div className="fixed inset-0 z-110 flex flex-col overflow-y-auto bg-background">
         <div className="flex h-full flex-col items-center justify-center px-6 text-center">
           <h1 className="mb-2 text-2xl font-bold">All caught up!</h1>
           <p className="mb-8 text-muted-foreground">
@@ -255,8 +249,8 @@ function FocusModeOverlay({
   const newLocal =
     "flex items-center gap-1.5 rounded-md border-2 border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--intent-info-text)] uppercase";
   return (
-    <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
-      <div className="flex h-full flex-col">
+    <div className="fixed inset-0 z-110 flex flex-col overflow-y-auto bg-background">
+      <div className="flex min-h-full flex-col">
         <progress
           className="h-1 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
           value={Math.round(progress * 100)}
@@ -287,23 +281,20 @@ function FocusModeOverlay({
           </Button>
         </div>
 
-        <div className="flex-1 overflow-hidden px-4 pb-4">
-          {(currentSubject || currentDeck) && (
+        <div className="flex-1 px-4 pb-4">
+          {currentDeck && (
             <p className="mb-3 text-xs font-semibold tracking-wider text-primary/80 uppercase">
-              {currentSubject?.name}
-              {currentDeck
-                ? ` · ${currentDeck.name}`
-                : ` · ${DEFAULT_DECK_NAME}`}
+              {currentDeckLabel}
             </p>
           )}
 
-          <div className="relative flex h-full flex-col rounded-xl border border-border/60 bg-card">
-            <div className="flex min-h-0 flex-1 flex-col p-6">
-              <div className="flex min-h-0 flex-none flex-col max-h-[50%]">
+          <div className="relative flex flex-col rounded-xl border border-border/60 bg-card">
+            <div className="flex flex-col p-6">
+              <div className="flex flex-col">
                 <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                   Front
                 </h3>
-                <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 pb-3">
+                <div className="pr-1 pb-3">
                   <TiptapRenderer
                     content={currentCard.front}
                     className={`${reviewRichTextClassName} text-lg leading-relaxed`}
@@ -312,11 +303,11 @@ function FocusModeOverlay({
               </div>
 
               {revealed ? (
-                <div className="flex min-h-0 flex-1 flex-col border-t border-border/60 pt-4">
+                <div className="flex flex-col border-t border-border/60 pt-4">
                   <h3 className="mb-2 text-xs font-semibold tracking-wider text-primary/80 uppercase">
                     Answer
                   </h3>
-                  <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 pb-3">
+                  <div className="pr-1 pb-3">
                     <TiptapRenderer
                       content={currentCard.back}
                       className={`${reviewRichTextClassName} text-lg leading-relaxed text-primary`}
@@ -357,9 +348,7 @@ function FocusModeOverlay({
 
 export function FlashcardReviewClient({
   initialState,
-  subjects,
   decks,
-  subjectId,
   deckId,
   embedded = false,
 }: Readonly<FlashcardReviewClientProps>) {
@@ -371,22 +360,17 @@ export function FlashcardReviewClient({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
-  const [isScopeLoading, setIsScopeLoading] = useState(false);
-  const [isScopeSwitchPending, startScopeSwitchTransition] = useTransition();
   const [isActionPending, startActionTransition] = useTransition();
-  const isScopeSwitchLoading = isScopeLoading || isScopeSwitchPending;
-  const isPending = isScopeSwitchLoading || isActionPending;
+  const isScopeSwitchLoading = false;
+  const isPending = isActionPending;
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
-  const router = useRouter();
-  const [selectedSubjectId, setSelectedSubjectId] = useState(subjectId);
   const [selectedDeckId, setSelectedDeckId] = useState(deckId);
-  const subjectChangeRequestIdRef = useRef(0);
   const [examCards, setExamCards] = useState<FlashcardReviewEntity[] | null>(
     null,
   );
   const [isLoadingExamCards, setIsLoadingExamCards] = useState(false);
-  const examScopeRef = useRef<{ subjectId?: string; deckId?: string }>({});
+  const examScopeRef = useRef<{ deckId?: string }>({});
   const examCardsRequestIdRef = useRef(0);
   const examCardsRequestRef = useRef<{
     scopeKey: string;
@@ -396,26 +380,18 @@ export function FlashcardReviewClient({
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
   useEffect(() => {
-    setSelectedSubjectId(subjectId);
     setSelectedDeckId(deckId);
-  }, [subjectId, deckId]);
+  }, [deckId]);
 
   useEffect(() => {
-    const scopeChanged =
-      examScopeRef.current.subjectId !== selectedSubjectId ||
-      examScopeRef.current.deckId !== selectedDeckId;
-
-    if (scopeChanged) {
+    if (examScopeRef.current.deckId !== selectedDeckId) {
       setExamCards(null);
-      examScopeRef.current = {
-        subjectId: selectedSubjectId,
-        deckId: selectedDeckId,
-      };
+      examScopeRef.current = { deckId: selectedDeckId };
       examCardsRequestIdRef.current += 1;
       examCardsRequestRef.current = null;
       setIsLoadingExamCards(false);
     }
-  }, [selectedSubjectId, selectedDeckId]);
+  }, [selectedDeckId]);
 
   async function ensureExamCardsLoaded(): Promise<
     FlashcardReviewEntity[] | null
@@ -424,7 +400,7 @@ export function FlashcardReviewClient({
       return examCards;
     }
 
-    const scopeKey = getExamScopeKey(selectedSubjectId, selectedDeckId);
+    const scopeKey = getExamScopeKey(selectedDeckId);
     if (examCardsRequestRef.current?.scopeKey === scopeKey) {
       return examCardsRequestRef.current.promise;
     }
@@ -434,7 +410,6 @@ export function FlashcardReviewClient({
 
     setIsLoadingExamCards(true);
     const request = getExamFlashcards({
-      subjectId: selectedSubjectId,
       deckId: selectedDeckId,
     })
       .then((cards) => {
@@ -475,14 +450,9 @@ export function FlashcardReviewClient({
   const examBadgeText = `${reviewState.summary.totalCount} ${
     reviewState.summary.totalCount === 1 ? "card" : "cards"
   }`;
-  let examScopeLabel: string;
-  if (selectedDeckId) {
-    examScopeLabel = "All cards in deck";
-  } else if (selectedSubjectId) {
-    examScopeLabel = "All cards in subject";
-  } else {
-    examScopeLabel = "All cards in scope";
-  }
+  const examScopeLabel = selectedDeckId
+    ? "All cards in deck"
+    : "All flashcards";
 
   let progress: number;
   if (examSession.session) {
@@ -500,10 +470,6 @@ export function FlashcardReviewClient({
         scheduler: reviewState.scheduler,
       })
     : null;
-  const filteredDecks = selectedSubjectId
-    ? decks.filter((deck) => deck.subjectId === selectedSubjectId)
-    : [];
-
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
     setReviewState(nextState);
@@ -518,9 +484,8 @@ export function FlashcardReviewClient({
       return;
     }
 
-    if (subjectId && updatedFlashcard.subjectId !== subjectId) {
+    if (deckId && updatedFlashcard.deckId !== deckId) {
       const nextState = await getFlashcardReviewState({
-        subjectId,
         deckId: selectedDeckId,
         limit: reviewBatchLimit,
       });
@@ -563,84 +528,6 @@ export function FlashcardReviewClient({
     }
   }
 
-  function handleSubjectChange(value: string) {
-    const newSubjectId = value === "all" ? undefined : value;
-    setSelectedSubjectId(newSubjectId);
-    setSelectedDeckId(undefined);
-    setIsScopeLoading(true);
-
-    const params = new URLSearchParams();
-    params.set("view", "review");
-    if (newSubjectId) {
-      params.set("subjectId", newSubjectId);
-    }
-    router.replace(`/flashcards?${params.toString()}`);
-
-    const requestId = subjectChangeRequestIdRef.current + 1;
-    subjectChangeRequestIdRef.current = requestId;
-
-    startScopeSwitchTransition(async () => {
-      try {
-        const nextState = await getFlashcardReviewState({
-          subjectId: newSubjectId,
-          deckId: undefined,
-          limit: reviewBatchLimit,
-        });
-
-        if (subjectChangeRequestIdRef.current !== requestId) {
-          return;
-        }
-
-        commitReviewState(nextState);
-        setRevealed(false);
-      } finally {
-        if (subjectChangeRequestIdRef.current === requestId) {
-          setIsScopeLoading(false);
-        }
-      }
-    });
-  }
-
-  function handleDeckChange(value: string) {
-    const newDeckId = value === "all" ? undefined : value;
-    setSelectedDeckId(newDeckId);
-    setIsScopeLoading(true);
-
-    const params = new URLSearchParams();
-    params.set("view", "review");
-    if (selectedSubjectId) {
-      params.set("subjectId", selectedSubjectId);
-    }
-    if (newDeckId) {
-      params.set("deckId", newDeckId);
-    }
-    router.replace(`/flashcards?${params.toString()}`);
-
-    const requestId = subjectChangeRequestIdRef.current + 1;
-    subjectChangeRequestIdRef.current = requestId;
-
-    startScopeSwitchTransition(async () => {
-      try {
-        const nextState = await getFlashcardReviewState({
-          subjectId: selectedSubjectId,
-          deckId: newDeckId,
-          limit: reviewBatchLimit,
-        });
-
-        if (subjectChangeRequestIdRef.current !== requestId) {
-          return;
-        }
-
-        commitReviewState(nextState);
-        setRevealed(false);
-      } finally {
-        if (subjectChangeRequestIdRef.current === requestId) {
-          setIsScopeLoading(false);
-        }
-      }
-    });
-  }
-
   async function refillReviewState(retryCount = 0) {
     if (isRefillingRef.current) {
       return;
@@ -652,7 +539,6 @@ export function FlashcardReviewClient({
       refillRequestIdRef.current = requestId;
 
       const nextState = await getFlashcardReviewState({
-        subjectId: selectedSubjectId,
         deckId: selectedDeckId,
         limit: reviewBatchLimit,
       });
@@ -692,10 +578,7 @@ export function FlashcardReviewClient({
       return;
     }
 
-    examSession.startSession(cards, {
-      subjectId: selectedSubjectId,
-      deckId: selectedDeckId,
-    });
+    examSession.startSession(cards, { deckId: selectedDeckId });
     setRevealed(false);
     setIsFocusMode(true);
   }
@@ -746,10 +629,7 @@ export function FlashcardReviewClient({
       return;
     }
 
-    examSession.startSession(weakCards, {
-      subjectId: selectedSubjectId,
-      deckId: selectedDeckId,
-    });
+    examSession.startSession(weakCards, { deckId: selectedDeckId });
     setRevealed(false);
     setIsFocusMode(true);
   }
@@ -855,64 +735,11 @@ export function FlashcardReviewClient({
 
   const content = (
     <>
-      <div className="mb-4 grid min-w-0 w-full gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
-        <div className="min-w-0">
-          <Select
-            value={selectedSubjectId ?? "all"}
-            onValueChange={handleSubjectChange}
-            disabled={isScopeSwitchLoading}
-          >
-            <SelectTrigger
-              className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
-              data-testid="flashcard-review-subject-filter"
-            >
-              <SelectValue placeholder="Filter by subject" />
-            </SelectTrigger>
-            <SelectContent align="start">
-              <SelectItem value="all">All subjects</SelectItem>
-              {subjects.map((subject) => (
-                <SelectItem key={subject.id} value={subject.id}>
-                  <SubjectText
-                    value={subject.name}
-                    mode="truncate"
-                    className="block max-w-full"
-                  />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {selectedSubjectId && filteredDecks.length > 0 ? (
-          <div className="min-w-0">
-            <Select
-              value={selectedDeckId ?? "all"}
-              onValueChange={handleDeckChange}
-              disabled={isScopeSwitchLoading}
-            >
-              <SelectTrigger
-                className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
-                data-testid="flashcard-review-deck-filter"
-              >
-                <SelectValue placeholder="Filter by deck" />
-              </SelectTrigger>
-              <SelectContent align="start">
-                <SelectItem value="all">All decks</SelectItem>
-                {filteredDecks.map((deck) => (
-                  <SelectItem key={deck.id} value={deck.id}>
-                    {deck.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
-      </div>
-
       {isScopeSwitchLoading ? (
         <ReviewHubCardsLoading />
       ) : (
         <div
-          className="grid gap-4 lg:grid-cols-2"
+          className="grid min-w-0 gap-4 lg:grid-cols-2"
           data-testid="flashcard-review-hub"
         >
           <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
@@ -1030,7 +857,6 @@ export function FlashcardReviewClient({
         <FocusModeOverlay
           currentCard={currentCard}
           reviewState={reviewState}
-          subjects={subjects}
           decks={decks}
           progress={progress}
           revealed={revealed}
@@ -1053,7 +879,6 @@ export function FlashcardReviewClient({
             <EditFlashcardDialog
               key={currentCard.id}
               flashcard={currentCard}
-              subjects={subjects}
               open={editOpen}
               onOpenChange={setEditOpen}
               onUpdated={handleFlashcardUpdated}
@@ -1117,7 +942,7 @@ export function FlashcardReviewClient({
   }
 
   return embedded ? (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto">
       {content}
     </div>
   ) : (

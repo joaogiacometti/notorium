@@ -1,0 +1,2 @@
+ALTER TABLE "deck" DROP CONSTRAINT "deck_userId_parentDeckId_name_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "deck_userId_parentDeckId_name_unique" ON "deck" USING btree ("user_id",coalesce("parent_deck_id", '__root_deck__'),"name");

@@ -20,26 +20,25 @@ function makeFlashcard(
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
-    subjectId: "subject-1",
     userId: "user-1",
     createdAt: new Date("2026-03-01T00:00:00.000Z"),
     updatedAt: new Date("2026-03-01T00:00:00.000Z"),
-    subjectName: "Physics",
-    deckId: null,
-    deckName: null,
+    deckId: "deck-1",
+    deckName: "Default Deck",
+    deckPath: "Default Deck",
     ...overrides,
   };
 }
 
 describe("filterFlashcards", () => {
-  it("filters by subject id", () => {
+  it("filters by deck id", () => {
     const result = filterFlashcards({
       flashcards: [
-        makeFlashcard({ id: "fc-1", subjectId: "subject-1" }),
-        makeFlashcard({ id: "fc-2", subjectId: "subject-2" }),
+        makeFlashcard({ id: "fc-1", deckId: "deck-1" }),
+        makeFlashcard({ id: "fc-2", deckId: "deck-2" }),
       ],
       searchQuery: "",
-      subjectId: "subject-1",
+      deckId: "deck-1",
     });
 
     expect(result).toHaveLength(1);
@@ -84,11 +83,11 @@ describe("filterFlashcards", () => {
     expect(result[0]?.id).toBe("fc-1");
   });
 
-  it("matches subject name case-insensitively", () => {
+  it("matches deck name case-insensitively", () => {
     const result = filterFlashcards({
       flashcards: [
-        makeFlashcard({ id: "fc-1", subjectName: "Linear Algebra" }),
-        makeFlashcard({ id: "fc-2", subjectName: "World History" }),
+        makeFlashcard({ id: "fc-1", deckName: "Linear Algebra" }),
+        makeFlashcard({ id: "fc-2", deckName: "World History" }),
       ],
       searchQuery: "ALGEBRA",
     });
@@ -97,30 +96,30 @@ describe("filterFlashcards", () => {
     expect(result[0]?.id).toBe("fc-1");
   });
 
-  it("combines subject and search filters", () => {
+  it("combines deck and search filters", () => {
     const result = filterFlashcards({
       flashcards: [
         makeFlashcard({
           id: "fc-1",
-          subjectId: "subject-1",
+          deckId: "deck-1",
           front: "<p>Cell division</p>",
-          subjectName: "Biology",
+          deckName: "Biology",
         }),
         makeFlashcard({
           id: "fc-2",
-          subjectId: "subject-2",
+          deckId: "deck-2",
           front: "<p>Cell division</p>",
-          subjectName: "Medicine",
+          deckName: "Medicine",
         }),
         makeFlashcard({
           id: "fc-3",
-          subjectId: "subject-1",
+          deckId: "deck-1",
           front: "<p>Genetics</p>",
-          subjectName: "Biology",
+          deckName: "Biology",
         }),
       ],
       searchQuery: "cell",
-      subjectId: "subject-1",
+      deckId: "deck-1",
     });
 
     expect(result).toHaveLength(1);

@@ -34,8 +34,8 @@ export type { FlashcardForValidation };
 
 export async function generateFlashcardBackContent(input: {
   settings: ResolvedUserAiSettings;
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   front: string;
 }): Promise<string> {
   const frontText = normalizeLine(richTextToPlainText(input.front));
@@ -66,8 +66,8 @@ export async function generateFlashcardBackContent(input: {
 
 export async function improveFlashcardBackContent(input: {
   settings: ResolvedUserAiSettings;
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   front: string;
   currentBack: string;
 }): Promise<string> {
@@ -106,8 +106,8 @@ export async function improveFlashcardBackContent(input: {
 
 export async function generateFlashcardsFromText(input: {
   settings: ResolvedUserAiSettings;
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   text: string;
 }): Promise<Array<{ front: string; back: string }>> {
   const output = await generateStructuredOutput({

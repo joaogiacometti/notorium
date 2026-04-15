@@ -46,7 +46,7 @@ Students who want a private, lightweight study management workspace.
 
 ### Flashcards
 
-- Create, read, update, and delete flashcards per subject.
+- Create, read, update, and delete flashcards within decks.
 - Flashcard fields: front and back rich text.
 - Flashcard create and edit support AI generation of the back when the back is empty.
 - AI flashcard generation is BYOK-only: each user configures their own OpenRouter model and API key on the account page.
@@ -58,19 +58,20 @@ Students who want a private, lightweight study management workspace.
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
 - Flashcards have a global top-level page with review, management, and statistics views.
 - The default flashcards page opens in the review view, with management and statistics available as alternate global views.
-- Flashcards have a dedicated detail page nested under subject routes.
+- Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
 - Flashcard review remains available in the global flashcards page.
 - User AI API keys are encrypted at rest, never shown back to the user after saving, and excluded from data export/import.
 
 ### Decks
 
-- Flashcards belong to a deck within a subject.
-- Each subject has a default deck named "General" created automatically when the subject is created.
-- Users can create, rename, and delete additional decks per subject.
-- Deleting a non-default deck moves all its flashcards to the subject's default deck.
-- The default deck cannot be deleted.
-- The management and review views both support filtering by deck.
-- When creating or editing a flashcard, the user can select any deck belonging to the same subject; unspecified deck assignments fall back to the subject's default deck.
+- Decks are global to the user and are not owned by subjects.
+- Decks support unlimited nesting through `parentDeckId`.
+- Deck paths use `::` notation for display and searchable pickers.
+- Deck names must be unique among sibling decks, including root-level decks.
+- Users can create, rename, and delete decks from the flashcards area.
+- Deleting a deck also deletes its child decks and all flashcards inside that subtree.
+- The flashcards page uses a deck tree sidebar, and deck-scoped review/manage/statistics include cards from descendant decks.
+- When creating or editing a flashcard, the user must choose one of their decks.
 
 ### Flashcard Review
 
@@ -91,7 +92,7 @@ Students who want a private, lightweight study management workspace.
 ### Flashcard Statistics
 
 - Global statistics view in the flashcards page.
-- Statistics respect the active subject and deck filters.
+- Statistics respect the active deck filter.
 - Statistics show overview metrics for cards in scope, including due cards, reviewed vs never-reviewed cards, review/lapse totals, card-state distribution, rating distribution, and recent daily review activity.
 
 ### Focus Mode
@@ -107,7 +108,7 @@ Students who want a private, lightweight study management workspace.
 ### Exam Mode
 
 - Accessed from the flashcard review hub via the `Start exam` action card.
-- Uses the active subject and deck filters as the exam scope.
+- Uses the active deck filter as the exam scope.
 - The first tap/click on `Start exam` loads scoped exam cards and enters exam mode in a single interaction.
 - Runs in focus-mode UI with exam progress shown as `Card X of Y`.
 - Exam sessions do not modify due-card scheduling state for regular spaced-repetition reviews.
@@ -135,6 +136,7 @@ Students who want a private, lightweight study management workspace.
 
 - Search subjects, notes, and flashcards by text with case-insensitive matching.
 - Flashcard search results navigate to the flashcard detail page.
+- Flashcard search results display deck paths using `::` notation.
 - Search is user-scoped and accessible from the navbar.
 - Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
@@ -176,8 +178,8 @@ Students who want a private, lightweight study management workspace.
 - A user can create a maximum of 50 subjects.
 - A user can create a maximum of 100 notes per subject.
 - A user can create a maximum of 50 assessments per subject.
-- A user can create a maximum of 2000 flashcards per subject.
-- A user can create a maximum of 20 decks per subject.
+- A user can create a maximum of 2000 flashcards per deck.
+- A user can create a maximum of 200 decks.
 
 ## Data Ownership and Security Rules
 
@@ -194,9 +196,9 @@ Students who want a private, lightweight study management workspace.
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`
 - `deck`
-  - `id`, `name`, `description`, `isDefault`, `subjectId`, timestamps, `userId`
+  - `id`, `name`, `description`, `parentDeckId`, timestamps, `userId`
 - `flashcard`
-  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, `deckId`, timestamps, `userId`
+  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `deckId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
   - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, optimization timestamps
 - `flashcard_review_log`

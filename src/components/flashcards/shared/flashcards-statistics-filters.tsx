@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { SubjectText } from "@/components/shared/subject-text";
 import {
   Select,
   SelectContent,
@@ -10,22 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { DeckEntity, SubjectEntity } from "@/lib/server/api-contracts";
+import type { DeckEntity } from "@/lib/server/api-contracts";
 
 interface FlashcardsStatisticsFiltersProps {
-  subjects: SubjectEntity[];
   decks: DeckEntity[];
-  subjectId?: string;
   deckId?: string;
 }
 
-function buildStatisticsHref(subjectId?: string, deckId?: string) {
+function buildStatisticsHref(deckId?: string) {
   const params = new URLSearchParams();
   params.set("view", "statistics");
-
-  if (subjectId) {
-    params.set("subjectId", subjectId);
-  }
 
   if (deckId) {
     params.set("deckId", deckId);
@@ -35,63 +28,23 @@ function buildStatisticsHref(subjectId?: string, deckId?: string) {
 }
 
 export function FlashcardsStatisticsFilters({
-  subjects,
   decks,
-  subjectId,
   deckId,
 }: Readonly<FlashcardsStatisticsFiltersProps>) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const filteredDecks = subjectId
-    ? decks.filter((deck) => deck.subjectId === subjectId)
-    : [];
-
-  function handleSubjectChange(value: string) {
-    const nextSubjectId = value === "all" ? undefined : value;
-
-    startTransition(() => {
-      router.replace(buildStatisticsHref(nextSubjectId));
-    });
-  }
 
   function handleDeckChange(value: string) {
     const nextDeckId = value === "all" ? undefined : value;
 
     startTransition(() => {
-      router.replace(buildStatisticsHref(subjectId, nextDeckId));
+      router.replace(buildStatisticsHref(nextDeckId));
     });
   }
 
   return (
     <div className="grid min-w-0 w-full gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
-      <div className="min-w-0">
-        <Select
-          value={subjectId ?? "all"}
-          onValueChange={handleSubjectChange}
-          disabled={isPending}
-        >
-          <SelectTrigger
-            className="h-10 w-full rounded-lg border-border/70 bg-background px-3.5 shadow-xs sm:w-auto sm:min-w-32 sm:max-w-64"
-            data-testid="flashcard-statistics-subject-filter"
-          >
-            <SelectValue placeholder="Filter by subject" />
-          </SelectTrigger>
-          <SelectContent align="start">
-            <SelectItem value="all">All subjects</SelectItem>
-            {subjects.map((subject) => (
-              <SelectItem key={subject.id} value={subject.id}>
-                <SubjectText
-                  value={subject.name}
-                  mode="truncate"
-                  className="block max-w-full"
-                />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {subjectId && filteredDecks.length > 0 ? (
+      {decks.length > 0 ? (
         <div className="min-w-0">
           <Select
             value={deckId ?? "all"}
@@ -106,7 +59,7 @@ export function FlashcardsStatisticsFilters({
             </SelectTrigger>
             <SelectContent align="start">
               <SelectItem value="all">All decks</SelectItem>
-              {filteredDecks.map((deck) => (
+              {decks.map((deck) => (
                 <SelectItem key={deck.id} value={deck.id}>
                   {deck.name}
                 </SelectItem>

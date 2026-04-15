@@ -19,7 +19,6 @@ import {
   type ImportData,
   importDataSchema,
 } from "@/features/data-transfer/validation";
-import { DEFAULT_DECK_NAME } from "@/features/decks/constants";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
@@ -58,45 +57,74 @@ export async function importDataForUser(
     return parsed.error;
   }
 
-  const data = parsed.data;
+  const data: ImportData = {
+    ...parsed.data,
+    decks: parsed.data.decks ?? [],
+    flashcards: parsed.data.flashcards ?? [],
+    subjects: (parsed.data.subjects ?? []).map((currentSubject) => ({
+      ...currentSubject,
+      notes: currentSubject.notes ?? [],
+      attendanceMisses: currentSubject.attendanceMisses ?? [],
+      assessments: currentSubject.assessments ?? [],
+    })),
+  };
 
-  if (data.subjects.length === 0) {
+  if (
+    data.subjects.length === 0 &&
+    data.decks.length === 0 &&
+    data.flashcards.length === 0
+  ) {
     return actionError("dataTransfer.noSubjectsToImport");
   }
 
-  const subjectCountResult = await getDb()
-    .select({ total: count() })
-    .from(subject)
-    .where(eq(subject.userId, userId));
+  if (data.subjects.length > 0) {
+    const subjectCountResult = await getDb()
+      .select({ total: count() })
+      .from(subject)
+      .where(eq(subject.userId, userId));
 
-  const currentSubjects = subjectCountResult[0]?.total ?? 0;
+    const currentSubjects = subjectCountResult[0]?.total ?? 0;
 
-  if (currentSubjects + data.subjects.length > LIMITS.maxSubjects) {
-    return actionError("limits.subjectImportLimit", {
-      errorParams: { max: LIMITS.maxSubjects },
-    });
-  }
+    if (currentSubjects + data.subjects.length > LIMITS.maxSubjects) {
+      return actionError("limits.subjectImportLimit", {
+        errorParams: { max: LIMITS.maxSubjects },
+      });
+    }
 
-  const subjectLimitsError = validateSubjectImportLimits(data.subjects);
-  if (subjectLimitsError) {
-    return subjectLimitsError;
+    const subjectLimitsError = validateSubjectImportLimits(data.subjects);
+    if (subjectLimitsError) {
+      return subjectLimitsError;
+    }
   }
 
   try {
-    const imported = await importSubjectsFromData(userId, data);
+    const imported = await importDataFromPayload(userId, data);
     return { success: true, imported };
   } catch {
     return actionError("dataTransfer.importFailed");
   }
 }
 
-async function importSubjectsFromData(userId: string, data: ImportData) {
+type Tx = Parameters<ReturnType<typeof getDb>["transaction"]>[0] extends (
+  tx: infer T,
+) => unknown
+  ? T
+  : never;
+
+async function importDataFromPayload(userId: string, data: ImportData) {
   return getDb().transaction(async (tx) => {
     let importedCount = 0;
     const importedScheduler = data.flashcardScheduler ?? {
       desiredRetention: getDefaultFsrsDesiredRetention(),
       weights: getDefaultFsrsWeights(),
     };
+
+    const sharedDeckPathToId = await importDecksFromPaths(
+      tx,
+      userId,
+      data.decks,
+    );
+    await insertFlashcardRows(tx, userId, data.flashcards, sharedDeckPathToId);
 
     for (const importedSubject of data.subjects) {
       const [inserted] = await tx
@@ -161,37 +189,6 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
         );
       }
 
-      const { deckNameToId, defaultDeckId } = await importDecksForSubject(
-        tx,
-        userId,
-        subjectId,
-        importedSubject.decks,
-      );
-
-      if (importedSubject.flashcards.length > 0) {
-        await tx.insert(flashcard).values(
-          importedSubject.flashcards.map((currentFlashcard) => ({
-            ...getImportedFlashcardSchedulingState(currentFlashcard),
-            front: removeInternalAttachmentImagesForTransfer(
-              currentFlashcard.front,
-            ),
-            frontNormalized: normalizeRichTextForUniqueness(
-              removeInternalAttachmentImagesForTransfer(currentFlashcard.front),
-            ),
-            back: removeInternalAttachmentImagesForTransfer(
-              currentFlashcard.back,
-            ),
-            deckId:
-              currentFlashcard.deckName === undefined
-                ? defaultDeckId
-                : (deckNameToId.get(currentFlashcard.deckName) ??
-                  defaultDeckId),
-            subjectId,
-            userId,
-          })),
-        );
-      }
-
       importedCount++;
     }
 
@@ -215,66 +212,84 @@ async function importSubjectsFromData(userId: string, data: ImportData) {
   });
 }
 
-type Tx = Parameters<ReturnType<typeof getDb>["transaction"]>[0] extends (
-  tx: infer T,
-) => unknown
-  ? T
-  : never;
-
-type ImportedDeck = ImportData["subjects"][number]["decks"][number];
-
-async function importDecksForSubject(
+async function importDecksFromPaths(
   tx: Tx,
   userId: string,
-  subjectId: string,
-  importedDecks: ImportedDeck[],
-): Promise<{
-  deckNameToId: Map<string, string>;
-  defaultDeckId: string;
-}> {
-  const deckNameToId = new Map<string, string>();
-  let defaultDeckId: string | null = null;
+  importedDecks: ImportData["decks"],
+): Promise<Map<string, string>> {
+  const pathToId = new Map<string, string>();
 
-  if (importedDecks.length > 0) {
-    const insertedDecks = await tx
-      .insert(deck)
-      .values(
-        importedDecks.map((d) => ({
-          name: d.name,
-          description: d.description ?? undefined,
-          isDefault: d.isDefault,
-          subjectId,
-          userId,
-        })),
-      )
-      .returning({ id: deck.id, name: deck.name, isDefault: deck.isDefault });
+  const sorted = [...importedDecks].sort((a, b) => {
+    const aDepth = a.path.split("::").length;
+    const bDepth = b.path.split("::").length;
+    return aDepth - bDepth;
+  });
 
-    for (const insertedDeck of insertedDecks) {
-      deckNameToId.set(insertedDeck.name, insertedDeck.id);
-      if (insertedDeck.isDefault) {
-        defaultDeckId = insertedDeck.id;
+  for (const d of sorted) {
+    const parts = d.path.split("::");
+    const name = parts[parts.length - 1];
+    const parentPath = parts.length > 1 ? parts.slice(0, -1).join("::") : null;
+    const parentDeckId = parentPath ? (pathToId.get(parentPath) ?? null) : null;
+
+    const insertBuilder = tx.insert(deck).values({
+      name: name ?? d.path,
+      description: d.description ?? undefined,
+      parentDeckId,
+      userId,
+    });
+
+    const insertResult =
+      "onConflictDoNothing" in insertBuilder
+        ? insertBuilder.onConflictDoNothing()
+        : insertBuilder;
+    const [returned] = await insertResult.returning({ id: deck.id });
+
+    if (returned) {
+      pathToId.set(d.path, returned.id);
+    }
+  }
+
+  return pathToId;
+}
+
+async function insertFlashcardRows(
+  tx: Tx,
+  userId: string,
+  importedFlashcards: ImportData["flashcards"],
+  deckPathToId: Map<string, string>,
+): Promise<number> {
+  if (importedFlashcards.length === 0) {
+    return 0;
+  }
+
+  const flashcardRows = importedFlashcards
+    .map((fc) => {
+      const deckId =
+        (fc.deckPath ? deckPathToId.get(fc.deckPath) : undefined) ??
+        (fc.deckName ? deckPathToId.get(fc.deckName) : undefined);
+
+      if (!deckId) {
+        return null;
       }
-    }
-  }
 
-  if (defaultDeckId === null) {
-    const [insertedDefault] = await tx
-      .insert(deck)
-      .values({
-        name: DEFAULT_DECK_NAME,
-        isDefault: true,
-        subjectId,
+      const front = removeInternalAttachmentImagesForTransfer(fc.front);
+      const back = removeInternalAttachmentImagesForTransfer(fc.back);
+
+      return {
+        ...getImportedFlashcardSchedulingState(fc),
+        front,
+        frontNormalized: normalizeRichTextForUniqueness(front),
+        back,
+        deckId,
         userId,
-      })
-      .returning({ id: deck.id });
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
 
-    if (!insertedDefault) {
-      throw new Error("Failed to insert default deck for imported subject");
-    }
-
-    defaultDeckId = insertedDefault.id;
-    deckNameToId.set(DEFAULT_DECK_NAME, defaultDeckId);
+  if (flashcardRows.length === 0) {
+    return 0;
   }
 
-  return { deckNameToId, defaultDeckId };
+  await tx.insert(flashcard).values(flashcardRows);
+  return flashcardRows.length;
 }

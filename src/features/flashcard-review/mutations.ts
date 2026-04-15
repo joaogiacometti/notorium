@@ -80,7 +80,6 @@ export async function reviewFlashcardForUser(
           id: flashcard.id,
           front: flashcard.front,
           back: flashcard.back,
-          subjectId: flashcard.subjectId,
           state: flashcard.state,
           dueAt: flashcard.dueAt,
           stability: flashcard.stability,

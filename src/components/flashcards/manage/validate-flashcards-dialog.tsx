@@ -1,15 +1,14 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   getAllFlashcardIds,
-  getFlashcardIdsForSubject,
+  getFlashcardIdsForDeck,
   validateFlashcards,
 } from "@/app/actions/flashcards";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,19 +18,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FieldGroup } from "@/components/ui/field";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardValidationIssue,
   FlashcardValidationItem,
-  SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -42,41 +33,27 @@ interface ValidateFlashcardsDialogProps {
     issues: FlashcardValidationIssue[],
     flashcards: FlashcardValidationItem[],
   ) => void;
-  subjects: SubjectEntity[];
-  currentSubjectId?: string;
+  currentDeckId?: string;
 }
 
 export function ValidateFlashcardsDialog({
   open,
   onOpenChange,
   onValidationStarted,
-  subjects,
-  currentSubjectId,
+  currentDeckId,
 }: Readonly<ValidateFlashcardsDialogProps>) {
   const [isValidating, setIsValidating] = useState(false);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<
-    string | "all" | undefined
-  >(undefined);
-
-  useEffect(() => {
-    if (open) {
-      setSelectedSubjectId(currentSubjectId ?? "all");
-    }
-  }, [open, currentSubjectId]);
 
   const handleValidate = async () => {
-    if (!selectedSubjectId) {
-      toast.error("No flashcards to validate.");
-      return;
-    }
-
     setIsValidating(true);
 
     try {
       let flashcardIds: string[];
 
-      if (selectedSubjectId === "all") {
-        const idsResult = await getAllFlashcardIds();
+      if (currentDeckId) {
+        const idsResult = await getFlashcardIdsForDeck({
+          deckId: currentDeckId,
+        });
 
         if ("errorCode" in idsResult) {
           toast.error(t(idsResult.errorCode, idsResult.errorParams));
@@ -86,9 +63,7 @@ export function ValidateFlashcardsDialog({
 
         flashcardIds = idsResult.flashcardIds;
       } else {
-        const idsResult = await getFlashcardIdsForSubject({
-          subjectId: selectedSubjectId,
-        });
+        const idsResult = await getAllFlashcardIds();
 
         if ("errorCode" in idsResult) {
           toast.error(t(idsResult.errorCode, idsResult.errorParams));
@@ -105,8 +80,10 @@ export function ValidateFlashcardsDialog({
         return;
       }
 
-      if (flashcardIds.length > LIMITS.maxFlashcardsPerSubject) {
-        toast.error("Too many flashcards. Maximum 500 cards per validation.");
+      if (flashcardIds.length > LIMITS.flashcardBatchSize) {
+        toast.error(
+          `Too many flashcards. Maximum ${LIMITS.flashcardBatchSize} cards per validation.`,
+        );
         setIsValidating(false);
         return;
       }
@@ -136,6 +113,8 @@ export function ValidateFlashcardsDialog({
     }
   };
 
+  const scopeLabel = currentDeckId ? "the selected deck" : "all flashcards";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -143,37 +122,10 @@ export function ValidateFlashcardsDialog({
           <DialogTitle>Validate Flashcards</DialogTitle>
           <DialogDescription>
             Use AI to check for incorrect information, confusing content, or
-            duplicate cards.
+            duplicate cards in {scopeLabel}.
           </DialogDescription>
         </DialogHeader>
         <FieldGroup className="gap-3">
-          <Field>
-            <FieldLabel htmlFor="validation-subject">Subject</FieldLabel>
-            <Select
-              value={selectedSubjectId ?? "all"}
-              onValueChange={(value) => setSelectedSubjectId(value || "all")}
-              disabled={isValidating}
-            >
-              <SelectTrigger
-                id="validation-subject"
-                className="h-10 rounded-lg"
-              >
-                <SelectValue placeholder="Subject" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subjects</SelectItem>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    <SubjectText
-                      value={subject.name}
-                      mode="truncate"
-                      className="block max-w-full"
-                    />
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               type="button"

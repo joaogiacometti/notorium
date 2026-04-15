@@ -7,6 +7,7 @@ export const detailPageOriginValues = [
 export type DetailPageOrigin = (typeof detailPageOriginValues)[number];
 
 export type DetailPageBackLabel = "flashcards" | "planning" | "subject";
+export type FlashcardsReturnView = "manage" | "review" | "statistics";
 
 export interface DetailPageBackLink {
   href: string;
@@ -16,15 +17,23 @@ export interface DetailPageBackLink {
 interface DetailPageReturnContextInput {
   from?: string;
   subjectId?: string;
+  view?: string;
+  deckId?: string;
 }
 
 interface DetailPageReturnContext {
   from?: DetailPageOrigin;
   subjectId?: string;
+  view?: FlashcardsReturnView;
+  deckId?: string;
 }
 
 function isDetailPageOrigin(value: string): value is DetailPageOrigin {
   return detailPageOriginValues.includes(value as DetailPageOrigin);
+}
+
+function isFlashcardsReturnView(value: string): value is FlashcardsReturnView {
+  return ["manage", "review", "statistics"].includes(value);
 }
 
 export function resolveDetailPageReturnContext(
@@ -39,6 +48,9 @@ export function resolveDetailPageReturnContext(
       input.subjectId && input.subjectId.length > 0
         ? input.subjectId
         : undefined,
+    view:
+      input.view && isFlashcardsReturnView(input.view) ? input.view : undefined,
+    deckId: input.deckId && input.deckId.length > 0 ? input.deckId : undefined,
   };
 }
 
@@ -59,10 +71,13 @@ function withSearchParams(
   return query.length > 0 ? `${pathname}?${query}` : pathname;
 }
 
-export function getFlashcardsManageHref(subjectId?: string) {
+export function getFlashcardsHref(
+  view: FlashcardsReturnView = "manage",
+  deckId?: string,
+) {
   return withSearchParams("/flashcards", {
-    view: "manage",
-    subjectId,
+    view,
+    deckId,
   });
 }
 
@@ -74,7 +89,6 @@ export function getPlanningAssessmentsHref(subjectId?: string) {
 }
 
 export function getFlashcardDetailHref(
-  subjectId: string,
   flashcardId: string,
   returnContext?: DetailPageReturnContextInput,
 ) {
@@ -82,9 +96,10 @@ export function getFlashcardDetailHref(
     ? resolveDetailPageReturnContext(returnContext)
     : {};
 
-  return withSearchParams(`/subjects/${subjectId}/flashcards/${flashcardId}`, {
+  return withSearchParams(`/flashcards/${flashcardId}`, {
     from: context.from,
-    subjectId: context.subjectId,
+    view: context.view,
+    deckId: context.deckId,
   });
 }
 
@@ -119,20 +134,26 @@ export function getAssessmentDetailHref(
 
 export function resolveFlashcardDetailBackLink(
   input: DetailPageReturnContextInput,
-  subjectId: string,
 ): DetailPageBackLink {
   const context = resolveDetailPageReturnContext(input);
 
   if (context.from === "flashcards-manage") {
     return {
-      href: getFlashcardsManageHref(context.subjectId),
+      href: getFlashcardsHref(context.view, context.deckId),
+      label: "flashcards",
+    };
+  }
+
+  if (context.view) {
+    return {
+      href: getFlashcardsHref(context.view, context.deckId),
       label: "flashcards",
     };
   }
 
   return {
-    href: `/subjects/${subjectId}`,
-    label: "subject",
+    href: "/flashcards",
+    label: "flashcards",
   };
 }
 

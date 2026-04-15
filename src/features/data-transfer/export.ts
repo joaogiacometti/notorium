@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import {
   assessment,
@@ -23,6 +23,45 @@ export interface ExportOptions {
   templateOnly?: boolean;
 }
 
+function buildDeckPaths(
+  decks: Array<{ id: string; name: string; parentDeckId: string | null }>,
+): Map<string, string> {
+  const pathById = new Map<string, string>();
+  const deckById = new Map(decks.map((d) => [d.id, d]));
+
+  function getPath(deckId: string): string {
+    const cached = pathById.get(deckId);
+    if (cached) {
+      return cached;
+    }
+
+    const d = deckById.get(deckId);
+    if (!d) {
+      return "";
+    }
+
+    const path = d.parentDeckId
+      ? `${getPath(d.parentDeckId)}::${d.name}`
+      : d.name;
+    pathById.set(deckId, path);
+    return path;
+  }
+
+  for (const d of decks) {
+    getPath(d.id);
+  }
+
+  return pathById;
+}
+
+function _getOptionalRowField(row: unknown, field: string): unknown {
+  if (typeof row !== "object" || row === null) {
+    return undefined;
+  }
+
+  return (row as Record<string, unknown>)[field];
+}
+
 export async function exportDataForUser(
   userId: string,
   options: ExportOptions = {},
@@ -39,72 +78,45 @@ export async function exportDataForUser(
     .from(subject)
     .where(and(eq(subject.userId, userId), isNull(subject.archivedAt)));
 
-  if (subjects.length === 0) {
-    return {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      subjects: [],
-    };
-  }
-
-  const subjectIds = subjects.map((item) => item.id);
+  const subjectIds = subjects.map((s) => s.id);
 
   const [notes, misses, assessments, flashcards, decks] = await Promise.all([
-    templateOnly
+    templateOnly || subjectIds.length === 0
       ? Promise.resolve([])
       : getDb()
           .select()
           .from(note)
-          .where(
-            and(eq(note.userId, userId), inArray(note.subjectId, subjectIds)),
-          ),
-    templateOnly
+          .where(and(eq(note.userId, userId))),
+    templateOnly || subjectIds.length === 0
       ? Promise.resolve([])
       : getDb()
           .select()
           .from(attendanceMiss)
-          .where(
-            and(
-              eq(attendanceMiss.userId, userId),
-              inArray(attendanceMiss.subjectId, subjectIds),
-            ),
-          ),
-    getDb()
-      .select()
-      .from(assessment)
-      .where(
-        and(
-          eq(assessment.userId, userId),
-          inArray(assessment.subjectId, subjectIds),
-        ),
-      ),
+          .where(eq(attendanceMiss.userId, userId)),
+    subjectIds.length === 0
+      ? Promise.resolve([])
+      : getDb().select().from(assessment).where(eq(assessment.userId, userId)),
+    templateOnly
+      ? Promise.resolve([])
+      : getDb().select().from(flashcard).where(eq(flashcard.userId, userId)),
     templateOnly
       ? Promise.resolve([])
       : getDb()
-          .select()
-          .from(flashcard)
-          .where(
-            and(
-              eq(flashcard.userId, userId),
-              inArray(flashcard.subjectId, subjectIds),
-            ),
-          ),
-    templateOnly
-      ? Promise.resolve([])
-      : getDb()
-          .select()
+          .select({
+            id: deck.id,
+            name: deck.name,
+            description: deck.description,
+            parentDeckId: deck.parentDeckId,
+          })
           .from(deck)
-          .where(
-            and(eq(deck.userId, userId), inArray(deck.subjectId, subjectIds)),
-          ),
+          .where(eq(deck.userId, userId)),
   ]);
 
-  const notesBySubjectId = groupRowsBySubjectId(notes);
-  const missesBySubjectId = groupRowsBySubjectId(misses);
-  const assessmentsBySubjectId = groupRowsBySubjectId(assessments);
-  const flashcardsBySubjectId = groupRowsBySubjectId(flashcards);
-  const decksBySubjectId = groupRowsBySubjectId(decks);
-  const deckNameById = new Map(decks.map((d) => [d.id, d.name]));
+  const deckPathById = buildDeckPaths(decks);
+
+  const notesBySubjectId = groupByField(notes, "subjectId");
+  const missesBySubjectId = groupByField(misses, "subjectId");
+  const assessmentsBySubjectId = groupByField(assessments, "subjectId");
 
   return {
     version: 1,
@@ -120,6 +132,33 @@ export async function exportDataForUser(
           desiredRetention: getDefaultFsrsDesiredRetention(),
           weights: getDefaultFsrsWeights(),
         },
+    decks: decks.map((d) => ({
+      path: deckPathById.get(d.id) ?? d.name,
+      name: d.name,
+      description: d.description ?? null,
+    })),
+    flashcards: flashcards.map((fc) => ({
+      front: removeInternalAttachmentImagesForTransfer(fc.front),
+      back: removeInternalAttachmentImagesForTransfer(fc.back),
+      deckName: fc.deckId ? (deckPathById.get(fc.deckId) ?? "") : undefined,
+      deckPath: deckPathById.get(fc.deckId) ?? "",
+      state: fc.state,
+      dueAt: fc.dueAt.toISOString(),
+      stability:
+        fc.stability === null ? null : Number.parseFloat(String(fc.stability)),
+      difficulty:
+        fc.difficulty === null
+          ? null
+          : Number.parseFloat(String(fc.difficulty)),
+      ease: fc.ease,
+      intervalDays: fc.intervalDays,
+      learningStep: fc.learningStep,
+      lastReviewedAt: fc.lastReviewedAt?.toISOString() ?? null,
+      reviewCount: fc.reviewCount,
+      lapseCount: fc.lapseCount,
+      createdAt: fc.createdAt.toISOString(),
+      updatedAt: fc.updatedAt.toISOString(),
+    })),
     subjects: subjects.map((item) => ({
       name: item.name,
       description: item.description,
@@ -154,59 +193,24 @@ export async function exportDataForUser(
           updatedAt: currentAssessment.updatedAt.toISOString(),
         }),
       ),
-      flashcards: (flashcardsBySubjectId.get(item.id) ?? []).map(
-        (currentFlashcard) => ({
-          front: removeInternalAttachmentImagesForTransfer(
-            currentFlashcard.front,
-          ),
-          back: removeInternalAttachmentImagesForTransfer(
-            currentFlashcard.back,
-          ),
-          deckName:
-            currentFlashcard.deckId === null
-              ? undefined
-              : (deckNameById.get(currentFlashcard.deckId) ?? undefined),
-          state: currentFlashcard.state,
-          dueAt: currentFlashcard.dueAt.toISOString(),
-          stability:
-            currentFlashcard.stability === null
-              ? null
-              : Number.parseFloat(String(currentFlashcard.stability)),
-          difficulty:
-            currentFlashcard.difficulty === null
-              ? null
-              : Number.parseFloat(String(currentFlashcard.difficulty)),
-          ease: currentFlashcard.ease,
-          intervalDays: currentFlashcard.intervalDays,
-          learningStep: currentFlashcard.learningStep,
-          lastReviewedAt:
-            currentFlashcard.lastReviewedAt?.toISOString() ?? null,
-          reviewCount: currentFlashcard.reviewCount,
-          lapseCount: currentFlashcard.lapseCount,
-          createdAt: currentFlashcard.createdAt.toISOString(),
-          updatedAt: currentFlashcard.updatedAt.toISOString(),
-        }),
-      ),
-      decks: (decksBySubjectId.get(item.id) ?? []).map((d) => ({
-        name: d.name,
-        description: d.description ?? null,
-        isDefault: d.isDefault,
-      })),
     })),
   };
 }
 
-function groupRowsBySubjectId<T extends { subjectId: string }>(rows: T[]) {
+function groupByField<T extends Record<string, unknown>>(
+  rows: T[],
+  field: keyof T & string,
+): Map<string, T[]> {
   const grouped = new Map<string, T[]>();
 
   for (const row of rows) {
-    const existing = grouped.get(row.subjectId);
+    const key = String(row[field]);
+    const existing = grouped.get(key);
     if (existing) {
       existing.push(row);
-      continue;
+    } else {
+      grouped.set(key, [row]);
     }
-
-    grouped.set(row.subjectId, [row]);
   }
 
   return grouped;

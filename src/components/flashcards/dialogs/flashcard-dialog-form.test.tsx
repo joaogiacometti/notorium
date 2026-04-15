@@ -30,7 +30,7 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
 function Harness() {
   const form = useForm<CreateFlashcardForm>({
     defaultValues: {
-      subjectId: "subject-1",
+      deckId: "",
       front: "",
       back: "",
     },

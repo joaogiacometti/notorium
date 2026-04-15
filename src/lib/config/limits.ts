@@ -4,8 +4,10 @@ export const LIMITS = {
   maxAttachmentsPerNote: 20,
   maxAttachmentsPerFlashcard: 10,
   maxAssessmentsPerSubject: 50,
-  maxFlashcardsPerSubject: 2000,
-  maxDecksPerSubject: 20,
+  maxFlashcardsPerDeck: 2000,
+  maxDecksPerUser: 200,
+  maxChildDecksPerDeck: 50,
+  maxDeckNestingDepth: 4,
 
   deckNameMax: 100,
   deckDescriptionMax: 500,

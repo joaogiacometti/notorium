@@ -4,13 +4,17 @@ import {
   count,
   eq,
   gte,
-  isNull,
+  inArray,
   lte,
   type SQL,
   sql,
 } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { deck, flashcard, flashcardReviewLog, subject } from "@/db/schema";
+import { deck, flashcard, flashcardReviewLog } from "@/db/schema";
+import {
+  getAllDecksWithPathsForUser,
+  getDescendantDeckIds,
+} from "@/features/decks/queries";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -21,40 +25,50 @@ import type {
 } from "@/lib/server/api-contracts";
 
 export interface GetDueFlashcardsOptions {
-  subjectId?: string;
   deckId?: string;
+  deckIds?: string[];
   limit?: number;
 }
 
 const recentTrendDays = 7;
 
-function getScopedFilters(
+async function getDeckPathMapForUser(
   userId: string,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "deckId"> = {},
-): SQL<unknown>[] {
-  const filters: SQL<unknown>[] = [
-    eq(flashcard.userId, userId),
-    eq(subject.userId, userId),
-    isNull(subject.archivedAt),
-  ];
+): Promise<Map<string, string>> {
+  const decks = await getAllDecksWithPathsForUser(userId);
+  return new Map(
+    decks.map((currentDeck) => [currentDeck.id, currentDeck.path]),
+  );
+}
 
-  if (options.subjectId) {
-    filters.push(eq(flashcard.subjectId, options.subjectId));
-  }
+async function getScopedFilters(
+  userId: string,
+  options: Pick<GetDueFlashcardsOptions, "deckId" | "deckIds"> = {},
+): Promise<SQL<unknown>[]> {
+  const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
 
-  if (options.deckId) {
-    filters.push(eq(flashcard.deckId, options.deckId));
+  if (options.deckIds && options.deckIds.length > 0) {
+    filters.push(inArray(flashcard.deckId, options.deckIds));
+  } else if (options.deckId) {
+    const descendantDeckIds = await getDescendantDeckIds(
+      userId,
+      options.deckId,
+    );
+    filters.push(inArray(flashcard.deckId, descendantDeckIds));
   }
 
   return filters;
 }
 
-function getDueFilters(
+async function getDueFilters(
   userId: string,
   now: Date,
   options: GetDueFlashcardsOptions,
-): SQL<unknown>[] {
-  return [...getScopedFilters(userId, options), lte(flashcard.dueAt, now)];
+): Promise<SQL<unknown>[]> {
+  return [
+    ...(await getScopedFilters(userId, options)),
+    lte(flashcard.dueAt, now),
+  ];
 }
 
 export async function getDueFlashcardsForUser(
@@ -67,19 +81,23 @@ export async function getDueFlashcardsForUser(
       ? Math.min(options.limit, LIMITS.reviewDueLimitMax)
       : LIMITS.reviewDueLimitDefault;
 
+  const [filters, deckPathMap] = await Promise.all([
+    getDueFilters(userId, now, options),
+    getDeckPathMapForUser(userId),
+  ]);
+
   return getDb()
-    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
+    .select({ flashcard, deckName: deck.name })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .leftJoin(deck, eq(flashcard.deckId, deck.id))
-    .where(and(...getDueFilters(userId, now, options)))
+    .innerJoin(deck, eq(flashcard.deckId, deck.id))
+    .where(and(...filters))
     .orderBy(asc(flashcard.dueAt), asc(flashcard.createdAt))
     .limit(limit)
     .then((rows) =>
       rows.map((row) => ({
         ...row.flashcard,
-        subjectName: row.subjectName,
         deckName: row.deckName,
+        deckPath: deckPathMap.get(row.flashcard.deckId) ?? row.deckName,
       })),
     );
 }
@@ -87,20 +105,18 @@ export async function getDueFlashcardsForUser(
 export async function getFlashcardReviewSummaryForUser(
   userId: string,
   now: Date,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "deckId"> = {},
+  options: Pick<GetDueFlashcardsOptions, "deckId" | "deckIds"> = {},
 ): Promise<FlashcardReviewSummary> {
-  const baseFilters = getScopedFilters(userId, options);
+  const baseFilters = await getScopedFilters(userId, options);
 
   const [dueResult, totalResult] = await Promise.all([
     getDb()
       .select({ total: count() })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
       .where(and(...baseFilters, lte(flashcard.dueAt, now))),
     getDb()
       .select({ total: count() })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
       .where(and(...baseFilters)),
   ]);
 
@@ -113,22 +129,22 @@ export async function getFlashcardReviewSummaryForUser(
 export async function getFlashcardStatisticsForUser(
   userId: string,
   now: Date,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "deckId"> = {},
+  options: Pick<GetDueFlashcardsOptions, "deckId" | "deckIds"> = {},
 ): Promise<FlashcardStatisticsState> {
-  const flashcardFilters = getScopedFilters(userId, options);
+  const flashcardFilters = await getScopedFilters(userId, options);
   const reviewFilters: SQL<unknown>[] = [
     eq(flashcardReviewLog.userId, userId),
     eq(flashcard.userId, userId),
-    eq(subject.userId, userId),
-    isNull(subject.archivedAt),
   ];
 
-  if (options.subjectId) {
-    reviewFilters.push(eq(flashcard.subjectId, options.subjectId));
-  }
-
-  if (options.deckId) {
-    reviewFilters.push(eq(flashcard.deckId, options.deckId));
+  if (options.deckIds && options.deckIds.length > 0) {
+    reviewFilters.push(inArray(flashcard.deckId, options.deckIds));
+  } else if (options.deckId) {
+    const descendantDeckIds = await getDescendantDeckIds(
+      userId,
+      options.deckId,
+    );
+    reviewFilters.push(inArray(flashcard.deckId, descendantDeckIds));
   }
 
   const trendStart = new Date(now);
@@ -145,7 +161,7 @@ export async function getFlashcardStatisticsForUser(
         totalLapses: sql<number>`coalesce(sum(${flashcard.lapseCount}), 0)`,
       })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...flashcardFilters)),
     getDb()
       .select({
@@ -153,7 +169,7 @@ export async function getFlashcardStatisticsForUser(
         count: count(),
       })
       .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...flashcardFilters))
       .groupBy(flashcard.state),
     getDb()
@@ -163,7 +179,7 @@ export async function getFlashcardStatisticsForUser(
       })
       .from(flashcardReviewLog)
       .innerJoin(flashcard, eq(flashcardReviewLog.flashcardId, flashcard.id))
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...reviewFilters))
       .groupBy(flashcardReviewLog.rating),
     getDb()
@@ -173,7 +189,7 @@ export async function getFlashcardStatisticsForUser(
       })
       .from(flashcardReviewLog)
       .innerJoin(flashcard, eq(flashcardReviewLog.flashcardId, flashcard.id))
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(
         and(...reviewFilters, gte(flashcardReviewLog.reviewedAt, trendStart)),
       )
@@ -264,7 +280,7 @@ export async function getReviewableFlashcardForUser(
   flashcardId: string,
 ): Promise<{
   id: string;
-  subjectId: string;
+  deckId: string;
   userId: string;
   state: FlashcardReviewEntity["state"];
   dueAt: Date;
@@ -276,49 +292,48 @@ export async function getReviewableFlashcardForUser(
   lastReviewedAt: Date | null;
   reviewCount: number;
   lapseCount: number;
-  subjectName: string;
+  deckName: string;
+  deckPath?: string;
 } | null> {
-  return getDb()
-    .select({ flashcard, subjectName: subject.name })
-    .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(
-      and(
-        eq(flashcard.id, flashcardId),
-        eq(flashcard.userId, userId),
-        eq(subject.userId, userId),
-        isNull(subject.archivedAt),
-      ),
-    )
-    .limit(1)
-    .then((rows) =>
-      rows[0]
-        ? {
-            ...rows[0].flashcard,
-            subjectName: rows[0].subjectName,
-          }
-        : null,
-    );
+  const [rows, deckPathMap] = await Promise.all([
+    getDb()
+      .select({ flashcard, deckName: deck.name })
+      .from(flashcard)
+      .innerJoin(deck, eq(flashcard.deckId, deck.id))
+      .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
+      .limit(1),
+    getDeckPathMapForUser(userId),
+  ]);
+
+  return rows[0]
+    ? {
+        ...rows[0].flashcard,
+        deckName: rows[0].deckName,
+        deckPath: deckPathMap.get(rows[0].flashcard.deckId) ?? rows[0].deckName,
+      }
+    : null;
 }
 
 export async function getAllFlashcardsForExam(
   userId: string,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "deckId"> = {},
+  options: Pick<GetDueFlashcardsOptions, "deckId" | "deckIds"> = {},
 ): Promise<FlashcardReviewEntity[]> {
-  const filters = getScopedFilters(userId, options);
+  const [filters, deckPathMap] = await Promise.all([
+    getScopedFilters(userId, options),
+    getDeckPathMapForUser(userId),
+  ]);
 
   return getDb()
-    .select({ flashcard, subjectName: subject.name, deckName: deck.name })
+    .select({ flashcard, deckName: deck.name })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .leftJoin(deck, eq(flashcard.deckId, deck.id))
+    .innerJoin(deck, eq(flashcard.deckId, deck.id))
     .where(and(...filters))
     .orderBy(asc(flashcard.createdAt))
     .then((rows) =>
       rows.map((row) => ({
         ...row.flashcard,
-        subjectName: row.subjectName,
         deckName: row.deckName,
+        deckPath: deckPathMap.get(row.flashcard.deckId) ?? row.deckName,
       })),
     );
 }

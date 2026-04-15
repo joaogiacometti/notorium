@@ -253,38 +253,30 @@ OUTPUT
 Array of issues with flashcardId, issueType, explanation, and relatedFlashcardId (duplicate only).`;
 
 export function buildGenerateFlashcardBackPrompt(input: {
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   front: string;
 }): string {
-  const deckContext =
-    input.deckName && input.deckName.trim().length > 0
-      ? [`Deck context: ${input.deckName}`]
-      : [];
-
   return [
-    `Subject context: ${input.subjectName}`,
-    ...deckContext,
+    ...(input.subjectName ? [`Subject context: ${input.subjectName}`] : []),
+    ...(input.deckName ? [`Deck context: ${input.deckName}`] : []),
     "Task: Write the back of a study flashcard for the front below.",
-    "Use the subject only as background context. Answer only what the front asks.",
+    input.subjectName
+      ? "Use the subject only as background context. Answer only what the front asks."
+      : "Answer only what the front asks.",
     `Front: ${input.front}`,
   ].join("\n");
 }
 
 export function buildImproveFlashcardBackPrompt(input: {
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   front: string;
   currentBack: string;
 }): string {
-  const deckContext =
-    input.deckName && input.deckName.trim().length > 0
-      ? [`Deck context: ${input.deckName}`]
-      : [];
-
   return [
-    `Subject context: ${input.subjectName}`,
-    ...deckContext,
+    ...(input.subjectName ? [`Subject context: ${input.subjectName}`] : []),
+    ...(input.deckName ? [`Deck context: ${input.deckName}`] : []),
     `Front: ${input.front}`,
     `Current back: ${input.currentBack}`,
     "",
@@ -293,18 +285,13 @@ export function buildImproveFlashcardBackPrompt(input: {
 }
 
 export function buildGenerateFlashcardsPrompt(input: {
-  subjectName: string;
-  deckName?: string | null;
+  subjectName?: string;
+  deckName?: string;
   text: string;
 }): string {
-  const deckContext =
-    input.deckName && input.deckName.trim().length > 0
-      ? [`Deck: ${input.deckName}`]
-      : [];
-
   return [
-    `Subject: ${input.subjectName}`,
-    ...deckContext,
+    ...(input.subjectName ? [`Subject: ${input.subjectName}`] : []),
+    ...(input.deckName ? [`Deck: ${input.deckName}`] : []),
     "",
     "Source material:",
     input.text,
@@ -317,7 +304,7 @@ export interface FlashcardForValidation {
   id: string;
   front: string;
   back: string;
-  subjectName: string;
+  deckName: string;
 }
 
 export function buildValidateFlashcardsPrompt(
@@ -327,15 +314,13 @@ export function buildValidateFlashcardsPrompt(
     .map(
       (card, index) =>
         `Card ${index + 1} (ID: ${card.id})
-Subject: ${card.subjectName}
+Deck: ${card.deckName}
 Front: ${card.front}
 Back: ${card.back}`,
     )
     .join("\n\n");
 
-  return `Analyze the following flashcards and report any issues:
-
-${cards}`;
+  return `Analyze the following flashcards and report any issues:\n\n${cards}`;
 }
 
 export function normalizeGeneratedCards(

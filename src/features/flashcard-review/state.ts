@@ -118,7 +118,7 @@ export function replaceFlashcardInReviewState(
 
   cards[cardIndex] = {
     ...flashcard,
-    subjectName: flashcard.subjectName ?? currentCard.subjectName,
+    deckName: flashcard.deckName ?? currentCard.deckName,
   };
 
   return {

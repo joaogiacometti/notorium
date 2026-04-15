@@ -31,13 +31,11 @@ const validSubject = {
   notes: [],
   attendanceMisses: [],
   assessments: [],
-  flashcards: [],
 };
 
 const validDeck = {
   name: "Lecture Notes",
   description: null,
-  isDefault: false,
 };
 
 const validPayload = {
@@ -74,7 +72,7 @@ describe("importDataSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts a full subject with notes, assessments, attendance, decks, and flashcards", () => {
+  it("accepts a full subject with notes, assessments, and attendance", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
       subjects: [
@@ -83,10 +81,18 @@ describe("importDataSchema", () => {
           notes: [validNote],
           assessments: [validAssessment],
           attendanceMisses: [{ missDate: "2026-02-10" }],
-          decks: [validDeck],
-          flashcards: [{ ...validFlashcard, deckName: "Lecture Notes" }],
         },
       ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts decks and flashcards at the top level", () => {
+    const result = importDataSchema.safeParse({
+      ...validPayload,
+      decks: [validDeck],
+      flashcards: [{ ...validFlashcard, deckName: "Lecture Notes" }],
     });
 
     expect(result.success).toBe(true);
@@ -95,12 +101,7 @@ describe("importDataSchema", () => {
   it("accepts a flashcard without deckName (backward-compatible)", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
-      subjects: [
-        {
-          ...validSubject,
-          flashcards: [validFlashcard],
-        },
-      ],
+      flashcards: [validFlashcard],
     });
 
     expect(result.success).toBe(true);
@@ -166,12 +167,7 @@ describe("importDataSchema", () => {
   it("rejects flashcard with empty front", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
-      subjects: [
-        {
-          ...validSubject,
-          flashcards: [{ ...validFlashcard, front: "" }],
-        },
-      ],
+      flashcards: [{ ...validFlashcard, front: "" }],
     });
 
     expect(result.success).toBe(false);
@@ -206,16 +202,11 @@ describe("importDataSchema", () => {
 
     const result = importDataSchema.safeParse({
       ...validPayload,
-      subjects: [
+      flashcards: [
         {
-          ...validSubject,
-          flashcards: [
-            {
-              ...validFlashcard,
-              front,
-              back: '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Foverflow.png">',
-            },
-          ],
+          ...validFlashcard,
+          front,
+          back: '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Foverflow.png">',
         },
       ],
     });
@@ -233,12 +224,7 @@ describe("importDataSchema", () => {
   it("defaults missing flashcards array to empty", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
-      subjects: [
-        {
-          ...validSubject,
-          flashcards: undefined,
-        },
-      ],
+      flashcards: undefined,
     });
 
     expect(result.success).toBe(true);
@@ -246,18 +232,13 @@ describe("importDataSchema", () => {
       return;
     }
 
-    expect(result.data.subjects[0]?.flashcards).toEqual([]);
+    expect(result.data.flashcards).toEqual([]);
   });
 
   it("rejects flashcards with invalid scheduling dates", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
-      subjects: [
-        {
-          ...validSubject,
-          flashcards: [{ ...validFlashcard, dueAt: "not-a-date" }],
-        },
-      ],
+      flashcards: [{ ...validFlashcard, dueAt: "not-a-date" }],
     });
 
     expect(result.success).toBe(false);
@@ -266,12 +247,7 @@ describe("importDataSchema", () => {
   it("rejects flashcards with non-finite scheduling numbers", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
-      subjects: [
-        {
-          ...validSubject,
-          flashcards: [{ ...validFlashcard, stability: Number.NaN }],
-        },
-      ],
+      flashcards: [{ ...validFlashcard, stability: Number.NaN }],
     });
 
     expect(result.success).toBe(false);
@@ -280,17 +256,12 @@ describe("importDataSchema", () => {
   it("rejects flashcards with negative counters and intervals", () => {
     const result = importDataSchema.safeParse({
       ...validPayload,
-      subjects: [
+      flashcards: [
         {
-          ...validSubject,
-          flashcards: [
-            {
-              ...validFlashcard,
-              intervalDays: -1,
-              reviewCount: -1,
-              lapseCount: -1,
-            },
-          ],
+          ...validFlashcard,
+          intervalDays: -1,
+          reviewCount: -1,
+          lapseCount: -1,
         },
       ],
     });

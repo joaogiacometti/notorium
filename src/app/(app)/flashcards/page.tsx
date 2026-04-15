@@ -1,21 +1,23 @@
+import { DeckTreeSidebar } from "@/components/decks/deck-tree-sidebar";
 import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
 import { FlashcardsPageShell } from "@/components/flashcards/shared/flashcards-page-shell";
 import { FlashcardsStatistics } from "@/components/flashcards/shared/flashcards-statistics";
-import { getDecksBySubjectForUser } from "@/features/decks/queries";
+import {
+  getAllDecksWithPathsForUser,
+  getDeckTreeForUser,
+} from "@/features/decks/queries";
 import {
   getFlashcardReviewStateForUser,
   getFlashcardStatisticsForUser,
 } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
-import { getSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 
 interface FlashcardsPageProps {
   searchParams: Promise<{
     view?: string;
-    subjectId?: string;
     deckId?: string;
   }>;
 }
@@ -24,24 +26,19 @@ export default async function FlashcardsPage({
   searchParams,
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
-  const { view, subjectId, deckId } = await searchParams;
+  const { view, deckId } = await searchParams;
   const currentView = resolveFlashcardsView(view);
-  const subjects = await getSubjectsForUser(session.user.id);
-
-  const scopedSubjectId = subjects.some((subject) => subject.id === subjectId)
-    ? subjectId
-    : undefined;
-
-  const decks = scopedSubjectId
-    ? await getDecksBySubjectForUser(session.user.id, scopedSubjectId)
-    : [];
+  const [decks, deckTree] = await Promise.all([
+    getAllDecksWithPathsForUser(session.user.id),
+    getDeckTreeForUser(session.user.id),
+  ]);
 
   const scopedDeckId =
     deckId && decks.some((deck) => deck.id === deckId) ? deckId : undefined;
+  const scopeKey = `${currentView}:${scopedDeckId ?? "all"}`;
 
   if (currentView === "review") {
     const reviewState = await getFlashcardReviewStateForUser(session.user.id, {
-      subjectId: scopedSubjectId,
       deckId: scopedDeckId,
       limit: 50,
     });
@@ -54,17 +51,22 @@ export default async function FlashcardsPage({
         reviewLabel="Review"
         statisticsLabel="Statistics"
         title="Flashcards"
-        subjectId={scopedSubjectId}
         deckId={scopedDeckId}
       >
-        <FlashcardReviewClient
-          initialState={reviewState}
-          subjects={subjects}
-          subjectId={scopedSubjectId}
-          deckId={scopedDeckId}
-          decks={decks}
-          embedded
-        />
+        <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <DeckTreeSidebar
+            deckTree={deckTree}
+            selectedDeckId={scopedDeckId}
+            currentView={currentView}
+          />
+          <FlashcardReviewClient
+            key={scopeKey}
+            initialState={reviewState}
+            deckId={scopedDeckId}
+            decks={decks}
+            embedded
+          />
+        </div>
       </FlashcardsPageShell>
     );
   }
@@ -73,12 +75,8 @@ export default async function FlashcardsPage({
     const statistics = await getFlashcardStatisticsForUser(
       session.user.id,
       new Date(),
-      {
-        subjectId: scopedSubjectId,
-        deckId: scopedDeckId,
-      },
+      { deckId: scopedDeckId },
     );
-
     return (
       <FlashcardsPageShell
         currentView={currentView}
@@ -87,16 +85,20 @@ export default async function FlashcardsPage({
         reviewLabel="Review"
         statisticsLabel="Statistics"
         title="Flashcards"
-        subjectId={scopedSubjectId}
         deckId={scopedDeckId}
       >
-        <FlashcardsStatistics
-          statistics={statistics}
-          subjects={subjects}
-          decks={decks}
-          subjectId={scopedSubjectId}
-          deckId={scopedDeckId}
-        />
+        <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <DeckTreeSidebar
+            deckTree={deckTree}
+            selectedDeckId={scopedDeckId}
+            currentView={currentView}
+          />
+          <FlashcardsStatistics
+            statistics={statistics}
+            decks={decks}
+            deckId={scopedDeckId}
+          />
+        </div>
       </FlashcardsPageShell>
     );
   }
@@ -106,7 +108,6 @@ export default async function FlashcardsPage({
     {
       pageIndex: 0,
       pageSize: 25,
-      subjectId: scopedSubjectId,
       deckId: scopedDeckId,
       search: "",
     },
@@ -120,16 +121,20 @@ export default async function FlashcardsPage({
       reviewLabel="Review"
       statisticsLabel="Statistics"
       title="Flashcards"
-      subjectId={scopedSubjectId}
       deckId={scopedDeckId}
     >
-      <FlashcardsManager
-        initialPageData={initialPageData}
-        subjects={subjects}
-        decks={decks}
-        initialSubjectId={scopedSubjectId}
-        initialDeckId={scopedDeckId}
-      />
+      <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          selectedDeckId={scopedDeckId}
+          currentView={currentView}
+        />
+        <FlashcardsManager
+          key={scopeKey}
+          initialPageData={initialPageData}
+          initialDeckId={scopedDeckId}
+        />
+      </div>
     </FlashcardsPageShell>
   );
 }

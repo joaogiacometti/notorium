@@ -20,26 +20,16 @@ import { ValidateFlashcardsDialog } from "@/components/flashcards/manage/validat
 import { Card } from "@/components/ui/card";
 import { LIMITS } from "@/lib/config/limits";
 import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
-import type {
-  DeckEntity,
-  FlashcardManagePage,
-  SubjectEntity,
-} from "@/lib/server/api-contracts";
+import type { FlashcardManagePage } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
-  subjects: SubjectEntity[];
-  decks: DeckEntity[];
-  initialSubjectId?: string;
   initialDeckId?: string;
 }
 
 export function FlashcardsManager({
   initialPageData,
-  subjects,
-  decks,
-  initialSubjectId,
   initialDeckId,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
@@ -54,7 +44,7 @@ export function FlashcardsManager({
     editingFlashcard,
     editingFlashcardId,
     flashcards,
-    isAtSubjectLimit,
+    isAtDeckLimit,
     managePageQuery,
     pageIndex,
     searchQuery,
@@ -62,8 +52,6 @@ export function FlashcardsManager({
     resetTarget,
     selectedDeckId,
     selectedFlashcardIds,
-    selectedSubjectCardCount,
-    selectedSubjectId,
     setBulkDeleteOpen,
     setBulkMoveOpen,
     setBulkResetOpen,
@@ -74,8 +62,6 @@ export function FlashcardsManager({
     setResetTarget,
     setSearchQuery,
     setSelectedFlashcardIds,
-    setSelectedSubjectId,
-    handleDeckChange,
     total,
     pageSize,
     validationMode,
@@ -94,11 +80,8 @@ export function FlashcardsManager({
     checkValidationEmpty,
   } = useFlashcardsManagerController({
     initialPageData,
-    initialSubjectId,
     initialDeckId,
-    subjects,
   });
-  const hasSubjects = subjects.length > 0;
   const isManageScopeLoading =
     managePageQuery.isFetching && managePageQuery.isPlaceholderData;
 
@@ -115,7 +98,7 @@ export function FlashcardsManager({
     }
 
     return (
-      <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
+      <Card className="min-w-0 overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
         <FlashcardsManagerTable
           flashcards={flashcards}
           total={total}
@@ -131,9 +114,10 @@ export function FlashcardsManager({
           onRowClick={(row) =>
             startNavTransition(() =>
               router.push(
-                getFlashcardDetailHref(row.subjectId, row.id, {
+                getFlashcardDetailHref(row.id, {
                   from: "flashcards-manage",
-                  subjectId: selectedSubjectId,
+                  view: "manage",
+                  deckId: selectedDeckId,
                 }),
               ),
             )
@@ -144,24 +128,16 @@ export function FlashcardsManager({
   };
 
   return (
-    <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
+    <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:min-h-0">
       <FlashcardsManagerToolbar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
-        hasSubjects={hasSubjects}
         validationMode={validationMode}
-        subjects={subjects}
-        decks={decks}
-        selectedSubjectId={selectedSubjectId}
-        selectedDeckId={selectedDeckId}
         isManageScopeLoading={isManageScopeLoading}
         selectedFlashcardIds={selectedFlashcardIds}
-        selectedSubjectCardCount={selectedSubjectCardCount}
         total={total}
         validationIssuesCount={validationIssues.length}
         isValidatingAgain={isValidatingAgain}
-        onSubjectChange={setSelectedSubjectId}
-        onDeckChange={handleDeckChange}
         onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
         onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}
@@ -171,13 +147,13 @@ export function FlashcardsManager({
         onOpenBulkResetDialog={() => setBulkResetOpen(true)}
         onClearSelection={() => setSelectedFlashcardIds([])}
       />
-      {selectedSubjectId && isAtSubjectLimit && (
+      {selectedDeckId && isAtDeckLimit && (
         <div
           className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 text-sm shadow-xs ${warningTone.border} ${warningTone.bg}`}
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {`You've reached the limit of ${LIMITS.maxFlashcardsPerSubject} flashcards per subject. Please delete existing ones to create more.`}
+            {`You've reached the limit of ${LIMITS.maxFlashcardsPerDeck} flashcards per deck. Please delete existing ones to create more.`}
           </p>
         </div>
       )}
@@ -186,14 +162,11 @@ export function FlashcardsManager({
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={refreshManagePage}
-        subjectId={selectedSubjectId}
         deckId={selectedDeckId}
-        subjects={subjects}
       />
       {editingFlashcardId !== null && editingFlashcard && (
         <EditFlashcardDialog
           flashcard={editingFlashcard}
-          subjects={subjects}
           open={editingFlashcardId !== null}
           onOpenChange={(nextOpen) => {
             if (!nextOpen) {
@@ -213,8 +186,10 @@ export function FlashcardsManager({
                 updateValidationFlashcard({
                   id: result.flashcard.id,
                   front: result.flashcard.front,
-                  subjectName: existingCard?.subjectName ?? "",
-                  subjectId: result.flashcard.subjectId,
+                  deckName: existingCard?.deckName ?? "",
+                  deckPath:
+                    existingCard?.deckPath ?? existingCard?.deckName ?? "",
+                  deckId: result.flashcard.deckId,
                 });
               }
             }
@@ -242,11 +217,10 @@ export function FlashcardsManager({
         ids={selectedFlashcardIds}
         open={bulkMoveOpen}
         onOpenChange={setBulkMoveOpen}
-        onMoved={(_ids, _subjectId) => {
+        onMoved={() => {
           refreshManagePage();
           setBulkMoveOpen(false);
         }}
-        subjects={subjects}
       />
       <BulkResetFlashcardsDialog
         ids={selectedFlashcardIds}
@@ -293,8 +267,7 @@ export function FlashcardsManager({
         open={validateDialogOpen}
         onOpenChange={setValidateDialogOpen}
         onValidationStarted={handleValidationStarted}
-        subjects={subjects}
-        currentSubjectId={selectedSubjectId}
+        currentDeckId={selectedDeckId}
       />
       <ValidateAgainDialog
         open={validateAgainDialogOpen}

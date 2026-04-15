@@ -4,29 +4,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface FlashcardsLoadingShellProps {
   children: ReactNode;
-  lockViewport?: boolean;
 }
 
 export function FlashcardsLoadingShell({
   children,
-  lockViewport = false,
 }: Readonly<FlashcardsLoadingShellProps>) {
   return (
     <main
-      className={
-        lockViewport
-          ? "h-[calc(100dvh-3.5rem)] overflow-hidden lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden"
-          : "lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden"
-      }
+      className="lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden"
       data-testid="flashcards-loading-shell"
     >
-      <AppPageContainer
-        className={
-          lockViewport
-            ? "flex h-full min-h-0 flex-col"
-            : "flex flex-col lg:h-full lg:min-h-0"
-        }
-      >
+      <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
         <div className="mb-6 flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />
           <div className="min-w-0">
@@ -42,11 +30,7 @@ export function FlashcardsLoadingShell({
           <Skeleton className="h-8 w-28 rounded-sm" />
         </div>
 
-        <div
-          className={lockViewport ? "flex-1 min-h-0" : "lg:flex-1 lg:min-h-0"}
-        >
-          {children}
-        </div>
+        <div className="lg:flex-1 lg:min-h-0">{children}</div>
       </AppPageContainer>
     </main>
   );

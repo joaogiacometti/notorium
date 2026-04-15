@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, CreditCard, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { getDecks } from "@/app/actions/decks";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
@@ -12,27 +12,21 @@ import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-t
 import { Button } from "@/components/ui/button";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
-import type {
-  FlashcardDetailEntity,
-  SubjectEntity,
-} from "@/lib/server/api-contracts";
+import type { FlashcardDetailEntity } from "@/lib/server/api-contracts";
 
 interface FlashcardDetailProps {
   backHref: string;
   backLabel: string;
   flashcard: FlashcardDetailEntity;
-  subjects: SubjectEntity[];
 }
 
 export function FlashcardDetail({
   backHref,
   backLabel,
   flashcard,
-  subjects,
 }: Readonly<FlashcardDetailProps>) {
   const router = useRouter();
   const [, startNavTransition] = useTransition();
-  const searchParams = useSearchParams();
 
   const [currentFlashcard, setCurrentFlashcard] =
     useState<FlashcardDetailEntity>(flashcard);
@@ -78,12 +72,9 @@ export function FlashcardDetail({
       backLabel={backLabel}
       meta={
         <>
-          <span className="truncate" title={currentFlashcard.subjectName}>
-            {currentFlashcard.subjectName}
-          </span>
-          {currentFlashcard.deckName ? (
-            <span className="truncate" title={currentFlashcard.deckName}>
-              {currentFlashcard.deckName}
+          {currentFlashcard.deckPath ? (
+            <span className="truncate" title={currentFlashcard.deckPath}>
+              {currentFlashcard.deckPath}
             </span>
           ) : null}
           <span>Created {formatRelativeTime(currentFlashcard.createdAt)}</span>
@@ -116,38 +107,24 @@ export function FlashcardDetail({
 
       <EditFlashcardDialog
         flashcard={currentFlashcard}
-        subjects={subjects}
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdated={async (updated) => {
-          const subjectName =
-            subjects.find((subject) => subject.id === updated.subjectId)
-              ?.name ?? currentFlashcard.subjectName;
-          const requiresDeckRefresh =
-            updated.subjectId !== currentFlashcard.subjectId ||
-            updated.deckId !== currentFlashcard.deckId;
           let deckName = currentFlashcard.deckName;
+          let deckPath = currentFlashcard.deckPath;
 
-          if (requiresDeckRefresh) {
-            const decks = await getDecks(updated.subjectId);
-            deckName =
-              decks.find((deck) => deck.id === updated.deckId)?.name ?? null;
+          if (updated.deckId !== currentFlashcard.deckId) {
+            const decks = await getDecks();
+            const nextDeck = decks.find((deck) => deck.id === updated.deckId);
+            deckName = nextDeck?.name ?? "";
+            deckPath = nextDeck?.path ?? deckName;
           }
 
           setCurrentFlashcard({
             ...updated,
-            subjectName,
             deckName,
+            deckPath,
           });
-
-          if (updated.subjectId !== currentFlashcard.subjectId) {
-            const query = searchParams.toString();
-            const nextPath = `/subjects/${updated.subjectId}/flashcards/${updated.id}`;
-
-            router.replace(
-              query.length > 0 ? `${nextPath}?${query}` : nextPath,
-            );
-          }
         }}
         onDeleted={() => {
           setEditOpen(false);
@@ -162,8 +139,8 @@ export function FlashcardDetail({
         onReset={(updated) =>
           setCurrentFlashcard((current) => ({
             ...updated,
-            subjectName: current.subjectName,
             deckName: current.deckName,
+            deckPath: current.deckPath,
           }))
         }
       />

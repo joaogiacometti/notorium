@@ -19,7 +19,6 @@ import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-fla
 import { DeckSelect } from "@/components/shared/deck-select";
 import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
-import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,11 +34,7 @@ import {
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import type {
-  DeckEntity,
-  FlashcardEntity,
-  SubjectEntity,
-} from "@/lib/server/api-contracts";
+import type { DeckEntity, FlashcardEntity } from "@/lib/server/api-contracts";
 
 type EditMode = "edit" | "split";
 
@@ -54,11 +49,7 @@ interface GeneratedCard {
 }
 
 interface EditFlashcardDialogProps {
-  flashcard: Pick<
-    FlashcardEntity,
-    "id" | "subjectId" | "deckId" | "front" | "back"
-  >;
-  subjects?: SubjectEntity[];
+  flashcard: Pick<FlashcardEntity, "id" | "deckId" | "front" | "back">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
@@ -69,7 +60,6 @@ interface EditFlashcardDialogProps {
 
 export function EditFlashcardDialog({
   flashcard,
-  subjects,
   open,
   onOpenChange,
   onUpdated,
@@ -87,14 +77,13 @@ export function EditFlashcardDialog({
     useState(false);
   const [discardOnCloseDialogOpen, setDiscardOnCloseDialogOpen] =
     useState(false);
-  const [splitSubjectId, setSplitSubjectId] = useState(flashcard.subjectId);
   const [splitDeckId, setSplitDeckId] = useState<string | null>(
     flashcard.deckId ?? null,
   );
   const [splitFront, setSplitFront] = useState(flashcard.front);
   const [splitBack, setSplitBack] = useState(flashcard.back);
   const [decks, setDecks] = useState<DeckEntity[]>([]);
-  const [splitDecks, setSplitDecks] = useState<DeckEntity[]>([]);
+  const [_splitDecks, setSplitDecks] = useState<DeckEntity[]>([]);
   const [splitEditorPendingUploads, setSplitEditorPendingUploads] = useState(0);
 
   const isSplitDirty =
@@ -108,41 +97,13 @@ export function EditFlashcardDialog({
   });
 
   useEffect(() => {
-    if (open && flashcard.subjectId) {
-      void getDecks(flashcard.subjectId).then((fetchedDecks) => {
+    if (open) {
+      void getDecks().then((fetchedDecks) => {
         setDecks(fetchedDecks);
-      });
-    }
-  }, [open, flashcard.subjectId]);
-
-  useEffect(() => {
-    if (splitSubjectId) {
-      void getDecks(splitSubjectId).then((fetchedDecks) => {
         setSplitDecks(fetchedDecks);
-        setSplitDeckId(selectDeckId(fetchedDecks, flashcard.deckId));
       });
-    } else {
-      setSplitDecks([]);
-      setSplitDeckId(null);
     }
-  }, [splitSubjectId, flashcard.deckId]);
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "subjectId") {
-        const currentSubjectId = value.subjectId;
-        if (currentSubjectId && currentSubjectId !== flashcard.subjectId) {
-          void getDecks(currentSubjectId).then((fetchedDecks) => {
-            setDecks(fetchedDecks);
-            form.setValue("deckId", fetchedDecks.find((d) => d.isDefault)?.id, {
-              shouldDirty: true,
-            });
-          });
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, flashcard.subjectId]);
+  }, [open]);
 
   const dialog = useFlashcardDialogState({
     mode: "edit",
@@ -153,7 +114,6 @@ export function EditFlashcardDialog({
         setMode("edit");
         setSplitFront(flashcard.front);
         setSplitBack(flashcard.back);
-        setSplitSubjectId(flashcard.subjectId);
         setSplitDeckId(flashcard.deckId ?? null);
       }
       onOpenChange(nextOpen);
@@ -165,12 +125,6 @@ export function EditFlashcardDialog({
     getSuccessValues: (submittedValues) => submittedValues,
     closeOnSuccess: false,
   });
-
-  function handleSubjectChange(newSubjectId: string) {
-    void getDecks(newSubjectId).then((fetchedDecks) => {
-      setDecks(fetchedDecks);
-    });
-  }
 
   function _handleDialogClose(nextOpen: boolean) {
     if (!nextOpen) {
@@ -192,14 +146,7 @@ export function EditFlashcardDialog({
     setMode("edit");
     setSplitFront(flashcard.front);
     setSplitBack(flashcard.back);
-    setSplitSubjectId(flashcard.subjectId);
     setSplitDeckId(flashcard.deckId ?? null);
-  }
-
-  function handleSplitSubjectChange(newSubjectId: string) {
-    setSplitSubjectId(newSubjectId);
-    setSplitDecks([]);
-    setSplitDeckId(null);
   }
 
   function handleSplitEditorUploadPendingChange(pending: boolean) {
@@ -249,8 +196,7 @@ export function EditFlashcardDialog({
     setGeneratedCards(null);
 
     const result = await generateFlashcards({
-      subjectId: splitSubjectId,
-      deckId: splitDeckId ?? undefined,
+      deckId: splitDeckId ?? "",
       text: combinedText,
     });
 
@@ -281,8 +227,7 @@ export function EditFlashcardDialog({
 
     for (const card of cards) {
       const result = await createFlashcard({
-        subjectId: splitSubjectId,
-        deckId: splitDeckId ?? undefined,
+        deckId: splitDeckId ?? "",
         front: card.front,
         back: card.back,
       });
@@ -326,13 +271,11 @@ export function EditFlashcardDialog({
     if (mode === "edit" && newMode === "split") {
       setSplitFront(form.getValues("front"));
       setSplitBack(form.getValues("back"));
-      setSplitSubjectId(form.getValues("subjectId") || flashcard.subjectId);
       setSplitDeckId(form.getValues("deckId") ?? flashcard.deckId ?? null);
     } else if (mode === "split" && newMode === "edit") {
       form.setValue("front", splitFront, { shouldDirty: true });
       form.setValue("back", splitBack, { shouldDirty: true });
-      form.setValue("subjectId", splitSubjectId);
-      form.setValue("deckId", splitDeckId ?? undefined);
+      form.setValue("deckId", splitDeckId ?? "");
     }
     setMode(newMode);
   }
@@ -373,9 +316,7 @@ export function EditFlashcardDialog({
           onOpenChange={dialog.handleOpenChange}
           form={form}
           formId="form-edit-flashcard"
-          subjects={subjects}
           decks={decks}
-          onSubjectChange={handleSubjectChange}
           onSubmit={dialog.handleSubmit}
           isSubmitting={dialog.isSubmitting}
           discard={{
@@ -440,30 +381,12 @@ export function EditFlashcardDialog({
       >
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-5 sm:px-6">
           <FieldGroup className="gap-5">
-            {subjects && subjects.length > 0 ? (
-              <div className="flex flex-col gap-5 sm:flex-row sm:gap-4">
-                <div className="flex-1">
-                  <SubjectSelect
-                    value={splitSubjectId}
-                    onChange={handleSplitSubjectChange}
-                    subjects={subjects}
-                    id="split-subject"
-                  />
-                </div>
-                {splitSubjectId ? (
-                  <div className="flex-1">
-                    <DeckSelect
-                      value={splitDeckId}
-                      onChange={setSplitDeckId}
-                      decks={splitDecks}
-                      id="split-deck"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex-1" />
-                )}
-              </div>
-            ) : null}
+            <DeckSelect
+              value={splitDeckId}
+              onChange={setSplitDeckId}
+              decks={decks}
+              id="split-deck"
+            />
             <CreateModeToggle
               mode="split"
               onModeChange={(m) => handleModeSwitch(m as EditMode)}
@@ -515,7 +438,7 @@ export function EditFlashcardDialog({
               isSplitImageUploading ||
               !hasFrontContent ||
               !hasBackContent ||
-              !splitSubjectId
+              !splitDeckId
             }
             className="w-full"
           >
@@ -566,26 +489,12 @@ export function EditFlashcardDialog({
   );
 }
 
-function selectDeckId(
-  decks: DeckEntity[],
-  currentDeckId: string | null,
-): string | null {
-  if (currentDeckId && decks.some((d) => d.id === currentDeckId)) {
-    return currentDeckId;
-  }
-  return decks.find((d) => d.isDefault)?.id ?? null;
-}
-
 function getEditFlashcardFormValues(
-  flashcard: Pick<
-    FlashcardEntity,
-    "id" | "subjectId" | "deckId" | "front" | "back"
-  >,
+  flashcard: Pick<FlashcardEntity, "id" | "deckId" | "front" | "back">,
 ): EditFlashcardForm {
   return {
     id: flashcard.id,
-    subjectId: flashcard.subjectId,
-    deckId: flashcard.deckId ?? undefined,
+    deckId: flashcard.deckId,
     front: flashcard.front,
     back: flashcard.back,
   };

@@ -41,7 +41,7 @@ vi.mock("@/db/schema", () => ({
   deck: {
     id: "deck_id_column",
     name: "deck_name_column",
-    isDefault: "deck_is_default_column",
+    parentDeckId: "deck_parent_deck_id_column",
   },
   flashcard: {},
   flashcardSchedulerSettings: {
@@ -84,6 +84,32 @@ describe("importDataForUser", () => {
         desiredRetention: 0.87,
         weights: [1, 2, 3],
       },
+      decks: [
+        {
+          name: "Math Deck",
+          path: "Math Deck",
+          description: null,
+        },
+      ],
+      flashcards: [
+        {
+          front: "<p>Front</p>",
+          back: "<p>Back</p>",
+          deckPath: "Math Deck",
+          state: "review",
+          dueAt: "2026-03-20T00:00:00.000Z",
+          stability: 10,
+          difficulty: 5,
+          ease: 250,
+          intervalDays: 7,
+          learningStep: 0,
+          lastReviewedAt: "2026-03-13T00:00:00.000Z",
+          reviewCount: 3,
+          lapseCount: 1,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
       subjects: [
         {
           name: "Math",
@@ -95,25 +121,6 @@ describe("importDataForUser", () => {
           notes: [],
           attendanceMisses: [],
           assessments: [],
-          decks: [],
-          flashcards: [
-            {
-              front: "<p>Front</p>",
-              back: "<p>Back</p>",
-              state: "review",
-              dueAt: "2026-03-20T00:00:00.000Z",
-              stability: 10,
-              difficulty: 5,
-              ease: 250,
-              intervalDays: 7,
-              learningStep: 0,
-              lastReviewedAt: "2026-03-13T00:00:00.000Z",
-              reviewCount: 3,
-              lapseCount: 1,
-              createdAt: "2026-01-01T00:00:00.000Z",
-              updatedAt: "2026-01-01T00:00:00.000Z",
-            },
-          ],
         },
       ],
     };
@@ -143,8 +150,8 @@ describe("importDataForUser", () => {
         insert: txInsertMock,
       }),
     );
+    returningMock.mockResolvedValueOnce([{ id: "deck-1" }]);
     returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
-    returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
 
     const { importDataForUser } = await import(
       "@/features/data-transfer/import"
@@ -159,32 +166,30 @@ describe("importDataForUser", () => {
         expect.objectContaining({
           front: "<p>Front</p>",
           reviewCount: 3,
-          subjectId: "subject-1",
-          deckId: "default-deck-1",
+          deckId: "deck-1",
         }),
       ]),
     );
   });
 
-  it("creates a default deck for imported subjects without flashcards", async () => {
+  it("imports decks with hierarchical paths", async () => {
     const input = {
       version: 1,
       exportedAt: "2026-03-13T00:00:00.000Z",
-      subjects: [
+      decks: [
         {
-          name: "History",
+          name: "Math",
+          path: "Math",
           description: null,
-          totalClasses: null,
-          maxMisses: null,
-          createdAt: "2026-01-01T00:00:00.000Z",
-          updatedAt: "2026-01-01T00:00:00.000Z",
-          notes: [],
-          attendanceMisses: [],
-          assessments: [],
-          decks: [],
-          flashcards: [],
+        },
+        {
+          name: "Algebra",
+          path: "Math::Algebra",
+          description: "Algebraic concepts",
         },
       ],
+      flashcards: [],
+      subjects: [],
     };
 
     parseActionInputMock.mockReturnValueOnce({
@@ -202,8 +207,8 @@ describe("importDataForUser", () => {
       }),
     );
 
-    returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
-    returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
+    returningMock.mockResolvedValueOnce([{ id: "deck-1" }]);
+    returningMock.mockResolvedValueOnce([{ id: "deck-2" }]);
 
     const { importDataForUser } = await import(
       "@/features/data-transfer/import"
@@ -211,12 +216,20 @@ describe("importDataForUser", () => {
 
     const result = await importDataForUser("user-1", input);
 
-    expect(result).toEqual({ success: true, imported: 1 });
+    expect(result).toEqual({ success: true, imported: 0 });
     expect(insertValuesMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "General",
-        isDefault: true,
-        subjectId: "subject-1",
+        name: "Math",
+        description: undefined,
+        parentDeckId: null,
+        userId: "user-1",
+      }),
+    );
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Algebra",
+        description: "Algebraic concepts",
+        parentDeckId: "deck-1",
         userId: "user-1",
       }),
     );
@@ -226,6 +239,33 @@ describe("importDataForUser", () => {
     const input = {
       version: 1,
       exportedAt: "2026-03-13T00:00:00.000Z",
+      decks: [
+        {
+          name: "Biology Deck",
+          path: "Biology Deck",
+          description: null,
+        },
+      ],
+      flashcards: [
+        {
+          front:
+            '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fold-user%2Ffront.png" alt=""></p>',
+          back: "<p>Back</p>",
+          deckPath: "Biology Deck",
+          state: "review",
+          dueAt: "2026-03-20T00:00:00.000Z",
+          stability: 10,
+          difficulty: 5,
+          ease: 250,
+          intervalDays: 7,
+          learningStep: 0,
+          lastReviewedAt: "2026-03-13T00:00:00.000Z",
+          reviewCount: 3,
+          lapseCount: 1,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
       subjects: [
         {
           name: "Biology",
@@ -245,26 +285,6 @@ describe("importDataForUser", () => {
           ],
           attendanceMisses: [],
           assessments: [],
-          decks: [],
-          flashcards: [
-            {
-              front:
-                '<p><img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fold-user%2Ffront.png" alt=""></p>',
-              back: "<p>Back</p>",
-              state: "review",
-              dueAt: "2026-03-20T00:00:00.000Z",
-              stability: 10,
-              difficulty: 5,
-              ease: 250,
-              intervalDays: 7,
-              learningStep: 0,
-              lastReviewedAt: "2026-03-13T00:00:00.000Z",
-              reviewCount: 3,
-              lapseCount: 1,
-              createdAt: "2026-01-01T00:00:00.000Z",
-              updatedAt: "2026-01-01T00:00:00.000Z",
-            },
-          ],
         },
       ],
     };
@@ -295,8 +315,8 @@ describe("importDataForUser", () => {
         insert: txInsertMock,
       }),
     );
+    returningMock.mockResolvedValueOnce([{ id: "deck-1" }]);
     returningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
-    returningMock.mockResolvedValueOnce([{ id: "default-deck-1" }]);
 
     const { importDataForUser } = await import(
       "@/features/data-transfer/import"
@@ -305,7 +325,7 @@ describe("importDataForUser", () => {
     const result = await importDataForUser("user-1", input);
 
     expect(result).toEqual({ success: true, imported: 1 });
-    expect(insertValuesMock.mock.calls[1]?.[0]).toEqual(
+    expect(insertValuesMock.mock.calls[3]?.[0]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           title: "Cells",
@@ -313,7 +333,7 @@ describe("importDataForUser", () => {
         }),
       ]),
     );
-    expect(insertValuesMock.mock.calls[3]?.[0]).toEqual(
+    expect(insertValuesMock.mock.calls[1]?.[0]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           front: "",

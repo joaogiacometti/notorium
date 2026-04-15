@@ -16,9 +16,7 @@ export const deckDescriptionSchema = z
   .optional();
 
 export const createDeckSchema = z.object({
-  subjectId: z
-    .string()
-    .min(1, validationMessage("Validation.decks.subjectRequired")),
+  parentDeckId: z.string().min(1).optional(),
   name: deckNameSchema,
   description: deckDescriptionSchema,
 });
@@ -38,3 +36,10 @@ export const deleteDeckSchema = z.object({
 });
 
 export type DeleteDeckForm = z.infer<typeof deleteDeckSchema>;
+
+export const moveDeckSchema = z.object({
+  id: z.string().min(1),
+  parentDeckId: z.string().min(1).optional(),
+});
+
+export type MoveDeckForm = z.infer<typeof moveDeckSchema>;
