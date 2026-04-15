@@ -198,10 +198,10 @@ export function AccountForm({
       </section>
 
       <section id="danger-zone" className="scroll-mt-24">
-        <Card className="gap-4 border-[var(--status-danger-border)] py-5">
+        <Card className="gap-4 border-(--intent-danger-border) py-5">
           <CardHeader className="pb-0">
             <div className="flex items-start gap-3">
-              <div className="rounded-md bg-[var(--status-danger-bg)] p-2 text-[var(--status-danger-text)]">
+              <div className="rounded-md bg-(--intent-danger-bg) p-2 text-(--intent-danger-text)">
                 <AlertTriangle className="size-4" />
               </div>
               <div className="space-y-1">

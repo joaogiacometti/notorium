@@ -25,10 +25,10 @@ const stateColors: Record<string, string> = {
 };
 
 const ratingColors: Record<string, string> = {
-  again: "bg-[var(--status-danger-fill)]",
-  hard: "bg-[var(--status-warning-fill)]",
+  again: "bg-[var(--intent-danger-fill)]",
+  hard: "bg-[var(--intent-warning-fill)]",
   good: "bg-[var(--chart-3)]",
-  easy: "bg-[var(--status-success-fill)]",
+  easy: "bg-[var(--intent-success-fill)]",
 };
 
 function formatTrendLabel(date: string) {

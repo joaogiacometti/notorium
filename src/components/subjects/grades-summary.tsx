@@ -261,7 +261,7 @@ export function GradesSummary({
           <div className="mb-2">
             <p className="text-sm font-medium">Average</p>
           </div>
-          <p className="text-3xl font-semibold tracking-tight text-white">
+          <p className="text-3xl font-semibold tracking-tight">
             {average.toFixed(1)}
           </p>
         </div>

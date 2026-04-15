@@ -56,7 +56,7 @@ export function ExamResultsScreen({
     <div className="fixed inset-0 z-110 flex flex-col items-center justify-center overflow-hidden bg-background px-4">
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="absolute top-6 left-6">
-          <div className="flex items-center gap-1.5 rounded-md border-2 border-[var(--assessment-exam-border)] bg-[var(--assessment-exam-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--assessment-exam-text)] uppercase">
+          <div className="flex items-center gap-1.5 rounded-md border-2 border-(--intent-info-border) bg-(--intent-info-bg) px-2 py-1 text-xs font-bold tracking-wider text-(--intent-info-text) uppercase">
             <GraduationCap className="size-3.5" />
             <span>EXAM</span>
           </div>
@@ -105,7 +105,7 @@ export function ExamResultsScreen({
                   strokeWidth="8"
                   strokeDasharray={`${againArc} ${circumference - againArc}`}
                   strokeDashoffset="0"
-                  className="text-[var(--status-danger-fill)] transition-all duration-1000"
+                  className="text-(--intent-danger-fill) transition-all duration-1000"
                 />
               )}
               {hardArc > 0 && (
@@ -118,7 +118,7 @@ export function ExamResultsScreen({
                   strokeWidth="8"
                   strokeDasharray={`${hardArc} ${circumference - hardArc}`}
                   strokeDashoffset={`-${againArc}`}
-                  className="text-[var(--status-warning-fill)] transition-all duration-1000"
+                  className="text-(--intent-warning-fill) transition-all duration-1000"
                 />
               )}
               {goodArc > 0 && (
@@ -131,7 +131,7 @@ export function ExamResultsScreen({
                   strokeWidth="8"
                   strokeDasharray={`${goodArc} ${circumference - goodArc}`}
                   strokeDashoffset={`-${againArc + hardArc}`}
-                  className="text-[var(--chart-3)] transition-all duration-1000"
+                  className="text-(--intent-info-fill) transition-all duration-1000"
                 />
               )}
               {easyArc > 0 && (
@@ -144,7 +144,7 @@ export function ExamResultsScreen({
                   strokeWidth="8"
                   strokeDasharray={`${easyArc} ${circumference - easyArc}`}
                   strokeDashoffset={`-${againArc + hardArc + goodArc}`}
-                  className="text-[var(--status-success-fill)] transition-all duration-1000"
+                  className="text-(--intent-success-fill) transition-all duration-1000"
                 />
               )}
             </svg>
@@ -158,10 +158,10 @@ export function ExamResultsScreen({
         <div className="grid grid-cols-4 gap-3">
           {(["again", "hard", "good", "easy"] as const).map((grade) => {
             const colorMap = {
-              again: "text-[var(--status-danger-text)]",
-              hard: "text-[var(--status-warning-text)]",
-              good: "text-[var(--chart-3)]",
-              easy: "text-[var(--status-success-text)]",
+              again: "text-[var(--intent-danger-text)]",
+              hard: "text-[var(--intent-warning-text)]",
+              good: "text-[var(--intent-info-text)]",
+              easy: "text-[var(--intent-success-text)]",
             };
             return (
               <div
@@ -187,7 +187,7 @@ export function ExamResultsScreen({
           {onRetryWeak && (counts.again > 0 || counts.hard > 0) ? (
             <Button
               onClick={onRetryWeak}
-              className="flex-1 gap-2 bg-[var(--assessment-exam-text)] hover:bg-[var(--assessment-exam-text)]/90"
+              className="flex-1 gap-2 bg-(--intent-info-fill) text-primary-foreground hover:bg-(--intent-info-fill)/90"
             >
               <RotateCcw className="size-4" />
               Retry weak cards

@@ -71,17 +71,17 @@ export function AccountSectionsNav({
                   "text-muted-foreground hover:text-foreground",
                 active &&
                   danger &&
-                  "bg-[var(--status-danger-bg)] text-[var(--status-danger-text)]",
+                  "bg-[var(--intent-danger-bg)] text-[var(--intent-danger-text)]",
                 !active &&
                   danger &&
-                  "text-[var(--status-danger-text)]/85 hover:text-[var(--status-danger-text)]",
+                  "text-[var(--intent-danger-text)]/85 hover:text-[var(--intent-danger-text)]",
               )}
             >
               <span
                 className={cn(
                   "size-1.5 shrink-0 rounded-full bg-muted-foreground/70",
                   active && !danger && "bg-primary",
-                  danger && "bg-[var(--status-danger-fill)]",
+                  danger && "bg-[var(--intent-danger-fill)]",
                 )}
               />
               <span>{item.label}</span>

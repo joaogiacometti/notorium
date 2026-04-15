@@ -26,7 +26,7 @@ export function FlashcardBackDiff({
 }: Readonly<FlashcardBackDiffProps>) {
   return (
     <div className="mt-3 space-y-3">
-      <div className="rounded-lg border p-3 bg-[var(--status-danger-bg)]">
+      <div className="rounded-lg border p-3 bg-(--intent-danger-bg)">
         <p className="text-xs font-medium text-muted-foreground mb-1">
           {originalLabel}
         </p>
@@ -35,7 +35,7 @@ export function FlashcardBackDiff({
           className="tiptap-renderer-muted prose prose-sm max-w-none text-muted-foreground"
         />
       </div>
-      <div className="rounded-lg border p-3 bg-[var(--status-success-bg)]">
+      <div className="rounded-lg border p-3 bg-(--intent-success-bg)">
         <p className="text-xs font-medium text-muted-foreground mb-1">
           {proposedLabel}
         </p>

@@ -90,10 +90,10 @@ const reviewRichTextClassName =
   "flashcard-review-tiptap-content min-w-0 max-w-full wrap-break-word hyphens-auto";
 const gradeButtonStyles: Record<ReviewGrade, string> = {
   again:
-    "border-[color:var(--review-again-border)] bg-[color:var(--review-again-bg)] text-[color:var(--review-again-text)] hover:border-[color:var(--review-again-border-hover)] hover:bg-[color:var(--review-again-bg-hover)]",
-  hard: "border-[color:var(--review-hard-border)] bg-[color:var(--review-hard-bg)] text-[color:var(--review-hard-text)] hover:border-[color:var(--review-hard-border-hover)] hover:bg-[color:var(--review-hard-bg-hover)]",
-  good: "border-[color:var(--review-good-border)] bg-[color:var(--review-good-bg)] text-[color:var(--review-good-text)] hover:border-[color:var(--review-good-border-hover)] hover:bg-[color:var(--review-good-bg-hover)]",
-  easy: "border-[color:var(--review-easy-border)] bg-[color:var(--review-easy-bg)] text-[color:var(--review-easy-text)] hover:border-[color:var(--review-easy-border-hover)] hover:bg-[color:var(--review-easy-bg-hover)]",
+    "border-[color:var(--intent-danger-border)] bg-[color:var(--intent-danger-bg)] text-[color:var(--intent-danger-text)] hover:border-[color:var(--intent-danger-border-hover)] hover:bg-[color:var(--intent-danger-bg-hover)]",
+  hard: "border-[color:var(--intent-warning-border)] bg-[color:var(--intent-warning-bg)] text-[color:var(--intent-warning-text)] hover:border-[color:var(--intent-warning-border-hover)] hover:bg-[color:var(--intent-warning-bg-hover)]",
+  good: "border-[color:var(--intent-info-border)] bg-[color:var(--intent-info-bg)] text-[color:var(--intent-info-text)] hover:border-[color:var(--intent-info-border-hover)] hover:bg-[color:var(--intent-info-bg-hover)]",
+  easy: "border-[color:var(--intent-success-border)] bg-[color:var(--intent-success-bg)] text-[color:var(--intent-success-text)] hover:border-[color:var(--intent-success-border-hover)] hover:bg-[color:var(--intent-success-bg-hover)]",
 };
 const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
   again: CircleAlert,
@@ -253,7 +253,7 @@ function FocusModeOverlay({
   }
 
   const newLocal =
-    "flex items-center gap-1.5 rounded-md border-2 border-(--assessment-exam-border) bg-(--assessment-exam-bg) px-2 py-1 text-xs font-bold tracking-wider text-[var(--assessment-exam-text)] uppercase";
+    "flex items-center gap-1.5 rounded-md border-2 border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--intent-info-text)] uppercase";
   return (
     <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
       <div className="flex h-full flex-col">
@@ -915,13 +915,13 @@ export function FlashcardReviewClient({
           className="grid gap-4 lg:grid-cols-2"
           data-testid="flashcard-review-hub"
         >
-          <Card className="gap-0 rounded-xl border-(--assessment-exam-border) py-0 shadow-none">
+          <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
             <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
-                <span className="inline-flex items-center rounded-md border border-(--assessment-exam-border) bg-(--assessment-exam-bg) px-2 py-0.5 text-[10px] font-semibold tracking-wide text-(--assessment-exam-text) uppercase">
+                <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-primary uppercase">
                   {hasDueCards ? "Due now" : "No due cards"}
                 </span>
-                <span className="inline-flex items-center rounded-md border border-(--assessment-exam-border) bg-(--assessment-exam-bg) px-2 py-0.5 text-xs font-medium text-(--assessment-exam-text)">
+                <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   {dueBadgeText}
                 </span>
               </div>
@@ -938,15 +938,15 @@ export function FlashcardReviewClient({
 
               <ul className="hidden space-y-1.5 text-sm text-muted-foreground sm:block">
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-(--assessment-exam-text)" />
+                  <span className="size-2 rounded-full bg-primary/70" />
                   <span>Spaced repetition</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-(--assessment-exam-text)" />
+                  <span className="size-2 rounded-full bg-primary/70" />
                   <span>Again · Hard · Good · Easy</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-(--assessment-exam-text)" />
+                  <span className="size-2 rounded-full bg-primary/70" />
                   <span>Tracks your progress</span>
                 </li>
               </ul>
@@ -963,13 +963,13 @@ export function FlashcardReviewClient({
             </CardContent>
           </Card>
 
-          <Card className="gap-0 rounded-xl border-(--status-success-border) py-0 shadow-none">
+          <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
             <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
-                <span className="inline-flex items-center rounded-md border border-(--status-success-border) bg-(--status-success-bg) px-2 py-0.5 text-[10px] font-semibold tracking-wide text-(--status-success-text) uppercase">
+                <span className="inline-flex items-center rounded-md border border-[var(--intent-success-border)] bg-[var(--intent-success-bg)] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--intent-success-text)] uppercase">
                   All cards
                 </span>
-                <span className="inline-flex items-center rounded-md border border-(--status-success-border) bg-(--status-success-bg) px-2 py-0.5 text-xs font-medium text-(--status-success-text)">
+                <span className="inline-flex items-center rounded-md border border-[var(--intent-success-border)] bg-[var(--intent-success-bg)] px-2 py-0.5 text-xs font-medium text-[var(--intent-success-text)]">
                   {examBadgeText}
                 </span>
               </div>
@@ -986,15 +986,15 @@ export function FlashcardReviewClient({
 
               <ul className="hidden space-y-1.5 text-sm text-muted-foreground sm:block">
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-(--status-success-fill)" />
+                  <span className="size-2 rounded-full bg-[var(--intent-success-fill)]" />
                   <span>{examScopeLabel}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-(--status-success-fill)" />
+                  <span className="size-2 rounded-full bg-[var(--intent-success-fill)]" />
                   <span>No scheduling impact</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-(--status-success-fill)" />
+                  <span className="size-2 rounded-full bg-[var(--intent-success-fill)]" />
                   <span>Randomized order</span>
                 </li>
               </ul>

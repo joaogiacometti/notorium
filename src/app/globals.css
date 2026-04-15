@@ -6,14 +6,13 @@
  * ALWAYS use these CSS custom properties via Tailwind arbitrary values.
  *
  * Examples:
- *   - bg-[var(--status-danger-fill)] instead of bg-red-500
- *   - text-[var(--assessment-exam-text)] instead of text-yellow-600
- *   - border-[var(--status-warning-border)] instead of border-orange-500
+ *   - bg-[var(--intent-danger-fill)] instead of bg-red-500
+ *   - text-[var(--intent-info-text)] instead of text-yellow-600
+ *   - border-[var(--intent-warning-border)] instead of border-orange-500
  *
  * Available theme variable categories:
  *   - Semantic: --primary, --secondary, --accent, --destructive, --muted, etc.
- *   - Status: --status-danger-*, --status-warning-*, --status-success-*
- *   - Assessment: --assessment-exam-border, --assessment-exam-bg, --assessment-exam-text
+ *   - Intent: --intent-danger-*, --intent-warning-*, --intent-success-*, --intent-info-*
  *   - Charts: --chart-1 through --chart-5
  *
  * This ensures colors adapt properly to user-selected themes (Catppuccin Mocha, Tokyo Night, etc.)
@@ -106,90 +105,118 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-  --status-success-border: oklch(0.68 0.14 155 / 35%);
-  --status-success-bg: oklch(0.68 0.14 155 / 10%);
-  --status-success-text: oklch(0.52 0.11 156);
-  --status-success-fill: oklch(0.61 0.13 156);
-  --status-warning-border: oklch(0.73 0.14 74 / 35%);
-  --status-warning-bg: oklch(0.73 0.14 74 / 10%);
-  --status-warning-text: oklch(0.55 0.12 71);
-  --status-warning-fill: oklch(0.63 0.13 73);
-  --status-danger-border: color-mix(
+  --intent-success-border: oklch(0.68 0.14 155 / 35%);
+  --intent-success-bg: oklch(0.68 0.14 155 / 10%);
+  --intent-success-text: oklch(0.52 0.11 156);
+  --intent-success-fill: oklch(0.61 0.13 156);
+  --intent-warning-border: oklch(0.73 0.14 74 / 35%);
+  --intent-warning-bg: oklch(0.73 0.14 74 / 10%);
+  --intent-warning-text: oklch(0.55 0.12 71);
+  --intent-warning-fill: oklch(0.63 0.13 73);
+  --intent-danger-border: color-mix(
     in oklab,
     var(--destructive) 35%,
     transparent
   );
-  --status-danger-bg: color-mix(in oklab, var(--destructive) 10%, transparent);
-  --status-danger-text: var(--destructive);
-  --status-danger-fill: var(--destructive);
-  --assessment-exam-border: oklch(0.58 0.14 276 / 30%);
-  --assessment-exam-bg: oklch(0.58 0.14 276 / 10%);
-  --assessment-exam-text: oklch(0.46 0.11 276);
-  --assessment-exam-icon: oklch(0.55 0.13 276);
-  --assessment-assignment-border: oklch(0.7 0.11 230 / 30%);
-  --assessment-assignment-bg: oklch(0.7 0.11 230 / 10%);
-  --assessment-assignment-text: oklch(0.51 0.09 228);
-  --assessment-assignment-icon: oklch(0.61 0.1 230);
-  --assessment-project-border: oklch(0.62 0.16 312 / 30%);
-  --assessment-project-bg: oklch(0.62 0.16 312 / 10%);
-  --assessment-project-text: oklch(0.49 0.13 312);
-  --assessment-project-icon: oklch(0.58 0.14 312);
-  --assessment-presentation-border: oklch(0.68 0.18 336 / 30%);
-  --assessment-presentation-bg: oklch(0.68 0.18 336 / 10%);
-  --assessment-presentation-text: oklch(0.54 0.15 336);
-  --assessment-presentation-icon: oklch(0.62 0.16 336);
-  --assessment-homework-border: oklch(0.66 0.11 185 / 30%);
-  --assessment-homework-bg: oklch(0.66 0.11 185 / 10%);
-  --assessment-homework-text: oklch(0.5 0.09 185);
-  --assessment-homework-icon: oklch(0.58 0.1 185);
-  --assessment-other-border: color-mix(
+  --intent-danger-bg: color-mix(in oklab, var(--destructive) 10%, transparent);
+  --intent-danger-text: var(--destructive);
+  --intent-danger-fill: var(--destructive);
+  --intent-info-border: oklch(0.58 0.14 276 / 30%);
+  --intent-info-bg: oklch(0.58 0.14 276 / 10%);
+  --intent-info-text: oklch(0.46 0.11 276);
+  --intent-info-fill: oklch(0.55 0.13 276);
+  --intent-danger-border-hover: color-mix(
+    in oklab,
+    var(--intent-danger-fill) 55%,
+    transparent
+  );
+  --intent-danger-bg-hover: color-mix(
+    in oklab,
+    var(--intent-danger-fill) 15%,
+    transparent
+  );
+  --intent-warning-border-hover: color-mix(
+    in oklab,
+    var(--intent-warning-fill) 55%,
+    transparent
+  );
+  --intent-warning-bg-hover: color-mix(
+    in oklab,
+    var(--intent-warning-fill) 15%,
+    transparent
+  );
+  --intent-success-border-hover: color-mix(
+    in oklab,
+    var(--intent-success-fill) 55%,
+    transparent
+  );
+  --intent-success-bg-hover: color-mix(
+    in oklab,
+    var(--intent-success-fill) 15%,
+    transparent
+  );
+  --intent-info-border-hover: color-mix(
+    in oklab,
+    var(--intent-info-fill) 55%,
+    transparent
+  );
+  --intent-info-bg-hover: color-mix(
+    in oklab,
+    var(--intent-info-fill) 15%,
+    transparent
+  );
+  --intent-exam-border: var(--intent-info-border);
+  --intent-exam-bg: var(--intent-info-bg);
+  --intent-exam-text: var(--intent-info-text);
+  --intent-exam-fill: var(--intent-info-fill);
+  --intent-assignment-border: color-mix(
+    in oklab,
+    var(--chart-3) 30%,
+    transparent
+  );
+  --intent-assignment-bg: color-mix(in oklab, var(--chart-3) 10%, transparent);
+  --intent-assignment-text: color-mix(
+    in oklab,
+    var(--chart-3) 78%,
+    var(--foreground)
+  );
+  --intent-assignment-fill: var(--chart-3);
+  --intent-project-border: color-mix(in oklab, var(--chart-1) 30%, transparent);
+  --intent-project-bg: color-mix(in oklab, var(--chart-1) 10%, transparent);
+  --intent-project-text: color-mix(
+    in oklab,
+    var(--chart-1) 78%,
+    var(--foreground)
+  );
+  --intent-project-fill: var(--chart-1);
+  --intent-presentation-border: var(--intent-warning-border);
+  --intent-presentation-bg: var(--intent-warning-bg);
+  --intent-presentation-text: var(--intent-warning-text);
+  --intent-presentation-fill: var(--intent-warning-fill);
+  --intent-homework-border: color-mix(
+    in oklab,
+    var(--chart-2) 30%,
+    transparent
+  );
+  --intent-homework-bg: color-mix(in oklab, var(--chart-2) 10%, transparent);
+  --intent-homework-text: color-mix(
+    in oklab,
+    var(--chart-2) 78%,
+    var(--foreground)
+  );
+  --intent-homework-fill: var(--chart-2);
+  --intent-other-border: color-mix(
     in oklab,
     var(--muted-foreground) 28%,
     transparent
   );
-  --assessment-other-bg: color-mix(
+  --intent-other-bg: color-mix(
     in oklab,
     var(--muted-foreground) 10%,
     transparent
   );
-  --assessment-other-text: color-mix(in oklab, var(--foreground) 68%, white);
-  --assessment-other-icon: var(--muted-foreground);
-  --review-again-border: color-mix(
-    in oklab,
-    var(--destructive) 45%,
-    transparent
-  );
-  --review-again-border-hover: color-mix(
-    in oklab,
-    var(--destructive) 60%,
-    transparent
-  );
-  --review-again-bg: color-mix(in oklab, var(--destructive) 10%, transparent);
-  --review-again-bg-hover: color-mix(
-    in oklab,
-    var(--destructive) 15%,
-    transparent
-  );
-  --review-again-text: var(--destructive);
-  --review-hard-border: oklch(0.73 0.14 74 / 40%);
-  --review-hard-border-hover: oklch(0.73 0.14 74 / 55%);
-  --review-hard-bg: oklch(0.73 0.14 74 / 10%);
-  --review-hard-bg-hover: oklch(0.73 0.14 74 / 15%);
-  --review-hard-text: oklch(0.55 0.12 71);
-  --review-good-border: color-mix(in oklab, var(--primary) 45%, transparent);
-  --review-good-border-hover: color-mix(
-    in oklab,
-    var(--primary) 60%,
-    transparent
-  );
-  --review-good-bg: color-mix(in oklab, var(--primary) 10%, transparent);
-  --review-good-bg-hover: color-mix(in oklab, var(--primary) 15%, transparent);
-  --review-good-text: var(--primary);
-  --review-easy-border: oklch(0.68 0.14 155 / 40%);
-  --review-easy-border-hover: oklch(0.68 0.14 155 / 55%);
-  --review-easy-bg: oklch(0.68 0.14 155 / 10%);
-  --review-easy-bg-hover: oklch(0.68 0.14 155 / 15%);
-  --review-easy-text: oklch(0.52 0.11 156);
+  --intent-other-text: color-mix(in oklab, var(--foreground) 68%, white);
+  --intent-other-fill: var(--muted-foreground);
 }
 
 .dark,
@@ -235,184 +262,76 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
-  --status-success-border: oklch(0.75 0.14 155 / 35%);
-  --status-success-bg: oklch(0.75 0.14 155 / 10%);
-  --status-success-text: oklch(0.8 0.1 158);
-  --status-success-fill: oklch(0.74 0.13 156);
-  --status-warning-border: oklch(0.78 0.14 74 / 35%);
-  --status-warning-bg: oklch(0.78 0.14 74 / 10%);
-  --status-warning-text: oklch(0.82 0.11 80);
-  --status-warning-fill: oklch(0.77 0.13 76);
-  --status-danger-border: color-mix(
+  --intent-success-border: oklch(0.75 0.14 155 / 35%);
+  --intent-success-bg: oklch(0.75 0.14 155 / 10%);
+  --intent-success-text: oklch(0.8 0.1 158);
+  --intent-success-fill: oklch(0.74 0.13 156);
+  --intent-warning-border: oklch(0.78 0.14 74 / 35%);
+  --intent-warning-bg: oklch(0.78 0.14 74 / 10%);
+  --intent-warning-text: oklch(0.82 0.11 80);
+  --intent-warning-fill: oklch(0.77 0.13 76);
+  --intent-danger-border: color-mix(
     in oklab,
     var(--destructive) 35%,
     transparent
   );
-  --status-danger-bg: color-mix(in oklab, var(--destructive) 10%, transparent);
-  --status-danger-text: var(--destructive);
-  --status-danger-fill: var(--destructive);
-  --assessment-exam-border: oklch(0.7 0.15 280 / 30%);
-  --assessment-exam-bg: oklch(0.7 0.15 280 / 10%);
-  --assessment-exam-text: oklch(0.82 0.09 282);
-  --assessment-exam-icon: oklch(0.76 0.12 281);
-  --assessment-assignment-border: oklch(0.75 0.11 230 / 30%);
-  --assessment-assignment-bg: oklch(0.75 0.11 230 / 10%);
-  --assessment-assignment-text: oklch(0.84 0.06 230);
-  --assessment-assignment-icon: oklch(0.79 0.09 230);
-  --assessment-project-border: oklch(0.73 0.17 315 / 30%);
-  --assessment-project-bg: oklch(0.73 0.17 315 / 10%);
-  --assessment-project-text: oklch(0.83 0.09 316);
-  --assessment-project-icon: oklch(0.77 0.12 315);
-  --assessment-presentation-border: oklch(0.76 0.17 338 / 30%);
-  --assessment-presentation-bg: oklch(0.76 0.17 338 / 10%);
-  --assessment-presentation-text: oklch(0.85 0.1 338);
-  --assessment-presentation-icon: oklch(0.79 0.12 338);
-  --assessment-homework-border: oklch(0.74 0.11 185 / 30%);
-  --assessment-homework-bg: oklch(0.74 0.11 185 / 10%);
-  --assessment-homework-text: oklch(0.83 0.06 186);
-  --assessment-homework-icon: oklch(0.78 0.09 186);
-  --assessment-other-border: color-mix(
-    in oklab,
-    var(--muted-foreground) 28%,
-    transparent
-  );
-  --assessment-other-bg: color-mix(
-    in oklab,
-    var(--muted-foreground) 10%,
-    transparent
-  );
-  --assessment-other-text: color-mix(
-    in oklab,
-    var(--foreground) 72%,
-    transparent
-  );
-  --assessment-other-icon: var(--muted-foreground);
-  --review-again-border: color-mix(
-    in oklab,
-    var(--destructive) 45%,
-    transparent
-  );
-  --review-again-border-hover: color-mix(
-    in oklab,
-    var(--destructive) 60%,
-    transparent
-  );
-  --review-again-bg: color-mix(in oklab, var(--destructive) 10%, transparent);
-  --review-again-bg-hover: color-mix(
-    in oklab,
-    var(--destructive) 15%,
-    transparent
-  );
-  --review-again-text: var(--destructive);
-  --review-hard-border: oklch(0.78 0.14 74 / 40%);
-  --review-hard-border-hover: oklch(0.78 0.14 74 / 55%);
-  --review-hard-bg: oklch(0.78 0.14 74 / 10%);
-  --review-hard-bg-hover: oklch(0.78 0.14 74 / 15%);
-  --review-hard-text: oklch(0.82 0.11 80);
-  --review-good-border: color-mix(in oklab, var(--primary) 45%, transparent);
-  --review-good-border-hover: color-mix(
-    in oklab,
-    var(--primary) 60%,
-    transparent
-  );
-  --review-good-bg: color-mix(in oklab, var(--primary) 10%, transparent);
-  --review-good-bg-hover: color-mix(in oklab, var(--primary) 15%, transparent);
-  --review-good-text: var(--primary);
-  --review-easy-border: oklch(0.75 0.14 155 / 40%);
-  --review-easy-border-hover: oklch(0.75 0.14 155 / 55%);
-  --review-easy-bg: oklch(0.75 0.14 155 / 10%);
-  --review-easy-bg-hover: oklch(0.75 0.14 155 / 15%);
-  --review-easy-text: oklch(0.8 0.1 158);
+  --intent-danger-bg: color-mix(in oklab, var(--destructive) 10%, transparent);
+  --intent-danger-text: var(--destructive);
+  --intent-danger-fill: var(--destructive);
+  --intent-info-border: oklch(0.7 0.15 280 / 30%);
+  --intent-info-bg: oklch(0.7 0.15 280 / 10%);
+  --intent-info-text: oklch(0.82 0.09 282);
+  --intent-info-fill: oklch(0.76 0.12 281);
 }
 
 .tokyo-night {
-  --background: hsl(235 21% 15%);
-  --foreground: hsl(220 39% 76%);
-  --card: hsl(235 19% 18%);
-  --card-foreground: hsl(220 39% 76%);
-  --popover: hsl(235 19% 18%);
-  --popover-foreground: hsl(220 39% 76%);
+  --background: hsl(235 21% 12%);
+  --foreground: hsl(220 45% 84%);
+  --card: hsl(235 19% 20%);
+  --card-foreground: hsl(220 45% 84%);
+  --popover: hsl(235 19% 20%);
+  --popover-foreground: hsl(220 45% 84%);
   --primary: hsl(221 74% 70%);
   --primary-foreground: hsl(235 21% 15%);
-  --secondary: hsl(234 18% 24%);
-  --secondary-foreground: hsl(220 39% 76%);
-  --muted: hsl(233 17% 22%);
-  --muted-foreground: hsl(230 18% 62%);
+  --secondary: hsl(233 19% 27%);
+  --secondary-foreground: hsl(220 45% 84%);
+  --muted: hsl(233 19% 27%);
+  --muted-foreground: hsl(230 22% 68%);
   --accent: hsl(191 69% 50% / 0.18);
   --accent-foreground: hsl(189 70% 71%);
   --destructive: hsl(349 89% 71%);
-  --border: hsl(233 17% 28%);
-  --input: hsl(235 17% 20%);
+  --border: hsl(233 20% 36%);
+  --input: hsl(235 17% 24%);
   --ring: hsl(221 74% 70% / 0.55);
   --chart-1: hsl(27 93% 69%);
   --chart-2: hsl(174 54% 65%);
   --chart-3: hsl(221 74% 70%);
   --chart-4: hsl(267 83% 79%);
   --chart-5: hsl(189 95% 74%);
-  --sidebar: hsl(235 21% 13%);
-  --sidebar-foreground: hsl(220 39% 76%);
+  --sidebar: hsl(235 21% 10%);
+  --sidebar-foreground: hsl(220 45% 84%);
   --sidebar-primary: hsl(221 74% 70%);
   --sidebar-primary-foreground: hsl(235 21% 15%);
   --sidebar-accent: hsl(234 18% 22%);
-  --sidebar-accent-foreground: hsl(220 39% 76%);
-  --sidebar-border: hsl(233 17% 24%);
+  --sidebar-accent-foreground: hsl(220 45% 84%);
+  --sidebar-border: hsl(233 20% 30%);
   --sidebar-ring: hsl(221 74% 70% / 0.5);
-  --status-success-border: hsl(174 54% 65% / 0.35);
-  --status-success-bg: hsl(174 54% 65% / 0.1);
-  --status-success-text: hsl(174 54% 72%);
-  --status-success-fill: hsl(174 54% 65%);
-  --status-warning-border: hsl(36 69% 65% / 0.35);
-  --status-warning-bg: hsl(36 69% 65% / 0.1);
-  --status-warning-text: hsl(36 69% 72%);
-  --status-warning-fill: hsl(36 69% 65%);
-  --status-danger-border: hsl(349 89% 71% / 0.35);
-  --status-danger-bg: hsl(349 89% 71% / 0.1);
-  --status-danger-text: hsl(349 89% 71%);
-  --status-danger-fill: hsl(349 89% 71%);
-  --assessment-exam-border: hsl(267 83% 79% / 0.3);
-  --assessment-exam-bg: hsl(267 83% 79% / 0.1);
-  --assessment-exam-text: hsl(267 83% 82%);
-  --assessment-exam-icon: hsl(267 83% 79%);
-  --assessment-assignment-border: hsl(221 74% 70% / 0.3);
-  --assessment-assignment-bg: hsl(221 74% 70% / 0.1);
-  --assessment-assignment-text: hsl(221 74% 77%);
-  --assessment-assignment-icon: hsl(221 74% 70%);
-  --assessment-project-border: hsl(349 89% 71% / 0.28);
-  --assessment-project-bg: hsl(349 89% 71% / 0.1);
-  --assessment-project-text: hsl(349 89% 76%);
-  --assessment-project-icon: hsl(349 89% 71%);
-  --assessment-presentation-border: hsl(27 93% 69% / 0.3);
-  --assessment-presentation-bg: hsl(27 93% 69% / 0.1);
-  --assessment-presentation-text: hsl(27 93% 74%);
-  --assessment-presentation-icon: hsl(27 93% 69%);
-  --assessment-homework-border: hsl(189 95% 74% / 0.28);
-  --assessment-homework-bg: hsl(189 95% 74% / 0.1);
-  --assessment-homework-text: hsl(189 80% 78%);
-  --assessment-homework-icon: hsl(189 95% 74%);
-  --assessment-other-border: hsl(230 18% 62% / 0.24);
-  --assessment-other-bg: hsl(230 18% 62% / 0.08);
-  --assessment-other-text: hsl(220 39% 76%);
-  --assessment-other-icon: hsl(230 18% 62%);
-  --review-again-border: hsl(349 89% 71% / 0.4);
-  --review-again-border-hover: hsl(349 89% 71% / 0.55);
-  --review-again-bg: hsl(349 89% 71% / 0.1);
-  --review-again-bg-hover: hsl(349 89% 71% / 0.15);
-  --review-again-text: hsl(349 89% 71%);
-  --review-hard-border: hsl(36 69% 65% / 0.4);
-  --review-hard-border-hover: hsl(36 69% 65% / 0.55);
-  --review-hard-bg: hsl(36 69% 65% / 0.1);
-  --review-hard-bg-hover: hsl(36 69% 65% / 0.15);
-  --review-hard-text: hsl(36 69% 72%);
-  --review-good-border: hsl(221 74% 70% / 0.4);
-  --review-good-border-hover: hsl(221 74% 70% / 0.55);
-  --review-good-bg: hsl(221 74% 70% / 0.1);
-  --review-good-bg-hover: hsl(221 74% 70% / 0.15);
-  --review-good-text: hsl(221 74% 70%);
-  --review-easy-border: hsl(174 54% 65% / 0.4);
-  --review-easy-border-hover: hsl(174 54% 65% / 0.55);
-  --review-easy-bg: hsl(174 54% 65% / 0.1);
-  --review-easy-bg-hover: hsl(174 54% 65% / 0.15);
-  --review-easy-text: hsl(174 54% 72%);
+  --intent-success-border: hsl(174 54% 65% / 0.35);
+  --intent-success-bg: hsl(174 54% 65% / 0.1);
+  --intent-success-text: hsl(174 54% 72%);
+  --intent-success-fill: hsl(174 54% 65%);
+  --intent-warning-border: hsl(36 69% 65% / 0.35);
+  --intent-warning-bg: hsl(36 69% 65% / 0.1);
+  --intent-warning-text: hsl(36 69% 72%);
+  --intent-warning-fill: hsl(36 69% 65%);
+  --intent-danger-border: hsl(349 89% 71% / 0.35);
+  --intent-danger-bg: hsl(349 89% 71% / 0.1);
+  --intent-danger-text: hsl(349 89% 71%);
+  --intent-danger-fill: hsl(349 89% 71%);
+  --intent-info-border: hsl(267 83% 79% / 0.3);
+  --intent-info-bg: hsl(267 83% 79% / 0.1);
+  --intent-info-text: hsl(267 83% 82%);
+  --intent-info-fill: hsl(267 83% 79%);
 }
 
 .halloween {
@@ -447,90 +366,26 @@
   --sidebar-accent-foreground: oklch(0.95 0.02 85);
   --sidebar-border: oklch(0.43 0.06 32 / 50%);
   --sidebar-ring: oklch(0.72 0.19 48 / 75%);
-  --status-success-border: oklch(0.77 0.1 92 / 35%);
-  --status-success-bg: oklch(0.77 0.1 92 / 12%);
-  --status-success-text: oklch(0.9 0.06 95);
-  --status-success-fill: oklch(0.82 0.09 93);
-  --status-warning-border: oklch(0.69 0.18 34 / 35%);
-  --status-warning-bg: oklch(0.69 0.18 34 / 12%);
-  --status-warning-text: oklch(0.82 0.14 46);
-  --status-warning-fill: oklch(0.74 0.17 38);
-  --status-danger-border: color-mix(
+  --intent-success-border: oklch(0.77 0.1 92 / 35%);
+  --intent-success-bg: oklch(0.77 0.1 92 / 12%);
+  --intent-success-text: oklch(0.9 0.06 95);
+  --intent-success-fill: oklch(0.82 0.09 93);
+  --intent-warning-border: oklch(0.69 0.18 34 / 35%);
+  --intent-warning-bg: oklch(0.69 0.18 34 / 12%);
+  --intent-warning-text: oklch(0.82 0.14 46);
+  --intent-warning-fill: oklch(0.74 0.17 38);
+  --intent-danger-border: color-mix(
     in oklab,
     var(--destructive) 35%,
     transparent
   );
-  --status-danger-bg: color-mix(in oklab, var(--destructive) 12%, transparent);
-  --status-danger-text: oklch(0.83 0.12 42);
-  --status-danger-fill: var(--destructive);
-  --assessment-exam-border: oklch(0.61 0.14 296 / 30%);
-  --assessment-exam-bg: oklch(0.61 0.14 296 / 12%);
-  --assessment-exam-text: oklch(0.82 0.08 298);
-  --assessment-exam-icon: oklch(0.73 0.12 296);
-  --assessment-assignment-border: oklch(0.69 0.11 230 / 30%);
-  --assessment-assignment-bg: oklch(0.69 0.11 230 / 12%);
-  --assessment-assignment-text: oklch(0.83 0.05 228);
-  --assessment-assignment-icon: oklch(0.75 0.09 230);
-  --assessment-project-border: oklch(0.64 0.14 332 / 30%);
-  --assessment-project-bg: oklch(0.64 0.14 332 / 12%);
-  --assessment-project-text: oklch(0.83 0.08 334);
-  --assessment-project-icon: oklch(0.75 0.11 332);
-  --assessment-presentation-border: oklch(0.66 0.16 20 / 30%);
-  --assessment-presentation-bg: oklch(0.66 0.16 20 / 12%);
-  --assessment-presentation-text: oklch(0.85 0.1 30);
-  --assessment-presentation-icon: oklch(0.78 0.13 22);
-  --assessment-homework-border: oklch(0.63 0.09 110 / 30%);
-  --assessment-homework-bg: oklch(0.63 0.09 110 / 12%);
-  --assessment-homework-text: oklch(0.86 0.06 108);
-  --assessment-homework-icon: oklch(0.77 0.08 110);
-  --assessment-other-border: color-mix(
-    in oklab,
-    var(--muted-foreground) 32%,
-    transparent
-  );
-  --assessment-other-bg: color-mix(
-    in oklab,
-    var(--muted-foreground) 12%,
-    transparent
-  );
-  --assessment-other-text: color-mix(in oklab, var(--foreground) 82%, black);
-  --assessment-other-icon: var(--muted-foreground);
-  --review-again-border: color-mix(
-    in oklab,
-    var(--destructive) 45%,
-    transparent
-  );
-  --review-again-border-hover: color-mix(
-    in oklab,
-    var(--destructive) 60%,
-    transparent
-  );
-  --review-again-bg: color-mix(in oklab, var(--destructive) 12%, transparent);
-  --review-again-bg-hover: color-mix(
-    in oklab,
-    var(--destructive) 18%,
-    transparent
-  );
-  --review-again-text: oklch(0.83 0.12 42);
-  --review-hard-border: oklch(0.69 0.18 34 / 45%);
-  --review-hard-border-hover: oklch(0.73 0.18 34 / 58%);
-  --review-hard-bg: oklch(0.69 0.18 34 / 12%);
-  --review-hard-bg-hover: oklch(0.73 0.18 34 / 18%);
-  --review-hard-text: oklch(0.82 0.14 46);
-  --review-good-border: color-mix(in oklab, var(--primary) 45%, transparent);
-  --review-good-border-hover: color-mix(
-    in oklab,
-    var(--primary) 60%,
-    transparent
-  );
-  --review-good-bg: color-mix(in oklab, var(--primary) 12%, transparent);
-  --review-good-bg-hover: color-mix(in oklab, var(--primary) 18%, transparent);
-  --review-good-text: var(--primary);
-  --review-easy-border: oklch(0.77 0.1 92 / 45%);
-  --review-easy-border-hover: oklch(0.81 0.1 92 / 58%);
-  --review-easy-bg: oklch(0.77 0.1 92 / 12%);
-  --review-easy-bg-hover: oklch(0.81 0.1 92 / 18%);
-  --review-easy-text: oklch(0.9 0.06 95);
+  --intent-danger-bg: color-mix(in oklab, var(--destructive) 12%, transparent);
+  --intent-danger-text: oklch(0.83 0.12 42);
+  --intent-danger-fill: var(--destructive);
+  --intent-info-border: oklch(0.61 0.14 296 / 30%);
+  --intent-info-bg: oklch(0.61 0.14 296 / 12%);
+  --intent-info-text: oklch(0.82 0.08 298);
+  --intent-info-fill: oklch(0.73 0.12 296);
 }
 
 .catppuccin-mocha {
@@ -566,62 +421,22 @@
   --sidebar-accent-foreground: hsl(226 63.93% 88.04%);
   --sidebar-border: hsl(234 13.21% 31.18%);
   --sidebar-ring: hsl(234 13.21% 31.18%);
-  --status-success-border: hsl(172 39% 63% / 0.35);
-  --status-success-bg: hsl(172 39% 63% / 0.1);
-  --status-success-text: hsl(172 39% 70%);
-  --status-success-fill: hsl(172 39% 63%);
-  --status-warning-border: hsl(23 88% 74% / 0.35);
-  --status-warning-bg: hsl(23 88% 74% / 0.1);
-  --status-warning-text: hsl(23 88% 78%);
-  --status-warning-fill: hsl(23 88% 74%);
-  --status-danger-border: hsl(343 81.25% 74.9% / 0.35);
-  --status-danger-bg: hsl(343 81.25% 74.9% / 0.1);
-  --status-danger-text: hsl(343 81.25% 74.9%);
-  --status-danger-fill: hsl(343 81.25% 74.9%);
-  --assessment-exam-border: hsl(267 83.51% 80.98% / 0.3);
-  --assessment-exam-bg: hsl(267 83.51% 80.98% / 0.1);
-  --assessment-exam-text: hsl(267 83.51% 80.98%);
-  --assessment-exam-icon: hsl(267 83.51% 80.98%);
-  --assessment-assignment-border: hsl(221 27.45% 60% / 0.3);
-  --assessment-assignment-bg: hsl(221 27.45% 60% / 0.1);
-  --assessment-assignment-text: hsl(221 45% 76%);
-  --assessment-assignment-icon: hsl(221 32% 66%);
-  --assessment-project-border: hsl(329 21.57% 52% / 0.3);
-  --assessment-project-bg: hsl(329 21.57% 52% / 0.1);
-  --assessment-project-text: hsl(329 28% 78%);
-  --assessment-project-icon: hsl(329 24% 66%);
-  --assessment-presentation-border: hsl(343 81.25% 74.9% / 0.3);
-  --assessment-presentation-bg: hsl(343 81.25% 74.9% / 0.1);
-  --assessment-presentation-text: hsl(343 81.25% 79%);
-  --assessment-presentation-icon: hsl(343 81.25% 74.9%);
-  --assessment-homework-border: hsl(188 18.82% 37.25% / 0.3);
-  --assessment-homework-bg: hsl(188 18.82% 37.25% / 0.1);
-  --assessment-homework-text: hsl(188 26% 74%);
-  --assessment-homework-icon: hsl(188 22% 60%);
-  --assessment-other-border: hsl(227 35.29% 80% / 0.25);
-  --assessment-other-bg: hsl(227 35.29% 80% / 0.08);
-  --assessment-other-text: hsl(227 35.29% 80%);
-  --assessment-other-icon: hsl(227 35.29% 80%);
-  --review-again-border: hsl(343 81.25% 74.9% / 0.4);
-  --review-again-border-hover: hsl(343 81.25% 74.9% / 0.55);
-  --review-again-bg: hsl(343 81.25% 74.9% / 0.1);
-  --review-again-bg-hover: hsl(343 81.25% 74.9% / 0.15);
-  --review-again-text: hsl(343 81.25% 74.9%);
-  --review-hard-border: hsl(23 88% 74% / 0.4);
-  --review-hard-border-hover: hsl(23 88% 74% / 0.55);
-  --review-hard-bg: hsl(23 88% 74% / 0.1);
-  --review-hard-bg-hover: hsl(23 88% 74% / 0.15);
-  --review-hard-text: hsl(23 88% 78%);
-  --review-good-border: hsl(267 83.51% 80.98% / 0.4);
-  --review-good-border-hover: hsl(267 83.51% 80.98% / 0.55);
-  --review-good-bg: hsl(267 83.51% 80.98% / 0.1);
-  --review-good-bg-hover: hsl(267 83.51% 80.98% / 0.15);
-  --review-good-text: hsl(267 83.51% 80.98%);
-  --review-easy-border: hsl(172 39% 63% / 0.4);
-  --review-easy-border-hover: hsl(172 39% 63% / 0.55);
-  --review-easy-bg: hsl(172 39% 63% / 0.1);
-  --review-easy-bg-hover: hsl(172 39% 63% / 0.15);
-  --review-easy-text: hsl(172 39% 70%);
+  --intent-success-border: hsl(172 39% 63% / 0.35);
+  --intent-success-bg: hsl(172 39% 63% / 0.1);
+  --intent-success-text: hsl(172 39% 70%);
+  --intent-success-fill: hsl(172 39% 63%);
+  --intent-warning-border: hsl(23 88% 74% / 0.35);
+  --intent-warning-bg: hsl(23 88% 74% / 0.1);
+  --intent-warning-text: hsl(23 88% 78%);
+  --intent-warning-fill: hsl(23 88% 74%);
+  --intent-danger-border: hsl(343 81.25% 74.9% / 0.35);
+  --intent-danger-bg: hsl(343 81.25% 74.9% / 0.1);
+  --intent-danger-text: hsl(343 81.25% 74.9%);
+  --intent-danger-fill: hsl(343 81.25% 74.9%);
+  --intent-info-border: hsl(267 83.51% 80.98% / 0.3);
+  --intent-info-bg: hsl(267 83.51% 80.98% / 0.1);
+  --intent-info-text: hsl(267 83.51% 80.98%);
+  --intent-info-fill: hsl(267 83.51% 80.98%);
 }
 
 .catppuccin-latte {
@@ -657,62 +472,22 @@
   --sidebar-accent-foreground: hsl(234 16.02% 35.49%);
   --sidebar-border: hsl(225 13.56% 76.86%);
   --sidebar-ring: hsl(225 13.56% 76.86%);
-  --status-success-border: hsl(185 37.25% 52% / 0.35);
-  --status-success-bg: hsl(185 37.25% 52% / 0.08);
-  --status-success-text: hsl(188 45% 34%);
-  --status-success-fill: hsl(185 37.25% 52%);
-  --status-warning-border: hsl(33 75% 48% / 0.35);
-  --status-warning-bg: hsl(33 75% 48% / 0.08);
-  --status-warning-text: hsl(30 78% 38%);
-  --status-warning-fill: hsl(33 75% 48%);
-  --status-danger-border: hsl(347 86.67% 44.12% / 0.35);
-  --status-danger-bg: hsl(347 86.67% 44.12% / 0.08);
-  --status-danger-text: hsl(347 78% 42%);
-  --status-danger-fill: hsl(347 86.67% 44.12%);
-  --assessment-exam-border: hsl(266 85.05% 58.04% / 0.3);
-  --assessment-exam-bg: hsl(266 85.05% 58.04% / 0.08);
-  --assessment-exam-text: hsl(266 85.05% 42%);
-  --assessment-exam-icon: hsl(266 85.05% 50%);
-  --assessment-assignment-border: hsl(219 81.96% 78.43% / 0.3);
-  --assessment-assignment-bg: hsl(219 81.96% 78.43% / 0.08);
-  --assessment-assignment-text: hsl(221 42% 42%);
-  --assessment-assignment-icon: hsl(221 58% 58%);
-  --assessment-project-border: hsl(345 57.65% 74.12% / 0.3);
-  --assessment-project-bg: hsl(345 57.65% 74.12% / 0.08);
-  --assessment-project-text: hsl(339 38% 42%);
-  --assessment-project-icon: hsl(345 48% 60%);
-  --assessment-presentation-border: hsl(35 61.18% 76.86% / 0.3);
-  --assessment-presentation-bg: hsl(35 61.18% 76.86% / 0.08);
-  --assessment-presentation-text: hsl(27 48% 40%);
-  --assessment-presentation-icon: hsl(33 58% 52%);
-  --assessment-homework-border: hsl(185 37.25% 52% / 0.3);
-  --assessment-homework-bg: hsl(185 37.25% 52% / 0.08);
-  --assessment-homework-text: hsl(188 45% 34%);
-  --assessment-homework-icon: hsl(185 37.25% 46%);
-  --assessment-other-border: hsl(233 12.8% 41.37% / 0.2);
-  --assessment-other-bg: hsl(233 12.8% 41.37% / 0.08);
-  --assessment-other-text: hsl(234 16.02% 35.49%);
-  --assessment-other-icon: hsl(233 12.8% 41.37%);
-  --review-again-border: hsl(347 86.67% 44.12% / 0.35);
-  --review-again-border-hover: hsl(347 86.67% 44.12% / 0.5);
-  --review-again-bg: hsl(347 86.67% 44.12% / 0.08);
-  --review-again-bg-hover: hsl(347 86.67% 44.12% / 0.13);
-  --review-again-text: hsl(347 78% 42%);
-  --review-hard-border: hsl(33 75% 48% / 0.35);
-  --review-hard-border-hover: hsl(33 75% 48% / 0.5);
-  --review-hard-bg: hsl(33 75% 48% / 0.08);
-  --review-hard-bg-hover: hsl(33 75% 48% / 0.13);
-  --review-hard-text: hsl(30 78% 38%);
-  --review-good-border: hsl(266 85.05% 58.04% / 0.35);
-  --review-good-border-hover: hsl(266 85.05% 58.04% / 0.5);
-  --review-good-bg: hsl(266 85.05% 58.04% / 0.08);
-  --review-good-bg-hover: hsl(266 85.05% 58.04% / 0.13);
-  --review-good-text: hsl(266 85.05% 42%);
-  --review-easy-border: hsl(185 37.25% 52% / 0.35);
-  --review-easy-border-hover: hsl(185 37.25% 52% / 0.5);
-  --review-easy-bg: hsl(185 37.25% 52% / 0.08);
-  --review-easy-bg-hover: hsl(185 37.25% 52% / 0.13);
-  --review-easy-text: hsl(188 45% 34%);
+  --intent-success-border: hsl(185 37.25% 52% / 0.35);
+  --intent-success-bg: hsl(185 37.25% 52% / 0.08);
+  --intent-success-text: hsl(188 45% 34%);
+  --intent-success-fill: hsl(185 37.25% 52%);
+  --intent-warning-border: hsl(33 75% 48% / 0.35);
+  --intent-warning-bg: hsl(33 75% 48% / 0.08);
+  --intent-warning-text: hsl(30 78% 38%);
+  --intent-warning-fill: hsl(33 75% 48%);
+  --intent-danger-border: hsl(347 86.67% 44.12% / 0.35);
+  --intent-danger-bg: hsl(347 86.67% 44.12% / 0.08);
+  --intent-danger-text: hsl(347 78% 42%);
+  --intent-danger-fill: hsl(347 86.67% 44.12%);
+  --intent-info-border: hsl(266 85.05% 58.04% / 0.3);
+  --intent-info-bg: hsl(266 85.05% 58.04% / 0.08);
+  --intent-info-text: hsl(266 85.05% 42%);
+  --intent-info-fill: hsl(266 85.05% 50%);
 }
 
 @layer base {
@@ -747,14 +522,14 @@
 
 .tokyo-night body {
   background:
-    linear-gradient(180deg, hsl(235 20% 16%), hsl(235 21% 14%)),
+    linear-gradient(180deg, hsl(235 20% 14%), hsl(235 21% 12%)),
     linear-gradient(180deg, hsl(221 74% 70% / 0.06), transparent 22%);
 }
 
 .tokyo-night nav {
   background-color: color-mix(in srgb, var(--background) 90%, black);
   border-bottom-color: color-mix(in srgb, var(--border) 88%, var(--primary));
-  box-shadow: 0 1px 0 hsl(233 17% 24% / 0.7);
+  box-shadow: 0 1px 0 hsl(233 20% 30% / 0.7);
 }
 
 .halloween main > section:first-child {
@@ -1104,7 +879,9 @@
 
 .tiptap-content mark,
 .tiptap-wrapper .tiptap mark {
-  @apply rounded-sm bg-yellow-200/60 px-0.5 dark:bg-yellow-500/30;
+  @apply rounded-sm px-0.5;
+  background-color: var(--intent-warning-bg);
+  color: var(--intent-warning-text);
 }
 
 .tokyo-night .tiptap-content mark,
