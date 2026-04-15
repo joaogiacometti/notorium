@@ -60,7 +60,7 @@ Students who want a private, lightweight study management workspace.
 - The default flashcards page opens in the review view, with management and statistics available as alternate global views.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
 - Flashcard review remains available in the global flashcards page.
-- User AI API keys are encrypted at rest, never shown back to the user after saving, and excluded from data export/import.
+- User AI API keys are encrypted at rest and never shown back to the user after saving.
 
 ### Decks
 
@@ -147,9 +147,6 @@ Students who want a private, lightweight study management workspace.
 - Navigate Account settings sections with in-page shortcuts on the Account page.
 - Update display name.
 - Admin-only access management page to approve, block, or set pending for users.
-- Export study data as JSON, including subjects, notes, attendance, assessments, flashcards (with deck assignment), decks, and flashcard review settings.
-- Export template JSON with subject structure only, excluding notes, attendance records, flashcards, and all account/security data.
-- Import user data from a previous Notorium export.
 - Delete account and all user-owned data.
 
 ### Email Notifications
@@ -185,7 +182,7 @@ Students who want a private, lightweight study management workspace.
 
 - All user-owned data must be scoped by authenticated `userId`.
 - A user can only access or mutate their own subjects, notes, flashcards, attendance records, and assessments.
-- Data export, import, and account deletion operations must enforce ownership checks server-side.
+- Account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
 

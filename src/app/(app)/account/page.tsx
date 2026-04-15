@@ -15,7 +15,6 @@ export default async function AccountPage() {
     { id: "account", label: "Account" },
     { id: "ai-settings", label: "AI settings" },
     ...(emailEnabled ? [{ id: "notifications", label: "Notifications" }] : []),
-    { id: "data-transfer", label: "Data transfer" },
     { id: "danger-zone", label: "Danger zone", tone: "danger" },
   ];
 

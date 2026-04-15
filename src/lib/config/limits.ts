@@ -61,8 +61,6 @@ export const LIMITS = {
   pageSizeMin: 1,
   pageSizeMax: 100,
 
-  importMaxBytes: 1048576,
-
   authRateLimitMaxAttempts: 10,
   authRateLimitWindowSeconds: 60,
   authRateLimitPrefix: "ratelimit:auth",

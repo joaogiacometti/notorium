@@ -1,14 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, ArrowRightLeft, User } from "lucide-react";
+import { AlertTriangle, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAccount } from "@/app/actions/account";
 import { AiSettingsCard } from "@/components/account/ai-settings-card";
-import { DataTransferActions } from "@/components/account/data-transfer-actions";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
 import { NotificationPreferencesCard } from "@/components/account/notification-preferences-card";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -174,28 +173,6 @@ export function AccountForm({
           />
         </section>
       )}
-
-      <section id="data-transfer" className="scroll-mt-24">
-        <Card className="gap-4 py-5">
-          <CardHeader className="pb-0">
-            <div className="flex items-start gap-3">
-              <div className="rounded-md bg-primary/10 p-2 text-primary">
-                <ArrowRightLeft className="size-4" />
-              </div>
-              <div className="space-y-1">
-                <CardTitle>Data Transfer</CardTitle>
-                <CardDescription>
-                  Export or import your study data. Account and secret fields
-                  are excluded.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <DataTransferActions />
-          </CardContent>
-        </Card>
-      </section>
 
       <section id="danger-zone" className="scroll-mt-24">
         <Card className="gap-4 border-(--intent-danger-border) py-5">

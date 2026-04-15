@@ -59,9 +59,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
   "attachments.notConfigured":
     "No media storage is configured. Contact your administrator.",
-  "dataTransfer.invalidImportFormat": "Invalid import file format.",
-  "dataTransfer.noSubjectsToImport": "No subjects to import.",
-  "dataTransfer.importFailed": "Failed to import data.",
   "decks.invalidData": "Invalid deck data.",
   "decks.notFound": "Deck not found.",
   "decks.duplicateName": "A deck with this name already exists.",
@@ -90,8 +87,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "Review submission is temporarily unavailable. Try again in a moment.",
   "limits.subjectLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} subjects.`,
-  "limits.subjectImportLimit": (params) =>
-    `Import failed: you can only have up to ${params?.max} subjects.`,
   "limits.noteLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} notes per subject.`,
   "limits.attachmentLimit": (params) =>

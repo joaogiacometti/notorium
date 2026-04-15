@@ -172,7 +172,7 @@ Usage: `bg-[var(--x)]`, `text-[var(--x)]`, `border-[var(--x)]`, `bg-[var(--x)]/9
 - Test behavior and edge cases, not constants or implementation.
 - Don't test Server Actions, queries, mutations directly.
 - Zod tests must reject invalid inputs.
-- Add regression tests for auth/AI/account/data-transfer changes.
+- Add regression tests for auth/AI/account changes.
 - Put limit/quota enforcement tests here (subject, note, assessment, flashcard, deck limits).
 
 ### TDD Cycle
