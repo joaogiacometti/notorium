@@ -7,18 +7,9 @@ export const deckNameSchema = z
   .min(1, validationMessage("Validation.decks.nameRequired"))
   .max(LIMITS.deckNameMax, validationMessage("Validation.decks.nameMaxLength"));
 
-export const deckDescriptionSchema = z
-  .string()
-  .max(
-    LIMITS.deckDescriptionMax,
-    validationMessage("Validation.decks.descriptionMaxLength"),
-  )
-  .optional();
-
 export const createDeckSchema = z.object({
   parentDeckId: z.string().min(1).optional(),
   name: deckNameSchema,
-  description: deckDescriptionSchema,
 });
 
 export type CreateDeckForm = z.infer<typeof createDeckSchema>;
@@ -26,7 +17,6 @@ export type CreateDeckForm = z.infer<typeof createDeckSchema>;
 export const editDeckSchema = z.object({
   id: z.string().min(1),
   name: deckNameSchema,
-  description: deckDescriptionSchema,
 });
 
 export type EditDeckForm = z.infer<typeof editDeckSchema>;

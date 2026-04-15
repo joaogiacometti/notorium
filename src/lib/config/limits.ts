@@ -10,7 +10,6 @@ export const LIMITS = {
   maxDeckNestingDepth: 4,
 
   deckNameMax: 100,
-  deckDescriptionMax: 500,
 
   noteTitleMax: 200,
   noteContentMax: 100000,

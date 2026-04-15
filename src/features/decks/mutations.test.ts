@@ -91,7 +91,6 @@ describe("createDeckForUser", () => {
 
     const result = await createDeckForUser("user-1", {
       name: "math",
-      description: "",
     });
 
     expect(result).toEqual({
@@ -116,7 +115,6 @@ describe("createDeckForUser", () => {
     const result = await createDeckForUser("user-1", {
       parentDeckId: "parent-1",
       name: "math",
-      description: "",
     });
 
     expect(result).toEqual({
@@ -140,7 +138,6 @@ describe("createDeckForUser", () => {
         userId: "user-1",
         parentDeckId: "parent-2",
         name: "math",
-        description: "",
       },
     ]);
 
@@ -149,7 +146,6 @@ describe("createDeckForUser", () => {
     const result = await createDeckForUser("user-1", {
       parentDeckId: "parent-2",
       name: "math",
-      description: "",
     });
 
     expect(result).toEqual({
@@ -159,7 +155,6 @@ describe("createDeckForUser", () => {
         userId: "user-1",
         parentDeckId: "parent-2",
         name: "math",
-        description: "",
       },
     });
   });
@@ -205,7 +200,6 @@ describe("editDeckForUser", () => {
     const result = await editDeckForUser("user-1", {
       id: "deck-1",
       name: "Renamed Deck",
-      description: "Updated",
     });
 
     expect(result).toEqual({
@@ -230,7 +224,6 @@ describe("editDeckForUser", () => {
     const result = await editDeckForUser("user-1", {
       id: "deck-2",
       name: "math",
-      description: "Updated description",
     });
 
     expect(result).toEqual({
@@ -252,7 +245,6 @@ describe("editDeckForUser", () => {
         id: "deck-2",
         userId: "user-1",
         name: "Custom Updated",
-        description: "Updated description",
       },
     ]);
 
@@ -261,7 +253,6 @@ describe("editDeckForUser", () => {
     const result = await editDeckForUser("user-1", {
       id: "deck-2",
       name: "Custom Updated",
-      description: "Updated description",
     });
 
     expect(result).toEqual({
@@ -270,7 +261,6 @@ describe("editDeckForUser", () => {
         id: "deck-2",
         userId: "user-1",
         name: "Custom Updated",
-        description: "Updated description",
       },
     });
     expect(updateMock).toHaveBeenCalledTimes(1);

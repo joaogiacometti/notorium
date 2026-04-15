@@ -21,7 +21,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   type CreateDeckForm,
   createDeckSchema,
@@ -42,7 +41,6 @@ function getCreateDeckFormValues(parentDeckId?: string): CreateDeckForm {
   return {
     parentDeckId,
     name: "",
-    description: "",
   };
 }
 
@@ -112,28 +110,6 @@ export function CreateDeckDialog({
                     maxLength={LIMITS.deckNameMax}
                     aria-invalid={fieldState.invalid}
                     autoFocus
-                  />
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : null}
-                </Field>
-              )}
-            />
-            <Controller
-              name="description"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-description`}>
-                    Description (optional)
-                  </FieldLabel>
-                  <Textarea
-                    {...field}
-                    id={`${formId}-description`}
-                    placeholder="Brief description of this deck"
-                    maxLength={LIMITS.deckDescriptionMax}
-                    rows={3}
-                    aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid ? (
                     <FieldError errors={[fieldState.error]} />

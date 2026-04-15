@@ -70,7 +70,6 @@ export async function createDeckForUser(
         parentDeckId: data.parentDeckId ?? null,
         userId,
         name: data.name,
-        description: data.description,
       })
       .returning();
 
@@ -98,7 +97,6 @@ export async function editDeckForUser(
       .update(deck)
       .set({
         name: data.name,
-        description: data.description,
       })
       .where(and(eq(deck.id, data.id), eq(deck.userId, userId)))
       .returning();

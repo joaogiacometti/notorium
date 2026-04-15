@@ -25,7 +25,6 @@ interface DecksListProps {
 type DeckEditTarget = {
   id: string;
   name: string;
-  description: string | null;
 };
 
 type DeckDeleteTarget = {
@@ -122,7 +121,6 @@ export function DecksList({ decks }: Readonly<DecksListProps>) {
                 setEditTarget({
                   id: deck.id,
                   name: deck.name,
-                  description: deck.description,
                 })
               }
               onDeleteRequested={() =>
@@ -250,12 +248,7 @@ function DeckCard({
         href={`/flashcards?view=manage&deckId=${deck.id}`}
         className="block rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
-        <CardContent className="space-y-1.5 pt-0">
-          {deck.description && (
-            <p className="line-clamp-2 text-sm text-muted-foreground">
-              {deck.description}
-            </p>
-          )}
+        <CardContent className="pt-0">
           <p className="text-xs text-muted-foreground/60">
             {deck.flashcardCount} flashcard
             {deck.flashcardCount === 1 ? "" : "s"}

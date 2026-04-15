@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   createDeckSchema,
-  deckDescriptionSchema,
   deckNameSchema,
   deleteDeckSchema,
   editDeckSchema,
@@ -29,33 +28,10 @@ describe("deckNameSchema", () => {
   });
 });
 
-describe("deckDescriptionSchema", () => {
-  it("accepts valid description", () => {
-    const result = deckDescriptionSchema.safeParse("Flashcards for chapter 1");
-
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts undefined", () => {
-    const result = deckDescriptionSchema.safeParse(undefined);
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects description longer than max characters", () => {
-    const result = deckDescriptionSchema.safeParse(
-      "a".repeat(LIMITS.deckDescriptionMax + 1),
-    );
-
-    expect(result.success).toBe(false);
-  });
-});
-
 describe("createDeckSchema", () => {
-  it("accepts valid input with name and description", () => {
+  it("accepts valid input with name", () => {
     const result = createDeckSchema.safeParse({
       name: "Lecture Notes",
-      description: "Notes from lectures",
     });
 
     expect(result.success).toBe(true);
@@ -91,7 +67,6 @@ describe("editDeckSchema", () => {
     const result = editDeckSchema.safeParse({
       id: "deck-1",
       name: "Updated Name",
-      description: "Updated description",
     });
 
     expect(result.success).toBe(true);

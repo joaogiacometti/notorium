@@ -38,7 +38,6 @@ const rootDeckId = "__flashcards_root__";
 type EditDeckTarget = {
   id: string;
   name: string;
-  description: string | null;
 };
 
 type DeleteDeckTarget = {
@@ -200,7 +199,6 @@ function DeckTreeNodeItem({
             onEdit({
               id: node.id,
               name: node.name,
-              description: node.description,
             })
           }
         >
@@ -377,7 +375,9 @@ export function DeckTreeSidebar({
     }
 
     const ancestorIds = getDeckAncestorIds(deckTree, selectedDeckId);
-    const isTopLevelSelected = deckTree.some((node) => node.id === selectedDeckId);
+    const isTopLevelSelected = deckTree.some(
+      (node) => node.id === selectedDeckId,
+    );
 
     if (ancestorIds.length === 0 && !isTopLevelSelected) {
       return;

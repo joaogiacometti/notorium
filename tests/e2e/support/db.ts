@@ -494,7 +494,6 @@ export async function createDeck(
   const usesLegacySubjectSignature =
     secondArg !== undefined && (await subjectExistsForUser(userId, firstArg));
   const name = usesLegacySubjectSignature ? secondArg : firstArg;
-  const description = usesLegacySubjectSignature ? thirdArg : secondArg;
   const parentDeckId = usesLegacySubjectSignature ? null : thirdArg;
 
   if (!name) {
@@ -506,7 +505,6 @@ export async function createDeck(
     .values({
       userId,
       name,
-      description: description ?? null,
       parentDeckId: parentDeckId ?? null,
     })
     .returning({ id: deck.id, name: deck.name });

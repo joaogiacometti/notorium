@@ -69,8 +69,6 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.flashcards.textRequired": "Text is required.",
   "Validation.decks.nameRequired": "Name is required.",
   "Validation.decks.nameMaxLength": "Name must be at most 100 characters.",
-  "Validation.decks.descriptionMaxLength":
-    "Description must be at most 500 characters.",
   "Validation.notes.contentMaxLength":
     "Content must be at most 100,000 characters.",
   "Validation.notes.attachmentLimit":

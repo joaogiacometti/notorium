@@ -50,6 +50,13 @@ function getDeckButton(sidebar: Locator, deckName: string, count: number) {
   });
 }
 
+function getFocusModeDeckLabel(page: Page, deckName: string) {
+  return page
+    .locator("main p")
+    .filter({ hasText: new RegExp(`^${escapeRegex(deckName)}$`) })
+    .last();
+}
+
 function getDeckActionsButton(
   sidebar: Locator,
   deckName: string,
@@ -66,7 +73,6 @@ test("can create a deck from the flashcards sidebar", async ({
 }) => {
   const user = e2eUser;
   const deckName = getUniqueDeckName("create");
-  const deckDescription = "Deck created from flashcards sidebar";
 
   await clearUserDecksByNames(user.userId, [deckName]);
 
@@ -76,9 +82,6 @@ test("can create a deck from the flashcards sidebar", async ({
     await page.getByRole("button", { name: "New Deck", exact: true }).click();
     const createDialog = page.getByRole("dialog", { name: "Create Deck" });
     await createDialog.locator("#form-create-deck-name").fill(deckName);
-    await createDialog
-      .locator("#form-create-deck-description")
-      .fill(deckDescription);
     await createDialog.getByRole("button", { name: "Create" }).click();
 
     await expect(createDialog).toHaveCount(0);
@@ -105,12 +108,11 @@ test("can rename a deck from the flashcards sidebar", async ({
   const user = e2eUser;
   const initialDeckName = getUniqueDeckName("edit-initial");
   const updatedDeckName = getUniqueDeckName("edit-updated");
-  const updatedDescription = "Updated deck description for e2e coverage";
 
   await clearUserDecksByNames(user.userId, [initialDeckName, updatedDeckName]);
 
   try {
-    await createDeck(user.userId, initialDeckName, "Initial deck description");
+    await createDeck(user.userId, initialDeckName);
 
     await openFlashcardsPage(page, "manage");
 
@@ -124,9 +126,6 @@ test("can rename a deck from the flashcards sidebar", async ({
 
     const editDialog = page.getByRole("dialog", { name: "Edit Deck" });
     await editDialog.locator("#form-edit-deck-name").fill(updatedDeckName);
-    await editDialog
-      .locator("#form-edit-deck-description")
-      .fill(updatedDescription);
     await editDialog.getByRole("button", { name: "Save" }).click();
 
     await expect(editDialog).toHaveCount(0);
@@ -151,11 +150,7 @@ test("can delete a deck with flashcards from the flashcards sidebar", async ({
   await clearUserDecksByNames(user.userId, [deckName]);
 
   try {
-    const createdDeck = await createDeck(
-      user.userId,
-      deckName,
-      "Deck to be deleted",
-    );
+    const createdDeck = await createDeck(user.userId, deckName);
 
     await createFlashcardForDeck(
       user.userId,
@@ -204,16 +199,8 @@ test("can filter flashcards by deck in manage and review views", async ({
   await clearUserDecksByNames(user.userId, [firstDeckName, secondDeckName]);
 
   try {
-    const firstDeck = await createDeck(
-      user.userId,
-      firstDeckName,
-      "First filter deck",
-    );
-    const secondDeck = await createDeck(
-      user.userId,
-      secondDeckName,
-      "Second filter deck",
-    );
+    const firstDeck = await createDeck(user.userId, firstDeckName);
+    const secondDeck = await createDeck(user.userId, secondDeckName);
 
     await createFlashcardForDeck(
       user.userId,
@@ -249,7 +236,8 @@ test("can filter flashcards by deck in manage and review views", async ({
       page.getByRole("button", { name: "Start exam", exact: true }),
     ).toBeEnabled();
     await page.getByRole("button", { name: "Start exam", exact: true }).click();
-    await expect(page.getByText(firstDeckFront, { exact: true })).toBeVisible();
+    await expect(page.getByText("Card 1 of 1", { exact: true })).toBeVisible();
+    await expect(getFocusModeDeckLabel(page, firstDeckName)).toBeVisible();
     await expect(page.getByText(secondDeckFront, { exact: true })).toHaveCount(
       0,
     );
@@ -260,9 +248,8 @@ test("can filter flashcards by deck in manage and review views", async ({
       page.getByRole("button", { name: "Start exam", exact: true }),
     ).toBeEnabled();
     await page.getByRole("button", { name: "Start exam", exact: true }).click();
-    await expect(
-      page.getByText(secondDeckFront, { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText("Card 1 of 1", { exact: true })).toBeVisible();
+    await expect(getFocusModeDeckLabel(page, secondDeckName)).toBeVisible();
     await expect(page.getByText(firstDeckFront, { exact: true })).toHaveCount(
       0,
     );

@@ -20,7 +20,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { type EditDeckForm, editDeckSchema } from "@/features/decks/validation";
 import { LIMITS } from "@/lib/config/limits";
 import type { DeckEntity } from "@/lib/server/api-contracts";
@@ -29,7 +28,6 @@ import { t } from "@/lib/server/server-action-errors";
 type EditDeckDialogDeck = {
   id: string;
   name: string;
-  description: string | null;
 };
 
 interface EditDeckDialogProps {
@@ -43,7 +41,6 @@ function getEditDeckFormValues(deck: EditDeckDialogDeck): EditDeckForm {
   return {
     id: deck.id,
     name: deck.name,
-    description: deck.description ?? "",
   };
 }
 
@@ -109,28 +106,6 @@ export function EditDeckDialog({
                     maxLength={LIMITS.deckNameMax}
                     aria-invalid={fieldState.invalid}
                     autoFocus
-                  />
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : null}
-                </Field>
-              )}
-            />
-            <Controller
-              name="description"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-description`}>
-                    Description (optional)
-                  </FieldLabel>
-                  <Textarea
-                    {...field}
-                    id={`${formId}-description`}
-                    placeholder="Brief description of this deck"
-                    maxLength={LIMITS.deckDescriptionMax}
-                    rows={3}
-                    aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid ? (
                     <FieldError errors={[fieldState.error]} />

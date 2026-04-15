@@ -34,7 +34,6 @@ vi.mock("@/components/decks/edit-deck-dialog", () => ({
     deck: {
       id: string;
       name: string;
-      description: string | null;
     };
     open: boolean;
     onSaved?: (deck: DeckEntity) => void;
@@ -49,7 +48,6 @@ vi.mock("@/components/decks/edit-deck-dialog", () => ({
             userId: "user-1",
             parentDeckId: null,
             name: "Renamed Deck",
-            description: deck.description,
             createdAt: new Date("2026-01-01T00:00:00.000Z"),
             updatedAt: new Date("2026-01-02T00:00:00.000Z"),
           });
@@ -119,7 +117,6 @@ function createDeckNode(
     userId: "user-1",
     parentDeckId: null,
     name: id,
-    description: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     flashcardCount,
@@ -128,11 +125,7 @@ function createDeckNode(
   };
 }
 
-function clickButtonByText(
-  container: HTMLDivElement,
-  text: string,
-  index = 0,
-) {
+function clickButtonByText(container: HTMLDivElement, text: string, index = 0) {
   const buttons = Array.from(container.querySelectorAll("button")).filter(
     (currentButton) => currentButton.textContent?.includes(text),
   );

@@ -245,7 +245,6 @@ export const deck = pgTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
-    description: text("description"),
     parentDeckId: text("parent_deck_id").references(
       (): AnyPgColumn => deck.id,
       { onDelete: "cascade" },

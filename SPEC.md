@@ -193,7 +193,7 @@ Students who want a private, lightweight study management workspace.
 - `subject`
   - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`
 - `deck`
-  - `id`, `name`, `description`, `parentDeckId`, timestamps, `userId`
+  - `id`, `name`, `parentDeckId`, timestamps, `userId`
 - `flashcard`
   - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `deckId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
