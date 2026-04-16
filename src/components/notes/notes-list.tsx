@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
@@ -22,6 +23,7 @@ type NoteDeleteTarget = {
 };
 
 export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
+  const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<NoteEntity | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NoteDeleteTarget | null>(
@@ -67,6 +69,9 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
           }
           open={createOpen}
           onOpenChange={setCreateOpen}
+          onSuccess={() => {
+            router.refresh();
+          }}
         />
       </div>
 
@@ -112,6 +117,9 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
           onOpenChange={(open) => {
             if (!open) setEditTarget(null);
           }}
+          onSuccess={() => {
+            router.refresh();
+          }}
         />
       )}
       {deleteTarget && (
@@ -121,6 +129,9 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
           open
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null);
+          }}
+          onSuccess={() => {
+            router.refresh();
           }}
         />
       )}

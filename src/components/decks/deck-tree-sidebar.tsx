@@ -46,6 +46,69 @@ type DeleteDeckTarget = {
   flashcardCount: number;
 };
 
+function normalizeDeckTree(
+  nodes: DeckTreeNode[],
+  parentPath?: string,
+): DeckTreeNode[] {
+  return nodes.map((node) => {
+    const normalizedChildren = normalizeDeckTree(
+      node.children,
+      parentPath ? `${parentPath}::${node.name}` : node.name,
+    );
+    const previousChildCount = node.children.reduce(
+      (total, childNode) => total + childNode.flashcardCount,
+      0,
+    );
+    const directFlashcardCount = node.flashcardCount - previousChildCount;
+    const nextPath = parentPath ? `${parentPath}::${node.name}` : node.name;
+    const nextFlashcardCount =
+      directFlashcardCount +
+      normalizedChildren.reduce(
+        (total, childNode) => total + childNode.flashcardCount,
+        0,
+      );
+
+    return {
+      ...node,
+      children: normalizedChildren,
+      path: nextPath,
+      flashcardCount: nextFlashcardCount,
+    };
+  });
+}
+
+function updateDeckTreeNode(
+  nodes: DeckTreeNode[],
+  deckId: string,
+  updater: (node: DeckTreeNode) => DeckTreeNode,
+): DeckTreeNode[] {
+  return nodes.map((node) => {
+    const nextNode =
+      node.id === deckId
+        ? updater(node)
+        : {
+            ...node,
+          };
+
+    return {
+      ...nextNode,
+      children: updateDeckTreeNode(nextNode.children, deckId, updater),
+    };
+  });
+}
+
+function removeDeckTreeNode(
+  nodes: DeckTreeNode[],
+  deckId: string,
+): DeckTreeNode[] {
+  return nodes
+    .filter((node) => node.id !== deckId)
+    .map((node) => ({
+      ...node,
+      children: removeDeckTreeNode(node.children, deckId),
+    }));
+}
+
 function buildDeckViewHref(view: FlashcardsView, deckId?: string) {
   const params = new URLSearchParams();
   params.set("view", view);
@@ -328,6 +391,7 @@ export function DeckTreeSidebar({
 }: Readonly<DeckTreeSidebarProps>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [localDeckTree, setLocalDeckTree] = useState<DeckTreeNode[]>(deckTree);
   const [pendingDeckId, setPendingDeckId] = useState<string | null>(null);
 
   const isPendingVisible = useSmoothedLoadingState(pendingDeckId !== null, {
@@ -343,12 +407,16 @@ export function DeckTreeSidebar({
   const [deleteTarget, setDeleteTarget] = useState<DeleteDeckTarget | null>(
     null,
   );
-  const allFlashcardsTotal = getTotalFlashcardsCount(deckTree);
+  const allFlashcardsTotal = getTotalFlashcardsCount(localDeckTree);
   const rootNode: SyntheticDeckTreeRoot = {
     id: rootDeckId,
     name: "Flashcards",
     flashcardCount: allFlashcardsTotal,
   };
+
+  useEffect(() => {
+    setLocalDeckTree(deckTree);
+  }, [deckTree]);
 
   useEffect(() => {
     const activeDeckId = selectedDeckId ?? "__root__";
@@ -374,8 +442,8 @@ export function DeckTreeSidebar({
       return;
     }
 
-    const ancestorIds = getDeckAncestorIds(deckTree, selectedDeckId);
-    const isTopLevelSelected = deckTree.some(
+    const ancestorIds = getDeckAncestorIds(localDeckTree, selectedDeckId);
+    const isTopLevelSelected = localDeckTree.some(
       (node) => node.id === selectedDeckId,
     );
 
@@ -392,7 +460,7 @@ export function DeckTreeSidebar({
 
       return next;
     });
-  }, [deckTree, selectedDeckId]);
+  }, [localDeckTree, selectedDeckId]);
 
   function handleToggle(deckId: string) {
     setExpandedIds((current) => {
@@ -409,7 +477,9 @@ export function DeckTreeSidebar({
   }
 
   function refreshPage() {
-    router.refresh();
+    startTransition(() => {
+      router.refresh();
+    });
   }
 
   return (
@@ -443,13 +513,13 @@ export function DeckTreeSidebar({
           loadingId={isPendingVisible ? pendingDeckId : null}
           onSelectDeck={handleSelectDeck}
         />
-        {deckTree.length === 0 ? (
+        {localDeckTree.length === 0 ? (
           <div className="mt-1 rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
             Create your first deck to start organizing flashcards.
           </div>
         ) : (
           <div className="mt-1 space-y-1">
-            {deckTree.map((childNode) => (
+            {localDeckTree.map((childNode) => (
               <DeckTreeNodeItem
                 key={childNode.id}
                 node={childNode}
@@ -481,7 +551,16 @@ export function DeckTreeSidebar({
               setEditTarget(null);
             }
           }}
-          onSaved={() => {
+          onSaved={(deck) => {
+            setLocalDeckTree((current) =>
+              normalizeDeckTree(
+                updateDeckTreeNode(current, deck.id, (node) => ({
+                  ...node,
+                  name: deck.name,
+                  updatedAt: deck.updatedAt,
+                })),
+              ),
+            );
             setEditTarget(null);
             refreshPage();
           }}
@@ -499,7 +578,10 @@ export function DeckTreeSidebar({
               setDeleteTarget(null);
             }
           }}
-          onDeleted={() => {
+          onDeleted={(deckId) => {
+            setLocalDeckTree((current) =>
+              normalizeDeckTree(removeDeckTreeNode(current, deckId)),
+            );
             setDeleteTarget(null);
             refreshPage();
           }}

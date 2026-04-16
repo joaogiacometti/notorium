@@ -40,6 +40,7 @@ interface NoteDialogFormProps {
   mode: "create" | "edit";
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void | Promise<void>;
   trigger?: React.ReactNode;
   values: NoteFormValues;
   onSubmitAction: (
@@ -63,6 +64,7 @@ export function NoteDialogForm({
   mode,
   open,
   onOpenChange,
+  onSuccess,
   trigger,
   values,
   onSubmitAction,
@@ -129,6 +131,7 @@ export function NoteDialogForm({
               : values
             : data,
         );
+        await onSuccess?.();
         setDiscardDialogOpen(false);
         if (mode === "create") {
           onOpenChange(false);

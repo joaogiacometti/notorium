@@ -73,7 +73,14 @@ export function NoteDetail({
         </div>
       </div>
 
-      <EditNoteDialog note={note} open={editOpen} onOpenChange={setEditOpen} />
+      <EditNoteDialog
+        note={note}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSuccess={() => {
+          router.refresh();
+        }}
+      />
       <DeleteNoteDialog
         noteId={note.id}
         noteTitle={note.title}

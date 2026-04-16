@@ -9,6 +9,7 @@ interface CreateNoteDialogProps {
   trigger: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void | Promise<void>;
 }
 
 function getCreateNoteFormValues(subjectId: string): CreateNoteForm {
@@ -24,12 +25,14 @@ export function CreateNoteDialog({
   trigger,
   open,
   onOpenChange,
+  onSuccess,
 }: Readonly<CreateNoteDialogProps>) {
   return (
     <NoteDialogForm
       mode="create"
       open={open}
       onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
       trigger={trigger}
       values={getCreateNoteFormValues(subjectId)}
       onSubmitAction={(values) => createNote(values as CreateNoteForm)}

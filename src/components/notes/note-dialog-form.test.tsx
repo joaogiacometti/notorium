@@ -163,4 +163,33 @@ describe("NoteDialogForm", () => {
 
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
+
+  it("runs the success callback after a successful submit", async () => {
+    const onSuccess = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <NoteDialogForm
+            mode="create"
+            open
+            onOpenChange={() => {}}
+            onSuccess={onSuccess}
+            values={{ subjectId: "subject-1", title: "Aula 3", content: "" }}
+            onSubmitAction={async () => ({ success: true })}
+          />
+        </QueryClientProvider>,
+      );
+    });
+
+    const button = document.body.querySelector(
+      'button[form="form-create-note"]',
+    ) as HTMLButtonElement;
+
+    await act(async () => {
+      button.click();
+    });
+
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
 });
