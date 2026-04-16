@@ -234,7 +234,7 @@ function FocusModeOverlay({
 
   if (!currentCard) {
     return (
-      <div className="fixed inset-0 z-110 flex flex-col overflow-y-auto bg-background">
+      <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
         <div className="flex h-full flex-col items-center justify-center px-6 text-center">
           <h1 className="mb-2 text-2xl font-bold">All caught up!</h1>
           <p className="mb-8 text-muted-foreground">
@@ -249,8 +249,8 @@ function FocusModeOverlay({
   const newLocal =
     "flex items-center gap-1.5 rounded-md border-2 border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--intent-info-text)] uppercase";
   return (
-    <div className="fixed inset-0 z-110 flex flex-col overflow-y-auto bg-background">
-      <div className="flex min-h-full flex-col">
+    <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
+      <div className="flex h-full flex-col">
         <progress
           className="h-1 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
           value={Math.round(progress * 100)}
@@ -281,7 +281,7 @@ function FocusModeOverlay({
           </Button>
         </div>
 
-        <div className="flex-1 px-4 pb-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
           {currentDeck && (
             <p className="mb-3 text-xs font-semibold tracking-wider text-primary/80 uppercase">
               {currentDeckLabel}
@@ -294,7 +294,7 @@ function FocusModeOverlay({
                 <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                   Front
                 </h3>
-                <div className="pr-1 pb-3">
+                <div className="max-h-[40vh] overflow-y-auto pr-1 pb-3">
                   <TiptapRenderer
                     content={currentCard.front}
                     className={`${reviewRichTextClassName} text-lg leading-relaxed`}
@@ -307,7 +307,7 @@ function FocusModeOverlay({
                   <h3 className="mb-2 text-xs font-semibold tracking-wider text-primary/80 uppercase">
                     Answer
                   </h3>
-                  <div className="pr-1 pb-3">
+                  <div className="max-h-[40vh] overflow-y-auto pr-1 pb-3">
                     <TiptapRenderer
                       content={currentCard.back}
                       className={`${reviewRichTextClassName} text-lg leading-relaxed text-primary`}
