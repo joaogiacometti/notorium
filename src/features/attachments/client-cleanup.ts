@@ -13,9 +13,5 @@ export async function cleanupDiscardedEditorAttachments(
     return;
   }
 
-  const result = await deleteEditorImages({ pathnames });
-
-  if (!result.success) {
-    return;
-  }
+  await deleteEditorImages({ pathnames });
 }

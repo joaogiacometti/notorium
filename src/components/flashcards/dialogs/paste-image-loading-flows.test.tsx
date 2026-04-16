@@ -29,7 +29,7 @@ vi.mock("@/app/actions/flashcards", () => ({
   generateFlashcards: vi.fn(),
 }));
 
-vi.mock("@/components/shared/editor-attachment-cleanup", () => ({
+vi.mock("@/features/attachments/client-cleanup", () => ({
   cleanupDiscardedEditorAttachments: vi.fn().mockResolvedValue(undefined),
 }));
 

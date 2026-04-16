@@ -12,7 +12,7 @@ import {
   checkFlashcardDuplicate,
   generateFlashcardBack,
 } from "@/app/actions/flashcards";
-import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
+import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
 import {
   type CreateFlashcardForm,

@@ -1,3 +1,4 @@
+import { getOwnedAttachmentPathnames } from "@/features/attachments/pathname";
 import {
   type DeleteEditorImagesForm,
   isSupportedAttachmentImageMimeType,
@@ -18,13 +19,6 @@ export type UploadEditorImageResult =
 
 function buildAttachmentReadUrl(pathname: string): string {
   return `/api/attachments/blob?pathname=${encodeURIComponent(pathname)}`;
-}
-
-function isOwnedAttachmentPathname(pathname: string, userId: string): boolean {
-  return (
-    pathname.startsWith(`notorium/notes/${userId}/`) ||
-    pathname.startsWith(`notorium/flashcards/${userId}/`)
-  );
 }
 
 function normalizeBase64Payload(value: string): string | null {
@@ -135,9 +129,7 @@ export async function deleteEditorImagesForUser(
   userId: string,
   data: DeleteEditorImagesForm,
 ): Promise<{ success: true } | ActionErrorResult> {
-  const ownedPathnames = [...new Set(data.pathnames)].filter((pathname) =>
-    isOwnedAttachmentPathname(pathname, userId),
-  );
+  const ownedPathnames = getOwnedAttachmentPathnames(data.pathnames, userId);
 
   if (ownedPathnames.length !== data.pathnames.length) {
     return actionError("attachments.invalidData");

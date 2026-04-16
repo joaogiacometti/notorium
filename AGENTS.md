@@ -125,7 +125,7 @@ Next.js · React · TypeScript · Drizzle ORM · Better Auth · Zod · React Hoo
 ### Authentication
 
 - Server: `auth.api.getSession()` from `src/lib/auth/auth.ts`.
-- Client: `authClient` from `src/lib/auth/auth-client.ts` (only when needed).
+- Client: keep auth flows server-first; add a dedicated client auth entrypoint only when an explicit client-side auth requirement exists.
 - Always check auth and filter by `userId`. Enforce approved status. Admin mutations server-only.
 
 ### Sensitive Data

@@ -1,8 +1,11 @@
+import { Layers3 } from "lucide-react";
+import type { ReactNode } from "react";
 import { DeckTreeSidebar } from "@/components/decks/deck-tree-sidebar";
 import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
-import { FlashcardsPageShell } from "@/components/flashcards/shared/flashcards-page-shell";
 import { FlashcardsStatistics } from "@/components/flashcards/shared/flashcards-statistics";
+import { FlashcardsViewSwitch } from "@/components/flashcards/shared/flashcards-view-switch";
+import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import {
   getAllDecksWithPathsForUser,
   getDeckTreeForUser,
@@ -36,6 +39,26 @@ export default async function FlashcardsPage({
   const scopedDeckId =
     deckId && decks.some((deck) => deck.id === deckId) ? deckId : undefined;
   const scopeKey = `${currentView}:${scopedDeckId ?? "all"}`;
+  function renderFlashcardsPage(children: ReactNode) {
+    return (
+      <FeaturePageShell
+        title="Flashcards"
+        description="Review due cards, manage your library, or inspect study statistics."
+        icon={Layers3}
+        switcher={
+          <FlashcardsViewSwitch
+            currentView={currentView}
+            manageLabel="Manage"
+            reviewLabel="Review"
+            statisticsLabel="Statistics"
+            deckId={scopedDeckId}
+          />
+        }
+      >
+        {children}
+      </FeaturePageShell>
+    );
+  }
 
   if (currentView === "review") {
     const reviewState = await getFlashcardReviewStateForUser(session.user.id, {
@@ -43,31 +66,21 @@ export default async function FlashcardsPage({
       limit: 50,
     });
 
-    return (
-      <FlashcardsPageShell
-        currentView={currentView}
-        description="Review due cards, manage your library, or inspect study statistics."
-        manageLabel="Manage"
-        reviewLabel="Review"
-        statisticsLabel="Statistics"
-        title="Flashcards"
-        deckId={scopedDeckId}
-      >
-        <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
-          <DeckTreeSidebar
-            deckTree={deckTree}
-            selectedDeckId={scopedDeckId}
-            currentView={currentView}
-          />
-          <FlashcardReviewClient
-            key={scopeKey}
-            initialState={reviewState}
-            deckId={scopedDeckId}
-            decks={decks}
-            embedded
-          />
-        </div>
-      </FlashcardsPageShell>
+    return renderFlashcardsPage(
+      <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          selectedDeckId={scopedDeckId}
+          currentView={currentView}
+        />
+        <FlashcardReviewClient
+          key={scopeKey}
+          initialState={reviewState}
+          deckId={scopedDeckId}
+          decks={decks}
+          embedded
+        />
+      </div>,
     );
   }
 
@@ -77,29 +90,19 @@ export default async function FlashcardsPage({
       new Date(),
       { deckId: scopedDeckId },
     );
-    return (
-      <FlashcardsPageShell
-        currentView={currentView}
-        description="Review due cards, manage your library, or inspect study statistics."
-        manageLabel="Manage"
-        reviewLabel="Review"
-        statisticsLabel="Statistics"
-        title="Flashcards"
-        deckId={scopedDeckId}
-      >
-        <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
-          <DeckTreeSidebar
-            deckTree={deckTree}
-            selectedDeckId={scopedDeckId}
-            currentView={currentView}
-          />
-          <FlashcardsStatistics
-            statistics={statistics}
-            decks={decks}
-            deckId={scopedDeckId}
-          />
-        </div>
-      </FlashcardsPageShell>
+    return renderFlashcardsPage(
+      <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          selectedDeckId={scopedDeckId}
+          currentView={currentView}
+        />
+        <FlashcardsStatistics
+          statistics={statistics}
+          decks={decks}
+          deckId={scopedDeckId}
+        />
+      </div>,
     );
   }
 
@@ -113,28 +116,18 @@ export default async function FlashcardsPage({
     },
   );
 
-  return (
-    <FlashcardsPageShell
-      currentView={currentView}
-      description="Review due cards, manage your library, or inspect study statistics."
-      manageLabel="Manage"
-      reviewLabel="Review"
-      statisticsLabel="Statistics"
-      title="Flashcards"
-      deckId={scopedDeckId}
-    >
-      <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <DeckTreeSidebar
-          deckTree={deckTree}
-          selectedDeckId={scopedDeckId}
-          currentView={currentView}
-        />
-        <FlashcardsManager
-          key={scopeKey}
-          initialPageData={initialPageData}
-          initialDeckId={scopedDeckId}
-        />
-      </div>
-    </FlashcardsPageShell>
+  return renderFlashcardsPage(
+    <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <DeckTreeSidebar
+        deckTree={deckTree}
+        selectedDeckId={scopedDeckId}
+        currentView={currentView}
+      />
+      <FlashcardsManager
+        key={scopeKey}
+        initialPageData={initialPageData}
+        initialDeckId={scopedDeckId}
+      />
+    </div>,
   );
 }

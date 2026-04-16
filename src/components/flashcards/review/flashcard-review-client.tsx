@@ -378,6 +378,8 @@ export function FlashcardReviewClient({
   } | null>(null);
   const examSession = useExamSession();
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+  const examSessionData = examSession.session;
+  const isExamMode = !!examSessionData;
 
   useEffect(() => {
     setSelectedDeckId(deckId);
@@ -441,7 +443,7 @@ export function FlashcardReviewClient({
     return request;
   }
 
-  const currentCard = examSession.session
+  const currentCard = isExamMode
     ? examSession.currentCard
     : (reviewState.cards[0] ?? null);
   const hasDueCards = reviewState.summary.dueCount > 0;
@@ -454,16 +456,12 @@ export function FlashcardReviewClient({
     ? "All cards in deck"
     : "All flashcards";
 
-  let progress: number;
-  if (examSession.session) {
-    progress = examSession.progress;
-  } else if (reviewState.summary.totalCount > 0) {
-    progress =
-      (reviewState.summary.totalCount - reviewState.summary.dueCount) /
-      reviewState.summary.totalCount;
-  } else {
-    progress = 0;
-  }
+  const progress = isExamMode
+    ? examSession.progress
+    : reviewState.summary.totalCount > 0
+      ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
+        reviewState.summary.totalCount
+      : 0;
   const previewLabels = currentCard
     ? getFlashcardReviewPreviewLabels({
         card: currentCard,
@@ -475,12 +473,24 @@ export function FlashcardReviewClient({
     setReviewState(nextState);
   }
 
+  function resetFocusViewState() {
+    setRevealed(false);
+    setEditOpen(false);
+    setDeleteOpen(false);
+  }
+
+  function closeFocusMode() {
+    examSession.endSession();
+    setIsFocusMode(false);
+    resetFocusViewState();
+  }
+
   async function handleFlashcardUpdated(
     updatedFlashcard: FlashcardReviewState["cards"][number],
   ) {
-    if (examSession.session) {
+    if (isExamMode) {
       examSession.updateCard(updatedFlashcard);
-      setRevealed(false);
+      resetFocusViewState();
       return;
     }
 
@@ -491,20 +501,20 @@ export function FlashcardReviewClient({
       });
 
       commitReviewState(nextState);
-      setRevealed(false);
+      resetFocusViewState();
       return;
     }
 
     commitReviewState(
       replaceFlashcardInReviewState(reviewStateRef.current, updatedFlashcard),
     );
-    setRevealed(false);
+    resetFocusViewState();
   }
 
   async function handleFlashcardDeleted(deletedId: string) {
-    if (examSession.session) {
+    if (isExamMode) {
       examSession.removeCard(deletedId);
-      setRevealed(false);
+      resetFocusViewState();
       return;
     }
 
@@ -521,7 +531,7 @@ export function FlashcardReviewClient({
     };
 
     commitReviewState(nextState);
-    setRevealed(false);
+    resetFocusViewState();
 
     if (shouldRefillFlashcardReviewState(nextState)) {
       void refillReviewState();
@@ -567,7 +577,7 @@ export function FlashcardReviewClient({
 
   function handleStartReviewMode() {
     examSession.endSession();
-    setRevealed(false);
+    resetFocusViewState();
     setIsFocusMode(true);
   }
 
@@ -579,7 +589,7 @@ export function FlashcardReviewClient({
     }
 
     examSession.startSession(cards, { deckId: selectedDeckId });
-    setRevealed(false);
+    resetFocusViewState();
     setIsFocusMode(true);
   }
 
@@ -589,30 +599,24 @@ export function FlashcardReviewClient({
     }
 
     examSession.rateCard(grade);
-    setRevealed(false);
+    resetFocusViewState();
   }
 
   function handleExitExamMode() {
     if (examSession.hasStarted && !examSession.sessionComplete) {
       setShowExitConfirmation(true);
     } else {
-      examSession.endSession();
-      setIsFocusMode(false);
-      setRevealed(false);
+      closeFocusMode();
     }
   }
 
   function handleConfirmExitExam() {
     setShowExitConfirmation(false);
-    examSession.endSession();
-    setIsFocusMode(false);
-    setRevealed(false);
+    closeFocusMode();
   }
 
   function handleCloseResults() {
-    examSession.endSession();
-    setIsFocusMode(false);
-    setRevealed(false);
+    closeFocusMode();
   }
 
   function handleRetryWeakCards() {
@@ -630,12 +634,12 @@ export function FlashcardReviewClient({
     }
 
     examSession.startSession(weakCards, { deckId: selectedDeckId });
-    setRevealed(false);
+    resetFocusViewState();
     setIsFocusMode(true);
   }
 
   function handleGrade(grade: ReviewGrade) {
-    if (examSession.session) {
+    if (isExamMode) {
       handleGradeInExamMode(grade);
       return;
     }
@@ -661,8 +665,7 @@ export function FlashcardReviewClient({
         );
 
         commitReviewState(nextState);
-        setRevealed(false);
-        setEditOpen(false);
+        resetFocusViewState();
 
         if (shouldRefillFlashcardReviewState(nextState)) {
           void refillReviewState();
@@ -680,7 +683,7 @@ export function FlashcardReviewClient({
 
     if (isFocusMode && event.key === "Escape") {
       event.preventDefault();
-      if (examSession.session) {
+      if (isExamMode) {
         handleExitExamMode();
       } else {
         setIsFocusMode(false);
@@ -866,13 +869,11 @@ export function FlashcardReviewClient({
           onReveal={() => setRevealed(true)}
           onGrade={handleGrade}
           onExitFocusMode={
-            examSession.session
-              ? handleExitExamMode
-              : () => setIsFocusMode(false)
+            isExamMode ? handleExitExamMode : () => setIsFocusMode(false)
           }
-          isExamMode={!!examSession.session}
-          examCurrentIndex={examSession.session?.currentIndex ?? 0}
-          examTotalCards={examSession.session?.cards.length ?? 0}
+          isExamMode={isExamMode}
+          examCurrentIndex={examSessionData?.currentIndex ?? 0}
+          examTotalCards={examSessionData?.cards.length ?? 0}
         />
         {currentCard ? (
           <>
@@ -897,12 +898,12 @@ export function FlashcardReviewClient({
             />
           </>
         ) : null}
-        {examSession.sessionComplete && examSession.session ? (
+        {examSession.sessionComplete && examSessionData ? (
           <ExamResultsScreen
-            totalCards={examSession.session.cards.length}
-            ratings={examSession.session.ratings}
+            totalCards={examSessionData.cards.length}
+            ratings={examSessionData.ratings}
             duration={Math.floor(
-              (Date.now() - examSession.session.startedAt.getTime()) / 1000,
+              (Date.now() - examSessionData.startedAt.getTime()) / 1000,
             )}
             onClose={handleCloseResults}
             onRetryWeak={handleRetryWeakCards}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Command,
   CommandEmpty,
@@ -49,12 +49,8 @@ export function DeckSelect({
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const selectedDeck = useMemo(
-    () => decks.find((deck) => deck.id === value) ?? null,
-    [decks, value],
-  );
-
-  const filteredDecks = useMemo(() => {
+  const selectedDeck = decks.find((deck) => deck.id === value) ?? null;
+  const filteredDecks = (() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
     if (normalizedQuery.length === 0) {
@@ -64,7 +60,7 @@ export function DeckSelect({
     return decks.filter((deck) =>
       getDeckLabel(deck).toLowerCase().includes(normalizedQuery),
     );
-  }, [decks, searchQuery]);
+  })();
 
   useEffect(() => {
     if (!open) {

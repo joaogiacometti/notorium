@@ -180,11 +180,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   key={n.id}
                   value={n.id}
                   onSelect={() =>
-                    handleSelect(
-                      getNoteDetailHref(n.subjectId, n.id, {
-                        from: "subject",
-                      }),
-                    )
+                    handleSelect(getNoteDetailHref(n.subjectId, n.id))
                   }
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >

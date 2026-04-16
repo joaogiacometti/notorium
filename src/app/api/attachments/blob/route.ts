@@ -1,44 +1,6 @@
+import { parseOwnedAttachmentPathname } from "@/features/attachments/pathname";
 import { getOptionalSession } from "@/lib/auth/auth";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
-
-function parseOwnedPathname(
-  pathnameParam: string,
-): { ownerId: string; pathname: string } | null {
-  const pathname = pathnameParam.trim();
-
-  if (
-    pathname.length === 0 ||
-    pathname.length > 512 ||
-    pathname.includes("..")
-  ) {
-    return null;
-  }
-
-  const segments = pathname.split("/");
-  if (segments.length !== 4) {
-    return null;
-  }
-
-  const [namespace, context, ownerId, fileName] = segments;
-
-  if (namespace !== "notorium") {
-    return null;
-  }
-
-  if (context !== "notes" && context !== "flashcards") {
-    return null;
-  }
-
-  if (ownerId.length === 0 || ownerId.length > 200) {
-    return null;
-  }
-
-  if (fileName.length === 0 || fileName.length > 220) {
-    return null;
-  }
-
-  return { ownerId, pathname };
-}
 
 export async function GET(request: Request): Promise<Response> {
   const session = await getOptionalSession();
@@ -48,7 +10,7 @@ export async function GET(request: Request): Promise<Response> {
 
   const url = new URL(request.url);
   const pathname = url.searchParams.get("pathname") ?? "";
-  const parsedPath = parseOwnedPathname(pathname);
+  const parsedPath = parseOwnedAttachmentPathname(pathname);
 
   if (!parsedPath) {
     return new Response(null, { status: 400 });

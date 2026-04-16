@@ -6,7 +6,6 @@ import { useEffect, useState, useTransition } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import {
   type CreateNoteForm,
   createNoteSchema,

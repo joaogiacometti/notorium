@@ -30,7 +30,7 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
   },
 }));
 
-vi.mock("@/components/shared/editor-attachment-cleanup", () => ({
+vi.mock("@/features/attachments/client-cleanup", () => ({
   cleanupDiscardedEditorAttachments: vi.fn().mockResolvedValue(undefined),
 }));
 

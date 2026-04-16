@@ -53,11 +53,12 @@ interface UpdateAssessmentNotificationStatusInput {
   notificationDate: string;
 }
 
-export async function markAssessmentNotificationsSent({
-  assessmentIds,
-  userId,
-  notificationDate,
-}: UpdateAssessmentNotificationStatusInput): Promise<void> {
+async function updateAssessmentNotificationStatus(
+  input: UpdateAssessmentNotificationStatusInput,
+  status: "sent" | "failed",
+): Promise<void> {
+  const { assessmentIds, userId, notificationDate } = input;
+
   if (assessmentIds.length === 0) {
     return;
   }
@@ -65,7 +66,7 @@ export async function markAssessmentNotificationsSent({
   await getDb()
     .update(notificationLog)
     .set({
-      status: "sent",
+      status,
       updatedAt: new Date(),
     })
     .where(
@@ -78,27 +79,24 @@ export async function markAssessmentNotificationsSent({
     );
 }
 
+export async function markAssessmentNotificationsSent({
+  assessmentIds,
+  userId,
+  notificationDate,
+}: UpdateAssessmentNotificationStatusInput): Promise<void> {
+  return updateAssessmentNotificationStatus(
+    { assessmentIds, userId, notificationDate },
+    "sent",
+  );
+}
+
 export async function markAssessmentNotificationsFailed({
   assessmentIds,
   userId,
   notificationDate,
 }: UpdateAssessmentNotificationStatusInput): Promise<void> {
-  if (assessmentIds.length === 0) {
-    return;
-  }
-
-  await getDb()
-    .update(notificationLog)
-    .set({
-      status: "failed",
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        inArray(notificationLog.assessmentId, assessmentIds),
-        eq(notificationLog.userId, userId),
-        eq(notificationLog.notificationDate, notificationDate),
-        eq(notificationLog.status, "claimed"),
-      ),
-    );
+  return updateAssessmentNotificationStatus(
+    { assessmentIds, userId, notificationDate },
+    "failed",
+  );
 }

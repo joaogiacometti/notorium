@@ -59,11 +59,9 @@ describe("detail href builders", () => {
   });
 
   it("builds a note detail href with subject context", () => {
-    expect(
-      getNoteDetailHref("subject-1", "note-1", {
-        from: "subject",
-      }),
-    ).toBe("/subjects/subject-1/notes/note-1?from=subject");
+    expect(getNoteDetailHref("subject-1", "note-1")).toBe(
+      "/subjects/subject-1/notes/note-1",
+    );
   });
 
   it("builds an assessment detail href with planning context", () => {

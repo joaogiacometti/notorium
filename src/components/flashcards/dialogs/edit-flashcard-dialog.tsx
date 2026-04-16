@@ -17,7 +17,6 @@ import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-d
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import { DeckSelect } from "@/components/shared/deck-select";
-import { cleanupDiscardedEditorAttachments } from "@/components/shared/editor-attachment-cleanup";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import {
   type EditFlashcardForm,
   editFlashcardSchema,

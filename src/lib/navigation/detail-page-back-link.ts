@@ -1,7 +1,6 @@
 export const detailPageOriginValues = [
   "flashcards-manage",
   "planning-assessments",
-  "subject",
 ] as const;
 
 export type DetailPageOrigin = (typeof detailPageOriginValues)[number];
@@ -103,19 +102,8 @@ export function getFlashcardDetailHref(
   });
 }
 
-export function getNoteDetailHref(
-  subjectId: string,
-  noteId: string,
-  returnContext?: DetailPageReturnContextInput,
-) {
-  const context = returnContext
-    ? resolveDetailPageReturnContext(returnContext)
-    : {};
-
-  return withSearchParams(`/subjects/${subjectId}/notes/${noteId}`, {
-    from: context.from,
-    subjectId: context.subjectId,
-  });
+export function getNoteDetailHref(subjectId: string, noteId: string) {
+  return `/subjects/${subjectId}/notes/${noteId}`;
 }
 
 export function getAssessmentDetailHref(
@@ -144,9 +132,9 @@ export function resolveFlashcardDetailBackLink(
     };
   }
 
-  if (context.view) {
+  if (context.view || context.deckId) {
     return {
-      href: getFlashcardsHref(context.view, context.deckId),
+      href: getFlashcardsHref(context.view ?? "manage", context.deckId),
       label: "flashcards",
     };
   }

@@ -1,5 +1,10 @@
-import { FlashcardsHubLoading } from "@/components/flashcards/shared/flashcards-hub-loading";
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { FlashcardsHubLoadingContent } from "@/components/flashcards/shared/flashcards-hub-loading-content";
 
 export default function FlashcardsLoading() {
-  return <FlashcardsHubLoading />;
+  const searchParams = useSearchParams();
+
+  return <FlashcardsHubLoadingContent view={searchParams.get("view")} />;
 }
