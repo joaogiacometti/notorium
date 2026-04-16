@@ -26,11 +26,13 @@ import { getStatusToneClasses } from "@/lib/ui/status-tones";
 interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
   initialDeckId?: string;
+  aiEnabled: boolean;
 }
 
 export function FlashcardsManager({
   initialPageData,
   initialDeckId,
+  aiEnabled,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
@@ -138,6 +140,7 @@ export function FlashcardsManager({
         total={total}
         validationIssuesCount={validationIssues.length}
         isValidatingAgain={isValidatingAgain}
+        aiEnabled={aiEnabled}
         onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
         onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}
@@ -163,11 +166,13 @@ export function FlashcardsManager({
         onOpenChange={setCreateOpen}
         onCreated={refreshManagePage}
         deckId={selectedDeckId}
+        aiEnabled={aiEnabled}
       />
       {editingFlashcardId !== null && editingFlashcard && (
         <EditFlashcardDialog
           flashcard={editingFlashcard}
           open={editingFlashcardId !== null}
+          aiEnabled={aiEnabled}
           onOpenChange={(nextOpen) => {
             if (!nextOpen) {
               setEditingFlashcardId(null);
@@ -263,12 +268,14 @@ export function FlashcardsManager({
           }}
         />
       )}
-      <ValidateFlashcardsDialog
-        open={validateDialogOpen}
-        onOpenChange={setValidateDialogOpen}
-        onValidationStarted={handleValidationStarted}
-        currentDeckId={selectedDeckId}
-      />
+      {aiEnabled ? (
+        <ValidateFlashcardsDialog
+          open={validateDialogOpen}
+          onOpenChange={setValidateDialogOpen}
+          onValidationStarted={handleValidationStarted}
+          currentDeckId={selectedDeckId}
+        />
+      ) : null}
       <ValidateAgainDialog
         open={validateAgainDialogOpen}
         onOpenChange={setValidateAgainDialogOpen}

@@ -147,7 +147,9 @@ describe("paste-image loading flows", () => {
 
   it("disables AI generation in create dialog while resources editor uploads an image", async () => {
     await act(async () => {
-      root.render(<CreateFlashcardDialog open onOpenChange={() => {}} />);
+      root.render(
+        <CreateFlashcardDialog open onOpenChange={() => {}} aiEnabled />,
+      );
     });
 
     await act(async () => {
@@ -177,6 +179,7 @@ describe("paste-image loading flows", () => {
           open
           onOpenChange={() => {}}
           flashcard={flashcard}
+          aiEnabled
         />,
       );
     });

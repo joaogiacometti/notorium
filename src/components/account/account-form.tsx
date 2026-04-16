@@ -7,7 +7,6 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAccount } from "@/app/actions/account";
-import { AiSettingsCard } from "@/components/account/ai-settings-card";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
 import { NotificationPreferencesCard } from "@/components/account/notification-preferences-card";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -31,7 +30,6 @@ import {
   updateAccountSchema,
 } from "@/features/account/validation";
 import { formatDateLong, formatDateShort } from "@/lib/dates/format";
-import type { UserAiSettingsSummary } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface AccountFormProps {
@@ -39,7 +37,6 @@ interface AccountFormProps {
   email: string;
   createdAt: string;
   updatedAt: string;
-  initialAiSettings: UserAiSettingsSummary | null;
   emailEnabled: boolean;
   initialNotificationsEnabled: boolean;
   initialNotificationDaysBefore: number;
@@ -50,7 +47,6 @@ export function AccountForm({
   email,
   createdAt,
   updatedAt,
-  initialAiSettings,
   emailEnabled,
   initialNotificationsEnabled,
   initialNotificationDaysBefore,
@@ -159,10 +155,6 @@ export function AccountForm({
             </form>
           </CardContent>
         </Card>
-      </section>
-
-      <section id="ai-settings" className="scroll-mt-24">
-        <AiSettingsCard initialAiSettings={initialAiSettings} />
       </section>
 
       {emailEnabled && (

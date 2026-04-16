@@ -4,7 +4,8 @@ const SNAPSHOT = {
   DATABASE_URL: process.env.DATABASE_URL,
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
   REDIS_URL: process.env.REDIS_URL,
-  USER_AI_SETTINGS_ENCRYPTION_KEY: process.env.USER_AI_SETTINGS_ENCRYPTION_KEY,
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
   RATE_LIMIT_BACKEND: process.env.RATE_LIMIT_BACKEND,
   BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
   SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
@@ -32,11 +33,16 @@ function restoreEnv() {
     process.env.REDIS_URL = SNAPSHOT.REDIS_URL;
   }
 
-  if (SNAPSHOT.USER_AI_SETTINGS_ENCRYPTION_KEY === undefined) {
-    delete process.env.USER_AI_SETTINGS_ENCRYPTION_KEY;
+  if (SNAPSHOT.OPENROUTER_API_KEY === undefined) {
+    delete process.env.OPENROUTER_API_KEY;
   } else {
-    process.env.USER_AI_SETTINGS_ENCRYPTION_KEY =
-      SNAPSHOT.USER_AI_SETTINGS_ENCRYPTION_KEY;
+    process.env.OPENROUTER_API_KEY = SNAPSHOT.OPENROUTER_API_KEY;
+  }
+
+  if (SNAPSHOT.OPENROUTER_MODEL === undefined) {
+    delete process.env.OPENROUTER_MODEL;
+  } else {
+    process.env.OPENROUTER_MODEL = SNAPSHOT.OPENROUTER_MODEL;
   }
 
   if (SNAPSHOT.RATE_LIMIT_BACKEND === undefined) {
@@ -82,8 +88,6 @@ function setRequiredServerEnv() {
   process.env.BETTER_AUTH_SECRET = "12345678901234567890123456789012";
   process.env.REDIS_URL = "redis://localhost:6379";
   process.env.RATE_LIMIT_BACKEND = "redis";
-  process.env.USER_AI_SETTINGS_ENCRYPTION_KEY =
-    "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=";
 }
 
 describe("server env", () => {
@@ -92,7 +96,8 @@ describe("server env", () => {
     delete process.env.DATABASE_URL;
     delete process.env.BETTER_AUTH_SECRET;
     delete process.env.REDIS_URL;
-    delete process.env.USER_AI_SETTINGS_ENCRYPTION_KEY;
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.OPENROUTER_MODEL;
     delete process.env.RATE_LIMIT_BACKEND;
     delete process.env.BLOB_READ_WRITE_TOKEN;
     delete process.env.SKIP_ENV_VALIDATION;
@@ -143,5 +148,15 @@ describe("server env", () => {
     expect(env.CRON_SECRET).toBeUndefined();
     expect(env.RESEND_API_KEY).toBeUndefined();
     expect(env.RESEND_FROM_EMAIL).toBeUndefined();
+  });
+
+  it("allows missing OpenRouter env vars", async () => {
+    setRequiredServerEnv();
+
+    const { getServerEnv } = await import("@/env");
+    const env = getServerEnv();
+
+    expect(env.OPENROUTER_API_KEY).toBeUndefined();
+    expect(env.OPENROUTER_MODEL).toBeUndefined();
   });
 });

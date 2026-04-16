@@ -66,7 +66,7 @@ const FEATURES: {
     icon: Layers,
     title: "Flashcards",
     description:
-      "Create flashcards and review them with spaced repetition to retain what you learn.",
+      "Create flashcards and review with spaced repetition. Optional AI generation is available when enabled on the instance.",
   },
 ];
 

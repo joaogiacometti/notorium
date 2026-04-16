@@ -59,6 +59,7 @@ function TestHarness({
   const dialog = useFlashcardDialogState({
     mode,
     open,
+    aiEnabled: true,
     onOpenChange,
     values,
     form,
@@ -337,6 +338,7 @@ describe("useFlashcardDialogState", () => {
       const dialog = useFlashcardDialogState({
         mode: "create",
         open: true,
+        aiEnabled: true,
         onOpenChange: () => {},
         values: {
           deckId: "deck-1",

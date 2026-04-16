@@ -4,7 +4,6 @@ import type { AccountSectionNavItem } from "@/components/account/account-section
 import { AccountSectionsNav } from "@/components/account/account-sections-nav";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { getServerEnv } from "@/env";
-import { getUserAiSettingsSummary } from "@/features/ai/queries";
 import { getNotificationPreferences } from "@/features/user/queries";
 import { requireSession } from "@/lib/auth/auth";
 
@@ -13,12 +12,10 @@ export default async function AccountPage() {
   const emailEnabled = !!getServerEnv().RESEND_API_KEY;
   const sectionItems: AccountSectionNavItem[] = [
     { id: "account", label: "Account" },
-    { id: "ai-settings", label: "AI settings" },
     ...(emailEnabled ? [{ id: "notifications", label: "Notifications" }] : []),
     { id: "danger-zone", label: "Danger zone", tone: "danger" },
   ];
 
-  const aiSettings = await getUserAiSettingsSummary(session.user.id);
   const notificationPrefs = emailEnabled
     ? await getNotificationPreferences(session.user.id)
     : null;
@@ -50,7 +47,6 @@ export default async function AccountPage() {
               email={session.user.email}
               createdAt={new Date(session.user.createdAt).toISOString()}
               updatedAt={new Date(session.user.updatedAt).toISOString()}
-              initialAiSettings={aiSettings}
               emailEnabled={emailEnabled}
               initialNotificationsEnabled={
                 notificationPrefs?.notificationsEnabled ?? false

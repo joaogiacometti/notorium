@@ -16,6 +16,7 @@ import {
 } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
+import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 
 interface FlashcardsPageProps {
@@ -29,6 +30,7 @@ export default async function FlashcardsPage({
   searchParams,
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
+  const aiEnabled = isAiEnabled();
   const { view, deckId } = await searchParams;
   const currentView = resolveFlashcardsView(view);
   const [decks, deckTree] = await Promise.all([
@@ -78,6 +80,7 @@ export default async function FlashcardsPage({
           initialState={reviewState}
           deckId={scopedDeckId}
           decks={decks}
+          aiEnabled={aiEnabled}
           embedded
         />
       </div>,
@@ -127,6 +130,7 @@ export default async function FlashcardsPage({
         key={scopeKey}
         initialPageData={initialPageData}
         initialDeckId={scopedDeckId}
+        aiEnabled={aiEnabled}
       />
     </div>,
   );

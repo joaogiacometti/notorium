@@ -4,10 +4,3 @@ export class AiConfigurationError extends Error {
     this.name = "AiConfigurationError";
   }
 }
-
-export class AiStoredCredentialError extends Error {
-  constructor() {
-    super("Stored AI credentials are invalid");
-    this.name = "AiStoredCredentialError";
-  }
-}

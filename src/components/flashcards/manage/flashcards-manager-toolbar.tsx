@@ -28,6 +28,7 @@ interface FlashcardsManagerToolbarProps {
   total: number;
   validationIssuesCount: number;
   isValidatingAgain: boolean;
+  aiEnabled: boolean;
   onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
   onOpenValidateAgainDialog: () => void;
@@ -279,6 +280,7 @@ export function FlashcardsManagerToolbar({
   total,
   validationIssuesCount,
   isValidatingAgain,
+  aiEnabled,
   onOpenValidateDialog,
   onOpenCreateDialog,
   onOpenValidateAgainDialog,
@@ -313,15 +315,17 @@ export function FlashcardsManagerToolbar({
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={onOpenValidateDialog}
-                variant="outline"
-                className="h-10 shrink-0 gap-2 rounded-lg px-3 shadow-sm sm:px-4"
-              >
-                <Sparkles className="size-4" />
-                <span className="hidden sm:inline">Validate</span>
-              </Button>
+              {aiEnabled ? (
+                <Button
+                  type="button"
+                  onClick={onOpenValidateDialog}
+                  variant="outline"
+                  className="h-10 shrink-0 gap-2 rounded-lg px-3 shadow-sm sm:px-4"
+                >
+                  <Sparkles className="size-4" />
+                  <span className="hidden sm:inline">Validate</span>
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 onClick={onOpenCreateDialog}

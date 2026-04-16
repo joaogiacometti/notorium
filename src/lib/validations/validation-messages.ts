@@ -15,12 +15,6 @@ export function validationMessage(
 
 const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.common.invalidRequest": "Invalid request.",
-  "Validation.account.aiApiKeyMaxLength":
-    "API key must be at most 500 characters.",
-  "Validation.account.aiApiKeyRequired": "API key is required.",
-  "Validation.account.aiModelMaxLength":
-    "Model must be at most 150 characters.",
-  "Validation.account.aiModelRequired": "Model is required.",
   "Validation.account.nameMaxLength": "Name must be at most 100 characters.",
   "Validation.account.nameMinLength": "Name must be at least 2 characters.",
   "Validation.assessments.descriptionMaxLength":

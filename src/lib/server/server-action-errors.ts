@@ -38,9 +38,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "account.invalidData": "Invalid account data.",
   "account.updateFailed": "Failed to update account.",
   "account.deleteFailed": "Failed to delete account.",
-  "account.ai.invalidData": "Invalid AI settings.",
-  "account.ai.updateFailed": "Failed to update AI settings.",
-  "account.ai.clearFailed": "Failed to clear AI settings.",
   "account.notifications.invalidData": "Invalid notification settings.",
   "account.notifications.updateFailed":
     "Failed to update notification settings.",
@@ -70,13 +67,13 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "flashcards.duplicateFront": "A flashcard with this front already exists.",
   "flashcards.ai.invalidData": "Invalid flashcard input for AI generation.",
   "flashcards.ai.notConfigured":
-    "AI flashcard generation is not configured. Add your OpenRouter key and model in your account page.",
+    "AI flashcard generation is not configured for this instance.",
   "flashcards.ai.unavailable":
     "AI flashcard generation is temporarily unavailable.",
   "flashcards.ai.emptyGeneration":
     "Could not extract flashcards from this text. Try adding more content.",
   "flashcards.validation.notConfigured":
-    "AI validation is not configured. Add your OpenRouter key and model in your account page.",
+    "AI validation is not configured for this instance.",
   "flashcards.validation.unavailable":
     "AI validation is temporarily unavailable. Please try again later.",
   "flashcards.validation.noCards": "No flashcards to validate.",
@@ -101,6 +98,11 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} decks.`,
   "limits.deckNestingDepthLimit": (params) =>
     `System limit reached: decks can only be nested up to ${params?.max} levels deep.`,
+  "limits.aiBackGenerationPerDay":
+    "Daily limit reached for AI back generation.",
+  "limits.aiFlashcardGenerationPerDay":
+    "Daily limit reached for AI flashcard generation.",
+  "limits.aiValidationPerDay": "Daily limit reached for AI validation.",
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
   "subjects.invalidData": "Invalid subject data.",

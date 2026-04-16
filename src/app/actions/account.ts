@@ -8,15 +8,6 @@ import {
   updateAccountSchema,
 } from "@/features/account/validation";
 import {
-  clearUserAiSettings as clearUserAiSettingsForUser,
-  updateUserAiSettings as updateUserAiSettingsForUser,
-} from "@/features/ai/mutations";
-import {
-  createUserAiSettingsSchema,
-  type UpdateUserAiSettingsForm,
-  updateUserAiSettingsSchema,
-} from "@/features/ai/validation";
-import {
   type UpdateNotificationPreferencesForm,
   updateNotificationPreferencesSchema,
 } from "@/features/notifications/validation";
@@ -30,10 +21,7 @@ import {
   runValidatedAction,
   runValidatedUserAction,
 } from "@/lib/server/action-runner";
-import type {
-  MutationResult,
-  UserAiSettingsSummary,
-} from "@/lib/server/api-contracts";
+import type { MutationResult } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
 import {
   type UpdateUserAccessInput,
@@ -65,61 +53,6 @@ export async function updateAccount(
       return { success: true };
     },
   );
-}
-
-export async function updateUserAiSettings(
-  data: UpdateUserAiSettingsForm,
-): Promise<MutationResult & { settings?: UserAiSettingsSummary }> {
-  return runValidatedUserAction(
-    updateUserAiSettingsSchema,
-    data,
-    "account.ai.invalidData",
-    async (userId, parsedData) => {
-      try {
-        const settings = await updateUserAiSettingsForUser(userId, parsedData);
-        if (settings) {
-          return {
-            success: true,
-            settings,
-          };
-        }
-
-        return runValidatedAction(
-          createUserAiSettingsSchema,
-          parsedData,
-          "account.ai.invalidData",
-          async (createdData) => {
-            const savedSettings = await updateUserAiSettingsForUser(
-              userId,
-              createdData,
-            );
-            if (!savedSettings) {
-              return actionError("account.ai.updateFailed");
-            }
-
-            return {
-              success: true,
-              settings: savedSettings,
-            };
-          },
-        );
-      } catch {
-        return actionError("account.ai.updateFailed");
-      }
-    },
-  );
-}
-
-export async function clearUserAiSettings(): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-
-  try {
-    await clearUserAiSettingsForUser(userId);
-  } catch {
-    return actionError("account.ai.clearFailed");
-  }
-
-  return { success: true };
 }
 
 export async function updateNotificationPreferences(

@@ -2,7 +2,7 @@
 
 Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, assessments, and personal search in one place with private, user-scoped data.
 
-**AI Integration**: This project uses a Bring Your Own Key (BYOK) model for AI features. Users provide their own OpenRouter API key to access AI-powered flashcard generation.
+**AI Integration**: AI features are optional and configured at the instance level with OpenRouter environment variables.
 
 This document covers project setup, local development, and repository operations. For product behavior, UX rules, and feature acceptance criteria, use `SPEC.md`.
 
@@ -48,9 +48,6 @@ cp .env.example .env
 ```bash
 # Generate auth secret (for BETTER_AUTH_SECRET)
 openssl rand -hex 32
-
-# Generate encryption key (for USER_AI_SETTINGS_ENCRYPTION_KEY)
-openssl rand -base64 32
 
 # Generate cron secret (for CRON_SECRET, if using email notifications)
 openssl rand -hex 32
@@ -183,7 +180,8 @@ Defined in `src/env.ts`:
 | `UPSTASH_REDIS_REST_URL`          | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                                                               |
 | `UPSTASH_REDIS_REST_TOKEN`        | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                                                               |
 | `REDIS_URL`                       | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                                                                 |
-| `USER_AI_SETTINGS_ENCRYPTION_KEY` | Yes         | Base64-encoded 32-byte key used to encrypt user BYOK OpenRouter credentials at rest                                                      |
+| `OPENROUTER_API_KEY`              | No          | OpenRouter API key for instance-level AI features. If missing, AI features are hidden                                                     |
+| `OPENROUTER_MODEL`                | No          | OpenRouter model ID for instance-level AI features. If missing, AI features are hidden                                                     |
 | `BLOB_READ_WRITE_TOKEN`           | No          | Vercel Blob storage token for file uploads. Leave unset to disable attachments                                                           |
 | `RESEND_API_KEY`                  | No          | Resend API key for email notifications. When unset, email notification preferences are hidden                                            |
 | `RESEND_FROM_EMAIL`               | No          | Sender email address for notifications (requires verified domain in Resend)                                                              |
@@ -321,7 +319,11 @@ The E2E database is completely isolated from your development data, so tests can
 
 ## AI Integration
 
-Notorium uses a Bring Your Own Key (BYOK) model for AI features. Users provide their own OpenRouter API key for flashcard generation.
+AI is optional and managed at the instance level.
+
+- Configure both `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` to enable AI flashcard generation/validation features.
+- If either env var is missing, AI controls are hidden from the UI.
+- AI usage is limited per approved user per day to prevent runaway usage.
 
 ## Email Notifications
 

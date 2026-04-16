@@ -59,6 +59,7 @@ function Harness() {
         onAccept: () => {},
         onReject: () => {},
       }}
+      aiEnabled
       duplicateFront={{
         isChecking: false,
         isDuplicate: false,

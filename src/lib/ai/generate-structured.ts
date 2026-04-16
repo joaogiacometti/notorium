@@ -1,10 +1,10 @@
 import { generateObject } from "ai";
 import type { z } from "zod";
-import type { ResolvedUserAiSettings } from "@/features/ai/queries";
-import { getUserAiModelOrThrow } from "@/lib/ai/provider";
+import type { ResolvedAiSettings } from "@/lib/ai/config";
+import { getAiModelOrThrow } from "@/lib/ai/provider";
 
 interface GenerateStructuredOutputOptions<TSchema extends z.ZodType> {
-  settings: ResolvedUserAiSettings;
+  settings: ResolvedAiSettings;
   schema: TSchema;
   system: string;
   prompt: string;
@@ -18,7 +18,7 @@ export async function generateStructuredOutput<TSchema extends z.ZodType>({
   prompt,
   maxOutputTokens,
 }: GenerateStructuredOutputOptions<TSchema>): Promise<z.infer<TSchema>> {
-  const model = getUserAiModelOrThrow(settings);
+  const model = getAiModelOrThrow(settings);
 
   const { object } = await generateObject({
     model,

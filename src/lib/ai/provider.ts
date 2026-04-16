@@ -1,8 +1,8 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { ResolvedUserAiSettings } from "@/features/ai/queries";
+import type { ResolvedAiSettings } from "@/lib/ai/config";
 import { AiConfigurationError } from "@/lib/ai/errors";
 
-export function getUserAiModel(settings: ResolvedUserAiSettings | null) {
+export function getAiModel(settings: ResolvedAiSettings | null) {
   if (!settings || settings.provider !== "openrouter") {
     return null;
   }
@@ -14,8 +14,8 @@ export function getUserAiModel(settings: ResolvedUserAiSettings | null) {
   return openRouterProvider(settings.model);
 }
 
-export function getUserAiModelOrThrow(settings: ResolvedUserAiSettings) {
-  const model = getUserAiModel(settings);
+export function getAiModelOrThrow(settings: ResolvedAiSettings) {
+  const model = getAiModel(settings);
 
   if (!model) {
     throw new AiConfigurationError();

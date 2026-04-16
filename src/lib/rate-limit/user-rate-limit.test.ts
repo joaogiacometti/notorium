@@ -36,10 +36,6 @@ describe("tryAcquireUserExpiringLock", () => {
     );
     vi.stubEnv("BETTER_AUTH_SECRET", "secretsecretsecretsecret");
     vi.stubEnv("REDIS_URL", "redis://localhost:6379");
-    vi.stubEnv(
-      "USER_AI_SETTINGS_ENCRYPTION_KEY",
-      "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=",
-    );
     vi.stubEnv("SKIP_ENV_VALIDATION", "1");
 
     const upstashSetMock = vi.fn().mockResolvedValue("OK");
@@ -83,10 +79,6 @@ describe("tryAcquireUserExpiringLock", () => {
       "postgresql://postgres:postgres@localhost:5432/notorium",
     );
     vi.stubEnv("BETTER_AUTH_SECRET", "secretsecretsecretsecret");
-    vi.stubEnv(
-      "USER_AI_SETTINGS_ENCRYPTION_KEY",
-      "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=",
-    );
     vi.stubEnv("SKIP_ENV_VALIDATION", "1");
 
     const redisSetMock = vi.fn().mockResolvedValue("OK");

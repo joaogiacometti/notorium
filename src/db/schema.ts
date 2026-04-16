@@ -277,7 +277,6 @@ export const flashcardReviewRatingEnum = pgEnum("flashcard_review_rating", [
   "easy",
 ]);
 
-export const aiProviderEnum = pgEnum("ai_provider", ["openrouter"]);
 export const notificationStatusEnum = pgEnum("notification_status", [
   "claimed",
   "sent",
@@ -439,33 +438,6 @@ export const flashcardSchedulerSettings = pgTable(
   ],
 );
 
-export const userAiSettings = pgTable(
-  "user_ai_settings",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    provider: aiProviderEnum("provider").notNull().default("openrouter"),
-    model: text("model").notNull(),
-    apiKeyCiphertext: text("api_key_ciphertext").notNull(),
-    apiKeyIv: text("api_key_iv").notNull(),
-    apiKeyTag: text("api_key_tag").notNull(),
-    apiKeyLastFour: text("api_key_last_four").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    unique("user_ai_settings_userId_unique").on(table.userId),
-    index("user_ai_settings_userId_idx").on(table.userId),
-  ],
-);
-
 export const flashcardReviewLog = pgTable(
   "flashcard_review_log",
   {
@@ -506,7 +478,6 @@ export const userRelations = relations(user, ({ many }) => ({
   assessments: many(assessment),
   flashcards: many(flashcard),
   flashcardReviewLogs: many(flashcardReviewLog),
-  aiSettings: many(userAiSettings),
   decks: many(deck),
   notificationLogs: many(notificationLog),
 }));
@@ -617,13 +588,6 @@ export const flashcardReviewLogRelations = relations(
     }),
   }),
 );
-
-export const userAiSettingsRelations = relations(userAiSettings, ({ one }) => ({
-  user: one(user, {
-    fields: [userAiSettings.userId],
-    references: [user.id],
-  }),
-}));
 
 export const notificationLogRelations = relations(
   notificationLog,

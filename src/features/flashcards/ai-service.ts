@@ -1,4 +1,3 @@
-import { resolveRequiredUserAiSettings } from "@/features/ai/queries";
 import {
   type FlashcardForValidation,
   type FlashcardValidationOutput,
@@ -7,8 +6,11 @@ import {
   improveFlashcardBackContent,
   validateFlashcardsWithAi,
 } from "@/features/flashcards/ai";
-import { AiConfigurationError, AiStoredCredentialError } from "@/lib/ai/errors";
+import { resolveRequiredAiSettings } from "@/lib/ai/config";
+import { AiConfigurationError } from "@/lib/ai/errors";
+import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainTextWithImagePlaceholders } from "@/lib/editor/rich-text";
+import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 
 interface GenerateFlashcardBackForUserInput {
   userId: string;
@@ -21,7 +23,10 @@ type GenerateFlashcardBackForUserResult =
   | { success: true; back: string }
   | {
       success: false;
-      errorCode: "flashcards.ai.notConfigured" | "flashcards.ai.unavailable";
+      errorCode:
+        | "flashcards.ai.notConfigured"
+        | "flashcards.ai.unavailable"
+        | "limits.aiBackGenerationPerDay";
     };
 
 export async function generateFlashcardBackForUser({
@@ -31,7 +36,21 @@ export async function generateFlashcardBackForUser({
   front,
 }: GenerateFlashcardBackForUserInput): Promise<GenerateFlashcardBackForUserResult> {
   try {
-    const settings = await resolveRequiredUserAiSettings(userId);
+    const settings = resolveRequiredAiSettings();
+    const limitResult = await consumeUserDailyRateLimit({
+      prefix: LIMITS.aiBackGenerationRateLimitPrefix,
+      userId,
+      limit: LIMITS.aiBackGenerationRateLimitPerDay,
+      errorCode: "limits.aiBackGenerationPerDay",
+    });
+
+    if (limitResult.limited) {
+      return {
+        success: false,
+        errorCode: "limits.aiBackGenerationPerDay",
+      };
+    }
+
     const back = await generateFlashcardBackContent({
       settings,
       subjectName,
@@ -44,10 +63,7 @@ export async function generateFlashcardBackForUser({
       back,
     };
   } catch (error) {
-    if (
-      error instanceof AiConfigurationError ||
-      error instanceof AiStoredCredentialError
-    ) {
+    if (error instanceof AiConfigurationError) {
       return {
         success: false,
         errorCode: "flashcards.ai.notConfigured",
@@ -73,7 +89,10 @@ type ImproveFlashcardBackForUserResult =
   | { success: true; back: string }
   | {
       success: false;
-      errorCode: "flashcards.ai.notConfigured" | "flashcards.ai.unavailable";
+      errorCode:
+        | "flashcards.ai.notConfigured"
+        | "flashcards.ai.unavailable"
+        | "limits.aiBackGenerationPerDay";
     };
 
 export async function improveFlashcardBackForUser({
@@ -84,7 +103,21 @@ export async function improveFlashcardBackForUser({
   currentBack,
 }: ImproveFlashcardBackForUserInput): Promise<ImproveFlashcardBackForUserResult> {
   try {
-    const settings = await resolveRequiredUserAiSettings(userId);
+    const settings = resolveRequiredAiSettings();
+    const limitResult = await consumeUserDailyRateLimit({
+      prefix: LIMITS.aiBackGenerationRateLimitPrefix,
+      userId,
+      limit: LIMITS.aiBackGenerationRateLimitPerDay,
+      errorCode: "limits.aiBackGenerationPerDay",
+    });
+
+    if (limitResult.limited) {
+      return {
+        success: false,
+        errorCode: "limits.aiBackGenerationPerDay",
+      };
+    }
+
     const back = await improveFlashcardBackContent({
       settings,
       subjectName,
@@ -98,10 +131,7 @@ export async function improveFlashcardBackForUser({
       back,
     };
   } catch (error) {
-    if (
-      error instanceof AiConfigurationError ||
-      error instanceof AiStoredCredentialError
-    ) {
+    if (error instanceof AiConfigurationError) {
       return {
         success: false,
         errorCode: "flashcards.ai.notConfigured",
@@ -129,7 +159,8 @@ type GenerateFlashcardsForUserResult =
       errorCode:
         | "flashcards.ai.notConfigured"
         | "flashcards.ai.unavailable"
-        | "flashcards.ai.emptyGeneration";
+        | "flashcards.ai.emptyGeneration"
+        | "limits.aiFlashcardGenerationPerDay";
     };
 
 export async function generateFlashcardsForUser({
@@ -139,7 +170,21 @@ export async function generateFlashcardsForUser({
   text,
 }: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
   try {
-    const settings = await resolveRequiredUserAiSettings(userId);
+    const settings = resolveRequiredAiSettings();
+    const limitResult = await consumeUserDailyRateLimit({
+      prefix: LIMITS.aiFlashcardGenerationRateLimitPrefix,
+      userId,
+      limit: LIMITS.aiFlashcardGenerationRateLimitPerDay,
+      errorCode: "limits.aiFlashcardGenerationPerDay",
+    });
+
+    if (limitResult.limited) {
+      return {
+        success: false,
+        errorCode: "limits.aiFlashcardGenerationPerDay",
+      };
+    }
+
     const cards = await generateFlashcardsFromText({
       settings,
       subjectName,
@@ -159,10 +204,7 @@ export async function generateFlashcardsForUser({
       cards,
     };
   } catch (error) {
-    if (
-      error instanceof AiConfigurationError ||
-      error instanceof AiStoredCredentialError
-    ) {
+    if (error instanceof AiConfigurationError) {
       return {
         success: false,
         errorCode: "flashcards.ai.notConfigured",
@@ -188,7 +230,8 @@ type ValidateFlashcardsForUserResult =
       errorCode:
         | "flashcards.validation.notConfigured"
         | "flashcards.validation.unavailable"
-        | "flashcards.validation.noCards";
+        | "flashcards.validation.noCards"
+        | "limits.aiValidationPerDay";
     };
 
 export async function validateFlashcardsForUser({
@@ -203,7 +246,20 @@ export async function validateFlashcardsForUser({
   }
 
   try {
-    const settings = await resolveRequiredUserAiSettings(userId);
+    const settings = resolveRequiredAiSettings();
+    const limitResult = await consumeUserDailyRateLimit({
+      prefix: LIMITS.aiValidationRateLimitPrefix,
+      userId,
+      limit: LIMITS.aiValidationRateLimitPerDay,
+      errorCode: "limits.aiValidationPerDay",
+    });
+
+    if (limitResult.limited) {
+      return {
+        success: false,
+        errorCode: "limits.aiValidationPerDay",
+      };
+    }
 
     const flashcardsForValidation = flashcards.map((card) => ({
       id: card.id,
@@ -239,10 +295,7 @@ export async function validateFlashcardsForUser({
       validation: { issues: validIssues },
     };
   } catch (error) {
-    if (
-      error instanceof AiConfigurationError ||
-      error instanceof AiStoredCredentialError
-    ) {
+    if (error instanceof AiConfigurationError) {
       return {
         success: false,
         errorCode: "flashcards.validation.notConfigured",

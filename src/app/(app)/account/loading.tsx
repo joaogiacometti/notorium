@@ -21,7 +21,6 @@ export default function AccountLoading() {
               <Skeleton className="h-9 w-full rounded-md" />
               <Skeleton className="h-9 w-full rounded-md" />
               <Skeleton className="h-9 w-full rounded-md" />
-              <Skeleton className="h-9 w-full rounded-md" />
             </div>
           </div>
 
@@ -40,15 +39,6 @@ export default function AccountLoading() {
                   <Skeleton className="h-10 w-full rounded-md" />
                 </div>
                 <Skeleton className="h-14 w-full rounded-lg" />
-                <Skeleton className="h-10 w-28 rounded-md" />
-              </div>
-            </div>
-
-            <div className="rounded-xl border bg-card p-6">
-              <Skeleton className="h-6 w-28" />
-              <Skeleton className="mt-1 h-4 w-72" />
-              <div className="mt-5 flex gap-3">
-                <Skeleton className="h-10 w-28 rounded-md" />
                 <Skeleton className="h-10 w-28 rounded-md" />
               </div>
             </div>

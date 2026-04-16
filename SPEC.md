@@ -49,7 +49,9 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete flashcards within decks.
 - Flashcard fields: front and back rich text.
 - Flashcard create and edit support AI generation of the back when the back is empty.
-- AI flashcard generation is BYOK-only: each user configures their own OpenRouter model and API key on the account page.
+- AI flashcard generation is optional and configured globally at the instance level with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`.
+- AI flashcard controls are hidden when AI env vars are not configured.
+- AI generation and validation are limited per approved user per day.
 - Flashcard rich text supports the same shared editor capabilities as notes, including syntax-highlighted code blocks and supported image rendering.
 - Flashcard content renders images from:
   - pasted direct image URLs
@@ -60,7 +62,6 @@ Students who want a private, lightweight study management workspace.
 - The default flashcards page opens in the review view, with management and statistics available as alternate global views.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
 - Flashcard review remains available in the global flashcards page.
-- User AI API keys are encrypted at rest and never shown back to the user after saving.
 
 ### Decks
 

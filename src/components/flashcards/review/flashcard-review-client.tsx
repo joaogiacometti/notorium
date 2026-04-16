@@ -66,6 +66,7 @@ interface FlashcardReviewClientProps {
   decks: Array<DeckEntity | DeckOption>;
   deckId?: string;
   embedded?: boolean;
+  aiEnabled: boolean;
 }
 
 function getExamScopeKey(deckId?: string) {
@@ -351,6 +352,7 @@ export function FlashcardReviewClient({
   decks,
   deckId,
   embedded = false,
+  aiEnabled,
 }: Readonly<FlashcardReviewClientProps>) {
   const shortcutsSuspended = useShortcutsDialogOpen();
   const [reviewState, setReviewState] = useState(initialState);
@@ -882,6 +884,7 @@ export function FlashcardReviewClient({
               flashcard={currentCard}
               open={editOpen}
               onOpenChange={setEditOpen}
+              aiEnabled={aiEnabled}
               onUpdated={handleFlashcardUpdated}
               onDeleted={handleFlashcardDeleted}
               className="z-120"

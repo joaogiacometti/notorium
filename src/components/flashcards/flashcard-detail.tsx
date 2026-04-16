@@ -18,12 +18,14 @@ interface FlashcardDetailProps {
   backHref: string;
   backLabel: string;
   flashcard: FlashcardDetailEntity;
+  aiEnabled: boolean;
 }
 
 export function FlashcardDetail({
   backHref,
   backLabel,
   flashcard,
+  aiEnabled,
 }: Readonly<FlashcardDetailProps>) {
   const router = useRouter();
   const [, startNavTransition] = useTransition();
@@ -109,6 +111,7 @@ export function FlashcardDetail({
         flashcard={currentFlashcard}
         open={editOpen}
         onOpenChange={setEditOpen}
+        aiEnabled={aiEnabled}
         onUpdated={async (updated) => {
           let deckName = currentFlashcard.deckName;
           let deckPath = currentFlashcard.deckPath;

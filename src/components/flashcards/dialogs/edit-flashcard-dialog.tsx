@@ -52,6 +52,7 @@ interface EditFlashcardDialogProps {
   flashcard: Pick<FlashcardEntity, "id" | "deckId" | "front" | "back">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  aiEnabled: boolean;
   onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
   onDeleted?: (deletedId: string) => void | Promise<void>;
   className?: string;
@@ -62,6 +63,7 @@ export function EditFlashcardDialog({
   flashcard,
   open,
   onOpenChange,
+  aiEnabled,
   onUpdated,
   onDeleted,
   className,
@@ -108,6 +110,7 @@ export function EditFlashcardDialog({
   const dialog = useFlashcardDialogState({
     mode: "edit",
     open,
+    aiEnabled,
     onOpenChange: (nextOpen) => {
       if (!nextOpen) {
         setGeneratedCards(null);
@@ -190,6 +193,10 @@ export function EditFlashcardDialog({
   }
 
   async function handleGenerate() {
+    if (!aiEnabled) {
+      return;
+    }
+
     const combinedText = `Front:\n${richTextToPlainText(splitFront)}\n\nBack:\n${richTextToPlainText(splitBack)}`;
 
     setIsGenerating(true);
@@ -205,8 +212,9 @@ export function EditFlashcardDialog({
     if (!result.success) {
       let errorMessage = "AI service temporarily unavailable. Try again later.";
       if (result.errorCode === "flashcards.ai.notConfigured") {
-        errorMessage =
-          "Configure your AI settings in Account to use this feature.";
+        errorMessage = "AI features are not configured for this instance.";
+      } else if (result.errorCode === "limits.aiFlashcardGenerationPerDay") {
+        errorMessage = "Daily limit reached for AI flashcard generation.";
       } else if (result.errorCode === "flashcards.ai.emptyGeneration") {
         errorMessage =
           "Could not extract flashcards from this text. Try adding more content.";
@@ -259,6 +267,10 @@ export function EditFlashcardDialog({
   }
 
   function handleModeSwitch(newMode: EditMode) {
+    if (!aiEnabled) {
+      return;
+    }
+
     if (
       generatedCards &&
       generatedCards.length > 0 &&
@@ -333,17 +345,22 @@ export function EditFlashcardDialog({
             onAccept: dialog.handleAcceptBack,
             onReject: dialog.handleRejectBack,
           }}
+          aiEnabled={aiEnabled}
           duplicateFront={{
             isChecking: dialog.isCheckingDuplicateFront,
             isDuplicate: dialog.isDuplicateFront,
             message: dialog.duplicateFrontMessage,
           }}
           noDialog
-          typeToggle={{
-            mode: "edit",
-            onModeChange: (m) => handleModeSwitch(m as EditMode),
-            options: modeOptions,
-          }}
+          typeToggle={
+            aiEnabled
+              ? {
+                  mode: "edit",
+                  onModeChange: (m) => handleModeSwitch(m as EditMode),
+                  options: modeOptions,
+                }
+              : undefined
+          }
         />
       );
     }
@@ -360,11 +377,15 @@ export function EditFlashcardDialog({
             onCreate={handleCreateCards}
             onBack={handleBackToInput}
             isCreating={isCreating}
-            typeToggle={{
-              mode: "split",
-              onModeChange: (m) => handleModeSwitch(m as EditMode),
-              options: modeOptions,
-            }}
+            typeToggle={
+              aiEnabled
+                ? {
+                    mode: "split",
+                    onModeChange: (m) => handleModeSwitch(m as EditMode),
+                    options: modeOptions,
+                  }
+                : undefined
+            }
           />
         </div>
       );

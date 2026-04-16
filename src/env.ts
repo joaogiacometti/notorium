@@ -1,15 +1,5 @@
 import { z } from "zod";
 
-function isBase64Length(length: number) {
-  return (value: string) => {
-    try {
-      return Buffer.from(value, "base64").length === length;
-    } catch {
-      return false;
-    }
-  };
-}
-
 const serverEnvSchema = z
   .object({
     DATABASE_URL: z.url(),
@@ -22,10 +12,8 @@ const serverEnvSchema = z
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
     REDIS_URL: z.url().optional(),
     BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
-    USER_AI_SETTINGS_ENCRYPTION_KEY: z.string().refine(isBase64Length(32), {
-      message:
-        "USER_AI_SETTINGS_ENCRYPTION_KEY must be a base64-encoded 32-byte key",
-    }),
+    OPENROUTER_API_KEY: z.string().min(1).optional(),
+    OPENROUTER_MODEL: z.string().min(1).optional(),
     RESEND_API_KEY: z.string().min(1).optional(),
     RESEND_FROM_EMAIL: z.string().min(1).optional(),
     CRON_SECRET: z.string().min(32).optional(),

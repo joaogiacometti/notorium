@@ -253,6 +253,13 @@
       "when": 1776274844281,
       "tag": "0035_furry_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1776355295339,
+      "tag": "0036_cloudy_khan",
+      "breakpoints": true
     }
   ]
 }

@@ -28,6 +28,7 @@ type FlashcardFormValues = CreateFlashcardForm & { id?: string };
 interface UseFlashcardDialogStateOptions<TValues extends FlashcardFormValues> {
   mode: "create" | "edit";
   open: boolean;
+  aiEnabled: boolean;
   onOpenChange: (open: boolean) => void;
   values: TValues;
   form: UseFormReturn<TValues>;
@@ -50,6 +51,7 @@ interface UseFlashcardDialogStateOptions<TValues extends FlashcardFormValues> {
 export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   mode,
   open,
+  aiEnabled,
   onOpenChange,
   values,
   form,
@@ -281,6 +283,10 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }
 
   async function handleGenerateBack() {
+    if (!aiEnabled) {
+      return;
+    }
+
     const hasBack = hasRichTextContent(currentValues.back);
 
     if (!hasRichTextContent(currentValues.front) || isGeneratingBack) {
@@ -344,6 +350,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }
 
   const canUseAiBack =
+    aiEnabled &&
     (currentValues.deckId ?? "").length > 0 &&
     hasRichTextContent(currentValues.front) &&
     !isGeneratingBack &&

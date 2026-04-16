@@ -78,6 +78,7 @@ interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   isSubmitting: boolean;
   discard: FlashcardDialogDiscardConfig;
   aiBack: FlashcardDialogAiBackConfig;
+  aiEnabled: boolean;
   duplicateFront: FlashcardDialogDuplicateConfig;
   noDialog?: boolean;
   typeToggle?: {
@@ -111,6 +112,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   isSubmitting,
   discard,
   aiBack,
+  aiEnabled,
   duplicateFront,
   createOptions,
   noDialog,
@@ -264,21 +266,25 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   <div className="flex items-center justify-between gap-3">
                     <FieldLabel htmlFor={`${formId}-back`}>Back</FieldLabel>
                     <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="xs"
-                        className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                        onClick={() => void aiBack.onGenerate()}
-                        disabled={!aiBack.canUse}
-                      >
-                        {aiBack.isGenerating ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="size-3.5" />
-                        )}
-                        {aiBack.isGenerating ? generatingLabel : generateLabel}
-                      </Button>
+                      {aiEnabled ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
+                          onClick={() => void aiBack.onGenerate()}
+                          disabled={!aiBack.canUse}
+                        >
+                          {aiBack.isGenerating ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="size-3.5" />
+                          )}
+                          {aiBack.isGenerating
+                            ? generatingLabel
+                            : generateLabel}
+                        </Button>
+                      ) : null}
                       {mode === "create" && createOptions ? (
                         <Button
                           type="button"
@@ -312,7 +318,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     </div>
                   </div>
                 </div>
-                {aiBack.proposedValue && aiBack.previousValue ? (
+                {aiEnabled && aiBack.proposedValue && aiBack.previousValue ? (
                   <FlashcardBackDiff
                     previousBack={aiBack.previousValue}
                     proposedBack={aiBack.proposedValue}

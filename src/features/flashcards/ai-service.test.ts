@@ -1,29 +1,47 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AiConfigurationError } from "@/lib/ai/errors";
 
-import { AiConfigurationError, AiStoredCredentialError } from "@/lib/ai/errors";
-
-const resolveRequiredUserAiSettingsMock = vi.fn();
+const resolveRequiredAiSettingsMock = vi.fn();
+const consumeUserDailyRateLimitMock = vi.fn();
 const generateFlashcardBackContentMock = vi.fn();
 const improveFlashcardBackContentMock = vi.fn();
+const generateFlashcardsFromTextMock = vi.fn();
+const validateFlashcardsWithAiMock = vi.fn();
 
-vi.mock("@/features/ai/queries", () => ({
-  resolveRequiredUserAiSettings: resolveRequiredUserAiSettingsMock,
+vi.mock("@/lib/ai/config", () => ({
+  resolveRequiredAiSettings: resolveRequiredAiSettingsMock,
+}));
+
+vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
+  consumeUserDailyRateLimit: consumeUserDailyRateLimitMock,
 }));
 
 vi.mock("@/features/flashcards/ai", () => ({
   generateFlashcardBackContent: generateFlashcardBackContentMock,
   improveFlashcardBackContent: improveFlashcardBackContentMock,
+  generateFlashcardsFromText: generateFlashcardsFromTextMock,
+  validateFlashcardsWithAi: validateFlashcardsWithAiMock,
 }));
 
-describe("generateFlashcardBackForUser", () => {
+describe("flashcards ai service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveRequiredAiSettingsMock.mockReturnValue({
+      provider: "openrouter",
+      model: "openai/gpt-4.1-mini",
+      apiKey: "sk-or-v1-test",
+    });
+    consumeUserDailyRateLimitMock.mockResolvedValue({
+      limited: false,
+      remaining: 100,
+      resetAt: "2026-05-01T00:00:00.000Z",
+    });
   });
 
-  it("returns notConfigured without consuming quota when settings are missing", async () => {
-    resolveRequiredUserAiSettingsMock.mockRejectedValueOnce(
-      new AiConfigurationError(),
-    );
+  it("returns notConfigured when AI env settings are missing", async () => {
+    resolveRequiredAiSettingsMock.mockImplementationOnce(() => {
+      throw new AiConfigurationError();
+    });
 
     const { generateFlashcardBackForUser } = await import(
       "@/features/flashcards/ai-service"
@@ -31,8 +49,7 @@ describe("generateFlashcardBackForUser", () => {
 
     const result = await generateFlashcardBackForUser({
       userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
+      front: "<p>What is ATP?</p>",
     });
 
     expect(result).toEqual({
@@ -42,10 +59,13 @@ describe("generateFlashcardBackForUser", () => {
     expect(generateFlashcardBackContentMock).not.toHaveBeenCalled();
   });
 
-  it("returns notConfigured when settings cannot be decrypted", async () => {
-    resolveRequiredUserAiSettingsMock.mockRejectedValueOnce(
-      new AiStoredCredentialError(),
-    );
+  it("returns AI back-generation limit error before provider call", async () => {
+    consumeUserDailyRateLimitMock.mockResolvedValueOnce({
+      limited: true,
+      remaining: 0,
+      resetAt: "2026-05-01T00:00:00.000Z",
+      errorCode: "limits.aiBackGenerationPerDay",
+    });
 
     const { generateFlashcardBackForUser } = await import(
       "@/features/flashcards/ai-service"
@@ -53,31 +73,18 @@ describe("generateFlashcardBackForUser", () => {
 
     const result = await generateFlashcardBackForUser({
       userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
+      front: "<p>What is ATP?</p>",
     });
 
     expect(result).toEqual({
       success: false,
-      errorCode: "flashcards.ai.notConfigured",
+      errorCode: "limits.aiBackGenerationPerDay",
     });
+    expect(generateFlashcardBackContentMock).not.toHaveBeenCalled();
   });
 
-  it("generates content after settings resolve successfully", async () => {
-    const calls: string[] = [];
-
-    resolveRequiredUserAiSettingsMock.mockImplementationOnce(async () => {
-      calls.push("resolve");
-      return {
-        provider: "openrouter",
-        model: "openai/gpt-4.1-mini",
-        apiKey: "sk-or-v1-test",
-      };
-    });
-    generateFlashcardBackContentMock.mockImplementationOnce(async () => {
-      calls.push("generate");
-      return "<p>ATP stores and transfers cellular energy.</p>";
-    });
+  it("generates back content with global AI settings", async () => {
+    generateFlashcardBackContentMock.mockResolvedValueOnce("<p>Energy.</p>");
 
     const { generateFlashcardBackForUser } = await import(
       "@/features/flashcards/ai-service"
@@ -85,173 +92,97 @@ describe("generateFlashcardBackForUser", () => {
 
     const result = await generateFlashcardBackForUser({
       userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
+      front: "<p>What is ATP?</p>",
+      deckName: "Biology",
     });
 
     expect(result).toEqual({
       success: true,
-      back: "<p>ATP stores and transfers cellular energy.</p>",
+      back: "<p>Energy.</p>",
     });
-    expect(calls).toEqual(["resolve", "generate"]);
     expect(generateFlashcardBackContentMock).toHaveBeenCalledWith({
       settings: {
         provider: "openrouter",
         model: "openai/gpt-4.1-mini",
         apiKey: "sk-or-v1-test",
       },
-      subjectName: "Biology",
-      deckName: undefined,
-      front: "What is ATP?",
+      subjectName: undefined,
+      deckName: "Biology",
+      front: "<p>What is ATP?</p>",
     });
   });
 
-  it("returns unavailable for non-configuration failures", async () => {
-    resolveRequiredUserAiSettingsMock.mockRejectedValueOnce(
-      new Error("db down"),
-    );
+  it("returns generation limit error for multi-card generation", async () => {
+    consumeUserDailyRateLimitMock.mockResolvedValueOnce({
+      limited: true,
+      remaining: 0,
+      resetAt: "2026-05-01T00:00:00.000Z",
+      errorCode: "limits.aiFlashcardGenerationPerDay",
+    });
 
-    const { generateFlashcardBackForUser } = await import(
+    const { generateFlashcardsForUser } = await import(
       "@/features/flashcards/ai-service"
     );
 
-    const result = await generateFlashcardBackForUser({
+    const result = await generateFlashcardsForUser({
       userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
+      text: "sample",
     });
 
     expect(result).toEqual({
       success: false,
-      errorCode: "flashcards.ai.unavailable",
+      errorCode: "limits.aiFlashcardGenerationPerDay",
     });
+    expect(generateFlashcardsFromTextMock).not.toHaveBeenCalled();
   });
 
-  it("returns unavailable for provider failures after valid resolution", async () => {
-    resolveRequiredUserAiSettingsMock.mockImplementationOnce(async () => {
-      return {
-        provider: "openrouter",
-        model: "openai/gpt-4.1-mini",
-        apiKey: "sk-or-v1-test",
-      };
+  it("returns validation limit error for AI validation", async () => {
+    consumeUserDailyRateLimitMock.mockResolvedValueOnce({
+      limited: true,
+      remaining: 0,
+      resetAt: "2026-05-01T00:00:00.000Z",
+      errorCode: "limits.aiValidationPerDay",
     });
-    generateFlashcardBackContentMock.mockRejectedValueOnce(
-      new Error("provider error"),
-    );
 
-    const { generateFlashcardBackForUser } = await import(
+    const { validateFlashcardsForUser } = await import(
       "@/features/flashcards/ai-service"
     );
 
-    const result = await generateFlashcardBackForUser({
+    const result = await validateFlashcardsForUser({
       userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
+      flashcards: [
+        {
+          id: "f1",
+          front: "<p>Front</p>",
+          back: "<p>Back</p>",
+          deckName: "Biology",
+          deckId: "deck-1",
+          deckPath: "Biology",
+        },
+      ],
     });
 
     expect(result).toEqual({
       success: false,
-      errorCode: "flashcards.ai.unavailable",
+      errorCode: "limits.aiValidationPerDay",
     });
-  });
-});
-
-describe("improveFlashcardBackForUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+    expect(validateFlashcardsWithAiMock).not.toHaveBeenCalled();
   });
 
-  it("returns notConfigured without consuming quota when settings are missing", async () => {
-    resolveRequiredUserAiSettingsMock.mockRejectedValueOnce(
-      new AiConfigurationError(),
-    );
-
-    const { improveFlashcardBackForUser } = await import(
+  it("returns noCards without touching limits", async () => {
+    const { validateFlashcardsForUser } = await import(
       "@/features/flashcards/ai-service"
     );
 
-    const result = await improveFlashcardBackForUser({
+    const result = await validateFlashcardsForUser({
       userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
-      currentBack: "ATP stores energy.",
+      flashcards: [],
     });
 
     expect(result).toEqual({
       success: false,
-      errorCode: "flashcards.ai.notConfigured",
+      errorCode: "flashcards.validation.noCards",
     });
-    expect(generateFlashcardBackContentMock).not.toHaveBeenCalled();
-  });
-
-  it("returns notConfigured when settings cannot be decrypted", async () => {
-    resolveRequiredUserAiSettingsMock.mockRejectedValueOnce(
-      new AiStoredCredentialError(),
-    );
-
-    const { improveFlashcardBackForUser } = await import(
-      "@/features/flashcards/ai-service"
-    );
-
-    const result = await improveFlashcardBackForUser({
-      userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
-      currentBack: "ATP stores energy.",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "flashcards.ai.notConfigured",
-    });
-  });
-
-  it("improves content after settings resolve successfully", async () => {
-    resolveRequiredUserAiSettingsMock.mockResolvedValueOnce({
-      provider: "openrouter",
-      model: "openai/gpt-4.1-mini",
-      apiKey: "sk-or-v1-test",
-    });
-    improveFlashcardBackContentMock.mockResolvedValueOnce(
-      "<p>ATP stores and transfers cellular energy through phosphate bonds.</p>",
-    );
-
-    const { improveFlashcardBackForUser } = await import(
-      "@/features/flashcards/ai-service"
-    );
-
-    const result = await improveFlashcardBackForUser({
-      userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
-      currentBack: "ATP stores energy.",
-    });
-
-    expect(result).toEqual({
-      success: true,
-      back: "<p>ATP stores and transfers cellular energy through phosphate bonds.</p>",
-    });
-  });
-
-  it("returns unavailable for non-configuration failures", async () => {
-    resolveRequiredUserAiSettingsMock.mockRejectedValueOnce(
-      new Error("db down"),
-    );
-
-    const { improveFlashcardBackForUser } = await import(
-      "@/features/flashcards/ai-service"
-    );
-
-    const result = await improveFlashcardBackForUser({
-      userId: "user-1",
-      subjectName: "Biology",
-      front: "What is ATP?",
-      currentBack: "ATP stores energy.",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "flashcards.ai.unavailable",
-    });
+    expect(consumeUserDailyRateLimitMock).not.toHaveBeenCalled();
   });
 });

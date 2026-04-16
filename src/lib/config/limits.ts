@@ -39,8 +39,6 @@ export const LIMITS = {
   attendanceMaxMissesMax: 365,
 
   accountNameMax: 100,
-  accountAiModelMax: 150,
-  accountAiApiKeyMax: 500,
 
   authEmailMax: 254,
   authPasswordMin: 8,
@@ -63,6 +61,12 @@ export const LIMITS = {
   authRateLimitMaxAttempts: 10,
   authRateLimitWindowSeconds: 60,
   authRateLimitPrefix: "ratelimit:auth",
+  aiBackGenerationRateLimitPrefix: "ratelimit:ai:back",
+  aiFlashcardGenerationRateLimitPrefix: "ratelimit:ai:generation",
+  aiValidationRateLimitPrefix: "ratelimit:ai:validation",
+  aiBackGenerationRateLimitPerDay: 500,
+  aiFlashcardGenerationRateLimitPerDay: 250,
+  aiValidationRateLimitPerDay: 200,
   trustedProxyCount: 0,
   ipAddressMaxLength: 64,
 } as const;

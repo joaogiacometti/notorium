@@ -1,4 +1,3 @@
-import type { ResolvedUserAiSettings } from "@/features/ai/queries";
 import {
   buildGenerateFlashcardBackPrompt,
   buildGenerateFlashcardsPrompt,
@@ -21,6 +20,7 @@ import {
   plainTextToRichText,
 } from "@/features/flashcards/ai-utils";
 import { flashcardBackSchema } from "@/features/flashcards/validation";
+import type { ResolvedAiSettings } from "@/lib/ai/config";
 import { generateStructuredOutput } from "@/lib/ai/generate-structured";
 import { AI_LIMITS } from "@/lib/config/limits";
 import {
@@ -33,7 +33,7 @@ export type { FlashcardValidationOutput };
 export type { FlashcardForValidation };
 
 export async function generateFlashcardBackContent(input: {
-  settings: ResolvedUserAiSettings;
+  settings: ResolvedAiSettings;
   subjectName?: string;
   deckName?: string;
   front: string;
@@ -65,7 +65,7 @@ export async function generateFlashcardBackContent(input: {
 }
 
 export async function improveFlashcardBackContent(input: {
-  settings: ResolvedUserAiSettings;
+  settings: ResolvedAiSettings;
   subjectName?: string;
   deckName?: string;
   front: string;
@@ -105,7 +105,7 @@ export async function improveFlashcardBackContent(input: {
 }
 
 export async function generateFlashcardsFromText(input: {
-  settings: ResolvedUserAiSettings;
+  settings: ResolvedAiSettings;
   subjectName?: string;
   deckName?: string;
   text: string;
@@ -132,7 +132,7 @@ export async function generateFlashcardsFromText(input: {
 }
 
 export async function validateFlashcardsWithAi(input: {
-  settings: ResolvedUserAiSettings;
+  settings: ResolvedAiSettings;
   flashcards: FlashcardForValidation[];
 }): Promise<FlashcardValidationOutput> {
   const output = await generateStructuredOutput({

@@ -70,6 +70,7 @@ interface CreateFlashcardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
+  aiEnabled: boolean;
 }
 
 export function CreateFlashcardDialog({
@@ -78,6 +79,7 @@ export function CreateFlashcardDialog({
   open,
   onOpenChange,
   onCreated,
+  aiEnabled,
 }: Readonly<CreateFlashcardDialogProps>) {
   const [mode, setMode] = useState<CreateMode>("single");
   const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(
@@ -118,6 +120,7 @@ export function CreateFlashcardDialog({
   const dialog = useFlashcardDialogState({
     mode: "create",
     open,
+    aiEnabled,
     onOpenChange: (nextOpen) => {
       if (!nextOpen) {
         if (
@@ -148,6 +151,10 @@ export function CreateFlashcardDialog({
   });
 
   async function handleGenerate() {
+    if (!aiEnabled) {
+      return;
+    }
+
     const isValid = await aiForm.trigger();
     if (!isValid) {
       return;
@@ -164,8 +171,9 @@ export function CreateFlashcardDialog({
     if (!result.success) {
       let errorMessage = "AI service temporarily unavailable. Try again later.";
       if (result.errorCode === "flashcards.ai.notConfigured") {
-        errorMessage =
-          "Configure your AI settings in Account to use this feature.";
+        errorMessage = "AI features are not configured for this instance.";
+      } else if (result.errorCode === "limits.aiFlashcardGenerationPerDay") {
+        errorMessage = "Daily limit reached for AI flashcard generation.";
       } else if (result.errorCode === "flashcards.ai.emptyGeneration") {
         errorMessage =
           "Could not extract flashcards from this text. Try adding more content.";
@@ -226,6 +234,10 @@ export function CreateFlashcardDialog({
   }
 
   function handleModeSwitch(newMode: CreateMode) {
+    if (!aiEnabled) {
+      return;
+    }
+
     if (
       generatedCards &&
       generatedCards.length > 0 &&
@@ -317,6 +329,7 @@ export function CreateFlashcardDialog({
           onAccept: dialog.handleAcceptBack,
           onReject: dialog.handleRejectBack,
         }}
+        aiEnabled={aiEnabled}
         duplicateFront={{
           isChecking: dialog.isCheckingDuplicateFront,
           isDuplicate: dialog.isDuplicateFront,
@@ -329,10 +342,14 @@ export function CreateFlashcardDialog({
           onKeepBackAfterSubmitChange: dialog.setKeepBackAfterSubmit,
         }}
         noDialog
-        typeToggle={{
-          mode: "single",
-          onModeChange: handleModeSwitch as (mode: string) => void,
-        }}
+        typeToggle={
+          aiEnabled
+            ? {
+                mode: "single",
+                onModeChange: handleModeSwitch as (mode: string) => void,
+              }
+            : undefined
+        }
       />
     );
   } else if (generatedCards) {
