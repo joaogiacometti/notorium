@@ -156,8 +156,6 @@ describe("flashcards ai service", () => {
           front: "<p>Front</p>",
           back: "<p>Back</p>",
           deckName: "Biology",
-          deckId: "deck-1",
-          deckPath: "Biology",
         },
       ],
     });
