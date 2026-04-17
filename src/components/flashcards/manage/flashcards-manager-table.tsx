@@ -2,15 +2,12 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreditCard } from "lucide-react";
+import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
-import {
-  getRichTextExcerpt,
-  richTextToPlainText,
-} from "@/lib/editor/rich-text";
 import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -27,16 +24,6 @@ interface FlashcardsManagerTableProps {
   onResetRequested: (flashcard: FlashcardTarget) => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
   onRowClick?: (flashcard: FlashcardManageItem) => void;
-}
-
-const flashcardFrontPreviewLength = 30;
-
-function getFlashcardFrontPreview(front: string) {
-  return getRichTextExcerpt(front, flashcardFrontPreviewLength);
-}
-
-function getFlashcardFrontTitle(front: string) {
-  return richTextToPlainText(front) || undefined;
 }
 
 function getColumnClassName(columnId: string) {
@@ -74,9 +61,9 @@ function getColumns(
           <div className="min-w-0 flex-1">
             <div
               className="truncate text-sm font-semibold leading-6 text-foreground/95"
-              title={getFlashcardFrontTitle(row.original.front)}
+              title={row.original.frontTitle ?? undefined}
             >
-              {getFlashcardFrontPreview(row.original.front)}
+              {row.original.frontExcerpt}
             </div>
           </div>
         </div>
@@ -150,10 +137,15 @@ export function FlashcardsManagerTable({
   onSelectedFlashcardIdsChange,
   onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
+  const columns = useMemo(
+    () => getColumns(onEditRequested, onDeleteRequested, onResetRequested),
+    [onDeleteRequested, onEditRequested, onResetRequested],
+  );
+
   return (
     <ManagerDataTable
       data={flashcards}
-      columns={getColumns(onEditRequested, onDeleteRequested, onResetRequested)}
+      columns={columns}
       pageIndex={pageIndex}
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}

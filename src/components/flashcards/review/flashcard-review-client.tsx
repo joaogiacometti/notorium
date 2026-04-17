@@ -12,6 +12,7 @@ import {
 import {
   useEffect,
   useEffectEvent,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -464,12 +465,16 @@ export function FlashcardReviewClient({
       ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
         reviewState.summary.totalCount
       : 0;
-  const previewLabels = currentCard
-    ? getFlashcardReviewPreviewLabels({
-        card: currentCard,
-        scheduler: reviewState.scheduler,
-      })
-    : null;
+  const previewLabels = useMemo(
+    () =>
+      currentCard
+        ? getFlashcardReviewPreviewLabels({
+            card: currentCard,
+            scheduler: reviewState.scheduler,
+          })
+        : null,
+    [currentCard, reviewState.scheduler],
+  );
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
     setReviewState(nextState);

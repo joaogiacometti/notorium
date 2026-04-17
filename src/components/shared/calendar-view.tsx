@@ -15,12 +15,12 @@ import {
   ChevronRight,
   CircleAlert,
   ClipboardList,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getCalendarEvents } from "@/app/actions/calendar";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { assessmentTypeLabels } from "@/features/assessments/assessments";
 import {
   buildCalendarEvents,
@@ -216,22 +216,6 @@ function DayDetail({
   );
 }
 
-function DayDetailSkeleton() {
-  return (
-    <div className="rounded-xl border border-border/70 bg-card/85 p-4 lg:min-h-0 lg:overflow-y-auto">
-      <Skeleton className="h-5 w-40" />
-      <div className="mt-4 space-y-3">
-        {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton
-            key={`calendar-detail-skeleton-${index + 1}`}
-            className="h-16 rounded-lg"
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 interface CalendarViewProps {
   initialAnchorIso?: string;
   initialSelectedDateIso?: string;
@@ -250,13 +234,14 @@ export function CalendarView({
     resolveCalendarDate(initialSelectedDateIso ?? initialAnchorIso),
   );
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents ?? []);
-  const [isPending, startTransition] = useTransition();
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const initialRangeKeyRef = useRef(
     initialEvents
       ? getMonthRange(resolveCalendarDate(initialAnchorIso)).key
       : null,
   );
   const shouldReuseInitialEventsRef = useRef(initialEvents !== undefined);
+  const requestIdRef = useRef(0);
   const {
     endIso: rangeEndIso,
     key: rangeKey,
@@ -272,17 +257,34 @@ export function CalendarView({
       return;
     }
 
-    startTransition(async () => {
-      const data = await getCalendarEvents(rangeStartIso, rangeEndIso);
-      setEvents(buildCalendarEvents(data));
-    });
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setIsLoadingEvents(true);
+
+    void getCalendarEvents(rangeStartIso, rangeEndIso)
+      .then((data) => {
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+
+        setEvents(buildCalendarEvents(data));
+      })
+      .finally(() => {
+        if (requestIdRef.current === requestId) {
+          setIsLoadingEvents(false);
+        }
+      });
   }, [rangeEndIso, rangeKey, rangeStartIso]);
 
   const todayIso = formatIsoDate(new Date());
-  const dates = getMonthGridDates(anchor);
-  const eventsByDate = groupEventsByDate(events);
-  const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
-    format(addDays(startOfWeek(anchor, { weekStartsOn: 1 }), index), "EEE"),
+  const dates = useMemo(() => getMonthGridDates(anchor), [anchor]);
+  const eventsByDate = useMemo(() => groupEventsByDate(events), [events]);
+  const weekdayLabels = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, index) =>
+        format(addDays(startOfWeek(anchor, { weekStartsOn: 1 }), index), "EEE"),
+      ),
+    [anchor],
   );
 
   function goBack() {
@@ -319,6 +321,9 @@ export function CalendarView({
             <h2 className="min-w-40 text-center text-base font-semibold">
               {title}
             </h2>
+            {isLoadingEvents ? (
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            ) : null}
             <Button
               variant="ghost"
               size="icon"
@@ -340,61 +345,46 @@ export function CalendarView({
         </div>
 
         <div className="mt-4 min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-          {isPending ? (
-            <div className="grid grid-cols-7 gap-px lg:gap-1">
-              {weekdayLabels.map((d) => (
-                <div
-                  key={d}
-                  className="py-1 text-center text-[11px] font-medium text-muted-foreground lg:text-xs"
-                >
-                  {d}
-                </div>
-              ))}
-              {Array.from({ length: 35 }, (_, i) => `skel-${i}`).map((id) => (
-                <Skeleton key={id} className="h-10 rounded-md lg:h-16" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-7 gap-px lg:gap-1">
-              {weekdayLabels.map((d) => (
-                <div
-                  key={d}
-                  className="py-1 text-center text-[11px] font-medium text-muted-foreground lg:text-xs"
-                >
-                  {d}
-                </div>
-              ))}
-              {dates.map((date) => (
-                <DayCell
-                  key={date.toISOString()}
-                  date={date}
-                  dayEvents={
-                    eventsByDate.get(format(date, "yyyy-MM-dd")) ?? emptyEvents
-                  }
-                  isCurrentMonth={isSameMonth(date, anchor)}
-                  selected={isSameDay(date, selectedDate)}
-                  todayIso={todayIso}
-                  onSelect={setSelectedDate}
-                />
-              ))}
-            </div>
-          )}
+          <div
+            className={cn(
+              "grid grid-cols-7 gap-px transition-opacity lg:gap-1",
+              isLoadingEvents && "opacity-70",
+            )}
+          >
+            {weekdayLabels.map((d) => (
+              <div
+                key={d}
+                className="py-1 text-center text-[11px] font-medium text-muted-foreground lg:text-xs"
+              >
+                {d}
+              </div>
+            ))}
+            {dates.map((date) => (
+              <DayCell
+                key={date.toISOString()}
+                date={date}
+                dayEvents={
+                  eventsByDate.get(format(date, "yyyy-MM-dd")) ?? emptyEvents
+                }
+                isCurrentMonth={isSameMonth(date, anchor)}
+                selected={isSameDay(date, selectedDate)}
+                todayIso={todayIso}
+                onSelect={setSelectedDate}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      {isPending ? (
-        <DayDetailSkeleton />
-      ) : (
-        <DayDetail
-          date={selectedDate}
-          dayEvents={
-            eventsByDate.get(format(selectedDate, "yyyy-MM-dd")) ?? emptyEvents
-          }
-          todayIso={todayIso}
-          emptyLabel="No assessments or attendance misses on this day."
-          className="lg:min-h-0 lg:overflow-y-auto"
-        />
-      )}
+      <DayDetail
+        date={selectedDate}
+        dayEvents={
+          eventsByDate.get(format(selectedDate, "yyyy-MM-dd")) ?? emptyEvents
+        }
+        todayIso={todayIso}
+        emptyLabel="No assessments or attendance misses on this day."
+        className="lg:min-h-0 lg:overflow-y-auto"
+      />
     </div>
   );
 }

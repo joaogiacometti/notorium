@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { moveDeck } from "@/app/actions/decks";
 import { CreateDeckDialog } from "@/components/decks/create-deck-dialog";
@@ -597,6 +597,8 @@ export function DeckTreeSidebar({
   );
   const [draggedDeckId, setDraggedDeckId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const draggedDeckIdRef = useRef<string | null>(null);
+  const dropTargetIdRef = useRef<string | null>(null);
 
   const isPendingVisible = useSmoothedLoadingState(pendingDeckId !== null, {
     delayMs: 0,
@@ -723,6 +725,8 @@ export function DeckTreeSidebar({
   }
 
   function clearDragState() {
+    draggedDeckIdRef.current = null;
+    dropTargetIdRef.current = null;
     setDraggedDeckId(null);
     setDropTargetId(null);
   }
@@ -732,6 +736,8 @@ export function DeckTreeSidebar({
       return;
     }
 
+    draggedDeckIdRef.current = deckId;
+    dropTargetIdRef.current = null;
     setDraggedDeckId(deckId);
     setDropTargetId(null);
   }
@@ -741,29 +747,35 @@ export function DeckTreeSidebar({
       return;
     }
 
-    if (!canDropDeck(draggedDeckId, targetId)) {
-      if (dropTargetId === targetId) {
+    if (!canDropDeck(draggedDeckIdRef.current, targetId)) {
+      if (dropTargetIdRef.current === targetId) {
+        dropTargetIdRef.current = null;
         setDropTargetId(null);
       }
       return;
     }
 
+    if (dropTargetIdRef.current === targetId) {
+      return;
+    }
+
+    dropTargetIdRef.current = targetId;
     setDropTargetId(targetId);
   }
 
   async function handleDropTarget(targetId: string) {
-    if (pendingMoveDeckId !== null || !draggedDeckId) {
+    if (pendingMoveDeckId !== null || !draggedDeckIdRef.current) {
       clearDragState();
       return;
     }
 
-    if (!canDropDeck(draggedDeckId, targetId)) {
+    if (!canDropDeck(draggedDeckIdRef.current, targetId)) {
       clearDragState();
       return;
     }
 
     const proposedParentDeckId = getProposedParentDeckId(targetId);
-    const deckId = draggedDeckId;
+    const deckId = draggedDeckIdRef.current;
 
     setPendingMoveDeckId(deckId);
     clearDragState();

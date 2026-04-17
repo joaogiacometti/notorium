@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CalendarDays, ClipboardList } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
@@ -263,11 +263,15 @@ export function PlanningAssessmentsManagerTable({
   const [, startNavTransition] = useTransition();
   const finalGradeTone =
     finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
+  const columns = useMemo(
+    () => getColumns(onUpdated, onDeleted, subjectNamesById, todayIso),
+    [onDeleted, onUpdated, subjectNamesById, todayIso],
+  );
 
   return (
     <ManagerDataTable
       data={assessments}
-      columns={getColumns(onUpdated, onDeleted, subjectNamesById, todayIso)}
+      columns={columns}
       pageIndex={pageIndex}
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}

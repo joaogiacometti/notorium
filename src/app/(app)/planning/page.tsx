@@ -37,7 +37,7 @@ export default async function PlanningPage({
           initialSubjectId={subject}
         />
       ) : (
-        <PlanningCalendarPanel />
+        <PlanningCalendarPanel userId={session.user.id} />
       )}
     </FeaturePageShell>
   );

@@ -52,6 +52,8 @@ export type FlashcardManageItem = Pick<
   "id" | "deckId" | "updatedAt"
 > & {
   front: string;
+  frontExcerpt: string;
+  frontTitle: string | null;
   backExcerpt: string;
   deckName: string;
   deckPath: string;

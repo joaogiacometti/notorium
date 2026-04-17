@@ -327,6 +327,62 @@ export function removeInternalAttachmentImagesForTransfer(
   );
 }
 
+function normalizeRichTextForRenderingWithResolvedImageUrls(
+  value: string,
+  resolveImageUrl: (value: string) => string | null,
+): string {
+  const normalizedImages = normalizeUnsupportedImageMarkup(value);
+
+  if (!/<p>[\s\S]*<\/p>/i.test(normalizedImages)) {
+    return normalizedImages;
+  }
+
+  const paragraphPattern = /<p>([\s\S]*?)<\/p>/gi;
+  const matches = [...normalizedImages.matchAll(paragraphPattern)];
+  if (matches.length === 0) {
+    return normalizedImages;
+  }
+
+  let result = "";
+  let lastIndex = 0;
+  let changed = normalizedImages !== value;
+
+  for (const match of matches) {
+    const [paragraphHtml, innerHtml] = match;
+    const index = match.index ?? 0;
+    const candidate = extractImageUrlCandidate(innerHtml);
+    let replacement = paragraphHtml;
+
+    if (candidate) {
+      if (isInternalAttachmentImageSource(candidate)) {
+        replacement = `<img src="${escapeHtmlAttribute(candidate)}" alt="">`;
+        changed = true;
+      } else {
+        const directImageUrl = resolveImageUrl(candidate);
+
+        if (directImageUrl) {
+          replacement = `<img src="${escapeHtmlAttribute(directImageUrl)}" alt="">`;
+          changed = true;
+        }
+      }
+    }
+
+    result += normalizedImages.slice(lastIndex, index);
+    result += replacement;
+    lastIndex = index + paragraphHtml.length;
+  }
+
+  result += normalizedImages.slice(lastIndex);
+  return changed ? result : normalizedImages;
+}
+
+export function normalizeRichTextForStaticRendering(value: string): string {
+  return normalizeRichTextForRenderingWithResolvedImageUrls(
+    value,
+    resolveEmbeddableImageUrl,
+  );
+}
+
 export async function normalizeRichTextForRendering(
   value: string,
   resolveImageUrl: (value: string) => Promise<string | null>,

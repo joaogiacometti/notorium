@@ -5,13 +5,11 @@ import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers"
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
-  SubjectEntity,
 } from "@/lib/server/api-contracts";
 
 export interface PlanningCalendarData {
   assessments: (AssessmentEntity & { subjectName: string })[];
   misses: (AttendanceMissEntity & { subjectName: string })[];
-  subjects: Pick<SubjectEntity, "id" | "name">[];
 }
 
 export async function getPlanningCalendarDataForUser(
@@ -21,7 +19,7 @@ export async function getPlanningCalendarDataForUser(
 ): Promise<PlanningCalendarData> {
   const subjectFilters = getOwnedActiveSubjectFilters(userId);
 
-  const [assessmentRows, missRows, subjectRows] = await Promise.all([
+  const [assessmentRows, missRows] = await Promise.all([
     getDb()
       .select({ assessment, subjectName: subject.name })
       .from(assessment)
@@ -46,10 +44,6 @@ export async function getPlanningCalendarDataForUser(
           lte(attendanceMiss.missDate, rangeEnd),
         ),
       ),
-    getDb()
-      .select({ id: subject.id, name: subject.name })
-      .from(subject)
-      .where(and(eq(subject.userId, userId), ...subjectFilters)),
   ]);
 
   return {
@@ -61,6 +55,5 @@ export async function getPlanningCalendarDataForUser(
       ...row.attendanceMiss,
       subjectName: row.subjectName,
     })),
-    subjects: subjectRows,
   };
 }

@@ -1,0 +1,2 @@
+CREATE INDEX "assessment_title_trgm_idx" ON "assessment" USING gin ("title" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX "assessment_description_trgm_idx" ON "assessment" USING gin (coalesce("description", '') gin_trgm_ops);

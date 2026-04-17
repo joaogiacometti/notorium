@@ -314,6 +314,14 @@ export const assessment = pgTable(
     index("assessment_userId_dueDate_idx").on(table.userId, table.dueDate),
     index("assessment_status_idx").on(table.status),
     index("assessment_dueDate_idx").on(table.dueDate),
+    index("assessment_title_trgm_idx").using(
+      "gin",
+      table.title.op("gin_trgm_ops"),
+    ),
+    index("assessment_description_trgm_idx").using(
+      "gin",
+      sql`coalesce(${table.description}, '') gin_trgm_ops`,
+    ),
   ],
 );
 

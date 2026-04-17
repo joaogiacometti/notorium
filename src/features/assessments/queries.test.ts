@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const limitMock = vi.fn();
 const whereMock = vi.fn(() => ({
@@ -45,9 +45,14 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
+let getAssessmentDetailForUser: typeof import("./queries").getAssessmentDetailForUser;
+
 describe("getAssessmentDetailForUser", () => {
+  beforeAll(async () => {
+    ({ getAssessmentDetailForUser } = await import("./queries"));
+  });
+
   beforeEach(() => {
-    vi.resetModules();
     vi.clearAllMocks();
   });
 
@@ -66,7 +71,6 @@ describe("getAssessmentDetailForUser", () => {
       },
     ]);
 
-    const { getAssessmentDetailForUser } = await import("./queries");
     const result = await getAssessmentDetailForUser("user-1", "assessment-1");
 
     expect(result).toEqual({
@@ -89,7 +93,6 @@ describe("getAssessmentDetailForUser", () => {
   it("returns null when the assessment is missing or inaccessible", async () => {
     limitMock.mockResolvedValueOnce([]);
 
-    const { getAssessmentDetailForUser } = await import("./queries");
     const result = await getAssessmentDetailForUser("user-1", "assessment-1");
 
     expect(result).toBeNull();

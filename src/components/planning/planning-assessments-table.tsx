@@ -45,6 +45,7 @@ interface PlanningAssessmentsTableProps {
 }
 
 const planningAssessmentsPageSize = 25;
+const planningAssessmentsSearchDebounceMs = 200;
 
 export function PlanningAssessmentsTable({
   initialSubjectId,
@@ -70,6 +71,7 @@ export function PlanningAssessmentsTable({
     setSearchQuery,
   } = useManagerPageState({
     initialFilter: initialSubjectId ?? "all",
+    searchDebounceMs: planningAssessmentsSearchDebounceMs,
     onFilterChange: (nextSubjectFilter) => {
       const query = new URLSearchParams();
       query.set("view", "assessments");

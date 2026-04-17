@@ -21,6 +21,10 @@ import {
   getFlashcardManageBackExcerptSourceLength,
 } from "@/features/flashcards/manage-excerpts";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
+import {
+  getRichTextExcerpt,
+  richTextToPlainText,
+} from "@/lib/editor/rich-text";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
   FlashcardDetailEntity,
@@ -139,6 +143,8 @@ export async function getFlashcardsManagePageForUser(
       deckId: row.deckId,
       updatedAt: row.updatedAt,
       front: row.front,
+      frontExcerpt: getRichTextExcerpt(row.front, 30),
+      frontTitle: richTextToPlainText(row.front) || null,
       backExcerpt: getFlashcardManageBackExcerpt(row.back),
       deckName: row.deckName,
       deckPath: deckPathMap.get(row.deckId) ?? row.deckName,

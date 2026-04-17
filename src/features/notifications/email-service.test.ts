@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const getServerEnvMock = vi.fn();
 const getUsersWithUpcomingAssessmentsMock = vi.fn();
@@ -30,9 +30,18 @@ vi.mock("@/features/notifications/mutations", () => ({
   markAssessmentNotificationsFailed: markAssessmentNotificationsFailedMock,
 }));
 
+let sendAssessmentReminderEmails: typeof import(
+  "@/features/notifications/email-service"
+).sendAssessmentReminderEmails;
+
 describe("sendAssessmentReminderEmails", () => {
+  beforeAll(async () => {
+    ({ sendAssessmentReminderEmails } = await import(
+      "@/features/notifications/email-service"
+    ));
+  });
+
   beforeEach(() => {
-    vi.resetModules();
     vi.clearAllMocks();
     getServerEnvMock.mockReturnValue({
       BETTER_AUTH_URL: "https://notorium.example.com/",
@@ -69,10 +78,6 @@ describe("sendAssessmentReminderEmails", () => {
     ]);
     claimUnsentAssessmentsMock.mockResolvedValueOnce(["assessment-2"]);
     sendEmailMock.mockResolvedValueOnce({ success: true, id: "email-1" });
-
-    const { sendAssessmentReminderEmails } = await import(
-      "@/features/notifications/email-service"
-    );
 
     const result = await sendAssessmentReminderEmails();
 
@@ -128,10 +133,6 @@ describe("sendAssessmentReminderEmails", () => {
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
 
-    const { sendAssessmentReminderEmails } = await import(
-      "@/features/notifications/email-service"
-    );
-
     const result = await sendAssessmentReminderEmails();
 
     expect(result).toEqual({ sent: 0, failed: 1 });
@@ -167,10 +168,6 @@ describe("sendAssessmentReminderEmails", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-
-    const { sendAssessmentReminderEmails } = await import(
-      "@/features/notifications/email-service"
-    );
 
     const result = await sendAssessmentReminderEmails();
 
@@ -210,10 +207,6 @@ describe("sendAssessmentReminderEmails", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-
-    const { sendAssessmentReminderEmails } = await import(
-      "@/features/notifications/email-service"
-    );
 
     const result = await sendAssessmentReminderEmails();
 
@@ -265,10 +258,6 @@ describe("sendAssessmentReminderEmails", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-
-    const { sendAssessmentReminderEmails } = await import(
-      "@/features/notifications/email-service"
-    );
 
     const result = await sendAssessmentReminderEmails();
 

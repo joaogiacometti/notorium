@@ -4,6 +4,7 @@ import {
   getRichTextExcerpt,
   hasRichTextContent,
   normalizeRichTextForRendering,
+  normalizeRichTextForStaticRendering,
   normalizeRichTextForUniqueness,
   removeInternalAttachmentImagesForTransfer,
   replaceImagesWithPlaceholders,
@@ -230,6 +231,16 @@ describe("normalizeRichTextForRendering", () => {
       '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fimage.png" alt="">',
     );
     expect(resolveImageUrl).not.toHaveBeenCalled();
+  });
+});
+
+describe("normalizeRichTextForStaticRendering", () => {
+  it("converts image URL paragraphs into image markup synchronously", () => {
+    expect(
+      normalizeRichTextForStaticRendering(
+        "<p>https://cdn.example.com/abc123.png</p>",
+      ),
+    ).toBe('<img src="https://cdn.example.com/abc123.png" alt="">');
   });
 });
 

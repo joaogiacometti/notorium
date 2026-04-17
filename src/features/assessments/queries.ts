@@ -10,7 +10,7 @@ import type {
   AssessmentEntity,
   PlanningAssessmentsPage,
 } from "@/lib/server/api-contracts";
-import { getAssessmentAverage, getTodayIso } from "./assessments";
+import { getTodayIso } from "./assessments";
 
 export async function getAssessmentsForUser(
   userId: string,
@@ -261,18 +261,12 @@ export async function getPlanningAssessmentsPageForUser(
       input.subjectId
         ? getDb()
             .select({
-              status: assessment.status,
-              score: assessment.score,
-              weight: assessment.weight,
-              id: assessment.id,
-              title: assessment.title,
-              description: assessment.description,
-              type: assessment.type,
-              dueDate: assessment.dueDate,
-              subjectId: assessment.subjectId,
-              userId: assessment.userId,
-              createdAt: assessment.createdAt,
-              updatedAt: assessment.updatedAt,
+              weightedSum: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then ${assessment.score} * ${assessment.weight} else 0 end), 0)`,
+              totalWeight: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then ${assessment.weight} else 0 end), 0)`,
+              weightedCount: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then 1 else 0 end), 0)`,
+              averageScore: sql<
+                number | null
+              >`avg(case when ${assessment.status} = 'completed' and ${assessment.score} is not null then ${assessment.score} end)`,
             })
             .from(assessment)
             .innerJoin(subject, eq(assessment.subjectId, subject.id))
@@ -294,7 +288,22 @@ export async function getPlanningAssessmentsPageForUser(
       ? (subjectCountRows[0]?.total ?? 0)
       : null,
     subjectFinalGrade: input.subjectId
-      ? getAssessmentAverage(finalGradeRows as AssessmentEntity[])
+      ? (() => {
+          const finalGradeRow = finalGradeRows[0];
+
+          if (!finalGradeRow) {
+            return null;
+          }
+
+          if (
+            finalGradeRow.weightedCount > 0 &&
+            finalGradeRow.totalWeight > 0
+          ) {
+            return finalGradeRow.weightedSum / finalGradeRow.totalWeight;
+          }
+
+          return finalGradeRow.averageScore ?? null;
+        })()
       : null,
   };
 }
