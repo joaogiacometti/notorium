@@ -308,7 +308,10 @@ export function CalendarView({
   return (
     <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.6fr)_22rem]">
       <div className="rounded-xl border border-border/70 bg-card/85 p-4 lg:flex lg:min-h-0 lg:flex-col">
-        <div className="flex items-center justify-between gap-2">
+        <div
+          className="flex items-center justify-between gap-2"
+          data-testid="calendar-header"
+        >
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -321,9 +324,6 @@ export function CalendarView({
             <h2 className="min-w-40 text-center text-base font-semibold">
               {title}
             </h2>
-            {isLoadingEvents ? (
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-            ) : null}
             <Button
               variant="ghost"
               size="icon"
@@ -344,7 +344,10 @@ export function CalendarView({
           </Button>
         </div>
 
-        <div className="mt-4 min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        <div
+          className="relative mt-4 min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+          data-testid="calendar-grid-region"
+        >
           <div
             className={cn(
               "grid grid-cols-7 gap-px transition-opacity lg:gap-1",
@@ -373,6 +376,18 @@ export function CalendarView({
               />
             ))}
           </div>
+
+          {isLoadingEvents ? (
+            <div
+              className="absolute inset-0 flex items-center justify-center rounded-md bg-background/50"
+              data-testid="calendar-grid-loading"
+            >
+              <Loader2
+                className="size-5 animate-spin text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+          ) : null}
         </div>
       </div>
 

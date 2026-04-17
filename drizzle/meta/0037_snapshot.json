@@ -110,12 +110,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -328,12 +324,8 @@
           "name": "assessment_subject_id_subject_id_fk",
           "tableFrom": "assessment",
           "tableTo": "subject",
-          "columnsFrom": [
-            "subject_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subject_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -341,12 +333,8 @@
           "name": "assessment_user_id_user_id_fk",
           "tableFrom": "assessment",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -458,12 +446,8 @@
           "name": "attendance_miss_subject_id_subject_id_fk",
           "tableFrom": "attendance_miss",
           "tableTo": "subject",
-          "columnsFrom": [
-            "subject_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subject_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -471,12 +455,8 @@
           "name": "attendance_miss_user_id_user_id_fk",
           "tableFrom": "attendance_miss",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -486,11 +466,7 @@
         "attendance_miss_unique": {
           "name": "attendance_miss_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "subject_id",
-            "miss_date",
-            "user_id"
-          ]
+          "columns": ["subject_id", "miss_date", "user_id"]
         }
       },
       "policies": {},
@@ -625,12 +601,8 @@
           "name": "deck_parent_deck_id_deck_id_fk",
           "tableFrom": "deck",
           "tableTo": "deck",
-          "columnsFrom": [
-            "parent_deck_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_deck_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -638,12 +610,8 @@
           "name": "deck_user_id_user_id_fk",
           "tableFrom": "deck",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -929,12 +897,8 @@
           "name": "flashcard_deck_id_deck_id_fk",
           "tableFrom": "flashcard",
           "tableTo": "deck",
-          "columnsFrom": [
-            "deck_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["deck_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -942,12 +906,8 @@
           "name": "flashcard_user_id_user_id_fk",
           "tableFrom": "flashcard",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -957,10 +917,7 @@
         "flashcard_userId_frontNormalized_unique": {
           "name": "flashcard_userId_frontNormalized_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "front_normalized"
-          ]
+          "columns": ["user_id", "front_normalized"]
         }
       },
       "policies": {},
@@ -1082,12 +1039,8 @@
           "name": "flashcard_review_log_flashcard_id_flashcard_id_fk",
           "tableFrom": "flashcard_review_log",
           "tableTo": "flashcard",
-          "columnsFrom": [
-            "flashcard_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["flashcard_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1095,12 +1048,8 @@
           "name": "flashcard_review_log_user_id_user_id_fk",
           "tableFrom": "flashcard_review_log",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1196,12 +1145,8 @@
           "name": "flashcard_scheduler_settings_user_id_user_id_fk",
           "tableFrom": "flashcard_scheduler_settings",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1211,9 +1156,7 @@
         "flashcard_scheduler_settings_userId_unique": {
           "name": "flashcard_scheduler_settings_userId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -1403,12 +1346,8 @@
           "name": "note_subject_id_subject_id_fk",
           "tableFrom": "note",
           "tableTo": "subject",
-          "columnsFrom": [
-            "subject_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subject_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1416,12 +1355,8 @@
           "name": "note_user_id_user_id_fk",
           "tableFrom": "note",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1520,12 +1455,8 @@
           "name": "notification_log_assessment_id_assessment_id_fk",
           "tableFrom": "notification_log",
           "tableTo": "assessment",
-          "columnsFrom": [
-            "assessment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assessment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1533,12 +1464,8 @@
           "name": "notification_log_user_id_user_id_fk",
           "tableFrom": "notification_log",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1548,11 +1475,7 @@
         "notification_log_assessmentId_userId_date_unique": {
           "name": "notification_log_assessmentId_userId_date_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "assessment_id",
-            "user_id",
-            "notification_date"
-          ]
+          "columns": ["assessment_id", "user_id", "notification_date"]
         }
       },
       "policies": {},
@@ -1635,12 +1558,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1650,9 +1569,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -1821,12 +1738,8 @@
           "name": "subject_user_id_user_id_fk",
           "tableFrom": "subject",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1930,9 +1843,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -2011,10 +1922,7 @@
     "public.assessment_status": {
       "name": "assessment_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "completed"
-      ]
+      "values": ["pending", "completed"]
     },
     "public.assessment_type": {
       "name": "assessment_type",
@@ -2031,40 +1939,22 @@
     "public.flashcard_review_rating": {
       "name": "flashcard_review_rating",
       "schema": "public",
-      "values": [
-        "again",
-        "hard",
-        "good",
-        "easy"
-      ]
+      "values": ["again", "hard", "good", "easy"]
     },
     "public.flashcard_state": {
       "name": "flashcard_state",
       "schema": "public",
-      "values": [
-        "new",
-        "learning",
-        "review",
-        "relearning"
-      ]
+      "values": ["new", "learning", "review", "relearning"]
     },
     "public.notification_status": {
       "name": "notification_status",
       "schema": "public",
-      "values": [
-        "claimed",
-        "sent",
-        "failed"
-      ]
+      "values": ["claimed", "sent", "failed"]
     },
     "public.user_access_status": {
       "name": "user_access_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "blocked"
-      ]
+      "values": ["pending", "approved", "blocked"]
     }
   },
   "schemas": {},

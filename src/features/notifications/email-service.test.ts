@@ -30,9 +30,7 @@ vi.mock("@/features/notifications/mutations", () => ({
   markAssessmentNotificationsFailed: markAssessmentNotificationsFailedMock,
 }));
 
-let sendAssessmentReminderEmails: typeof import(
-  "@/features/notifications/email-service"
-).sendAssessmentReminderEmails;
+let sendAssessmentReminderEmails: typeof import("@/features/notifications/email-service").sendAssessmentReminderEmails;
 
 describe("sendAssessmentReminderEmails", () => {
   beforeAll(async () => {
