@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   deleteMissForUser,
   recordMissForUser,
+  removeAttendanceSettingsForUser,
   updateAttendanceSettingsForUser,
 } from "@/features/attendance/mutations";
 import { getMissesBySubjectForUser } from "@/features/attendance/queries";
@@ -35,6 +36,19 @@ export async function updateAttendanceSettings(
 
   if (result.success) {
     revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
+}
+
+export async function removeAttendanceSettings(
+  subjectId: string,
+): Promise<MutationResult> {
+  const userId = await getAuthenticatedUserId();
+  const result = await removeAttendanceSettingsForUser(userId, subjectId);
+
+  if (result.success) {
+    revalidatePath(`/subjects/${subjectId}`);
   }
 
   return result;

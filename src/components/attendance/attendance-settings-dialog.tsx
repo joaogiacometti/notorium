@@ -2,16 +2,20 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Settings } from "lucide-react";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { updateAttendanceSettings } from "@/app/actions/attendance";
+import {
+  removeAttendanceSettings,
+  updateAttendanceSettings,
+} from "@/app/actions/attendance";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -44,7 +48,8 @@ export function AttendanceSettingsDialog({
   open,
   onOpenChange,
 }: Readonly<AttendanceSettingsDialogProps>) {
-  const [_isPending, _startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const form = useForm({
     resolver: zodResolver(attendanceSettingsSchema),
     defaultValues: {
@@ -61,6 +66,18 @@ export function AttendanceSettingsDialog({
     } else {
       toast.error(resolveActionErrorMessage(result));
     }
+  }
+
+  function handleRemove() {
+    startTransition(async () => {
+      const result = await removeAttendanceSettings(subjectId);
+      if (result.success) {
+        setShowRemoveConfirm(false);
+        onOpenChange(false);
+      } else {
+        toast.error(resolveActionErrorMessage(result));
+      }
+    });
   }
 
   return (
@@ -151,8 +168,51 @@ export function AttendanceSettingsDialog({
                 pendingLabel="Saving..."
               />
             </Button>
+            {totalClasses !== null && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setShowRemoveConfirm(true)}
+                disabled={form.formState.isSubmitting}
+                className="w-full"
+              >
+                Remove Configuration
+              </Button>
+            )}
           </FieldGroup>
         </form>
+        <Dialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Remove Attendance Configuration</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to remove the attendance configuration?
+                All recorded misses will also be deleted. This action cannot be
+                undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowRemoveConfirm(false)}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleRemove}
+                disabled={isPending}
+              >
+                <AsyncButtonContent
+                  pending={isPending}
+                  idleLabel="Remove"
+                  pendingLabel="Removing..."
+                />
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

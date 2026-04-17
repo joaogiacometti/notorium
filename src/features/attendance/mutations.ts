@@ -94,3 +94,33 @@ export async function deleteMissForUser(
 
   return { success: true, subjectId: existing.subjectId };
 }
+
+export async function removeAttendanceSettingsForUser(
+  userId: string,
+  subjectId: string,
+): Promise<AttendanceMutationResult> {
+  const existing = await getActiveSubjectRecordForUser(userId, subjectId);
+
+  if (!existing) {
+    return actionError("subjects.notFound");
+  }
+
+  await getDb()
+    .delete(attendanceMiss)
+    .where(
+      and(
+        eq(attendanceMiss.subjectId, subjectId),
+        eq(attendanceMiss.userId, userId),
+      ),
+    );
+
+  await getDb()
+    .update(subject)
+    .set({
+      totalClasses: null,
+      maxMisses: null,
+    })
+    .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)));
+
+  return { success: true, subjectId };
+}

@@ -139,3 +139,52 @@ test("can delete a recorded miss", async ({ page, e2eUser }) => {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }
 });
+
+test("can remove attendance configuration", async ({ page, e2eUser }) => {
+  const user = e2eUser;
+  const subjectName = getUniqueSubjectName("remove-config");
+  const missDate = "2026-03-12";
+
+  await clearUserSubjectsByNames(user.userId, [subjectName]);
+
+  try {
+    const createdSubject = await createSubject(
+      user.userId,
+      subjectName,
+      "Attendance remove config test",
+    );
+
+    await updateSubjectAttendanceSettings(
+      user.userId,
+      createdSubject.id,
+      20,
+      4,
+    );
+    await clearUserAttendanceMissesBySubject(user.userId, createdSubject.id);
+    await createAttendanceMiss(user.userId, createdSubject.id, missDate);
+
+    await openSubjectDetailByName(page, subjectName);
+    await expect(page.getByText("3 misses remaining")).toBeVisible();
+
+    await page.getByRole("button", { name: "Settings" }).click();
+    const settingsDialog = page.getByRole("dialog", {
+      name: "Attendance Settings",
+    });
+    await expect(settingsDialog).toBeVisible();
+
+    await settingsDialog
+      .getByRole("button", { name: "Remove Configuration" })
+      .click();
+
+    const confirmDialog = page.getByRole("dialog", {
+      name: "Remove Attendance Configuration",
+    });
+    await expect(confirmDialog).toBeVisible();
+    await confirmDialog.getByRole("button", { name: "Remove" }).click();
+
+    await expect(confirmDialog).toHaveCount(0);
+    await expect(page.getByText("No attendance settings yet")).toBeVisible();
+  } finally {
+    await clearUserSubjectsByNames(user.userId, [subjectName]);
+  }
+});
