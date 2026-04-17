@@ -33,14 +33,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
           storageKey={themeStorageKey}
-          themes={[
-            "light",
-            "dark",
-            "tokyo-night",
-            "halloween",
-            "catppuccin-mocha",
-            "catppuccin-latte",
-          ]}
+          themes={["light", "dark", "halloween", "catppuccin-mocha"]}
         >
           <QueryProvider>
             {children}

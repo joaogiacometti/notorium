@@ -15,20 +15,54 @@
  *   - Intent: --intent-danger-*, --intent-warning-*, --intent-success-*, --intent-info-*
  *   - Charts: --chart-1 through --chart-5
  *
- * This ensures colors adapt properly to user-selected themes (Catppuccin Mocha, Tokyo Night, etc.)
+ * This ensures colors adapt properly to user-selected themes (Catppuccin Mocha, etc.)
  * and provides consistent, accessible color schemes across light and dark modes.
+ *
+ * ---------------------------------------------------------------------------
+ * DESIGN SYSTEM CONVENTIONS
+ * ---------------------------------------------------------------------------
+ *
+ * OPACITY SCALE (for muted/border/primary variants):
+ *   /10  — icon containers, primary tints
+ *   /20  — empty/dashed states
+ *   /30  — sidebar, muted backgrounds
+ *   /40  — hover states
+ *   /50  — subtle borders
+ *   /60  — card containers (default)
+ *   /70  — emphasized borders
+ *
+ * BORDER RADIUS SEMANTICS:
+ *   rounded-md  — buttons, inputs, small elements
+ *   rounded-lg  — content cards, dialogs
+ *   rounded-xl  — page-level containers, loading skeletons
+ *   rounded-full — avatars, icon circles
+ *
+ * TYPOGRAPHY SCALE:
+ *   text-xs (12px)    — muted labels, secondary text, badge counts
+ *   text-sm (14px)    — body text, sidebar labels
+ *   text-base (16px)  — default prose
+ *   text-lg (18px)    — section headers
+ *   text-xl (20px)    — card titles, H2
+ *   text-2xl (24px)   — page titles, H1
+ *   text-3xl (30px)   — landing page hero
+ *
+ * SPACING CONVENTIONS:
+ *   gap-1   — tight icon groups
+ *   gap-2   — standard between related items
+ *   gap-3   — between sections within a component
+ *   gap-4   — section-level spacing
+ *   gap-6   — major section spacing
+ *
+ *   p-4     — compact card padding
+ *   p-5/p-6 — standard card padding
+ *   p-8     — large card/section padding
  */
 
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(
-    .dark *,
-    .tokyo-night *,
-    .halloween *,
-    .catppuccin-mocha *
-  ));
+@custom-variant dark (&:is(.dark *, .halloween *, .catppuccin-mocha *));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -220,14 +254,9 @@
 }
 
 .dark,
-.tokyo-night,
 .halloween,
 .catppuccin-mocha {
   color-scheme: dark;
-}
-
-.catppuccin-latte {
-  color-scheme: light;
 }
 
 .dark {
@@ -282,56 +311,6 @@
   --intent-info-bg: oklch(0.7 0.15 280 / 10%);
   --intent-info-text: oklch(0.82 0.09 282);
   --intent-info-fill: oklch(0.76 0.12 281);
-}
-
-.tokyo-night {
-  --background: hsl(235 21% 12%);
-  --foreground: hsl(220 45% 84%);
-  --card: hsl(235 19% 20%);
-  --card-foreground: hsl(220 45% 84%);
-  --popover: hsl(235 19% 20%);
-  --popover-foreground: hsl(220 45% 84%);
-  --primary: hsl(221 74% 70%);
-  --primary-foreground: hsl(235 21% 15%);
-  --secondary: hsl(233 19% 27%);
-  --secondary-foreground: hsl(220 45% 84%);
-  --muted: hsl(233 19% 27%);
-  --muted-foreground: hsl(230 22% 68%);
-  --accent: hsl(191 69% 50% / 0.18);
-  --accent-foreground: hsl(189 70% 71%);
-  --destructive: hsl(349 89% 71%);
-  --border: hsl(233 20% 36%);
-  --input: hsl(235 17% 24%);
-  --ring: hsl(221 74% 70% / 0.55);
-  --chart-1: hsl(27 93% 69%);
-  --chart-2: hsl(174 54% 65%);
-  --chart-3: hsl(221 74% 70%);
-  --chart-4: hsl(267 83% 79%);
-  --chart-5: hsl(189 95% 74%);
-  --sidebar: hsl(235 21% 10%);
-  --sidebar-foreground: hsl(220 45% 84%);
-  --sidebar-primary: hsl(221 74% 70%);
-  --sidebar-primary-foreground: hsl(235 21% 15%);
-  --sidebar-accent: hsl(234 18% 22%);
-  --sidebar-accent-foreground: hsl(220 45% 84%);
-  --sidebar-border: hsl(233 20% 30%);
-  --sidebar-ring: hsl(221 74% 70% / 0.5);
-  --intent-success-border: hsl(174 54% 65% / 0.35);
-  --intent-success-bg: hsl(174 54% 65% / 0.1);
-  --intent-success-text: hsl(174 54% 72%);
-  --intent-success-fill: hsl(174 54% 65%);
-  --intent-warning-border: hsl(36 69% 65% / 0.35);
-  --intent-warning-bg: hsl(36 69% 65% / 0.1);
-  --intent-warning-text: hsl(36 69% 72%);
-  --intent-warning-fill: hsl(36 69% 65%);
-  --intent-danger-border: hsl(349 89% 71% / 0.35);
-  --intent-danger-bg: hsl(349 89% 71% / 0.1);
-  --intent-danger-text: hsl(349 89% 71%);
-  --intent-danger-fill: hsl(349 89% 71%);
-  --intent-info-border: hsl(267 83% 79% / 0.3);
-  --intent-info-bg: hsl(267 83% 79% / 0.1);
-  --intent-info-text: hsl(267 83% 82%);
-  --intent-info-fill: hsl(267 83% 79%);
 }
 
 .halloween {
@@ -439,57 +418,6 @@
   --intent-info-fill: hsl(267 83.51% 80.98%);
 }
 
-.catppuccin-latte {
-  --radius: 0.625rem;
-  --background: hsl(220 23.08% 94.9%);
-  --foreground: hsl(234 16.02% 35.49%);
-  --card: hsl(220 23.08% 94.9%);
-  --card-foreground: hsl(234 16.02% 35.49%);
-  --popover: hsl(220 23.08% 94.9%);
-  --popover-foreground: hsl(234 16.02% 35.49%);
-  --primary: hsl(266 85.05% 58.04%);
-  --primary-foreground: hsl(220 23.08% 94.9%);
-  --secondary: hsl(223 15.91% 82.75%);
-  --secondary-foreground: hsl(234 16.02% 35.49%);
-  --muted: hsl(223 15.91% 82.75%);
-  --muted-foreground: hsl(233 12.8% 41.37%);
-  --accent: hsl(223 15.91% 82.75%);
-  --accent-foreground: hsl(234 16.02% 35.49%);
-  --destructive: hsl(347 86.67% 44.12%);
-  --border: hsl(225 13.56% 76.86%);
-  --input: hsl(225 13.56% 76.86%);
-  --ring: hsl(234 16.02% 35.49%);
-  --chart-1: hsl(345 57.65% 74.12%);
-  --chart-2: hsl(185 37.25% 70.59%);
-  --chart-3: hsl(219 81.96% 78.43%);
-  --chart-4: hsl(35 61.18% 76.86%);
-  --chart-5: hsl(113 32.94% 73.33%);
-  --sidebar: hsl(218 25.1% 93.73%);
-  --sidebar-foreground: hsl(234 16.02% 35.49%);
-  --sidebar-primary: hsl(266 85.05% 58.04%);
-  --sidebar-primary-foreground: hsl(220 23.08% 94.9%);
-  --sidebar-accent: hsl(220 23.08% 94.9%);
-  --sidebar-accent-foreground: hsl(234 16.02% 35.49%);
-  --sidebar-border: hsl(225 13.56% 76.86%);
-  --sidebar-ring: hsl(225 13.56% 76.86%);
-  --intent-success-border: hsl(185 37.25% 52% / 0.35);
-  --intent-success-bg: hsl(185 37.25% 52% / 0.08);
-  --intent-success-text: hsl(188 45% 34%);
-  --intent-success-fill: hsl(185 37.25% 52%);
-  --intent-warning-border: hsl(33 75% 48% / 0.35);
-  --intent-warning-bg: hsl(33 75% 48% / 0.08);
-  --intent-warning-text: hsl(30 78% 38%);
-  --intent-warning-fill: hsl(33 75% 48%);
-  --intent-danger-border: hsl(347 86.67% 44.12% / 0.35);
-  --intent-danger-bg: hsl(347 86.67% 44.12% / 0.08);
-  --intent-danger-text: hsl(347 78% 42%);
-  --intent-danger-fill: hsl(347 86.67% 44.12%);
-  --intent-info-border: hsl(266 85.05% 58.04% / 0.3);
-  --intent-info-bg: hsl(266 85.05% 58.04% / 0.08);
-  --intent-info-text: hsl(266 85.05% 42%);
-  --intent-info-fill: hsl(266 85.05% 50%);
-}
-
 @layer base {
   html,
   body {
@@ -518,18 +446,6 @@
   background-color: color-mix(in oklab, var(--background) 84%, black);
   border-bottom-color: color-mix(in oklab, var(--primary) 22%, var(--border));
   box-shadow: 0 1px 0 color-mix(in oklab, var(--primary) 12%, transparent);
-}
-
-.tokyo-night body {
-  background:
-    linear-gradient(180deg, hsl(235 20% 14%), hsl(235 21% 12%)),
-    linear-gradient(180deg, hsl(221 74% 70% / 0.06), transparent 22%);
-}
-
-.tokyo-night nav {
-  background-color: color-mix(in srgb, var(--background) 90%, black);
-  border-bottom-color: color-mix(in srgb, var(--border) 88%, var(--primary));
-  box-shadow: 0 1px 0 hsl(233 20% 30% / 0.7);
 }
 
 .halloween main > section:first-child {
@@ -645,13 +561,6 @@
   @apply mb-3 overflow-x-auto rounded-lg bg-muted p-4 last:mb-0;
 }
 
-.tokyo-night .tiptap-content pre,
-.tokyo-night .tiptap-wrapper .tiptap pre {
-  background-color: hsl(234 23% 12%);
-  border: 1px solid hsl(233 17% 24%);
-  box-shadow: inset 0 1px 0 hsl(221 74% 70% / 0.06);
-}
-
 .tiptap-content pre code,
 .tiptap-wrapper .tiptap pre code {
   @apply bg-transparent p-0;
@@ -669,18 +578,6 @@
   @apply text-muted-foreground italic;
 }
 
-.tokyo-night .tiptap-content .hljs,
-.tokyo-night .tiptap-wrapper .tiptap .hljs {
-  color: hsl(220 39% 76%);
-}
-
-.tokyo-night .tiptap-content .hljs-comment,
-.tokyo-night .tiptap-content .hljs-quote,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-comment,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-quote {
-  color: hsl(230 18% 62%);
-}
-
 .tiptap-content .hljs-keyword,
 .tiptap-content .hljs-selector-tag,
 .tiptap-content .hljs-literal,
@@ -692,19 +589,6 @@
 .tiptap-wrapper .tiptap .hljs-section,
 .tiptap-wrapper .tiptap .hljs-link {
   color: color-mix(in oklab, var(--foreground) 82%, var(--chart-3));
-}
-
-.tokyo-night .tiptap-content .hljs-keyword,
-.tokyo-night .tiptap-content .hljs-selector-tag,
-.tokyo-night .tiptap-content .hljs-literal,
-.tokyo-night .tiptap-content .hljs-section,
-.tokyo-night .tiptap-content .hljs-link,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-keyword,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-selector-tag,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-literal,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-section,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-link {
-  color: hsl(267 83% 79%);
 }
 
 .tiptap-content .hljs-string,
@@ -724,23 +608,6 @@
   color: color-mix(in oklab, var(--foreground) 78%, var(--chart-2));
 }
 
-.tokyo-night .tiptap-content .hljs-string,
-.tokyo-night .tiptap-content .hljs-title,
-.tokyo-night .tiptap-content .hljs-name,
-.tokyo-night .tiptap-content .hljs-attribute,
-.tokyo-night .tiptap-content .hljs-symbol,
-.tokyo-night .tiptap-content .hljs-bullet,
-.tokyo-night .tiptap-content .hljs-addition,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-string,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-title,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-name,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-attribute,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-symbol,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-bullet,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-addition {
-  color: hsl(102 57% 65%);
-}
-
 .tiptap-content .hljs-number,
 .tiptap-content .hljs-meta,
 .tiptap-content .hljs-variable,
@@ -758,41 +625,6 @@
   color: color-mix(in oklab, var(--foreground) 74%, var(--chart-1));
 }
 
-.tokyo-night .tiptap-content .hljs-number,
-.tokyo-night .tiptap-content .hljs-meta,
-.tokyo-night .tiptap-content .hljs-variable,
-.tokyo-night .tiptap-content .hljs-template-variable,
-.tokyo-night .tiptap-content .hljs-type,
-.tokyo-night .tiptap-content .hljs-params,
-.tokyo-night .tiptap-content .hljs-attr,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-number,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-meta,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-variable,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-template-variable,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-type,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-params,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-attr {
-  color: hsl(36 69% 65%);
-}
-
-.tiptap-content .hljs-regexp,
-.tiptap-content .hljs-selector-attr,
-.tiptap-content .hljs-selector-pseudo,
-.tiptap-wrapper .tiptap .hljs-regexp,
-.tiptap-wrapper .tiptap .hljs-selector-attr,
-.tiptap-wrapper .tiptap .hljs-selector-pseudo {
-  color: color-mix(in oklab, var(--foreground) 78%, var(--chart-5));
-}
-
-.tokyo-night .tiptap-content .hljs-regexp,
-.tokyo-night .tiptap-content .hljs-selector-attr,
-.tokyo-night .tiptap-content .hljs-selector-pseudo,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-regexp,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-selector-attr,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-selector-pseudo {
-  color: hsl(189 95% 74%);
-}
-
 .tiptap-content .hljs-built_in,
 .tiptap-content .hljs-function,
 .tiptap-content .hljs-class,
@@ -800,15 +632,6 @@
 .tiptap-wrapper .tiptap .hljs-function,
 .tiptap-wrapper .tiptap .hljs-class {
   color: color-mix(in oklab, var(--foreground) 78%, var(--chart-4));
-}
-
-.tokyo-night .tiptap-content .hljs-built_in,
-.tokyo-night .tiptap-content .hljs-function,
-.tokyo-night .tiptap-content .hljs-class,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-built_in,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-function,
-.tokyo-night .tiptap-wrapper .tiptap .hljs-class {
-  color: hsl(221 74% 70%);
 }
 
 .tiptap-content hr,
@@ -882,12 +705,6 @@
   @apply rounded-sm px-0.5;
   background-color: var(--intent-warning-bg);
   color: var(--intent-warning-text);
-}
-
-.tokyo-night .tiptap-content mark,
-.tokyo-night .tiptap-wrapper .tiptap mark {
-  background-color: hsl(36 69% 65% / 0.28);
-  color: hsl(45 40% 88%);
 }
 
 /* Task list styles */

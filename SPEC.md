@@ -169,7 +169,7 @@ Students who want a private, lightweight study management workspace.
 - Responsive layout for desktop and mobile.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.
-- Theme toggle with `light`, `dark`, `tokyo-night`, `halloween`, `catppuccin-mocha`, `catppuccin-latte`, and `system`; authenticated users access it from the navbar, and signed-out users access it from a floating top-right control.
+- Theme toggle with `light`, `dark`, `halloween`, `catppuccin-mocha`, and `system`; authenticated users access it from the navbar, and signed-out users access it from a floating top-right control.
 - Custom not-found page.
 
 ## Resource Limits

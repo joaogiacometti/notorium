@@ -755,7 +755,7 @@ export function FlashcardReviewClient({
           <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
             <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
-                <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-primary uppercase">
+                <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-semibold tracking-wide text-primary uppercase">
                   {hasDueCards ? "Due now" : "No due cards"}
                 </span>
                 <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
@@ -803,7 +803,7 @@ export function FlashcardReviewClient({
           <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
             <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
-                <span className="inline-flex items-center rounded-md border border-[var(--intent-success-border)] bg-[var(--intent-success-bg)] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--intent-success-text)] uppercase">
+                <span className="inline-flex items-center rounded-md border border-[var(--intent-success-border)] bg-[var(--intent-success-bg)] px-2 py-0.5 text-xs font-semibold tracking-wide text-[var(--intent-success-text)] uppercase">
                   All cards
                 </span>
                 <span className="inline-flex items-center rounded-md border border-[var(--intent-success-border)] bg-[var(--intent-success-bg)] px-2 py-0.5 text-xs font-medium text-[var(--intent-success-text)]">

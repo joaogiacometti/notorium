@@ -156,7 +156,7 @@ export function AttendanceSummary({
                           className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3 transition-colors hover:border-border"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="flex size-8 items-center justify-center rounded-md bg-muted/50">
+                            <div className="flex size-8 items-center justify-center rounded-md bg-muted/40">
                               <CalendarDays className="size-4 text-muted-foreground" />
                             </div>
                             <span className="text-sm font-medium">

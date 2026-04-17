@@ -82,17 +82,17 @@ describe("LogoutButton", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    Object.defineProperty(window, "localStorage", {
+    Object.defineProperty(globalThis, "localStorage", {
       value: createStorageMock(),
       configurable: true,
     });
-    Object.defineProperty(window, "cookieStore", {
+    Object.defineProperty(globalThis, "cookieStore", {
       value: createCookieStoreMock(),
       configurable: true,
     });
-    vi.spyOn(window.location, "assign").mockImplementation(() => {});
-    window.localStorage.setItem(themeStorageKey, "tokyo-night");
-    void window.cookieStore.set(themeStorageKey, "tokyo-night");
+    vi.spyOn(globalThis.location, "assign").mockImplementation(() => {});
+    globalThis.localStorage.setItem(themeStorageKey, "dark");
+    void globalThis.cookieStore.set(themeStorageKey, "dark");
     logoutActionMock.mockResolvedValue({ success: true });
   });
 
@@ -101,7 +101,7 @@ describe("LogoutButton", () => {
       root.unmount();
     });
     container.remove();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
     vi.clearAllMocks();
   });
@@ -122,8 +122,8 @@ describe("LogoutButton", () => {
     });
 
     expect(logoutActionMock).toHaveBeenCalledOnce();
-    expect(window.localStorage.getItem(themeStorageKey)).toBeNull();
-    expect(window.cookieStore.delete).toHaveBeenCalledWith(themeStorageKey);
-    expect(window.location.assign).toHaveBeenCalledWith("/login");
+    expect(globalThis.localStorage.getItem(themeStorageKey)).toBeNull();
+    expect(globalThis.cookieStore.delete).toHaveBeenCalledWith(themeStorageKey);
+    expect(globalThis.location.assign).toHaveBeenCalledWith("/login");
   });
 });

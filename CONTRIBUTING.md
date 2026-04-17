@@ -45,7 +45,7 @@ bun run build        # Production build check
 - **Never use hardcoded Tailwind color classes** like `bg-red-500`, `text-yellow-600`, etc.
 - Always use theme-aware CSS custom properties: `bg-[var(--status-danger-fill)]`, `text-[var(--assessment-exam-text)]`
 - Available theme variables are defined in `src/app/globals.css`
-- This ensures colors adapt to light/dark themes (Catppuccin Mocha, Tokyo Night, etc.)
+- This ensures colors adapt to light/dark themes (Catppuccin Mocha, etc.)
 - See `AGENTS.md` for complete list of available theme variables and usage patterns
 
 ### Database

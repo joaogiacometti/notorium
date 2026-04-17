@@ -46,14 +46,14 @@ export function ShortcutsHelpDialog({
                 {globalShortcuts.map((shortcut) => (
                   <div
                     key={shortcut.id}
-                    className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50"
+                    className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/40"
                   >
                     <span className="text-sm">{shortcut.description}</span>
                     <div className="flex gap-1">
                       {formatShortcutKeys(shortcut.keys).map((key) => (
                         <kbd
                           key={key}
-                          className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100"
+                          className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium opacity-100"
                         >
                           {key}
                         </kbd>
@@ -74,14 +74,14 @@ export function ShortcutsHelpDialog({
                 {flashcardShortcuts.map((shortcut) => (
                   <div
                     key={shortcut.id}
-                    className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50"
+                    className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/40"
                   >
                     <span className="text-sm">{shortcut.description}</span>
                     <div className="flex gap-1">
                       {formatShortcutKeys(shortcut.keys).map((key) => (
                         <kbd
                           key={key}
-                          className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100"
+                          className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium opacity-100"
                         >
                           {key}
                         </kbd>

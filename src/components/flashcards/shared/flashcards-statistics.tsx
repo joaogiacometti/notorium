@@ -127,7 +127,7 @@ function TrendSection({
                 key={point.date}
                 className="flex min-w-0 flex-col items-center gap-1"
               >
-                <div className="flex h-22 w-full items-end justify-center rounded-md border border-border/70 bg-background/80 px-0.75 py-1">
+                <div className="flex h-24 w-full items-end justify-center rounded-md border border-border/70 bg-background/80 px-0.75 py-1">
                   <div
                     className="w-full rounded-sm bg-chart-2 transition-[height]"
                     style={{
@@ -137,7 +137,7 @@ function TrendSection({
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-medium">{point.count}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {formatTrendLabel(point.date)}
                   </p>
                 </div>

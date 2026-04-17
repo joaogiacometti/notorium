@@ -335,17 +335,17 @@ function DeckSidebarRow({
       className={cn(
         "group flex w-full items-center gap-1 rounded-lg pr-1 text-left transition-opacity",
         isSelected
-          ? "bg-primary/10 font-semibold text-primary"
-          : "hover:bg-muted/70",
+          ? "bg-background text-foreground shadow-sm font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
         isDropTarget ? "bg-muted/70 ring-1 ring-border" : undefined,
-        isDragging ? "opacity-60" : undefined,
+        isDragging ? "opacity-50" : undefined,
       )}
       style={{ paddingLeft: `${depth * 12}px` }}
     >
       {leading ?? <span className="size-7 shrink-0" aria-hidden />}
       <button
         type="button"
-        className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm"
+        className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm"
         data-deck-id={deckId}
         data-deck-row="true"
         draggable={draggable}
@@ -808,9 +808,9 @@ export function DeckTreeSidebar({
 
   return (
     <>
-      <aside className="rounded-2xl border border-border/70 bg-card/85 p-3 shadow-none lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold">Decks</p>
+      <aside className="rounded-lg border border-border/60 bg-muted/30 p-3 lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-sm font-medium text-foreground">Decks</p>
           <CreateDeckDialog
             trigger={
               <Button
@@ -846,12 +846,12 @@ export function DeckTreeSidebar({
             />
           </div>
           <div
-            className="border-t border-border/70"
+            className="my-2 border-t border-border/50"
             data-testid="deck-tree-root-divider"
           />
         </div>
         {localDeckTree.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
+          <div className="mt-2 rounded-lg border border-dashed border-border/60 px-3 py-3 text-sm text-muted-foreground">
             Create your first deck to start organizing flashcards.
           </div>
         ) : (

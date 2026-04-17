@@ -177,7 +177,7 @@ export default async function Home() {
 
       <section className="border-t px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="rounded-3xl border border-border/50 bg-muted/30 p-8 sm:p-12 transition-all hover:bg-muted/50 hover:border-primary/20 backdrop-blur-sm">
+          <div className="rounded-3xl border border-border/50 bg-muted/30 p-8 sm:p-12 transition-all hover:bg-muted/40 hover:border-primary/20 backdrop-blur-sm">
             <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-foreground text-background shadow-lg">
               <GithubIcon className="size-8" />
             </div>

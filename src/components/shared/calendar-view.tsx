@@ -161,7 +161,7 @@ function DayCell({
               <EventDot key={e.id} event={e} todayIso={todayIso} />
             ))}
             {dayEvents.length > 3 && (
-              <span className="text-[10px] leading-none text-muted-foreground">
+              <span className="text-xs leading-none text-muted-foreground">
                 +{dayEvents.length - 3}
               </span>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Ghost, LaptopMinimal, Moon, MoonStar, Sun } from "lucide-react";
+import { Check, Ghost, LaptopMinimal, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { type ComponentType, useEffect, useState } from "react";
 import { updateUserTheme } from "@/app/actions/theme";
@@ -28,20 +28,16 @@ const themeLabelByKey: Record<
   system: "System",
   light: "Light",
   dark: "Dark",
-  tokyo_night: "Tokyo Night",
   halloween: "Halloween",
   catppuccin_mocha: "Catppuccin mocha",
-  catppuccin_latte: "Catppuccin latte",
 };
 
 const themeDescriptionById: Record<AppTheme, string> = {
   system: "Match your device appearance",
   light: "Clean and bright workspace",
   dark: "Classic low-light contrast",
-  "tokyo-night": "Cool neon-inspired midnight",
   halloween: "Warm seasonal orange accents",
   "catppuccin-mocha": "Soft and cozy dark palette",
-  "catppuccin-latte": "Calm pastel daylight tones",
 };
 
 function CatppuccinMochaIcon({ className }: Readonly<{ className?: string }>) {
@@ -70,29 +66,37 @@ const themeIconById: Record<AppTheme, ComponentType<{ className?: string }>> = {
   system: LaptopMinimal,
   light: Sun,
   dark: Moon,
-  "tokyo-night": MoonStar,
   halloween: Ghost,
   "catppuccin-mocha": CatppuccinMochaIcon,
-  "catppuccin-latte": CatppuccinMochaIcon,
 };
 
 const themePreviewPaletteById: Record<
   Exclude<AppTheme, "system">,
-  { background: string; card: string; accent: string }
+  { background: string; muted: string; card: string; primary: string }
 > = {
-  light: { background: "#f8fafc", card: "#ffffff", accent: "#0f172a" },
-  dark: { background: "#0f172a", card: "#1e293b", accent: "#93c5fd" },
-  "tokyo-night": { background: "#1a1b26", card: "#24283b", accent: "#7aa2f7" },
-  halloween: { background: "#1a0f2e", card: "#241235", accent: "#f97316" },
+  light: {
+    background: "#f8fafc",
+    muted: "#e2e8f0",
+    card: "#ffffff",
+    primary: "#0f172a",
+  },
+  dark: {
+    background: "#0f172a",
+    muted: "#1e293b",
+    card: "#1e293b",
+    primary: "#93c5fd",
+  },
+  halloween: {
+    background: "#1a0f2e",
+    muted: "#241235",
+    card: "#241235",
+    primary: "#f97316",
+  },
   "catppuccin-mocha": {
     background: "#1e1e2e",
+    muted: "#313244",
     card: "#313244",
-    accent: "#cba6f7",
-  },
-  "catppuccin-latte": {
-    background: "#eff1f5",
-    card: "#ffffff",
-    accent: "#8839ef",
+    primary: "#cba6f7",
   },
 };
 
@@ -100,44 +104,42 @@ function ThemePreview({
   themeId,
   isSelected,
 }: Readonly<{ themeId: AppTheme; isSelected: boolean }>) {
-  if (themeId === "system") {
-    return (
-      <span
-        className={cn(
-          "inline-flex h-7 w-10 overflow-hidden rounded-md border border-border/70",
-          isSelected && "border-foreground/35",
-        )}
-      >
-        <span className="h-full w-1/2 bg-background" />
-        <span className="h-full w-1/2 bg-foreground/80" />
-      </span>
-    );
-  }
-
-  const palette = themePreviewPaletteById[themeId];
-
   return (
     <span
       className={cn(
-        "inline-flex h-7 w-10 rounded-md border border-border/70 p-0.5",
+        "inline-flex h-7 w-10 items-center justify-center rounded-md border border-border/70 p-0.5",
         isSelected && "border-foreground/35",
       )}
     >
-      <span
-        className="flex w-full flex-col overflow-hidden rounded-sm"
-        style={{ backgroundColor: palette.background }}
-      >
-        <span className="h-2/5" />
+      {themeId === "system" ? (
+        <span className="flex h-full w-full overflow-hidden rounded-sm">
+          <span className="h-full w-1/2 bg-background" />
+          <span className="h-full w-1/2 bg-foreground/80" />
+        </span>
+      ) : (
         <span
-          className="h-3/5 px-1 py-0.5"
-          style={{ backgroundColor: palette.card }}
+          className="flex h-full w-full flex-col overflow-hidden rounded-sm"
+          style={{
+            backgroundColor: themePreviewPaletteById[themeId].background,
+          }}
         >
           <span
-            className="block h-full w-full rounded-[2px] opacity-85"
-            style={{ backgroundColor: palette.accent }}
+            className="h-2/5"
+            style={{ backgroundColor: themePreviewPaletteById[themeId].muted }}
           />
+          <span
+            className="h-3/5 px-0.5 py-0.5"
+            style={{ backgroundColor: themePreviewPaletteById[themeId].card }}
+          >
+            <span
+              className="block h-full w-full rounded-[2px]"
+              style={{
+                backgroundColor: themePreviewPaletteById[themeId].primary,
+              }}
+            />
+          </span>
         </span>
-      </span>
+      )}
     </span>
   );
 }
