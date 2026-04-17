@@ -31,11 +31,11 @@ function getColumnClassName(columnId: string) {
     case "select":
       return "w-9 min-w-9";
     case "front":
-      return "min-w-[7rem] sm:min-w-[8rem]";
+      return "min-w-[7rem] sm:min-w-[8rem] lg:min-w-[5rem]";
     case "back":
-      return "min-w-[5.5rem] sm:min-w-[6.5rem]";
+      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[4rem]";
     case "deckPath":
-      return "min-w-[5.5rem] sm:min-w-[6.5rem]";
+      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[4rem]";
     case "actions":
       return "w-14 min-w-14";
     default:
@@ -169,7 +169,8 @@ export function FlashcardsManagerTable({
       emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
-      tableClassName="w-full min-w-[30rem] sm:min-w-[34rem] lg:min-w-[36rem]"
+      tableClassName="w-full min-w-[30rem] sm:min-w-[34rem] lg:min-w-[28rem]"
+      columnResizeMode="onEnd"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
         cn("px-3 py-3 align-middle", getColumnClassName(columnId))
