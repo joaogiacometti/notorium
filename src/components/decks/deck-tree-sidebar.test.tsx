@@ -4,14 +4,28 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeckTreeSidebar } from "@/components/decks/deck-tree-sidebar";
 import type { DeckEntity, DeckTreeNode } from "@/lib/server/api-contracts";
 
-const { replaceMock, refreshMock } = vi.hoisted(() => ({
-  replaceMock: vi.fn(),
-  refreshMock: vi.fn(),
-}));
+const { moveDeckMock, replaceMock, refreshMock, toastErrorMock } = vi.hoisted(
+  () => ({
+    moveDeckMock: vi.fn(),
+    replaceMock: vi.fn(),
+    refreshMock: vi.fn(),
+    toastErrorMock: vi.fn(),
+  }),
+);
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: toastErrorMock,
+  },
+}));
+
+vi.mock("@/app/actions/decks", () => ({
+  moveDeck: moveDeckMock,
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -135,6 +149,40 @@ function clickButtonByText(container: HTMLDivElement, text: string, index = 0) {
   button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 }
 
+function getDeckRow(container: HTMLDivElement, deckId: string): HTMLElement {
+  const row = container.querySelector<HTMLElement>(
+    `[data-deck-row="true"][data-deck-id="${deckId}"]`,
+  );
+
+  expect(row).toBeTruthy();
+  return row as HTMLElement;
+}
+
+function dispatchDragEvent(node: HTMLElement, type: string) {
+  const DragEventCtor = globalThis.DragEvent ?? Event;
+  node.dispatchEvent(
+    new DragEventCtor(type, { bubbles: true, cancelable: true }),
+  );
+}
+
+async function dragDeck(
+  container: HTMLDivElement,
+  sourceDeckId: string,
+  targetDeckId: string,
+) {
+  await act(async () => {
+    dispatchDragEvent(getDeckRow(container, sourceDeckId), "dragstart");
+  });
+
+  await act(async () => {
+    dispatchDragEvent(getDeckRow(container, targetDeckId), "dragover");
+  });
+
+  await act(async () => {
+    dispatchDragEvent(getDeckRow(container, targetDeckId), "drop");
+  });
+}
+
 describe("DeckTreeSidebar", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -155,7 +203,7 @@ describe("DeckTreeSidebar", () => {
     vi.clearAllMocks();
   });
 
-  it("shows the summed flashcard total on the root row", async () => {
+  it("shows the summed flashcard total on the all decks row", async () => {
     const nestedChild = {
       ...createDeckNode("child-1", 3),
       parentDeckId: "root-1",
@@ -186,12 +234,12 @@ describe("DeckTreeSidebar", () => {
       );
     });
 
-    const flashcardsButton = Array.from(
+    const allDecksButton = Array.from(
       container.querySelectorAll("button"),
-    ).find((button) => button.textContent?.includes("Flashcards"));
+    ).find((button) => button.textContent?.includes("All Decks"));
 
-    expect(flashcardsButton).toBeTruthy();
-    expect(flashcardsButton?.textContent).toContain("10");
+    expect(allDecksButton).toBeTruthy();
+    expect(allDecksButton?.textContent).toContain("10");
   });
 
   it("shows subtree flashcard counts for parent decks", async () => {
@@ -258,6 +306,133 @@ describe("DeckTreeSidebar", () => {
     });
 
     expect(container.textContent).toContain("grandchild-1");
+  });
+
+  it("moves a deck under another deck when dropped on its row", async () => {
+    moveDeckMock.mockResolvedValueOnce({
+      success: true,
+      id: "deck-a",
+      previousParentDeckId: null,
+      newParentDeckId: "deck-b",
+    });
+
+    const deckTree: DeckTreeNode[] = [
+      createDeckNode("deck-a", 2),
+      createDeckNode("deck-b", 3),
+    ];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    await dragDeck(container, "deck-a", "deck-b");
+
+    expect(moveDeckMock).toHaveBeenCalledWith({
+      id: "deck-a",
+      parentDeckId: "deck-b",
+    });
+    expect(container.querySelector('[title="deck-b::deck-a"]')).toBeTruthy();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("moves a nested deck to root when dropped on the flashcards row", async () => {
+    moveDeckMock.mockResolvedValueOnce({
+      success: true,
+      id: "child-1",
+      previousParentDeckId: "root-1",
+      newParentDeckId: null,
+    });
+
+    const deckTree: DeckTreeNode[] = [
+      {
+        ...createDeckNode("root-1", 5, [
+          {
+            ...createDeckNode("child-1", 2),
+            parentDeckId: "root-1",
+            path: "root-1::child-1",
+          },
+        ]),
+        path: "root-1",
+      },
+    ];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          selectedDeckId="child-1"
+        />,
+      );
+    });
+
+    await dragDeck(container, "child-1", "__flashcards_root__");
+
+    expect(moveDeckMock).toHaveBeenCalledWith({ id: "child-1" });
+    expect(container.querySelector('[title="child-1"]')).toBeTruthy();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not move a deck when dropped onto itself", async () => {
+    const deckTree: DeckTreeNode[] = [createDeckNode("deck-a", 2)];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    await dragDeck(container, "deck-a", "deck-a");
+
+    expect(moveDeckMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it("shows an error and leaves the tree unchanged when moving fails", async () => {
+    moveDeckMock.mockResolvedValueOnce({
+      success: false,
+      errorCode: "decks.wouldCreateCycle",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+
+    const deckTree: DeckTreeNode[] = [
+      createDeckNode("deck-a", 2),
+      createDeckNode("deck-b", 3),
+    ];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    await dragDeck(container, "deck-a", "deck-b");
+
+    expect(moveDeckMock).toHaveBeenCalledWith({
+      id: "deck-a",
+      parentDeckId: "deck-b",
+    });
+    expect(toastErrorMock).toHaveBeenCalledWith(
+      "This move would create a circular deck hierarchy.",
+    );
+    expect(container.querySelector('[title="deck-b::deck-a"]')).toBeNull();
+    expect(container.querySelector('[title="deck-a"]')).toBeTruthy();
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
   it("refreshes after a deck is deleted", async () => {

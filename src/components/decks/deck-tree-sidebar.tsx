@@ -12,6 +12,8 @@ import {
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { moveDeck } from "@/app/actions/decks";
 import { CreateDeckDialog } from "@/components/decks/create-deck-dialog";
 import { DeleteDeckDialog } from "@/components/decks/delete-deck-dialog";
 import { EditDeckDialog } from "@/components/decks/edit-deck-dialog";
@@ -25,6 +27,7 @@ import {
 import type { FlashcardsView } from "@/features/flashcards/view";
 import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import type { DeckTreeNode } from "@/lib/server/api-contracts";
+import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 
 interface DeckTreeSidebarProps {
@@ -109,6 +112,131 @@ function removeDeckTreeNode(
     }));
 }
 
+function findDeckTreeNode(
+  nodes: DeckTreeNode[],
+  deckId: string,
+): DeckTreeNode | null {
+  for (const node of nodes) {
+    if (node.id === deckId) {
+      return node;
+    }
+
+    const childMatch = findDeckTreeNode(node.children, deckId);
+    if (childMatch) {
+      return childMatch;
+    }
+  }
+
+  return null;
+}
+
+function isDeckDescendant(
+  nodes: DeckTreeNode[],
+  ancestorId: string,
+  targetId: string,
+): boolean {
+  const ancestor = findDeckTreeNode(nodes, ancestorId);
+  if (!ancestor) {
+    return false;
+  }
+
+  return findDeckTreeNode(ancestor.children, targetId) !== null;
+}
+
+function extractDeckTreeNode(
+  nodes: DeckTreeNode[],
+  deckId: string,
+): {
+  nextNodes: DeckTreeNode[];
+  removedNode: DeckTreeNode | null;
+} {
+  let removedNode: DeckTreeNode | null = null;
+  const nextNodes: DeckTreeNode[] = [];
+
+  for (const node of nodes) {
+    if (node.id === deckId) {
+      removedNode = node;
+      continue;
+    }
+
+    const extractedChild = extractDeckTreeNode(node.children, deckId);
+    if (extractedChild.removedNode) {
+      removedNode = extractedChild.removedNode;
+      nextNodes.push({
+        ...node,
+        children: extractedChild.nextNodes,
+      });
+      continue;
+    }
+
+    nextNodes.push(node);
+  }
+
+  return {
+    nextNodes,
+    removedNode,
+  };
+}
+
+function sortDeckTreeNodes(nodes: DeckTreeNode[]): DeckTreeNode[] {
+  return [...nodes].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function insertDeckTreeNode(
+  nodes: DeckTreeNode[],
+  nodeToInsert: DeckTreeNode,
+  parentDeckId: string | null,
+): DeckTreeNode[] {
+  if (parentDeckId === null) {
+    return sortDeckTreeNodes([
+      ...nodes,
+      {
+        ...nodeToInsert,
+        parentDeckId: null,
+      },
+    ]);
+  }
+
+  return nodes.map((node) => {
+    if (node.id === parentDeckId) {
+      return {
+        ...node,
+        children: sortDeckTreeNodes([
+          ...node.children,
+          {
+            ...nodeToInsert,
+            parentDeckId,
+          },
+        ]),
+      };
+    }
+
+    return {
+      ...node,
+      children: insertDeckTreeNode(node.children, nodeToInsert, parentDeckId),
+    };
+  });
+}
+
+function moveDeckTreeNode(
+  nodes: DeckTreeNode[],
+  deckId: string,
+  parentDeckId: string | null,
+): DeckTreeNode[] {
+  const extracted = extractDeckTreeNode(nodes, deckId);
+  if (!extracted.removedNode) {
+    return nodes;
+  }
+
+  return normalizeDeckTree(
+    insertDeckTreeNode(
+      extracted.nextNodes,
+      extracted.removedNode,
+      parentDeckId,
+    ),
+  );
+}
+
 function buildDeckViewHref(view: FlashcardsView, deckId?: string) {
   const params = new URLSearchParams();
   params.set("view", view);
@@ -127,11 +255,17 @@ interface DeckTreeNodeItemProps {
   expandedIds: Set<string>;
   selectedDeckId?: string;
   loadingId: string | null;
+  draggedDeckId: string | null;
+  dropTargetId: string | null;
   onToggle: (deckId: string) => void;
   onSelectDeck: (deckId?: string) => void;
   onCreateChild: (parentDeckId: string) => void;
   onEdit: (deck: EditDeckTarget) => void;
   onDelete: (deck: DeleteDeckTarget) => void;
+  onDragEnd: () => void;
+  onDragStart: (deckId: string) => void;
+  onDragTarget: (targetId: string) => void;
+  onDropTarget: (targetId: string) => void;
 }
 
 interface SyntheticDeckTreeRoot {
@@ -168,26 +302,43 @@ interface DeckSidebarRowProps {
   deckId?: string;
   depth: number;
   isSelected: boolean;
+  isDragging?: boolean;
+  isDropTarget?: boolean;
+  draggable?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
+  onDragEnd?: () => void;
+  onDragOver?: () => void;
+  onDragStart?: () => void;
+  onDrop?: () => void;
   onSelect: () => void;
 }
 
 function DeckSidebarRow({
   children,
+  deckId,
   depth,
   isSelected,
+  isDragging,
+  isDropTarget,
+  draggable,
   leading,
   trailing,
+  onDragEnd,
+  onDragOver,
+  onDragStart,
+  onDrop,
   onSelect,
 }: Readonly<DeckSidebarRowProps>) {
   return (
     <div
       className={cn(
-        "group flex w-full items-center gap-1 rounded-lg pr-1 text-left",
+        "group flex w-full items-center gap-1 rounded-lg pr-1 text-left transition-opacity",
         isSelected
           ? "bg-primary/10 font-semibold text-primary"
           : "hover:bg-muted/70",
+        isDropTarget ? "bg-muted/70 ring-1 ring-border" : undefined,
+        isDragging ? "opacity-60" : undefined,
       )}
       style={{ paddingLeft: `${depth * 12}px` }}
     >
@@ -195,7 +346,20 @@ function DeckSidebarRow({
       <button
         type="button"
         className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm"
+        data-deck-id={deckId}
+        data-deck-row="true"
+        draggable={draggable}
+        onDragEnd={onDragEnd}
+        onDragOver={(event) => {
+          event.preventDefault();
+          onDragOver?.();
+        }}
+        onDragStart={onDragStart}
         onClick={onSelect}
+        onDrop={(event) => {
+          event.preventDefault();
+          onDrop?.();
+        }}
       >
         {children}
       </button>
@@ -211,11 +375,17 @@ function DeckTreeNodeItem({
   expandedIds,
   selectedDeckId,
   loadingId,
+  draggedDeckId,
+  dropTargetId,
   onToggle,
   onSelectDeck,
   onCreateChild,
   onEdit,
   onDelete,
+  onDragEnd,
+  onDragStart,
+  onDragTarget,
+  onDropTarget,
 }: Readonly<DeckTreeNodeItemProps>) {
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedIds.has(node.id);
@@ -292,8 +462,15 @@ function DeckTreeNodeItem({
         deckId={node.id}
         depth={depth}
         isSelected={isSelected}
+        isDragging={draggedDeckId === node.id}
+        isDropTarget={dropTargetId === node.id}
+        draggable
         leading={toggleButton}
         trailing={actionsMenu}
+        onDragEnd={onDragEnd}
+        onDragOver={() => onDragTarget(node.id)}
+        onDragStart={() => onDragStart(node.id)}
+        onDrop={() => onDropTarget(node.id)}
         onSelect={() => onSelectDeck(node.id)}
       >
         <span className="flex min-w-0 items-center gap-2 truncate">
@@ -325,11 +502,17 @@ function DeckTreeNodeItem({
               expandedIds={expandedIds}
               selectedDeckId={selectedDeckId}
               loadingId={loadingId}
+              draggedDeckId={draggedDeckId}
+              dropTargetId={dropTargetId}
               onToggle={onToggle}
               onSelectDeck={onSelectDeck}
               onCreateChild={onCreateChild}
               onEdit={onEdit}
               onDelete={onDelete}
+              onDragEnd={onDragEnd}
+              onDragStart={onDragStart}
+              onDragTarget={onDragTarget}
+              onDropTarget={onDropTarget}
             />
           ))}
         </div>
@@ -343,6 +526,11 @@ interface SyntheticDeckTreeRootItemProps {
   currentView: FlashcardsView;
   selectedDeckId?: string;
   loadingId: string | null;
+  draggedDeckId: string | null;
+  dropTargetId: string | null;
+  onDragEnd: () => void;
+  onDragOver: () => void;
+  onDrop: () => void;
   onSelectDeck: (deckId?: string) => void;
 }
 
@@ -351,6 +539,11 @@ function SyntheticDeckTreeRootItem({
   currentView,
   selectedDeckId,
   loadingId,
+  draggedDeckId,
+  dropTargetId,
+  onDragEnd,
+  onDragOver,
+  onDrop,
   onSelectDeck,
 }: Readonly<SyntheticDeckTreeRootItemProps>) {
   const isLoading = loadingId === "__root__";
@@ -358,8 +551,14 @@ function SyntheticDeckTreeRootItem({
   return (
     <DeckSidebarRow
       currentView={currentView}
+      deckId={node.id}
       depth={0}
       isSelected={selectedDeckId === undefined}
+      isDragging={draggedDeckId === rootDeckId}
+      isDropTarget={dropTargetId === rootDeckId}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
       onSelect={() => onSelectDeck(undefined)}
     >
       <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
@@ -393,6 +592,11 @@ export function DeckTreeSidebar({
   const [, startTransition] = useTransition();
   const [localDeckTree, setLocalDeckTree] = useState<DeckTreeNode[]>(deckTree);
   const [pendingDeckId, setPendingDeckId] = useState<string | null>(null);
+  const [pendingMoveDeckId, setPendingMoveDeckId] = useState<string | null>(
+    null,
+  );
+  const [draggedDeckId, setDraggedDeckId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   const isPendingVisible = useSmoothedLoadingState(pendingDeckId !== null, {
     delayMs: 0,
@@ -410,9 +614,11 @@ export function DeckTreeSidebar({
   const allFlashcardsTotal = getTotalFlashcardsCount(localDeckTree);
   const rootNode: SyntheticDeckTreeRoot = {
     id: rootDeckId,
-    name: "Flashcards",
+    name: "All Decks",
     flashcardCount: allFlashcardsTotal,
   };
+  const loadingId =
+    pendingMoveDeckId ?? (isPendingVisible ? pendingDeckId : null);
 
   useEffect(() => {
     setLocalDeckTree(deckTree);
@@ -482,6 +688,112 @@ export function DeckTreeSidebar({
     });
   }
 
+  function getProposedParentDeckId(targetId: string): string | null {
+    return targetId === rootDeckId ? null : targetId;
+  }
+
+  function canDropDeck(sourceDeckId: string | null, targetId: string): boolean {
+    if (!sourceDeckId) {
+      return false;
+    }
+
+    const sourceNode = findDeckTreeNode(localDeckTree, sourceDeckId);
+    if (!sourceNode) {
+      return false;
+    }
+
+    const proposedParentDeckId = getProposedParentDeckId(targetId);
+
+    if (proposedParentDeckId === sourceDeckId) {
+      return false;
+    }
+
+    if (proposedParentDeckId === sourceNode.parentDeckId) {
+      return false;
+    }
+
+    if (
+      proposedParentDeckId !== null &&
+      isDeckDescendant(localDeckTree, sourceDeckId, proposedParentDeckId)
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function clearDragState() {
+    setDraggedDeckId(null);
+    setDropTargetId(null);
+  }
+
+  function handleDragStart(deckId: string) {
+    if (pendingMoveDeckId !== null) {
+      return;
+    }
+
+    setDraggedDeckId(deckId);
+    setDropTargetId(null);
+  }
+
+  function handleDragTarget(targetId: string) {
+    if (pendingMoveDeckId !== null) {
+      return;
+    }
+
+    if (!canDropDeck(draggedDeckId, targetId)) {
+      if (dropTargetId === targetId) {
+        setDropTargetId(null);
+      }
+      return;
+    }
+
+    setDropTargetId(targetId);
+  }
+
+  async function handleDropTarget(targetId: string) {
+    if (pendingMoveDeckId !== null || !draggedDeckId) {
+      clearDragState();
+      return;
+    }
+
+    if (!canDropDeck(draggedDeckId, targetId)) {
+      clearDragState();
+      return;
+    }
+
+    const proposedParentDeckId = getProposedParentDeckId(targetId);
+    const deckId = draggedDeckId;
+
+    setPendingMoveDeckId(deckId);
+    clearDragState();
+
+    const result = await moveDeck(
+      proposedParentDeckId === null
+        ? { id: deckId }
+        : { id: deckId, parentDeckId: proposedParentDeckId },
+    );
+
+    if (!result.success) {
+      toast.error(resolveActionErrorMessage(result));
+      setPendingMoveDeckId(null);
+      return;
+    }
+
+    setLocalDeckTree((current) =>
+      moveDeckTreeNode(current, deckId, proposedParentDeckId),
+    );
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (proposedParentDeckId !== null) {
+        next.add(proposedParentDeckId);
+      }
+      return next;
+    });
+    setPendingMoveDeckId(null);
+    refreshPage();
+  }
+
   return (
     <>
       <aside className="rounded-2xl border border-border/70 bg-card/85 p-3 shadow-none lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
@@ -506,19 +818,32 @@ export function DeckTreeSidebar({
           />
         </div>
 
-        <SyntheticDeckTreeRootItem
-          node={rootNode}
-          currentView={currentView}
-          selectedDeckId={selectedDeckId}
-          loadingId={isPendingVisible ? pendingDeckId : null}
-          onSelectDeck={handleSelectDeck}
-        />
+        <div className="space-y-3">
+          <div data-testid="deck-tree-root-scope">
+            <SyntheticDeckTreeRootItem
+              node={rootNode}
+              currentView={currentView}
+              selectedDeckId={selectedDeckId}
+              loadingId={loadingId}
+              draggedDeckId={draggedDeckId}
+              dropTargetId={dropTargetId}
+              onDragEnd={clearDragState}
+              onDragOver={() => handleDragTarget(rootDeckId)}
+              onDrop={() => void handleDropTarget(rootDeckId)}
+              onSelectDeck={handleSelectDeck}
+            />
+          </div>
+          <div
+            className="border-t border-border/70"
+            data-testid="deck-tree-root-divider"
+          />
+        </div>
         {localDeckTree.length === 0 ? (
-          <div className="mt-1 rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
+          <div className="mt-3 rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
             Create your first deck to start organizing flashcards.
           </div>
         ) : (
-          <div className="mt-1 space-y-1">
+          <div className="mt-3 space-y-1">
             {localDeckTree.map((childNode) => (
               <DeckTreeNodeItem
                 key={childNode.id}
@@ -527,7 +852,9 @@ export function DeckTreeSidebar({
                 currentView={currentView}
                 expandedIds={expandedIds}
                 selectedDeckId={selectedDeckId}
-                loadingId={isPendingVisible ? pendingDeckId : null}
+                loadingId={loadingId}
+                draggedDeckId={draggedDeckId}
+                dropTargetId={dropTargetId}
                 onToggle={handleToggle}
                 onSelectDeck={handleSelectDeck}
                 onCreateChild={(parentDeckId) => {
@@ -536,6 +863,12 @@ export function DeckTreeSidebar({
                 }}
                 onEdit={setEditTarget}
                 onDelete={setDeleteTarget}
+                onDragEnd={clearDragState}
+                onDragStart={handleDragStart}
+                onDragTarget={handleDragTarget}
+                onDropTarget={(targetId) => {
+                  void handleDropTarget(targetId);
+                }}
               />
             ))}
           </div>

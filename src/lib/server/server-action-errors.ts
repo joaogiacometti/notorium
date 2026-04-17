@@ -61,6 +61,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "decks.duplicateName": "A deck with this name already exists.",
   "decks.cannotEditDefault": "Cannot edit this deck.",
   "decks.cannotDeleteDefault": "Cannot delete this deck.",
+  "decks.cannotMoveIntoSelf": "A deck cannot be moved into itself.",
+  "decks.wouldCreateCycle": "This move would create a circular deck hierarchy.",
   "decks.wrongSubject": "Deck does not belong to the selected scope.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
@@ -96,6 +98,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} flashcards per deck.`,
   "limits.deckLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} decks.`,
+  "limits.childDeckLimit": (params) =>
+    `System limit reached: a deck can have up to ${params?.max} child decks.`,
   "limits.deckNestingDepthLimit": (params) =>
     `System limit reached: decks can only be nested up to ${params?.max} levels deep.`,
   "limits.aiBackGenerationPerDay":
