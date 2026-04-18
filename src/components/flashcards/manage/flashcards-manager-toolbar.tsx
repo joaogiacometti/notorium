@@ -298,8 +298,7 @@ export function FlashcardsManagerToolbar({
   });
 
   return (
-    <Card className="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
-      <div className="absolute top-0 right-0 size-28 rounded-full bg-primary/10 blur-3xl" />
+    <Card className="relative overflow-hidden rounded-xl border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
       <CardContent className="relative px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">

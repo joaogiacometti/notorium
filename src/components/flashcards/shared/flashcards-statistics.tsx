@@ -170,7 +170,7 @@ export function FlashcardsStatistics({
         data-testid="flashcards-statistics"
       >
         <div className="grid gap-3 xl:grid-cols-2">
-          <Card className="gap-0 rounded-2xl border-border/70 py-0 shadow-none">
+          <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
             <CardContent className="flex h-full flex-col justify-between gap-3 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1">

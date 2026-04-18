@@ -752,8 +752,8 @@ export function FlashcardReviewClient({
           className="grid min-w-0 gap-4 lg:grid-cols-2"
           data-testid="flashcard-review-hub"
         >
-          <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
-            <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+          <div className="rounded-xl border border-border/70 py-0 shadow-none">
+            <div className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
                 <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-semibold tracking-wide text-primary uppercase">
                   {hasDueCards ? "Due now" : "No due cards"}
@@ -797,16 +797,16 @@ export function FlashcardReviewClient({
               >
                 Start review
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
-            <CardContent className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+          <div className="rounded-xl border border-border/70 py-0 shadow-none">
+            <div className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
-                <span className="inline-flex items-center rounded-md border border-[var(--intent-success-border)] bg-[var(--intent-success-bg)] px-2 py-0.5 text-xs font-semibold tracking-wide text-[var(--intent-success-text)] uppercase">
+                <span className="inline-flex items-center rounded-md border border-(--intent-success-border) bg-(--intent-success-bg) px-2 py-0.5 text-xs font-semibold tracking-wide text-(--intent-success-text) uppercase">
                   All cards
                 </span>
-                <span className="inline-flex items-center rounded-md border border-[var(--intent-success-border)] bg-[var(--intent-success-bg)] px-2 py-0.5 text-xs font-medium text-[var(--intent-success-text)]">
+                <span className="inline-flex items-center rounded-md border border-(--intent-success-border) bg-(--intent-success-bg) px-2 py-0.5 text-xs font-medium text-(--intent-success-text)">
                   {examBadgeText}
                 </span>
               </div>
@@ -823,15 +823,15 @@ export function FlashcardReviewClient({
 
               <ul className="hidden space-y-1.5 text-sm text-muted-foreground sm:block">
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[var(--intent-success-fill)]" />
+                  <span className="size-2 rounded-full bg-(--intent-success-fill)" />
                   <span>{examScopeLabel}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[var(--intent-success-fill)]" />
+                  <span className="size-2 rounded-full bg-(--intent-success-fill)" />
                   <span>No scheduling impact</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[var(--intent-success-fill)]" />
+                  <span className="size-2 rounded-full bg-(--intent-success-fill)" />
                   <span>Randomized order</span>
                 </li>
               </ul>
@@ -854,8 +854,8 @@ export function FlashcardReviewClient({
                   pendingLabel="Loading exam..."
                 />
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </>

@@ -149,6 +149,37 @@ function clickButtonByText(container: HTMLDivElement, text: string, index = 0) {
   button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 }
 
+function clickButtonByLabel(
+  container: HTMLDivElement,
+  label: string,
+  index = 0,
+) {
+  const buttons = Array.from(container.querySelectorAll("button")).filter(
+    (currentButton) => currentButton.getAttribute("aria-label") === label,
+  );
+  const button = buttons[index];
+
+  expect(button).toBeTruthy();
+  button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+}
+
+function changeSearchQuery(container: HTMLDivElement, value: string) {
+  const input = container.querySelector<HTMLInputElement>(
+    'input[placeholder="Search decks..."]',
+  );
+
+  expect(input).toBeTruthy();
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set;
+
+  expect(valueSetter).toBeTruthy();
+  valueSetter?.call(input, value);
+  input?.dispatchEvent(new Event("input", { bubbles: true }));
+  input?.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
 function getDeckRow(container: HTMLDivElement, deckId: string): HTMLElement {
   const row = container.querySelector<HTMLElement>(
     `[data-deck-row="true"][data-deck-id="${deckId}"]`,
@@ -275,6 +306,70 @@ describe("DeckTreeSidebar", () => {
     expect(container.textContent).toContain("root-16");
   });
 
+  it("keeps nested decks collapsed by default", async () => {
+    const deckTree: DeckTreeNode[] = [
+      {
+        ...createDeckNode("root-1", 6, [
+          {
+            ...createDeckNode("child-1", 3),
+            parentDeckId: "root-1",
+            path: "root-1::child-1",
+          },
+        ]),
+        path: "root-1",
+      },
+    ];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[title="root-1::child-1"]')).toBeNull();
+  });
+
+  it("toggles nested decks open and closed", async () => {
+    const deckTree: DeckTreeNode[] = [
+      {
+        ...createDeckNode("root-1", 6, [
+          {
+            ...createDeckNode("child-1", 3),
+            parentDeckId: "root-1",
+            path: "root-1::child-1",
+          },
+        ]),
+        path: "root-1",
+      },
+    ];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    await act(async () => {
+      clickButtonByLabel(container, "Expand deck");
+    });
+
+    expect(container.querySelector('[title="root-1::child-1"]')).toBeTruthy();
+
+    await act(async () => {
+      clickButtonByLabel(container, "Collapse deck");
+    });
+
+    expect(container.querySelector('[title="root-1::child-1"]')).toBeNull();
+  });
+
   it("auto-expands ancestor decks for a selected nested deck", async () => {
     const deckTree: DeckTreeNode[] = [
       {
@@ -308,6 +403,45 @@ describe("DeckTreeSidebar", () => {
     expect(container.textContent).toContain("grandchild-1");
   });
 
+  it("reveals matching nested decks while searching and restores the prior state when cleared", async () => {
+    const deckTree: DeckTreeNode[] = [
+      {
+        ...createDeckNode("root-1", 6, [
+          {
+            ...createDeckNode("child-1", 3),
+            parentDeckId: "root-1",
+            path: "root-1::child-1",
+          },
+        ]),
+        path: "root-1",
+      },
+    ];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[title="root-1::child-1"]')).toBeNull();
+
+    await act(async () => {
+      changeSearchQuery(container, "child");
+    });
+
+    expect(container.querySelector('[title="root-1::child-1"]')).toBeTruthy();
+
+    await act(async () => {
+      changeSearchQuery(container, "");
+    });
+
+    expect(container.querySelector('[title="root-1::child-1"]')).toBeNull();
+  });
+
   it("moves a deck under another deck when dropped on its row", async () => {
     moveDeckMock.mockResolvedValueOnce({
       success: true,
@@ -318,7 +452,16 @@ describe("DeckTreeSidebar", () => {
 
     const deckTree: DeckTreeNode[] = [
       createDeckNode("deck-a", 2),
-      createDeckNode("deck-b", 3),
+      {
+        ...createDeckNode("deck-b", 4, [
+          {
+            ...createDeckNode("deck-c", 1),
+            parentDeckId: "deck-b",
+            path: "deck-b::deck-c",
+          },
+        ]),
+        path: "deck-b",
+      },
     ];
 
     await act(async () => {
@@ -338,6 +481,7 @@ describe("DeckTreeSidebar", () => {
       parentDeckId: "deck-b",
     });
     expect(container.querySelector('[title="deck-b::deck-a"]')).toBeTruthy();
+    expect(container.querySelector('[title="deck-b::deck-c"]')).toBeTruthy();
     expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 

@@ -7,6 +7,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Search,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -24,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import type { FlashcardsView } from "@/features/flashcards/view";
 import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import type { DeckTreeNode } from "@/lib/server/api-contracts";
@@ -278,6 +280,42 @@ function getTotalFlashcardsCount(nodes: DeckTreeNode[]): number {
   return nodes.reduce((total, node) => total + node.flashcardCount, 0);
 }
 
+function filterDeckTree(nodes: DeckTreeNode[], query: string): DeckTreeNode[] {
+  if (!query.trim()) {
+    return nodes;
+  }
+  const lowerQuery = query.toLowerCase();
+  return nodes
+    .map((node) => {
+      const filteredChildren = filterDeckTree(node.children, query);
+      if (
+        node.name.toLowerCase().includes(lowerQuery) ||
+        filteredChildren.length > 0
+      ) {
+        return { ...node, children: filteredChildren };
+      }
+      return null;
+    })
+    .filter((node): node is DeckTreeNode => node !== null);
+}
+
+function getExpandedIdsForVisibleTree(nodes: DeckTreeNode[]): Set<string> {
+  const expandedIds = new Set<string>();
+
+  function visit(currentNodes: DeckTreeNode[]) {
+    for (const node of currentNodes) {
+      if (node.children.length > 0) {
+        expandedIds.add(node.id);
+        visit(node.children);
+      }
+    }
+  }
+
+  visit(nodes);
+
+  return expandedIds;
+}
+
 function getDeckAncestorIds(nodes: DeckTreeNode[], deckId: string): string[] {
   for (const node of nodes) {
     if (node.id === deckId) {
@@ -397,7 +435,10 @@ function DeckTreeNodeItem({
       variant="ghost"
       size="icon"
       className="size-7 shrink-0"
-      onClick={() => onToggle(node.id)}
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle(node.id);
+      }}
       aria-label={isExpanded ? "Collapse deck" : "Expand deck"}
     >
       {isExpanded ? (
@@ -487,7 +528,7 @@ function DeckTreeNodeItem({
             {node.name}
           </span>
         </span>
-        <span className="shrink-0 text-xs text-muted-foreground">
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground">
           {node.flashcardCount}
         </span>
       </DeckSidebarRow>
@@ -575,7 +616,7 @@ function SyntheticDeckTreeRootItem({
             {node.name}
           </span>
         </span>
-        <span className="shrink-0 text-xs text-muted-foreground">
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground">
           {node.flashcardCount}
         </span>
       </span>
@@ -613,7 +654,19 @@ export function DeckTreeSidebar({
   const [deleteTarget, setDeleteTarget] = useState<DeleteDeckTarget | null>(
     null,
   );
+  const [searchQuery, setSearchQuery] = useState("");
   const allFlashcardsTotal = getTotalFlashcardsCount(localDeckTree);
+  const filteredDeckTree = filterDeckTree(localDeckTree, searchQuery);
+  const hasSearchQuery = searchQuery.trim().length > 0;
+  const searchExpandedIds = hasSearchQuery
+    ? getExpandedIdsForVisibleTree(filteredDeckTree)
+    : new Set<string>();
+  const visibleExpandedIds = new Set(expandedIds);
+
+  for (const deckId of searchExpandedIds) {
+    visibleExpandedIds.add(deckId);
+  }
+
   const rootNode: SyntheticDeckTreeRoot = {
     id: rootDeckId,
     name: "All Decks",
@@ -809,14 +862,14 @@ export function DeckTreeSidebar({
   return (
     <>
       <aside className="rounded-lg border border-border/60 bg-muted/30 p-3 lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-foreground">Decks</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-foreground">Decks</p>
           <CreateDeckDialog
             trigger={
               <Button
                 type="button"
                 size="sm"
-                className="gap-1.5"
+                className="h-9 gap-1.5"
                 onClick={() => setCreateParentDeckId(undefined)}
               >
                 <Plus className="size-4" />
@@ -830,7 +883,18 @@ export function DeckTreeSidebar({
           />
         </div>
 
-        <div className="space-y-3">
+        <div className="relative mt-3">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search decks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 rounded-lg border-border/70 bg-background/80 pl-10 pr-4 shadow-xs"
+          />
+        </div>
+
+        <div className="mt-4 space-y-2">
           <div data-testid="deck-tree-root-scope">
             <SyntheticDeckTreeRootItem
               node={rootNode}
@@ -845,46 +909,51 @@ export function DeckTreeSidebar({
               onSelectDeck={handleSelectDeck}
             />
           </div>
-          <div
-            className="my-2 border-t border-border/50"
-            data-testid="deck-tree-root-divider"
-          />
+
+          <p className="pt-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+            My Decks
+          </p>
+
+          {filteredDeckTree.length === 0 && !searchQuery ? (
+            <div className="rounded-lg border border-dashed border-border/60 px-3 py-3 text-center text-sm text-muted-foreground">
+              Create your first deck to start organizing flashcards.
+            </div>
+          ) : filteredDeckTree.length === 0 && searchQuery ? (
+            <p className="py-2 text-center text-sm text-muted-foreground">
+              No decks match your search.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {filteredDeckTree.map((childNode) => (
+                <DeckTreeNodeItem
+                  key={childNode.id}
+                  node={childNode}
+                  depth={0}
+                  currentView={currentView}
+                  expandedIds={visibleExpandedIds}
+                  selectedDeckId={selectedDeckId}
+                  loadingId={loadingId}
+                  draggedDeckId={draggedDeckId}
+                  dropTargetId={dropTargetId}
+                  onToggle={handleToggle}
+                  onSelectDeck={handleSelectDeck}
+                  onCreateChild={(parentDeckId) => {
+                    setCreateParentDeckId(parentDeckId);
+                    setCreateOpen(true);
+                  }}
+                  onEdit={setEditTarget}
+                  onDelete={setDeleteTarget}
+                  onDragEnd={clearDragState}
+                  onDragStart={handleDragStart}
+                  onDragTarget={handleDragTarget}
+                  onDropTarget={(targetId) => {
+                    void handleDropTarget(targetId);
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        {localDeckTree.length === 0 ? (
-          <div className="mt-2 rounded-lg border border-dashed border-border/60 px-3 py-3 text-sm text-muted-foreground">
-            Create your first deck to start organizing flashcards.
-          </div>
-        ) : (
-          <div className="mt-3 space-y-1">
-            {localDeckTree.map((childNode) => (
-              <DeckTreeNodeItem
-                key={childNode.id}
-                node={childNode}
-                depth={0}
-                currentView={currentView}
-                expandedIds={expandedIds}
-                selectedDeckId={selectedDeckId}
-                loadingId={loadingId}
-                draggedDeckId={draggedDeckId}
-                dropTargetId={dropTargetId}
-                onToggle={handleToggle}
-                onSelectDeck={handleSelectDeck}
-                onCreateChild={(parentDeckId) => {
-                  setCreateParentDeckId(parentDeckId);
-                  setCreateOpen(true);
-                }}
-                onEdit={setEditTarget}
-                onDelete={setDeleteTarget}
-                onDragEnd={clearDragState}
-                onDragStart={handleDragStart}
-                onDragTarget={handleDragTarget}
-                onDropTarget={(targetId) => {
-                  void handleDropTarget(targetId);
-                }}
-              />
-            ))}
-          </div>
-        )}
       </aside>
 
       {editTarget ? (
