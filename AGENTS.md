@@ -199,7 +199,7 @@ Usage: `bg-[var(--x)]`, `text-[var(--x)]`, `border-[var(--x)]`, `bg-[var(--x)]/9
 - Auth enforced
 - Revalidation implemented
 - No unused code
-- Tests added (if applicable)
+- TDD cycle complete
 
 ## File & Naming Conventions
 
