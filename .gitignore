@@ -49,5 +49,6 @@ next-env.d.ts
 # User configs
 .gitconfig
 
-# AI docs
+# AI
 docs/superpowers
+.codex
