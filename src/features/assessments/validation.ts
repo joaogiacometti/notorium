@@ -29,10 +29,13 @@ const optionalNumberSchema = (field: "score" | "weight") =>
         : LIMITS.assessmentWeightMax,
       validationMessage(`Validation.assessments.${field}.maxValue`),
     )
+    .nullable()
     .optional();
 
 export const createAssessmentSchema = z.object({
-  subjectId: z.string().min(1),
+  subjectId: z
+    .string()
+    .min(1, validationMessage("Validation.assessments.subjectRequired")),
   title: z
     .string()
     .min(1, validationMessage("Validation.assessments.titleRequired"))

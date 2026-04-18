@@ -298,7 +298,7 @@ export function AssessmentDialogForm<
                     onChange={(event) =>
                       field.onChange(
                         event.target.value === ""
-                          ? undefined
+                          ? null
                           : event.target.valueAsNumber,
                       )
                     }
@@ -332,7 +332,7 @@ export function AssessmentDialogForm<
                     onChange={(event) =>
                       field.onChange(
                         event.target.value === ""
-                          ? undefined
+                          ? null
                           : event.target.valueAsNumber,
                       )
                     }

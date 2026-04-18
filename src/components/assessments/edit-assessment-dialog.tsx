@@ -30,8 +30,8 @@ function getEditAssessmentFormValues(
     type: assessment.type,
     status: assessment.status,
     dueDate: assessment.dueDate ?? undefined,
-    score: assessment.score === null ? undefined : Number(assessment.score),
-    weight: assessment.weight === null ? undefined : Number(assessment.weight),
+    score: assessment.score === null ? null : Number(assessment.score),
+    weight: assessment.weight === null ? null : Number(assessment.weight),
   };
 }
 

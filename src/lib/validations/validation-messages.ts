@@ -26,6 +26,7 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.assessments.titleMaxLength":
     "Title must be at most 100 characters.",
   "Validation.assessments.titleRequired": "Title is required.",
+  "Validation.assessments.subjectRequired": "Subject is required.",
   "Validation.assessments.weight.maxValue": "Weight cannot exceed 100.",
   "Validation.assessments.weight.minValue": "Weight cannot be negative.",
   "Validation.assessments.weight.notNumber": "Weight must be a number.",

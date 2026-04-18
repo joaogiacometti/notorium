@@ -143,6 +143,43 @@ describe("createAssessmentSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects empty subjectId", () => {
+    const result = createAssessmentSchema.safeParse({
+      subjectId: "",
+      title: "Test",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing subjectId", () => {
+    const result = createAssessmentSchema.safeParse({
+      title: "Test",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts null score and weight", () => {
+    const result = createAssessmentSchema.safeParse({
+      subjectId: "s1",
+      title: "Test",
+      score: null,
+      weight: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts omitted score and weight", () => {
+    const result = createAssessmentSchema.safeParse({
+      subjectId: "s1",
+      title: "Test",
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("editAssessmentSchema", () => {
@@ -163,6 +200,19 @@ describe("editAssessmentSchema", () => {
       type: "exam",
       status: "completed",
       score: 88,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts null score and weight", () => {
+    const result = editAssessmentSchema.safeParse({
+      id: "a1",
+      title: "Updated",
+      type: "exam",
+      status: "pending",
+      score: null,
+      weight: null,
     });
 
     expect(result.success).toBe(true);

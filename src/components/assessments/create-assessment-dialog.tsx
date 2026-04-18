@@ -34,8 +34,8 @@ function getCreateAssessmentFormValues(
     type: "other",
     status: "pending",
     dueDate: undefined,
-    score: undefined,
-    weight: undefined,
+    score: null,
+    weight: null,
   };
 }
 
