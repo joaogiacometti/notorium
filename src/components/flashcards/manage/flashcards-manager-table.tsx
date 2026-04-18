@@ -31,11 +31,11 @@ function getColumnClassName(columnId: string) {
     case "select":
       return "w-9 min-w-9";
     case "front":
-      return "min-w-[7rem] sm:min-w-[8rem] lg:min-w-[5rem]";
+      return "min-w-[7rem] sm:min-w-[8rem] lg:min-w-[3rem] lg:max-w-[8rem]";
     case "back":
-      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[4rem]";
+      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[2.5rem] lg:max-w-[6rem]";
     case "deckPath":
-      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[4rem]";
+      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[2.5rem] lg:max-w-[5rem]";
     case "actions":
       return "w-14 min-w-14";
     default:
@@ -58,7 +58,7 @@ function getColumns(
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
             <CreditCard className="size-4" />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <div
               className="truncate text-sm font-semibold leading-6 text-foreground/95"
               title={row.original.frontTitle ?? undefined}
@@ -75,7 +75,7 @@ function getColumns(
       header: () => <TableHeaderLabel>Back</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
-          className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
+          className="min-w-0 overflow-hidden truncate py-1 text-sm leading-6 text-muted-foreground"
           title={row.original.backExcerpt}
         >
           {row.original.backExcerpt}
@@ -88,7 +88,7 @@ function getColumns(
       header: () => <TableHeaderLabel>Deck</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
-          className="min-w-0 truncate py-1 text-sm leading-6 text-muted-foreground"
+          className="min-w-0 overflow-hidden truncate py-1 text-sm leading-6 text-muted-foreground"
           title={row.original.deckPath ?? undefined}
         >
           {row.original.deckPath}
@@ -169,7 +169,7 @@ export function FlashcardsManagerTable({
       emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
-      tableClassName="w-full min-w-[30rem] sm:min-w-[34rem] lg:min-w-[28rem]"
+      tableClassName="w-full min-w-[30rem] sm:min-w-[34rem] lg:min-w-[20rem]"
       columnResizeMode="onEnd"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
