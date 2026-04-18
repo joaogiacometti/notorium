@@ -1,47 +1,32 @@
 # Security Policy
 
-This document outlines the security practices and vulnerability reporting for Notorium.
+Use this document for vulnerability reporting and high-level security policy only.
 
-## Security Architecture
+Operational setup details belong in `README.md` and `docs/`, not here.
 
-Notorium implements multiple security layers:
+## Reporting a Vulnerability
 
-- **Admin approval system** prevents unauthorized access
-- **User data isolation** ensures privacy between accounts
-- **Encrypted AI settings** protect user-provided API keys
-- **Rate limiting** prevents abuse of features
-- **Secure session management** with Better Auth
+Do not open a public issue for security findings.
 
-For detailed security setup and user management, see [USER_APPROVAL_SETUP.md](./USER_APPROVAL_SETUP.md).
+Report vulnerabilities privately by email:
 
-## Reporting Security Issues
+- `j.guerreiro@unesp.br`
 
-If you discover a security vulnerability, please report it privately:
+Include:
 
-1. **Do not** open a public issue
-2. Email your findings to: j.guerreiro@unesp.br
-3. Include detailed steps to reproduce
-4. Allow reasonable time for response before disclosure
+- affected area
+- impact
+- reproduction steps
+- suggested mitigation if available
 
-## Security Best Practices
+## Disclosure Expectations
 
-### For Self-Hosting
-- Generate strong secrets for authentication and encryption
-- Use HTTPS in production
-- Keep dependencies updated
-- Regularly monitor user approval queue
-- Backup data with encryption
+- Give reasonable time for review and remediation before public disclosure.
+- Share only the minimum details needed until a fix is available.
 
-### For Development
-- Never commit secrets or API keys
-- Use environment variables for all configuration
-- Test with different user permission levels
-- Validate all inputs with Zod schemas
+## Operational Reminders for Self-Hosting
 
-## Compliance
-
-Notorium is designed to be privacy-first:
-- No tracking or analytics by default
-- User data remains under user control
-- AI processing uses user-provided keys only
-- No data shared with third parties without explicit consent
+- Use strong secrets for auth and scheduled jobs.
+- Use HTTPS in production.
+- Keep your dependencies and base images updated.
+- Restrict access to backing services where possible.

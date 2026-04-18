@@ -63,7 +63,6 @@ jobs:
       - name: Generate E2E secrets
         run: |
           echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
-          echo "USER_AI_SETTINGS_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> $GITHUB_ENV
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

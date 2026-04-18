@@ -1,165 +1,47 @@
 # Notorium
 
-Notorium is a study management app for students. It centralizes subjects, notes, flashcards, attendance, assessments, and personal search in one place with private, user-scoped data.
+Notorium is a private study management app for students. It combines subjects, notes, flashcards, attendance, assessments, and personal search in one place.
 
-**AI Integration**: AI features are optional and configured at the instance level with OpenRouter environment variables.
+This README owns setup, local development, runtime commands, and environment guidance. Product behavior lives in `SPEC.md`. Engineering rules for contributors and agents live in `AGENTS.md`.
 
-This document covers project setup, local development, and repository operations. For product behavior, UX rules, and feature acceptance criteria, use `SPEC.md`.
+## Quick Start
 
-## High-Level Features
+The primary local development path is:
 
-- Subject organization
-- Rich text notes and flashcards
-- Deck organization for flashcards
-- Flashcard review with spaced repetition
-- Attendance tracking
-- Assessment tracking
-- English-only interface
+1. Install dependencies:
 
-## Tech Stack
+```bash
+bun install
+```
 
-- Next.js 16 (App Router, Server Components, Server Actions)
-- React 19 + TypeScript 5
-- PostgreSQL + Drizzle ORM
-- Better Auth
-- Zod + React Hook Form
-- Vercel AI SDK + OpenRouter
-- Tailwind CSS 4 + shadcn/ui
-- Biome
-- Bun
-
-## Requirements
-
-- Bun
-- Docker (for local Docker Compose stack)
-
-## Environment Setup
-
-All setup paths require environment configuration:
-
-1. Copy the example file:
+2. Create your app env file:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Generate required secrets:
+3. Generate required secrets and place them in `.env`:
 
 ```bash
-# Generate auth secret (for BETTER_AUTH_SECRET)
 openssl rand -hex 32
-
-# Generate cron secret (for CRON_SECRET, if using email notifications)
 openssl rand -hex 32
 ```
 
-3. Update `.env` with the generated values and set your app URL:
+Use one value for `BETTER_AUTH_SECRET`. Use the other for `CRON_SECRET` only if you plan to enable scheduled assessment reminders.
 
-```bash
-# Local development
-BETTER_AUTH_URL=http://localhost:3000
-
-# Production example
-BETTER_AUTH_URL=https://your-domain.com
-```
-
-If you use the assessment reminder GitHub Actions workflow, set the `NOTORIUM_APP_URL` repository secret to the same public base URL.
-
-## Quick Start (Production-like Docker Compose)
-
-1. Install dependencies:
-
-```bash
-bun install
-```
-
-2. Configure environment (see [Environment Setup](#environment-setup)).
-
-3. Start the production-like stack:
-
-```bash
-docker compose up --build -d
-```
-
-Open `http://localhost:3000`.
-
-## User Management
-
-Notorium uses an admin approval system to prevent spam. For complete setup instructions, see [USER_APPROVAL_SETUP.md](./USER_APPROVAL_SETUP.md).
-
-## Scheduled Assessment Reminders
-
-Notorium can send daily email reminders for upcoming assessments. Users control their notification preferences in account settings, and scheduling is handled by a GitHub Actions workflow that calls the protected notification endpoint once per day.
-
-### GitHub Actions Setup
-
-Configure these GitHub Actions repository secrets:
-
-1. `NOTORIUM_APP_URL` with your deployed app base URL
-2. `CRON_SECRET` with the same secret configured in the app environment
-
-The workflow at `.github/workflows/assessment-reminders.yml` runs daily at 9:00 AM UTC and can also be triggered manually with `workflow_dispatch`.
-
-**Timezone Behavior**: The scheduler runs at 9 AM UTC daily. All users receive emails at the same UTC time regardless of their location. Assessment due dates are stored as ISO date strings (YYYY-MM-DD) without time components, and the notification window is calculated based on the user's `notificationDaysBefore` preference (1, 3, or 7 days).
-
-**Note**: User-level notification preferences (`notificationsEnabled` in account settings) work independently. The GitHub workflow only triggers the job; user preferences control who receives emails when it executes.
-
-The Compose stack runs:
-
-- `postgres` (`postgres:17-alpine`)
-- `redis` (`redis:7-alpine`)
-- `migrate` (runs `bun run db:migrate` once on startup)
-- `app` (containerized Next.js standalone server on port `3000`)
-
-Security defaults in Compose:
-
-- `app` runs as non-root with dropped Linux capabilities and `no-new-privileges`
-- `postgres` and `redis` ports are bound to `127.0.0.1` only
-
-## Quick Start (Development Infrastructure)
-
-1. Install dependencies:
-
-```bash
-bun install
-```
-
-2. Configure environment (see [Environment Setup](#environment-setup)).
-
-3. Start PostgreSQL and Redis:
+4. Start local infrastructure:
 
 ```bash
 docker compose -f compose.dev.yml up -d
 ```
 
-The development Compose stack runs infrastructure only:
-
-- `postgres` (`postgres:17-alpine`)
-- `redis` (`redis:7-alpine`)
-
-## Quick Start (Local Bun Dev Server)
-
-1. Install dependencies:
-
-```bash
-bun install
-```
-
-2. Configure environment (see [Environment Setup](#environment-setup)).
-
-3. Start infrastructure services:
-
-```bash
-docker compose -f compose.dev.yml up -d
-```
-
-4. Run database migrations:
+5. Run migrations:
 
 ```bash
 bun run db:migrate
 ```
 
-5. Start the development server:
+6. Start the app:
 
 ```bash
 bun dev
@@ -167,199 +49,115 @@ bun dev
 
 Open `http://localhost:3000`.
 
-## Environment Variables
+## Supported Run Modes
 
-Defined in `src/env.ts`:
+### Local development
 
-| Variable                          | Required    | Description                                                                                                                              |
-| --------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                    | Yes         | PostgreSQL connection string. This is the only variable required for `bun run db:migrate`                                                |
-| `BETTER_AUTH_URL`                 | Yes         | Public base app URL used by the app at runtime (local: `http://localhost:3000`)                                                          |
-| `BETTER_AUTH_SECRET`              | Yes         | Secret used by Better Auth (min 32 chars)                                                                                                |
-| `RATE_LIMIT_BACKEND`              | No          | Rate-limit backend (`redis` default, or `upstash`)                                                                                       |
-| `UPSTASH_REDIS_REST_URL`          | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                                                               |
-| `UPSTASH_REDIS_REST_TOKEN`        | Conditional | Required when `RATE_LIMIT_BACKEND=upstash`                                                                                               |
-| `REDIS_URL`                       | Conditional | Required when `RATE_LIMIT_BACKEND=redis`                                                                                                 |
-| `OPENROUTER_API_KEY`              | No          | OpenRouter API key for instance-level AI features. If missing, AI features are hidden                                                     |
-| `OPENROUTER_MODEL`                | No          | OpenRouter model ID for instance-level AI features. If missing, AI features are hidden                                                     |
-| `BLOB_READ_WRITE_TOKEN`           | No          | Vercel Blob storage token for file uploads. Leave unset to disable attachments                                                           |
-| `RESEND_API_KEY`                  | No          | Resend API key for email notifications. When unset, email notification preferences are hidden                                            |
-| `RESEND_FROM_EMAIL`               | No          | Sender email address for notifications (requires verified domain in Resend)                                                              |
-| `CRON_SECRET`                     | No          | Secret for securing the `/api/notifications/assessments` cron endpoint (min 32 chars). Required to enable scheduled assessment reminders |
+- App runtime: `bun dev`
+- Infrastructure: `docker compose -f compose.dev.yml up -d`
+- Best for day-to-day feature work
 
-## Scripts
+### Self-host / prod-like local stack
 
-| Command                       | Description                             |
-| ----------------------------- | --------------------------------------- |
-| `bun dev`                     | Start development server                |
-| `bun run build`               | Production build                        |
-| `bun run start`               | Start production server                 |
-| `bun run typecheck`           | Run TypeScript checks                   |
-| `bun run lint`                | Run Biome checks                        |
-| `bun run format`              | Format files with Biome                 |
-| `bun run test`                | Run Vitest suite                        |
-| `bun run test:watch`          | Run Vitest in watch mode                |
-| `bun run test:coverage`       | Run Vitest with coverage                |
-| `bun run test:e2e:infra:up`   | Start E2E infrastructure                |
-| `bun run test:e2e:infra:down` | Stop E2E infrastructure and remove data |
-| `bun run test:e2e:migrate`    | Run migrations against test database    |
-| `bun run test:e2e`            | Run E2E tests                           |
-| `bun run test:e2e:ui`         | Run E2E tests in UI mode                |
-| `bun run test:e2e:headed`     | Run E2E tests in headed mode            |
-| `bun run db:generate`         | Generate Drizzle migrations             |
-| `bun run db:migrate`          | Apply Drizzle migrations                |
-| `bun run db:push`             | Push schema directly to DB              |
+- Full stack: `docker compose up --build -d`
+- Runs PostgreSQL, Redis, a one-shot migration container, and the built app
+- Best for validating the containerized deployment path
 
-## Project Structure
+### E2E test infrastructure
 
-```text
-src/
-  api/               API route handlers
-  app/               Next.js App Router pages and layouts
-  app/(app)/         Authenticated route group
-  app/actions/       Server Actions
-  app/login/         Login page
-  app/signup/        Signup page
-  components/        Feature-first UI components
-  components/ui/     shadcn/ui primitives
-  components/shared/ Shared cross-feature UI
-  components/navbar/ Global navigation and preferences
-  features/          Feature-scoped queries, mappers, and business logic
-  db/                Drizzle client and schema
-  lib/               Cross-feature infrastructure and shared utilities
-  env.ts             Environment validation
-```
+- Test infra: `bun run test:e2e:infra:up`
+- Test app/test suite: `bun run test:e2e`
+- Uses `.env.test.example` as the template for `.env.test`
 
-## Database Workflow
+## Environment
 
-When changing the schema:
+`src/env.ts` is the runtime source of truth for app env validation.
 
-1. Edit `src/db/schema.ts`
-2. Do not manually edit files in `drizzle/*.sql` or `drizzle/meta/*`
-3. Run `bun run db:generate`
-4. Run `bun run db:migrate`
+Required app runtime variables:
 
-## Quality Checks
+- `DATABASE_URL`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`
+- `RATE_LIMIT_BACKEND=redis` with `REDIS_URL`, or `RATE_LIMIT_BACKEND=upstash` with both Upstash variables
 
-Run before pushing changes:
+Optional feature variables:
 
-```bash
-bun run typecheck
-bun run lint
-bun run test
-bun run build
-```
-
-## End-to-End Tests
-
-Playwright e2e coverage lives under `tests/e2e` and currently covers approved, pending, and blocked login states plus basic subject CRUD.
-
-E2E tests use an isolated database (`notorium_test`) that is completely separate from your development database. Test credentials are generated automatically at runtime.
-
-### Setup
-
-1. Install Playwright browsers:
-
-```bash
-bunx playwright install
-```
-
-2. Create test environment file:
-
-```bash
-cp .env.test.example .env.test
-```
-
-3. Start test infrastructure:
-
-```bash
-bun run test:e2e:infra:up
-```
-
-This starts PostgreSQL (default port `5433`) and Redis (default port `6380`) in isolated Docker containers and runs database migrations automatically.
-
-### Running Tests
-
-Run the E2E test suite:
-
-```bash
-bun run test:e2e
-```
-
-The suite starts an isolated production build on `127.0.0.1:3001`, so it can run while your normal `bun dev` server is active on `3000`.
-
-**UI mode:**
-
-```bash
-bun run test:e2e:ui
-```
-
-**Headed mode:**
-
-```bash
-bun run test:e2e:headed
-```
-
-### Manual Infrastructure Control
-
-Start/stop test infrastructure separately:
-
-```bash
-bun run test:e2e:infra:up      # Start PostgreSQL + Redis
-bun run test:e2e:infra:down    # Stop and remove containers + data
-```
-
-Re-run migrations manually (e.g. after schema changes):
-
-```bash
-bun run test:e2e:migrate
-```
-
-The E2E database is completely isolated from your development data, so tests can safely reset the entire database without affecting your work.
-
-## AI Integration
-
-AI is optional and managed at the instance level.
-
-- Configure both `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` to enable AI flashcard generation/validation features.
-- If either env var is missing, AI controls are hidden from the UI.
-- AI usage is limited per approved user per day to prevent runaway usage.
-
-## Email Notifications
-
-Notorium supports optional daily email reminders for upcoming assessments. Users opt in from the Account settings page and choose a lead time (1, 3, or 7 days before the due date).
-
-### Requirements
-
-- `RESEND_API_KEY` — Resend API key for sending emails
-- `RESEND_FROM_EMAIL` — Verified sender email address
-- `CRON_SECRET` — Secret for securing the cron endpoint (min 32 chars)
-
-When `RESEND_API_KEY` is not configured, email notification preferences are hidden from the Account page.
-
-### Scheduler
-
-The notification system requires a daily trigger at 9:00 AM UTC that calls `GET /api/notifications/assessments` with `Authorization: Bearer <CRON_SECRET>`.
-
-This repository includes `.github/workflows/assessment-reminders.yml`, which triggers the endpoint daily and also supports manual runs through `workflow_dispatch`.
-
-Configure these GitHub repository secrets before enabling it:
-
-- `NOTORIUM_APP_URL`
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL`
+- `BLOB_READ_WRITE_TOKEN`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
 - `CRON_SECRET`
 
-The workflow performs this request:
+Compose helper variables such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`, `REDIS_PORT`, and `APP_PORT` are used by the compose files, not by `src/env.ts`.
 
-```bash
-curl -X GET \
-  -H "Authorization: Bearer <CRON_SECRET>" \
-  https://your-domain.com/api/notifications/assessments
-```
+Focused guides:
+
+- [Environment Guide](./docs/setup/environment.md)
+- [Docker Guide](./docs/setup/docker.md)
+- [Docs Index](./docs/README.md)
+
+## First Admin and User Approval
+
+- The first account created on a new instance becomes an approved admin automatically.
+- Later accounts start as `pending` and require admin approval.
+- Operational details are in [User Approval Guide](./docs/operations/user-approval.md).
+
+## Scheduled Assessment Reminders
+
+Assessment reminders are optional.
+
+- App env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `CRON_SECRET`
+- External scheduler secret: `NOTORIUM_APP_URL` in GitHub Actions, set to your deployed base URL
+- Trigger endpoint: `GET /api/notifications/assessments` with `Authorization: Bearer <CRON_SECRET>`
+
+The repository includes `.github/workflows/assessment-reminders.yml` for a daily GitHub Actions trigger.
+
+## Docs Map
+
+- Start here in `README.md` for local setup, runtime commands, and entry-level environment guidance.
+- Use [docs/setup/environment.md](./docs/setup/environment.md) for env variable roles and optional feature configuration.
+- Use [docs/setup/docker.md](./docs/setup/docker.md) for Compose and container workflows.
+- Use [docs/operations/user-approval.md](./docs/operations/user-approval.md) for admin approval operations.
+- Use [docs/README.md](./docs/README.md) for the full docs index.
+- Use `SPEC.md` for product behavior and `AGENTS.md` for engineering rules.
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `bun dev` | Start the Next.js development server |
+| `bun run build` | Build the production app |
+| `bun run start` | Start the production server |
+| `bun run typecheck` | Run TypeScript checks |
+| `bun run lint` | Run Biome checks |
+| `bun run format` | Format files with Biome |
+| `bun run test` | Run the Vitest suite |
+| `bun run test:watch` | Run Vitest in watch mode |
+| `bun run test:coverage` | Run Vitest with coverage |
+| `bun run db:generate` | Generate Drizzle migrations |
+| `bun run db:migrate` | Apply Drizzle migrations |
+| `bun run db:push` | Push schema directly to the database |
+| `bun run test:e2e:infra:up` | Start isolated E2E PostgreSQL and Redis containers |
+| `bun run test:e2e:infra:down` | Stop isolated E2E containers and remove test data |
+| `bun run test:e2e:migrate` | Run migrations against the E2E database |
+| `bun run test:e2e` | Run Playwright E2E tests |
+| `bun run test:e2e:ui` | Run Playwright in UI mode |
+| `bun run test:e2e:headed` | Run Playwright in headed mode |
+
+## Project Docs
+
+- `README.md`: setup, runtime, local development, commands, environment
+- `SPEC.md`: product behavior and acceptance criteria
+- `AGENTS.md`: coding rules, architecture guidance, testing expectations
+- `CONTRIBUTING.md`: contributor workflow
+- `SECURITY.md`: vulnerability reporting and security policy
+- `docs/`: focused setup and operational guides
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.

@@ -10,6 +10,8 @@
 
 When behavior changes → update `SPEC.md`. When setup/commands change → update `README.md`. When engineering rules change → update `AGENTS.md`. Never duplicate detailed feature behavior across files.
 
+Operational and setup sub-guides live under `docs/`. Keep `README.md` as the entrypoint and move narrow operational detail into the relevant guide instead of expanding root docs.
+
 ## Project Structure
 
 ```text
