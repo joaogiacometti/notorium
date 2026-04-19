@@ -5,6 +5,10 @@ import { getSubjectsForUser } from "@/features/subjects/queries";
 
 interface PlanningAssessmentsPanelProps {
   initialSubjectId?: string;
+  initialSearch?: string;
+  initialStatus?: string;
+  initialType?: string;
+  initialSort?: string;
   userId: string;
 }
 
@@ -12,6 +16,10 @@ const planningAssessmentsPageSize = 25;
 
 export async function PlanningAssessmentsPanel({
   initialSubjectId,
+  initialSearch,
+  initialStatus,
+  initialType,
+  initialSort,
   userId,
 }: Readonly<PlanningAssessmentsPanelProps>) {
   const subjects = await getSubjectsForUser(userId);
@@ -36,6 +44,10 @@ export async function PlanningAssessmentsPanel({
   return (
     <PlanningAssessmentsTable
       initialSubjectId={resolvedInitialSubjectId}
+      initialSearch={initialSearch}
+      initialStatus={initialStatus}
+      initialType={initialType}
+      initialSort={initialSort}
       initialPageData={initialPageData}
       subjects={subjects}
       subjectNamesById={subjectNamesById}

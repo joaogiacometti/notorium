@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, Lock, Plus, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { getPlanningAssessmentsPage } from "@/app/actions/assessments";
 import { LazyCreateAssessmentDialog as CreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
@@ -29,6 +29,9 @@ import type {
 import {
   assessmentTypeValues,
   getAssessmentTypeLabel,
+  planningAssessmentSortValues,
+  planningAssessmentStatusFilterValues,
+  planningAssessmentTypeFilterValues,
 } from "@/features/assessments/constants";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -39,6 +42,10 @@ import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface PlanningAssessmentsTableProps {
   initialSubjectId?: string;
+  initialSearch?: string;
+  initialStatus?: string;
+  initialType?: string;
+  initialSort?: string;
   initialPageData: PlanningAssessmentsPage;
   subjects: SubjectEntity[];
   subjectNamesById: Record<string, string>;
@@ -47,8 +54,41 @@ interface PlanningAssessmentsTableProps {
 const planningAssessmentsPageSize = 25;
 const planningAssessmentsSearchDebounceMs = 200;
 
+function buildAssessmentsParams(
+  currentSubject: string,
+  currentSearch: string,
+  currentStatus: StatusFilter,
+  currentType: TypeFilter,
+  currentSort: SortBy,
+) {
+  const query = new URLSearchParams();
+  query.set("view", "assessments");
+
+  if (currentSubject !== "all") {
+    query.set("subject", currentSubject);
+  }
+  if (currentSearch) {
+    query.set("search", currentSearch);
+  }
+  if (currentStatus !== "all") {
+    query.set("status", currentStatus);
+  }
+  if (currentType !== "all") {
+    query.set("type", currentType);
+  }
+  if (currentSort !== "smart") {
+    query.set("sort", currentSort);
+  }
+
+  return query.toString();
+}
+
 export function PlanningAssessmentsTable({
   initialSubjectId,
+  initialSearch,
+  initialStatus,
+  initialType,
+  initialSort,
   initialPageData,
   subjects,
   subjectNamesById,
@@ -58,9 +98,34 @@ export function PlanningAssessmentsTable({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [sortBy, setSortBy] = useState<SortBy>("smart");
+
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    (planningAssessmentStatusFilterValues as readonly string[]).includes(
+      initialStatus ?? "",
+    )
+      ? (initialStatus as StatusFilter)
+      : "all",
+  );
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(
+    (planningAssessmentTypeFilterValues as readonly string[]).includes(
+      initialType ?? "",
+    )
+      ? (initialType as TypeFilter)
+      : "all",
+  );
+  const [sortBy, setSortBy] = useState<SortBy>(
+    (planningAssessmentSortValues as readonly string[]).includes(
+      initialSort ?? "",
+    )
+      ? (initialSort as SortBy)
+      : "smart",
+  );
+
+  const pathnameRef = useRef(pathname);
+  const routerRef = useRef(router);
+  pathnameRef.current = pathname;
+  routerRef.current = router;
+
   const {
     filter: subjectFilter,
     pageIndex,
@@ -71,20 +136,24 @@ export function PlanningAssessmentsTable({
     setSearchQuery,
   } = useManagerPageState({
     initialFilter: initialSubjectId ?? "all",
+    initialSearchQuery: initialSearch ?? "",
     searchDebounceMs: planningAssessmentsSearchDebounceMs,
-    onFilterChange: (nextSubjectFilter) => {
-      const query = new URLSearchParams();
-      query.set("view", "assessments");
-
-      if (nextSubjectFilter !== "all") {
-        query.set("subject", nextSubjectFilter);
-      }
-
-      startTransition(() => {
-        router.replace(`${pathname}?${query.toString()}`);
-      });
-    },
+    onFilterChange: () => {},
   });
+
+  useEffect(() => {
+    startTransition(() => {
+      routerRef.current.replace(
+        `${pathnameRef.current}?${buildAssessmentsParams(
+          subjectFilter,
+          resolvedSearchQuery,
+          statusFilter,
+          typeFilter,
+          sortBy,
+        )}`,
+      );
+    });
+  }, [resolvedSearchQuery, subjectFilter, statusFilter, typeFilter, sortBy]);
 
   const assessmentsQuery = useQuery({
     queryKey: [

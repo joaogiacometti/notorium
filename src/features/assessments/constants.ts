@@ -9,6 +9,24 @@ export const assessmentTypeValues = [
 
 export const assessmentStatusValues = ["pending", "completed"] as const;
 
+export const planningAssessmentStatusFilterValues = [
+  "all",
+  "pending",
+  "completed",
+  "overdue",
+] as const;
+export const planningAssessmentTypeFilterValues = [
+  "all",
+  ...assessmentTypeValues,
+] as const;
+export const planningAssessmentSortValues = [
+  "smart",
+  "dueDateAsc",
+  "dueDateDesc",
+  "updatedAtDesc",
+  "scoreDesc",
+] as const;
+
 export type AssessmentType = (typeof assessmentTypeValues)[number];
 export type AssessmentStatus = (typeof assessmentStatusValues)[number];
 

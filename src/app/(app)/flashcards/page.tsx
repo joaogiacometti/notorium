@@ -19,6 +19,7 @@ interface FlashcardsPageProps {
   searchParams: Promise<{
     view?: string;
     deckId?: string;
+    search?: string;
   }>;
 }
 
@@ -27,7 +28,7 @@ export default async function FlashcardsPage({
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
   const aiEnabled = isAiEnabled();
-  const { view, deckId } = await searchParams;
+  const { view, deckId, search } = await searchParams;
   const currentView = resolveFlashcardsView(view);
   const [decks, deckTree] = await Promise.all([
     getAllDecksWithPathsForUser(session.user.id),
@@ -86,6 +87,7 @@ export default async function FlashcardsPage({
       <FlashcardsPageClient
         currentView={currentView}
         scopedDeckId={scopedDeckId}
+        initialSearch={currentView === "manage" ? search : undefined}
         deckTree={deckTree}
         decks={decks}
         initialManagePageData={initialManagePageDataResult}

@@ -26,12 +26,14 @@ import { getStatusToneClasses } from "@/lib/ui/status-tones";
 interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
   initialDeckId?: string;
+  initialSearch?: string;
   aiEnabled: boolean;
 }
 
 export function FlashcardsManager({
   initialPageData,
   initialDeckId,
+  initialSearch,
   aiEnabled,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
@@ -83,6 +85,7 @@ export function FlashcardsManager({
   } = useFlashcardsManagerController({
     initialPageData,
     initialDeckId,
+    initialSearch,
   });
   const isManageScopeLoading =
     managePageQuery.isFetching && managePageQuery.isPlaceholderData;

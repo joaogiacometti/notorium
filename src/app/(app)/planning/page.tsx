@@ -7,14 +7,21 @@ import { resolvePlanningView } from "@/features/planning/view";
 import { requireSession } from "@/lib/auth/auth";
 
 interface PlanningPageProps {
-  searchParams: Promise<{ subject?: string; view?: string }>;
+  searchParams: Promise<{
+    subject?: string;
+    view?: string;
+    search?: string;
+    status?: string;
+    type?: string;
+    sort?: string;
+  }>;
 }
 
 export default async function PlanningPage({
   searchParams,
 }: Readonly<PlanningPageProps>) {
   const session = await requireSession();
-  const { subject, view } = await searchParams;
+  const { subject, view, search, status, type, sort } = await searchParams;
   const currentView = resolvePlanningView(view);
 
   return (
@@ -35,6 +42,10 @@ export default async function PlanningPage({
         <PlanningAssessmentsPanel
           userId={session.user.id}
           initialSubjectId={subject}
+          initialSearch={search}
+          initialStatus={status}
+          initialType={type}
+          initialSort={sort}
         />
       ) : (
         <PlanningCalendarPanel userId={session.user.id} />

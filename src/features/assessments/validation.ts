@@ -2,6 +2,9 @@ import { z } from "zod";
 import {
   assessmentStatusValues,
   assessmentTypeValues,
+  planningAssessmentSortValues,
+  planningAssessmentStatusFilterValues,
+  planningAssessmentTypeFilterValues,
 } from "@/features/assessments/constants";
 import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
@@ -92,23 +95,6 @@ export const deleteAssessmentSchema = z.object({
 
 export type DeleteAssessmentForm = z.infer<typeof deleteAssessmentSchema>;
 
-const planningAssessmentStatusFilterValues = [
-  "all",
-  "pending",
-  "completed",
-  "overdue",
-] as const;
-const planningAssessmentTypeFilterValues = [
-  "all",
-  ...assessmentTypeValues,
-] as const;
-const planningAssessmentSortValues = [
-  "smart",
-  "dueDateAsc",
-  "dueDateDesc",
-  "updatedAtDesc",
-  "scoreDesc",
-] as const;
 const planningAssessmentDueDateFilterValues = [
   "all",
   "past",

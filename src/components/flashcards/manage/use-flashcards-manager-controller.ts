@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   getFlashcardForManage,
   getFlashcardsManagePage,
@@ -22,6 +22,7 @@ const flashcardManagerSearchDebounceMs = 200;
 interface UseFlashcardsManagerControllerOptions {
   initialPageData: FlashcardManagePage;
   initialDeckId?: string;
+  initialSearch?: string;
 }
 
 export type FlashcardTarget = {
@@ -32,6 +33,7 @@ export type FlashcardTarget = {
 export function useFlashcardsManagerController({
   initialPageData,
   initialDeckId,
+  initialSearch,
 }: Readonly<UseFlashcardsManagerControllerOptions>) {
   const pathname = usePathname();
   const router = useRouter();
@@ -63,6 +65,12 @@ export function useFlashcardsManagerController({
   const [selectedDeckId, setSelectedDeckId] = useState<string | undefined>(
     initialDeckId,
   );
+  const pathnameRef = useRef(pathname);
+  const routerRef = useRef(router);
+  pathnameRef.current = pathname;
+  routerRef.current = router;
+  const selectedDeckIdRef = useRef(selectedDeckId);
+  selectedDeckIdRef.current = selectedDeckId;
   const {
     pageIndex,
     resolvedSearchQuery,
@@ -71,11 +79,29 @@ export function useFlashcardsManagerController({
     setSearchQuery,
   } = useManagerPageState({
     initialFilter: undefined,
+    initialSearchQuery: initialSearch ?? "",
     searchDebounceMs: flashcardManagerSearchDebounceMs,
     onSearchChange: () => {
       setSelectedFlashcardIds([]);
     },
   });
+
+  useEffect(() => {
+    const query = new URLSearchParams();
+    query.set("view", "manage");
+
+    const currentDeckId = selectedDeckIdRef.current;
+    if (currentDeckId) {
+      query.set("deckId", currentDeckId);
+    }
+    if (resolvedSearchQuery) {
+      query.set("search", resolvedSearchQuery);
+    }
+
+    startTransition(() => {
+      routerRef.current.replace(`${pathnameRef.current}?${query.toString()}`);
+    });
+  }, [resolvedSearchQuery]);
 
   function handleDeckChange(nextDeckId: string | undefined) {
     setSelectedFlashcardIds([]);
@@ -86,6 +112,9 @@ export function useFlashcardsManagerController({
 
     if (nextDeckId) {
       query.set("deckId", nextDeckId);
+    }
+    if (resolvedSearchQuery) {
+      query.set("search", resolvedSearchQuery);
     }
 
     startTransition(() => {

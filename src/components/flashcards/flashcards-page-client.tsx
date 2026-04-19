@@ -21,6 +21,7 @@ const STORAGE_KEY = "flashcards-sidebar-visible";
 interface FlashcardsPageClientProps {
   currentView: FlashcardsView;
   scopedDeckId?: string;
+  initialSearch?: string;
   deckTree: DeckTreeNode[];
   decks: DeckEntity[];
   initialManagePageData: FlashcardManagePage;
@@ -41,6 +42,7 @@ function writeSidebarVisible(visible: boolean): void {
 export function FlashcardsPageClient({
   currentView,
   scopedDeckId,
+  initialSearch,
   deckTree,
   decks,
   initialManagePageData,
@@ -112,6 +114,7 @@ export function FlashcardsPageClient({
           key={scopeKey}
           initialPageData={initialManagePageData}
           initialDeckId={scopedDeckId}
+          initialSearch={initialSearch}
           aiEnabled={aiEnabled}
         />
       )}
