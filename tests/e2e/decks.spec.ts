@@ -20,7 +20,7 @@ function getUniqueFlashcardBack(testTitle: string) {
 }
 
 function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 async function openFlashcardsPage(
@@ -46,7 +46,7 @@ function getDeckSidebar(page: Page) {
 
 function getDeckButton(sidebar: Locator, deckName: string, count: number) {
   return sidebar.getByRole("button", {
-    name: new RegExp(`^${escapeRegex(deckName)}\\s*${count}$`),
+    name: new RegExp(String.raw`^${escapeRegex(deckName)}\s*${count}$`),
   });
 }
 

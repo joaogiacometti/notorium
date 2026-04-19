@@ -72,6 +72,8 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
   const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
   const [editorResetVersion, setEditorResetVersion] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestDuplicateCheckVersionRef = useRef(duplicateCheckVersion);
   const previousOpenRef = useRef(false);
   const previousValuesRef = useRef<TValues | null>(null);
@@ -114,6 +116,14 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     previousOpenRef.current = open;
     previousValuesRef.current = values;
   }, [form, open, values]);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) {
+        clearTimeout(savedTimerRef.current);
+      }
+    };
+  }, []);
 
   useBeforeUnload(
     open && (form.formState.isDirty || Boolean(proposedBack)) && !isSubmitting,
@@ -180,6 +190,10 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   ]);
 
   async function handleDiscardChanges() {
+    if (savedTimerRef.current) {
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = null;
+    }
     await cleanupDiscardedEditorAttachments(
       [currentValues.front, currentValues.back],
       [savedValuesRef.current.front, savedValuesRef.current.back],
@@ -188,6 +202,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     setPreviousBack(null);
     setProposedBack(null);
     setDiscardDialogOpen(false);
+    setIsSaved(false);
     onOpenChange(false);
   }
 
@@ -201,6 +216,12 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       onOpenChange(true);
       return;
     }
+
+    if (savedTimerRef.current) {
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = null;
+    }
+    setIsSaved(false);
 
     const hasFrontContent = hasRichTextContent(currentValues.front);
     const hasBackContent = hasRichTextContent(currentValues.back);
@@ -276,6 +297,14 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
       if (closeOnSuccess) {
         onOpenChange(false);
+      } else {
+        setIsSaved(true);
+        if (savedTimerRef.current) {
+          clearTimeout(savedTimerRef.current);
+        }
+        savedTimerRef.current = setTimeout(() => {
+          setIsSaved(false);
+        }, 1200);
       }
     } finally {
       setIsSubmitting(false);
@@ -363,6 +392,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     setDiscardDialogOpen,
     isGeneratingBack,
     isSubmitting,
+    isSaved,
     previousBack,
     proposedBack,
     editorResetVersion,

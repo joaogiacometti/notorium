@@ -34,6 +34,7 @@ import {
   hasRichTextContent,
 } from "@/features/flashcards/validation";
 import type { DeckEntity } from "@/lib/server/api-contracts";
+import { cn } from "@/lib/utils";
 
 type FlashcardFormValues = CreateFlashcardForm | EditFlashcardForm;
 
@@ -76,6 +77,7 @@ interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   decks?: DeckEntity[];
   onSubmit: (values: TValues) => Promise<void>;
   isSubmitting: boolean;
+  isSaved?: boolean;
   discard: FlashcardDialogDiscardConfig;
   aiBack: FlashcardDialogAiBackConfig;
   aiEnabled: boolean;
@@ -110,6 +112,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   decks,
   onSubmit,
   isSubmitting,
+  isSaved,
   discard,
   aiBack,
   aiEnabled,
@@ -363,12 +366,18 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
             duplicateFront.isDuplicate ||
             Boolean(aiBack.proposedValue && aiBack.previousValue)
           }
-          className="w-full"
+          className={cn(
+            "w-full",
+            isSaved &&
+              "bg-(--intent-success-fill) text-primary-foreground hover:bg-(--intent-success-fill)/90",
+          )}
         >
           <AsyncButtonContent
             pending={isSubmitting}
             idleLabel={mode === "create" ? "Create Flashcard" : "Save Changes"}
             pendingLabel={pendingSubmitLabel}
+            saved={isSaved}
+            savedLabel="Saved"
           />
         </Button>
       </div>

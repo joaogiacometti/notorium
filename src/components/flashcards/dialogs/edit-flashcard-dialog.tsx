@@ -331,6 +331,7 @@ export function EditFlashcardDialog({
           decks={decks}
           onSubmit={dialog.handleSubmit}
           isSubmitting={dialog.isSubmitting}
+          isSaved={dialog.isSaved}
           discard={{
             open: dialog.discardDialogOpen,
             onOpenChange: dialog.setDiscardDialogOpen,

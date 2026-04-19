@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -33,6 +33,7 @@ import {
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { t } from "@/lib/server/server-action-errors";
+import { cn } from "@/lib/utils";
 
 type NoteFormValues = CreateNoteForm | EditNoteForm;
 
@@ -74,6 +75,8 @@ export function NoteDialogForm({
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const form = useNoteForm(mode, values);
 
   useEffect(() => {
@@ -82,7 +85,20 @@ export function NoteDialogForm({
 
   useBeforeUnload(open && form.formState.isDirty && !isSubmitting);
 
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) {
+        clearTimeout(savedTimerRef.current);
+      }
+    };
+  }, []);
+
   async function handleDiscardChanges() {
+    if (savedTimerRef.current) {
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = null;
+    }
+    setIsSaved(false);
     await cleanupDiscardedEditorAttachments(
       [form.getValues("content") ?? ""],
       [values.content ?? ""],
@@ -98,6 +114,12 @@ export function NoteDialogForm({
       onOpenChange(true);
       return;
     }
+
+    if (savedTimerRef.current) {
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = null;
+    }
+    setIsSaved(false);
 
     if (form.formState.isDirty && !isSubmitting) {
       setDiscardDialogOpen(true);
@@ -124,17 +146,25 @@ export function NoteDialogForm({
       const result = await onSubmitAction(data);
       if (result.success) {
         await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-        form.reset(
+        const resetValues =
           mode === "create"
             ? "subjectId" in values
               ? { subjectId: values.subjectId, title: "", content: "" }
-              : values
-            : data,
-        );
+              : data
+            : data;
+        form.reset(resetValues);
         await onSuccess?.();
         setDiscardDialogOpen(false);
         if (mode === "create") {
           onOpenChange(false);
+        } else {
+          setIsSaved(true);
+          if (savedTimerRef.current) {
+            clearTimeout(savedTimerRef.current);
+          }
+          savedTimerRef.current = setTimeout(() => {
+            setIsSaved(false);
+          }, 1200);
         }
         return;
       }
@@ -214,7 +244,11 @@ export function NoteDialogForm({
                 type="submit"
                 form={formId}
                 disabled={isSubmitting || isImageUploading}
-                className="w-full"
+                className={cn(
+                  "w-full",
+                  isSaved &&
+                    "bg-(--intent-success-fill) text-primary-foreground hover:bg-(--intent-success-fill)/90",
+                )}
               >
                 <AsyncButtonContent
                   pending={isSubmitting || isImageUploading}
@@ -226,6 +260,8 @@ export function NoteDialogForm({
                         : "Saving..."
                       : "Uploading image..."
                   }
+                  saved={isSaved}
+                  savedLabel="Saved"
                 />
               </Button>
             </FieldGroup>
