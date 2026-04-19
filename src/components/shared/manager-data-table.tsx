@@ -39,14 +39,14 @@ function SelectColumnHeader<TRow>({
   else if (table.getIsSomePageRowsSelected()) checked = "indeterminate";
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center">
       <Checkbox
         checked={checked}
         onCheckedChange={(checked) =>
           table.toggleAllPageRowsSelected(Boolean(checked))
         }
         aria-label={selectionAriaLabel}
-        className="border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+        className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
       />
     </div>
   );
@@ -61,12 +61,12 @@ function SelectColumnCell<TRow>({
   selectionAriaLabel,
 }: Readonly<SelectColumnCellProps & { row: Row<TRow> }>) {
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center">
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(checked) => row.toggleSelected(Boolean(checked))}
         aria-label={selectionAriaLabel}
-        className="border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+        className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
       />
     </div>
   );
@@ -258,6 +258,14 @@ export function ManagerDataTable<TRow>({
     onRowClick(row);
   }
 
+  function handleSelectAllClick() {
+    table.toggleAllPageRowsSelected(!table.getIsAllPageRowsSelected());
+  }
+
+  function handleSelectRowClick(row: Row<TRow>) {
+    row.toggleSelected(!row.getIsSelected());
+  }
+
   return (
     <div
       className={cn(
@@ -297,6 +305,14 @@ export function ManagerDataTable<TRow>({
                             ? {
                                 width: header.getSize(),
                               }
+                            : undefined
+                        }
+                        data-no-row-click={
+                          header.column.id === "select" ? true : undefined
+                        }
+                        onClick={
+                          header.column.id === "select"
+                            ? handleSelectAllClick
                             : undefined
                         }
                       >
@@ -370,6 +386,14 @@ export function ManagerDataTable<TRow>({
                               ? {
                                   width: cell.column.getSize(),
                                 }
+                              : undefined
+                          }
+                          data-no-row-click={
+                            cell.column.id === "select" ? true : undefined
+                          }
+                          onClick={
+                            cell.column.id === "select"
+                              ? () => handleSelectRowClick(row)
                               : undefined
                           }
                         >

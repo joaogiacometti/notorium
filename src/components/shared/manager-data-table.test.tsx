@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -79,5 +79,83 @@ describe("ManagerDataTable", () => {
     expect(emptyCell?.className).toContain("h-full");
     expect(emptyContent?.className).toContain("min-h-36");
     expect(emptyContent?.className).toContain("h-full");
+  });
+
+  it("toggles selection from the select cell without triggering row navigation", async () => {
+    const onRowClick = vi.fn();
+    const onSelectedRowIdsChange = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <ManagerDataTable
+          data={[{ id: "row-1", label: "Alpha" }]}
+          columns={columns}
+          emptyLabel="No rows"
+          getRowId={(row) => row.id}
+          nextLabel="Next"
+          onPageIndexChange={() => {}}
+          onRowClick={onRowClick}
+          onSelectedRowIdsChange={onSelectedRowIdsChange}
+          pageIndex={0}
+          pageLabel={(current, total) => `Page ${current} of ${total}`}
+          prevLabel="Previous"
+          selectedRowIds={[]}
+          selectionAriaLabel="Select row"
+        />,
+      );
+    });
+
+    const selectCellButton = container.querySelector(
+      '[data-slot="table-body"] [data-no-row-click]',
+    );
+
+    expect(selectCellButton).toBeTruthy();
+
+    await act(async () => {
+      selectCellButton?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(onSelectedRowIdsChange).toHaveBeenCalledWith(["row-1"]);
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("keeps row navigation on regular cells when selection is enabled", async () => {
+    const onRowClick = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <ManagerDataTable
+          data={[{ id: "row-1", label: "Alpha" }]}
+          columns={columns}
+          emptyLabel="No rows"
+          getRowId={(row) => row.id}
+          nextLabel="Next"
+          onPageIndexChange={() => {}}
+          onRowClick={onRowClick}
+          onSelectedRowIdsChange={() => {}}
+          pageIndex={0}
+          pageLabel={(current, total) => `Page ${current} of ${total}`}
+          prevLabel="Previous"
+          selectedRowIds={[]}
+          selectionAriaLabel="Select row"
+        />,
+      );
+    });
+
+    const labelCell = container.querySelector(
+      '[data-slot="table-body"] [data-slot="table-row"] [data-slot="table-cell"]:nth-child(2)',
+    );
+
+    expect(labelCell).toBeTruthy();
+
+    await act(async () => {
+      labelCell?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(onRowClick).toHaveBeenCalledWith({ id: "row-1", label: "Alpha" });
   });
 });
