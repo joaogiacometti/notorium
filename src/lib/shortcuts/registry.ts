@@ -59,12 +59,6 @@ export const shortcutRegistry: Shortcut[] = [
     description: "Delete flashcard",
     category: ShortcutCategory.FlashcardReview,
   },
-  {
-    id: "sidebar-toggle",
-    keys: ["ctrl+b"],
-    description: "Toggle flashcard sidebar",
-    category: ShortcutCategory.Global,
-  },
 ];
 
 export function getShortcutsByCategory(category: ShortcutCategory): Shortcut[] {

@@ -7,23 +7,6 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-function createStorageMock() {
-  const store = new Map<string, string>();
-
-  return {
-    getItem: vi.fn((key: string) => store.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) => {
-      store.set(key, value);
-    }),
-    removeItem: vi.fn((key: string) => {
-      store.delete(key);
-    }),
-    clear: vi.fn(() => {
-      store.clear();
-    }),
-  };
-}
-
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     replace: vi.fn(),
@@ -178,10 +161,6 @@ describe("FlashcardsPageClient", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    Object.defineProperty(window, "localStorage", {
-      value: createStorageMock(),
-      configurable: true,
-    });
     vi.useFakeTimers();
   });
 
@@ -195,177 +174,10 @@ describe("FlashcardsPageClient", () => {
     vi.clearAllMocks();
   });
 
-  it("defaults to visible on first load", async () => {
+  it("renders sidebar always visible", async () => {
     await act(async () => {
       root.render(<FlashcardsPageClient {...defaultProps} />);
     });
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeTruthy();
-  });
-
-  it("restores persisted state from localStorage", async () => {
-    window.localStorage.setItem("flashcards-sidebar-visible", "false");
-
-    await act(async () => {
-      root.render(<FlashcardsPageClient {...defaultProps} />);
-    });
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeNull();
-  });
-
-  it("Ctrl+B toggles sidebar visible to hidden", async () => {
-    await act(async () => {
-      root.render(<FlashcardsPageClient {...defaultProps} />);
-    });
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeTruthy();
-
-    await act(async () => {
-      const event = new KeyboardEvent("keydown", {
-        key: "b",
-        ctrlKey: true,
-        bubbles: true,
-      });
-      document.dispatchEvent(event);
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeNull();
-  });
-
-  it("Ctrl+B toggles sidebar hidden to visible", async () => {
-    window.localStorage.setItem("flashcards-sidebar-visible", "false");
-
-    await act(async () => {
-      root.render(<FlashcardsPageClient {...defaultProps} />);
-    });
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeNull();
-
-    await act(async () => {
-      const event = new KeyboardEvent("keydown", {
-        key: "b",
-        ctrlKey: true,
-        bubbles: true,
-      });
-      document.dispatchEvent(event);
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeTruthy();
-  });
-
-  it("persists toggle to localStorage", async () => {
-    await act(async () => {
-      root.render(<FlashcardsPageClient {...defaultProps} />);
-    });
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(
-      window.localStorage.getItem("flashcards-sidebar-visible"),
-    ).toBeNull();
-
-    const event = new KeyboardEvent("keydown", {
-      key: "b",
-      ctrlKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(window.localStorage.getItem("flashcards-sidebar-visible")).toBe(
-      "false",
-    );
-  });
-
-  it("ignores shortcut when input is focused", async () => {
-    await act(async () => {
-      root.render(
-        <div>
-          <input type="text" data-testid="test-input" />
-          <FlashcardsPageClient {...defaultProps} />
-        </div>,
-      );
-    });
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    const input = container.querySelector(
-      '[data-testid="test-input"]',
-    ) as HTMLInputElement;
-    input?.focus();
-
-    const event = new KeyboardEvent("keydown", {
-      key: "b",
-      ctrlKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeTruthy();
-  });
-
-  it("ignores shortcut when modifier keys other than ctrl are pressed", async () => {
-    await act(async () => {
-      root.render(<FlashcardsPageClient {...defaultProps} />);
-    });
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(
-      container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeTruthy();
-
-    const event = new KeyboardEvent("keydown", {
-      key: "b",
-      shiftKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
 
     act(() => {
       vi.runAllTimers();
