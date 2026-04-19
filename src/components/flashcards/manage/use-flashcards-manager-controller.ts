@@ -231,13 +231,13 @@ export function useFlashcardsManagerController({
 
       setValidationIssues(result.issues);
       setValidationFlashcards(result.flashcards);
+      setValidateAgainDialogOpen(false);
     } finally {
       setIsValidatingAgain(false);
     }
   }
 
   async function handleConfirmValidateAgain() {
-    setValidateAgainDialogOpen(false);
     await handleValidateAgain();
   }
 
