@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { ShortcutsHelpDialog } from "./shortcuts-help-dialog";
 import { ShortcutsDialogOpenProvider } from "./shortcuts-suspension-context";
 
@@ -23,24 +24,6 @@ export function ShortcutsProvider({
         e.preventDefault();
         setShortcutsOpen(true);
       }
-    }
-
-    function isEditableTarget(target: EventTarget | null): boolean {
-      let element: Element | null = null;
-
-      if (target instanceof Element) {
-        element = target;
-      } else if (target instanceof Node) {
-        element = target.parentElement;
-      }
-
-      if (!element) {
-        return false;
-      }
-
-      return (
-        element.closest("input, textarea, select, [contenteditable]") !== null
-      );
     }
 
     document.addEventListener("keydown", handleKeyDown);

@@ -59,10 +59,32 @@ export const shortcutRegistry: Shortcut[] = [
     description: "Delete flashcard",
     category: ShortcutCategory.FlashcardReview,
   },
+  {
+    id: "sidebar-toggle",
+    keys: ["ctrl+b"],
+    description: "Toggle flashcard sidebar",
+    category: ShortcutCategory.Global,
+  },
 ];
 
 export function getShortcutsByCategory(category: ShortcutCategory): Shortcut[] {
   return shortcutRegistry.filter((shortcut) => shortcut.category === category);
+}
+
+export function isEditableTarget(target: EventTarget | null): boolean {
+  let element: Element | null = null;
+
+  if (target instanceof Element) {
+    element = target;
+  } else if (target instanceof Node) {
+    element = target.parentElement;
+  }
+
+  if (!element) {
+    return false;
+  }
+
+  return element.closest("input, textarea, select, [contenteditable]") !== null;
 }
 
 export function formatShortcutKeys(keys: string[]): string[] {
