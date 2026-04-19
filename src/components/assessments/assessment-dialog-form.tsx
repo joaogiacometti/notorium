@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -346,20 +347,22 @@ export function AssessmentDialogForm<
                 </Field>
               )}
             />
-            <Button
-              type="submit"
-              form={formId}
-              disabled={isSubmitting}
-              className="w-full"
-            >
-              <AsyncButtonContent
-                pending={isSubmitting}
-                idleLabel={submitLabel}
-                pendingLabel={pendingSubmitLabel}
-              />
-            </Button>
           </FieldGroup>
         </form>
+        <DialogFooter>
+          <Button
+            form={formId}
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            <AsyncButtonContent
+              pending={isSubmitting}
+              idleLabel={submitLabel}
+              pendingLabel={pendingSubmitLabel}
+            />
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

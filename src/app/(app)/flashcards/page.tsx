@@ -47,10 +47,10 @@ export default async function FlashcardsPage({
     },
   );
 
-  const initialReviewState = getFlashcardReviewStateForUser(
-    session.user.id,
-    { deckId: scopedDeckId, limit: 50 },
-  );
+  const initialReviewState = getFlashcardReviewStateForUser(session.user.id, {
+    deckId: scopedDeckId,
+    limit: 50,
+  });
 
   const statistics = getFlashcardStatisticsForUser(
     session.user.id,
@@ -58,8 +58,15 @@ export default async function FlashcardsPage({
     { deckId: scopedDeckId },
   );
 
-  const [initialManagePageDataResult, initialReviewStateResult, statisticsResult] =
-    await Promise.all([initialManagePageData, initialReviewState, statistics]);
+  const [
+    initialManagePageDataResult,
+    initialReviewStateResult,
+    statisticsResult,
+  ] = await Promise.all([
+    initialManagePageData,
+    initialReviewState,
+    statistics,
+  ]);
 
   return (
     <FeaturePageShell

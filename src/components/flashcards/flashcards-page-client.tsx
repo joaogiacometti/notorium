@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { DeckTreeSidebar } from "@/components/decks/deck-tree-sidebar";
 import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
@@ -14,6 +13,7 @@ import type {
   FlashcardReviewState,
   FlashcardStatisticsState,
 } from "@/lib/server/api-contracts";
+import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "flashcards-sidebar-visible";

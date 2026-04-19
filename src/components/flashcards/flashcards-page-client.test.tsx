@@ -42,15 +42,16 @@ vi.mock("@/components/decks/edit-deck-dialog", () => ({
     deck,
     open,
     onSaved,
-    onOpenChange,
   }: {
     deck: { id: string; name: string };
     open: boolean;
     onSaved?: (deck: { id: string; name: string }) => void;
-    onOpenChange: (open: boolean) => void;
   }) =>
     open ? (
-      <button type="button" onClick={() => onSaved?.({ id: deck.id, name: "Renamed" })}>
+      <button
+        type="button"
+        onClick={() => onSaved?.({ id: deck.id, name: "Renamed" })}
+      >
         Confirm
       </button>
     ) : null,
@@ -78,7 +79,8 @@ vi.mock("@/components/decks/delete-deck-dialog", () => ({
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => children,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => children,
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) =>
+    children,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -119,33 +121,39 @@ vi.mock("@/components/decks/deck-tree-sidebar", () => ({
   ),
 }));
 
-const mockManagePageData: import("@/lib/server/api-contracts").FlashcardManagePage = {
-  items: [],
-  total: 0,
-  deckCardCount: null,
-};
+const mockManagePageData: import("@/lib/server/api-contracts").FlashcardManagePage =
+  {
+    items: [],
+    total: 0,
+    deckCardCount: null,
+  };
 
-const mockReviewState: import("@/lib/server/api-contracts").FlashcardReviewState = {
-  cards: [],
-  summary: { dueCount: 0, totalCount: 0 },
-  scheduler: { desiredRetention: 0.9, weights: [0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.9, 2.4, 4.9, 6.7] },
-};
+const mockReviewState: import("@/lib/server/api-contracts").FlashcardReviewState =
+  {
+    cards: [],
+    summary: { dueCount: 0, totalCount: 0 },
+    scheduler: {
+      desiredRetention: 0.9,
+      weights: [0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.9, 2.4, 4.9, 6.7],
+    },
+  };
 
-const mockStatistics: import("@/lib/server/api-contracts").FlashcardStatisticsState = {
-  summary: {
-    totalCards: 0,
-    dueCards: 0,
-    reviewedCards: 0,
-    neverReviewedCards: 0,
-    totalReviews: 0,
-    totalLapses: 0,
-    averageReviewsPerCard: 0,
-    averageLapsesPerReviewedCard: 0,
-  },
-  states: [],
-  ratings: [],
-  trend: [],
-};
+const mockStatistics: import("@/lib/server/api-contracts").FlashcardStatisticsState =
+  {
+    summary: {
+      totalCards: 0,
+      dueCards: 0,
+      reviewedCards: 0,
+      neverReviewedCards: 0,
+      totalReviews: 0,
+      totalLapses: 0,
+      averageReviewsPerCard: 0,
+      averageLapsesPerReviewedCard: 0,
+    },
+    states: [],
+    ratings: [],
+    trend: [],
+  };
 
 const mockDeckTree: import("@/lib/server/api-contracts").DeckTreeNode[] = [];
 const mockDecks: import("@/lib/server/api-contracts").DeckEntity[] = [];
@@ -284,7 +292,9 @@ describe("FlashcardsPageClient", () => {
       vi.runAllTimers();
     });
 
-    expect(window.localStorage.getItem("flashcards-sidebar-visible")).toBeNull();
+    expect(
+      window.localStorage.getItem("flashcards-sidebar-visible"),
+    ).toBeNull();
 
     const event = new KeyboardEvent("keydown", {
       key: "b",
@@ -297,7 +307,9 @@ describe("FlashcardsPageClient", () => {
       vi.runAllTimers();
     });
 
-    expect(window.localStorage.getItem("flashcards-sidebar-visible")).toBe("false");
+    expect(window.localStorage.getItem("flashcards-sidebar-visible")).toBe(
+      "false",
+    );
   });
 
   it("ignores shortcut when input is focused", async () => {
