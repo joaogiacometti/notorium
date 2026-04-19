@@ -19,6 +19,7 @@ interface FlashcardsManagerTableProps {
   pageSize: number;
   isLoading: boolean;
   onEditRequested: (flashcardId: string) => void;
+  onMoveRequested: (flashcard: FlashcardTarget) => void;
   onPageIndexChange: (pageIndex: number) => void;
   onDeleteRequested: (flashcard: FlashcardTarget) => void;
   onResetRequested: (flashcard: FlashcardTarget) => void;
@@ -45,6 +46,7 @@ function getColumnClassName(columnId: string) {
 
 function getColumns(
   onEditRequested: (flashcardId: string) => void,
+  onMoveRequested: (flashcard: FlashcardTarget) => void,
   onDeleteRequested: (flashcard: FlashcardTarget) => void,
   onResetRequested: (flashcard: FlashcardTarget) => void,
 ): ColumnDef<FlashcardManageItem>[] {
@@ -103,6 +105,12 @@ function getColumns(
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
             onEditRequested={() => onEditRequested(row.original.id)}
+            onMoveRequested={() =>
+              onMoveRequested({
+                id: row.original.id,
+                front: row.original.front,
+              })
+            }
             onResetRequested={() =>
               onResetRequested({
                 id: row.original.id,
@@ -131,6 +139,7 @@ export function FlashcardsManagerTable({
   pageSize,
   isLoading,
   onEditRequested,
+  onMoveRequested,
   onPageIndexChange,
   onDeleteRequested,
   onResetRequested,
@@ -138,8 +147,14 @@ export function FlashcardsManagerTable({
   onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
   const columns = useMemo(
-    () => getColumns(onEditRequested, onDeleteRequested, onResetRequested),
-    [onDeleteRequested, onEditRequested, onResetRequested],
+    () =>
+      getColumns(
+        onEditRequested,
+        onMoveRequested,
+        onDeleteRequested,
+        onResetRequested,
+      ),
+    [onDeleteRequested, onEditRequested, onMoveRequested, onResetRequested],
   );
 
   return (

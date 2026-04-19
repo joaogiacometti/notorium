@@ -40,6 +40,7 @@ export function BulkMoveFlashcardsDialog({
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
   const [isPending, startTransition] = useTransition();
   const [decks, setDecks] = useState<DeckEntity[]>([]);
+  const _idsKey = ids.join(",");
   const form = useForm<BulkMoveFlashcardsForm>({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
     defaultValues: {
@@ -55,7 +56,7 @@ export function BulkMoveFlashcardsDialog({
 
     form.reset({ ids, deckId: "" });
     void getDecks().then((fetchedDecks) => setDecks(fetchedDecks));
-  }, [form, ids, open]);
+  }, [form, open, ids]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {

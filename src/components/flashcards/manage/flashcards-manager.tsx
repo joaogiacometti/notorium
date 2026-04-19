@@ -45,6 +45,7 @@ export function FlashcardsManager({
     bulkResetOpen,
     createOpen,
     deleteTarget,
+    moveTarget,
     editingFlashcard,
     editingFlashcardId,
     flashcards,
@@ -61,6 +62,7 @@ export function FlashcardsManager({
     setBulkResetOpen,
     setCreateOpen,
     setDeleteTarget,
+    setMoveTarget,
     setEditingFlashcardId,
     setPageIndex,
     setResetTarget,
@@ -112,6 +114,7 @@ export function FlashcardsManager({
           pageSize={pageSize}
           isLoading={isManageScopeLoading}
           onEditRequested={setEditingFlashcardId}
+          onMoveRequested={setMoveTarget}
           onPageIndexChange={setPageIndex}
           onDeleteRequested={setDeleteTarget}
           onResetRequested={setResetTarget}
@@ -225,11 +228,28 @@ export function FlashcardsManager({
         ids={selectedFlashcardIds}
         open={bulkMoveOpen}
         onOpenChange={setBulkMoveOpen}
-        onMoved={() => {
+        onMoved={(movedIds) => {
+          setSelectedFlashcardIds((currentIds) =>
+            currentIds.filter((id) => !movedIds.includes(id)),
+          );
           refreshManagePage();
           setBulkMoveOpen(false);
         }}
       />
+      {moveTarget && (
+        <BulkMoveFlashcardsDialog
+          ids={[moveTarget.id]}
+          open
+          onOpenChange={() => setMoveTarget(null)}
+          onMoved={(movedIds) => {
+            setSelectedFlashcardIds((currentIds) =>
+              currentIds.filter((id) => !movedIds.includes(id)),
+            );
+            setMoveTarget(null);
+            refreshManagePage();
+          }}
+        />
+      )}
       <BulkResetFlashcardsDialog
         ids={selectedFlashcardIds}
         open={bulkResetOpen}

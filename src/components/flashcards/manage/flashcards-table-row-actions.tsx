@@ -1,6 +1,12 @@
 "use client";
 
-import { MoreVertical, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import {
+  ArrowRightLeft,
+  MoreVertical,
+  Pencil,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,12 +18,14 @@ import {
 
 interface FlashcardsTableRowActionsProps {
   onEditRequested: () => void;
+  onMoveRequested: () => void;
   onResetRequested: () => void;
   onDeleteRequested: () => void;
 }
 
 export function FlashcardsTableRowActions({
   onEditRequested,
+  onMoveRequested,
   onResetRequested,
   onDeleteRequested,
 }: Readonly<FlashcardsTableRowActionsProps>) {
@@ -37,6 +45,10 @@ export function FlashcardsTableRowActions({
         <DropdownMenuItem onClick={onEditRequested} className="cursor-pointer">
           <Pencil className="size-4" />
           Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onMoveRequested}>
+          <ArrowRightLeft className="size-4" />
+          Move
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onResetRequested} className="cursor-pointer">
           <RotateCcw className="size-4" />
