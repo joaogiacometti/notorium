@@ -100,4 +100,97 @@ describe("FlashcardsManagerToolbar", () => {
 
     expect(baseProps.onOpenCreateDialog).not.toHaveBeenCalled();
   });
+
+  it("shows hover and focus tooltips for selection toolbar actions", async () => {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar
+          {...baseProps}
+          selectedFlashcardIds={["flashcard-1"]}
+        />,
+      );
+    });
+
+    const moveButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Move"]',
+    );
+    const resetButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Reset"]',
+    );
+    const deleteButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Delete"]',
+    );
+    const clearSelectionButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Clear selection"]',
+    );
+
+    expect(moveButton).toBeTruthy();
+    expect(resetButton).toBeTruthy();
+    expect(deleteButton).toBeTruthy();
+    expect(clearSelectionButton).toBeTruthy();
+
+    await act(async () => {
+      moveButton?.focus();
+      vi.runAllTimers();
+    });
+
+    expect(document.body.textContent).toContain("Move");
+
+    await act(async () => {
+      resetButton?.focus();
+      vi.runAllTimers();
+    });
+
+    expect(document.body.textContent).toContain("Reset");
+
+    await act(async () => {
+      deleteButton?.focus();
+      vi.runAllTimers();
+    });
+
+    expect(document.body.textContent).toContain("Delete");
+
+    await act(async () => {
+      clearSelectionButton?.focus();
+      vi.runAllTimers();
+    });
+
+    expect(document.body.textContent).toContain("Clear selection");
+  });
+
+  it("shows hover and focus tooltips for validation toolbar actions", async () => {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar
+          {...baseProps}
+          validationMode
+          validationIssuesCount={2}
+        />,
+      );
+    });
+
+    const validateAgainButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Validate Again"]',
+    );
+    const exitValidationButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Exit Validation"]',
+    );
+
+    expect(validateAgainButton).toBeTruthy();
+    expect(exitValidationButton).toBeTruthy();
+
+    await act(async () => {
+      validateAgainButton?.focus();
+      vi.runAllTimers();
+    });
+
+    expect(document.body.textContent).toContain("Validate Again");
+
+    await act(async () => {
+      exitValidationButton?.focus();
+      vi.runAllTimers();
+    });
+
+    expect(document.body.textContent).toContain("Exit Validation");
+  });
 });

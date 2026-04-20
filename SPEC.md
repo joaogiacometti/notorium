@@ -62,6 +62,7 @@ Students who want a private, lightweight study management workspace.
 - The default flashcards page opens in the review view, with management and statistics available as alternate global views.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
 - Flashcard review remains available in the global flashcards page.
+- In the flashcards manage toolbar, every icon-only action must show a descriptive tooltip on hover and keyboard focus instead of relying on icon recognition alone.
 
 ### Decks
 

@@ -88,6 +88,41 @@ interface SelectionActionButtonsProps {
   onClearSelection: () => void;
 }
 
+interface ToolbarIconActionButtonProps {
+  ariaLabel: string;
+  className: string;
+  disabled?: boolean;
+  icon: JSX.Element;
+  onClick: () => void;
+}
+
+function ToolbarIconActionButton({
+  ariaLabel,
+  className,
+  disabled = false,
+  icon,
+  onClick,
+}: Readonly<ToolbarIconActionButtonProps>): JSX.Element {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClick}
+          disabled={disabled}
+          className={className}
+          aria-label={ariaLabel}
+        >
+          {icon}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{ariaLabel}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function getToolbarViewModel({
   validationMode,
   selectedFlashcardIds,
@@ -164,27 +199,19 @@ function ValidationActionButtons({
 }: Readonly<ValidationActionButtonsProps>): JSX.Element {
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
+      <ToolbarIconActionButton
+        ariaLabel="Validate Again"
         onClick={onOpenValidateAgainDialog}
         disabled={isValidatingAgain}
         className="rounded-md text-muted-foreground hover:text-foreground"
-        aria-label="Validate Again"
-      >
-        <RotateCw className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
+        icon={<RotateCw className="size-4" />}
+      />
+      <ToolbarIconActionButton
+        ariaLabel="Exit Validation"
         onClick={onExitValidation}
         className="rounded-md text-muted-foreground hover:text-foreground"
-        aria-label="Exit Validation"
-      >
-        <X className="size-4" />
-      </Button>
+        icon={<X className="size-4" />}
+      />
     </>
   );
 }
@@ -197,47 +224,31 @@ function SelectionActionButtons({
 }: Readonly<SelectionActionButtonsProps>): JSX.Element {
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
+      <ToolbarIconActionButton
+        ariaLabel="Move"
         onClick={onOpenBulkMoveDialog}
         className="rounded-md text-muted-foreground hover:text-foreground"
-        aria-label="Move"
-      >
-        <ArrowRightLeft className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
+        icon={<ArrowRightLeft className="size-4" />}
+      />
+      <ToolbarIconActionButton
+        ariaLabel="Reset"
         onClick={onOpenBulkResetDialog}
         className="rounded-md text-muted-foreground hover:text-foreground"
-        aria-label="Reset"
-      >
-        <RotateCcw className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
+        icon={<RotateCcw className="size-4" />}
+      />
+      <ToolbarIconActionButton
+        ariaLabel="Delete"
         onClick={onOpenBulkDeleteDialog}
         className="rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
-        aria-label="Delete"
-      >
-        <Trash2 className="size-4" />
-      </Button>
+        icon={<Trash2 className="size-4" />}
+      />
       <div className="hidden h-5 w-px bg-border/60 sm:block" />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
+      <ToolbarIconActionButton
+        ariaLabel="Clear selection"
         onClick={onClearSelection}
         className="rounded-md text-muted-foreground hover:text-foreground"
-        aria-label="Clear selection"
-      >
-        <X className="size-4" />
-      </Button>
+        icon={<X className="size-4" />}
+      />
     </>
   );
 }
