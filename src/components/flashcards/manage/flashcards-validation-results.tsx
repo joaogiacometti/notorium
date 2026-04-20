@@ -150,6 +150,7 @@ function getColumns(
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
             onEditRequested={() => onEdit(row.original.id)}
+            onMoveRequested={() => {}}
             onResetRequested={() => {}}
             onDeleteRequested={() =>
               onDelete({

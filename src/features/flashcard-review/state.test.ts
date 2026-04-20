@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  isCardDueWithLearnAhead,
+  LEARN_AHEAD_WINDOW_MS,
+} from "@/features/flashcard-review/constants";
+import {
   applyReviewedFlashcardToState,
   mergeFlashcardReviewStates,
   replaceFlashcardInReviewState,
@@ -55,7 +59,38 @@ function makeState(
 }
 
 describe("applyReviewedFlashcardToState", () => {
-  it("removes the reviewed card and decrements the due count when the card is no longer due", () => {
+  it("removes the reviewed card and decrements the due count when a review card is not yet due", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const state = makeState(
+      [
+        makeCard("card-1", new Date("2026-03-07T11:00:00.000Z")),
+        makeCard("card-2", new Date("2026-03-07T11:05:00.000Z")),
+      ],
+      2,
+    );
+
+    const nextState = applyReviewedFlashcardToState(
+      state,
+      "card-1",
+      makeCard("card-1", new Date("2026-03-08T12:00:00.000Z"), {
+        state: "review",
+        learningStep: 0,
+        reviewCount: 1,
+      }),
+      now,
+    );
+
+    expect(nextState).toEqual({
+      cards: [makeCard("card-2", new Date("2026-03-07T11:05:00.000Z"))],
+      summary: {
+        dueCount: 1,
+        totalCount: 2,
+      },
+      scheduler,
+    });
+  });
+
+  it("re-inserts a learning card within the 20-min learn-ahead window instead of dropping it", () => {
     const now = new Date("2026-03-07T12:00:00.000Z");
     const state = makeState(
       [
@@ -76,14 +111,33 @@ describe("applyReviewedFlashcardToState", () => {
       now,
     );
 
-    expect(nextState).toEqual({
-      cards: [makeCard("card-2", new Date("2026-03-07T11:05:00.000Z"))],
-      summary: {
-        dueCount: 1,
-        totalCount: 2,
-      },
-      scheduler,
-    });
+    expect(nextState.summary).toEqual(state.summary);
+    expect(nextState.cards.map((card) => card.id)).toEqual([
+      "card-2",
+      "card-1",
+    ]);
+  });
+
+  it("drops a learning card scheduled beyond the 20-min window and decrements due count", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const state = makeState(
+      [makeCard("card-1", new Date("2026-03-07T11:00:00.000Z"))],
+      1,
+    );
+
+    const nextState = applyReviewedFlashcardToState(
+      state,
+      "card-1",
+      makeCard("card-1", new Date("2026-03-07T12:21:00.000Z"), {
+        state: "learning",
+        learningStep: 0,
+        reviewCount: 1,
+      }),
+      now,
+    );
+
+    expect(nextState.cards).toEqual([]);
+    expect(nextState.summary.dueCount).toBe(0);
   });
 
   it("re-inserts the reviewed card when it remains due immediately", () => {
@@ -128,8 +182,8 @@ describe("applyReviewedFlashcardToState", () => {
     const nextState = applyReviewedFlashcardToState(
       state,
       "card-1",
-      makeCard("card-1", new Date("2026-03-07T12:10:00.000Z"), {
-        state: "learning",
+      makeCard("card-1", new Date("2026-03-07T12:25:00.000Z"), {
+        state: "review",
         learningStep: 0,
         reviewCount: 1,
       }),
@@ -197,6 +251,31 @@ describe("mergeFlashcardReviewStates", () => {
     expect(nextState.cards).toEqual([]);
     expect(nextState.summary.dueCount).toBe(0);
     expect(nextState.summary.totalCount).toBe(10);
+  });
+
+  it("counts a learning card within the 20-min window as due when merging", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const current = makeState([], 0);
+    const incoming = {
+      cards: [
+        makeCard("card-1", new Date("2026-03-07T12:10:00.000Z"), {
+          state: "learning",
+        }),
+        makeCard("card-2", new Date("2026-03-07T14:00:00.000Z"), {
+          state: "learning",
+        }),
+      ],
+      summary: { dueCount: 2, totalCount: 2 },
+      scheduler,
+    };
+
+    const nextState = mergeFlashcardReviewStates(current, incoming, now);
+
+    expect(nextState.cards.map((card) => card.id)).toEqual([
+      "card-1",
+      "card-2",
+    ]);
+    expect(nextState.summary.dueCount).toBe(1);
   });
 
   it("correctly counts only due cards when some cards are not yet due", () => {
@@ -268,6 +347,59 @@ describe("replaceFlashcardInReviewState", () => {
     );
 
     expect(nextState).toBe(state);
+  });
+});
+
+describe("isCardDueWithLearnAhead", () => {
+  const now = new Date("2026-03-07T12:00:00.000Z");
+
+  it("returns true when dueAt is in the past", () => {
+    const card = makeCard("c", new Date("2026-03-07T11:00:00.000Z"), {
+      state: "new",
+    });
+    expect(isCardDueWithLearnAhead(card, now)).toBe(true);
+  });
+
+  it("returns true when dueAt equals now", () => {
+    const card = makeCard("c", now, { state: "review" });
+    expect(isCardDueWithLearnAhead(card, now)).toBe(true);
+  });
+
+  it("returns false for a new card with dueAt in the future beyond now", () => {
+    const card = makeCard("c", new Date(now.getTime() + 1), { state: "new" });
+    expect(isCardDueWithLearnAhead(card, now)).toBe(false);
+  });
+
+  it("returns false for a review card with dueAt in the future even within 20 min", () => {
+    const card = makeCard("c", new Date(now.getTime() + 10 * 60 * 1000), {
+      state: "review",
+    });
+    expect(isCardDueWithLearnAhead(card, now)).toBe(false);
+  });
+
+  it("returns true for a learning card with dueAt within the 20-min window", () => {
+    const card = makeCard("c", new Date(now.getTime() + 10 * 60 * 1000), {
+      state: "learning",
+    });
+    expect(isCardDueWithLearnAhead(card, now)).toBe(true);
+  });
+
+  it("returns true for a relearning card with dueAt at the exact 20-min boundary", () => {
+    const card = makeCard(
+      "c",
+      new Date(now.getTime() + LEARN_AHEAD_WINDOW_MS),
+      { state: "relearning" },
+    );
+    expect(isCardDueWithLearnAhead(card, now)).toBe(true);
+  });
+
+  it("returns false for a learning card with dueAt 1ms past the 20-min boundary", () => {
+    const card = makeCard(
+      "c",
+      new Date(now.getTime() + LEARN_AHEAD_WINDOW_MS + 1),
+      { state: "learning" },
+    );
+    expect(isCardDueWithLearnAhead(card, now)).toBe(false);
   });
 });
 

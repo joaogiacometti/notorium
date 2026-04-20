@@ -6,6 +6,7 @@ import {
   gte,
   inArray,
   lte,
+  or,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -15,6 +16,10 @@ import {
   getAllDecksWithPathsForUser,
   getDescendantDeckIds,
 } from "@/features/decks/queries";
+import {
+  LEARN_AHEAD_STATES,
+  LEARN_AHEAD_WINDOW_MS,
+} from "@/features/flashcard-review/constants";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -60,15 +65,23 @@ async function getScopedFilters(
   return filters;
 }
 
+function buildDueAtFilter(now: Date): SQL<unknown> {
+  const aheadCutoff = new Date(now.getTime() + LEARN_AHEAD_WINDOW_MS);
+  return or(
+    lte(flashcard.dueAt, now),
+    and(
+      inArray(flashcard.state, LEARN_AHEAD_STATES),
+      lte(flashcard.dueAt, aheadCutoff),
+    ),
+  ) as SQL<unknown>;
+}
+
 async function getDueFilters(
   userId: string,
   now: Date,
   options: GetDueFlashcardsOptions,
 ): Promise<SQL<unknown>[]> {
-  return [
-    ...(await getScopedFilters(userId, options)),
-    lte(flashcard.dueAt, now),
-  ];
+  return [...(await getScopedFilters(userId, options)), buildDueAtFilter(now)];
 }
 
 export async function getDueFlashcardsForUser(
@@ -113,7 +126,7 @@ export async function getFlashcardReviewSummaryForUser(
     getDb()
       .select({ total: count() })
       .from(flashcard)
-      .where(and(...baseFilters, lte(flashcard.dueAt, now))),
+      .where(and(...baseFilters, buildDueAtFilter(now))),
     getDb()
       .select({ total: count() })
       .from(flashcard)
@@ -155,7 +168,7 @@ export async function getFlashcardStatisticsForUser(
     getDb()
       .select({
         totalCards: count(),
-        dueCards: sql<number>`coalesce(sum(case when ${flashcard.dueAt} <= ${now} then 1 else 0 end), 0)`,
+        dueCards: sql<number>`coalesce(sum(case when ${buildDueAtFilter(now)} then 1 else 0 end), 0)`,
         reviewedCards: sql<number>`coalesce(sum(case when ${flashcard.reviewCount} > 0 then 1 else 0 end), 0)`,
         totalReviews: sql<number>`coalesce(sum(${flashcard.reviewCount}), 0)`,
         totalLapses: sql<number>`coalesce(sum(${flashcard.lapseCount}), 0)`,

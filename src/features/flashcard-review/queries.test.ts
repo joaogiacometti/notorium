@@ -9,6 +9,7 @@ const gteMock = vi.fn((column, value) => ({ column, operator: "gte", value }));
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const lteMock = vi.fn((column, value) => ({ column, operator: "lte", value }));
+const orMock = vi.fn((...conditions) => conditions);
 const sqlMock = vi.fn((strings, ...values) => ({ strings, values }));
 const getDescendantDeckIdsMock = vi.fn();
 const getAllDecksWithPathsForUserMock = vi.fn();
@@ -29,6 +30,7 @@ vi.mock("drizzle-orm", () => ({
   inArray: inArrayMock,
   isNull: isNullMock,
   lte: lteMock,
+  or: orMock,
   sql: sqlMock,
 }));
 

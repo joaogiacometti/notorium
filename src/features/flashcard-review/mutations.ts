@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, flashcardReviewLog } from "@/db/schema";
+import { isCardDueWithLearnAhead } from "@/features/flashcard-review/constants";
 import { getReviewableFlashcardForUser } from "@/features/flashcard-review/queries";
 import type { ReviewFlashcardForm } from "@/features/flashcard-review/validation";
 import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
@@ -44,9 +45,13 @@ export async function reviewFlashcardForUser(
     return actionError("flashcards.review.notFound");
   }
 
-  if (existingCard.dueAt.getTime() > now.getTime()) {
+  if (!isCardDueWithLearnAhead(existingCard, now)) {
     return actionError("flashcards.review.notDue");
   }
+
+  const effectiveNow = new Date(
+    Math.max(now.getTime(), existingCard.dueAt.getTime()),
+  );
 
   const nextState = scheduleFlashcardReview({
     card: {
@@ -61,7 +66,7 @@ export async function reviewFlashcardForUser(
       lapseCount: existingCard.lapseCount,
     },
     grade: data.grade,
-    now,
+    now: effectiveNow,
     desiredRetention: settings.desiredRetention,
     weights: settings.weights,
   });
@@ -97,7 +102,7 @@ export async function reviewFlashcardForUser(
         flashcardId: existingCard.id,
         userId,
         rating: data.grade,
-        reviewedAt: now,
+        reviewedAt: effectiveNow,
         daysElapsed: nextState.daysElapsed,
       });
 

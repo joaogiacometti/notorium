@@ -1,3 +1,4 @@
+import { isCardDueWithLearnAhead } from "@/features/flashcard-review/constants";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -5,12 +6,8 @@ import type {
 
 const defaultReviewRefillThreshold = 5;
 
-function isStillDue(card: FlashcardReviewEntity, now: Date): boolean {
-  return card.dueAt.getTime() <= now.getTime();
-}
-
 function countDueCards(cards: FlashcardReviewEntity[], now: Date): number {
-  return cards.filter((card) => isStillDue(card, now)).length;
+  return cards.filter((card) => isCardDueWithLearnAhead(card, now)).length;
 }
 
 function insertCardByDueAt(
@@ -41,7 +38,7 @@ export function applyReviewedFlashcardToState(
     (card) => card.id !== reviewedCardId,
   );
 
-  if (isStillDue(flashcard, now)) {
+  if (isCardDueWithLearnAhead(flashcard, now)) {
     return {
       cards: insertCardByDueAt(remainingCards, flashcard),
       summary: state.summary,
@@ -110,15 +107,9 @@ export function replaceFlashcardInReviewState(
   }
 
   const cards = [...state.cards];
-  const currentCard = cards[cardIndex];
-
-  if (!currentCard) {
-    return state;
-  }
-
   cards[cardIndex] = {
     ...flashcard,
-    deckName: flashcard.deckName ?? currentCard.deckName,
+    deckName: flashcard.deckName ?? state.cards[cardIndex].deckName,
   };
 
   return {

@@ -81,6 +81,7 @@ Students who want a private, lightweight study management workspace.
 - Review view is a landing hub with `Start review` and `Start exam` action cards.
 - Review answers are `Again`, `Hard`, `Good`, and `Easy`.
 - Review uses a memory-state scheduler with learning and relearning stages.
+- A 20-minute learn-ahead window is applied to `learning` and `relearning` cards only: a card whose `dueAt` is within the next 20 minutes is treated as due and kept in the current session. This matches Anki's `collapseTime` behavior and prevents short-interval cards (e.g. `Again → 1m`) from vanishing mid-session.
 - Review logs are stored per user.
 - Review parameters support per-user tuning.
 - Keyboard shortcuts on the review screen:
