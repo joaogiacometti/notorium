@@ -723,6 +723,25 @@ export function DeckTreeSidebar({
     });
   }, [localDeckTree, selectedDeckId]);
 
+  function handleDeckCreated(
+    deck: import("@/lib/server/api-contracts").DeckEntity,
+  ) {
+    const newNode: DeckTreeNode = {
+      ...deck,
+      flashcardCount: 0,
+      children: [],
+      path: deck.parentDeckId
+        ? `${findDeckTreeNode(localDeckTree, deck.parentDeckId)?.path ?? deck.parentDeckId}::${deck.name}`
+        : deck.name,
+    };
+    setLocalDeckTree((current) =>
+      normalizeDeckTree(
+        insertDeckTreeNode(current, newNode, deck.parentDeckId ?? null),
+      ),
+    );
+    refreshPage();
+  }
+
   function handleToggle(deckId: string) {
     setExpandedIds((current) => {
       const next = new Set(current);
@@ -879,7 +898,7 @@ export function DeckTreeSidebar({
             open={createOpen}
             onOpenChange={setCreateOpen}
             parentDeckId={createParentDeckId}
-            onCreated={refreshPage}
+            onCreated={handleDeckCreated}
           />
         </div>
 

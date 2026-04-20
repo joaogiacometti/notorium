@@ -123,6 +123,7 @@ export function PlanningAssessmentsTable({
 
   const pathnameRef = useRef(pathname);
   const routerRef = useRef(router);
+  const isMountedRef = useRef(false);
   pathnameRef.current = pathname;
   routerRef.current = router;
 
@@ -142,6 +143,11 @@ export function PlanningAssessmentsTable({
   });
 
   useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+
     startTransition(() => {
       routerRef.current.replace(
         `${pathnameRef.current}?${buildAssessmentsParams(

@@ -388,9 +388,9 @@ test("can complete a review in Focus Mode", async ({ page, e2eUser }) => {
     await page.getByRole("button", { name: "Show Answer" }).click();
 
     await expect(page.getByText(flashcardBack)).toBeVisible();
-    await expect(page.getByRole("button", { name: /Good/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Easy/i })).toBeVisible();
 
-    await page.getByRole("button", { name: /Good/i }).click();
+    await page.getByRole("button", { name: /Easy/i }).click();
 
     await expect(page.getByText("All caught up!")).toBeVisible();
     await expect(
