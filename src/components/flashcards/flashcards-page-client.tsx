@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { DeckTreeSidebar } from "@/components/decks/deck-tree-sidebar";
 import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
@@ -37,6 +38,13 @@ export function FlashcardsPageClient({
   aiEnabled,
 }: Readonly<FlashcardsPageClientProps>) {
   const scopeKey = `${currentView}:${scopedDeckId ?? "all"}`;
+  const queryClient = useQueryClient();
+
+  function handleDeckDeleted() {
+    void queryClient.invalidateQueries({
+      queryKey: ["flashcards-manage-page"],
+    });
+  }
 
   return (
     <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
@@ -44,6 +52,7 @@ export function FlashcardsPageClient({
         deckTree={deckTree}
         selectedDeckId={scopedDeckId}
         currentView={currentView}
+        onDeckDeleted={handleDeckDeleted}
       />
       {currentView === "review" && (
         <FlashcardReviewClient

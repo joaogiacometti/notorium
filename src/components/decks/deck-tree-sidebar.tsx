@@ -36,6 +36,7 @@ interface DeckTreeSidebarProps {
   deckTree: DeckTreeNode[];
   selectedDeckId?: string;
   currentView: FlashcardsView;
+  onDeckDeleted?: (deckId: string) => void;
 }
 
 const rootDeckId = "__flashcards_root__";
@@ -628,6 +629,7 @@ export function DeckTreeSidebar({
   deckTree,
   selectedDeckId,
   currentView,
+  onDeckDeleted,
 }: Readonly<DeckTreeSidebarProps>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -1016,6 +1018,7 @@ export function DeckTreeSidebar({
               normalizeDeckTree(removeDeckTreeNode(current, deckId)),
             );
             setDeleteTarget(null);
+            onDeckDeleted?.(deckId);
             refreshPage();
           }}
         />
