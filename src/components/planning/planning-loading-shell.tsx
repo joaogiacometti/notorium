@@ -20,9 +20,9 @@ export function PlanningLoadingShell({
           </div>
         </div>
 
-        <div className="mb-4 flex h-10 w-fit items-center gap-2 rounded-md border border-border/60 px-1">
-          <Skeleton className="h-8 w-28 rounded-sm" />
-          <Skeleton className="h-8 w-24 rounded-sm" />
+        <div className="mb-4 flex h-9 w-fit items-center gap-1.5 rounded-lg border border-border/60 px-0.75">
+          <Skeleton className="h-7 w-24 rounded-md" />
+          <Skeleton className="h-7 w-16 rounded-md" />
         </div>
 
         <div className="lg:flex-1 lg:min-h-0">{children}</div>

@@ -1,4 +1,4 @@
-export type StatusTone = "success" | "warning" | "danger";
+export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
 
 interface StatusToneClasses {
   text: string;
@@ -25,6 +25,18 @@ const STATUS_TONE_CLASSES: Record<StatusTone, StatusToneClasses> = {
     bg: "bg-[color:var(--intent-danger-bg)]",
     border: "border-[color:var(--intent-danger-border)]",
     fill: "bg-[color:var(--intent-danger-fill)]",
+  },
+  info: {
+    text: "text-[color:var(--intent-info-text)]",
+    bg: "bg-[color:var(--intent-info-bg)]",
+    border: "border-[color:var(--intent-info-border)]",
+    fill: "bg-[color:var(--intent-info-fill)]",
+  },
+  neutral: {
+    text: "text-muted-foreground",
+    bg: "bg-background/70",
+    border: "border-border/70",
+    fill: "bg-muted-foreground/45",
   },
 };
 

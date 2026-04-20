@@ -268,9 +268,13 @@ describe("DeckTreeSidebar", () => {
     const allDecksButton = Array.from(
       container.querySelectorAll("button"),
     ).find((button) => button.textContent?.includes("All Decks"));
+    const divider = container.querySelector(
+      '[data-testid="deck-tree-section-divider"]',
+    );
 
     expect(allDecksButton).toBeTruthy();
     expect(allDecksButton?.textContent).toContain("10");
+    expect(divider?.textContent).toContain("My Decks");
   });
 
   it("shows subtree flashcard counts for parent decks", async () => {

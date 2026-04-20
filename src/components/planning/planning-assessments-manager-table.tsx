@@ -330,6 +330,7 @@ export function PlanningAssessmentsManagerTable({
 export function PlanningAssessmentsManagerTableSkeleton() {
   return (
     <TableSkeleton
+      className="flex h-full flex-col"
       columnTemplate="2.25rem 0.96fr 0.7fr 0.62fr 0.68fr 0.72fr 3.5rem"
       headers={[
         { content: <div /> },
@@ -359,6 +360,7 @@ export function PlanningAssessmentsManagerTableSkeleton() {
         { className: "h-8 w-24 rounded-full" },
         { className: "h-8 w-24 rounded-full" },
       ]}
+      footerClassName="mt-auto"
     />
   );
 }

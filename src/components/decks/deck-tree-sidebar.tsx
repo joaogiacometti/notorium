@@ -372,11 +372,13 @@ function DeckSidebarRow({
   return (
     <div
       className={cn(
-        "group flex w-full items-center gap-1 rounded-lg pr-1 text-left transition-opacity",
+        "group flex w-full items-center gap-1 rounded-xl pr-1 text-left transition-[opacity,background-color,color,box-shadow]",
         isSelected
-          ? "bg-background text-foreground shadow-sm font-medium"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
-        isDropTarget ? "bg-muted/70 ring-1 ring-border" : undefined,
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
+        isDropTarget
+          ? "bg-background ring-1 ring-[color:var(--intent-info-border)]"
+          : undefined,
         isDragging ? "opacity-50" : undefined,
       )}
       style={{ paddingLeft: `${depth * 12}px` }}
@@ -384,7 +386,10 @@ function DeckSidebarRow({
       {leading ?? <span className="size-7 shrink-0" aria-hidden />}
       <button
         type="button"
-        className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm"
+        className={cn(
+          "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm",
+          isSelected ? "font-medium" : undefined,
+        )}
         data-deck-id={deckId}
         data-deck-row="true"
         draggable={draggable}
@@ -882,7 +887,7 @@ export function DeckTreeSidebar({
 
   return (
     <>
-      <aside className="rounded-lg border border-border/60 bg-muted/30 p-3 lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
+      <aside className="rounded-2xl border border-border/70 bg-card/85 p-3 shadow-none lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-foreground">Decks</p>
           <CreateDeckDialog
@@ -911,11 +916,11 @@ export function DeckTreeSidebar({
             placeholder="Search decks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 rounded-lg border-border/70 bg-background/80 pl-10 pr-4 shadow-xs"
+            className="h-9 rounded-lg border-border/70 bg-background pl-10 pr-4 shadow-xs"
           />
         </div>
 
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 space-y-1">
           <div data-testid="deck-tree-root-scope">
             <SyntheticDeckTreeRootItem
               node={rootNode}
@@ -931,18 +936,23 @@ export function DeckTreeSidebar({
             />
           </div>
 
-          <p className="pt-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-            My Decks
-          </p>
+          <div
+            className="mt-3 border-t border-border/60 pt-3"
+            data-testid="deck-tree-section-divider"
+          >
+            <p className="px-2 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+              My Decks
+            </p>
+          </div>
 
           {filteredDeckTree.length === 0 && !searchQuery ? (
-            <div className="rounded-lg border border-dashed border-border/60 px-3 py-3 text-center text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-border/60 bg-background/80 px-3 py-5 text-center text-sm text-muted-foreground">
               Create your first deck to start organizing flashcards.
             </div>
           ) : filteredDeckTree.length === 0 && searchQuery ? (
-            <p className="py-2 text-center text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-border/60 bg-background/80 px-3 py-5 text-center text-sm text-muted-foreground">
               No decks match your search.
-            </p>
+            </div>
           ) : (
             <div className="space-y-1">
               {filteredDeckTree.map((childNode) => (
