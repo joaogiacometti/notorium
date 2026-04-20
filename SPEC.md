@@ -73,6 +73,7 @@ Students who want a private, lightweight study management workspace.
 - Users can drag decks in the flashcards tree to change parent decks or move them back to the root level.
 - Deleting a deck also deletes its child decks and all flashcards inside that subtree.
 - The flashcards page uses a deck tree sidebar, and deck-scoped review/manage/statistics include cards from descendant decks.
+- Flashcard creation is unavailable until the user has at least one deck; the manage toolbar shows a hover/focus hint telling the user to create a deck first.
 - When creating or editing a flashcard, the user must choose one of their decks.
 
 ### Flashcard Review

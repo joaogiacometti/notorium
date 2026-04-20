@@ -28,6 +28,7 @@ interface FlashcardsManagerProps {
   initialDeckId?: string;
   initialSearch?: string;
   aiEnabled: boolean;
+  hasDecks: boolean;
 }
 
 export function FlashcardsManager({
@@ -35,6 +36,7 @@ export function FlashcardsManager({
   initialDeckId,
   initialSearch,
   aiEnabled,
+  hasDecks,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
@@ -147,6 +149,7 @@ export function FlashcardsManager({
         validationIssuesCount={validationIssues.length}
         isValidatingAgain={isValidatingAgain}
         aiEnabled={aiEnabled}
+        hasDecks={hasDecks}
         onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
         onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}

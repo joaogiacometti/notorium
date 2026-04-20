@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -155,12 +156,14 @@ const defaultProps = {
 describe("FlashcardsPageClient", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    queryClient = new QueryClient();
     vi.useFakeTimers();
   });
 
@@ -176,7 +179,11 @@ describe("FlashcardsPageClient", () => {
 
   it("renders sidebar always visible", async () => {
     await act(async () => {
-      root.render(<FlashcardsPageClient {...defaultProps} />);
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlashcardsPageClient {...defaultProps} />
+        </QueryClientProvider>,
+      );
     });
 
     act(() => {

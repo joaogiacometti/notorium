@@ -78,6 +78,7 @@ export function FlashcardsPageClient({
           initialDeckId={scopedDeckId}
           initialSearch={initialSearch}
           aiEnabled={aiEnabled}
+          hasDecks={decks.length > 0}
         />
       )}
     </div>

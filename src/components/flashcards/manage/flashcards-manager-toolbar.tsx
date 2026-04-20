@@ -17,6 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface FlashcardsManagerToolbarProps {
@@ -29,6 +35,7 @@ interface FlashcardsManagerToolbarProps {
   validationIssuesCount: number;
   isValidatingAgain: boolean;
   aiEnabled: boolean;
+  hasDecks: boolean;
   onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
   onOpenValidateAgainDialog: () => void;
@@ -281,6 +288,7 @@ export function FlashcardsManagerToolbar({
   validationIssuesCount,
   isValidatingAgain,
   aiEnabled,
+  hasDecks,
   onOpenValidateDialog,
   onOpenCreateDialog,
   onOpenValidateAgainDialog,
@@ -296,71 +304,99 @@ export function FlashcardsManagerToolbar({
     total,
     validationIssuesCount,
   });
+  const createButton = (
+    <Button
+      type="button"
+      onClick={onOpenCreateDialog}
+      disabled={!hasDecks}
+      className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
+    >
+      <Plus className="size-4" />
+      New Flashcard
+    </Button>
+  );
 
   return (
-    <Card className="relative overflow-hidden rounded-xl border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
-      <CardContent className="relative px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0 flex-1 lg:max-w-3xl">
-              <div className="relative min-w-0">
-                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(event) => onSearchQueryChange(event.target.value)}
-                  placeholder="Search front, back, or deck path..."
-                  className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
-                />
+    <TooltipProvider>
+      <Card className="relative overflow-hidden rounded-xl border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
+        <CardContent className="relative px-4 py-3 sm:px-5 sm:py-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1 lg:max-w-3xl">
+                <div className="relative min-w-0">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(event) =>
+                      onSearchQueryChange(event.target.value)
+                    }
+                    placeholder="Search front, back, or deck path..."
+                    className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {aiEnabled ? (
+                  <Button
+                    type="button"
+                    onClick={onOpenValidateDialog}
+                    variant="outline"
+                    className="h-10 shrink-0 gap-2 rounded-lg px-3 shadow-sm sm:px-4"
+                  >
+                    <Sparkles className="size-4" />
+                    <span className="hidden sm:inline">Validate</span>
+                  </Button>
+                ) : null}
+                {hasDecks ? (
+                  createButton
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="inline-flex flex-1 sm:flex-initial"
+                        data-testid="new-flashcard-disabled-trigger"
+                      >
+                        {createButton}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Create a deck first to add flashcards.
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
-            <div className="flex gap-2">
-              {aiEnabled ? (
-                <Button
-                  type="button"
-                  onClick={onOpenValidateDialog}
-                  variant="outline"
-                  className="h-10 shrink-0 gap-2 rounded-lg px-3 shadow-sm sm:px-4"
-                >
-                  <Sparkles className="size-4" />
-                  <span className="hidden sm:inline">Validate</span>
-                </Button>
-              ) : null}
-              <Button
-                type="button"
-                onClick={onOpenCreateDialog}
-                className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
-              >
-                <Plus className="size-4" />
-                New Flashcard
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:justify-between">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
-              <ToolbarStatusBadges
+            <div className="flex flex-wrap items-center gap-2 sm:justify-between">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
+                <ToolbarStatusBadges
+                  validationMode={validationMode}
+                  isManageScopeLoading={isManageScopeLoading}
+                  hasSelection={viewModel.hasSelection}
+                  selectedCountText={viewModel.selectedCountText}
+                  resultsCountText={viewModel.resultsCountText}
+                  validationIssuesCountText={
+                    viewModel.validationIssuesCountText
+                  }
+                />
+              </div>
+
+              <ToolbarActionBar
                 validationMode={validationMode}
-                isManageScopeLoading={isManageScopeLoading}
-                hasSelection={viewModel.hasSelection}
-                selectedCountText={viewModel.selectedCountText}
-                resultsCountText={viewModel.resultsCountText}
-                validationIssuesCountText={viewModel.validationIssuesCountText}
+                isValidatingAgain={isValidatingAgain}
+                actionBarVisibilityClasses={
+                  viewModel.actionBarVisibilityClasses
+                }
+                onOpenValidateAgainDialog={onOpenValidateAgainDialog}
+                onExitValidation={onExitValidation}
+                onOpenBulkMoveDialog={onOpenBulkMoveDialog}
+                onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
+                onOpenBulkResetDialog={onOpenBulkResetDialog}
+                onClearSelection={onClearSelection}
               />
             </div>
-
-            <ToolbarActionBar
-              validationMode={validationMode}
-              isValidatingAgain={isValidatingAgain}
-              actionBarVisibilityClasses={viewModel.actionBarVisibilityClasses}
-              onOpenValidateAgainDialog={onOpenValidateAgainDialog}
-              onExitValidation={onExitValidation}
-              onOpenBulkMoveDialog={onOpenBulkMoveDialog}
-              onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
-              onOpenBulkResetDialog={onOpenBulkResetDialog}
-              onClearSelection={onClearSelection}
-            />
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
