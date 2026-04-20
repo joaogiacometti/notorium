@@ -95,6 +95,28 @@ export const deleteAssessmentSchema = z.object({
 
 export type DeleteAssessmentForm = z.infer<typeof deleteAssessmentSchema>;
 
+const bulkAssessmentIdsSchema = z
+  .array(z.string().min(1))
+  .min(1)
+  .refine((ids) => new Set(ids).size === ids.length);
+
+export const bulkDeleteAssessmentsSchema = z.object({
+  ids: bulkAssessmentIdsSchema,
+});
+
+export type BulkDeleteAssessmentsForm = z.infer<
+  typeof bulkDeleteAssessmentsSchema
+>;
+
+export const bulkUpdateAssessmentStatusSchema = z.object({
+  ids: bulkAssessmentIdsSchema,
+  status: assessmentStatusSchema,
+});
+
+export type BulkUpdateAssessmentStatusForm = z.infer<
+  typeof bulkUpdateAssessmentStatusSchema
+>;
+
 const planningAssessmentDueDateFilterValues = [
   "all",
   "past",

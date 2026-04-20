@@ -1,5 +1,5 @@
 import { addDays } from "date-fns";
-import { and, count, desc, eq, type SQL, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { PlanningAssessmentsQueryInput } from "@/features/assessments/validation";
@@ -80,6 +80,27 @@ export async function getAssessmentRecordForUser(
     .limit(1);
 
   return results[0] ?? null;
+}
+
+export async function getAssessmentRecordsForUser(
+  userId: string,
+  assessmentIds: string[],
+): Promise<Array<{ id: string; subjectId: string }>> {
+  if (assessmentIds.length === 0) {
+    return [];
+  }
+
+  return getDb()
+    .select({ id: assessment.id, subjectId: assessment.subjectId })
+    .from(assessment)
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
+    .where(
+      and(
+        inArray(assessment.id, assessmentIds),
+        eq(assessment.userId, userId),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
+    );
 }
 
 export async function getAssessmentDetailForUser(

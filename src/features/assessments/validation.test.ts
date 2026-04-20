@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  bulkDeleteAssessmentsSchema,
+  bulkUpdateAssessmentStatusSchema,
   createAssessmentSchema,
   deleteAssessmentSchema,
   editAssessmentSchema,
@@ -230,6 +232,43 @@ describe("deleteAssessmentSchema", () => {
     const result = deleteAssessmentSchema.safeParse({ id: "a1" });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("bulk assessment schemas", () => {
+  it("accepts valid bulk status update input", () => {
+    const result = bulkUpdateAssessmentStatusSchema.safeParse({
+      ids: ["assessment-1", "assessment-2"],
+      status: "completed",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty ids", () => {
+    const result = bulkDeleteAssessmentsSchema.safeParse({
+      ids: [],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects duplicate ids", () => {
+    const result = bulkUpdateAssessmentStatusSchema.safeParse({
+      ids: ["assessment-1", "assessment-1"],
+      status: "pending",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid status", () => {
+    const result = bulkUpdateAssessmentStatusSchema.safeParse({
+      ids: ["assessment-1"],
+      status: "overdue",
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

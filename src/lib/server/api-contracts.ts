@@ -193,6 +193,21 @@ export type DeleteAssessmentResult =
       id: string;
     }
   | ActionErrorResult;
+export type BulkDeleteAssessmentsResult =
+  | {
+      success: true;
+      ids: string[];
+      subjectIds: string[];
+    }
+  | ActionErrorResult;
+export type BulkUpdateAssessmentStatusResult =
+  | {
+      success: true;
+      ids: string[];
+      status: AssessmentEntity["status"];
+      subjectIds: string[];
+    }
+  | ActionErrorResult;
 export type ReviewFlashcardResult =
   | {
       success: true;

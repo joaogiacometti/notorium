@@ -29,9 +29,11 @@ interface PlanningAssessmentsManagerTableProps {
   isLoading: boolean;
   pageIndex: number;
   pageSize: number;
+  selectedAssessmentIds: string[];
   selectedSubjectId?: string;
   subjectNamesById: Record<string, string>;
   onPageIndexChange: (pageIndex: number) => void;
+  onSelectedAssessmentIdsChange: (ids: string[]) => void;
   onUpdated: (assessment: AssessmentEntity) => void;
   onDeleted: (id: string) => void;
 }
@@ -252,9 +254,11 @@ export function PlanningAssessmentsManagerTable({
   isLoading,
   pageIndex,
   pageSize,
+  selectedAssessmentIds,
   selectedSubjectId,
   subjectNamesById,
   onPageIndexChange,
+  onSelectedAssessmentIdsChange,
   onUpdated,
   onDeleted,
 }: Readonly<PlanningAssessmentsManagerTableProps>) {
@@ -280,6 +284,9 @@ export function PlanningAssessmentsManagerTable({
       loadingMinimumVisibleMs={250}
       loadingSkeleton={<PlanningAssessmentsManagerTableSkeleton />}
       onPageIndexChange={onPageIndexChange}
+      selectedRowIds={selectedAssessmentIds}
+      onSelectedRowIdsChange={onSelectedAssessmentIdsChange}
+      selectionAriaLabel="Select assessment"
       pageLabel={(current, total) => `Page ${current} of ${total}`}
       prevLabel="Previous"
       nextLabel="Next"
@@ -323,8 +330,9 @@ export function PlanningAssessmentsManagerTable({
 export function PlanningAssessmentsManagerTableSkeleton() {
   return (
     <TableSkeleton
-      columnTemplate="0.96fr 0.7fr 0.62fr 0.68fr 0.72fr 3.5rem"
+      columnTemplate="2.25rem 0.96fr 0.7fr 0.62fr 0.68fr 0.72fr 3.5rem"
       headers={[
+        { content: <div /> },
         { className: "h-4 w-16" },
         { className: "h-4 w-14" },
         { className: "h-4 w-16" },
@@ -333,6 +341,9 @@ export function PlanningAssessmentsManagerTableSkeleton() {
         { content: <div /> },
       ]}
       rows={[
+        {
+          className: "h-4 w-4 rounded-sm self-center justify-self-center",
+        },
         { className: "h-14 w-full" },
         { className: "h-7 w-24 rounded-full" },
         { className: "h-7 w-24 rounded-full" },

@@ -5,8 +5,11 @@ import { ClipboardList, Lock, Plus, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { getPlanningAssessmentsPage } from "@/app/actions/assessments";
+import { BulkDeleteAssessmentsDialog } from "@/components/assessments/bulk-delete-assessments-dialog";
+import { BulkUpdateAssessmentStatusDialog } from "@/components/assessments/bulk-update-assessment-status-dialog";
 import { LazyCreateAssessmentDialog as CreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
+import { PlanningAssessmentsToolbar } from "@/components/planning/planning-assessments-toolbar";
 import { SubjectText } from "@/components/shared/subject-text";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +109,12 @@ export function PlanningAssessmentsTable({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [markCompletedOpen, setMarkCompletedOpen] = useState(false);
+  const [markPendingOpen, setMarkPendingOpen] = useState(false);
+  const [selectedAssessmentIds, setSelectedAssessmentIds] = useState<string[]>(
+    [],
+  );
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
     (planningAssessmentStatusFilterValues as readonly string[]).includes(
@@ -169,6 +178,10 @@ export function PlanningAssessmentsTable({
     });
   }, [resolvedSearchQuery, subjectFilter, statusFilter, typeFilter, sortBy]);
 
+  useEffect(() => {
+    setSelectedAssessmentIds([]);
+  }, []);
+
   const assessmentsQuery = useQuery({
     queryKey: [
       "planning-assessments-page",
@@ -230,6 +243,14 @@ export function PlanningAssessmentsTable({
   const hasSubjects = subjects.length > 0;
 
   useEffect(() => {
+    const pageIds = new Set(assessments.map((assessment) => assessment.id));
+
+    setSelectedAssessmentIds((current) =>
+      current.filter((assessmentId) => pageIds.has(assessmentId)),
+    );
+  }, [assessments]);
+
+  useEffect(() => {
     const pageCount = Math.max(
       1,
       Math.ceil(
@@ -250,7 +271,7 @@ export function PlanningAssessmentsTable({
   ]);
 
   function refreshAssessments() {
-    setPageIndex(0);
+    setSelectedAssessmentIds([]);
     void assessmentsQuery.refetch();
   }
 
@@ -422,13 +443,16 @@ export function PlanningAssessmentsTable({
                   </>
                 ) : (
                   <>
-                    <Badge
-                      variant="outline"
-                      className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-muted-foreground"
-                    >
-                      <Search className="size-3.5" />
-                      {total} {total === 1 ? "item" : "items"}
-                    </Badge>
+                    <PlanningAssessmentsToolbar
+                      selectedAssessmentIds={selectedAssessmentIds}
+                      total={total}
+                      onOpenBulkDeleteDialog={() => setBulkDeleteOpen(true)}
+                      onOpenMarkCompletedDialog={() =>
+                        setMarkCompletedOpen(true)
+                      }
+                      onOpenMarkPendingDialog={() => setMarkPendingOpen(true)}
+                      onClearSelection={() => setSelectedAssessmentIds([])}
+                    />
                     {subjectFilter === "all" ? null : (
                       <Badge
                         variant="outline"
@@ -465,11 +489,13 @@ export function PlanningAssessmentsTable({
               isLoading={isAssessmentsScopeLoading}
               pageIndex={pageIndex}
               pageSize={planningAssessmentsPageSize}
+              selectedAssessmentIds={selectedAssessmentIds}
               selectedSubjectId={
                 subjectFilter === "all" ? undefined : subjectFilter
               }
               subjectNamesById={subjectNamesById}
               onPageIndexChange={setPageIndex}
+              onSelectedAssessmentIdsChange={setSelectedAssessmentIds}
               onUpdated={refreshAssessments}
               onDeleted={refreshAssessments}
             />
@@ -498,6 +524,35 @@ export function PlanningAssessmentsTable({
           onCreated={refreshAssessments}
           subjects={subjects}
           subjectId={subjectFilter === "all" ? undefined : subjectFilter}
+        />
+        <BulkDeleteAssessmentsDialog
+          ids={selectedAssessmentIds}
+          open={bulkDeleteOpen}
+          onOpenChange={setBulkDeleteOpen}
+          onDeleted={() => {
+            refreshAssessments();
+            setBulkDeleteOpen(false);
+          }}
+        />
+        <BulkUpdateAssessmentStatusDialog
+          ids={selectedAssessmentIds}
+          open={markCompletedOpen}
+          status="completed"
+          onOpenChange={setMarkCompletedOpen}
+          onUpdated={() => {
+            refreshAssessments();
+            setMarkCompletedOpen(false);
+          }}
+        />
+        <BulkUpdateAssessmentStatusDialog
+          ids={selectedAssessmentIds}
+          open={markPendingOpen}
+          status="pending"
+          onOpenChange={setMarkPendingOpen}
+          onUpdated={() => {
+            refreshAssessments();
+            setMarkPendingOpen(false);
+          }}
         />
       </div>
     </TooltipProvider>

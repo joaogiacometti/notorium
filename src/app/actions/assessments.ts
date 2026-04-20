@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  bulkDeleteAssessmentsForUser,
+  bulkUpdateAssessmentStatusForUser,
   createAssessmentForUser,
   deleteAssessmentForUser,
   editAssessmentForUser,
@@ -12,6 +14,10 @@ import {
   getPlanningAssessmentsPageForUser,
 } from "@/features/assessments/queries";
 import {
+  type BulkDeleteAssessmentsForm,
+  type BulkUpdateAssessmentStatusForm,
+  bulkDeleteAssessmentsSchema,
+  bulkUpdateAssessmentStatusSchema,
   type CreateAssessmentForm,
   createAssessmentSchema,
   type DeleteAssessmentForm,
@@ -25,6 +31,8 @@ import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   AssessmentEntity,
+  BulkDeleteAssessmentsResult,
+  BulkUpdateAssessmentStatusResult,
   CreateAssessmentResult,
   DeleteAssessmentResult,
   EditAssessmentResult,
@@ -102,6 +110,50 @@ export async function deleteAssessment(
 
   if (result.success) {
     revalidatePath(`/subjects/${result.subjectId}`);
+  }
+
+  return result;
+}
+
+export async function bulkDeleteAssessments(
+  data: BulkDeleteAssessmentsForm,
+): Promise<BulkDeleteAssessmentsResult> {
+  const result = await runValidatedUserAction(
+    bulkDeleteAssessmentsSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) =>
+      bulkDeleteAssessmentsForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    revalidatePath("/planning");
+
+    for (const subjectId of result.subjectIds) {
+      revalidatePath(`/subjects/${subjectId}`);
+    }
+  }
+
+  return result;
+}
+
+export async function bulkUpdateAssessmentStatus(
+  data: BulkUpdateAssessmentStatusForm,
+): Promise<BulkUpdateAssessmentStatusResult> {
+  const result = await runValidatedUserAction(
+    bulkUpdateAssessmentStatusSchema,
+    data,
+    "assessments.invalidData",
+    async (userId, parsedData) =>
+      bulkUpdateAssessmentStatusForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    revalidatePath("/planning");
+
+    for (const subjectId of result.subjectIds) {
+      revalidatePath(`/subjects/${subjectId}`);
+    }
   }
 
   return result;

@@ -1,18 +1,25 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment } from "@/db/schema";
 import {
   countAssessmentsBySubjectForUser,
   getAssessmentRecordForUser,
+  getAssessmentRecordsForUser,
 } from "@/features/assessments/queries";
 import type {
+  BulkDeleteAssessmentsForm,
+  BulkUpdateAssessmentStatusForm,
   CreateAssessmentForm,
   DeleteAssessmentForm,
   EditAssessmentForm,
 } from "@/features/assessments/validation";
 import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
-import type { AssessmentEntity } from "@/lib/server/api-contracts";
+import type {
+  AssessmentEntity,
+  BulkDeleteAssessmentsResult,
+  BulkUpdateAssessmentStatusResult,
+} from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { actionError } from "@/lib/server/server-action-errors";
 
@@ -37,6 +44,10 @@ export type DeleteAssessmentMutationResult =
       subjectId: string;
     }
   | ActionErrorResult;
+
+function getUniqueSubjectIds(records: Array<{ subjectId: string }>) {
+  return Array.from(new Set(records.map((record) => record.subjectId)));
+}
 
 function getAssessmentMutationValues(
   values: Pick<
@@ -134,5 +145,53 @@ export async function deleteAssessmentForUser(
     success: true,
     id: data.id,
     subjectId: existingAssessment.subjectId,
+  };
+}
+
+export async function bulkDeleteAssessmentsForUser(
+  userId: string,
+  data: BulkDeleteAssessmentsForm,
+): Promise<BulkDeleteAssessmentsResult> {
+  const existingAssessments = await getAssessmentRecordsForUser(
+    userId,
+    data.ids,
+  );
+
+  if (existingAssessments.length !== data.ids.length) {
+    return actionError("assessments.notFound");
+  }
+
+  await getDb().delete(assessment).where(inArray(assessment.id, data.ids));
+
+  return {
+    success: true,
+    ids: data.ids,
+    subjectIds: getUniqueSubjectIds(existingAssessments),
+  };
+}
+
+export async function bulkUpdateAssessmentStatusForUser(
+  userId: string,
+  data: BulkUpdateAssessmentStatusForm,
+): Promise<BulkUpdateAssessmentStatusResult> {
+  const existingAssessments = await getAssessmentRecordsForUser(
+    userId,
+    data.ids,
+  );
+
+  if (existingAssessments.length !== data.ids.length) {
+    return actionError("assessments.notFound");
+  }
+
+  await getDb()
+    .update(assessment)
+    .set({ status: data.status })
+    .where(inArray(assessment.id, data.ids));
+
+  return {
+    success: true,
+    ids: data.ids,
+    status: data.status,
+    subjectIds: getUniqueSubjectIds(existingAssessments),
   };
 }
