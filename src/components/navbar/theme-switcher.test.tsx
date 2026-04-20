@@ -125,7 +125,7 @@ describe("ModeToggle", () => {
 
   it("keeps floating trigger selector stable", async () => {
     await act(async () => {
-      root.render(<ModeToggle variant="floating" persistPreference={false} />);
+      root.render(<ModeToggle variant="floating" syncWithServer={false} />);
     });
 
     const floatingTrigger = container.querySelector(
@@ -171,5 +171,24 @@ describe("ModeToggle", () => {
     expect(setThemeMock).toHaveBeenNthCalledWith(1, "light");
     expect(setThemeMock).toHaveBeenNthCalledWith(2, "dark");
     expect(updateUserThemeMock).toHaveBeenCalledWith({ theme: "light" });
+  });
+
+  it("does not sync the theme to the server when disabled", async () => {
+    await act(async () => {
+      root.render(<ModeToggle variant="floating" syncWithServer={false} />);
+    });
+
+    const lightLabel = findElementByExactText(container, "Light");
+    const lightItem = lightLabel?.closest('[role="menuitem"]');
+
+    expect(lightItem).toBeTruthy();
+
+    await act(async () => {
+      lightItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setThemeMock).toHaveBeenCalledOnce();
+    expect(setThemeMock).toHaveBeenCalledWith("light");
+    expect(updateUserThemeMock).not.toHaveBeenCalled();
   });
 });

@@ -10,6 +10,7 @@ import type {
   subject,
 } from "@/db/schema";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
+import type { AppTheme } from "@/lib/theme";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
@@ -166,6 +167,14 @@ export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "description">;
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
+export type AuthRedirectSuccessResult = {
+  success: true;
+  data: {
+    redirectTo: string;
+    theme?: AppTheme;
+  };
+};
+export type AuthRedirectResult = AuthRedirectSuccessResult | ActionErrorResult;
 export type CreateAssessmentResult =
   | {
       success: true;

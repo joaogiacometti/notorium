@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
-import { themeStorageKey } from "@/lib/theme-storage";
+import { themeStorageKey } from "@/lib/theme";
 
 const { deleteAccountMock, toastErrorMock } = vi.hoisted(() => ({
   deleteAccountMock: vi.fn(),
@@ -12,40 +12,6 @@ const { deleteAccountMock, toastErrorMock } = vi.hoisted(() => ({
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
-
-function createStorageMock() {
-  const store = new Map<string, string>();
-
-  return {
-    getItem: vi.fn((key: string) => store.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) => {
-      store.set(key, value);
-    }),
-    removeItem: vi.fn((key: string) => {
-      store.delete(key);
-    }),
-    clear: vi.fn(() => {
-      store.clear();
-    }),
-  };
-}
-
-function createCookieStoreMock() {
-  const store = new Map<string, string>();
-
-  return {
-    delete: vi.fn(async (key: string) => {
-      store.delete(key);
-    }),
-    get: vi.fn(async (key: string) => {
-      const value = store.get(key);
-      return value ? { name: key, value } : null;
-    }),
-    set: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
-    }),
-  };
-}
 
 vi.mock("@/app/actions/account", () => ({
   deleteAccount: deleteAccountMock,
@@ -105,23 +71,27 @@ vi.mock("@/lib/server/server-action-errors", () => ({
 describe("DeleteAccountDialog", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let removeItemMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    removeItemMock = vi.fn();
     Object.defineProperty(window, "localStorage", {
-      value: createStorageMock(),
-      configurable: true,
-    });
-    Object.defineProperty(window, "cookieStore", {
-      value: createCookieStoreMock(),
+      value: {
+        getItem: vi.fn((key: string) =>
+          key === themeStorageKey ? "dark" : null,
+        ),
+        setItem: vi.fn(),
+        removeItem: removeItemMock,
+        clear: vi.fn(),
+      },
       configurable: true,
     });
     vi.spyOn(window.location, "assign").mockImplementation(() => {});
-    window.localStorage.setItem(themeStorageKey, "halloween");
-    void window.cookieStore.set(themeStorageKey, "halloween");
+    deleteAccountMock.mockReset();
     toastErrorMock.mockReset();
   });
 
@@ -130,12 +100,11 @@ describe("DeleteAccountDialog", () => {
       root.unmount();
     });
     container.remove();
-    window.localStorage.clear();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
     vi.clearAllMocks();
   });
 
-  it("clears the persisted theme preference after a successful deletion", async () => {
+  it("clears the stored theme and navigates to login after a successful deletion", async () => {
     deleteAccountMock.mockResolvedValue({ success: true });
 
     await act(async () => {
@@ -153,13 +122,12 @@ describe("DeleteAccountDialog", () => {
     });
 
     expect(deleteAccountMock).toHaveBeenCalledOnce();
-    expect(window.localStorage.getItem(themeStorageKey)).toBeNull();
-    expect(window.cookieStore.delete).toHaveBeenCalledWith(themeStorageKey);
+    expect(removeItemMock).toHaveBeenCalledWith(themeStorageKey);
     expect(window.location.assign).toHaveBeenCalledWith("/login");
     expect(toastErrorMock).not.toHaveBeenCalled();
   });
 
-  it("preserves the persisted theme preference when deletion fails", async () => {
+  it("does not navigate when deletion fails", async () => {
     deleteAccountMock.mockResolvedValue({
       success: false,
       errorCode: "account.deleteFailed",
@@ -180,8 +148,7 @@ describe("DeleteAccountDialog", () => {
     });
 
     expect(deleteAccountMock).toHaveBeenCalledOnce();
-    expect(window.localStorage.getItem(themeStorageKey)).toBe("halloween");
-    expect(window.cookieStore.delete).not.toHaveBeenCalled();
+    expect(removeItemMock).not.toHaveBeenCalled();
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(toastErrorMock).toHaveBeenCalledWith("Failed to delete account.");
   });

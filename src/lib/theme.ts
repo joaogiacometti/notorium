@@ -6,6 +6,8 @@ export const validThemes = [
   "catppuccin-mocha",
 ] as const;
 
+export const themeStorageKey = "theme";
+
 export type AppTheme = (typeof validThemes)[number];
 
 export type ThemeOption = {
@@ -25,4 +27,14 @@ export const appThemes: Set<AppTheme> = new Set(validThemes);
 
 export function isAppTheme(value: string | undefined): value is AppTheme {
   return value !== undefined && appThemes.has(value as AppTheme);
+}
+
+export function clearStoredTheme() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(themeStorageKey);
+  } catch {}
 }

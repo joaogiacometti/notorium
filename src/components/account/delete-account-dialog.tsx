@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
-import { clearPersistedThemePreference } from "@/lib/theme-storage";
+import { clearStoredTheme } from "@/lib/theme";
 
 interface DeleteAccountDialogProps {
   open: boolean;
@@ -35,7 +35,7 @@ export function DeleteAccountDialog({
         return;
       }
 
-      clearPersistedThemePreference();
+      clearStoredTheme();
       window.location.assign("/login");
     });
   }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { loginAction } from "@/app/actions/auth";
+import { handleAuthRedirect } from "@/components/auth/handle-auth-redirect";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +46,14 @@ export function LoginForm({
     const result = await loginAction(data);
     if (result && !result.success) {
       toast.error(resolveActionErrorMessage(result));
+      return;
     }
+
+    if (!result?.success) {
+      return;
+    }
+
+    handleAuthRedirect(result);
   }
 
   return (

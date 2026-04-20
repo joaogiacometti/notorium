@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 interface ModeToggleProps {
   variant?: "navbar" | "floating";
-  persistPreference?: boolean;
+  syncWithServer?: boolean;
 }
 
 const themeLabelByKey: Record<
@@ -146,7 +146,7 @@ function ThemePreview({
 
 export function ModeToggle({
   variant = "navbar",
-  persistPreference = true,
+  syncWithServer = true,
 }: Readonly<ModeToggleProps>) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -172,7 +172,7 @@ export function ModeToggle({
 
     setTheme(nextTheme);
 
-    if (!persistPreference) {
+    if (!syncWithServer) {
       return;
     }
 

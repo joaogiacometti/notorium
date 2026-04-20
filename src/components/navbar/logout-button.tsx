@@ -3,7 +3,7 @@
 import { LogOut } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { clearPersistedThemePreference } from "@/lib/theme-storage";
+import { clearStoredTheme } from "@/lib/theme";
 
 export function LogoutButton() {
   const handleLogout = async () => {
@@ -12,7 +12,7 @@ export function LogoutButton() {
       return;
     }
 
-    clearPersistedThemePreference();
+    clearStoredTheme();
     window.location.assign("/login");
   };
 

@@ -6,7 +6,7 @@ import { QueryProvider } from "@/components/shared/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getUserPreferredTheme } from "@/features/user/queries";
 import { getOptionalSession } from "@/lib/auth/auth";
-import { themeStorageKey } from "@/lib/theme-storage";
+import { themeStorageKey } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default async function RootLayout({
           <QueryProvider>
             {children}
             {!session && (
-              <ModeToggle variant="floating" persistPreference={false} />
+              <ModeToggle variant="floating" syncWithServer={false} />
             )}
             <Toaster />
             <SpeedInsights />

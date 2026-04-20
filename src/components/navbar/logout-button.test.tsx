@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LogoutButton } from "@/components/navbar/logout-button";
-import { themeStorageKey } from "@/lib/theme-storage";
+import { themeStorageKey } from "@/lib/theme";
 
 const { logoutActionMock } = vi.hoisted(() => ({
   logoutActionMock: vi.fn(),
@@ -11,40 +11,6 @@ const { logoutActionMock } = vi.hoisted(() => ({
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
-
-function createStorageMock() {
-  const store = new Map<string, string>();
-
-  return {
-    getItem: vi.fn((key: string) => store.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) => {
-      store.set(key, value);
-    }),
-    removeItem: vi.fn((key: string) => {
-      store.delete(key);
-    }),
-    clear: vi.fn(() => {
-      store.clear();
-    }),
-  };
-}
-
-function createCookieStoreMock() {
-  const store = new Map<string, string>();
-
-  return {
-    delete: vi.fn(async (key: string) => {
-      store.delete(key);
-    }),
-    get: vi.fn(async (key: string) => {
-      const value = store.get(key);
-      return value ? { name: key, value } : null;
-    }),
-    set: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
-    }),
-  };
-}
 
 vi.mock("@/app/actions/auth", () => ({
   logoutAction: logoutActionMock,
@@ -83,16 +49,17 @@ describe("LogoutButton", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     Object.defineProperty(globalThis, "localStorage", {
-      value: createStorageMock(),
-      configurable: true,
-    });
-    Object.defineProperty(globalThis, "cookieStore", {
-      value: createCookieStoreMock(),
+      value: {
+        getItem: vi.fn((key: string) =>
+          key === themeStorageKey ? "dark" : null,
+        ),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
       configurable: true,
     });
     vi.spyOn(globalThis.location, "assign").mockImplementation(() => {});
-    globalThis.localStorage.setItem(themeStorageKey, "dark");
-    void globalThis.cookieStore.set(themeStorageKey, "dark");
     logoutActionMock.mockResolvedValue({ success: true });
   });
 
@@ -101,12 +68,11 @@ describe("LogoutButton", () => {
       root.unmount();
     });
     container.remove();
-    globalThis.localStorage.clear();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
     vi.clearAllMocks();
   });
 
-  it("clears the persisted theme preference before navigating to login", async () => {
+  it("clears the stored theme and navigates to login after a successful logout", async () => {
     await act(async () => {
       root.render(<LogoutButton />);
     });
@@ -122,8 +88,9 @@ describe("LogoutButton", () => {
     });
 
     expect(logoutActionMock).toHaveBeenCalledOnce();
-    expect(globalThis.localStorage.getItem(themeStorageKey)).toBeNull();
-    expect(globalThis.cookieStore.delete).toHaveBeenCalledWith(themeStorageKey);
+    expect(globalThis.localStorage.removeItem).toHaveBeenCalledWith(
+      themeStorageKey,
+    );
     expect(globalThis.location.assign).toHaveBeenCalledWith("/login");
   });
 });

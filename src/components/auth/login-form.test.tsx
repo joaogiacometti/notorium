@@ -3,12 +3,17 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "@/components/auth/login-form";
 
+const { loginActionMock, toastErrorMock } = vi.hoisted(() => ({
+  loginActionMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+}));
+
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
 vi.mock("@/app/actions/auth", () => ({
-  loginAction: vi.fn(),
+  loginAction: loginActionMock,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -19,7 +24,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("sonner", () => ({
   toast: {
-    error: vi.fn(),
+    error: toastErrorMock,
   },
 }));
 
@@ -38,6 +43,8 @@ describe("LoginForm", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    loginActionMock.mockReset();
+    toastErrorMock.mockReset();
   });
 
   afterEach(async () => {
@@ -46,6 +53,7 @@ describe("LoginForm", () => {
     });
     container.remove();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
+    vi.clearAllMocks();
   });
 
   it("renders the pending approval notice when requested", async () => {
