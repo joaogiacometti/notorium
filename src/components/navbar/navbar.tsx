@@ -1,25 +1,10 @@
-import {
-  BookOpenText,
-  ChevronDown,
-  LogIn,
-  Shield,
-  User,
-  UserPlus,
-} from "lucide-react";
+import { BookOpenText, LogIn, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { AccountMenu } from "@/components/navbar/account-menu";
 import { AppSectionNav } from "@/components/navbar/app-section-nav";
 import { GlobalSearch } from "@/components/navbar/global-search";
-import { LogoutButton } from "@/components/navbar/logout-button";
 import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
 export async function Navbar() {
@@ -57,57 +42,11 @@ export async function Navbar() {
           {session && <GlobalSearch userId={session.user.id} />}
           {session && <ModeToggle />}
           {session ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  data-testid="account-menu-trigger"
-                  className="max-w-32 gap-1 px-1.5 text-muted-foreground hover:text-foreground sm:max-w-36 sm:gap-1.5 sm:px-3 lg:max-w-40"
-                >
-                  <User className="size-4 shrink-0" />
-                  <span className="truncate">{accountName}</span>
-                  <ChevronDown className="size-3.5 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="grid gap-0.5">
-                  <span className="truncate font-medium">{accountName}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {session.user.email}
-                  </span>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <form action="/account">
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <button
-                      type="submit"
-                      data-testid="account-menu-account"
-                      className="flex w-full items-center gap-2 text-left"
-                    >
-                      <User className="size-4" />
-                      Account
-                    </button>
-                  </DropdownMenuItem>
-                </form>
-                {isAdmin && (
-                  <form action="/admin">
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <button
-                        type="submit"
-                        data-testid="account-menu-admin"
-                        className="flex w-full items-center gap-2 text-left"
-                      >
-                        <Shield className="size-4" />
-                        Admin Panel
-                      </button>
-                    </DropdownMenuItem>
-                  </form>
-                )}
-                <DropdownMenuSeparator />
-                <LogoutButton />
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <AccountMenu
+              accountName={accountName}
+              email={session.user.email ?? ""}
+              isAdmin={isAdmin}
+            />
           ) : (
             <>
               <Button
