@@ -40,7 +40,6 @@ export function BulkMoveFlashcardsDialog({
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
   const [isPending, startTransition] = useTransition();
   const [decks, setDecks] = useState<DeckEntity[]>([]);
-  const _idsKey = ids.join(",");
   const form = useForm<BulkMoveFlashcardsForm>({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
     defaultValues: {

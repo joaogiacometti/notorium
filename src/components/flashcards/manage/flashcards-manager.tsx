@@ -2,7 +2,7 @@
 
 import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import { getFlashcardForManage } from "@/app/actions/flashcards";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
 import { LazyCreateFlashcardDialog as CreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
@@ -93,6 +93,10 @@ export function FlashcardsManager({
   });
   const isManageScopeLoading =
     managePageQuery.isFetching && managePageQuery.isPlaceholderData;
+  const singleMoveIds = useMemo(
+    () => (moveTarget ? [moveTarget.id] : null),
+    [moveTarget],
+  );
 
   const renderMainContent = () => {
     if (validationMode) {
@@ -239,9 +243,9 @@ export function FlashcardsManager({
           setBulkMoveOpen(false);
         }}
       />
-      {moveTarget && (
+      {moveTarget && singleMoveIds && (
         <BulkMoveFlashcardsDialog
-          ids={[moveTarget.id]}
+          ids={singleMoveIds}
           open
           onOpenChange={() => setMoveTarget(null)}
           onMoved={(movedIds) => {
