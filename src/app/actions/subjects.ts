@@ -58,6 +58,7 @@ export async function createSubject(
 
   if (result.success) {
     revalidatePath("/subjects");
+    revalidatePath("/subjects/archived");
   }
 
   return result;
@@ -93,6 +94,7 @@ export async function archiveSubject(
 
   if (result.success) {
     revalidatePath("/subjects");
+    revalidatePath("/subjects/archived");
   }
 
   return result;
@@ -110,6 +112,7 @@ export async function restoreSubject(
 
   if (result.success) {
     revalidatePath("/subjects");
+    revalidatePath("/subjects/archived");
   }
 
   return result;

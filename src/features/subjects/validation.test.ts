@@ -33,6 +33,12 @@ describe("createSubjectSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects whitespace-only name", () => {
+    const result = createSubjectSchema.safeParse({ name: "   " });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects name longer than max characters", () => {
     const result = createSubjectSchema.safeParse({
       name: "a".repeat(LIMITS.subjectNameMax + 1),
@@ -74,6 +80,15 @@ describe("editSubjectSchema", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("rejects whitespace-only edit name", () => {
+    const result = editSubjectSchema.safeParse({
+      id: "subject-1",
+      name: "   ",
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

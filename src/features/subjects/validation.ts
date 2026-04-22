@@ -5,6 +5,7 @@ import { validationMessage } from "@/lib/validations/validation-messages";
 export const createSubjectSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, validationMessage("Validation.subjects.nameRequired"))
     .max(
       LIMITS.subjectNameMax,
@@ -12,6 +13,7 @@ export const createSubjectSchema = z.object({
     ),
   description: z
     .string()
+    .trim()
     .max(
       LIMITS.subjectDescriptionMax,
       validationMessage("Validation.subjects.descriptionMaxLength"),
@@ -25,6 +27,7 @@ export const editSubjectSchema = z.object({
   id: z.string().min(1),
   name: z
     .string()
+    .trim()
     .min(1, validationMessage("Validation.subjects.nameRequired"))
     .max(
       LIMITS.subjectNameMax,
@@ -32,6 +35,7 @@ export const editSubjectSchema = z.object({
     ),
   description: z
     .string()
+    .trim()
     .max(
       LIMITS.subjectDescriptionMax,
       validationMessage("Validation.subjects.descriptionMaxLength"),

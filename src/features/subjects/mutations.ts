@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
 import {
-  countSubjectsForUser,
+  countTotalSubjectsForUser,
   getActiveSubjectRecordForUser,
   getArchivedSubjectRecordForUser,
   getSubjectRecordForUser,
@@ -31,8 +31,8 @@ function getSubjectMutationValues(
   values: Pick<CreateSubjectForm, "name" | "description">,
 ) {
   return {
-    name: values.name,
-    description: values.description ?? null,
+    name: values.name.trim(),
+    description: values.description?.trim() || null,
   };
 }
 
@@ -40,7 +40,7 @@ export async function createSubjectForUser(
   userId: string,
   data: CreateSubjectForm,
 ): Promise<SubjectMutationResult> {
-  const current = await countSubjectsForUser(userId);
+  const current = await countTotalSubjectsForUser(userId);
 
   if (current >= LIMITS.maxSubjects) {
     return actionError("limits.subjectLimit", {

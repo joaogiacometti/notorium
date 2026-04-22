@@ -101,3 +101,14 @@ export async function countSubjectsForUser(userId: string): Promise<number> {
 
   return result[0]?.total ?? 0;
 }
+
+export async function countTotalSubjectsForUser(
+  userId: string,
+): Promise<number> {
+  const result = await getDb()
+    .select({ total: count() })
+    .from(subject)
+    .where(eq(subject.userId, userId));
+
+  return result[0]?.total ?? 0;
+}

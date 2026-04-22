@@ -132,3 +132,72 @@ test("can delete a subject", async ({ page, e2eUser }) => {
     ).toHaveCount(0);
   });
 });
+
+test("can archive and restore a subject", async ({ page, e2eUser }) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const subjectName = getUniqueSubjectName("archive-restore");
+    const cleanupNames = [subjectName];
+
+    await clearUserSubjectsByNames(user.userId, cleanupNames);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
+
+    await createSubject(user.userId, subjectName, initialSubjectDescription);
+
+    await openSubjectDetailByName(page, subjectName);
+
+    await page.getByTestId("subject-detail-archive").click();
+    await page.getByTestId("confirm-archive-subject").click();
+
+    await page.waitForURL("**/subjects");
+    await expect(
+      page.getByTestId("subject-card").filter({ hasText: subjectName }),
+    ).toHaveCount(0);
+
+    await page.goto("/subjects/archived");
+    const archivedCard = page.getByText(subjectName, { exact: true });
+    await expect(archivedCard).toBeVisible();
+
+    await page.getByRole("button", { name: "Restore" }).click();
+
+    await expect(archivedCard).toHaveCount(0);
+
+    await page.goto("/subjects");
+    await expect(
+      page.getByTestId("subject-card").filter({ hasText: subjectName }),
+    ).toHaveCount(1);
+  });
+});
+
+test("can delete an archived subject from the archived page", async ({
+  page,
+  e2eUser,
+}) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const subjectName = getUniqueSubjectName("archived-delete");
+    const cleanupNames = [subjectName];
+
+    await clearUserSubjectsByNames(user.userId, cleanupNames);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
+
+    await createSubject(user.userId, subjectName, initialSubjectDescription);
+
+    await openSubjectDetailByName(page, subjectName);
+    await page.getByTestId("subject-detail-archive").click();
+    await page.getByTestId("confirm-archive-subject").click();
+    await page.waitForURL("**/subjects");
+
+    await page.goto("/subjects/archived");
+    const archivedCard = page.getByText(subjectName, { exact: true });
+
+    await expect(archivedCard).toBeVisible();
+    await page.getByRole("button", { name: "Delete" }).click();
+    await page.getByTestId("confirm-delete-subject").click();
+
+    await expect(archivedCard).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "No archived subjects" }),
+    ).toBeVisible();
+  });
+});
