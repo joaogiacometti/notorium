@@ -2,7 +2,7 @@
 
 import { ChevronDown, Shield, User } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useState } from "react";
 import { LogoutButton } from "@/components/navbar/logout-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,9 @@ const triggerClassName =
 function AccountMenuTrigger({
   accountName,
   disabled = false,
-}: Readonly<{ accountName: string; disabled?: boolean }>) {
+  ...rest
+}: Readonly<{ accountName: string; disabled?: boolean }> &
+  ComponentProps<typeof Button>) {
   return (
     <Button
       variant="ghost"
@@ -34,6 +36,7 @@ function AccountMenuTrigger({
       data-testid="account-menu-trigger"
       className={triggerClassName}
       disabled={disabled}
+      {...rest}
     >
       <User className="size-4 shrink-0" />
       <span className="truncate">{accountName}</span>
