@@ -1,284 +1,191 @@
-# Notorium — Agent Instructions
+# Notorium Agent Guide
 
-## Documentation Ownership
+This file is for agents. Keep it short, direct, imperative, and focused on what prevents mistakes.
 
-| File        | Owns                                                                            |
-| ----------- | ------------------------------------------------------------------------------- |
-| `SPEC.md`   | Product behavior, UX rules, feature constraints, acceptance criteria            |
-| `README.md` | Setup, runtime, local development, commands, environment                        |
-| `AGENTS.md` | Coding rules, architecture guidance, testing expectations, contributor workflow |
+## Project Facts
 
-When behavior changes → update `SPEC.md`. When setup/commands change → update `README.md`. When engineering rules change → update `AGENTS.md`. Never duplicate detailed feature behavior across files.
+- Stack: Next.js App Router, React, TypeScript, Drizzle ORM, Better Auth, Zod, React Hook Form, shadcn/ui, Tailwind CSS 4, Biome, Bun, PostgreSQL, Redis.
+- Use Bun. Do not use npm.
+- Format and lint with Biome.
+- `SPEC.md` is the product behavior source of truth.
+- `README.md` owns setup, runtime commands, and high-level architecture.
+- `docs/` owns narrow setup, operations, and historical planning notes.
 
-Operational and setup sub-guides live under `docs/`. Keep `README.md` as the entrypoint and move narrow operational detail into the relevant guide instead of expanding root docs.
+## Code Style
 
-## Project Structure
+- Functions: 4-20 lines. Split if longer.
+- Files: under 500 lines. Split by responsibility.
+- One thing per function, one responsibility per module.
+- Names: specific and unique. Avoid `data`, `handler`, `Manager`, and other vague names.
+- Prefer names that return fewer than 5 grep hits in the codebase.
+- Types: explicit. No `any`, no broad `Dict` aliases, no untyped functions.
+- No code duplication. Extract shared logic into a function or module.
+- Use early returns over nested conditionals.
+- Keep indentation to 2 levels maximum.
+- Exception messages must include the offending value and expected shape.
+- No `console.log` in production code.
+
+## Comments
+
+- Keep existing comments during refactors. They carry intent and provenance.
+- Write WHY, not WHAT. Skip comments like `// increment counter` above `i++`.
+- Public/exported functions need docstrings with intent and one usage example.
+- Reference issue numbers or commit SHAs when code exists because of a specific bug or upstream constraint.
+
+## Tests
+
+- Tests run with one command: `bun run test`.
+- Every new function gets a test.
+- Bug fixes get a regression test.
+- Mock external I/O, APIs, DB, and filesystem with named fake classes or helpers, not inline stubs.
+- Tests must be F.I.R.S.T: fast, independent, repeatable, self-validating, timely.
+- Keep Vitest tests next to source with `.test.ts` or `.test.tsx`.
+- Add Playwright coverage only for critical user workflows: navigation, auth/permissions, writes, persistence, destructive actions, or cross-page flow integrity.
+- Do not add Playwright tests for presentation-only changes unless explicitly requested.
+
+## Dependencies
+
+- Inject dependencies through parameters or constructors where practical.
+- Wrap external services and volatile third-party APIs behind thin project-owned interfaces.
+- Direct imports are fine for stable framework and utility libraries: React, Next.js, shadcn/ui, Drizzle query helpers, Zod, date-fns, and local UI primitives.
+
+## Structure
+
+- Follow Next.js App Router conventions.
+- Prefer small focused modules over god files.
+- Use predictable paths.
+- Feature folders live in `src/features/[feature-name]/`.
+- Components live in `src/components/[feature-name]/` or `src/components/shared/`.
+- shadcn primitives live in `src/components/ui/`; do not edit them manually.
+
+Standard feature shape:
 
 ```text
-src/
-├── api/              API route handlers (Better Auth)
-├── app/              Next.js App Router pages and layouts
-│   ├── (app)/        Authenticated route group
-│   ├── actions/      Server Actions
-│   ├── api/          App Router API routes
-│   ├── login/        Login page
-│   ├── signup/       Signup page
-│   ├── globals.css   Global styles (Tailwind)
-│   ├── layout.tsx    Root layout
-│   ├── page.tsx      Landing page
-│   └── not-found.tsx 404 page
-├── components/       Feature-first UI components
-│   ├── ui/           shadcn/ui primitives (do not edit manually)
-│   ├── navbar/       Global navigation, search, theme, preferences
-│   ├── shared/       Cross-feature shared components and editors
-│   ├── auth/         Login and signup forms
-│   └── ...           Feature folders (subjects, notes, flashcards, etc.)
-├── features/         Feature-scoped queries, mappers, business logic
-├── db/               Database layer
-│   ├── index.ts      Drizzle client instance
-│   └── schema.ts     Drizzle schema definitions
-├── lib/              Cross-feature infrastructure
-│   ├── auth/         Better Auth config, client, access control
-│   ├── server/       Server action helpers, contracts, revalidation
-│   ├── editor/       Rich-text and editor helpers
-│   ├── dates/        Calendar/date helpers
-│   ├── validations/  Shared validation utilities and boundary schemas
-│   ├── rate-limit/   Rate limiting utilities
-│   ├── ai/           AI integration helpers
-│   ├── theme.ts      Theme management
-│   └── utils.ts      General utilities
-└── env.ts            Environment variable validation
+features/[feature-name]/
+  queries.ts
+  mutations.ts
+  validation.ts
+  mappers.ts
+  types.ts
+  utils.ts
+  constants.ts
 ```
 
-## Tech Stack
+Only add optional files when they are needed.
 
-Next.js · React · TypeScript · Drizzle ORM · Better Auth · Zod · React Hook Form · shadcn/ui · Biome · Bun · PostgreSQL · Redis
+## Next.js Boundaries
 
-## Coding Rules
+- Use Server Components by default.
+- Add `"use client"` only when browser state, effects, or event handlers are required.
+- Server Actions in `src/app/actions/` are the only client-callable server boundary.
+- Client Components call server code only through Server Actions.
+- Server Components read from `src/features/*` directly.
+- Do not call Server Actions from Server Components.
+- Keep Server Actions thin: authenticate, validate, delegate, revalidate, return typed result.
+- `src/app/actions/*` must not import `@/db/index` directly unless the exception is documented.
+- Keep read logic in `src/features/*/queries.ts`.
+- Keep write logic in `src/features/*/mutations.ts`.
+- Keep validation schemas in `src/features/*/validation.ts` or `src/lib/validations/*`.
+- Every `page.tsx` needs a matching `loading.tsx` that mirrors the page layout.
+- `/planning` is the canonical planning route. Do not add aliases like `/assessments` or `/calendar`.
 
-### General
+## Results and Errors
 
-- No comments. No `console.log` in production.
-- TypeScript strict mode. No `any`.
-- Use Bun, never npm.
+- Server Actions must return typed results, never throw to the client.
+- Use this result shape: `{ success: true, data } | { success: false, error: string }`.
+- Validate inputs with Zod before DB access.
+- Return validation error results on invalid input.
+- Do not expose internal errors, stack traces, SQL errors, provider errors, or secrets to clients.
 
-### Next.js Patterns
+## Auth and Security
 
-- Use Server Components by default. Add `"use client"` only when required.
-- Server Actions in `src/app/actions/` are the only client-callable server boundary (reads and writes).
-- Keep queries in `src/features/*/queries.ts`, write-side logic in `src/features/*/mutations.ts`.
-- Server Components read from `src/features/*` directly — never through `src/app/actions/*`.
-- Keep Server Actions thin: authenticate → validate → delegate → revalidate → return typed result.
-- `src/app/actions/*` must not import `@/db/index` directly unless explicitly documented.
-- Client Components call server code only through `src/app/actions/*`.
-- Use `@/` alias imports.
-- Every `page.tsx` must have a matching `loading.tsx` that mirrors the page layout structure. Keep them in sync when layout changes.
-- `/planning` is the canonical route for planning views. Do not add aliases like `/assessments` or `/calendar`.
+- Server auth uses `auth.api.getSession()` from `src/lib/auth/auth.ts`.
+- Always check authentication and approved access status.
+- Always filter user-owned data by `userId`.
+- Admin mutations stay server-only.
+- Secrets stay server-only, encrypted at rest when stored, and are never returned after save.
+- Exports must exclude auth/session/account tables and secret fields.
+- Never expose secrets in errors, logs, fixtures, tests, or messages.
 
-### Error Handling
-
-- Server Actions must return typed results — never throw to the client.
-- Use a consistent result shape: `{ success: true, data } | { success: false, error: string }`.
-- Validate inputs with Zod before any DB access; return a validation error result on failure.
-- Do not expose internal error messages, stack traces, or DB errors in the returned error string.
-
-### React Compiler
-
-- Treat React Compiler as enabled. Do not use `useCallback`, `useMemo`, or `memo` by default.
-- Use manual memoization only when required for correctness; state the reason in the change summary.
-
-### Performance
-
-- Avoid unnecessary client components.
-- Avoid over-fetching (select only required fields).
-- Prefer server-side data composition over client aggregation.
-
-### Database
+## Database
 
 - Define tables in `src/db/schema.ts` with Drizzle `pgTable` and `relations()`.
-- Use `text` type for IDs. Include `createdAt` and `updatedAt` on every table.
+- Use `text` IDs.
+- Include `createdAt` and `updatedAt` on every table.
 - Use `onDelete: "cascade"` where appropriate.
+- Preserve backward compatibility unless the user explicitly approves a breaking change.
+- Keep migrations safe to run in production.
 - Never manually edit `drizzle/*.sql` or `drizzle/meta/*`.
-- For schema changes, instruct user to run `bun run db:generate` and `bun run db:migrate`.
+- For schema changes, tell the user to run `bun run db:generate` and `bun run db:migrate`.
 
-### Schema & Feature Changes
+## Validation
 
-- Backward compatibility must be preserved unless explicitly approved.
-- Migrations must be safe to run in production.
-
-### Validation
-
-- Define Zod schemas for forms and Server Actions. Use `@hookform/resolvers/zod` with React Hook Form.
+- Define Zod schemas for forms and Server Actions.
 - Validate on both client and server.
+- Use `@hookform/resolvers/zod` with React Hook Form.
+- Export matching TypeScript types with `z.infer<>`.
+- Do not duplicate validation schemas.
 
-### Anti-patterns
+## React
 
-- ❌ Calling DB from components
-- ❌ Business logic inside Server Actions
-- ❌ Duplicating validation schemas
+- Treat React Compiler as enabled.
+- Do not use `useCallback`, `useMemo`, or `memo` by default.
+- Use manual memoization only when required for correctness and state the reason in the change summary.
+- Avoid unnecessary client components.
+- Avoid over-fetching. Select only required fields.
+- Prefer server-side data composition over client aggregation.
 
-### Components
+## Components
 
-- Use shadcn/ui primitives from `src/components/ui/`. Do not modify. Add missing primitives before use.
 - Keep components focused and single-purpose.
-- For async actions: disable button, show spinner, use pending label. Reuse `async-button-content.tsx`.
-- Remove unreachable code immediately. No speculative scaffolding.
-
-### Authentication
-
-- Server: `auth.api.getSession()` from `src/lib/auth/auth.ts`.
-- Client: keep auth flows server-first; add a dedicated client auth entrypoint only when an explicit client-side auth requirement exists.
-- Always check auth and filter by `userId`. Enforce approved status. Admin mutations server-only.
-
-### Sensitive Data
-
-- Secrets stay server-only, encrypted at rest, never returned after save.
-- Exports exclude auth/session/account tables and secret fields.
-- Never expose secrets in errors, logs, fixtures, or messages.
+- Component file order: types, main component, helpers.
+- Props type name: `[ComponentName]Props`.
+- Use named exports except for Next.js pages and layouts.
+- For async actions, disable the button, show a spinner, and use a pending label.
+- Reuse `async-button-content.tsx` for async button content.
+- Remove unreachable code immediately.
+- Do not add speculative scaffolding.
 
 ## Styling
 
-Use Tailwind CSS 4. Use `cn()` from `src/lib/utils.ts` for conditional class merging.
-
-### Color Theming — BUSINESS CRITICAL
-
-**Never use hardcoded Tailwind color classes.** All UI colors must use CSS variables so they respect the user's chosen theme.
+- Use Tailwind CSS 4.
+- Use `cn()` from `src/lib/utils.ts` for conditional classes.
+- Never use hardcoded Tailwind color classes.
+- All UI colors must use CSS variables so user themes work.
 
 ```tsx
-// ❌ Wrong
-className = "bg-red-500 text-yellow-600 border-orange-500/60";
-
-// ✅ Correct
 className =
   "bg-(--status-danger-fill) text-(--assessment-exam-text) border-(--status-warning-border)";
 ```
 
-**Available theme variables** (defined in `src/app/globals.css`):
+- For SVGs, use `stroke="currentColor"` and a theme variable text class.
+- Use semantic variables from `src/app/globals.css`: `--primary`, `--secondary`, `--accent`, `--destructive`, `--muted`, `--background`, `--foreground`, `--border`.
+- Use status variables for assessment, danger, warning, success, and chart colors.
 
-| Group        | Variables                                                                                                      |
-| ------------ | -------------------------------------------------------------------------------------------------------------- |
-| Assessment   | `--assessment-exam-border`, `--assessment-exam-bg`, `--assessment-exam-text`                                   |
-| Danger/Again | `--status-danger-border`, `--status-danger-bg`, `--status-danger-text`, `--status-danger-fill`                 |
-| Warning/Hard | `--status-warning-border`, `--status-warning-bg`, `--status-warning-text`, `--status-warning-fill`             |
-| Success/Easy | `--status-success-border`, `--status-success-bg`, `--status-success-text`, `--status-success-fill`             |
-| Charts       | `--chart-1` through `--chart-5`                                                                                |
-| Semantic     | `--primary`, `--secondary`, `--accent`, `--destructive`, `--muted`, `--background`, `--foreground`, `--border` |
+## Formatting
 
-Usage: `bg-[var(--x)]`, `text-[var(--x)]`, `border-[var(--x)]`, `bg-[var(--x)]/90`. For SVG: `stroke="currentColor"` with `className="text-[var(--x)]"`.
+- Use Biome. Do not discuss formatting style beyond the formatter.
+- Keep files kebab-case.
+- Functions use camelCase.
+- Components and types use PascalCase.
+- True constants use UPPER_SNAKE_CASE.
+- Config objects use camelCase.
+- Use `@/` alias imports.
 
-## Testing
+## Logging
 
-### Unit & Integration (Vitest)
+- Use structured JSON when logging for debugging or observability.
+- Use plain text only for user-facing CLI output.
+- Include named fields that make failures filterable and correlatable.
+- Do not log secrets, tokens, cookies, raw auth payloads, or private user content.
 
-- Test files next to source with `.test.ts` suffix.
-- Test behavior and edge cases, not constants or implementation.
-- Don't test Server Actions, queries, mutations directly.
-- Zod tests must reject invalid inputs.
-- Add regression tests for auth/AI/account changes.
-- Put limit/quota enforcement tests here (subject, note, assessment, flashcard, deck limits).
+## Definition of Done
 
-### TDD Cycle
-
-1. **Red** — Write failing test.
-2. **Green** — Minimal code to pass.
-3. **Refactor** — Improve while keeping tests green.
-
-### E2E (Playwright)
-
-- Cover essential CRUD flows per feature.
-- Assert outcomes: behavior, permissions, persistence, errors.
-- Add or update E2E only when a change impacts a critical user workflow (navigation, auth/permissions, writes/persistence, destructive actions, or cross-page flow integrity).
-- Do not add E2E for presentation-only changes (labels, column visibility/copy tweaks, spacing, styling) unless the user explicitly requests E2E coverage for that change.
-- Use resilient selectors (`getByRole`, labels, test ids).
-- Parallel-safe with unique data and cleanup.
-- Do not add limit/quota tests in Playwright. Keep e2e focused on user flows; enforce limits with Vitest.
-
-### Definition of Done
-
-- Validated inputs (Zod)
-- Auth enforced
-- Revalidation implemented
-- No unused code
-- TDD cycle complete
-
-## File & Naming Conventions
-
-- **Files**: kebab-case for all files (`user-settings.ts`, `async-button.tsx`)
-- **Functions**: camelCase (`getUserById`, `calculateAverage`)
-- **Components**: PascalCase (`UserProfile`, `AsyncButton`)
-- **Types/Interfaces**: PascalCase, co-located with usage or in feature-level `types.ts`
-- **Constants**: UPPER_SNAKE_CASE for true constants, camelCase for config objects
-
-## Feature Module Structure
-
-Standard feature folder anatomy:
-
-```
-features/[feature-name]/
-  queries.ts       - read operations (called from Server Components)
-  mutations.ts     - write operations (called by Server Actions)
-  validation.ts    - feature-specific Zod schemas
-  mappers.ts       - data transformation (optional)
-  types.ts         - feature-specific types (optional)
-  utils.ts         - feature-specific helpers (optional)
-  constants.ts     - feature-specific constants (optional)
-```
-
-**Queries:**
-
-- Called directly from Server Components
-- Return domain objects, not raw DB rows
-- Use Drizzle queries with proper joins and filtering
-- Always filter by `userId` for user-owned data
-
-**Mutations:**
-
-- Called by Server Actions in `src/app/actions/`
-- Contain write-side business logic
-- Return success/error objects, never throw
-- Handle transactions when needed
-
-**Validation:**
-
-- Export Zod schemas for Server Action inputs
-- Schemas used with React Hook Form via `@hookform/resolvers/zod`
-- Must have matching TypeScript types via `z.infer<>`
-
-## Component Organization
-
-- **Structure:** Types → Main component → Helpers
-- **Props:** `[ComponentName]Props` pattern, export for reuse
-- **Exports:** Named exports (except Next.js pages/layouts)
-- **Size:** Split at >150 lines or when logic is reusable. Extract to same file first, separate only when shared.
-
-## Agent Behavior
-
-### Focus Areas
-
-AI agents should focus on:
-
-- **Coding** — Writing, modifying, and refactoring code
-- **Architecture** — Designing feature structure, choosing patterns, organizing modules **with the user**
-- **Documentation** — Updating `AGENTS.md`, `SPEC.md`, `README.md` when patterns change
-- **Suggestions** — Proposing improvements, identifying issues, recommending approaches
-
-### What NOT to Do
-
-**Do NOT run verification commands** — User handles these manually for token efficiency:
-
-- ❌ Do not run `bun run lint` or `bun run lint --fix`
-- ❌ Do not run `bun run test` (except for TDD, see below)
-- ❌ Do not run `bun run typecheck`
-- ❌ Do not run `bun run build`
-- ❌ Do not run `bun dev` to verify server starts
-
-**Exception:** When explicitly doing TDD, run specific test files (`bun run test [file]`) to verify the red-green-refactor cycle.
-
-### General Guidelines
-
-- Ask before assuming when a requirement is genuinely unclear.
-- Follow `SPEC.md` as the source of truth for product behavior.
-- Keep changes small and focused.
-- Follow existing commit message patterns.
-- Before finishing, verify new files and touched modules are reachable from active app code.
-- Call out intentionally unused code explicitly in the change summary with the reason it still exists.
+- Behavior matches `SPEC.md`.
+- Inputs are validated with Zod.
+- Auth and `userId` ownership are enforced.
+- Server Actions return typed results.
+- Revalidation is implemented where UI data changes.
+- Tests cover new functions and regressions.
+- New files and touched modules are reachable from active app code.
+- No unused code remains unless explicitly called out with a reason.

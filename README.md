@@ -4,6 +4,31 @@ Notorium is a private study management app for students. It combines subjects, n
 
 This README owns setup, local development, runtime commands, and environment guidance. Product behavior lives in `SPEC.md`. Engineering rules for contributors and agents live in `AGENTS.md`.
 
+## Architecture
+
+Notorium keeps framework entrypoints thin and pushes product logic into feature modules.
+
+```text
+src/
+├── app/                 Next.js App Router pages, layouts, API routes, and Server Actions
+│   ├── (app)/           Authenticated pages
+│   └── actions/         Client-callable server boundary
+├── components/          Feature UI, shared UI, navbar, auth forms, and shadcn primitives
+├── features/            Feature queries, mutations, validation, mappers, and domain helpers
+├── db/                  Drizzle schema and database client
+├── lib/                 Auth, server contracts, dates, editor, AI, email, rate limits, storage
+└── env.ts               Runtime environment validation
+```
+
+Primary flow:
+
+```text
+Server Component -> src/features/*/queries.ts -> Drizzle -> PostgreSQL
+Client Component -> src/app/actions/* -> validation/auth -> src/features/*/mutations.ts -> Drizzle
+```
+
+Cross-cutting services live behind project-owned helpers in `src/lib/`, including Better Auth, AI providers, email, media storage, and rate limiting.
+
 ## Quick Start
 
 The primary local development path is:
