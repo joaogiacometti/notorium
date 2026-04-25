@@ -1,8 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { note } from "@/db/schema";
-import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
-import { getRemovedAttachmentPathnames } from "@/features/attachments/utils";
+import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
 import {
   countNotesBySubjectForUser,
   getNoteByIdForUser,
@@ -81,11 +80,11 @@ export async function editNoteForUser(
     .set(getNoteMutationValues(data))
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 
-  const removedPathnames = getRemovedAttachmentPathnames(
+  await cleanupAttachmentsAfterMutation(
+    userId,
     [existing.content ?? ""],
     [data.content ?? ""],
   );
-  await cleanupAttachmentPathnames(userId, removedPathnames);
 
   return { success: true, subjectId: existing.subjectId };
 }
@@ -104,11 +103,7 @@ export async function deleteNoteForUser(
     .delete(note)
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 
-  const removedPathnames = getRemovedAttachmentPathnames(
-    [existing.content ?? ""],
-    [],
-  );
-  await cleanupAttachmentPathnames(userId, removedPathnames);
+  await cleanupAttachmentsAfterMutation(userId, [existing.content ?? ""], []);
 
   return { success: true, subjectId: existing.subjectId };
 }

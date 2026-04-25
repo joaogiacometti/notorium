@@ -30,6 +30,18 @@ import type { FlashcardsView } from "@/features/flashcards/view";
 import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import type { DeckTreeNode } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import {
+  filterDeckTree,
+  findDeckTreeNode,
+  getDeckAncestorIds,
+  getExpandedIdsForVisibleTree,
+  insertDeckTreeNode,
+  isDeckDescendant,
+  moveDeckTreeNode,
+  normalizeDeckTree,
+  removeDeckTreeNode,
+  updateDeckTreeNode,
+} from "@/lib/trees/deck-tree";
 import { cn } from "@/lib/utils";
 
 interface DeckTreeSidebarProps {
@@ -51,205 +63,6 @@ type DeleteDeckTarget = {
   name: string;
   flashcardCount: number;
 };
-
-function normalizeDeckTree(
-  nodes: DeckTreeNode[],
-  parentPath?: string,
-): DeckTreeNode[] {
-  return nodes.map((node) => {
-    const normalizedChildren = normalizeDeckTree(
-      node.children,
-      parentPath ? `${parentPath}::${node.name}` : node.name,
-    );
-    const previousChildCount = node.children.reduce(
-      (total, childNode) => total + childNode.flashcardCount,
-      0,
-    );
-    const directFlashcardCount = node.flashcardCount - previousChildCount;
-    const nextPath = parentPath ? `${parentPath}::${node.name}` : node.name;
-    const nextFlashcardCount =
-      directFlashcardCount +
-      normalizedChildren.reduce(
-        (total, childNode) => total + childNode.flashcardCount,
-        0,
-      );
-
-    return {
-      ...node,
-      children: normalizedChildren,
-      path: nextPath,
-      flashcardCount: nextFlashcardCount,
-    };
-  });
-}
-
-function updateDeckTreeNode(
-  nodes: DeckTreeNode[],
-  deckId: string,
-  updater: (node: DeckTreeNode) => DeckTreeNode,
-): DeckTreeNode[] {
-  return nodes.map((node) => {
-    const nextNode =
-      node.id === deckId
-        ? updater(node)
-        : {
-            ...node,
-          };
-
-    return {
-      ...nextNode,
-      children: updateDeckTreeNode(nextNode.children, deckId, updater),
-    };
-  });
-}
-
-function removeDeckTreeNode(
-  nodes: DeckTreeNode[],
-  deckId: string,
-): DeckTreeNode[] {
-  return nodes
-    .filter((node) => node.id !== deckId)
-    .map((node) => ({
-      ...node,
-      children: removeDeckTreeNode(node.children, deckId),
-    }));
-}
-
-function findDeckTreeNode(
-  nodes: DeckTreeNode[],
-  deckId: string,
-): DeckTreeNode | null {
-  for (const node of nodes) {
-    if (node.id === deckId) {
-      return node;
-    }
-
-    const childMatch = findDeckTreeNode(node.children, deckId);
-    if (childMatch) {
-      return childMatch;
-    }
-  }
-
-  return null;
-}
-
-function isDeckDescendant(
-  nodes: DeckTreeNode[],
-  ancestorId: string,
-  targetId: string,
-): boolean {
-  const ancestor = findDeckTreeNode(nodes, ancestorId);
-  if (!ancestor) {
-    return false;
-  }
-
-  return findDeckTreeNode(ancestor.children, targetId) !== null;
-}
-
-function extractDeckTreeNode(
-  nodes: DeckTreeNode[],
-  deckId: string,
-): {
-  nextNodes: DeckTreeNode[];
-  removedNode: DeckTreeNode | null;
-} {
-  let removedNode: DeckTreeNode | null = null;
-  const nextNodes: DeckTreeNode[] = [];
-
-  for (const node of nodes) {
-    if (node.id === deckId) {
-      removedNode = node;
-      continue;
-    }
-
-    const extractedChild = extractDeckTreeNode(node.children, deckId);
-    if (extractedChild.removedNode) {
-      removedNode = extractedChild.removedNode;
-      nextNodes.push({
-        ...node,
-        children: extractedChild.nextNodes,
-      });
-      continue;
-    }
-
-    nextNodes.push(node);
-  }
-
-  return {
-    nextNodes,
-    removedNode,
-  };
-}
-
-function sortDeckTreeNodes(nodes: DeckTreeNode[]): DeckTreeNode[] {
-  return [...nodes].sort((left, right) => left.name.localeCompare(right.name));
-}
-
-function insertDeckTreeNode(
-  nodes: DeckTreeNode[],
-  nodeToInsert: DeckTreeNode,
-  parentDeckId: string | null,
-): DeckTreeNode[] {
-  if (parentDeckId === null) {
-    return sortDeckTreeNodes([
-      ...nodes,
-      {
-        ...nodeToInsert,
-        parentDeckId: null,
-      },
-    ]);
-  }
-
-  return nodes.map((node) => {
-    if (node.id === parentDeckId) {
-      return {
-        ...node,
-        children: sortDeckTreeNodes([
-          ...node.children,
-          {
-            ...nodeToInsert,
-            parentDeckId,
-          },
-        ]),
-      };
-    }
-
-    return {
-      ...node,
-      children: insertDeckTreeNode(node.children, nodeToInsert, parentDeckId),
-    };
-  });
-}
-
-function moveDeckTreeNode(
-  nodes: DeckTreeNode[],
-  deckId: string,
-  parentDeckId: string | null,
-): DeckTreeNode[] {
-  const extracted = extractDeckTreeNode(nodes, deckId);
-  if (!extracted.removedNode) {
-    return nodes;
-  }
-
-  return normalizeDeckTree(
-    insertDeckTreeNode(
-      extracted.nextNodes,
-      extracted.removedNode,
-      parentDeckId,
-    ),
-  );
-}
-
-function buildDeckViewHref(view: FlashcardsView, deckId?: string) {
-  const params = new URLSearchParams();
-  params.set("view", view);
-
-  if (deckId) {
-    params.set("deckId", deckId);
-  }
-
-  return `/flashcards?${params.toString()}`;
-}
 
 interface DeckTreeNodeItemProps {
   node: DeckTreeNode;
@@ -281,58 +94,15 @@ function getTotalFlashcardsCount(nodes: DeckTreeNode[]): number {
   return nodes.reduce((total, node) => total + node.flashcardCount, 0);
 }
 
-function filterDeckTree(nodes: DeckTreeNode[], query: string): DeckTreeNode[] {
-  if (!query.trim()) {
-    return nodes;
-  }
-  const lowerQuery = query.toLowerCase();
-  return nodes
-    .map((node) => {
-      const filteredChildren = filterDeckTree(node.children, query);
-      if (
-        node.name.toLowerCase().includes(lowerQuery) ||
-        filteredChildren.length > 0
-      ) {
-        return { ...node, children: filteredChildren };
-      }
-      return null;
-    })
-    .filter((node): node is DeckTreeNode => node !== null);
-}
+function buildDeckViewHref(view: FlashcardsView, deckId?: string) {
+  const params = new URLSearchParams();
+  params.set("view", view);
 
-function getExpandedIdsForVisibleTree(nodes: DeckTreeNode[]): Set<string> {
-  const expandedIds = new Set<string>();
-
-  function visit(currentNodes: DeckTreeNode[]) {
-    for (const node of currentNodes) {
-      if (node.children.length > 0) {
-        expandedIds.add(node.id);
-        visit(node.children);
-      }
-    }
+  if (deckId) {
+    params.set("deckId", deckId);
   }
 
-  visit(nodes);
-
-  return expandedIds;
-}
-
-function getDeckAncestorIds(nodes: DeckTreeNode[], deckId: string): string[] {
-  for (const node of nodes) {
-    if (node.id === deckId) {
-      return [];
-    }
-
-    const childAncestors = getDeckAncestorIds(node.children, deckId);
-    if (
-      childAncestors.length > 0 ||
-      node.children.some((child) => child.id === deckId)
-    ) {
-      return [node.id, ...childAncestors];
-    }
-  }
-
-  return [];
+  return `/flashcards?${params.toString()}`;
 }
 
 interface DeckSidebarRowProps {

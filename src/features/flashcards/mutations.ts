@@ -1,8 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
-import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
-import { getRemovedAttachmentPathnames } from "@/features/attachments/utils";
+import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
 import { getDeckRecordForUser } from "@/features/decks/queries";
 import {
   generateFlashcardBackForUser,
@@ -176,11 +175,10 @@ export async function editFlashcardForUser(
     return actionError("flashcards.notFound");
   }
 
-  const removedPathnames = getRemovedAttachmentPathnames(
-    previousAttachmentValues,
-    [data.front, data.back],
-  );
-  await cleanupAttachmentPathnames(userId, removedPathnames);
+  await cleanupAttachmentsAfterMutation(userId, previousAttachmentValues, [
+    data.front,
+    data.back,
+  ]);
 
   return {
     success: true,
@@ -245,11 +243,11 @@ export async function deleteFlashcardForUser(
     .delete(flashcard)
     .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)));
 
-  const removedPathnames = getRemovedAttachmentPathnames(
+  await cleanupAttachmentsAfterMutation(
+    userId,
     [existingFlashcard.front, existingFlashcard.back],
     [],
   );
-  await cleanupAttachmentPathnames(userId, removedPathnames);
 
   return { success: true, id: data.id, deckId: existingFlashcard.deckId };
 }
@@ -272,11 +270,11 @@ export async function bulkDeleteFlashcardsForUser(
     .delete(flashcard)
     .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
-  const removedPathnames = getRemovedAttachmentPathnames(
+  await cleanupAttachmentsAfterMutation(
+    userId,
     ownedFlashcards.flatMap((flashcard) => [flashcard.front, flashcard.back]),
     [],
   );
-  await cleanupAttachmentPathnames(userId, removedPathnames);
 
   return {
     success: true,
