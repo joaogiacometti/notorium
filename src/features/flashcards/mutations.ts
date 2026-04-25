@@ -27,6 +27,7 @@ import type {
   ResetFlashcardForm,
 } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
+import { isUniqueViolationError } from "@/lib/db/errors";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import type {
   BulkDeleteFlashcardsResult,
@@ -41,6 +42,7 @@ import {
   type ActionErrorResult,
   actionError,
 } from "@/lib/server/server-action-errors";
+import { uniqueItems } from "@/lib/utils";
 
 export type DeleteFlashcardMutationResult =
   | {
@@ -49,26 +51,6 @@ export type DeleteFlashcardMutationResult =
       deckId: string;
     }
   | ActionErrorResult;
-
-function getUniqueDeckIds(deckIds: string[]): string[] {
-  return [...new Set(deckIds)];
-}
-
-function isUniqueViolationError(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) {
-    return false;
-  }
-
-  return (
-    "code" in error &&
-    (
-      error as {
-        code?: string;
-      }
-    ).code === "23505"
-  );
-}
-
 export async function createFlashcardForUser(
   userId: string,
   data: CreateFlashcardForm,
@@ -299,9 +281,7 @@ export async function bulkDeleteFlashcardsForUser(
   return {
     success: true,
     ids: data.ids,
-    deckIds: getUniqueDeckIds(
-      ownedFlashcards.map((flashcard) => flashcard.deckId),
-    ),
+    deckIds: uniqueItems(ownedFlashcards.map((flashcard) => flashcard.deckId)),
   };
 }
 
@@ -344,9 +324,7 @@ export async function bulkMoveFlashcardsForUser(
     success: true,
     ids: data.ids,
     deckId: data.deckId,
-    previousDeckIds: getUniqueDeckIds(
-      existingFlashcards.map((fc) => fc.deckId),
-    ),
+    previousDeckIds: uniqueItems(existingFlashcards.map((fc) => fc.deckId)),
   };
 }
 
@@ -383,7 +361,7 @@ export async function bulkResetFlashcardsForUser(
   return {
     success: true,
     ids: data.ids,
-    deckIds: getUniqueDeckIds(existingFlashcards.map((fc) => fc.deckId)),
+    deckIds: uniqueItems(existingFlashcards.map((fc) => fc.deckId)),
   };
 }
 

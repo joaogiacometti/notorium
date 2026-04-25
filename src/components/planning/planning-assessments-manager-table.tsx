@@ -16,7 +16,7 @@ import {
   ASSESSMENT_STATUS_LABEL,
   ASSESSMENT_STATUS_TONE_NAME,
   resolveAssessmentStatus,
-} from "@/features/assessments/status";
+} from "@/features/assessments/constants";
 import { formatDateShort, formatIsoDate } from "@/lib/dates/format";
 import { getAssessmentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";

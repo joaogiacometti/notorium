@@ -5,6 +5,11 @@ import {
   hasRichTextContent,
   richTextToPlainText,
 } from "@/lib/editor/rich-text";
+import {
+  bulkIdsSchema,
+  idSchema,
+  optionalBulkIdsSchema,
+} from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const flashcardFrontSchema = z
@@ -82,7 +87,7 @@ export type CreateFlashcardForm = z.infer<typeof createFlashcardSchema>;
 
 export const editFlashcardSchema = withFlashcardAttachmentLimit(
   z.object({
-    id: z.string().min(1),
+    id: idSchema,
     deckId: z
       .string()
       .min(1, validationMessage("Validation.flashcards.deckRequired")),
@@ -117,18 +122,13 @@ export type CheckFlashcardDuplicateForm = z.infer<
 export { hasRichTextContent } from "@/lib/editor/rich-text";
 
 export const deleteFlashcardSchema = z.object({
-  id: z.string().min(1),
+  id: idSchema,
 });
 
 export type DeleteFlashcardForm = z.infer<typeof deleteFlashcardSchema>;
 
-const bulkFlashcardIdsSchema = z
-  .array(z.string().min(1))
-  .min(1)
-  .refine((ids) => new Set(ids).size === ids.length);
-
 export const bulkDeleteFlashcardsSchema = z.object({
-  ids: bulkFlashcardIdsSchema,
+  ids: bulkIdsSchema,
 });
 
 export type BulkDeleteFlashcardsForm = z.infer<
@@ -136,13 +136,13 @@ export type BulkDeleteFlashcardsForm = z.infer<
 >;
 
 export const bulkResetFlashcardsSchema = z.object({
-  ids: bulkFlashcardIdsSchema,
+  ids: bulkIdsSchema,
 });
 
 export type BulkResetFlashcardsForm = z.infer<typeof bulkResetFlashcardsSchema>;
 
 export const bulkMoveFlashcardsSchema = z.object({
-  ids: bulkFlashcardIdsSchema,
+  ids: bulkIdsSchema,
   deckId: z
     .string()
     .min(1, validationMessage("Validation.flashcards.deckRequired")),
@@ -151,7 +151,7 @@ export const bulkMoveFlashcardsSchema = z.object({
 export type BulkMoveFlashcardsForm = z.infer<typeof bulkMoveFlashcardsSchema>;
 
 export const resetFlashcardSchema = z.object({
-  id: z.string().min(1),
+  id: idSchema,
 });
 
 export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;
@@ -164,8 +164,8 @@ export const flashcardsManageQuerySchema = z.object({
     .min(LIMITS.pageSizeMin)
     .max(LIMITS.pageSizeMax)
     .default(25),
-  deckId: z.string().min(1).optional(),
-  deckIds: z.array(z.string().min(1)).optional(),
+  deckId: idSchema.optional(),
+  deckIds: optionalBulkIdsSchema,
   search: z.string().trim().max(LIMITS.searchQueryMax).optional(),
 });
 

@@ -7,6 +7,7 @@ import {
   planningAssessmentTypeFilterValues,
 } from "@/features/assessments/constants";
 import { LIMITS } from "@/lib/config/limits";
+import { bulkIdsSchema, idSchema } from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const assessmentTypeSchema = z.enum(assessmentTypeValues);
@@ -90,18 +91,13 @@ export type EditAssessmentForm = z.infer<typeof editAssessmentSchema>;
 export type EditAssessmentFormInput = z.input<typeof editAssessmentSchema>;
 
 export const deleteAssessmentSchema = z.object({
-  id: z.string().min(1),
+  id: idSchema,
 });
 
 export type DeleteAssessmentForm = z.infer<typeof deleteAssessmentSchema>;
 
-const bulkAssessmentIdsSchema = z
-  .array(z.string().min(1))
-  .min(1)
-  .refine((ids) => new Set(ids).size === ids.length);
-
 export const bulkDeleteAssessmentsSchema = z.object({
-  ids: bulkAssessmentIdsSchema,
+  ids: bulkIdsSchema,
 });
 
 export type BulkDeleteAssessmentsForm = z.infer<
@@ -109,7 +105,7 @@ export type BulkDeleteAssessmentsForm = z.infer<
 >;
 
 export const bulkUpdateAssessmentStatusSchema = z.object({
-  ids: bulkAssessmentIdsSchema,
+  ids: bulkIdsSchema,
   status: assessmentStatusSchema,
 });
 

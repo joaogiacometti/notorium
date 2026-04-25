@@ -19,12 +19,12 @@ import { SubjectBadge } from "@/components/shared/subject-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
-import { getAssessmentTypeLabel } from "@/features/assessments/constants";
 import {
   ASSESSMENT_STATUS_LABEL,
   ASSESSMENT_STATUS_TONE,
+  getAssessmentTypeLabel,
   resolveAssessmentStatus,
-} from "@/features/assessments/status";
+} from "@/features/assessments/constants";
 import {
   formatIsoDate,
   formatRelativeTime,

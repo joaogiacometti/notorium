@@ -24,6 +24,7 @@ import type {
 } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { actionError } from "@/lib/server/server-action-errors";
+import { uniqueItems } from "@/lib/utils";
 
 export type CreateAssessmentMutationResult =
   | {
@@ -48,7 +49,7 @@ export type DeleteAssessmentMutationResult =
   | ActionErrorResult;
 
 function getUniqueSubjectIds(records: Array<{ subjectId: string }>) {
-  return Array.from(new Set(records.map((record) => record.subjectId)));
+  return uniqueItems(records.map((record) => record.subjectId));
 }
 
 function getAssessmentMutationValues(
