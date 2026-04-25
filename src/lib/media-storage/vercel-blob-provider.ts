@@ -39,64 +39,88 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     return env.BLOB_READ_WRITE_TOKEN;
   }
 
-  return {
-    async uploadImage(input: UploadImageInput): Promise<UploadImageResult> {
-      const result = await put(buildPath(input), Buffer.from(input.bytes), {
-        access: "private",
-        addRandomSuffix: false,
-        contentType: input.mimeType,
+  async function uploadFile(
+    input: UploadImageInput,
+  ): Promise<UploadImageResult> {
+    const result = await put(buildPath(input), Buffer.from(input.bytes), {
+      access: "private",
+      addRandomSuffix: false,
+      contentType: input.mimeType,
+      token: getBlobToken(),
+    });
+
+    return {
+      url: result.url,
+      pathname: result.pathname,
+    };
+  }
+
+  async function readFile(
+    input: ReadImageInput,
+  ): Promise<ReadImageResult | null> {
+    const result = await get(input.pathname, {
+      access: "private",
+      token: getBlobToken(),
+    });
+
+    if (!result || result.statusCode !== 200 || !result.blob.contentType) {
+      return null;
+    }
+
+    return {
+      stream: result.stream,
+      contentType: result.blob.contentType,
+      contentDisposition: result.blob.contentDisposition,
+      cacheControl: result.blob.cacheControl,
+      etag: result.blob.etag,
+      size: result.blob.size,
+    };
+  }
+
+  async function deleteFiles(input: DeleteImagesInput): Promise<void> {
+    if (input.pathnames.length === 0) {
+      return;
+    }
+
+    await del(input.pathnames, {
+      token: getBlobToken(),
+    });
+  }
+
+  async function listFilePathnames(input: ListImagesInput): Promise<string[]> {
+    const pathnames: string[] = [];
+    let cursor: string | undefined;
+
+    do {
+      const result = await list({
         token: getBlobToken(),
+        prefix: input.prefix,
+        cursor,
       });
 
-      return {
-        url: result.url,
-        pathname: result.pathname,
-      };
+      pathnames.push(...result.blobs.map((blob) => blob.pathname));
+      cursor = result.hasMore ? result.cursor : undefined;
+    } while (cursor);
+
+    return pathnames;
+  }
+
+  return {
+    uploadFile,
+    readFile,
+    deleteFiles,
+    listFilePathnames,
+    async uploadImage(input: UploadImageInput): Promise<UploadImageResult> {
+      return uploadFile(input);
     },
     async readImage(input: ReadImageInput): Promise<ReadImageResult | null> {
-      const result = await get(input.pathname, {
-        access: "private",
-        token: getBlobToken(),
-      });
-
-      if (!result || result.statusCode !== 200 || !result.blob.contentType) {
-        return null;
-      }
-
-      return {
-        stream: result.stream,
-        contentType: result.blob.contentType,
-        contentDisposition: result.blob.contentDisposition,
-        cacheControl: result.blob.cacheControl,
-        etag: result.blob.etag,
-        size: result.blob.size,
-      };
+      return readFile(input);
     },
     async deleteImages(input: DeleteImagesInput): Promise<void> {
-      if (input.pathnames.length === 0) {
-        return;
-      }
-
-      await del(input.pathnames, {
-        token: getBlobToken(),
-      });
+      return deleteFiles(input);
     },
     async listImagePathnames(input: ListImagesInput): Promise<string[]> {
-      const pathnames: string[] = [];
-      let cursor: string | undefined;
-
-      do {
-        const result = await list({
-          token: getBlobToken(),
-          prefix: input.prefix,
-          cursor,
-        });
-
-        pathnames.push(...result.blobs.map((blob) => blob.pathname));
-        cursor = result.hasMore ? result.cursor : undefined;
-      } while (cursor);
-
-      return pathnames;
+      return listFilePathnames(input);
     },
   };
 }

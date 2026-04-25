@@ -1,5 +1,8 @@
 import { headers } from "next/headers";
-import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
+import {
+  cleanupAttachmentPathnames,
+  listAccountAttachmentPathnames,
+} from "@/features/attachments/cleanup";
 import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import {
@@ -16,14 +19,10 @@ export async function deleteAccountForUser(): Promise<AccountMutationResult> {
 
   if (provider) {
     try {
-      attachmentPathnames = (
-        await Promise.all([
-          provider.listImagePathnames({ prefix: `notorium/notes/${userId}/` }),
-          provider.listImagePathnames({
-            prefix: `notorium/flashcards/${userId}/`,
-          }),
-        ])
-      ).flat();
+      attachmentPathnames = await listAccountAttachmentPathnames(
+        provider,
+        userId,
+      );
     } catch {}
   }
 

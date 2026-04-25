@@ -3,6 +3,7 @@ import { and, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { PlanningAssessmentsQueryInput } from "@/features/assessments/validation";
+import { getAssessmentAttachmentsForUser } from "@/features/attachments/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
@@ -126,7 +127,17 @@ export async function getAssessmentDetailForUser(
     )
     .limit(1);
 
-  return results[0] ?? null;
+  const detail = results[0];
+  if (!detail) {
+    return null;
+  }
+
+  const attachments = await getAssessmentAttachmentsForUser(
+    userId,
+    assessmentId,
+  );
+
+  return { ...detail, attachments };
 }
 
 function getPlanningAssessmentOrderBy(

@@ -90,6 +90,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} notes per subject.`,
   "limits.attachmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} attachments per item.`,
+  "limits.assessmentAttachmentLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} attachments per assessment.`,
   "limits.attachmentSizeLimit": (params) =>
     `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.assessmentLimit": (params) =>

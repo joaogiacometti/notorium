@@ -4,7 +4,47 @@ import { LIMITS } from "@/lib/config/limits";
 const consumeUserDailyRateLimitMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
 const uploadImageMock = vi.fn();
+const uploadFileMock = vi.fn();
+const deleteFilesMock = vi.fn();
 const readImageMock = vi.fn();
+const insertReturningMock = vi.fn();
+const insertValuesMock = vi.fn(() => ({ returning: insertReturningMock }));
+const insertMock = vi.fn(() => ({ values: insertValuesMock }));
+const deleteWhereMock = vi.fn();
+const deleteMock = vi.fn(() => ({ where: deleteWhereMock }));
+const getAssessmentRecordForUserMock = vi.fn();
+const countAssessmentAttachmentsForUserMock = vi.fn();
+const getAssessmentAttachmentForUserMock = vi.fn();
+const andMock = vi.fn((...conditions) => conditions);
+const eqMock = vi.fn((column, value) => ({ column, value }));
+
+vi.mock("@/db/index", () => ({
+  getDb: () => ({
+    insert: insertMock,
+    delete: deleteMock,
+  }),
+}));
+
+vi.mock("drizzle-orm", () => ({
+  and: andMock,
+  eq: eqMock,
+}));
+
+vi.mock("@/db/schema", () => ({
+  assessmentAttachment: {
+    id: "assessment_attachment_id_column",
+    userId: "assessment_attachment_user_id_column",
+  },
+}));
+
+vi.mock("@/features/assessments/queries", () => ({
+  getAssessmentRecordForUser: getAssessmentRecordForUserMock,
+}));
+
+vi.mock("@/features/attachments/queries", () => ({
+  countAssessmentAttachmentsForUser: countAssessmentAttachmentsForUserMock,
+  getAssessmentAttachmentForUser: getAssessmentAttachmentForUserMock,
+}));
 
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
   consumeUserDailyRateLimit: consumeUserDailyRateLimitMock,
@@ -40,7 +80,9 @@ describe("uploadEditorImageForUser", () => {
     }));
 
     getMediaStorageProviderMock.mockResolvedValue({
+      uploadFile: uploadFileMock,
       uploadImage: uploadImageMock,
+      deleteFiles: deleteFilesMock,
       readImage: readImageMock,
     });
   });
@@ -184,5 +226,174 @@ describe("uploadEditorImageForUser", () => {
       mimeType: "image/png",
       bytes: expect.any(Uint8Array),
     });
+  });
+});
+
+function createValidAssessmentAttachmentPayload(
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    assessmentId: "assessment-1",
+    fileName: "rubric.pdf",
+    mimeType: "application/pdf",
+    dataBase64: Buffer.from("rubric").toString("base64"),
+    ...overrides,
+  };
+}
+
+describe("uploadAssessmentAttachmentForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getAssessmentRecordForUserMock.mockResolvedValue({
+      id: "assessment-1",
+      subjectId: "subject-1",
+    });
+    countAssessmentAttachmentsForUserMock.mockResolvedValue(0);
+    consumeUserDailyRateLimitMock.mockResolvedValue({
+      limited: false,
+      remaining: LIMITS.attachmentUploadRateLimitPerDay - 1,
+      resetAt: "2026-04-13T00:00:00.000Z",
+    });
+    uploadFileMock.mockResolvedValue({
+      url: "https://blob.vercel-storage.com/notorium/rubric.pdf",
+      pathname: "notorium/assessments/user-1/rubric.pdf",
+    });
+    insertReturningMock.mockResolvedValue([
+      {
+        id: "attachment-1",
+        assessmentId: "assessment-1",
+        userId: "user-1",
+        fileName: "rubric.pdf",
+        blobPathname: "notorium/assessments/user-1/rubric.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 6,
+      },
+    ]);
+    deleteFilesMock.mockResolvedValue(undefined);
+    getMediaStorageProviderMock.mockResolvedValue({
+      uploadFile: uploadFileMock,
+      uploadImage: uploadImageMock,
+      deleteFiles: deleteFilesMock,
+      readImage: readImageMock,
+    });
+  });
+
+  it("rejects unsupported assessment file types", async () => {
+    const { uploadAssessmentAttachmentForUser } = await import(
+      "@/features/attachments/mutations"
+    );
+
+    const result = await uploadAssessmentAttachmentForUser(
+      "user-1",
+      createValidAssessmentAttachmentPayload({
+        mimeType: "application/x-msdownload",
+      }),
+    );
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "attachments.mimeTypeNotAllowed",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+    expect(uploadFileMock).not.toHaveBeenCalled();
+  });
+
+  it("uploads a supported assessment file and records metadata", async () => {
+    const { uploadAssessmentAttachmentForUser } = await import(
+      "@/features/attachments/mutations"
+    );
+
+    const result = await uploadAssessmentAttachmentForUser(
+      "user-1",
+      createValidAssessmentAttachmentPayload(),
+    );
+
+    expect(result).toEqual({
+      success: true,
+      attachment: expect.objectContaining({
+        id: "attachment-1",
+        blobPathname: "notorium/assessments/user-1/rubric.pdf",
+      }),
+    });
+    expect(uploadFileMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      context: "assessments",
+      fileName: "rubric.pdf",
+      mimeType: "application/pdf",
+      bytes: expect.any(Uint8Array),
+    });
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      assessmentId: "assessment-1",
+      userId: "user-1",
+      fileName: "rubric.pdf",
+      blobPathname: "notorium/assessments/user-1/rubric.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 6,
+    });
+  });
+});
+
+describe("deleteAssessmentAttachmentForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getAssessmentAttachmentForUserMock.mockResolvedValue({
+      id: "attachment-1",
+      assessmentId: "assessment-1",
+      userId: "user-1",
+      fileName: "rubric.pdf",
+      blobPathname: "notorium/assessments/user-1/rubric.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 6,
+    });
+    deleteFilesMock.mockResolvedValue(undefined);
+    getMediaStorageProviderMock.mockResolvedValue({
+      uploadFile: uploadFileMock,
+      uploadImage: uploadImageMock,
+      deleteFiles: deleteFilesMock,
+      readImage: readImageMock,
+    });
+  });
+
+  it("deletes storage before removing attachment metadata", async () => {
+    const { deleteAssessmentAttachmentForUser } = await import(
+      "@/features/attachments/mutations"
+    );
+
+    const result = await deleteAssessmentAttachmentForUser("user-1", {
+      id: "attachment-1",
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(deleteFilesMock).toHaveBeenCalledWith({
+      pathnames: ["notorium/assessments/user-1/rubric.pdf"],
+    });
+    expect(deleteMock).toHaveBeenCalledWith({
+      id: "assessment_attachment_id_column",
+      userId: "assessment_attachment_user_id_column",
+    });
+    expect(deleteWhereMock).toHaveBeenCalled();
+  });
+
+  it("returns deleteFailed without deleting metadata when storage deletion fails", async () => {
+    deleteFilesMock.mockRejectedValueOnce(new Error("blob delete failed"));
+    const { deleteAssessmentAttachmentForUser } = await import(
+      "@/features/attachments/mutations"
+    );
+
+    const result = await deleteAssessmentAttachmentForUser("user-1", {
+      id: "attachment-1",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "attachments.deleteFailed",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+    expect(deleteFilesMock).toHaveBeenCalledWith({
+      pathnames: ["notorium/assessments/user-1/rubric.pdf"],
+    });
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 });

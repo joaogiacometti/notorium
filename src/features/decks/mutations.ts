@@ -2,6 +2,10 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { deck } from "@/db/schema";
 import {
+  cleanupAttachmentPathnames,
+  getDeckAttachmentPathnamesForUser,
+} from "@/features/attachments/cleanup";
+import {
   countChildDecksForUser,
   countDecksForUser,
   getDeckDepthForUser,
@@ -120,9 +124,16 @@ export async function deleteDeckForUser(
     return actionError("decks.notFound");
   }
 
+  const attachmentPathnames = await getDeckAttachmentPathnamesForUser(
+    userId,
+    data.id,
+  );
+
   await getDb()
     .delete(deck)
     .where(and(eq(deck.id, data.id), eq(deck.userId, userId)));
+
+  await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return {
     success: true,

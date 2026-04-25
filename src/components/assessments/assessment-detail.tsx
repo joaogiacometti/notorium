@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { AssessmentAttachmentsPanel } from "@/components/assessments/assessment-attachments-panel";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
@@ -30,6 +31,7 @@ import {
   toUtcDate,
 } from "@/lib/dates/format";
 import type {
+  AssessmentAttachmentEntity,
   AssessmentDetailEntity,
   AssessmentEntity,
 } from "@/lib/server/api-contracts";
@@ -69,6 +71,9 @@ export function AssessmentDetail({
   const [, startNavTransition] = useTransition();
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentEntity>(
     detail.assessment,
+  );
+  const [attachments, setAttachments] = useState<AssessmentAttachmentEntity[]>(
+    detail.attachments,
   );
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -238,13 +243,21 @@ export function AssessmentDetail({
             </p>
           )}
         </div>
+
+        <AssessmentAttachmentsPanel
+          assessmentId={currentAssessment.id}
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+        />
       </div>
 
       <EditAssessmentDialog
         assessment={currentAssessment}
         open={editOpen}
         onOpenChange={setEditOpen}
-        onUpdated={setCurrentAssessment}
+        onUpdated={(assessment) => {
+          setCurrentAssessment(assessment);
+        }}
       />
       <DeleteAssessmentDialog
         assessmentId={currentAssessment.id}

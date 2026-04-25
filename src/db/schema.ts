@@ -325,6 +325,38 @@ export const assessment = pgTable(
   ],
 );
 
+export const assessmentAttachment = pgTable(
+  "assessment_attachment",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    assessmentId: text("assessment_id")
+      .notNull()
+      .references((): AnyPgColumn => assessment.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    blobPathname: text("blob_pathname").notNull().unique(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("assessment_attachment_assessmentId_idx").on(table.assessmentId),
+    index("assessment_attachment_userId_idx").on(table.userId),
+    index("assessment_attachment_userId_assessmentId_idx").on(
+      table.userId,
+      table.assessmentId,
+    ),
+  ],
+);
+
 export const notificationLog = pgTable(
   "notification_log",
   {
@@ -484,6 +516,7 @@ export const userRelations = relations(user, ({ many }) => ({
   notes: many(note),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
+  assessmentAttachments: many(assessmentAttachment),
   flashcards: many(flashcard),
   flashcardReviewLogs: many(flashcardReviewLog),
   decks: many(deck),
@@ -546,7 +579,22 @@ export const assessmentRelations = relations(assessment, ({ one, many }) => ({
     references: [user.id],
   }),
   notificationLogs: many(notificationLog),
+  attachments: many(assessmentAttachment),
 }));
+
+export const assessmentAttachmentRelations = relations(
+  assessmentAttachment,
+  ({ one }) => ({
+    assessment: one(assessment, {
+      fields: [assessmentAttachment.assessmentId],
+      references: [assessment.id],
+    }),
+    user: one(user, {
+      fields: [assessmentAttachment.userId],
+      references: [user.id],
+    }),
+  }),
+);
 
 export const deckRelations = relations(deck, ({ one, many }) => ({
   parentDeck: one(deck, {

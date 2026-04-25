@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment } from "@/db/schema";
 import {
@@ -13,6 +13,8 @@ import type {
   DeleteAssessmentForm,
   EditAssessmentForm,
 } from "@/features/assessments/validation";
+import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
+import { getAssessmentAttachmentsForAssessments } from "@/features/attachments/queries";
 import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -119,7 +121,7 @@ export async function editAssessmentForUser(
   const [updatedAssessment] = await getDb()
     .update(assessment)
     .set(getAssessmentMutationValues(data))
-    .where(eq(assessment.id, data.id))
+    .where(and(eq(assessment.id, data.id), eq(assessment.userId, userId)))
     .returning();
 
   return {
@@ -139,7 +141,15 @@ export async function deleteAssessmentForUser(
     return actionError("assessments.notFound");
   }
 
-  await getDb().delete(assessment).where(eq(assessment.id, data.id));
+  const attachmentPathnames = (
+    await getAssessmentAttachmentsForAssessments(userId, [data.id])
+  ).map((attachment) => attachment.blobPathname);
+
+  await getDb()
+    .delete(assessment)
+    .where(and(eq(assessment.id, data.id), eq(assessment.userId, userId)));
+
+  await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return {
     success: true,
@@ -161,7 +171,17 @@ export async function bulkDeleteAssessmentsForUser(
     return actionError("assessments.notFound");
   }
 
-  await getDb().delete(assessment).where(inArray(assessment.id, data.ids));
+  const attachmentPathnames = (
+    await getAssessmentAttachmentsForAssessments(userId, data.ids)
+  ).map((attachment) => attachment.blobPathname);
+
+  await getDb()
+    .delete(assessment)
+    .where(
+      and(inArray(assessment.id, data.ids), eq(assessment.userId, userId)),
+    );
+
+  await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return {
     success: true,
@@ -186,7 +206,9 @@ export async function bulkUpdateAssessmentStatusForUser(
   await getDb()
     .update(assessment)
     .set({ status: data.status })
-    .where(inArray(assessment.id, data.ids));
+    .where(
+      and(inArray(assessment.id, data.ids), eq(assessment.userId, userId)),
+    );
 
   return {
     success: true,

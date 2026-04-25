@@ -11,6 +11,7 @@ const deleteWhereMock = vi.fn();
 const deleteMock = vi.fn(() => ({
   where: deleteWhereMock,
 }));
+const andMock = vi.fn((...conditions) => ({ type: "and", conditions }));
 const eqMock = vi.fn((column, value) => ({ type: "eq", column, value }));
 const inArrayMock = vi.fn((column, values) => ({
   type: "inArray",
@@ -21,6 +22,8 @@ const getAssessmentRecordForUserMock = vi.fn();
 const getAssessmentRecordsForUserMock = vi.fn();
 const countAssessmentsBySubjectForUserMock = vi.fn();
 const getActiveSubjectRecordForUserMock = vi.fn();
+const getAssessmentAttachmentsForAssessmentsMock = vi.fn();
+const cleanupAttachmentPathnamesMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -30,6 +33,7 @@ vi.mock("@/db/index", () => ({
 }));
 
 vi.mock("drizzle-orm", () => ({
+  and: andMock,
   eq: eqMock,
   inArray: inArrayMock,
 }));
@@ -37,7 +41,17 @@ vi.mock("drizzle-orm", () => ({
 vi.mock("@/db/schema", () => ({
   assessment: {
     id: "assessment_id_column",
+    userId: "assessment_user_id_column",
   },
+}));
+
+vi.mock("@/features/attachments/queries", () => ({
+  getAssessmentAttachmentsForAssessments:
+    getAssessmentAttachmentsForAssessmentsMock,
+}));
+
+vi.mock("@/features/attachments/cleanup", () => ({
+  cleanupAttachmentPathnames: cleanupAttachmentPathnamesMock,
 }));
 
 vi.mock("@/features/assessments/queries", () => ({
@@ -53,6 +67,8 @@ vi.mock("@/features/subjects/queries", () => ({
 describe("bulkDeleteAssessmentsForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAssessmentAttachmentsForAssessmentsMock.mockResolvedValue([]);
+    cleanupAttachmentPathnamesMock.mockResolvedValue(undefined);
   });
 
   it("deletes owned assessments and returns affected ids and subject ids", async () => {
@@ -106,6 +122,8 @@ describe("bulkDeleteAssessmentsForUser", () => {
 describe("bulkUpdateAssessmentStatusForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAssessmentAttachmentsForAssessmentsMock.mockResolvedValue([]);
+    cleanupAttachmentPathnamesMock.mockResolvedValue(undefined);
   });
 
   it("updates the status for all owned selected assessments", async () => {

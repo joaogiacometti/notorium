@@ -1,10 +1,17 @@
 const ATTACHMENT_NAMESPACE = "notorium";
-const ATTACHMENT_CONTEXTS = new Set(["notes", "flashcards"]);
+export const ATTACHMENT_CONTEXT_VALUES = [
+  "notes",
+  "flashcards",
+  "assessments",
+] as const;
+const ATTACHMENT_CONTEXTS = new Set<string>(ATTACHMENT_CONTEXT_VALUES);
+
+export type AttachmentContext = (typeof ATTACHMENT_CONTEXT_VALUES)[number];
 
 export interface ParsedOwnedAttachmentPathname {
   pathname: string;
   ownerId: string;
-  context: "notes" | "flashcards";
+  context: AttachmentContext;
   fileName: string;
 }
 
@@ -48,7 +55,7 @@ export function parseOwnedAttachmentPathname(
   return {
     pathname,
     ownerId,
-    context: context as "notes" | "flashcards",
+    context: context as AttachmentContext,
     fileName,
   };
 }

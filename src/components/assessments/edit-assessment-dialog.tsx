@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { editAssessment } from "@/app/actions/assessments";
 import { AssessmentDialogForm } from "@/components/assessments/assessment-dialog-form";
@@ -42,7 +42,6 @@ export function EditAssessmentDialog({
   onUpdated,
 }: Readonly<EditAssessmentDialogProps>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [_isPending, _startTransition] = useTransition();
   const form = useForm<EditAssessmentFormInput, unknown, EditAssessmentForm>({
     resolver: zodResolver(editAssessmentSchema),
     defaultValues: getEditAssessmentFormValues(assessment),

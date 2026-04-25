@@ -16,6 +16,7 @@ const selectMock = vi.fn(() => ({
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
+const getAssessmentAttachmentsForUserMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -45,6 +46,10 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
+vi.mock("@/features/attachments/queries", () => ({
+  getAssessmentAttachmentsForUser: getAssessmentAttachmentsForUserMock,
+}));
+
 let getAssessmentDetailForUser: typeof import("./queries").getAssessmentDetailForUser;
 
 describe("getAssessmentDetailForUser", () => {
@@ -54,6 +59,7 @@ describe("getAssessmentDetailForUser", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    getAssessmentAttachmentsForUserMock.mockResolvedValue([]);
   });
 
   it("returns the assessment detail for an owned active subject", async () => {
@@ -83,6 +89,7 @@ describe("getAssessmentDetailForUser", () => {
         id: "subject-1",
         name: "Physics",
       },
+      attachments: [],
     });
     expect(eqMock).toHaveBeenCalledWith("assessment_id_column", "assessment-1");
     expect(eqMock).toHaveBeenCalledWith("assessment_user_id_column", "user-1");

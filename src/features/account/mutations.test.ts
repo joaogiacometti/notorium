@@ -44,7 +44,8 @@ describe("deleteAccountForUser", () => {
   it("deletes the user before cleaning up owned note and flashcard blobs", async () => {
     listImagePathnamesMock
       .mockResolvedValueOnce(["notorium/notes/user-1/a.png"])
-      .mockResolvedValueOnce(["notorium/flashcards/user-1/b.png"]);
+      .mockResolvedValueOnce(["notorium/flashcards/user-1/b.png"])
+      .mockResolvedValueOnce(["notorium/assessments/user-1/c.pdf"]);
 
     const { deleteAccountForUser } = await import(
       "@/features/account/mutations"
@@ -57,6 +58,7 @@ describe("deleteAccountForUser", () => {
       pathnames: [
         "notorium/notes/user-1/a.png",
         "notorium/flashcards/user-1/b.png",
+        "notorium/assessments/user-1/c.pdf",
       ],
     });
     expect(deleteUserMock).toHaveBeenCalled();
@@ -100,7 +102,8 @@ describe("deleteAccountForUser", () => {
   it("returns success when blob cleanup fails after deleting the user", async () => {
     listImagePathnamesMock
       .mockResolvedValueOnce(["notorium/notes/user-1/a.png"])
-      .mockResolvedValueOnce(["notorium/flashcards/user-1/b.png"]);
+      .mockResolvedValueOnce(["notorium/flashcards/user-1/b.png"])
+      .mockResolvedValueOnce(["notorium/assessments/user-1/c.pdf"]);
     deleteImagesMock.mockRejectedValueOnce(new Error("cleanup failed"));
 
     const { deleteAccountForUser } = await import(
@@ -116,6 +119,7 @@ describe("deleteAccountForUser", () => {
       pathnames: [
         "notorium/notes/user-1/a.png",
         "notorium/flashcards/user-1/b.png",
+        "notorium/assessments/user-1/c.pdf",
       ],
     });
   });
@@ -123,7 +127,8 @@ describe("deleteAccountForUser", () => {
   it("returns an error when auth deletion fails and skips blob cleanup", async () => {
     listImagePathnamesMock
       .mockResolvedValueOnce(["notorium/notes/user-1/a.png"])
-      .mockResolvedValueOnce(["notorium/flashcards/user-1/b.png"]);
+      .mockResolvedValueOnce(["notorium/flashcards/user-1/b.png"])
+      .mockResolvedValueOnce(["notorium/assessments/user-1/c.pdf"]);
     deleteUserMock.mockRejectedValueOnce(new Error("auth failed"));
 
     const { deleteAccountForUser } = await import(

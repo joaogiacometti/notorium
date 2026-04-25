@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   Controller,
   type FieldPath,
@@ -63,6 +64,7 @@ interface AssessmentDialogFormProps<
   pendingSubmitLabel: string;
   onSubmit: (values: TSubmitValues) => Promise<void>;
   subjects?: SubjectEntity[];
+  attachmentsSlot?: ReactNode;
   isSubmitting: boolean;
 }
 
@@ -80,6 +82,7 @@ export function AssessmentDialogForm<
   pendingSubmitLabel,
   onSubmit,
   subjects,
+  attachmentsSlot,
   isSubmitting,
 }: Readonly<AssessmentDialogFormProps<TValues, TSubmitValues>>) {
   return (
@@ -216,6 +219,7 @@ export function AssessmentDialogForm<
                 </Field>
               )}
             />
+            {attachmentsSlot}
             <Controller
               name={"status" as FieldPath<TValues>}
               control={form.control}

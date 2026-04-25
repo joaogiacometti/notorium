@@ -1,6 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 import type {
   assessment,
+  assessmentAttachment,
   attendanceMiss,
   deck,
   flashcard,
@@ -16,6 +17,9 @@ export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
+export type AssessmentAttachmentEntity = InferSelectModel<
+  typeof assessmentAttachment
+>;
 export type DeckEntity = InferSelectModel<typeof deck>;
 export interface DeckOption extends DeckEntity {
   path: string;
@@ -31,6 +35,7 @@ export interface DeckTreeNode extends DeckEntity {
 export interface AssessmentDetailEntity {
   assessment: AssessmentEntity;
   subject: Pick<SubjectEntity, "id" | "name">;
+  attachments: AssessmentAttachmentEntity[];
 }
 export interface PlanningAssessmentsPage {
   items: AssessmentEntity[];

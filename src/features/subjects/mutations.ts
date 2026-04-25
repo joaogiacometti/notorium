@@ -2,6 +2,10 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
 import {
+  cleanupAttachmentPathnames,
+  getSubjectAttachmentPathnamesForUser,
+} from "@/features/attachments/cleanup";
+import {
   countTotalSubjectsForUser,
   getActiveSubjectRecordForUser,
   getArchivedSubjectRecordForUser,
@@ -123,9 +127,16 @@ export async function deleteSubjectForUser(
     return actionError("subjects.notFound");
   }
 
+  const attachmentPathnames = await getSubjectAttachmentPathnamesForUser(
+    userId,
+    data.id,
+  );
+
   await getDb()
     .delete(subject)
     .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
+
+  await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return { success: true };
 }
