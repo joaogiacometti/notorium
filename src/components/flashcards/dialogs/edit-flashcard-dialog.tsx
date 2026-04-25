@@ -498,6 +498,11 @@ export function EditFlashcardDialog({
         </DialogContent>
       </Dialog>
       <UnsavedChangesDialog
+        open={dialog.discardDialogOpen}
+        onOpenChange={dialog.setDiscardDialogOpen}
+        onDiscard={dialog.handleDiscardChanges}
+      />
+      <UnsavedChangesDialog
         open={discardOnModeSwitchDialogOpen}
         onOpenChange={setDiscardOnModeSwitchDialogOpen}
         onDiscard={handleDiscardOnModeSwitch}

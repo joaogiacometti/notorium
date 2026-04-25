@@ -461,6 +461,11 @@ export function CreateFlashcardDialog({
         </DialogContent>
       </Dialog>
       <UnsavedChangesDialog
+        open={dialog.discardDialogOpen}
+        onOpenChange={dialog.setDiscardDialogOpen}
+        onDiscard={dialog.handleDiscardChanges}
+      />
+      <UnsavedChangesDialog
         open={discardOnCloseDialogOpen}
         onOpenChange={setDiscardOnCloseDialogOpen}
         onDiscard={handleDiscardOnClose}

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
@@ -30,6 +30,19 @@ interface GenerateFlashcardsReviewProps {
   };
 }
 
+function mapGeneratedCards(cards: Array<{ front: string; back: string }>) {
+  return cards.map((card) => ({
+    id: crypto.randomUUID(),
+    front: card.front,
+    back: card.back,
+    selected: true,
+  }));
+}
+
+function getCardsContent(cards: GeneratedCard[]) {
+  return cards.map((card) => ({ front: card.front, back: card.back }));
+}
+
 export function GenerateFlashcardsReview({
   cards: initialCards,
   onCreate,
@@ -39,34 +52,12 @@ export function GenerateFlashcardsReview({
   typeToggle,
 }: Readonly<GenerateFlashcardsReviewProps>) {
   const [cards, setCards] = useState<GeneratedCard[]>(() =>
-    initialCards.map((card) => ({
-      id: crypto.randomUUID(),
-      front: card.front,
-      back: card.back,
-      selected: true,
-    })),
+    mapGeneratedCards(initialCards),
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editFront, setEditFront] = useState("");
   const [editBack, setEditBack] = useState("");
   const [pendingImageUploads, setPendingImageUploads] = useState(0);
-
-  useEffect(() => {
-    setCards((prevCards) => {
-      return initialCards.map((card, i) => ({
-        id: prevCards[i]?.id ?? crypto.randomUUID(),
-        front: card.front,
-        back: card.back,
-        selected: true,
-      }));
-    });
-  }, [initialCards]);
-
-  useEffect(() => {
-    onCardsChange?.(
-      cards.map((card) => ({ front: card.front, back: card.back })),
-    );
-  }, [cards, onCardsChange]);
 
   const selectedCount = cards.filter((c) => c.selected).length;
   const allSelected = cards.every((c) => c.selected);
@@ -90,11 +81,11 @@ export function GenerateFlashcardsReview({
 
   function saveEdit() {
     if (editingIndex === null) return;
-    setCards(
-      cards.map((c, i) =>
-        i === editingIndex ? { ...c, front: editFront, back: editBack } : c,
-      ),
+    const nextCards = cards.map((c, i) =>
+      i === editingIndex ? { ...c, front: editFront, back: editBack } : c,
     );
+    setCards(nextCards);
+    onCardsChange?.(getCardsContent(nextCards));
     setEditingIndex(null);
   }
 

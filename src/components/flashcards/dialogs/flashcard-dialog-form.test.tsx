@@ -46,7 +46,7 @@ function Harness() {
       onSubmit={async () => {}}
       isSubmitting={false}
       discard={{
-        open: false,
+        open: true,
         onOpenChange: () => {},
         onDiscard: () => {},
       }}
@@ -124,5 +124,13 @@ describe("FlashcardDialogForm", () => {
     });
 
     expect(button.disabled).toBe(false);
+  });
+
+  it("does not render discard confirmation in embedded form mode", async () => {
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    expect(document.body.textContent).not.toContain("Discard changes?");
   });
 });

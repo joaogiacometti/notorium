@@ -385,16 +385,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   );
 
   if (noDialog) {
-    return (
-      <>
-        {formContent}
-        <UnsavedChangesDialog
-          open={discard.open}
-          onOpenChange={discard.onOpenChange}
-          onDiscard={discard.onDiscard}
-        />
-      </>
-    );
+    return formContent;
   }
 
   return (
