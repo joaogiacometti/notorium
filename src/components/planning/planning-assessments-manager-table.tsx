@@ -8,18 +8,19 @@ import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-pr
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
-import { SubjectChip } from "@/components/shared/subject-chip";
+import { SubjectBadge } from "@/components/shared/subject-badge";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
+import {
+  ASSESSMENT_STATUS_LABEL,
+  ASSESSMENT_STATUS_TONE_NAME,
+  resolveAssessmentStatus,
+} from "@/features/assessments/status";
 import { formatDateShort, formatIsoDate } from "@/lib/dates/format";
 import { getAssessmentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
-import {
-  getScoreTone,
-  getStatusToneClasses,
-  type StatusTone,
-} from "@/lib/ui/status-tones";
+import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
 interface PlanningAssessmentsManagerTableProps {
@@ -36,28 +37,6 @@ interface PlanningAssessmentsManagerTableProps {
   onSelectedAssessmentIdsChange: (ids: string[]) => void;
   onUpdated: (assessment: AssessmentEntity) => void;
   onDeleted: (id: string) => void;
-}
-
-function getStatusMeta(assessment: AssessmentEntity, todayIso: string) {
-  let tone: StatusTone;
-
-  if (isAssessmentOverdue(assessment, todayIso)) {
-    tone = "danger";
-  } else if (assessment.status === "completed") {
-    tone = "success";
-  } else {
-    tone = "warning";
-  }
-
-  return {
-    label:
-      tone === "danger"
-        ? "Overdue"
-        : tone === "success"
-          ? "Completed"
-          : "Pending",
-    tone,
-  };
 }
 
 function formatDueDate(dueDate: string | null) {
@@ -164,10 +143,13 @@ function getColumns(
       accessorKey: "status",
       header: () => <TableHeaderLabel>Status</TableHeaderLabel>,
       cell: ({ row }) => {
-        const status = getStatusMeta(row.original, todayIso);
+        const isOverdue = isAssessmentOverdue(row.original, todayIso);
+        const status = resolveAssessmentStatus(isOverdue, row.original.status);
 
         return (
-          <StatusToneBadge tone={status.tone}>{status.label}</StatusToneBadge>
+          <StatusToneBadge tone={ASSESSMENT_STATUS_TONE_NAME[status]}>
+            {ASSESSMENT_STATUS_LABEL[status]}
+          </StatusToneBadge>
         );
       },
     },
@@ -221,24 +203,17 @@ function getColumns(
 
       if (!subjectName) {
         return (
-          <SubjectChip
-            label="Unknown Subject"
-            maxWidthClassName="max-w-[7.5rem]"
-          />
+          <SubjectBadge label="Unknown Subject" maxWidthClassName="max-w-30" />
         );
       }
 
       return (
-        <SubjectChip
+        <SubjectBadge
           href={`/subjects/${row.original.subjectId}`}
           label={subjectName}
-          maxWidthClassName="max-w-[7.5rem]"
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-          onKeyDown={(event) => {
-            event.stopPropagation();
-          }}
+          maxWidthClassName="max-w-30"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
         />
       );
     },

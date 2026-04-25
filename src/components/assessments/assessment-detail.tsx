@@ -15,7 +15,7 @@ import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-pr
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
-import { SubjectChip } from "@/components/shared/subject-chip";
+import { SubjectBadge } from "@/components/shared/subject-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
@@ -135,7 +135,7 @@ export function AssessmentDetail({
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <SubjectChip
+          <SubjectBadge
             href={`/subjects/${detail.subject.id}`}
             label={detail.subject.name}
             maxWidthClassName="max-w-56"
@@ -143,7 +143,7 @@ export function AssessmentDetail({
           <Badge
             variant="outline"
             className={cn(
-              "rounded-full px-2 py-0.5 text-xs",
+              "h-7 rounded-full px-2.5 text-xs",
               statusTone.border,
               statusTone.bg,
               statusTone.text,
@@ -153,7 +153,7 @@ export function AssessmentDetail({
           </Badge>
           <AssessmentTypeBadge
             type={currentAssessment.type}
-            className="px-2.5 py-1"
+            className="h-7 rounded-full px-2.5"
           />
         </div>
 

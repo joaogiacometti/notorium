@@ -1,5 +1,5 @@
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
-import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { getStatusToneClasses, type StatusTone } from "@/lib/ui/status-tones";
 
 export type AssessmentStatus = "overdue" | "completed" | "pending";
 
@@ -17,6 +17,13 @@ export const ASSESSMENT_STATUS_TONE = {
   completed: getStatusToneClasses("success"),
   pending: getStatusToneClasses("warning"),
 } as const;
+
+export const ASSESSMENT_STATUS_TONE_NAME: Record<AssessmentStatus, StatusTone> =
+  {
+    overdue: "danger",
+    completed: "success",
+    pending: "warning",
+  } as const;
 
 export const ASSESSMENT_STATUS_LABEL = {
   overdue: "Overdue",
