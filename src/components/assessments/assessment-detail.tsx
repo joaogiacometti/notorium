@@ -39,6 +39,7 @@ import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
 interface AssessmentDetailProps {
+  attachmentsEnabled: boolean;
   backHref: string;
   backLabel: string;
   detail: AssessmentDetailEntity;
@@ -63,6 +64,7 @@ function formatNumber(value: string | null, suffix = "") {
 }
 
 export function AssessmentDetail({
+  attachmentsEnabled,
   backHref,
   backLabel,
   detail,
@@ -244,11 +246,13 @@ export function AssessmentDetail({
           )}
         </div>
 
-        <AssessmentAttachmentsPanel
-          assessmentId={currentAssessment.id}
-          attachments={attachments}
-          onAttachmentsChange={setAttachments}
-        />
+        {attachmentsEnabled ? (
+          <AssessmentAttachmentsPanel
+            assessmentId={currentAssessment.id}
+            attachments={attachments}
+            onAttachmentsChange={setAttachments}
+          />
+        ) : null}
       </div>
 
       <EditAssessmentDialog

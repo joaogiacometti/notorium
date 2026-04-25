@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AssessmentDetail } from "@/components/assessments/assessment-detail";
 import { getAssessmentDetailForUser } from "@/features/assessments/queries";
 import { requireSession } from "@/lib/auth/auth";
+import { isMediaStorageConfigured } from "@/lib/media-storage/provider";
 import { resolveAssessmentDetailBackLink } from "@/lib/navigation/detail-page-back-link";
 
 interface AssessmentPageProps {
@@ -20,6 +21,7 @@ export default async function AssessmentPage({
     session.user.id,
     assessmentId,
   );
+  const attachmentsEnabled = isMediaStorageConfigured();
 
   if (!detail) {
     const backLink = resolveAssessmentDetailBackLink(
@@ -46,6 +48,7 @@ export default async function AssessmentPage({
       <AssessmentDetail
         backHref={backLink.href}
         backLabel={backLabel}
+        attachmentsEnabled={attachmentsEnabled}
         detail={detail}
       />
     </main>

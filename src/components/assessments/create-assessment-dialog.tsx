@@ -20,6 +20,7 @@ import type {
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface CreateAssessmentDialogProps {
+  attachmentsEnabled: boolean;
   subjectId?: string;
   subjects?: SubjectEntity[];
   open: boolean;
@@ -43,6 +44,7 @@ function getCreateAssessmentFormValues(
 }
 
 export function CreateAssessmentDialog({
+  attachmentsEnabled,
   subjectId,
   subjects,
   open,
@@ -117,14 +119,16 @@ export function CreateAssessmentDialog({
       onSubmit={onSubmit}
       subjects={subjects}
       attachmentsSlot={
-        <AssessmentAttachmentsField
-          formId="form-create-assessment"
-          newFiles={newFiles}
-          removedAttachmentIds={[]}
-          onNewFilesChange={setNewFiles}
-          onRemovedAttachmentIdsChange={() => {}}
-          disabled={isSubmitting}
-        />
+        attachmentsEnabled ? (
+          <AssessmentAttachmentsField
+            formId="form-create-assessment"
+            newFiles={newFiles}
+            removedAttachmentIds={[]}
+            onNewFilesChange={setNewFiles}
+            onRemovedAttachmentIdsChange={() => {}}
+            disabled={isSubmitting}
+          />
+        ) : undefined
       }
       isSubmitting={isSubmitting}
     />

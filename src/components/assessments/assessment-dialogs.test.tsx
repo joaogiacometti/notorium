@@ -105,6 +105,7 @@ describe("assessment dialogs", () => {
     await act(async () => {
       root.render(
         <CreateAssessmentDialog
+          attachmentsEnabled
           open
           onOpenChange={() => {}}
           subjects={[createSubject()]}
@@ -114,6 +115,25 @@ describe("assessment dialogs", () => {
 
     expect(document.body.textContent).toContain("Attachments");
     expect(document.body.textContent).toContain("Add Files");
+  });
+
+  it("hides attachment controls when attachments are disabled", async () => {
+    await act(async () => {
+      root.render(
+        <CreateAssessmentDialog
+          attachmentsEnabled={false}
+          open
+          onOpenChange={() => {}}
+          subjects={[createSubject()]}
+        />,
+      );
+    });
+
+    expect(document.body.textContent).not.toContain("Attachments");
+    expect(document.body.textContent).not.toContain("Add Files");
+    expect(
+      document.body.querySelector("#form-create-assessment-attachments"),
+    ).toBeNull();
   });
 
   it("keeps create dialog open with selected files when upload fails", async () => {
@@ -134,6 +154,7 @@ describe("assessment dialogs", () => {
     await act(async () => {
       root.render(
         <CreateAssessmentDialog
+          attachmentsEnabled
           open
           onOpenChange={onOpenChange}
           subjectId="subject-1"

@@ -5,6 +5,7 @@ import { PlanningViewSwitch } from "@/components/planning/planning-view-switch";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import { resolvePlanningView } from "@/features/planning/view";
 import { requireSession } from "@/lib/auth/auth";
+import { isMediaStorageConfigured } from "@/lib/media-storage/provider";
 
 interface PlanningPageProps {
   searchParams: Promise<{
@@ -23,6 +24,7 @@ export default async function PlanningPage({
   const session = await requireSession();
   const { subject, view, search, status, type, sort } = await searchParams;
   const currentView = resolvePlanningView(view);
+  const attachmentsEnabled = isMediaStorageConfigured();
 
   return (
     <FeaturePageShell
@@ -46,6 +48,7 @@ export default async function PlanningPage({
           initialStatus={status}
           initialType={type}
           initialSort={sort}
+          attachmentsEnabled={attachmentsEnabled}
         />
       ) : (
         <PlanningCalendarPanel userId={session.user.id} />

@@ -50,10 +50,24 @@ export interface MediaStorageProvider {
   listImagePathnames(input: ListImagesInput): Promise<string[]>;
 }
 
-export async function getMediaStorageProvider(): Promise<MediaStorageProvider | null> {
-  const env = getServerEnv();
+/**
+ * Reports whether runtime media storage is configured for upload features.
+ *
+ * @example
+ * const attachmentsEnabled = isMediaStorageConfigured();
+ */
+export function isMediaStorageConfigured(): boolean {
+  return Boolean(getServerEnv().BLOB_READ_WRITE_TOKEN);
+}
 
-  if (!env.BLOB_READ_WRITE_TOKEN) {
+/**
+ * Returns a media storage provider if configured, otherwise null.
+ *
+ * @example
+ * const provider = await getMediaStorageProvider();
+ */
+export async function getMediaStorageProvider(): Promise<MediaStorageProvider | null> {
+  if (!isMediaStorageConfigured()) {
     return null;
   }
 

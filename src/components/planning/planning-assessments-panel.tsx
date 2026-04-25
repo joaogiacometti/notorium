@@ -4,6 +4,7 @@ import { resolvePlanningSubject } from "@/features/planning/view";
 import { getSubjectsForUser } from "@/features/subjects/queries";
 
 interface PlanningAssessmentsPanelProps {
+  attachmentsEnabled: boolean;
   initialSubjectId?: string;
   initialSearch?: string;
   initialStatus?: string;
@@ -15,6 +16,7 @@ interface PlanningAssessmentsPanelProps {
 const planningAssessmentsPageSize = 25;
 
 export async function PlanningAssessmentsPanel({
+  attachmentsEnabled,
   initialSubjectId,
   initialSearch,
   initialStatus,
@@ -49,6 +51,7 @@ export async function PlanningAssessmentsPanel({
       initialType={initialType}
       initialSort={initialSort}
       initialPageData={initialPageData}
+      attachmentsEnabled={attachmentsEnabled}
       subjects={subjects}
       subjectNamesById={subjectNamesById}
     />

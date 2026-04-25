@@ -28,8 +28,19 @@ vi.mock("@/app/actions/assessments", () => ({
 }));
 
 vi.mock("@/components/assessments/lazy-create-assessment-dialog", () => ({
-  LazyCreateAssessmentDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="create-assessment-dialog" /> : null,
+  LazyCreateAssessmentDialog: ({
+    attachmentsEnabled,
+    open,
+  }: {
+    attachmentsEnabled: boolean;
+    open: boolean;
+  }) =>
+    open ? (
+      <div
+        data-attachments-enabled={String(attachmentsEnabled)}
+        data-testid="create-assessment-dialog"
+      />
+    ) : null,
 }));
 
 vi.mock("@/components/planning/planning-assessments-manager-table", () => ({
@@ -86,11 +97,15 @@ describe("PlanningAssessmentsTable", () => {
     vi.clearAllMocks();
   });
 
-  async function renderTable(subjects: SubjectEntity[]) {
+  async function renderTable(
+    subjects: SubjectEntity[],
+    attachmentsEnabled = true,
+  ) {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
           <PlanningAssessmentsTable
+            attachmentsEnabled={attachmentsEnabled}
             initialPageData={emptyPageData}
             subjects={subjects}
             subjectNamesById={Object.fromEntries(
@@ -164,5 +179,23 @@ describe("PlanningAssessmentsTable", () => {
     expect(
       container.querySelector('[data-testid="create-assessment-dialog"]'),
     ).toBeTruthy();
+  });
+
+  it("passes attachment availability into the create dialog", async () => {
+    await renderTable([createSubject()], false);
+
+    const addButtons = Array.from(container.querySelectorAll("button")).filter(
+      (button) => button.textContent?.includes("Add Assessment"),
+    ) as HTMLButtonElement[];
+
+    await act(async () => {
+      addButtons[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(
+      container
+        .querySelector('[data-testid="create-assessment-dialog"]')
+        ?.getAttribute("data-attachments-enabled"),
+    ).toBe("false");
   });
 });
