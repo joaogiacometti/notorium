@@ -1,6 +1,7 @@
 import { GraduationCap, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
+import { gradeLabels } from "@/features/flashcards/fsrs";
 
 interface ExamResultsScreenProps {
   totalCards: number;
@@ -9,13 +10,6 @@ interface ExamResultsScreenProps {
   onClose: () => void;
   onRetryWeak?: () => void;
 }
-
-const gradeLabels: Record<ReviewGrade, string> = {
-  again: "Again",
-  hard: "Hard",
-  good: "Good",
-  easy: "Easy",
-};
 
 function formatDuration(seconds: number): string {
   const minutes = Math.floor(seconds / 60);

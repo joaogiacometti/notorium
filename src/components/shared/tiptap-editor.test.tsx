@@ -5,7 +5,7 @@ import {
   isExternalEditorValueChange,
   shouldApplyNormalizedEditorValue,
   uploadPastedImage,
-} from "@/components/shared/tiptap-editor";
+} from "@/components/shared/tiptap-helpers";
 
 const toastErrorMock = vi.fn();
 const uploadEditorImageMock = vi.fn();

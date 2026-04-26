@@ -6,6 +6,7 @@ import {
 } from "@/app/actions/attachments";
 import type { AssessmentAttachmentEntity } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
+import { readFileAsBase64 } from "@/lib/utils";
 
 type UploadAssessmentFilesResult =
   | {
@@ -17,25 +18,6 @@ type UploadAssessmentFilesResult =
       attachments: AssessmentAttachmentEntity[];
       completedFileCount: number;
     });
-
-function readFileAsBase64(file: File): Promise<string | null> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-
-    reader.onerror = () => resolve(null);
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        resolve(null);
-        return;
-      }
-
-      const commaIndex = reader.result.indexOf(",");
-      resolve(commaIndex >= 0 ? reader.result.slice(commaIndex + 1) : null);
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
 
 export async function uploadAssessmentFiles(
   assessmentId: string,

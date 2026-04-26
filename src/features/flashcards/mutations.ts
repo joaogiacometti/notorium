@@ -34,6 +34,7 @@ import type {
   BulkResetFlashcardsResult,
   CreateFlashcardResult,
   EditFlashcardResult,
+  FlashcardEntity,
   GenerateFlashcardBackResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
@@ -50,10 +51,13 @@ export type DeleteFlashcardMutationResult =
       deckId: string;
     }
   | ActionErrorResult;
-export async function createFlashcardForUser(
+
+async function validateCreateFlashcardInput(
   userId: string,
   data: CreateFlashcardForm,
-): Promise<CreateFlashcardResult> {
+): Promise<
+  { error: ActionErrorResult } | { deckId: string; frontNormalized: string }
+> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
   const [existingDeck, currentCount, hasDuplicate] = await Promise.all([
@@ -63,43 +67,75 @@ export async function createFlashcardForUser(
   ]);
 
   if (!existingDeck) {
-    return actionError("decks.notFound");
+    return { error: actionError("decks.notFound") };
   }
 
   if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
-    return actionError("limits.flashcardLimit", {
-      errorParams: { max: LIMITS.maxFlashcardsPerDeck },
-    });
+    return {
+      error: actionError("limits.flashcardLimit", {
+        errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+      }),
+    };
   }
 
   if (hasDuplicate) {
-    return actionError("flashcards.duplicateFront");
+    return { error: actionError("flashcards.duplicateFront") };
   }
 
-  const schedulingState = getInitialFlashcardSchedulingState();
-  try {
-    const inserted = await getDb()
-      .insert(flashcard)
-      .values({
-        deckId: data.deckId,
-        userId,
-        front: data.front,
-        frontNormalized,
-        back: data.back,
-        state: schedulingState.state,
-        dueAt: schedulingState.dueAt,
-        stability: schedulingState.stability,
-        difficulty: schedulingState.difficulty,
-        ease: schedulingState.ease,
-        intervalDays: schedulingState.intervalDays,
-        learningStep: schedulingState.learningStep,
-        lastReviewedAt: schedulingState.lastReviewedAt,
-        reviewCount: schedulingState.reviewCount,
-        lapseCount: schedulingState.lapseCount,
-      })
-      .returning();
+  return { deckId: data.deckId, frontNormalized };
+}
 
-    return { success: true, flashcard: inserted[0] };
+async function createFlashcardRecord(
+  userId: string,
+  deckId: string,
+  data: CreateFlashcardForm,
+  frontNormalized: string,
+) {
+  const schedulingState = getInitialFlashcardSchedulingState();
+
+  const inserted = await getDb()
+    .insert(flashcard)
+    .values({
+      deckId,
+      userId,
+      front: data.front,
+      frontNormalized,
+      back: data.back,
+      state: schedulingState.state,
+      dueAt: schedulingState.dueAt,
+      stability: schedulingState.stability,
+      difficulty: schedulingState.difficulty,
+      ease: schedulingState.ease,
+      intervalDays: schedulingState.intervalDays,
+      learningStep: schedulingState.learningStep,
+      lastReviewedAt: schedulingState.lastReviewedAt,
+      reviewCount: schedulingState.reviewCount,
+      lapseCount: schedulingState.lapseCount,
+    })
+    .returning();
+
+  return inserted[0];
+}
+
+export async function createFlashcardForUser(
+  userId: string,
+  data: CreateFlashcardForm,
+): Promise<CreateFlashcardResult> {
+  const validation = await validateCreateFlashcardInput(userId, data);
+
+  if ("error" in validation) {
+    return validation.error;
+  }
+
+  try {
+    const flashcardRecord = await createFlashcardRecord(
+      userId,
+      validation.deckId,
+      data,
+      validation.frontNormalized,
+    );
+
+    return { success: true, flashcard: flashcardRecord };
   } catch (error) {
     if (isUniqueViolationError(error)) {
       return actionError("flashcards.duplicateFront");
@@ -109,10 +145,18 @@ export async function createFlashcardForUser(
   }
 }
 
-export async function editFlashcardForUser(
+type ValidateEditFlashcardResult =
+  | { ok: true; frontNormalized: string; existingFlashcard: FlashcardEntity }
+  | {
+      ok: false;
+      error: ActionErrorResult;
+      existingFlashcard: FlashcardEntity | null;
+    };
+
+async function validateEditFlashcardInput(
   userId: string,
   data: EditFlashcardForm,
-): Promise<EditFlashcardResult> {
+): Promise<ValidateEditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
   const [existingFlashcard, existingDeck, hasDuplicate] = await Promise.all([
@@ -122,34 +166,51 @@ export async function editFlashcardForUser(
   ]);
 
   if (!existingFlashcard) {
-    return actionError("flashcards.notFound");
+    return {
+      ok: false,
+      error: actionError("flashcards.notFound"),
+      existingFlashcard: null,
+    };
   }
 
   if (!existingDeck) {
-    return actionError("decks.notFound");
+    return {
+      ok: false,
+      error: actionError("decks.notFound"),
+      existingFlashcard,
+    };
   }
 
   if (existingFlashcard.deckId !== data.deckId) {
     const current = await countFlashcardsByDeckForUser(userId, data.deckId);
 
     if (current >= LIMITS.maxFlashcardsPerDeck) {
-      return actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerDeck },
-      });
+      return {
+        ok: false,
+        error: actionError("limits.flashcardLimit", {
+          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+        }),
+        existingFlashcard,
+      };
     }
   }
 
   if (hasDuplicate) {
-    return actionError("flashcards.duplicateFront");
+    return {
+      ok: false,
+      error: actionError("flashcards.duplicateFront"),
+      existingFlashcard,
+    };
   }
 
-  const previousAttachmentValues = [
-    existingFlashcard.front,
-    existingFlashcard.back,
-  ];
+  return { ok: true, frontNormalized, existingFlashcard };
+}
 
-  let updatedFlashcard: typeof existingFlashcard | undefined;
-
+async function performFlashcardUpdate(
+  userId: string,
+  data: EditFlashcardForm,
+  frontNormalized: string,
+) {
   try {
     const updated = await getDb()
       .update(flashcard)
@@ -162,13 +223,43 @@ export async function editFlashcardForUser(
       .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)))
       .returning();
 
-    updatedFlashcard = updated[0];
+    return { updatedFlashcard: updated[0], error: null };
   } catch (error) {
     if (isUniqueViolationError(error)) {
-      return actionError("flashcards.duplicateFront");
+      return {
+        updatedFlashcard: undefined,
+        error: actionError("flashcards.duplicateFront"),
+      };
     }
 
     throw error;
+  }
+}
+
+export async function editFlashcardForUser(
+  userId: string,
+  data: EditFlashcardForm,
+): Promise<EditFlashcardResult> {
+  const validation = await validateEditFlashcardInput(userId, data);
+
+  if (!validation.ok) {
+    return validation.error;
+  }
+
+  const { frontNormalized, existingFlashcard } = validation;
+  const previousAttachmentValues = [
+    existingFlashcard.front,
+    existingFlashcard.back,
+  ];
+
+  const { updatedFlashcard, error } = await performFlashcardUpdate(
+    userId,
+    data,
+    frontNormalized,
+  );
+
+  if (error) {
+    return error;
   }
 
   if (!updatedFlashcard) {
