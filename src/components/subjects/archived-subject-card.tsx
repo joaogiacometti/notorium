@@ -23,6 +23,7 @@ export function ArchivedSubjectCard({
   subject,
 }: Readonly<ArchivedSubjectCardProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isRestored, setIsRestored] = useState(false);
   const [isRestoring, startRestoreTransition] = useTransition();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -36,6 +37,7 @@ export function ArchivedSubjectCard({
       const result = await restoreSubject({ id: subject.id });
 
       if (result.success) {
+        setIsRestored(true);
         await queryClient.invalidateQueries({ queryKey: ["search-data"] });
         router.refresh();
         return;
@@ -43,6 +45,10 @@ export function ArchivedSubjectCard({
 
       toast.error(t(result.errorCode, result.errorParams));
     });
+  }
+
+  if (isRestored) {
+    return null;
   }
 
   return (

@@ -32,13 +32,14 @@ async function openAssessmentDetailFromPlanning(
   page: Page,
   assessmentTitle: string,
 ) {
-  const assessmentRow = page.getByRole("link", {
+  const assessmentDetailLink = page.getByRole("link", {
     name: `Open details for ${assessmentTitle}`,
     exact: true,
   });
 
-  await expect(assessmentRow).toBeVisible();
-  await assessmentRow.click();
+  await expect(assessmentDetailLink).toBeVisible();
+  await assessmentDetailLink.click();
+  await expect(page).toHaveURL(/\/assessments\/[^/?#]+/);
   await expect(
     page.getByRole("heading", { name: assessmentTitle, exact: true }),
   ).toBeVisible();
@@ -101,16 +102,7 @@ test("can create and open an assessment from planning", async ({
 
     await expect(createDialog).toHaveCount(0);
 
-    const assessmentRow = page.getByRole("link", {
-      name: `Open details for ${assessmentTitle}`,
-      exact: true,
-    });
-
-    await expect(assessmentRow).toBeVisible();
-    await assessmentRow.click();
-    await expect(
-      page.getByRole("heading", { name: assessmentTitle, exact: true }),
-    ).toBeVisible();
+    await openAssessmentDetailFromPlanning(page, assessmentTitle);
     await expect(
       page.getByText("Assessment created from planning page"),
     ).toBeVisible();
@@ -255,7 +247,7 @@ test("shows overdue status for pending past due assessments", async ({
       exact: true,
     });
     await expect(assessmentRowLink).toBeVisible();
-    await expect(assessmentRowLink).toContainText("Overdue");
+    await expect(page.getByText("Overdue", { exact: true })).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

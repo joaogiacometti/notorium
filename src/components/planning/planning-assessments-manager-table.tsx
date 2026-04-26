@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { CalendarDays, ClipboardList } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
@@ -103,13 +104,23 @@ function getColumns(
   onDeleted: (id: string) => void,
   subjectNamesById: Record<string, string>,
   todayIso: string,
+  selectedSubjectId?: string,
 ): ColumnDef<AssessmentEntity>[] {
   const columns: ColumnDef<AssessmentEntity>[] = [
     {
       accessorKey: "title",
       header: () => <TableHeaderLabel>Title</TableHeaderLabel>,
       cell: ({ row }) => (
-        <div className="flex min-w-0 max-w-full items-center gap-2.5 py-1">
+        <Link
+          href={getAssessmentDetailHref(row.original.id, {
+            from: "planning-assessments",
+            subjectId: selectedSubjectId,
+          })}
+          aria-label={`Open details for ${row.original.title}`}
+          className="flex min-w-0 max-w-full items-center gap-2.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
           <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
             <ClipboardList className="size-4" />
           </div>
@@ -129,7 +140,7 @@ function getColumns(
               </div>
             ) : null}
           </div>
-        </div>
+        </Link>
       ),
     },
     {
@@ -243,8 +254,15 @@ export function PlanningAssessmentsManagerTable({
   const finalGradeTone =
     finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
   const columns = useMemo(
-    () => getColumns(onUpdated, onDeleted, subjectNamesById, todayIso),
-    [onDeleted, onUpdated, subjectNamesById, todayIso],
+    () =>
+      getColumns(
+        onUpdated,
+        onDeleted,
+        subjectNamesById,
+        todayIso,
+        selectedSubjectId,
+      ),
+    [onDeleted, onUpdated, selectedSubjectId, subjectNamesById, todayIso],
   );
 
   return (
@@ -262,12 +280,12 @@ export function PlanningAssessmentsManagerTable({
       selectedRowIds={selectedAssessmentIds}
       onSelectedRowIdsChange={onSelectedAssessmentIdsChange}
       selectionAriaLabel="Select assessment"
+      exposeRowNavigationRole={false}
       pageLabel={(current, total) => `Page ${current} of ${total}`}
       prevLabel="Previous"
       nextLabel="Next"
       emptyLabel="No assessments match your filters."
       getRowId={(row) => row.id}
-      getRowAriaLabel={(row) => `Open details for ${row.title}`}
       onRowClick={(row) =>
         startNavTransition(() =>
           router.push(

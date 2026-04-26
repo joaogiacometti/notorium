@@ -138,6 +138,7 @@ interface ManagerDataTableProps<TRow> {
   prevLabel: string;
   columnResizeMode?: "onChange" | "onEnd";
   controlsClassName?: string;
+  exposeRowNavigationRole?: boolean;
   footerClassName?: string;
   footerLeading?: ReactNode;
   getBodyCellClassName?: (columnId: string) => string;
@@ -172,6 +173,7 @@ export function ManagerDataTable<TRow>({
   prevLabel,
   columnResizeMode,
   controlsClassName,
+  exposeRowNavigationRole = true,
   footerClassName,
   footerLeading,
   getBodyCellClassName,
@@ -243,6 +245,9 @@ export function ManagerDataTable<TRow>({
     showLoadingSkeleton && loadingSkeleton,
   );
   const isEmpty = table.getRowModel().rows.length === 0;
+  const shouldExposeRowNavigationRole = Boolean(
+    onRowClick && exposeRowNavigationRole,
+  );
 
   function handleRowClick(
     event: ReactMouseEvent<HTMLTableRowElement>,
@@ -340,16 +345,20 @@ export function ManagerDataTable<TRow>({
                           : null,
                         getRowClassName?.(row.original),
                       )}
-                      tabIndex={onRowClick ? 0 : undefined}
-                      role={onRowClick ? "link" : undefined}
-                      aria-label={getRowAriaLabel?.(row.original)}
+                      tabIndex={shouldExposeRowNavigationRole ? 0 : undefined}
+                      role={shouldExposeRowNavigationRole ? "link" : undefined}
+                      aria-label={
+                        shouldExposeRowNavigationRole
+                          ? getRowAriaLabel?.(row.original)
+                          : undefined
+                      }
                       onClick={
                         onRowClick
                           ? (event) => handleRowClick(event, row.original)
                           : undefined
                       }
                       onKeyDown={
-                        onRowClick
+                        shouldExposeRowNavigationRole
                           ? (event) => {
                               if (
                                 shouldIgnoreRowClick(
@@ -366,7 +375,7 @@ export function ManagerDataTable<TRow>({
                                 event.key === "Spacebar"
                               ) {
                                 event.preventDefault();
-                                onRowClick(row.original);
+                                onRowClick?.(row.original);
                               }
                             }
                           : undefined
