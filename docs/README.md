@@ -4,7 +4,7 @@ Use this index to find the narrowest source of truth before reading broader docs
 
 ## Canonical Root Docs
 
-- [README.md](../README.md): start here for local setup, runtime commands, and top-level environment guidance
+- [README.md](../README.md): quick local setup only
 - [SPEC.md](../SPEC.md): product behavior, UX rules, and acceptance criteria
 - [AGENTS.md](../AGENTS.md): engineering rules, architecture guidance, and testing expectations
 - [CONTRIBUTING.md](../CONTRIBUTING.md): contributor workflow and PR expectations
@@ -12,8 +12,13 @@ Use this index to find the narrowest source of truth before reading broader docs
 
 ## Setup Guides
 
-- [setup/environment.md](./setup/environment.md): runtime env variables, Compose helper variables, and optional feature config
+- [setup/environment.md](./setup/environment.md): required env, rate limiting backends, Compose helper variables, and test env
+- [setup/optional-features.md](./setup/optional-features.md): plugin-like features for AI, attachments, email, scheduled reminders, and Upstash
 - [setup/docker.md](./setup/docker.md): Compose files, container workflows, and stack behavior
+
+## Architecture Guides
+
+- [architecture.md](./architecture.md): source layout, data flow, and ownership boundaries for agents and contributors
 
 ## Operations Guides
 

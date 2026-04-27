@@ -8,8 +8,10 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - Use Bun. Do not use npm.
 - Format and lint with Biome.
 - `SPEC.md` is the product behavior source of truth.
-- `README.md` owns setup, runtime commands, and high-level architecture.
-- `docs/` owns narrow setup, operations, and historical planning notes.
+- `README.md` owns quick setup and basic runtime commands.
+- `docs/architecture.md` owns high-level architecture, source layout, and boundary guidance.
+- `docs/` owns focused setup, architecture, operations, and historical planning notes.
+- Read `docs/architecture.md` before structural or cross-boundary code changes.
 
 ## Code Style
 

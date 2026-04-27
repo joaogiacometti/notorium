@@ -1,10 +1,10 @@
 # Docker Guide
 
-Notorium ships with three compose entrypoints.
+Notorium ships with three Compose entrypoints.
 
 Audience: developers and self-hosters using Docker or Docker Compose.
 
-Related docs: [Docs Index](../README.md), [Environment Guide](./environment.md), [README](../../README.md)
+Related docs: [Docs Index](../README.md), [Environment Guide](./environment.md), [Optional Features](./optional-features.md), [README](../../README.md)
 
 ## Files
 
@@ -37,6 +37,12 @@ bun run db:migrate
 bun dev
 ```
 
+Stop:
+
+```bash
+docker compose -f compose.dev.yml down
+```
+
 ## Full Stack Compose
 
 Use `compose.yml` when you want the containerized app path.
@@ -58,7 +64,7 @@ Important behavior:
 
 - the app container runs as a non-root user
 - PostgreSQL and Redis are bound to `127.0.0.1`
-- the app reads runtime env such as `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `RATE_LIMIT_BACKEND`, `REDIS_URL`, and `CRON_SECRET`
+- the app reads runtime env such as `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `RATE_LIMIT_BACKEND`, and `REDIS_URL`
 - the migration container uses the internal Compose PostgreSQL hostname
 
 Stop:
@@ -72,6 +78,8 @@ Remove volumes too:
 ```bash
 docker compose down -v
 ```
+
+Optional integrations such as email, scheduled reminders, AI, attachments, and Upstash are documented in [Optional Features](./optional-features.md).
 
 ## Test Compose
 
@@ -90,18 +98,3 @@ bun run test:e2e:infra:down
 ```
 
 This stack starts isolated PostgreSQL and Redis containers and runs a migration container against the test database.
-
-## Scheduler and GitHub Actions
-
-The scheduled reminder workflow is not part of the Docker stack.
-
-- App-side secret: `CRON_SECRET`
-- GitHub Actions secret: `NOTORIUM_APP_URL`
-
-The workflow calls:
-
-```bash
-curl -X GET \
-  -H "Authorization: Bearer <CRON_SECRET>" \
-  https://your-domain.com/api/notifications/assessments
-```
