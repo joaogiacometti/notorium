@@ -37,6 +37,8 @@ export default async function FlashcardsPage({
 
   const scopedDeckId =
     deckId && decks.some((deck) => deck.id === deckId) ? deckId : undefined;
+  const initialManageSearch =
+    currentView === "manage" ? search?.trim() : undefined;
 
   const initialManagePageData = getFlashcardsManagePageForUser(
     session.user.id,
@@ -44,7 +46,7 @@ export default async function FlashcardsPage({
       pageIndex: 0,
       pageSize: 25,
       deckId: scopedDeckId,
-      search: "",
+      search: initialManageSearch,
     },
   );
 
@@ -87,7 +89,7 @@ export default async function FlashcardsPage({
       <FlashcardsPageClient
         currentView={currentView}
         scopedDeckId={scopedDeckId}
-        initialSearch={currentView === "manage" ? search : undefined}
+        initialSearch={initialManageSearch}
         deckTree={deckTree}
         decks={decks}
         initialManagePageData={initialManagePageDataResult}

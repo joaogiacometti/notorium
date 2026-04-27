@@ -309,6 +309,58 @@ test("can switch between deck-scoped flashcards views", async ({
   }
 });
 
+test("can search deck-scoped manage flashcards without hanging", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const deckName = getUniqueDeckName("manage-search");
+  const matchingFront = getUniqueFlashcardFront("manage-search-match");
+  const matchingBack = getUniqueFlashcardBack("manage-search-match");
+  const otherFront = getUniqueFlashcardFront("manage-search-other");
+  const otherBack = getUniqueFlashcardBack("manage-search-other");
+  const searchTerm = "manage-search-match";
+
+  await clearUserDecksByNames(user.userId, [deckName]);
+
+  try {
+    const createdDeck = await createDeck(
+      user.userId,
+      deckName,
+      "Flashcards manage search regression test",
+    );
+
+    await createFlashcardForDeck(
+      user.userId,
+      createdDeck.id,
+      matchingFront,
+      matchingBack,
+    );
+    await createFlashcardForDeck(
+      user.userId,
+      createdDeck.id,
+      otherFront,
+      otherBack,
+    );
+
+    await openFlashcardsManagePage(page, createdDeck.id);
+    await page
+      .getByPlaceholder("Search front, back, or deck path...")
+      .fill(searchTerm);
+
+    await expect(page).toHaveURL(
+      new RegExp(`search=${escapeRegex(searchTerm)}`),
+    );
+    await expect(
+      page.getByTestId("flashcards-manage-table-loading"),
+    ).toHaveCount(0);
+    await expect(page.getByTitle(matchingFront, { exact: true })).toBeVisible();
+    await expect(page.getByTitle(otherFront, { exact: true })).toHaveCount(0);
+  } finally {
+    await clearUserDecksByNames(user.userId, [deckName]);
+  }
+});
+
 test("can enter and exit Focus Mode", async ({ page, e2eUser }) => {
   const user = e2eUser;
   const deckName = getUniqueDeckName("focus-mode");

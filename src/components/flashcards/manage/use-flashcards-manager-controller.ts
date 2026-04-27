@@ -68,6 +68,7 @@ export function useFlashcardsManagerController({
   );
   const pathnameRef = useRef(pathname);
   const routerRef = useRef(router);
+  const hasSyncedUrlRef = useRef(false);
   pathnameRef.current = pathname;
   routerRef.current = router;
   const selectedDeckIdRef = useRef(selectedDeckId);
@@ -88,6 +89,11 @@ export function useFlashcardsManagerController({
   });
 
   useEffect(() => {
+    if (!hasSyncedUrlRef.current) {
+      hasSyncedUrlRef.current = true;
+      return;
+    }
+
     const query = new URLSearchParams();
     query.set("view", "manage");
 
@@ -148,7 +154,7 @@ export function useFlashcardsManagerController({
     initialData:
       pageIndex === 0 &&
       (selectedDeckId ?? undefined) === (initialDeckId ?? undefined) &&
-      resolvedSearchQuery.trim().length === 0
+      resolvedSearchQuery === (initialSearch ?? "")
         ? initialPageData
         : undefined,
     placeholderData: (previousData) => previousData,
