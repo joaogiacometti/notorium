@@ -50,7 +50,6 @@ import type {
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface PlanningAssessmentsTableProps {
-  attachmentsEnabled: boolean;
   initialSubjectId?: string;
   initialSearch?: string;
   initialStatus?: string;
@@ -96,7 +95,6 @@ function buildAssessmentsParams(
 }
 
 export function PlanningAssessmentsTable({
-  attachmentsEnabled,
   initialSubjectId,
   initialSearch,
   initialStatus,
@@ -524,7 +522,6 @@ export function PlanningAssessmentsTable({
           open={createOpen}
           onOpenChange={setCreateOpen}
           onCreated={refreshAssessments}
-          attachmentsEnabled={attachmentsEnabled}
           subjects={subjects}
           subjectId={subjectFilter === "all" ? undefined : subjectFilter}
         />

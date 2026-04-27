@@ -1,12 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { createAssessment } from "@/app/actions/assessments";
-import { uploadAssessmentFiles } from "@/components/assessments/assessment-attachment-actions";
-import { AssessmentAttachmentsField } from "@/components/assessments/assessment-attachments-field";
 import { AssessmentDialogForm } from "@/components/assessments/assessment-dialog-form";
 import {
   type CreateAssessmentForm,
@@ -20,7 +17,6 @@ import type {
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface CreateAssessmentDialogProps {
-  attachmentsEnabled: boolean;
   subjectId?: string;
   subjects?: SubjectEntity[];
   open: boolean;
@@ -44,7 +40,6 @@ function getCreateAssessmentFormValues(
 }
 
 export function CreateAssessmentDialog({
-  attachmentsEnabled,
   subjectId,
   subjects,
   open,
@@ -52,8 +47,6 @@ export function CreateAssessmentDialog({
   onCreated,
 }: Readonly<CreateAssessmentDialogProps>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
-  const [_isPending, _startTransition] = useTransition();
   const form = useForm<
     CreateAssessmentFormInput,
     unknown,
@@ -65,7 +58,6 @@ export function CreateAssessmentDialog({
 
   useEffect(() => {
     form.reset(getCreateAssessmentFormValues(subjectId));
-    setNewFiles([]);
   }, [form, subjectId]);
 
   async function onSubmit(data: CreateAssessmentForm) {
@@ -78,22 +70,7 @@ export function CreateAssessmentDialog({
     try {
       const result = await createAssessment(data);
       if (result.success) {
-        const uploadResult = await uploadAssessmentFiles(
-          result.assessment.id,
-          newFiles,
-        );
-
-        if (!uploadResult.success) {
-          if (uploadResult.attachments.length > 0) {
-            setNewFiles(newFiles.slice(uploadResult.completedFileCount));
-          }
-
-          toast.error(resolveActionErrorMessage(uploadResult));
-          return;
-        }
-
         form.reset(getCreateAssessmentFormValues(subjectId));
-        setNewFiles([]);
         onCreated?.(result.assessment);
         onOpenChange(false);
       } else {
@@ -118,18 +95,6 @@ export function CreateAssessmentDialog({
       pendingSubmitLabel="Creating..."
       onSubmit={onSubmit}
       subjects={subjects}
-      attachmentsSlot={
-        attachmentsEnabled ? (
-          <AssessmentAttachmentsField
-            formId="form-create-assessment"
-            newFiles={newFiles}
-            removedAttachmentIds={[]}
-            onNewFilesChange={setNewFiles}
-            onRemovedAttachmentIdsChange={() => {}}
-            disabled={isSubmitting}
-          />
-        ) : undefined
-      }
       isSubmitting={isSubmitting}
     />
   );
