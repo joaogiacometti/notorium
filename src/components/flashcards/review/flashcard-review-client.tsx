@@ -95,6 +95,7 @@ export function FlashcardReviewClient({
     scopeKey: string;
     promise: Promise<FlashcardReviewEntity[] | null>;
   } | null>(null);
+  const isRefreshingOnReturnRef = useRef(false);
   const examSession = useExamSession();
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
   const examSessionData = examSession.session;
@@ -201,6 +202,17 @@ export function FlashcardReviewClient({
     setRevealed(false);
     setEditOpen(false);
     setDeleteOpen(false);
+  }
+
+  function commitReturnedReviewState(nextState: FlashcardReviewState) {
+    const currentCardId = reviewStateRef.current.cards[0]?.id;
+    const nextCardId = nextState.cards[0]?.id;
+
+    commitReviewState(nextState);
+
+    if (currentCardId !== nextCardId) {
+      resetFocusViewState();
+    }
   }
 
   function closeFocusMode() {
@@ -400,6 +412,26 @@ export function FlashcardReviewClient({
     });
   }
 
+  const refreshReviewStateOnReturn = useEffectEvent(async () => {
+    if (isExamMode || isPending || isRefreshingOnReturnRef.current) {
+      return;
+    }
+
+    isRefreshingOnReturnRef.current = true;
+    try {
+      const nextState = await getFlashcardReviewState({
+        deckId: selectedDeckId,
+        limit: reviewBatchLimit,
+      });
+
+      commitReturnedReviewState(nextState);
+    } catch {
+      toast.error("Could not refresh review progress. Please try again.");
+    } finally {
+      isRefreshingOnReturnRef.current = false;
+    }
+  });
+
   const handleReviewKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (shortcutsSuspended) {
       return;
@@ -458,6 +490,26 @@ export function FlashcardReviewClient({
     document.addEventListener("keydown", handleReviewKeyDown);
 
     return () => document.removeEventListener("keydown", handleReviewKeyDown);
+  }, []);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void refreshReviewStateOnReturn();
+      }
+    }
+
+    function handleWindowFocus() {
+      void refreshReviewStateOnReturn();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
   }, []);
 
   const content = (
