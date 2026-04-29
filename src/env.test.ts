@@ -7,6 +7,8 @@ const SERVER_ENV_KEYS = [
   "OPENROUTER_API_KEY",
   "OPENROUTER_MODEL",
   "NOTORIUM_AI_FIXTURE_MODE",
+  "NOTORIUM_EMAIL_FIXTURE_MODE",
+  "NOTORIUM_EMAIL_FIXTURE_INBOX_PATH",
   "RATE_LIMIT_BACKEND",
   "BLOB_READ_WRITE_TOKEN",
   "SKIP_ENV_VALIDATION",
@@ -116,5 +118,20 @@ describe("server env", () => {
     const env = getServerEnv();
 
     expect(env.NOTORIUM_AI_FIXTURE_MODE).toBe("playwright");
+  });
+
+  it("parses Playwright email fixture settings when set", async () => {
+    setRequiredServerEnv();
+    process.env.NOTORIUM_EMAIL_FIXTURE_MODE = "playwright";
+    process.env.NOTORIUM_EMAIL_FIXTURE_INBOX_PATH =
+      "test-results/email-fixture-inbox.jsonl";
+
+    const { getServerEnv } = await import("@/env");
+    const env = getServerEnv();
+
+    expect(env.NOTORIUM_EMAIL_FIXTURE_MODE).toBe("playwright");
+    expect(env.NOTORIUM_EMAIL_FIXTURE_INBOX_PATH).toBe(
+      "test-results/email-fixture-inbox.jsonl",
+    );
   });
 });

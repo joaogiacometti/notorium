@@ -17,6 +17,7 @@ import {
 } from "@/db/schema";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import {
+  type E2ECredentials,
   type E2EUserKind,
   getE2ECredentials,
   getE2EWorkerCredentials,
@@ -73,10 +74,10 @@ function getAccessStatus(kind: E2EUserKind): AccessStatus {
   return "approved";
 }
 
-export async function ensureE2EUser(kind: E2EUserKind = "approved") {
-  const credentials = getE2ECredentials(kind);
-  const accessStatus = getAccessStatus(kind);
-
+export async function ensureE2EUserAccount(
+  credentials: E2ECredentials,
+  accessStatus: AccessStatus,
+) {
   let [existingUser] = await getDb()
     .select({
       id: user.id,
@@ -111,6 +112,10 @@ export async function ensureE2EUser(kind: E2EUserKind = "approved") {
     ...credentials,
     userId: existingUser.id,
   } satisfies E2EUserAccount;
+}
+
+export async function ensureE2EUser(kind: E2EUserKind = "approved") {
+  return ensureE2EUserAccount(getE2ECredentials(kind), getAccessStatus(kind));
 }
 
 export async function resetE2EInstanceAuthState() {

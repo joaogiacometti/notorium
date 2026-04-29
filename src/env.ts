@@ -15,6 +15,8 @@ const serverEnvSchema = z
     OPENROUTER_API_KEY: z.string().min(1).optional(),
     OPENROUTER_MODEL: z.string().min(1).optional(),
     NOTORIUM_AI_FIXTURE_MODE: z.enum(["playwright"]).optional(),
+    NOTORIUM_EMAIL_FIXTURE_MODE: z.enum(["playwright"]).optional(),
+    NOTORIUM_EMAIL_FIXTURE_INBOX_PATH: z.string().min(1).optional(),
     RESEND_API_KEY: z.string().min(1).optional(),
     RESEND_FROM_EMAIL: z.string().min(1).optional(),
     CRON_SECRET: z.string().min(32).optional(),

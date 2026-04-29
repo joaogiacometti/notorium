@@ -35,8 +35,12 @@ jobs:
       RATE_LIMIT_BACKEND: redis
       REDIS_URL: redis://localhost:6380
       NOTORIUM_AI_FIXTURE_MODE: playwright
+      NOTORIUM_EMAIL_FIXTURE_MODE: playwright
+      NOTORIUM_EMAIL_FIXTURE_INBOX_PATH: test-results/email-fixture-inbox.jsonl
       OPENROUTER_API_KEY: playwright-openrouter-key
       OPENROUTER_MODEL: playwright-openrouter-model
+      RESEND_API_KEY: playwright-resend-key
+      RESEND_FROM_EMAIL: Notorium <notifications@example.com>
 
     steps:
       - name: Checkout
