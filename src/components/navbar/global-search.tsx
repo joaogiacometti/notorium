@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
-import { SubjectText } from "@/components/shared/subject-text";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,12 +17,16 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { LIMITS } from "@/lib/config/limits";
-import { getRichTextExcerpt } from "@/lib/editor/rich-text";
+import { richTextToPlainText } from "@/lib/editor/rich-text";
 import {
   getFlashcardDetailHref,
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
+import {
+  buildSearchMatchSnippet,
+  renderSearchHighlightedText,
+} from "@/lib/search/highlight";
 
 interface GlobalSearchProps {
   userId: string;
@@ -91,6 +94,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
   const canSearch =
     userId.length > 0 && debouncedQuery.trim().length >= LIMITS.searchQueryMin;
+  const highlightQuery = canSearch ? debouncedQuery.trim() : "";
   const isAuthenticated = userId.length > 0;
   const showingRecents = isAuthenticated && !canSearch;
   const currentData = canSearch ? data : recentQuery.data;
@@ -157,15 +161,16 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                 >
                   <div className="flex w-full min-w-0 items-center gap-2">
                     <BookOpen className="size-4 text-muted-foreground" />
-                    <SubjectText
-                      value={subj.name}
-                      mode="truncate"
-                      className="block flex-1"
-                    />
+                    <span className="block min-w-0 flex-1 truncate">
+                      {renderSearchHighlightedText(subj.name, highlightQuery)}
+                    </span>
                   </div>
                   {subj.description && (
                     <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
-                      {subj.description}
+                      {renderSearchHighlightedText(
+                        subj.description,
+                        highlightQuery,
+                      )}
                     </span>
                   )}
                 </CommandItem>
@@ -186,19 +191,29 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                 >
                   <div className="flex w-full min-w-0 items-center gap-2">
                     <FileText className="size-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">{n.title}</span>
+                    <span className="min-w-0 flex-1 truncate">
+                      {renderSearchHighlightedText(n.title, highlightQuery)}
+                    </span>
                     <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
                       <span className="shrink-0">in</span>
-                      <SubjectText
-                        value={n.subjectName}
-                        mode="truncate"
-                        className="block flex-1"
-                      />
+                      <span className="block min-w-0 flex-1 truncate">
+                        {renderSearchHighlightedText(
+                          n.subjectName,
+                          highlightQuery,
+                        )}
+                      </span>
                     </span>
                   </div>
                   {n.content && (
                     <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
-                      {n.content}
+                      {renderSearchHighlightedText(
+                        buildSearchMatchSnippet(
+                          richTextToPlainText(n.content),
+                          highlightQuery,
+                          LIMITS.contentPreviewTruncate,
+                        ),
+                        highlightQuery,
+                      )}
                     </span>
                   )}
                 </CommandItem>
@@ -228,7 +243,14 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   <div className="flex w-full min-w-0 items-center gap-2">
                     <Layers className="size-4 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate">
-                      {getRichTextExcerpt(fc.front, 80)}
+                      {renderSearchHighlightedText(
+                        buildSearchMatchSnippet(
+                          richTextToPlainText(fc.front),
+                          highlightQuery,
+                          80,
+                        ),
+                        highlightQuery,
+                      )}
                     </span>
                     <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
                       <span className="shrink-0">in</span>
@@ -239,7 +261,14 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   </div>
                   {fc.back && (
                     <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
-                      {getRichTextExcerpt(fc.back, 120)}
+                      {renderSearchHighlightedText(
+                        buildSearchMatchSnippet(
+                          richTextToPlainText(fc.back),
+                          highlightQuery,
+                          120,
+                        ),
+                        highlightQuery,
+                      )}
                     </span>
                   )}
                 </CommandItem>

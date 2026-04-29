@@ -42,7 +42,7 @@ export async function getSearchDataForUser(
       .select({
         id: note.id,
         title: note.title,
-        content: sql<string>`left(coalesce(${note.content}, ''), ${LIMITS.contentPreviewTruncate})`,
+        content: sql<string>`coalesce(${note.content}, '')`,
         subjectId: note.subjectId,
         subjectName: subject.name,
       })
@@ -65,7 +65,7 @@ export async function getSearchDataForUser(
       .select({
         id: flashcard.id,
         front: flashcard.front,
-        back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
+        back: flashcard.back,
         deckId: flashcard.deckId,
         deckName: deck.name,
       })
