@@ -1,3 +1,4 @@
+import { getServerEnv } from "@/env";
 import {
   buildGenerateFlashcardBackPrompt,
   buildGenerateFlashcardsPrompt,
@@ -32,12 +33,34 @@ import {
 export type { FlashcardValidationOutput };
 export type { FlashcardForValidation };
 
+export const PLAYWRIGHT_GENERATED_BACK =
+  "Playwright fixture back: photosynthesis converts light energy into stored chemical energy.";
+
+export const PLAYWRIGHT_GENERATED_CARDS = [
+  {
+    front: "Playwright fixture card 1: What does active recall improve?",
+    back: "Active recall strengthens retrieval practice by requiring learners to produce an answer.",
+  },
+  {
+    front: "Playwright fixture card 2: What does spaced repetition optimize?",
+    back: "Spaced repetition schedules reviews near the point of forgetting.",
+  },
+];
+
+function isPlaywrightAiFixtureMode() {
+  return getServerEnv().NOTORIUM_AI_FIXTURE_MODE === "playwright";
+}
+
 export async function generateFlashcardBackContent(input: {
   settings: ResolvedAiSettings;
   subjectName?: string;
   deckName?: string;
   front: string;
 }): Promise<string> {
+  if (isPlaywrightAiFixtureMode()) {
+    return plainTextToRichText(PLAYWRIGHT_GENERATED_BACK);
+  }
+
   const frontText = normalizeLine(richTextToPlainText(input.front));
 
   const output = await generateStructuredOutput({
@@ -110,6 +133,10 @@ export async function generateFlashcardsFromText(input: {
   deckName?: string;
   text: string;
 }): Promise<Array<{ front: string; back: string }>> {
+  if (isPlaywrightAiFixtureMode()) {
+    return PLAYWRIGHT_GENERATED_CARDS;
+  }
+
   const output = await generateStructuredOutput({
     settings: input.settings,
     schema: generatedFlashcardsSchema,
@@ -135,6 +162,24 @@ export async function validateFlashcardsWithAi(input: {
   settings: ResolvedAiSettings;
   flashcards: FlashcardForValidation[];
 }): Promise<FlashcardValidationOutput> {
+  if (isPlaywrightAiFixtureMode()) {
+    const issueCard = input.flashcards.find((card) =>
+      card.front.includes("fixture issue"),
+    );
+
+    return {
+      issues: issueCard
+        ? [
+            {
+              flashcardId: issueCard.id,
+              issueType: "confusing",
+              explanation: "Playwright fixture issue: answer is too vague.",
+            },
+          ]
+        : [],
+    };
+  }
+
   const output = await generateStructuredOutput({
     settings: input.settings,
     schema: flashcardValidationOutputSchema,

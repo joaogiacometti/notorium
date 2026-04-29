@@ -1,84 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const SNAPSHOT = {
-  DATABASE_URL: process.env.DATABASE_URL,
-  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-  REDIS_URL: process.env.REDIS_URL,
-  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
-  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
-  RATE_LIMIT_BACKEND: process.env.RATE_LIMIT_BACKEND,
-  BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
-  SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
-  CRON_SECRET: process.env.CRON_SECRET,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
-  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
-};
+const SERVER_ENV_KEYS = [
+  "DATABASE_URL",
+  "BETTER_AUTH_SECRET",
+  "REDIS_URL",
+  "OPENROUTER_API_KEY",
+  "OPENROUTER_MODEL",
+  "NOTORIUM_AI_FIXTURE_MODE",
+  "RATE_LIMIT_BACKEND",
+  "BLOB_READ_WRITE_TOKEN",
+  "SKIP_ENV_VALIDATION",
+  "CRON_SECRET",
+  "RESEND_API_KEY",
+  "RESEND_FROM_EMAIL",
+] as const;
+
+type ServerEnvKey = (typeof SERVER_ENV_KEYS)[number];
+
+const SNAPSHOT = Object.fromEntries(
+  SERVER_ENV_KEYS.map((key) => [key, process.env[key]]),
+) as Record<ServerEnvKey, string | undefined>;
 
 function restoreEnv() {
-  if (SNAPSHOT.DATABASE_URL === undefined) {
-    delete process.env.DATABASE_URL;
-  } else {
-    process.env.DATABASE_URL = SNAPSHOT.DATABASE_URL;
-  }
+  for (const key of SERVER_ENV_KEYS) {
+    const value = SNAPSHOT[key];
 
-  if (SNAPSHOT.BETTER_AUTH_SECRET === undefined) {
-    delete process.env.BETTER_AUTH_SECRET;
-  } else {
-    process.env.BETTER_AUTH_SECRET = SNAPSHOT.BETTER_AUTH_SECRET;
-  }
+    if (value === undefined) {
+      delete process.env[key];
+      continue;
+    }
 
-  if (SNAPSHOT.REDIS_URL === undefined) {
-    delete process.env.REDIS_URL;
-  } else {
-    process.env.REDIS_URL = SNAPSHOT.REDIS_URL;
-  }
-
-  if (SNAPSHOT.OPENROUTER_API_KEY === undefined) {
-    delete process.env.OPENROUTER_API_KEY;
-  } else {
-    process.env.OPENROUTER_API_KEY = SNAPSHOT.OPENROUTER_API_KEY;
-  }
-
-  if (SNAPSHOT.OPENROUTER_MODEL === undefined) {
-    delete process.env.OPENROUTER_MODEL;
-  } else {
-    process.env.OPENROUTER_MODEL = SNAPSHOT.OPENROUTER_MODEL;
-  }
-
-  if (SNAPSHOT.RATE_LIMIT_BACKEND === undefined) {
-    delete process.env.RATE_LIMIT_BACKEND;
-  } else {
-    process.env.RATE_LIMIT_BACKEND = SNAPSHOT.RATE_LIMIT_BACKEND;
-  }
-
-  if (SNAPSHOT.BLOB_READ_WRITE_TOKEN === undefined) {
-    delete process.env.BLOB_READ_WRITE_TOKEN;
-  } else {
-    process.env.BLOB_READ_WRITE_TOKEN = SNAPSHOT.BLOB_READ_WRITE_TOKEN;
-  }
-
-  if (SNAPSHOT.SKIP_ENV_VALIDATION === undefined) {
-    delete process.env.SKIP_ENV_VALIDATION;
-  } else {
-    process.env.SKIP_ENV_VALIDATION = SNAPSHOT.SKIP_ENV_VALIDATION;
-  }
-
-  if (SNAPSHOT.CRON_SECRET === undefined) {
-    delete process.env.CRON_SECRET;
-  } else {
-    process.env.CRON_SECRET = SNAPSHOT.CRON_SECRET;
-  }
-
-  if (SNAPSHOT.RESEND_API_KEY === undefined) {
-    delete process.env.RESEND_API_KEY;
-  } else {
-    process.env.RESEND_API_KEY = SNAPSHOT.RESEND_API_KEY;
-  }
-
-  if (SNAPSHOT.RESEND_FROM_EMAIL === undefined) {
-    delete process.env.RESEND_FROM_EMAIL;
-  } else {
-    process.env.RESEND_FROM_EMAIL = SNAPSHOT.RESEND_FROM_EMAIL;
+    process.env[key] = value;
   }
 }
 
@@ -90,20 +42,16 @@ function setRequiredServerEnv() {
   process.env.RATE_LIMIT_BACKEND = "redis";
 }
 
+function clearServerEnv() {
+  for (const key of SERVER_ENV_KEYS) {
+    delete process.env[key];
+  }
+}
+
 describe("server env", () => {
   beforeEach(() => {
     vi.resetModules();
-    delete process.env.DATABASE_URL;
-    delete process.env.BETTER_AUTH_SECRET;
-    delete process.env.REDIS_URL;
-    delete process.env.OPENROUTER_API_KEY;
-    delete process.env.OPENROUTER_MODEL;
-    delete process.env.RATE_LIMIT_BACKEND;
-    delete process.env.BLOB_READ_WRITE_TOKEN;
-    delete process.env.SKIP_ENV_VALIDATION;
-    delete process.env.CRON_SECRET;
-    delete process.env.RESEND_API_KEY;
-    delete process.env.RESEND_FROM_EMAIL;
+    clearServerEnv();
   });
 
   afterEach(() => {
@@ -158,5 +106,15 @@ describe("server env", () => {
 
     expect(env.OPENROUTER_API_KEY).toBeUndefined();
     expect(env.OPENROUTER_MODEL).toBeUndefined();
+  });
+
+  it("parses Playwright AI fixture mode when set", async () => {
+    setRequiredServerEnv();
+    process.env.NOTORIUM_AI_FIXTURE_MODE = "playwright";
+
+    const { getServerEnv } = await import("@/env");
+    const env = getServerEnv();
+
+    expect(env.NOTORIUM_AI_FIXTURE_MODE).toBe("playwright");
   });
 });

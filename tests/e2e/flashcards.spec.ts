@@ -1,4 +1,8 @@
 import type { Locator, Page } from "@playwright/test";
+import {
+  PLAYWRIGHT_GENERATED_BACK,
+  PLAYWRIGHT_GENERATED_CARDS,
+} from "@/features/flashcards/ai";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
@@ -68,25 +72,30 @@ function getFocusModeDeckLabel(page: Page, deckName: string) {
     .last();
 }
 
+async function fillRichTextEditor(editor: Locator, value: string) {
+  await expect(editor).toBeVisible();
+  await editor.click();
+  await editor.press("Control+A");
+  await editor.press("Backspace");
+  await editor.pressSequentially(value);
+}
+
 async function fillFlashcardEditors(
   dialog: Locator,
   formId: "form-create-flashcard" | "form-edit-flashcard",
   front: string,
   back: string,
 ) {
-  const frontEditor = dialog.locator(`#${formId}-front`);
-  await expect(frontEditor).toBeVisible();
-  await frontEditor.click();
-  await frontEditor.press("Control+A");
-  await frontEditor.press("Backspace");
-  await frontEditor.pressSequentially(front);
+  await fillRichTextEditor(dialog.locator(`#${formId}-front`), front);
+  await fillRichTextEditor(dialog.locator(`#${formId}-back`), back);
+}
 
-  const backEditor = dialog.locator(`#${formId}-back`);
-  await expect(backEditor).toBeVisible();
-  await backEditor.click();
-  await backEditor.press("Control+A");
-  await backEditor.press("Backspace");
-  await backEditor.pressSequentially(back);
+async function openCreateFlashcardDialog(page: Page) {
+  await page
+    .getByRole("button", { name: "New Flashcard", exact: true })
+    .click();
+
+  return page.getByRole("dialog", { name: "Create Flashcard" });
 }
 
 async function createFlashcardFromManageDialog(
@@ -94,10 +103,7 @@ async function createFlashcardFromManageDialog(
   front: string,
   back: string,
 ) {
-  await page
-    .getByRole("button", { name: "New Flashcard", exact: true })
-    .click();
-  const createDialog = page.getByRole("dialog", { name: "Create Flashcard" });
+  const createDialog = await openCreateFlashcardDialog(page);
   await fillFlashcardEditors(
     createDialog,
     "form-create-flashcard",
@@ -151,6 +157,153 @@ test("can create and open a flashcard", async ({ page, e2eUser }) => {
     await expect(page.getByText("Back", { exact: true })).toBeVisible();
     await expect(page.getByText(deckName, { exact: true })).toBeVisible();
     await expect(page.getByText(flashcardBack).first()).toBeVisible();
+  } finally {
+    await clearUserDecksByNames(user.userId, [deckName]);
+  }
+});
+
+test("can generate a single flashcard back with AI", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const deckName = getUniqueDeckName("ai-single-back");
+  const flashcardFront = getUniqueFlashcardFront("ai-single-back");
+
+  await clearUserDecksByNames(user.userId, [deckName]);
+
+  try {
+    const createdDeck = await createDeck(
+      user.userId,
+      deckName,
+      "AI single back generation test",
+    );
+
+    await openFlashcardsManagePage(page, createdDeck.id);
+    const createDialog = await openCreateFlashcardDialog(page);
+    await fillRichTextEditor(
+      createDialog.locator("#form-create-flashcard-front"),
+      flashcardFront,
+    );
+
+    await createDialog
+      .getByRole("button", { name: "Generate with AI", exact: true })
+      .click();
+    await expect(
+      createDialog.locator("#form-create-flashcard-back"),
+    ).toContainText(PLAYWRIGHT_GENERATED_BACK);
+
+    await createDialog
+      .getByRole("button", { name: "Create Flashcard", exact: true })
+      .click();
+    await expect(
+      page.getByTitle(flashcardFront, { exact: true }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(createDialog).toHaveCount(0);
+
+    await openFlashcardDetailFromManage(page, flashcardFront);
+    await expect(
+      page.getByText(PLAYWRIGHT_GENERATED_BACK).first(),
+    ).toBeVisible();
+  } finally {
+    await clearUserDecksByNames(user.userId, [deckName]);
+  }
+});
+
+test("can generate multiple flashcards from source text with AI", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const deckName = getUniqueDeckName("ai-multiple");
+
+  await clearUserDecksByNames(user.userId, [deckName]);
+
+  try {
+    const createdDeck = await createDeck(
+      user.userId,
+      deckName,
+      "AI multiple flashcards generation test",
+    );
+
+    await openFlashcardsManagePage(page, createdDeck.id);
+    const createDialog = await openCreateFlashcardDialog(page);
+    await createDialog.getByRole("button", { name: "Multiple" }).click();
+    await fillRichTextEditor(
+      createDialog.locator("#ai-text"),
+      "Active recall and spaced repetition are core study practices.",
+    );
+
+    await createDialog
+      .getByRole("button", { name: "Generate Flashcards", exact: true })
+      .click();
+    await expect(
+      createDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[0].front),
+    ).toBeVisible();
+    await expect(
+      createDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[1].front),
+    ).toBeVisible();
+    await expect(createDialog.getByText("2 of 2 selected")).toBeVisible();
+
+    await createDialog
+      .getByRole("button", { name: "Create 2 Cards", exact: true })
+      .click();
+    await expect(
+      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[0].front, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[1].front, { exact: true }),
+    ).toBeVisible();
+  } finally {
+    await clearUserDecksByNames(user.userId, [deckName]);
+  }
+});
+
+test("can validate flashcards with AI", async ({ page, e2eUser }) => {
+  const user = e2eUser;
+  const deckName = getUniqueDeckName("ai-validation");
+  const issueFront = getUniqueFlashcardFront("ai-validation-fixture issue");
+  const cleanFront = getUniqueFlashcardFront("ai-validation-clean");
+
+  await clearUserDecksByNames(user.userId, [deckName]);
+
+  try {
+    const createdDeck = await createDeck(
+      user.userId,
+      deckName,
+      "AI validation results test",
+    );
+
+    await createFlashcardForDeck(
+      user.userId,
+      createdDeck.id,
+      issueFront,
+      "Too vague.",
+    );
+    await createFlashcardForDeck(
+      user.userId,
+      createdDeck.id,
+      cleanFront,
+      "Specific enough for validation.",
+    );
+
+    await openFlashcardsManagePage(page, createdDeck.id);
+    await page.getByRole("button", { name: "Validate", exact: true }).click();
+
+    const validateDialog = page.getByRole("dialog", {
+      name: "Validate Flashcards",
+    });
+    await expect(validateDialog.getByText("the selected deck")).toBeVisible();
+    await validateDialog
+      .getByRole("button", { name: "Validate", exact: true })
+      .click();
+
+    await expect(page.getByText("Confusing", { exact: true })).toBeVisible();
+    await expect(page.getByTitle(issueFront, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(deckName, { exact: true }).first(),
+    ).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);
   }

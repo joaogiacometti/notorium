@@ -14,6 +14,7 @@ const serverEnvSchema = z
     BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
     OPENROUTER_API_KEY: z.string().min(1).optional(),
     OPENROUTER_MODEL: z.string().min(1).optional(),
+    NOTORIUM_AI_FIXTURE_MODE: z.enum(["playwright"]).optional(),
     RESEND_API_KEY: z.string().min(1).optional(),
     RESEND_FROM_EMAIL: z.string().min(1).optional(),
     CRON_SECRET: z.string().min(32).optional(),

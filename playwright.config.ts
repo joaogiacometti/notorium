@@ -22,6 +22,11 @@ export default defineConfig({
   webServer: {
     command:
       "bun --env-file=.env.test run build && bun --env-file=.env.test run start -- --hostname 127.0.0.1 --port 3001",
+    env: {
+      NOTORIUM_AI_FIXTURE_MODE: "playwright",
+      OPENROUTER_API_KEY: "playwright-openrouter-key",
+      OPENROUTER_MODEL: "playwright-openrouter-model",
+    },
     url: baseURL,
     reuseExistingServer: true,
     timeout: 120_000,
