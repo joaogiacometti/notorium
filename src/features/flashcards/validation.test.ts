@@ -8,6 +8,7 @@ import {
   editFlashcardSchema,
   generateFlashcardBackSchema,
   generateFlashcardsSchema,
+  generateNoteFlashcardsSchema,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
@@ -170,6 +171,33 @@ describe("generateFlashcardsSchema", () => {
     const result = generateFlashcardsSchema.safeParse({
       deckId: "deck-123",
       text: "a".repeat(LIMITS.flashcardAiMaxInput + 1),
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("generateNoteFlashcardsSchema", () => {
+  it("accepts note and deck ids", () => {
+    const result = generateNoteFlashcardsSchema.safeParse({
+      noteId: "note-123",
+      deckId: "deck-123",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing note id", () => {
+    const result = generateNoteFlashcardsSchema.safeParse({
+      deckId: "deck-123",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing deck id", () => {
+    const result = generateNoteFlashcardsSchema.safeParse({
+      noteId: "note-123",
     });
 
     expect(result.success).toBe(false);

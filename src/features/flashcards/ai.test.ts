@@ -231,6 +231,20 @@ describe("buildGenerateFlashcardsPrompt", () => {
     });
     expect(prompt).toContain("Deck: Networking");
   });
+
+  it("includes note title when provided", () => {
+    const prompt = buildGenerateFlashcardsPrompt({
+      subjectName: "Biology",
+      deckName: "Metabolism",
+      noteTitle: "Photosynthesis lecture",
+      text: "Chloroplasts contain chlorophyll.",
+    });
+
+    expect(prompt).toContain("Subject: Biology");
+    expect(prompt).toContain("Deck: Metabolism");
+    expect(prompt).toContain("Note title: Photosynthesis lecture");
+    expect(prompt).toContain("Chloroplasts contain chlorophyll.");
+  });
 });
 
 describe("normalizeGeneratedCards", () => {

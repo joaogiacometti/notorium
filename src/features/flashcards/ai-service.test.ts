@@ -136,6 +136,40 @@ describe("flashcards ai service", () => {
     expect(generateFlashcardsFromTextMock).not.toHaveBeenCalled();
   });
 
+  it("passes note context into multi-card generation", async () => {
+    generateFlashcardsFromTextMock.mockResolvedValueOnce([
+      { front: "Front", back: "Back" },
+    ]);
+
+    const { generateFlashcardsForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+
+    const result = await generateFlashcardsForUser({
+      userId: "user-1",
+      subjectName: "Biology",
+      deckName: "Metabolism",
+      noteTitle: "Photosynthesis lecture",
+      text: "Chloroplasts contain chlorophyll.",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      cards: [{ front: "Front", back: "Back" }],
+    });
+    expect(generateFlashcardsFromTextMock).toHaveBeenCalledWith({
+      settings: {
+        provider: "openrouter",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-or-v1-test",
+      },
+      subjectName: "Biology",
+      deckName: "Metabolism",
+      noteTitle: "Photosynthesis lecture",
+      text: "Chloroplasts contain chlorophyll.",
+    });
+  });
+
   it("returns validation limit error for AI validation", async () => {
     consumeUserDailyRateLimitMock.mockResolvedValueOnce({
       limited: true,

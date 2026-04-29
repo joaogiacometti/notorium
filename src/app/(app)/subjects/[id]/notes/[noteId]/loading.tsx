@@ -18,6 +18,7 @@ export default function NoteDetailLoading() {
             </div>
           </div>
           <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+            <Skeleton className="h-9 flex-1 sm:w-40 sm:flex-none" />
             <Skeleton className="h-9 flex-1 sm:w-20 sm:flex-none" />
             <Skeleton className="h-9 flex-1 sm:w-24 sm:flex-none" />
           </div>

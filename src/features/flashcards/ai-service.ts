@@ -149,6 +149,7 @@ interface GenerateFlashcardsForUserInput {
   userId: string;
   subjectName?: string;
   deckName?: string;
+  noteTitle?: string;
   text: string;
 }
 
@@ -167,6 +168,7 @@ export async function generateFlashcardsForUser({
   userId,
   subjectName,
   deckName,
+  noteTitle,
   text,
 }: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
   try {
@@ -189,6 +191,7 @@ export async function generateFlashcardsForUser({
       settings,
       subjectName,
       deckName,
+      noteTitle,
       text,
     });
 

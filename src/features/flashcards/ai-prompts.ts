@@ -287,11 +287,13 @@ export function buildImproveFlashcardBackPrompt(input: {
 export function buildGenerateFlashcardsPrompt(input: {
   subjectName?: string;
   deckName?: string;
+  noteTitle?: string;
   text: string;
 }): string {
   return [
     ...(input.subjectName ? [`Subject: ${input.subjectName}`] : []),
     ...(input.deckName ? [`Deck: ${input.deckName}`] : []),
+    ...(input.noteTitle ? [`Note title: ${input.noteTitle}`] : []),
     "",
     "Source material:",
     input.text,

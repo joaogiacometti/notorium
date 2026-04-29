@@ -12,6 +12,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - `docs/architecture.md` owns high-level architecture, source layout, and boundary guidance.
 - `docs/` owns focused setup, architecture, operations, and historical planning notes.
 - Read `docs/architecture.md` before structural or cross-boundary code changes.
+- When changing behavior or adding a feature, update every related document in the same change: `SPEC.md` for product behavior, `README.md` for setup/runtime commands, `docs/architecture.md` for boundaries or source layout, and focused `docs/` files for operations or setup details.
 
 ## Code Style
 
@@ -89,6 +90,7 @@ Only add optional files when they are needed.
 - Keep write logic in `src/features/*/mutations.ts`.
 - Keep validation schemas in `src/features/*/validation.ts` or `src/lib/validations/*`.
 - Every `page.tsx` needs a matching `loading.tsx` that mirrors the page layout.
+- When changing a page or detail header, check its matching `loading.tsx` in the same change. Loading screens should stay simple, but must not miss major layout regions or primary action slots that would cause obvious shift or broken expectations.
 - `/planning` is the canonical planning route. Do not add aliases like `/assessments` or `/calendar`.
 
 ## Results and Errors
@@ -184,6 +186,7 @@ className =
 ## Definition of Done
 
 - Behavior matches `SPEC.md`.
+- Related documentation is updated in the same change.
 - Inputs are validated with Zod.
 - Auth and `userId` ownership are enforced.
 - Server Actions return typed results.

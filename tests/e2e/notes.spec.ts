@@ -1,8 +1,11 @@
 import type { Page } from "@playwright/test";
+import { PLAYWRIGHT_GENERATED_CARDS } from "@/features/flashcards/ai";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
+  clearUserDecksByNames,
   clearUserSubjectsByNames,
+  createDeck,
   createNote,
   createSubject,
 } from "./support/db";
@@ -18,6 +21,10 @@ function getUniqueSubjectName(testTitle: string) {
 
 function getUniqueNoteTitle(testTitle: string) {
   return getPrefixedValue("note", testTitle);
+}
+
+function getUniqueDeckName(testTitle: string) {
+  return getPrefixedValue("note-deck", testTitle);
 }
 
 async function createNoteFromDialog(
@@ -156,5 +163,71 @@ test("can delete a note", async ({ page, e2eUser }) => {
     ).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
+  }
+});
+
+test("can generate flashcards from a note with AI", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const subjectName = getUniqueSubjectName("ai-flashcards");
+  const noteTitle = getUniqueNoteTitle("ai-flashcards");
+  const deckName = getUniqueDeckName("ai-flashcards");
+
+  await clearUserSubjectsByNames(user.userId, [subjectName]);
+  await clearUserDecksByNames(user.userId, [deckName]);
+
+  try {
+    const createdSubject = await createSubject(
+      user.userId,
+      subjectName,
+      "Notes AI flashcards smoke test",
+    );
+    const createdDeck = await createDeck(user.userId, deckName);
+
+    await createNote(
+      user.userId,
+      createdSubject.id,
+      noteTitle,
+      "Active recall and spaced repetition are core study practices.",
+    );
+
+    await openSubjectDetailByName(page, subjectName);
+    await openNoteDetailByTitle(page, noteTitle);
+
+    await page
+      .getByRole("button", { name: "Generate flashcards", exact: true })
+      .click();
+
+    const generateDialog = page.getByRole("dialog", {
+      name: "Generate Flashcards",
+    });
+    await generateDialog
+      .getByRole("button", { name: "Generate Flashcards", exact: true })
+      .click();
+
+    await expect(
+      generateDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[0].front),
+    ).toBeVisible();
+    await expect(
+      generateDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[1].front),
+    ).toBeVisible();
+
+    await generateDialog
+      .getByRole("button", { name: "Create 2 Cards", exact: true })
+      .click();
+    await expect(generateDialog).toHaveCount(0);
+
+    await page.goto(`/flashcards?view=manage&deckId=${createdDeck.id}`);
+    await expect(
+      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[0].front, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[1].front, { exact: true }),
+    ).toBeVisible();
+  } finally {
+    await clearUserSubjectsByNames(user.userId, [subjectName]);
+    await clearUserDecksByNames(user.userId, [deckName]);
   }
 });

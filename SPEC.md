@@ -47,12 +47,15 @@ Students who want a private, lightweight study management workspace.
   - pasted image uploads stored in private blob storage
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
+- When AI is configured, users can generate flashcards from a note into a selected deck.
+- Generated note flashcards are reviewed before creation.
 
 ### Flashcards
 
 - Create, read, update, and delete flashcards within decks.
 - Flashcard fields: front and back rich text.
 - Flashcard create and edit support AI generation of the back when the back is empty.
+- Flashcards can also be generated from a note detail page when AI is configured.
 - AI flashcard generation is optional and configured globally at the instance level with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`.
 - AI flashcard controls are hidden when AI env vars are not configured.
 - AI generation and validation are limited per approved user per day.

@@ -30,9 +30,6 @@ import {
   richTextToPlainText,
 } from "@/lib/editor/rich-text";
 
-export type { FlashcardValidationOutput };
-export type { FlashcardForValidation };
-
 export const PLAYWRIGHT_GENERATED_BACK =
   "Playwright fixture back: photosynthesis converts light energy into stored chemical energy.";
 
@@ -131,6 +128,7 @@ export async function generateFlashcardsFromText(input: {
   settings: ResolvedAiSettings;
   subjectName?: string;
   deckName?: string;
+  noteTitle?: string;
   text: string;
 }): Promise<Array<{ front: string; back: string }>> {
   if (isPlaywrightAiFixtureMode()) {
@@ -144,6 +142,7 @@ export async function generateFlashcardsFromText(input: {
     prompt: buildGenerateFlashcardsPrompt({
       subjectName: input.subjectName,
       deckName: input.deckName,
+      noteTitle: input.noteTitle,
       text: input.text,
     }),
     maxOutputTokens: AI_LIMITS.maxGenerationTokens,
@@ -190,3 +189,8 @@ export async function validateFlashcardsWithAi(input: {
 
   return output;
 }
+
+export type {
+  FlashcardForValidation,
+  FlashcardValidationOutput,
+} from "@/features/flashcards/ai-prompts";

@@ -1,36 +1,60 @@
 "use client";
 
-import { ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
+import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
 import { LazyEditNoteDialog as EditNoteDialog } from "@/components/notes/lazy-edit-note-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { Button } from "@/components/ui/button";
 import { formatRelativeTime } from "@/lib/dates/format";
-import type { NoteEntity } from "@/lib/server/api-contracts";
+import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
 
 interface NoteDetailProps {
+  aiEnabled: boolean;
   backHref: string;
   backLabel: string;
+  decks: DeckOption[];
   note: NoteEntity;
 }
 
 export function NoteDetail({
+  aiEnabled,
   backHref,
   backLabel,
+  decks,
   note,
 }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const [, startNavTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const hasDecks = decks.length > 0;
 
   return (
     <DetailPageLayout
       actions={
         <>
+          {aiEnabled ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-1.5 sm:flex-none"
+              onClick={() => setGenerateOpen(true)}
+              disabled={!hasDecks}
+              title={
+                hasDecks
+                  ? undefined
+                  : "Create a deck before generating flashcards."
+              }
+            >
+              <Sparkles className="size-3.5" />
+              Generate flashcards
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             size="sm"
@@ -91,6 +115,14 @@ export function NoteDetail({
           startNavTransition(() => router.push(backHref));
         }}
       />
+      {aiEnabled ? (
+        <GenerateNoteFlashcardsDialog
+          decks={decks}
+          noteId={note.id}
+          open={generateOpen}
+          onOpenChange={setGenerateOpen}
+        />
+      ) : null}
     </DetailPageLayout>
   );
 }

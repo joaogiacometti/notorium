@@ -17,6 +17,7 @@ import {
   generateFlashcardBackForUserInput,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
+import { buildNoteFlashcardSource } from "@/features/flashcards/note-source";
 import {
   countFlashcardsByDeckForUser,
   getAllFlashcardIdsForDeck,
@@ -45,15 +46,19 @@ import {
   flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
   type GenerateFlashcardsForm,
+  type GenerateNoteFlashcardsForm,
   type GetFlashcardIdsForDeckForm,
   generateFlashcardBackSchema,
   generateFlashcardsSchema,
+  generateNoteFlashcardsSchema,
   getFlashcardIdsForDeckSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type ValidateFlashcardsForm,
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
+import { getNoteByIdForUser } from "@/features/notes/queries";
+import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
@@ -414,6 +419,61 @@ export async function generateFlashcards(
         userId,
         deckName: existingDeck.name,
         text: parsedData.text,
+      });
+
+      return result;
+    },
+  );
+}
+
+export async function generateFlashcardsFromNote(
+  data: GenerateNoteFlashcardsForm,
+): Promise<
+  | { success: true; cards: Array<{ front: string; back: string }> }
+  | ActionErrorResult
+> {
+  return runValidatedUserAction(
+    generateNoteFlashcardsSchema,
+    data,
+    "flashcards.ai.invalidData",
+    async (userId, parsedData) => {
+      const [existingNote, existingDeck] = await Promise.all([
+        getNoteByIdForUser(userId, parsedData.noteId),
+        getDeckRecordForUser(userId, parsedData.deckId),
+      ]);
+
+      if (!existingNote) {
+        return actionError("notes.notFound");
+      }
+
+      if (!existingDeck) {
+        return actionError("decks.notFound");
+      }
+
+      const currentCount = await countFlashcardsByDeckForUser(
+        userId,
+        parsedData.deckId,
+      );
+
+      if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
+        return actionError("limits.flashcardLimit", {
+          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+        });
+      }
+
+      const subject = await getActiveSubjectByIdForUser(
+        userId,
+        existingNote.subjectId,
+      );
+      const result = await generateFlashcardsForUserService({
+        userId,
+        subjectName: subject?.name,
+        deckName: existingDeck.name,
+        noteTitle: existingNote.title,
+        text: buildNoteFlashcardSource({
+          title: existingNote.title,
+          content: existingNote.content,
+        }),
       });
 
       return result;
