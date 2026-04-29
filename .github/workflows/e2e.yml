@@ -34,6 +34,9 @@ jobs:
       BETTER_AUTH_URL: http://127.0.0.1:3001
       RATE_LIMIT_BACKEND: redis
       REDIS_URL: redis://localhost:6380
+      NOTORIUM_AI_FIXTURE_MODE: playwright
+      OPENROUTER_API_KEY: playwright-openrouter-key
+      OPENROUTER_MODEL: playwright-openrouter-model
 
     steps:
       - name: Checkout
