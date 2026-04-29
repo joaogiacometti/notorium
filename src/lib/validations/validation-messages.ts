@@ -49,6 +49,7 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.auth.passwordMinLength":
     "Password must be at least 8 characters.",
   "Validation.auth.passwordsDoNotMatch": "Passwords do not match.",
+  "Validation.auth.resetTokenRequired": "Reset token is required.",
   "Validation.flashcards.backMaxLength":
     "Back must be at most 4,000 characters.",
   "Validation.flashcards.backRequired": "Back is required.",
@@ -84,7 +85,7 @@ function resolveMessage(key: string, values?: ValidationMessageValues): string {
   if (!values) {
     return message;
   }
-  return message.replace(/\{(\w+)\}/g, (_, param: string) => {
+  return message.replaceAll(/\{(\w+)\}/g, (_, param: string) => {
     return String(values[param] ?? `{${param}}`);
   });
 }
@@ -92,7 +93,7 @@ function resolveMessage(key: string, values?: ValidationMessageValues): string {
 export function resolveValidationMessages(
   message: string | undefined,
 ): string | undefined {
-  if (!message || !message.startsWith("Validation.")) {
+  if (!message?.startsWith("Validation.")) {
     return message;
   }
 

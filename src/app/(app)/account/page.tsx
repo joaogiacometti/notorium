@@ -1,13 +1,13 @@
 import { UserCircle } from "lucide-react";
 import { AccountForm } from "@/components/account/account-form";
 import { AppPageContainer } from "@/components/shared/app-page-container";
-import { getServerEnv } from "@/env";
 import { getNotificationPreferences } from "@/features/user/queries";
 import { requireSession } from "@/lib/auth/auth";
+import { isEmailDeliveryEnabled } from "@/lib/email/config";
 
 export default async function AccountPage() {
   const session = await requireSession();
-  const emailEnabled = !!getServerEnv().RESEND_API_KEY;
+  const emailEnabled = isEmailDeliveryEnabled();
 
   const notificationPrefs = emailEnabled
     ? await getNotificationPreferences(session.user.id)

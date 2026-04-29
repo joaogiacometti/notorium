@@ -70,3 +70,47 @@ export const signupSchema = z
   });
 
 export type SignupForm = z.infer<typeof signupSchema>;
+
+export const requestPasswordResetSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .max(
+      LIMITS.authEmailMax,
+      validationMessage("Validation.auth.emailMaxLength"),
+    )
+    .pipe(
+      z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
+    ),
+});
+
+export type RequestPasswordResetForm = z.infer<
+  typeof requestPasswordResetSchema
+>;
+
+export const resetPasswordSchema = z
+  .object({
+    token: z
+      .string()
+      .trim()
+      .min(1, validationMessage("Validation.auth.resetTokenRequired")),
+    password: z
+      .string()
+      .min(
+        LIMITS.authPasswordMin,
+        validationMessage("Validation.auth.passwordMinLength"),
+      )
+      .max(
+        LIMITS.authPasswordMax,
+        validationMessage("Validation.auth.passwordMaxLength"),
+      ),
+    confirmPassword: z
+      .string()
+      .min(1, validationMessage("Validation.auth.confirmPasswordRequired")),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: validationMessage("Validation.auth.passwordsDoNotMatch"),
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerEnv } from "@/env";
 import { sendAssessmentReminderEmails } from "@/features/notifications/email-service";
+import { isEmailDeliveryEnabled } from "@/lib/email/config";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
   }
 
-  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) {
+  if (!isEmailDeliveryEnabled(env)) {
     return NextResponse.json(
       { error: "Email notifications are not configured." },
       { status: 503 },

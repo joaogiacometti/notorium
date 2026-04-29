@@ -31,6 +31,12 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "auth.invalidInput": "Invalid input.",
   "auth.loginFailed": "Login failed.",
   "auth.signupFailed": "Sign up failed.",
+  "auth.passwordResetUnavailable":
+    "Password reset is not configured for this instance.",
+  "auth.passwordResetRequestFailed":
+    "Could not send password reset email. Please try again later.",
+  "auth.passwordResetFailed":
+    "Could not reset password. The link may be invalid or expired.",
   "auth.accessPending": "Your account is pending approval.",
   "auth.accessBlocked": "Your account access is blocked.",
   "auth.forbidden": "You are not allowed to do this.",

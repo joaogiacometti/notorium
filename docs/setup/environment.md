@@ -55,7 +55,7 @@ Optional feature variables are not required for this workflow. Leave them commen
 | `OPENROUTER_MODEL` | Selects the OpenRouter model for AI features |
 | `BLOB_READ_WRITE_TOKEN` | Enables attachment uploads |
 | `RESEND_API_KEY` | Enables email delivery when paired with `RESEND_FROM_EMAIL` |
-| `RESEND_FROM_EMAIL` | Sender address for reminder emails |
+| `RESEND_FROM_EMAIL` | Sender address for password reset and reminder emails |
 | `CRON_SECRET` | Secures scheduled reminder triggers |
 
 See [Optional Features](./optional-features.md) for setup details.

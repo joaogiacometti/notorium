@@ -8,6 +8,11 @@ import { cache } from "react";
 import { getDb } from "@/db/index";
 import * as schema from "@/db/schema";
 import { user } from "@/db/schema";
+import { getServerEnv } from "@/env";
+import { sendEmail } from "@/lib/email/provider";
+import { renderPasswordResetEmail } from "@/lib/email/templates/password-reset";
+
+const resetPasswordTokenExpiresInSeconds = 60 * 60;
 
 function createAuth() {
   return betterAuth({
@@ -17,6 +22,34 @@ function createAuth() {
     }),
     emailAndPassword: {
       enabled: true,
+      resetPasswordTokenExpiresIn: resetPasswordTokenExpiresInSeconds,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user: authUser, url }) => {
+        const env = getServerEnv();
+        const appUrl = env.BETTER_AUTH_URL.replace(/\/$/, "");
+        const baseUrl = new URL(appUrl);
+        const resetUrl = new URL(url, baseUrl);
+        resetUrl.protocol = baseUrl.protocol;
+        resetUrl.host = baseUrl.host;
+
+        const { subject, html } = renderPasswordResetEmail({
+          userName: authUser.name,
+          resetUrl: resetUrl.toString(),
+        });
+
+        const result = await sendEmail({
+          to: authUser.email,
+          subject,
+          html,
+        });
+
+        if (!result.success) {
+          console.error(
+            `Failed to send password reset email to user ${authUser.id}:`,
+            result.error,
+          );
+        }
+      },
     },
     user: {
       deleteUser: {

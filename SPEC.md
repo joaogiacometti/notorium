@@ -26,6 +26,10 @@ Students who want a private, lightweight study management workspace.
 - Only approved users can access authenticated app routes and server actions.
 - Blocked and pending users are denied sign in with an access-status error.
 - Admin users can manage user access status (`pending`, `approved`, `blocked`) from an Admin Panel in the account menu.
+- Password reset is available only when `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured.
+- Password reset emails are sent only for approved users; missing, pending, and blocked accounts receive the same generic UI response.
+- Approved users can request at most 3 password reset emails per UTC day.
+- Password reset links expire after 1 hour, and active sessions are revoked after a successful password reset.
 
 ### Subjects
 
@@ -170,7 +174,7 @@ Students who want a private, lightweight study management workspace.
 - Each email lists the user's pending assessments that fall within their configured window, along with subject names and due dates.
 - The email contains a link to the planning page.
 - Requires `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `CRON_SECRET` environment variables; if unconfigured, the endpoint returns `503`.
-- The "Email Notifications" preferences card is hidden on the Account page when `RESEND_API_KEY` is not configured, and notification preferences are not queried from the database.
+- The "Email Notifications" preferences card is hidden on the Account page unless both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured, and notification preferences are not queried from the database.
 
 ### UI/UX Baseline
 

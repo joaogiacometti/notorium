@@ -133,6 +133,25 @@ describe("renderAssessmentReminderEmail", () => {
     expect(html).toContain("</body>");
   });
 
+  it("uses the light Notorium email shell", () => {
+    const { html } = renderAssessmentReminderEmail({
+      userName: "Grace",
+      assessments: [baseAssessment],
+      appUrl: "https://app.example.com",
+    });
+
+    expect(html).toMatch(/<!doctype html>/i);
+    expect(html).toContain("<html>");
+    expect(html).toContain("background:#f8fafc");
+    expect(html).toContain("font-family:Arial,sans-serif");
+    expect(html).toContain("max-width:560px;background:#ffffff");
+    expect(html).toContain("border:1px solid #e2e8f0");
+    expect(html).toContain("color:#2563eb");
+    expect(html).toContain("background:#2563eb");
+    expect(html).not.toContain("background:#18181b");
+    expect(html).not.toContain("box-shadow:0 1px 3px rgba(0,0,0,0.08)");
+  });
+
   it("escapes HTML in user-controlled strings", () => {
     const { html } = renderAssessmentReminderEmail({
       userName: '<script>alert("xss")</script>',

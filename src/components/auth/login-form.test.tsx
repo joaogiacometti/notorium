@@ -81,4 +81,22 @@ describe("LoginForm", () => {
       ),
     ).toBeUndefined();
   });
+
+  it("hides the password reset link by default", async () => {
+    await act(async () => {
+      root.render(<LoginForm />);
+    });
+
+    expect(queryByText(container, "Forgot your password?")).toBeUndefined();
+  });
+
+  it("shows the password reset link when enabled", async () => {
+    await act(async () => {
+      root.render(<LoginForm showForgotPasswordLink />);
+    });
+
+    const link = queryByText(container, "Forgot your password?");
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute("href")).toBe("/forgot-password");
+  });
 });

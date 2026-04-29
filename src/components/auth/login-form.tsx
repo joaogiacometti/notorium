@@ -27,10 +27,12 @@ import {
 
 export function LoginForm({
   showPendingApprovalNotice = false,
+  showForgotPasswordLink = false,
   className,
   ...props
 }: React.ComponentProps<"div"> & {
   showPendingApprovalNotice?: boolean;
+  showForgotPasswordLink?: boolean;
 }) {
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -107,9 +109,14 @@ export function LoginForm({
                       <FieldLabel htmlFor="form-login-password">
                         Password
                       </FieldLabel>
-                      <span className="ml-auto text-sm text-muted-foreground">
-                        Forgot your password?
-                      </span>
+                      {showForgotPasswordLink ? (
+                        <Link
+                          href="/forgot-password"
+                          className="ml-auto text-sm underline-offset-4 hover:underline"
+                        >
+                          Forgot your password?
+                        </Link>
+                      ) : null}
                     </div>
                     <Input
                       {...field}

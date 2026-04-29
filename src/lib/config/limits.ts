@@ -63,6 +63,8 @@ export const LIMITS = {
   authRateLimitMaxAttempts: 10,
   authRateLimitWindowSeconds: 60,
   authRateLimitPrefix: "ratelimit:auth",
+  passwordResetRateLimitPrefix: "ratelimit:auth:password-reset",
+  passwordResetRateLimitPerDay: 3,
   aiBackGenerationRateLimitPrefix: "ratelimit:ai:back",
   aiFlashcardGenerationRateLimitPrefix: "ratelimit:ai:generation",
   aiValidationRateLimitPrefix: "ratelimit:ai:validation",

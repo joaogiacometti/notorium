@@ -44,6 +44,8 @@ Set both variables:
 
 If either variable is missing, email-dependent UI stays hidden or disabled.
 
+Email sending enables password reset and assessment reminders. Password reset is limited to approved users and at most 3 reset emails per approved user per UTC day.
+
 ## Scheduled Assessment Reminders
 
 Scheduled reminders require email sending plus a cron trigger secret.

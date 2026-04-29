@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { loginSchema, signupSchema } from "@/lib/validations/auth";
+import {
+  loginSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
+  signupSchema,
+} from "@/lib/validations/auth";
 
 describe("loginSchema", () => {
   it("accepts valid credentials", () => {
@@ -117,5 +122,69 @@ describe("signupSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("requestPasswordResetSchema", () => {
+  it("accepts a valid email", () => {
+    const result = requestPasswordResetSchema.safeParse({
+      email: "user@example.com",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid email", () => {
+    const result = requestPasswordResetSchema.safeParse({
+      email: "not-valid",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("resetPasswordSchema", () => {
+  it("accepts matching password data with token", () => {
+    const result = resetPasswordSchema.safeParse({
+      token: "token-1",
+      password: "securepass",
+      confirmPassword: "securepass",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing token", () => {
+    const result = resetPasswordSchema.safeParse({
+      token: "",
+      password: "securepass",
+      confirmPassword: "securepass",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects short password", () => {
+    const result = resetPasswordSchema.safeParse({
+      token: "token-1",
+      password: "short",
+      confirmPassword: "short",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects mismatched passwords on confirmPassword path", () => {
+    const result = resetPasswordSchema.safeParse({
+      token: "token-1",
+      password: "securepass",
+      confirmPassword: "differentpass",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join("."));
+      expect(paths).toContain("confirmPassword");
+    }
   });
 });
