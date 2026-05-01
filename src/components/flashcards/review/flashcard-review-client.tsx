@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import {
   useEffect,
   useEffectEvent,
@@ -11,37 +10,24 @@ import {
 } from "react";
 import { toast } from "sonner";
 import {
-  getExamFlashcards,
   getFlashcardReviewState,
   reviewFlashcard,
-  syncFlashcardReviews,
 } from "@/app/actions/flashcard-review";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/dialogs/lazy-edit-flashcard-dialog";
+import { ExamExitConfirmationDialog } from "@/components/flashcards/review/exam-exit-confirmation-dialog";
 import { ExamResultsScreen } from "@/components/flashcards/review/exam-results-screen";
+import { ReturnSyncBlockingOverlay } from "@/components/flashcards/review/return-sync-blocking-overlay";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
-import { useExamSession } from "@/components/flashcards/review/use-exam-session";
+import { useFlashcardExamController } from "@/components/flashcards/review/use-flashcard-exam-controller";
+import { useFlashcardReviewSync } from "@/components/flashcards/review/use-flashcard-review-sync";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { applyOfflineFlashcardReview } from "@/features/flashcard-review/offline-review";
 import {
-  type FlashcardReviewSyncStatus,
   getFlashcardReviewScopeKey,
-  loadOfflineReviewState,
-  loadQueuedReviewEvents,
-  type QueuedFlashcardReviewEvent,
   queueOfflineReviewEvent,
-  removeQueuedReviewEvents,
   saveOfflineReviewState,
 } from "@/features/flashcard-review/offline-store";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
@@ -74,10 +60,6 @@ interface FlashcardReviewClientProps {
 
 const reviewBatchLimit = 50;
 
-function getExamScopeKey(deckId?: string) {
-  return deckId ?? "all";
-}
-
 export function FlashcardReviewClient({
   initialState,
   decks,
@@ -93,125 +75,16 @@ export function FlashcardReviewClient({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
-  const [syncStatus, setSyncStatus] =
-    useState<FlashcardReviewSyncStatus>("idle");
-  const [pendingSyncCount, setPendingSyncCount] = useState(0);
-  const [isReturnSyncBlocking, setIsReturnSyncBlocking] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
   const [isActionPending, startActionTransition] = useTransition();
   const isPending = isActionPending;
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
   const [selectedDeckId, setSelectedDeckId] = useState(deckId);
-  const [examCards, setExamCards] = useState<FlashcardReviewEntity[] | null>(
-    null,
-  );
-  const [isLoadingExamCards, setIsLoadingExamCards] = useState(false);
-  const examScopeRef = useRef<{ deckId?: string }>({});
-  const examCardsRequestIdRef = useRef(0);
-  const examCardsRequestRef = useRef<{
-    scopeKey: string;
-    promise: Promise<FlashcardReviewEntity[] | null>;
-  } | null>(null);
-  const isRefreshingOnReturnRef = useRef(false);
-  const isSyncingQueuedReviewsRef = useRef(false);
-  const examSession = useExamSession();
-  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
-  const examSessionData = examSession.session;
-  const isExamMode = !!examSessionData;
-  const reviewScopeKey = getFlashcardReviewScopeKey(selectedDeckId);
 
   useEffect(() => {
     setSelectedDeckId(deckId);
   }, [deckId]);
-
-  useEffect(() => {
-    if (examScopeRef.current.deckId !== selectedDeckId) {
-      setExamCards(null);
-      examScopeRef.current = { deckId: selectedDeckId };
-      examCardsRequestIdRef.current += 1;
-      examCardsRequestRef.current = null;
-      setIsLoadingExamCards(false);
-    }
-  }, [selectedDeckId]);
-
-  async function ensureExamCardsLoaded(): Promise<
-    FlashcardReviewEntity[] | null
-  > {
-    if (examCards !== null) {
-      return examCards;
-    }
-
-    const scopeKey = getExamScopeKey(selectedDeckId);
-    if (examCardsRequestRef.current?.scopeKey === scopeKey) {
-      return examCardsRequestRef.current.promise;
-    }
-
-    const requestId = examCardsRequestIdRef.current + 1;
-    examCardsRequestIdRef.current = requestId;
-
-    setIsLoadingExamCards(true);
-    const request = getExamFlashcards({
-      deckId: selectedDeckId,
-    })
-      .then((cards) => {
-        if (examCardsRequestIdRef.current === requestId) {
-          setExamCards(cards);
-        }
-
-        return cards;
-      })
-      .catch(() => {
-        if (examCardsRequestIdRef.current === requestId) {
-          toast.error("Could not load exam cards. Please try again.");
-        }
-
-        return null;
-      })
-      .finally(() => {
-        if (examCardsRequestIdRef.current === requestId) {
-          setIsLoadingExamCards(false);
-          examCardsRequestRef.current = null;
-        }
-      });
-
-    examCardsRequestRef.current = {
-      scopeKey,
-      promise: request,
-    };
-
-    return request;
-  }
-
-  const currentCard = isExamMode
-    ? examSession.currentCard
-    : (reviewState.cards[0] ?? null);
-  const hasDueCards = reviewState.summary.dueCount > 0;
-  const hasExamCards = reviewState.summary.totalCount > 0;
-  const dueBadgeText = `${reviewState.summary.dueCount} due`;
-  const examBadgeText = `${reviewState.summary.totalCount} ${
-    reviewState.summary.totalCount === 1 ? "card" : "cards"
-  }`;
-  const examScopeLabel = selectedDeckId
-    ? "All cards in deck"
-    : "All flashcards";
-
-  const progress = isExamMode
-    ? examSession.progress
-    : reviewState.summary.totalCount > 0
-      ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
-        reviewState.summary.totalCount
-      : 0;
-  const previewLabels = useMemo(
-    () =>
-      currentCard
-        ? getFlashcardReviewPreviewLabels({
-            card: currentCard,
-            scheduler: reviewState.scheduler,
-          })
-        : null,
-    [currentCard, reviewState.scheduler],
-  );
+  const reviewScopeKey = getFlashcardReviewScopeKey(selectedDeckId);
 
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
@@ -236,18 +109,80 @@ export function FlashcardReviewClient({
     }
   }
 
-  function closeFocusMode() {
-    examSession.endSession();
-    setIsFocusMode(false);
-    resetFocusViewState();
-  }
+  const examController = useFlashcardExamController({
+    selectedDeckId,
+    isPending,
+    resetFocusViewState,
+    setFocusMode: setIsFocusMode,
+  });
+  const {
+    examSession,
+    examSessionData,
+    handleCloseResults,
+    handleConfirmExitExam,
+    handleExitExamMode,
+    handleGradeInExamMode,
+    handleRetryWeakCards,
+    handleStartExamMode,
+    handleStartReviewMode,
+    isExamMode,
+    isLoadingExamCards,
+    progress: examProgress,
+    removeExamCard,
+    showExitConfirmation,
+    updateExamCard,
+  } = examController;
+  const {
+    isOnline,
+    isReturnSyncBlocking,
+    markOfflineReviewQueued,
+    pendingSyncCount,
+    syncStatus,
+  } = useFlashcardReviewSync({
+    selectedDeckId,
+    reviewBatchLimit,
+    isExamMode,
+    isPending,
+    commitReturnedReviewState,
+    commitStoredReviewState: commitReviewState,
+    getCurrentReviewState: () => reviewStateRef.current,
+  });
+
+  const currentCard = isExamMode
+    ? examController.currentCard
+    : (reviewState.cards[0] ?? null);
+  const hasDueCards = reviewState.summary.dueCount > 0;
+  const hasExamCards = reviewState.summary.totalCount > 0;
+  const dueBadgeText = `${reviewState.summary.dueCount} due`;
+  const examBadgeText = `${reviewState.summary.totalCount} ${
+    reviewState.summary.totalCount === 1 ? "card" : "cards"
+  }`;
+  const examScopeLabel = selectedDeckId
+    ? "All cards in deck"
+    : "All flashcards";
+
+  const progress = isExamMode
+    ? examProgress
+    : reviewState.summary.totalCount > 0
+      ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
+        reviewState.summary.totalCount
+      : 0;
+  const previewLabels = useMemo(
+    () =>
+      currentCard
+        ? getFlashcardReviewPreviewLabels({
+            card: currentCard,
+            scheduler: reviewState.scheduler,
+          })
+        : null,
+    [currentCard, reviewState.scheduler],
+  );
 
   async function handleFlashcardUpdated(
     updatedFlashcard: FlashcardReviewState["cards"][number],
   ) {
     if (isExamMode) {
-      examSession.updateCard(updatedFlashcard);
-      resetFocusViewState();
+      updateExamCard(updatedFlashcard);
       return;
     }
 
@@ -270,8 +205,7 @@ export function FlashcardReviewClient({
 
   async function handleFlashcardDeleted(deletedId: string) {
     if (isExamMode) {
-      examSession.removeCard(deletedId);
-      resetFocusViewState();
+      removeExamCard(deletedId);
       return;
     }
 
@@ -332,72 +266,9 @@ export function FlashcardReviewClient({
     }
   }
 
-  function handleStartReviewMode() {
-    examSession.endSession();
-    resetFocusViewState();
-    setIsFocusMode(true);
-  }
-
-  async function handleStartExamMode() {
-    const cards = examCards ?? (await ensureExamCardsLoaded());
-
-    if (!cards || cards.length === 0) {
-      return;
-    }
-
-    examSession.startSession(cards, { deckId: selectedDeckId });
-    resetFocusViewState();
-    setIsFocusMode(true);
-  }
-
-  function handleGradeInExamMode(grade: ReviewGrade) {
-    if (!currentCard || isPending) {
-      return;
-    }
-
-    examSession.rateCard(grade);
-    resetFocusViewState();
-  }
-
-  function handleExitExamMode() {
-    if (examSession.hasStarted && !examSession.sessionComplete) {
-      setShowExitConfirmation(true);
-    } else {
-      closeFocusMode();
-    }
-  }
-
-  function handleConfirmExitExam() {
-    setShowExitConfirmation(false);
-    closeFocusMode();
-  }
-
-  function handleCloseResults() {
-    closeFocusMode();
-  }
-
-  function handleRetryWeakCards() {
-    if (!examSession.session) {
-      return;
-    }
-
-    const weakCards = examSession.session.cards.filter((_card, index) => {
-      const rating = examSession.session?.ratings[index];
-      return rating === "again" || rating === "hard";
-    });
-
-    if (weakCards.length === 0) {
-      return;
-    }
-
-    examSession.startSession(weakCards, { deckId: selectedDeckId });
-    resetFocusViewState();
-    setIsFocusMode(true);
-  }
-
   function handleGrade(grade: ReviewGrade) {
     if (isExamMode) {
-      handleGradeInExamMode(grade);
+      handleGradeInExamMode(currentCard, grade);
       return;
     }
 
@@ -457,8 +328,7 @@ export function FlashcardReviewClient({
 
     commitReviewState(nextState);
     resetFocusViewState();
-    setSyncStatus("offline");
-    setPendingSyncCount((count) => count + 1);
+    markOfflineReviewQueued();
 
     await queueOfflineReviewEvent({
       clientReviewId,
@@ -467,111 +337,6 @@ export function FlashcardReviewClient({
       reviewedAt,
     });
   }
-
-  async function loadQueuedReviewEventsForSync() {
-    try {
-      const events = await loadQueuedReviewEvents();
-      setPendingSyncCount(events.length);
-      return events;
-    } catch {
-      setSyncStatus("error");
-      return null;
-    }
-  }
-
-  async function applyQueuedReviewSyncResult(
-    result: Awaited<ReturnType<typeof syncFlashcardReviews>>,
-  ) {
-    if (!result.success) {
-      setSyncStatus("error");
-      toast.error(t(result.errorCode, result.errorParams));
-      return;
-    }
-
-    await removeQueuedReviewEvents(result.appliedClientReviewIds);
-    setPendingSyncCount(result.rejectedClientReviewIds.length);
-    commitReturnedReviewState(result.reviewState);
-    setSyncStatus(result.rejectedClientReviewIds.length > 0 ? "error" : "idle");
-  }
-
-  async function syncQueuedReviewEvents(events: QueuedFlashcardReviewEvent[]) {
-    setIsReturnSyncBlocking(true);
-    setSyncStatus("syncing");
-    try {
-      const result = await syncFlashcardReviews(
-        { events },
-        { deckId: selectedDeckId, limit: reviewBatchLimit },
-      );
-
-      await applyQueuedReviewSyncResult(result);
-    } catch {
-      setSyncStatus("error");
-      toast.error("Could not sync flashcard reviews. Please try again.");
-    } finally {
-      setIsReturnSyncBlocking(false);
-    }
-  }
-
-  const syncQueuedReviews = useEffectEvent(async (forceOnline = false) => {
-    if (
-      (!isOnline && !forceOnline) ||
-      syncStatus === "syncing" ||
-      isSyncingQueuedReviewsRef.current
-    ) {
-      return true;
-    }
-
-    isSyncingQueuedReviewsRef.current = true;
-    try {
-      const events = await loadQueuedReviewEventsForSync();
-      if (!events) {
-        return true;
-      }
-
-      if (events.length === 0) {
-        setSyncStatus("idle");
-        return false;
-      }
-
-      await syncQueuedReviewEvents(events);
-      return true;
-    } finally {
-      isSyncingQueuedReviewsRef.current = false;
-    }
-  });
-
-  const syncQueuedReviewsOrRefreshOnReturn = useEffectEvent(async () => {
-    const handledQueuedReviews = await syncQueuedReviews();
-    if (!handledQueuedReviews) {
-      await refreshReviewStateOnReturn();
-    }
-  });
-
-  const refreshReviewStateOnReturn = useEffectEvent(async () => {
-    if (
-      isExamMode ||
-      isPending ||
-      isReturnSyncBlocking ||
-      !isOnline ||
-      isRefreshingOnReturnRef.current
-    ) {
-      return;
-    }
-
-    isRefreshingOnReturnRef.current = true;
-    try {
-      const nextState = await getFlashcardReviewState({
-        deckId: selectedDeckId,
-        limit: reviewBatchLimit,
-      });
-
-      commitReturnedReviewState(nextState);
-    } catch {
-      toast.error("Could not refresh review progress. Please try again.");
-    } finally {
-      isRefreshingOnReturnRef.current = false;
-    }
-  });
 
   const handleReviewKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (shortcutsSuspended) {
@@ -631,80 +396,6 @@ export function FlashcardReviewClient({
     document.addEventListener("keydown", handleReviewKeyDown);
 
     return () => document.removeEventListener("keydown", handleReviewKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const online = navigator.onLine;
-    setIsOnline(online);
-    setSyncStatus(online ? "idle" : "offline");
-    void loadQueuedReviewEvents()
-      .then((events) => setPendingSyncCount(events.length))
-      .catch(() => setSyncStatus("error"));
-    void saveOfflineReviewState(reviewScopeKey, reviewStateRef.current).catch(
-      () => {},
-    );
-  }, [reviewScopeKey]);
-
-  useEffect(() => {
-    async function hydrateOfflineState() {
-      if (isOnline || reviewStateRef.current.cards.length > 0) {
-        return;
-      }
-
-      const storedState = await loadOfflineReviewState(reviewScopeKey);
-      if (storedState) {
-        reviewStateRef.current = storedState;
-        setReviewState(storedState);
-      }
-    }
-
-    void hydrateOfflineState();
-  }, [isOnline, reviewScopeKey]);
-
-  useEffect(() => {
-    function handleOnline() {
-      setIsOnline(true);
-      void syncQueuedReviews(true);
-    }
-
-    function handleOffline() {
-      setIsOnline(false);
-      setSyncStatus("offline");
-    }
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isOnline) {
-      void syncQueuedReviews(true);
-    }
-  }, [isOnline]);
-
-  useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        void syncQueuedReviewsOrRefreshOnReturn();
-      }
-    }
-
-    function handleWindowFocus() {
-      void syncQueuedReviewsOrRefreshOnReturn();
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleWindowFocus);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleWindowFocus);
-    };
   }, []);
 
   const isReviewActionBlocked = isPending || isReturnSyncBlocking;
@@ -789,35 +480,11 @@ export function FlashcardReviewClient({
             onRetryWeak={handleRetryWeakCards}
           />
         ) : null}
-        <Dialog
+        <ExamExitConfirmationDialog
           open={showExitConfirmation}
-          onOpenChange={setShowExitConfirmation}
-        >
-          <DialogContent
-            className="z-120 sm:max-w-md"
-            overlayClassName="z-120"
-            onEscapeKeyDown={(e) => e.preventDefault()}
-          >
-            <DialogHeader>
-              <DialogTitle>Exit Exam</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to exit? Your progress won&apos;t be
-                saved.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowExitConfirmation(false)}
-              >
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleConfirmExitExam}>
-                Exit
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          onOpenChange={examController.setShowExitConfirmation}
+          onConfirm={handleConfirmExitExam}
+        />
       </>
     );
   }
@@ -828,30 +495,5 @@ export function FlashcardReviewClient({
     </div>
   ) : (
     <AppPageContainer>{content}</AppPageContainer>
-  );
-}
-
-interface ReturnSyncBlockingOverlayProps {
-  placement?: "absolute" | "fixed";
-}
-
-function ReturnSyncBlockingOverlay({
-  placement = "absolute",
-}: Readonly<ReturnSyncBlockingOverlayProps>) {
-  const placementClassName =
-    placement === "fixed" ? "fixed inset-0 z-120" : "absolute inset-0 z-20";
-
-  return (
-    <output
-      aria-live="polite"
-      aria-label="Syncing flashcards"
-      className={`${placementClassName} flex items-center justify-center rounded-xl border border-border/70 bg-background/85 p-6 backdrop-blur-sm`}
-      data-testid="flashcard-return-sync-blocker"
-    >
-      <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm">
-        <Loader2 className="size-4 animate-spin text-primary" />
-        <span>Syncing flashcards...</span>
-      </div>
-    </output>
   );
 }
