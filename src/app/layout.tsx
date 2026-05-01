@@ -1,5 +1,5 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
 import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { QueryProvider } from "@/components/shared/query-provider";
@@ -7,7 +7,7 @@ import { ServiceWorkerRegister } from "@/components/shared/service-worker-regist
 import { Toaster } from "@/components/ui/sonner";
 import { getUserPreferredTheme } from "@/features/user/queries";
 import { getOptionalSession } from "@/lib/auth/auth";
-import { themeStorageKey } from "@/lib/theme";
+import { defaultThemeChromeColor, themeStorageKey } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,15 +15,20 @@ export const metadata: Metadata = {
   description: "Study management system",
   applicationName: "Notorium",
   manifest: "/manifest.webmanifest",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
-  ],
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/icons/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     title: "Notorium",
     statusBarStyle: "default",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: defaultThemeChromeColor,
 };
 
 export default async function RootLayout({

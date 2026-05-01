@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { defaultThemeChromeColor } from "@/lib/theme";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -8,19 +9,19 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#ffffff",
+    background_color: defaultThemeChromeColor,
+    theme_color: defaultThemeChromeColor,
     icons: [
       {
-        src: "/icons/notorium-192.svg",
+        src: "/icons/notorium-192.png",
         sizes: "192x192",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/notorium-512.svg",
+        src: "/icons/notorium-512.png",
         sizes: "512x512",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "maskable",
       },
     ],

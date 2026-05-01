@@ -1,8 +1,8 @@
-const CACHE_NAME = "notorium-static-v2";
+const CACHE_NAME = "notorium-static-v3";
 const STATIC_ASSETS = [
   "/",
-  "/icons/notorium-192.svg",
-  "/icons/notorium-512.svg",
+  "/icons/notorium-192.png",
+  "/icons/notorium-512.png",
 ];
 
 self.addEventListener("install", (event) => {
