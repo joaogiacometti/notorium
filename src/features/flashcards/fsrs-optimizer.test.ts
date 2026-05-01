@@ -12,6 +12,7 @@ function makeLog(
     id,
     flashcardId,
     userId: "user-1",
+    clientReviewId: null,
     rating,
     reviewedAt,
     daysElapsed,

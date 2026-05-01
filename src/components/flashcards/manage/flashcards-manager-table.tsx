@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { CreditCard } from "lucide-react";
+import { BookOpenText } from "lucide-react";
 import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
@@ -58,7 +58,7 @@ function getColumns(
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-3 py-1">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
-            <CreditCard className="size-4" />
+            <BookOpenText className="size-4" />
           </div>
           <div className="min-w-0 flex-1 overflow-hidden">
             <div

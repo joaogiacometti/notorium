@@ -14,6 +14,15 @@ const insertValuesMock = vi.fn();
 const insertMock = vi.fn(() => ({
   values: insertValuesMock,
 }));
+const limitMock = vi.fn();
+const selectWhereMock = vi.fn(() => ({
+  limit: limitMock,
+}));
+const selectMock = vi.fn(() => ({
+  from: () => ({
+    where: selectWhereMock,
+  }),
+}));
 const transactionMock = vi.fn();
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
@@ -24,6 +33,7 @@ const maybeOptimizeFsrsParametersMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
+    select: selectMock,
     transaction: transactionMock,
   }),
 }));
@@ -51,7 +61,11 @@ vi.mock("@/db/schema", () => ({
     reviewCount: "flashcard_review_count_column",
     lapseCount: "flashcard_lapse_count_column",
   },
-  flashcardReviewLog: {},
+  flashcardReviewLog: {
+    id: "flashcard_review_log_id_column",
+    userId: "flashcard_review_log_user_id_column",
+    clientReviewId: "flashcard_review_log_client_review_id_column",
+  },
 }));
 
 vi.mock("@/features/flashcard-review/queries", () => ({
@@ -76,6 +90,7 @@ describe("reviewFlashcardForUser", () => {
       weights: [1, 2, 3],
     });
     maybeOptimizeFsrsParametersMock.mockResolvedValue(undefined);
+    limitMock.mockResolvedValue([]);
   });
 
   it("rejects reviews for cards that are not due yet", async () => {
@@ -244,5 +259,144 @@ describe("reviewFlashcardForUser", () => {
       errorParams: undefined,
       errorMessage: undefined,
     });
+  });
+});
+
+describe("syncFlashcardReviewsForUser", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    ensureFsrsSettingsMock.mockResolvedValue({
+      desiredRetention: 0.9,
+      weights: [1, 2, 3],
+    });
+    maybeOptimizeFsrsParametersMock.mockResolvedValue(undefined);
+    limitMock.mockResolvedValue([]);
+  });
+
+  it("treats duplicate client review ids as applied without writing again", async () => {
+    limitMock.mockResolvedValueOnce([{ id: "log-1" }]);
+    const getReviewState = vi.fn().mockResolvedValue({
+      cards: [],
+      summary: { dueCount: 0, totalCount: 0 },
+      scheduler: { desiredRetention: 0.9, weights: [1, 2, 3] },
+    });
+
+    const { syncFlashcardReviewsForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+
+    const result = await syncFlashcardReviewsForUser(
+      "user-1",
+      {
+        events: [
+          {
+            clientReviewId: "client-1",
+            flashcardId: "flashcard-1",
+            grade: "good",
+            reviewedAt: new Date("2026-03-13T12:00:00.000Z"),
+          },
+        ],
+      },
+      getReviewState,
+    );
+
+    expect(result).toEqual({
+      success: true,
+      appliedClientReviewIds: ["client-1"],
+      rejectedClientReviewIds: [],
+      reviewState: await getReviewState.mock.results[0].value,
+    });
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it("applies queued reviews chronologically", async () => {
+    const oldReviewAt = new Date("2026-03-13T12:00:00.000Z");
+    const newReviewAt = new Date("2026-03-13T12:01:00.000Z");
+    getReviewableFlashcardForUserMock
+      .mockResolvedValueOnce({
+        id: "card-old",
+        state: "new",
+        dueAt: oldReviewAt,
+        stability: null,
+        difficulty: null,
+        intervalDays: 0,
+        learningStep: 0,
+        lastReviewedAt: null,
+        reviewCount: 0,
+        lapseCount: 0,
+      })
+      .mockResolvedValueOnce({
+        id: "card-new",
+        state: "new",
+        dueAt: newReviewAt,
+        stability: null,
+        difficulty: null,
+        intervalDays: 0,
+        learningStep: 0,
+        lastReviewedAt: null,
+        reviewCount: 0,
+        lapseCount: 0,
+      });
+    scheduleFlashcardReviewMock.mockReturnValue({
+      state: "review",
+      dueAt: new Date("2026-03-14T12:00:00.000Z"),
+      stability: "1.0000",
+      difficulty: "5.0000",
+      ease: 250,
+      intervalDays: 1,
+      learningStep: 0,
+      lastReviewedAt: oldReviewAt,
+      reviewCount: 1,
+      lapseCount: 0,
+      updatedAt: oldReviewAt,
+      daysElapsed: 0,
+    });
+    transactionMock.mockImplementation(async (callback) =>
+      callback({ update: updateMock, insert: insertMock }),
+    );
+    returningMock.mockResolvedValue([{ id: "updated-card" }]);
+
+    const { syncFlashcardReviewsForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+
+    await syncFlashcardReviewsForUser(
+      "user-1",
+      {
+        events: [
+          {
+            clientReviewId: "client-new",
+            flashcardId: "card-new",
+            grade: "good",
+            reviewedAt: newReviewAt,
+          },
+          {
+            clientReviewId: "client-old",
+            flashcardId: "card-old",
+            grade: "again",
+            reviewedAt: oldReviewAt,
+          },
+        ],
+      },
+      vi.fn().mockResolvedValue({
+        cards: [],
+        summary: { dueCount: 0, totalCount: 0 },
+        scheduler: { desiredRetention: 0.9, weights: [1, 2, 3] },
+      }),
+    );
+
+    expect(getReviewableFlashcardForUserMock.mock.calls).toEqual([
+      ["user-1", "card-old"],
+      ["user-1", "card-new"],
+    ]);
+    expect(insertValuesMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ clientReviewId: "client-old" }),
+    );
+    expect(insertValuesMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ clientReviewId: "client-new" }),
+    );
   });
 });

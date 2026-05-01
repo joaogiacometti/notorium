@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
 import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { QueryProvider } from "@/components/shared/query-provider";
+import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 import { Toaster } from "@/components/ui/sonner";
 import { getUserPreferredTheme } from "@/features/user/queries";
 import { getOptionalSession } from "@/lib/auth/auth";
@@ -12,6 +13,17 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Notorium",
   description: "Study management system",
+  applicationName: "Notorium",
+  manifest: "/manifest.webmanifest",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+  appleWebApp: {
+    capable: true,
+    title: "Notorium",
+    statusBarStyle: "default",
+  },
 };
 
 export default async function RootLayout({
@@ -42,6 +54,7 @@ export default async function RootLayout({
             )}
             <Toaster />
             <SpeedInsights />
+            <ServiceWorkerRegister />
           </QueryProvider>
         </ThemeProvider>
       </body>

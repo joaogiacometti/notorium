@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, Clock3 } from "lucide-react";
+import { BookOpenText, Clock3 } from "lucide-react";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -154,7 +154,7 @@ export function LoginForm({
             <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-muted/40 to-background" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="rounded-full border border-primary/20 bg-primary/10 p-5">
-                <BookOpen className="size-10 text-primary" />
+                <BookOpenText className="size-10 text-primary" />
               </div>
             </div>
           </div>

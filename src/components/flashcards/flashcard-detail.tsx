@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowLeft, CreditCard, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpenText,
+  Pencil,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { getDecks } from "@/app/actions/decks";
@@ -83,7 +89,7 @@ export function FlashcardDetail({
         </>
       }
       title={getRichTextExcerpt(currentFlashcard.front, 120)}
-      titleIcon={CreditCard}
+      titleIcon={BookOpenText}
     >
       <div className="space-y-4">
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">

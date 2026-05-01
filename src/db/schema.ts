@@ -490,6 +490,7 @@ export const flashcardReviewLog = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    clientReviewId: text("client_review_id"),
     rating: flashcardReviewRatingEnum("rating").notNull(),
     reviewedAt: timestamp("reviewed_at").notNull(),
     daysElapsed: integer("days_elapsed").notNull().default(0),
@@ -506,6 +507,9 @@ export const flashcardReviewLog = pgTable(
       table.userId,
       table.reviewedAt,
     ),
+    uniqueIndex("flashcard_review_log_userId_clientReviewId_unique")
+      .on(table.userId, table.clientReviewId)
+      .where(sql`${table.clientReviewId} is not null`),
   ],
 );
 

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { CreditCard } from "lucide-react";
+import { BookOpenText } from "lucide-react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import { ValidationIssueTooltip } from "@/components/flashcards/manage/validation-issue-tooltip";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
@@ -100,7 +100,7 @@ function getColumns(
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-3 py-1">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-destructive/15 bg-destructive/10 text-destructive shadow-xs">
-            <CreditCard className="size-4" />
+            <BookOpenText className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
             <div

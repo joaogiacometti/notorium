@@ -1,0 +1,2 @@
+ALTER TABLE "flashcard_review_log" ADD COLUMN "client_review_id" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "flashcard_review_log_userId_clientReviewId_unique" ON "flashcard_review_log" USING btree ("user_id","client_review_id") WHERE "flashcard_review_log"."client_review_id" is not null;

@@ -2,6 +2,7 @@
 
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
+import type { FlashcardReviewSyncStatus } from "@/features/flashcard-review/offline-store";
 
 interface ReviewHubViewProps {
   hasDueCards: boolean;
@@ -11,6 +12,9 @@ interface ReviewHubViewProps {
   examScopeLabel: string;
   isLoadingExamCards: boolean;
   isPending: boolean;
+  syncStatus: FlashcardReviewSyncStatus;
+  pendingSyncCount: number;
+  isOnline: boolean;
   onStartReview: () => void;
   onStartExam: () => void;
 }
@@ -23,9 +27,23 @@ export function ReviewHubView({
   examScopeLabel,
   isLoadingExamCards,
   isPending,
+  syncStatus,
+  pendingSyncCount,
+  isOnline,
   onStartReview,
   onStartExam,
 }: Readonly<ReviewHubViewProps>) {
+  const syncLabel =
+    syncStatus === "error"
+      ? "Sync failed"
+      : pendingSyncCount > 0
+        ? `${pendingSyncCount} pending sync`
+        : syncStatus === "syncing"
+          ? "Syncing"
+          : isOnline
+            ? "Ready offline"
+            : "Offline";
+
   return (
     <div
       className="grid min-w-0 gap-4 lg:grid-cols-2"
@@ -41,6 +59,9 @@ export function ReviewHubView({
               {dueBadgeText}
             </span>
           </div>
+          <span className="inline-flex w-fit items-center rounded-md border border-(--intent-warning-border) bg-(--intent-warning-bg) px-2 py-0.5 text-xs font-medium text-(--intent-warning-text)">
+            {syncLabel}
+          </span>
 
           <div className="space-y-1">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
@@ -119,7 +140,9 @@ export function ReviewHubView({
             data-testid="flashcard-exam-start-button"
             variant="outline"
             onClick={() => void onStartExam()}
-            disabled={isLoadingExamCards || isPending || !hasExamCards}
+            disabled={
+              isLoadingExamCards || isPending || !hasExamCards || !isOnline
+            }
             className="mt-auto h-10 w-full text-base sm:h-11"
           >
             <AsyncButtonContent
