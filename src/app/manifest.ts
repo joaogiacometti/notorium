@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { defaultThemeChromeColor } from "@/lib/theme";
+import { pwaLaunchBackgroundColor } from "@/lib/theme";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: defaultThemeChromeColor,
-    theme_color: defaultThemeChromeColor,
+    background_color: pwaLaunchBackgroundColor,
+    theme_color: pwaLaunchBackgroundColor,
     icons: [
       {
         src: "/icons/notorium-192.png",

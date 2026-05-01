@@ -187,7 +187,7 @@ Students who want a private, lightweight study management workspace.
 - Toast feedback for mutation success and error states.
 - Dialog mutation feedback follows a two-mode rule: **close on success** for straightforward create/edit dialogs (user sees the result appear in the list); **button saved state** (1200 ms "Saved ✓" transition on the submit button) for dialogs that stay open as a progress checkpoint, where the user continues working after saving (e.g. edit note, create flashcard, edit flashcard).
 - Theme toggle with `light`, `dark`, `halloween`, `catppuccin-mocha`, and `system`; authenticated users access it from the navbar, and signed-out users access it from a floating top-right control.
-- Browser and installed PWA chrome follows the active theme after the app loads, including `halloween` and `catppuccin-mocha`.
+- Installed PWA launch uses the static dark theme background before app code loads; browser and installed PWA chrome follows the active theme after the app loads, including `halloween` and `catppuccin-mocha`.
 - Custom not-found page.
 
 ## Resource Limits

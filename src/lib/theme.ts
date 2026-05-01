@@ -31,7 +31,8 @@ export const themeChromeColorById: Record<ResolvedAppTheme, string> = {
   "catppuccin-mocha": "#1e1e2e",
 };
 
-export const defaultThemeChromeColor = themeChromeColorById.light;
+export const defaultThemeChromeColor = themeChromeColorById.dark;
+export const pwaLaunchBackgroundColor = defaultThemeChromeColor;
 
 export const appThemes: Set<AppTheme> = new Set(validThemes);
 

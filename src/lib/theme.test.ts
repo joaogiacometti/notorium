@@ -24,12 +24,13 @@ describe("theme chrome colors", () => {
     );
   });
 
-  it("uses the light chrome color for unknown or unresolved themes", () => {
+  it("uses the dark chrome color for unknown or unresolved themes", () => {
     expect(resolveThemeChromeColor("system", undefined)).toBe(
       defaultThemeChromeColor,
     );
     expect(resolveThemeChromeColor("unknown", "halloween")).toBe(
       defaultThemeChromeColor,
     );
+    expect(defaultThemeChromeColor).toBe(themeChromeColorById.dark);
   });
 });
