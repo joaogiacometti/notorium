@@ -91,6 +91,25 @@ describe("getFlashcardReviewShortcutAction", () => {
     ).toEqual({ type: "delete" });
   });
 
+  it("opens reset on r when shortcuts are allowed", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "r",
+      }),
+    ).toEqual({ type: "reset" });
+  });
+
+  it("opens reset on r when the answer is visible", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "r",
+        revealed: true,
+      }),
+    ).toEqual({ type: "reset" });
+  });
+
   it("maps 1 through 4 to the expected grades when revealed", () => {
     expect(
       getFlashcardReviewShortcutAction({
@@ -147,6 +166,15 @@ describe("getFlashcardReviewShortcutAction", () => {
         key: "D",
       }),
     ).toBeNull();
+  });
+
+  it("opens reset on uppercase R", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "R",
+      }),
+    ).toEqual({ type: "reset" });
   });
 
   it("ignores shortcuts when no current card is available", () => {

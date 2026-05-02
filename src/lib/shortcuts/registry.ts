@@ -59,6 +59,12 @@ export const shortcutRegistry: Shortcut[] = [
     description: "Delete flashcard",
     category: ShortcutCategory.FlashcardReview,
   },
+  {
+    id: "flashcard-reset",
+    keys: ["r"],
+    description: "Reset review progress",
+    category: ShortcutCategory.FlashcardReview,
+  },
 ];
 
 export function getShortcutsByCategory(category: ShortcutCategory): Shortcut[] {

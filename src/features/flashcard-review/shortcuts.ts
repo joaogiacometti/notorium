@@ -14,6 +14,9 @@ export type FlashcardReviewShortcutAction =
       type: "delete";
     }
   | {
+      type: "reset";
+    }
+  | {
       type: "grade";
       grade: ReviewGrade;
     };
@@ -64,6 +67,10 @@ export function getFlashcardReviewShortcutAction({
 
   if (key === "d") {
     return { type: "delete" };
+  }
+
+  if (key.toLowerCase() === "r") {
+    return { type: "reset" };
   }
 
   if (!revealed) {

@@ -23,6 +23,8 @@ interface ResetFlashcardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onReset?: (flashcard: FlashcardEntity) => void;
+  className?: string;
+  overlayClassName?: string;
 }
 
 export function ResetFlashcardDialog({
@@ -31,6 +33,8 @@ export function ResetFlashcardDialog({
   open,
   onOpenChange,
   onReset,
+  className,
+  overlayClassName,
 }: Readonly<ResetFlashcardDialogProps>) {
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
@@ -49,7 +53,10 @@ export function ResetFlashcardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className={`sm:max-w-md ${className ?? ""}`}
+        overlayClassName={overlayClassName}
+      >
         <DialogHeader>
           <DialogTitle>Reset Flashcard</DialogTitle>
           <DialogDescription>

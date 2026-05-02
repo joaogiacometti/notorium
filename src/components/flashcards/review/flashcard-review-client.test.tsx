@@ -44,6 +44,11 @@ vi.mock("@/components/flashcards/dialogs/delete-flashcard-dialog", () => ({
   DeleteFlashcardDialog: () => null,
 }));
 
+vi.mock("@/components/flashcards/dialogs/reset-flashcard-dialog", () => ({
+  ResetFlashcardDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="reset-flashcard-dialog" /> : null,
+}));
+
 vi.mock("@/components/flashcards/dialogs/lazy-edit-flashcard-dialog", () => ({
   LazyEditFlashcardDialog: () => null,
 }));
@@ -441,6 +446,26 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(getFlashcardReviewStateMock).not.toHaveBeenCalled();
+  });
+
+  it("opens reset confirmation on uppercase R in focus mode", async () => {
+    await renderReviewClient(makeReviewState(1, [makeCard("card-1")]));
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="flashcard-review-start-button"]',
+        )
+        ?.click();
+    });
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "R" }));
+    });
+
+    expect(
+      container.querySelector('[data-testid="reset-flashcard-dialog"]'),
+    ).toBeTruthy();
   });
 
   async function renderReviewClient(initialState: FlashcardReviewState) {

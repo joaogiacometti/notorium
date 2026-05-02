@@ -15,6 +15,7 @@ import {
 } from "@/app/actions/flashcard-review";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/dialogs/lazy-edit-flashcard-dialog";
+import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { ExamExitConfirmationDialog } from "@/components/flashcards/review/exam-exit-confirmation-dialog";
 import { ExamResultsScreen } from "@/components/flashcards/review/exam-results-screen";
 import { ReturnSyncBlockingOverlay } from "@/components/flashcards/review/return-sync-blocking-overlay";
@@ -73,6 +74,7 @@ export function FlashcardReviewClient({
   const [revealed, setRevealed] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
   const [isActionPending, startActionTransition] = useTransition();
@@ -96,6 +98,7 @@ export function FlashcardReviewClient({
     setRevealed(false);
     setEditOpen(false);
     setDeleteOpen(false);
+    setResetOpen(false);
   }
 
   function commitReturnedReviewState(nextState: FlashcardReviewState) {
@@ -227,6 +230,19 @@ export function FlashcardReviewClient({
     if (shouldRefillFlashcardReviewState(nextState)) {
       void refillReviewState();
     }
+  }
+
+  function handleFlashcardReset(updatedFlashcard: FlashcardReviewEntity) {
+    if (isExamMode) {
+      updateExamCard(updatedFlashcard);
+      resetFocusViewState();
+      return;
+    }
+
+    commitReviewState(
+      replaceFlashcardInReviewState(reviewStateRef.current, updatedFlashcard),
+    );
+    resetFocusViewState();
   }
 
   async function refillReviewState(retryCount = 0) {
@@ -362,7 +378,7 @@ export function FlashcardReviewClient({
       revealed,
       hasCurrentCard: currentCard !== null,
       isPending,
-      isDialogOpen: editOpen || deleteOpen,
+      isDialogOpen: editOpen || deleteOpen || resetOpen,
       isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
       hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
       isRepeat: event.repeat,
@@ -386,6 +402,11 @@ export function FlashcardReviewClient({
 
     if (action.type === "delete") {
       setDeleteOpen(true);
+      return;
+    }
+
+    if (action.type === "reset") {
+      setResetOpen(true);
       return;
     }
 
@@ -464,6 +485,21 @@ export function FlashcardReviewClient({
               open={deleteOpen}
               onOpenChange={setDeleteOpen}
               onDeleted={handleFlashcardDeleted}
+              className="z-120"
+              overlayClassName="z-120"
+            />
+            <ResetFlashcardDialog
+              flashcardId={currentCard.id}
+              flashcardFront={currentCard.front}
+              open={resetOpen}
+              onOpenChange={setResetOpen}
+              onReset={(updated) =>
+                handleFlashcardReset({
+                  ...updated,
+                  deckName: currentCard.deckName,
+                  deckPath: currentCard.deckPath,
+                })
+              }
               className="z-120"
               overlayClassName="z-120"
             />

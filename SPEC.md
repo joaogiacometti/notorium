@@ -97,6 +97,9 @@ Students who want a private, lightweight study management workspace.
 - Keyboard shortcuts on the review screen:
   - `Enter` reveals the back when hidden.
   - `Enter` grades `Good` after the back is shown.
+  - `e` opens edit flashcard.
+  - `d` opens delete flashcard confirmation.
+  - `r` opens reset review progress confirmation for the current card.
   - `1` grades `Again` after reveal.
   - `2` grades `Hard` after reveal.
   - `3` grades `Good` after reveal.
