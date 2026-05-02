@@ -1,8 +1,12 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { SyncStatusDot } from "@/components/shared/sync-status-dot";
 import { Button } from "@/components/ui/button";
 import type { FlashcardReviewSyncStatus } from "@/features/flashcard-review/offline-store";
+import { getFlashcardReviewSyncIndicatorStatus } from "@/features/flashcard-review/sync-status";
+import type { SyncIndicatorStatus } from "@/lib/sync-status";
 
 interface ReviewHubViewProps {
   hasDueCards: boolean;
@@ -19,6 +23,12 @@ interface ReviewHubViewProps {
   onStartExam: () => void;
 }
 
+/**
+ * Shows the flashcard review landing hub and its review/exam actions.
+ *
+ * @example
+ * <ReviewHubView hasDueCards dueBadgeText="3 due" hasExamCards examBadgeText="12 cards" examScopeLabel="All flashcards" isLoadingExamCards={false} isPending={false} syncStatus="idle" pendingSyncCount={0} isOnline onStartReview={startReview} onStartExam={startExam} />
+ */
 export function ReviewHubView({
   hasDueCards,
   dueBadgeText,
@@ -33,126 +43,219 @@ export function ReviewHubView({
   onStartReview,
   onStartExam,
 }: Readonly<ReviewHubViewProps>) {
-  const syncLabel =
-    syncStatus === "error"
-      ? "Sync failed"
-      : pendingSyncCount > 0
-        ? `${pendingSyncCount} pending sync`
-        : syncStatus === "syncing"
-          ? "Syncing"
-          : isOnline
-            ? "Ready offline"
-            : "Offline";
+  const reviewSyncStatus = getFlashcardReviewSyncIndicatorStatus({
+    syncStatus,
+    pendingSyncCount,
+    isOnline,
+  });
 
   return (
     <div
-      className="grid min-w-0 gap-4 lg:grid-cols-2"
+      className="grid min-w-0 gap-4 lg:grid-cols-2 lg:gap-5"
       data-testid="flashcard-review-hub"
     >
-      <div className="rounded-xl border border-border/70 py-0 shadow-none">
-        <div className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
-          <div className="flex items-start justify-between gap-2">
-            <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-semibold tracking-wide text-primary uppercase">
-              {hasDueCards ? "Due now" : "No due cards"}
-            </span>
-            <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {dueBadgeText}
-            </span>
-          </div>
-          <span className="inline-flex w-fit items-center rounded-md border border-(--intent-warning-border) bg-(--intent-warning-bg) px-2 py-0.5 text-xs font-medium text-(--intent-warning-text)">
-            {syncLabel}
-          </span>
-
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Review
-            </h2>
-            <p className="text-pretty text-sm text-muted-foreground">
-              Go through cards that are due based on your spaced repetition
-              schedule.
-            </p>
-          </div>
-
-          <ul className="hidden space-y-1.5 text-sm text-muted-foreground sm:block">
-            <li className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-primary/70" />
-              <span>Spaced repetition</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-primary/70" />
-              <span>Again · Hard · Good · Easy</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-primary/70" />
-              <span>Tracks your progress</span>
-            </li>
-          </ul>
-
-          <Button
-            data-testid="flashcard-review-start-button"
-            variant="outline"
-            onClick={onStartReview}
+      <ReviewActionCard
+        title="Review"
+        badgeText={dueBadgeText}
+        description="Go through cards that are due based on your spaced repetition schedule."
+        bullets={[
+          "Spaced repetition",
+          "Again · Hard · Good · Easy",
+          "Tracks your progress",
+        ]}
+        action={
+          <StartReviewButton
             disabled={isPending || !hasDueCards}
-            className="mt-auto h-10 w-full text-base sm:h-11"
-          >
-            Start review
-          </Button>
-        </div>
-      </div>
+            onClick={onStartReview}
+          />
+        }
+        syncStatus={reviewSyncStatus}
+        syncText={getVisibleSyncText(reviewSyncStatus, pendingSyncCount)}
+        pendingSyncCount={pendingSyncCount}
+      />
+      <ReviewActionCard
+        title="Exam"
+        badgeText={examBadgeText}
+        description="Practice every card in this scope without changing its review schedule."
+        bullets={[examScopeLabel, "Shuffled practice", "Retry weak cards"]}
+        action={
+          <StartExamButton
+            disabled={isPending || !hasExamCards || isLoadingExamCards}
+            isLoading={isLoadingExamCards}
+            onClick={onStartExam}
+          />
+        }
+      />
+    </div>
+  );
+}
 
-      <div className="rounded-xl border border-border/70 py-0 shadow-none">
-        <div className="flex h-full flex-col gap-3 p-4 sm:gap-4 sm:p-5">
-          <div className="flex items-start justify-between gap-2">
-            <span className="inline-flex items-center rounded-md border border-(--intent-success-border) bg-(--intent-success-bg) px-2 py-0.5 text-xs font-semibold tracking-wide text-(--intent-success-text) uppercase">
-              All cards
-            </span>
-            <span className="inline-flex items-center rounded-md border border-(--intent-success-border) bg-(--intent-success-bg) px-2 py-0.5 text-xs font-medium text-(--intent-success-text)">
-              {examBadgeText}
-            </span>
-          </div>
+interface ReviewActionCardProps {
+  title: string;
+  badgeText: string;
+  description: string;
+  bullets: string[];
+  action: ReactNode;
+  syncStatus?: SyncIndicatorStatus;
+  syncText?: string;
+  pendingSyncCount?: number;
+}
 
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Exam mode
-            </h2>
-            <p className="text-pretty text-sm text-muted-foreground">
-              Practice all cards regardless of schedule. Good for cramming
-              before a test.
-            </p>
-          </div>
-
-          <ul className="hidden space-y-1.5 text-sm text-muted-foreground sm:block">
-            <li className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-(--intent-success-fill)" />
-              <span>{examScopeLabel}</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-(--intent-success-fill)" />
-              <span>No scheduling impact</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-(--intent-success-fill)" />
-              <span>Randomized order</span>
-            </li>
-          </ul>
-
-          <Button
-            data-testid="flashcard-exam-start-button"
-            variant="outline"
-            onClick={() => void onStartExam()}
-            disabled={
-              isLoadingExamCards || isPending || !hasExamCards || !isOnline
-            }
-            className="mt-auto h-10 w-full text-base sm:h-11"
-          >
-            <AsyncButtonContent
-              pending={isLoadingExamCards}
-              idleLabel="Start exam"
-              pendingLabel="Loading exam..."
-            />
-          </Button>
-        </div>
+function ReviewActionCard({
+  title,
+  badgeText,
+  description,
+  bullets,
+  action,
+  syncStatus,
+  syncText,
+  pendingSyncCount = 0,
+}: Readonly<ReviewActionCardProps>) {
+  return (
+    <div className="relative rounded-xl border border-border/70 py-0 shadow-none">
+      <ActionCardSyncIndicator
+        status={syncStatus}
+        pendingCount={pendingSyncCount}
+      />
+      <div className="flex h-full flex-col p-4 sm:p-6">
+        <ActionCardHeader title={title} badgeText={badgeText} />
+        <p className="mt-2 text-pretty text-sm text-muted-foreground">
+          {description}
+        </p>
+        <VisibleSyncText text={syncText} />
+        <ActionCardFooter bullets={bullets} action={action} />
       </div>
     </div>
   );
+}
+
+function ActionCardHeader({
+  title,
+  badgeText,
+}: Readonly<{ title: string; badgeText: string }>) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+        {title}
+      </h2>
+      <span className="shrink-0 text-sm font-medium text-muted-foreground">
+        {badgeText}
+      </span>
+    </div>
+  );
+}
+
+function ActionCardFooter({
+  bullets,
+  action,
+}: Readonly<{ bullets: string[]; action: ReactNode }>) {
+  return (
+    <div className="mt-auto flex flex-col gap-1 pt-3 sm:pt-4">
+      <ul className="hidden space-y-2.5 pb-3 text-sm text-muted-foreground sm:block">
+        {bullets.map((bullet) => (
+          <li key={bullet} className="flex items-center gap-2">
+            <span className="size-2 shrink-0 rounded-full bg-(--primary)" />
+            <span>{bullet}</span>
+          </li>
+        ))}
+      </ul>
+      {action}
+    </div>
+  );
+}
+
+function ActionCardSyncIndicator({
+  status,
+  pendingCount,
+}: Readonly<{
+  status?: SyncIndicatorStatus;
+  pendingCount: number;
+}>) {
+  if (!status) {
+    return null;
+  }
+
+  return (
+    <SyncStatusDot
+      status={status}
+      pendingCount={pendingCount}
+      className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3"
+    />
+  );
+}
+
+function VisibleSyncText({ text }: Readonly<{ text?: string }>) {
+  if (!text) {
+    return null;
+  }
+
+  return (
+    <span className="mt-3 inline-flex w-fit items-center rounded-md border border-(--intent-warning-border) bg-(--intent-warning-bg) px-2 py-0.5 text-xs font-medium text-(--intent-warning-text)">
+      {text}
+    </span>
+  );
+}
+
+function StartReviewButton({
+  disabled,
+  onClick,
+}: Readonly<{ disabled: boolean; onClick: () => void }>) {
+  return (
+    <Button
+      data-testid="flashcard-review-start-button"
+      variant="default"
+      onClick={onClick}
+      disabled={disabled}
+      className="h-10 w-full text-base sm:h-11"
+    >
+      Start review
+    </Button>
+  );
+}
+
+function StartExamButton({
+  disabled,
+  isLoading,
+  onClick,
+}: Readonly<{
+  disabled: boolean;
+  isLoading: boolean;
+  onClick: () => void;
+}>) {
+  return (
+    <Button
+      data-testid="flashcard-exam-start-button"
+      variant="outline"
+      onClick={onClick}
+      disabled={disabled}
+      className="h-10 w-full text-base sm:h-11"
+    >
+      <AsyncButtonContent
+        pending={isLoading}
+        pendingLabel="Loading cards..."
+        idleLabel="Start exam"
+      />
+    </Button>
+  );
+}
+
+function getVisibleSyncText(
+  status: SyncIndicatorStatus,
+  pendingSyncCount: number,
+) {
+  if (status === "error") {
+    return "Sync failed";
+  }
+
+  if (status === "pending") {
+    return `${pendingSyncCount} pending sync`;
+  }
+
+  return status === "syncing" || status === "offline"
+    ? getStatusLabel(status)
+    : "";
+}
+
+function getStatusLabel(status: SyncIndicatorStatus) {
+  return status === "syncing" ? "Syncing" : "Offline";
 }

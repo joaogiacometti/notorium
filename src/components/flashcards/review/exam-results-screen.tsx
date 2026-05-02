@@ -47,7 +47,7 @@ export function ExamResultsScreen({
   const easyArc = (easyPercent / 100) * circumference;
 
   return (
-    <div className="fixed inset-0 z-110 flex flex-col items-center justify-center overflow-hidden bg-background px-4">
+    <div className="fixed inset-0 z-110 flex flex-col items-center justify-center overflow-hidden bg-background px-4 sm:px-6">
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="absolute top-6 left-6">
           <div className="flex items-center gap-1.5 rounded-md border-2 border-(--intent-info-border) bg-(--intent-info-bg) px-2 py-1 text-xs font-bold tracking-wider text-(--intent-info-text) uppercase">
@@ -149,7 +149,7 @@ export function ExamResultsScreen({
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-3 sm:gap-4">
           {(["again", "hard", "good", "easy"] as const).map((grade) => {
             const colorMap = {
               again: "text-[var(--intent-danger-text)]",
@@ -160,7 +160,7 @@ export function ExamResultsScreen({
             return (
               <div
                 key={grade}
-                className="rounded-lg border border-border/60 bg-card p-4"
+                className="rounded-lg border border-border/60 bg-card p-4 sm:p-5"
               >
                 <div className={`mb-1 text-3xl font-bold ${colorMap[grade]}`}>
                   {counts[grade]}
@@ -173,7 +173,7 @@ export function ExamResultsScreen({
           })}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 sm:gap-4">
           <Button variant="outline" onClick={onClose} className="flex-1 gap-2">
             <X className="size-4" />
             Close
