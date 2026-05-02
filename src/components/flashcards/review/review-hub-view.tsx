@@ -112,7 +112,7 @@ function ReviewActionCard({
   pendingSyncCount = 0,
 }: Readonly<ReviewActionCardProps>) {
   return (
-    <div className="relative rounded-xl border border-border/70 py-0 shadow-none">
+    <div className="relative rounded-xl border border-border/70 bg-card/85 py-0 shadow-none">
       <ActionCardSyncIndicator
         status={syncStatus}
         pendingCount={pendingSyncCount}

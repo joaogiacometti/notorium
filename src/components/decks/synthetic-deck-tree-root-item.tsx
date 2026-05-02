@@ -33,12 +33,13 @@ export function SyntheticDeckTreeRootItem({
   onSelectDeck,
 }: Readonly<SyntheticDeckTreeRootItemProps>) {
   const isLoading = loadingId === loadingRootDeckId;
+  const isSelected = selectedDeckId === undefined;
 
   return (
     <DeckSidebarRow
       deckId={node.id}
       depth={0}
-      isSelected={selectedDeckId === undefined}
+      isSelected={isSelected}
       isDragging={draggedDeckId === rootDeckId}
       isDropTarget={dropTargetId === rootDeckId}
       onDragEnd={onDragEnd}
@@ -60,7 +61,14 @@ export function SyntheticDeckTreeRootItem({
             {node.name}
           </span>
         </span>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground">
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[10px] tabular-nums",
+            isSelected
+              ? "bg-background/80 text-foreground"
+              : "bg-muted text-muted-foreground group-hover:bg-background/80 group-hover:text-foreground",
+          )}
+        >
           {node.flashcardCount}
         </span>
       </span>

@@ -41,8 +41,8 @@ export function DeckSidebarRow({
       className={cn(
         "group flex w-full items-center gap-1 rounded-xl pr-1 text-left transition-[opacity,background-color,color,box-shadow]",
         isSelected
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
+          ? "bg-accent text-accent-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-accent/70 hover:text-accent-foreground",
         isDropTarget
           ? "bg-background ring-1 ring-[color:var(--intent-info-border)]"
           : undefined,

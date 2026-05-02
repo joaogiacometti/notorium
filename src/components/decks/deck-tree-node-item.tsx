@@ -97,7 +97,11 @@ export function DeckTreeNodeItem({
         onDrop={() => onDropTarget(node.id)}
         onSelect={() => onSelectDeck(node.id)}
       >
-        <DeckNodeLabel node={node} isLoading={isLoading} />
+        <DeckNodeLabel
+          node={node}
+          isLoading={isLoading}
+          isSelected={isSelected}
+        />
       </DeckSidebarRow>
       {hasChildren && isExpanded ? (
         <div className="space-y-1">
@@ -229,7 +233,12 @@ function DeckActionsMenu({
 function DeckNodeLabel({
   node,
   isLoading,
-}: Readonly<{ node: DeckTreeNode; isLoading: boolean }>) {
+  isSelected,
+}: Readonly<{
+  node: DeckTreeNode;
+  isLoading: boolean;
+  isSelected: boolean;
+}>) {
   return (
     <>
       <span className="flex min-w-0 items-center gap-2 truncate">
@@ -246,7 +255,14 @@ function DeckNodeLabel({
           {node.name}
         </span>
       </span>
-      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground">
+      <span
+        className={cn(
+          "rounded-full px-2 py-0.5 text-[10px] tabular-nums",
+          isSelected
+            ? "bg-background/80 text-foreground"
+            : "bg-muted text-muted-foreground group-hover:bg-background/80 group-hover:text-foreground",
+        )}
+      >
         {node.flashcardCount}
       </span>
     </>

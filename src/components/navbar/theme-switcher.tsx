@@ -194,9 +194,9 @@ export function ModeToggle({
           size="icon"
           data-testid={dataTestId}
           className={cn(
-            "border-border/60 text-muted-foreground hover:text-foreground",
+            "border-border/60 text-muted-foreground hover:text-accent-foreground",
             variant === "navbar" &&
-              "size-9 rounded-full border bg-background/45 hover:bg-accent/70",
+              "size-9 rounded-full border bg-muted/30 hover:bg-accent/70",
             variant === "floating" &&
               "fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-55 rounded-full border bg-background/90 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/70",
           )}
