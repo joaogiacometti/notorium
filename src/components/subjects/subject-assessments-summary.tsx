@@ -10,11 +10,13 @@ import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 interface SubjectAssessmentsSummaryProps {
   assessments: AssessmentEntity[];
   subjectId: string;
+  showManageAction?: boolean;
 }
 
 export function SubjectAssessmentsSummary({
   assessments,
   subjectId,
+  showManageAction = true,
 }: Readonly<SubjectAssessmentsSummaryProps>) {
   const average = getAssessmentAverage(assessments);
   const assessmentCount = assessments.length;
@@ -35,19 +37,21 @@ export function SubjectAssessmentsSummary({
             Track how your completed assessments shape the final grade.
           </p>
         </div>
-        <div className="flex w-full gap-2 sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full gap-1.5"
-            asChild
-          >
-            <Link href={`/planning?view=assessments&subject=${subjectId}`}>
-              <ClipboardList className="size-3.5" />
-              Manage assessments
-            </Link>
-          </Button>
-        </div>
+        {showManageAction ? (
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5"
+              asChild
+            >
+              <Link href={`/planning?view=assessments&subject=${subjectId}`}>
+                <ClipboardList className="size-3.5" />
+                Manage assessments
+              </Link>
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <div className={cardClassName}>

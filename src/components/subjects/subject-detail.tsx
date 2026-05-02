@@ -3,15 +3,12 @@
 import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { AttendanceSummary } from "@/components/attendance/attendance-summary";
-import { NotesList } from "@/components/notes/notes-list";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { SubjectText } from "@/components/shared/subject-text";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
-import { SubjectAssessmentsSummary } from "@/components/subjects/subject-assessments-summary";
+import { SubjectDetailContent } from "@/components/subjects/subject-detail-content";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { formatRelativeTime } from "@/lib/dates/format";
 import type {
   AssessmentEntity,
@@ -83,21 +80,12 @@ export function SubjectDetail({
       title={<SubjectText value={subject.name} mode="wrap" />}
       titleIcon={BookOpen}
     >
-      <AttendanceSummary
-        subjectId={subject.id}
-        totalClasses={subject.totalClasses}
-        maxMisses={subject.maxMisses}
+      <SubjectDetailContent
+        subject={subject}
+        notes={notes}
         misses={misses}
-      />
-
-      <Separator className="my-8" />
-      <SubjectAssessmentsSummary
         assessments={assessments}
-        subjectId={subject.id}
       />
-
-      <Separator className="my-8" />
-      <NotesList subjectId={subject.id} notes={notes} />
 
       <EditSubjectDialog
         subject={subject}

@@ -42,6 +42,7 @@ import {
   planningAssessmentStatusFilterValues,
   planningAssessmentTypeFilterValues,
 } from "@/features/assessments/constants";
+import { buildPlanningAssessmentsParams } from "@/features/assessments/planning-assessment-url";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   PlanningAssessmentsPage,
@@ -64,35 +65,6 @@ const planningAssessmentsPageSize = 25;
 const planningAssessmentsSearchDebounceMs = 200;
 const missingSubjectTooltipMessage =
   "Create a subject first to add assessments.";
-
-function buildAssessmentsParams(
-  currentSubject: string,
-  currentSearch: string,
-  currentStatus: StatusFilter,
-  currentType: TypeFilter,
-  currentSort: SortBy,
-) {
-  const query = new URLSearchParams();
-  query.set("view", "assessments");
-
-  if (currentSubject !== "all") {
-    query.set("subject", currentSubject);
-  }
-  if (currentSearch) {
-    query.set("search", currentSearch);
-  }
-  if (currentStatus !== "all") {
-    query.set("status", currentStatus);
-  }
-  if (currentType !== "all") {
-    query.set("type", currentType);
-  }
-  if (currentSort !== "smart") {
-    query.set("sort", currentSort);
-  }
-
-  return query.toString();
-}
 
 export function PlanningAssessmentsTable({
   initialSubjectId,
@@ -167,7 +139,7 @@ export function PlanningAssessmentsTable({
 
     startTransition(() => {
       routerRef.current.replace(
-        `${pathnameRef.current}?${buildAssessmentsParams(
+        `${pathnameRef.current}?${buildPlanningAssessmentsParams(
           subjectFilter,
           resolvedSearchQuery,
           statusFilter,
