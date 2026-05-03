@@ -18,7 +18,7 @@ import {
 import {
   optimizeFsrsParameters,
   shouldOptimizeFsrsParameters,
-} from "@/features/flashcards/fsrs-optimizer";
+} from "@/features/flashcards/fsrs/optimizer";
 import { tryAcquireUserExpiringLock } from "@/lib/rate-limit/user-rate-limit";
 import type {
   FlashcardReviewLogEntity,

@@ -69,7 +69,7 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/flashcards/fsrs-settings", () => ({
+vi.mock("@/features/flashcards/fsrs/settings", () => ({
   ensureFsrsSettings: ensureFsrsSettingsMock,
 }));
 

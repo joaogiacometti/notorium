@@ -12,7 +12,7 @@ import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
 import {
   ensureFsrsSettings,
   maybeOptimizeFsrsParameters,
-} from "@/features/flashcards/fsrs-settings";
+} from "@/features/flashcards/fsrs/settings";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,

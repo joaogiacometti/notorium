@@ -7,13 +7,13 @@ export {
   schedulerValidationCacheMaxEntries,
   schedulerValidationMaxNewCardEasyIntervalDays,
   schedulerValidationProbeNow,
-} from "@/features/flashcards/fsrs-constants";
+} from "@/features/flashcards/fsrs/constants";
 export {
   buildFsrsCard,
   mapGradeToRating,
   mapStateFromFsrs,
   mapStateToFsrs,
-} from "@/features/flashcards/fsrs-mapping";
+} from "@/features/flashcards/fsrs/mapping";
 
 export {
   formatFsrsNumber,
@@ -22,12 +22,12 @@ export {
   normalizeNonNegativeInteger,
   normalizeOptionalDate,
   parseNullableNumeric,
-} from "@/features/flashcards/fsrs-normalization";
+} from "@/features/flashcards/fsrs/normalization";
 export {
   getInitialFlashcardSchedulingState,
   previewFlashcardReview,
   scheduleFlashcardReview,
-} from "@/features/flashcards/fsrs-scheduler";
+} from "@/features/flashcards/fsrs/scheduler";
 export {
   type FlashcardReviewPreview,
   type FsrsSchedulerValidationInput,
@@ -38,14 +38,14 @@ export {
   reviewGradeValues,
   type ScheduleFlashcardReviewInput,
   type SchedulerOutput,
-} from "@/features/flashcards/fsrs-types";
+} from "@/features/flashcards/fsrs/types";
 
 export {
   buildSchedulerValidationCacheKey,
   getCachedSchedulerValidationResult,
   isFsrsSchedulerSettingsValid,
   setCachedSchedulerValidationResult,
-} from "@/features/flashcards/fsrs-validation";
+} from "@/features/flashcards/fsrs/validation";
 export {
   areFsrsWeightsWellFormed,
   getDefaultFsrsDesiredRetention,
@@ -56,4 +56,4 @@ export {
   parseFsrsWeights,
   parseFsrsWeightsWithValidity,
   serializeFsrsWeights,
-} from "@/features/flashcards/fsrs-weights";
+} from "@/features/flashcards/fsrs/weights";

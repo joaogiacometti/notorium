@@ -17,7 +17,7 @@ import {
   type SyncFlashcardReviewsForm,
   syncFlashcardReviewsSchema,
 } from "@/features/flashcard-review/validation";
-import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {

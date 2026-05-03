@@ -2,6 +2,7 @@
 
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
+import type { AccountMutationResult } from "@/features/account/mutations";
 import { deleteAccountForUser } from "@/features/account/mutations";
 import {
   type UpdateAccountForm,
@@ -72,14 +73,9 @@ export async function updateNotificationPreferences(
   );
 }
 
-export async function deleteAccount(): Promise<MutationResult> {
-  const result = await deleteAccountForUser();
-
-  if (!result.success) {
-    return result;
-  }
-
-  return { success: true };
+export async function deleteAccount(): Promise<AccountMutationResult> {
+  const userId = await getAuthenticatedUserId();
+  return deleteAccountForUser(userId);
 }
 
 async function getAdminUserId() {

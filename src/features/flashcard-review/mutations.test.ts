@@ -76,7 +76,7 @@ vi.mock("@/features/flashcards/fsrs", () => ({
   scheduleFlashcardReview: scheduleFlashcardReviewMock,
 }));
 
-vi.mock("@/features/flashcards/fsrs-settings", () => ({
+vi.mock("@/features/flashcards/fsrs/settings", () => ({
   ensureFsrsSettings: ensureFsrsSettingsMock,
   maybeOptimizeFsrsParameters: maybeOptimizeFsrsParametersMock,
 }));

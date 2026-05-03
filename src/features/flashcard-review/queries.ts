@@ -20,7 +20,7 @@ import {
   LEARN_AHEAD_STATES,
   LEARN_AHEAD_WINDOW_MS,
 } from "@/features/flashcard-review/constants";
-import { ensureFsrsSettings } from "@/features/flashcards/fsrs-settings";
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardReviewEntity,

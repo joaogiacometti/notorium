@@ -42,7 +42,7 @@ import {
   planningAssessmentStatusFilterValues,
   planningAssessmentTypeFilterValues,
 } from "@/features/assessments/constants";
-import { buildPlanningAssessmentsParams } from "@/features/assessments/planning-assessment-url";
+import { buildPlanningAssessmentsParams } from "@/features/planning/assessment-url";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   PlanningAssessmentsPage,

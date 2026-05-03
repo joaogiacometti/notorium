@@ -42,7 +42,7 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/flashcards/fsrs-optimizer", () => ({
+vi.mock("@/features/flashcards/fsrs/optimizer", () => ({
   optimizeFsrsParameters: optimizeFsrsParametersMock,
   shouldOptimizeFsrsParameters: shouldOptimizeFsrsParametersMock,
 }));
@@ -97,7 +97,7 @@ describe("ensureFsrsSettings", () => {
     ]);
 
     const { ensureFsrsSettings } = await import(
-      "@/features/flashcards/fsrs-settings"
+      "@/features/flashcards/fsrs/settings"
     );
     const { getDefaultFsrsDesiredRetention, getDefaultFsrsWeights } =
       await import("@/features/flashcards/fsrs");
@@ -134,7 +134,7 @@ describe("getFlashcardReviewLogsForOptimization", () => {
     }));
 
     const { getFlashcardReviewLogsForOptimization } = await import(
-      "@/features/flashcards/fsrs-settings"
+      "@/features/flashcards/fsrs/settings"
     );
 
     await getFlashcardReviewLogsForOptimization("user-1");
@@ -170,7 +170,7 @@ describe("maybeOptimizeFsrsParameters", () => {
     tryAcquireUserExpiringLockMock.mockResolvedValueOnce(false);
 
     const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs-settings"
+      "@/features/flashcards/fsrs/settings"
     );
 
     await maybeOptimizeFsrsParameters("user-1");
@@ -208,7 +208,7 @@ describe("maybeOptimizeFsrsParameters", () => {
     optimizeFsrsParametersMock.mockResolvedValueOnce(optimizedWeights);
 
     const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs-settings"
+      "@/features/flashcards/fsrs/settings"
     );
 
     await maybeOptimizeFsrsParameters("user-1");
@@ -238,7 +238,7 @@ describe("maybeOptimizeFsrsParameters", () => {
     shouldOptimizeFsrsParametersMock.mockReturnValueOnce(false);
 
     const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs-settings"
+      "@/features/flashcards/fsrs/settings"
     );
 
     await maybeOptimizeFsrsParameters("user-1");
@@ -270,7 +270,7 @@ describe("maybeOptimizeFsrsParameters", () => {
     optimizeFsrsParametersMock.mockResolvedValueOnce([1, 2, 3]);
 
     const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs-settings"
+      "@/features/flashcards/fsrs/settings"
     );
 
     await maybeOptimizeFsrsParameters("user-1");
@@ -309,7 +309,7 @@ describe("maybeOptimizeFsrsParameters", () => {
     optimizeFsrsParametersMock.mockResolvedValueOnce(unstableWeights);
 
     const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs-settings"
+      "@/features/flashcards/fsrs/settings"
     );
 
     await maybeOptimizeFsrsParameters("user-1");

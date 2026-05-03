@@ -4,11 +4,11 @@ import {
   normalizeNonNegativeInteger,
   normalizeOptionalDate,
   parseNullableNumeric,
-} from "@/features/flashcards/fsrs-normalization";
+} from "@/features/flashcards/fsrs/normalization";
 import type {
   ReviewGrade,
   ScheduleFlashcardReviewInput,
-} from "@/features/flashcards/fsrs-types";
+} from "@/features/flashcards/fsrs/types";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 export function mapStateToFsrs(state: FlashcardEntity["state"]): State {

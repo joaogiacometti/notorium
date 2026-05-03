@@ -14,7 +14,9 @@ import {
   type DeleteMissForm,
   deleteMissSchema,
   type RecordMissForm,
+  type RemoveAttendanceSettingsForm,
   recordMissSchema,
+  removeAttendanceSettingsSchema,
 } from "@/features/attendance/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
@@ -42,13 +44,18 @@ export async function updateAttendanceSettings(
 }
 
 export async function removeAttendanceSettings(
-  subjectId: string,
+  data: RemoveAttendanceSettingsForm,
 ): Promise<MutationResult> {
-  const userId = await getAuthenticatedUserId();
-  const result = await removeAttendanceSettingsForUser(userId, subjectId);
+  const result = await runValidatedUserAction(
+    removeAttendanceSettingsSchema,
+    data,
+    "attendance.invalidSettings",
+    async (userId, parsedData) =>
+      removeAttendanceSettingsForUser(userId, parsedData.subjectId),
+  );
 
   if (result.success) {
-    revalidatePath(`/subjects/${subjectId}`);
+    revalidatePath(`/subjects/${result.subjectId}`);
   }
 
   return result;

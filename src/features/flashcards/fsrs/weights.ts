@@ -1,7 +1,7 @@
 import {
   defaultSchedulerParameters,
   fsrsWeightCount,
-} from "@/features/flashcards/fsrs-constants";
+} from "@/features/flashcards/fsrs/constants";
 
 export function getDefaultFsrsWeights(): number[] {
   return [...defaultSchedulerParameters.w];

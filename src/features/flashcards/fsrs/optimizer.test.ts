@@ -22,7 +22,7 @@ function makeLog(
 }
 
 async function loadFsrsOptimizerModule() {
-  return import("@/features/flashcards/fsrs-optimizer");
+  return import("@/features/flashcards/fsrs/optimizer");
 }
 
 afterEach(() => {

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const signOutMock = vi.fn();
 const deleteUserMock = vi.fn();
-const getAuthenticatedUserIdMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
 const deleteImagesMock = vi.fn();
 const listImagePathnamesMock = vi.fn();
@@ -19,7 +18,6 @@ vi.mock("@/lib/auth/auth", () => ({
       deleteUser: deleteUserMock,
     },
   }),
-  getAuthenticatedUserId: getAuthenticatedUserIdMock,
 }));
 
 vi.mock("@/lib/media-storage/provider", () => ({
@@ -30,7 +28,6 @@ describe("deleteAccountForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     headersMock.mockResolvedValue(new Headers());
-    getAuthenticatedUserIdMock.mockResolvedValue("user-1");
     signOutMock.mockResolvedValue(undefined);
     deleteUserMock.mockResolvedValue(undefined);
     deleteImagesMock.mockResolvedValue(undefined);
@@ -51,7 +48,7 @@ describe("deleteAccountForUser", () => {
       "@/features/account/mutations"
     );
 
-    const result = await deleteAccountForUser();
+    const result = await deleteAccountForUser("user-1");
 
     expect(result).toEqual({ success: true });
     expect(deleteImagesMock).toHaveBeenCalledWith({
@@ -75,7 +72,7 @@ describe("deleteAccountForUser", () => {
       "@/features/account/mutations"
     );
 
-    const result = await deleteAccountForUser();
+    const result = await deleteAccountForUser("user-1");
 
     expect(result).toEqual({ success: true });
     expect(deleteUserMock).toHaveBeenCalled();
@@ -91,7 +88,7 @@ describe("deleteAccountForUser", () => {
       "@/features/account/mutations"
     );
 
-    const result = await deleteAccountForUser();
+    const result = await deleteAccountForUser("user-1");
 
     expect(result).toEqual({ success: true });
     expect(deleteUserMock).toHaveBeenCalled();
@@ -110,7 +107,7 @@ describe("deleteAccountForUser", () => {
       "@/features/account/mutations"
     );
 
-    const result = await deleteAccountForUser();
+    const result = await deleteAccountForUser("user-1");
 
     expect(result).toEqual({ success: true });
     expect(deleteUserMock).toHaveBeenCalled();
@@ -135,7 +132,7 @@ describe("deleteAccountForUser", () => {
       "@/features/account/mutations"
     );
 
-    const result = await deleteAccountForUser();
+    const result = await deleteAccountForUser("user-1");
 
     expect(result).toEqual({
       success: false,

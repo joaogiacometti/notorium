@@ -4,19 +4,19 @@ import {
   schedulerValidationCacheMaxEntries,
   schedulerValidationMaxNewCardEasyIntervalDays,
   schedulerValidationProbeNow,
-} from "@/features/flashcards/fsrs-constants";
-import { mapStateFromFsrs } from "@/features/flashcards/fsrs-mapping";
+} from "@/features/flashcards/fsrs/constants";
+import { mapStateFromFsrs } from "@/features/flashcards/fsrs/mapping";
 import {
   isValidDate,
   normalizeDate,
   normalizeNonNegativeInteger,
-} from "@/features/flashcards/fsrs-normalization";
-import { createScheduler } from "@/features/flashcards/fsrs-scheduler";
-import type { FsrsSchedulerValidationInput } from "@/features/flashcards/fsrs-types";
+} from "@/features/flashcards/fsrs/normalization";
+import { createScheduler } from "@/features/flashcards/fsrs/scheduler";
+import type { FsrsSchedulerValidationInput } from "@/features/flashcards/fsrs/types";
 import {
   areFsrsWeightsWellFormed,
   isFsrsDesiredRetentionValid,
-} from "@/features/flashcards/fsrs-weights";
+} from "@/features/flashcards/fsrs/weights";
 
 const schedulerSettingsValidationCache = new Map<string, boolean>();
 

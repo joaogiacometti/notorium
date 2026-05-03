@@ -70,7 +70,7 @@ export function AttendanceSettingsDialog({
 
   function handleRemove() {
     startTransition(async () => {
-      const result = await removeAttendanceSettings(subjectId);
+      const result = await removeAttendanceSettings({ subjectId });
       if (result.success) {
         setShowRemoveConfirm(false);
         onOpenChange(false);

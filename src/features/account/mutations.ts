@@ -3,7 +3,7 @@ import {
   cleanupAttachmentPathnames,
   listAccountAttachmentPathnames,
 } from "@/features/attachments/cleanup";
-import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
+import { getAuth } from "@/lib/auth/auth";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import {
   type ActionErrorResult,
@@ -12,8 +12,9 @@ import {
 
 export type AccountMutationResult = { success: true } | ActionErrorResult;
 
-export async function deleteAccountForUser(): Promise<AccountMutationResult> {
-  const userId = await getAuthenticatedUserId();
+export async function deleteAccountForUser(
+  userId: string,
+): Promise<AccountMutationResult> {
   const provider = await getMediaStorageProvider();
   let attachmentPathnames: string[] = [];
 

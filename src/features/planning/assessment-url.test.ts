@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPlanningAssessmentsParams } from "@/features/assessments/planning-assessment-url";
+import { buildPlanningAssessmentsParams } from "@/features/planning/assessment-url";
 
 describe("buildPlanningAssessmentsParams", () => {
   it("keeps default filters out of the URL", () => {

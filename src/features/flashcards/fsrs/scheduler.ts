@@ -5,31 +5,31 @@ import {
   defaultEaseValue,
   defaultSchedulerParameters,
   defaultStabilityValue,
-} from "@/features/flashcards/fsrs-constants";
+} from "@/features/flashcards/fsrs/constants";
 import {
   buildFsrsCard,
   mapGradeToRating,
   mapStateFromFsrs,
-} from "@/features/flashcards/fsrs-mapping";
+} from "@/features/flashcards/fsrs/mapping";
 import {
   formatFsrsNumber,
   normalizeDate,
   normalizeFsrsOutputNumber,
   normalizeNonNegativeInteger,
-} from "@/features/flashcards/fsrs-normalization";
+} from "@/features/flashcards/fsrs/normalization";
 import type {
   FlashcardReviewPreview,
   PreviewFlashcardReviewInput,
   ReviewGrade,
   ScheduleFlashcardReviewInput,
   SchedulerOutput,
-} from "@/features/flashcards/fsrs-types";
+} from "@/features/flashcards/fsrs/types";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
   normalizeFsrsDesiredRetention,
   normalizeFsrsWeights,
-} from "@/features/flashcards/fsrs-weights";
+} from "@/features/flashcards/fsrs/weights";
 
 export function createScheduler({
   desiredRetention,

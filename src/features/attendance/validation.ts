@@ -43,3 +43,11 @@ export const deleteMissSchema = z.object({
 });
 
 export type DeleteMissForm = z.infer<typeof deleteMissSchema>;
+
+export const removeAttendanceSettingsSchema = z.object({
+  subjectId: z.string().min(1),
+});
+
+export type RemoveAttendanceSettingsForm = z.infer<
+  typeof removeAttendanceSettingsSchema
+>;

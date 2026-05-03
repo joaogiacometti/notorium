@@ -15,6 +15,7 @@ src/
 |   `-- actions/         Client-callable server boundary
 |-- components/          Feature UI, shared UI, navbar, auth forms, and shadcn primitives
 |-- features/            Feature queries, mutations, validation, mappers, and domain helpers
+|   `-- planning/        Planning route helpers and planning-specific data shaping
 |-- db/                  Drizzle schema and database client
 |-- lib/                 Auth, server contracts, dates, editor, AI, email, rate limits, storage
 `-- env.ts               Runtime environment validation
@@ -32,6 +33,8 @@ Client Component -> src/app/actions/* -> validation/auth -> src/features/*/mutat
 - `src/app/` owns framework routing, layouts, pages, API routes, and thin Server Actions.
 - `src/components/` owns reusable and feature UI; shadcn primitives stay in `src/components/ui/`.
 - `src/features/` owns product read/write logic, validation, mapping, constants, and feature-local types.
+- Dense algorithms may live in feature subfolders, such as `src/features/flashcards/fsrs/`.
+- Planning-specific URL and view helpers live in `src/features/planning/`.
 - `src/db/` owns the Drizzle schema, relations, and database client.
 - `src/lib/` owns cross-cutting project helpers and wrappers for external services.
 - `src/env.ts` owns runtime environment validation.
