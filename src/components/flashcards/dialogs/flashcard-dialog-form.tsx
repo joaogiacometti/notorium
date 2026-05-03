@@ -163,7 +163,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
         <FieldGroup className="gap-5">
-          {decks && decks.length > 0 ? (
+          {decks ? (
             <Controller
               name={"deckId" as FieldPath<TValues>}
               control={form.control}
@@ -175,6 +175,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   id={`${formId}-deck`}
                   error={fieldState.error?.message as string}
                   ariaInvalid={fieldState.invalid}
+                  disabled={decks.length === 0}
                 />
               )}
             />

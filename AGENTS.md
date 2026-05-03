@@ -183,6 +183,16 @@ className =
 - Include named fields that make failures filterable and correlatable.
 - Do not log secrets, tokens, cookies, raw auth payloads, or private user content.
 
+## Commits
+
+- Commit only when the user explicitly asks for a commit.
+- Use Conventional Commits: `fix(scope): summary`, `feat(scope): summary`, `docs(scope): summary`, `test(scope): summary`, or `refactor(scope): summary`.
+- Pick the narrowest meaningful scope, usually the feature or subsystem changed.
+- Keep the subject imperative, descriptive, and under 72 characters when practical.
+- Add a body when the reason is not obvious. Explain what changed and why; do not restate the diff.
+- Stage only files that belong to the requested change. Do not include unrelated worktree changes.
+- Before reporting success, confirm the commit hash and a clean `git status --short`.
+
 ## Definition of Done
 
 - Behavior matches `SPEC.md`.

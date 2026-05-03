@@ -35,6 +35,7 @@ import {
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type { DeckEntity, FlashcardEntity } from "@/lib/server/api-contracts";
+import { cn } from "@/lib/utils";
 
 type EditMode = "edit" | "split";
 
@@ -487,7 +488,10 @@ export function EditFlashcardDialog({
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent
-          className={`flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl ${className ?? ""}`}
+          className={cn(
+            "flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl",
+            className,
+          )}
           overlayClassName={overlayClassName}
         >
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
