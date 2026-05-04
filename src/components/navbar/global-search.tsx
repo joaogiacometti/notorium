@@ -118,13 +118,11 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
       <Button
         variant="outline"
         size="sm"
-        className="size-9 justify-center px-0 text-sm leading-none text-muted-foreground xl:h-9 xl:w-56 xl:justify-start xl:gap-2 xl:px-3 2xl:w-64"
+        aria-label="Search"
+        className="size-9 justify-center px-0 text-sm leading-none text-muted-foreground"
         onClick={() => setOpen(true)}
       >
         <Search className="size-4 shrink-0" />
-        <span className="hidden min-w-0 truncate leading-none xl:block">
-          Search...
-        </span>
       </Button>
       <CommandDialog
         open={open}

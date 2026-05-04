@@ -18,7 +18,7 @@ export async function Navbar() {
   return (
     <nav className="sticky top-0 z-50 box-border h-14 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-full min-w-0 items-center justify-between px-3 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link
             href={logoHref}
             className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80"
@@ -30,8 +30,8 @@ export async function Navbar() {
           </Link>
           {session && (
             <>
-              <div className="ml-1 hidden h-6 w-px bg-border/60 md:block" />
-              <div className="md:ml-2">
+              <div className="ml-2 hidden h-6 w-px bg-border/60 md:block" />
+              <div className="md:ml-4">
                 <AppSectionNav />
               </div>
             </>

@@ -190,13 +190,13 @@ export function ModeToggle({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant={variant === "floating" ? "outline" : "ghost"}
+          variant="outline"
           size="icon"
           data-testid={dataTestId}
           className={cn(
             "border-border/60 text-muted-foreground hover:text-accent-foreground",
             variant === "navbar" &&
-              "size-9 rounded-full border bg-muted/30 hover:bg-accent/70",
+              "size-9 justify-center px-0 text-sm leading-none",
             variant === "floating" &&
               "fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-55 rounded-full border bg-background/90 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/70",
           )}
@@ -219,7 +219,6 @@ export function ModeToggle({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {themeOptions.map((option) => {
-          const OptionIcon = themeIconById[option.id];
           const isSelected = option.id === currentTheme;
 
           return (
@@ -234,15 +233,6 @@ export function ModeToggle({
               )}
             >
               <ThemePreview themeId={option.id} isSelected={isSelected} />
-              <span
-                className={cn(
-                  "inline-flex size-7 items-center justify-center rounded-full border border-border/60 bg-background/80",
-                  isSelected &&
-                    "border-foreground/20 bg-accent text-foreground",
-                )}
-              >
-                <OptionIcon className="size-3.5 shrink-0" />
-              </span>
               <div className="grid flex-1 gap-0.5">
                 <span className="text-sm leading-none font-medium">
                   {themeLabelByKey[option.labelKey]}
