@@ -118,14 +118,13 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
       <Button
         variant="outline"
         size="sm"
-        className="relative size-9 justify-center px-0 text-sm text-muted-foreground xl:h-9 xl:w-56 xl:justify-start xl:gap-2 xl:px-3 2xl:w-64"
+        className="size-9 justify-center px-0 text-sm leading-none text-muted-foreground xl:h-9 xl:w-56 xl:justify-start xl:gap-2 xl:px-3 2xl:w-64"
         onClick={() => setOpen(true)}
       >
-        <Search className="size-4" />
-        <span className="hidden xl:inline-flex">Search...</span>
-        <kbd className="pointer-events-none absolute right-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 xl:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
+        <Search className="size-4 shrink-0" />
+        <span className="hidden min-w-0 truncate leading-none xl:block">
+          Search...
+        </span>
       </Button>
       <CommandDialog
         open={open}
@@ -160,13 +159,13 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
                   <div className="flex w-full min-w-0 items-center gap-2">
-                    <BookOpen className="size-4 text-muted-foreground" />
+                    <BookOpen className="!size-4 text-muted-foreground" />
                     <span className="block min-w-0 flex-1 truncate">
                       {renderSearchHighlightedText(subj.name, highlightQuery)}
                     </span>
                   </div>
                   {subj.description && (
-                    <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
+                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
                       {renderSearchHighlightedText(
                         subj.description,
                         highlightQuery,
@@ -190,7 +189,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
                   <div className="flex w-full min-w-0 items-center gap-2">
-                    <FileText className="size-4 text-muted-foreground" />
+                    <FileText className="!size-4 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate">
                       {renderSearchHighlightedText(n.title, highlightQuery)}
                     </span>
@@ -205,7 +204,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                     </span>
                   </div>
                   {n.content && (
-                    <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
+                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
                       {renderSearchHighlightedText(
                         buildSearchMatchSnippet(
                           richTextToPlainText(n.content),
@@ -241,7 +240,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                   className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
                 >
                   <div className="flex w-full min-w-0 items-center gap-2">
-                    <Layers className="size-4 text-muted-foreground" />
+                    <Layers className="!size-4 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate">
                       {renderSearchHighlightedText(
                         buildSearchMatchSnippet(
@@ -260,7 +259,7 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                     </span>
                   </div>
                   {fc.back && (
-                    <span className="ml-6 text-xs text-muted-foreground line-clamp-1">
+                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
                       {renderSearchHighlightedText(
                         buildSearchMatchSnippet(
                           richTextToPlainText(fc.back),

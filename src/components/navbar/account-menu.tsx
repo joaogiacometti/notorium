@@ -21,7 +21,7 @@ interface AccountMenuProps {
 }
 
 const triggerClassName =
-  "max-w-32 gap-1 px-1.5 text-muted-foreground hover:text-foreground sm:max-w-36 sm:gap-1.5 sm:px-3 lg:max-w-40";
+  "size-9 justify-center px-0 text-muted-foreground hover:text-foreground sm:h-9 sm:w-auto sm:max-w-36 sm:gap-1.5 sm:px-3 lg:max-w-40";
 
 function AccountMenuTrigger({
   accountName,
@@ -39,8 +39,8 @@ function AccountMenuTrigger({
       {...rest}
     >
       <User className="size-4 shrink-0" />
-      <span className="truncate">{accountName}</span>
-      <ChevronDown className="size-3.5 shrink-0" />
+      <span className="hidden truncate sm:inline">{accountName}</span>
+      <ChevronDown className="hidden size-3.5 shrink-0 sm:block" />
     </Button>
   );
 }
