@@ -68,6 +68,7 @@ describe("buildCalendarEvents", () => {
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
       id: "a-abc",
+      sourceId: "abc",
       date: "2026-03-15",
       title: "Midterm",
       subjectName: "Math",
@@ -97,6 +98,7 @@ describe("buildCalendarEvents", () => {
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
       id: "m-xyz",
+      sourceId: "xyz",
       date: "2026-03-10",
       title: "Missed class",
       subjectName: "Math",

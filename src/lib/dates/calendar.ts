@@ -15,6 +15,7 @@ export type CalendarEventKind = "assessment" | "miss";
 
 export interface CalendarEvent {
   id: string;
+  sourceId: string;
   date: string;
   title: string;
   subjectName: string;
@@ -38,6 +39,7 @@ export function buildCalendarEvents(data: CalendarSourceData): CalendarEvent[] {
     if (a.dueDate) {
       events.push({
         id: `a-${a.id}`,
+        sourceId: a.id,
         date: a.dueDate,
         title: a.title,
         subjectName: a.subjectName,
@@ -51,6 +53,7 @@ export function buildCalendarEvents(data: CalendarSourceData): CalendarEvent[] {
   for (const m of data.misses) {
     events.push({
       id: `m-${m.id}`,
+      sourceId: m.id,
       date: m.missDate,
       title: "Missed class",
       subjectName: m.subjectName,

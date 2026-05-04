@@ -80,6 +80,19 @@ function getAssessmentTypeLabel(event: CalendarEvent) {
   );
 }
 
+function getCalendarEventHref(event: CalendarEvent) {
+  if (event.kind === "assessment") {
+    const params = new URLSearchParams({
+      from: "planning-assessments",
+      subjectId: event.subjectId,
+    });
+
+    return `/assessments/${event.sourceId}?${params.toString()}`;
+  }
+
+  return `/subjects/${event.subjectId}`;
+}
+
 function EventChip({
   event,
   todayIso,
@@ -200,7 +213,7 @@ function DayDetail({
           {dayEvents.map((e) => (
             <Link
               key={e.id}
-              href={`/subjects/${e.subjectId}`}
+              href={getCalendarEventHref(e)}
               className="block min-w-0 w-full max-w-full transition-opacity hover:opacity-80"
             >
               <EventChip event={e} todayIso={todayIso} />
