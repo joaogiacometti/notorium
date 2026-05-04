@@ -117,6 +117,7 @@ Students who want a private, lightweight study management workspace.
 - Due-card review sessions are focus-only and start from the `Start review` action card on the review hub.
 - Hides navbar and all non-essential UI elements.
 - Shows progress bar, card content, and rating buttons only.
+- Shows a card actions menu for edit, reset review progress, and delete.
 - Keyboard shortcuts:
   - `Escape` exits Focus Mode.
 - Completion screen provides an exit action back to the review hub.

@@ -9,6 +9,7 @@ interface ReviewSessionShellProps {
   headerText: string;
   exitLabel: string;
   onExit: () => void;
+  actions?: ReactNode;
   badge?: ReactNode;
   children: ReactNode;
   footer: ReactNode;
@@ -25,6 +26,7 @@ export function ReviewSessionShell({
   headerText,
   exitLabel,
   onExit,
+  actions,
   badge,
   children,
   footer,
@@ -43,6 +45,7 @@ export function ReviewSessionShell({
         headerText={headerText}
         exitLabel={exitLabel}
         onExit={onExit}
+        actions={actions}
       />
 
       <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5">
@@ -61,6 +64,7 @@ interface SessionHeaderProps {
   headerText: string;
   exitLabel: string;
   onExit: () => void;
+  actions?: ReactNode;
 }
 
 function SessionHeader({
@@ -68,22 +72,28 @@ function SessionHeader({
   headerText,
   exitLabel,
   onExit,
+  actions,
 }: Readonly<SessionHeaderProps>) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 sm:px-5">
-      {badge ?? <div className="size-10" />}
-      <span className="text-sm font-medium text-muted-foreground">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:px-5">
+      <div className="flex min-w-10 items-center">
+        {badge ?? <div className="size-10" />}
+      </div>
+      <span className="truncate text-center text-sm font-medium text-muted-foreground">
         {headerText}
       </span>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-10"
-        aria-label={exitLabel}
-        onClick={onExit}
-      >
-        <X className="size-5" />
-      </Button>
+      <div className="flex items-center justify-end gap-1">
+        {actions}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10"
+          aria-label={exitLabel}
+          onClick={onExit}
+        >
+          <X className="size-5" />
+        </Button>
+      </div>
     </div>
   );
 }

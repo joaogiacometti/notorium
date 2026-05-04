@@ -1,10 +1,22 @@
 "use client";
 
-import { GraduationCap } from "lucide-react";
+import {
+  GraduationCap,
+  MoreVertical,
+  Pencil,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import { ReviewGradeButtons } from "@/components/flashcards/review/review-grade-buttons";
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
 import { ReviewSessionShell } from "@/components/flashcards/review/review-session-shell";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { FlashcardReviewSyncStatus } from "@/features/flashcard-review/offline-store";
 import type { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
@@ -31,6 +43,9 @@ interface FocusModeOverlayProps {
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
   onExitFocusMode: () => void;
+  onEditFlashcard: () => void;
+  onResetFlashcard: () => void;
+  onDeleteFlashcard: () => void;
   isExamMode?: boolean;
   examCurrentIndex?: number;
   examTotalCards?: number;
@@ -74,6 +89,9 @@ function DueReviewFocusModeOverlay({
   onReveal,
   onGrade,
   onExitFocusMode,
+  onEditFlashcard,
+  onResetFlashcard,
+  onDeleteFlashcard,
 }: Readonly<SessionOverlayProps>) {
   const footer = getSessionFooter({
     revealed,
@@ -90,6 +108,14 @@ function DueReviewFocusModeOverlay({
       headerText={getDueReviewHeaderText(reviewState)}
       exitLabel="Exit Focus Mode"
       onExit={onExitFocusMode}
+      actions={
+        <FocusModeCardActions
+          isPending={isPending}
+          onEditFlashcard={onEditFlashcard}
+          onResetFlashcard={onResetFlashcard}
+          onDeleteFlashcard={onDeleteFlashcard}
+        />
+      }
       footer={footer}
     >
       <ReviewStatusText
@@ -116,6 +142,9 @@ function ExamFocusModeOverlay({
   onReveal,
   onGrade,
   onExitFocusMode,
+  onEditFlashcard,
+  onResetFlashcard,
+  onDeleteFlashcard,
   examCurrentIndex = 0,
   examTotalCards = 0,
 }: Readonly<SessionOverlayProps>) {
@@ -135,6 +164,14 @@ function ExamFocusModeOverlay({
       exitLabel="Exit Focus Mode"
       onExit={onExitFocusMode}
       badge={<ExamBadge />}
+      actions={
+        <FocusModeCardActions
+          isPending={isPending}
+          onEditFlashcard={onEditFlashcard}
+          onResetFlashcard={onResetFlashcard}
+          onDeleteFlashcard={onDeleteFlashcard}
+        />
+      }
       footer={footer}
     >
       <ReviewSessionCardContent
@@ -143,6 +180,56 @@ function ExamFocusModeOverlay({
         revealed={revealed}
       />
     </ReviewSessionShell>
+  );
+}
+
+interface FocusModeCardActionsProps {
+  isPending: boolean;
+  onEditFlashcard: () => void;
+  onResetFlashcard: () => void;
+  onDeleteFlashcard: () => void;
+}
+
+function FocusModeCardActions({
+  isPending,
+  onEditFlashcard,
+  onResetFlashcard,
+  onDeleteFlashcard,
+}: Readonly<FocusModeCardActionsProps>) {
+  if (isPending) {
+    return null;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10"
+          aria-label="Open flashcard actions"
+        >
+          <MoreVertical className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="z-120">
+        <DropdownMenuItem onClick={onEditFlashcard} className="cursor-pointer">
+          <Pencil className="size-4" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onResetFlashcard} className="cursor-pointer">
+          <RotateCcw className="size-4" />
+          Reset
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onDeleteFlashcard}
+          className="cursor-pointer text-destructive focus:text-destructive"
+        >
+          <Trash2 className="size-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

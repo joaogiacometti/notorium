@@ -459,6 +459,9 @@ export function FlashcardReviewClient({
           onExitFocusMode={
             isExamMode ? handleExitExamMode : () => setIsFocusMode(false)
           }
+          onEditFlashcard={() => setEditOpen(true)}
+          onResetFlashcard={() => setResetOpen(true)}
+          onDeleteFlashcard={() => setDeleteOpen(true)}
           isExamMode={isExamMode}
           examCurrentIndex={examSessionData?.currentIndex ?? 0}
           examTotalCards={examSessionData?.cards.length ?? 0}
