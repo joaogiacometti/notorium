@@ -1,7 +1,10 @@
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isAiEnabled } from "@/lib/ai/config";
 
 export default function NoteDetailLoading() {
+  const aiEnabled = isAiEnabled();
+
   return (
     <main>
       <AppPageContainer maxWidth="3xl">
@@ -18,9 +21,10 @@ export default function NoteDetailLoading() {
             </div>
           </div>
           <div className="flex w-full shrink-0 gap-2 sm:w-auto">
-            <Skeleton className="h-9 flex-1 sm:w-40 sm:flex-none" />
-            <Skeleton className="h-9 flex-1 sm:w-20 sm:flex-none" />
-            <Skeleton className="h-9 flex-1 sm:w-24 sm:flex-none" />
+            {aiEnabled ? (
+              <Skeleton className="h-9 flex-1 sm:w-40 sm:flex-none" />
+            ) : null}
+            <Skeleton className="size-9 shrink-0" />
           </div>
         </div>
 

@@ -58,6 +58,13 @@ async function openNoteDetailByTitle(page: Page, noteTitle: string) {
   ).toBeVisible();
 }
 
+async function openNoteActions(page: Page) {
+  await page
+    .getByRole("main")
+    .getByRole("button", { name: "Open note actions", exact: true })
+    .click();
+}
+
 test("can create and open a note", async ({ page, e2eUser }) => {
   const user = e2eUser;
   const subjectName = getUniqueSubjectName("create-open");
@@ -100,10 +107,8 @@ test("can edit a note", async ({ page, e2eUser }) => {
     await openSubjectDetailByName(page, subjectName);
     await openNoteDetailByTitle(page, initialTitle);
 
-    await page
-      .getByRole("main")
-      .getByRole("button", { name: "Edit", exact: true })
-      .click();
+    await openNoteActions(page);
+    await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
 
     const editDialog = page.getByRole("dialog", { name: "Edit Note" });
     await editDialog.locator("#form-edit-note-title").fill(updatedTitle);
@@ -150,7 +155,8 @@ test("can delete a note", async ({ page, e2eUser }) => {
     await openSubjectDetailByName(page, subjectName);
     await openNoteDetailByTitle(page, noteTitle);
 
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    await openNoteActions(page);
+    await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
     const deleteDialog = page.getByRole("dialog", { name: "Delete Note" });
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
 

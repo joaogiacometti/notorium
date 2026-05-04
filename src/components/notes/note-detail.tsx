@@ -1,14 +1,34 @@
 "use client";
 
-import { ArrowLeft, FileText, Pencil, Sparkles, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Clipboard,
+  FileText,
+  MoreVertical,
+  Pencil,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
 import { LazyEditNoteDialog as EditNoteDialog } from "@/components/notes/lazy-edit-note-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  copyNoteContentToClipboard,
+  type NoteCopyFormat,
+} from "@/lib/clipboard/note-content";
 import { formatRelativeTime } from "@/lib/dates/format";
 import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
 
@@ -33,6 +53,17 @@ export function NoteDetail({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const hasDecks = decks.length > 0;
+  const noteContent = note.content ?? "";
+  const hasContent = noteContent.trim().length > 0;
+
+  async function copyNoteContent(format: NoteCopyFormat) {
+    try {
+      await copyNoteContentToClipboard(noteContent, format);
+      toast.success("Note copied.");
+    } catch {
+      toast.error("Could not copy note.");
+    }
+  }
 
   return (
     <DetailPageLayout
@@ -55,24 +86,53 @@ export function NoteDetail({
               Generate flashcards
             </Button>
           ) : null}
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 gap-1.5 sm:flex-none"
-            onClick={() => setEditOpen(true)}
-          >
-            <Pencil className="size-3.5" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground sm:flex-none"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="size-3.5" />
-            Delete
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="shrink-0"
+                aria-label="Open note actions"
+              >
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {hasContent ? (
+                <>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => void copyNoteContent("rich")}
+                  >
+                    <Clipboard className="size-4" />
+                    Copy as rich text
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => void copyNoteContent("plain")}
+                  >
+                    <Clipboard className="size-4" />
+                    Copy as plain text
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="size-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </>
       }
       backHref={backHref}
@@ -84,9 +144,9 @@ export function NoteDetail({
     >
       <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card p-4 sm:p-6">
         <div className="min-w-0 space-y-4 sm:space-y-5">
-          {note.content ? (
+          {hasContent ? (
             <TiptapRenderer
-              content={note.content}
+              content={noteContent}
               className="min-w-0 wrap-break-word hyphens-auto text-sm sm:text-base"
             />
           ) : (

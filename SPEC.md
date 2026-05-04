@@ -42,6 +42,7 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete notes per subject.
 - Notes use rich text editing and rendering.
 - Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, and other shared editor formatting exposed by the app.
+- Note detail supports copying note content as rich text or plain text.
 - Note content renders images from:
   - pasted direct image URLs
   - pasted image uploads stored in private blob storage

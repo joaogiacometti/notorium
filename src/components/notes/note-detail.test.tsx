@@ -1,8 +1,17 @@
+import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteDetail } from "@/components/notes/note-detail";
 import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
+
+const { copyNoteContentMock, toastErrorMock, toastSuccessMock } = vi.hoisted(
+  () => ({
+    copyNoteContentMock: vi.fn(),
+    toastErrorMock: vi.fn(),
+    toastSuccessMock: vi.fn(),
+  }),
+);
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -16,11 +25,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/components/notes/delete-note-dialog", () => ({
-  DeleteNoteDialog: () => null,
+  DeleteNoteDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="delete-note-dialog" /> : null,
 }));
 
 vi.mock("@/components/notes/lazy-edit-note-dialog", () => ({
-  LazyEditNoteDialog: () => null,
+  LazyEditNoteDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="edit-note-dialog" /> : null,
 }));
 
 vi.mock("@/components/notes/generate-note-flashcards-dialog", () => ({
@@ -32,6 +43,37 @@ vi.mock("@/components/shared/lazy-tiptap-renderer", () => ({
   LazyTiptapRenderer: ({ content }: { content: string }) => (
     <div>{content}</div>
   ),
+}));
+
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuTrigger: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    onClick,
+  }: {
+    children: ReactNode;
+    onClick: () => void;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {children}
+    </button>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+}));
+
+vi.mock("@/lib/clipboard/note-content", () => ({
+  copyNoteContentToClipboard: copyNoteContentMock,
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: toastErrorMock,
+    success: toastSuccessMock,
+  },
 }));
 
 const note: NoteEntity = {
@@ -73,7 +115,7 @@ function renderNoteDetail(
 function findButton(container: HTMLElement, text: string) {
   return Array.from(container.querySelectorAll("button")).find((button) =>
     button.textContent?.includes(text),
-  ) as HTMLButtonElement | undefined;
+  );
 }
 
 describe("NoteDetail", () => {
@@ -82,6 +124,7 @@ describe("NoteDetail", () => {
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+    copyNoteContentMock.mockResolvedValue(undefined);
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -138,6 +181,95 @@ describe("NoteDetail", () => {
       container.querySelector(
         '[data-testid="generate-note-flashcards-dialog"]',
       ),
+    ).toBeTruthy();
+  });
+
+  it("renders copy options for notes with content", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    expect(
+      container.querySelector('button[aria-label="Open note actions"]'),
+    ).toBeTruthy();
+    expect(findButton(container, "Copy as rich text")).toBeTruthy();
+    expect(findButton(container, "Copy as plain text")).toBeTruthy();
+  });
+
+  it("hides copy options when note content is empty", async () => {
+    await act(async () => {
+      renderNoteDetail(root, { note: { ...note, content: " " } });
+    });
+
+    expect(
+      container.querySelector('button[aria-label="Open note actions"]'),
+    ).toBeTruthy();
+    expect(findButton(container, "Copy as rich text")).toBeUndefined();
+    expect(findButton(container, "Copy as plain text")).toBeUndefined();
+    expect(findButton(container, "Edit")).toBeTruthy();
+    expect(findButton(container, "Delete")).toBeTruthy();
+  });
+
+  it("copies note content as rich text", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      findButton(container, "Copy as rich text")?.click();
+    });
+
+    expect(copyNoteContentMock).toHaveBeenCalledWith(note.content, "rich");
+    expect(toastSuccessMock).toHaveBeenCalledWith("Note copied.");
+  });
+
+  it("copies note content as plain text", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      findButton(container, "Copy as plain text")?.click();
+    });
+
+    expect(copyNoteContentMock).toHaveBeenCalledWith(note.content, "plain");
+    expect(toastSuccessMock).toHaveBeenCalledWith("Note copied.");
+  });
+
+  it("shows an error toast when copying fails", async () => {
+    copyNoteContentMock.mockRejectedValueOnce(new Error("copy failed"));
+
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      findButton(container, "Copy as rich text")?.click();
+    });
+
+    expect(toastErrorMock).toHaveBeenCalledWith("Could not copy note.");
+    expect(toastSuccessMock).not.toHaveBeenCalled();
+  });
+
+  it("opens edit and delete dialogs from the note actions menu", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      findButton(container, "Edit")?.click();
+    });
+
+    expect(
+      container.querySelector('[data-testid="edit-note-dialog"]'),
+    ).toBeTruthy();
+
+    await act(async () => {
+      findButton(container, "Delete")?.click();
+    });
+
+    expect(
+      container.querySelector('[data-testid="delete-note-dialog"]'),
     ).toBeTruthy();
   });
 });
