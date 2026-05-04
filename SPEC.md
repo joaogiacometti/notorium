@@ -160,7 +160,7 @@ Students who want a private, lightweight study management workspace.
 - Search is user-scoped and accessible from the navbar.
 - Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
-- Search result text matching the query is highlighted in results, with matched phrases kept centered in preview snippets. Highlighting is rendered safely without raw HTML injection.
+- Search result text matching the query is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
 - Empty queries show unfiltered data without highlighting.
 
 ### Account

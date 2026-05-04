@@ -28,7 +28,8 @@ export function renderSearchHighlightedText(
   return splitSearchHighlightSegments(value, query).map((segment, index) =>
     segment.highlighted ? (
       <mark
-        className="rounded-sm bg-[var(--intent-warning-bg)] px-0.5 text-[var(--intent-warning-text)]"
+        className="rounded-sm px-0.5"
+        data-search-highlight="true"
         key={`${segment.text}-${index}`}
       >
         {segment.text}

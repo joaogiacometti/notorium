@@ -68,6 +68,7 @@ describe("renderSearchHighlightedText", () => {
     );
 
     expect(markup).toContain("<mark");
+    expect(markup).toContain('data-search-highlight="true"');
     expect(markup).toContain("Needle");
     expect(markup).toContain("&lt;script&gt;");
     expect(markup).not.toContain("<script>");

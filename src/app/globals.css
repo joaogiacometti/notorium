@@ -707,6 +707,27 @@
   color: var(--intent-warning-text);
 }
 
+[data-search-highlight="true"] {
+  background-color: var(--intent-warning-bg);
+  color: var(--intent-warning-text);
+}
+
+.halloween [data-search-highlight="true"],
+.catppuccin-mocha [data-search-highlight="true"] {
+  background-color: color-mix(in oklab, var(--primary) 16%, transparent);
+  color: color-mix(in oklab, var(--primary) 86%, var(--foreground));
+}
+
+[data-slot="command-item"][data-selected="true"]
+  [data-search-highlight="true"] {
+  background-color: color-mix(
+    in oklab,
+    var(--accent-foreground) 18%,
+    transparent
+  );
+  color: var(--accent-foreground);
+}
+
 /* Task list styles */
 .tiptap-content ul[data-type="taskList"],
 .tiptap-wrapper .tiptap ul[data-type="taskList"] {
