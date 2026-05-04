@@ -104,6 +104,7 @@ function getColumns(
   onDeleted: (id: string) => void,
   subjectNamesById: Record<string, string>,
   todayIso: string,
+  isLoading: boolean,
   selectedSubjectId?: string,
 ): ColumnDef<AssessmentEntity>[] {
   const columns: ColumnDef<AssessmentEntity>[] = [
@@ -195,11 +196,13 @@ function getColumns(
           className="flex w-14 min-w-14 items-center justify-start pl-1"
           data-no-row-click
         >
-          <AssessmentsTableRowActions
-            assessment={row.original}
-            onUpdated={onUpdated}
-            onDeleted={onDeleted}
-          />
+          {isLoading ? null : (
+            <AssessmentsTableRowActions
+              assessment={row.original}
+              onUpdated={onUpdated}
+              onDeleted={onDeleted}
+            />
+          )}
         </div>
       ),
       enableHiding: false,
@@ -260,9 +263,17 @@ export function PlanningAssessmentsManagerTable({
         onDeleted,
         subjectNamesById,
         todayIso,
+        isLoading,
         selectedSubjectId,
       ),
-    [onDeleted, onUpdated, selectedSubjectId, subjectNamesById, todayIso],
+    [
+      isLoading,
+      onDeleted,
+      onUpdated,
+      selectedSubjectId,
+      subjectNamesById,
+      todayIso,
+    ],
   );
 
   return (
@@ -325,6 +336,7 @@ export function PlanningAssessmentsManagerTableSkeleton() {
     <TableSkeleton
       className="flex h-full flex-col"
       columnTemplate="2.25rem 0.96fr 0.7fr 0.62fr 0.68fr 0.72fr 3.5rem"
+      headerClassName="py-3"
       headers={[
         { content: <div /> },
         { className: "h-4 w-16" },
@@ -338,16 +350,19 @@ export function PlanningAssessmentsManagerTableSkeleton() {
         {
           className: "h-4 w-4 rounded-sm self-center justify-self-center",
         },
-        { className: "h-14 w-full" },
-        { className: "h-7 w-24 rounded-full" },
-        { className: "h-7 w-24 rounded-full" },
-        { className: "h-6 w-full" },
-        { className: "h-7 w-24 rounded-full" },
         {
-          className: "h-10 w-10 self-center justify-self-start rounded-full",
+          className: "h-6 w-full",
+        },
+        { className: "h-6 w-24 rounded-full" },
+        { className: "h-6 w-24 rounded-full" },
+        { className: "h-6 w-full" },
+        { className: "h-6 w-24 rounded-full" },
+        {
+          content: <div />,
         },
       ]}
-      rowCount={4}
+      rowClassName="py-2.5"
+      rowCount={3}
       footer={[
         { className: "h-7 w-28 rounded-full" },
         { className: "h-8 w-24 rounded-full" },

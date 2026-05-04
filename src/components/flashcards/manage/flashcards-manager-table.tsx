@@ -208,6 +208,7 @@ export function FlashcardsManagerTableSkeleton({
   return (
     <TableSkeleton
       className={cn("flex h-full flex-col", className)}
+      headerClassName="py-3"
       columnTemplate={
         selectedRow
           ? "2.25rem 1.35fr 1fr 0.7fr 0.7fr 3.5rem"
@@ -239,27 +240,32 @@ export function FlashcardsManagerTableSkeleton({
                   className:
                     "h-4 w-4 rounded-sm self-center justify-self-center",
                 },
-                { className: "h-14 w-full" },
+                {
+                  className: "h-6 w-full",
+                },
                 { className: "h-6 w-full" },
-                { className: "h-7 w-24 rounded-full" },
+                { className: "h-6 w-24 rounded-full" },
                 { className: "h-6 w-full" },
                 {
                   className:
-                    "h-10 w-10 self-center justify-self-center rounded-full",
+                    "h-8 w-8 self-center justify-self-start rounded-full ml-1",
                 },
               ],
             ]
           : [
-              { className: "h-14 w-full" },
+              {
+                className: "h-6 w-full",
+              },
               { className: "h-6 w-full" },
               { className: "h-7 w-24 rounded-full" },
               { className: "h-6 w-full" },
               {
                 className:
-                  "h-10 w-10 self-center justify-self-center rounded-full",
+                  "h-8 w-8 self-center justify-self-start rounded-full ml-1",
               },
             ]
       }
+      rowClassName="py-2.5"
       rowCount={3}
       footer={[
         { className: "h-7 w-28 rounded-full" },
