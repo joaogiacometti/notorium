@@ -56,6 +56,7 @@ export function FlashcardsManager({
     pageIndex,
     searchQuery,
     refreshManagePage,
+    cacheUpdatedFlashcard,
     resetTarget,
     selectedDeckId,
     selectedFlashcardIds,
@@ -191,7 +192,8 @@ export function FlashcardsManager({
               setEditingFlashcardId(null);
             }
           }}
-          onUpdated={async () => {
+          onUpdated={async (updatedFlashcard) => {
+            cacheUpdatedFlashcard(updatedFlashcard);
             refreshManagePage();
             if (validationMode && editingFlashcardId) {
               const result = await getFlashcardForManage({

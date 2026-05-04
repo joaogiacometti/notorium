@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -11,6 +11,7 @@ import {
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { LIMITS } from "@/lib/config/limits";
 import type {
+  FlashcardEntity,
   FlashcardManagePage,
   FlashcardValidationIssue,
   FlashcardValidationItem,
@@ -37,6 +38,7 @@ export function useFlashcardsManagerController({
 }: Readonly<UseFlashcardsManagerControllerOptions>) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -208,6 +210,13 @@ export function useFlashcardsManagerController({
     void managePageQuery.refetch();
   }
 
+  function cacheUpdatedFlashcard(updatedFlashcard: FlashcardEntity) {
+    queryClient.setQueryData(
+      ["flashcard-manage-edit", updatedFlashcard.id],
+      updatedFlashcard,
+    );
+  }
+
   function handleValidationStarted(
     issues: FlashcardValidationIssue[],
     flashcards: FlashcardValidationItem[],
@@ -299,6 +308,7 @@ export function useFlashcardsManagerController({
     managePageQuery,
     pageIndex,
     refreshManagePage,
+    cacheUpdatedFlashcard,
     resetTarget,
     resolvedSearchQuery,
     searchQuery,
