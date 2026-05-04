@@ -6,6 +6,7 @@ import {
   createFlashcardSchema,
   deleteFlashcardSchema,
   editFlashcardSchema,
+  flashcardsManageQuerySchema,
   generateFlashcardBackSchema,
   generateFlashcardsSchema,
   generateNoteFlashcardsSchema,
@@ -145,6 +146,17 @@ describe("delete and bulk schemas", () => {
     expect(resetFlashcardSchema.safeParse({ id: "flashcard-1" }).success).toBe(
       true,
     );
+  });
+});
+
+describe("flashcardsManageQuerySchema", () => {
+  it("accepts the largest selectable page size", () => {
+    const result = flashcardsManageQuerySchema.safeParse({
+      pageIndex: 0,
+      pageSize: 500,
+    });
+
+    expect(result.success).toBe(true);
   });
 });
 

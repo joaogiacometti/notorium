@@ -42,8 +42,8 @@ import {
   planningAssessmentStatusFilterValues,
   planningAssessmentTypeFilterValues,
 } from "@/features/assessments/constants";
-import { buildPlanningAssessmentsParams } from "@/features/planning/assessment-url";
 import { LIMITS } from "@/lib/config/limits";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
 import type {
   PlanningAssessmentsPage,
   SubjectEntity,
@@ -56,15 +56,42 @@ interface PlanningAssessmentsTableProps {
   initialStatus?: string;
   initialType?: string;
   initialSort?: string;
+  initialPageSize: number;
   initialPageData: PlanningAssessmentsPage;
   subjects: SubjectEntity[];
   subjectNamesById: Record<string, string>;
 }
 
-const planningAssessmentsPageSize = 25;
 const planningAssessmentsSearchDebounceMs = 200;
 const missingSubjectTooltipMessage =
   "Create a subject first to add assessments.";
+
+function buildAssessmentsParams({
+  pageSize,
+  search,
+  sortBy,
+  statusFilter,
+  subjectFilter,
+  typeFilter,
+}: Readonly<{
+  pageSize: number;
+  search: string;
+  sortBy: SortBy;
+  statusFilter: StatusFilter;
+  subjectFilter: string;
+  typeFilter: TypeFilter;
+}>) {
+  const query = new URLSearchParams({ view: "assessments" });
+
+  if (subjectFilter !== "all") query.set("subject", subjectFilter);
+  if (search) query.set("search", search);
+  if (statusFilter !== "all") query.set("status", statusFilter);
+  if (typeFilter !== "all") query.set("type", typeFilter);
+  if (sortBy !== "smart") query.set("sort", sortBy);
+  if (pageSize !== DEFAULT_PAGE_SIZE) query.set("pageSize", String(pageSize));
+
+  return query.toString();
+}
 
 export function PlanningAssessmentsTable({
   initialSubjectId,
@@ -72,6 +99,7 @@ export function PlanningAssessmentsTable({
   initialStatus,
   initialType,
   initialSort,
+  initialPageSize,
   initialPageData,
   subjects,
   subjectNamesById,
@@ -109,6 +137,7 @@ export function PlanningAssessmentsTable({
       ? (initialSort as SortBy)
       : "smart",
   );
+  const [pageSize, setPageSizeState] = useState(initialPageSize);
 
   const pathnameRef = useRef(pathname);
   const routerRef = useRef(router);
@@ -139,16 +168,24 @@ export function PlanningAssessmentsTable({
 
     startTransition(() => {
       routerRef.current.replace(
-        `${pathnameRef.current}?${buildPlanningAssessmentsParams(
-          subjectFilter,
-          resolvedSearchQuery,
-          statusFilter,
-          typeFilter,
+        `${pathnameRef.current}?${buildAssessmentsParams({
+          pageSize,
+          search: resolvedSearchQuery,
           sortBy,
-        )}`,
+          statusFilter,
+          subjectFilter,
+          typeFilter,
+        })}`,
       );
     });
-  }, [resolvedSearchQuery, subjectFilter, statusFilter, typeFilter, sortBy]);
+  }, [
+    resolvedSearchQuery,
+    subjectFilter,
+    statusFilter,
+    typeFilter,
+    sortBy,
+    pageSize,
+  ]);
 
   useEffect(() => {
     setSelectedAssessmentIds([]);
@@ -158,7 +195,7 @@ export function PlanningAssessmentsTable({
     queryKey: [
       "planning-assessments-page",
       pageIndex,
-      planningAssessmentsPageSize,
+      pageSize,
       subjectFilter,
       resolvedSearchQuery,
       statusFilter,
@@ -168,7 +205,7 @@ export function PlanningAssessmentsTable({
     queryFn: async () => {
       const result = await getPlanningAssessmentsPage({
         pageIndex,
-        pageSize: planningAssessmentsPageSize,
+        pageSize,
         search: resolvedSearchQuery,
         subjectId: subjectFilter === "all" ? undefined : subjectFilter,
         statusFilter,
@@ -190,6 +227,7 @@ export function PlanningAssessmentsTable({
     },
     initialData:
       pageIndex === 0 &&
+      pageSize === initialPageSize &&
       subjectFilter === (initialSubjectId ?? "all") &&
       resolvedSearchQuery.trim().length === 0 &&
       statusFilter === "all" &&
@@ -226,8 +264,7 @@ export function PlanningAssessmentsTable({
     const pageCount = Math.max(
       1,
       Math.ceil(
-        (assessmentsQuery.data?.total ?? initialPageData.total) /
-          planningAssessmentsPageSize,
+        (assessmentsQuery.data?.total ?? initialPageData.total) / pageSize,
       ),
     );
     const maxIndex = pageCount - 1;
@@ -239,12 +276,19 @@ export function PlanningAssessmentsTable({
     assessmentsQuery.data?.total,
     initialPageData.total,
     pageIndex,
+    pageSize,
     setPageIndex,
   ]);
 
   function refreshAssessments() {
     setSelectedAssessmentIds([]);
     void assessmentsQuery.refetch();
+  }
+
+  function setPageSize(nextPageSize: number) {
+    setSelectedAssessmentIds([]);
+    setPageIndex(0);
+    setPageSizeState(nextPageSize);
   }
 
   function renderAddAssessmentButton({
@@ -460,13 +504,14 @@ export function PlanningAssessmentsTable({
               finalGrade={finalGrade}
               isLoading={isAssessmentsScopeLoading}
               pageIndex={pageIndex}
-              pageSize={planningAssessmentsPageSize}
+              pageSize={pageSize}
               selectedAssessmentIds={selectedAssessmentIds}
               selectedSubjectId={
                 subjectFilter === "all" ? undefined : subjectFilter
               }
               subjectNamesById={subjectNamesById}
               onPageIndexChange={setPageIndex}
+              onPageSizeChange={setPageSize}
               onSelectedAssessmentIdsChange={setSelectedAssessmentIds}
               onUpdated={refreshAssessments}
               onDeleted={refreshAssessments}

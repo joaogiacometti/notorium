@@ -5,6 +5,7 @@ import { PlanningViewSwitch } from "@/components/planning/planning-view-switch";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import { resolvePlanningView } from "@/features/planning/view";
 import { requireSession } from "@/lib/auth/auth";
+import { resolvePageSize } from "@/lib/pagination/page-size";
 
 interface PlanningPageProps {
   searchParams: Promise<{
@@ -14,6 +15,7 @@ interface PlanningPageProps {
     status?: string;
     type?: string;
     sort?: string;
+    pageSize?: string;
   }>;
 }
 
@@ -21,8 +23,10 @@ export default async function PlanningPage({
   searchParams,
 }: Readonly<PlanningPageProps>) {
   const session = await requireSession();
-  const { subject, view, search, status, type, sort } = await searchParams;
+  const { subject, view, search, status, type, sort, pageSize } =
+    await searchParams;
   const currentView = resolvePlanningView(view);
+  const initialPageSize = resolvePageSize(pageSize);
 
   return (
     <FeaturePageShell
@@ -46,6 +50,7 @@ export default async function PlanningPage({
           initialStatus={status}
           initialType={type}
           initialSort={sort}
+          initialPageSize={initialPageSize}
         />
       ) : (
         <PlanningCalendarPanel userId={session.user.id} />

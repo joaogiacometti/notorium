@@ -9,10 +9,9 @@ interface PlanningAssessmentsPanelProps {
   initialStatus?: string;
   initialType?: string;
   initialSort?: string;
+  initialPageSize: number;
   userId: string;
 }
-
-const planningAssessmentsPageSize = 25;
 
 export async function PlanningAssessmentsPanel({
   initialSubjectId,
@@ -20,6 +19,7 @@ export async function PlanningAssessmentsPanel({
   initialStatus,
   initialType,
   initialSort,
+  initialPageSize,
   userId,
 }: Readonly<PlanningAssessmentsPanelProps>) {
   const subjects = await getSubjectsForUser(userId);
@@ -33,7 +33,7 @@ export async function PlanningAssessmentsPanel({
   );
   const initialPageData = await getPlanningAssessmentsPageForUser(userId, {
     pageIndex: 0,
-    pageSize: planningAssessmentsPageSize,
+    pageSize: initialPageSize,
     search: "",
     subjectId: resolvedInitialSubjectId,
     statusFilter: "all",
@@ -48,6 +48,7 @@ export async function PlanningAssessmentsPanel({
       initialStatus={initialStatus}
       initialType={initialType}
       initialSort={initialSort}
+      initialPageSize={initialPageSize}
       initialPageData={initialPageData}
       subjects={subjects}
       subjectNamesById={subjectNamesById}

@@ -14,12 +14,14 @@ import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
+import { resolvePageSize } from "@/lib/pagination/page-size";
 
 interface FlashcardsPageProps {
   searchParams: Promise<{
     view?: string;
     deckId?: string;
     search?: string;
+    pageSize?: string;
   }>;
 }
 
@@ -28,8 +30,9 @@ export default async function FlashcardsPage({
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
   const aiEnabled = isAiEnabled();
-  const { view, deckId, search } = await searchParams;
+  const { view, deckId, search, pageSize } = await searchParams;
   const currentView = resolveFlashcardsView(view);
+  const initialPageSize = resolvePageSize(pageSize);
   const [decks, deckTree] = await Promise.all([
     getAllDecksWithPathsForUser(session.user.id),
     getDeckTreeForUser(session.user.id),
@@ -44,7 +47,7 @@ export default async function FlashcardsPage({
     session.user.id,
     {
       pageIndex: 0,
-      pageSize: 25,
+      pageSize: initialPageSize,
       deckId: scopedDeckId,
       search: initialManageSearch,
     },
@@ -90,6 +93,7 @@ export default async function FlashcardsPage({
         currentView={currentView}
         scopedDeckId={scopedDeckId}
         initialSearch={initialManageSearch}
+        initialPageSize={initialPageSize}
         deckTree={deckTree}
         decks={decks}
         initialManagePageData={initialManagePageDataResult}

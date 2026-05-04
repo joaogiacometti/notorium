@@ -58,7 +58,7 @@ export const LIMITS = {
   reviewDueLimitMax: 200,
 
   pageSizeMin: 1,
-  pageSizeMax: 100,
+  pageSizeMax: 500,
 
   authRateLimitMaxAttempts: 10,
   authRateLimitWindowSeconds: 60,

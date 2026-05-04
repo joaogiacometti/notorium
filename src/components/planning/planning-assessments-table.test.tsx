@@ -92,6 +92,7 @@ describe("PlanningAssessmentsTable", () => {
         <QueryClientProvider client={queryClient}>
           <PlanningAssessmentsTable
             initialPageData={emptyPageData}
+            initialPageSize={25}
             subjects={subjects}
             subjectNamesById={Object.fromEntries(
               subjects.map((subject) => [subject.id, subject.name]),

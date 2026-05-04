@@ -16,6 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -148,8 +155,11 @@ interface ManagerDataTableProps<TRow> {
   loadingMinimumVisibleMs?: number;
   loadingSkeleton?: ReactNode;
   onSelectedRowIdsChange?: (rowIds: string[]) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   pageCount?: number;
   pageSize?: number;
+  pageSizeLabel?: string;
+  pageSizeOptions?: readonly number[];
   selectedRowIds?: string[];
   selectionAriaLabel?: string;
   scrollAreaClassName?: string;
@@ -168,6 +178,7 @@ export function ManagerDataTable<TRow>({
   nextLabel,
   onRowClick,
   onPageIndexChange,
+  onPageSizeChange,
   pageIndex,
   pageLabel,
   prevLabel,
@@ -185,6 +196,8 @@ export function ManagerDataTable<TRow>({
   onSelectedRowIdsChange,
   pageCount,
   pageSize = 25,
+  pageSizeLabel = "Rows per page",
+  pageSizeOptions,
   selectedRowIds,
   selectionAriaLabel = "Select row",
   scrollAreaClassName,
@@ -271,6 +284,10 @@ export function ManagerDataTable<TRow>({
     row.toggleSelected(!row.getIsSelected());
   }
 
+  const showPageSizeSelect = Boolean(
+    onPageSizeChange && pageSizeOptions && pageSizeOptions.length > 0,
+  );
+
   return (
     <div
       className={cn(
@@ -333,7 +350,18 @@ export function ManagerDataTable<TRow>({
                 ))}
               </TableHeader>
               <TableBody className={cn(isEmpty ? "h-full" : null)}>
-                {!isEmpty ? (
+                {isEmpty ? (
+                  <TableRow className="h-full hover:bg-transparent">
+                    <TableCell
+                      colSpan={table.getAllColumns().length}
+                      className="h-full p-0"
+                    >
+                      <div className="flex min-h-36 h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                        {emptyLabel}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
                   table.getRowModel().rows.map((row) => (
                     <TableRow
                       key={row.id}
@@ -414,17 +442,6 @@ export function ManagerDataTable<TRow>({
                       ))}
                     </TableRow>
                   ))
-                ) : (
-                  <TableRow className="h-full hover:bg-transparent">
-                    <TableCell
-                      colSpan={table.getAllColumns().length}
-                      className="h-full p-0"
-                    >
-                      <div className="flex min-h-36 h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                        {emptyLabel}
-                      </div>
-                    </TableCell>
-                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -448,6 +465,31 @@ export function ManagerDataTable<TRow>({
               >
                 {pageLabel(pagination.pageIndex + 1, totalPageCount)}
               </Badge>
+              {showPageSizeSelect ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="whitespace-nowrap">{pageSizeLabel}</span>
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={(value) => onPageSizeChange?.(Number(value))}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger
+                      size="sm"
+                      className="h-8 rounded-full border-border/70 bg-background/80"
+                      aria-label={pageSizeLabel}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                      {pageSizeOptions?.map((option) => (
+                        <SelectItem key={option} value={String(option)}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
               <Button
                 type="button"
                 variant="outline"

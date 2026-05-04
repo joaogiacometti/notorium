@@ -90,6 +90,7 @@ describe("PlanningAssessmentsManagerTable", () => {
           selectedSubjectId="subject-1"
           subjectNamesById={{ "subject-1": "Biology" }}
           onPageIndexChange={() => {}}
+          onPageSizeChange={() => {}}
           onSelectedAssessmentIdsChange={() => {}}
           onUpdated={() => {}}
           onDeleted={() => {}}

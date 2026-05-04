@@ -145,6 +145,7 @@ const mockDecks: import("@/lib/server/api-contracts").DeckEntity[] = [];
 const defaultProps = {
   currentView: "manage" as const,
   scopedDeckId: undefined,
+  initialPageSize: 25,
   deckTree: mockDeckTree,
   decks: mockDecks,
   initialManagePageData: mockManagePageData,

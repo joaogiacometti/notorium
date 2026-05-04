@@ -18,6 +18,7 @@ interface FlashcardsPageClientProps {
   currentView: FlashcardsView;
   scopedDeckId?: string;
   initialSearch?: string;
+  initialPageSize: number;
   deckTree: DeckTreeNode[];
   decks: DeckEntity[];
   initialManagePageData: FlashcardManagePage;
@@ -30,6 +31,7 @@ export function FlashcardsPageClient({
   currentView,
   scopedDeckId,
   initialSearch,
+  initialPageSize,
   deckTree,
   decks,
   initialManagePageData,
@@ -77,6 +79,7 @@ export function FlashcardsPageClient({
           initialPageData={initialManagePageData}
           initialDeckId={scopedDeckId}
           initialSearch={initialSearch}
+          initialPageSize={initialPageSize}
           aiEnabled={aiEnabled}
           hasDecks={decks.length > 0}
         />

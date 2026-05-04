@@ -20,6 +20,7 @@ import {
 } from "@/features/assessments/constants";
 import { formatDateShort, formatIsoDate } from "@/lib/dates/format";
 import { getAssessmentDetailHref } from "@/lib/navigation/detail-page-back-link";
+import { PAGE_SIZE_OPTIONS } from "@/lib/pagination/page-size";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ interface PlanningAssessmentsManagerTableProps {
   selectedSubjectId?: string;
   subjectNamesById: Record<string, string>;
   onPageIndexChange: (pageIndex: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onSelectedAssessmentIdsChange: (ids: string[]) => void;
   onUpdated: (assessment: AssessmentEntity) => void;
   onDeleted: (id: string) => void;
@@ -247,6 +249,7 @@ export function PlanningAssessmentsManagerTable({
   selectedSubjectId,
   subjectNamesById,
   onPageIndexChange,
+  onPageSizeChange,
   onSelectedAssessmentIdsChange,
   onUpdated,
   onDeleted,
@@ -283,11 +286,14 @@ export function PlanningAssessmentsManagerTable({
       pageIndex={pageIndex}
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+      pageSizeLabel="Rows"
       isLoading={isLoading}
       loadingDelayMs={0}
       loadingMinimumVisibleMs={250}
       loadingSkeleton={<PlanningAssessmentsManagerTableSkeleton />}
       onPageIndexChange={onPageIndexChange}
+      onPageSizeChange={onPageSizeChange}
       selectedRowIds={selectedAssessmentIds}
       onSelectedRowIdsChange={onSelectedAssessmentIdsChange}
       selectionAriaLabel="Select assessment"

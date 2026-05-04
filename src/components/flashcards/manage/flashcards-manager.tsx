@@ -27,6 +27,7 @@ interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
   initialDeckId?: string;
   initialSearch?: string;
+  initialPageSize: number;
   aiEnabled: boolean;
   hasDecks: boolean;
 }
@@ -35,6 +36,7 @@ export function FlashcardsManager({
   initialPageData,
   initialDeckId,
   initialSearch,
+  initialPageSize,
   aiEnabled,
   hasDecks,
 }: Readonly<FlashcardsManagerProps>) {
@@ -68,6 +70,7 @@ export function FlashcardsManager({
     setMoveTarget,
     setEditingFlashcardId,
     setPageIndex,
+    setPageSize,
     setResetTarget,
     setSearchQuery,
     setSelectedFlashcardIds,
@@ -91,6 +94,7 @@ export function FlashcardsManager({
     initialPageData,
     initialDeckId,
     initialSearch,
+    initialPageSize,
   });
   const isManageScopeLoading =
     managePageQuery.isFetching && managePageQuery.isPlaceholderData;
@@ -123,6 +127,7 @@ export function FlashcardsManager({
           onEditRequested={setEditingFlashcardId}
           onMoveRequested={setMoveTarget}
           onPageIndexChange={setPageIndex}
+          onPageSizeChange={setPageSize}
           onDeleteRequested={setDeleteTarget}
           onResetRequested={setResetTarget}
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}

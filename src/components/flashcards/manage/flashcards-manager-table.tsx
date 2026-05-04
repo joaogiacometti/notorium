@@ -8,6 +8,7 @@ import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashca
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
+import { PAGE_SIZE_OPTIONS } from "@/lib/pagination/page-size";
 import type { FlashcardManageItem } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ interface FlashcardsManagerTableProps {
   onEditRequested: (flashcardId: string) => void;
   onMoveRequested: (flashcard: FlashcardTarget) => void;
   onPageIndexChange: (pageIndex: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onDeleteRequested: (flashcard: FlashcardTarget) => void;
   onResetRequested: (flashcard: FlashcardTarget) => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
@@ -141,6 +143,7 @@ export function FlashcardsManagerTable({
   onEditRequested,
   onMoveRequested,
   onPageIndexChange,
+  onPageSizeChange,
   onDeleteRequested,
   onResetRequested,
   onSelectedFlashcardIdsChange,
@@ -164,6 +167,8 @@ export function FlashcardsManagerTable({
       pageIndex={pageIndex}
       pageCount={Math.max(1, Math.ceil(total / pageSize))}
       pageSize={pageSize}
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+      pageSizeLabel="Rows"
       isLoading={isLoading}
       loadingDelayMs={0}
       loadingMinimumVisibleMs={250}
@@ -175,6 +180,7 @@ export function FlashcardsManagerTable({
         </div>
       }
       onPageIndexChange={onPageIndexChange}
+      onPageSizeChange={onPageSizeChange}
       selectedRowIds={selectedFlashcardIds}
       onSelectedRowIdsChange={onSelectedFlashcardIdsChange}
       selectionAriaLabel="Select flashcard"

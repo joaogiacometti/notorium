@@ -158,4 +158,33 @@ describe("ManagerDataTable", () => {
 
     expect(onRowClick).toHaveBeenCalledWith({ id: "row-1", label: "Alpha" });
   });
+
+  it("renders page size controls when a page size handler is provided", async () => {
+    await act(async () => {
+      root.render(
+        <ManagerDataTable
+          data={[{ id: "row-1", label: "Alpha" }]}
+          columns={columns}
+          emptyLabel="No rows"
+          getRowId={(row) => row.id}
+          nextLabel="Next"
+          onPageIndexChange={() => {}}
+          onPageSizeChange={() => {}}
+          pageIndex={0}
+          pageLabel={(current, total) => `Page ${current} of ${total}`}
+          pageSize={25}
+          pageSizeLabel="Rows"
+          pageSizeOptions={[10, 25, 50, 100, 250, 500]}
+          prevLabel="Previous"
+        />,
+      );
+    });
+
+    const pageSizeTrigger = container.querySelector(
+      '[role="combobox"][aria-label="Rows"]',
+    );
+
+    expect(container.textContent).toContain("Rows");
+    expect(pageSizeTrigger?.textContent).toContain("25");
+  });
 });

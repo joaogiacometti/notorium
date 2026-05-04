@@ -53,6 +53,7 @@ Students who want a private, lightweight study management workspace.
 ### Flashcards
 
 - Create, read, update, and delete flashcards within decks.
+- The flashcards manage table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
 - Flashcard fields: front and back rich text.
 - Flashcard create and edit support AI generation of the back when the back is empty.
 - Flashcards can also be generated from a note detail page when AI is configured.
@@ -142,6 +143,7 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete assessments per subject.
 - Assessments have a dedicated global planning page for full management and calendar-based timeline viewing.
 - The planning assessments table supports bulk selection with bulk mark pending, bulk mark completed, and bulk delete actions.
+- The planning assessments table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
 - Subject detail pages show a minimal assessment summary with the subject average when available and a link to the planning page filtered to that subject.
 - The planning assessments view always shows a combined grade/weight column, and enters a subject-focused mode when exactly one subject is selected to additionally show the final grade summary for that subject.
 - Assessment fields: title, optional description, type, status, due date, optional score, and optional weight.

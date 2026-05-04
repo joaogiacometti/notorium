@@ -287,6 +287,18 @@ describe("planningAssessmentsQuerySchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts the largest selectable page size", () => {
+    const result = planningAssessmentsQuerySchema.safeParse({
+      pageIndex: 0,
+      pageSize: 500,
+      statusFilter: "all",
+      typeFilter: "all",
+      sortBy: "smart",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects invalid paging and filter values", () => {
     const result = planningAssessmentsQuerySchema.safeParse({
       pageIndex: -1,
