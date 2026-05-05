@@ -197,7 +197,7 @@ function FocusModeCardActions({
   onDeleteFlashcard,
 }: Readonly<FocusModeCardActionsProps>) {
   if (isPending) {
-    return null;
+    return <FocusModeCardActionsButton disabled />;
   }
 
   return (
@@ -230,6 +230,22 @@ function FocusModeCardActions({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function FocusModeCardActionsButton({
+  disabled = false,
+}: Readonly<{ disabled?: boolean }>) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-10"
+      aria-label="Open flashcard actions"
+      disabled={disabled}
+    >
+      <MoreVertical className="size-5" />
+    </Button>
   );
 }
 

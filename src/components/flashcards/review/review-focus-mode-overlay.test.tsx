@@ -110,12 +110,32 @@ describe("FocusModeOverlay", () => {
     expect(baseHandlers.onDeleteFlashcard).toHaveBeenCalledOnce();
   });
 
-  it("hides the card actions menu while review actions are pending", async () => {
+  it("keeps the card actions menu disabled while review actions are pending", async () => {
     await renderFocusModeOverlay({ isPending: true });
 
-    expect(
-      container.querySelector('button[aria-label="Open flashcard actions"]'),
-    ).toBeNull();
+    const headerButtons = container.querySelectorAll("button");
+    const actionsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open flashcard actions"]',
+    );
+
+    expect(actionsButton).toBeTruthy();
+    expect(actionsButton?.disabled).toBe(true);
+    expect(headerButtons[0]).toBe(actionsButton);
+    expect(headerButtons[1]?.getAttribute("aria-label")).toBe(
+      "Exit Focus Mode",
+    );
+
+    await act(async () => {
+      actionsButton?.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          ctrlKey: false,
+        }),
+      );
+    });
+
+    expect(document.body.querySelector('[role="menuitem"]')).toBeNull();
   });
 
   async function clickMenuItem(label: string) {
