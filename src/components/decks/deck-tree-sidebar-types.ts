@@ -1,10 +1,22 @@
+import type { ComponentType } from "react";
 import type { FlashcardsView } from "@/features/flashcards/view";
-import type { DeckTreeNode } from "@/lib/server/api-contracts";
+import type { DeckTreeNode, FlashcardEntity } from "@/lib/server/api-contracts";
+
+export interface DeckSidebarCreateFlashcardDialogProps {
+  deckId?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated?: (flashcard: FlashcardEntity) => void;
+  aiEnabled: boolean;
+}
 
 export interface DeckTreeSidebarProps {
   deckTree: DeckTreeNode[];
   selectedDeckId?: string;
   currentView: FlashcardsView;
+  aiEnabled: boolean;
+  CreateFlashcardDialogComponent?: ComponentType<DeckSidebarCreateFlashcardDialogProps>;
+  onFlashcardCreated?: (flashcard: FlashcardEntity) => void;
   onDeckDeleted?: (deckId: string) => void;
 }
 

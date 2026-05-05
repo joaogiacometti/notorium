@@ -2,7 +2,7 @@
 
 import {
   ArrowRightLeft,
-  Plus,
+  CopyPlus,
   RotateCcw,
   RotateCw,
   Search,
@@ -322,7 +322,7 @@ export function FlashcardsManagerToolbar({
       disabled={!hasDecks}
       className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
     >
-      <Plus className="size-4" />
+      <CopyPlus className="size-4" />
       New Flashcard
     </Button>
   );

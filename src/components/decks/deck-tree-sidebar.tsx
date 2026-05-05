@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
+import { FolderPlus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -25,7 +25,11 @@ import { SyntheticDeckTreeRootItem } from "@/components/decks/synthetic-deck-tre
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
-import type { DeckEntity, DeckTreeNode } from "@/lib/server/api-contracts";
+import type {
+  DeckEntity,
+  DeckTreeNode,
+  FlashcardEntity,
+} from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import {
   filterDeckTree,
@@ -44,6 +48,9 @@ export function DeckTreeSidebar({
   deckTree,
   selectedDeckId,
   currentView,
+  aiEnabled,
+  CreateFlashcardDialogComponent,
+  onFlashcardCreated,
   onDeckDeleted,
 }: Readonly<DeckTreeSidebarProps>) {
   const router = useRouter();
@@ -67,6 +74,9 @@ export function DeckTreeSidebar({
     string | undefined
   >(undefined);
   const [createOpen, setCreateOpen] = useState(false);
+  const [createFlashcardDeckId, setCreateFlashcardDeckId] = useState<
+    string | null
+  >(null);
   const [editTarget, setEditTarget] = useState<EditDeckTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteDeckTarget | null>(
     null,
@@ -159,6 +169,14 @@ export function DeckTreeSidebar({
         insertDeckTreeNode(current, newNode, deck.parentDeckId ?? null),
       ),
     );
+    refreshPage();
+  }
+
+  function handleFlashcardCreated(deckId: string, flashcard: FlashcardEntity) {
+    setLocalDeckTree((current) =>
+      incrementDeckTreeFlashcardCount(current, deckId),
+    );
+    onFlashcardCreated?.(flashcard);
     refreshPage();
   }
 
@@ -305,7 +323,7 @@ export function DeckTreeSidebar({
                 className="h-9 gap-1.5"
                 onClick={() => setCreateParentDeckId(undefined)}
               >
-                <Plus className="size-4" />
+                <FolderPlus className="size-4" />
                 New Deck
               </Button>
             }
@@ -361,6 +379,7 @@ export function DeckTreeSidebar({
             dropTargetId={dropTargetId}
             onToggle={handleToggle}
             onSelectDeck={handleSelectDeck}
+            onCreateFlashcard={setCreateFlashcardDeckId}
             onCreateChild={(parentDeckId) => {
               setCreateParentDeckId(parentDeckId);
               setCreateOpen(true);
@@ -423,8 +442,46 @@ export function DeckTreeSidebar({
           }}
         />
       ) : null}
+
+      {CreateFlashcardDialogComponent ? (
+        <CreateFlashcardDialogComponent
+          open={createFlashcardDeckId !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreateFlashcardDeckId(null);
+            }
+          }}
+          onCreated={(flashcard) => {
+            if (createFlashcardDeckId) {
+              handleFlashcardCreated(createFlashcardDeckId, flashcard);
+            }
+          }}
+          deckId={createFlashcardDeckId ?? undefined}
+          aiEnabled={aiEnabled}
+        />
+      ) : null}
     </>
   );
+}
+
+function incrementDeckTreeFlashcardCount(
+  nodes: DeckTreeNode[],
+  deckId: string,
+): DeckTreeNode[] {
+  return nodes.map((node) => {
+    if (node.id === deckId) {
+      return { ...node, flashcardCount: node.flashcardCount + 1 };
+    }
+
+    const children = incrementDeckTreeFlashcardCount(node.children, deckId);
+    const didChildChange = children.some(
+      (childNode, index) => childNode !== node.children[index],
+    );
+
+    return didChildChange
+      ? { ...node, children, flashcardCount: node.flashcardCount + 1 }
+      : node;
+  });
 }
 
 function getVisibleExpandedIds(

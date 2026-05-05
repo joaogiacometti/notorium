@@ -3,10 +3,11 @@
 import {
   ChevronDown,
   ChevronRight,
+  CopyPlus,
+  FolderPlus,
   Loader2,
   MoreHorizontal,
   Pencil,
-  Plus,
   Trash2,
 } from "lucide-react";
 import { DeckSidebarRow } from "@/components/decks/deck-sidebar-row";
@@ -34,6 +35,7 @@ interface DeckTreeNodeItemProps {
   dropTargetId: string | null;
   onToggle: (deckId: string) => void;
   onSelectDeck: (deckId?: string) => void;
+  onCreateFlashcard: (deckId: string) => void;
   onCreateChild: (parentDeckId: string) => void;
   onEdit: (deck: EditDeckTarget) => void;
   onDelete: (deck: DeleteDeckTarget) => void;
@@ -53,6 +55,7 @@ export function DeckTreeNodeItem({
   dropTargetId,
   onToggle,
   onSelectDeck,
+  onCreateFlashcard,
   onCreateChild,
   onEdit,
   onDelete,
@@ -86,6 +89,7 @@ export function DeckTreeNodeItem({
         trailing={
           <DeckActionsMenu
             node={node}
+            onCreateFlashcard={onCreateFlashcard}
             onCreateChild={onCreateChild}
             onEdit={onEdit}
             onDelete={onDelete}
@@ -117,6 +121,7 @@ export function DeckTreeNodeItem({
               dropTargetId={dropTargetId}
               onToggle={onToggle}
               onSelectDeck={onSelectDeck}
+              onCreateFlashcard={onCreateFlashcard}
               onCreateChild={onCreateChild}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -172,6 +177,7 @@ function DeckExpandButton({
 
 interface DeckActionsMenuProps {
   node: DeckTreeNode;
+  onCreateFlashcard: (deckId: string) => void;
   onCreateChild: (parentDeckId: string) => void;
   onEdit: (deck: EditDeckTarget) => void;
   onDelete: (deck: DeleteDeckTarget) => void;
@@ -179,6 +185,7 @@ interface DeckActionsMenuProps {
 
 function DeckActionsMenu({
   node,
+  onCreateFlashcard,
   onCreateChild,
   onEdit,
   onDelete,
@@ -197,8 +204,12 @@ function DeckActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onCreateFlashcard(node.id)}>
+          <CopyPlus className="size-4" />
+          Add flashcard
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onCreateChild(node.id)}>
-          <Plus className="size-4" />
+          <FolderPlus className="size-4" />
           Create sub-deck
         </DropdownMenuItem>
         <DropdownMenuItem

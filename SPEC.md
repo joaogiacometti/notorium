@@ -82,6 +82,7 @@ Students who want a private, lightweight study management workspace.
 - Deck paths use `::` notation for display and searchable pickers.
 - Deck names must be unique among sibling decks, including root-level decks.
 - Users can create, rename, and delete decks from the flashcards area.
+- Users can add a flashcard to a specific deck from that deck's sidebar actions menu.
 - Users can drag decks in the flashcards tree to change parent decks or move them back to the root level.
 - Deleting a deck also deletes its child decks and all flashcards inside that subtree.
 - The flashcards page uses a deck tree sidebar, and deck-scoped review/manage/statistics include cards from descendant decks.

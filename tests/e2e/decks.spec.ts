@@ -67,6 +67,26 @@ function getDeckActionsButton(
     .getByRole("button", { name: "Deck actions", exact: true });
 }
 
+async function fillRichTextEditor(editor: Locator, value: string) {
+  await expect(editor).toBeVisible();
+  await editor.click();
+  await editor.press("Control+A");
+  await editor.press("Backspace");
+  await editor.pressSequentially(value);
+}
+
+async function fillCreateFlashcardDialog(
+  dialog: Locator,
+  front: string,
+  back: string,
+) {
+  await fillRichTextEditor(
+    dialog.locator("#form-create-flashcard-front"),
+    front,
+  );
+  await fillRichTextEditor(dialog.locator("#form-create-flashcard-back"), back);
+}
+
 test("can create a deck from the flashcards sidebar", async ({
   page,
   e2eUser,
@@ -95,6 +115,57 @@ test("can create a deck from the flashcards sidebar", async ({
     await expect(page).toHaveURL(/deckId=/);
     await expect(
       page.getByRole("button", { name: "New Flashcard", exact: true }),
+    ).toBeVisible();
+  } finally {
+    await clearUserDecksByNames(user.userId, [deckName]);
+  }
+});
+
+test("can add a flashcard from a deck sidebar action", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const deckName = getUniqueDeckName("sidebar-add-flashcard");
+  const flashcardFront = getUniqueFlashcardFront("sidebar-add-flashcard");
+  const flashcardBack = getUniqueFlashcardBack("sidebar-add-flashcard");
+
+  await clearUserDecksByNames(user.userId, [deckName]);
+
+  try {
+    await createDeck(user.userId, deckName);
+    await openFlashcardsPage(page, "manage");
+
+    const sidebar = getDeckSidebar(page);
+    await expect(getDeckButton(sidebar, deckName, 0)).toBeVisible();
+
+    await getDeckActionsButton(sidebar, deckName, 0).click();
+    await page
+      .getByRole("menuitem", { name: "Add flashcard", exact: true })
+      .click();
+
+    const createDialog = page.getByRole("dialog", {
+      name: "Create Flashcard",
+    });
+    await fillCreateFlashcardDialog(
+      createDialog,
+      flashcardFront,
+      flashcardBack,
+    );
+    await createDialog
+      .getByRole("button", { name: "Create Flashcard", exact: true })
+      .click();
+
+    await expect(
+      createDialog.getByRole("button", { name: "Saved", exact: true }),
+    ).toBeVisible();
+    await createDialog
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await expect(createDialog).toHaveCount(0);
+    await expect(getDeckButton(sidebar, deckName, 1)).toBeVisible();
+    await expect(
+      page.getByTitle(flashcardFront, { exact: true }),
     ).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);

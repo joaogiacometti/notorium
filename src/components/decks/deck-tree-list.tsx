@@ -17,6 +17,7 @@ interface DeckTreeListProps {
   dropTargetId: string | null;
   onToggle: (deckId: string) => void;
   onSelectDeck: (deckId?: string) => void;
+  onCreateFlashcard: (deckId: string) => void;
   onCreateChild: (parentDeckId: string) => void;
   onEdit: (deck: EditDeckTarget) => void;
   onDelete: (deck: DeleteDeckTarget) => void;
@@ -36,6 +37,7 @@ export function DeckTreeList({
   dropTargetId,
   onToggle,
   onSelectDeck,
+  onCreateFlashcard,
   onCreateChild,
   onEdit,
   onDelete,
@@ -74,6 +76,7 @@ export function DeckTreeList({
           dropTargetId={dropTargetId}
           onToggle={onToggle}
           onSelectDeck={onSelectDeck}
+          onCreateFlashcard={onCreateFlashcard}
           onCreateChild={onCreateChild}
           onEdit={onEdit}
           onDelete={onDelete}

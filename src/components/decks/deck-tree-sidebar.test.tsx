@@ -2,6 +2,7 @@ import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeckTreeSidebar } from "@/components/decks/deck-tree-sidebar";
+import type { DeckSidebarCreateFlashcardDialogProps } from "@/components/decks/deck-tree-sidebar-types";
 import type { DeckEntity, DeckTreeNode } from "@/lib/server/api-contracts";
 
 const { moveDeckMock, replaceMock, refreshMock, toastErrorMock } = vi.hoisted(
@@ -139,6 +140,20 @@ function createDeckNode(
   };
 }
 
+function MockCreateFlashcardDialog({
+  deckId,
+  open,
+  onCreated,
+}: Readonly<DeckSidebarCreateFlashcardDialogProps>) {
+  return open ? (
+    <div data-testid="create-flashcard-dialog" data-deck-id={deckId}>
+      <button type="button" onClick={() => onCreated?.({} as never)}>
+        Confirm Flashcard
+      </button>
+    </div>
+  ) : null;
+}
+
 function clickButtonByText(container: HTMLDivElement, text: string, index = 0) {
   const buttons = Array.from(container.querySelectorAll("button")).filter(
     (currentButton) => currentButton.textContent?.includes(text),
@@ -260,6 +275,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="statistics"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -302,6 +318,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -329,6 +346,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -356,6 +374,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -399,6 +418,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId="grandchild-1"
         />,
       );
@@ -426,6 +446,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -473,6 +494,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -515,6 +537,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId="child-1"
         />,
       );
@@ -535,6 +558,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -564,6 +588,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -591,6 +616,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -618,6 +644,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="manage"
+          aiEnabled={false}
           selectedDeckId={undefined}
         />,
       );
@@ -637,6 +664,65 @@ describe("DeckTreeSidebar", () => {
     expect(container.textContent).not.toContain("Confirm Edit");
   });
 
+  it("opens flashcard creation from a deck actions menu", async () => {
+    const deckTree: DeckTreeNode[] = [createDeckNode("root-1", 3)];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          aiEnabled={true}
+          CreateFlashcardDialogComponent={MockCreateFlashcardDialog}
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    await act(async () => {
+      clickButtonByText(container, "Add flashcard");
+    });
+
+    const dialog = container.querySelector<HTMLElement>(
+      '[data-testid="create-flashcard-dialog"]',
+    );
+
+    expect(dialog).toBeTruthy();
+    expect(dialog?.dataset.deckId).toBe("root-1");
+  });
+
+  it("refreshes and updates counts after a sidebar flashcard is created", async () => {
+    const deckTree: DeckTreeNode[] = [createDeckNode("root-1", 3)];
+
+    await act(async () => {
+      root.render(
+        <DeckTreeSidebar
+          deckTree={deckTree}
+          currentView="manage"
+          aiEnabled={false}
+          CreateFlashcardDialogComponent={MockCreateFlashcardDialog}
+          selectedDeckId={undefined}
+        />,
+      );
+    });
+
+    await act(async () => {
+      clickButtonByText(container, "Add flashcard");
+    });
+
+    await act(async () => {
+      clickButtonByText(container, "Confirm Flashcard");
+    });
+
+    const allDecksButton = Array.from(
+      container.querySelectorAll("button"),
+    ).find((button) => button.textContent?.includes("All Decks"));
+
+    expect(container.textContent).toContain("root-14");
+    expect(allDecksButton?.textContent).toContain("4");
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
   it("does not redirect after a selected deck is deleted", async () => {
     const deckTree: DeckTreeNode[] = [createDeckNode("root-1", 3)];
 
@@ -645,6 +731,7 @@ describe("DeckTreeSidebar", () => {
         <DeckTreeSidebar
           deckTree={deckTree}
           currentView="review"
+          aiEnabled={false}
           selectedDeckId="root-1"
         />,
       );
