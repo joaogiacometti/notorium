@@ -203,42 +203,22 @@
   --intent-exam-bg: var(--intent-info-bg);
   --intent-exam-text: var(--intent-info-text);
   --intent-exam-fill: var(--intent-info-fill);
-  --intent-assignment-border: color-mix(
-    in oklab,
-    var(--chart-3) 30%,
-    transparent
-  );
-  --intent-assignment-bg: color-mix(in oklab, var(--chart-3) 10%, transparent);
-  --intent-assignment-text: color-mix(
-    in oklab,
-    var(--chart-3) 78%,
-    var(--foreground)
-  );
-  --intent-assignment-fill: var(--chart-3);
-  --intent-project-border: color-mix(in oklab, var(--chart-1) 30%, transparent);
-  --intent-project-bg: color-mix(in oklab, var(--chart-1) 10%, transparent);
-  --intent-project-text: color-mix(
-    in oklab,
-    var(--chart-1) 78%,
-    var(--foreground)
-  );
-  --intent-project-fill: var(--chart-1);
+  --intent-assignment-border: oklch(0.6 0.14 220 / 32%);
+  --intent-assignment-bg: oklch(0.6 0.14 220 / 10%);
+  --intent-assignment-text: oklch(0.42 0.12 220);
+  --intent-assignment-fill: oklch(0.55 0.14 220);
+  --intent-project-border: oklch(0.58 0.14 296 / 32%);
+  --intent-project-bg: oklch(0.58 0.14 296 / 10%);
+  --intent-project-text: oklch(0.43 0.13 296);
+  --intent-project-fill: oklch(0.55 0.15 296);
   --intent-presentation-border: var(--intent-warning-border);
   --intent-presentation-bg: var(--intent-warning-bg);
   --intent-presentation-text: var(--intent-warning-text);
   --intent-presentation-fill: var(--intent-warning-fill);
-  --intent-homework-border: color-mix(
-    in oklab,
-    var(--chart-2) 30%,
-    transparent
-  );
-  --intent-homework-bg: color-mix(in oklab, var(--chart-2) 10%, transparent);
-  --intent-homework-text: color-mix(
-    in oklab,
-    var(--chart-2) 78%,
-    var(--foreground)
-  );
-  --intent-homework-fill: var(--chart-2);
+  --intent-homework-border: oklch(0.62 0.13 164 / 32%);
+  --intent-homework-bg: oklch(0.62 0.13 164 / 10%);
+  --intent-homework-text: oklch(0.43 0.11 164);
+  --intent-homework-fill: oklch(0.56 0.13 164);
   --intent-other-border: color-mix(
     in oklab,
     var(--muted-foreground) 28%,
@@ -311,6 +291,18 @@
   --intent-info-bg: oklch(0.7 0.15 280 / 10%);
   --intent-info-text: oklch(0.82 0.09 282);
   --intent-info-fill: oklch(0.76 0.12 281);
+  --intent-assignment-border: oklch(0.72 0.13 220 / 35%);
+  --intent-assignment-bg: oklch(0.72 0.13 220 / 12%);
+  --intent-assignment-text: oklch(0.82 0.08 220);
+  --intent-assignment-fill: oklch(0.74 0.12 220);
+  --intent-project-border: oklch(0.74 0.13 310 / 35%);
+  --intent-project-bg: oklch(0.74 0.13 310 / 12%);
+  --intent-project-text: oklch(0.84 0.08 310);
+  --intent-project-fill: oklch(0.76 0.12 310);
+  --intent-homework-border: oklch(0.74 0.12 164 / 35%);
+  --intent-homework-bg: oklch(0.74 0.12 164 / 12%);
+  --intent-homework-text: oklch(0.82 0.08 164);
+  --intent-homework-fill: oklch(0.74 0.11 164);
 }
 
 .halloween {
@@ -365,6 +357,18 @@
   --intent-info-bg: oklch(0.61 0.14 296 / 12%);
   --intent-info-text: oklch(0.82 0.08 298);
   --intent-info-fill: oklch(0.73 0.12 296);
+  --intent-assignment-border: oklch(0.72 0.14 220 / 35%);
+  --intent-assignment-bg: oklch(0.72 0.14 220 / 12%);
+  --intent-assignment-text: oklch(0.84 0.08 220);
+  --intent-assignment-fill: oklch(0.76 0.12 220);
+  --intent-project-border: oklch(0.69 0.16 325 / 35%);
+  --intent-project-bg: oklch(0.69 0.16 325 / 12%);
+  --intent-project-text: oklch(0.85 0.1 325);
+  --intent-project-fill: oklch(0.74 0.14 325);
+  --intent-homework-border: oklch(0.78 0.1 92 / 35%);
+  --intent-homework-bg: oklch(0.78 0.1 92 / 12%);
+  --intent-homework-text: oklch(0.9 0.06 95);
+  --intent-homework-fill: oklch(0.82 0.09 93);
 }
 
 .catppuccin-mocha {
@@ -416,6 +420,18 @@
   --intent-info-bg: hsl(267 83.51% 80.98% / 0.1);
   --intent-info-text: hsl(267 83.51% 80.98%);
   --intent-info-fill: hsl(267 83.51% 80.98%);
+  --intent-assignment-border: hsl(217 92% 76% / 0.35);
+  --intent-assignment-bg: hsl(217 92% 76% / 0.1);
+  --intent-assignment-text: hsl(217 92% 82%);
+  --intent-assignment-fill: hsl(217 92% 76%);
+  --intent-project-border: hsl(316 72% 86% / 0.35);
+  --intent-project-bg: hsl(316 72% 86% / 0.1);
+  --intent-project-text: hsl(316 72% 88%);
+  --intent-project-fill: hsl(316 72% 86%);
+  --intent-homework-border: hsl(115 54% 76% / 0.35);
+  --intent-homework-bg: hsl(115 54% 76% / 0.1);
+  --intent-homework-text: hsl(115 54% 82%);
+  --intent-homework-fill: hsl(115 54% 76%);
 }
 
 @layer base {
