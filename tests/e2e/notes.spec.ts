@@ -53,9 +53,7 @@ async function openNoteDetailByTitle(page: Page, noteTitle: string) {
   await Promise.all([page.waitForURL(noteUrlPattern), noteLink.click()]);
   await expect(page).toHaveURL(noteUrlPattern);
 
-  await expect(
-    page.getByRole("heading", { name: noteTitle, exact: true }),
-  ).toBeVisible();
+  await expect(page.locator("#form-edit-note-title")).toHaveValue(noteTitle);
 }
 
 async function openNoteActions(page: Page) {
@@ -63,6 +61,15 @@ async function openNoteActions(page: Page) {
     .getByRole("main")
     .getByRole("button", { name: "Open note actions", exact: true })
     .click();
+}
+
+async function createSidebarNote(page: Page, title: string) {
+  await page.getByRole("button", { name: "Create note", exact: true }).click();
+  const createDialog = page.getByRole("dialog", { name: "Create Note" });
+  await createDialog.locator("#form-create-note-title-input").fill(title);
+  await createDialog.getByRole("button", { name: "Create Note" }).click();
+  await expect(createDialog).toHaveCount(0);
+  await expect(page.locator("#form-edit-note-title")).toHaveValue(title);
 }
 
 test("can create and open a note", async ({ page, e2eUser }) => {
@@ -107,25 +114,53 @@ test("can edit a note", async ({ page, e2eUser }) => {
     await openSubjectDetailByName(page, subjectName);
     await openNoteDetailByTitle(page, initialTitle);
 
-    await openNoteActions(page);
-    await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
+    const savedToast = page.getByText("Note saved.", { exact: true });
 
-    const editDialog = page.getByRole("dialog", { name: "Edit Note" });
-    await editDialog.locator("#form-edit-note-title").fill(updatedTitle);
-    await editDialog.locator("#form-edit-note-content").fill(updatedContent);
-    await editDialog.getByRole("button", { name: "Save Changes" }).click();
+    await page.locator("#form-edit-note-title").fill(updatedTitle);
+    await expect(savedToast).toBeVisible();
+    await expect(savedToast).toBeHidden();
 
-    await expect(editDialog).toBeVisible();
-    await expect(editDialog.locator("#form-edit-note-title")).toHaveValue(
+    await page.locator("#form-edit-note-content").click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.type(updatedContent);
+    await expect(savedToast).toBeVisible();
+
+    await page.reload();
+    await expect(page.locator("#form-edit-note-title")).toHaveValue(
       updatedTitle,
     );
-    await expect(editDialog.getByText(updatedContent)).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(editDialog).toHaveCount(0);
-    await expect(
-      page.getByRole("heading", { name: updatedTitle, exact: true }),
-    ).toBeVisible();
     await expect(page.getByText(updatedContent)).toBeVisible();
+  } finally {
+    await clearUserSubjectsByNames(user.userId, [subjectName]);
+  }
+});
+
+test("can create a title-only note from detail sidebar", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const subjectName = getUniqueSubjectName("sidebar-create");
+  const initialTitle = getUniqueNoteTitle("sidebar-create-initial");
+  const newTitle = getUniqueNoteTitle("sidebar-create-new");
+
+  await clearUserSubjectsByNames(user.userId, [subjectName]);
+
+  try {
+    const createdSubject = await createSubject(
+      user.userId,
+      subjectName,
+      "Notes sidebar create smoke test",
+    );
+
+    await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
+
+    await openSubjectDetailByName(page, subjectName);
+    await openNoteDetailByTitle(page, initialTitle);
+    await createSidebarNote(page, newTitle);
+
+    await expect(page).toHaveURL(/\/subjects\/.+\/notes\/.+$/);
+    await expect(page.locator("#form-edit-note-content")).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
   }

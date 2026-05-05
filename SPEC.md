@@ -44,6 +44,7 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete notes per subject.
 - Notes use rich text editing and rendering.
 - Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, and other shared editor formatting exposed by the app.
+- Note detail shows same-subject notes in a sidebar, supports title-only sidebar note creation, and edits the active note inline with auto-save.
 - Note detail supports copying note content as rich text or plain text.
 - Note content renders images from:
   - pasted direct image URLs
@@ -195,7 +196,7 @@ Students who want a private, lightweight study management workspace.
 - Responsive layout for desktop and mobile.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.
-- Dialog mutation feedback follows a two-mode rule: **close on success** for straightforward create/edit dialogs (user sees the result appear in the list); **button saved state** (1200 ms "Saved ✓" transition on the submit button) for dialogs that stay open as a progress checkpoint, where the user continues working after saving (e.g. edit note, create flashcard, edit flashcard).
+- Dialog mutation feedback follows a two-mode rule: **close on success** for straightforward create/edit dialogs (user sees the result appear in the list); **button saved state** (1200 ms "Saved ✓" transition on the submit button) for dialogs that stay open as a progress checkpoint, where the user continues working after saving (e.g. create flashcard, edit flashcard). Inline auto-save surfaces compact saving, saved, and error status near the edited content.
 - Theme toggle with `light`, `dark`, `halloween`, `catppuccin-mocha`, and `system`; authenticated users access it from the navbar, and signed-out users access it from a floating top-right control.
 - Installed PWA launch uses the static dark theme background before app code loads; browser and installed PWA chrome follows the active theme after the app loads, including `halloween` and `catppuccin-mocha`.
 - Custom not-found page.

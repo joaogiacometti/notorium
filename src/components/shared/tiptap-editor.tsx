@@ -31,6 +31,7 @@ interface TiptapEditorProps {
   placeholder?: string;
   id?: string;
   "aria-invalid"?: boolean;
+  className?: string;
   contentClassName?: string;
   showToolbar?: boolean;
   imageUploadContext?: EditorImageUploadContext;
@@ -44,6 +45,7 @@ export function TiptapEditor({
   placeholder,
   id,
   "aria-invalid": ariaInvalid,
+  className,
   contentClassName,
   showToolbar = true,
   imageUploadContext = "notes",
@@ -199,6 +201,7 @@ export function TiptapEditor({
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
         ariaInvalid &&
           "border-destructive focus-within:border-destructive focus-within:ring-destructive/20",
+        className,
       )}
     >
       {showToolbar && <EditorToolbar editor={editor} />}

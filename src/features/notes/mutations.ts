@@ -18,6 +18,14 @@ import {
   actionError,
 } from "@/lib/server/server-action-errors";
 
+export type CreateNoteMutationResult =
+  | {
+      success: true;
+      subjectId: string;
+      noteId: string;
+    }
+  | ActionErrorResult;
+
 export type NoteMutationResult =
   | {
       success: true;
@@ -37,7 +45,7 @@ function getNoteMutationValues(
 export async function createNoteForUser(
   userId: string,
   data: CreateNoteForm,
-): Promise<NoteMutationResult> {
+): Promise<CreateNoteMutationResult> {
   const existingSubject = await getActiveSubjectRecordForUser(
     userId,
     data.subjectId,
@@ -54,15 +62,18 @@ export async function createNoteForUser(
     });
   }
 
+  const noteId = crypto.randomUUID();
+
   await getDb()
     .insert(note)
     .values({
+      id: noteId,
       ...getNoteMutationValues(data),
       subjectId: data.subjectId,
       userId,
     });
 
-  return { success: true, subjectId: data.subjectId };
+  return { success: true, subjectId: data.subjectId, noteId };
 }
 
 export async function editNoteForUser(

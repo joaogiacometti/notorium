@@ -111,7 +111,7 @@ describe("resolveNoteDetailBackLink", () => {
   it("returns the owning subject", () => {
     expect(resolveNoteDetailBackLink("subject-2")).toEqual({
       href: "/subjects/subject-2",
-      label: "subject",
+      label: "Back to Subject",
     });
   });
 });

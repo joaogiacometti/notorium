@@ -56,6 +56,45 @@ vi.mock("@/lib/media-storage/provider", () => ({
   getMediaStorageProvider: getMediaStorageProviderMock,
 }));
 
+describe("createNoteForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns the created note id", async () => {
+    const randomUUIDSpy = vi
+      .spyOn(crypto, "randomUUID")
+      .mockReturnValue("note-new" as ReturnType<typeof crypto.randomUUID>);
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    countNotesBySubjectForUserMock.mockResolvedValueOnce(0);
+
+    const { createNoteForUser } = await import("@/features/notes/mutations");
+
+    const result = await createNoteForUser("user-1", {
+      subjectId: "subject-1",
+      title: "New note",
+      content: "",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      subjectId: "subject-1",
+      noteId: "note-new",
+    });
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      id: "note-new",
+      subjectId: "subject-1",
+      userId: "user-1",
+      title: "New note",
+      content: "",
+    });
+
+    randomUUIDSpy.mockRestore();
+  });
+});
+
 describe("editNoteForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();

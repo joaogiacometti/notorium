@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  type CreateNoteMutationResult,
   createNoteForUser,
   deleteNoteForUser,
   editNoteForUser,
@@ -36,7 +37,7 @@ export async function getNoteById(id: string): Promise<NoteEntity | null> {
 
 export async function createNote(
   data: CreateNoteForm,
-): Promise<MutationResult> {
+): Promise<CreateNoteMutationResult> {
   const result = await runValidatedUserAction(
     createNoteSchema,
     data,
@@ -46,6 +47,7 @@ export async function createNote(
 
   if (result.success) {
     revalidatePath(`/subjects/${result.subjectId}`);
+    revalidatePath(`/subjects/${result.subjectId}/notes/${result.noteId}`);
   }
 
   return result;
@@ -61,6 +63,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
 
   if (result.success) {
     revalidatePath(`/subjects/${result.subjectId}`);
+    revalidatePath(`/subjects/${result.subjectId}/notes/${data.id}`);
   }
 
   return result;

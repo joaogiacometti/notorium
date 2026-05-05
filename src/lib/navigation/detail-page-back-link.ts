@@ -5,7 +5,11 @@ export const detailPageOriginValues = [
 
 export type DetailPageOrigin = (typeof detailPageOriginValues)[number];
 
-export type DetailPageBackLabel = "flashcards" | "planning" | "subject";
+export type DetailPageBackLabel =
+  | "Back to Subject"
+  | "flashcards"
+  | "planning"
+  | "subject";
 export type FlashcardsReturnView = "manage" | "review" | "statistics";
 
 export interface DetailPageBackLink {
@@ -150,7 +154,7 @@ export function resolveNoteDetailBackLink(
 ): DetailPageBackLink {
   return {
     href: `/subjects/${subjectId}`,
-    label: "subject",
+    label: "Back to Subject",
   };
 }
 
