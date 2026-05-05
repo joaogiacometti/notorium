@@ -1,7 +1,12 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
 import { runWithCleanup } from "./support/cleanup";
 import { getPrefixedValue } from "./support/data";
-import { clearUserSubjectsByNames, createSubject } from "./support/db";
+import {
+  clearUserSubjects,
+  clearUserSubjectsByNames,
+  createSubject,
+} from "./support/db";
 import { openSubjectDetailByName } from "./support/subjects";
 
 const initialSubjectDescription =
@@ -11,6 +16,25 @@ const updatedSubjectDescription =
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("subject", testTitle);
+}
+
+function getSubjectRow(page: Page, name: string) {
+  return page.getByRole("row").filter({ hasText: name });
+}
+
+async function selectSubjectRow(page: Page, name: string) {
+  const row = getSubjectRow(page, name);
+  await expect(row).toBeVisible();
+  await row.locator('td[data-no-row-click="true"]').first().click();
+  await expect(
+    row.getByRole("checkbox", { name: "Select subject" }),
+  ).toHaveAttribute("aria-checked", "true");
+}
+
+async function openSubjectActions(page: Page, name: string) {
+  const row = getSubjectRow(page, name);
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: "Open subject actions" }).click();
 }
 
 test("can create a subject", async ({ page, e2eUser }) => {
@@ -37,13 +61,10 @@ test("can create a subject", async ({ page, e2eUser }) => {
       .fill(initialSubjectDescription);
     await createDialog.getByRole("button", { name: "Create Subject" }).click();
 
-    const subjectCard = page
-      .getByTestId("subject-card")
-      .filter({ hasText: initialSubjectName })
-      .first();
+    const subjectRow = getSubjectRow(page, initialSubjectName);
 
-    await expect(subjectCard).toBeVisible();
-    await expect(subjectCard).toContainText(initialSubjectDescription);
+    await expect(subjectRow).toBeVisible();
+    await expect(subjectRow).toContainText(initialSubjectDescription);
 
     await openSubjectDetailByName(page, initialSubjectName);
     await expect(page.getByText(initialSubjectDescription)).toBeVisible();
@@ -71,12 +92,11 @@ test("can edit a subject", async ({ page, e2eUser }) => {
       page.getByRole("heading", { name: "Subjects", exact: true }),
     ).toBeVisible();
 
-    const subjectCard = page
-      .getByTestId("subject-card")
-      .filter({ hasText: initialSubjectName })
-      .first();
+    const subjectRow = getSubjectRow(page, initialSubjectName);
 
-    await subjectCard.getByTestId("subject-card-actions").click();
+    await subjectRow
+      .getByRole("button", { name: "Open subject actions" })
+      .click();
     await page.getByRole("menuitem", { name: "Edit" }).click();
     const editDialog = page.getByRole("dialog", { name: "Edit Subject" });
     await editDialog
@@ -88,13 +108,10 @@ test("can edit a subject", async ({ page, e2eUser }) => {
     await editDialog.getByRole("button", { name: "Save Changes" }).click();
     await expect(editDialog).not.toBeVisible();
 
-    const editedCard = page
-      .getByTestId("subject-card")
-      .filter({ hasText: updatedSubjectName })
-      .first();
+    const editedRow = getSubjectRow(page, updatedSubjectName);
 
-    await expect(editedCard).toBeVisible();
-    await expect(editedCard).toContainText(updatedSubjectDescription);
+    await expect(editedRow).toBeVisible();
+    await expect(editedRow).toContainText(updatedSubjectDescription);
 
     await openSubjectDetailByName(page, updatedSubjectName);
     await expect(page.getByText(updatedSubjectDescription)).toBeVisible();
@@ -127,9 +144,7 @@ test("can delete a subject", async ({ page, e2eUser }) => {
     await page.getByTestId("confirm-delete-subject").click();
 
     await page.waitForURL("**/subjects");
-    await expect(
-      page.getByTestId("subject-card").filter({ hasText: initialSubjectName }),
-    ).toHaveCount(0);
+    await expect(getSubjectRow(page, initialSubjectName)).toHaveCount(0);
   });
 });
 
@@ -150,22 +165,19 @@ test("can archive and restore a subject", async ({ page, e2eUser }) => {
     await page.getByTestId("confirm-archive-subject").click();
 
     await page.waitForURL("**/subjects");
-    await expect(
-      page.getByTestId("subject-card").filter({ hasText: subjectName }),
-    ).toHaveCount(0);
+    await expect(getSubjectRow(page, subjectName)).toHaveCount(0);
 
     await page.goto("/subjects/archived");
     const archivedCard = page.getByText(subjectName, { exact: true });
     await expect(archivedCard).toBeVisible();
 
-    await page.getByRole("button", { name: "Restore" }).click();
+    await openSubjectActions(page, subjectName);
+    await page.getByRole("menuitem", { name: "Restore" }).click();
 
     await expect(archivedCard).toHaveCount(0);
 
     await page.goto("/subjects");
-    await expect(
-      page.getByTestId("subject-card").filter({ hasText: subjectName }),
-    ).toHaveCount(1);
+    await expect(getSubjectRow(page, subjectName)).toHaveCount(1);
   });
 });
 
@@ -192,12 +204,135 @@ test("can delete an archived subject from the archived page", async ({
     const archivedCard = page.getByText(subjectName, { exact: true });
 
     await expect(archivedCard).toBeVisible();
-    await page.getByRole("button", { name: "Delete" }).click();
+    await openSubjectActions(page, subjectName);
+    await page.getByRole("menuitem", { name: "Delete" }).click();
     await page.getByTestId("confirm-delete-subject").click();
 
     await expect(archivedCard).toHaveCount(0);
     await expect(
-      page.getByRole("heading", { name: "No archived subjects" }),
+      page.getByRole("heading", { name: "No subjects yet" }),
     ).toBeVisible();
+  });
+});
+
+test("can bulk archive active subjects", async ({ page, e2eUser }) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const names = [
+      getUniqueSubjectName("bulk-archive-1"),
+      getUniqueSubjectName("bulk-archive-2"),
+    ];
+
+    await clearUserSubjects(user.userId);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, names));
+
+    for (const name of names) {
+      await createSubject(user.userId, name, initialSubjectDescription);
+    }
+
+    await page.goto("/subjects");
+    await selectSubjectRow(page, names[0]);
+    await selectSubjectRow(page, names[1]);
+    await expect(page.getByText("2 selected")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Archive" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Clear selection" }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Clear selection" }).click();
+    await expect(page.getByText("2 subjects")).toBeVisible();
+
+    await selectSubjectRow(page, names[0]);
+    await selectSubjectRow(page, names[1]);
+    await page.getByRole("button", { name: "Archive" }).click();
+    const archiveDialog = page.getByRole("dialog", {
+      name: "Archive Subjects",
+    });
+    await archiveDialog.getByRole("button", { name: "Archive" }).click();
+    await expect(archiveDialog).not.toBeVisible();
+
+    for (const name of names) {
+      await expect(getSubjectRow(page, name)).toHaveCount(0);
+    }
+
+    await page.goto("/subjects?status=archived");
+    for (const name of names) {
+      await expect(getSubjectRow(page, name)).toBeVisible();
+    }
+  });
+});
+
+test("can bulk restore archived subjects", async ({ page, e2eUser }) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const names = [
+      getUniqueSubjectName("bulk-restore-1"),
+      getUniqueSubjectName("bulk-restore-2"),
+    ];
+
+    await clearUserSubjects(user.userId);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, names));
+
+    for (const name of names) {
+      await createSubject(user.userId, name, initialSubjectDescription, {
+        archivedAt: new Date(),
+      });
+    }
+
+    await page.goto("/subjects?status=archived");
+    await selectSubjectRow(page, names[0]);
+    await selectSubjectRow(page, names[1]);
+    await expect(page.getByText("2 selected")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Restore" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Clear selection" }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Restore" }).click();
+    const restoreDialog = page.getByRole("dialog", {
+      name: "Restore Subjects",
+    });
+    await restoreDialog.getByRole("button", { name: "Restore" }).click();
+    await expect(restoreDialog).not.toBeVisible();
+
+    for (const name of names) {
+      await expect(getSubjectRow(page, name)).toHaveCount(0);
+    }
+
+    await page.goto("/subjects");
+    for (const name of names) {
+      await expect(getSubjectRow(page, name)).toBeVisible();
+    }
+  });
+});
+
+test("can bulk delete selected subjects", async ({ page, e2eUser }) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const names = [
+      getUniqueSubjectName("bulk-delete-1"),
+      getUniqueSubjectName("bulk-delete-2"),
+    ];
+
+    await clearUserSubjects(user.userId);
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, names));
+
+    for (const name of names) {
+      await createSubject(user.userId, name, initialSubjectDescription);
+    }
+
+    await page.goto("/subjects");
+    await selectSubjectRow(page, names[0]);
+    await selectSubjectRow(page, names[1]);
+    await page.getByRole("button", { name: "Delete" }).click();
+    const deleteDialog = page.getByRole("dialog", { name: "Delete Subjects" });
+    await deleteDialog.getByRole("button", { name: "Delete" }).click();
+    await expect(deleteDialog).not.toBeVisible();
+
+    for (const name of names) {
+      await expect(getSubjectRow(page, name)).toHaveCount(0);
+    }
   });
 });

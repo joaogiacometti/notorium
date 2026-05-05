@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import {
   archiveSubjectForUser,
+  bulkArchiveSubjectsForUser,
+  bulkDeleteSubjectsForUser,
+  bulkRestoreSubjectsForUser,
   createSubjectForUser,
   deleteSubjectForUser,
   editSubjectForUser,
@@ -10,12 +13,19 @@ import {
 } from "@/features/subjects/mutations";
 import {
   getActiveSubjectByIdForUser,
+  getAllSubjectsForUser,
   getArchivedSubjectsForUser,
   getSubjectsForUser,
 } from "@/features/subjects/queries";
 import {
   type ArchiveSubjectForm,
   archiveSubjectSchema,
+  type BulkArchiveSubjectsForm,
+  type BulkDeleteSubjectsForm,
+  type BulkRestoreSubjectsForm,
+  bulkArchiveSubjectsSchema,
+  bulkDeleteSubjectsSchema,
+  bulkRestoreSubjectsSchema,
   type CreateSubjectForm,
   createSubjectSchema,
   type DeleteSubjectForm,
@@ -27,7 +37,11 @@ import {
 } from "@/features/subjects/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
-import type { MutationResult, SubjectEntity } from "@/lib/server/api-contracts";
+import type {
+  BulkSubjectMutationResult,
+  MutationResult,
+  SubjectEntity,
+} from "@/lib/server/api-contracts";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
@@ -37,6 +51,11 @@ export async function getSubjects(): Promise<SubjectEntity[]> {
 export async function getArchivedSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
   return getArchivedSubjectsForUser(userId);
+}
+
+export async function getAllSubjects(): Promise<SubjectEntity[]> {
+  const userId = await getAuthenticatedUserId();
+  return getAllSubjectsForUser(userId);
 }
 
 export async function getSubjectById(
@@ -130,6 +149,62 @@ export async function deleteSubject(
 
   if (result.success) {
     revalidatePath("/subjects");
+  }
+
+  return result;
+}
+
+export async function bulkArchiveSubjects(
+  data: BulkArchiveSubjectsForm,
+): Promise<BulkSubjectMutationResult> {
+  const result = await runValidatedUserAction(
+    bulkArchiveSubjectsSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) =>
+      bulkArchiveSubjectsForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+    revalidatePath("/subjects/archived");
+  }
+
+  return result;
+}
+
+export async function bulkRestoreSubjects(
+  data: BulkRestoreSubjectsForm,
+): Promise<BulkSubjectMutationResult> {
+  const result = await runValidatedUserAction(
+    bulkRestoreSubjectsSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) =>
+      bulkRestoreSubjectsForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+    revalidatePath("/subjects/archived");
+  }
+
+  return result;
+}
+
+export async function bulkDeleteSubjects(
+  data: BulkDeleteSubjectsForm,
+): Promise<BulkSubjectMutationResult> {
+  const result = await runValidatedUserAction(
+    bulkDeleteSubjectsSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) => bulkDeleteSubjectsForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    revalidatePath("/subjects");
+    revalidatePath("/subjects/archived");
   }
 
   return result;

@@ -35,6 +35,8 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete subjects.
 - Archive and restore subjects.
+- Subjects list as a table with search, sorting, active/archived/all filters, page size controls, row selection, and bulk archive/restore/delete.
+- Subjects table shows created date without time and does not show an updated column.
 - Subject fields: name and optional description.
 
 ### Notes

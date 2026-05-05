@@ -1,15 +1,11 @@
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { SubjectsTableSkeleton } from "@/components/subjects/subjects-table-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SubjectsLoading() {
-  const skeletonItems = Array.from(
-    { length: 6 },
-    (_, index) => `loading-subject-${index}`,
-  );
-
   return (
-    <main>
-      <AppPageContainer>
+    <main className="lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden">
+      <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
         <div className="mb-6 flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />
           <div className="min-w-0">
@@ -18,31 +14,32 @@ export default function SubjectsLoading() {
           </div>
         </div>
 
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-          <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
-            <Skeleton className="h-10 w-28 rounded-md" />
-            <Skeleton className="h-10 w-32 rounded-md" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {skeletonItems.map((id) => (
-            <div
-              key={id}
-              className="rounded-xl border border-border/60 bg-card p-6"
-            >
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <Skeleton className="size-9 shrink-0 rounded-lg" />
-                  <Skeleton className="h-6 w-3/4" />
-                </div>
-                <Skeleton className="size-8 shrink-0 rounded-md" />
+        <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:flex-1">
+          <div className="rounded-xl border border-border/70 bg-card/85 p-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+                <Skeleton className="h-10 w-full lg:max-w-3xl" />
+                <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="mt-1 h-4 w-2/3" />
-              <Skeleton className="mt-3 h-3 w-28" />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Skeleton className="h-9 w-full sm:w-80" />
+                <Skeleton className="h-10 w-full sm:w-48" />
+              </div>
+              <div className="flex min-h-8 flex-wrap items-center gap-2 sm:justify-between">
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <div className="ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34">
+                  <Skeleton className="size-8 rounded-md" />
+                  <Skeleton className="size-8 rounded-md" />
+                  <div className="hidden h-5 w-px bg-border/60 sm:block" />
+                  <Skeleton className="size-8 rounded-md" />
+                </div>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/85 lg:min-h-0 lg:flex-1">
+            <SubjectsTableSkeleton selectedRow />
+          </div>
         </div>
       </AppPageContainer>
     </main>

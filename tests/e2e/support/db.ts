@@ -364,6 +364,9 @@ export async function createSubject(
   userId: string,
   name: string,
   description: string,
+  options?: {
+    archivedAt?: Date | null;
+  },
 ) {
   const [newSubject] = await getDb()
     .insert(subject)
@@ -371,6 +374,7 @@ export async function createSubject(
       userId,
       name,
       description,
+      archivedAt: options?.archivedAt ?? null,
     })
     .returning({ id: subject.id });
 

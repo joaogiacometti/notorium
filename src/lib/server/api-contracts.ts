@@ -213,6 +213,12 @@ export type BulkUpdateAssessmentStatusResult =
       subjectIds: string[];
     }
   | ActionErrorResult;
+export type BulkSubjectMutationResult =
+  | {
+      success: true;
+      ids: string[];
+    }
+  | ActionErrorResult;
 export type ReviewFlashcardResult =
   | {
       success: true;

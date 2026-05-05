@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { LIMITS } from "@/lib/config/limits";
+import { bulkIdsSchema } from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 export const createSubjectSchema = z.object({
@@ -62,3 +63,21 @@ export const restoreSubjectSchema = z.object({
 });
 
 export type RestoreSubjectForm = z.infer<typeof restoreSubjectSchema>;
+
+export const bulkArchiveSubjectsSchema = z.object({
+  ids: bulkIdsSchema,
+});
+
+export type BulkArchiveSubjectsForm = z.infer<typeof bulkArchiveSubjectsSchema>;
+
+export const bulkRestoreSubjectsSchema = z.object({
+  ids: bulkIdsSchema,
+});
+
+export type BulkRestoreSubjectsForm = z.infer<typeof bulkRestoreSubjectsSchema>;
+
+export const bulkDeleteSubjectsSchema = z.object({
+  ids: bulkIdsSchema,
+});
+
+export type BulkDeleteSubjectsForm = z.infer<typeof bulkDeleteSubjectsSchema>;

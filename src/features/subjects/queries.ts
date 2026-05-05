@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
 import type { SubjectEntity } from "@/lib/server/api-contracts";
@@ -61,6 +61,16 @@ export async function getArchivedSubjectsForUser(
     .orderBy(desc(subject.updatedAt));
 }
 
+export async function getAllSubjectsForUser(
+  userId: string,
+): Promise<SubjectEntity[]> {
+  return getDb()
+    .select()
+    .from(subject)
+    .where(eq(subject.userId, userId))
+    .orderBy(desc(subject.updatedAt));
+}
+
 export async function getArchivedSubjectRecordForUser(
   userId: string,
   subjectId: string,
@@ -91,6 +101,18 @@ export async function getSubjectRecordForUser(
     .limit(1);
 
   return results[0] ?? null;
+}
+
+export async function getSubjectRecordsForUser(
+  userId: string,
+  subjectIds: string[],
+): Promise<Array<{ id: string; archivedAt: Date | null }>> {
+  if (subjectIds.length === 0) return [];
+
+  return getDb()
+    .select({ id: subject.id, archivedAt: subject.archivedAt })
+    .from(subject)
+    .where(and(inArray(subject.id, subjectIds), eq(subject.userId, userId)));
 }
 
 export async function countSubjectsForUser(userId: string): Promise<number> {

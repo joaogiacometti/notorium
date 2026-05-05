@@ -17,10 +17,16 @@ const deleteMock = vi.fn(() => ({
 }));
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
+const inArrayMock = vi.fn((column, values) => ({ column, values }));
+const isNotNullMock = vi.fn((column) => ({ column, operator: "isNotNull" }));
+const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const countTotalSubjectsForUserMock = vi.fn();
 const getActiveSubjectRecordForUserMock = vi.fn();
 const getArchivedSubjectRecordForUserMock = vi.fn();
 const getSubjectRecordForUserMock = vi.fn();
+const getSubjectRecordsForUserMock = vi.fn();
+const getSubjectAttachmentPathnamesForUserMock = vi.fn();
+const cleanupAttachmentPathnamesMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -33,13 +39,23 @@ vi.mock("@/db/index", () => ({
 vi.mock("drizzle-orm", () => ({
   and: andMock,
   eq: eqMock,
+  inArray: inArrayMock,
+  isNotNull: isNotNullMock,
+  isNull: isNullMock,
 }));
 
 vi.mock("@/db/schema", () => ({
   subject: {
+    archivedAt: "subject_archived_at_column",
     id: "subject_id_column",
     userId: "subject_user_id_column",
   },
+}));
+
+vi.mock("@/features/attachments/cleanup", () => ({
+  cleanupAttachmentPathnames: cleanupAttachmentPathnamesMock,
+  getSubjectAttachmentPathnamesForUser:
+    getSubjectAttachmentPathnamesForUserMock,
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
@@ -47,6 +63,7 @@ vi.mock("@/features/subjects/queries", () => ({
   getActiveSubjectRecordForUser: getActiveSubjectRecordForUserMock,
   getArchivedSubjectRecordForUser: getArchivedSubjectRecordForUserMock,
   getSubjectRecordForUser: getSubjectRecordForUserMock,
+  getSubjectRecordsForUser: getSubjectRecordsForUserMock,
 }));
 
 describe("createSubjectForUser", () => {
@@ -203,6 +220,160 @@ describe("deleteSubjectForUser", () => {
       errorCode: "subjects.notFound",
       errorParams: undefined,
       errorMessage: undefined,
+    });
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("bulkArchiveSubjectsForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("archives only owned active subjects", async () => {
+    getSubjectRecordsForUserMock.mockResolvedValueOnce([
+      { id: "subject-1", archivedAt: null },
+      { id: "subject-2", archivedAt: null },
+    ]);
+    updateWhereMock.mockResolvedValueOnce([]);
+
+    const { bulkArchiveSubjectsForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await bulkArchiveSubjectsForUser("user-1", {
+      ids: ["subject-1", "subject-2"],
+    });
+
+    expect(result).toEqual({
+      success: true,
+      ids: ["subject-1", "subject-2"],
+    });
+    expect(updateSetMock).toHaveBeenCalledWith({
+      archivedAt: expect.any(Date),
+    });
+    expect(isNullMock).toHaveBeenCalledWith("subject_archived_at_column");
+  });
+
+  it("rejects missing or archived subjects", async () => {
+    getSubjectRecordsForUserMock.mockResolvedValueOnce([
+      { id: "subject-1", archivedAt: new Date("2026-04-20T10:00:00.000Z") },
+    ]);
+
+    const { bulkArchiveSubjectsForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await bulkArchiveSubjectsForUser("user-1", {
+      ids: ["subject-1", "subject-2"],
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.notFound",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("bulkRestoreSubjectsForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("restores only owned archived subjects", async () => {
+    getSubjectRecordsForUserMock.mockResolvedValueOnce([
+      { id: "subject-1", archivedAt: new Date("2026-04-20T10:00:00.000Z") },
+    ]);
+    updateWhereMock.mockResolvedValueOnce([]);
+
+    const { bulkRestoreSubjectsForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await bulkRestoreSubjectsForUser("user-1", {
+      ids: ["subject-1"],
+    });
+
+    expect(result).toEqual({ success: true, ids: ["subject-1"] });
+    expect(updateSetMock).toHaveBeenCalledWith({ archivedAt: null });
+    expect(isNotNullMock).toHaveBeenCalledWith("subject_archived_at_column");
+  });
+
+  it("rejects active subjects", async () => {
+    getSubjectRecordsForUserMock.mockResolvedValueOnce([
+      { id: "subject-1", archivedAt: null },
+    ]);
+
+    const { bulkRestoreSubjectsForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await bulkRestoreSubjectsForUser("user-1", {
+      ids: ["subject-1"],
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.notFound",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("bulkDeleteSubjectsForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("deletes owned subjects and returns deleted ids", async () => {
+    getSubjectRecordsForUserMock.mockResolvedValueOnce([
+      { id: "subject-1", archivedAt: null },
+      { id: "subject-2", archivedAt: new Date("2026-04-20T10:00:00.000Z") },
+    ]);
+    getSubjectAttachmentPathnamesForUserMock
+      .mockResolvedValueOnce(["attachment-1"])
+      .mockResolvedValueOnce(["attachment-2"]);
+    deleteWhereMock.mockResolvedValueOnce([]);
+    cleanupAttachmentPathnamesMock.mockResolvedValueOnce(undefined);
+
+    const { bulkDeleteSubjectsForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await bulkDeleteSubjectsForUser("user-1", {
+      ids: ["subject-1", "subject-2"],
+    });
+
+    expect(result).toEqual({
+      success: true,
+      ids: ["subject-1", "subject-2"],
+    });
+    expect(deleteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "subject_id_column" }),
+    );
+    expect(cleanupAttachmentPathnamesMock).toHaveBeenCalledWith("user-1", [
+      "attachment-1",
+      "attachment-2",
+    ]);
+  });
+
+  it("rejects inaccessible subjects", async () => {
+    getSubjectRecordsForUserMock.mockResolvedValueOnce([
+      { id: "subject-1", archivedAt: null },
+    ]);
+
+    const { bulkDeleteSubjectsForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await bulkDeleteSubjectsForUser("user-1", {
+      ids: ["subject-1", "subject-2"],
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.notFound",
     });
     expect(deleteMock).not.toHaveBeenCalled();
   });

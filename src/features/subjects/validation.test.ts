@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   archiveSubjectSchema,
+  bulkArchiveSubjectsSchema,
+  bulkDeleteSubjectsSchema,
+  bulkRestoreSubjectsSchema,
   createSubjectSchema,
   deleteSubjectSchema,
   editSubjectSchema,
@@ -135,5 +138,25 @@ describe("restoreSubjectSchema", () => {
     expect(restoreSubjectSchema.safeParse({ id: "subject-1" }).success).toBe(
       true,
     );
+  });
+});
+
+describe("bulk subject schemas", () => {
+  it("reject empty ids", () => {
+    expect(bulkArchiveSubjectsSchema.safeParse({ ids: [] }).success).toBe(
+      false,
+    );
+    expect(bulkRestoreSubjectsSchema.safeParse({ ids: [] }).success).toBe(
+      false,
+    );
+    expect(bulkDeleteSubjectsSchema.safeParse({ ids: [] }).success).toBe(false);
+  });
+
+  it("accept non-empty ids", () => {
+    const input = { ids: ["subject-1"] };
+
+    expect(bulkArchiveSubjectsSchema.safeParse(input).success).toBe(true);
+    expect(bulkRestoreSubjectsSchema.safeParse(input).success).toBe(true);
+    expect(bulkDeleteSubjectsSchema.safeParse(input).success).toBe(true);
   });
 });

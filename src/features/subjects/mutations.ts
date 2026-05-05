@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
 import {
@@ -10,15 +10,20 @@ import {
   getActiveSubjectRecordForUser,
   getArchivedSubjectRecordForUser,
   getSubjectRecordForUser,
+  getSubjectRecordsForUser,
 } from "@/features/subjects/queries";
 import type {
   ArchiveSubjectForm,
+  BulkArchiveSubjectsForm,
+  BulkDeleteSubjectsForm,
+  BulkRestoreSubjectsForm,
   CreateSubjectForm,
   DeleteSubjectForm,
   EditSubjectForm,
   RestoreSubjectForm,
 } from "@/features/subjects/validation";
 import { LIMITS } from "@/lib/config/limits";
+import type { BulkSubjectMutationResult } from "@/lib/server/api-contracts";
 import {
   type ActionErrorResult,
   actionError,
@@ -139,4 +144,99 @@ export async function deleteSubjectForUser(
   await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return { success: true };
+}
+
+function getMissingSubjectIds(
+  expectedIds: string[],
+  records: Array<{ id: string }>,
+): string[] {
+  const recordIds = new Set(records.map((record) => record.id));
+
+  return expectedIds.filter((id) => !recordIds.has(id));
+}
+
+function hasArchivedSubject(records: Array<{ archivedAt: Date | null }>) {
+  return records.some((record) => record.archivedAt !== null);
+}
+
+function hasActiveSubject(records: Array<{ archivedAt: Date | null }>) {
+  return records.some((record) => record.archivedAt === null);
+}
+
+export async function bulkArchiveSubjectsForUser(
+  userId: string,
+  data: BulkArchiveSubjectsForm,
+): Promise<BulkSubjectMutationResult> {
+  const existingSubjects = await getSubjectRecordsForUser(userId, data.ids);
+
+  if (
+    existingSubjects.length !== data.ids.length ||
+    hasArchivedSubject(existingSubjects)
+  ) {
+    return actionError("subjects.notFound");
+  }
+
+  await getDb()
+    .update(subject)
+    .set({ archivedAt: new Date() })
+    .where(
+      and(
+        inArray(subject.id, data.ids),
+        eq(subject.userId, userId),
+        isNull(subject.archivedAt),
+      ),
+    );
+
+  return { success: true, ids: data.ids };
+}
+
+export async function bulkRestoreSubjectsForUser(
+  userId: string,
+  data: BulkRestoreSubjectsForm,
+): Promise<BulkSubjectMutationResult> {
+  const existingSubjects = await getSubjectRecordsForUser(userId, data.ids);
+
+  if (
+    existingSubjects.length !== data.ids.length ||
+    hasActiveSubject(existingSubjects)
+  ) {
+    return actionError("subjects.notFound");
+  }
+
+  await getDb()
+    .update(subject)
+    .set({ archivedAt: null })
+    .where(
+      and(
+        inArray(subject.id, data.ids),
+        eq(subject.userId, userId),
+        isNotNull(subject.archivedAt),
+      ),
+    );
+
+  return { success: true, ids: data.ids };
+}
+
+export async function bulkDeleteSubjectsForUser(
+  userId: string,
+  data: BulkDeleteSubjectsForm,
+): Promise<BulkSubjectMutationResult> {
+  const existingSubjects = await getSubjectRecordsForUser(userId, data.ids);
+  const missingSubjectIds = getMissingSubjectIds(data.ids, existingSubjects);
+
+  if (missingSubjectIds.length > 0) {
+    return actionError("subjects.notFound");
+  }
+
+  const attachmentPathnames = await Promise.all(
+    data.ids.map((id) => getSubjectAttachmentPathnamesForUser(userId, id)),
+  );
+
+  await getDb()
+    .delete(subject)
+    .where(and(inArray(subject.id, data.ids), eq(subject.userId, userId)));
+
+  await cleanupAttachmentPathnames(userId, attachmentPathnames.flat());
+
+  return { success: true, ids: data.ids };
 }

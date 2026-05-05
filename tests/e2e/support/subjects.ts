@@ -7,13 +7,16 @@ export async function openSubjectDetailByName(page: Page, subjectName: string) {
     page.getByRole("heading", { name: "Subjects", exact: true }),
   ).toBeVisible();
 
-  const subjectCard = page.getByTestId("subject-card").filter({
-    has: page.getByRole("link", { name: subjectName, exact: true }),
+  const subjectRow = page.getByRole("row").filter({
+    has: page.getByRole("link", { name: `Open ${subjectName}`, exact: true }),
   });
 
-  await expect(subjectCard).toHaveCount(1);
+  await expect(subjectRow).toHaveCount(1);
 
-  const subjectLink = subjectCard.getByTestId("subject-card-link");
+  const subjectLink = subjectRow.getByRole("link", {
+    name: `Open ${subjectName}`,
+    exact: true,
+  });
   await expect(subjectLink).toBeVisible();
 
   const subjectHref = await subjectLink.getAttribute("href");

@@ -1,19 +1,33 @@
 import { BookOpen } from "lucide-react";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import { SubjectsList } from "@/components/subjects/subjects-list";
-import {
-  getArchivedSubjectsForUser,
-  getSubjectsForUser,
-} from "@/features/subjects/queries";
+import { getAllSubjectsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 
-export default async function SubjectsPage() {
-  const session = await requireSession();
+type SubjectsStatusFilter = "active" | "archived" | "all";
 
-  const [subjects, archived] = await Promise.all([
-    getSubjectsForUser(session.user.id),
-    getArchivedSubjectsForUser(session.user.id),
-  ]);
+interface SubjectsPageProps {
+  searchParams: Promise<{
+    status?: string;
+  }>;
+}
+
+function resolveSubjectsStatusFilter(status?: string): SubjectsStatusFilter {
+  if (status === "archived" || status === "all") {
+    return status;
+  }
+
+  return "active";
+}
+
+export default async function SubjectsPage({
+  searchParams,
+}: Readonly<SubjectsPageProps>) {
+  const session = await requireSession();
+  const { status } = await searchParams;
+  const initialStatus = resolveSubjectsStatusFilter(status);
+
+  const subjects = await getAllSubjectsForUser(session.user.id);
 
   return (
     <FeaturePageShell
@@ -21,7 +35,7 @@ export default async function SubjectsPage() {
       description="Manage your courses and track progress."
       icon={BookOpen}
     >
-      <SubjectsList subjects={subjects} archivedCount={archived.length} />
+      <SubjectsList initialStatus={initialStatus} subjects={subjects} />
     </FeaturePageShell>
   );
 }
