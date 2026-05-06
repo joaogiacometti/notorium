@@ -317,6 +317,37 @@ describe("NoteDetail", () => {
     expect(toastSuccessMock).not.toHaveBeenCalled();
   });
 
+  it("keeps newer local content when saved note props refresh", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      changeFormControlValue(getContentInput(container), "Saved echo");
+    });
+
+    await waitForAutosave();
+
+    await act(async () => {
+      changeFormControlValue(getContentInput(container), "Newer local draft");
+    });
+
+    const savedEchoNote = {
+      ...note,
+      content: "Saved echo",
+      updatedAt: new Date("2026-04-20T10:01:00.000Z"),
+    };
+
+    await act(async () => {
+      renderNoteDetail(root, {
+        note: savedEchoNote,
+        subjectNotes: [savedEchoNote, otherNote],
+      });
+    });
+
+    expect(getContentInput(container)?.value).toBe("Newer local draft");
+  });
+
   it("flushes valid edits before sidebar navigation", async () => {
     await act(async () => {
       renderNoteDetail(root);

@@ -106,8 +106,21 @@ export function NoteDetail({
 
   useEffect(() => {
     const nextValues = getEditValues(note);
+    const currentValues = form.getValues();
+    const previousSavedValues = lastSavedValuesRef.current;
+    const isDifferentNote = currentValues.id !== note.id;
+    const hasLocalEdits = !isSameNoteEdit(currentValues, previousSavedValues);
+
     lastSavedValuesRef.current = nextValues;
-    form.reset(nextValues);
+
+    if (
+      isDifferentNote ||
+      !hasLocalEdits ||
+      isSameNoteEdit(currentValues, nextValues)
+    ) {
+      form.reset(nextValues);
+    }
+
     setIsSaving(false);
   }, [form, note]);
 
