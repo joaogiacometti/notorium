@@ -128,6 +128,12 @@ async function openFlashcardDetailFromManage(page: Page, front: string) {
   ).toBeVisible();
 }
 
+async function openFlashcardActionsMenu(page: Page) {
+  await page
+    .getByRole("button", { name: "Open flashcard actions", exact: true })
+    .click();
+}
+
 test("can create and open a flashcard", async ({ page, e2eUser }) => {
   const user = e2eUser;
   const deckName = getUniqueDeckName("create-open");
@@ -155,7 +161,9 @@ test("can create and open a flashcard", async ({ page, e2eUser }) => {
     ).toBeVisible();
     await expect(page.getByText("Front", { exact: true })).toBeVisible();
     await expect(page.getByText("Back", { exact: true })).toBeVisible();
-    await expect(page.getByText(deckName, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(`Deck: ${deckName}`, { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText(flashcardBack).first()).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);
@@ -340,10 +348,8 @@ test("can edit a flashcard", async ({ page, e2eUser }) => {
       page.getByRole("heading", { name: initialFront, exact: true }),
     ).toBeVisible();
 
-    await page
-      .getByRole("main")
-      .getByRole("button", { name: "Edit", exact: true })
-      .click();
+    await openFlashcardActionsMenu(page);
+    await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
 
     const editDialog = page.getByRole("dialog", { name: "Edit Flashcard" });
     await fillFlashcardEditors(
@@ -401,7 +407,8 @@ test("can delete a flashcard", async ({ page, e2eUser }) => {
       page.getByRole("heading", { name: flashcardFront, exact: true }),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    await openFlashcardActionsMenu(page);
+    await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
     const deleteDialog = page.getByRole("dialog", { name: "Delete Flashcard" });
     await deleteDialog
       .getByRole("button", { name: "Delete", exact: true })
