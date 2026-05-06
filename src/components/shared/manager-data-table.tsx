@@ -366,13 +366,14 @@ export function ManagerDataTable<TRow>({
                     <TableRow
                       key={row.id}
                       className={cn(
-                        "border-b border-border/50 transition-colors duration-150 hover:bg-muted/20",
+                        "group border-b border-border/50 transition-colors duration-150 hover:bg-muted/20",
                         row.getIsSelected() ? "bg-muted/10" : null,
                         onRowClick
                           ? "cursor-pointer focus-visible:bg-muted/20 focus-visible:outline-none"
                           : null,
                         getRowClassName?.(row.original),
                       )}
+                      data-selected={row.getIsSelected() ? "true" : undefined}
                       tabIndex={shouldExposeRowNavigationRole ? 0 : undefined}
                       role={shouldExposeRowNavigationRole ? "link" : undefined}
                       aria-label={

@@ -31,10 +31,9 @@ export default function NoteDetailLoading() {
 
           <div className="min-w-0 space-y-4 lg:flex lg:min-h-0 lg:flex-col">
             <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-4">
-              <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
-                <Skeleton className="size-10 shrink-0 rounded-lg" />
+              <div className="flex min-w-0 flex-1 items-start">
                 <div className="min-w-0 flex-1">
-                  <Skeleton className="h-10 w-full max-w-80 rounded-md sm:w-4/5" />
+                  <Skeleton className="h-10 w-full rounded-md" />
                 </div>
               </div>
               <div className="flex shrink-0">

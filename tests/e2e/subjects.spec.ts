@@ -29,12 +29,24 @@ async function selectSubjectRow(page: Page, name: string) {
 async function openSubjectActions(page: Page, name: string) {
   const row = getSubjectRow(page, name);
   await expect(row).toBeVisible();
+  await row.hover();
   const actionsButton = row.getByRole("button", {
     name: "Open subject actions",
   });
 
   await expect(actionsButton).toBeVisible();
   await actionsButton.click();
+}
+
+async function openActiveSubjectActions(page: Page, name: string) {
+  await openSubjectActions(page, name);
+  await expect(page.getByRole("menuitem", { name: "Edit" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+}
+
+async function openArchivedSubjectActions(page: Page, name: string) {
+  await openSubjectActions(page, name);
+  await expect(page.getByRole("menuitem", { name: "Restore" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
 }
 
@@ -84,11 +96,7 @@ test("can edit a subject", async ({ page, e2eUser }) => {
       page.getByRole("heading", { name: "Subjects", exact: true }),
     ).toBeVisible();
 
-    const subjectRow = getSubjectRow(page, initialSubjectName);
-
-    await subjectRow
-      .getByRole("button", { name: "Open subject actions" })
-      .click();
+    await openActiveSubjectActions(page, initialSubjectName);
     await page.getByRole("menuitem", { name: "Edit" }).click();
     const editDialog = page.getByRole("dialog", { name: "Edit Subject" });
     await editDialog
@@ -154,7 +162,7 @@ test("can archive and restore a subject", async ({ page, e2eUser }) => {
     const archivedCard = page.getByText(subjectName, { exact: true });
     await expect(archivedCard).toBeVisible();
 
-    await openSubjectActions(page, subjectName);
+    await openArchivedSubjectActions(page, subjectName);
     await page.getByRole("menuitem", { name: "Restore" }).click();
 
     await expect(archivedCard).toHaveCount(0);
@@ -187,7 +195,7 @@ test("can delete an archived subject from the archived page", async ({
     const archivedCard = page.getByText(subjectName, { exact: true });
 
     await expect(archivedCard).toBeVisible();
-    await openSubjectActions(page, subjectName);
+    await openArchivedSubjectActions(page, subjectName);
     await page.getByRole("menuitem", { name: "Delete" }).click();
     await page.getByTestId("confirm-delete-subject").click();
 

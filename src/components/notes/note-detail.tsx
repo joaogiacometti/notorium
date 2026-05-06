@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Clipboard,
-  FileText,
   MoreVertical,
   Sparkles,
   Trash2,
@@ -239,10 +238,7 @@ export function NoteDetail({
 
         <form className="min-w-0 space-y-4 lg:flex lg:min-h-0 lg:flex-col lg:space-y-4">
           <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-4">
-            <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground">
-                <FileText className="size-5" />
-              </div>
+            <div className="flex min-w-0 flex-1 items-start">
               <Controller
                 name="title"
                 control={form.control}
@@ -253,7 +249,7 @@ export function NoteDetail({
                       id="form-edit-note-title"
                       aria-label="Note title"
                       aria-invalid={fieldState.invalid}
-                      className="-mx-2 h-10 w-full min-w-0 rounded-md border-0 bg-transparent px-2 py-0 text-lg leading-10 font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl"
+                      className="h-10 w-full min-w-0 rounded-md border-0 bg-transparent px-3 py-0 text-lg leading-10 font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl"
                       placeholder="Untitled note"
                     />
                     {fieldState.invalid ? (

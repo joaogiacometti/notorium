@@ -4,6 +4,7 @@ import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
+import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,7 +43,7 @@ export function AssessmentsTableRowActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
+            className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground`}
             aria-label="Open actions"
             onClick={(event) => {
               event.stopPropagation();

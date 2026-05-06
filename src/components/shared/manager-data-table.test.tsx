@@ -159,6 +159,33 @@ describe("ManagerDataTable", () => {
     expect(onRowClick).toHaveBeenCalledWith({ id: "row-1", label: "Alpha" });
   });
 
+  it("marks selected rows for action visibility styling", async () => {
+    await act(async () => {
+      root.render(
+        <ManagerDataTable
+          data={[{ id: "row-1", label: "Alpha" }]}
+          columns={columns}
+          emptyLabel="No rows"
+          getRowId={(row) => row.id}
+          nextLabel="Next"
+          onPageIndexChange={() => {}}
+          onSelectedRowIdsChange={() => {}}
+          pageIndex={0}
+          pageLabel={(current, total) => `Page ${current} of ${total}`}
+          prevLabel="Previous"
+          selectedRowIds={["row-1"]}
+          selectionAriaLabel="Select row"
+        />,
+      );
+    });
+
+    const row = container.querySelector(
+      '[data-slot="table-body"] [data-slot="table-row"]',
+    );
+
+    expect(row?.getAttribute("data-selected")).toBe("true");
+  });
+
   it("renders page size controls when a page size handler is provided", async () => {
     await act(async () => {
       root.render(

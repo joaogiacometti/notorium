@@ -64,6 +64,31 @@
 
 @custom-variant dark (&:is(.dark *, .halloween *, .catppuccin-mocha *));
 
+@layer components {
+  .row-action-trigger {
+    opacity: 1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .row-action-trigger {
+      pointer-events: none;
+      opacity: 0;
+      transition-property:
+        color, background-color, border-color, opacity, box-shadow, transform;
+      transition-timing-function: var(--tw-ease, ease);
+      transition-duration: var(--tw-duration, 150ms);
+    }
+
+    .group:hover .row-action-trigger,
+    .group:focus-within .row-action-trigger,
+    .group[data-selected="true"] .row-action-trigger,
+    .row-action-trigger[data-state="open"] {
+      pointer-events: auto;
+      opacity: 1;
+    }
+  }
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

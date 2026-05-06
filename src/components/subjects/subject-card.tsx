@@ -1,7 +1,8 @@
 "use client";
 
-import { Archive, BookOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Archive, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { SubjectText } from "@/components/shared/subject-text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,11 +37,8 @@ export function SubjectCard({
         <Link
           href={`/subjects/${subject.id}`}
           data-testid="subject-card-link"
-          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="flex min-w-0 flex-1 items-center rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
-            <BookOpen className="size-4" />
-          </div>
           <CardTitle className="min-w-0 text-base leading-tight">
             <SubjectText
               value={subject.name}
@@ -55,7 +53,7 @@ export function SubjectCard({
               variant="ghost"
               size="icon"
               data-testid="subject-card-actions"
-              className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+              className={`${ROW_ACTION_TRIGGER_CLASS} size-8 shrink-0 text-muted-foreground`}
               aria-label="Open subject actions"
             >
               <MoreVertical className="size-4" />

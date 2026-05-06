@@ -1,7 +1,8 @@
 "use client";
 
-import { FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -29,11 +30,8 @@ export function NoteCard({
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
         <Link
           href={`/subjects/${note.subjectId}/notes/${note.id}`}
-          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="flex min-w-0 flex-1 items-center rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
-            <FileText className="size-4" />
-          </div>
           <CardTitle className="truncate text-base leading-tight">
             {note.title}
           </CardTitle>
@@ -43,7 +41,7 @@ export function NoteCard({
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 shrink-0 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+              className={`${ROW_ACTION_TRIGGER_CLASS} size-8 shrink-0 text-muted-foreground`}
               aria-label="Open note actions"
             >
               <MoreVertical className="size-4" />

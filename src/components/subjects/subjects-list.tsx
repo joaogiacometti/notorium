@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { getAllSubjects, restoreSubject } from "@/app/actions/subjects";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
+import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { SubjectText } from "@/components/shared/subject-text";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
@@ -157,7 +158,7 @@ function getColumnClassName(columnId: string): string {
     case "select":
       return "w-9 min-w-9";
     case "subject":
-      return "min-w-[7rem] sm:min-w-[8rem] lg:min-w-[3rem] lg:max-w-[8rem]";
+      return "w-36 min-w-36 max-w-36 sm:w-44 sm:min-w-44 sm:max-w-44 lg:w-auto lg:min-w-[3rem] lg:max-w-[8rem]";
     case "status":
       return "min-w-[5rem]";
     case "createdAt":
@@ -285,31 +286,24 @@ function SubjectsSelectionToolbar({
 
 function renderSubjectLabel(subject: SubjectEntity) {
   const content = (
-    <>
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
-        <BookOpen className="size-4" />
-      </div>
-      <div className="min-w-0 max-w-full flex-1 overflow-hidden">
-        <SubjectText
-          value={subject.name}
-          mode="truncate"
-          className="block max-w-full text-sm font-semibold leading-5.5 text-foreground/95"
-        />
-      </div>
-    </>
+    <div className="min-w-0 max-w-full flex-1 overflow-hidden">
+      <SubjectText
+        value={subject.name}
+        mode="truncate"
+        className="block max-w-full text-sm font-semibold leading-5.5 text-foreground/95"
+      />
+    </div>
   );
 
   if (isArchived(subject)) {
-    return (
-      <div className="flex min-w-0 items-center gap-2.5 py-1">{content}</div>
-    );
+    return <div className="flex min-w-0 items-center py-1">{content}</div>;
   }
 
   return (
     <Link
       href={`/subjects/${subject.id}`}
       aria-label={`Open ${subject.name}`}
-      className="flex min-w-0 max-w-full items-center gap-2.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex min-w-0 max-w-full items-center py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
     >
@@ -410,7 +404,10 @@ function SubjectsTableActions({
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
+          className={cn(
+            ROW_ACTION_TRIGGER_CLASS,
+            "size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground",
+          )}
           aria-label="Open subject actions"
           disabled={isPending}
           onClick={(event) => event.stopPropagation()}

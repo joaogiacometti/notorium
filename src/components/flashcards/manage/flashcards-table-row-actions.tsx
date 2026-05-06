@@ -8,6 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,7 +36,7 @@ export function FlashcardsTableRowActions({
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs transition-all hover:border-border/70 hover:bg-background hover:text-foreground"
+          className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground`}
           aria-label="Open flashcard actions"
         >
           <MoreVertical className="size-3.5" />

@@ -1,7 +1,6 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { BookOpenText } from "lucide-react";
 import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
@@ -58,10 +57,7 @@ function getColumns(
       size: 128,
       header: () => <TableHeaderLabel>Front</TableHeaderLabel>,
       cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-3 py-1">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
-            <BookOpenText className="size-4" />
-          </div>
+        <div className="flex min-w-0 items-center py-1">
           <div className="min-w-0 flex-1 overflow-hidden">
             <div
               className="truncate text-sm font-semibold leading-6 text-foreground/95"

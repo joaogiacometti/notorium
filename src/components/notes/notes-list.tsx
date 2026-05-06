@@ -1,19 +1,13 @@
 "use client";
 
-import {
-  FileText,
-  Lock,
-  MoreVertical,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { Lock, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
+import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -162,9 +156,8 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
                 <Link
                   href={`/subjects/${n.subjectId}/notes/${n.id}`}
                   aria-label={`Open ${n.title}`}
-                  className="flex min-w-0 flex-1 items-start gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  className="flex min-w-0 flex-1 items-start rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
-                  <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">
                       {n.title}
@@ -180,7 +173,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      className="shrink-0 text-muted-foreground opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+                      className={`${ROW_ACTION_TRIGGER_CLASS} shrink-0 text-muted-foreground`}
                       aria-label={`Open actions for ${n.title}`}
                     >
                       <MoreVertical className="size-4" />

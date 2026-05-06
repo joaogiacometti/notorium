@@ -1,7 +1,6 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { CalendarDays, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
@@ -120,13 +119,10 @@ function getColumns(
             subjectId: selectedSubjectId,
           })}
           aria-label={`Open details for ${row.original.title}`}
-          className="flex min-w-0 max-w-full items-center gap-2.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-w-0 max-w-full items-center py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary shadow-xs">
-            <ClipboardList className="size-4" />
-          </div>
           <div className="min-w-0 max-w-full flex-1 overflow-hidden">
             <div
               className="max-w-full truncate text-sm font-semibold leading-5.5 text-foreground/95"
@@ -171,8 +167,7 @@ function getColumns(
       accessorKey: "dueDate",
       header: () => <TableHeaderLabel>Due Date</TableHeaderLabel>,
       cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-1.5 py-1 text-xs text-muted-foreground">
-          <CalendarDays className="size-3.5 shrink-0 text-muted-foreground/70" />
+        <div className="flex min-w-0 items-center py-1 text-xs text-muted-foreground">
           <span className="truncate leading-5">
             {formatDueDate(row.original.dueDate)}
           </span>
