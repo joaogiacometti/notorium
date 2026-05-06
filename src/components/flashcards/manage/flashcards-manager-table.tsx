@@ -33,11 +33,9 @@ function getColumnClassName(columnId: string) {
     case "select":
       return "w-9 min-w-9";
     case "front":
-      return "min-w-[7rem] sm:min-w-[8rem] lg:min-w-[3rem] lg:max-w-[8rem]";
-    case "back":
-      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[2.5rem] lg:max-w-[6rem]";
+      return "min-w-[10rem] sm:min-w-[12rem] lg:min-w-[8rem] lg:max-w-[14rem]";
     case "deckPath":
-      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[2.5rem] lg:max-w-[5rem]";
+      return "min-w-[6rem] sm:min-w-[8rem] lg:min-w-[4rem] lg:max-w-[10rem]";
     case "actions":
       return "w-14 min-w-14";
     default:
@@ -54,7 +52,7 @@ function getColumns(
   return [
     {
       accessorKey: "front",
-      size: 128,
+      size: 220,
       header: () => <TableHeaderLabel>Front</TableHeaderLabel>,
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center py-1">
@@ -70,21 +68,8 @@ function getColumns(
       ),
     },
     {
-      accessorKey: "back",
-      size: 104,
-      header: () => <TableHeaderLabel>Back</TableHeaderLabel>,
-      cell: ({ row }) => (
-        <div
-          className="min-w-0 overflow-hidden truncate py-1 text-sm leading-6 text-muted-foreground"
-          title={row.original.backExcerpt}
-        >
-          {row.original.backExcerpt}
-        </div>
-      ),
-    },
-    {
       accessorKey: "deckPath",
-      size: 104,
+      size: 140,
       header: () => <TableHeaderLabel>Deck</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
@@ -170,9 +155,7 @@ export function FlashcardsManagerTable({
       loadingMinimumVisibleMs={250}
       loadingSkeleton={
         <div className="h-full" data-testid="flashcards-manage-table-loading">
-          <FlashcardsManagerTableSkeleton
-            selectedRow={selectedFlashcardIds.length > 0}
-          />
+          <FlashcardsManagerTableSkeleton />
         </div>
       }
       onPageIndexChange={onPageIndexChange}
@@ -186,7 +169,7 @@ export function FlashcardsManagerTable({
       emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
-      tableClassName="w-full min-w-[30rem] sm:min-w-[34rem] lg:min-w-[20rem]"
+      tableClassName="w-full min-w-[26rem] sm:min-w-[30rem] lg:min-w-[20rem]"
       columnResizeMode="onEnd"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
@@ -200,73 +183,41 @@ export function FlashcardsManagerTable({
 
 interface FlashcardsManagerTableSkeletonProps {
   className?: string;
-  selectedRow?: boolean;
 }
 
 export function FlashcardsManagerTableSkeleton({
   className,
-  selectedRow = false,
 }: Readonly<FlashcardsManagerTableSkeletonProps>) {
   return (
     <TableSkeleton
       className={cn("flex h-full flex-col", className)}
       headerClassName="py-3"
-      columnTemplate={
-        selectedRow
-          ? "2.25rem 1.35fr 1fr 0.7fr 0.7fr 3.5rem"
-          : "1.35fr 1fr 0.7fr 0.7fr 3.5rem"
-      }
-      headers={
-        selectedRow
-          ? [
-              { content: <div /> },
-              { className: "h-4 w-16" },
-              { className: "h-4 w-14" },
-              { className: "h-4 w-20" },
-              { className: "h-4 w-16" },
-              { content: <div /> },
-            ]
-          : [
-              { className: "h-4 w-16" },
-              { className: "h-4 w-14" },
-              { className: "h-4 w-20" },
-              { className: "h-4 w-16" },
-              { content: <div /> },
-            ]
-      }
-      rows={
-        selectedRow
-          ? [
-              [
-                {
-                  className:
-                    "h-4 w-4 rounded-sm self-center justify-self-center",
-                },
-                {
-                  className: "h-6 w-full",
-                },
-                { className: "h-6 w-full" },
-                { className: "h-6 w-24 rounded-full" },
-                { className: "h-6 w-full" },
-                {
-                  className:
-                    "h-8 w-8 self-center justify-self-start rounded-full ml-1",
-                },
-              ],
-            ]
-          : [
-              {
-                className: "h-6 w-full",
-              },
-              { className: "h-6 w-full" },
-              { className: "h-7 w-24 rounded-full" },
-              { className: "h-6 w-full" },
-              {
-                className:
-                  "h-8 w-8 self-center justify-self-start rounded-full ml-1",
-              },
-            ]
-      }
+      columnTemplate="2.25rem 2fr 1fr 3.5rem"
+      headers={[
+        {
+          content: (
+            <div className="h-4 w-4 rounded-sm self-center justify-self-center bg-muted" />
+          ),
+        },
+        { className: "h-4 w-16" },
+        { className: "h-4 w-20" },
+        { content: <div /> },
+      ]}
+      rows={[
+        [
+          {
+            className: "h-4 w-4 rounded-sm self-center justify-self-center",
+          },
+          {
+            className: "h-6 w-full",
+          },
+          { className: "h-6 w-full" },
+          {
+            className:
+              "h-8 w-8 self-center justify-self-start rounded-full ml-1",
+          },
+        ],
+      ]}
       rowClassName="py-2.5"
       rowCount={3}
       footer={[

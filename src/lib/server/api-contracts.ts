@@ -60,7 +60,6 @@ export type FlashcardManageItem = Pick<
   front: string;
   frontExcerpt: string;
   frontTitle: string | null;
-  backExcerpt: string;
   deckName: string;
   deckPath: string;
 };

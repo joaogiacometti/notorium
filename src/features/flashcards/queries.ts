@@ -8,7 +8,6 @@ import {
   ne,
   or,
   type SQL,
-  sql,
 } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { deck, flashcard } from "@/db/schema";
@@ -16,10 +15,6 @@ import {
   getAllDecksWithPathsForUser,
   getDescendantDeckIds,
 } from "@/features/decks/queries";
-import {
-  getFlashcardManageBackExcerpt,
-  getFlashcardManageBackExcerptSourceLength,
-} from "@/features/flashcards/manage-excerpts";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import {
   getRichTextExcerpt,
@@ -85,7 +80,6 @@ export async function getFlashcardsManagePageForUser(
   const normalizedSearch = search?.trim() ?? "";
   const searchPattern = buildContainsSearchPattern(normalizedSearch);
   const offset = pageIndex * pageSize;
-  const backExcerptSourceLength = getFlashcardManageBackExcerptSourceLength();
   const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
   const scopedDeckIds = await resolveScopedDeckIds(userId, deckId, deckIds);
 
@@ -112,7 +106,6 @@ export async function getFlashcardsManagePageForUser(
         deckId: flashcard.deckId,
         updatedAt: flashcard.updatedAt,
         front: flashcard.front,
-        back: sql<string>`left(${flashcard.back}, ${backExcerptSourceLength})`,
         deckName: deck.name,
       })
       .from(flashcard)
@@ -143,9 +136,8 @@ export async function getFlashcardsManagePageForUser(
       deckId: row.deckId,
       updatedAt: row.updatedAt,
       front: row.front,
-      frontExcerpt: getRichTextExcerpt(row.front, 30),
+      frontExcerpt: getRichTextExcerpt(row.front, 45),
       frontTitle: richTextToPlainText(row.front) || null,
-      backExcerpt: getFlashcardManageBackExcerpt(row.back),
       deckName: row.deckName,
       deckPath: deckPathMap.get(row.deckId) ?? row.deckName,
     })),
