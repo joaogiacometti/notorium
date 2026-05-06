@@ -344,24 +344,6 @@ export function NoteDetail({
             </div>
 
             <div className="flex w-full shrink-0 gap-2 sm:w-auto">
-              {aiEnabled ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-1.5 sm:flex-none"
-                  onClick={() => setGenerateOpen(true)}
-                  disabled={!hasDecks}
-                  title={
-                    hasDecks
-                      ? undefined
-                      : "Create a deck before generating flashcards."
-                  }
-                >
-                  <Sparkles className="size-3.5" />
-                  Generate flashcards
-                </Button>
-              ) : null}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -375,6 +357,24 @@ export function NoteDetail({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {aiEnabled ? (
+                    <>
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => setGenerateOpen(true)}
+                        disabled={!hasDecks}
+                        title={
+                          hasDecks
+                            ? undefined
+                            : "Create a deck before generating flashcards."
+                        }
+                      >
+                        <Sparkles className="size-4" />
+                        Generate flashcards
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  ) : null}
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => void copyNoteContent("rich")}
