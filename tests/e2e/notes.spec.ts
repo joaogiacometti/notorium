@@ -8,6 +8,7 @@ import {
   createDeck,
   createNote,
   createSubject,
+  getNoteById,
 } from "./support/db";
 import { openSubjectDetailByName } from "./support/subjects";
 
@@ -105,21 +106,33 @@ test("can edit a note", async ({ page, e2eUser }) => {
   try {
     const createdSubject = await createSubject(user.userId, subjectName);
 
-    await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
+    const createdNote = await createNote(
+      user.userId,
+      createdSubject.id,
+      initialTitle,
+      "Initial",
+    );
 
     await openSubjectDetailByName(page, subjectName);
     await openNoteDetailByTitle(page, initialTitle);
 
-    const savedToast = page.getByText("Note saved.", { exact: true });
-
     await page.locator("#form-edit-note-title").fill(updatedTitle);
-    await expect(savedToast).toBeVisible();
-    await expect(savedToast).toBeHidden();
+    await expect
+      .poll(async () => {
+        const editedNote = await getNoteById(user.userId, createdNote.id);
+        return editedNote?.title;
+      })
+      .toBe(updatedTitle);
 
     await page.locator("#form-edit-note-content").click();
     await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.type(updatedContent);
-    await expect(savedToast).toBeVisible();
+    await expect
+      .poll(async () => {
+        const editedNote = await getNoteById(user.userId, createdNote.id);
+        return editedNote?.content ?? "";
+      })
+      .toContain(updatedContent);
 
     await page.reload();
     await expect(page.locator("#form-edit-note-title")).toHaveValue(

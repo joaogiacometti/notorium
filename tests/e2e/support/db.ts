@@ -260,6 +260,19 @@ export async function createNote(
   return newNote;
 }
 
+export async function getNoteById(userId: string, noteId: string) {
+  const [existingNote] = await getDb()
+    .select({
+      content: note.content,
+      title: note.title,
+    })
+    .from(note)
+    .where(and(eq(note.userId, userId), eq(note.id, noteId)))
+    .limit(1);
+
+  return existingNote ?? null;
+}
+
 export async function createAttendanceMiss(
   userId: string,
   subjectId: string,

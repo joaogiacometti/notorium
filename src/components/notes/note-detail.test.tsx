@@ -313,12 +313,8 @@ describe("NoteDetail", () => {
       title: "Updated note",
       content: "Updated content",
     });
-    expect(toastLoadingMock).toHaveBeenCalledWith("Saving note...", {
-      id: "note-save-status",
-    });
-    expect(toastSuccessMock).toHaveBeenCalledWith("Note saved.", {
-      id: "note-save-status",
-    });
+    expect(toastLoadingMock).not.toHaveBeenCalled();
+    expect(toastSuccessMock).not.toHaveBeenCalled();
   });
 
   it("flushes valid edits before sidebar navigation", async () => {

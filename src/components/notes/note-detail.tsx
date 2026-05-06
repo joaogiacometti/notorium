@@ -55,7 +55,6 @@ interface NoteDetailProps {
 }
 
 const AUTOSAVE_DELAY_MS = 800;
-const NOTE_SAVE_TOAST_ID = "note-save-status";
 
 function getEditValues(note: NoteEntity): EditNoteForm {
   return {
@@ -122,7 +121,6 @@ export function NoteDetail({
       const saveSequence = saveSequenceRef.current + 1;
       saveSequenceRef.current = saveSequence;
       setIsSaving(true);
-      toast.loading("Saving note...", { id: NOTE_SAVE_TOAST_ID });
 
       const result = await editNote(values);
 
@@ -133,9 +131,7 @@ export function NoteDetail({
       setIsSaving(false);
 
       if (!result.success) {
-        toast.error(t(result.errorCode, result.errorParams), {
-          id: NOTE_SAVE_TOAST_ID,
-        });
+        toast.error(t(result.errorCode, result.errorParams));
         return false;
       }
 
@@ -143,7 +139,6 @@ export function NoteDetail({
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       if (isSameNoteEdit(form.getValues(), values)) {
         form.reset(values);
-        toast.success("Note saved.", { id: NOTE_SAVE_TOAST_ID });
       }
 
       return true;
