@@ -29,7 +29,13 @@ async function selectSubjectRow(page: Page, name: string) {
 async function openSubjectActions(page: Page, name: string) {
   const row = getSubjectRow(page, name);
   await expect(row).toBeVisible();
-  await row.getByRole("button", { name: "Open subject actions" }).click();
+  const actionsButton = row.getByRole("button", {
+    name: "Open subject actions",
+  });
+
+  await expect(actionsButton).toBeVisible();
+  await actionsButton.click();
+  await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
 }
 
 test("can create a subject", async ({ page, e2eUser }) => {

@@ -268,7 +268,7 @@ function createSubject(
 function findButton(container: HTMLElement, text: string) {
   return Array.from(container.querySelectorAll("button")).find((button) =>
     button.textContent?.includes(text),
-  ) as HTMLButtonElement | undefined;
+  );
 }
 
 function findButtonByLabel(container: HTMLElement, label: string) {
@@ -366,7 +366,7 @@ describe("SubjectsList", () => {
     });
 
     expect(container.textContent).not.toContain("Active Biology");
-    expect(container.textContent).toContain("Archived Histor...");
+    expect(container.textContent).toContain("Archived History");
     expect(container.textContent).toContain("Restore");
     expect(container.textContent).not.toContain("Edit");
   });
@@ -419,7 +419,7 @@ describe("SubjectsList", () => {
     );
   });
 
-  it("limits long subject names in the table", async () => {
+  it("keeps long subject names in table text", async () => {
     const longName = "Advanced Interdisciplinary Biology Research";
 
     await act(async () => {
@@ -432,8 +432,8 @@ describe("SubjectsList", () => {
       `a[aria-label="Open ${longName}"]`,
     );
 
-    expect(subjectLink?.textContent).toContain("Advanced Interd...");
-    expect(subjectLink?.textContent).not.toContain(longName);
+    expect(subjectLink?.textContent).toContain(longName);
+    expect(subjectLink?.querySelector("span")?.className).toContain("truncate");
     expect(subjectLink?.querySelector("span")?.title).toBe(longName);
   });
 

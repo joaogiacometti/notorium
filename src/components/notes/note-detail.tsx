@@ -237,7 +237,7 @@ export function NoteDetail({
           }}
         />
 
-        <form className="min-w-0 space-y-4 overflow-hidden lg:flex lg:min-h-0 lg:flex-col lg:space-y-4">
+        <form className="min-w-0 space-y-4 lg:flex lg:min-h-0 lg:flex-col lg:space-y-4">
           <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-4">
             <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground">
