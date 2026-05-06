@@ -10,34 +10,36 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 const refreshMock = vi.fn();
+const pushMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: refreshMock,
+    push: pushMock,
   }),
 }));
 
-vi.mock("@/components/notes/note-card", () => ({
-  NoteCard: ({ note }: { note: NoteEntity }) => <div>{note.title}</div>,
-}));
-
-vi.mock("@/components/notes/edit-note-dialog", () => ({
-  EditNoteDialog: () => null,
-}));
-
 vi.mock("@/components/notes/delete-note-dialog", () => ({
-  DeleteNoteDialog: () => null,
+  DeleteNoteDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="delete-note-dialog" /> : null,
 }));
 
-vi.mock("@/components/notes/create-note-dialog", () => ({
-  CreateNoteDialog: ({
+vi.mock("@/components/notes/edit-note-title-dialog", () => ({
+  EditNoteTitleDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="edit-note-title-dialog" /> : null,
+}));
+
+vi.mock("@/components/notes/create-note-title-dialog", () => ({
+  CreateNoteTitleDialog: ({
     trigger,
     open,
     onOpenChange,
+    onSuccess,
   }: {
     trigger: React.ReactElement<Record<string, unknown>>;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onSuccess: (noteId: string) => void;
   }) => {
     const child = trigger.props.children;
     const disabled =
@@ -54,10 +56,44 @@ vi.mock("@/components/notes/create-note-dialog", () => ({
             }
           },
         })}
-        {open ? <div data-testid="create-note-dialog" /> : null}
+        {open ? (
+          <div data-testid="create-note-title-dialog">
+            <button type="button" onClick={() => onSuccess("created-note")}>
+              Create Note
+            </button>
+          </div>
+        ) : null}
       </>
     );
   },
+}));
+
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+    className,
+  }: {
+    children: React.ReactNode;
+    onSelect?: (event: Event) => void;
+    className?: string;
+  }) => (
+    <button
+      className={className}
+      type="button"
+      onClick={() => onSelect?.(new Event("select"))}
+    >
+      {children}
+    </button>
+  ),
+  DropdownMenuTrigger: ({ children }: { children: React.ReactElement }) =>
+    children,
 }));
 
 function createNote(id: string): NoteEntity {
@@ -66,7 +102,7 @@ function createNote(id: string): NoteEntity {
     userId: "user-1",
     subjectId: "subject-1",
     title: `Note ${id}`,
-    content: "<p>Body</p>",
+    content: `<p>Body ${id}</p>`,
     createdAt: new Date("2026-04-20T10:00:00.000Z"),
     updatedAt: new Date("2026-04-20T10:00:00.000Z"),
   };
@@ -75,7 +111,7 @@ function createNote(id: string): NoteEntity {
 function findButton(container: HTMLElement, text: string) {
   return Array.from(container.querySelectorAll("button")).find((button) =>
     button.textContent?.includes(text),
-  ) as HTMLButtonElement | undefined;
+  );
 }
 
 describe("NotesList", () => {
@@ -100,14 +136,14 @@ describe("NotesList", () => {
     vi.clearAllMocks();
   });
 
-  it("keeps the create action enabled below the per-subject limit", async () => {
+  it("opens title-only create and redirects to the created note", async () => {
     await act(async () => {
       root.render(
         <NotesList subjectId="subject-1" notes={[createNote("1")]} />,
       );
     });
 
-    const button = findButton(container, "New Note");
+    const button = findButton(container, "New");
 
     expect(button?.disabled).toBe(false);
 
@@ -116,7 +152,75 @@ describe("NotesList", () => {
     });
 
     expect(
-      container.querySelector('[data-testid="create-note-dialog"]'),
+      container.querySelector('[data-testid="create-note-title-dialog"]'),
+    ).toBeTruthy();
+
+    await act(async () => {
+      findButton(container, "Create Note")?.click();
+    });
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/subjects/subject-1/notes/created-note",
+    );
+  });
+
+  it("renders a 3 note preview with content excerpts and a full list link", async () => {
+    await act(async () => {
+      root.render(
+        <NotesList
+          subjectId="subject-1"
+          notes={["1", "2", "3", "4"].map(createNote)}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain("Note 1");
+    expect(container.textContent).toContain("Body 1");
+    expect(container.textContent).toContain("Note 3");
+    expect(container.textContent).not.toContain("Note 4");
+
+    const topLink = container.querySelector<HTMLAnchorElement>(
+      'a[href="/subjects/subject-1/notes"]',
+    );
+
+    expect(topLink?.textContent).toContain("View all");
+    expect(container.textContent).toContain("View all 4 notes ->");
+  });
+
+  it("does not render the bottom full list link for 3 or fewer notes", async () => {
+    await act(async () => {
+      root.render(
+        <NotesList
+          subjectId="subject-1"
+          notes={["1", "2", "3"].map(createNote)}
+        />,
+      );
+    });
+
+    expect(container.textContent).not.toContain("View all 3 notes");
+  });
+
+  it("opens edit and delete from the preview row action menu", async () => {
+    await act(async () => {
+      root.render(
+        <NotesList subjectId="subject-1" notes={[createNote("1")]} />,
+      );
+    });
+
+    await act(async () => {
+      findButton(container, "Edit")?.click();
+    });
+
+    expect(
+      container.querySelector('[data-testid="edit-note-title-dialog"]'),
+    ).toBeTruthy();
+
+    await act(async () => {
+      findButton(container, "Delete")?.click();
+    });
+
+    expect(
+      container.querySelector('[data-testid="delete-note-dialog"]'),
     ).toBeTruthy();
   });
 
@@ -132,7 +236,7 @@ describe("NotesList", () => {
       );
     });
 
-    const button = findButton(container, "New Note");
+    const button = findButton(container, "New");
     const trigger = container.querySelector<HTMLElement>(
       '[data-testid="new-note-disabled-trigger"]',
     );

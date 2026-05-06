@@ -1,19 +1,33 @@
 "use client";
 
-import { Lock, Plus } from "lucide-react";
+import {
+  FileText,
+  Lock,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
+import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
-import { EditNoteDialog } from "@/components/notes/edit-note-dialog";
-import { NoteCard } from "@/components/notes/note-card";
+import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getNoteContentPreview } from "@/features/notes/excerpts";
 import { LIMITS } from "@/lib/config/limits";
 import type { NoteEntity } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
@@ -28,6 +42,8 @@ type NoteDeleteTarget = {
   title: string;
 };
 
+const SUBJECT_NOTE_PREVIEW_COUNT = 3;
+
 export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
@@ -38,6 +54,9 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
   const warningTone = getStatusToneClasses("warning");
 
   const isAtLimit = notes.length >= LIMITS.maxNotesPerSubject;
+  const previewNotes = notes.slice(0, SUBJECT_NOTE_PREVIEW_COUNT);
+  const hasMoreNotes = notes.length > SUBJECT_NOTE_PREVIEW_COUNT;
+  const fullNotesHref = `/subjects/${subjectId}/notes`;
 
   function getNoteCountText() {
     if (notes.length === 0) {
@@ -54,7 +73,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
       disabled={isAtLimit}
     >
       <Plus className="size-4" />
-      <span>New Note</span>
+      <span>New</span>
     </Button>
   );
 
@@ -68,33 +87,45 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
               {getNoteCountText()}
             </p>
           </div>
-          <CreateNoteDialog
-            subjectId={subjectId}
-            trigger={
-              isAtLimit ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span
-                      className="inline-flex w-full sm:w-auto"
-                      data-testid="new-note-disabled-trigger"
-                    >
-                      {createButton}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Delete an existing note to create a new one.
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                createButton
-              )
-            }
-            open={createOpen}
-            onOpenChange={setCreateOpen}
-            onSuccess={() => {
-              router.refresh();
-            }}
-          />
+          <div className="flex w-full gap-2 sm:w-auto">
+            {notes.length > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-1.5 sm:flex-none"
+                asChild
+              >
+                <Link href={fullNotesHref}>View all -&gt;</Link>
+              </Button>
+            ) : null}
+            <CreateNoteTitleDialog
+              subjectId={subjectId}
+              trigger={
+                isAtLimit ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="inline-flex flex-1 sm:flex-none"
+                        data-testid="new-note-disabled-trigger"
+                      >
+                        {createButton}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Delete an existing note to create a new one.
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  createButton
+                )
+              }
+              open={createOpen}
+              onOpenChange={setCreateOpen}
+              onSuccess={(noteId) => {
+                router.push(`/subjects/${subjectId}/notes/${noteId}`);
+              }}
+            />
+          </div>
         </div>
 
         {isAtLimit && (
@@ -118,22 +149,76 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {notes.map((n) => (
-              <NoteCard
+          <div className="space-y-1">
+            {previewNotes.map((n) => (
+              <div
                 key={n.id}
-                note={n}
-                onEditRequested={() => setEditTarget(n)}
-                onDeleteRequested={() =>
-                  setDeleteTarget({ id: n.id, title: n.title })
-                }
-              />
+                className="group flex items-start gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/35"
+              >
+                <Link
+                  href={`/subjects/${n.subjectId}/notes/${n.id}`}
+                  aria-label={`Open ${n.title}`}
+                  className="flex min-w-0 flex-1 items-start gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">
+                      {n.title}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {getNoteContentPreview(n.content)}
+                    </span>
+                  </span>
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="shrink-0 text-muted-foreground opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 data-[state=open]:opacity-100"
+                      aria-label={`Open actions for ${n.title}`}
+                    >
+                      <MoreVertical className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onSelect={() => setEditTarget(n)}
+                      className="cursor-pointer"
+                    >
+                      <Pencil className="size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        setDeleteTarget({ id: n.id, title: n.title })
+                      }
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ))}
+            {hasMoreNotes ? (
+              <Button
+                variant="outline"
+                className="mt-3 w-full border-dashed"
+                asChild
+              >
+                <Link href={fullNotesHref}>
+                  View all {notes.length} notes -&gt;
+                </Link>
+              </Button>
+            ) : null}
           </div>
         )}
 
         {editTarget && (
-          <EditNoteDialog
+          <EditNoteTitleDialog
             note={editTarget}
             open
             onOpenChange={(open) => {

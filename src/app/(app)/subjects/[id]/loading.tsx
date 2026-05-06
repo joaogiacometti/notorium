@@ -71,15 +71,17 @@ export default function SubjectDetailLoading() {
             <Skeleton className="h-6 w-20" />
             <Skeleton className="h-9 w-full sm:w-28" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-1">
             {skeletonItems.map((id) => (
               <div
                 key={id}
-                className="rounded-xl border border-border/60 bg-card p-4"
+                className="flex items-start gap-3 rounded-md px-2 py-2"
               >
-                <Skeleton className="mb-2 h-5 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="mt-1 h-4 w-1/2" />
+                <Skeleton className="mt-0.5 size-4 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="mt-2 h-3 w-full" />
+                </div>
               </div>
             ))}
           </div>

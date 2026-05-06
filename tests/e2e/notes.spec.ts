@@ -28,22 +28,17 @@ function getUniqueDeckName(testTitle: string) {
   return getPrefixedValue("note-deck", testTitle);
 }
 
-async function createNoteFromDialog(
-  page: Page,
-  title: string,
-  content: string,
-) {
+async function createNoteFromDialog(page: Page, title: string) {
   await page.locator("#btn-create-note").click();
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
-  await createDialog.locator("#form-create-note-title").fill(title);
-  await createDialog.locator("#form-create-note-content").fill(content);
+  await createDialog.locator("#form-create-note-title-input").fill(title);
   await createDialog.getByRole("button", { name: "Create Note" }).click();
   await expect(createDialog).toHaveCount(0);
 }
 
 async function openNoteDetailByTitle(page: Page, noteTitle: string) {
   const noteLink = page
-    .getByRole("link", { name: noteTitle, exact: true })
+    .getByRole("link", { name: `Open ${noteTitle}`, exact: true })
     .first();
   await expect(noteLink).toBeVisible();
   const noteHref = await noteLink.getAttribute("href");
@@ -85,9 +80,12 @@ test("can create and open a note", async ({ page, e2eUser }) => {
     await createSubject(user.userId, subjectName);
     await openSubjectDetailByName(page, subjectName);
 
-    await createNoteFromDialog(page, noteTitle, noteContent);
+    await createNoteFromDialog(page, noteTitle);
 
-    await openNoteDetailByTitle(page, noteTitle);
+    await expect(page).toHaveURL(/\/subjects\/.+\/notes\/.+$/);
+    await expect(page.locator("#form-edit-note-title")).toHaveValue(noteTitle);
+    await page.locator("#form-edit-note-content").click();
+    await page.keyboard.type(noteContent);
     await expect(page.getByText(noteContent)).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -201,7 +199,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
       page.getByRole("heading", { name: subjectName, exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: noteTitle, exact: true }),
+      page.getByRole("link", { name: `Open ${noteTitle}`, exact: true }),
     ).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -234,8 +232,9 @@ test("can generate flashcards from a note with AI", async ({
     await openSubjectDetailByName(page, subjectName);
     await openNoteDetailByTitle(page, noteTitle);
 
+    await openNoteActions(page);
     await page
-      .getByRole("button", { name: "Generate flashcards", exact: true })
+      .getByRole("menuitem", { name: "Generate flashcards", exact: true })
       .click();
 
     const generateDialog = page.getByRole("dialog", {

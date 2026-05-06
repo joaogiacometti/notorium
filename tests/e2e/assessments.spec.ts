@@ -38,7 +38,14 @@ async function openAssessmentDetailFromPlanning(
   });
 
   await expect(assessmentDetailLink).toBeVisible();
-  await assessmentDetailLink.click();
+  const assessmentDetailHref = await assessmentDetailLink.getAttribute("href");
+  expect(assessmentDetailHref).toBeTruthy();
+
+  if (!assessmentDetailHref) {
+    throw new Error(`Missing href for assessment: ${assessmentTitle}`);
+  }
+
+  await page.goto(assessmentDetailHref);
   await expect(page).toHaveURL(/\/assessments\/[^/?#]+/);
   await expect(
     page.getByRole("heading", { name: assessmentTitle, exact: true }),

@@ -44,6 +44,8 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete notes per subject.
 - Notes use rich text editing and rendering.
 - Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, and other shared editor formatting exposed by the app.
+- Subject detail shows the 3 most recently updated notes with content previews, row links to note detail, title-only note creation, and compact row action menus for title edits and deletes.
+- The full subject notes list keeps the same-subject note sidebar and shows a simple center indicator until a note is selected.
 - Note detail shows same-subject notes in a sidebar, supports title-only sidebar note creation, and edits the active note inline with auto-save.
 - Note detail supports copying note content as rich text or plain text.
 - Note content renders images from:

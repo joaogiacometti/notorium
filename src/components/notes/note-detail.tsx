@@ -7,7 +7,6 @@ import {
   Clipboard,
   FileText,
   MoreVertical,
-  Plus,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -17,9 +16,9 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editNote } from "@/app/actions/notes";
-import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
+import { NoteSidebar } from "@/components/notes/note-sidebar";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { Button } from "@/components/ui/button";
@@ -37,13 +36,11 @@ import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
-import { LIMITS } from "@/lib/config/limits";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
-import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
   aiEnabled: boolean;
@@ -79,7 +76,6 @@ export function NoteDetail({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -87,7 +83,6 @@ export function NoteDetail({
   const lastSavedValuesRef = useRef(getEditValues(note));
   const saveSequenceRef = useRef(0);
   const hasDecks = decks.length > 0;
-  const isAtNoteLimit = subjectNotes.length >= LIMITS.maxNotesPerSubject;
   const form = useForm<EditNoteForm>({
     resolver: zodResolver(editNoteSchema),
     defaultValues: getEditValues(note),
@@ -229,86 +224,19 @@ export function NoteDetail({
         </Button>
       </div>
       <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[17rem_minmax(0,1fr)]">
-        <aside className="min-w-0 border-border bg-transparent lg:flex lg:min-h-0 lg:flex-col lg:border-r">
-          <div className="border-b border-border/60 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  Notes
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {subjectNotes.length} notes in subject
-                </p>
-              </div>
-              <CreateNoteTitleDialog
-                subjectId={note.subjectId}
-                open={createOpen}
-                onOpenChange={setCreateOpen}
-                onSuccess={(noteId) => {
-                  startNavTransition(() => {
-                    router.push(`/subjects/${note.subjectId}/notes/${noteId}`);
-                  });
-                }}
-                trigger={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    aria-label="Create note"
-                    disabled={isAtNoteLimit}
-                    title={
-                      isAtNoteLimit
-                        ? "Delete an existing note to create a new one."
-                        : undefined
-                    }
-                  >
-                    <Plus className="size-4" />
-                  </Button>
-                }
-              />
-            </div>
-          </div>
-          <nav
-            aria-label="Subject notes"
-            className="flex gap-2 overflow-x-auto !bg-transparent p-3 !shadow-none lg:block lg:min-h-0 lg:flex-1 lg:space-y-1 lg:overflow-y-auto"
-          >
-            {subjectNotes.map((subjectNote) => {
-              const href = `/subjects/${subjectNote.subjectId}/notes/${subjectNote.id}`;
-              const isActive = subjectNote.id === note.id;
-
-              return (
-                <Link
-                  key={subjectNote.id}
-                  href={href}
-                  aria-current={isActive ? "page" : undefined}
-                  onClick={(event) => {
-                    if (isActive) {
-                      return;
-                    }
-                    event.preventDefault();
-                    void saveBeforeNavigation(href);
-                  }}
-                  className={cn(
-                    "block min-w-48 rounded-md px-3 py-2.5 text-left transition-colors lg:min-w-0",
-                    "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
-                    isActive
-                      ? "bg-muted/45 text-foreground"
-                      : "text-muted-foreground hover:bg-muted/35 hover:text-foreground",
-                  )}
-                >
-                  <span className="block truncate text-sm font-medium">
-                    {isActive
-                      ? watchedTitle || subjectNote.title
-                      : subjectNote.title}
-                  </span>
-                  <span className="mt-1 block text-xs text-muted-foreground/70">
-                    Updated {formatRelativeTime(subjectNote.updatedAt)}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
+        <NoteSidebar
+          activeNoteId={note.id}
+          notes={subjectNotes.map((subjectNote) =>
+            subjectNote.id === note.id
+              ? { ...subjectNote, title: watchedTitle || subjectNote.title }
+              : subjectNote,
+          )}
+          subjectId={note.subjectId}
+          onNoteNavigate={(href, event) => {
+            event.preventDefault();
+            void saveBeforeNavigation(href);
+          }}
+        />
 
         <form className="min-w-0 space-y-4 lg:flex lg:min-h-0 lg:flex-col lg:space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
