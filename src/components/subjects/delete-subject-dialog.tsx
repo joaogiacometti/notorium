@@ -70,7 +70,7 @@ export function DeleteSubjectDialog({
             <SubjectText
               value={subjectName}
               mode="wrap"
-              className="font-semibold text-foreground"
+              className="inline font-semibold text-foreground"
             />
             {mode === "archive"
               ? "? You can restore it later from archived subjects."
