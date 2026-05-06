@@ -121,7 +121,6 @@ export const subject = pgTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
-    description: text("description"),
     totalClasses: integer("total_classes"),
     maxMisses: integer("max_misses"),
 
@@ -144,10 +143,6 @@ export const subject = pgTable(
       table.updatedAt,
     ),
     index("subject_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
-    index("subject_description_trgm_idx").using(
-      "gin",
-      sql`coalesce(${table.description}, '') gin_trgm_ops`,
-    ),
   ],
 );
 

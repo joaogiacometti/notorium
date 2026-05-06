@@ -81,7 +81,7 @@ test("can create and open a note", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    await createSubject(user.userId, subjectName, "Notes smoke test");
+    await createSubject(user.userId, subjectName);
     await openSubjectDetailByName(page, subjectName);
 
     await createNoteFromDialog(page, noteTitle, noteContent);
@@ -103,11 +103,7 @@ test("can edit a note", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Notes edit smoke test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
 
@@ -147,11 +143,7 @@ test("can create a title-only note from detail sidebar", async ({
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Notes sidebar create smoke test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
 
@@ -174,11 +166,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Notes delete smoke test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await createNote(
       user.userId,
@@ -220,11 +208,7 @@ test("can generate flashcards from a note with AI", async ({
   await clearUserDecksByNames(user.userId, [deckName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Notes AI flashcards smoke test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
     const createdDeck = await createDeck(user.userId, deckName);
 
     await createNote(

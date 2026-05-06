@@ -12,14 +12,6 @@ export const createSubjectSchema = z.object({
       LIMITS.subjectNameMax,
       validationMessage("Validation.subjects.nameMaxLength"),
     ),
-  description: z
-    .string()
-    .trim()
-    .max(
-      LIMITS.subjectDescriptionMax,
-      validationMessage("Validation.subjects.descriptionMaxLength"),
-    )
-    .optional(),
 });
 
 export type CreateSubjectForm = z.infer<typeof createSubjectSchema>;
@@ -34,14 +26,6 @@ export const editSubjectSchema = z.object({
       LIMITS.subjectNameMax,
       validationMessage("Validation.subjects.nameMaxLength"),
     ),
-  description: z
-    .string()
-    .trim()
-    .max(
-      LIMITS.subjectDescriptionMax,
-      validationMessage("Validation.subjects.descriptionMaxLength"),
-    )
-    .optional(),
 });
 
 export type EditSubjectForm = z.infer<typeof editSubjectSchema>;

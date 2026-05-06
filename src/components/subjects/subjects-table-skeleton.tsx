@@ -16,22 +16,20 @@ export function SubjectsTableSkeleton({
       headerClassName="py-3"
       columnTemplate={
         selectedRow
-          ? "2.25rem 1.35fr 1fr 0.7fr 0.7fr 3.5rem"
-          : "1.35fr 1fr 0.7fr 0.7fr 3.5rem"
+          ? "2.25rem 1.35fr 0.7fr 0.7fr 3.5rem"
+          : "1.35fr 0.7fr 0.7fr 3.5rem"
       }
       headers={
         selectedRow
           ? [
               { content: <div /> },
               { className: "h-4 w-16" },
-              { className: "h-4 w-20" },
               { className: "h-4 w-14" },
               { className: "h-4 w-16" },
               { content: <div /> },
             ]
           : [
               { className: "h-4 w-16" },
-              { className: "h-4 w-20" },
               { className: "h-4 w-14" },
               { className: "h-4 w-16" },
               { content: <div /> },
@@ -48,7 +46,6 @@ export function SubjectsTableSkeleton({
                 {
                   className: "h-6 w-full",
                 },
-                { className: "h-6 w-full" },
                 { className: "h-6 w-24 rounded-full" },
                 { className: "h-6 w-full" },
                 {
@@ -61,7 +58,6 @@ export function SubjectsTableSkeleton({
               {
                 className: "h-6 w-full",
               },
-              { className: "h-6 w-full" },
               { className: "h-7 w-24 rounded-full" },
               { className: "h-6 w-full" },
               {

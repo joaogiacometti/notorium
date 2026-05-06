@@ -141,10 +141,7 @@ export interface FlashcardStatisticsState {
   trend: FlashcardStatisticsTrendPoint[];
 }
 
-export type SearchSubjectResult = Pick<
-  SubjectEntity,
-  "id" | "name" | "description"
->;
+export type SearchSubjectResult = Pick<SubjectEntity, "id" | "name">;
 
 export type SearchNoteResult = Pick<
   NoteEntity,
@@ -167,7 +164,7 @@ export type SearchData = {
   flashcards: SearchFlashcardResult[];
 };
 
-export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "description">;
+export type SubjectEditDto = Pick<SubjectEntity, "id" | "name">;
 
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 

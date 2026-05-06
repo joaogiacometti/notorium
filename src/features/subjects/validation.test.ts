@@ -21,15 +21,6 @@ describe("createSubjectSchema", () => {
     }
   });
 
-  it("accepts valid input with all fields", () => {
-    const result = createSubjectSchema.safeParse({
-      name: "Physics",
-      description: "Intro to physics",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("rejects empty name", () => {
     const result = createSubjectSchema.safeParse({ name: "" });
 
@@ -48,24 +39,6 @@ describe("createSubjectSchema", () => {
     });
 
     expect(result.success).toBe(false);
-  });
-
-  it("rejects description longer than max characters", () => {
-    const result = createSubjectSchema.safeParse({
-      name: "Valid",
-      description: "x".repeat(LIMITS.subjectDescriptionMax + 1),
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts description at exactly max characters", () => {
-    const result = createSubjectSchema.safeParse({
-      name: "Valid",
-      description: "x".repeat(LIMITS.subjectDescriptionMax),
-    });
-
-    expect(result.success).toBe(true);
   });
 });
 

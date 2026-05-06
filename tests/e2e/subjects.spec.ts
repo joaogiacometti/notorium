@@ -9,11 +9,6 @@ import {
 } from "./support/db";
 import { openSubjectDetailByName } from "./support/subjects";
 
-const initialSubjectDescription =
-  "Initial subject description for e2e coverage.";
-const updatedSubjectDescription =
-  "Updated subject description for e2e coverage.";
-
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("subject", testTitle);
 }
@@ -56,18 +51,13 @@ test("can create a subject", async ({ page, e2eUser }) => {
     await createDialog
       .locator("#form-create-subject-name")
       .fill(initialSubjectName);
-    await createDialog
-      .locator("#form-create-subject-description")
-      .fill(initialSubjectDescription);
     await createDialog.getByRole("button", { name: "Create Subject" }).click();
 
     const subjectRow = getSubjectRow(page, initialSubjectName);
 
     await expect(subjectRow).toBeVisible();
-    await expect(subjectRow).toContainText(initialSubjectDescription);
 
     await openSubjectDetailByName(page, initialSubjectName);
-    await expect(page.getByText(initialSubjectDescription)).toBeVisible();
   });
 });
 
@@ -81,11 +71,7 @@ test("can edit a subject", async ({ page, e2eUser }) => {
     await clearUserSubjectsByNames(user.userId, cleanupNames);
     registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-    await createSubject(
-      user.userId,
-      initialSubjectName,
-      initialSubjectDescription,
-    );
+    await createSubject(user.userId, initialSubjectName);
 
     await page.goto("/subjects");
     await expect(
@@ -102,19 +88,14 @@ test("can edit a subject", async ({ page, e2eUser }) => {
     await editDialog
       .locator("#form-edit-subject-name")
       .fill(updatedSubjectName);
-    await editDialog
-      .locator("#form-edit-subject-description")
-      .fill(updatedSubjectDescription);
     await editDialog.getByRole("button", { name: "Save Changes" }).click();
     await expect(editDialog).not.toBeVisible();
 
     const editedRow = getSubjectRow(page, updatedSubjectName);
 
     await expect(editedRow).toBeVisible();
-    await expect(editedRow).toContainText(updatedSubjectDescription);
 
     await openSubjectDetailByName(page, updatedSubjectName);
-    await expect(page.getByText(updatedSubjectDescription)).toBeVisible();
   });
 });
 
@@ -127,11 +108,7 @@ test("can delete a subject", async ({ page, e2eUser }) => {
     await clearUserSubjectsByNames(user.userId, cleanupNames);
     registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-    await createSubject(
-      user.userId,
-      initialSubjectName,
-      initialSubjectDescription,
-    );
+    await createSubject(user.userId, initialSubjectName);
 
     await page.goto("/subjects");
     await expect(
@@ -157,7 +134,7 @@ test("can archive and restore a subject", async ({ page, e2eUser }) => {
     await clearUserSubjectsByNames(user.userId, cleanupNames);
     registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-    await createSubject(user.userId, subjectName, initialSubjectDescription);
+    await createSubject(user.userId, subjectName);
 
     await openSubjectDetailByName(page, subjectName);
 
@@ -193,7 +170,7 @@ test("can delete an archived subject from the archived page", async ({
     await clearUserSubjectsByNames(user.userId, cleanupNames);
     registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-    await createSubject(user.userId, subjectName, initialSubjectDescription);
+    await createSubject(user.userId, subjectName);
 
     await openSubjectDetailByName(page, subjectName);
     await page.getByTestId("subject-detail-archive").click();
@@ -227,7 +204,7 @@ test("can bulk archive active subjects", async ({ page, e2eUser }) => {
     registerCleanup(() => clearUserSubjectsByNames(user.userId, names));
 
     for (const name of names) {
-      await createSubject(user.userId, name, initialSubjectDescription);
+      await createSubject(user.userId, name);
     }
 
     await page.goto("/subjects");
@@ -275,7 +252,7 @@ test("can bulk restore archived subjects", async ({ page, e2eUser }) => {
     registerCleanup(() => clearUserSubjectsByNames(user.userId, names));
 
     for (const name of names) {
-      await createSubject(user.userId, name, initialSubjectDescription, {
+      await createSubject(user.userId, name, {
         archivedAt: new Date(),
       });
     }
@@ -320,7 +297,7 @@ test("can bulk delete selected subjects", async ({ page, e2eUser }) => {
     registerCleanup(() => clearUserSubjectsByNames(user.userId, names));
 
     for (const name of names) {
-      await createSubject(user.userId, name, initialSubjectDescription);
+      await createSubject(user.userId, name);
     }
 
     await page.goto("/subjects");

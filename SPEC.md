@@ -37,7 +37,7 @@ Students who want a private, lightweight study management workspace.
 - Archive and restore subjects.
 - Subjects list as a table with search, sorting, active/archived/all filters, page size controls, row selection, and bulk archive/restore/delete.
 - Subjects table shows created date without time and does not show an updated column.
-- Subject fields: name and optional description.
+- Subject fields: name.
 
 ### Notes
 
@@ -222,7 +222,7 @@ Students who want a private, lightweight study management workspace.
 - `instance_state`
   - `id`, `initialAdminUserId`, `initialAdminAssignedAt`, timestamps
 - `subject`
-  - `id`, `name`, `description`, `totalClasses`, `maxMisses`, timestamps, `userId`
+  - `id`, `name`, `totalClasses`, `maxMisses`, timestamps, `userId`
 - `deck`
   - `id`, `name`, `parentDeckId`, timestamps, `userId`
 - `flashcard`

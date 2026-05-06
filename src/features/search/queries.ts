@@ -23,17 +23,13 @@ export async function getSearchDataForUser(
       .select({
         id: subject.id,
         name: subject.name,
-        description: subject.description,
       })
       .from(subject)
       .where(
         and(
           eq(subject.userId, userId),
           ...subjectFilters,
-          or(
-            ilike(subject.name, searchPattern),
-            ilike(subject.description, searchPattern),
-          ),
+          ilike(subject.name, searchPattern),
         ),
       )
       .orderBy(desc(subject.updatedAt))
@@ -108,7 +104,6 @@ export async function getRecentSearchDataForUser(
       .select({
         id: subject.id,
         name: subject.name,
-        description: subject.description,
       })
       .from(subject)
       .where(and(eq(subject.userId, userId), ...subjectFilters))

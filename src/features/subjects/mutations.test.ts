@@ -81,7 +81,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "History",
-      description: "Archived subjects still count",
     });
 
     expect(result).toEqual({
@@ -103,14 +102,12 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "  History  ",
-      description: "  Reading list  ",
     });
 
     expect(result).toEqual({ success: true });
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
       name: "History",
-      description: "Reading list",
     });
   });
 });

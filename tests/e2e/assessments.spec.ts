@@ -76,11 +76,7 @@ test("can create and open an assessment from planning", async ({
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Assessments create test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await openPlanningAssessments(page, createdSubject.id);
 
@@ -120,11 +116,7 @@ test("can edit an assessment from detail page", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Assessment edit test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await createAssessment(user.userId, createdSubject.id, initialTitle, {
       description: "Initial assessment description",
@@ -176,11 +168,7 @@ test("can delete an assessment from detail page", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Assessment delete test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await createAssessment(user.userId, createdSubject.id, assessmentTitle, {
       description: "Assessment to delete",
@@ -229,11 +217,7 @@ test("shows overdue status for pending past due assessments", async ({
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Assessments overdue state test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await createAssessment(user.userId, createdSubject.id, assessmentTitle, {
       dueDate: "2024-01-10",
@@ -263,11 +247,7 @@ test("shows weighted final grade in planning subject mode", async ({
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Assessments final grade test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await createAssessment(
       user.userId,

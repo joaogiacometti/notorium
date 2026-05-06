@@ -21,7 +21,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   type CreateSubjectForm,
   createSubjectSchema,
@@ -85,7 +84,7 @@ export function SubjectDialogForm({
       const result = await onSubmitAction(data);
       if (result.success) {
         await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-        form.reset(mode === "create" ? { name: "", description: "" } : data);
+        form.reset(mode === "create" ? { name: "" } : data);
         onOpenChange(false);
         onSuccess?.(data);
         return;
@@ -123,28 +122,6 @@ export function SubjectDialogForm({
                     placeholder="e.g. Calculus I"
                     aria-invalid={fieldState.invalid}
                     autoFocus
-                  />
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : null}
-                </Field>
-              )}
-            />
-            <Controller
-              name="description"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-description`}>
-                    Description
-                  </FieldLabel>
-                  <Textarea
-                    {...field}
-                    id={`${formId}-description`}
-                    placeholder="Optional description..."
-                    rows={3}
-                    className="resize-none"
-                    aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid ? (
                     <FieldError errors={[fieldState.error]} />

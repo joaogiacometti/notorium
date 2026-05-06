@@ -37,7 +37,6 @@ function createArchivedSubject(): SubjectEntity {
     id: "subject-1",
     userId: "user-1",
     name: "Archived Biology",
-    description: "Archived subject description",
     totalClasses: null,
     maxMisses: null,
     archivedAt: new Date("2026-04-20T10:00:00.000Z"),
@@ -49,7 +48,7 @@ function createArchivedSubject(): SubjectEntity {
 function findButton(container: HTMLElement, text: string) {
   return Array.from(container.querySelectorAll("button")).find((button) =>
     button.textContent?.includes(text),
-  ) as HTMLButtonElement | undefined;
+  );
 }
 
 describe("ArchivedSubjectCard", () => {

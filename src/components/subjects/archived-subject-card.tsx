@@ -64,11 +64,6 @@ export function ArchivedSubjectCard({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
-          {subject.description && (
-            <p className="line-clamp-2 text-sm text-muted-foreground">
-              {subject.description}
-            </p>
-          )}
           {archivedLabel && (
             <p className="text-xs text-muted-foreground/60">
               Archived {archivedLabel}

@@ -38,7 +38,6 @@ function createSubject(): SubjectEntity {
     id: "subject-1",
     userId: "user-1",
     name: "Biology",
-    description: null,
     totalClasses: 20,
     maxMisses: 5,
     archivedAt: null,

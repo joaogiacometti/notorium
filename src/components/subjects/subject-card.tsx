@@ -91,11 +91,6 @@ export function SubjectCard({
         className="block rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         <CardContent className="pt-0">
-          {subject.description && (
-            <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
-              {subject.description}
-            </p>
-          )}
           <p className="text-xs text-muted-foreground/60">
             Created {formatRelativeTime(subject.createdAt)}
           </p>

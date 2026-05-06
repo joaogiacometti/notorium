@@ -256,7 +256,6 @@ function createSubject(
     id,
     userId: "user-1",
     name: `Subject ${id}`,
-    description: null,
     totalClasses: null,
     maxMisses: null,
     archivedAt: null,
@@ -372,9 +371,9 @@ describe("SubjectsList", () => {
     expect(container.textContent).not.toContain("Edit");
   });
 
-  it("filters subjects by name and description", async () => {
+  it("filters subjects by name", async () => {
     const algebra = createSubject("1", { name: "Algebra" });
-    const biology = createSubject("2", { description: "Cells and genetics" });
+    const biology = createSubject("2", { name: "Cell Biology" });
 
     await act(async () => {
       renderSubjectsList(root, queryClient, [algebra, biology], "all");
@@ -389,13 +388,13 @@ describe("SubjectsList", () => {
           "value",
         )?.set;
 
-        valueSetter?.call(input, "cells");
+        valueSetter?.call(input, "cell");
         input.dispatchEvent(new Event("input", { bubbles: true }));
       }
     });
 
     expect(container.textContent).not.toContain("Algebra");
-    expect(container.textContent).toContain("Cells and genetics");
+    expect(container.textContent).toContain("Cell Biology");
   });
 
   it("sorts subjects by name", async () => {

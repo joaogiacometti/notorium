@@ -363,7 +363,6 @@ export async function updateSubjectAttendanceSettings(
 export async function createSubject(
   userId: string,
   name: string,
-  description: string,
   options?: {
     archivedAt?: Date | null;
   },
@@ -373,7 +372,6 @@ export async function createSubject(
     .values({
       userId,
       name,
-      description,
       archivedAt: options?.archivedAt ?? null,
     })
     .returning({ id: subject.id });

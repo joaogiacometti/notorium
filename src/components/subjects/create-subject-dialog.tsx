@@ -14,7 +14,6 @@ interface CreateSubjectDialogProps {
 function getCreateSubjectFormValues(): CreateSubjectForm {
   return {
     name: "",
-    description: "",
   };
 }
 

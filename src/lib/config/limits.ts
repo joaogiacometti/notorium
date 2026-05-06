@@ -30,7 +30,6 @@ export const LIMITS = {
   flashcardAiBackMax: 400,
 
   subjectNameMax: 100,
-  subjectDescriptionMax: 500,
 
   assessmentTitleMax: 100,
   assessmentDescriptionMax: 1000,

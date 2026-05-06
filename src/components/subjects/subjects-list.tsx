@@ -136,8 +136,7 @@ function matchesStatus(
 function matchesSearch(subject: SubjectEntity, searchQuery: string): boolean {
   if (!searchQuery) return true;
 
-  const haystack = `${subject.name} ${subject.description ?? ""}`.toLowerCase();
-  return haystack.includes(searchQuery);
+  return subject.name.toLowerCase().includes(searchQuery);
 }
 
 function compareSubjects(
@@ -159,8 +158,6 @@ function getColumnClassName(columnId: string): string {
       return "w-9 min-w-9";
     case "subject":
       return "min-w-[7rem] sm:min-w-[8rem] lg:min-w-[3rem] lg:max-w-[8rem]";
-    case "description":
-      return "min-w-[5.5rem] sm:min-w-[6.5rem] lg:min-w-[2.5rem] lg:max-w-[6rem]";
     case "status":
       return "min-w-[5rem]";
     case "createdAt":
@@ -332,17 +329,6 @@ function getColumns({
       id: "subject",
       header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
       cell: ({ row }) => renderSubjectLabel(row.original),
-    },
-    {
-      id: "description",
-      header: () => <TableHeaderLabel>Description</TableHeaderLabel>,
-      cell: ({ row }) => (
-        <SubjectText
-          value={row.original.description ?? "No description"}
-          mode="truncate"
-          className="block max-w-full text-sm leading-6 text-muted-foreground"
-        />
-      ),
     },
     {
       id: "status",
@@ -600,7 +586,6 @@ export function SubjectsList({
         subject: {
           id: subject.id,
           name: subject.name,
-          description: subject.description,
         },
       }),
     onRestored: () => {
@@ -633,7 +618,7 @@ export function SubjectsList({
                       onChange={(event) =>
                         handleSearchChange(event.target.value)
                       }
-                      placeholder="Search subjects or descriptions..."
+                      placeholder="Search subjects..."
                       className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                     />
                   </div>
@@ -805,7 +790,6 @@ export function SubjectsList({
                     ? {
                         ...currentSubject,
                         name: updatedSubject.name,
-                        description: updatedSubject.description,
                       }
                     : currentSubject,
                 ),

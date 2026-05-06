@@ -50,7 +50,6 @@ function createSubject(overrides: Partial<SubjectEntity> = {}): SubjectEntity {
   return {
     id: "subject-1",
     name: "Math",
-    description: null,
     totalClasses: null,
     maxMisses: null,
     archivedAt: null,

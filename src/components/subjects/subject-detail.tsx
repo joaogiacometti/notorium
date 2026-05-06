@@ -75,7 +75,6 @@ export function SubjectDetail({
       backHref="/subjects"
       backIcon={ArrowLeft}
       backLabel="Back to Subjects"
-      description={subject.description}
       meta={<span>Created {formatRelativeTime(subject.createdAt)}</span>}
       title={<SubjectText value={subject.name} mode="wrap" />}
       titleIcon={BookOpen}

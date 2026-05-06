@@ -281,6 +281,13 @@
       "when": 1777640569079,
       "tag": "0039_nebulous_white_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1778026172053,
+      "tag": "0040_charming_excalibur",
+      "breakpoints": true
     }
   ]
 }

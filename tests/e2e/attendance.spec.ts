@@ -20,11 +20,7 @@ test("can configure attendance settings", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Attendance settings test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await clearUserAttendanceMissesBySubject(user.userId, createdSubject.id);
     await openSubjectDetailByName(page, subjectName);
@@ -60,11 +56,7 @@ test("can record a miss and rejects duplicate dates", async ({
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Attendance record miss test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await updateSubjectAttendanceSettings(
       user.userId,
@@ -108,11 +100,7 @@ test("can delete a recorded miss", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Attendance delete miss test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await updateSubjectAttendanceSettings(
       user.userId,
@@ -148,11 +136,7 @@ test("can remove attendance configuration", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(
-      user.userId,
-      subjectName,
-      "Attendance remove config test",
-    );
+    const createdSubject = await createSubject(user.userId, subjectName);
 
     await updateSubjectAttendanceSettings(
       user.userId,

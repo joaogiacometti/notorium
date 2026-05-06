@@ -162,14 +162,6 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                       {renderSearchHighlightedText(subj.name, highlightQuery)}
                     </span>
                   </div>
-                  {subj.description && (
-                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
-                      {renderSearchHighlightedText(
-                        subj.description,
-                        highlightQuery,
-                      )}
-                    </span>
-                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
