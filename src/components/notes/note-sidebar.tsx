@@ -39,13 +39,13 @@ export function NoteSidebar({
   return (
     <aside className="min-w-0 border-border bg-transparent lg:flex lg:min-h-0 lg:flex-col lg:border-r">
       <div className="border-b border-border/60 p-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               Notes
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {notes.length} notes in subject
+              {notes.length} notes
             </p>
           </div>
           <CreateNoteTitleDialog
@@ -60,8 +60,8 @@ export function NoteSidebar({
             trigger={
               <Button
                 type="button"
-                variant="outline"
-                size="icon-sm"
+                size="sm"
+                className="h-9 shrink-0 gap-1.5 whitespace-nowrap px-3"
                 aria-label="Create note"
                 disabled={isAtNoteLimit}
                 title={
@@ -71,6 +71,7 @@ export function NoteSidebar({
                 }
               >
                 <Plus className="size-4" />
+                <span>Create note</span>
               </Button>
             }
           />
@@ -101,7 +102,7 @@ export function NoteSidebar({
                   onNoteNavigate?.(href, event);
                 }}
                 className={cn(
-                  "block min-w-48 rounded-md px-3 py-2.5 text-left transition-colors lg:min-w-0",
+                  "block min-w-36 rounded-md px-3 py-2.5 text-left transition-colors sm:min-w-40 lg:min-w-0",
                   "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
                   isActive
                     ? "bg-muted/45 text-foreground"

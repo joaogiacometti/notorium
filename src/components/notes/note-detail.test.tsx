@@ -252,8 +252,30 @@ describe("NoteDetail", () => {
     expect(titleInput?.className).toContain("bg-transparent");
     expect(titleInput?.className).toContain("hover:bg-muted/25");
     expect(titleInput?.className).toContain("focus-visible:ring-2");
+    expect(titleInput?.parentElement?.parentElement?.className).not.toContain(
+      "overflow-hidden",
+    );
+    expect(
+      titleInput?.parentElement?.parentElement?.parentElement?.className,
+    ).not.toContain("overflow-hidden");
     expect(getContentInput(container)?.value).toBe(note.content);
     expect(findButton(container, "Edit")).toBeUndefined();
+  });
+
+  it("keeps note actions beside the title on narrow layouts", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    const actionsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open note actions"]',
+    );
+
+    expect(actionsButton?.parentElement?.className).toContain("shrink-0");
+    expect(actionsButton?.parentElement?.className).not.toContain("w-full");
+    expect(
+      actionsButton?.closest("div.flex.items-start.justify-between"),
+    ).toBeTruthy();
   });
 
   it("does not show idle auto-save status", async () => {

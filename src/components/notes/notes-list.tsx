@@ -68,12 +68,12 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
   const createButton = (
     <Button
       size="sm"
-      className="w-full gap-1.5 sm:w-auto"
+      className="w-full gap-1.5 whitespace-nowrap sm:w-auto"
       id="btn-create-note"
       disabled={isAtLimit}
     >
       <Plus className="size-4" />
-      <span>New</span>
+      <span>Create note</span>
     </Button>
   );
 
@@ -87,15 +87,19 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
               {getNoteCountText()}
             </p>
           </div>
-          <div className="flex w-full gap-2 sm:w-auto">
+          <div
+            className={`grid w-full gap-2 ${
+              notes.length > 0 ? "grid-cols-2" : "grid-cols-1"
+            } sm:flex sm:w-auto`}
+          >
             {notes.length > 0 ? (
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 gap-1.5 sm:flex-none"
+                className="w-full gap-1.5 sm:w-auto"
                 asChild
               >
-                <Link href={fullNotesHref}>View all -&gt;</Link>
+                <Link href={fullNotesHref}>View all</Link>
               </Button>
             ) : null}
             <CreateNoteTitleDialog
@@ -105,7 +109,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span
-                        className="inline-flex flex-1 sm:flex-none"
+                        className="inline-flex w-full sm:w-auto"
                         data-testid="new-note-disabled-trigger"
                       >
                         {createButton}
@@ -209,9 +213,7 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
                 className="mt-3 w-full border-dashed"
                 asChild
               >
-                <Link href={fullNotesHref}>
-                  View all {notes.length} notes -&gt;
-                </Link>
+                <Link href={fullNotesHref}>View all {notes.length} notes</Link>
               </Button>
             ) : null}
           </div>

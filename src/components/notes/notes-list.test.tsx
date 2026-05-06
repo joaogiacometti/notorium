@@ -143,7 +143,7 @@ describe("NotesList", () => {
       );
     });
 
-    const button = findButton(container, "New");
+    const button = findButton(container, "Create note");
 
     expect(button?.disabled).toBe(false);
 
@@ -179,12 +179,28 @@ describe("NotesList", () => {
     expect(container.textContent).toContain("Note 3");
     expect(container.textContent).not.toContain("Note 4");
 
-    const topLink = container.querySelector<HTMLAnchorElement>(
-      'a[href="/subjects/subject-1/notes"]',
+    const fullListLinks = Array.from(
+      container.querySelectorAll<HTMLAnchorElement>(
+        'a[href="/subjects/subject-1/notes"]',
+      ),
     );
 
-    expect(topLink?.textContent).toContain("View all");
-    expect(container.textContent).toContain("View all 4 notes ->");
+    expect(fullListLinks.map((link) => link.textContent)).toEqual([
+      "View all",
+      "View all 4 notes",
+    ]);
+    expect(container.textContent).not.toContain("->");
+  });
+
+  it("keeps the create action contained in the mobile header layout", async () => {
+    await act(async () => {
+      root.render(<NotesList subjectId="subject-1" notes={[]} />);
+    });
+
+    const button = findButton(container, "Create note");
+
+    expect(button?.className).toContain("w-full");
+    expect(button?.className).toContain("whitespace-nowrap");
   });
 
   it("does not render the bottom full list link for 3 or fewer notes", async () => {
@@ -236,13 +252,14 @@ describe("NotesList", () => {
       );
     });
 
-    const button = findButton(container, "New");
+    const button = findButton(container, "Create note");
     const trigger = container.querySelector<HTMLElement>(
       '[data-testid="new-note-disabled-trigger"]',
     );
 
     expect(button?.disabled).toBe(true);
     expect(trigger).toBeTruthy();
+    expect(trigger?.className).toContain("w-full");
 
     await act(async () => {
       trigger?.focus();

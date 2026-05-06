@@ -366,7 +366,7 @@ describe("SubjectsList", () => {
     });
 
     expect(container.textContent).not.toContain("Active Biology");
-    expect(container.textContent).toContain("Archived History");
+    expect(container.textContent).toContain("Archived Histor...");
     expect(container.textContent).toContain("Restore");
     expect(container.textContent).not.toContain("Edit");
   });
@@ -417,6 +417,24 @@ describe("SubjectsList", () => {
     expect(container.textContent.indexOf("Algebra")).toBeLessThan(
       container.textContent.indexOf("Zebra Studies"),
     );
+  });
+
+  it("limits long subject names in the table", async () => {
+    const longName = "Advanced Interdisciplinary Biology Research";
+
+    await act(async () => {
+      renderSubjectsList(root, queryClient, [
+        createSubject("1", { name: longName }),
+      ]);
+    });
+
+    const subjectLink = container.querySelector<HTMLAnchorElement>(
+      `a[aria-label="Open ${longName}"]`,
+    );
+
+    expect(subjectLink?.textContent).toContain("Advanced Interd...");
+    expect(subjectLink?.textContent).not.toContain(longName);
+    expect(subjectLink?.querySelector("span")?.title).toBe(longName);
   });
 
   it("changes visible rows when the page size changes", async () => {

@@ -152,6 +152,14 @@ function compareSubjects(
   return right.updatedAt.getTime() - left.updatedAt.getTime();
 }
 
+function getPreviewText(value: string, maxLength = 15) {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength).trimEnd()}...`;
+}
+
 function getColumnClassName(columnId: string): string {
   switch (columnId) {
     case "select":
@@ -291,9 +299,10 @@ function renderSubjectLabel(subject: SubjectEntity) {
       </div>
       <div className="min-w-0 max-w-full flex-1 overflow-hidden">
         <SubjectText
-          value={subject.name}
+          value={getPreviewText(subject.name)}
           mode="truncate"
           className="block max-w-full text-sm font-semibold leading-5.5 text-foreground/95"
+          title={subject.name}
         />
       </div>
     </>
