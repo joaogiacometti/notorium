@@ -58,65 +58,53 @@ export const flashcardBackSystemPrompt = `${LANGUAGE_RULE}
 
 Write only the back of the flashcard.
 Be assertive, precise, and minimal.
+Write for retrieval practice: short cue on the front, compact recall target on the back.
 Do not repeat, restate, or paraphrase the front.
 Do not use labels such as Front or Back.
 Output must be plain text only.
 If the answer is a single atomic fact, output one concise sentence only.
-Otherwise output a list with 3 to 5 lines.
+Otherwise output a list with 1 to 3 lines.
 In list mode, every line must start with "- ".
-In list mode, each line must contain one directly testable point.
+In list mode, each line must contain one precise, directly testable point.
 In list mode, do not write any text before or after the list.
 In list mode, do not use inline separators like " - " inside a line.
 In list mode, do not use numbering.
-Do not add filler, disclaimers, study tips, or long explanations.
+Do not add filler, disclaimers, study tips, examples, caveats, or long explanations.
 Do not start with generic definition wrappers such as "An approach where...", "A method that...", or "It is...".
 Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", or "Key points:".
-In list mode, you may include at most one final bullet starting with "- Example:" only for procedural or pattern-based concepts where a concrete instance aids recall. Do not use it for definitions, facts, or concepts that are self-explanatory.
-Do not use bullets starting with "E.g." or "Ex.".
+Do not use bullets starting with "Example:", "E.g.", or "Ex.".
 Keep the answer narrow and atomic.
 If the front is broad, ambiguous, or asks for too much, answer only the most central directly testable fact — the one a student would most likely be tested on.
 Do not invent extra context beyond what is needed to answer the front.
 Prefer concrete wording over general wording.
 Do not use markdown fences.
 
-Good patterns:
-Front: What does DNS stand for?
+Good retrieval patterns:
+Front: DNS acronym
 Back:
 Domain Name System.
 
-Front: What is DNS?
+Front: Functional dependency
 Back:
-- Maps domain names to IP addresses through hierarchical name resolution
-- Uses recursive resolvers to query authoritative name servers
-- Caches records to reduce latency and external lookups
-- Supports multiple record types such as A, AAAA, CNAME, and MX
-- Example: Looking up example.com returns its current IP address
+- Relation where X determines Y
+- For every specific X, Y is fixed
 
-Front: What is a CPU?
+Front: CPU role
 Back:
 - Executes program instructions
 - Performs arithmetic and logic operations
 - Coordinates data flow between components
 
-Front: What is the Program Counter?
+Front: Program counter
 Back:
 - Memory address of the next instruction to execute
 - Updated after each instruction cycle
-- Used by control flow operations
 
-Front: What are the main stages of program execution?
+Front: Program execution stages
 Back:
 - Write program
 - Compile or assemble to machine code
 - Load into memory
-- Execute instructions
-
-Front: Explain how TCP/IP works.
-Back:
-- Splits data into packets at the sender
-- Routes packets independently across networks
-- Reassembles packets in order at the receiver
-- Retransmits lost packets to guarantee delivery
 
 Subject context is allowed only as background context.
 Use the subject only as background context. Answer only what the front asks.
@@ -128,9 +116,9 @@ Back:
 - Resolves IP addresses
 - Has recursive and authoritative servers
 
-Front: What is DNS?
+Front: Functional dependency
 Back:
-It is a system on the internet that helps with names and addresses and many other things in different situations.
+A relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
 
 Front: Tabela CAN
 Back: Mapeia identificadores para prioridades. - Define o acesso ao barramento. - Gerencia a arbitragem.
@@ -155,12 +143,13 @@ export const flashcardBackImproveSystemPrompt = `${LANGUAGE_RULE}
 You are rewriting a flashcard back to be significantly better. You MUST produce a different, improved version. Never echo the original back unchanged.
 
 Rules:
-- Always rewrite the content. If the original is a list of fragments, convert to a proper structured list with complete, testable points.
+- Always rewrite toward concise retrieval practice.
+- If the original is a list of fragments, convert to a proper structured list with precise, testable points.
 - If the original is already well-structured, improve precision, remove redundancy, and sharpen each point.
 - If the answer is a single atomic fact, output one concise sentence only.
-- Otherwise output a list with 3 to 5 lines.
+- Otherwise output a list with 1 to 3 lines.
 - In list mode, every line must start with "- ".
-- In list mode, each line must be one complete, directly testable point.
+- In list mode, each line must be one precise, directly testable point.
 - In list mode, do not write any text before or after the list.
 - In list mode, do not use inline separators like " - " inside a line.
 - In list mode, do not use numbering.
@@ -168,47 +157,82 @@ Rules:
 - Do not repeat, restate, or paraphrase the front.
 - Do not start with generic definition wrappers such as "An approach where...", "A method that...", or "It is...".
 - Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", "Key points:", or "Improved:".
-- Do not add filler, disclaimers, study tips, or long explanations.
+- Do not add filler, disclaimers, study tips, examples, caveats, or long explanations.
 - Do not invent facts not implied by the original back.
 
 Subject context is allowed only as background context.
 
 Good improvements:
-Front: What does DNS stand for?
+Front: DNS acronym
 Current back: Domain Name System.
 Improved:
 Domain Name System.
 
-Front: What is a CPU?
+Front: Functional dependency
+Current back: A relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
+Improved:
+- Relation where X determines Y
+- For every specific X, Y is fixed
+
+Front: CPU role
 Current back: The central processing unit is the brain of the computer that executes instructions.
 Improved:
 - Executes program instructions
 - Performs arithmetic and logic operations
-- Coordinates data flow between components
 
 Bad improvements:
-Front: What does DNS stand for?
+Front: DNS acronym
 Current back: Domain Name System.
 Improved: Here is a detailed explanation of DNS which is a very important system.
 
-Front: What is DNS?
-Current back: Resolves domain names to IP addresses.
-Improved: DNS is a complex distributed system that has many components and works in many different ways.
+Front: Functional dependency
+Current back: Attribute X determines Y.
+Improved: A functional dependency is a relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
 `;
 
 export const flashcardsGenerationSystemPrompt = `${LANGUAGE_RULE}
 
 You are creating study flashcards from source material.
 
-Extract key concepts and create atomic, testable flashcard pairs.
+Extract key concepts and create atomic retrieval-practice flashcard pairs.
 
 Rules:
-- Each card must have one clear, testable question on the front
-- Each answer must be concise (1-5 bullet points or one sentence)
-- Focus on facts, definitions, processes, and relationships
-- Avoid creating cards for trivial or obvious information
-- Do not repeat context across cards unnecessarily
-- Output as many cards as the material warrants
+- Fronts must be concise retrieval cues, usually noun phrases, not full questions.
+- Use fronts like "Functional dependency", "CPU role", or "TCP vs UDP".
+- Avoid "What is...", "Explain...", or other verbose question wrappers unless needed for clarity.
+- Each card must test one atomic fact, definition, process step, contrast, or relationship.
+- Backs must be one atomic sentence or 1 to 3 bullet points.
+- In bullet mode, every line must start with "- ".
+- In bullet mode, each bullet must contain one precise, directly testable point.
+- Do not repeat, restate, or paraphrase the front in the back.
+- Do not include extra context, examples, caveats, or details beyond the source material.
+- Avoid trivial or obvious information.
+- Output as many cards as the material warrants, but prefer fewer high-value cards over many weak cards.
+
+Good patterns:
+Front: Functional dependency
+Back:
+- Relation where X determines Y
+- For every specific X, Y is fixed
+
+Front: Program counter
+Back:
+- Memory address of the next instruction to execute
+- Updated after each instruction cycle
+
+Front: DNS acronym
+Back:
+Domain Name System.
+
+Bad patterns:
+Front: What is a functional dependency?
+Back:
+A relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
+
+Front: Explain how the program counter works in a CPU.
+Back:
+- The program counter is an important CPU register used during instruction execution.
+- It has many roles in processor control flow and program sequencing.
 
 Output format: JSON object with a "cards" array containing { front, back } objects.`;
 
@@ -222,10 +246,15 @@ You are a flashcard quality validator. Analyze flashcards for three types of iss
 
 FRONT STYLE AWARENESS
 Fronts are intentionally written as terse noun-phrase cues, not full sentences. This is correct style — do not flag it as confusing.
+- "Functional dependency" is correct. Do not require "What is a functional dependency?".
 - "DNS acronym" is correct. Do not flag as vague.
 - "Mitochondria role" is correct. Do not flag as incomplete.
 - "TCP vs UDP" is correct. Do not flag as ambiguous.
 Only flag a front as confusing if the cue is so unclear that a student genuinely cannot know what to recall.
+
+BACK STYLE AWARENESS
+Backs are intentionally concise. One atomic sentence or 1 to 3 precise bullets is correct style.
+Do not flag a back as confusing only because it omits extra explanation, examples, caveats, or context.
 
 DUPLICATE RULES
 Related concepts are NOT duplicates. Only flag when both the front AND back are effectively equivalent.

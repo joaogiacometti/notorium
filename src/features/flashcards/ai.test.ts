@@ -8,6 +8,8 @@ const {
   buildImproveFlashcardBackPrompt,
   flashcardBackSystemPrompt,
   flashcardBackImproveSystemPrompt,
+  flashcardsGenerationSystemPrompt,
+  flashcardValidationSystemPrompt,
   normalizeGeneratedCards,
 } = await import("@/features/flashcards/ai-prompts");
 
@@ -49,7 +51,7 @@ describe("flashcardBackSystemPrompt", () => {
       "If the answer is a single atomic fact, output one concise sentence only.",
     );
     expect(flashcardBackSystemPrompt).toContain(
-      "Otherwise output a list with 3 to 5 lines.",
+      "Otherwise output a list with 1 to 3 lines.",
     );
   });
 
@@ -65,15 +67,12 @@ describe("flashcardBackSystemPrompt", () => {
     );
   });
 
-  it("allows one optional list example line and forbids e.g shorthand", () => {
+  it("forbids example bullets and extra details", () => {
     expect(flashcardBackSystemPrompt).toContain(
-      'In list mode, you may include at most one final bullet starting with "- Example:"',
+      "Do not add filler, disclaimers, study tips, examples, caveats, or long explanations.",
     );
     expect(flashcardBackSystemPrompt).toContain(
-      "Do not use it for definitions, facts, or concepts that are self-explanatory.",
-    );
-    expect(flashcardBackSystemPrompt).toContain(
-      'Do not use bullets starting with "E.g." or "Ex.".',
+      'Do not use bullets starting with "Example:", "E.g.", or "Ex.".',
     );
   });
 
@@ -85,13 +84,11 @@ describe("flashcardBackSystemPrompt", () => {
 
   it("includes compact good examples and bad versus good guidance", () => {
     expect(flashcardBackSystemPrompt).toContain(
-      "Front: What does DNS stand for?",
+      "Front: DNS acronym",
     );
-    expect(flashcardBackSystemPrompt).toContain("Front: What is DNS?");
-    expect(flashcardBackSystemPrompt).toContain("Front: What is a CPU?");
-    expect(flashcardBackSystemPrompt).toContain(
-      "Front: What are the main stages of program execution?",
-    );
+    expect(flashcardBackSystemPrompt).toContain("Front: Functional dependency");
+    expect(flashcardBackSystemPrompt).toContain("Front: CPU role");
+    expect(flashcardBackSystemPrompt).toContain("Front: Program counter");
     expect(flashcardBackSystemPrompt).toContain("Bad patterns:");
     expect(flashcardBackSystemPrompt).toContain("Front: Tabela CAN");
     expect(flashcardBackSystemPrompt).toContain(
@@ -210,6 +207,24 @@ describe("flashcardBackImproveSystemPrompt", () => {
     expect(flashcardBackImproveSystemPrompt).toContain("Bad improvements:");
     expect(flashcardBackImproveSystemPrompt).toContain("Current back:");
     expect(flashcardBackImproveSystemPrompt).toContain("Improved:");
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "Front: Functional dependency",
+    );
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "- Relation where X determines Y",
+    );
+  });
+
+  it("requires the same minimal retrieval style as generation", () => {
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "Always rewrite toward concise retrieval practice.",
+    );
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "Otherwise output a list with 1 to 3 lines.",
+    );
+    expect(flashcardBackImproveSystemPrompt).toContain(
+      "Do not add filler, disclaimers, study tips, examples, caveats, or long explanations.",
+    );
   });
 });
 
@@ -244,6 +259,55 @@ describe("buildGenerateFlashcardsPrompt", () => {
     expect(prompt).toContain("Deck: Metabolism");
     expect(prompt).toContain("Note title: Photosynthesis lecture");
     expect(prompt).toContain("Chloroplasts contain chlorophyll.");
+  });
+});
+
+describe("flashcardsGenerationSystemPrompt", () => {
+  it("requires concise retrieval-cue fronts", () => {
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "Fronts must be concise retrieval cues, usually noun phrases, not full questions.",
+    );
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      'Avoid "What is...", "Explain...", or other verbose question wrappers unless needed for clarity.',
+    );
+  });
+
+  it("requires minimal directly testable backs", () => {
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "Backs must be one atomic sentence or 1 to 3 bullet points.",
+    );
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "Do not repeat, restate, or paraphrase the front in the back.",
+    );
+  });
+
+  it("includes functional-dependency guidance in the expected style", () => {
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "Front: Functional dependency",
+    );
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "- Relation where X determines Y",
+    );
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "- For every specific X, Y is fixed",
+    );
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "Front: What is a functional dependency?",
+    );
+  });
+});
+
+describe("flashcardValidationSystemPrompt", () => {
+  it("accepts terse cue fronts and concise backs as valid style", () => {
+    expect(flashcardValidationSystemPrompt).toContain(
+      '"Functional dependency" is correct. Do not require "What is a functional dependency?".',
+    );
+    expect(flashcardValidationSystemPrompt).toContain(
+      "Backs are intentionally concise. One atomic sentence or 1 to 3 precise bullets is correct style.",
+    );
+    expect(flashcardValidationSystemPrompt).toContain(
+      "Do not flag a back as confusing only because it omits extra explanation, examples, caveats, or context.",
+    );
   });
 });
 
