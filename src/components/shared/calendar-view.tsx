@@ -11,6 +11,8 @@ import {
   subMonths,
 } from "date-fns";
 import {
+  ArrowRight,
+  CalendarCheck,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
@@ -63,9 +65,21 @@ function EventDot({
   return <span className={cn("inline-block size-2 rounded-full", toneClass)} />;
 }
 
-function getEventChipToneClass(event: CalendarEvent, todayIso: string) {
+function getEventRowToneClass(event: CalendarEvent, todayIso: string) {
   const tone = getStatusToneClasses(getEventTone(event, todayIso));
-  return `${tone.border} ${tone.bg} ${tone.text}`;
+  return `${tone.border} ${tone.bg}`;
+}
+
+function getEventStatusLabel(event: CalendarEvent, todayIso: string) {
+  if (event.kind === "miss") {
+    return "Miss";
+  }
+
+  if (event.meta?.status === "completed") {
+    return "Done";
+  }
+
+  return event.date < todayIso ? "Overdue" : "Pending";
 }
 
 function getAssessmentTypeLabel(event: CalendarEvent) {
@@ -93,35 +107,72 @@ function getCalendarEventHref(event: CalendarEvent) {
   return `/subjects/${event.subjectId}`;
 }
 
-function EventChip({
+function getEventSubtitle(event: CalendarEvent) {
+  const assessmentTypeLabel = getAssessmentTypeLabel(event);
+
+  return assessmentTypeLabel
+    ? `${event.subjectName} · ${assessmentTypeLabel}`
+    : event.subjectName;
+}
+
+function formatEventCount(count: number) {
+  if (count === 0) {
+    return "No items";
+  }
+
+  return count === 1 ? "1 item" : `${count} items`;
+}
+
+function EventRow({
   event,
   todayIso,
 }: Readonly<{ event: CalendarEvent; todayIso: string }>) {
-  const chipToneClass = getEventChipToneClass(event, todayIso);
-  const assessmentTypeLabel = getAssessmentTypeLabel(event);
-  const subtitle = assessmentTypeLabel
-    ? `${event.subjectName} · ${assessmentTypeLabel}`
-    : event.subjectName;
-
   return (
     <div
       className={cn(
-        "flex min-w-0 w-full max-w-full items-start rounded border leading-tight",
-        "gap-1.5 px-2.5 py-2 text-sm sm:gap-2 sm:px-3 sm:py-2.5 sm:text-base",
-        chipToneClass,
+        "flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5",
+        "transition-colors hover:bg-muted/50",
+        getEventRowToneClass(event, todayIso),
       )}
     >
-      {event.kind === "assessment" ? (
-        <ClipboardList className="mt-0.5 size-3.5 shrink-0 sm:size-4" />
-      ) : (
-        <CircleAlert className="mt-0.5 size-3.5 shrink-0 sm:size-4" />
-      )}
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <p className="truncate text-sm font-medium sm:text-base">
-          {event.title}
-        </p>
-        <p className="truncate text-xs opacity-70 sm:text-sm">{subtitle}</p>
-      </div>
+      <EventRowIcon event={event} />
+      <EventRowText event={event} />
+      <EventRowStatus event={event} todayIso={todayIso} />
+    </div>
+  );
+}
+
+function EventRowIcon({ event }: Readonly<{ event: CalendarEvent }>) {
+  const Icon = event.kind === "assessment" ? ClipboardList : CircleAlert;
+
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background/70 text-muted-foreground">
+      <Icon className="size-4" aria-hidden="true" />
+    </span>
+  );
+}
+
+function EventRowText({ event }: Readonly<{ event: CalendarEvent }>) {
+  return (
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-sm font-medium text-foreground">
+        {event.title}
+      </p>
+      <p className="truncate text-xs text-muted-foreground">
+        {getEventSubtitle(event)}
+      </p>
+    </div>
+  );
+}
+
+function EventRowStatus({
+  event,
+  todayIso,
+}: Readonly<{ event: CalendarEvent; todayIso: string }>) {
+  return (
+    <div className="flex shrink-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+      <span>{getEventStatusLabel(event, todayIso)}</span>
+      <ArrowRight className="size-3.5" aria-hidden="true" />
     </div>
   );
 }
@@ -201,31 +252,89 @@ function DayDetail({
   return (
     <section
       className={cn(
-        "min-w-0 rounded-xl border border-border/70 bg-card/85 p-4",
+        "min-w-0 rounded-xl border border-border/70 bg-card/85",
         className,
       )}
+      data-testid="calendar-day-detail"
     >
-      <h3 className="text-sm font-medium text-muted-foreground">
-        {format(date, "EEEE, MMMM d, yyyy")}
-      </h3>
-      {dayEvents.length > 0 ? (
-        <div className="mt-4 min-w-0 space-y-2">
-          {dayEvents.map((e) => (
-            <Link
-              key={e.id}
-              href={getCalendarEventHref(e)}
-              className="block min-w-0 w-full max-w-full transition-opacity hover:opacity-80"
-            >
-              <EventChip event={e} todayIso={todayIso} />
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-border/70 bg-background/40 px-3 py-4 text-sm text-muted-foreground">
-          {emptyLabel}
-        </div>
-      )}
+      <DayDetailHeader date={date} eventCount={dayEvents.length} />
+      <DayDetailContent
+        dayEvents={dayEvents}
+        emptyLabel={emptyLabel}
+        todayIso={todayIso}
+      />
     </section>
+  );
+}
+
+function DayDetailContent({
+  dayEvents,
+  emptyLabel,
+  todayIso,
+}: Readonly<{
+  dayEvents: CalendarEvent[];
+  emptyLabel: string;
+  todayIso: string;
+}>) {
+  if (dayEvents.length === 0) {
+    return <EmptyDayDetail emptyLabel={emptyLabel} />;
+  }
+
+  return <DayEventList dayEvents={dayEvents} todayIso={todayIso} />;
+}
+
+function DayEventList({
+  dayEvents,
+  todayIso,
+}: Readonly<{ dayEvents: CalendarEvent[]; todayIso: string }>) {
+  return (
+    <div className="min-w-0 space-y-2 p-3 pt-0">
+      {dayEvents.map((e) => (
+        <Link
+          key={e.id}
+          href={getCalendarEventHref(e)}
+          className="block min-w-0 w-full max-w-full transition-opacity hover:opacity-80"
+        >
+          <EventRow event={e} todayIso={todayIso} />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function DayDetailHeader({
+  date,
+  eventCount,
+}: Readonly<{ date: Date; eventCount: number }>) {
+  return (
+    <div className="flex items-start justify-between gap-3 p-4">
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-muted-foreground">
+          Selected day
+        </p>
+        <h3 className="mt-1 truncate text-base font-semibold text-foreground">
+          {format(date, "EEEE, MMMM d")}
+        </h3>
+      </div>
+      <div className="rounded-md border border-border/70 bg-background/70 px-2 py-1 text-xs font-medium text-muted-foreground">
+        {formatEventCount(eventCount)}
+      </div>
+    </div>
+  );
+}
+
+function EmptyDayDetail({ emptyLabel }: Readonly<{ emptyLabel: string }>) {
+  return (
+    <div className="p-3 pt-0">
+      <div className="rounded-lg border border-dashed border-border/70 bg-background/50 px-3 py-5 text-center">
+        <CalendarCheck
+          className="mx-auto size-5 text-muted-foreground"
+          aria-hidden="true"
+        />
+        <p className="mt-2 text-sm font-medium text-foreground">Open day</p>
+        <p className="mt-1 text-xs text-muted-foreground">{emptyLabel}</p>
+      </div>
+    </div>
   );
 }
 
