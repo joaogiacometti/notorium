@@ -60,6 +60,7 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete flashcards within decks.
 - The flashcards manage table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
+- Flashcard manage search ranks front matches before back matches, deck-name matches, and recency tie-breakers.
 - Flashcard fields: front and back rich text.
 - Flashcard create and edit support AI generation of the back when the back is empty.
 - Flashcards can also be generated from a note detail page when AI is configured.

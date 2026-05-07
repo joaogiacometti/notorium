@@ -8,6 +8,7 @@ import {
   ne,
   or,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { deck, flashcard } from "@/db/schema";
@@ -51,6 +52,25 @@ async function resolveScopedDeckIds(
   }
 
   return getDescendantDeckIds(userId, deckId);
+}
+
+export function getFlashcardsManageOrderBy(
+  normalizedSearch: string,
+  searchPattern: string,
+): SQL<unknown>[] {
+  if (normalizedSearch.length === 0) {
+    return [desc(flashcard.updatedAt)];
+  }
+
+  return [
+    sql<number>`case
+      when ${flashcard.front} ilike ${searchPattern} then 0
+      when ${flashcard.back} ilike ${searchPattern} then 1
+      when ${deck.name} ilike ${searchPattern} then 2
+      else 3
+    end`,
+    desc(flashcard.updatedAt),
+  ];
 }
 
 export async function getFlashcardsForUser(
@@ -111,7 +131,7 @@ export async function getFlashcardsManagePageForUser(
       .from(flashcard)
       .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(and(...totalFilters))
-      .orderBy(desc(flashcard.updatedAt))
+      .orderBy(...getFlashcardsManageOrderBy(normalizedSearch, searchPattern))
       .limit(pageSize)
       .offset(offset),
     getDb()
