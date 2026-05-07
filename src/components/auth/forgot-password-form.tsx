@@ -11,7 +11,6 @@ import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -79,10 +78,6 @@ export function ForgotPasswordForm({
                   aria-invalid={fieldState.invalid}
                   autoComplete="email"
                 />
-                <FieldDescription>
-                  For security, this confirmation is generic and never reveals
-                  account status.
-                </FieldDescription>
                 {fieldState.invalid ? (
                   <FieldError errors={[fieldState.error]} />
                 ) : null}

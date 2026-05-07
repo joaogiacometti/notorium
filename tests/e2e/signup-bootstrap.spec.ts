@@ -70,9 +70,7 @@ test("later signup stays pending and shows approval notice", async ({
   await expect(
     page.getByRole("heading", { name: /sign in to notorium/i }),
   ).toBeVisible();
-  await expect(
-    page.getByText(/administrator approval/i),
-  ).toBeVisible();
+  await expect(page.getByText(/administrator approval/i)).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
   await expect(
     page.getByTestId("theme-switcher-floating-trigger"),

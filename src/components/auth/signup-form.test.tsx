@@ -68,7 +68,7 @@ describe("SignupForm", () => {
     expect(queryByText(container, "Use 8 to 128 characters.")).toBeTruthy();
   });
 
-  it("toggles signup password visibility", async () => {
+  it("renders password input without a custom reveal button", async () => {
     await act(async () => {
       root.render(<SignupForm />);
     });
@@ -76,14 +76,10 @@ describe("SignupForm", () => {
     const input = container.querySelector(
       "#form-signup-password",
     ) as HTMLInputElement;
-    const toggle = queryByAriaLabel(container, "Show password") as HTMLElement;
 
     expect(input.type).toBe("password");
-    await act(async () => {
-      toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(input.type).toBe("text");
-    expect(queryByAriaLabel(container, "Hide password")).toBeTruthy();
+    expect(queryByAriaLabel(container, "Show password")).toBeNull();
+    expect(queryByAriaLabel(container, "Hide password")).toBeNull();
   });
 
   it("shows caps lock hint on signup password fields", async () => {

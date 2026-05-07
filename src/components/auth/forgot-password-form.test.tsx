@@ -119,9 +119,6 @@ describe("ForgotPasswordForm", () => {
     expect(container.textContent).toContain(
       "If your account is active, we'll send a reset link.",
     );
-    expect(container.textContent).toContain(
-      "this confirmation is generic and never reveals account status",
-    );
 
     const signInLink = Array.from(container.querySelectorAll("a")).find(
       (element) => element.textContent === "Back to sign in",

@@ -113,7 +113,7 @@ describe("LoginForm", () => {
     expect(link?.className).toContain("focus-visible:ring-2");
   });
 
-  it("toggles password visibility", async () => {
+  it("renders password input without a custom reveal button", async () => {
     await act(async () => {
       root.render(<LoginForm />);
     });
@@ -121,14 +121,10 @@ describe("LoginForm", () => {
     const input = container.querySelector(
       "#form-login-password",
     ) as HTMLInputElement;
-    const toggle = queryByAriaLabel(container, "Show password") as HTMLElement;
 
     expect(input.type).toBe("password");
-    await act(async () => {
-      toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(input.type).toBe("text");
-    expect(queryByAriaLabel(container, "Hide password")).toBeTruthy();
+    expect(queryByAriaLabel(container, "Show password")).toBeNull();
+    expect(queryByAriaLabel(container, "Hide password")).toBeNull();
   });
 
   it("shows caps lock hint while key event indicates caps lock", async () => {
