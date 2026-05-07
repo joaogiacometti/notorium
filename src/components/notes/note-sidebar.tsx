@@ -1,12 +1,19 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
 import { useState, useTransition } from "react";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
+import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LIMITS } from "@/lib/config/limits";
 import { formatRelativeTime } from "@/lib/dates/format";
 import type { NoteEntity } from "@/lib/server/api-contracts";
@@ -15,6 +22,8 @@ import { cn } from "@/lib/utils";
 interface NoteSidebarProps {
   activeNoteId?: string;
   notes: NoteEntity[];
+  onDeleteRequested?: (note: NoteEntity) => void;
+  onEditRequested?: (note: NoteEntity) => void;
   onNoteNavigate?: (href: string, event: MouseEvent<HTMLAnchorElement>) => void;
   subjectId: string;
 }
@@ -28,6 +37,8 @@ interface NoteSidebarProps {
 export function NoteSidebar({
   activeNoteId,
   notes,
+  onDeleteRequested,
+  onEditRequested,
   onNoteNavigate,
   subjectId,
 }: Readonly<NoteSidebarProps>) {
@@ -89,33 +100,75 @@ export function NoteSidebar({
           notes.map((subjectNote) => {
             const href = `/subjects/${subjectNote.subjectId}/notes/${subjectNote.id}`;
             const isActive = subjectNote.id === activeNoteId;
+            const canShowActions = onEditRequested || onDeleteRequested;
 
             return (
-              <Link
+              <div
                 key={subjectNote.id}
-                href={href}
-                aria-current={isActive ? "page" : undefined}
-                onClick={(event) => {
-                  if (isActive) {
-                    return;
-                  }
-                  onNoteNavigate?.(href, event);
-                }}
                 className={cn(
-                  "block min-w-36 rounded-md px-3 py-2.5 text-left transition-colors sm:min-w-40 lg:min-w-0",
-                  "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
+                  "group flex min-w-36 items-start gap-1 rounded-md transition-colors sm:min-w-40 lg:min-w-0",
                   isActive
                     ? "bg-muted/45 text-foreground"
                     : "text-muted-foreground hover:bg-muted/35 hover:text-foreground",
                 )}
               >
-                <span className="block truncate text-sm font-medium">
-                  {subjectNote.title}
-                </span>
-                <span className="mt-1 block text-xs text-muted-foreground/70">
-                  Updated {formatRelativeTime(subjectNote.updatedAt)}
-                </span>
-              </Link>
+                <Link
+                  href={href}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={(event) => {
+                    if (isActive) {
+                      return;
+                    }
+                    onNoteNavigate?.(href, event);
+                  }}
+                  className={cn(
+                    "block min-w-0 flex-1 rounded-md px-3 py-2.5 text-left",
+                    "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
+                  )}
+                >
+                  <span className="block truncate text-sm font-medium">
+                    {subjectNote.title}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground/70">
+                    Updated {formatRelativeTime(subjectNote.updatedAt)}
+                  </span>
+                </Link>
+                {canShowActions ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className={`${ROW_ACTION_TRIGGER_CLASS} mt-1.5 shrink-0 text-muted-foreground`}
+                        aria-label={`Open actions for ${subjectNote.title}`}
+                      >
+                        <MoreVertical className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {onEditRequested ? (
+                        <DropdownMenuItem
+                          onClick={() => onEditRequested(subjectNote)}
+                          className="cursor-pointer"
+                        >
+                          <Pencil className="size-4" />
+                          Edit
+                        </DropdownMenuItem>
+                      ) : null}
+                      {onDeleteRequested ? (
+                        <DropdownMenuItem
+                          onClick={() => onDeleteRequested(subjectNote)}
+                          className="cursor-pointer text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="size-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      ) : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
+              </div>
             );
           })
         )}

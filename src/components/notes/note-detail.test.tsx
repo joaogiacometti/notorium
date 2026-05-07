@@ -43,8 +43,35 @@ vi.mock("@/app/actions/notes", () => ({
 }));
 
 vi.mock("@/components/notes/delete-note-dialog", () => ({
-  DeleteNoteDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="delete-note-dialog" /> : null,
+  DeleteNoteDialog: ({
+    noteId,
+    noteTitle,
+    open,
+  }: {
+    noteId: string;
+    noteTitle: string;
+    open: boolean;
+  }) =>
+    open ? (
+      <div data-note-id={noteId} data-testid="delete-note-dialog">
+        {noteTitle}
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/components/notes/edit-note-title-dialog", () => ({
+  EditNoteTitleDialog: ({
+    note,
+    open,
+  }: {
+    note: Pick<NoteEntity, "id" | "title">;
+    open: boolean;
+  }) =>
+    open ? (
+      <div data-note-id={note.id} data-testid="edit-note-title-dialog">
+        {note.title}
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/notes/generate-note-flashcards-dialog", () => ({
@@ -236,8 +263,8 @@ describe("NoteDetail", () => {
     const activeNoteLink = container.querySelector('a[aria-current="page"]');
 
     expect(activeNoteLink?.textContent).toContain("Photosynthesis note");
-    expect(activeNoteLink?.className).toContain("bg-muted/45");
-    expect(activeNoteLink?.className).not.toContain("bg-accent");
+    expect(activeNoteLink?.parentElement?.className).toContain("bg-muted/45");
+    expect(activeNoteLink?.parentElement?.className).not.toContain("bg-accent");
   });
 
   it("renders editable title and content without an edit action", async () => {
@@ -259,7 +286,11 @@ describe("NoteDetail", () => {
       titleInput?.parentElement?.parentElement?.parentElement?.className,
     ).not.toContain("overflow-hidden");
     expect(getContentInput(container)?.value).toBe(note.content);
-    expect(findButton(container, "Edit")).toBeUndefined();
+    expect(
+      container.querySelector(
+        'button[aria-label="Open actions for Photosynthesis note"]',
+      ),
+    ).toBeTruthy();
   });
 
   it("keeps note actions beside the title on narrow layouts", async () => {
@@ -505,12 +536,77 @@ describe("NoteDetail", () => {
       renderNoteDetail(root);
     });
 
+    const deleteButtons = Array.from(
+      container.querySelectorAll("button"),
+    ).filter((button) => button.textContent?.includes("Delete"));
+
     await act(async () => {
-      findButton(container, "Delete")?.click();
+      deleteButtons.at(-1)?.click();
     });
 
     expect(
       container.querySelector('[data-testid="delete-note-dialog"]'),
     ).toBeTruthy();
+  });
+
+  it("opens the sidebar edit dialog for another note", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    const editButtons = Array.from(container.querySelectorAll("button")).filter(
+      (button) => button.textContent?.includes("Edit"),
+    );
+
+    await act(async () => {
+      editButtons.at(1)?.click();
+    });
+
+    const dialog = container.querySelector(
+      '[data-testid="edit-note-title-dialog"]',
+    );
+
+    expect(dialog?.getAttribute("data-note-id")).toBe(otherNote.id);
+    expect(dialog?.textContent).toContain(otherNote.title);
+  });
+
+  it("opens the sidebar delete dialog for another note", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    const deleteButtons = Array.from(
+      container.querySelectorAll("button"),
+    ).filter((button) => button.textContent?.includes("Delete"));
+
+    await act(async () => {
+      deleteButtons.at(1)?.click();
+    });
+
+    const dialog = container.querySelector(
+      '[data-testid="delete-note-dialog"]',
+    );
+
+    expect(dialog?.getAttribute("data-note-id")).toBe(otherNote.id);
+    expect(dialog?.textContent).toContain(otherNote.title);
+  });
+
+  it("focuses the inline title from the active sidebar edit action", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    const editButtons = Array.from(container.querySelectorAll("button")).filter(
+      (button) => button.textContent?.includes("Edit"),
+    );
+
+    await act(async () => {
+      editButtons.at(0)?.click();
+    });
+
+    expect(document.activeElement).toBe(getTitleInput(container));
+    expect(
+      container.querySelector('[data-testid="edit-note-title-dialog"]'),
+    ).toBeNull();
   });
 });

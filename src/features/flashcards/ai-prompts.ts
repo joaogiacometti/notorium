@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { normalizeGeneratedBack } from "@/features/flashcards/ai-utils";
+import {
+  normalizeGeneratedBack,
+  plainTextToRichText,
+} from "@/features/flashcards/ai-utils";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 
 const LANGUAGE_RULE =
@@ -379,8 +382,8 @@ export function normalizeGeneratedCards(
         : normalizedBack;
 
     cards.push({
-      front,
-      back: backWithConsistentBullets,
+      front: plainTextToRichText(front),
+      back: plainTextToRichText(backWithConsistentBullets),
     });
   }
 

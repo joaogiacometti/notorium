@@ -38,6 +38,28 @@ vi.mock("@/components/notes/create-note-title-dialog", () => ({
     }),
 }));
 
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => children,
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) =>
+    children,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    className,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    onClick: () => void;
+  }) => (
+    <button type="button" className={className} onClick={onClick}>
+      {children}
+    </button>
+  ),
+}));
+
 function createNote(id: string): NoteEntity {
   return {
     id,
@@ -113,5 +135,48 @@ describe("NoteSidebar", () => {
 
     expect(button?.disabled).toBe(true);
     expect(button?.title).toBe("Delete an existing note to create a new one.");
+  });
+
+  it("runs sidebar row edit and delete actions for notes", async () => {
+    const onEditRequested = vi.fn();
+    const onDeleteRequested = vi.fn();
+    const firstNote = createNote("1");
+    const secondNote = createNote("2");
+
+    await act(async () => {
+      root.render(
+        <NoteSidebar
+          activeNoteId="1"
+          subjectId="subject-1"
+          notes={[firstNote, secondNote]}
+          onEditRequested={onEditRequested}
+          onDeleteRequested={onDeleteRequested}
+        />,
+      );
+    });
+
+    const actionTrigger = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open actions for Note 2"]',
+    );
+    const buttons = Array.from(container.querySelectorAll("button"));
+    const editButtons = buttons.filter((button) =>
+      button.textContent?.includes("Edit"),
+    );
+    const deleteButtons = buttons.filter((button) =>
+      button.textContent?.includes("Delete"),
+    );
+
+    expect(actionTrigger).toBeTruthy();
+    expect(
+      container.querySelector('button[aria-label="Open actions for Note 1"]'),
+    ).toBeTruthy();
+
+    await act(async () => {
+      editButtons.at(1)?.click();
+      deleteButtons.at(1)?.click();
+    });
+
+    expect(onEditRequested).toHaveBeenCalledWith(secondNote);
+    expect(onDeleteRequested).toHaveBeenCalledWith(secondNote);
   });
 });

@@ -16,6 +16,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editNote } from "@/app/actions/notes";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
+import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
 import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
 import { NoteSidebar } from "@/components/notes/note-sidebar";
 import { AppPageContainer } from "@/components/shared/app-page-container";
@@ -75,11 +76,17 @@ export function NoteDetail({
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [sidebarDeleteTarget, setSidebarDeleteTarget] =
+    useState<NoteEntity | null>(null);
+  const [sidebarEditTarget, setSidebarEditTarget] = useState<NoteEntity | null>(
+    null,
+  );
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
   const lastSavedValuesRef = useRef(getEditValues(note));
   const saveSequenceRef = useRef(0);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
   const hasDecks = decks.length > 0;
   const form = useForm<EditNoteForm>({
     resolver: zodResolver(editNoteSchema),
@@ -202,6 +209,24 @@ export function NoteDetail({
     }
   }
 
+  function handleSidebarEditRequested(targetNote: NoteEntity) {
+    if (targetNote.id === note.id) {
+      titleInputRef.current?.focus();
+      return;
+    }
+
+    setSidebarEditTarget(targetNote);
+  }
+
+  function handleSidebarDeleteRequested(targetNote: NoteEntity) {
+    if (targetNote.id === note.id) {
+      setDeleteOpen(true);
+      return;
+    }
+
+    setSidebarDeleteTarget(targetNote);
+  }
+
   return (
     <AppPageContainer
       maxWidth="5xl"
@@ -234,6 +259,8 @@ export function NoteDetail({
             event.preventDefault();
             void saveBeforeNavigation(href);
           }}
+          onEditRequested={handleSidebarEditRequested}
+          onDeleteRequested={handleSidebarDeleteRequested}
         />
 
         <form className="min-w-0 space-y-4 lg:flex lg:min-h-0 lg:flex-col lg:space-y-4">
@@ -246,6 +273,10 @@ export function NoteDetail({
                   <div className="min-w-0 flex-1">
                     <Input
                       {...field}
+                      ref={(element) => {
+                        field.ref(element);
+                        titleInputRef.current = element;
+                      }}
                       id="form-edit-note-title"
                       aria-label="Note title"
                       aria-invalid={fieldState.invalid}
@@ -354,9 +385,42 @@ export function NoteDetail({
         onOpenChange={setDeleteOpen}
         onSuccess={() => {
           setDeleteOpen(false);
-          startNavTransition(() => router.push(backHref));
+          startNavTransition(() =>
+            router.push(`/subjects/${note.subjectId}/notes`),
+          );
         }}
       />
+      {sidebarEditTarget ? (
+        <EditNoteTitleDialog
+          note={sidebarEditTarget}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setSidebarEditTarget(null);
+            }
+          }}
+          onSuccess={() => {
+            setSidebarEditTarget(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
+      {sidebarDeleteTarget ? (
+        <DeleteNoteDialog
+          noteId={sidebarDeleteTarget.id}
+          noteTitle={sidebarDeleteTarget.title}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setSidebarDeleteTarget(null);
+            }
+          }}
+          onSuccess={() => {
+            setSidebarDeleteTarget(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
       {aiEnabled ? (
         <GenerateNoteFlashcardsDialog
           decks={decks}

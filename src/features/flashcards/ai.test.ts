@@ -83,9 +83,7 @@ describe("flashcardBackSystemPrompt", () => {
   });
 
   it("includes compact good examples and bad versus good guidance", () => {
-    expect(flashcardBackSystemPrompt).toContain(
-      "Front: DNS acronym",
-    );
+    expect(flashcardBackSystemPrompt).toContain("Front: DNS acronym");
     expect(flashcardBackSystemPrompt).toContain("Front: Functional dependency");
     expect(flashcardBackSystemPrompt).toContain("Front: CPU role");
     expect(flashcardBackSystemPrompt).toContain("Front: Program counter");
@@ -317,7 +315,7 @@ describe("normalizeGeneratedCards", () => {
       cards: [{ front: "What is DNS?", back: "Domain Name System" }],
     });
     expect(result).toEqual([
-      { front: "What is DNS?", back: "Domain Name System" },
+      { front: "<p>What is DNS?</p>", back: "<p>Domain Name System</p>" },
     ]);
   });
 
@@ -326,7 +324,7 @@ describe("normalizeGeneratedCards", () => {
       cards: [{ front: "  What is DNS?  ", back: "  Domain Name System  " }],
     });
     expect(result).toEqual([
-      { front: "What is DNS?", back: "Domain Name System" },
+      { front: "<p>What is DNS?</p>", back: "<p>Domain Name System</p>" },
     ]);
   });
 
@@ -375,8 +373,21 @@ describe("normalizeGeneratedCards", () => {
       ],
     });
     expect(result).toEqual([
-      { front: "Valid", back: "Answer" },
-      { front: "Another valid", back: "Another answer" },
+      { front: "<p>Valid</p>", back: "<p>Answer</p>" },
+      { front: "<p>Another valid</p>", back: "<p>Another answer</p>" },
+    ]);
+  });
+
+  it("converts generated bullet backs into rich text lists", () => {
+    const result = normalizeGeneratedCards({
+      cards: [{ front: "Network devices", back: "- Router\n- Switch" }],
+    });
+
+    expect(result).toEqual([
+      {
+        front: "<p>Network devices</p>",
+        back: "<ul><li>Router</li><li>Switch</li></ul>",
+      },
     ]);
   });
 
@@ -402,8 +413,8 @@ describe("normalizeGeneratedCards", () => {
 
     expect(result).toEqual([
       {
-        front: "Queue vs Topic",
-        back: "- Queue implements point-to-point delivery where each message is processed by exactly one consumer.\n- Topic implements publish-subscribe delivery where one message is broadcast to all subscribed consumers.\n- Queues are optimized for task distribution and load balancing among workers.\n- Topics are optimized for event notification and broadcasting data to multiple independent systems.",
+        front: "<p>Queue vs Topic</p>",
+        back: "<ul><li>Queue implements point-to-point delivery where each message is processed by exactly one consumer.</li><li>Topic implements publish-subscribe delivery where one message is broadcast to all subscribed consumers.</li><li>Queues are optimized for task distribution and load balancing among workers.</li><li>Topics are optimized for event notification and broadcasting data to multiple independent systems.</li></ul>",
       },
     ]);
   });
