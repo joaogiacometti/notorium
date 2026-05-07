@@ -7,7 +7,7 @@ test("approved user can log in", async ({ page }) => {
   await page.goto("/login");
   await page.locator("#form-login-email").fill(user.email);
   await page.locator("#form-login-password").fill(user.password);
-  await page.getByRole("button", { name: "Login" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
 
   await page.waitForURL("**/subjects");
   await expect(
@@ -27,10 +27,10 @@ test("pending user cannot log in", async ({ page }) => {
   await page.goto("/login");
   await page.locator("#form-login-email").fill(user.email);
   await page.locator("#form-login-password").fill(user.password);
-  await page.getByRole("button", { name: "Login" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(
-    page.getByRole("heading", { name: "Login to your account", exact: true }),
+    page.getByRole("heading", { name: "Sign in to Notorium", exact: true }),
   ).toBeVisible();
   await expect(page.locator("#form-login-email")).toBeVisible();
   await expect(page.locator("#form-login-password")).toBeVisible();
@@ -51,10 +51,10 @@ test("blocked user cannot log in", async ({ page }) => {
   await page.goto("/login");
   await page.locator("#form-login-email").fill(user.email);
   await page.locator("#form-login-password").fill(user.password);
-  await page.getByRole("button", { name: "Login" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(
-    page.getByRole("heading", { name: "Login to your account", exact: true }),
+    page.getByRole("heading", { name: "Sign in to Notorium", exact: true }),
   ).toBeVisible();
   await expect(page.locator("#form-login-email")).toBeVisible();
   await expect(page.locator("#form-login-password")).toBeVisible();

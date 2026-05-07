@@ -110,6 +110,27 @@ describe("ForgotPasswordForm", () => {
     expect(toastErrorMock).not.toHaveBeenCalled();
   });
 
+  it("renders recovery guidance and sign-in link", async () => {
+    await act(async () => {
+      root.render(<ForgotPasswordForm />);
+    });
+
+    expect(container.textContent).toContain("Forgot your password?");
+    expect(container.textContent).toContain(
+      "If your account is active, we'll send a reset link.",
+    );
+    expect(container.textContent).toContain(
+      "this confirmation is generic and never reveals account status",
+    );
+
+    const signInLink = Array.from(container.querySelectorAll("a")).find(
+      (element) => element.textContent === "Back to sign in",
+    );
+
+    expect(signInLink).toBeTruthy();
+    expect(signInLink?.getAttribute("href")).toBe("/login");
+  });
+
   it("shows an error toast and does not redirect when the action fails", async () => {
     requestPasswordResetActionMock.mockResolvedValueOnce({
       success: false,

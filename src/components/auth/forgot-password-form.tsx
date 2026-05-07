@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { requestPasswordResetAction } from "@/app/actions/auth";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
@@ -50,60 +50,61 @@ export function ForgotPasswordForm({
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="p-4 sm:p-6 md:p-8">
-          <form
-            id="form-forgot-password"
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
-            <FieldGroup className="gap-4 md:gap-6">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Reset your password</h1>
-              </div>
-              <Controller
-                name="email"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="form-forgot-password-email">
-                      Email
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="form-forgot-password-email"
-                      type="email"
-                      placeholder="m@example.com"
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="email"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Field>
-                <Button
-                  type="submit"
-                  form="form-forgot-password"
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  <AsyncButtonContent
-                    pending={isSubmitting}
-                    idleLabel="Send reset link"
-                    pendingLabel="Sending..."
-                  />
-                </Button>
+    <AuthFormShell
+      heading="Forgot your password?"
+      subheading="Enter your account email. If your account is active, we'll send a reset link."
+      footer={
+        <>
+          Remembered it? <Link href="/login">Back to sign in</Link>
+        </>
+      }
+      className={cn(className)}
+      {...props}
+    >
+      <form id="form-forgot-password" onSubmit={form.handleSubmit(onSubmit)}>
+        <FieldGroup className="gap-4 md:gap-6">
+          <Controller
+            name="email"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-forgot-password-email">
+                  Email
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="form-forgot-password-email"
+                  type="email"
+                  placeholder="name@school.edu"
+                  aria-invalid={fieldState.invalid}
+                  autoComplete="email"
+                />
+                <FieldDescription>
+                  For security, this confirmation is generic and never reveals
+                  account status.
+                </FieldDescription>
+                {fieldState.invalid ? (
+                  <FieldError errors={[fieldState.error]} />
+                ) : null}
               </Field>
-              <FieldDescription className="text-center">
-                Remembered it? <Link href="/login">Sign in</Link>
-              </FieldDescription>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            )}
+          />
+          <Field>
+            <Button
+              type="submit"
+              form="form-forgot-password"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              <AsyncButtonContent
+                pending={isSubmitting}
+                idleLabel="Send reset link"
+                pendingLabel="Sending reset link..."
+              />
+            </Button>
+          </Field>
+        </FieldGroup>
+      </form>
+    </AuthFormShell>
   );
 }

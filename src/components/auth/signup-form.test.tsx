@@ -1,10 +1,10 @@
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LoginForm } from "@/components/auth/login-form";
+import { SignupForm } from "@/components/auth/signup-form";
 
-const { loginActionMock, toastErrorMock } = vi.hoisted(() => ({
-  loginActionMock: vi.fn(),
+const { signUpActionMock, toastErrorMock } = vi.hoisted(() => ({
+  signUpActionMock: vi.fn(),
   toastErrorMock: vi.fn(),
 }));
 
@@ -13,7 +13,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 vi.mock("@/app/actions/auth", () => ({
-  loginAction: loginActionMock,
+  signUpAction: signUpActionMock,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -38,13 +38,7 @@ function queryByAriaLabel(container: HTMLElement, label: string) {
   return container.querySelector(`[aria-label="${label}"]`);
 }
 
-function queryLinkByText(container: HTMLElement, text: string) {
-  return Array.from(container.querySelectorAll("a")).find(
-    (element) => element.textContent === text,
-  );
-}
-
-describe("LoginForm", () => {
+describe("SignupForm", () => {
   let container: HTMLDivElement;
   let root: Root;
 
@@ -53,7 +47,7 @@ describe("LoginForm", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    loginActionMock.mockReset();
+    signUpActionMock.mockReset();
     toastErrorMock.mockReset();
   });
 
@@ -66,60 +60,21 @@ describe("LoginForm", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the pending approval notice when requested", async () => {
+  it("renders password requirement helper text", async () => {
     await act(async () => {
-      root.render(<LoginForm showPendingApprovalNotice />);
+      root.render(<SignupForm />);
     });
 
-    expect(
-      queryByText(container, "Account created successfully."),
-    ).toBeTruthy();
-    expect(
-      queryByText(
-        container,
-        "Your access now waits for administrator approval.",
-      ),
-    ).toBeTruthy();
+    expect(queryByText(container, "Use 8 to 128 characters.")).toBeTruthy();
   });
 
-  it("omits the pending approval notice by default", async () => {
+  it("toggles signup password visibility", async () => {
     await act(async () => {
-      root.render(<LoginForm />);
-    });
-
-    expect(
-      queryByText(container, "Account created successfully."),
-    ).toBeUndefined();
-  });
-
-  it("hides the password reset link by default", async () => {
-    await act(async () => {
-      root.render(<LoginForm />);
-    });
-
-    expect(queryByText(container, "Forgot password?")).toBeUndefined();
-  });
-
-  it("shows the password reset link when enabled", async () => {
-    await act(async () => {
-      root.render(<LoginForm showForgotPasswordLink />);
-    });
-
-    const link = queryLinkByText(container, "Forgot password?");
-    expect(link).toBeTruthy();
-    expect(link?.getAttribute("href")).toBe("/forgot-password");
-    expect(link?.className).toContain("text-foreground/90");
-    expect(link?.className).toContain("hover:underline");
-    expect(link?.className).toContain("focus-visible:ring-2");
-  });
-
-  it("toggles password visibility", async () => {
-    await act(async () => {
-      root.render(<LoginForm />);
+      root.render(<SignupForm />);
     });
 
     const input = container.querySelector(
-      "#form-login-password",
+      "#form-signup-password",
     ) as HTMLInputElement;
     const toggle = queryByAriaLabel(container, "Show password") as HTMLElement;
 
@@ -131,13 +86,13 @@ describe("LoginForm", () => {
     expect(queryByAriaLabel(container, "Hide password")).toBeTruthy();
   });
 
-  it("shows caps lock hint while key event indicates caps lock", async () => {
+  it("shows caps lock hint on signup password fields", async () => {
     await act(async () => {
-      root.render(<LoginForm />);
+      root.render(<SignupForm />);
     });
 
     const passwordInput = container.querySelector(
-      "#form-login-password",
+      "#form-signup-password",
     ) as HTMLInputElement;
     await act(async () => {
       const event = new KeyboardEvent("keydown", { key: "A", bubbles: true });

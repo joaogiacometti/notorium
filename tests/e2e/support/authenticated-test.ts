@@ -46,7 +46,7 @@ export const test = base.extend<
       await page.goto(loginUrl);
       await page.locator("#form-login-email").fill(workerE2EUser.email);
       await page.locator("#form-login-password").fill(workerE2EUser.password);
-      await page.getByRole("button", { name: "Login" }).click();
+      await page.getByRole("button", { name: "Sign in" }).click();
       await page.waitForURL("**/subjects");
       await page.context().storageState({ path: storageStatePath });
       await page.context().close();

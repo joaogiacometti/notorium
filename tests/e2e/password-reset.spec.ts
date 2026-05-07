@@ -16,20 +16,20 @@ function getUniqueEmail(testTitle: string) {
 async function requestPasswordReset(page: Page, email: string) {
   await page.goto("/forgot-password");
   await expect(
-    page.getByRole("heading", { name: "Reset your password", exact: true }),
+    page.getByRole("heading", { name: "Forgot your password?", exact: true }),
   ).toBeVisible();
   await page.locator("#form-forgot-password-email").fill(email);
   await page.getByRole("button", { name: "Send reset link" }).click();
   await page.waitForURL("**/login");
   await expect(
-    page.getByRole("heading", { name: "Login to your account", exact: true }),
+    page.getByRole("heading", { name: "Sign in to Notorium", exact: true }),
   ).toBeVisible();
 }
 
 async function loginWithPassword(page: Page, email: string, password: string) {
   await page.locator("#form-login-email").fill(email);
   await page.locator("#form-login-password").fill(password);
-  await page.getByRole("button", { name: "Login" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
 }
 
 test("approved user can reset password through app email flow", async ({
@@ -54,7 +54,7 @@ test("approved user can reset password through app email flow", async ({
 
   await page.goto(extractResetUrl(emails[0]));
   await expect(
-    page.getByRole("heading", { name: "Choose a new password", exact: true }),
+    page.getByRole("heading", { name: "Set a new password", exact: true }),
   ).toBeVisible();
   await page.locator("#form-reset-password-password").fill(newPassword);
   await page.locator("#form-reset-password-confirm-password").fill(newPassword);
@@ -63,7 +63,7 @@ test("approved user can reset password through app email flow", async ({
 
   await loginWithPassword(page, credentials.email, credentials.password);
   await expect(
-    page.getByRole("heading", { name: "Login to your account", exact: true }),
+    page.getByRole("heading", { name: "Sign in to Notorium", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Login failed.")).toBeVisible();
 

@@ -66,11 +66,12 @@ test("later signup stays pending and shows approval notice", async ({
   await page.locator("#form-signup-confirm-password").fill(secondUser.password);
   await page.getByRole("button", { name: "Create Account" }).click();
 
+  await page.waitForURL("**/login**");
   await expect(
-    page.getByRole("heading", { name: "Login to your account", exact: true }),
+    page.getByRole("heading", { name: /sign in to notorium/i }),
   ).toBeVisible();
   await expect(
-    page.getByText(/waiting for administrator approval/i),
+    page.getByText(/administrator approval/i),
   ).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
   await expect(

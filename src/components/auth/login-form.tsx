@@ -1,18 +1,18 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpenText, Clock3 } from "lucide-react";
+import { Clock3 } from "lucide-react";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { loginAction } from "@/app/actions/auth";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { handleAuthRedirect } from "@/components/auth/handle-auth-redirect";
+import { PasswordField } from "@/components/auth/password-field";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -59,107 +59,94 @@ export function LoginForm({
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form
-            id="form-login"
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="p-4 sm:p-6 md:p-8"
-          >
-            <FieldGroup className="gap-4 md:gap-6">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Login to your account</h1>
-              </div>
-              {showPendingApprovalNotice ? (
-                <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
-                  <Clock3 className="mt-0.5 size-4 shrink-0 text-primary" />
-                  <p className="text-left text-foreground/90">
-                    Your account was created successfully and is now waiting for
-                    administrator approval.
-                  </p>
-                </div>
-              ) : null}
-              <Controller
-                name="email"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="form-login-email">Email</FieldLabel>
-                    <Input
-                      {...field}
-                      id="form-login-email"
-                      type="email"
-                      placeholder="m@example.com"
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="email"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="password"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <div className="flex items-center">
-                      <FieldLabel htmlFor="form-login-password">
-                        Password
-                      </FieldLabel>
-                      {showForgotPasswordLink ? (
-                        <Link
-                          href="/forgot-password"
-                          className="ml-auto text-sm underline-offset-4 hover:underline"
-                        >
-                          Forgot your password?
-                        </Link>
-                      ) : null}
-                    </div>
-                    <Input
-                      {...field}
-                      id="form-login-password"
-                      type="password"
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="current-password"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Field>
-                <Button
-                  type="submit"
-                  form="form-login"
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  <AsyncButtonContent
-                    pending={isSubmitting}
-                    idleLabel="Login"
-                    pendingLabel="Logging in..."
-                  />
-                </Button>
-              </Field>
-              <FieldDescription className="text-center">
-                Don&apos;t have an account? <Link href="/signup">Sign up</Link>
-              </FieldDescription>
-            </FieldGroup>
-          </form>
-          <div className="relative hidden bg-muted md:block">
-            <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-muted/40 to-background" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="rounded-full border border-primary/20 bg-primary/10 p-5">
-                <BookOpenText className="size-10 text-primary" />
+    <AuthFormShell
+      heading="Sign in to Notorium"
+      subheading="Pick up where your study plan left off."
+      footer={
+        <>
+          Need an account? <Link href="/signup">Create one</Link>
+        </>
+      }
+      className={cn(className)}
+      {...props}
+    >
+      <form id="form-login" onSubmit={form.handleSubmit(onSubmit)}>
+        <FieldGroup className="gap-4 md:gap-6">
+          {showPendingApprovalNotice ? (
+            <div className="flex items-start gap-3 rounded-xl border border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-4 py-3 text-sm">
+              <Clock3 className="mt-0.5 size-4 shrink-0 text-[var(--intent-info-fill)]" />
+              <div className="space-y-1">
+                <p className="font-medium text-[var(--intent-info-text)]">
+                  Account created successfully.
+                </p>
+                <p className="text-[var(--intent-info-text)]/90">
+                  Your access now waits for administrator approval.
+                </p>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          ) : null}
+          <Controller
+            name="email"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-login-email">Email</FieldLabel>
+                <Input
+                  {...field}
+                  id="form-login-email"
+                  type="email"
+                  placeholder="name@school.edu"
+                  aria-invalid={fieldState.invalid}
+                  autoComplete="email"
+                />
+                {fieldState.invalid ? (
+                  <FieldError errors={[fieldState.error]} />
+                ) : null}
+              </Field>
+            )}
+          />
+          <Controller
+            name="password"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <PasswordField
+                id="form-login-password"
+                label="Password"
+                value={field.value}
+                onBlur={field.onBlur}
+                onChange={field.onChange}
+                autoComplete="current-password"
+                invalid={fieldState.invalid}
+                error={fieldState.error}
+                trailingSlot={
+                  showForgotPasswordLink ? (
+                    <Link
+                      href="/forgot-password"
+                      className="rounded-sm text-sm text-foreground/90 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      Forgot password?
+                    </Link>
+                  ) : undefined
+                }
+              />
+            )}
+          />
+          <Field>
+            <Button
+              type="submit"
+              form="form-login"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              <AsyncButtonContent
+                pending={isSubmitting}
+                idleLabel="Sign in"
+                pendingLabel="Signing in..."
+              />
+            </Button>
+          </Field>
+        </FieldGroup>
+      </form>
+    </AuthFormShell>
   );
 }

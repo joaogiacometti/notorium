@@ -6,17 +6,11 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { resetPasswordAction } from "@/app/actions/auth";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
+import { PasswordField } from "@/components/auth/password-field";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { Field, FieldGroup } from "@/components/ui/field";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 import {
@@ -55,78 +49,66 @@ export function ResetPasswordForm({
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="p-4 sm:p-6 md:p-8">
-          <form id="form-reset-password" onSubmit={form.handleSubmit(onSubmit)}>
-            <FieldGroup className="gap-4 md:gap-6">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Choose a new password</h1>
-              </div>
-              <input type="hidden" {...form.register("token")} />
-              <Controller
-                name="password"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="form-reset-password-password">
-                      Password
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="form-reset-password-password"
-                      type="password"
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="new-password"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
+    <AuthFormShell
+      heading="Set a new password"
+      subheading="Use a unique password you haven't used for this account before."
+      footer={<Link href="/login">Back to sign in</Link>}
+      className={cn(className)}
+      {...props}
+    >
+      <form id="form-reset-password" onSubmit={form.handleSubmit(onSubmit)}>
+        <FieldGroup className="gap-4 md:gap-6">
+          <input type="hidden" {...form.register("token")} />
+          <Controller
+            name="password"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <PasswordField
+                id="form-reset-password-password"
+                label="New password"
+                value={field.value}
+                onBlur={field.onBlur}
+                onChange={field.onChange}
+                autoComplete="new-password"
+                invalid={fieldState.invalid}
+                error={fieldState.error}
+                helperText="Use at least 8 characters."
               />
-              <Controller
-                name="confirmPassword"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="form-reset-password-confirm-password">
-                      Confirm Password
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="form-reset-password-confirm-password"
-                      type="password"
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="new-password"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
+            )}
+          />
+          <Controller
+            name="confirmPassword"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <PasswordField
+                id="form-reset-password-confirm-password"
+                label="Confirm new password"
+                value={field.value}
+                onBlur={field.onBlur}
+                onChange={field.onChange}
+                autoComplete="new-password"
+                invalid={fieldState.invalid}
+                error={fieldState.error}
+                helperText="Re-enter your new password exactly."
               />
-              <Field>
-                <Button
-                  type="submit"
-                  form="form-reset-password"
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  <AsyncButtonContent
-                    pending={isSubmitting}
-                    idleLabel="Reset password"
-                    pendingLabel="Resetting..."
-                  />
-                </Button>
-              </Field>
-              <FieldDescription className="text-center">
-                <Link href="/login">Back to sign in</Link>
-              </FieldDescription>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            )}
+          />
+          <Field>
+            <Button
+              type="submit"
+              form="form-reset-password"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              <AsyncButtonContent
+                pending={isSubmitting}
+                idleLabel="Reset password"
+                pendingLabel="Resetting password..."
+              />
+            </Button>
+          </Field>
+        </FieldGroup>
+      </form>
+    </AuthFormShell>
   );
 }

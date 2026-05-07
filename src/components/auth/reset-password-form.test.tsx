@@ -114,6 +114,53 @@ describe("ResetPasswordForm", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
+  it("toggles password visibility for both password fields", async () => {
+    await act(async () => {
+      root.render(<ResetPasswordForm token="token-1" />);
+    });
+
+    const passwordInput = container.querySelector(
+      "#form-reset-password-password",
+    ) as HTMLInputElement;
+    const confirmPasswordInput = container.querySelector(
+      "#form-reset-password-confirm-password",
+    ) as HTMLInputElement;
+    const toggles = Array.from(
+      container.querySelectorAll('[aria-label="Show password"]'),
+    ) as HTMLElement[];
+
+    expect(passwordInput.type).toBe("password");
+    expect(confirmPasswordInput.type).toBe("password");
+
+    await act(async () => {
+      toggles[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      toggles[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(passwordInput.type).toBe("text");
+    expect(confirmPasswordInput.type).toBe("text");
+  });
+
+  it("shows caps lock hint while typing a new password", async () => {
+    await act(async () => {
+      root.render(<ResetPasswordForm token="token-1" />);
+    });
+
+    const passwordInput = container.querySelector(
+      "#form-reset-password-password",
+    ) as HTMLInputElement;
+
+    await act(async () => {
+      const event = new KeyboardEvent("keydown", { key: "A", bubbles: true });
+      Object.defineProperty(event, "getModifierState", {
+        value: (key: string) => key === "CapsLock",
+      });
+      passwordInput.dispatchEvent(event);
+    });
+
+    expect(container.textContent).toContain("Caps Lock is on.");
+  });
+
   async function fillPasswordFields(password: string) {
     await act(async () => {
       setInputValue(
