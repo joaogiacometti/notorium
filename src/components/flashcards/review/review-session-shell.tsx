@@ -34,7 +34,7 @@ export function ReviewSessionShell({
   return (
     <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
       <progress
-        className="h-1 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
+        className="h-1.5 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
         value={Math.round(progress * 100)}
         max={100}
         aria-label="Review progress"
@@ -48,12 +48,14 @@ export function ReviewSessionShell({
         actions={actions}
       />
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5">
-        {children}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5">
+        <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col justify-center py-4 sm:py-6">
+          {children}
+        </div>
       </div>
 
-      <div className="shrink-0 border-t border-border/60 px-4 py-4 sm:px-5">
-        {footer}
+      <div className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 sm:px-5 sm:py-4">
+        <div className="mx-auto w-full max-w-4xl">{footer}</div>
       </div>
     </div>
   );
@@ -75,7 +77,7 @@ function SessionHeader({
   actions,
 }: Readonly<SessionHeaderProps>) {
   return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:px-5">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/40 px-4 py-3 sm:px-5">
       <div className="flex min-w-10 items-center">
         {badge ?? <div className="size-10" />}
       </div>

@@ -259,15 +259,20 @@ function getSessionFooter({
 }: Readonly<SessionFooterParams>) {
   if (!revealed) {
     return (
-      <Button size="lg" className="h-12 w-full text-base" onClick={onReveal}>
-        Show Answer
+      <Button
+        size="lg"
+        className="h-12 w-full text-base sm:h-14"
+        onClick={onReveal}
+        aria-keyshortcuts="Enter"
+      >
+        Show answer
       </Button>
     );
   }
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
         <ReviewGradeButtons
           pendingGrade={pendingGrade}
           previewLabels={previewLabels}
@@ -283,11 +288,13 @@ function ReviewSessionEmptyState({ onExit }: Readonly<{ onExit: () => void }>) {
   return (
     <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-        <h1 className="mb-2 text-2xl font-bold">All caught up!</h1>
-        <p className="mb-8 text-muted-foreground">
-          There are no due flashcards to review.
+        <h1 className="mb-2 text-2xl font-semibold tracking-tight">
+          All caught up
+        </h1>
+        <p className="mb-8 max-w-sm text-muted-foreground">
+          No due flashcards in this scope right now.
         </p>
-        <Button onClick={onExit}>Exit Focus Mode</Button>
+        <Button onClick={onExit}>Exit focus mode</Button>
       </div>
     </div>
   );
@@ -295,7 +302,7 @@ function ReviewSessionEmptyState({ onExit }: Readonly<{ onExit: () => void }>) {
 
 function ExamBadge() {
   return (
-    <div className="flex items-center gap-1.5 rounded-md border-2 border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--intent-info-text)] uppercase">
+    <div className="flex items-center gap-1.5 rounded-md border border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-2 py-1 text-xs font-semibold tracking-wider text-[var(--intent-info-text)] uppercase">
       <GraduationCap className="size-3.5" />
       <span>Exam</span>
     </div>

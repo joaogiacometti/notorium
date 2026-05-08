@@ -19,6 +19,12 @@ interface ReviewGradeButtonsProps {
 }
 
 const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
+const gradeShortcuts: Record<ReviewGrade, string> = {
+  again: "1",
+  hard: "2",
+  good: "3",
+  easy: "4",
+};
 const gradeButtonStyles: Record<ReviewGrade, string> = {
   again:
     "border-[color:var(--intent-danger-border)] bg-[color:var(--intent-danger-bg)] text-[color:var(--intent-danger-text)] hover:border-[color:var(--intent-danger-border-hover)] hover:bg-[color:var(--intent-danger-bg-hover)]",
@@ -51,10 +57,11 @@ export function ReviewGradeButtons({
             size="lg"
             onClick={() => onGrade(grade)}
             disabled={isPending}
-            className={`h-auto min-h-14 w-full min-w-0 border-2 px-1 py-0.75 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
+            aria-keyshortcuts={gradeShortcuts[grade]}
+            className={`h-12 w-full min-w-0 border-2 px-1.5 py-0 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:h-auto sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
           >
-            <span className="flex min-w-0 flex-col items-center justify-center gap-px text-center">
-              <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+            <span className="flex min-w-0 flex-col items-center justify-center text-center sm:gap-1">
+              <span className="flex min-w-0 items-center gap-1.5">
                 {isActivePendingGrade ? (
                   <Loader2 className="size-3.5 animate-spin sm:size-4" />
                 ) : (
@@ -63,7 +70,7 @@ export function ReviewGradeButtons({
                 <span className="truncate">{gradeLabels[grade]}</span>
               </span>
               {previewLabels ? (
-                <span className="text-pretty whitespace-normal wrap-break-word text-[9px] leading-tight font-medium opacity-80 sm:text-[11px]">
+                <span className="max-w-full truncate text-[9px] leading-tight font-medium opacity-80 sm:text-pretty sm:whitespace-normal sm:wrap-break-word sm:text-[11px]">
                   {previewLabels[grade].durationText}
                 </span>
               ) : null}
