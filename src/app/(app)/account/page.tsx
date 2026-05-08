@@ -1,17 +1,21 @@
 import { UserCircle } from "lucide-react";
 import { AccountForm } from "@/components/account/account-form";
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { getFsrsOptimizationSettings } from "@/features/flashcards/fsrs/settings";
 import { getNotificationPreferences } from "@/features/user/queries";
 import { requireSession } from "@/lib/auth/auth";
 import { isEmailDeliveryEnabled } from "@/lib/email/config";
+import { areWorkflowsEnabled } from "@/lib/workflows/config";
 
 export default async function AccountPage() {
   const session = await requireSession();
   const emailEnabled = isEmailDeliveryEnabled();
+  const workflowsEnabled = areWorkflowsEnabled();
 
-  const notificationPrefs = emailEnabled
-    ? await getNotificationPreferences(session.user.id)
-    : null;
+  const [notificationPrefs, fsrsOptimizationSettings] = await Promise.all([
+    emailEnabled ? getNotificationPreferences(session.user.id) : null,
+    getFsrsOptimizationSettings(session.user.id),
+  ]);
 
   return (
     <main>
@@ -43,6 +47,8 @@ export default async function AccountPage() {
             initialNotificationDaysBefore={
               notificationPrefs?.notificationDaysBefore ?? 1
             }
+            workflowsEnabled={workflowsEnabled}
+            fsrsOptimizationSettings={fsrsOptimizationSettings}
           />
         </div>
       </AppPageContainer>

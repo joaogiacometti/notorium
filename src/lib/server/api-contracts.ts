@@ -105,6 +105,13 @@ export interface FlashcardReviewSchedulerSettings {
   weights: number[];
 }
 
+export interface FlashcardOptimizationSettings {
+  automaticOptimizationEnabled: boolean;
+  lastOptimizedAt: string | null;
+  optimizedReviewCount: number;
+  reviewCount: number;
+}
+
 export interface FlashcardReviewState {
   cards: FlashcardReviewEntity[];
   summary: FlashcardReviewSummary;
@@ -172,6 +179,13 @@ export type SubjectEditDto = Pick<SubjectEntity, "id" | "name">;
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
+export type FlashcardOptimizationResult =
+  | {
+      success: true;
+      optimizedReviewCount: number;
+      lastOptimizedAt: Date;
+    }
+  | ActionErrorResult;
 export type AuthRedirectSuccessResult = {
   success: true;
   data: {

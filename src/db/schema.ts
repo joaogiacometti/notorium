@@ -460,6 +460,9 @@ export const flashcardSchedulerSettings = pgTable(
       .notNull()
       .default(0),
     lastOptimizedAt: timestamp("last_optimized_at"),
+    automaticOptimizationEnabled: boolean("automatic_optimization_enabled")
+      .notNull()
+      .default(false),
     legacySchedulerMigratedAt: timestamp("legacy_scheduler_migrated_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

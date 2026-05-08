@@ -103,6 +103,9 @@ Students who want a private, lightweight study management workspace.
 - A 20-minute learn-ahead window is applied to `learning` and `relearning` cards only: a card whose `dueAt` is within the next 20 minutes is treated as due and kept in the current session. This matches Anki's `collapseTime` behavior and prevents short-interval cards (e.g. `Again → 1m`) from vanishing mid-session.
 - Review logs are stored per user.
 - Review parameters support per-user tuning.
+- Users can manually optimize FSRS parameters from the Account page using their review history.
+- Users can reset FSRS optimization from the Account page to restore default scheduler tuning without deleting review history or flashcard progress.
+- Users can enable automatic FSRS optimization from the Account page when workflows are configured; automatic optimization runs on a fixed 30-day cadence and does not rewrite existing card due dates.
 - Keyboard shortcuts on the review screen:
   - `Enter` reveals the back when hidden.
   - `Enter` grades `Good` after the back is shown.
@@ -178,6 +181,8 @@ Students who want a private, lightweight study management workspace.
 - View account details.
 - Navigate Account settings sections with in-page shortcuts on the Account page.
 - Update display name.
+- View flashcard optimization status, including the last FSRS optimization date.
+- Reset flashcard optimization to default FSRS tuning while keeping review history.
 - Admin-only access management page to approve, block, or set pending for users.
 - Delete account and all user-owned data.
 
@@ -232,7 +237,7 @@ Students who want a private, lightweight study management workspace.
 - `flashcard`
   - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `deckId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
-  - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, optimization timestamps
+  - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, `automaticOptimizationEnabled`, optimization timestamps
 - `flashcard_review_log`
   - `id`, `flashcardId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps
 - `note`

@@ -1,0 +1,1 @@
+ALTER TABLE "flashcard_scheduler_settings" ADD COLUMN "automatic_optimization_enabled" boolean DEFAULT false NOT NULL;

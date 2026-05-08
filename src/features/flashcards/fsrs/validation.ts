@@ -1,4 +1,5 @@
 import { createEmptyCard, type Grade, Rating } from "ts-fsrs";
+import { z } from "zod";
 
 import {
   schedulerValidationCacheMaxEntries,
@@ -17,6 +18,14 @@ import {
   areFsrsWeightsWellFormed,
   isFsrsDesiredRetentionValid,
 } from "@/features/flashcards/fsrs/weights";
+
+export const updateFsrsOptimizationPreferencesSchema = z.object({
+  automaticOptimizationEnabled: z.boolean(),
+});
+
+export type UpdateFsrsOptimizationPreferencesForm = z.infer<
+  typeof updateFsrsOptimizationPreferencesSchema
+>;
 
 const schedulerSettingsValidationCache = new Map<string, boolean>();
 

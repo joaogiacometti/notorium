@@ -41,10 +41,10 @@ describe("shouldOptimizeFsrsParameters", () => {
 });
 
 describe("optimizeFsrsParameters", () => {
-  it("returns null when every card history lacks a positive interval", async () => {
+  it("returns null when all card histories are invalid", async () => {
     const { optimizeFsrsParameters } = await loadFsrsOptimizerModule();
-    const logs: FlashcardReviewLogEntity[] = [];
     const baseTime = new Date("2026-01-01T00:00:00.000Z").getTime();
+    const logs: FlashcardReviewLogEntity[] = [];
 
     for (let cardIndex = 0; cardIndex < 16; cardIndex++) {
       for (let reviewIndex = 0; reviewIndex < 4; reviewIndex++) {
@@ -63,48 +63,60 @@ describe("optimizeFsrsParameters", () => {
     await expect(optimizeFsrsParameters(logs)).resolves.toBeNull();
   });
 
-  it("returns safely when valid and invalid card histories are mixed", async () => {
-    const { optimizeFsrsParameters } = await loadFsrsOptimizerModule();
-    const baseTime = new Date("2026-01-01T00:00:00.000Z").getTime();
-    const logs: FlashcardReviewLogEntity[] = [];
+  it(
+    "optimizes valid histories even when invalid histories are present",
+    { timeout: 15_000 },
+    async () => {
+      const { optimizeFsrsParameters } = await loadFsrsOptimizerModule();
+      const baseTime = new Date("2026-01-01T00:00:00.000Z").getTime();
+      const logs: FlashcardReviewLogEntity[] = [];
+      const ratingPatterns: FlashcardReviewLogEntity["rating"][][] = [
+        ["again", "hard", "good", "easy"],
+        ["good", "hard", "good", "easy"],
+        ["hard", "good", "good", "easy"],
+        ["again", "again", "hard", "good"],
+      ];
 
-    for (let cardIndex = 0; cardIndex < 16; cardIndex++) {
-      for (let reviewIndex = 0; reviewIndex < 4; reviewIndex++) {
+      for (let cardIndex = 0; cardIndex < 16; cardIndex++) {
+        const pattern = ratingPatterns[cardIndex % ratingPatterns.length];
+        for (let reviewIndex = 0; reviewIndex < 4; reviewIndex++) {
+          logs.push(
+            makeLog(
+              `valid-${cardIndex}-${reviewIndex}`,
+              `valid-card-${cardIndex}`,
+              pattern[reviewIndex],
+              new Date(
+                baseTime + (cardIndex * 8 + reviewIndex) * 24 * 60 * 60 * 1000,
+              ),
+              reviewIndex === 0 ? 0 : reviewIndex,
+            ),
+          );
+        }
+      }
+
+      for (let index = 0; index < 16; index++) {
         logs.push(
           makeLog(
-            `valid-${cardIndex}-${reviewIndex}`,
-            `valid-card-${cardIndex}`,
-            reviewIndex === 0 ? "again" : reviewIndex === 3 ? "easy" : "good",
-            new Date(
-              baseTime + (cardIndex * 8 + reviewIndex) * 24 * 60 * 60 * 1000,
-            ),
-            reviewIndex === 0 ? 0 : reviewIndex,
+            `invalid-${index}-0`,
+            `invalid-card-${index}`,
+            "again",
+            new Date(baseTime + 10_000_000 + index * 2000),
+            0,
+          ),
+          makeLog(
+            `invalid-${index}-1`,
+            `invalid-card-${index}`,
+            "good",
+            new Date(baseTime + 10_000_000 + index * 2000 + 1000),
+            0,
           ),
         );
       }
-    }
 
-    for (let index = 0; index < 16; index++) {
-      logs.push(
-        makeLog(
-          `invalid-${index}-0`,
-          `invalid-card-${index}`,
-          "again",
-          new Date(baseTime + 10_000_000 + index * 2000),
-          0,
-        ),
-        makeLog(
-          `invalid-${index}-1`,
-          `invalid-card-${index}`,
-          "good",
-          new Date(baseTime + 10_000_000 + index * 2000 + 1000),
-          0,
-        ),
-      );
-    }
+      const weights = await optimizeFsrsParameters(logs);
 
-    const weights = await optimizeFsrsParameters(logs);
-
-    expect(weights === null || weights.length > 0).toBe(true);
-  });
+      expect(weights).not.toBeNull();
+      expect(weights?.length).toBeGreaterThan(0);
+    },
+  );
 });
