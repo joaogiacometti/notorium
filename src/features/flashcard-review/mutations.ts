@@ -3,11 +3,7 @@ import { getDb } from "@/db/index";
 import { flashcard, flashcardReviewLog } from "@/db/schema";
 import { isCardDueWithLearnAhead } from "@/features/flashcard-review/constants";
 import { getReviewableFlashcardForUser } from "@/features/flashcard-review/queries";
-import type {
-  ReviewFlashcardForm,
-  SyncFlashcardReviewEventForm,
-  SyncFlashcardReviewsForm,
-} from "@/features/flashcard-review/validation";
+import type { ReviewFlashcardForm } from "@/features/flashcard-review/validation";
 import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
 import {
   ensureFsrsSettings,
@@ -15,9 +11,7 @@ import {
 } from "@/features/flashcards/fsrs/settings";
 import type {
   FlashcardReviewEntity,
-  FlashcardReviewState,
   ReviewFlashcardResult,
-  SyncFlashcardReviewsResult,
 } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
 
@@ -164,64 +158,4 @@ export async function reviewFlashcardForUser(
   void maybeOptimizeFsrsParameters(userId).catch(() => {});
 
   return result;
-}
-
-function sortReviewEventsByTime(
-  events: SyncFlashcardReviewEventForm[],
-): SyncFlashcardReviewEventForm[] {
-  return [...events].sort(
-    (left, right) => left.reviewedAt.getTime() - right.reviewedAt.getTime(),
-  );
-}
-
-async function applySyncEvent(
-  userId: string,
-  event: SyncFlashcardReviewEventForm,
-): Promise<"applied" | "rejected"> {
-  if (await hasAppliedClientReviewId(userId, event.clientReviewId)) {
-    return "applied";
-  }
-
-  const result = await applyFlashcardReviewForUser(
-    userId,
-    {
-      id: event.flashcardId,
-      grade: event.grade,
-      clientReviewId: event.clientReviewId,
-    },
-    event.reviewedAt,
-  );
-
-  return result.success ? "applied" : "rejected";
-}
-
-/**
- * Applies queued offline flashcard reviews in chronological order.
- *
- * @example
- * await syncFlashcardReviewsForUser("user-1", { events: [] }, state)
- */
-export async function syncFlashcardReviewsForUser(
-  userId: string,
-  data: SyncFlashcardReviewsForm,
-  getReviewState: () => Promise<FlashcardReviewState>,
-): Promise<SyncFlashcardReviewsResult> {
-  const appliedClientReviewIds: string[] = [];
-  const rejectedClientReviewIds: string[] = [];
-
-  for (const event of sortReviewEventsByTime(data.events)) {
-    const status = await applySyncEvent(userId, event);
-    const target =
-      status === "applied" ? appliedClientReviewIds : rejectedClientReviewIds;
-    target.push(event.clientReviewId);
-  }
-
-  void maybeOptimizeFsrsParameters(userId).catch(() => {});
-
-  return {
-    success: true,
-    appliedClientReviewIds,
-    rejectedClientReviewIds,
-    reviewState: await getReviewState(),
-  };
 }

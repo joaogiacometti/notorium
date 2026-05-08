@@ -18,19 +18,11 @@ import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/fla
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { ExamExitConfirmationDialog } from "@/components/flashcards/review/exam-exit-confirmation-dialog";
 import { ExamResultsScreen } from "@/components/flashcards/review/exam-results-screen";
-import { ReturnSyncBlockingOverlay } from "@/components/flashcards/review/return-sync-blocking-overlay";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
 import { useFlashcardExamController } from "@/components/flashcards/review/use-flashcard-exam-controller";
-import { useFlashcardReviewSync } from "@/components/flashcards/review/use-flashcard-review-sync";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
-import { applyOfflineFlashcardReview } from "@/features/flashcard-review/offline-review";
-import {
-  getFlashcardReviewScopeKey,
-  queueOfflineReviewEvent,
-  saveOfflineReviewState,
-} from "@/features/flashcard-review/offline-store";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import {
   getFlashcardReviewShortcutAction,
@@ -81,17 +73,16 @@ export function FlashcardReviewClient({
   const isPending = isActionPending;
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
+  const isRefreshingOnReturnRef = useRef(false);
   const [selectedDeckId, setSelectedDeckId] = useState(deckId);
 
   useEffect(() => {
     setSelectedDeckId(deckId);
   }, [deckId]);
-  const reviewScopeKey = getFlashcardReviewScopeKey(selectedDeckId);
 
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
     setReviewState(nextState);
-    void saveOfflineReviewState(reviewScopeKey, nextState).catch(() => {});
   }
 
   function resetFocusViewState() {
@@ -135,22 +126,6 @@ export function FlashcardReviewClient({
     showExitConfirmation,
     updateExamCard,
   } = examController;
-  const {
-    isOnline,
-    isReturnSyncBlocking,
-    markOfflineReviewQueued,
-    pendingSyncCount,
-    syncStatus,
-  } = useFlashcardReviewSync({
-    selectedDeckId,
-    reviewBatchLimit,
-    isExamMode,
-    isPending,
-    commitReturnedReviewState,
-    commitStoredReviewState: commitReviewState,
-    getCurrentReviewState: () => reviewStateRef.current,
-  });
-
   const currentCard = isExamMode
     ? examController.currentCard
     : (reviewState.cards[0] ?? null);
@@ -246,7 +221,7 @@ export function FlashcardReviewClient({
   }
 
   async function refillReviewState(retryCount = 0) {
-    if (isRefillingRef.current || !isOnline) {
+    if (isRefillingRef.current) {
       return;
     }
     isRefillingRef.current = true;
@@ -282,6 +257,46 @@ export function FlashcardReviewClient({
     }
   }
 
+  const refreshReviewStateOnReturn = useEffectEvent(async () => {
+    if (isExamMode || isPending || isRefreshingOnReturnRef.current) {
+      return;
+    }
+
+    isRefreshingOnReturnRef.current = true;
+    try {
+      const nextState = await getFlashcardReviewState({
+        deckId: selectedDeckId,
+        limit: reviewBatchLimit,
+      });
+
+      commitReturnedReviewState(nextState);
+    } catch {
+      toast.error("Could not refresh review progress. Please try again.");
+    } finally {
+      isRefreshingOnReturnRef.current = false;
+    }
+  });
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void refreshReviewStateOnReturn();
+      }
+    }
+
+    function handleWindowFocus() {
+      void refreshReviewStateOnReturn();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, []);
+
   function handleGrade(grade: ReviewGrade) {
     if (isExamMode) {
       handleGradeInExamMode(currentCard, grade);
@@ -289,11 +304,6 @@ export function FlashcardReviewClient({
     }
 
     if (!currentCard || isPending) {
-      return;
-    }
-
-    if (!isOnline) {
-      void handleOfflineGrade(currentCard, grade);
       return;
     }
 
@@ -326,31 +336,6 @@ export function FlashcardReviewClient({
       } finally {
         setPendingGrade(null);
       }
-    });
-  }
-
-  async function handleOfflineGrade(
-    card: FlashcardReviewEntity,
-    grade: ReviewGrade,
-  ) {
-    const reviewedAt = new Date();
-    const clientReviewId = crypto.randomUUID();
-    const nextState = applyOfflineFlashcardReview({
-      state: reviewStateRef.current,
-      card,
-      grade,
-      reviewedAt,
-    });
-
-    commitReviewState(nextState);
-    resetFocusViewState();
-    markOfflineReviewQueued();
-
-    await queueOfflineReviewEvent({
-      clientReviewId,
-      flashcardId: card.id,
-      grade,
-      reviewedAt,
     });
   }
 
@@ -419,7 +404,6 @@ export function FlashcardReviewClient({
     return () => document.removeEventListener("keydown", handleReviewKeyDown);
   }, []);
 
-  const isReviewActionBlocked = isPending || isReturnSyncBlocking;
   const content = (
     <div className="relative min-h-0">
       <ReviewHubView
@@ -429,14 +413,10 @@ export function FlashcardReviewClient({
         examBadgeText={examBadgeText}
         examScopeLabel={examScopeLabel}
         isLoadingExamCards={isLoadingExamCards}
-        isPending={isReviewActionBlocked}
-        syncStatus={syncStatus}
-        pendingSyncCount={pendingSyncCount}
-        isOnline={isOnline}
+        isPending={isPending}
         onStartReview={handleStartReviewMode}
         onStartExam={handleStartExamMode}
       />
-      {isReturnSyncBlocking ? <ReturnSyncBlockingOverlay /> : null}
     </div>
   );
 
@@ -449,10 +429,8 @@ export function FlashcardReviewClient({
           decks={decks}
           progress={progress}
           revealed={revealed}
-          isPending={isReviewActionBlocked}
+          isPending={isPending}
           pendingGrade={pendingGrade}
-          syncStatus={syncStatus}
-          pendingSyncCount={pendingSyncCount}
           previewLabels={previewLabels}
           onReveal={() => setRevealed(true)}
           onGrade={handleGrade}
@@ -466,9 +444,6 @@ export function FlashcardReviewClient({
           examCurrentIndex={examSessionData?.currentIndex ?? 0}
           examTotalCards={examSessionData?.cards.length ?? 0}
         />
-        {isReturnSyncBlocking ? (
-          <ReturnSyncBlockingOverlay placement="fixed" />
-        ) : null}
         {currentCard ? (
           <>
             <EditFlashcardDialog

@@ -86,13 +86,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "AI validation is temporarily unavailable. Please try again later.",
   "flashcards.validation.noCards": "No flashcards to validate.",
   "flashcards.review.invalidData": "Invalid review input.",
-  "flashcards.review.syncInvalidData": "Invalid review sync input.",
   "flashcards.review.notFound": "Flashcard not found for review.",
   "flashcards.review.notDue": "This flashcard is not due yet.",
   "flashcards.review.unavailable":
     "Review submission is temporarily unavailable. Try again in a moment.",
-  "flashcards.review.syncUnavailable":
-    "Offline review sync is temporarily unavailable. Try again in a moment.",
   "limits.subjectLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} subjects.`,
   "limits.noteLimit": (params) =>

@@ -4,16 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getExamFlashcards,
   getFlashcardReviewState,
-  syncFlashcardReviews,
+  reviewFlashcard,
 } from "@/app/actions/flashcard-review";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
-import {
-  loadOfflineReviewState,
-  loadQueuedReviewEvents,
-  queueOfflineReviewEvent,
-  removeQueuedReviewEvents,
-  saveOfflineReviewState,
-} from "@/features/flashcard-review/offline-store";
 import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
 import type {
   FlashcardReviewEntity,
@@ -28,16 +21,6 @@ vi.mock("@/app/actions/flashcard-review", () => ({
   getExamFlashcards: vi.fn(),
   getFlashcardReviewState: vi.fn(),
   reviewFlashcard: vi.fn(),
-  syncFlashcardReviews: vi.fn(),
-}));
-
-vi.mock("@/features/flashcard-review/offline-store", () => ({
-  getFlashcardReviewScopeKey: vi.fn(() => "all"),
-  loadOfflineReviewState: vi.fn(),
-  loadQueuedReviewEvents: vi.fn(),
-  queueOfflineReviewEvent: vi.fn(),
-  removeQueuedReviewEvents: vi.fn(),
-  saveOfflineReviewState: vi.fn(),
 }));
 
 vi.mock("@/components/flashcards/dialogs/delete-flashcard-dialog", () => ({
@@ -58,8 +41,18 @@ vi.mock("@/components/flashcards/review/exam-results-screen", () => ({
 }));
 
 vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
-  FocusModeOverlay: ({ isExamMode }: { isExamMode?: boolean }) => (
-    <div data-testid={isExamMode ? "exam-focus-mode" : "review-focus-mode"} />
+  FocusModeOverlay: ({
+    isExamMode,
+    onGrade,
+  }: {
+    isExamMode?: boolean;
+    onGrade: (grade: "good") => void;
+  }) => (
+    <div data-testid={isExamMode ? "exam-focus-mode" : "review-focus-mode"}>
+      <button type="button" onClick={() => onGrade("good")}>
+        Grade good
+      </button>
+    </div>
   ),
 }));
 
@@ -75,12 +68,7 @@ vi.mock("sonner", () => ({
 
 const getFlashcardReviewStateMock = vi.mocked(getFlashcardReviewState);
 const getExamFlashcardsMock = vi.mocked(getExamFlashcards);
-const syncFlashcardReviewsMock = vi.mocked(syncFlashcardReviews);
-const loadOfflineReviewStateMock = vi.mocked(loadOfflineReviewState);
-const loadQueuedReviewEventsMock = vi.mocked(loadQueuedReviewEvents);
-const queueOfflineReviewEventMock = vi.mocked(queueOfflineReviewEvent);
-const removeQueuedReviewEventsMock = vi.mocked(removeQueuedReviewEvents);
-const saveOfflineReviewStateMock = vi.mocked(saveOfflineReviewState);
+const reviewFlashcardMock = vi.mocked(reviewFlashcard);
 
 const scheduler = {
   desiredRetention: 0.9,
@@ -141,22 +129,6 @@ function setDocumentVisibility(value: DocumentVisibilityState) {
   });
 }
 
-function setNavigatorOnline(value: boolean) {
-  Object.defineProperty(navigator, "onLine", {
-    configurable: true,
-    value,
-  });
-}
-
-function makeQueuedReviewEvent() {
-  return {
-    clientReviewId: "client-review-1",
-    flashcardId: "card-1",
-    grade: "good" as const,
-    reviewedAt: new Date("2026-03-07T11:05:00.000Z"),
-  };
-}
-
 describe("FlashcardReviewClient", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -167,12 +139,6 @@ describe("FlashcardReviewClient", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     setDocumentVisibility("visible");
-    setNavigatorOnline(true);
-    loadOfflineReviewStateMock.mockResolvedValue(null);
-    loadQueuedReviewEventsMock.mockResolvedValue([]);
-    queueOfflineReviewEventMock.mockResolvedValue();
-    removeQueuedReviewEventsMock.mockResolvedValue();
-    saveOfflineReviewStateMock.mockResolvedValue();
   });
 
   afterEach(async () => {
@@ -182,191 +148,7 @@ describe("FlashcardReviewClient", () => {
     container.remove();
     vi.clearAllMocks();
     setDocumentVisibility("visible");
-    setNavigatorOnline(true);
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
-  });
-
-  it("blocks the review area when coming online with queued reviews", async () => {
-    const deferred =
-      createDeferred<Awaited<ReturnType<typeof syncFlashcardReviews>>>();
-    loadQueuedReviewEventsMock
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValue([makeQueuedReviewEvent()]);
-    syncFlashcardReviewsMock.mockReturnValue(deferred.promise);
-
-    await renderReviewClient(makeReviewState(8, [makeCard("card-1")]));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("online"));
-    });
-
-    expect(
-      container.querySelector('[data-testid="flashcard-return-sync-blocker"]'),
-    ).toBeTruthy();
-    expect(container.textContent).toContain("Syncing flashcards...");
-  });
-
-  it("disables review and exam actions while return sync blocks", async () => {
-    const deferred =
-      createDeferred<Awaited<ReturnType<typeof syncFlashcardReviews>>>();
-    loadQueuedReviewEventsMock
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValue([makeQueuedReviewEvent()]);
-    syncFlashcardReviewsMock.mockReturnValue(deferred.promise);
-
-    await renderReviewClient(makeReviewState(8, [makeCard("card-1")]));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("online"));
-    });
-
-    expect(
-      container.querySelector<HTMLButtonElement>(
-        '[data-testid="flashcard-review-start-button"]',
-      )?.disabled,
-    ).toBe(true);
-    expect(
-      container.querySelector<HTMLButtonElement>(
-        '[data-testid="flashcard-exam-start-button"]',
-      )?.disabled,
-    ).toBe(true);
-  });
-
-  it("removes the return sync blocker and refreshes counts after sync", async () => {
-    loadQueuedReviewEventsMock
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValue([makeQueuedReviewEvent()]);
-    syncFlashcardReviewsMock.mockResolvedValue({
-      success: true,
-      appliedClientReviewIds: ["client-review-1"],
-      rejectedClientReviewIds: [],
-      reviewState: makeReviewState(2),
-    });
-
-    await renderReviewClient(makeReviewState(8, [makeCard("card-1")]));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("online"));
-    });
-
-    expect(removeQueuedReviewEventsMock).toHaveBeenCalledWith([
-      "client-review-1",
-    ]);
-    expect(
-      container.querySelector('[data-testid="flashcard-return-sync-blocker"]'),
-    ).toBeNull();
-    expect(container.textContent).toContain("2 due");
-  });
-
-  it("removes the return sync blocker and shows error state after sync failure", async () => {
-    loadQueuedReviewEventsMock
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValue([makeQueuedReviewEvent()]);
-    syncFlashcardReviewsMock.mockResolvedValue({
-      success: false,
-      errorCode: "flashcards.review.syncFailed",
-    });
-
-    await renderReviewClient(makeReviewState(8, [makeCard("card-1")]));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("online"));
-    });
-
-    expect(
-      container.querySelector('[data-testid="flashcard-return-sync-blocker"]'),
-    ).toBeNull();
-    expect(container.textContent).toContain("Sync failed");
-  });
-
-  it("retries failed queued sync when the window receives focus", async () => {
-    loadQueuedReviewEventsMock
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([makeQueuedReviewEvent()])
-      .mockResolvedValue([makeQueuedReviewEvent()]);
-    syncFlashcardReviewsMock
-      .mockResolvedValueOnce({
-        success: false,
-        errorCode: "flashcards.review.syncFailed",
-      })
-      .mockResolvedValueOnce({
-        success: true,
-        appliedClientReviewIds: ["client-review-1"],
-        rejectedClientReviewIds: [],
-        reviewState: makeReviewState(2),
-      });
-
-    await renderReviewClient(makeReviewState(8, [makeCard("card-1")]));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("online"));
-    });
-
-    expect(syncFlashcardReviewsMock).toHaveBeenCalledTimes(1);
-    expect(removeQueuedReviewEventsMock).not.toHaveBeenCalled();
-    expect(container.textContent).toContain("Sync failed");
-
-    await act(async () => {
-      window.dispatchEvent(new Event("focus"));
-    });
-
-    expect(syncFlashcardReviewsMock).toHaveBeenCalledTimes(2);
-    expect(removeQueuedReviewEventsMock).toHaveBeenCalledWith([
-      "client-review-1",
-    ]);
-    expect(
-      container.querySelector('[data-testid="flashcard-return-sync-blocker"]'),
-    ).toBeNull();
-    expect(container.textContent).toContain("2 due");
-    expect(container.textContent).not.toContain("Sync failed");
-  });
-
-  it("retries failed queued sync when the document becomes visible again", async () => {
-    loadQueuedReviewEventsMock
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([makeQueuedReviewEvent()])
-      .mockResolvedValue([makeQueuedReviewEvent()]);
-    syncFlashcardReviewsMock
-      .mockResolvedValueOnce({
-        success: false,
-        errorCode: "flashcards.review.syncFailed",
-      })
-      .mockResolvedValueOnce({
-        success: true,
-        appliedClientReviewIds: ["client-review-1"],
-        rejectedClientReviewIds: [],
-        reviewState: makeReviewState(2),
-      });
-
-    await renderReviewClient(makeReviewState(8, [makeCard("card-1")]));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("online"));
-    });
-
-    expect(syncFlashcardReviewsMock).toHaveBeenCalledTimes(1);
-    expect(removeQueuedReviewEventsMock).not.toHaveBeenCalled();
-    expect(container.textContent).toContain("Sync failed");
-
-    await act(async () => {
-      document.dispatchEvent(new Event("visibilitychange"));
-    });
-
-    expect(syncFlashcardReviewsMock).toHaveBeenCalledTimes(2);
-    expect(removeQueuedReviewEventsMock).toHaveBeenCalledWith([
-      "client-review-1",
-    ]);
-    expect(
-      container.querySelector('[data-testid="flashcard-return-sync-blocker"]'),
-    ).toBeNull();
-    expect(container.textContent).toContain("2 due");
-    expect(container.textContent).not.toContain("Sync failed");
   });
 
   it("refreshes review counts when the document becomes visible again", async () => {
@@ -446,6 +228,35 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(getFlashcardReviewStateMock).not.toHaveBeenCalled();
+  });
+
+  it("submits grades through the review server action", async () => {
+    const card = makeCard("card-1");
+    reviewFlashcardMock.mockResolvedValue({
+      success: true,
+      reviewedCardId: "card-1",
+      flashcard: { ...card, reviewCount: 1 },
+    });
+
+    await renderReviewClient(makeReviewState(1, [card]));
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="flashcard-review-start-button"]',
+        )
+        ?.click();
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>("button")?.click();
+    });
+
+    expect(reviewFlashcardMock).toHaveBeenCalledWith({
+      id: "card-1",
+      grade: "good",
+      clientReviewId: expect.any(String),
+    });
   });
 
   it("opens reset confirmation on uppercase R in focus mode", async () => {

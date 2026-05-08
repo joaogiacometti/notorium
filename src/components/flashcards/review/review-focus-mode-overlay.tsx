@@ -17,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { FlashcardReviewSyncStatus } from "@/features/flashcard-review/offline-store";
 import type { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
@@ -37,8 +36,6 @@ interface FocusModeOverlayProps {
   revealed: boolean;
   isPending: boolean;
   pendingGrade: ReviewGrade | null;
-  syncStatus: FlashcardReviewSyncStatus;
-  pendingSyncCount: number;
   previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
@@ -55,7 +52,7 @@ interface FocusModeOverlayProps {
  * Routes the focus overlay to the due-review or exam session presentation.
  *
  * @example
- * <FocusModeOverlay currentCard={card} reviewState={state} decks={decks} progress={0} revealed={false} isPending={false} pendingGrade={null} syncStatus="idle" pendingSyncCount={0} previewLabels={null} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
+ * <FocusModeOverlay currentCard={card} reviewState={state} decks={decks} progress={0} revealed={false} isPending={false} pendingGrade={null} previewLabels={null} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
  */
 export function FocusModeOverlay(props: Readonly<FocusModeOverlayProps>) {
   if (!props.currentCard) {
@@ -83,8 +80,6 @@ function DueReviewFocusModeOverlay({
   revealed,
   isPending,
   pendingGrade,
-  syncStatus,
-  pendingSyncCount,
   previewLabels,
   onReveal,
   onGrade,
@@ -118,10 +113,6 @@ function DueReviewFocusModeOverlay({
       }
       footer={footer}
     >
-      <ReviewStatusText
-        syncStatus={syncStatus}
-        pendingSyncCount={pendingSyncCount}
-      />
       <ReviewSessionCardContent
         card={currentCard}
         deckLabel={getDeckLabel(currentCard, decks)}
@@ -302,24 +293,6 @@ function ReviewSessionEmptyState({ onExit }: Readonly<{ onExit: () => void }>) {
   );
 }
 
-function ReviewStatusText({
-  syncStatus,
-  pendingSyncCount,
-}: Readonly<{
-  syncStatus: FlashcardReviewSyncStatus;
-  pendingSyncCount: number;
-}>) {
-  const syncText = getReviewSessionSyncText(syncStatus, pendingSyncCount);
-
-  if (!syncText) {
-    return null;
-  }
-
-  return (
-    <p className="mb-3 text-sm font-medium text-muted-foreground">{syncText}</p>
-  );
-}
-
 function ExamBadge() {
   return (
     <div className="flex items-center gap-1.5 rounded-md border-2 border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-2 py-1 text-xs font-bold tracking-wider text-[var(--intent-info-text)] uppercase">
@@ -352,19 +325,4 @@ function getDueReviewHeaderText(reviewState: FlashcardReviewState) {
   }
 
   return `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards`;
-}
-
-function getReviewSessionSyncText(
-  syncStatus: FlashcardReviewSyncStatus,
-  pendingSyncCount: number,
-) {
-  if (syncStatus === "error") {
-    return "Sync failed";
-  }
-
-  if (pendingSyncCount > 0) {
-    return `${pendingSyncCount} pending sync`;
-  }
-
-  return syncStatus === "syncing" ? "Syncing" : "";
 }

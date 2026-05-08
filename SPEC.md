@@ -103,7 +103,6 @@ Students who want a private, lightweight study management workspace.
 - A 20-minute learn-ahead window is applied to `learning` and `relearning` cards only: a card whose `dueAt` is within the next 20 minutes is treated as due and kept in the current session. This matches Anki's `collapseTime` behavior and prevents short-interval cards (e.g. `Again → 1m`) from vanishing mid-session.
 - Review logs are stored per user.
 - Review parameters support per-user tuning.
-- Offline review answers queue locally. When the app comes back online with queued review answers, the flashcards review area shows a blocking sync state, disables review and exam actions, syncs the queued answers, refreshes review counts, and then unblocks. If sync fails, only the flashcards review area unblocks with a sync error state; the queued answers remain available for retry.
 - Keyboard shortcuts on the review screen:
   - `Enter` reveals the back when hidden.
   - `Enter` grades `Good` after the back is shown.

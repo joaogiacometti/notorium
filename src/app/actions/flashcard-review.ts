@@ -1,9 +1,6 @@
 "use server";
 
-import {
-  reviewFlashcardForUser,
-  syncFlashcardReviewsForUser,
-} from "@/features/flashcard-review/mutations";
+import { reviewFlashcardForUser } from "@/features/flashcard-review/mutations";
 import {
   type GetDueFlashcardsOptions,
   getAllFlashcardsForExam,
@@ -14,8 +11,6 @@ import {
 import {
   type ReviewFlashcardForm,
   reviewFlashcardSchema,
-  type SyncFlashcardReviewsForm,
-  syncFlashcardReviewsSchema,
 } from "@/features/flashcard-review/validation";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
@@ -25,7 +20,6 @@ import type {
   FlashcardReviewState,
   FlashcardReviewSummary,
   ReviewFlashcardResult,
-  SyncFlashcardReviewsResult,
 } from "@/lib/server/api-contracts";
 
 export async function getDueFlashcards(
@@ -59,21 +53,6 @@ export async function reviewFlashcard(
     data,
     "flashcards.review.invalidData",
     async (userId, parsedData) => reviewFlashcardForUser(userId, parsedData),
-  );
-}
-
-export async function syncFlashcardReviews(
-  data: SyncFlashcardReviewsForm,
-  options: GetDueFlashcardsOptions = {},
-): Promise<SyncFlashcardReviewsResult> {
-  return runValidatedUserAction(
-    syncFlashcardReviewsSchema,
-    data,
-    "flashcards.review.syncInvalidData",
-    async (userId, parsedData) =>
-      syncFlashcardReviewsForUser(userId, parsedData, () =>
-        getFlashcardReviewStateForUser(userId, options),
-      ),
   );
 }
 

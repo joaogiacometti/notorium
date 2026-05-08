@@ -11,13 +11,7 @@ export function FlashcardReviewLoading() {
       >
         <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
           {(["review", "exam"] as const).map((key) => (
-            <Card
-              key={key}
-              className="relative gap-0 rounded-xl py-0 shadow-none"
-            >
-              {key === "review" ? (
-                <Skeleton className="absolute top-2.5 right-2.5 size-2 rounded-full sm:top-3 sm:right-3" />
-              ) : null}
+            <Card key={key} className="gap-0 rounded-xl py-0 shadow-none">
               <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <div className="space-y-2">
                   <div className="flex items-baseline justify-between gap-3">

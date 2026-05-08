@@ -179,8 +179,6 @@ describe("FocusModeOverlay", () => {
           revealed={false}
           isPending={false}
           pendingGrade={null}
-          syncStatus="idle"
-          pendingSyncCount={0}
           previewLabels={null}
           {...baseHandlers}
           {...overrides}

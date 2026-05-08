@@ -222,14 +222,6 @@ export type ReviewFlashcardResult =
       flashcard: FlashcardReviewEntity;
     }
   | ActionErrorResult;
-export type SyncFlashcardReviewsResult =
-  | {
-      success: true;
-      appliedClientReviewIds: string[];
-      rejectedClientReviewIds: string[];
-      reviewState: FlashcardReviewState;
-    }
-  | ActionErrorResult;
 export type CreateFlashcardResult =
   | {
       success: true;
