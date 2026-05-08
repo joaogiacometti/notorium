@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface FlashcardsLoadingShellProps {
   children: ReactNode;
+  mobileScopeFirst?: boolean;
   withWorkspace?: boolean;
 }
 
@@ -17,11 +19,23 @@ const deckRows = [
 
 export function FlashcardsLoadingShell({
   children,
+  mobileScopeFirst = false,
   withWorkspace = false,
 }: Readonly<FlashcardsLoadingShellProps>) {
   const content = withWorkspace ? (
     <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
-      <aside className="rounded-2xl border border-border/70 bg-card/85 p-3 shadow-none lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
+      {mobileScopeFirst ? (
+        <div className="rounded-xl border border-border/70 bg-card/85 p-3 shadow-xs lg:hidden">
+          <Skeleton className="h-3 w-24 rounded-md" />
+          <Skeleton className="mt-2 h-10 w-full rounded-lg" />
+        </div>
+      ) : null}
+      <aside
+        className={cn(
+          "rounded-2xl border border-border/70 bg-card/85 p-3 shadow-none lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto",
+          mobileScopeFirst ? "hidden lg:block" : undefined,
+        )}
+      >
         <div className="flex items-center justify-between gap-2">
           <Skeleton className="h-5 w-16 rounded-md" />
           <Skeleton className="h-9 w-28 rounded-md" />

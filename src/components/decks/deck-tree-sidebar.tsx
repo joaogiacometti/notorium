@@ -43,12 +43,14 @@ import {
   removeDeckTreeNode,
   updateDeckTreeNode,
 } from "@/lib/trees/deck-tree";
+import { cn } from "@/lib/utils";
 
 export function DeckTreeSidebar({
   deckTree,
   selectedDeckId,
   currentView,
   aiEnabled,
+  className,
   CreateFlashcardDialogComponent,
   onFlashcardCreated,
   onDeckDeleted,
@@ -312,7 +314,12 @@ export function DeckTreeSidebar({
 
   return (
     <>
-      <aside className="rounded-2xl border border-border/70 bg-card/85 p-3 shadow-none lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto">
+      <aside
+        className={cn(
+          "rounded-2xl border border-border/70 bg-card/85 p-3 shadow-none lg:sticky lg:top-0 lg:h-full lg:min-h-0 lg:overflow-y-auto",
+          className,
+        )}
+      >
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-foreground">Decks</p>
           <CreateDeckDialog

@@ -55,6 +55,20 @@ async function openFlashcardsReviewPage(page: Page, deckId?: string) {
   ).toBeVisible();
 }
 
+async function openFlashcardsStatisticsPage(page: Page, deckId?: string) {
+  const query = new URLSearchParams();
+  query.set("view", "statistics");
+
+  if (deckId) {
+    query.set("deckId", deckId);
+  }
+
+  await page.goto(`/flashcards?${query.toString()}`);
+  await expect(
+    page.getByRole("heading", { name: "Flashcards", exact: true }),
+  ).toBeVisible();
+}
+
 function getDeckSidebar(page: Page) {
   return page.getByRole("complementary").first();
 }
@@ -811,6 +825,143 @@ test("review hub updates immediately when deck is changed from the sidebar", asy
     await expect(
       page.getByRole("button", { name: "Start exam", exact: true }),
     ).toBeEnabled();
+  } finally {
+    await clearUserDecksByNames(user.userId, [
+      populatedDeckName,
+      emptyDeckName,
+    ]);
+  }
+});
+
+test("mobile review shows actions before deck library and supports scope changes", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const populatedDeckName = getUniqueDeckName("mobile-review-populated");
+  const emptyDeckName = getUniqueDeckName("mobile-review-empty");
+  const populatedDeckFront = getUniqueFlashcardFront("mobile-review-populated");
+  const populatedDeckBack = getUniqueFlashcardBack("mobile-review-populated");
+
+  await clearUserDecksByNames(user.userId, [populatedDeckName, emptyDeckName]);
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  try {
+    const populatedDeck = await createDeck(
+      user.userId,
+      populatedDeckName,
+      "Mobile deck with one due card",
+    );
+    const emptyDeck = await createDeck(
+      user.userId,
+      emptyDeckName,
+      "Mobile deck with no cards",
+    );
+
+    await createFlashcardForDeck(
+      user.userId,
+      populatedDeck.id,
+      populatedDeckFront,
+      populatedDeckBack,
+    );
+
+    await openFlashcardsReviewPage(page, populatedDeck.id);
+
+    const startReviewButton = page.getByRole("button", {
+      name: "Start review",
+      exact: true,
+    });
+    await expect(startReviewButton).toBeVisible();
+
+    const startReviewBox = await startReviewButton.boundingBox();
+    expect(startReviewBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(844);
+
+    const scopePicker = page.getByTestId("mobile-deck-scope-picker");
+    await expect(scopePicker).toContainText(populatedDeckName);
+
+    await scopePicker.getByRole("combobox", { name: "Deck scope" }).click();
+    await page
+      .locator('[data-slot="popover-content"]')
+      .getByText(emptyDeckName, { exact: true })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`deckId=${escapeRegex(emptyDeck.id)}`),
+    );
+    await expect(scopePicker).toContainText(emptyDeckName);
+    await expect(page.getByText("0 due", { exact: true })).toBeVisible();
+    await expect(page.getByText("0 cards", { exact: true })).toBeVisible();
+    await expect(startReviewButton).toBeDisabled();
+  } finally {
+    await clearUserDecksByNames(user.userId, [
+      populatedDeckName,
+      emptyDeckName,
+    ]);
+  }
+});
+
+test("mobile statistics shows compact scope picker and supports scope changes", async ({
+  page,
+  e2eUser,
+}) => {
+  const user = e2eUser;
+  const populatedDeckName = getUniqueDeckName("mobile-statistics-populated");
+  const emptyDeckName = getUniqueDeckName("mobile-statistics-empty");
+  const populatedDeckFront = getUniqueFlashcardFront(
+    "mobile-statistics-populated",
+  );
+  const populatedDeckBack = getUniqueFlashcardBack(
+    "mobile-statistics-populated",
+  );
+
+  await clearUserDecksByNames(user.userId, [populatedDeckName, emptyDeckName]);
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  try {
+    const populatedDeck = await createDeck(
+      user.userId,
+      populatedDeckName,
+      "Mobile statistics deck with one card",
+    );
+    const emptyDeck = await createDeck(
+      user.userId,
+      emptyDeckName,
+      "Mobile statistics empty deck",
+    );
+
+    await createFlashcardForDeck(
+      user.userId,
+      populatedDeck.id,
+      populatedDeckFront,
+      populatedDeckBack,
+    );
+
+    await openFlashcardsStatisticsPage(page, populatedDeck.id);
+
+    await expect(page.getByTestId("mobile-deck-scope-picker")).toContainText(
+      populatedDeckName,
+    );
+    await expect(getDeckSidebar(page)).toBeHidden();
+    await expect(page.getByTestId("flashcards-statistics")).toBeVisible();
+
+    await page
+      .getByTestId("mobile-deck-scope-picker")
+      .getByRole("combobox", { name: "Deck scope" })
+      .click();
+    await page
+      .locator('[data-slot="popover-content"]')
+      .getByText(emptyDeckName, { exact: true })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`view=statistics&deckId=${escapeRegex(emptyDeck.id)}`),
+    );
+    await expect(page.getByTestId("mobile-deck-scope-picker")).toContainText(
+      emptyDeckName,
+    );
+    await expect(
+      page.getByText("No flashcards in this scope", { exact: true }),
+    ).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [
       populatedDeckName,

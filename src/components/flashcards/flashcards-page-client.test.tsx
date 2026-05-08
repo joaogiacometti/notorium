@@ -48,7 +48,6 @@ vi.mock("@/components/decks/delete-deck-dialog", () => ({
     onDeleted,
   }: {
     deckId: string;
-    deckName: string;
     open: boolean;
     onDeleted?: (deckId: string) => void;
   }) =>
@@ -100,8 +99,16 @@ vi.mock("@/components/flashcards/shared/flashcards-statistics", () => ({
 }));
 
 vi.mock("@/components/decks/deck-tree-sidebar", () => ({
-  DeckTreeSidebar: ({ children }: { children?: React.ReactNode }) => (
-    <aside data-testid="deck-tree-sidebar">{children}</aside>
+  DeckTreeSidebar: ({
+    children,
+    className,
+  }: {
+    children?: React.ReactNode;
+    className?: string;
+  }) => (
+    <aside className={className} data-testid="deck-tree-sidebar">
+      {children}
+    </aside>
   ),
 }));
 
@@ -140,7 +147,26 @@ const mockStatistics: import("@/lib/server/api-contracts").FlashcardStatisticsSt
   };
 
 const mockDeckTree: import("@/lib/server/api-contracts").DeckTreeNode[] = [];
-const mockDecks: import("@/lib/server/api-contracts").DeckEntity[] = [];
+const mockDecks: import("@/lib/server/api-contracts").DeckOption[] = [
+  {
+    id: "deck-1",
+    name: "Database 1",
+    path: "CS::Database 1",
+    userId: "user-1",
+    parentDeckId: "deck-parent",
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  },
+  {
+    id: "deck-2",
+    name: "Network",
+    path: "CS::Network",
+    userId: "user-1",
+    parentDeckId: "deck-parent",
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  },
+];
 
 const defaultProps = {
   currentView: "manage" as const,
@@ -194,5 +220,74 @@ describe("FlashcardsPageClient", () => {
     expect(
       container.querySelector('[data-testid="deck-tree-sidebar"]'),
     ).toBeTruthy();
+  });
+
+  it("keeps the deck sidebar available on manage view", async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlashcardsPageClient {...defaultProps} />
+        </QueryClientProvider>,
+      );
+    });
+
+    const sidebar = container.querySelector(
+      '[data-testid="deck-tree-sidebar"]',
+    );
+
+    expect(sidebar?.className).not.toContain("hidden lg:block");
+    expect(
+      container.querySelector('[data-testid="mobile-deck-scope-picker"]'),
+    ).toBeNull();
+  });
+
+  it("uses a compact mobile scope picker on review view", async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlashcardsPageClient
+            {...defaultProps}
+            currentView="review"
+            scopedDeckId="deck-1"
+          />
+        </QueryClientProvider>,
+      );
+    });
+
+    const sidebar = container.querySelector(
+      '[data-testid="deck-tree-sidebar"]',
+    );
+    const scopePicker = container.querySelector(
+      '[data-testid="mobile-deck-scope-picker"]',
+    );
+
+    expect(sidebar?.className).toContain("hidden lg:block");
+    expect(scopePicker).toBeTruthy();
+    expect(scopePicker?.textContent).toContain("CS::Database 1");
+  });
+
+  it("uses a compact mobile scope picker on statistics view", async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlashcardsPageClient
+            {...defaultProps}
+            currentView="statistics"
+            scopedDeckId="deck-2"
+          />
+        </QueryClientProvider>,
+      );
+    });
+
+    const sidebar = container.querySelector(
+      '[data-testid="deck-tree-sidebar"]',
+    );
+    const scopePicker = container.querySelector(
+      '[data-testid="mobile-deck-scope-picker"]',
+    );
+
+    expect(sidebar?.className).toContain("hidden lg:block");
+    expect(scopePicker).toBeTruthy();
+    expect(scopePicker?.textContent).toContain("CS::Network");
   });
 });

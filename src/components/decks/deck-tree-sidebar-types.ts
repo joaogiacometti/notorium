@@ -15,6 +15,7 @@ export interface DeckTreeSidebarProps {
   selectedDeckId?: string;
   currentView: FlashcardsView;
   aiEnabled: boolean;
+  className?: string;
   CreateFlashcardDialogComponent?: ComponentType<DeckSidebarCreateFlashcardDialogProps>;
   onFlashcardCreated?: (flashcard: FlashcardEntity) => void;
   onDeckDeleted?: (deckId: string) => void;

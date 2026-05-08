@@ -55,12 +55,12 @@ export function ReviewHubView({
             "Uses memory ratings",
             hasDueCards ? "Ready now" : "No due cards",
           ]}
-          action={
+          action={() => (
             <StartReviewButton
               disabled={isPending || !hasDueCards}
               onClick={onStartReview}
             />
-          }
+          )}
         />
         <ReviewActionCard
           title="Exam"
@@ -68,13 +68,13 @@ export function ReviewHubView({
           badgeTone={hasExamCards ? "info" : "muted"}
           description="Practice every card in this scope without changing its review schedule."
           bullets={[examScopeLabel, "Shuffled practice", "Weak-card retry"]}
-          action={
+          action={() => (
             <StartExamButton
               disabled={isPending || !hasExamCards || isLoadingExamCards}
               isLoading={isLoadingExamCards}
               onClick={onStartExam}
             />
-          }
+          )}
         />
       </div>
     </div>
@@ -87,7 +87,7 @@ interface ReviewActionCardProps {
   badgeTone: "primary" | "info" | "muted";
   description: string;
   bullets: string[];
-  action: ReactNode;
+  action: () => ReactNode;
 }
 
 function ReviewActionCard({
@@ -106,6 +106,7 @@ function ReviewActionCard({
           badgeText={badgeText}
           badgeTone={badgeTone}
         />
+        <div className="mt-3 lg:hidden">{action()}</div>
         <p className="mt-3 text-pretty text-sm text-muted-foreground">
           {description}
         </p>
@@ -137,9 +138,9 @@ function ActionCardHeader({
 function ActionCardFooter({
   bullets,
   action,
-}: Readonly<{ bullets: string[]; action: ReactNode }>) {
+}: Readonly<{ bullets: string[]; action: () => ReactNode }>) {
   return (
-    <div className="mt-4 flex flex-col gap-1">
+    <div className="mt-4 hidden flex-col gap-1 lg:flex">
       <ul className="grid gap-2 pb-4 text-sm text-muted-foreground">
         {bullets.map((bullet) => (
           <li key={bullet} className="flex items-center gap-2">
@@ -148,7 +149,7 @@ function ActionCardFooter({
           </li>
         ))}
       </ul>
-      {action}
+      {action()}
     </div>
   );
 }
