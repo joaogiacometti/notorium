@@ -5,18 +5,19 @@ const minimumOptimizationReviewCount = 64;
 const optimizationReviewBatchSize = 32;
 const require = createRequire(import.meta.url);
 
-interface FsrsBindingReviewConstructor {
-  new (rating: number, deltaT: number): FsrsBindingReviewInstance;
-}
+type FsrsBindingReviewConstructor = new (
+  rating: number,
+  deltaT: number,
+) => FsrsBindingReviewInstance;
 
 interface FsrsBindingReviewInstance {
   readonly rating: number;
   readonly deltaT: number;
 }
 
-interface FsrsBindingItemConstructor {
-  new (reviews: FsrsBindingReviewInstance[]): FsrsBindingItemInstance;
-}
+type FsrsBindingItemConstructor = new (
+  reviews: FsrsBindingReviewInstance[],
+) => FsrsBindingItemInstance;
 
 interface FsrsBindingItemInstance {
   readonly reviews: FsrsBindingReviewInstance[];
@@ -96,11 +97,13 @@ function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
         ),
     );
 
-    if (reviews.length === 0) {
+    if (reviews.length < 2) {
       continue;
     }
 
-    trainingSet.push(new FSRSBindingItem(reviews));
+    for (let index = 1; index < reviews.length; index++) {
+      trainingSet.push(new FSRSBindingItem(reviews.slice(0, index + 1)));
+    }
   }
 
   return trainingSet;
@@ -134,7 +137,7 @@ export async function optimizeFsrsParameters(
     return await computeParameters(trainingSet, {
       enableShortTerm: true,
       numRelearningSteps: 1,
-      timeout: 30_000,
+      timeout: 10_000,
     });
   } catch {
     return null;

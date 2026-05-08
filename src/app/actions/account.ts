@@ -9,6 +9,15 @@ import {
   updateAccountSchema,
 } from "@/features/account/validation";
 import {
+  optimizeFsrsParametersForUser,
+  resetFsrsOptimizationForUser,
+  updateFsrsOptimizationPreferences as updateFsrsOptimizationPreferencesForUser,
+} from "@/features/flashcards/fsrs/settings";
+import {
+  type UpdateFsrsOptimizationPreferencesForm,
+  updateFsrsOptimizationPreferencesSchema,
+} from "@/features/flashcards/fsrs/validation";
+import {
   type UpdateNotificationPreferencesForm,
   updateNotificationPreferencesSchema,
 } from "@/features/notifications/validation";
@@ -22,7 +31,10 @@ import {
   runValidatedAction,
   runValidatedUserAction,
 } from "@/lib/server/action-runner";
-import type { MutationResult } from "@/lib/server/api-contracts";
+import type {
+  FlashcardOptimizationResult,
+  MutationResult,
+} from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
 import {
   type UpdateUserAccessInput,
@@ -71,6 +83,48 @@ export async function updateNotificationPreferences(
       }
     },
   );
+}
+
+export async function optimizeFlashcardScheduler(): Promise<FlashcardOptimizationResult> {
+  const userId = await getAuthenticatedUserId();
+
+  try {
+    return await optimizeFsrsParametersForUser(userId);
+  } catch {
+    return actionError("flashcards.fsrsOptimization.unavailable");
+  }
+}
+
+export async function updateFsrsOptimizationPreferences(
+  data: UpdateFsrsOptimizationPreferencesForm,
+): Promise<MutationResult> {
+  return runValidatedUserAction(
+    updateFsrsOptimizationPreferencesSchema,
+    data,
+    "flashcards.fsrsOptimization.invalidData",
+    async (userId, parsedData) => {
+      try {
+        await updateFsrsOptimizationPreferencesForUser(
+          userId,
+          parsedData.automaticOptimizationEnabled,
+        );
+        return { success: true };
+      } catch {
+        return actionError("flashcards.fsrsOptimization.updateFailed");
+      }
+    },
+  );
+}
+
+export async function resetFlashcardSchedulerOptimization(): Promise<MutationResult> {
+  const userId = await getAuthenticatedUserId();
+
+  try {
+    await resetFsrsOptimizationForUser(userId);
+    return { success: true };
+  } catch {
+    return actionError("flashcards.fsrsOptimization.updateFailed");
+  }
 }
 
 export async function deleteAccount(): Promise<AccountMutationResult> {

@@ -29,7 +29,6 @@ const eqMock = vi.fn((column, value) => ({ column, value }));
 const getReviewableFlashcardForUserMock = vi.fn();
 const scheduleFlashcardReviewMock = vi.fn();
 const ensureFsrsSettingsMock = vi.fn();
-const maybeOptimizeFsrsParametersMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -78,7 +77,6 @@ vi.mock("@/features/flashcards/fsrs", () => ({
 
 vi.mock("@/features/flashcards/fsrs/settings", () => ({
   ensureFsrsSettings: ensureFsrsSettingsMock,
-  maybeOptimizeFsrsParameters: maybeOptimizeFsrsParametersMock,
 }));
 
 describe("reviewFlashcardForUser", () => {
@@ -89,7 +87,6 @@ describe("reviewFlashcardForUser", () => {
       desiredRetention: 0.9,
       weights: [1, 2, 3],
     });
-    maybeOptimizeFsrsParametersMock.mockResolvedValue(undefined);
     limitMock.mockResolvedValue([]);
   });
 
@@ -210,7 +207,6 @@ describe("reviewFlashcardForUser", () => {
         daysElapsed: 10,
       }),
     );
-    expect(maybeOptimizeFsrsParametersMock).toHaveBeenCalledWith("user-1");
     vi.useRealTimers();
   });
 

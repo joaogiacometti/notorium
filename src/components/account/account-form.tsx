@@ -8,6 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateAccount } from "@/app/actions/account";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
+import { LazyFlashcardOptimizationCard } from "@/components/account/lazy-flashcard-optimization-card";
 import { NotificationPreferencesCard } from "@/components/account/notification-preferences-card";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
   updateAccountSchema,
 } from "@/features/account/validation";
 import { formatDateLong, formatDateShort } from "@/lib/dates/format";
+import type { FlashcardOptimizationSettings } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface AccountFormProps {
@@ -40,6 +42,8 @@ interface AccountFormProps {
   emailEnabled: boolean;
   initialNotificationsEnabled: boolean;
   initialNotificationDaysBefore: number;
+  workflowsEnabled: boolean;
+  fsrsOptimizationSettings: FlashcardOptimizationSettings;
 }
 
 export function AccountForm({
@@ -50,6 +54,8 @@ export function AccountForm({
   emailEnabled,
   initialNotificationsEnabled,
   initialNotificationDaysBefore,
+  workflowsEnabled,
+  fsrsOptimizationSettings,
 }: Readonly<AccountFormProps>) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -165,6 +171,13 @@ export function AccountForm({
           />
         </section>
       )}
+
+      <section id="flashcard-optimization" className="scroll-mt-24">
+        <LazyFlashcardOptimizationCard
+          settings={fsrsOptimizationSettings}
+          workflowsEnabled={workflowsEnabled}
+        />
+      </section>
 
       <section id="danger-zone" className="scroll-mt-24">
         <Card className="gap-4 border-(--intent-danger-border) py-5">

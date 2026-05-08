@@ -90,6 +90,18 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "flashcards.review.notDue": "This flashcard is not due yet.",
   "flashcards.review.unavailable":
     "Review submission is temporarily unavailable. Try again in a moment.",
+  "flashcards.fsrsOptimization.locked":
+    "FSRS optimization is already running. Try again in a moment.",
+  "flashcards.fsrsOptimization.notEnoughHistory":
+    "Not enough review history to optimize FSRS yet.",
+  "flashcards.fsrsOptimization.invalidResult":
+    "FSRS optimization returned parameters that could not be used.",
+  "flashcards.fsrsOptimization.unavailable":
+    "FSRS optimization is temporarily unavailable. Try again later.",
+  "flashcards.fsrsOptimization.invalidData":
+    "Invalid FSRS optimization settings.",
+  "flashcards.fsrsOptimization.updateFailed":
+    "Failed to update FSRS optimization settings.",
   "limits.subjectLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} subjects.`,
   "limits.noteLimit": (params) =>

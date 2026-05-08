@@ -5,10 +5,7 @@ import { isCardDueWithLearnAhead } from "@/features/flashcard-review/constants";
 import { getReviewableFlashcardForUser } from "@/features/flashcard-review/queries";
 import type { ReviewFlashcardForm } from "@/features/flashcard-review/validation";
 import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
-import {
-  ensureFsrsSettings,
-  maybeOptimizeFsrsParameters,
-} from "@/features/flashcards/fsrs/settings";
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
 import type {
   FlashcardReviewEntity,
   ReviewFlashcardResult,
@@ -153,9 +150,5 @@ export async function reviewFlashcardForUser(
   userId: string,
   data: ReviewFlashcardForm,
 ): Promise<ReviewFlashcardResult> {
-  const result = await applyFlashcardReviewForUser(userId, data, new Date());
-
-  void maybeOptimizeFsrsParameters(userId).catch(() => {});
-
-  return result;
+  return applyFlashcardReviewForUser(userId, data, new Date());
 }

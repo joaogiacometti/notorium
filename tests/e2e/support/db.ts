@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import {
   account,
@@ -8,6 +8,8 @@ import {
   attendanceMiss,
   deck,
   flashcard,
+  flashcardReviewLog,
+  flashcardSchedulerSettings,
   instanceState,
   note,
   session,
@@ -15,6 +17,12 @@ import {
   user,
   verification,
 } from "@/db/schema";
+import {
+  getDefaultFsrsDesiredRetention,
+  getDefaultFsrsWeights,
+  parseFsrsWeights,
+  serializeFsrsWeights,
+} from "@/features/flashcards/fsrs";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import {
   type E2ECredentials,
@@ -60,6 +68,19 @@ export interface E2EUserAccount {
   name: string;
   password: string;
   userId: string;
+}
+
+export interface E2EFsrsSettingsSnapshot {
+  weights: number[];
+  optimizedReviewCount: number;
+  lastOptimizedAt: Date | null;
+  automaticOptimizationEnabled: boolean;
+  reviewCount: number;
+}
+
+export interface E2EFsrsReviewSeed {
+  deckId: string;
+  flashcardIds: string[];
 }
 
 function getAccessStatus(kind: E2EUserKind): AccessStatus {
@@ -553,6 +574,182 @@ export async function ensureDeckForUser(
     .returning({ id: deck.id, name: deck.name });
 
   return newDeck;
+}
+
+export async function seedFsrsSchedulerSettings(
+  userId: string,
+  options?: {
+    optimized?: boolean;
+    automaticOptimizationEnabled?: boolean;
+  },
+) {
+  const now = new Date("2026-01-15T12:00:00.000Z");
+  const defaultWeights = getDefaultFsrsWeights();
+  const weights = options?.optimized
+    ? defaultWeights.map((value, index) => value + (index === 0 ? 0.01 : 0))
+    : defaultWeights;
+
+  await getDb()
+    .insert(flashcardSchedulerSettings)
+    .values({
+      userId,
+      desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
+      weights: serializeFsrsWeights(weights),
+      optimizedReviewCount: options?.optimized ? 64 : 0,
+      lastOptimizedAt: options?.optimized ? now : null,
+      automaticOptimizationEnabled:
+        options?.automaticOptimizationEnabled ?? false,
+      legacySchedulerMigratedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: flashcardSchedulerSettings.userId,
+      set: {
+        weights: serializeFsrsWeights(weights),
+        optimizedReviewCount: options?.optimized ? 64 : 0,
+        lastOptimizedAt: options?.optimized ? now : null,
+        automaticOptimizationEnabled:
+          options?.automaticOptimizationEnabled ?? false,
+      },
+    });
+}
+
+export async function readFsrsSchedulerSettings(
+  userId: string,
+): Promise<E2EFsrsSettingsSnapshot> {
+  const [settings] = await getDb()
+    .select()
+    .from(flashcardSchedulerSettings)
+    .where(eq(flashcardSchedulerSettings.userId, userId))
+    .limit(1);
+  const reviewCount = await getE2EFsrsReviewLogCount(userId);
+
+  if (!settings) {
+    throw new Error(`Expected FSRS settings for user ${userId}`);
+  }
+
+  return {
+    weights: parseFsrsWeights(settings.weights),
+    optimizedReviewCount: settings.optimizedReviewCount,
+    lastOptimizedAt: settings.lastOptimizedAt,
+    automaticOptimizationEnabled: settings.automaticOptimizationEnabled,
+    reviewCount,
+  };
+}
+
+export async function createFsrsOptimizationReviewHistory(
+  userId: string,
+  name: string,
+  reviewCount: number,
+): Promise<E2EFsrsReviewSeed> {
+  const createdDeck = await createDeck(userId, name);
+  const flashcardCount = Math.max(1, Math.ceil(reviewCount / 4));
+  const createdFlashcards: { id: string }[] = [];
+
+  for (let index = 0; index < flashcardCount; index++) {
+    createdFlashcards.push(
+      await createFlashcardInDeck(
+        userId,
+        createdDeck.id,
+        `${name} front ${index}`,
+        `${name} back ${index}`,
+      ),
+    );
+  }
+
+  await seedFsrsReviewLogs(
+    userId,
+    createdFlashcards.map((createdFlashcard) => createdFlashcard.id),
+    name,
+    reviewCount,
+  );
+
+  return {
+    deckId: createdDeck.id,
+    flashcardIds: createdFlashcards.map(
+      (createdFlashcard) => createdFlashcard.id,
+    ),
+  };
+}
+
+export async function resetFsrsSchedulerSettings(userId: string) {
+  await seedFsrsSchedulerSettings(userId, {
+    optimized: false,
+    automaticOptimizationEnabled: false,
+  });
+}
+
+async function getE2EFsrsReviewLogCount(userId: string) {
+  const rows = await getDb()
+    .select({ total: count() })
+    .from(flashcardReviewLog)
+    .where(eq(flashcardReviewLog.userId, userId));
+
+  return rows[0]?.total ?? 0;
+}
+
+function getSeedRatingForCardReview(
+  cardIndex: number,
+  cardPosition: number,
+): "again" | "hard" | "easy" | "good" {
+  const patterns: Array<
+    [
+      "again" | "hard" | "easy" | "good",
+      "again" | "hard" | "easy" | "good",
+      "again" | "hard" | "easy" | "good",
+      "again" | "hard" | "easy" | "good",
+    ]
+  > = [
+    ["again", "hard", "good", "easy"],
+    ["good", "again", "hard", "easy"],
+    ["hard", "good", "easy", "again"],
+    ["easy", "hard", "good", "again"],
+  ];
+
+  const pattern = patterns[cardIndex % patterns.length];
+  return pattern[cardPosition % pattern.length];
+}
+
+async function seedFsrsReviewLogs(
+  userId: string,
+  flashcardIds: string[],
+  seedName: string,
+  reviewCount: number,
+) {
+  if (reviewCount === 0) {
+    return;
+  }
+
+  const baseTime = new Date("2026-01-01T00:00:00.000Z").getTime();
+  const logs = Array.from({ length: reviewCount }, (_, index) => {
+    const reviewDay = Math.floor(index / flashcardIds.length);
+    const daysElapsed = reviewDay === 0 ? 0 : 2 ** (reviewDay - 1);
+    const offsetMs =
+      reviewDay * 24 * 60 * 60 * 1000 + (index % flashcardIds.length) * 1000;
+    const cardIndex = index % flashcardIds.length;
+    const cardPosition = reviewDay;
+    const rating = getSeedRatingForCardReview(cardIndex, cardPosition);
+    return {
+      flashcardId: getFsrsSeedFlashcardId(flashcardIds, index),
+      userId,
+      clientReviewId: `${seedName}-${index}`,
+      rating,
+      reviewedAt: new Date(baseTime + offsetMs),
+      daysElapsed,
+    };
+  });
+
+  await getDb().insert(flashcardReviewLog).values(logs);
+}
+
+function getFsrsSeedFlashcardId(flashcardIds: string[], index: number): string {
+  const flashcardId = flashcardIds[index % flashcardIds.length];
+  if (!flashcardId) {
+    throw new Error(
+      `Expected at least one flashcard id for FSRS seed index ${index}`,
+    );
+  }
+
+  return flashcardId;
 }
 
 async function resolveDeckIdForFlashcard(

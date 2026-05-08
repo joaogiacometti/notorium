@@ -80,6 +80,27 @@ The repository includes `.github/workflows/assessment-reminders.yml` for a daily
 
 The workflow skips itself when either secret is missing.
 
+## FSRS Optimization Workflow
+
+Users can manually optimize flashcard FSRS parameters from the Account page.
+Automatic optimization is available only when `CRON_SECRET` is configured.
+
+The automatic optimization endpoint is:
+
+```text
+GET /api/flashcards/fsrs/optimize
+Authorization: Bearer <CRON_SECRET>
+```
+
+The repository includes `.github/workflows/fsrs-optimization.yml` for a monthly GitHub Actions trigger. Configure these repository secrets in your fork or deployment repository:
+
+| Secret | Purpose |
+| --- | --- |
+| `NOTORIUM_APP_URL` | Deployed app base URL |
+| `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
+
+The workflow skips itself when either secret is missing.
+
 ## Upstash Rate Limiting
 
 The default local setup uses Redis through `RATE_LIMIT_BACKEND=redis` and `REDIS_URL`.

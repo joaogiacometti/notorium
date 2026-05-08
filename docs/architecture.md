@@ -26,6 +26,7 @@ src/
 ```text
 Server Component -> src/features/*/queries.ts -> Drizzle -> PostgreSQL
 Client Component -> src/app/actions/* -> validation/auth -> src/features/*/mutations.ts -> Drizzle
+Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* service functions
 ```
 
 ## Ownership Boundaries
