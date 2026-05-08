@@ -597,16 +597,16 @@ test("can complete a review in Focus Mode", async ({ page, e2eUser }) => {
       .click();
 
     await expect(page.getByText(flashcardFront)).toBeVisible();
-    await page.getByRole("button", { name: "Show Answer" }).click();
+    await page.getByRole("button", { name: "Show answer" }).click();
 
     await expect(page.getByText(flashcardBack)).toBeVisible();
     await expect(page.getByRole("button", { name: /Easy/i })).toBeVisible();
 
     await page.getByRole("button", { name: /Easy/i }).click();
 
-    await expect(page.getByText("All caught up!")).toBeVisible();
+    await expect(page.getByText("All caught up")).toBeVisible();
     await expect(
-      page.getByText("There are no due flashcards to review."),
+      page.getByText("No due flashcards in this scope right now."),
     ).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);
@@ -651,7 +651,7 @@ test("can start exam mode from review hub on first click", async ({
     ).toBeVisible();
     await expect(getFocusModeDeckLabel(page, deckName)).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Show Answer", exact: true }),
+      page.getByRole("button", { name: "Show answer", exact: true }),
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Exit Focus Mode" }).click();

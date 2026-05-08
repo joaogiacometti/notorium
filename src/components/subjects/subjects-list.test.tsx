@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SubjectsList } from "@/components/subjects/subjects-list";
 import { SubjectsTableSkeleton } from "@/components/subjects/subjects-table-skeleton";
 import { LIMITS } from "@/lib/config/limits";
-import type { SubjectEntity } from "@/lib/server/api-contracts";
+import type { SubjectListItem } from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -43,6 +43,7 @@ vi.mock("@/app/actions/subjects", () => ({
   bulkDeleteSubjects: vi.fn(),
   bulkRestoreSubjects: vi.fn(),
   getAllSubjects: (...args: unknown[]) => getAllSubjectsMock(...args),
+  getSubjectListItems: (...args: unknown[]) => getAllSubjectsMock(...args),
   restoreSubject: (...args: unknown[]) => restoreSubjectMock(...args),
 }));
 
@@ -250,12 +251,13 @@ function hasDisabledChild(node: React.ReactNode): boolean {
 
 function createSubject(
   id: string,
-  overrides: Partial<SubjectEntity> = {},
-): SubjectEntity {
+  overrides: Partial<SubjectListItem> = {},
+): SubjectListItem {
   return {
     id,
     userId: "user-1",
     name: `Subject ${id}`,
+    notesCount: 0,
     totalClasses: null,
     maxMisses: null,
     archivedAt: null,
@@ -292,8 +294,8 @@ function selectSubjectAt(container: HTMLElement, rowIndex: number) {
 function renderSubjectsList(
   root: Root,
   queryClient: QueryClient,
-  subjects: SubjectEntity[],
-  initialStatus: "active" | "archived" | "all" = "active",
+  subjects: SubjectListItem[],
+  initialStatus: "active" | "archived" = "active",
 ) {
   root.render(
     <QueryClientProvider client={queryClient}>
@@ -332,8 +334,7 @@ describe("SubjectsList", () => {
     });
 
     expect(container.textContent).toContain("Subject 1");
-    expect(container.textContent).toContain("Created");
-    expect(container.textContent).toContain("Apr 20, 2026");
+    expect(container.textContent).toContain("0 notes");
     expect(container.textContent).not.toContain("10:00 AM");
     expect(container.querySelector("table")).toBeTruthy();
     expect(
@@ -376,7 +377,7 @@ describe("SubjectsList", () => {
     const biology = createSubject("2", { name: "Cell Biology" });
 
     await act(async () => {
-      renderSubjectsList(root, queryClient, [algebra, biology], "all");
+      renderSubjectsList(root, queryClient, [algebra, biology]);
     });
 
     const input = container.querySelector("input");
@@ -402,7 +403,7 @@ describe("SubjectsList", () => {
     const algebra = createSubject("2", { name: "Algebra" });
 
     await act(async () => {
-      renderSubjectsList(root, queryClient, [zebra, algebra], "all");
+      renderSubjectsList(root, queryClient, [zebra, algebra]);
     });
 
     const select = container.querySelector("select");
@@ -443,7 +444,6 @@ describe("SubjectsList", () => {
         root,
         queryClient,
         Array.from({ length: 12 }, (_, index) => createSubject(`${index + 1}`)),
-        "all",
       );
     });
 
@@ -544,6 +544,22 @@ describe("SubjectsList", () => {
     });
 
     expect(container.querySelector(".border-t")).toBeTruthy();
+  });
+
+  it("keeps page count and rows selection above page actions", async () => {
+    await act(async () => {
+      renderSubjectsList(root, queryClient, [createSubject("1")]);
+    });
+
+    const pageBadge = Array.from(
+      container.querySelectorAll(".rounded-full"),
+    ).find((element) => element.textContent?.includes("Page 1 of 1"));
+    const controlsRow = pageBadge?.parentElement;
+
+    expect(controlsRow?.className).toContain("grid");
+    expect(controlsRow?.className).toContain("grid-cols-2");
+    expect(controlsRow?.className).toContain("[&>button]:w-full");
+    expect(controlsRow?.className).toContain("sm:flex");
   });
 
   it("shows a tooltip when the create action is disabled at the limit", async () => {

@@ -1,7 +1,10 @@
 import { and, count, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { subject } from "@/db/schema";
-import type { SubjectEntity } from "@/lib/server/api-contracts";
+import { note, subject } from "@/db/schema";
+import type {
+  SubjectEntity,
+  SubjectListItem,
+} from "@/lib/server/api-contracts";
 
 export async function getSubjectsForUser(
   userId: string,
@@ -69,6 +72,28 @@ export async function getAllSubjectsForUser(
     .from(subject)
     .where(eq(subject.userId, userId))
     .orderBy(desc(subject.updatedAt));
+}
+
+export async function getSubjectListItemsForUser(
+  userId: string,
+): Promise<SubjectListItem[]> {
+  const subjects = await getAllSubjectsForUser(userId);
+
+  if (subjects.length === 0) {
+    return [];
+  }
+
+  const noteCounts = await getDb()
+    .select({ subjectId: note.subjectId, count: count() })
+    .from(note)
+    .where(eq(note.userId, userId))
+    .groupBy(note.subjectId)
+    .then((rows) => new Map(rows.map((row) => [row.subjectId, row.count])));
+
+  return subjects.map((currentSubject) => ({
+    ...currentSubject,
+    notesCount: noteCounts.get(currentSubject.id) ?? 0,
+  }));
 }
 
 export async function getArchivedSubjectRecordForUser(

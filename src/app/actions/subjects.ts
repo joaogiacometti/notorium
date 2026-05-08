@@ -15,6 +15,7 @@ import {
   getActiveSubjectByIdForUser,
   getAllSubjectsForUser,
   getArchivedSubjectsForUser,
+  getSubjectListItemsForUser,
   getSubjectsForUser,
 } from "@/features/subjects/queries";
 import {
@@ -41,6 +42,7 @@ import type {
   BulkSubjectMutationResult,
   MutationResult,
   SubjectEntity,
+  SubjectListItem,
 } from "@/lib/server/api-contracts";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
@@ -56,6 +58,11 @@ export async function getArchivedSubjects(): Promise<SubjectEntity[]> {
 export async function getAllSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
   return getAllSubjectsForUser(userId);
+}
+
+export async function getSubjectListItems(): Promise<SubjectListItem[]> {
+  const userId = await getAuthenticatedUserId();
+  return getSubjectListItemsForUser(userId);
 }
 
 export async function getSubjectById(

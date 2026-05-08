@@ -1,10 +1,10 @@
 import { BookOpen } from "lucide-react";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import { SubjectsList } from "@/components/subjects/subjects-list";
-import { getAllSubjectsForUser } from "@/features/subjects/queries";
+import { getSubjectListItemsForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 
-type SubjectsStatusFilter = "active" | "archived" | "all";
+type SubjectsStatusFilter = "active" | "archived";
 
 interface SubjectsPageProps {
   searchParams: Promise<{
@@ -13,7 +13,7 @@ interface SubjectsPageProps {
 }
 
 function resolveSubjectsStatusFilter(status?: string): SubjectsStatusFilter {
-  if (status === "archived" || status === "all") {
+  if (status === "archived") {
     return status;
   }
 
@@ -27,7 +27,7 @@ export default async function SubjectsPage({
   const { status } = await searchParams;
   const initialStatus = resolveSubjectsStatusFilter(status);
 
-  const subjects = await getAllSubjectsForUser(session.user.id);
+  const subjects = await getSubjectListItemsForUser(session.user.id);
 
   return (
     <FeaturePageShell

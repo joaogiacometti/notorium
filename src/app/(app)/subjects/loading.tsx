@@ -22,7 +22,7 @@ export default function SubjectsLoading() {
                 <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <Skeleton className="h-9 w-full sm:w-80" />
+                <Skeleton className="h-9 w-full sm:w-52" />
                 <Skeleton className="h-10 w-full sm:w-48" />
               </div>
               <div className="flex min-h-8 flex-wrap items-center gap-2 sm:justify-between">

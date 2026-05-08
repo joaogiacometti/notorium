@@ -19,11 +19,10 @@ import { useRouter } from "next/navigation";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { getAllSubjects, restoreSubject } from "@/app/actions/subjects";
+import { getSubjectListItems, restoreSubject } from "@/app/actions/subjects";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
-import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { SubjectText } from "@/components/shared/subject-text";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { BulkArchiveSubjectsDialog } from "@/components/subjects/bulk-archive-subjects-dialog";
@@ -59,18 +58,20 @@ import {
 } from "@/components/ui/tooltip";
 import { getTotalSubjectCount } from "@/features/subjects/subjects-count";
 import { LIMITS } from "@/lib/config/limits";
-import { formatDateShort, formatIsoDate } from "@/lib/dates/format";
 import { PAGE_SIZE_OPTIONS } from "@/lib/pagination/page-size";
-import type { SubjectEditDto, SubjectEntity } from "@/lib/server/api-contracts";
+import type {
+  SubjectEditDto,
+  SubjectListItem,
+} from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
-type SubjectsStatusFilter = "active" | "archived" | "all";
-type SubjectsSort = "updatedDesc" | "createdDesc" | "nameAsc";
+type SubjectsStatusFilter = "active" | "archived";
+type SubjectsSort = "updatedDesc" | "nameAsc";
 
 interface SubjectsListProps {
-  subjects: SubjectEntity[];
+  subjects: SubjectListItem[];
   initialStatus: SubjectsStatusFilter;
 }
 
@@ -82,10 +83,10 @@ type SubjectActionTarget =
 type SubjectBulkAction = "archive" | "restore" | "delete";
 
 interface SubjectsTableActionsProps {
-  subject: SubjectEntity;
-  onArchived: (subject: SubjectEntity) => void;
-  onDeleted: (subject: SubjectEntity) => void;
-  onEdit: (subject: SubjectEntity) => void;
+  subject: SubjectListItem;
+  onArchived: (subject: SubjectListItem) => void;
+  onDeleted: (subject: SubjectListItem) => void;
+  onEdit: (subject: SubjectListItem) => void;
   onRestored: () => void;
 }
 
@@ -107,16 +108,16 @@ interface SubjectsToolbarIconActionProps {
   onClick: () => void;
 }
 
-function isArchived(subject: SubjectEntity): boolean {
+function isArchived(subject: SubjectListItem): boolean {
   return subject.archivedAt !== null;
 }
 
 function getVisibleSubjects(
-  subjects: SubjectEntity[],
+  subjects: SubjectListItem[],
   status: SubjectsStatusFilter,
   searchQuery: string,
   sortBy: SubjectsSort,
-): SubjectEntity[] {
+): SubjectListItem[] {
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
   return [...subjects]
@@ -126,29 +127,25 @@ function getVisibleSubjects(
 }
 
 function matchesStatus(
-  subject: SubjectEntity,
+  subject: SubjectListItem,
   status: SubjectsStatusFilter,
 ): boolean {
-  if (status === "all") return true;
   if (status === "archived") return isArchived(subject);
   return !isArchived(subject);
 }
 
-function matchesSearch(subject: SubjectEntity, searchQuery: string): boolean {
+function matchesSearch(subject: SubjectListItem, searchQuery: string): boolean {
   if (!searchQuery) return true;
 
   return subject.name.toLowerCase().includes(searchQuery);
 }
 
 function compareSubjects(
-  left: SubjectEntity,
-  right: SubjectEntity,
+  left: SubjectListItem,
+  right: SubjectListItem,
   sortBy: SubjectsSort,
 ): number {
   if (sortBy === "nameAsc") return left.name.localeCompare(right.name);
-  if (sortBy === "createdDesc") {
-    return right.createdAt.getTime() - left.createdAt.getTime();
-  }
 
   return right.updatedAt.getTime() - left.updatedAt.getTime();
 }
@@ -156,34 +153,32 @@ function compareSubjects(
 function getColumnClassName(columnId: string): string {
   switch (columnId) {
     case "select":
-      return "w-9 min-w-9";
+      return "w-8 min-w-8 sm:w-9 sm:min-w-9";
     case "subject":
-      return "w-36 min-w-36 max-w-36 sm:w-44 sm:min-w-44 sm:max-w-44 lg:w-auto lg:min-w-[3rem] lg:max-w-[8rem]";
-    case "status":
-      return "min-w-[5rem]";
-    case "createdAt":
-      return "min-w-[5.5rem]";
+      return "min-w-0 max-w-[8.5rem] sm:min-w-[12rem] sm:max-w-none";
+    case "notesCount":
+      return "w-16 min-w-16 sm:w-[4.5rem] sm:min-w-[4.5rem]";
     case "actions":
-      return "w-14 min-w-14";
+      return "w-10 min-w-10 sm:w-14 sm:min-w-14";
     default:
       return "";
   }
 }
 
 function getSelectedSubjects(
-  subjects: SubjectEntity[],
+  subjects: SubjectListItem[],
   selectedSubjectIds: string[],
-): SubjectEntity[] {
+): SubjectListItem[] {
   const selectedIds = new Set(selectedSubjectIds);
 
   return subjects.filter((subject) => selectedIds.has(subject.id));
 }
 
 function getSubjectPageItems(
-  subjects: SubjectEntity[],
+  subjects: SubjectListItem[],
   pageIndex: number,
   pageSize: number,
-): SubjectEntity[] {
+): SubjectListItem[] {
   const startIndex = pageIndex * pageSize;
 
   return subjects.slice(startIndex, startIndex + pageSize);
@@ -284,7 +279,11 @@ function SubjectsSelectionToolbar({
   );
 }
 
-function renderSubjectLabel(subject: SubjectEntity) {
+function formatNotesCount(notesCount: number): string {
+  return notesCount === 1 ? "1 note" : `${notesCount} notes`;
+}
+
+function renderSubjectLabel(subject: SubjectListItem) {
   const content = (
     <div className="min-w-0 max-w-full flex-1 overflow-hidden">
       <SubjectText
@@ -317,7 +316,7 @@ function getColumns({
   onDeleted,
   onEdit,
   onRestored,
-}: Omit<SubjectsTableActionsProps, "subject">): ColumnDef<SubjectEntity>[] {
+}: Omit<SubjectsTableActionsProps, "subject">): ColumnDef<SubjectListItem>[] {
   return [
     {
       id: "subject",
@@ -325,29 +324,21 @@ function getColumns({
       cell: ({ row }) => renderSubjectLabel(row.original),
     },
     {
-      id: "status",
-      header: () => <TableHeaderLabel>Status</TableHeaderLabel>,
-      cell: ({ row }) =>
-        isArchived(row.original) ? (
-          <StatusToneBadge tone="neutral">Archived</StatusToneBadge>
-        ) : (
-          <StatusToneBadge tone="success">Active</StatusToneBadge>
-        ),
-    },
-    {
-      accessorKey: "createdAt",
-      header: () => <TableHeaderLabel>Created</TableHeaderLabel>,
+      accessorKey: "notesCount",
+      header: () => <TableHeaderLabel>Notes</TableHeaderLabel>,
       cell: ({ row }) => (
-        <span className="text-sm whitespace-nowrap text-muted-foreground">
-          {formatDateShort(formatIsoDate(row.original.createdAt))}
+        <span className="whitespace-nowrap text-sm text-muted-foreground">
+          {formatNotesCount(row.original.notesCount)}
         </span>
       ),
     },
     {
       id: "actions",
-      header: () => <div className="flex w-14 min-w-14 justify-start" />,
+      header: () => (
+        <div className="flex w-10 min-w-10 justify-start sm:w-14 sm:min-w-14" />
+      ),
       cell: ({ row }) => (
-        <div className="flex w-14 min-w-14 items-center justify-start pl-1">
+        <div className="flex w-10 min-w-10 items-center justify-start pl-1 sm:w-14 sm:min-w-14">
           <SubjectsTableActions
             subject={row.original}
             onArchived={onArchived}
@@ -378,7 +369,7 @@ function SubjectsTableActions({
 
   function handleMenuSelect(
     event: Event,
-    action: (subject: SubjectEntity) => void,
+    action: (subject: SubjectListItem) => void,
   ) {
     event.stopPropagation();
     action(subject);
@@ -537,7 +528,7 @@ export function SubjectsList({
   }, [visibleSubjects]);
 
   async function refreshSubjectsList() {
-    const latestSubjects = await getAllSubjects();
+    const latestSubjects = await getSubjectListItems();
     setSubjectItems(latestSubjects);
   }
 
@@ -662,12 +653,6 @@ export function SubjectsList({
                         {archivedCount}
                       </span>
                     </TabsTrigger>
-                    <TabsTrigger value="all">
-                      All
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]">
-                        {totalSubjects}
-                      </span>
-                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <Select
@@ -684,7 +669,6 @@ export function SubjectsList({
                     <SelectItem value="updatedDesc">
                       Recently Updated
                     </SelectItem>
-                    <SelectItem value="createdDesc">Newest Created</SelectItem>
                     <SelectItem value="nameAsc">Name A-Z</SelectItem>
                   </SelectContent>
                 </Select>
@@ -754,6 +738,7 @@ export function SubjectsList({
               pageSizeOptions={PAGE_SIZE_OPTIONS}
               pageSizeLabel="Rows"
               pageLabel={(current, total) => `Page ${current} of ${total}`}
+              controlsClassName="grid w-full grid-cols-2 items-center [&>*:nth-child(2)]:justify-self-end [&>button]:w-full sm:w-auto sm:flex sm:flex-row sm:items-center sm:[&>*:nth-child(2)]:justify-self-auto sm:[&>button]:w-auto"
               prevLabel="Previous"
               nextLabel="Next"
               loadingSkeleton={
@@ -764,7 +749,7 @@ export function SubjectsList({
               selectedRowIds={selectedSubjectIds}
               onSelectedRowIdsChange={setSelectedSubjectIds}
               selectionAriaLabel="Select subject"
-              tableClassName="w-full min-w-[30rem] sm:min-w-[34rem] lg:min-w-[20rem]"
+              tableClassName="w-full min-w-0 sm:min-w-[28rem] lg:min-w-[20rem]"
               columnResizeMode="onEnd"
               scrollAreaClassName="min-w-0 overflow-x-auto overflow-y-auto"
               getHeaderCellClassName={getColumnClassName}

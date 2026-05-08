@@ -142,6 +142,10 @@ export interface FlashcardStatisticsState {
 
 export type SearchSubjectResult = Pick<SubjectEntity, "id" | "name">;
 
+export interface SubjectListItem extends SubjectEntity {
+  notesCount: number;
+}
+
 export type SearchNoteResult = Pick<
   NoteEntity,
   "id" | "title" | "content" | "subjectId"
