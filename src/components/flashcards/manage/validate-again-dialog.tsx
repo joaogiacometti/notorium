@@ -1,16 +1,7 @@
 "use client";
 
 import { RotateCw } from "lucide-react";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 
 interface ValidateAgainDialogProps {
   open: boolean;
@@ -33,31 +24,17 @@ export function ValidateAgainDialog({
       : `Re-validate ${count} flashcards?`;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Re-validate Flashcards?</DialogTitle>
-          <DialogDescription>{descriptionText}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isValidating}
-          >
-            Cancel
-          </Button>
-          <Button type="button" onClick={onConfirm} disabled={isValidating}>
-            <AsyncButtonContent
-              pending={isValidating}
-              idleLabel="Re-validate"
-              pendingLabel="Validating..."
-              idleIcon={<RotateCw className="size-4" />}
-            />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Re-validate Flashcards?"
+      description={descriptionText}
+      confirmLabel="Re-validate"
+      pendingLabel="Validating..."
+      confirmVariant="default"
+      isPending={isValidating}
+      onConfirm={onConfirm}
+      confirmIcon={<RotateCw className="size-4" />}
+    />
   );
 }

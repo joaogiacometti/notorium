@@ -156,4 +156,46 @@ describe("DeleteSubjectDialog", () => {
     expect(subjectName?.className).not.toContain("break-all");
     expect(subjectName?.textContent).toContain(SOFT_HYPHEN);
   });
+
+  it("uses primary styling when archiving a subject", async () => {
+    await renderSubjectDialog("archive", root, queryClient);
+
+    const archiveButton = findButton("Archive", container);
+
+    expect(archiveButton?.dataset.variant).toBe("default");
+  });
+
+  it("uses destructive styling when deleting a subject", async () => {
+    await renderSubjectDialog("delete", root, queryClient);
+
+    const deleteButton = findButton("Delete", container);
+
+    expect(deleteButton?.dataset.variant).toBe("destructive");
+  });
 });
+
+async function renderSubjectDialog(
+  mode: "archive" | "delete",
+  root: Root,
+  queryClient: QueryClient,
+) {
+  await act(async () => {
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <DeleteSubjectDialog
+          subjectId="subject-1"
+          subjectName="test"
+          open
+          onOpenChange={vi.fn()}
+          mode={mode}
+        />
+      </QueryClientProvider>,
+    );
+  });
+}
+
+function findButton(text: string, container: HTMLDivElement) {
+  return Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === text,
+  );
+}

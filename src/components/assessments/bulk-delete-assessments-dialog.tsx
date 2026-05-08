@@ -3,16 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { bulkDeleteAssessments } from "@/app/actions/assessments";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface BulkDeleteAssessmentsDialogProps {
@@ -45,37 +36,20 @@ export function BulkDeleteAssessmentsDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Delete Assessments</DialogTitle>
-          <DialogDescription>
-            {count === 1
-              ? "Delete 1 assessment permanently."
-              : `Delete ${count} assessments permanently.`}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            <AsyncButtonContent
-              pending={isPending}
-              idleLabel="Delete"
-              pendingLabel="Deleting..."
-            />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete Assessments"
+      description={
+        count === 1
+          ? "Delete 1 assessment permanently."
+          : `Delete ${count} assessments permanently.`
+      }
+      confirmLabel="Delete"
+      pendingLabel="Deleting..."
+      confirmVariant="destructive"
+      isPending={isPending}
+      onConfirm={handleDelete}
+    />
   );
 }

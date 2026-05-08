@@ -1,14 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 
 interface ExamExitConfirmationDialogProps {
   open: boolean;
@@ -28,27 +20,19 @@ export function ExamExitConfirmationDialog({
   onConfirm,
 }: Readonly<ExamExitConfirmationDialogProps>) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="z-120 sm:max-w-md"
-        overlayClassName="z-120"
-        onEscapeKeyDown={(event) => event.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>Exit Exam</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to exit? Your progress won&apos;t be saved.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Exit
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Exit Exam"
+      description="Are you sure you want to exit? Your progress won't be saved."
+      confirmLabel="Exit"
+      pendingLabel="Exiting..."
+      confirmVariant="destructive"
+      isPending={false}
+      onConfirm={onConfirm}
+      className="z-120"
+      overlayClassName="z-120"
+      preventEscapeClose
+    />
   );
 }

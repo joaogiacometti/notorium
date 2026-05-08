@@ -1,14 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 
 interface UnsavedChangesDialogProps {
   open: boolean;
@@ -22,24 +14,18 @@ export function UnsavedChangesDialog({
   onDiscard,
 }: Readonly<UnsavedChangesDialogProps>) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>Discard changes?</DialogTitle>
-          <DialogDescription>
-            You have unsaved edits. If you discard now, those changes will be
-            lost.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Keep Editing
-          </Button>
-          <Button variant="destructive" onClick={onDiscard}>
-            Discard
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Discard changes?"
+      description="You have unsaved edits. If you discard now, those changes will be lost."
+      cancelLabel="Keep Editing"
+      confirmLabel="Discard"
+      pendingLabel="Discarding..."
+      confirmVariant="destructive"
+      isPending={false}
+      onConfirm={onDiscard}
+      showCloseButton={false}
+    />
   );
 }

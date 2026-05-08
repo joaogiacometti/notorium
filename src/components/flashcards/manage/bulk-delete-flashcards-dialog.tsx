@@ -3,16 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { bulkDeleteFlashcards } from "@/app/actions/flashcards";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { t } from "@/lib/server/server-action-errors";
 
 interface BulkDeleteFlashcardsDialogProps {
@@ -51,33 +42,16 @@ export function BulkDeleteFlashcardsDialog({
       : `Delete ${count} flashcards permanently.`;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Delete Flashcards</DialogTitle>
-          <DialogDescription>{descriptionText}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            <AsyncButtonContent
-              pending={isPending}
-              idleLabel="Delete"
-              pendingLabel="Deleting..."
-            />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete Flashcards"
+      description={descriptionText}
+      confirmLabel="Delete"
+      pendingLabel="Deleting..."
+      confirmVariant="destructive"
+      isPending={isPending}
+      onConfirm={handleDelete}
+    />
   );
 }

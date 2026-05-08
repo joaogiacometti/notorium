@@ -3,16 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAssessment } from "@/app/actions/assessments";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface DeleteAssessmentDialogProps {
@@ -45,39 +36,24 @@ export function DeleteAssessmentDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Delete Assessment</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete{" "}
-            <span className="font-semibold text-foreground">
-              {assessmentTitle}
-            </span>
-            ? This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            <AsyncButtonContent
-              pending={isPending}
-              idleLabel="Delete"
-              pendingLabel="Deleting..."
-            />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete Assessment"
+      description={
+        <>
+          Are you sure you want to delete{" "}
+          <span className="font-semibold text-foreground">
+            {assessmentTitle}
+          </span>
+          ? This action cannot be undone.
+        </>
+      }
+      confirmLabel="Delete"
+      pendingLabel="Deleting..."
+      confirmVariant="destructive"
+      isPending={isPending}
+      onConfirm={handleDelete}
+    />
   );
 }

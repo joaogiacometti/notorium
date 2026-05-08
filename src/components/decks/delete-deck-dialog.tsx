@@ -3,15 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteDeck } from "@/app/actions/decks";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { t } from "@/lib/server/server-action-errors";
 
 interface DeleteDeckDialogProps {
@@ -55,43 +47,27 @@ export function DeleteDeckDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Delete Deck</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete "{deckName}"? This also deletes all
-            nested sub-decks and their flashcards.{" "}
-            {flashcardCount > 0 && (
-              <>
-                {flashcardCount} flashcard{flashcardCount === 1 ? "" : "s"} in
-                this deck will also be deleted.
-              </>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isDeleting}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            <AsyncButtonContent
-              pending={isDeleting}
-              idleLabel="Delete"
-              pendingLabel="Deleting..."
-            />
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete Deck"
+      description={
+        <>
+          Are you sure you want to delete "{deckName}"? This also deletes all
+          nested sub-decks and their flashcards.{" "}
+          {flashcardCount > 0 && (
+            <>
+              {flashcardCount} flashcard{flashcardCount === 1 ? "" : "s"} in
+              this deck will also be deleted.
+            </>
+          )}
+        </>
+      }
+      confirmLabel="Delete"
+      pendingLabel="Deleting..."
+      confirmVariant="destructive"
+      isPending={isDeleting}
+      onConfirm={handleDelete}
+    />
   );
 }

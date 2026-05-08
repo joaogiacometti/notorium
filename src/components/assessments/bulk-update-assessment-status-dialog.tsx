@@ -3,16 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { bulkUpdateAssessmentStatus } from "@/app/actions/assessments";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface BulkUpdateAssessmentStatusDialogProps {
@@ -71,29 +62,16 @@ export function BulkUpdateAssessmentStatusDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{copy.title}</DialogTitle>
-          <DialogDescription>{copy.description}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleConfirm} disabled={isPending}>
-            <AsyncButtonContent
-              pending={isPending}
-              idleLabel={copy.idleLabel}
-              pendingLabel={copy.pendingLabel}
-            />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={copy.title}
+      description={copy.description}
+      confirmLabel={copy.idleLabel}
+      pendingLabel={copy.pendingLabel}
+      confirmVariant="default"
+      isPending={isPending}
+      onConfirm={handleConfirm}
+    />
   );
 }

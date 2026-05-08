@@ -3,16 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteFlashcard } from "@/app/actions/flashcards";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -51,42 +42,26 @@ export function DeleteFlashcardDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={`sm:max-w-md ${className ?? ""}`}
-        overlayClassName={overlayClassName}
-      >
-        <DialogHeader>
-          <DialogTitle>Delete Flashcard</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete{" "}
-            <span className="font-semibold text-foreground">
-              {flashcardFrontPreview}
-            </span>
-            ? This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            <AsyncButtonContent
-              pending={isPending}
-              idleLabel="Delete"
-              pendingLabel="Deleting..."
-            />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ActionConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete Flashcard"
+      description={
+        <>
+          Are you sure you want to delete{" "}
+          <span className="font-semibold text-foreground">
+            {flashcardFrontPreview}
+          </span>
+          ? This action cannot be undone.
+        </>
+      }
+      confirmLabel="Delete"
+      pendingLabel="Deleting..."
+      confirmVariant="destructive"
+      isPending={isPending}
+      onConfirm={handleDelete}
+      className={className}
+      overlayClassName={overlayClassName}
+    />
   );
 }

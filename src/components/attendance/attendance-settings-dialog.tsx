@@ -9,13 +9,13 @@ import {
   removeAttendanceSettings,
   updateAttendanceSettings,
 } from "@/app/actions/attendance";
+import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -181,38 +181,17 @@ export function AttendanceSettingsDialog({
             )}
           </FieldGroup>
         </form>
-        <Dialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Remove Attendance Configuration</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to remove the attendance configuration?
-                All recorded misses will also be deleted. This action cannot be
-                undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowRemoveConfirm(false)}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleRemove}
-                disabled={isPending}
-              >
-                <AsyncButtonContent
-                  pending={isPending}
-                  idleLabel="Remove"
-                  pendingLabel="Removing..."
-                />
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ActionConfirmationDialog
+          open={showRemoveConfirm}
+          onOpenChange={setShowRemoveConfirm}
+          title="Remove Attendance Configuration"
+          description="Are you sure you want to remove the attendance configuration? All recorded misses will also be deleted. This action cannot be undone."
+          confirmLabel="Remove"
+          pendingLabel="Removing..."
+          confirmVariant="destructive"
+          isPending={isPending}
+          onConfirm={handleRemove}
+        />
       </DialogContent>
     </Dialog>
   );
