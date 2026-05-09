@@ -162,6 +162,7 @@ interface ManagerDataTableProps<TRow> {
   pageSizeOptions?: readonly number[];
   selectedRowIds?: string[];
   selectionAriaLabel?: string;
+  selectionColumnClassName?: string;
   scrollAreaClassName?: string;
   showColumnWidths?: boolean;
   tableClassName?: string;
@@ -200,6 +201,7 @@ export function ManagerDataTable<TRow>({
   pageSizeOptions,
   selectedRowIds,
   selectionAriaLabel = "Select row",
+  selectionColumnClassName,
   scrollAreaClassName,
   showColumnWidths = false,
   tableClassName,
@@ -320,6 +322,9 @@ export function ManagerDataTable<TRow>({
                           header.column.id === "select"
                             ? "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-2"
                             : "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-3",
+                          header.column.id === "select"
+                            ? selectionColumnClassName
+                            : null,
                           getHeaderCellClassName?.(header.column.id),
                         )}
                         style={
@@ -417,6 +422,9 @@ export function ManagerDataTable<TRow>({
                             cell.column.id === "select"
                               ? "px-2 py-3 align-middle"
                               : "px-3 py-3 align-middle",
+                            cell.column.id === "select"
+                              ? selectionColumnClassName
+                              : null,
                             getBodyCellClassName?.(cell.column.id),
                           )}
                           style={
@@ -460,57 +468,63 @@ export function ManagerDataTable<TRow>({
                 controlsClassName,
               )}
             >
-              <Badge
-                variant="outline"
-                className="rounded-full border-border/70 bg-background/80 px-3 py-1 text-muted-foreground"
-              >
-                {pageLabel(pagination.pageIndex + 1, totalPageCount)}
-              </Badge>
-              {showPageSizeSelect ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="whitespace-nowrap">{pageSizeLabel}</span>
-                  <Select
-                    value={String(pageSize)}
-                    onValueChange={(value) => onPageSizeChange?.(Number(value))}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger
-                      size="sm"
-                      className="h-8 rounded-full border-border/70 bg-background/80"
-                      aria-label={pageSizeLabel}
+              <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
+                <Badge
+                  variant="outline"
+                  className="rounded-full border-border/70 bg-background/80 px-3 py-1 text-muted-foreground"
+                >
+                  {pageLabel(pagination.pageIndex + 1, totalPageCount)}
+                </Badge>
+                {showPageSizeSelect ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="whitespace-nowrap">{pageSizeLabel}</span>
+                    <Select
+                      value={String(pageSize)}
+                      onValueChange={(value) =>
+                        onPageSizeChange?.(Number(value))
+                      }
+                      disabled={isLoading}
                     >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent align="end">
-                      {pageSizeOptions?.map((option) => (
-                        <SelectItem key={option} value={String(option)}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={isLoading || !table.getCanPreviousPage()}
-                className="rounded-full border-border/70 bg-background/80 px-4"
-              >
-                {prevLabel}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={isLoading || !table.getCanNextPage()}
-                className="rounded-full border-border/70 bg-background/80 px-4"
-              >
-                {nextLabel}
-              </Button>
+                      <SelectTrigger
+                        size="sm"
+                        className="h-8 rounded-full border-border/70 bg-background/80"
+                        aria-label={pageSizeLabel}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent align="end">
+                        {pageSizeOptions?.map((option) => (
+                          <SelectItem key={option} value={String(option)}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.previousPage()}
+                  disabled={isLoading || !table.getCanPreviousPage()}
+                  className="rounded-full border-border/70 bg-background/80 px-4"
+                >
+                  {prevLabel}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.nextPage()}
+                  disabled={isLoading || !table.getCanNextPage()}
+                  className="rounded-full border-border/70 bg-background/80 px-4"
+                >
+                  {nextLabel}
+                </Button>
+              </div>
             </div>
           </div>
         </>

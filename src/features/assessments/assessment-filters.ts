@@ -1,4 +1,9 @@
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
+import {
+  planningAssessmentSortValues,
+  planningAssessmentStatusFilterValues,
+  planningAssessmentTypeFilterValues,
+} from "@/features/assessments/constants";
 import type { DueDateBounds } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
@@ -37,6 +42,46 @@ interface FilterAndSortAssessmentsInput {
 }
 
 export { getDueDateBounds } from "@/lib/dates/format";
+
+export function resolvePlanningAssessmentStatusFilter(
+  value: string | undefined,
+): StatusFilter {
+  if (
+    (planningAssessmentStatusFilterValues as readonly string[]).includes(
+      value ?? "",
+    )
+  ) {
+    return value as StatusFilter;
+  }
+
+  return "pending";
+}
+
+export function resolvePlanningAssessmentTypeFilter(
+  value: string | undefined,
+): TypeFilter {
+  if (
+    (planningAssessmentTypeFilterValues as readonly string[]).includes(
+      value ?? "",
+    )
+  ) {
+    return value as TypeFilter;
+  }
+
+  return "all";
+}
+
+export function resolvePlanningAssessmentSort(
+  value: string | undefined,
+): SortBy {
+  if (
+    (planningAssessmentSortValues as readonly string[]).includes(value ?? "")
+  ) {
+    return value as SortBy;
+  }
+
+  return "smart";
+}
 
 export function getSubjectFilterOptions(
   assessments: AssessmentEntity[],

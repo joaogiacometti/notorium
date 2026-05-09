@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ComponentProps } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -14,6 +15,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 
 const replaceMock = vi.fn();
 const getPlanningAssessmentsPageMock = vi.fn();
+const managerTablePropsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -33,9 +35,10 @@ vi.mock("@/components/assessments/lazy-create-assessment-dialog", () => ({
 }));
 
 vi.mock("@/components/planning/planning-assessments-manager-table", () => ({
-  PlanningAssessmentsManagerTable: () => (
-    <div data-testid="planning-assessments-manager-table" />
-  ),
+  PlanningAssessmentsManagerTable: (props: unknown) => {
+    managerTablePropsMock(props);
+    return <div data-testid="planning-assessments-manager-table" />;
+  },
 }));
 
 const emptyPageData: PlanningAssessmentsPage = {
@@ -85,7 +88,10 @@ describe("PlanningAssessmentsTable", () => {
     vi.clearAllMocks();
   });
 
-  async function renderTable(subjects: SubjectEntity[]) {
+  async function renderTable(
+    subjects: SubjectEntity[],
+    props: Partial<ComponentProps<typeof PlanningAssessmentsTable>> = {},
+  ) {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -96,6 +102,7 @@ describe("PlanningAssessmentsTable", () => {
             subjectNamesById={Object.fromEntries(
               subjects.map((subject) => [subject.id, subject.name]),
             )}
+            {...props}
           />
         </QueryClientProvider>,
       );
@@ -107,7 +114,7 @@ describe("PlanningAssessmentsTable", () => {
 
     const addButtons = Array.from(container.querySelectorAll("button")).filter(
       (button) => button.textContent?.includes("Add Assessment"),
-    ) as HTMLButtonElement[];
+    );
     const toolbarTrigger = container.querySelector<HTMLElement>(
       '[data-testid="planning-add-assessment-disabled-trigger"]',
     );
@@ -152,7 +159,7 @@ describe("PlanningAssessmentsTable", () => {
 
     const addButtons = Array.from(container.querySelectorAll("button")).filter(
       (button) => button.textContent?.includes("Add Assessment"),
-    ) as HTMLButtonElement[];
+    );
 
     expect(addButtons).toHaveLength(2);
     expect(addButtons.every((button) => !button.disabled)).toBe(true);
@@ -164,5 +171,54 @@ describe("PlanningAssessmentsTable", () => {
     expect(
       container.querySelector('[data-testid="create-assessment-dialog"]'),
     ).toBeTruthy();
+  });
+
+  it("defaults the assessment status filter to pending", async () => {
+    const pageData = {
+      ...emptyPageData,
+      allCount: 1,
+      total: 1,
+    };
+
+    await renderTable([createSubject()], { initialPageData: pageData });
+
+    expect(container.textContent).toContain("Pending");
+    expect(managerTablePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        total: 1,
+      }),
+    );
+    expect(getPlanningAssessmentsPageMock).not.toHaveBeenCalled();
+  });
+
+  it("gives the assessment list a mobile height and lets desktop own remaining height", async () => {
+    await renderTable([createSubject()], {
+      initialPageData: {
+        ...emptyPageData,
+        allCount: 1,
+        total: 1,
+      },
+    });
+
+    const tableCard = container
+      .querySelector('[data-testid="planning-assessments-manager-table"]')
+      ?.closest(String.raw`.h-\[clamp\(22rem\,58svh\,36rem\)\]`);
+
+    expect(tableCard?.className).toContain("overflow-hidden");
+    expect(tableCard?.className).toContain("lg:h-auto");
+    expect(tableCard?.className).toContain("lg:flex-1");
+  });
+
+  it("preserves explicit all status instead of the pending default", async () => {
+    await renderTable([createSubject()], {
+      initialStatus: "all",
+      initialPageData: {
+        ...emptyPageData,
+        allCount: 1,
+        total: 1,
+      },
+    });
+
+    expect(container.textContent).toContain("All Statuses");
   });
 });

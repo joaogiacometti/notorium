@@ -7,6 +7,7 @@ interface FeaturePageShellProps {
   description: string;
   headerMeta?: string;
   icon: LucideIcon;
+  isolateContentScroll?: boolean;
   switcher?: ReactNode;
   title: string;
 }
@@ -16,12 +17,25 @@ export function FeaturePageShell({
   description,
   headerMeta,
   icon: Icon,
+  isolateContentScroll = false,
   switcher,
   title,
 }: Readonly<FeaturePageShellProps>) {
   return (
-    <main className="lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden">
-      <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
+    <main
+      className={
+        isolateContentScroll
+          ? "lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden"
+          : "lg:h-[calc(100svh-3.5rem)] lg:overflow-hidden"
+      }
+    >
+      <AppPageContainer
+        className={
+          isolateContentScroll
+            ? "flex flex-col lg:h-full lg:min-h-0"
+            : "flex flex-col lg:h-full lg:min-h-0"
+        }
+      >
         <div className="mb-6 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Icon className="size-5" />
@@ -43,7 +57,15 @@ export function FeaturePageShell({
 
         {switcher ? <div className="mb-4">{switcher}</div> : null}
 
-        <div className="lg:flex-1 lg:min-h-0">{children}</div>
+        <div
+          className={
+            isolateContentScroll
+              ? "lg:min-h-0 lg:flex-1"
+              : "lg:flex-1 lg:min-h-0"
+          }
+        >
+          {children}
+        </div>
       </AppPageContainer>
     </main>
   );

@@ -25,7 +25,7 @@ export function PlanningLoadingShell({
           <Skeleton className="h-7 w-16 rounded-md" />
         </div>
 
-        <div className="lg:flex-1 lg:min-h-0">{children}</div>
+        <div className="lg:min-h-0 lg:flex-1">{children}</div>
       </AppPageContainer>
     </main>
   );

@@ -738,7 +738,6 @@ export function SubjectsList({
               pageSizeOptions={PAGE_SIZE_OPTIONS}
               pageSizeLabel="Rows"
               pageLabel={(current, total) => `Page ${current} of ${total}`}
-              controlsClassName="grid w-full grid-cols-2 items-center [&>*:nth-child(2)]:justify-self-end [&>button]:w-full sm:w-auto sm:flex sm:flex-row sm:items-center sm:[&>*:nth-child(2)]:justify-self-auto sm:[&>button]:w-auto"
               prevLabel="Previous"
               nextLabel="Next"
               loadingSkeleton={
@@ -754,7 +753,10 @@ export function SubjectsList({
               scrollAreaClassName="min-w-0 overflow-x-auto overflow-y-auto"
               getHeaderCellClassName={getColumnClassName}
               getBodyCellClassName={(columnId) =>
-                cn("px-3 py-3 align-middle", getColumnClassName(columnId))
+                cn(
+                  "px-3 py-2.5 align-middle sm:py-3",
+                  getColumnClassName(columnId),
+                )
               }
               wrapperClassName="min-w-0"
             />

@@ -28,19 +28,29 @@ interface FlashcardsManagerTableProps {
   onRowClick?: (flashcard: FlashcardManageItem) => void;
 }
 
+const flashcardFrontPreviewMaxLength = 28;
+
 function getColumnClassName(columnId: string) {
   switch (columnId) {
     case "select":
       return "w-9 min-w-9";
     case "front":
-      return "min-w-[10rem] sm:min-w-[12rem] lg:min-w-[8rem] lg:max-w-[14rem]";
+      return "min-w-[7.5rem] max-w-[8.5rem] sm:min-w-[10rem] sm:max-w-[12rem] lg:min-w-[8rem] lg:max-w-[11rem]";
     case "deckPath":
-      return "min-w-[6rem] sm:min-w-[8rem] lg:min-w-[4rem] lg:max-w-[10rem]";
+      return "min-w-[5.5rem] sm:min-w-[7rem] lg:min-w-[4rem] lg:max-w-[9rem]";
     case "actions":
       return "w-14 min-w-14";
     default:
       return "";
   }
+}
+
+function getFlashcardFrontPreview(value: string) {
+  if (value.length <= flashcardFrontPreviewMaxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, flashcardFrontPreviewMaxLength).trimEnd()}...`;
 }
 
 function getColumns(
@@ -61,7 +71,7 @@ function getColumns(
               className="truncate text-sm font-semibold leading-6 text-foreground/95"
               title={row.original.frontTitle ?? undefined}
             >
-              {row.original.frontExcerpt}
+              {getFlashcardFrontPreview(row.original.frontExcerpt)}
             </div>
           </div>
         </div>
@@ -169,7 +179,7 @@ export function FlashcardsManagerTable({
       emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
-      tableClassName="w-full min-w-[26rem] sm:min-w-[30rem] lg:min-w-[20rem]"
+      tableClassName="w-full min-w-[22rem] sm:min-w-[27rem] lg:min-w-[20rem]"
       columnResizeMode="onEnd"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
@@ -192,7 +202,7 @@ export function FlashcardsManagerTableSkeleton({
     <TableSkeleton
       className={cn("flex h-full flex-col", className)}
       headerClassName="py-3"
-      columnTemplate="2.25rem 2fr 1fr 3.5rem"
+      columnTemplate="2.25rem minmax(7.5rem,1.35fr) minmax(5.5rem,0.9fr) 3.5rem"
       headers={[
         {
           content: (

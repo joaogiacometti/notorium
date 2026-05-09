@@ -36,11 +36,13 @@ import type {
   TypeFilter,
 } from "@/features/assessments/assessment-filters";
 import {
+  resolvePlanningAssessmentSort,
+  resolvePlanningAssessmentStatusFilter,
+  resolvePlanningAssessmentTypeFilter,
+} from "@/features/assessments/assessment-filters";
+import {
   assessmentTypeValues,
   getAssessmentTypeLabel,
-  planningAssessmentSortValues,
-  planningAssessmentStatusFilterValues,
-  planningAssessmentTypeFilterValues,
 } from "@/features/assessments/constants";
 import { LIMITS } from "@/lib/config/limits";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
@@ -85,7 +87,7 @@ function buildAssessmentsParams({
 
   if (subjectFilter !== "all") query.set("subject", subjectFilter);
   if (search) query.set("search", search);
-  if (statusFilter !== "all") query.set("status", statusFilter);
+  if (statusFilter !== "pending") query.set("status", statusFilter);
   if (typeFilter !== "all") query.set("type", typeFilter);
   if (sortBy !== "smart") query.set("sort", sortBy);
   if (pageSize !== DEFAULT_PAGE_SIZE) query.set("pageSize", String(pageSize));
@@ -117,25 +119,13 @@ export function PlanningAssessmentsTable({
   );
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
-    (planningAssessmentStatusFilterValues as readonly string[]).includes(
-      initialStatus ?? "",
-    )
-      ? (initialStatus as StatusFilter)
-      : "all",
+    resolvePlanningAssessmentStatusFilter(initialStatus),
   );
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(
-    (planningAssessmentTypeFilterValues as readonly string[]).includes(
-      initialType ?? "",
-    )
-      ? (initialType as TypeFilter)
-      : "all",
+    resolvePlanningAssessmentTypeFilter(initialType),
   );
   const [sortBy, setSortBy] = useState<SortBy>(
-    (planningAssessmentSortValues as readonly string[]).includes(
-      initialSort ?? "",
-    )
-      ? (initialSort as SortBy)
-      : "smart",
+    resolvePlanningAssessmentSort(initialSort),
   );
   const [pageSize, setPageSizeState] = useState(initialPageSize);
 
@@ -229,10 +219,10 @@ export function PlanningAssessmentsTable({
       pageIndex === 0 &&
       pageSize === initialPageSize &&
       subjectFilter === (initialSubjectId ?? "all") &&
-      resolvedSearchQuery.trim().length === 0 &&
-      statusFilter === "all" &&
-      typeFilter === "all" &&
-      sortBy === "smart"
+      resolvedSearchQuery === (initialSearch ?? "") &&
+      statusFilter === resolvePlanningAssessmentStatusFilter(initialStatus) &&
+      typeFilter === resolvePlanningAssessmentTypeFilter(initialType) &&
+      sortBy === resolvePlanningAssessmentSort(initialSort)
         ? initialPageData
         : undefined,
     placeholderData: (previousData) => previousData,
@@ -356,14 +346,14 @@ export function PlanningAssessmentsTable({
                   testId: "planning-add-assessment-disabled-trigger",
                 })}
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
                 <div className="min-w-0">
                   <Select
                     value={subjectFilter}
                     onValueChange={setSubjectFilter}
                     disabled={isAssessmentsScopeLoading}
                   >
-                    <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
                       <SelectValue placeholder="Filter by subject" />
                     </SelectTrigger>
                     <SelectContent align="start">
@@ -389,7 +379,7 @@ export function PlanningAssessmentsTable({
                       setPageIndex(0);
                     }}
                   >
-                    <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
                       <SelectValue placeholder="All Statuses" />
                     </SelectTrigger>
                     <SelectContent align="start">
@@ -409,7 +399,7 @@ export function PlanningAssessmentsTable({
                       setPageIndex(0);
                     }}
                   >
-                    <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent align="start">
@@ -431,7 +421,7 @@ export function PlanningAssessmentsTable({
                       setPageIndex(0);
                     }}
                   >
-                    <SelectTrigger className="h-10 w-full rounded-lg border-border/70 bg-background/80 px-3.5 shadow-xs">
+                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent align="start">
@@ -497,7 +487,7 @@ export function PlanningAssessmentsTable({
           </div>
         ) : null}
         {hasAnyAssessments ? (
-          <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
+          <Card className="h-[clamp(22rem,58svh,36rem)] overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:h-auto lg:min-h-0 lg:flex-1">
             <PlanningAssessmentsManagerTable
               assessments={assessments}
               total={total}
@@ -518,7 +508,7 @@ export function PlanningAssessmentsTable({
             />
           </Card>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 py-20 text-center lg:min-h-0 lg:flex-1">
+          <div className="flex max-h-[clamp(18rem,52svh,32rem)] flex-col items-center justify-center overflow-auto rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center lg:min-h-0 lg:max-h-none lg:flex-1 lg:py-20">
             <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
               <ClipboardList className="size-6" />
             </div>

@@ -13,7 +13,7 @@ export function PlanningAssessmentsLoading() {
                 <Skeleton className="h-10 w-full lg:max-w-3xl rounded-lg" />
                 <Skeleton className="h-10 w-full rounded-lg sm:w-44" />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
                 <Skeleton className="h-10 w-full rounded-lg" />
                 <Skeleton className="h-10 w-full rounded-lg" />
                 <Skeleton className="h-10 w-full rounded-lg" />
@@ -26,7 +26,7 @@ export function PlanningAssessmentsLoading() {
             </div>
           </div>
         </div>
-        <div className="overflow-hidden rounded-xl border border-border/70 bg-card/85 lg:min-h-0 lg:flex-1">
+        <div className="h-[clamp(22rem,58svh,36rem)] overflow-hidden rounded-xl border border-border/70 bg-card/85 lg:h-auto lg:min-h-0 lg:flex-1">
           <PlanningAssessmentsManagerTableSkeleton />
         </div>
       </div>

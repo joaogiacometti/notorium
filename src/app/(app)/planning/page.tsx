@@ -32,6 +32,7 @@ export default async function PlanningPage({
     <FeaturePageShell
       description="Switch between assessment management and your calendar timeline."
       icon={CalendarDays}
+      isolateContentScroll={currentView === "assessments"}
       switcher={
         <PlanningViewSwitch
           currentView={currentView}
