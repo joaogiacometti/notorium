@@ -18,7 +18,6 @@ import {
   isExternalEditorValueChange,
   shouldApplyNormalizedEditorValue,
 } from "@/components/shared/tiptap-helpers";
-import { EditorToolbar } from "@/components/shared/tiptap-toolbar";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
@@ -33,7 +32,6 @@ interface TiptapEditorProps {
   "aria-invalid"?: boolean;
   className?: string;
   contentClassName?: string;
-  showToolbar?: boolean;
   imageUploadContext?: EditorImageUploadContext;
   onCtrlEnter?: () => void;
   onImageUploadPendingChange?: (pending: boolean) => void;
@@ -47,7 +45,6 @@ export function TiptapEditor({
   "aria-invalid": ariaInvalid,
   className,
   contentClassName,
-  showToolbar = true,
   imageUploadContext = "notes",
   onCtrlEnter,
   onImageUploadPendingChange,
@@ -204,7 +201,6 @@ export function TiptapEditor({
         className,
       )}
     >
-      {showToolbar && <EditorToolbar editor={editor} />}
       {isImageUploadPending ? (
         <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />

@@ -198,7 +198,6 @@ export function GenerateFlashcardsReview({
                           onChange={setEditFront}
                           id={`edit-front-${index}`}
                           contentClassName="min-h-11 max-h-[20vh]"
-                          showToolbar={false}
                           imageUploadContext="flashcards"
                           onImageUploadPendingChange={
                             handleImageUploadPendingChange
@@ -214,7 +213,6 @@ export function GenerateFlashcardsReview({
                           onChange={setEditBack}
                           id={`edit-back-${index}`}
                           contentClassName="min-h-11 max-h-[20vh]"
-                          showToolbar={false}
                           imageUploadContext="flashcards"
                           onImageUploadPendingChange={
                             handleImageUploadPendingChange
