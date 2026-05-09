@@ -156,6 +156,11 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  --syntax-comment: var(--muted-foreground);
+  --syntax-keyword: oklch(0.5 0.13 264);
+  --syntax-string: oklch(0.48 0.11 160);
+  --syntax-type: oklch(0.5 0.12 42);
+  --syntax-function: oklch(0.46 0.1 286);
   --sidebar: oklch(0.984 0.003 247.858);
   --sidebar-foreground: oklch(0.129 0.042 264.695);
   --sidebar-primary: oklch(0.208 0.042 265.755);
@@ -288,6 +293,11 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --syntax-comment: color-mix(in oklab, var(--muted-foreground) 86%, black);
+  --syntax-keyword: oklch(0.8 0.11 278);
+  --syntax-string: oklch(0.78 0.1 154);
+  --syntax-type: oklch(0.8 0.11 76);
+  --syntax-function: oklch(0.77 0.11 226);
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -354,6 +364,11 @@
   --chart-3: oklch(0.62 0.16 325);
   --chart-4: oklch(0.8 0.13 88);
   --chart-5: oklch(0.57 0.12 274);
+  --syntax-comment: color-mix(in oklab, var(--muted-foreground) 84%, black);
+  --syntax-keyword: oklch(0.78 0.14 48);
+  --syntax-string: oklch(0.77 0.1 88);
+  --syntax-type: oklch(0.72 0.11 318);
+  --syntax-function: oklch(0.73 0.1 274);
   --sidebar: oklch(0.2 0.03 314);
   --sidebar-foreground: oklch(0.95 0.02 85);
   --sidebar-primary: oklch(0.72 0.19 48);
@@ -421,6 +436,11 @@
   --chart-3: hsl(221 27.45% 39.61%);
   --chart-4: hsl(30 9.41% 42.35%);
   --chart-5: hsl(139 12.94% 38.04%);
+  --syntax-comment: hsl(229 24% 64%);
+  --syntax-keyword: hsl(267 83.51% 80.98%);
+  --syntax-string: hsl(115 54% 76%);
+  --syntax-type: hsl(189 71% 73%);
+  --syntax-function: hsl(217 92% 76%);
   --sidebar: hsl(240 21.18% 14.12%);
   --sidebar-foreground: hsl(226 63.93% 88.04%);
   --sidebar-primary: hsl(267 83.51% 80.98%);
@@ -616,7 +636,8 @@
 .tiptap-content .hljs-quote,
 .tiptap-wrapper .tiptap .hljs-comment,
 .tiptap-wrapper .tiptap .hljs-quote {
-  @apply text-muted-foreground italic;
+  color: var(--syntax-comment);
+  font-style: italic;
 }
 
 .tiptap-content .hljs-keyword,
@@ -629,7 +650,7 @@
 .tiptap-wrapper .tiptap .hljs-literal,
 .tiptap-wrapper .tiptap .hljs-section,
 .tiptap-wrapper .tiptap .hljs-link {
-  color: color-mix(in oklab, var(--foreground) 82%, var(--chart-3));
+  color: var(--syntax-keyword);
 }
 
 .tiptap-content .hljs-string,
@@ -646,7 +667,7 @@
 .tiptap-wrapper .tiptap .hljs-symbol,
 .tiptap-wrapper .tiptap .hljs-bullet,
 .tiptap-wrapper .tiptap .hljs-addition {
-  color: color-mix(in oklab, var(--foreground) 78%, var(--chart-2));
+  color: var(--syntax-string);
 }
 
 .tiptap-content .hljs-number,
@@ -663,16 +684,18 @@
 .tiptap-wrapper .tiptap .hljs-type,
 .tiptap-wrapper .tiptap .hljs-params,
 .tiptap-wrapper .tiptap .hljs-attr {
-  color: color-mix(in oklab, var(--foreground) 74%, var(--chart-1));
+  color: var(--syntax-type);
 }
 
 .tiptap-content .hljs-built_in,
 .tiptap-content .hljs-function,
 .tiptap-content .hljs-class,
+.tiptap-content .hljs-operator,
 .tiptap-wrapper .tiptap .hljs-built_in,
 .tiptap-wrapper .tiptap .hljs-function,
-.tiptap-wrapper .tiptap .hljs-class {
-  color: color-mix(in oklab, var(--foreground) 78%, var(--chart-4));
+.tiptap-wrapper .tiptap .hljs-class,
+.tiptap-wrapper .tiptap .hljs-operator {
+  color: var(--syntax-function);
 }
 
 .tiptap-content hr,

@@ -251,7 +251,6 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     id={`${formId}-front`}
                     aria-invalid={frontInvalid}
                     contentClassName="min-h-11 max-h-[40svh]"
-                    showToolbar={false}
                     imageUploadContext="flashcards"
                     onCtrlEnter={handleCtrlEnter}
                     onImageUploadPendingChange={handleImageUploadPendingChange}

@@ -425,7 +425,6 @@ export function EditFlashcardDialog({
                 placeholder="e.g. What is photosynthesis?"
                 id="split-front"
                 contentClassName="min-h-11 max-h-[40svh]"
-                showToolbar={false}
                 imageUploadContext="flashcards"
                 onImageUploadPendingChange={
                   handleSplitEditorUploadPendingChange
@@ -444,7 +443,6 @@ export function EditFlashcardDialog({
                 placeholder="e.g. Process plants use to convert light into energy."
                 id="split-back"
                 contentClassName="max-h-[10lh]"
-                showToolbar
                 imageUploadContext="flashcards"
                 onImageUploadPendingChange={
                   handleSplitEditorUploadPendingChange

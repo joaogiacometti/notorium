@@ -408,7 +408,6 @@ export function CreateFlashcardDialog({
                 placeholder="e.g. Textbook excerpts, lecture notes, or any study material..."
                 id="ai-text"
                 contentClassName="min-h-50 max-h-[40svh]"
-                showToolbar
                 imageUploadContext="flashcards"
                 onImageUploadPendingChange={setIsAiResourcesUploadingImage}
               />
