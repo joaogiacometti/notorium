@@ -544,9 +544,10 @@ describe("SubjectsList", () => {
     });
 
     expect(container.querySelector(".border-t")).toBeTruthy();
+    expect(container.querySelector(".sm\\:hidden .grid-cols-2")).toBeTruthy();
   });
 
-  it("keeps page count and rows selection above page actions", async () => {
+  it("keeps page count and rows selection on one mobile footer line", async () => {
     await act(async () => {
       renderSubjectsList(root, queryClient, [createSubject("1")]);
     });
@@ -556,10 +557,9 @@ describe("SubjectsList", () => {
     ).find((element) => element.textContent?.includes("Page 1 of 1"));
     const controlsRow = pageBadge?.parentElement;
 
-    expect(controlsRow?.className).toContain("grid");
-    expect(controlsRow?.className).toContain("grid-cols-2");
-    expect(controlsRow?.className).toContain("[&>button]:w-full");
-    expect(controlsRow?.className).toContain("sm:flex");
+    expect(controlsRow?.className).toContain("justify-between");
+    expect(controlsRow?.className).toContain("sm:justify-start");
+    expect(controlsRow?.textContent).toContain("Rows");
   });
 
   it("shows a tooltip when the create action is disabled at the limit", async () => {

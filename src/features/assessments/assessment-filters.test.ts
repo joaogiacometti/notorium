@@ -3,6 +3,9 @@ import {
   filterAndSortAssessments,
   getDueDateBounds,
   getSubjectFilterOptions,
+  resolvePlanningAssessmentSort,
+  resolvePlanningAssessmentStatusFilter,
+  resolvePlanningAssessmentTypeFilter,
 } from "@/features/assessments/assessment-filters";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
@@ -86,6 +89,30 @@ describe("getSubjectFilterOptions", () => {
     ];
 
     expect(getSubjectFilterOptions(items)).toEqual(["s1", "s3"]);
+  });
+});
+
+describe("planning assessment filter resolvers", () => {
+  it("defaults missing or invalid status filters to pending", () => {
+    expect(resolvePlanningAssessmentStatusFilter(undefined)).toBe("pending");
+    expect(resolvePlanningAssessmentStatusFilter("bad")).toBe("pending");
+  });
+
+  it("preserves explicit status filters including all", () => {
+    expect(resolvePlanningAssessmentStatusFilter("all")).toBe("all");
+    expect(resolvePlanningAssessmentStatusFilter("completed")).toBe(
+      "completed",
+    );
+  });
+
+  it("defaults invalid type and sort filters", () => {
+    expect(resolvePlanningAssessmentTypeFilter("bad")).toBe("all");
+    expect(resolvePlanningAssessmentSort("bad")).toBe("smart");
+  });
+
+  it("preserves valid type and sort filters", () => {
+    expect(resolvePlanningAssessmentTypeFilter("exam")).toBe("exam");
+    expect(resolvePlanningAssessmentSort("dueDateAsc")).toBe("dueDateAsc");
   });
 });
 

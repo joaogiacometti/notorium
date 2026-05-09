@@ -1,4 +1,9 @@
 import { PlanningAssessmentsTable } from "@/components/planning/planning-assessments-table";
+import {
+  resolvePlanningAssessmentSort,
+  resolvePlanningAssessmentStatusFilter,
+  resolvePlanningAssessmentTypeFilter,
+} from "@/features/assessments/assessment-filters";
 import { getPlanningAssessmentsPageForUser } from "@/features/assessments/queries";
 import { resolvePlanningSubject } from "@/features/planning/view";
 import { getSubjectsForUser } from "@/features/subjects/queries";
@@ -31,23 +36,28 @@ export async function PlanningAssessmentsPanel({
     initialSubjectId,
     subjects.map((subject) => subject.id),
   );
+  const resolvedInitialStatus =
+    resolvePlanningAssessmentStatusFilter(initialStatus);
+  const resolvedInitialType = resolvePlanningAssessmentTypeFilter(initialType);
+  const resolvedInitialSort = resolvePlanningAssessmentSort(initialSort);
+  const resolvedInitialSearch = initialSearch ?? "";
   const initialPageData = await getPlanningAssessmentsPageForUser(userId, {
     pageIndex: 0,
     pageSize: initialPageSize,
-    search: "",
+    search: resolvedInitialSearch,
     subjectId: resolvedInitialSubjectId,
-    statusFilter: "all",
-    typeFilter: "all",
-    sortBy: "smart",
+    statusFilter: resolvedInitialStatus,
+    typeFilter: resolvedInitialType,
+    sortBy: resolvedInitialSort,
   });
 
   return (
     <PlanningAssessmentsTable
       initialSubjectId={resolvedInitialSubjectId}
-      initialSearch={initialSearch}
-      initialStatus={initialStatus}
-      initialType={initialType}
-      initialSort={initialSort}
+      initialSearch={resolvedInitialSearch}
+      initialStatus={resolvedInitialStatus}
+      initialType={resolvedInitialType}
+      initialSort={resolvedInitialSort}
       initialPageSize={initialPageSize}
       initialPageData={initialPageData}
       subjects={subjects}

@@ -11,6 +11,7 @@ import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { SubjectBadge } from "@/components/shared/subject-badge";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
 import {
   ASSESSMENT_STATUS_LABEL,
@@ -84,15 +85,15 @@ function getColumnClassName(columnId: string) {
     case "title":
       return "min-w-[7rem]";
     case "type":
-      return "min-w-[5.5rem]";
+      return "hidden min-w-[5.5rem] sm:table-cell";
     case "status":
-      return "min-w-[5rem]";
+      return "hidden min-w-[5rem] sm:table-cell";
     case "dueDate":
       return "min-w-[4.5rem]";
     case "gradeWeight":
-      return "min-w-[5rem]";
+      return "hidden min-w-[5rem] sm:table-cell";
     case "subject":
-      return "min-w-[6rem]";
+      return "hidden min-w-[6rem] sm:table-cell";
     case "actions":
       return "w-14 min-w-14";
     default:
@@ -292,6 +293,7 @@ export function PlanningAssessmentsManagerTable({
       selectedRowIds={selectedAssessmentIds}
       onSelectedRowIdsChange={onSelectedAssessmentIdsChange}
       selectionAriaLabel="Select assessment"
+      selectionColumnClassName="w-10 min-w-10 sm:w-auto sm:min-w-0"
       exposeRowNavigationRole={false}
       pageLabel={(current, total) => `Page ${current} of ${total}`}
       prevLabel="Previous"
@@ -308,7 +310,7 @@ export function PlanningAssessmentsManagerTable({
           ),
         )
       }
-      tableClassName="w-full min-w-160"
+      tableClassName="w-full sm:min-w-160"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
         cn("align-middle px-3 py-3", getColumnClassName(columnId))
@@ -333,43 +335,98 @@ export function PlanningAssessmentsManagerTable({
 }
 
 export function PlanningAssessmentsManagerTableSkeleton() {
+  const mobileFooterSkeleton = (
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <Skeleton className="h-7 w-24 rounded-full" />
+        <Skeleton className="h-8 w-20 rounded-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-8 w-full rounded-full" />
+        <Skeleton className="h-8 w-full rounded-full" />
+      </div>
+    </div>
+  );
+  const loadingActionSkeleton = (
+    <div className="flex h-6 items-center justify-start">
+      <Skeleton className="size-6 rounded-full" />
+    </div>
+  );
+
   return (
-    <TableSkeleton
-      className="flex h-full flex-col"
-      columnTemplate="2.25rem 0.96fr 0.7fr 0.62fr 0.68fr 0.72fr 3.5rem"
-      headerClassName="py-3"
-      headers={[
-        { content: <div /> },
-        { className: "h-4 w-16" },
-        { className: "h-4 w-14" },
-        { className: "h-4 w-16" },
-        { className: "h-4 w-20" },
-        { className: "h-4 w-16" },
-        { content: <div /> },
-      ]}
-      rows={[
-        {
-          className: "h-4 w-4 rounded-sm self-center justify-self-center",
-        },
-        {
-          className: "h-6 w-full",
-        },
-        { className: "h-6 w-24 rounded-full" },
-        { className: "h-6 w-24 rounded-full" },
-        { className: "h-6 w-full" },
-        { className: "h-6 w-24 rounded-full" },
-        {
-          content: <div />,
-        },
-      ]}
-      rowClassName="py-2.5"
-      rowCount={3}
-      footer={[
-        { className: "h-7 w-28 rounded-full" },
-        { className: "h-8 w-24 rounded-full" },
-        { className: "h-8 w-24 rounded-full" },
-      ]}
-      footerClassName="mt-auto"
-    />
+    <>
+      <TableSkeleton
+        className="flex h-full flex-col sm:hidden"
+        columnTemplate="2.5rem minmax(0,1fr) 4.5rem 3rem"
+        headerClassName="py-3"
+        headers={[
+          {
+            content: (
+              <div className="h-4 w-4 rounded-sm self-center justify-self-center bg-muted" />
+            ),
+          },
+          { className: "h-4 w-12" },
+          { className: "h-4 w-14" },
+          { content: <div /> },
+        ]}
+        rows={[
+          {
+            className: "h-4 w-4 rounded-sm self-center justify-self-center",
+          },
+          {
+            className: "h-6 w-full",
+          },
+          { className: "h-5 w-12" },
+          {
+            content: loadingActionSkeleton,
+          },
+        ]}
+        rowClassName="py-2.5"
+        rowCount={4}
+        footer={[{ content: mobileFooterSkeleton }]}
+        footerClassName="mt-auto"
+      />
+      <TableSkeleton
+        className="hidden h-full flex-col sm:flex"
+        columnTemplate="2.25rem 0.96fr 0.7fr 0.62fr 0.68fr 0.72fr 3.5rem"
+        headerClassName="py-3"
+        headers={[
+          {
+            content: (
+              <div className="h-4 w-4 rounded-sm self-center justify-self-center bg-muted" />
+            ),
+          },
+          { className: "h-4 w-16" },
+          { className: "h-4 w-14" },
+          { className: "h-4 w-16" },
+          { className: "h-4 w-20" },
+          { className: "h-4 w-16" },
+          { content: <div /> },
+        ]}
+        rows={[
+          {
+            className: "h-4 w-4 rounded-sm self-center justify-self-center",
+          },
+          {
+            className: "h-6 w-full",
+          },
+          { className: "h-6 w-24 rounded-full" },
+          { className: "h-6 w-24 rounded-full" },
+          { className: "h-6 w-full" },
+          { className: "h-6 w-24 rounded-full" },
+          {
+            content: loadingActionSkeleton,
+          },
+        ]}
+        rowClassName="py-2.5"
+        rowCount={3}
+        footer={[
+          { className: "h-7 w-28 rounded-full" },
+          { className: "h-8 w-24 rounded-full" },
+          { className: "h-8 w-24 rounded-full" },
+        ]}
+        footerClassName="mt-auto"
+      />
+    </>
   );
 }

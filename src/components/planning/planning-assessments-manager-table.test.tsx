@@ -33,7 +33,11 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/components/assessments/assessments-table-row-actions", () => ({
-  AssessmentsTableRowActions: () => null,
+  AssessmentsTableRowActions: () => (
+    <button type="button" aria-label="Open assessment actions">
+      ...
+    </button>
+  ),
 }));
 
 function createAssessment(
@@ -118,5 +122,62 @@ describe("PlanningAssessmentsManagerTable", () => {
     expect(pushMock).toHaveBeenCalledWith(
       "/assessments/assessment-1?from=planning-assessments&subjectId=subject-1",
     );
+  });
+
+  it("keeps selection, title, due date, and actions visible on mobile", async () => {
+    await act(async () => {
+      root.render(
+        <PlanningAssessmentsManagerTable
+          assessments={[createAssessment()]}
+          finalGrade={null}
+          total={1}
+          isLoading={false}
+          pageIndex={0}
+          pageSize={25}
+          selectedAssessmentIds={[]}
+          selectedSubjectId="subject-1"
+          subjectNamesById={{ "subject-1": "Biology" }}
+          onPageIndexChange={() => {}}
+          onPageSizeChange={() => {}}
+          onSelectedAssessmentIdsChange={() => {}}
+          onUpdated={() => {}}
+          onDeleted={() => {}}
+        />,
+      );
+    });
+
+    const headers = Array.from(container.querySelectorAll("thead th"));
+    const titleHeader = headers.find((header) =>
+      header.textContent?.includes("Title"),
+    );
+    const dueDateHeader = headers.find((header) =>
+      header.textContent?.includes("Due Date"),
+    );
+    const typeHeader = headers.find((header) =>
+      header.textContent?.includes("Type"),
+    );
+    const statusHeader = headers.find((header) =>
+      header.textContent?.includes("Status"),
+    );
+    const gradeHeader = headers.find((header) =>
+      header.textContent?.includes("Grade/Weight"),
+    );
+    const subjectHeader = headers.find((header) =>
+      header.textContent?.includes("Subject"),
+    );
+    const selectHeader = headers[0];
+    const actionButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open assessment actions"]',
+    );
+
+    expect(selectHeader.className).not.toContain("hidden");
+    expect(selectHeader.className).toContain("w-10");
+    expect(titleHeader?.className).not.toContain("hidden");
+    expect(dueDateHeader?.className).not.toContain("hidden");
+    expect(typeHeader?.className).toContain("hidden");
+    expect(statusHeader?.className).toContain("hidden");
+    expect(gradeHeader?.className).toContain("hidden");
+    expect(subjectHeader?.className).toContain("hidden");
+    expect(actionButton).toBeTruthy();
   });
 });
