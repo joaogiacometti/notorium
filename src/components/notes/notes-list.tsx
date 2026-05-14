@@ -52,78 +52,62 @@ export function NotesList({ subjectId, notes }: Readonly<NotesListProps>) {
   const hasMoreNotes = notes.length > SUBJECT_NOTE_PREVIEW_COUNT;
   const fullNotesHref = `/subjects/${subjectId}/notes`;
 
-  function getNoteCountText() {
-    if (notes.length === 0) {
-      return "Capture what you learn, one note at a time.";
-    }
-    return `${notes.length}/${LIMITS.maxNotesPerSubject} notes`;
-  }
-
   const createButton = (
     <Button
       size="sm"
-      className="w-full gap-1.5 whitespace-nowrap sm:w-auto"
+      className="gap-1.5"
       id="btn-create-note"
       disabled={isAtLimit}
     >
       <Plus className="size-4" />
-      <span>Create note</span>
+      <span>Add</span>
     </Button>
   );
 
   return (
     <TooltipProvider>
       <div>
-        <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold tracking-tight">Notes</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {getNoteCountText()}
-            </p>
+            <div className="flex gap-2">
+              {notes.length > 0 ? (
+                <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                  <Link href={fullNotesHref}>Manage</Link>
+                </Button>
+              ) : null}
+              <CreateNoteTitleDialog
+                subjectId={subjectId}
+                trigger={
+                  isAtLimit ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="inline-flex w-full sm:w-auto"
+                          data-testid="new-note-disabled-trigger"
+                        >
+                          {createButton}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Delete an existing note to create a new one.
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    createButton
+                  )
+                }
+                open={createOpen}
+                onOpenChange={setCreateOpen}
+                onSuccess={(noteId) => {
+                  router.push(`/subjects/${subjectId}/notes/${noteId}`);
+                }}
+              />
+            </div>
           </div>
-          <div
-            className={`grid w-full gap-2 ${
-              notes.length > 0 ? "grid-cols-2" : "grid-cols-1"
-            } sm:flex sm:w-auto`}
-          >
-            {notes.length > 0 ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full gap-1.5 sm:w-auto"
-                asChild
-              >
-                <Link href={fullNotesHref}>View all</Link>
-              </Button>
-            ) : null}
-            <CreateNoteTitleDialog
-              subjectId={subjectId}
-              trigger={
-                isAtLimit ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span
-                        className="inline-flex w-full sm:w-auto"
-                        data-testid="new-note-disabled-trigger"
-                      >
-                        {createButton}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Delete an existing note to create a new one.
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  createButton
-                )
-              }
-              open={createOpen}
-              onOpenChange={setCreateOpen}
-              onSuccess={(noteId) => {
-                router.push(`/subjects/${subjectId}/notes/${noteId}`);
-              }}
-            />
-          </div>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Write and organize your study notes.
+          </p>
         </div>
 
         {isAtLimit && (

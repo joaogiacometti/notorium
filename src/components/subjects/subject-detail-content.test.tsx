@@ -21,6 +21,10 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 vi.mock("@/components/attendance/attendance-summary", () => ({
   AttendanceSummary: ({ subjectId }: { subjectId: string }) => (
     <section data-testid="attendance-summary">{subjectId}</section>
