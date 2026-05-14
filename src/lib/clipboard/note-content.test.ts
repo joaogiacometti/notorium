@@ -70,4 +70,31 @@ describe("copyNoteContentToClipboard", () => {
     expect(writeText).toHaveBeenCalledWith("Title");
     expect(write).not.toHaveBeenCalled();
   });
+
+  it("decodes HTML entities in plain text output", async () => {
+    await copyNoteContentToClipboard(
+      "<p>a &amp; b &lt;c&gt; &quot;d&quot;</p>",
+      "plain",
+    );
+
+    expect(writeText).toHaveBeenCalledWith('a & b <c> "d"');
+  });
+
+  it("strips inline formatting tags from plain text output", async () => {
+    await copyNoteContentToClipboard(
+      "<p><strong>Bold</strong> and <em>italic</em> text</p>",
+      "plain",
+    );
+
+    expect(writeText).toHaveBeenCalledWith("Bold and italic text");
+  });
+
+  it("converts br tags and block elements to newlines", async () => {
+    await copyNoteContentToClipboard(
+      "<p>Line one</p><br><p>Line two</p>",
+      "plain",
+    );
+
+    expect(writeText).toHaveBeenCalledWith("Line one\nLine two");
+  });
 });

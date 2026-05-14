@@ -20,15 +20,15 @@ export function PlanningCalendarLoading() {
 
           <div className="mt-4 min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             <div className="grid grid-cols-7 gap-px lg:gap-1">
-              {Array.from({ length: 7 }, (_, index) => (
+              {Array.from({ length: 7 }, (_, i) => i + 1).map((n) => (
                 <Skeleton
-                  key={`planning-calendar-weekday-skeleton-${index + 1}`}
+                  key={`planning-calendar-weekday-skeleton-${n}`}
                   className="h-5 rounded-sm"
                 />
               ))}
-              {Array.from({ length: 35 }, (_, index) => (
+              {Array.from({ length: 35 }, (_, i) => i + 1).map((n) => (
                 <Skeleton
-                  key={`planning-calendar-day-skeleton-${index + 1}`}
+                  key={`planning-calendar-day-skeleton-${n}`}
                   className="h-10 rounded-md lg:h-16"
                 />
               ))}
@@ -46,9 +46,9 @@ export function PlanningCalendarLoading() {
           </div>
 
           <div className="space-y-2 p-3 pt-0">
-            {Array.from({ length: 4 }, (_, index) => (
+            {Array.from({ length: 4 }, (_, i) => i + 1).map((n) => (
               <div
-                key={`planning-calendar-detail-skeleton-${index + 1}`}
+                key={`planning-calendar-detail-skeleton-${n}`}
                 className="flex items-center gap-3 rounded-lg border border-border/70 bg-background/40 px-3 py-2.5"
               >
                 <Skeleton className="size-8 rounded-md" />

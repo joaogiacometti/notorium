@@ -188,11 +188,11 @@ export function getRichTextExcerpt(value: string, maxLength: number): string {
 
 function decodeHtmlEntities(value: string): string {
   return value
-    .replaceAll("&amp;", "&")
     .replaceAll("&quot;", '"')
     .replaceAll("&#39;", "'")
     .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">");
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
 }
 
 function escapeHtmlAttribute(value: string): string {

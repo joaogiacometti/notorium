@@ -34,13 +34,19 @@ function canCopyRichText() {
   );
 }
 
-function getPlainTextFromHtml(html: string) {
-  const container = document.createElement("div");
-  container.innerHTML = html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(blockquote|div|h[1-6]|li|p|pre)>/gi, "\n");
+function getPlainTextFromHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, "text/html");
 
-  return (container.textContent ?? "")
+  doc.querySelectorAll("br").forEach((br) => {
+    br.replaceWith(doc.createTextNode("\n"));
+  });
+  doc
+    .querySelectorAll("blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre")
+    .forEach((el) => {
+      el.after(doc.createTextNode("\n"));
+    });
+
+  return (doc.body.textContent ?? "")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
