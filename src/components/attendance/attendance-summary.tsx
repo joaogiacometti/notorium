@@ -100,35 +100,35 @@ export function AttendanceSummary({
 
   return (
     <div>
-      <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">Attendance</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {isConfigured
-              ? "Track your attendance status and recorded misses."
-              : "Set attendance limits to begin tracking."}
-          </p>
+          <div className="flex gap-2">
+            {isConfigured && (
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setRecordOpen(true)}
+                id="btn-record-miss"
+              >
+                <Plus className="size-4" />
+                <span>Record Miss</span>
+              </Button>
+            )}
+            <AttendanceSettingsDialog
+              subjectId={subjectId}
+              totalClasses={totalClasses}
+              maxMisses={maxMisses}
+              open={settingsOpen}
+              onOpenChange={setSettingsOpen}
+            />
+          </div>
         </div>
-        <div className="flex w-full gap-2 sm:w-auto">
-          {isConfigured && (
-            <Button
-              size="sm"
-              className="flex-1 gap-1.5 sm:flex-none"
-              onClick={() => setRecordOpen(true)}
-              id="btn-record-miss"
-            >
-              <Plus className="size-4" />
-              <span>Record Miss</span>
-            </Button>
-          )}
-          <AttendanceSettingsDialog
-            subjectId={subjectId}
-            totalClasses={totalClasses}
-            maxMisses={maxMisses}
-            open={settingsOpen}
-            onOpenChange={setSettingsOpen}
-          />
-        </div>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {isConfigured
+            ? "Track your attendance status and recorded misses."
+            : "Set attendance limits to begin tracking."}
+        </p>
       </div>
 
       {isConfigured ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleHelp } from "lucide-react";
 import type { ReactNode } from "react";
 import {
   Controller,
@@ -33,6 +34,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   assessmentTypeValues,
   getAssessmentTypeLabel,
@@ -290,6 +297,27 @@ export function AssessmentDialogForm<
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`${formId}-score`}>
                     Score (optional)
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            aria-label="Score field information"
+                            className="inline-flex items-center text-muted-foreground hover:text-foreground focus-visible:outline-none"
+                          >
+                            <CircleHelp className="size-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          className="max-w-48 text-center"
+                        >
+                          Score is based on a 0–100 scale. Example: 95 means
+                          95/100.
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </FieldLabel>
                   <Input
                     id={`${formId}-score`}

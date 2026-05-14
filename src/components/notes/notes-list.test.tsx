@@ -143,7 +143,7 @@ describe("NotesList", () => {
       );
     });
 
-    const button = findButton(container, "Create note");
+    const button = findButton(container, "Add");
 
     expect(button?.disabled).toBe(false);
 
@@ -186,7 +186,7 @@ describe("NotesList", () => {
     );
 
     expect(fullListLinks.map((link) => link.textContent)).toEqual([
-      "View all",
+      "Manage",
       "View all 4 notes",
     ]);
     expect(container.textContent).not.toContain("->");
@@ -197,10 +197,9 @@ describe("NotesList", () => {
       root.render(<NotesList subjectId="subject-1" notes={[]} />);
     });
 
-    const button = findButton(container, "Create note");
+    const button = findButton(container, "Add");
 
-    expect(button?.className).toContain("w-full");
-    expect(button?.className).toContain("whitespace-nowrap");
+    expect(button?.className).toContain("gap-1.5");
   });
 
   it("does not render the bottom full list link for 3 or fewer notes", async () => {
@@ -252,14 +251,13 @@ describe("NotesList", () => {
       );
     });
 
-    const button = findButton(container, "Create note");
+    const button = findButton(container, "Add");
     const trigger = container.querySelector<HTMLElement>(
       '[data-testid="new-note-disabled-trigger"]',
     );
 
     expect(button?.disabled).toBe(true);
     expect(trigger).toBeTruthy();
-    expect(trigger?.className).toContain("w-full");
 
     await act(async () => {
       trigger?.focus();
