@@ -65,7 +65,9 @@ describe("optimizeFsrsParameters", () => {
 
   it(
     "optimizes valid histories even when invalid histories are present",
-    { timeout: 15_000 },
+    {
+      timeout: 15_000,
+    },
     async () => {
       const { optimizeFsrsParameters } = await loadFsrsOptimizerModule();
       const baseTime = new Date("2026-01-01T00:00:00.000Z").getTime();

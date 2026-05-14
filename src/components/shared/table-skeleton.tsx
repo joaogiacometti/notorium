@@ -19,25 +19,32 @@ interface TableSkeletonProps {
   footerClassName?: string;
 }
 
+interface NormalizedRow {
+  key: string;
+  cells: TableSkeletonCell[];
+}
+
 function normalizeRows(
   rows: TableSkeletonProps["rows"],
   rowCount: number,
-): TableSkeletonCell[][] {
+): NormalizedRow[] {
   if (rows.length === 0) {
     return [];
   }
 
   if (Array.isArray(rows[0])) {
     const nestedRows = rows as TableSkeletonCell[][];
-
-    if (nestedRows.length === 1 && rowCount > 1) {
-      return Array.from({ length: rowCount }, () => nestedRows[0]);
-    }
-
-    return nestedRows;
+    const source =
+      nestedRows.length === 1 && rowCount > 1
+        ? Array.from({ length: rowCount }, () => nestedRows[0])
+        : nestedRows;
+    return source.map((cells, i) => ({ key: `row-${i + 1}`, cells }));
   }
 
-  return Array.from({ length: rowCount }, () => rows as TableSkeletonCell[]);
+  return Array.from({ length: rowCount }, (_, i) => ({
+    key: `row-${i + 1}`,
+    cells: rows as TableSkeletonCell[],
+  }));
 }
 
 function renderCell(
@@ -85,19 +92,19 @@ export function TableSkeleton({
         </div>
       </div>
       <div className="space-y-0">
-        {normalizedRows.map((row, rowIndex) => (
+        {normalizedRows.map((row) => (
           <div
-            key={`row-${rowIndex + 1}`}
+            key={row.key}
             className={cn("border-b border-border/50 px-4 py-3", rowClassName)}
           >
             <div
               className="grid gap-4"
               style={{ gridTemplateColumns: columnTemplate }}
             >
-              {row.map((cell, columnIndex) =>
+              {row.cells.map((cell, columnIndex) =>
                 renderCell(
                   cell,
-                  `row-${rowIndex + 1}-cell-${columnIndex + 1}`,
+                  `${row.key}-cell-${columnIndex + 1}`,
                   "h-14 w-full",
                 ),
               )}

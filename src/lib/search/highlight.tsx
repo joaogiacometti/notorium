@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 export interface SearchHighlightSegment {
   text: string;
   highlighted: boolean;
+  offset: number;
 }
 
 const SEARCH_SNIPPET_ELLIPSIS = "...";
@@ -14,7 +15,7 @@ export function splitSearchHighlightSegments(
 ): SearchHighlightSegment[] {
   const normalizedQuery = query.trim();
   if (normalizedQuery.length === 0) {
-    return [{ text: value, highlighted: false }];
+    return [{ text: value, highlighted: false, offset: 0 }];
   }
 
   return collectSearchHighlightSegments(value, normalizedQuery);
@@ -25,12 +26,12 @@ export function renderSearchHighlightedText(
   value: string,
   query: string,
 ): ReactNode {
-  return splitSearchHighlightSegments(value, query).map((segment, index) =>
+  return splitSearchHighlightSegments(value, query).map((segment) =>
     segment.highlighted ? (
       <mark
         className="rounded-sm px-0.5"
         data-search-highlight="true"
-        key={`${segment.text}-${index}`}
+        key={segment.offset}
       >
         {segment.text}
       </mark>
@@ -87,12 +88,14 @@ function pushSearchSegments(
     segments.push({
       text: value.slice(cursor, matchIndex),
       highlighted: false,
+      offset: cursor,
     });
   }
 
   segments.push({
     text: value.slice(matchIndex, matchIndex + matchLength),
     highlighted: true,
+    offset: matchIndex,
   });
 }
 
@@ -102,7 +105,11 @@ function pushTrailingSearchSegment(
   cursor: number,
 ) {
   if (cursor < value.length) {
-    segments.push({ text: value.slice(cursor), highlighted: false });
+    segments.push({
+      text: value.slice(cursor),
+      highlighted: false,
+      offset: cursor,
+    });
   }
 }
 

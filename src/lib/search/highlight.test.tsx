@@ -9,9 +9,9 @@ import {
 describe("splitSearchHighlightSegments", () => {
   it("matches case-insensitively while preserving display casing", () => {
     expect(splitSearchHighlightSegments("Organic Chemistry", "chem")).toEqual([
-      { text: "Organic ", highlighted: false },
-      { text: "Chem", highlighted: true },
-      { text: "istry", highlighted: false },
+      { text: "Organic ", highlighted: false, offset: 0 },
+      { text: "Chem", highlighted: true, offset: 8 },
+      { text: "istry", highlighted: false, offset: 12 },
     ]);
   });
 
@@ -19,16 +19,16 @@ describe("splitSearchHighlightSegments", () => {
     expect(
       splitSearchHighlightSegments("C++ notes and c++ cards", "c++"),
     ).toEqual([
-      { text: "C++", highlighted: true },
-      { text: " notes and ", highlighted: false },
-      { text: "c++", highlighted: true },
-      { text: " cards", highlighted: false },
+      { text: "C++", highlighted: true, offset: 0 },
+      { text: " notes and ", highlighted: false, offset: 3 },
+      { text: "c++", highlighted: true, offset: 14 },
+      { text: " cards", highlighted: false, offset: 17 },
     ]);
   });
 
   it("does not highlight without a text query", () => {
     expect(splitSearchHighlightSegments("Recent note", " ")).toEqual([
-      { text: "Recent note", highlighted: false },
+      { text: "Recent note", highlighted: false, offset: 0 },
     ]);
   });
 });

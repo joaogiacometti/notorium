@@ -44,10 +44,8 @@ export function AssessmentAttachmentsField({
     onRemovedAttachmentIdsChange([...removedAttachmentIds, id]);
   }
 
-  function removeNewFile(index: number) {
-    onNewFilesChange(
-      newFiles.filter((_file, currentIndex) => currentIndex !== index),
-    );
+  function removeNewFile(file: File) {
+    onNewFilesChange(newFiles.filter((f) => f !== file));
   }
 
   const hasFiles = visibleAttachments.length > 0 || newFiles.length > 0;
@@ -112,9 +110,9 @@ export function AssessmentAttachmentsField({
               </Button>
             </div>
           ))}
-          {newFiles.map((file, index) => (
+          {newFiles.map((file) => (
             <div
-              key={`${file.name}-${index}`}
+              key={`${file.name}-${file.size}-${file.lastModified}`}
               className="flex min-w-0 items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40"
             >
               <Paperclip className="size-4 shrink-0 text-muted-foreground" />
@@ -130,7 +128,7 @@ export function AssessmentAttachmentsField({
                 size="icon-xs"
                 className="shrink-0 text-muted-foreground hover:text-(--intent-danger-text)"
                 disabled={disabled}
-                onClick={() => removeNewFile(index)}
+                onClick={() => removeNewFile(file)}
                 title="Remove attachment"
               >
                 <Trash2 className="size-3" />

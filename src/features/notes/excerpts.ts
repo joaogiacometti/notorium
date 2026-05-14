@@ -24,18 +24,15 @@ export function getNoteContentPreview(content: string | null): string {
 }
 
 function stripMarkup(content: string): string {
-  return content
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ");
+  return content.replace(/<[^>]*>/g, " ");
 }
 
 function decodeBasicEntities(content: string): string {
   return content
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&amp;", "&");
 }
