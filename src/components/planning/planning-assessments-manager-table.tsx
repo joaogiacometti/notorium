@@ -10,6 +10,7 @@ import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { SubjectBadge } from "@/components/shared/subject-badge";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
+import { TableRowActionSkeleton } from "@/components/shared/table-row-action-skeleton";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
@@ -194,7 +195,9 @@ function getColumns(
           className="flex w-14 min-w-14 items-center justify-start pl-1"
           data-no-row-click
         >
-          {isLoading ? null : (
+          {isLoading ? (
+            <TableRowActionSkeleton />
+          ) : (
             <AssessmentsTableRowActions
               assessment={row.original}
               onUpdated={onUpdated}
@@ -347,11 +350,7 @@ export function PlanningAssessmentsManagerTableSkeleton() {
       </div>
     </div>
   );
-  const loadingActionSkeleton = (
-    <div className="flex h-6 items-center justify-start">
-      <Skeleton className="size-6 rounded-full" />
-    </div>
-  );
+  const loadingActionSkeleton = <TableRowActionSkeleton />;
 
   return (
     <>
