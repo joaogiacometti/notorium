@@ -9,10 +9,6 @@ export function FlashcardReviewLoading() {
         className="flex h-full min-h-0 flex-col overflow-y-auto"
         data-testid="flashcards-review-loading"
       >
-        <div className="max-w-2xl space-y-2 pb-3">
-          <Skeleton className="h-8 w-52" />
-          <Skeleton className="h-4 w-full max-w-xl" />
-        </div>
         <div className="grid gap-3 lg:grid-cols-2">
           {(["review", "exam"] as const).map((key) => (
             <Card key={key} className="gap-0 rounded-xl py-0 shadow-none">

@@ -35,15 +35,6 @@ export function ReviewHubView({
 }: Readonly<ReviewHubViewProps>) {
   return (
     <div className="min-w-0 space-y-3" data-testid="flashcard-review-hub">
-      <div className="max-w-2xl space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Flashcard review
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Choose scheduled review for memory work or exam mode for free
-          practice.
-        </p>
-      </div>
       <div className="grid min-w-0 gap-3 lg:grid-cols-2">
         <ReviewActionCard
           title="Review"
