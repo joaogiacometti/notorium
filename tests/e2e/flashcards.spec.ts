@@ -137,9 +137,7 @@ async function openFlashcardDetailFromManage(page: Page, front: string) {
     page.waitForURL(/\/flashcards\/.+\?from=flashcards-manage/),
     frontPreview.click(),
   ]);
-  await expect(
-    page.getByRole("heading", { name: front, exact: true }),
-  ).toBeVisible();
+  await expect(page.locator("#form-edit-flashcard-front")).toContainText(front);
 }
 
 async function openFlashcardActionsMenu(page: Page) {
@@ -169,7 +167,7 @@ test("can create and open a flashcard", async ({ page, e2eUser }) => {
     await openFlashcardDetailFromManage(page, flashcardFront);
     await expect(
       page.getByRole("main").getByRole("link", {
-        name: "flashcards",
+        name: "Back to Flashcards",
         exact: true,
       }),
     ).toBeVisible();
@@ -358,35 +356,40 @@ test("can edit a flashcard", async ({ page, e2eUser }) => {
     await page.goto(
       `/flashcards/${createdFlashcard.id}?from=flashcards-manage`,
     );
-    await expect(
-      page.getByRole("heading", { name: initialFront, exact: true }),
-    ).toBeVisible();
+    await expect(page.locator("#form-edit-flashcard-front")).toContainText(
+      initialFront,
+    );
 
-    await openFlashcardActionsMenu(page);
-    await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
+    const savePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        /\/flashcards\/.+/.test(response.url()) &&
+        response.status() === 200,
+      { timeout: 10000 },
+    );
 
-    const editDialog = page.getByRole("dialog", { name: "Edit Flashcard" });
-    await fillFlashcardEditors(
-      editDialog,
-      "form-edit-flashcard",
+    await fillRichTextEditor(
+      page.locator("#form-edit-flashcard-front"),
       updatedFront,
+    );
+    await fillRichTextEditor(
+      page.locator("#form-edit-flashcard-back"),
       updatedBack,
     );
-    await editDialog.getByRole("button", { name: "Save Changes" }).click();
 
-    await expect(editDialog).toBeVisible();
-    await expect(
-      editDialog.locator("#form-edit-flashcard-front"),
-    ).toContainText(updatedFront);
-    await expect(editDialog.locator("#form-edit-flashcard-back")).toContainText(
+    await savePromise;
+
+    await page.goto("/flashcards?view=manage");
+    await page.goto(
+      `/flashcards/${createdFlashcard.id}?from=flashcards-manage`,
+    );
+
+    await expect(page.locator("#form-edit-flashcard-front")).toContainText(
+      updatedFront,
+    );
+    await expect(page.locator("#form-edit-flashcard-back")).toContainText(
       updatedBack,
     );
-    await page.keyboard.press("Escape");
-    await expect(editDialog).toHaveCount(0);
-    await expect(
-      page.getByRole("heading", { name: updatedFront, exact: true }),
-    ).toBeVisible();
-    await expect(page.getByText(updatedBack).first()).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);
   }
@@ -417,9 +420,9 @@ test("can delete a flashcard", async ({ page, e2eUser }) => {
     await page.goto(
       `/flashcards/${createdFlashcard.id}?from=flashcards-manage`,
     );
-    await expect(
-      page.getByRole("heading", { name: flashcardFront, exact: true }),
-    ).toBeVisible();
+    await expect(page.locator("#form-edit-flashcard-front")).toContainText(
+      flashcardFront,
+    );
 
     await openFlashcardActionsMenu(page);
     await page.getByRole("menuitem", { name: "Delete", exact: true }).click();

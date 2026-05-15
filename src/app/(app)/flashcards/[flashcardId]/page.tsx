@@ -34,7 +34,7 @@ export default async function FlashcardDetailPage({
     <main>
       <FlashcardDetail
         backHref={backLink.href}
-        backLabel={backLink.label}
+        backLabel="Back to Flashcards"
         flashcard={flashcard}
         aiEnabled={aiEnabled}
       />
