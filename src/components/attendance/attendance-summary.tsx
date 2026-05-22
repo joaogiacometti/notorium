@@ -104,6 +104,13 @@ export function AttendanceSummary({
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">Attendance</h2>
           <div className="flex gap-2">
+            <AttendanceSettingsDialog
+              subjectId={subjectId}
+              totalClasses={totalClasses}
+              maxMisses={maxMisses}
+              open={settingsOpen}
+              onOpenChange={setSettingsOpen}
+            />
             {isConfigured && (
               <Button
                 size="sm"
@@ -115,13 +122,6 @@ export function AttendanceSummary({
                 <span>Record Miss</span>
               </Button>
             )}
-            <AttendanceSettingsDialog
-              subjectId={subjectId}
-              totalClasses={totalClasses}
-              maxMisses={maxMisses}
-              open={settingsOpen}
-              onOpenChange={setSettingsOpen}
-            />
           </div>
         </div>
         <p className="mt-1.5 text-sm text-muted-foreground">

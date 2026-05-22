@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -83,9 +82,8 @@ export function AttendanceSettingsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Settings className="size-3.5" />
-          Settings
+        <Button variant="outline" size="sm">
+          Manage
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
