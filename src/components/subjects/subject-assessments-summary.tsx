@@ -76,7 +76,9 @@ export function SubjectAssessmentsSummary({
           {showManageAction ? (
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <Link href={`/planning?view=assessments&subject=${subjectId}`}>
+                <Link
+                  href={`/planning?view=assessments&subject=${subjectId}&status=all`}
+                >
                   Manage
                 </Link>
               </Button>
