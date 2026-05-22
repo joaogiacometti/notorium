@@ -27,7 +27,7 @@ test("can configure attendance settings", async ({ page, e2eUser }) => {
 
     await expect(page.getByText("No attendance settings yet")).toBeVisible();
 
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("button", { name: "Manage" }).click();
 
     const settingsDialog = page.getByRole("dialog", {
       name: "Attendance Settings",
@@ -150,7 +150,7 @@ test("can remove attendance configuration", async ({ page, e2eUser }) => {
     await openSubjectDetailByName(page, subjectName);
     await expect(page.getByText("3 misses remaining")).toBeVisible();
 
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("button", { name: "Manage" }).click();
     const settingsDialog = page.getByRole("dialog", {
       name: "Attendance Settings",
     });

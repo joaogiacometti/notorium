@@ -714,7 +714,7 @@ export function SubjectsList({
             </Button>
           </div>
         ) : (
-          <Card className="min-w-0 overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
+          <Card className="h-[clamp(22rem,58svh,36rem)] min-w-0 overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:h-auto lg:min-h-0 lg:flex-1">
             <ManagerDataTable
               data={pageSubjects}
               columns={columns}
