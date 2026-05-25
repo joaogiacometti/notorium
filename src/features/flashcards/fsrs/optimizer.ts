@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import type { FlashcardReviewLogEntity } from "@/lib/server/api-contracts";
 
-const minimumOptimizationReviewCount = 64;
+export const minimumOptimizationReviewCount = 64;
 const optimizationReviewBatchSize = 32;
 const require = createRequire(import.meta.url);
 
@@ -40,14 +40,13 @@ function getFsrsBindingModule(): FsrsBindingModule {
   return require("@open-spaced-repetition/binding") as FsrsBindingModule;
 }
 
-function mapRatingToBindingRating(rating: FlashcardReviewLogEntity["rating"]) {
-  return rating === "again"
-    ? 1
-    : rating === "hard"
-      ? 2
-      : rating === "good"
-        ? 3
-        : 4;
+function mapRatingToBindingRating(
+  rating: FlashcardReviewLogEntity["rating"],
+): number {
+  if (rating === "again") return 1;
+  if (rating === "hard") return 2;
+  if (rating === "good") return 3;
+  return 4;
 }
 
 function hasValidOptimizationHistory(
@@ -102,7 +101,12 @@ function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
     }
 
     for (let index = 1; index < reviews.length; index++) {
-      trainingSet.push(new FSRSBindingItem(reviews.slice(0, index + 1)));
+      const slice = reviews.slice(0, index + 1);
+      // FSRS binding requires at least one review with delta_t > 0; slices
+      // built from same-day re-reviews would abort the Rust process otherwise.
+      if (slice.some((r) => r.deltaT > 0)) {
+        trainingSet.push(new FSRSBindingItem(slice));
+      }
     }
   }
 
@@ -132,14 +136,10 @@ export async function optimizeFsrsParameters(
     return null;
   }
 
-  try {
-    const { computeParameters } = getFsrsBindingModule();
-    return await computeParameters(trainingSet, {
-      enableShortTerm: true,
-      numRelearningSteps: 1,
-      timeout: 10_000,
-    });
-  } catch {
-    return null;
-  }
+  const { computeParameters } = getFsrsBindingModule();
+  return await computeParameters(trainingSet, {
+    enableShortTerm: true,
+    numRelearningSteps: 1,
+    timeout: 10_000,
+  });
 }

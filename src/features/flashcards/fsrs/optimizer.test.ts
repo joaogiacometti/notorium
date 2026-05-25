@@ -64,6 +64,62 @@ describe("optimizeFsrsParameters", () => {
   });
 
   it(
+    "skips same-day re-review slices that have no delta_t > 0",
+    {
+      timeout: 15_000,
+    },
+    async () => {
+      const { optimizeFsrsParameters } = await loadFsrsOptimizerModule();
+      const baseTime = new Date("2026-01-01T00:00:00.000Z").getTime();
+      const logs: FlashcardReviewLogEntity[] = [];
+
+      // Each card: new review (dT=0), same-day re-review (dT=0), then spaced reviews.
+      // The slice [r0, r1] has all deltaT=0 and must be filtered to avoid a WASM abort.
+      for (let cardIndex = 0; cardIndex < 16; cardIndex++) {
+        logs.push(
+          makeLog(
+            `card-${cardIndex}-0`,
+            `card-${cardIndex}`,
+            "again",
+            new Date(baseTime + cardIndex * 10 * 24 * 60 * 60 * 1000),
+            0,
+          ),
+          makeLog(
+            `card-${cardIndex}-1`,
+            `card-${cardIndex}`,
+            "good",
+            new Date(baseTime + cardIndex * 10 * 24 * 60 * 60 * 1000 + 1000),
+            0,
+          ),
+          makeLog(
+            `card-${cardIndex}-2`,
+            `card-${cardIndex}`,
+            "good",
+            new Date(
+              baseTime + cardIndex * 10 * 24 * 60 * 60 * 1000 + 3 * 24 * 60 * 60 * 1000,
+            ),
+            3,
+          ),
+          makeLog(
+            `card-${cardIndex}-3`,
+            `card-${cardIndex}`,
+            "easy",
+            new Date(
+              baseTime + cardIndex * 10 * 24 * 60 * 60 * 1000 + 8 * 24 * 60 * 60 * 1000,
+            ),
+            5,
+          ),
+        );
+      }
+
+      const weights = await optimizeFsrsParameters(logs);
+
+      expect(weights).not.toBeNull();
+      expect(weights?.length).toBeGreaterThan(0);
+    },
+  );
+
+  it(
     "optimizes valid histories even when invalid histories are present",
     {
       timeout: 15_000,

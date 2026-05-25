@@ -16,10 +16,14 @@ import {
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
 import {
+  minimumOptimizationReviewCount,
   optimizeFsrsParameters,
   shouldOptimizeFsrsParameters,
 } from "@/features/flashcards/fsrs/optimizer";
-import { tryAcquireUserExpiringLock } from "@/lib/rate-limit/user-rate-limit";
+import {
+  releaseUserExpiringLock,
+  tryAcquireUserExpiringLock,
+} from "@/lib/rate-limit/user-rate-limit";
 import type {
   FlashcardOptimizationSettings,
   FlashcardReviewLogEntity,
@@ -249,8 +253,14 @@ export async function maybeOptimizeFsrsParameters(
 export async function optimizeFsrsParametersForUser(
   userId: string,
 ): Promise<FsrsOptimizationResult> {
-  const settings = await ensureFsrsSettings(userId);
-  const reviewCount = await getFlashcardReviewLogCount(userId);
+  const [settings, reviewCount] = await Promise.all([
+    ensureFsrsSettings(userId),
+    getFlashcardReviewLogCount(userId),
+  ]);
+
+  if (reviewCount < minimumOptimizationReviewCount) {
+    return actionError("flashcards.fsrsOptimization.notEnoughHistory");
+  }
 
   return runFsrsOptimization(userId, settings, reviewCount);
 }
@@ -271,9 +281,23 @@ async function runFsrsOptimization(
   }
 
   const logs = await getFlashcardReviewLogsForOptimization(userId);
-  const weights = await optimizeFsrsParameters(logs);
+
+  let weights: number[] | null;
+  try {
+    weights = await optimizeFsrsParameters(logs);
+  } catch {
+    await releaseUserExpiringLock({
+      prefix: fsrsOptimizationLockPrefix,
+      userId,
+    });
+    return actionError("flashcards.fsrsOptimization.unavailable");
+  }
 
   if (!weights) {
+    await releaseUserExpiringLock({
+      prefix: fsrsOptimizationLockPrefix,
+      userId,
+    });
     return actionError("flashcards.fsrsOptimization.notEnoughHistory");
   }
 

@@ -14,10 +14,7 @@ let redisClientConnection: Promise<RedisClientType> | null = null;
 
 function getUpstashRedis() {
   const appEnv = getServerEnv();
-  if (
-    upstashRedisCache &&
-    upstashRedisCache.backend === appEnv.RATE_LIMIT_BACKEND
-  ) {
+  if (upstashRedisCache?.backend === appEnv.RATE_LIMIT_BACKEND) {
     return upstashRedisCache.client;
   }
 
@@ -193,4 +190,38 @@ export async function tryAcquireUserExpiringLock({
   return appEnv.RATE_LIMIT_BACKEND === "redis"
     ? tryAcquireExpiringLockWithRedis(key, ttlSeconds)
     : tryAcquireExpiringLockWithUpstash(key, ttlSeconds);
+}
+
+interface ReleaseUserExpiringLockOptions {
+  prefix: string;
+  userId: string;
+}
+
+async function releaseExpiringLockWithRedis(key: string): Promise<void> {
+  const { client, connection } = getRedisClient();
+  await connection;
+  await client.del(key);
+}
+
+async function releaseExpiringLockWithUpstash(key: string): Promise<void> {
+  const redis = getUpstashRedis();
+  if (!redis) {
+    throw new Error("Upstash Redis is not configured");
+  }
+  await redis.del(key);
+}
+
+export async function releaseUserExpiringLock({
+  prefix,
+  userId,
+}: ReleaseUserExpiringLockOptions): Promise<void> {
+  const normalizedUserId = normalizeRateLimitKeyPart(userId);
+  const key = `${prefix}:${normalizedUserId}`;
+  const appEnv = getServerEnv();
+
+  if (appEnv.RATE_LIMIT_BACKEND === "redis") {
+    await releaseExpiringLockWithRedis(key);
+  } else {
+    await releaseExpiringLockWithUpstash(key);
+  }
 }

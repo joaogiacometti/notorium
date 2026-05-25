@@ -17,6 +17,7 @@ const orMock = vi.fn((...conditions) => conditions);
 const optimizeFsrsParametersMock = vi.fn();
 const shouldOptimizeFsrsParametersMock = vi.fn();
 const tryAcquireUserExpiringLockMock = vi.fn();
+const releaseUserExpiringLockMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -52,12 +53,14 @@ vi.mock("@/db/schema", () => ({
 }));
 
 vi.mock("@/features/flashcards/fsrs/optimizer", () => ({
+  minimumOptimizationReviewCount: 64,
   optimizeFsrsParameters: optimizeFsrsParametersMock,
   shouldOptimizeFsrsParameters: shouldOptimizeFsrsParametersMock,
 }));
 
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
   tryAcquireUserExpiringLock: tryAcquireUserExpiringLockMock,
+  releaseUserExpiringLock: releaseUserExpiringLockMock,
 }));
 
 function mockSelectLimitOnce(value: unknown) {
@@ -383,7 +386,7 @@ describe("optimizeFsrsParametersForUser", () => {
     );
   });
 
-  it("returns a user-facing result when optimization lacks review history", async () => {
+  it("returns notEnoughHistory without acquiring lock when review count is below minimum", async () => {
     const { getDefaultFsrsWeights } = await import(
       "@/features/flashcards/fsrs"
     );
@@ -399,9 +402,6 @@ describe("optimizeFsrsParametersForUser", () => {
       },
     ]);
     mockSelectWhereOnce([{ total: 12 }]);
-    mockSelectOrderByOnce([]);
-    tryAcquireUserExpiringLockMock.mockResolvedValueOnce(true);
-    optimizeFsrsParametersMock.mockResolvedValueOnce(null);
 
     const { optimizeFsrsParametersForUser } = await import(
       "@/features/flashcards/fsrs/settings"
@@ -415,6 +415,53 @@ describe("optimizeFsrsParametersForUser", () => {
       errorParams: undefined,
       errorMessage: undefined,
     });
+    expect(tryAcquireUserExpiringLockMock).not.toHaveBeenCalled();
+    expect(optimizeFsrsParametersMock).not.toHaveBeenCalled();
+    expect(updateSetMock).not.toHaveBeenCalled();
+  });
+
+  it("releases lock and returns unavailable when computation throws", async () => {
+    const { getDefaultFsrsWeights } = await import(
+      "@/features/flashcards/fsrs"
+    );
+
+    mockSelectLimitOnce([
+      {
+        id: "settings-1",
+        userId: "user-1",
+        desiredRetention: "0.900",
+        weights: JSON.stringify(getDefaultFsrsWeights()),
+        optimizedReviewCount: 0,
+        automaticOptimizationEnabled: false,
+      },
+    ]);
+    mockSelectWhereOnce([{ total: 96 }]);
+    mockSelectOrderByOnce([
+      {
+        flashcardId: "card-1",
+        rating: "good",
+        daysElapsed: 1,
+        reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+    tryAcquireUserExpiringLockMock.mockResolvedValueOnce(true);
+    optimizeFsrsParametersMock.mockRejectedValueOnce(
+      new Error("WASM computation failed"),
+    );
+
+    const { optimizeFsrsParametersForUser } = await import(
+      "@/features/flashcards/fsrs/settings"
+    );
+
+    const result = await optimizeFsrsParametersForUser("user-1");
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "flashcards.fsrsOptimization.unavailable",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+    expect(releaseUserExpiringLockMock).toHaveBeenCalled();
     expect(updateSetMock).not.toHaveBeenCalled();
   });
 });
