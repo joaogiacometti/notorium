@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
+import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 import { cn } from "@/lib/utils";
 
 interface TiptapRendererProps {
@@ -38,6 +39,7 @@ export function TiptapRenderer({
       Image.configure({ allowBase64: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      ...buildTableExtensions(),
     ],
     content: resolvedContent,
     editable: false,

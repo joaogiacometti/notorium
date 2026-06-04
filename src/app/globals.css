@@ -832,3 +832,40 @@
   @apply pointer-events-none float-left h-0 text-muted-foreground/50;
   content: attr(data-placeholder);
 }
+
+/* Table styles */
+.tiptap-content table,
+.tiptap-wrapper .tiptap table {
+  @apply mb-3 w-full border-collapse overflow-hidden rounded-md last:mb-0;
+  border: 1px solid var(--border);
+}
+
+.tiptap-content table td,
+.tiptap-content table th,
+.tiptap-wrapper .tiptap table td,
+.tiptap-wrapper .tiptap table th {
+  @apply px-3 py-2 text-left align-top text-sm;
+  border: 1px solid var(--border);
+  min-width: 6rem;
+  position: relative;
+}
+
+.tiptap-content table th,
+.tiptap-wrapper .tiptap table th {
+  @apply font-semibold;
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.tiptap-content table tr:hover td,
+.tiptap-wrapper .tiptap table tr:hover td {
+  background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+}
+
+/* Selected cell (editor only) */
+.tiptap-wrapper .tiptap table td.selectedCell,
+.tiptap-wrapper .tiptap table th.selectedCell {
+  background-color: color-mix(in oklab, var(--primary) 12%, transparent);
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}

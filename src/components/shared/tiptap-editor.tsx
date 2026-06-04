@@ -18,10 +18,13 @@ import {
   isExternalEditorValueChange,
   shouldApplyNormalizedEditorValue,
 } from "@/components/shared/tiptap-helpers";
+import { TiptapTableControls } from "@/components/shared/tiptap-table-controls";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
+import { SlashCommands } from "@/lib/editor/tiptap-slash-commands";
+import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 import { cn } from "@/lib/utils";
 
 interface TiptapEditorProps {
@@ -110,7 +113,9 @@ export function TiptapEditor({
       }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      ...buildTableExtensions(),
       Typography,
+      SlashCommands,
       createImageUrlPasteExtension(
         imageUploadContext,
         () => activeUploadsRef.current > 0,
@@ -207,6 +212,7 @@ export function TiptapEditor({
           <span>Uploading image...</span>
         </div>
       ) : null}
+      {editor ? <TiptapTableControls editor={editor} /> : null}
       <EditorContent
         editor={editor}
         className={cn(
