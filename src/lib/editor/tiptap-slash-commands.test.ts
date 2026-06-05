@@ -6,13 +6,19 @@ describe("resolveSlashCommand", () => {
     expect(resolveSlashCommand("/table")).toBe("table");
   });
 
+  it("returns 'math' for '/math'", () => {
+    expect(resolveSlashCommand("/math")).toBe("math");
+  });
+
   it("trims surrounding whitespace", () => {
     expect(resolveSlashCommand("  /table  ")).toBe("table");
+    expect(resolveSlashCommand("  /math  ")).toBe("math");
   });
 
   it("returns null for unrecognised commands", () => {
     expect(resolveSlashCommand("/unknown")).toBeNull();
     expect(resolveSlashCommand("/tabl")).toBeNull();
+    expect(resolveSlashCommand("/mat")).toBeNull();
   });
 
   it("returns null for empty text", () => {

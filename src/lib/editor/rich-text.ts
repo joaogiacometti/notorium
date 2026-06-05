@@ -1,23 +1,73 @@
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 
+// Math nodes serialize as empty <span>/<div> with the LaTeX held in a
+// data-latex attribute (see tiptap-math-extensions.ts). A plain tag strip would
+// drop that attribute, so equations must be surfaced as their LaTeX text to stay
+// searchable and to keep flashcard length validation accurate.
+const MATH_NODE_PATTERN =
+  /<(span|div)\b[^>]*\bdata-type="(?:inline|block)-math"[^>]*>[\s\S]*?<\/\1>/gi;
+
+// Private-use sentinel marking where extracted LaTeX is reinserted. It carries
+// no angle brackets or HTML entities and is not whitespace, so it survives the
+// tag-stripping and whitespace-collapsing passes below intact.
+const MATH_TOKEN_SENTINEL = "\uE000";
+
+/**
+ * Runs `transform` (tag stripping, whitespace collapse, casing) on the input
+ * with each math node swapped for an inert token, then restores every equation's
+ * decoded LaTeX. Decoding the LaTeX inline before `transform` would let its
+ * `<`/`>` characters be eaten by the `/<[^>]*>/g` tag strip — e.g. the equation
+ * `f(x) < g(x) > 0` would collapse to `f(x)  0`. Tokenizing keeps the LaTeX out
+ * of the strip's reach. See rich-text.test.ts for the regression.
+ */
+function transformAroundMath(
+  value: string,
+  transform: (mathFreeHtml: string) => string,
+): string {
+  const equations: string[] = [];
+  const tokenized = value.replaceAll(MATH_NODE_PATTERN, (match) => {
+    const latexMatch = /\bdata-latex="([^"]*)"/i.exec(match);
+    if (!latexMatch) {
+      return " ";
+    }
+
+    const index = equations.length;
+    equations.push(decodeHtmlEntities(latexMatch[1]));
+    return ` ${MATH_TOKEN_SENTINEL}${index}${MATH_TOKEN_SENTINEL} `;
+  });
+
+  let result = transform(tokenized);
+  equations.forEach((latex, index) => {
+    result = result.replaceAll(
+      `${MATH_TOKEN_SENTINEL}${index}${MATH_TOKEN_SENTINEL}`,
+      latex,
+    );
+  });
+
+  return result;
+}
+
 export function richTextToPlainText(value: string): string {
-  return value
-    .replaceAll(/<[^>]*>/g, " ")
-    .replaceAll("&nbsp;", " ")
-    .replaceAll(/\s+/g, " ")
-    .trim();
+  return transformAroundMath(value, (html) =>
+    html
+      .replaceAll(/<[^>]*>/g, " ")
+      .replaceAll("&nbsp;", " ")
+      .replaceAll(/\s+/g, " ")
+      .trim(),
+  );
 }
 
 export function richTextToPlainTextWithImagePlaceholders(
   value: string,
 ): string {
-  const withImagePlaceholders = value.replaceAll(/<img\b[^>]*>/gi, " [Image] ");
-
-  return withImagePlaceholders
-    .replaceAll(/<[^>]*>/g, " ")
-    .replaceAll("&nbsp;", " ")
-    .replaceAll(/\s+/g, " ")
-    .trim();
+  return transformAroundMath(value, (html) =>
+    html
+      .replaceAll(/<img\b[^>]*>/gi, " [Image] ")
+      .replaceAll(/<[^>]*>/g, " ")
+      .replaceAll("&nbsp;", " ")
+      .replaceAll(/\s+/g, " ")
+      .trim(),
+  );
 }
 
 function normalizeImageSourceForUniqueness(value: string): string {
@@ -29,31 +79,33 @@ function normalizeImageSourceForUniqueness(value: string): string {
 }
 
 export function normalizeRichTextForUniqueness(value: string): string {
-  const withImageTokens = value.replaceAll(
-    /<img\b([^>]*)>/gi,
-    (_, attributes: string) => {
-      const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
+  return transformAroundMath(value, (html) => {
+    const withImageTokens = html.replaceAll(
+      /<img\b([^>]*)>/gi,
+      (_match, attributes: string) => {
+        const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
 
-      if (!srcMatch) {
-        return " ";
-      }
+        if (!srcMatch) {
+          return " ";
+        }
 
-      const src = decodeHtmlEntities(srcMatch[1]).trim();
+        const src = decodeHtmlEntities(srcMatch[1]).trim();
 
-      if (src.length === 0) {
-        return " ";
-      }
+        if (src.length === 0) {
+          return " ";
+        }
 
-      return ` image:${normalizeImageSourceForUniqueness(src)} `;
-    },
-  );
+        return ` image:${normalizeImageSourceForUniqueness(src)} `;
+      },
+    );
 
-  return decodeHtmlEntities(withImageTokens)
-    .replaceAll(/<[^>]*>/g, " ")
-    .replaceAll("&nbsp;", " ")
-    .replaceAll(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
+    return decodeHtmlEntities(withImageTokens)
+      .replaceAll(/<[^>]*>/g, " ")
+      .replaceAll("&nbsp;", " ")
+      .replaceAll(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  });
 }
 
 export function replaceImagesWithPlaceholders(value: string): {

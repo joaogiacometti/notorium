@@ -97,4 +97,14 @@ describe("copyNoteContentToClipboard", () => {
 
     expect(writeText).toHaveBeenCalledWith("Line one\nLine two");
   });
+
+  it("surfaces inline and block math as LaTeX in plain text", async () => {
+    await copyNoteContentToClipboard(
+      '<p>Area <span data-type="inline-math" data-latex="A = \\pi r^2"></span></p>' +
+        '<div data-type="block-math" data-latex="F = ma"></div>',
+      "plain",
+    );
+
+    expect(writeText).toHaveBeenCalledWith("Area $A = \\pi r^2$\n$$F = ma$$");
+  });
 });

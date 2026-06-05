@@ -43,7 +43,8 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete notes per subject.
 - Notes use rich text editing and rendering.
-- Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, and other shared editor formatting exposed by the app.
+- Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, tables, LaTeX math, and other shared editor formatting exposed by the app.
+- Math renders with KaTeX in both editing and reading. Inline math is typed as `$...$`; the `/math` slash command inserts a block equation. Equations are editable by clicking them, and their LaTeX stays searchable.
 - Subject detail shows the 3 most recently updated notes with content previews, row links to note detail, title-only note creation, and compact row action menus for title edits and deletes.
 - The full subject notes list keeps the same-subject note sidebar and shows a simple center indicator until a note is selected.
 - Note detail shows same-subject notes in a sidebar, supports title-only sidebar note creation, exposes compact row action menus for title edits and deletes of same-subject notes, and edits the active note inline with auto-save.
@@ -65,10 +66,11 @@ Students who want a private, lightweight study management workspace.
 - Flashcard create and edit support AI generation of the back when the back is empty.
 - Flashcards can also be generated from a note detail page when AI is configured.
 - Generated AI flashcards use concise retrieval-cue fronts and minimal, directly testable answer bullets.
+- AI generation may emit LaTeX math (`$...$` inline, `$$...$$` block), which is converted to rendered math nodes.
 - AI flashcard generation is optional and configured globally at the instance level with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`.
 - AI flashcard controls are hidden when AI env vars are not configured.
 - AI generation and validation are limited per approved user per day.
-- Flashcard rich text supports the same shared editor capabilities as notes, including syntax-highlighted code blocks and supported image rendering.
+- Flashcard rich text supports the same shared editor capabilities as notes, including syntax-highlighted code blocks, LaTeX math, and supported image rendering.
 - Flashcard content renders images from:
   - pasted direct image URLs
   - pasted image uploads stored in private blob storage

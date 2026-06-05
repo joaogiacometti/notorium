@@ -23,6 +23,38 @@ describe("richTextToPlainText", () => {
   it("converts non-breaking spaces", () => {
     expect(richTextToPlainText("<p>Hello&nbsp;world</p>")).toBe("Hello world");
   });
+
+  it("surfaces inline math LaTeX so equations stay searchable", () => {
+    expect(
+      richTextToPlainText(
+        '<p>Area is <span data-type="inline-math" data-latex="A = \\pi r^2"></span> here</p>',
+      ),
+    ).toBe("Area is A = \\pi r^2 here");
+  });
+
+  it("surfaces block math LaTeX and decodes entities", () => {
+    expect(
+      richTextToPlainText(
+        '<div data-type="block-math" data-latex="a &lt; b"></div>',
+      ),
+    ).toBe("a < b");
+  });
+
+  it("keeps LaTeX intact when an equation contains both < and >", () => {
+    expect(
+      richTextToPlainText(
+        '<p><span data-type="inline-math" data-latex="f(x) &lt; g(x) &gt; 0"></span></p>',
+      ),
+    ).toBe("f(x) < g(x) > 0");
+  });
+
+  it("keeps prose between two equations that span a < and a >", () => {
+    expect(
+      richTextToPlainText(
+        '<p><span data-type="inline-math" data-latex="a &lt; b"></span> text <span data-type="inline-math" data-latex="c &gt; d"></span></p>',
+      ),
+    ).toBe("a < b text c > d");
+  });
 });
 
 describe("richTextToPlainTextWithImagePlaceholders", () => {
@@ -272,6 +304,31 @@ describe("normalizeRichTextForUniqueness", () => {
     );
 
     expect(first).toBe(second);
+  });
+
+  it("distinguishes cards by their math content", () => {
+    const first = normalizeRichTextForUniqueness(
+      '<p><span data-type="inline-math" data-latex="x^2"></span></p>',
+    );
+    const second = normalizeRichTextForUniqueness(
+      '<p><span data-type="inline-math" data-latex="x^3"></span></p>',
+    );
+
+    expect(first).not.toBe(second);
+    expect(first).toBe("x^2");
+  });
+
+  it("keeps equations with < and > distinct instead of collapsing them", () => {
+    const lessThan = normalizeRichTextForUniqueness(
+      '<p><span data-type="inline-math" data-latex="a &lt; b"></span></p>',
+    );
+    const between = normalizeRichTextForUniqueness(
+      '<p><span data-type="inline-math" data-latex="a &lt; b &gt; c"></span></p>',
+    );
+
+    expect(lessThan).toBe("a < b");
+    expect(between).toBe("a < b > c");
+    expect(lessThan).not.toBe(between);
   });
 });
 

@@ -33,6 +33,56 @@ export function normalizeGeneratedBack(value: string): string {
   return normalized;
 }
 
+type MathSegment = { token: string; type: "inline" | "block"; latex: string };
+
+// `$$...$$` (block) is tried before `$...$` (inline) via alternation order.
+const MATH_MARKER_RE = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+// Bare numbers/currency such as `$100$` are not math.
+const CURRENCY_LIKE_RE = /^[\d.,\s]+$/;
+
+// Pull math out before line processing so escaping/classification cannot corrupt
+// the LaTeX, then reinsert math nodes after the HTML skeleton is built. Tokens
+// are plain alphanumerics so normalizeLine, escapeHtml, and classifyLines leave
+// them untouched.
+function extractMathSegments(value: string): {
+  text: string;
+  segments: MathSegment[];
+} {
+  const segments: MathSegment[] = [];
+  const text = value.replace(
+    MATH_MARKER_RE,
+    (match, blockLatex?: string, inlineLatex?: string) => {
+      const isBlock = typeof blockLatex === "string";
+      const latex = (isBlock ? blockLatex : inlineLatex)?.trim() ?? "";
+      if (latex.length === 0) return match;
+      if (!isBlock && CURRENCY_LIKE_RE.test(latex)) return match;
+
+      const token = `MATHMARKER${segments.length}END`;
+      segments.push({ token, type: isBlock ? "block" : "inline", latex });
+      return token;
+    },
+  );
+
+  return { text, segments };
+}
+
+function renderMathSegments(html: string, segments: MathSegment[]): string {
+  let result = html;
+  for (const segment of segments) {
+    if (segment.type === "block") {
+      const block = `<div data-type="block-math" data-latex="${escapeHtml(segment.latex)}"></div>`;
+      result = result
+        .replaceAll(`<p>${segment.token}</p>`, block)
+        .replaceAll(segment.token, block);
+    } else {
+      const inline = `<span data-type="inline-math" data-latex="${escapeHtml(segment.latex)}"></span>`;
+      result = result.replaceAll(segment.token, inline);
+    }
+  }
+
+  return result;
+}
+
 type BlockType = "bullet" | "ordered" | "paragraph";
 
 function classifyLines(lines: string[]): BlockType {
@@ -46,7 +96,9 @@ function classifyLines(lines: string[]): BlockType {
 }
 
 export function plainTextToRichText(value: string): string {
-  const blocks = value
+  const { text, segments } = extractMathSegments(value);
+
+  const blocks = text
     .replaceAll("\r\n", "\n")
     .split(/\n\s*\n/g)
     .map((block) => block.trim())
@@ -56,7 +108,7 @@ export function plainTextToRichText(value: string): string {
     return "";
   }
 
-  return blocks
+  const html = blocks
     .map((block) => {
       const lines = block
         .split("\n")
@@ -82,4 +134,6 @@ export function plainTextToRichText(value: string): string {
       return `<p>${escapeHtml(lines.join(" "))}</p>`;
     })
     .join("");
+
+  return renderMathSegments(html, segments);
 }

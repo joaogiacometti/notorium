@@ -61,6 +61,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "katex/dist/katex.min.css";
 
 @custom-variant dark (&:is(.dark *, .halloween *, .catppuccin-mocha *));
 
@@ -868,4 +869,35 @@
   background-color: color-mix(in oklab, var(--primary) 12%, transparent);
   outline: 2px solid var(--primary);
   outline-offset: -2px;
+}
+
+/* KaTeX math: inherit theme text color (KaTeX uses currentColor) */
+.tiptap-content .katex,
+.tiptap-wrapper .tiptap .katex {
+  color: var(--foreground);
+}
+
+/* Block math renders centered with breathing room */
+.tiptap-content [data-type="block-math"],
+.tiptap-wrapper .tiptap [data-type="block-math"] {
+  display: block;
+  margin: 0.75rem 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+/* Editable equations (editor only) invite a click to open the LaTeX dialog */
+.tiptap-wrapper .tiptap .tiptap-mathematics-render--editable {
+  cursor: pointer;
+  border-radius: 0.25rem;
+}
+
+.tiptap-wrapper .tiptap .tiptap-mathematics-render--editable:hover {
+  background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+}
+
+/* Math that fails to parse shows its raw LaTeX in the danger color */
+.tiptap-content .block-math-error,
+.tiptap-wrapper .tiptap .block-math-error {
+  color: var(--destructive);
 }

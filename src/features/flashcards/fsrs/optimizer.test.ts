@@ -96,7 +96,9 @@ describe("optimizeFsrsParameters", () => {
             `card-${cardIndex}`,
             "good",
             new Date(
-              baseTime + cardIndex * 10 * 24 * 60 * 60 * 1000 + 3 * 24 * 60 * 60 * 1000,
+              baseTime +
+                cardIndex * 10 * 24 * 60 * 60 * 1000 +
+                3 * 24 * 60 * 60 * 1000,
             ),
             3,
           ),
@@ -105,7 +107,9 @@ describe("optimizeFsrsParameters", () => {
             `card-${cardIndex}`,
             "easy",
             new Date(
-              baseTime + cardIndex * 10 * 24 * 60 * 60 * 1000 + 8 * 24 * 60 * 60 * 1000,
+              baseTime +
+                cardIndex * 10 * 24 * 60 * 60 * 1000 +
+                8 * 24 * 60 * 60 * 1000,
             ),
             5,
           ),

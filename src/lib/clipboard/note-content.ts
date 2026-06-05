@@ -44,6 +44,11 @@ function sanitizeRichHtmlForClipboard(html: string): string {
 function getPlainTextFromHtml(html: string): string {
   const doc = new DOMParser().parseFromString(html, "text/html");
 
+  // Math nodes serialize as empty elements with the LaTeX in data-latex, so
+  // textContent would drop equations. Surface them as round-trippable $...$.
+  replaceMathNodesWithLatex(doc, "inline-math", "$");
+  replaceMathNodesWithLatex(doc, "block-math", "$$");
+
   doc.querySelectorAll("br").forEach((br) => {
     br.replaceWith(doc.createTextNode("\n"));
   });
@@ -58,4 +63,15 @@ function getPlainTextFromHtml(html: string): string {
     .map((line) => line.trim())
     .filter(Boolean)
     .join("\n");
+}
+
+function replaceMathNodesWithLatex(
+  doc: Document,
+  dataType: "inline-math" | "block-math",
+  delimiter: "$" | "$$",
+) {
+  doc.querySelectorAll(`[data-type="${dataType}"]`).forEach((element) => {
+    const latex = element.getAttribute("data-latex") ?? "";
+    element.replaceWith(doc.createTextNode(`${delimiter}${latex}${delimiter}`));
+  });
 }

@@ -12,6 +12,10 @@ import StarterKit from "@tiptap/starter-kit";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
+  type MathDialogState,
+  MathEditDialog,
+} from "@/components/shared/math-edit-dialog";
+import {
   createImageUrlPasteExtension,
   type EditorImageUploadContext,
   type EditorImageUploadTracker,
@@ -23,6 +27,7 @@ import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortc
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
+import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
 import { SlashCommands } from "@/lib/editor/tiptap-slash-commands";
 import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 import { cn } from "@/lib/utils";
@@ -58,6 +63,7 @@ export function TiptapEditor({
   const activeUploadsRef = useRef(0);
   const [resolvedValue, setResolvedValue] = useState(value);
   const [isImageUploadPending, setIsImageUploadPending] = useState(false);
+  const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null);
   const lastEmittedValueRef = useRef(value);
   const latestValueRef = useRef(value);
   onCtrlEnterRef.current = onCtrlEnter;
@@ -114,8 +120,20 @@ export function TiptapEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       ...buildTableExtensions(),
+      ...buildMathExtensions({
+        onClickMath: (target) =>
+          setMathDialog({
+            mode: "edit",
+            nodeType: target.type,
+            pos: target.pos,
+            latex: target.latex,
+          }),
+      }),
       Typography,
-      SlashCommands,
+      SlashCommands.configure({
+        onRequestBlockMath: (range) =>
+          setMathDialog({ mode: "insert-block", range }),
+      }),
       createImageUrlPasteExtension(
         imageUploadContext,
         () => activeUploadsRef.current > 0,
@@ -219,6 +237,11 @@ export function TiptapEditor({
           "tiptap-wrapper min-h-52 max-h-[52svh] overflow-y-auto",
           contentClassName,
         )}
+      />
+      <MathEditDialog
+        editor={editor}
+        state={mathDialog}
+        onClose={() => setMathDialog(null)}
       />
     </div>
   );

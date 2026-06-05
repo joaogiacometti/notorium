@@ -8,6 +8,9 @@ import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 const LANGUAGE_RULE =
   "Output language: English only. Regardless of the source material or card language, all generated text must be in English.";
 
+const MATH_RULE =
+  "Math notation: write mathematical expressions as LaTeX — $...$ for inline math (e.g. $E = mc^2$) and $$...$$ for a standalone block equation. Do not use \\( \\), \\[ \\], Unicode math symbols, or images. This LaTeX is the only exception to the plain-text rule.";
+
 export const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(LIMITS.flashcardAiBackMax),
 });
@@ -81,6 +84,7 @@ If the front is broad, ambiguous, or asks for too much, answer only the most cen
 Do not invent extra context beyond what is needed to answer the front.
 Prefer concrete wording over general wording.
 Do not use markdown fences.
+${MATH_RULE}
 
 Good retrieval patterns:
 Front: DNS acronym
@@ -162,6 +166,7 @@ Rules:
 - Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", "Key points:", or "Improved:".
 - Do not add filler, disclaimers, study tips, examples, caveats, or long explanations.
 - Do not invent facts not implied by the original back.
+- ${MATH_RULE}
 
 Subject context is allowed only as background context.
 
@@ -211,6 +216,7 @@ Rules:
 - Do not include extra context, examples, caveats, or details beyond the source material.
 - Avoid trivial or obvious information.
 - Output as many cards as the material warrants, but prefer fewer high-value cards over many weak cards.
+- ${MATH_RULE}
 
 Good patterns:
 Front: Functional dependency
