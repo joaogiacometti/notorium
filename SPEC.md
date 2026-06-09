@@ -69,6 +69,7 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete mindmaps per subject. Mindmaps are scoped to a subject, like notes, and appear in the subject's documents area.
 - Mindmap detail shows the subject's documents in the shared documents sidebar alongside the canvas, and edits a node-and-edge canvas centered on a distinct root node whose label stays in sync with the mindmap title (editing either updates the other). Users edit node labels (double-click), connect nodes with edges, drag nodes, and pan/zoom. Title and graph changes auto-save.
+- Canvas keyboard shortcuts (suppressed while typing in a field): `V` switches to select mode, `H` switches to pan mode, holding `Space` pans temporarily, and `Delete`/`Backspace` removes the selected node and its descendants.
 - Connections flow horizontally between the left and right sides of nodes. The map grows by branching: each selected node (root included) shows a "+" button on its left and right that adds a child on that side, and dragging a connection onto empty canvas also creates a new node linked to the source. There is no standalone "add node" button. A newly created node is selected and immediately in edit mode so the user can type right away.
 - Selecting a node shows a floating toolbar with bold, italic, a color picker, an image button, and delete. The image button uploads a picture that renders inside the node; a selected node with an image shows a remove control. Deleting a node also deletes its descendants so no children are orphaned. The root node is permanent and only offers the two add-child buttons.
 - Node images upload to the shared attachment storage under the `mindmaps` context; removing an image or deleting a node/mindmap cleans up the orphaned blob.
@@ -130,8 +131,8 @@ Students who want a private, lightweight study management workspace.
 - Users can reset FSRS optimization from the Account page to restore default scheduler tuning without deleting review history or flashcard progress.
 - Users can enable automatic FSRS optimization from the Account page when workflows are configured; automatic optimization runs on a fixed 30-day cadence and does not rewrite existing card due dates.
 - Keyboard shortcuts on the review screen:
-  - `Enter` reveals the back when hidden.
-  - `Enter` grades `Good` after the back is shown.
+  - `Enter` or `Space` reveals the back when hidden.
+  - `Enter` or `Space` grades `Good` after the back is shown.
   - `e` opens edit flashcard.
   - `d` opens delete flashcard confirmation.
   - `r` opens reset review progress confirmation for the current card.
@@ -198,6 +199,13 @@ Students who want a private, lightweight study management workspace.
 - Search results are cached on the client and invalidated after related mutations.
 - Search result text matching the query is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
 - Empty queries show unfiltered data without highlighting.
+
+### Keyboard Shortcuts Help
+
+- Pressing `?` outside an editable field opens a keyboard shortcuts dialog.
+- The dialog lists every shortcut grouped by where it applies: Global, Notes editor, Mindmap, and Flashcard review.
+- Groups whose shortcuts are usable on the current page are highlighted at the group level (accented card and header with a "This page" badge); individual rows keep uniform styling. Global is always highlighted.
+- It includes typed triggers alongside key chords: `/table` and `/math` slash commands, inline `$...$` math, and pasted `$$...$$` block math.
 
 ### Account
 
