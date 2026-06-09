@@ -39,15 +39,22 @@ Students who want a private, lightweight study management workspace.
 - Subjects table shows subject title, notes count, and compact row actions. It does not show status, created, or updated columns.
 - Subject fields: name.
 
-### Notes
+### Documents
+
+- Each subject has a Documents area that holds both notes and mindmaps together.
+- The documents sidebar lists notes and mindmaps in one list ordered by most recent update, with a leading icon per item that distinguishes notes from mindmaps.
+- A single "Create" action offers "Note" or "Mindmap"; each prompts for a title and opens the new item.
+- Subject detail previews the 3 most recently updated documents (notes and mindmaps), with row links to each item, the "Create" action, and compact row action menus (edit title for notes, delete for both).
+- The full documents list shows a simple center indicator until a document is selected.
+- There is no standalone top-level mindmaps route; mindmaps live only inside their subject.
+
+#### Notes
 
 - Create, read, update, and delete notes per subject.
 - Notes use rich text editing and rendering.
 - Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, tables, LaTeX math, and other shared editor formatting exposed by the app.
 - Math renders with KaTeX in both editing and reading. Inline math is typed as `$...$`; the `/math` slash command inserts a block equation. Equations are editable by clicking them, and their LaTeX stays searchable.
-- Subject detail shows the 3 most recently updated notes with content previews, row links to note detail, title-only note creation, and compact row action menus for title edits and deletes.
-- The full subject notes list keeps the same-subject note sidebar and shows a simple center indicator until a note is selected.
-- Note detail shows same-subject notes in a sidebar, supports title-only sidebar note creation, exposes compact row action menus for title edits and deletes of same-subject notes, and edits the active note inline with auto-save.
+- Note detail shows the subject's documents in the shared documents sidebar, exposes compact row action menus for title edits (notes) and deletes (notes and mindmaps), and edits the active note inline with auto-save.
 - Note detail supports copying note content as rich text or plain text.
 - Note content renders images from:
   - pasted direct image URLs
@@ -56,6 +63,19 @@ Students who want a private, lightweight study management workspace.
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
 - When AI is configured, users can generate flashcards from a note into a selected deck.
 - Generated note flashcards are reviewed before creation.
+
+#### Mindmaps
+
+- Create, read, update, and delete mindmaps per subject. Mindmaps are scoped to a subject, like notes, and appear in the subject's documents area.
+- Mindmap detail shows the subject's documents in the shared documents sidebar alongside the canvas, and edits a node-and-edge canvas centered on a distinct root node whose label stays in sync with the mindmap title (editing either updates the other). Users edit node labels (double-click), connect nodes with edges, drag nodes, and pan/zoom. Title and graph changes auto-save.
+- Connections flow horizontally between the left and right sides of nodes. The map grows by branching: each selected node (root included) shows a "+" button on its left and right that adds a child on that side, and dragging a connection onto empty canvas also creates a new node linked to the source. There is no standalone "add node" button. A newly created node is selected and immediately in edit mode so the user can type right away.
+- Selecting a node shows a floating toolbar with bold, italic, a color picker, an image button, and delete. The image button uploads a picture that renders inside the node; a selected node with an image shows a remove control. Deleting a node also deletes its descendants so no children are orphaned. The root node is permanent and only offers the two add-child buttons.
+- Node images upload to the shared attachment storage under the `mindmaps` context; removing an image or deleting a node/mindmap cleans up the orphaned blob.
+- Selecting a connection shows an on-edge toolbar with arrowhead options (none, at the source node, at the target node, or both ends). Double-clicking a connection edits its label inline. Connections cannot be deleted, to avoid orphaning nodes.
+- Connections can be moved: drag either endpoint onto another node to re-attach it, or drag the connection's midpoint to bend the curve. The bend persists.
+- Adding a child onto an already-occupied position stacks the new node below the existing one instead of overlapping.
+- Undo and redo are available with Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z for adds, moves, deletes, styling, reconnection, and bending.
+- Nodes and edges are stored as a JSON graph, including per-node color, bold, italic, and root kind, plus per-edge source/target handles, label, direction, and curve offset. The canvas recolors with the active theme.
 
 ### Flashcards
 
@@ -216,6 +236,8 @@ Students who want a private, lightweight study management workspace.
 
 - A user can create a maximum of 50 subjects.
 - A user can create a maximum of 100 notes per subject.
+- A user can create a maximum of 100 mindmaps per subject.
+- A mindmap can have a maximum of 200 nodes.
 - A user can create a maximum of 50 assessments per subject.
 - A user can create a maximum of 2000 flashcards per deck.
 - A user can create a maximum of 200 decks.
@@ -223,7 +245,7 @@ Students who want a private, lightweight study management workspace.
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.
-- A user can only access or mutate their own subjects, notes, flashcards, attendance records, and assessments.
+- A user can only access or mutate their own subjects, notes, mindmaps, flashcards, attendance records, and assessments.
 - Account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
@@ -244,6 +266,8 @@ Students who want a private, lightweight study management workspace.
   - `id`, `flashcardId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`
+- `mindmap`
+  - `id`, `title`, `data` (JSON graph of nodes and edges), timestamps, `userId`
 - `attendance_miss`
   - `id`, `missDate`, `subjectId`, timestamps, `userId`
 - `assessment`

@@ -106,6 +106,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} subjects.`,
   "limits.noteLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} notes per subject.`,
+  "limits.mindmapLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} mindmaps per subject.`,
   "limits.attachmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} attachments per item.`,
   "limits.assessmentAttachmentLimit": (params) =>
@@ -129,6 +131,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "limits.aiValidationPerDay": "Daily limit reached for AI validation.",
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
+  "mindmaps.invalidData": "Invalid mindmap data.",
+  "mindmaps.notFound": "Mindmap not found.",
   "subjects.invalidData": "Invalid subject data.",
   "subjects.notFound": "Subject not found.",
 };

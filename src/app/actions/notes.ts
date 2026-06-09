@@ -47,7 +47,7 @@ export async function createNote(
 
   if (result.success) {
     revalidatePath(`/subjects/${result.subjectId}`);
-    revalidatePath(`/subjects/${result.subjectId}/notes/${result.noteId}`);
+    revalidatePath(`/subjects/${result.subjectId}/documents`);
   }
 
   return result;
@@ -63,7 +63,8 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
 
   if (result.success) {
     revalidatePath(`/subjects/${result.subjectId}`);
-    revalidatePath(`/subjects/${result.subjectId}/notes/${data.id}`);
+    revalidatePath(`/subjects/${result.subjectId}/documents`);
+    revalidatePath(`/subjects/${result.subjectId}/documents/notes/${data.id}`);
   }
 
   return result;
@@ -81,6 +82,7 @@ export async function deleteNote(
 
   if (result.success) {
     revalidatePath(`/subjects/${result.subjectId}`);
+    revalidatePath(`/subjects/${result.subjectId}/documents`);
   }
 
   return result;

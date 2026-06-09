@@ -212,6 +212,39 @@ export const note = pgTable(
   ],
 );
 
+export const mindmap = pgTable(
+  "mindmap",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    title: text("title").notNull(),
+    // JSON-serialized { nodes, edges } graph. Stored as text to mirror
+    // note.content; always parsed/validated with Zod, never trusted raw.
+    data: text("data"),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("mindmap_subjectId_idx").on(table.subjectId),
+    index("mindmap_userId_idx").on(table.userId),
+    index("mindmap_userId_updatedAt_idx").on(table.userId, table.updatedAt),
+    index("mindmap_title_trgm_idx").using(
+      "gin",
+      table.title.op("gin_trgm_ops"),
+    ),
+  ],
+);
+
 export const assessmentTypeEnum = pgEnum("assessment_type", [
   "exam",
   "assignment",
@@ -516,6 +549,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   subjects: many(subject),
   notes: many(note),
+  mindmaps: many(mindmap),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
   assessmentAttachments: many(assessmentAttachment),
@@ -545,6 +579,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
     references: [user.id],
   }),
   notes: many(note),
+  mindmaps: many(mindmap),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
 }));
@@ -567,6 +602,17 @@ export const noteRelations = relations(note, ({ one }) => ({
   }),
   user: one(user, {
     fields: [note.userId],
+    references: [user.id],
+  }),
+}));
+
+export const mindmapRelations = relations(mindmap, ({ one }) => ({
+  subject: one(subject, {
+    fields: [mindmap.subjectId],
+    references: [subject.id],
+  }),
+  user: one(user, {
+    fields: [mindmap.userId],
     references: [user.id],
   }),
 }));

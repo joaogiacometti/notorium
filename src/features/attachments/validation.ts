@@ -45,7 +45,7 @@ export const uploadEditorImageSchema = z.object({
   fileName: z.string().trim().min(1).max(255),
   mimeType: z.string().trim().min(1).refine(isSupportedAttachmentImageMimeType),
   dataBase64: z.string().trim().min(1),
-  context: z.enum(["notes", "flashcards"]),
+  context: z.enum(["notes", "flashcards", "mindmaps"]),
 });
 
 export type UploadEditorImageForm = z.infer<typeof uploadEditorImageSchema>;

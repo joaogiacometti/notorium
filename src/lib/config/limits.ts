@@ -1,6 +1,12 @@
 export const LIMITS = {
   maxSubjects: 50,
   maxNotesPerSubject: 100,
+  maxMindmapsPerSubject: 100,
+  maxNodesPerMindmap: 200,
+  maxAttachmentsPerMindmap: 50,
+  mindmapTitleMax: 200,
+  mindmapEdgeLabelMax: 100,
+  mindmapDataMaxBytes: 200000,
   maxAttachmentsPerNote: 20,
   maxAttachmentsPerFlashcard: 10,
   maxAttachmentsPerAssessment: 10,

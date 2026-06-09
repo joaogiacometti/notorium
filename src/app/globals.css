@@ -901,3 +901,9 @@
 .tiptap-wrapper .tiptap .block-math-error {
   color: var(--destructive);
 }
+
+/* Connection menus live in React Flow's edge-label layer, which sits below the
+   nodes layer by default; raise it so the on-edge toolbar paints over nodes. */
+.mindmap-canvas .react-flow__edgelabel-renderer {
+  z-index: 1001;
+}

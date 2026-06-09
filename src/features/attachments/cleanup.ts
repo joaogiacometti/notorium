@@ -9,7 +9,12 @@ import {
   type MediaStorageProvider,
 } from "@/lib/media-storage/provider";
 
-const ATTACHMENT_ACCOUNT_CONTEXTS = ["notes", "flashcards", "assessments"];
+const ATTACHMENT_ACCOUNT_CONTEXTS = [
+  "notes",
+  "flashcards",
+  "assessments",
+  "mindmaps",
+];
 
 async function deleteProviderPathnames(
   provider: MediaStorageProvider,

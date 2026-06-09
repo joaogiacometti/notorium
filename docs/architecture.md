@@ -36,6 +36,8 @@ Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* serv
 - `src/features/` owns product read/write logic, validation, mapping, constants, and feature-local types.
 - Dense algorithms may live in feature subfolders, such as `src/features/flashcards/fsrs/`.
 - Planning-specific URL and view helpers live in `src/features/planning/`.
+- Notes and mindmaps are both subject-scoped and surfaced together in a subject's "Documents" area under `src/app/(app)/subjects/[id]/documents/` (`documents/` list, `documents/notes/[noteId]/`, `documents/mindmaps/[mindmapId]/`). `src/features/documents/` is a thin read layer that merges `src/features/notes` and `src/features/mindmaps` results into one recency-ordered list (`DocumentListItem`) for the shared `src/components/documents/` sidebar and previews.
+- Mindmaps (`src/features/mindmaps/`) are scoped by `userId` and `subjectId` (mirroring notes). The free-form canvas uses React Flow (`@xyflow/react`), loaded client-side, and persists its node/edge graph as JSON in the `mindmap.data` column.
 - `src/db/` owns the Drizzle schema, relations, and database client.
 - `src/lib/` owns cross-cutting project helpers and wrappers for external services.
 - `src/env.ts` owns runtime environment validation.

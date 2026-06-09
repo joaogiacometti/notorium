@@ -7,6 +7,7 @@ import type {
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
+  mindmap,
   note,
   subject,
 } from "@/db/schema";
@@ -15,6 +16,13 @@ import type { AppTheme } from "@/lib/theme";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
+export type MindmapEntity = InferSelectModel<typeof mindmap>;
+export type MindmapListItem = Pick<
+  MindmapEntity,
+  "id" | "title" | "updatedAt"
+> & {
+  nodeCount: number;
+};
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
 export type AssessmentAttachmentEntity = InferSelectModel<

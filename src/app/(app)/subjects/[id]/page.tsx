@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { SubjectDetail } from "@/components/subjects/subject-detail";
 import { getAssessmentsBySubjectForUser } from "@/features/assessments/queries";
 import { getMissesBySubjectForUser } from "@/features/attendance/queries";
-import { getNotesBySubjectForUser } from "@/features/notes/queries";
+import { getSubjectDocumentsForUser } from "@/features/documents/queries";
 import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 
@@ -16,9 +16,9 @@ export default async function SubjectPage({
   const session = await requireSession();
 
   const { id } = await params;
-  const [subject, notes, misses, assessments] = await Promise.all([
+  const [subject, documents, misses, assessments] = await Promise.all([
     getActiveSubjectByIdForUser(session.user.id, id),
-    getNotesBySubjectForUser(session.user.id, id),
+    getSubjectDocumentsForUser(session.user.id, id),
     getMissesBySubjectForUser(session.user.id, id),
     getAssessmentsBySubjectForUser(session.user.id, id),
   ]);
@@ -31,7 +31,7 @@ export default async function SubjectPage({
     <main>
       <SubjectDetail
         subject={subject}
-        notes={notes}
+        documents={documents}
         misses={misses}
         assessments={assessments}
       />

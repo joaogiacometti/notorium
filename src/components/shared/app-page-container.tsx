@@ -4,13 +4,14 @@ import { cn } from "@/lib/utils";
 interface AppPageContainerProps {
   children: ReactNode;
   className?: string;
-  maxWidth?: "3xl" | "4xl" | "5xl";
+  maxWidth?: "3xl" | "4xl" | "5xl" | "7xl";
 }
 
 const maxWidthStyles = {
   "3xl": "max-w-3xl",
   "4xl": "max-w-4xl",
   "5xl": "max-w-5xl",
+  "7xl": "max-w-7xl",
 } as const;
 
 export function AppPageContainer({

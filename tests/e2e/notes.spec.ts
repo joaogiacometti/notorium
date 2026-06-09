@@ -29,7 +29,8 @@ function getUniqueDeckName(testTitle: string) {
 }
 
 async function createNoteFromDialog(page: Page, title: string) {
-  await page.locator("#btn-create-note").click();
+  await page.getByRole("button", { name: "Create document" }).click();
+  await page.getByRole("menuitem", { name: "Note" }).click();
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
   await createDialog.getByRole("button", { name: "Create Note" }).click();
@@ -60,7 +61,8 @@ async function openNoteActions(page: Page) {
 }
 
 async function createSidebarNote(page: Page, title: string) {
-  await page.getByRole("button", { name: "Create note", exact: true }).click();
+  await page.getByRole("button", { name: "Create document" }).click();
+  await page.getByRole("menuitem", { name: "Note" }).click();
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
   await createDialog.getByRole("button", { name: "Create Note" }).click();
@@ -82,7 +84,7 @@ test("can create and open a note", async ({ page, e2eUser }) => {
 
     await createNoteFromDialog(page, noteTitle);
 
-    await expect(page).toHaveURL(/\/subjects\/.+\/notes\/.+$/);
+    await expect(page).toHaveURL(/\/subjects\/.+\/documents\/notes\/.+$/);
     await expect(page.locator("#form-edit-note-title")).toHaveValue(noteTitle);
     await page.locator("#form-edit-note-content").click();
     await page.keyboard.type(noteContent);
@@ -162,7 +164,7 @@ test("can create a title-only note from detail sidebar", async ({
     await openNoteDetailByTitle(page, initialTitle);
     await createSidebarNote(page, newTitle);
 
-    await expect(page).toHaveURL(/\/subjects\/.+\/notes\/.+$/);
+    await expect(page).toHaveURL(/\/subjects\/.+\/documents\/notes\/.+$/);
     await expect(page.locator("#form-edit-note-content")).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -195,9 +197,9 @@ test("can delete a note", async ({ page, e2eUser }) => {
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
 
     await expect(deleteDialog).toHaveCount(0);
-    await expect(page).toHaveURL(/\/subjects\/.+\/notes$/);
+    await expect(page).toHaveURL(/\/subjects\/.+\/documents$/);
     await expect(
-      page.getByRole("heading", { name: "Select a note", exact: true }),
+      page.getByRole("heading", { name: "Select a document", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: `Open ${noteTitle}`, exact: true }),

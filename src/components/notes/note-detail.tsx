@@ -15,10 +15,9 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editNote } from "@/app/actions/notes";
+import { DocumentsNav } from "@/components/documents/documents-nav";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
-import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
 import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
-import { NoteSidebar } from "@/components/notes/note-sidebar";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { Button } from "@/components/ui/button";
@@ -31,12 +30,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import type { DocumentListItem } from "@/features/documents/types";
 import { type EditNoteForm, editNoteSchema } from "@/features/notes/validation";
 import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { getSubjectDocumentsHref } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
@@ -47,7 +48,7 @@ interface NoteDetailProps {
   backLabel: string;
   decks: DeckOption[];
   note: NoteEntity;
-  subjectNotes: NoteEntity[];
+  documents: DocumentListItem[];
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -70,17 +71,12 @@ export function NoteDetail({
   backLabel,
   decks,
   note,
-  subjectNotes,
+  documents,
 }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [sidebarDeleteTarget, setSidebarDeleteTarget] =
-    useState<NoteEntity | null>(null);
-  const [sidebarEditTarget, setSidebarEditTarget] = useState<NoteEntity | null>(
-    null,
-  );
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
@@ -209,27 +205,15 @@ export function NoteDetail({
     }
   }
 
-  function handleSidebarEditRequested(targetNote: NoteEntity) {
-    if (targetNote.id === note.id) {
-      titleInputRef.current?.focus();
-      return;
-    }
-
-    setSidebarEditTarget(targetNote);
-  }
-
-  function handleSidebarDeleteRequested(targetNote: NoteEntity) {
-    if (targetNote.id === note.id) {
-      setDeleteOpen(true);
-      return;
-    }
-
-    setSidebarDeleteTarget(targetNote);
-  }
+  const sidebarDocuments = documents.map((item) =>
+    item.kind === "note" && item.id === note.id
+      ? { ...item, title: watchedTitle || item.title }
+      : item,
+  );
 
   return (
     <AppPageContainer
-      maxWidth="5xl"
+      maxWidth="7xl"
       className="lg:flex lg:h-[calc(100svh-4rem)] lg:flex-col lg:overflow-hidden lg:pb-6"
     >
       <div className="mb-4 shrink-0">
@@ -246,21 +230,18 @@ export function NoteDetail({
           </Link>
         </Button>
       </div>
-      <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[17rem_minmax(0,1fr)]">
-        <NoteSidebar
-          activeNoteId={note.id}
-          notes={subjectNotes.map((subjectNote) =>
-            subjectNote.id === note.id
-              ? { ...subjectNote, title: watchedTitle || subjectNote.title }
-              : subjectNote,
-          )}
+      <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[14rem_minmax(0,1fr)]">
+        <DocumentsNav
           subjectId={note.subjectId}
-          onNoteNavigate={(href, event) => {
+          documents={sidebarDocuments}
+          activeId={note.id}
+          activeKind="note"
+          onNavigate={(href, event) => {
             event.preventDefault();
             void saveBeforeNavigation(href);
           }}
-          onEditRequested={handleSidebarEditRequested}
-          onDeleteRequested={handleSidebarDeleteRequested}
+          onEditActive={() => titleInputRef.current?.focus()}
+          onDeleteActive={() => setDeleteOpen(true)}
         />
 
         <form className="min-w-0 space-y-4 lg:flex lg:min-h-0 lg:flex-col lg:space-y-4">
@@ -386,41 +367,10 @@ export function NoteDetail({
         onSuccess={() => {
           setDeleteOpen(false);
           startNavTransition(() =>
-            router.push(`/subjects/${note.subjectId}/notes`),
+            router.push(getSubjectDocumentsHref(note.subjectId)),
           );
         }}
       />
-      {sidebarEditTarget ? (
-        <EditNoteTitleDialog
-          note={sidebarEditTarget}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setSidebarEditTarget(null);
-            }
-          }}
-          onSuccess={() => {
-            setSidebarEditTarget(null);
-            router.refresh();
-          }}
-        />
-      ) : null}
-      {sidebarDeleteTarget ? (
-        <DeleteNoteDialog
-          noteId={sidebarDeleteTarget.id}
-          noteTitle={sidebarDeleteTarget.title}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setSidebarDeleteTarget(null);
-            }
-          }}
-          onSuccess={() => {
-            setSidebarDeleteTarget(null);
-            router.refresh();
-          }}
-        />
-      ) : null}
       {aiEnabled ? (
         <GenerateNoteFlashcardsDialog
           decks={decks}

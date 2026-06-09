@@ -9,24 +9,24 @@ import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { SubjectDetailContent } from "@/components/subjects/subject-detail-content";
 import { Button } from "@/components/ui/button";
+import type { DocumentListItem } from "@/features/documents/types";
 import { formatRelativeTime } from "@/lib/dates/format";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
-  NoteEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 
 interface SubjectDetailProps {
   subject: SubjectEntity;
-  notes: NoteEntity[];
+  documents: DocumentListItem[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
 }
 
 export function SubjectDetail({
   subject,
-  notes,
+  documents,
   misses,
   assessments,
 }: Readonly<SubjectDetailProps>) {
@@ -81,7 +81,7 @@ export function SubjectDetail({
     >
       <SubjectDetailContent
         subject={subject}
-        notes={notes}
+        documents={documents}
         misses={misses}
         assessments={assessments}
       />

@@ -94,7 +94,6 @@ export function MathEditDialog({
             placeholder={isBlock ? "\\int_0^1 x^2 \\, dx" : "E = mc^2"}
             aria-label="LaTeX"
             className="font-mono text-sm"
-            // biome-ignore lint/a11y/noAutofocus: dialog opens for immediate editing
             autoFocus
             rows={isBlock ? 4 : 2}
             onKeyDown={(event) => {

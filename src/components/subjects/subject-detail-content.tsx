@@ -1,17 +1,17 @@
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
-import { NotesList } from "@/components/notes/notes-list";
+import { DocumentsList } from "@/components/documents/documents-list";
 import { SubjectAssessmentsSummary } from "@/components/subjects/subject-assessments-summary";
 import { Separator } from "@/components/ui/separator";
+import type { DocumentListItem } from "@/features/documents/types";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
-  NoteEntity,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 
 interface SubjectDetailContentProps {
   subject: SubjectEntity;
-  notes: NoteEntity[];
+  documents: DocumentListItem[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
   showAssessmentActions?: boolean;
@@ -21,11 +21,11 @@ interface SubjectDetailContentProps {
  * Renders the read-only subject detail body without edit, archive, or delete dialogs.
  *
  * @example
- * <SubjectDetailContent subject={subject} notes={notes} misses={misses} assessments={assessments} />
+ * <SubjectDetailContent subject={subject} documents={documents} misses={misses} assessments={assessments} />
  */
 export function SubjectDetailContent({
   subject,
-  notes,
+  documents,
   misses,
   assessments,
   showAssessmentActions = true,
@@ -47,7 +47,7 @@ export function SubjectDetailContent({
       />
 
       <Separator className="my-8" />
-      <NotesList subjectId={subject.id} notes={notes} />
+      <DocumentsList subjectId={subject.id} documents={documents} />
     </>
   );
 }

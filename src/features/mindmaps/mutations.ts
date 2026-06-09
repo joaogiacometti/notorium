@@ -1,0 +1,138 @@
+import { and, eq } from "drizzle-orm";
+import { getDb } from "@/db/index";
+import { mindmap } from "@/db/schema";
+import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
+import {
+  countMindmapsBySubjectForUser,
+  getMindmapByIdForUser,
+} from "@/features/mindmaps/queries";
+import {
+  getMindmapImagePathnames,
+  getRemovedMindmapImagePathnames,
+} from "@/features/mindmaps/utils";
+import type {
+  CreateMindmapForm,
+  DeleteMindmapForm,
+  EditMindmapForm,
+  EditMindmapTitleForm,
+} from "@/features/mindmaps/validation";
+import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { LIMITS } from "@/lib/config/limits";
+import {
+  type ActionErrorResult,
+  actionError,
+} from "@/lib/server/server-action-errors";
+
+export type CreateMindmapMutationResult =
+  | {
+      success: true;
+      mindmapId: string;
+      subjectId: string;
+    }
+  | ActionErrorResult;
+
+export type MindmapMutationResult =
+  | {
+      success: true;
+      mindmapId: string;
+      subjectId: string;
+    }
+  | ActionErrorResult;
+
+export async function createMindmapForUser(
+  userId: string,
+  data: CreateMindmapForm,
+): Promise<CreateMindmapMutationResult> {
+  const existingSubject = await getActiveSubjectRecordForUser(
+    userId,
+    data.subjectId,
+  );
+  const current = await countMindmapsBySubjectForUser(userId, data.subjectId);
+
+  if (!existingSubject) {
+    return actionError("subjects.notFound");
+  }
+
+  if (current >= LIMITS.maxMindmapsPerSubject) {
+    return actionError("limits.mindmapLimit", {
+      errorParams: { max: LIMITS.maxMindmapsPerSubject },
+    });
+  }
+
+  const mindmapId = crypto.randomUUID();
+
+  await getDb().insert(mindmap).values({
+    id: mindmapId,
+    title: data.title,
+    data: null,
+    subjectId: data.subjectId,
+    userId,
+  });
+
+  return { success: true, mindmapId, subjectId: data.subjectId };
+}
+
+export async function editMindmapForUser(
+  userId: string,
+  data: EditMindmapForm,
+): Promise<MindmapMutationResult> {
+  const existing = await getMindmapByIdForUser(userId, data.id);
+
+  if (!existing) {
+    return actionError("mindmaps.notFound");
+  }
+
+  await getDb()
+    .update(mindmap)
+    .set({ title: data.title, data: data.data })
+    .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
+
+  // Remove blobs for node images dropped in this edit.
+  await cleanupAttachmentPathnames(
+    userId,
+    getRemovedMindmapImagePathnames(existing.data, data.data),
+  );
+
+  return { success: true, mindmapId: data.id, subjectId: existing.subjectId };
+}
+
+export async function editMindmapTitleForUser(
+  userId: string,
+  data: EditMindmapTitleForm,
+): Promise<MindmapMutationResult> {
+  const existing = await getMindmapByIdForUser(userId, data.id);
+
+  if (!existing) {
+    return actionError("mindmaps.notFound");
+  }
+
+  await getDb()
+    .update(mindmap)
+    .set({ title: data.title })
+    .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
+
+  return { success: true, mindmapId: data.id, subjectId: existing.subjectId };
+}
+
+export async function deleteMindmapForUser(
+  userId: string,
+  data: DeleteMindmapForm,
+): Promise<MindmapMutationResult> {
+  const existing = await getMindmapByIdForUser(userId, data.id);
+
+  if (!existing) {
+    return actionError("mindmaps.notFound");
+  }
+
+  await getDb()
+    .delete(mindmap)
+    .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
+
+  // Remove blobs for any node images the deleted mindmap referenced.
+  await cleanupAttachmentPathnames(
+    userId,
+    getMindmapImagePathnames(existing.data),
+  );
+
+  return { success: true, mindmapId: data.id, subjectId: existing.subjectId };
+}

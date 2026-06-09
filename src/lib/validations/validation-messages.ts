@@ -71,6 +71,12 @@ const VALIDATION_MESSAGES: Record<string, string> = {
     "Content can include at most {max} attachments.",
   "Validation.notes.titleMaxLength": "Title must be at most 200 characters.",
   "Validation.notes.titleRequired": "Title is required.",
+  "Validation.mindmaps.titleRequired": "Title is required.",
+  "Validation.mindmaps.titleMaxLength": "Title must be at most 200 characters.",
+  "Validation.mindmaps.dataTooLarge": "This mindmap is too large to save.",
+  "Validation.mindmaps.tooManyNodes": "A mindmap can have at most {max} nodes.",
+  "Validation.mindmaps.attachmentLimit":
+    "A mindmap can include at most {max} images.",
   "Validation.search.queryMaxLength":
     "Search query must be at most 200 characters.",
   "Validation.subjects.nameMaxLength": "Name must be at most 100 characters.",

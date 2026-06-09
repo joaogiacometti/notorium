@@ -3,6 +3,7 @@ export const ATTACHMENT_CONTEXT_VALUES = [
   "notes",
   "flashcards",
   "assessments",
+  "mindmaps",
 ] as const;
 const ATTACHMENT_CONTEXTS = new Set<string>(ATTACHMENT_CONTEXT_VALUES);
 

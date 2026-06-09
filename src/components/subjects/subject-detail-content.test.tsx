@@ -31,9 +31,9 @@ vi.mock("@/components/attendance/attendance-summary", () => ({
   ),
 }));
 
-vi.mock("@/components/notes/notes-list", () => ({
-  NotesList: ({ subjectId }: { subjectId: string }) => (
-    <section data-testid="notes-list">{subjectId}</section>
+vi.mock("@/components/documents/documents-list", () => ({
+  DocumentsList: ({ subjectId }: { subjectId: string }) => (
+    <section data-testid="documents-list">{subjectId}</section>
   ),
 }));
 
@@ -92,7 +92,7 @@ describe("SubjectDetailContent", () => {
       root.render(
         <SubjectDetailContent
           subject={createSubject()}
-          notes={[]}
+          documents={[]}
           misses={[]}
           assessments={[createAssessment()]}
         />,
@@ -104,7 +104,9 @@ describe("SubjectDetailContent", () => {
     expect(
       container.querySelector('[data-testid="attendance-summary"]'),
     ).toBeTruthy();
-    expect(container.querySelector('[data-testid="notes-list"]')).toBeTruthy();
+    expect(
+      container.querySelector('[data-testid="documents-list"]'),
+    ).toBeTruthy();
   });
 
   it("can render without online assessment actions", async () => {
@@ -112,7 +114,7 @@ describe("SubjectDetailContent", () => {
       root.render(
         <SubjectDetailContent
           subject={createSubject()}
-          notes={[]}
+          documents={[]}
           misses={[]}
           assessments={[]}
           showAssessmentActions={false}

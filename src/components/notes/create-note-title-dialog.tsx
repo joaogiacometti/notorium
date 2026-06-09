@@ -31,7 +31,7 @@ import { t } from "@/lib/server/server-action-errors";
 
 interface CreateNoteTitleDialogProps {
   subjectId: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (noteId: string) => void;
@@ -93,7 +93,7 @@ export function CreateNoteTitleDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Create Note</DialogTitle>

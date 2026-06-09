@@ -106,8 +106,26 @@ export function getFlashcardDetailHref(
   });
 }
 
+export function getSubjectDocumentsHref(subjectId: string) {
+  return `/subjects/${subjectId}/documents`;
+}
+
 export function getNoteDetailHref(subjectId: string, noteId: string) {
-  return `/subjects/${subjectId}/notes/${noteId}`;
+  return `/subjects/${subjectId}/documents/notes/${noteId}`;
+}
+
+export function getMindmapDetailHref(subjectId: string, mindmapId: string) {
+  return `/subjects/${subjectId}/documents/mindmaps/${mindmapId}`;
+}
+
+export function getDocumentDetailHref(item: {
+  kind: "note" | "mindmap";
+  subjectId: string;
+  id: string;
+}) {
+  return item.kind === "note"
+    ? getNoteDetailHref(item.subjectId, item.id)
+    : getMindmapDetailHref(item.subjectId, item.id);
 }
 
 export function getAssessmentDetailHref(

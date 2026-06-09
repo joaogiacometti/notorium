@@ -4,6 +4,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteDetail } from "@/components/notes/note-detail";
+import type { DocumentListItem } from "@/features/documents/types";
 import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
 
 const {
@@ -79,6 +80,15 @@ vi.mock("@/components/notes/generate-note-flashcards-dialog", () => ({
     open ? <div data-testid="generate-note-flashcards-dialog" /> : null,
 }));
 
+vi.mock("@/components/mindmaps/create-mindmap-dialog", () => ({
+  CreateMindmapDialog: () => null,
+}));
+
+vi.mock("@/components/mindmaps/delete-mindmap-dialog", () => ({
+  DeleteMindmapDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="delete-mindmap-dialog" /> : null,
+}));
+
 vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
   LazyTiptapEditor: ({
     value,
@@ -106,14 +116,21 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
     children,
     disabled,
     onClick,
+    onSelect,
     title,
   }: {
     children: ReactNode;
     disabled?: boolean;
-    onClick: () => void;
+    onClick?: () => void;
+    onSelect?: () => void;
     title?: string;
   }) => (
-    <button type="button" onClick={onClick} disabled={disabled} title={title}>
+    <button
+      type="button"
+      onClick={onClick ?? onSelect}
+      disabled={disabled}
+      title={title}
+    >
       {children}
     </button>
   ),
@@ -151,6 +168,23 @@ const otherNote: NoteEntity = {
   updatedAt: new Date("2026-04-21T10:00:00.000Z"),
 };
 
+const documents: DocumentListItem[] = [
+  {
+    id: note.id,
+    title: note.title,
+    updatedAt: note.updatedAt,
+    kind: "note",
+    subjectId: note.subjectId,
+  },
+  {
+    id: otherNote.id,
+    title: otherNote.title,
+    updatedAt: otherNote.updatedAt,
+    kind: "note",
+    subjectId: otherNote.subjectId,
+  },
+];
+
 const deck: DeckOption = {
   id: "deck-1",
   userId: "user-1",
@@ -177,7 +211,7 @@ function renderNoteDetail(
         backLabel="Back to Subject"
         decks={[deck]}
         note={note}
-        subjectNotes={[note, otherNote]}
+        documents={documents}
         {...props}
       />
     </QueryClientProvider>,
@@ -322,10 +356,12 @@ describe("NoteDetail", () => {
       renderNoteDetail(root);
     });
 
+    const createNoteItem = Array.from(
+      container.querySelectorAll("button"),
+    ).find((button) => button.textContent?.trim() === "Note");
+
     await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>('button[aria-label="Create note"]')
-        ?.click();
+      createNoteItem?.click();
     });
 
     const titleInput = document.querySelector<HTMLInputElement>(
@@ -350,7 +386,9 @@ describe("NoteDetail", () => {
       title: "Lab review",
       content: "",
     });
-    expect(pushMock).toHaveBeenCalledWith("/subjects/subject-1/notes/note-3");
+    expect(pushMock).toHaveBeenCalledWith(
+      "/subjects/subject-1/documents/notes/note-3",
+    );
   });
 
   it("autosaves title and content edits", async () => {
@@ -398,7 +436,6 @@ describe("NoteDetail", () => {
     await act(async () => {
       renderNoteDetail(root, {
         note: savedEchoNote,
-        subjectNotes: [savedEchoNote, otherNote],
       });
     });
 
@@ -417,7 +454,7 @@ describe("NoteDetail", () => {
     await act(async () => {
       container
         .querySelector<HTMLAnchorElement>(
-          'a[href="/subjects/subject-1/notes/note-2"]',
+          'a[href="/subjects/subject-1/documents/notes/note-2"]',
         )
         ?.click();
       await Promise.resolve();
@@ -428,7 +465,9 @@ describe("NoteDetail", () => {
       title: "Navigation save",
       content: note.content,
     });
-    expect(pushMock).toHaveBeenCalledWith("/subjects/subject-1/notes/note-2");
+    expect(pushMock).toHaveBeenCalledWith(
+      "/subjects/subject-1/documents/notes/note-2",
+    );
   });
 
   it("blocks sidebar navigation when inline edits are invalid", async () => {
@@ -443,7 +482,7 @@ describe("NoteDetail", () => {
     await act(async () => {
       container
         .querySelector<HTMLAnchorElement>(
-          'a[href="/subjects/subject-1/notes/note-2"]',
+          'a[href="/subjects/subject-1/documents/notes/note-2"]',
         )
         ?.click();
       await Promise.resolve();

@@ -60,7 +60,7 @@ describe("detail href builders", () => {
 
   it("builds a note detail href with subject context", () => {
     expect(getNoteDetailHref("subject-1", "note-1")).toBe(
-      "/subjects/subject-1/notes/note-1",
+      "/subjects/subject-1/documents/notes/note-1",
     );
   });
 
