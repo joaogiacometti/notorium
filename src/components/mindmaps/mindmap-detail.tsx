@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { editMindmap } from "@/app/actions/mindmaps";
 import { DocumentsNav } from "@/components/documents/documents-nav";
+import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
 import { LazyMindmapCanvas } from "@/components/mindmaps/lazy-mindmap-canvas";
@@ -30,10 +31,12 @@ import type { DocumentListItem } from "@/features/documents/types";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { ensureRootNode, parseMindmapGraph } from "@/features/mindmaps/utils";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { useZenMode } from "@/lib/editor/use-zen-mode";
 import { getSubjectDocumentsHref } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { MindmapEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
+import { cn } from "@/lib/utils";
 
 interface MindmapDetailProps {
   backHref: string;
@@ -54,6 +57,7 @@ export function MindmapDetail({
     ensureRootNode(parseMindmapGraph(mindmap.data), mindmap.title),
   ).current;
   const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const { isZenMode, toggleZenMode } = useZenMode();
   const [title, setTitle] = useState(mindmap.title);
   const [graph, setGraph] = useState<MindmapGraph>(initialGraph);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -126,34 +130,55 @@ export function MindmapDetail({
   return (
     <AppPageContainer
       maxWidth="7xl"
-      className="lg:flex lg:h-[calc(100svh-4rem)] lg:flex-col lg:overflow-hidden lg:pb-6"
+      className={cn(
+        "lg:flex lg:flex-col lg:overflow-hidden",
+        isZenMode
+          ? "fixed inset-0 z-50 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
+          : "lg:h-[calc(100svh-4rem)] lg:pb-6",
+      )}
     >
-      <div className="mb-4 shrink-0">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-muted-foreground hover:text-foreground"
-          asChild
-        >
-          <Link href={backHref}>
-            <ArrowLeft className="size-4" />
-            Back to Subject
-          </Link>
-        </Button>
-      </div>
-      <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <DocumentsNav
-          subjectId={mindmap.subjectId}
-          documents={sidebarDocuments}
-          activeId={mindmap.id}
-          activeKind="mindmap"
-          onNavigate={(href, event) => void saveBeforeNavigation(href, event)}
-          onEditActive={() => setEditOpen(true)}
-          onDeleteActive={() => setDeleteOpen(true)}
-        />
+      {!isZenMode ? (
+        <div className="mb-4 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground hover:text-foreground"
+            asChild
+          >
+            <Link href={backHref}>
+              <ArrowLeft className="size-4" />
+              Back to Subject
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+      <div
+        className={cn(
+          "grid gap-6 lg:min-h-0 lg:flex-1",
+          isZenMode ? "min-h-0 flex-1" : "lg:grid-cols-[14rem_minmax(0,1fr)]",
+        )}
+      >
+        {!isZenMode ? (
+          <DocumentsNav
+            subjectId={mindmap.subjectId}
+            documents={sidebarDocuments}
+            activeId={mindmap.id}
+            activeKind="mindmap"
+            onNavigate={(href, event) => void saveBeforeNavigation(href, event)}
+            onEditActive={() => setEditOpen(true)}
+            onDeleteActive={() => setDeleteOpen(true)}
+          />
+        ) : null}
 
-        <div className="min-w-0 lg:flex lg:min-h-0 lg:flex-col">
+        <div
+          className={cn(
+            "min-w-0",
+            isZenMode
+              ? "flex min-h-0 flex-1 flex-col"
+              : "lg:flex lg:min-h-0 lg:flex-col",
+          )}
+        >
           <div className="mb-4 flex shrink-0 items-center gap-2">
             <Input
               ref={titleInputRef}
@@ -162,6 +187,11 @@ export function MindmapDetail({
               aria-label="Mindmap title"
               placeholder="Untitled mindmap"
               className="h-10 min-w-0 flex-1 rounded-md border-0 bg-transparent px-3 text-lg font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl"
+            />
+            <ZenModeToggle
+              isZenMode={isZenMode}
+              onToggle={toggleZenMode}
+              className="size-9"
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -197,7 +227,12 @@ export function MindmapDetail({
           {/* React Flow sizes itself with height:100%, which resolves to 0 when
               the parent only has a min-height. Use an explicit height on mobile;
               on lg the flex column chain provides the height. */}
-          <div className="h-[60svh] flex-1 overflow-hidden rounded-lg border border-border lg:h-auto lg:min-h-0">
+          <div
+            className={cn(
+              "flex-1 overflow-hidden rounded-lg border border-border",
+              isZenMode ? "h-auto min-h-0" : "h-[60svh] lg:h-auto lg:min-h-0",
+            )}
+          >
             <LazyMindmapCanvas
               initialGraph={initialGraph}
               title={title}

@@ -630,6 +630,56 @@ describe("NoteDetail", () => {
     expect(dialog?.textContent).toContain(otherNote.title);
   });
 
+  it("enters zen mode, hiding the back link and documents sidebar", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    expect(container.textContent).toContain("Back to Subject");
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('button[aria-label="Enter zen mode"]')
+        ?.click();
+    });
+
+    expect(container.textContent).not.toContain("Back to Subject");
+    expect(container.textContent).not.toContain("Cell respiration");
+    expect(
+      container.querySelector('button[aria-label="Exit zen mode"]'),
+    ).toBeTruthy();
+    expect(getTitleInput(container)).toBeTruthy();
+    expect(getContentInput(container)).toBeTruthy();
+  });
+
+  it("exits zen mode on Escape and restores the sidebar", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('button[aria-label="Enter zen mode"]')
+        ?.click();
+    });
+
+    await act(async () => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Back to Subject");
+    expect(container.textContent).toContain("Cell respiration");
+    expect(
+      container.querySelector('button[aria-label="Enter zen mode"]'),
+    ).toBeTruthy();
+  });
+
   it("focuses the inline title from the active sidebar edit action", async () => {
     await act(async () => {
       renderNoteDetail(root);

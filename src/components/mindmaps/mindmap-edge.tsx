@@ -206,6 +206,9 @@ export function MindmapEdge({
                     commitLabel();
                   }
                   if (event.key === "Escape") {
+                    // Consume the event so cancelling a label edit does not
+                    // also exit zen mode (useZenMode skips defaultPrevented).
+                    event.preventDefault();
                     actions.setEditingEdgeId(null);
                     setLabelDraft(null);
                   }

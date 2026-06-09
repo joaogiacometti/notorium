@@ -16,6 +16,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editNote } from "@/app/actions/notes";
 import { DocumentsNav } from "@/components/documents/documents-nav";
+import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
 import { AppPageContainer } from "@/components/shared/app-page-container";
@@ -37,10 +38,12 @@ import {
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { useZenMode } from "@/lib/editor/use-zen-mode";
 import { getSubjectDocumentsHref } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
+import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
   aiEnabled: boolean;
@@ -76,6 +79,7 @@ export function NoteDetail({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
+  const { isZenMode, toggleZenMode } = useZenMode();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -214,37 +218,58 @@ export function NoteDetail({
   return (
     <AppPageContainer
       maxWidth="7xl"
-      className="lg:flex lg:h-[calc(100svh-4rem)] lg:flex-col lg:overflow-hidden lg:pb-6"
+      className={cn(
+        "lg:flex lg:flex-col lg:overflow-hidden",
+        isZenMode
+          ? "fixed inset-0 z-50 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
+          : "lg:h-[calc(100svh-4rem)] lg:pb-6",
+      )}
     >
-      <div className="mb-4 shrink-0">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-muted-foreground hover:text-foreground"
-          asChild
-        >
-          <Link href={backHref}>
-            <ArrowLeft className="size-4" />
-            {backLabel}
-          </Link>
-        </Button>
-      </div>
-      <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <DocumentsNav
-          subjectId={note.subjectId}
-          documents={sidebarDocuments}
-          activeId={note.id}
-          activeKind="note"
-          onNavigate={(href, event) => {
-            event.preventDefault();
-            void saveBeforeNavigation(href);
-          }}
-          onEditActive={() => titleInputRef.current?.focus()}
-          onDeleteActive={() => setDeleteOpen(true)}
-        />
+      {!isZenMode ? (
+        <div className="mb-4 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground hover:text-foreground"
+            asChild
+          >
+            <Link href={backHref}>
+              <ArrowLeft className="size-4" />
+              {backLabel}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+      <div
+        className={cn(
+          "grid gap-6 lg:min-h-0 lg:flex-1",
+          isZenMode ? "min-h-0 flex-1" : "lg:grid-cols-[14rem_minmax(0,1fr)]",
+        )}
+      >
+        {!isZenMode ? (
+          <DocumentsNav
+            subjectId={note.subjectId}
+            documents={sidebarDocuments}
+            activeId={note.id}
+            activeKind="note"
+            onNavigate={(href, event) => {
+              event.preventDefault();
+              void saveBeforeNavigation(href);
+            }}
+            onEditActive={() => titleInputRef.current?.focus()}
+            onDeleteActive={() => setDeleteOpen(true)}
+          />
+        ) : null}
 
-        <form className="min-w-0 space-y-4 lg:flex lg:min-h-0 lg:flex-col lg:space-y-4">
+        <form
+          className={cn(
+            "min-w-0 space-y-4",
+            isZenMode
+              ? "flex min-h-0 flex-1 flex-col"
+              : "lg:flex lg:min-h-0 lg:flex-col lg:space-y-4",
+          )}
+        >
           <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-4">
             <div className="flex min-w-0 flex-1 items-start">
               <Controller
@@ -276,6 +301,11 @@ export function NoteDetail({
             </div>
 
             <div className="flex shrink-0 gap-2">
+              <ZenModeToggle
+                isZenMode={isZenMode}
+                onToggle={toggleZenMode}
+                className="size-10"
+              />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -338,7 +368,12 @@ export function NoteDetail({
             name="content"
             control={form.control}
             render={({ field, fieldState }) => (
-              <div className="min-h-0 w-full min-w-0 overflow-hidden lg:flex lg:flex-1">
+              <div
+                className={cn(
+                  "min-h-0 w-full min-w-0 overflow-hidden",
+                  isZenMode ? "flex flex-1" : "lg:flex lg:flex-1",
+                )}
+              >
                 <TiptapEditor
                   value={field.value ?? ""}
                   onChange={field.onChange}
@@ -346,8 +381,18 @@ export function NoteDetail({
                   id="form-edit-note-content"
                   aria-invalid={fieldState.invalid}
                   imageUploadContext="notes"
-                  className="w-full min-w-0 overflow-hidden lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
-                  contentClassName="min-h-[60svh] w-full min-w-0 overflow-x-hidden lg:min-h-0 lg:max-h-none lg:flex-1 lg:overflow-y-auto"
+                  className={cn(
+                    "w-full min-w-0 overflow-hidden",
+                    isZenMode
+                      ? "flex min-h-0 flex-1 flex-col"
+                      : "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col",
+                  )}
+                  contentClassName={cn(
+                    "w-full min-w-0 overflow-x-hidden",
+                    isZenMode
+                      ? "min-h-0 max-h-none flex-1 overflow-y-auto"
+                      : "min-h-[60svh] lg:min-h-0 lg:max-h-none lg:flex-1 lg:overflow-y-auto",
+                  )}
                   onImageUploadPendingChange={setIsImageUploading}
                 />
                 {fieldState.invalid ? (

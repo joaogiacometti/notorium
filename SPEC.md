@@ -46,6 +46,7 @@ Students who want a private, lightweight study management workspace.
 - A single "Create" action offers "Note" or "Mindmap"; each prompts for a title and opens the new item.
 - Subject detail previews the 3 most recently updated documents (notes and mindmaps), with row links to each item, the "Create" action, and compact row action menus (edit title for notes, delete for both).
 - The full documents list shows a simple center indicator until a document is selected.
+- Note and mindmap detail pages offer a zen mode toggle next to the document actions menu. Zen mode expands the editor or canvas to a full-screen, distraction-free view that hides the navbar, back link, and documents sidebar while keeping the title and document actions available. `Escape` or the toggle exits; an `Escape` that closes a dialog, menu, or inline connection-label edit does not also exit zen mode.
 - There is no standalone top-level mindmaps route; mindmaps live only inside their subject.
 
 #### Notes
