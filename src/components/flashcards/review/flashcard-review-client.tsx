@@ -345,6 +345,11 @@ export function FlashcardReviewClient({
     }
 
     if (isFocusMode && event.key === "Escape") {
+      // Let an open dialog own Escape so unsaved-changes confirmation can
+      // appear instead of unmounting the whole focus view.
+      if (editOpen || deleteOpen || resetOpen) {
+        return;
+      }
       event.preventDefault();
       if (isExamMode) {
         handleExitExamMode();

@@ -33,7 +33,8 @@ vi.mock("@/components/flashcards/dialogs/reset-flashcard-dialog", () => ({
 }));
 
 vi.mock("@/components/flashcards/dialogs/lazy-edit-flashcard-dialog", () => ({
-  LazyEditFlashcardDialog: () => null,
+  LazyEditFlashcardDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="edit-flashcard-dialog" /> : null,
 }));
 
 vi.mock("@/components/flashcards/review/exam-results-screen", () => ({
@@ -276,6 +277,34 @@ describe("FlashcardReviewClient", () => {
 
     expect(
       container.querySelector('[data-testid="reset-flashcard-dialog"]'),
+    ).toBeTruthy();
+  });
+
+  it("keeps focus mode on Escape while the edit dialog is open", async () => {
+    await renderReviewClient(makeReviewState(1, [makeCard("card-1")]));
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="flashcard-review-start-button"]',
+        )
+        ?.click();
+    });
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "e" }));
+    });
+
+    expect(
+      container.querySelector('[data-testid="edit-flashcard-dialog"]'),
+    ).toBeTruthy();
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+
+    expect(
+      container.querySelector('[data-testid="review-focus-mode"]'),
     ).toBeTruthy();
   });
 

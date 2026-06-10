@@ -503,16 +503,22 @@ export function EditFlashcardDialog({
         open={dialog.discardDialogOpen}
         onOpenChange={dialog.setDiscardDialogOpen}
         onDiscard={dialog.handleDiscardChanges}
+        className={className}
+        overlayClassName={overlayClassName}
       />
       <UnsavedChangesDialog
         open={discardOnModeSwitchDialogOpen}
         onOpenChange={setDiscardOnModeSwitchDialogOpen}
         onDiscard={handleDiscardOnModeSwitch}
+        className={className}
+        overlayClassName={overlayClassName}
       />
       <UnsavedChangesDialog
         open={discardOnCloseDialogOpen}
         onOpenChange={setDiscardOnCloseDialogOpen}
         onDiscard={handleDiscardOnClose}
+        className={className}
+        overlayClassName={overlayClassName}
       />
     </>
   );
