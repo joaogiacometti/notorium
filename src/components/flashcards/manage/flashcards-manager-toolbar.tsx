@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  ArrowRightLeft,
-  CopyPlus,
-  RotateCcw,
-  RotateCw,
-  Search,
-  Sparkles,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CopyPlus, Search, Sparkles } from "lucide-react";
 import type { JSX } from "react";
+import { FlashcardsAiToolsMenu } from "@/components/flashcards/manage/flashcards-ai-tools-menu";
+import { ToolbarActionBar } from "@/components/flashcards/manage/flashcards-manager-toolbar-actions";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,12 +27,19 @@ interface FlashcardsManagerToolbarProps {
   total: number;
   validationIssuesCount: number;
   isValidatingAgain: boolean;
+  refineMode: boolean;
+  refineMasteredCount: number;
+  refineStrugglingCount: number;
+  isLoadingRefineGroups: boolean;
   aiEnabled: boolean;
   hasDecks: boolean;
   onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
   onOpenValidateAgainDialog: () => void;
   onExitValidation: () => void;
+  onStartRefine: () => void;
+  onRefreshRefine: () => void;
+  onExitRefine: () => void;
   onOpenBulkMoveDialog: () => void;
   onOpenBulkDeleteDialog: () => void;
   onOpenBulkResetDialog: () => void;
@@ -50,89 +50,38 @@ interface ToolbarViewModel {
   selectedCountText: string;
   resultsCountText: string;
   validationIssuesCountText: string;
+  refineCountText: string;
   actionBarVisibilityClasses: string;
   hasSelection: boolean;
 }
 
 interface ToolbarStatusBadgesProps {
   validationMode: boolean;
+  refineMode: boolean;
   isManageScopeLoading: boolean;
   hasSelection: boolean;
   selectedCountText: string;
   resultsCountText: string;
   validationIssuesCountText: string;
-}
-
-interface ToolbarActionBarProps {
-  validationMode: boolean;
-  isValidatingAgain: boolean;
-  actionBarVisibilityClasses: string;
-  onOpenValidateAgainDialog: () => void;
-  onExitValidation: () => void;
-  onOpenBulkMoveDialog: () => void;
-  onOpenBulkDeleteDialog: () => void;
-  onOpenBulkResetDialog: () => void;
-  onClearSelection: () => void;
-}
-
-interface ValidationActionButtonsProps {
-  isValidatingAgain: boolean;
-  onOpenValidateAgainDialog: () => void;
-  onExitValidation: () => void;
-}
-
-interface SelectionActionButtonsProps {
-  onOpenBulkMoveDialog: () => void;
-  onOpenBulkDeleteDialog: () => void;
-  onOpenBulkResetDialog: () => void;
-  onClearSelection: () => void;
-}
-
-interface ToolbarIconActionButtonProps {
-  ariaLabel: string;
-  className: string;
-  disabled?: boolean;
-  icon: JSX.Element;
-  onClick: () => void;
-}
-
-function ToolbarIconActionButton({
-  ariaLabel,
-  className,
-  disabled = false,
-  icon,
-  onClick,
-}: Readonly<ToolbarIconActionButtonProps>): JSX.Element {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={onClick}
-          disabled={disabled}
-          className={className}
-          aria-label={ariaLabel}
-        >
-          {icon}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{ariaLabel}</TooltipContent>
-    </Tooltip>
-  );
+  refineCountText: string;
 }
 
 function getToolbarViewModel({
   validationMode,
+  refineMode,
   selectedFlashcardIds,
   total,
   validationIssuesCount,
+  refineMasteredCount,
+  refineStrugglingCount,
 }: {
   validationMode: boolean;
+  refineMode: boolean;
   selectedFlashcardIds: string[];
   total: number;
   validationIssuesCount: number;
+  refineMasteredCount: number;
+  refineStrugglingCount: number;
 }): ToolbarViewModel {
   const selectedCount = selectedFlashcardIds.length;
   const hasSelection = selectedCount > 0;
@@ -145,8 +94,9 @@ function getToolbarViewModel({
       validationIssuesCount === 1
         ? "1 card with issues"
         : `${validationIssuesCount} cards with issues`,
+    refineCountText: `${refineMasteredCount} mastered · ${refineStrugglingCount} struggling`,
     actionBarVisibilityClasses:
-      validationMode || hasSelection
+      validationMode || refineMode || hasSelection
         ? "visible opacity-100"
         : "pointer-events-none invisible opacity-0",
     hasSelection,
@@ -155,17 +105,31 @@ function getToolbarViewModel({
 
 function ToolbarStatusBadges({
   validationMode,
+  refineMode,
   isManageScopeLoading,
   hasSelection,
   selectedCountText,
   resultsCountText,
   validationIssuesCountText,
+  refineCountText,
 }: Readonly<ToolbarStatusBadgesProps>): JSX.Element {
   if (validationMode) {
     return (
       <StatusToneBadge tone="danger" className="px-2.5 py-0.5 text-[11px]">
         {validationIssuesCountText}
       </StatusToneBadge>
+    );
+  }
+
+  if (refineMode) {
+    return (
+      <Badge
+        variant="outline"
+        className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-foreground"
+      >
+        <Sparkles className="size-3.5" />
+        {refineCountText}
+      </Badge>
     );
   }
 
@@ -192,103 +156,6 @@ function ToolbarStatusBadges({
   );
 }
 
-function ValidationActionButtons({
-  isValidatingAgain,
-  onOpenValidateAgainDialog,
-  onExitValidation,
-}: Readonly<ValidationActionButtonsProps>): JSX.Element {
-  return (
-    <>
-      <ToolbarIconActionButton
-        ariaLabel="Validate Again"
-        onClick={onOpenValidateAgainDialog}
-        disabled={isValidatingAgain}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<RotateCw className="size-4" />}
-      />
-      <ToolbarIconActionButton
-        ariaLabel="Exit Validation"
-        onClick={onExitValidation}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<X className="size-4" />}
-      />
-    </>
-  );
-}
-
-function SelectionActionButtons({
-  onOpenBulkMoveDialog,
-  onOpenBulkDeleteDialog,
-  onOpenBulkResetDialog,
-  onClearSelection,
-}: Readonly<SelectionActionButtonsProps>): JSX.Element {
-  return (
-    <>
-      <ToolbarIconActionButton
-        ariaLabel="Move"
-        onClick={onOpenBulkMoveDialog}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<ArrowRightLeft className="size-4" />}
-      />
-      <ToolbarIconActionButton
-        ariaLabel="Reset"
-        onClick={onOpenBulkResetDialog}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<RotateCcw className="size-4" />}
-      />
-      <ToolbarIconActionButton
-        ariaLabel="Delete"
-        onClick={onOpenBulkDeleteDialog}
-        className="rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
-        icon={<Trash2 className="size-4" />}
-      />
-      <div className="hidden h-5 w-px bg-border/60 sm:block" />
-      <ToolbarIconActionButton
-        ariaLabel="Clear selection"
-        onClick={onClearSelection}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<X className="size-4" />}
-      />
-    </>
-  );
-}
-
-function ToolbarActionBar({
-  validationMode,
-  isValidatingAgain,
-  actionBarVisibilityClasses,
-  onOpenValidateAgainDialog,
-  onExitValidation,
-  onOpenBulkMoveDialog,
-  onOpenBulkDeleteDialog,
-  onOpenBulkResetDialog,
-  onClearSelection,
-}: Readonly<ToolbarActionBarProps>): JSX.Element {
-  return (
-    <div
-      className={cn(
-        "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34",
-        actionBarVisibilityClasses,
-      )}
-    >
-      {validationMode ? (
-        <ValidationActionButtons
-          isValidatingAgain={isValidatingAgain}
-          onOpenValidateAgainDialog={onOpenValidateAgainDialog}
-          onExitValidation={onExitValidation}
-        />
-      ) : (
-        <SelectionActionButtons
-          onOpenBulkMoveDialog={onOpenBulkMoveDialog}
-          onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
-          onOpenBulkResetDialog={onOpenBulkResetDialog}
-          onClearSelection={onClearSelection}
-        />
-      )}
-    </div>
-  );
-}
-
 export function FlashcardsManagerToolbar({
   searchQuery,
   onSearchQueryChange,
@@ -298,12 +165,19 @@ export function FlashcardsManagerToolbar({
   total,
   validationIssuesCount,
   isValidatingAgain,
+  refineMode,
+  refineMasteredCount,
+  refineStrugglingCount,
+  isLoadingRefineGroups,
   aiEnabled,
   hasDecks,
   onOpenValidateDialog,
   onOpenCreateDialog,
   onOpenValidateAgainDialog,
   onExitValidation,
+  onStartRefine,
+  onRefreshRefine,
+  onExitRefine,
   onOpenBulkMoveDialog,
   onOpenBulkDeleteDialog,
   onOpenBulkResetDialog,
@@ -311,9 +185,12 @@ export function FlashcardsManagerToolbar({
 }: Readonly<FlashcardsManagerToolbarProps>): JSX.Element {
   const viewModel = getToolbarViewModel({
     validationMode,
+    refineMode,
     selectedFlashcardIds,
     total,
     validationIssuesCount,
+    refineMasteredCount,
+    refineStrugglingCount,
   });
   const createButton = (
     <Button
@@ -348,15 +225,12 @@ export function FlashcardsManagerToolbar({
               </div>
               <div className="flex gap-2">
                 {aiEnabled ? (
-                  <Button
-                    type="button"
-                    onClick={onOpenValidateDialog}
-                    variant="outline"
-                    className="h-10 shrink-0 gap-2 rounded-lg px-3 shadow-sm sm:px-4"
-                  >
-                    <Sparkles className="size-4" />
-                    <span className="hidden sm:inline">Validate</span>
-                  </Button>
+                  <FlashcardsAiToolsMenu
+                    refineMode={refineMode}
+                    isLoadingRefineGroups={isLoadingRefineGroups}
+                    onOpenValidateDialog={onOpenValidateDialog}
+                    onStartRefine={onStartRefine}
+                  />
                 ) : null}
                 {hasDecks ? (
                   createButton
@@ -381,6 +255,7 @@ export function FlashcardsManagerToolbar({
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
                 <ToolbarStatusBadges
                   validationMode={validationMode}
+                  refineMode={refineMode}
                   isManageScopeLoading={isManageScopeLoading}
                   hasSelection={viewModel.hasSelection}
                   selectedCountText={viewModel.selectedCountText}
@@ -388,17 +263,22 @@ export function FlashcardsManagerToolbar({
                   validationIssuesCountText={
                     viewModel.validationIssuesCountText
                   }
+                  refineCountText={viewModel.refineCountText}
                 />
               </div>
 
               <ToolbarActionBar
                 validationMode={validationMode}
+                refineMode={refineMode}
                 isValidatingAgain={isValidatingAgain}
+                isLoadingRefineGroups={isLoadingRefineGroups}
                 actionBarVisibilityClasses={
                   viewModel.actionBarVisibilityClasses
                 }
                 onOpenValidateAgainDialog={onOpenValidateAgainDialog}
                 onExitValidation={onExitValidation}
+                onRefreshRefine={onRefreshRefine}
+                onExitRefine={onExitRefine}
                 onOpenBulkMoveDialog={onOpenBulkMoveDialog}
                 onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
                 onOpenBulkResetDialog={onOpenBulkResetDialog}

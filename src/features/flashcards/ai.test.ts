@@ -10,6 +10,9 @@ const {
   flashcardBackImproveSystemPrompt,
   flashcardsGenerationSystemPrompt,
   flashcardValidationSystemPrompt,
+  buildMergeSynthesisPrompt,
+  flashcardMergeSynthesisOutputSchema,
+  flashcardMergeSynthesisSystemPrompt,
   normalizeGeneratedCards,
 } = await import("@/features/flashcards/ai-prompts");
 
@@ -39,6 +42,91 @@ describe("buildGenerateFlashcardBackPrompt", () => {
     });
 
     expect(result).toContain("Deck context: Metabolism");
+  });
+});
+
+describe("buildMergeSynthesisPrompt", () => {
+  it("labels the primary card and each candidate with its id", () => {
+    const result = buildMergeSynthesisPrompt({
+      primary: {
+        id: "f1",
+        front: "DNS acronym",
+        back: "Domain Name System.",
+        deckName: "Networking",
+      },
+      candidates: [
+        {
+          id: "f2",
+          front: "DNS role",
+          back: "Resolves names to IP addresses.",
+          deckName: "Networking",
+        },
+      ],
+    });
+
+    expect(result).toContain("Primary mastered card (ID: f1)");
+    expect(result).toContain("Candidate 1 (ID: f2)");
+    expect(result).toContain("Deck: Networking");
+    expect(result).toContain("Front: DNS role");
+  });
+});
+
+describe("flashcardMergeSynthesisSystemPrompt", () => {
+  it("prefers relationship cards, restricts merging, and allows declining", () => {
+    expect(flashcardMergeSynthesisSystemPrompt).toContain(
+      'ACTION "relate" — the preferred, common outcome.',
+    );
+    expect(flashcardMergeSynthesisSystemPrompt).toContain(
+      'ACTION "merge" — rare; only for true redundancy.',
+    );
+    expect(flashcardMergeSynthesisSystemPrompt).toContain(
+      "never combine two independent definitions",
+    );
+    expect(flashcardMergeSynthesisSystemPrompt).toContain(
+      "Declining is better than a forced, trivial connection.",
+    );
+    expect(flashcardMergeSynthesisSystemPrompt).toContain(
+      "Do not invent facts not present in the input cards.",
+    );
+  });
+});
+
+describe("flashcardMergeSynthesisOutputSchema", () => {
+  it("accepts a relate proposal", () => {
+    const result = flashcardMergeSynthesisOutputSchema.safeParse({
+      action: "relate",
+      front: "Velocity in terms of story points",
+      back: "- Total story points delivered per sprint",
+      sourceFlashcardIds: ["f2"],
+      rationale: "Velocity is computed from story points.",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a decline without card content", () => {
+    const result = flashcardMergeSynthesisOutputSchema.safeParse({
+      action: "decline",
+      sourceFlashcardIds: [],
+      rationale: "The candidates test distinct definitions.",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.front).toBe("");
+      expect(result.data.back).toBe("");
+    }
+  });
+
+  it("rejects output without an action decision", () => {
+    const result = flashcardMergeSynthesisOutputSchema.safeParse({
+      front: "DNS essentials",
+      back: "Domain Name System.",
+      sourceFlashcardIds: ["f2"],
+      rationale: "n/a",
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

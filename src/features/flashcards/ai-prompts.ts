@@ -290,6 +290,97 @@ GENERAL RULES
 OUTPUT
 Array of issues with flashcardId, issueType, explanation, and relatedFlashcardId (duplicate only).`;
 
+export const flashcardMergeSynthesisSystemPrompt = `${LANGUAGE_RULE}
+
+You are leveling up a mastered flashcard. You receive a primary card the student has
+mastered plus candidate cards found by text similarity. Choose exactly one action:
+
+ACTION "relate" — the preferred, common outcome.
+Create ONE NEW card that tests the relationship between the primary card and one or
+more candidates: a contrast, a computation linking them, a cause-effect chain, or an
+application question that requires both facts. The original cards are kept; the new
+card deepens mastery beyond isolated recall.
+- Use it when candidates are related-but-distinct concepts: two metrics that reference
+  each other, definition vs. example, terms from the same taxonomy.
+- Example: primary "Story points" + candidate "Velocity" -> new card
+  Front: "Velocity in terms of story points"
+  Back: "- Total story points delivered per sprint"
+- The new card must still be atomic: one retrieval cue, one coherent recall target
+  about the RELATIONSHIP itself. Do not restate the originals' answers side by side.
+- Prefer the single strongest relationship over involving many candidates.
+
+ACTION "merge" — rare; only for true redundancy.
+Combine cards that test the SAME fact with different wording, or where one card's
+answer is fully contained in another's. Merged sources are DELETED, so never merge
+related-but-distinct concepts and never combine two independent definitions into
+one card ("Term A: ... / Term B: ..." is worse than the originals).
+- Example: primary "DNS purpose" + candidate "What DNS does" -> one card.
+
+ACTION "decline" — when no candidate supports a meaningful relationship or merge.
+Declining is better than a forced, trivial connection.
+
+OUTPUT RULES
+- action: "relate", "merge", or "decline".
+- sourceFlashcardIds: the candidate IDs involved (excluding the primary card).
+  Required non-empty for relate and merge; must be empty for decline.
+- front and back: the new or merged card. Omit both for decline.
+- The front must be one concise retrieval cue.
+- The back must be 1 to 5 lines; in list mode every line starts with "- ".
+- Each line must be one precise, directly testable point.
+- Do not invent facts not present in the input cards.
+- Do not repeat, restate, or paraphrase the front in the back.
+- ${MATH_RULE}
+- rationale: one short sentence explaining the chosen action.
+
+OUTPUT
+JSON object with action, front, back, sourceFlashcardIds, and rationale.`;
+
+export const flashcardMergeSynthesisOutputSchema = z.object({
+  action: z.enum(["relate", "merge", "decline"]),
+  front: z
+    .string()
+    .trim()
+    .max(LIMITS.flashcardAiFrontMax)
+    .optional()
+    .default(""),
+  back: z.string().trim().max(LIMITS.flashcardAiBackMax).optional().default(""),
+  sourceFlashcardIds: z.array(z.string()),
+  rationale: z.string().trim().min(1).max(AI_LIMITS.maxMergeRationaleLength),
+});
+
+export type FlashcardMergeSynthesisOutput = z.infer<
+  typeof flashcardMergeSynthesisOutputSchema
+>;
+
+export interface FlashcardForMergeSynthesis {
+  id: string;
+  front: string;
+  back: string;
+  deckName: string;
+}
+
+export function buildMergeSynthesisPrompt(input: {
+  primary: FlashcardForMergeSynthesis;
+  candidates: FlashcardForMergeSynthesis[];
+}): string {
+  const formatCard = (card: FlashcardForMergeSynthesis, label: string) =>
+    `${label} (ID: ${card.id})
+Deck: ${card.deckName}
+Front: ${card.front}
+Back: ${card.back}`;
+
+  return [
+    formatCard(input.primary, "Primary mastered card"),
+    "",
+    "Candidate cards:",
+    ...input.candidates.map(
+      (card, index) => `\n${formatCard(card, `Candidate ${index + 1}`)}`,
+    ),
+    "",
+    "Choose one action: create a new relationship card (relate), combine true duplicates (merge), or decline.",
+  ].join("\n");
+}
+
 export function buildGenerateFlashcardBackPrompt(input: {
   subjectName?: string;
   deckName?: string;

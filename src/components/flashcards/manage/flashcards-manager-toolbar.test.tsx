@@ -7,6 +7,28 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => children,
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) =>
+    children,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button type="button" onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
+  ),
+}));
+
 const baseProps = {
   searchQuery: "",
   onSearchQueryChange: vi.fn(),
@@ -16,17 +38,30 @@ const baseProps = {
   total: 0,
   validationIssuesCount: 0,
   isValidatingAgain: false,
+  refineMode: false,
+  refineMasteredCount: 0,
+  refineStrugglingCount: 0,
+  isLoadingRefineGroups: false,
   aiEnabled: false,
   hasDecks: true,
   onOpenValidateDialog: vi.fn(),
   onOpenCreateDialog: vi.fn(),
   onOpenValidateAgainDialog: vi.fn(),
   onExitValidation: vi.fn(),
+  onStartRefine: vi.fn(),
+  onRefreshRefine: vi.fn(),
+  onExitRefine: vi.fn(),
   onOpenBulkMoveDialog: vi.fn(),
   onOpenBulkDeleteDialog: vi.fn(),
   onOpenBulkResetDialog: vi.fn(),
   onClearSelection: vi.fn(),
 };
+
+function findButtonByText(container: HTMLElement, text: string) {
+  return Array.from(container.querySelectorAll("button")).find(
+    (currentButton) => currentButton.textContent?.includes(text),
+  );
+}
 
 describe("FlashcardsManagerToolbar", () => {
   let container: HTMLDivElement;
@@ -192,5 +227,86 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     expect(document.body.textContent).toContain("Exit Validation");
+  });
+
+  it("hides the AI dropdown when AI is disabled", async () => {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar {...baseProps} aiEnabled={false} />,
+      );
+    });
+
+    expect(findButtonByText(container, "Validate cards")).toBeUndefined();
+    expect(findButtonByText(container, "Refine cards")).toBeUndefined();
+  });
+
+  it("triggers validate and refine flows from the AI dropdown", async () => {
+    await act(async () => {
+      root.render(<FlashcardsManagerToolbar {...baseProps} aiEnabled />);
+    });
+
+    const validateItem = findButtonByText(container, "Validate cards");
+    const refineItem = findButtonByText(container, "Refine cards");
+
+    expect(validateItem).toBeTruthy();
+    expect(refineItem).toBeTruthy();
+
+    await act(async () => {
+      validateItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      refineItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(baseProps.onOpenValidateDialog).toHaveBeenCalledOnce();
+    expect(baseProps.onStartRefine).toHaveBeenCalledOnce();
+  });
+
+  it("disables the refine entry while refine groups are loading", async () => {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar
+          {...baseProps}
+          aiEnabled
+          isLoadingRefineGroups
+        />,
+      );
+    });
+
+    const refineItem = findButtonByText(container, "Refine cards");
+
+    expect(refineItem?.disabled).toBe(true);
+  });
+
+  it("shows refine counts and mode actions in refine mode", async () => {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar
+          {...baseProps}
+          aiEnabled
+          refineMode
+          refineMasteredCount={2}
+          refineStrugglingCount={1}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain("2 mastered · 1 struggling");
+
+    const refreshButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Refresh Refine"]',
+    );
+    const exitButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Exit Refine"]',
+    );
+
+    expect(refreshButton).toBeTruthy();
+    expect(exitButton).toBeTruthy();
+
+    await act(async () => {
+      refreshButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      exitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(baseProps.onRefreshRefine).toHaveBeenCalledOnce();
+    expect(baseProps.onExitRefine).toHaveBeenCalledOnce();
   });
 });

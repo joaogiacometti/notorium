@@ -73,9 +73,11 @@ export const LIMITS = {
   aiBackGenerationRateLimitPrefix: "ratelimit:ai:back",
   aiFlashcardGenerationRateLimitPrefix: "ratelimit:ai:generation",
   aiValidationRateLimitPrefix: "ratelimit:ai:validation",
+  aiMergeSynthesisRateLimitPrefix: "ratelimit:ai:merge",
   aiBackGenerationRateLimitPerDay: 500,
   aiFlashcardGenerationRateLimitPerDay: 250,
   aiValidationRateLimitPerDay: 200,
+  aiMergeSynthesisRateLimitPerDay: 100,
   trustedProxyCount: 0,
   ipAddressMaxLength: 64,
 } as const;
@@ -86,4 +88,6 @@ export const AI_LIMITS = {
   maxGenerationTokens: 4000,
   maxValidationTokens: 500,
   maxValidationExplanationLength: 300,
+  maxMergeSynthesisTokens: 800,
+  maxMergeRationaleLength: 300,
 } as const;

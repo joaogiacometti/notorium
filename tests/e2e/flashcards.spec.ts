@@ -309,7 +309,8 @@ test("can validate flashcards with AI", async ({ page, e2eUser }) => {
     );
 
     await openFlashcardsManagePage(page, createdDeck.id);
-    await page.getByRole("button", { name: "Validate", exact: true }).click();
+    await page.getByRole("button", { name: "AI tools" }).click();
+    await page.getByRole("menuitem", { name: "Validate cards" }).click();
 
     const validateDialog = page.getByRole("dialog", {
       name: "Validate Flashcards",

@@ -1,9 +1,12 @@
 import {
+  type FlashcardForMergeSynthesis,
   type FlashcardForValidation,
   type FlashcardValidationOutput,
   generateFlashcardBackContent,
   generateFlashcardsFromText,
   improveFlashcardBackContent,
+  type RefineProposalSynthesis,
+  synthesizeRefineProposalWithAi,
   validateFlashcardsWithAi,
 } from "@/features/flashcards/ai";
 import { resolveRequiredAiSettings } from "@/lib/ai/config";
@@ -205,6 +208,97 @@ export async function generateFlashcardsForUser({
     return {
       success: true,
       cards,
+    };
+  } catch (error) {
+    if (error instanceof AiConfigurationError) {
+      return {
+        success: false,
+        errorCode: "flashcards.ai.notConfigured",
+      };
+    }
+
+    return {
+      success: false,
+      errorCode: "flashcards.ai.unavailable",
+    };
+  }
+}
+
+interface SynthesizeRefineProposalForUserInput {
+  userId: string;
+  primary: FlashcardForMergeSynthesis;
+  candidates: FlashcardForMergeSynthesis[];
+}
+
+type SynthesizeRefineProposalForUserResult =
+  | { success: true; synthesis: RefineProposalSynthesis }
+  | {
+      success: false;
+      errorCode:
+        | "flashcards.ai.notConfigured"
+        | "flashcards.ai.unavailable"
+        | "flashcards.merge.noCandidates"
+        | "flashcards.merge.declined"
+        | "limits.aiMergeSynthesisPerDay";
+    };
+
+/**
+ * Rate-limited AI level-up proposal for a mastered card: a new relationship
+ * card or a merge of true duplicates. The AI may decline (merge.declined).
+ *
+ * Example: await synthesizeRefineProposalForUser({ userId, primary, candidates });
+ */
+export async function synthesizeRefineProposalForUser({
+  userId,
+  primary,
+  candidates,
+}: SynthesizeRefineProposalForUserInput): Promise<SynthesizeRefineProposalForUserResult> {
+  if (candidates.length === 0) {
+    return {
+      success: false,
+      errorCode: "flashcards.merge.noCandidates",
+    };
+  }
+
+  try {
+    const settings = resolveRequiredAiSettings();
+    const limitResult = await consumeUserDailyRateLimit({
+      prefix: LIMITS.aiMergeSynthesisRateLimitPrefix,
+      userId,
+      limit: LIMITS.aiMergeSynthesisRateLimitPerDay,
+      errorCode: "limits.aiMergeSynthesisPerDay",
+    });
+
+    if (limitResult.limited) {
+      return {
+        success: false,
+        errorCode: "limits.aiMergeSynthesisPerDay",
+      };
+    }
+
+    const toPlainCard = (card: FlashcardForMergeSynthesis) => ({
+      id: card.id,
+      front: richTextToPlainTextWithImagePlaceholders(card.front),
+      back: richTextToPlainTextWithImagePlaceholders(card.back),
+      deckName: card.deckName,
+    });
+
+    const synthesis = await synthesizeRefineProposalWithAi({
+      settings,
+      primary: toPlainCard(primary),
+      candidates: candidates.map(toPlainCard),
+    });
+
+    if (!synthesis) {
+      return {
+        success: false,
+        errorCode: "flashcards.merge.declined",
+      };
+    }
+
+    return {
+      success: true,
+      synthesis,
     };
   } catch (error) {
     if (error instanceof AiConfigurationError) {

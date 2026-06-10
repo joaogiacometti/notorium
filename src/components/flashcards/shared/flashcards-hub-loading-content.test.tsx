@@ -40,6 +40,14 @@ describe("FlashcardsHubLoadingContent", () => {
     ).toBeTruthy();
   });
 
+  it("renders the review loading shell for legacy refine links", async () => {
+    await act(async () => {
+      root.render(<FlashcardsHubLoadingContent view="refine" />);
+    });
+
+    expect(queryByTestId(container, "flashcards-review-loading")).toBeTruthy();
+  });
+
   it("falls back to review loading for an unknown view", async () => {
     await act(async () => {
       root.render(<FlashcardsHubLoadingContent view="unknown" />);

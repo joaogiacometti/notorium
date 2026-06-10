@@ -102,6 +102,7 @@ Students who want a private, lightweight study management workspace.
 - The default flashcards page opens in the review view, with management and statistics available as alternate global views.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
 - Flashcard review remains available in the global flashcards page.
+- When AI env vars are configured, the manage toolbar shows a sparkles `AI` dropdown with `Validate cards` and `Refine cards` entries; without AI the dropdown is hidden.
 - In the flashcards manage toolbar, every icon-only action must show a descriptive tooltip on hover and keyboard focus instead of relying on icon recognition alone.
 
 ### Decks
@@ -146,6 +147,27 @@ Students who want a private, lightweight study management workspace.
 - Global statistics view in the flashcards page.
 - Statistics respect the active deck filter.
 - Statistics show overview metrics for cards in scope, including due cards, reviewed vs never-reviewed cards, review/lapse totals, card-state distribution, rating distribution, and recent daily review activity.
+
+### Flashcard Refine
+
+- Refine is a mode inside the manage view, entered via the `Refine cards` entry of the manage toolbar AI dropdown. It is only available when AI env vars are configured.
+- Refine candidates load on demand when the mode is entered; they are global to the user and are not filtered by the selected deck scope or search.
+- While in refine mode the manage area shows the candidates as table rows with per-row actions, and the toolbar shows the mastered/struggling counts plus `Refresh Refine` and `Exit Refine` actions.
+- Refine surfaces two groups derived from each card's most recent reviews:
+  - Mastered: the last 3 reviews are all `Good` or `Easy`.
+  - Struggling: the last 3 reviews are all `Again`.
+- `Hard` is neutral: it breaks both streaks without counting toward either group.
+- Cards with fewer than 3 reviews never appear; each group is capped at 50 cards.
+- Mastered cards offer a "Level up" action:
+  - Similar cards are found across all the user's cards via trigram similarity, ranking same-deck matches first.
+  - The AI chooses one outcome: relate (preferred), merge (rare), or decline.
+  - Relate: the AI proposes one new card testing the relationship between the mastered card and related ones (contrast, computation, application). On accept, the new card is created in the mastered card's deck with fresh scheduling state and the original cards are kept.
+  - Merge: only for true redundancy (same fact, different wording). On accept, the merged card replaces the source cards (including the mastered card), which are deleted; lineage rows snapshot each deleted card's front and back.
+  - Decline: when no candidate supports a meaningful relationship or merge, the user sees an informational notice instead of a proposal.
+  - The user always previews the proposed card — and, for merges, the cards that will be deleted — before accepting.
+- Struggling cards offer an "Improve" action: the AI proposes a rewritten back, shown as a before/after diff the user can accept or discard.
+- Merge proposals are limited per approved user per day, separately from other AI limits.
+- Legacy `view=refine` URLs fall back to the review view.
 
 ### Focus Mode
 

@@ -10,6 +10,7 @@ import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/fla
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { FlashcardsManagerTable } from "@/components/flashcards/manage/flashcards-manager-table";
 import { FlashcardsManagerToolbar } from "@/components/flashcards/manage/flashcards-manager-toolbar";
+import { FlashcardsRefineResults } from "@/components/flashcards/manage/flashcards-refine-results";
 import { FlashcardsValidationResults } from "@/components/flashcards/manage/flashcards-validation-results";
 import { LazyBulkDeleteFlashcardsDialog as BulkDeleteFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-delete-flashcards-dialog";
 import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-move-flashcards-dialog";
@@ -90,6 +91,12 @@ export function FlashcardsManager({
     removeValidationFlashcard,
     updateValidationFlashcard,
     checkValidationEmpty,
+    refineMode,
+    refineGroups,
+    isLoadingRefineGroups,
+    startRefineMode,
+    refreshRefineGroups,
+    exitRefine,
   } = useFlashcardsManagerController({
     initialPageData,
     initialDeckId,
@@ -111,6 +118,18 @@ export function FlashcardsManager({
           flashcards={validationFlashcards}
           onEdit={setEditingFlashcardId}
           onDelete={setDeleteTarget}
+        />
+      );
+    }
+
+    if (refineMode) {
+      return (
+        <FlashcardsRefineResults
+          groups={refineGroups}
+          onRefineApplied={() => {
+            void refreshRefineGroups();
+            refreshManagePage();
+          }}
         />
       );
     }
@@ -158,12 +177,19 @@ export function FlashcardsManager({
         total={total}
         validationIssuesCount={validationIssues.length}
         isValidatingAgain={isValidatingAgain}
+        refineMode={refineMode}
+        refineMasteredCount={refineGroups.mastered.length}
+        refineStrugglingCount={refineGroups.struggling.length}
+        isLoadingRefineGroups={isLoadingRefineGroups}
         aiEnabled={aiEnabled}
         hasDecks={hasDecks}
         onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
         onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}
         onExitValidation={exitValidation}
+        onStartRefine={() => void startRefineMode()}
+        onRefreshRefine={() => void refreshRefineGroups()}
+        onExitRefine={exitRefine}
         onOpenBulkMoveDialog={() => setBulkMoveOpen(true)}
         onOpenBulkDeleteDialog={() => setBulkDeleteOpen(true)}
         onOpenBulkResetDialog={() => setBulkResetOpen(true)}

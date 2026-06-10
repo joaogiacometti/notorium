@@ -79,7 +79,7 @@ export function FlashcardsPageClient({
             selectedDeckId={scopedDeckId}
             className="lg:hidden"
           />
-          {isReviewView ? (
+          {isReviewView && (
             <FlashcardReviewClient
               key={scopeKey}
               initialState={initialReviewState}
@@ -88,7 +88,8 @@ export function FlashcardsPageClient({
               aiEnabled={aiEnabled}
               embedded
             />
-          ) : (
+          )}
+          {isStatisticsView && (
             <FlashcardsStatistics
               statistics={statistics}
               decks={decks}

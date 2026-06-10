@@ -544,6 +544,37 @@ export const flashcardReviewLog = pgTable(
   ],
 );
 
+export const flashcardMergeLog = pgTable(
+  "flashcard_merge_log",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    mergedFlashcardId: text("merged_flashcard_id").references(
+      () => flashcard.id,
+      { onDelete: "set null" },
+    ),
+    // Snapshot of the source card so lineage survives source deletion.
+    sourceFlashcardId: text("source_flashcard_id"),
+    sourceFront: text("source_front").notNull(),
+    sourceBack: text("source_back").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("flashcard_merge_log_userId_idx").on(table.userId),
+    index("flashcard_merge_log_mergedFlashcardId_idx").on(
+      table.mergedFlashcardId,
+    ),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -688,6 +719,20 @@ export const flashcardReviewLogRelations = relations(
     }),
     user: one(user, {
       fields: [flashcardReviewLog.userId],
+      references: [user.id],
+    }),
+  }),
+);
+
+export const flashcardMergeLogRelations = relations(
+  flashcardMergeLog,
+  ({ one }) => ({
+    mergedFlashcard: one(flashcard, {
+      fields: [flashcardMergeLog.mergedFlashcardId],
+      references: [flashcard.id],
+    }),
+    user: one(user, {
+      fields: [flashcardMergeLog.userId],
       references: [user.id],
     }),
   }),

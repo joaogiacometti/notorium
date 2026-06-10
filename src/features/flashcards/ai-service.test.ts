@@ -7,6 +7,7 @@ const generateFlashcardBackContentMock = vi.fn();
 const improveFlashcardBackContentMock = vi.fn();
 const generateFlashcardsFromTextMock = vi.fn();
 const validateFlashcardsWithAiMock = vi.fn();
+const synthesizeRefineProposalWithAiMock = vi.fn();
 
 vi.mock("@/lib/ai/config", () => ({
   resolveRequiredAiSettings: resolveRequiredAiSettingsMock,
@@ -21,6 +22,7 @@ vi.mock("@/features/flashcards/ai", () => ({
   improveFlashcardBackContent: improveFlashcardBackContentMock,
   generateFlashcardsFromText: generateFlashcardsFromTextMock,
   validateFlashcardsWithAi: validateFlashcardsWithAiMock,
+  synthesizeRefineProposalWithAi: synthesizeRefineProposalWithAiMock,
 }));
 
 describe("flashcards ai service", () => {
@@ -199,6 +201,161 @@ describe("flashcards ai service", () => {
       errorCode: "limits.aiValidationPerDay",
     });
     expect(validateFlashcardsWithAiMock).not.toHaveBeenCalled();
+  });
+
+  it("returns merge limit error before provider call", async () => {
+    consumeUserDailyRateLimitMock.mockResolvedValueOnce({
+      limited: true,
+      remaining: 0,
+      resetAt: "2026-05-01T00:00:00.000Z",
+      errorCode: "limits.aiMergeSynthesisPerDay",
+    });
+
+    const { synthesizeRefineProposalForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+
+    const result = await synthesizeRefineProposalForUser({
+      userId: "user-1",
+      primary: {
+        id: "f1",
+        front: "<p>Front</p>",
+        back: "<p>Back</p>",
+        deckName: "Biology",
+      },
+      candidates: [
+        {
+          id: "f2",
+          front: "<p>Other front</p>",
+          back: "<p>Other back</p>",
+          deckName: "Biology",
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "limits.aiMergeSynthesisPerDay",
+    });
+    expect(synthesizeRefineProposalWithAiMock).not.toHaveBeenCalled();
+  });
+
+  it("returns noCandidates without touching limits", async () => {
+    const { synthesizeRefineProposalForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+
+    const result = await synthesizeRefineProposalForUser({
+      userId: "user-1",
+      primary: {
+        id: "f1",
+        front: "<p>Front</p>",
+        back: "<p>Back</p>",
+        deckName: "Biology",
+      },
+      candidates: [],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "flashcards.merge.noCandidates",
+    });
+    expect(consumeUserDailyRateLimitMock).not.toHaveBeenCalled();
+  });
+
+  it("returns declined when the AI rejects the merge", async () => {
+    synthesizeRefineProposalWithAiMock.mockResolvedValueOnce(null);
+
+    const { synthesizeRefineProposalForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+
+    const result = await synthesizeRefineProposalForUser({
+      userId: "user-1",
+      primary: {
+        id: "f1",
+        front: "<p>Front</p>",
+        back: "<p>Back</p>",
+        deckName: "Biology",
+      },
+      candidates: [
+        {
+          id: "f2",
+          front: "<p>Other front</p>",
+          back: "<p>Other back</p>",
+          deckName: "Biology",
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "flashcards.merge.declined",
+    });
+  });
+
+  it("synthesizes a refine proposal with plain-text inputs", async () => {
+    synthesizeRefineProposalWithAiMock.mockResolvedValueOnce({
+      action: "relate",
+      front: "<p>Relation front</p>",
+      back: "<p>Relation back</p>",
+      sourceFlashcardIds: ["f2"],
+      rationale: "The cards form a computation chain.",
+    });
+
+    const { synthesizeRefineProposalForUser } = await import(
+      "@/features/flashcards/ai-service"
+    );
+
+    const result = await synthesizeRefineProposalForUser({
+      userId: "user-1",
+      primary: {
+        id: "f1",
+        front: "<p>Front</p>",
+        back: "<p>Back</p>",
+        deckName: "Biology",
+      },
+      candidates: [
+        {
+          id: "f2",
+          front: "<p>Other front</p>",
+          back: "<p>Other back</p>",
+          deckName: "Biology",
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      success: true,
+      synthesis: {
+        action: "relate",
+        front: "<p>Relation front</p>",
+        back: "<p>Relation back</p>",
+        sourceFlashcardIds: ["f2"],
+        rationale: "The cards form a computation chain.",
+      },
+    });
+    expect(synthesizeRefineProposalWithAiMock).toHaveBeenCalledWith({
+      settings: {
+        provider: "openrouter",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-or-v1-test",
+      },
+      primary: {
+        id: "f1",
+        front: "Front",
+        back: "Back",
+        deckName: "Biology",
+      },
+      candidates: [
+        {
+          id: "f2",
+          front: "Other front",
+          back: "Other back",
+          deckName: "Biology",
+        },
+      ],
+    });
   });
 
   it("returns noCards without touching limits", async () => {

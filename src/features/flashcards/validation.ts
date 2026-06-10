@@ -156,6 +156,30 @@ export const resetFlashcardSchema = z.object({
 
 export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;
 
+export const proposeFlashcardMergeSchema = z.object({
+  flashcardId: idSchema,
+});
+
+export type ProposeFlashcardMergeForm = z.infer<
+  typeof proposeFlashcardMergeSchema
+>;
+
+export const applyFlashcardMergeSchema = withFlashcardAttachmentLimit(
+  z.object({
+    action: z.enum(["relate", "merge"]),
+    primaryFlashcardId: idSchema,
+    front: flashcardFrontSchema,
+    back: flashcardBackSchema,
+    sourceFlashcardIds: z
+      .array(idSchema)
+      .min(1)
+      .max(LIMITS.flashcardBatchSize)
+      .refine((ids) => new Set(ids).size === ids.length),
+  }),
+);
+
+export type ApplyFlashcardMergeForm = z.infer<typeof applyFlashcardMergeSchema>;
+
 export const flashcardsManageQuerySchema = z.object({
   pageIndex: z.number().int().min(0).default(0),
   pageSize: z

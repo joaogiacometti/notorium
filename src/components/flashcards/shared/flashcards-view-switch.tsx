@@ -59,48 +59,30 @@ export function FlashcardsViewSwitch({
   }
 
   const loadingView = isPendingVisible ? pendingView : null;
+  const tabs: Array<{ view: FlashcardsView; label: string }> = [
+    { view: "review", label: reviewLabel },
+    { view: "manage", label: manageLabel },
+    { view: "statistics", label: statisticsLabel },
+  ];
 
   return (
     <Tabs value={currentView}>
       <TabsList>
-        <TabsTrigger
-          value="review"
-          disabled={isPending}
-          onClick={() => handleViewSwitch("review")}
-        >
-          {loadingView === "review" ? (
-            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          ) : null}
-          <span className={loadingView === "review" ? "opacity-90" : undefined}>
-            {reviewLabel}
-          </span>
-        </TabsTrigger>
-        <TabsTrigger
-          value="manage"
-          disabled={isPending}
-          onClick={() => handleViewSwitch("manage")}
-        >
-          {loadingView === "manage" ? (
-            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          ) : null}
-          <span className={loadingView === "manage" ? "opacity-90" : undefined}>
-            {manageLabel}
-          </span>
-        </TabsTrigger>
-        <TabsTrigger
-          value="statistics"
-          disabled={isPending}
-          onClick={() => handleViewSwitch("statistics")}
-        >
-          {loadingView === "statistics" ? (
-            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          ) : null}
-          <span
-            className={loadingView === "statistics" ? "opacity-90" : undefined}
+        {tabs.map(({ view, label }) => (
+          <TabsTrigger
+            key={view}
+            value={view}
+            disabled={isPending}
+            onClick={() => handleViewSwitch(view)}
           >
-            {statisticsLabel}
-          </span>
-        </TabsTrigger>
+            {loadingView === view ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+            ) : null}
+            <span className={loadingView === view ? "opacity-90" : undefined}>
+              {label}
+            </span>
+          </TabsTrigger>
+        ))}
       </TabsList>
     </Tabs>
   );

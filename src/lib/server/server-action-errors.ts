@@ -85,6 +85,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "flashcards.validation.unavailable":
     "AI validation is temporarily unavailable. Please try again later.",
   "flashcards.validation.noCards": "No flashcards to validate.",
+  "flashcards.merge.invalidData": "Invalid merge input.",
+  "flashcards.merge.noCandidates": "No similar flashcards found to merge.",
+  "flashcards.merge.declined":
+    "No useful connection or merge found — this card is fine on its own.",
   "flashcards.review.invalidData": "Invalid review input.",
   "flashcards.review.notFound": "Flashcard not found for review.",
   "flashcards.review.notDue": "This flashcard is not due yet.",
@@ -129,6 +133,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "limits.aiFlashcardGenerationPerDay":
     "Daily limit reached for AI flashcard generation.",
   "limits.aiValidationPerDay": "Daily limit reached for AI validation.",
+  "limits.aiMergeSynthesisPerDay": "Daily limit reached for AI card merging.",
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
   "mindmaps.invalidData": "Invalid mindmap data.",

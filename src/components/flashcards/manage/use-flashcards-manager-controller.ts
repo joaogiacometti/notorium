@@ -3,12 +3,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
   getFlashcardForManage,
   getFlashcardsManagePage,
   validateFlashcards,
 } from "@/app/actions/flashcards";
+import { getRefineFlashcardGroups } from "@/app/actions/flashcards-refine";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
+import type { RefineGroups } from "@/features/flashcards/refine/types";
 import { LIMITS } from "@/lib/config/limits";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
 import type {
@@ -17,6 +20,7 @@ import type {
   FlashcardValidationIssue,
   FlashcardValidationItem,
 } from "@/lib/server/api-contracts";
+import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 const flashcardManagerSearchDebounceMs = 200;
 
@@ -82,6 +86,12 @@ export function useFlashcardsManagerController({
   const [validationFlashcards, setValidationFlashcards] = useState<
     FlashcardValidationItem[]
   >([]);
+  const [refineMode, setRefineMode] = useState(false);
+  const [refineGroups, setRefineGroups] = useState<RefineGroups>({
+    mastered: [],
+    struggling: [],
+  });
+  const [isLoadingRefineGroups, setIsLoadingRefineGroups] = useState(false);
   const [validateDialogOpen, setValidateDialogOpen] = useState(false);
   const [validateAgainDialogOpen, setValidateAgainDialogOpen] = useState(false);
   const [isValidatingAgain, setIsValidatingAgain] = useState(false);
@@ -240,10 +250,45 @@ export function useFlashcardsManagerController({
     issues: FlashcardValidationIssue[],
     flashcards: FlashcardValidationItem[],
   ) {
+    exitRefine();
     setValidationIssues(issues);
     setValidationFlashcards(flashcards);
     setValidationMode(true);
     setValidateDialogOpen(false);
+  }
+
+  async function refreshRefineGroups(): Promise<boolean> {
+    setIsLoadingRefineGroups(true);
+
+    try {
+      const result = await getRefineFlashcardGroups();
+
+      if (!result.success) {
+        toast.error(resolveActionErrorMessage(result));
+        return false;
+      }
+
+      setRefineGroups(result.groups);
+      return true;
+    } finally {
+      setIsLoadingRefineGroups(false);
+    }
+  }
+
+  async function startRefineMode() {
+    const loaded = await refreshRefineGroups();
+
+    if (!loaded) {
+      return;
+    }
+
+    exitValidation();
+    setRefineMode(true);
+  }
+
+  function exitRefine() {
+    setRefineMode(false);
+    setRefineGroups({ mastered: [], struggling: [] });
   }
 
   async function handleValidateAgain() {
@@ -365,5 +410,11 @@ export function useFlashcardsManagerController({
     removeValidationFlashcard,
     updateValidationFlashcard,
     checkValidationEmpty,
+    refineMode,
+    refineGroups,
+    isLoadingRefineGroups,
+    startRefineMode,
+    refreshRefineGroups,
+    exitRefine,
   };
 }

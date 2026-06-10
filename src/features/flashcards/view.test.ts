@@ -14,6 +14,10 @@ describe("resolveFlashcardsView", () => {
     expect(resolveFlashcardsView("statistics")).toBe("statistics");
   });
 
+  it("falls back to review for legacy refine links", () => {
+    expect(resolveFlashcardsView("refine")).toBe("review");
+  });
+
   it("falls back to review for invalid values", () => {
     expect(resolveFlashcardsView("invalid")).toBe("review");
   });
