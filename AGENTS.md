@@ -147,6 +147,7 @@ Only add optional files when they are needed.
 - Use named exports except for Next.js pages and layouts.
 - For async actions, disable the button, show a spinner, and use a pending label.
 - Reuse `async-button-content.tsx` for async button content.
+- When adding, removing, or changing keyboard shortcuts, update both the behavior and the visible shortcut registry in `src/lib/shortcuts/registry.ts`, plus registry tests.
 - Remove unreachable code immediately.
 - Do not add speculative scaffolding.
 
@@ -201,6 +202,7 @@ className =
 - Auth and `userId` ownership are enforced.
 - Server Actions return typed results.
 - Revalidation is implemented where UI data changes.
+- Keyboard shortcut changes are reflected in the shortcuts help dialog.
 - Tests cover new functions and regressions.
 - New files and touched modules are reachable from active app code.
 - No unused code remains unless explicitly called out with a reason.

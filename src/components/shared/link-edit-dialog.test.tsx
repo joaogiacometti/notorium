@@ -166,7 +166,7 @@ describe("handleSave URL validation", () => {
     });
 
     const input = container.querySelector("input") as HTMLInputElement;
-    const saveButton = findButton("Save", container)!;
+    const saveButton = findButton("Save", container);
 
     await act(async () => {
       setInputValue(input, "https://example.com");
@@ -184,7 +184,7 @@ describe("handleSave URL validation", () => {
     });
 
     const input = container.querySelector("input") as HTMLInputElement;
-    const saveButton = findButton("Save", container)!;
+    const saveButton = findButton("Save", container);
 
     await act(async () => {
       setInputValue(input, "mailto:hello@example.com");
@@ -202,7 +202,7 @@ describe("handleSave URL validation", () => {
     });
 
     const input = container.querySelector("input") as HTMLInputElement;
-    const saveButton = findButton("Save", container)!;
+    const saveButton = findButton("Save", container);
 
     await act(async () => {
       setInputValue(input, "example.com");
@@ -219,7 +219,7 @@ describe("handleSave URL validation", () => {
     });
 
     const input = container.querySelector("input") as HTMLInputElement;
-    const saveButton = findButton("Save", container)!;
+    const saveButton = findButton("Save", container);
 
     await act(async () => {
       setInputValue(input, "example..com");
@@ -236,7 +236,7 @@ describe("handleSave URL validation", () => {
     });
 
     const input = container.querySelector("input") as HTMLInputElement;
-    const saveButton = findButton("Save", container)!;
+    const saveButton = findButton("Save", container);
 
     await act(async () => {
       setInputValue(input, "javascript:alert(1)");
@@ -252,7 +252,7 @@ describe("handleSave URL validation", () => {
       editor,
     });
 
-    const saveButton = findButton("Save", container)!;
+    const saveButton = findButton("Save", container);
     expect(saveButton.disabled).toBe(true);
   });
 
@@ -263,7 +263,7 @@ describe("handleSave URL validation", () => {
     });
 
     const input = container.querySelector("input") as HTMLInputElement;
-    const saveButton = findButton("Save", container)!;
+    const saveButton = findButton("Save", container);
 
     await act(async () => {
       setInputValue(input, "foo");
@@ -294,7 +294,7 @@ describe("handleSave URL validation", () => {
 
     await act(async () => {
       setInputValue(input, "https://example.com");
-      findButton("Save", container)!.click();
+      findButton("Save", container).click();
     });
 
     expect(setLinkRun).toHaveBeenCalledTimes(1);
@@ -326,7 +326,7 @@ describe("handleSave URL validation", () => {
 
     await act(async () => {
       setInputValue(input, "https://new.example.com");
-      findButton("Save", container)!.click();
+      findButton("Save", container).click();
     });
 
     expect(setLinkRun).toHaveBeenCalledTimes(1);
@@ -353,7 +353,7 @@ describe("handleSave URL validation", () => {
 
     await act(async () => {
       setInputValue(input, "https://example.com");
-      findButton("Save", container)!.click();
+      findButton("Save", container).click();
     });
 
     expect(insertContentRun).toHaveBeenCalledTimes(1);
@@ -380,7 +380,7 @@ describe("handleSave URL validation", () => {
     });
 
     await act(async () => {
-      findButton("Remove", container)!.click();
+      findButton("Remove", container).click();
     });
 
     expect(unsetLinkRun).toHaveBeenCalledTimes(1);
@@ -441,19 +441,26 @@ describe("handleSave URL validation", () => {
 });
 
 function setInputValue(input: HTMLInputElement, value: string) {
-  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+  const descriptor = Object.getOwnPropertyDescriptor(
     HTMLInputElement.prototype,
     "value",
-  )!.set!;
-  nativeInputValueSetter.call(input, value);
+  );
+  if (!descriptor?.set) {
+    throw new Error("HTMLInputElement.value setter not found");
+  }
+  descriptor.set.call(input, value);
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 function findButton(
   text: string,
   container: HTMLDivElement,
-): HTMLButtonElement | undefined {
-  return Array.from(container.querySelectorAll("button")).find(
+): HTMLButtonElement {
+  const button = Array.from(container.querySelectorAll("button")).find(
     (button) => button.textContent === text,
   );
+  if (!button) {
+    throw new Error(`Button "${text}" not found`);
+  }
+  return button;
 }

@@ -31,6 +31,12 @@ describe("resolveModeKey", () => {
     ).toEqual({ kind: "delete" });
   });
 
+  it("maps Tab to an add-child action", () => {
+    expect(
+      resolveModeKey(new KeyboardEvent("keydown", { key: "Tab" })),
+    ).toEqual({ kind: "add-child" });
+  });
+
   it("ignores tool keys held with a modifier so shortcuts like Cmd+V pass through", () => {
     expect(
       resolveModeKey(new KeyboardEvent("keydown", { key: "v", metaKey: true })),

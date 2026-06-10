@@ -77,6 +77,18 @@ describe("shortcutRegistry", () => {
     const ids = shortcutRegistry.map((shortcut) => shortcut.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it("lists the mindmap Tab add-child shortcut", () => {
+    const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
+      (item) => item.id === "mindmap-add-child",
+    );
+    expect(shortcut).toMatchObject({
+      kind: "keys",
+      keys: ["tab"],
+      description: "Add child to selected node",
+    });
+    expect(shortcut ? displayShortcutKeys(shortcut) : []).toEqual(["Tab"]);
+  });
 });
 
 describe("getActiveShortcutCategories", () => {

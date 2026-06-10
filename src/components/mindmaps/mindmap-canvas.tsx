@@ -37,6 +37,11 @@ import {
   type MindmapNodeColor,
 } from "@/features/mindmaps/constants";
 import { layoutMindmap } from "@/features/mindmaps/layout";
+import {
+  getDefaultChildSide,
+  getNodeAllowedChildSides,
+  type MindmapSide,
+} from "@/features/mindmaps/sides";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { syncRootNodeLabel } from "@/features/mindmaps/utils";
 import { useMindmapHistory } from "@/lib/mindmap/use-mindmap-history";
@@ -148,6 +153,36 @@ function toGraph(nodes: Node[], edges: Edge[]): MindmapGraph {
         : {}),
     })),
   };
+}
+
+function createChildEdge(
+  parentId: string,
+  childId: string,
+  side: MindmapSide,
+): Edge {
+  const toRight = side === "right";
+  return toEdge({
+    id: crypto.randomUUID(),
+    source: parentId,
+    target: childId,
+    sourceHandle: toRight ? "r-source" : "l-source",
+    targetHandle: toRight ? "l-target" : "r-target",
+  });
+}
+
+function selectOnlyNewChild(
+  nodes: Node[],
+  parent: Node,
+  childId: string,
+): Node[] {
+  const child: Node = {
+    id: childId,
+    type: "mindmap",
+    position: { x: parent.position.x, y: Number.MAX_SAFE_INTEGER },
+    data: { label: "New idea" },
+    selected: true,
+  };
+  return [...nodes.map((node) => ({ ...node, selected: false })), child];
 }
 
 /** Collect `startIds` plus every node reachable from them via source→target. */
@@ -363,6 +398,52 @@ function MindmapCanvasInner({
     removeSubtrees(selectedIds);
   }, [getNodes, removeSubtrees]);
 
+  const addChild = useCallback(
+    (parentId: string, side: MindmapSide) => {
+      const parent = getNode(parentId);
+      if (!parent) {
+        return;
+      }
+      const currentNodes = getNodes();
+      const currentEdges = getEdges();
+      const allowed = getNodeAllowedChildSides(
+        currentNodes,
+        currentEdges,
+        parentId,
+      );
+      if (!allowed.includes(side)) {
+        return;
+      }
+      const newNodeId = crypto.randomUUID();
+      takeSnapshot();
+      const nextEdges = currentEdges.concat(
+        createChildEdge(parentId, newNodeId, side),
+      );
+      const nextNodes = selectOnlyNewChild(currentNodes, parent, newNodeId);
+      setNodes(layoutMindmap(nextNodes, nextEdges));
+      setEdges(nextEdges);
+      setPendingEditNodeId(newNodeId);
+    },
+    [getNode, getNodes, getEdges, setNodes, setEdges, takeSnapshot],
+  );
+
+  const getAllowedChildSides = useCallback(
+    (nodeId: string) =>
+      getNodeAllowedChildSides(getNodes(), getEdges(), nodeId),
+    [getNodes, getEdges],
+  );
+
+  const addChildToSelected = useCallback(() => {
+    const selectedNodes = getNodes().filter((node) => node.selected);
+    if (selectedNodes.length !== 1) {
+      return;
+    }
+    const side = getDefaultChildSide(getAllowedChildSides(selectedNodes[0].id));
+    if (side) {
+      addChild(selectedNodes[0].id, side);
+    }
+  }, [getNodes, getAllowedChildSides, addChild]);
+
   // A toolbar action on a node within a multi-selection applies to the whole
   // selection; otherwise it targets just that node. Lets users bulk-style nodes.
   const selectionTargetIds = useCallback(
@@ -377,43 +458,17 @@ function MindmapCanvasInner({
     [getNodes],
   );
 
-  useMindmapModeKeys({ setMode, setSpaceHeld, deleteSelected });
+  useMindmapModeKeys({
+    setMode,
+    setSpaceHeld,
+    deleteSelected,
+    addChildToSelected,
+  });
 
   const actions = useMemo<MindmapActions>(
     () => ({
-      addChild: (parentId, side) => {
-        const parent = getNode(parentId);
-        if (!parent) {
-          return;
-        }
-        const newNodeId = crypto.randomUUID();
-        const toRight = side === "right";
-        takeSnapshot();
-        const nextEdges = getEdges().concat(
-          toEdge({
-            id: crypto.randomUUID(),
-            source: parentId,
-            target: newNodeId,
-            sourceHandle: toRight ? "r-source" : "l-source",
-            targetHandle: toRight ? "l-target" : "r-target",
-          }),
-        );
-        // The sentinel y sorts the new node last among its side's children, so
-        // it lands at the bottom of the group; layoutMindmap then recenters the
-        // parent on its children and pushes neighbouring branches apart.
-        const nextNodes = getNodes()
-          .map((node) => ({ ...node, selected: false }))
-          .concat({
-            id: newNodeId,
-            type: "mindmap",
-            position: { x: parent.position.x, y: Number.MAX_SAFE_INTEGER },
-            data: { label: "New idea" },
-            selected: true,
-          });
-        setNodes(layoutMindmap(nextNodes, nextEdges));
-        setEdges(nextEdges);
-        setPendingEditNodeId(newNodeId);
-      },
+      addChild,
+      getAllowedChildSides,
       toggleNodeStyle: (nodeId, style) => {
         const targets = selectionTargetIds(nodeId);
         // Derive one shared value from the clicked node so the whole selection
@@ -491,8 +546,6 @@ function MindmapCanvasInner({
     }),
     [
       getNode,
-      getNodes,
-      getEdges,
       setNodes,
       setEdges,
       takeSnapshot,
@@ -501,6 +554,8 @@ function MindmapCanvasInner({
       selectionTargetIds,
       pendingEditNodeId,
       editingEdgeId,
+      addChild,
+      getAllowedChildSides,
     ],
   );
 

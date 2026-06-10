@@ -5,6 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MindmapAddButtons } from "@/components/mindmaps/mindmap-add-buttons";
 import { MindmapHandles } from "@/components/mindmaps/mindmap-handles";
 import type { MindmapNode } from "@/features/mindmaps/types";
+import {
+  shouldKeepMindmapEditorAfterBlur,
+  useMindmapWindowFocusRestore,
+} from "@/lib/mindmap/edit-focus";
 import { selectedNodeCount } from "@/lib/mindmap/selection-store";
 
 type MindmapNodeData = MindmapNode["data"];
@@ -42,6 +46,7 @@ export function MindmapRootNode({
     textareaRef.current?.focus();
     textareaRef.current?.select();
   }, [editing, resize]);
+  useMindmapWindowFocusRestore(editing, textareaRef);
 
   return (
     <div
@@ -51,6 +56,7 @@ export function MindmapRootNode({
       <MindmapAddButtons
         nodeId={id}
         visible={Boolean(selected) && !isMultiSelect}
+        allowedSides={["left", "right"]}
       />
 
       <MindmapHandles />
@@ -63,7 +69,12 @@ export function MindmapRootNode({
             updateNodeData(id, { label: event.target.value });
             resize();
           }}
-          onBlur={() => setEditing(false)}
+          onBlur={() => {
+            if (shouldKeepMindmapEditorAfterBlur()) {
+              return;
+            }
+            setEditing(false);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();

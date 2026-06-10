@@ -1,24 +1,13 @@
 import type { Edge, Node } from "@xyflow/react";
+import { getSourceHandleSide } from "@/features/mindmaps/sides";
 
 // Vertical room reserved per leaf row and horizontal gap between depth columns.
 export const ROW_STEP = 90;
 export const CHILD_OFFSET_X = 260;
 
-type Side = "left" | "right";
-
 interface SideChildren {
   left: string[];
   right: string[];
-}
-
-function sideForHandle(sourceHandle: string | null | undefined): Side | null {
-  if (sourceHandle === "r-source") {
-    return "right";
-  }
-  if (sourceHandle === "l-source") {
-    return "left";
-  }
-  return null;
 }
 
 /**
@@ -32,7 +21,7 @@ function buildChildren(
   const yOf = new Map(nodes.map((node) => [node.id, node.position.y]));
   const children = new Map<string, SideChildren>();
   for (const edge of edges) {
-    const side = sideForHandle(edge.sourceHandle);
+    const side = getSourceHandleSide(edge.sourceHandle);
     if (!side) {
       continue;
     }

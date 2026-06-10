@@ -11,6 +11,8 @@ interface UseMindmapModeKeysParams {
   setSpaceHeld: (held: boolean) => void;
   /** Delete/Backspace handler: removes the current selection (subtree-aware). */
   deleteSelected: () => void;
+  /** Tab handler: adds a child to the current single-node selection. */
+  addChildToSelected: () => void;
 }
 
 /** The action a keydown maps to, or null when the key is irrelevant. */
@@ -18,6 +20,7 @@ type ModeKeyAction =
   | { kind: "mode"; mode: MindmapMode }
   | { kind: "space" }
   | { kind: "delete" }
+  | { kind: "add-child" }
   | null;
 
 /**
@@ -53,21 +56,25 @@ export function resolveModeKey(event: KeyboardEvent): ModeKeyAction {
   if (event.key === "Delete" || event.key === "Backspace") {
     return { kind: "delete" };
   }
+  if (event.key === "Tab" && !event.shiftKey) {
+    return { kind: "add-child" };
+  }
   return null;
 }
 
 /**
  * Tool shortcuts for the mindmap canvas: `V` selects, `H` pans,
  * holding `Space` temporarily pans, and `Delete`/`Backspace` removes the
- * selection. Suppressed while typing in a field.
+ * selection. `Tab` adds a child to one selected node. Suppressed while typing.
  *
  * @example
- * useMindmapModeKeys({ setMode, setSpaceHeld, deleteSelected });
+ * useMindmapModeKeys({ setMode, setSpaceHeld, deleteSelected, addChildToSelected });
  */
 export function useMindmapModeKeys({
   setMode,
   setSpaceHeld,
   deleteSelected,
+  addChildToSelected,
 }: UseMindmapModeKeysParams): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -83,6 +90,9 @@ export function useMindmapModeKeys({
       } else if (action.kind === "space") {
         event.preventDefault();
         setSpaceHeld(true);
+      } else if (action.kind === "add-child") {
+        event.preventDefault();
+        addChildToSelected();
       } else {
         deleteSelected();
       }
@@ -98,5 +108,5 @@ export function useMindmapModeKeys({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [setMode, setSpaceHeld, deleteSelected]);
+  }, [setMode, setSpaceHeld, deleteSelected, addChildToSelected]);
 }

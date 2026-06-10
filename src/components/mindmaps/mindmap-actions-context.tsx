@@ -5,9 +5,9 @@ import type {
   MindmapEdgeDirection,
   MindmapNodeColor,
 } from "@/features/mindmaps/constants";
+import type { MindmapSide } from "@/features/mindmaps/sides";
 
-/** Which side of a node a child is added to. */
-export type MindmapSide = "left" | "right";
+export type { MindmapSide } from "@/features/mindmaps/sides";
 
 /**
  * Canvas-level handlers and transient editing state shared with custom node and
@@ -17,6 +17,7 @@ export type MindmapSide = "left" | "right";
  */
 export interface MindmapActions {
   addChild: (parentId: string, side: MindmapSide) => void;
+  getAllowedChildSides: (nodeId: string) => readonly MindmapSide[];
   toggleNodeStyle: (nodeId: string, style: "bold" | "italic") => void;
   setNodeColor: (nodeId: string, color: MindmapNodeColor | null) => void;
   setNodeImage: (nodeId: string, url: string | null) => void;

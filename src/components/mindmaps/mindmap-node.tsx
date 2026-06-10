@@ -19,6 +19,10 @@ import { MINDMAP_NODE_COLOR_TOKENS } from "@/features/mindmaps/constants";
 import type { MindmapNode } from "@/features/mindmaps/types";
 import { LIMITS } from "@/lib/config/limits";
 import {
+  shouldKeepMindmapEditorAfterBlur,
+  useMindmapWindowFocusRestore,
+} from "@/lib/mindmap/edit-focus";
+import {
   firstSelectedNodeId,
   selectedNodeCount,
 } from "@/lib/mindmap/selection-store";
@@ -112,6 +116,7 @@ export function MindmapNodeComponent({
     textareaRef.current?.focus();
     textareaRef.current?.select();
   }, [editing, resize]);
+  useMindmapWindowFocusRestore(editing, textareaRef);
 
   const labelClass = cn(
     "block w-full whitespace-pre-wrap break-words text-left",
@@ -188,6 +193,7 @@ export function MindmapNodeComponent({
       <MindmapAddButtons
         nodeId={id}
         visible={Boolean(selected) && !isMultiSelect}
+        allowedSides={actions.getAllowedChildSides(id)}
       />
 
       <MindmapHandles />
@@ -234,7 +240,12 @@ export function MindmapNodeComponent({
             updateNodeData(id, { label: event.target.value });
             resize();
           }}
-          onBlur={() => setEditing(false)}
+          onBlur={() => {
+            if (shouldKeepMindmapEditorAfterBlur()) {
+              return;
+            }
+            setEditing(false);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
