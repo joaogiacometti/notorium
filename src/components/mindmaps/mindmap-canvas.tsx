@@ -10,6 +10,7 @@ import {
   type FinalConnectionState,
   MarkerType,
   type Node,
+  type NodeChange,
   type OnConnect,
   Panel,
   ReactFlow,
@@ -36,7 +37,10 @@ import {
   type MindmapEdgeDirection,
   type MindmapNodeColor,
 } from "@/features/mindmaps/constants";
-import { layoutMindmap } from "@/features/mindmaps/layout";
+import {
+  layoutMindmap,
+  trackNodeHeightChanges,
+} from "@/features/mindmaps/layout";
 import {
   getDefaultChildSide,
   getNodeAllowedChildSides,
@@ -294,6 +298,19 @@ function MindmapCanvasInner({
 
     setNodes((current) => syncRootNodeLabel(current, title));
   }, [title, setNodes]);
+
+  // Re-run the layout when an already-rendered node changes height (image
+  // added/removed or finished loading) so nodes below it are pushed clear.
+  const knownNodeHeightsRef = useRef(new Map<string, number>());
+  const onNodesChangeWithRelayout = useCallback(
+    (changes: NodeChange[]) => {
+      onNodesChange(changes);
+      if (trackNodeHeightChanges(changes, knownNodeHeightsRef.current)) {
+        setNodes((current) => layoutMindmap(current, getEdges()));
+      }
+    },
+    [onNodesChange, setNodes, getEdges],
+  );
 
   const onConnect = useCallback<OnConnect>(
     (connection: Connection) => {
@@ -579,7 +596,7 @@ function MindmapCanvasInner({
           edges={edges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
+          onNodesChange={onNodesChangeWithRelayout}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onConnectEnd={onConnectEnd}

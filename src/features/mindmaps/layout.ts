@@ -1,9 +1,52 @@
-import type { Edge, Node } from "@xyflow/react";
+import type { Edge, Node, NodeChange } from "@xyflow/react";
 import { getSourceHandleSide } from "@/features/mindmaps/sides";
 
 // Vertical room reserved per leaf row and horizontal gap between depth columns.
 export const ROW_STEP = 90;
 export const CHILD_OFFSET_X = 260;
+// Minimum vertical clearance between adjacent nodes; tall nodes (e.g. with
+// images) reserve their measured height plus this gap instead of one ROW_STEP.
+export const ROW_GAP = 40;
+// Assumed height for nodes not yet measured by React Flow (fresh nodes render
+// at roughly this height); keeps default rows exactly one ROW_STEP tall.
+const FALLBACK_NODE_HEIGHT = ROW_STEP - ROW_GAP;
+
+/** Rendered height of a node, falling back for nodes not yet measured. */
+function nodeHeight(node: Node | undefined): number {
+  return node?.measured?.height ?? node?.height ?? FALLBACK_NODE_HEIGHT;
+}
+
+/**
+ * Record node heights from React Flow change events into `knownHeights` and
+ * report whether any already-measured node changed height — the signal that
+ * the layout must be recomputed (e.g. an image was added to a node, or its
+ * image finished loading). First measurements (initial mount, fresh nodes)
+ * only seed the map so saved layouts don't reflow on load.
+ *
+ * @example
+ * if (trackNodeHeightChanges(changes, heightsRef.current)) relayout();
+ */
+export function trackNodeHeightChanges(
+  changes: NodeChange[],
+  knownHeights: Map<string, number>,
+): boolean {
+  let resized = false;
+  for (const change of changes) {
+    if (change.type === "remove") {
+      knownHeights.delete(change.id);
+      continue;
+    }
+    if (change.type !== "dimensions" || !change.dimensions) {
+      continue;
+    }
+    const previous = knownHeights.get(change.id);
+    knownHeights.set(change.id, change.dimensions.height);
+    if (previous !== undefined && previous !== change.dimensions.height) {
+      resized = true;
+    }
+  }
+  return resized;
+}
 
 interface SideChildren {
   left: string[];
@@ -62,6 +105,10 @@ export function layoutMindmap(nodes: Node[], edges: Edge[]): Node[] {
     return nodes;
   }
   const children = buildChildren(nodes, edges);
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  // A node's own row must fit its rendered height (image nodes exceed ROW_STEP).
+  const rowSpan = (id: string) =>
+    Math.max(ROW_STEP, nodeHeight(nodeById.get(id)) + ROW_GAP);
 
   const spanCache = new Map<string, number>();
   const subtreeSpan = (id: string): number => {
@@ -73,7 +120,7 @@ export function layoutMindmap(nodes: Node[], edges: Edge[]): Node[] {
     const sumSide = (ids: string[]) =>
       ids.reduce((total, child) => total + subtreeSpan(child), 0);
     const span = Math.max(
-      ROW_STEP,
+      rowSpan(id),
       entry ? sumSide(entry.left) : 0,
       entry ? sumSide(entry.right) : 0,
     );
@@ -82,8 +129,10 @@ export function layoutMindmap(nodes: Node[], edges: Edge[]): Node[] {
   };
 
   const positions = new Map<string, { x: number; y: number }>();
+  // `position` is the node's top-left, so convert the row center to a top edge;
+  // with uniform fallback heights this matches the previous layout exactly.
   const assign = (id: string, x: number, centerY: number) => {
-    positions.set(id, { x, y: centerY });
+    positions.set(id, { x, y: centerY - nodeHeight(nodeById.get(id)) / 2 });
     const entry = children.get(id);
     if (!entry) {
       return;
@@ -101,7 +150,12 @@ export function layoutMindmap(nodes: Node[], edges: Edge[]): Node[] {
     }
   };
 
-  assign(root.id, root.position.x, root.position.y);
+  // Anchor on the root's current center so its on-screen spot never moves.
+  assign(
+    root.id,
+    root.position.x,
+    root.position.y + nodeHeight(nodeById.get(root.id)) / 2,
+  );
 
   return nodes.map((node) => {
     const next = positions.get(node.id);

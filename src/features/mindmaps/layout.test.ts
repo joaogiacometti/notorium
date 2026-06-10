@@ -1,6 +1,11 @@
-import type { Edge, Node } from "@xyflow/react";
+import type { Edge, Node, NodeChange } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
-import { CHILD_OFFSET_X, layoutMindmap, ROW_STEP } from "./layout";
+import {
+  CHILD_OFFSET_X,
+  layoutMindmap,
+  ROW_STEP,
+  trackNodeHeightChanges,
+} from "./layout";
 
 function node(id: string, x = 0, y = 0, kind?: "root" | "branch"): Node {
   return {
@@ -118,7 +123,61 @@ describe("layoutMindmap", () => {
     expect(posOf(result, "leaf").y).toBeGreaterThan(posOf(result, "t2").y);
   });
 
+  it("pushes siblings clear of a measured tall node (e.g. with an image)", () => {
+    const tall = {
+      ...node("tall", 0, 0),
+      measured: { width: 280, height: 300 },
+    };
+    const nodes = [node("root", 0, 0, "root"), tall, node("below", 0, 1)];
+    const edges = [
+      edge("root", "tall", "right"),
+      edge("root", "below", "right"),
+    ];
+    const result = layoutMindmap(nodes, edges);
+    const tallPos = posOf(result, "tall");
+    const belowPos = posOf(result, "below");
+    // 'below' must start past the tall node's bottom edge, not one ROW_STEP in.
+    expect(belowPos.y).toBeGreaterThan(tallPos.y + 300);
+  });
+
   it("returns the input unchanged when there are no nodes", () => {
     expect(layoutMindmap([], [])).toEqual([]);
+  });
+});
+
+function dimensionChange(id: string, height: number): NodeChange {
+  return { id, type: "dimensions", dimensions: { width: 200, height } };
+}
+
+describe("trackNodeHeightChanges", () => {
+  it("seeds first measurements without requesting a relayout", () => {
+    const heights = new Map<string, number>();
+    const resized = trackNodeHeightChanges([dimensionChange("a", 46)], heights);
+    expect(resized).toBe(false);
+    expect(heights.get("a")).toBe(46);
+  });
+
+  it("requests a relayout when a measured node changes height", () => {
+    const heights = new Map([["a", 46]]);
+    // e.g. an image was attached to 'a' and its render grew to 300px.
+    const resized = trackNodeHeightChanges(
+      [dimensionChange("a", 300)],
+      heights,
+    );
+    expect(resized).toBe(true);
+    expect(heights.get("a")).toBe(300);
+  });
+
+  it("ignores repeat measurements at the same height", () => {
+    const heights = new Map([["a", 46]]);
+    expect(trackNodeHeightChanges([dimensionChange("a", 46)], heights)).toBe(
+      false,
+    );
+  });
+
+  it("forgets removed nodes so re-adding the id seeds fresh", () => {
+    const heights = new Map([["a", 46]]);
+    trackNodeHeightChanges([{ id: "a", type: "remove" }], heights);
+    expect(heights.has("a")).toBe(false);
   });
 });
