@@ -51,7 +51,7 @@ export const shortcutRegistry: Shortcut[] = [
     id: "editor-slash-table",
     kind: "typed",
     keys: ["/table"],
-    description: "Insert a table (type on an empty line, then Enter)",
+    description: "Insert a table",
     category: ShortcutCategory.NotesEditor,
   },
   {
@@ -65,8 +65,7 @@ export const shortcutRegistry: Shortcut[] = [
     id: "editor-slash-math",
     kind: "typed",
     keys: ["/math"],
-    description:
-      "Insert a block LaTeX equation (type on an empty line, then Enter)",
+    description: "Insert a block LaTeX equation",
     category: ShortcutCategory.NotesEditor,
   },
   {
@@ -87,7 +86,14 @@ export const shortcutRegistry: Shortcut[] = [
     id: "editor-submit",
     kind: "keys",
     keys: ["cmd+enter", "ctrl+enter"],
-    description: "Submit the editor form (where supported)",
+    description: "Submit the editor form",
+    category: ShortcutCategory.NotesEditor,
+  },
+  {
+    id: "editor-link",
+    kind: "keys",
+    keys: ["cmd+k", "ctrl+k"],
+    description: "Insert or edit a link",
     category: ShortcutCategory.NotesEditor,
   },
   {
@@ -143,7 +149,7 @@ export const shortcutRegistry: Shortcut[] = [
     id: "mindmap-edit-label",
     kind: "typed",
     keys: ["Double-click"],
-    description: "Edit node or connection label (Enter commits, Esc cancels)",
+    description: "Edit node or connection label",
     category: ShortcutCategory.Mindmap,
   },
   {

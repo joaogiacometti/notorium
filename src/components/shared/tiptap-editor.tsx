@@ -7,10 +7,14 @@ import Placeholder from "@tiptap/extension-placeholder";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import Typography from "@tiptap/extension-typography";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  type LinkDialogState,
+  LinkEditDialog,
+} from "@/components/shared/link-edit-dialog";
 import {
   type MathDialogState,
   MathEditDialog,
@@ -64,6 +68,8 @@ export function TiptapEditor({
   const [resolvedValue, setResolvedValue] = useState(value);
   const [isImageUploadPending, setIsImageUploadPending] = useState(false);
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null);
+  const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
+  const editorRef = useRef<Editor | null>(null);
   const lastEmittedValueRef = useRef(value);
   const latestValueRef = useRef(value);
   onCtrlEnterRef.current = onCtrlEnter;
@@ -100,6 +106,12 @@ export function TiptapEditor({
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         codeBlock: false,
+        link: {
+          autolink: true,
+          openOnClick: true,
+          linkOnPaste: true,
+          enableClickSelection: true,
+        },
       }),
       CodeBlockLowlight.configure({
         defaultLanguage: "plaintext",
@@ -150,6 +162,43 @@ export function TiptapEditor({
       },
       handleKeyDown: (_, event) => {
         if (
+          event.key === "k" &&
+          (event.metaKey || event.ctrlKey) &&
+          !event.shiftKey
+        ) {
+          const ed = editorRef.current;
+          if (!ed) return false;
+
+          const linkActive = ed.isActive("link");
+          const canExtendLink = !linkActive && ed.can().extendMarkRange("link");
+
+          if (linkActive || canExtendLink) {
+            if (canExtendLink) {
+              ed.chain().focus().extendMarkRange("link").run();
+            }
+            const href = (ed.getAttributes("link").href as string) ?? "";
+            event.preventDefault();
+            event.stopPropagation();
+            setLinkDialog({ mode: "edit", href });
+            return true;
+          }
+
+          const { from, to, empty } = ed.state.selection;
+          if (!empty) {
+            const selectedText = ed.state.doc.textBetween(from, to, " ");
+            event.preventDefault();
+            event.stopPropagation();
+            setLinkDialog({ mode: "create", selectedText });
+            return true;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+          setLinkDialog({ mode: "create", selectedText: "" });
+          return true;
+        }
+
+        if (
           !onCtrlEnterRef.current ||
           !shouldSubmitEditorOnCtrlEnter({
             key: event.key,
@@ -169,6 +218,10 @@ export function TiptapEditor({
     },
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   useEffect(() => {
     if (!isExternalEditorValueChange(value, lastEmittedValueRef.current)) {
@@ -242,6 +295,11 @@ export function TiptapEditor({
         editor={editor}
         state={mathDialog}
         onClose={() => setMathDialog(null)}
+      />
+      <LinkEditDialog
+        editor={editor}
+        state={linkDialog}
+        onClose={() => setLinkDialog(null)}
       />
     </div>
   );

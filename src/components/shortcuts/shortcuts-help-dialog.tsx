@@ -35,9 +35,8 @@ export function ShortcutsHelpDialog({
         <DialogTitle className="text-lg font-semibold">
           Keyboard shortcuts
         </DialogTitle>
-        <DialogDescription className="text-sm text-muted-foreground">
-          Shortcuts and typed triggers, grouped by where they apply. Groups
-          available on the current page are highlighted.
+        <DialogDescription className="sr-only">
+          A list of keyboard shortcuts available on this page.
         </DialogDescription>
 
         <div className="grid items-start gap-4 md:grid-cols-2 mt-2 overflow-y-auto p-1 -m-1">
@@ -90,11 +89,6 @@ function ShortcutCategorySectionView({
         >
           {section.label}
         </h3>
-        {isActive && (
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            This page
-          </span>
-        )}
       </header>
       <div className="divide-y divide-border/60 px-4">
         {shortcuts.map((shortcut) => (
