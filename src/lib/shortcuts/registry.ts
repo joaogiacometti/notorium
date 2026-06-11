@@ -139,6 +139,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Mindmap,
   },
   {
+    id: "mindmap-add-sibling",
+    kind: "keys",
+    keys: ["shift+enter"],
+    description: "Add sibling below selected node",
+    category: ShortcutCategory.Mindmap,
+  },
+  {
     id: "mindmap-undo",
     kind: "keys",
     keys: ["cmd+z", "ctrl+z"],

@@ -461,6 +461,21 @@ function MindmapCanvasInner({
     }
   }, [getNodes, getAllowedChildSides, addChild]);
 
+  const addSiblingToSelected = useCallback(() => {
+    const selectedNodes = getNodes().filter((node) => node.selected);
+    if (selectedNodes.length !== 1) {
+      return;
+    }
+    const nodeId = selectedNodes[0].id;
+    const parentEdge = getEdges().find((edge) => edge.target === nodeId);
+    if (!parentEdge) {
+      return;
+    }
+    const side: MindmapSide =
+      parentEdge.sourceHandle === "r-source" ? "right" : "left";
+    addChild(parentEdge.source, side);
+  }, [getNodes, getEdges, addChild]);
+
   // A toolbar action on a node within a multi-selection applies to the whole
   // selection; otherwise it targets just that node. Lets users bulk-style nodes.
   const selectionTargetIds = useCallback(
@@ -480,6 +495,7 @@ function MindmapCanvasInner({
     setSpaceHeld,
     deleteSelected,
     addChildToSelected,
+    addSiblingToSelected,
   });
 
   const actions = useMemo<MindmapActions>(

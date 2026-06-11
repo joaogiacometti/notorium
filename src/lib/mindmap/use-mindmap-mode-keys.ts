@@ -13,6 +13,8 @@ interface UseMindmapModeKeysParams {
   deleteSelected: () => void;
   /** Tab handler: adds a child to the current single-node selection. */
   addChildToSelected: () => void;
+  /** Shift+Enter handler: adds a sibling below the current single-node selection. */
+  addSiblingToSelected: () => void;
 }
 
 /** The action a keydown maps to, or null when the key is irrelevant. */
@@ -21,6 +23,7 @@ type ModeKeyAction =
   | { kind: "space" }
   | { kind: "delete" }
   | { kind: "add-child" }
+  | { kind: "add-sibling" }
   | null;
 
 /**
@@ -59,22 +62,27 @@ export function resolveModeKey(event: KeyboardEvent): ModeKeyAction {
   if (event.key === "Tab" && !event.shiftKey) {
     return { kind: "add-child" };
   }
+  if (event.key === "Enter" && event.shiftKey) {
+    return { kind: "add-sibling" };
+  }
   return null;
 }
 
 /**
  * Tool shortcuts for the mindmap canvas: `V` selects, `H` pans,
- * holding `Space` temporarily pans, and `Delete`/`Backspace` removes the
- * selection. `Tab` adds a child to one selected node. Suppressed while typing.
+ * holding `Space` temporarily pans, `Delete`/`Backspace` removes the
+ * selection, `Tab` adds a child, and `Shift+Enter` adds a sibling below
+ * the selected node. Suppressed while typing.
  *
  * @example
- * useMindmapModeKeys({ setMode, setSpaceHeld, deleteSelected, addChildToSelected });
+ * useMindmapModeKeys({ setMode, setSpaceHeld, deleteSelected, addChildToSelected, addSiblingToSelected });
  */
 export function useMindmapModeKeys({
   setMode,
   setSpaceHeld,
   deleteSelected,
   addChildToSelected,
+  addSiblingToSelected,
 }: UseMindmapModeKeysParams): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -93,6 +101,9 @@ export function useMindmapModeKeys({
       } else if (action.kind === "add-child") {
         event.preventDefault();
         addChildToSelected();
+      } else if (action.kind === "add-sibling") {
+        event.preventDefault();
+        addSiblingToSelected();
       } else {
         deleteSelected();
       }
@@ -108,5 +119,5 @@ export function useMindmapModeKeys({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [setMode, setSpaceHeld, deleteSelected, addChildToSelected]);
+  }, [setMode, setSpaceHeld, deleteSelected, addChildToSelected, addSiblingToSelected]);
 }

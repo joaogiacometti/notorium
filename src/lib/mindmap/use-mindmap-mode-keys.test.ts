@@ -37,6 +37,20 @@ describe("resolveModeKey", () => {
     ).toEqual({ kind: "add-child" });
   });
 
+  it("maps Shift+Enter to an add-sibling action", () => {
+    expect(
+      resolveModeKey(
+        new KeyboardEvent("keydown", { key: "Enter", shiftKey: true }),
+      ),
+    ).toEqual({ kind: "add-sibling" });
+  });
+
+  it("ignores plain Enter (no shift)", () => {
+    expect(
+      resolveModeKey(new KeyboardEvent("keydown", { key: "Enter" })),
+    ).toBeNull();
+  });
+
   it("ignores tool keys held with a modifier so shortcuts like Cmd+V pass through", () => {
     expect(
       resolveModeKey(new KeyboardEvent("keydown", { key: "v", metaKey: true })),
