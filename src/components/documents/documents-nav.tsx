@@ -92,9 +92,7 @@ export function DocumentsNav({
 
   function isActive(item: DocumentListItem) {
     return (
-      activeId !== undefined &&
-      item.id === activeId &&
-      item.kind === activeKind
+      activeId !== undefined && item.id === activeId && item.kind === activeKind
     );
   }
 

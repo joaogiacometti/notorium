@@ -13,6 +13,7 @@ import {
   type MouseEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -84,7 +85,11 @@ export function MindmapDetail({
   const debouncedTitle = useDebouncedValue(title, AUTOSAVE_DELAY_MS);
   const debouncedGraph = useDebouncedValue(graph, AUTOSAVE_DELAY_MS);
 
-  const currentSnapshot = JSON.stringify({ title, data: graph });
+  // Serialize only when title or graph actually changes, not on every render.
+  const currentSnapshot = useMemo(
+    () => JSON.stringify({ title, data: graph }),
+    [title, graph],
+  );
   const isDirty = currentSnapshot !== lastSavedRef.current;
   useBeforeUnload(isDirty || isSaving);
 
@@ -99,24 +104,35 @@ export function MindmapDetail({
       saveSequenceRef.current = saveSequence;
       setIsSaving(true);
 
-      const result = await editMindmap({
-        id: mindmap.id,
-        title: nextTitle,
-        data: JSON.stringify(nextGraph),
-      });
+      try {
+        const result = await editMindmap({
+          id: mindmap.id,
+          title: nextTitle,
+          data: JSON.stringify(nextGraph),
+        });
 
-      if (saveSequence !== saveSequenceRef.current) {
-        return;
+        // A newer save superseded this one; let it own the saving state.
+        if (saveSequence !== saveSequenceRef.current) {
+          return;
+        }
+
+        if (!result.success) {
+          toast.error(t(result.errorCode, result.errorParams));
+          return;
+        }
+
+        lastSavedRef.current = snapshot;
+      } catch {
+        // A rejected action (network/serialization failure) must not leave the
+        // editor stuck in the saving state, which would warn on every unload.
+        if (saveSequence === saveSequenceRef.current) {
+          toast.error("Couldn't save the mindmap");
+        }
+      } finally {
+        if (saveSequence === saveSequenceRef.current) {
+          setIsSaving(false);
+        }
       }
-
-      setIsSaving(false);
-
-      if (!result.success) {
-        toast.error(t(result.errorCode, result.errorParams));
-        return;
-      }
-
-      lastSavedRef.current = snapshot;
     },
     [mindmap.id],
   );
@@ -150,7 +166,7 @@ export function MindmapDetail({
           : "lg:h-[calc(100svh-4rem)] lg:pb-6",
       )}
     >
-      {!isZenMode ? (
+      {isZenMode ? null : (
         <div className="mb-4 shrink-0">
           <Button
             type="button"
@@ -165,14 +181,14 @@ export function MindmapDetail({
             </Link>
           </Button>
         </div>
-      ) : null}
+      )}
       <div
         className={cn(
           "grid gap-6 lg:min-h-0 lg:flex-1",
           isZenMode ? "min-h-0 flex-1" : "lg:grid-cols-[14rem_minmax(0,1fr)]",
         )}
       >
-        {!isZenMode ? (
+        {isZenMode ? null : (
           <DocumentsNav
             subjectId={mindmap.subjectId}
             documents={sidebarDocuments}
@@ -185,7 +201,7 @@ export function MindmapDetail({
             onDeleteActive={() => setDeleteOpen(true)}
             onExportActive={() => void exportPngRef.current?.()}
           />
-        ) : null}
+        )}
 
         <div
           className={cn(
