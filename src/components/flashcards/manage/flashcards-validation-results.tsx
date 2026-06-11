@@ -76,11 +76,11 @@ function getIssueTypeBadgeVariant(
 function getColumnClassName(columnId: string) {
   switch (columnId) {
     case "front":
-      return "min-w-[10rem]";
+      return "min-w-[6rem]";
     case "issue":
-      return "min-w-[12rem]";
+      return "min-w-[9rem]";
     case "deckPath":
-      return "min-w-[8rem]";
+      return "w-24 min-w-20";
     case "actions":
       return "w-14 min-w-14";
     default:
@@ -200,7 +200,7 @@ export function FlashcardsValidationResults({
         isLoading={false}
         loadingSkeleton={
           <TableSkeleton
-            columnTemplate="1.35fr 1.2fr 0.7fr 3.5rem"
+            columnTemplate="1fr 0.9fr 6rem 3.5rem"
             headers={[
               { className: "h-4 w-16" },
               { className: "h-4 w-20" },
@@ -228,7 +228,7 @@ export function FlashcardsValidationResults({
         nextLabel="Next"
         emptyLabel="All validated flashcards look good!"
         getRowId={(row) => row.id}
-        tableClassName="w-full min-w-[40rem]"
+        tableClassName="w-full min-w-[25rem]"
         getHeaderCellClassName={getColumnClassName}
         getBodyCellClassName={(columnId) =>
           cn("px-3 py-3 align-middle", getColumnClassName(columnId))
