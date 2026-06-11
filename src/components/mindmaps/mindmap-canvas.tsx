@@ -24,6 +24,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   type MindmapActions,
   MindmapActionsProvider,
@@ -41,6 +42,7 @@ import {
   layoutMindmap,
   trackNodeHeightChanges,
 } from "@/features/mindmaps/layout";
+import { serializeMindmapSelection } from "@/features/mindmaps/serialize";
 import {
   getDefaultChildSide,
   getNodeAllowedChildSides,
@@ -49,6 +51,7 @@ import {
 } from "@/features/mindmaps/sides";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { syncRootNodeLabel } from "@/features/mindmaps/utils";
+import { useMindmapCopyKey } from "@/lib/mindmap/use-mindmap-copy-key";
 import { useMindmapHistory } from "@/lib/mindmap/use-mindmap-history";
 import {
   type MindmapMode,
@@ -447,6 +450,28 @@ function MindmapCanvasInner({
     }
   }, [getNodes, getEdges, setEdges, takeSnapshot, removeSubtrees]);
 
+  // Copy the selected nodes (and their subtrees) as a markdown outline so they
+  // can be pasted into an AI chat. Returns false when nothing is selected so the
+  // key handler can fall back to the browser's own copy.
+  const copySelected = useCallback(() => {
+    const selectedNodeIds = getNodes()
+      .filter((node) => node.selected)
+      .map((node) => node.id);
+    const text = serializeMindmapSelection(
+      getNodes(),
+      getEdges(),
+      selectedNodeIds,
+    );
+    if (!text) {
+      return false;
+    }
+    void navigator.clipboard.writeText(text).then(
+      () => toast.success("Copied node text to clipboard"),
+      () => toast.error("Couldn't copy to clipboard"),
+    );
+    return true;
+  }, [getNodes, getEdges]);
+
   const addChild = useCallback(
     (parentId: string, side: MindmapSide) => {
       const parent = getNode(parentId);
@@ -529,6 +554,7 @@ function MindmapCanvasInner({
     addChildToSelected,
     addSiblingToSelected,
   });
+  useMindmapCopyKey(copySelected);
 
   const actions = useMemo<MindmapActions>(
     () => ({

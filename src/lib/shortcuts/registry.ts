@@ -146,6 +146,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Mindmap,
   },
   {
+    id: "mindmap-copy-node",
+    kind: "keys",
+    keys: ["cmd+c", "ctrl+c"],
+    description: "Copy selected nodes as text",
+    category: ShortcutCategory.Mindmap,
+  },
+  {
     id: "mindmap-undo",
     kind: "keys",
     keys: ["cmd+z", "ctrl+z"],
