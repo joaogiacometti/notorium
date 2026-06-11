@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   computePngExportFrame,
+  inlineLoadedImages,
   toPngFileName,
 } from "@/features/mindmaps/export-png";
 
@@ -45,6 +46,101 @@ describe("computePngExportFrame", () => {
     expect(frame.height).toBeLessThanOrEqual(8000);
     // Scale must drop below the default 2x to fit.
     expect(frame.transform).toContain("scale(0.0");
+  });
+});
+
+describe("inlineLoadedImages", () => {
+  function makeImg(
+    src: string,
+    complete: boolean,
+    naturalWidth: number,
+  ): HTMLImageElement {
+    const img = document.createElement("img");
+    Object.defineProperty(img, "complete", { value: complete });
+    Object.defineProperty(img, "naturalWidth", { value: naturalWidth });
+    img.src = src;
+    return img;
+  }
+
+  function makeViewport(imgs: HTMLImageElement[]): HTMLElement {
+    const div = document.createElement("div");
+    for (const img of imgs) div.appendChild(img);
+    return div;
+  }
+
+  it("replaces src with data URL for a loaded image and restores it", async () => {
+    const originalCreateElement = document.createElement.bind(document);
+    const drawImage = vi.fn();
+    const toDataURL = vi.fn().mockReturnValue("data:image/png;base64,abc");
+    vi.spyOn(document, "createElement").mockImplementation((tag) => {
+      if (tag === "canvas") {
+        return {
+          width: 0,
+          height: 0,
+          getContext: () => ({ drawImage }),
+          toDataURL,
+        } as unknown as HTMLCanvasElement;
+      }
+      return originalCreateElement(tag);
+    });
+
+    const img = makeImg("https://example.com/image.png", true, 100);
+    const viewport = makeViewport([img]);
+
+    const restore = await inlineLoadedImages(viewport);
+    expect(img.src).toBe("data:image/png;base64,abc");
+
+    restore();
+    expect(img.src).toBe("https://example.com/image.png");
+
+    vi.restoreAllMocks();
+  });
+
+  it("skips images that are not yet loaded (complete=false)", async () => {
+    const img = makeImg("https://example.com/a.png", false, 100);
+    const viewport = makeViewport([img]);
+
+    const restore = await inlineLoadedImages(viewport);
+    expect(img.src).toBe("https://example.com/a.png");
+    restore();
+  });
+
+  it("replaces broken images (naturalWidth=0) with a transparent placeholder", async () => {
+    const img = makeImg("https://example.com/broken.png", true, 0);
+    const viewport = makeViewport([img]);
+
+    const restore = await inlineLoadedImages(viewport);
+    expect(img.src).toMatch(/^data:image\/png;base64,/);
+
+    restore();
+    expect(img.src).toBe("https://example.com/broken.png");
+  });
+
+  it("skips an image when canvas drawing throws", async () => {
+    const originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag) => {
+      if (tag === "canvas") {
+        return {
+          width: 0,
+          height: 0,
+          getContext: () => ({
+            drawImage: () => {
+              throw new Error("tainted");
+            },
+          }),
+          toDataURL: vi.fn(),
+        } as unknown as HTMLCanvasElement;
+      }
+      return originalCreateElement(tag);
+    });
+
+    const img = makeImg("https://example.com/c.png", true, 50);
+    const viewport = makeViewport([img]);
+
+    await expect(inlineLoadedImages(viewport)).resolves.toBeDefined();
+    expect(img.src).toBe("https://example.com/c.png");
+
+    vi.restoreAllMocks();
   });
 });
 

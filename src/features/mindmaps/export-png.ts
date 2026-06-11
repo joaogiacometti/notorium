@@ -19,6 +19,10 @@ interface Rect {
 // Render at 2x for crisp node text; pad evenly so nodes never touch the edge.
 const EXPORT_SCALE = 2;
 const EXPORT_PADDING_PX = 32;
+// Transparent 1×1 PNG used in place of broken images during export so that
+// html-to-image never sees an empty src, which would trigger onerror → reject.
+const TRANSPARENT_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII=";
 // Cap the longest side so a huge map cannot produce a multi-hundred-megapixel
 // canvas that exhausts memory; the scale is reduced to fit instead.
 const MAX_DIMENSION_PX = 8000;
@@ -106,6 +110,69 @@ function pinEdgeColors(viewport: HTMLElement): () => void {
 }
 
 /**
+ * Converts every already-loaded <img> inside the viewport to a data URL by
+ * drawing to a temporary canvas, then sets the element's src to that data URL.
+ * Returns a function that restores all original src values.
+ *
+ * html-to-image skips elements whose src is already a data URL, so this
+ * prevents the library from making additional network fetches for attachment
+ * images. Those fetches would fail (or return the wrong result) because
+ * html-to-image's internal cache strips query parameters and maps all
+ * /api/attachments/blob?pathname=… URLs to the same cache key.
+ *
+ * @example const restore = await inlineLoadedImages(viewport);
+ */
+export async function inlineLoadedImages(
+  viewport: HTMLElement,
+): Promise<() => void> {
+  const imgs = Array.from(viewport.querySelectorAll<HTMLImageElement>("img"));
+  const restores: Array<() => void> = [];
+
+  await Promise.all(
+    imgs.map(async (img) => {
+      if (!img.complete) {
+        return;
+      }
+
+      const previous = img.src;
+
+      if (img.naturalWidth === 0) {
+        // Broken image (404 or invalid URL). Replace with a transparent
+        // placeholder so html-to-image never receives an empty src, which
+        // would trigger its onerror → reject and crash the whole export.
+        img.src = TRANSPARENT_PNG;
+        restores.push(() => {
+          img.src = previous;
+        });
+        return;
+      }
+
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL();
+        img.src = dataUrl;
+        restores.push(() => {
+          img.src = previous;
+        });
+      } catch {
+        // Canvas taint or other draw failure — leave the src unchanged.
+      }
+    }),
+  );
+
+  return () => {
+    for (const restore of restores) {
+      restore();
+    }
+  };
+}
+
+/**
  * Rasterizes the live mindmap canvas to a PNG and downloads it. Uses the live
  * React Flow nodes (which carry measured sizes) to frame the whole map, so call
  * it from inside the canvas. Throws when the map is empty or the viewport
@@ -127,6 +194,7 @@ export async function exportMindmapToPng(
   }
   const frame = computePngExportFrame(getNodesBounds(nodes));
   const restoreEdgeColors = pinEdgeColors(viewport);
+  const restoreImages = await inlineLoadedImages(viewport);
   try {
     const dataUrl = await toPng(viewport, {
       backgroundColor,
@@ -135,6 +203,9 @@ export async function exportMindmapToPng(
       // Scale is already baked into the frame; keep pixelRatio at 1 so a
       // high-DPI screen does not multiply the dimensions a second time.
       pixelRatio: 1,
+      // Include query params in the cache key so that different attachment
+      // images (same base URL, different ?pathname=…) are not conflated.
+      includeQueryParams: true,
       style: {
         width: `${frame.width}px`,
         height: `${frame.height}px`,
@@ -144,5 +215,6 @@ export async function exportMindmapToPng(
     downloadDataUrl(dataUrl, fileName);
   } finally {
     restoreEdgeColors();
+    restoreImages();
   }
 }
