@@ -317,10 +317,31 @@ function MindmapCanvasInner({
   // Re-run the layout when an already-rendered node changes height (image
   // added/removed or finished loading) so nodes below it are pushed clear.
   const knownNodeHeightsRef = useRef(new Map<string, number>());
+  // After a reparent, React Flow fires a drag-end position change (dragging:
+  // false) that arrives after setNodes(layoutMindmap(…)) is already queued.
+  // In React 18's batched flush the position delta wins if it lands last,
+  // moving the node back to the raw drop position instead of its layout slot.
+  // We store the reparented node id here and skip exactly that one change so
+  // the layout result is never overridden.
+  const reparentedNodeIdRef = useRef<string | null>(null);
   const onNodesChangeWithRelayout = useCallback(
     (changes: NodeChange[]) => {
-      onNodesChange(changes);
-      if (trackNodeHeightChanges(changes, knownNodeHeightsRef.current)) {
+      const pendingId = reparentedNodeIdRef.current;
+      const filtered = pendingId
+        ? changes.filter(
+            (c) =>
+              !(
+                c.type === "position" &&
+                !c.dragging &&
+                c.id === pendingId
+              ),
+          )
+        : changes;
+      if (filtered.length !== changes.length) {
+        reparentedNodeIdRef.current = null;
+      }
+      onNodesChange(filtered);
+      if (trackNodeHeightChanges(filtered, knownNodeHeightsRef.current)) {
         setNodes((current) => layoutMindmap(current, getEdges()));
       }
     },
@@ -506,10 +527,15 @@ function MindmapCanvasInner({
       // The pre-drag snapshot from onNodeDragStart already covers this move.
       const side = chooseReparentSide(node, target);
       const nextEdges = reparentNode(getEdges(), node.id, target.id, side);
-      const selectedNodes = getNodes().map((current) => ({
-        ...current,
-        selected: current.id === node.id,
-      }));
+      // Use the `node` parameter (accurate drop position from React Flow's
+      // internal drag tracking) rather than getNodes() for the dragged node,
+      // so the layout sorts siblings by the actual drop Y and not stale state.
+      const selectedNodes = getNodes().map((current) =>
+        current.id === node.id
+          ? { ...node, selected: true }
+          : { ...current, selected: false },
+      );
+      reparentedNodeIdRef.current = node.id;
       setEdges(nextEdges);
       setNodes(layoutMindmap(selectedNodes, nextEdges));
     },
