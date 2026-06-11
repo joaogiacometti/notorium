@@ -1,12 +1,14 @@
 import { ArrowLeft, FileText } from "lucide-react";
 import Link from "next/link";
-import { DocumentsSidebar } from "@/components/documents/documents-sidebar";
+import { DocumentsNav } from "@/components/documents/documents-nav";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Button } from "@/components/ui/button";
 import type { DocumentListItem } from "@/features/documents/types";
-import type { SubjectEntity } from "@/lib/server/api-contracts";
+import type { DeckOption, SubjectEntity } from "@/lib/server/api-contracts";
 
 interface SubjectDocumentsListPageProps {
+  aiEnabled: boolean;
+  decks: DeckOption[];
   documents: DocumentListItem[];
   subject: SubjectEntity;
 }
@@ -15,9 +17,11 @@ interface SubjectDocumentsListPageProps {
  * Renders the full documents list for one subject (notes and mindmaps).
  *
  * @example
- * <SubjectDocumentsListPage subject={subject} documents={documents} />
+ * <SubjectDocumentsListPage subject={subject} documents={documents} aiEnabled decks={decks} />
  */
 export function SubjectDocumentsListPage({
+  aiEnabled,
+  decks,
   documents,
   subject,
 }: Readonly<SubjectDocumentsListPageProps>) {
@@ -41,7 +45,12 @@ export function SubjectDocumentsListPage({
         </Button>
       </div>
       <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <DocumentsSidebar subjectId={subject.id} items={documents} />
+        <DocumentsNav
+          subjectId={subject.id}
+          documents={documents}
+          aiEnabled={aiEnabled}
+          decks={decks}
+        />
         <section className="hidden min-h-72 items-center justify-center rounded-md border border-dashed border-border/70 bg-muted/15 text-center lg:flex">
           <div className="max-w-xs px-6">
             <FileText className="mx-auto size-8 text-muted-foreground/70" />

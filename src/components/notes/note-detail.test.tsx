@@ -11,6 +11,7 @@ const {
   copyNoteContentMock,
   createNoteMock,
   editNoteMock,
+  getNoteByIdMock,
   pushMock,
   refreshMock,
   toastErrorMock,
@@ -20,6 +21,7 @@ const {
   copyNoteContentMock: vi.fn(),
   createNoteMock: vi.fn(),
   editNoteMock: vi.fn(),
+  getNoteByIdMock: vi.fn(),
   pushMock: vi.fn(),
   refreshMock: vi.fn(),
   toastErrorMock: vi.fn(),
@@ -41,6 +43,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/app/actions/notes", () => ({
   createNote: createNoteMock,
   editNote: editNoteMock,
+  getNoteById: getNoteByIdMock,
 }));
 
 vi.mock("@/components/notes/delete-note-dialog", () => ({
@@ -220,6 +223,12 @@ function renderNoteDetail(
 
 function findButton(container: HTMLElement, text: string) {
   return Array.from(container.querySelectorAll("button")).find((button) =>
+    button.textContent?.includes(text),
+  );
+}
+
+function findButtons(container: HTMLElement, text: string) {
+  return Array.from(container.querySelectorAll("button")).filter((button) =>
     button.textContent?.includes(text),
   );
 }
@@ -678,6 +687,68 @@ describe("NoteDetail", () => {
     expect(
       container.querySelector('button[aria-label="Enter zen mode"]'),
     ).toBeTruthy();
+  });
+
+  it("copies a non-active note's saved content from its sidebar menu", async () => {
+    getNoteByIdMock.mockResolvedValue(otherNote);
+
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    // Buttons appear sidebar-first: [active row, other row, header menu].
+    await act(async () => {
+      findButtons(container, "Copy as rich text").at(1)?.click();
+      await Promise.resolve();
+    });
+
+    expect(getNoteByIdMock).toHaveBeenCalledWith(otherNote.id);
+    expect(copyNoteContentMock).toHaveBeenCalledWith(otherNote.content, "rich");
+    expect(toastSuccessMock).toHaveBeenCalledWith("Note copied.");
+  });
+
+  it("shows an error toast when a non-active note cannot be fetched", async () => {
+    getNoteByIdMock.mockResolvedValue(null);
+
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      findButtons(container, "Copy as plain text").at(1)?.click();
+      await Promise.resolve();
+    });
+
+    expect(copyNoteContentMock).not.toHaveBeenCalled();
+    expect(toastErrorMock).toHaveBeenCalledWith("Could not copy note.");
+  });
+
+  it("opens the generate dialog for a non-active note from its sidebar menu", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      findButtons(container, "Generate flashcards").at(1)?.click();
+    });
+
+    expect(
+      container.querySelector(
+        '[data-testid="generate-note-flashcards-dialog"]',
+      ),
+    ).toBeTruthy();
+  });
+
+  it("focuses the inline title from the header edit action", async () => {
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+
+    await act(async () => {
+      findButtons(container, "Edit").at(-1)?.click();
+    });
+
+    expect(document.activeElement).toBe(getTitleInput(container));
   });
 
   it("focuses the inline title from the active sidebar edit action", async () => {

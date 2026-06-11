@@ -176,19 +176,22 @@ export async function inlineLoadedImages(
  * Rasterizes the live mindmap canvas to a PNG and downloads it. Uses the live
  * React Flow nodes (which carry measured sizes) to frame the whole map, so call
  * it from inside the canvas. Throws when the map is empty or the viewport
- * element is missing so the caller can surface a failure toast.
+ * element is missing so the caller can surface a failure toast. Pass the
+ * canvas wrapper as `root` so that, when several canvases are mounted (e.g. an
+ * offscreen export render next to the open editor), the right one is captured.
  *
- * @example await exportMindmapToPng(getNodes(), "biology.png", "#ffffff");
+ * @example await exportMindmapToPng(getNodes(), "biology.png", "#ffffff", wrapper);
  */
 export async function exportMindmapToPng(
   nodes: Node[],
   fileName: string,
   backgroundColor: string,
+  root: ParentNode = document,
 ): Promise<void> {
   if (nodes.length === 0) {
     throw new Error("Cannot export an empty mindmap");
   }
-  const viewport = document.querySelector<HTMLElement>(VIEWPORT_SELECTOR);
+  const viewport = root.querySelector<HTMLElement>(VIEWPORT_SELECTOR);
   if (!viewport) {
     throw new Error(`Mindmap viewport "${VIEWPORT_SELECTOR}" not found`);
   }

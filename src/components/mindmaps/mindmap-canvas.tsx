@@ -84,6 +84,10 @@ interface MindmapCanvasProps {
   onTitleChange: (title: string) => void;
   onGraphChange: (graph: MindmapGraph) => void;
   exportRef?: RefObject<MindmapExporter | null>;
+  /** Fires once, after every node has a measured size. The offscreen PNG
+   * export render waits for this before capturing, so the framed bounds are
+   * computed from real node dimensions instead of zero-sized placeholders. */
+  onNodesMeasured?: () => void;
 }
 
 const nodeTypes = { mindmap: MindmapNodeComponent, root: MindmapRootNode };
@@ -221,6 +225,7 @@ function MindmapCanvasInner({
   onTitleChange,
   onGraphChange,
   exportRef,
+  onNodesMeasured,
 }: Readonly<MindmapCanvasProps>) {
   const initialNodes = useMemo<Node[]>(
     () =>
@@ -260,6 +265,8 @@ function MindmapCanvasInner({
   const [spaceHeld, setSpaceHeld] = useState(false);
   const syncedRootLabelRef = useRef(title);
   const previousTitleRef = useRef(title);
+  const canvasWrapperRef = useRef<HTMLDivElement | null>(null);
+  const nodesMeasuredFiredRef = useRef(false);
   const persistedGraph = useMemo(() => toGraph(nodes, edges), [nodes, edges]);
   const persistedGraphRef = useRef(persistedGraph);
   const persistedGraphSnapshot = JSON.stringify(persistedGraph);
@@ -569,6 +576,7 @@ function MindmapCanvasInner({
         getNodes(),
         toPngFileName(title),
         backgroundColor,
+        canvasWrapperRef.current ?? document,
       );
       toast.success("Exported mindmap as PNG");
     } catch {
@@ -589,6 +597,21 @@ function MindmapCanvasInner({
       }
     };
   }, [exportRef, exportToPng]);
+
+  // Tell the parent once every node carries a measured size; until then the
+  // export framing math would see zero-sized nodes and crop the capture.
+  useEffect(() => {
+    if (!onNodesMeasured || nodesMeasuredFiredRef.current) {
+      return;
+    }
+    const allMeasured =
+      nodes.length > 0 &&
+      nodes.every((node) => node.measured?.width && node.measured?.height);
+    if (allMeasured) {
+      nodesMeasuredFiredRef.current = true;
+      onNodesMeasured();
+    }
+  }, [nodes, onNodesMeasured]);
 
   const addChild = useCallback(
     (parentId: string, side: MindmapSide) => {
@@ -779,6 +802,7 @@ function MindmapCanvasInner({
   return (
     <MindmapActionsProvider value={actions}>
       <div
+        ref={canvasWrapperRef}
         className={cn(
           "mindmap-canvas relative size-full",
           effectiveMode === "select" ? "cursor-crosshair" : "cursor-grab",

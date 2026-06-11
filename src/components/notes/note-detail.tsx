@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Clipboard,
   MoreVertical,
+  Pencil,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -253,12 +254,16 @@ export function NoteDetail({
             documents={sidebarDocuments}
             activeId={note.id}
             activeKind="note"
+            aiEnabled={aiEnabled}
+            decks={decks}
             onNavigate={(href, event) => {
               event.preventDefault();
               void saveBeforeNavigation(href);
             }}
             onEditActive={() => titleInputRef.current?.focus()}
             onDeleteActive={() => setDeleteOpen(true)}
+            onCopyActive={(format) => void copyNoteContent(format)}
+            onGenerateActive={() => setGenerateOpen(true)}
           />
         ) : null}
 
@@ -319,24 +324,29 @@ export function NoteDetail({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => titleInputRef.current?.focus()}
+                  >
+                    <Pencil className="size-4" />
+                    Edit
+                  </DropdownMenuItem>
                   {aiEnabled ? (
-                    <>
-                      <DropdownMenuItem
-                        className="cursor-pointer"
-                        onClick={() => setGenerateOpen(true)}
-                        disabled={!hasDecks}
-                        title={
-                          hasDecks
-                            ? undefined
-                            : "Create a deck before generating flashcards."
-                        }
-                      >
-                        <Sparkles className="size-4" />
-                        Generate flashcards
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => setGenerateOpen(true)}
+                      disabled={!hasDecks}
+                      title={
+                        hasDecks
+                          ? undefined
+                          : "Create a deck before generating flashcards."
+                      }
+                    >
+                      <Sparkles className="size-4" />
+                      Generate flashcards
+                    </DropdownMenuItem>
                   ) : null}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => void copyNoteContent("rich")}

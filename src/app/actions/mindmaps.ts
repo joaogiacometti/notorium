@@ -9,6 +9,7 @@ import {
   editMindmapTitleForUser,
   type MindmapMutationResult,
 } from "@/features/mindmaps/mutations";
+import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
 import {
   type CreateMindmapForm,
   createMindmapSchema,
@@ -19,11 +20,20 @@ import {
   editMindmapSchema,
   editMindmapTitleSchema,
 } from "@/features/mindmaps/validation";
+import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
+import type { MindmapEntity } from "@/lib/server/api-contracts";
 
 function revalidateSubjectDocuments(subjectId: string) {
   revalidatePath(`/subjects/${subjectId}`);
   revalidatePath(`/subjects/${subjectId}/documents`);
+}
+
+export async function getMindmapById(
+  id: string,
+): Promise<MindmapEntity | null> {
+  const userId = await getAuthenticatedUserId();
+  return getMindmapByIdForUser(userId, id);
 }
 
 export async function createMindmap(

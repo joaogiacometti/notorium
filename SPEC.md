@@ -43,9 +43,10 @@ Students who want a private, lightweight study management workspace.
 
 - Each subject has a Documents area that holds both notes and mindmaps together.
 - The documents sidebar lists notes and mindmaps in one list ordered by most recent update, with a leading icon per item that distinguishes notes from mindmaps.
+- On note and mindmap detail pages and the full documents list, each sidebar row's kebab menu offers the same actions as that document kind's header kebab menu, and every action works without opening the document: notes offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Copy as rich text, Copy as plain text, and Delete; mindmaps offer Edit, Export as PNG, and Delete. Copy and export on a non-open document act on its last saved state; on the open document they act on the live editor content.
 - A single "Create" action offers "Note" or "Mindmap"; each prompts for a title and opens the new item.
 - Subject detail previews the 3 most recently updated documents (notes and mindmaps), with row links to each item, the "Create" action, and compact row action menus (edit title for notes, delete for both).
-- The full documents list shows a simple center indicator until a document is selected.
+- The full documents list shows a simple center indicator until a document is selected; its rows expose the same per-kind kebab actions as the detail-page sidebar.
 - Note and mindmap detail pages offer a zen mode toggle next to the document actions menu. Zen mode expands the editor or canvas to a full-screen, distraction-free view that hides the navbar, back link, and documents sidebar while keeping the title and document actions available. `Escape` or the toggle exits; an `Escape` that closes a dialog, menu, or inline connection-label edit does not also exit zen mode.
 - There is no standalone top-level mindmaps route; mindmaps live only inside their subject.
 
@@ -55,7 +56,7 @@ Students who want a private, lightweight study management workspace.
 - Notes use rich text editing and rendering.
 - Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, tables, LaTeX math, and other shared editor formatting exposed by the app.
 - Math renders with KaTeX in both editing and reading. Inline math is typed as `$...$`; the `/math` slash command inserts a block equation. Equations are editable by clicking them, and their LaTeX stays searchable.
-- Note detail shows the subject's documents in the shared documents sidebar, exposes compact row action menus for title edits (notes) and deletes (notes and mindmaps), and edits the active note inline with auto-save.
+- Note detail shows the subject's documents in the shared documents sidebar with full per-kind row action menus, and edits the active note inline with auto-save. The header kebab (three-dot) menu offers Edit (focuses the inline title), Generate flashcards (when AI is configured), Copy as rich text, Copy as plain text, and Delete.
 - Note detail supports copying note content as rich text or plain text.
 - Note content renders images from:
   - pasted direct image URLs
@@ -69,7 +70,7 @@ Students who want a private, lightweight study management workspace.
 
 - Create, read, update, and delete mindmaps per subject. Mindmaps are scoped to a subject, like notes, and appear in the subject's documents area.
 - Mindmap detail shows the subject's documents in the shared documents sidebar alongside the canvas, and edits a node-and-edge canvas centered on a distinct root node whose label stays in sync with the mindmap title (editing either updates the other). Users edit node labels (double-click), connect nodes with edges, drag nodes, and pan/zoom. Title and graph changes auto-save.
-- The header kebab (three-dot) menu offers Edit, Export as PNG, and Delete. Export as PNG rasterizes the whole map (framed with even padding, on the active theme's background) and downloads it as a file named after the mindmap title.
+- The header kebab (three-dot) menu offers Edit, Export as PNG, and Delete. Export as PNG rasterizes the whole map (framed with even padding, on the active theme's background) and downloads it as a file named after the mindmap title. Exporting a mindmap that is not currently open renders its saved graph offscreen before capturing.
 - Canvas keyboard shortcuts (suppressed while typing in a field): `V` switches to select mode, `H` switches to pan mode, holding `Space` pans temporarily, `Tab` adds a child to the selected node in its allowed branch direction, `Delete`/`Backspace` removes the selected node and its descendants, and `Ctrl`/`Cmd+C` copies the selected nodes and their subtrees to the clipboard as a nested markdown outline for pasting into an AI chat (it yields to a live text selection so ordinary copy still works).
 - Connections flow horizontally between the left and right sides of nodes. The map grows by branching: the root shows "+" buttons on its left and right, while non-root nodes only show the "+" button for their root-branch side. Dragging a connection onto empty canvas also creates a new node linked to the source. There is no standalone "add node" button. A newly created node is selected and immediately in edit mode so the user can type right away. Leaving the browser or app while editing a node label preserves the active editor so typing can continue after returning.
 - Selecting a node shows a floating toolbar with bold, italic, a color picker, an image button, and delete. The image button uploads a picture that renders inside the node; pasting an image from the clipboard (Ctrl/Cmd+V) onto a single selected non-root node attaches it the same way; a selected node with an image shows a remove control. Deleting a node also deletes its descendants so no children are orphaned. The root node is permanent and only offers the two add-child buttons.

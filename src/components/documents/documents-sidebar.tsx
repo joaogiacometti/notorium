@@ -1,6 +1,15 @@
 "use client";
 
-import { FileText, MoreVertical, Pencil, Trash2, Workflow } from "lucide-react";
+import {
+  Clipboard,
+  FileText,
+  ImageDown,
+  MoreVertical,
+  Pencil,
+  Sparkles,
+  Trash2,
+  Workflow,
+} from "lucide-react";
 import Link from "next/link";
 import type { MouseEvent } from "react";
 import { CreateDocumentMenu } from "@/components/documents/create-document-menu";
@@ -10,22 +19,35 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type {
   DocumentKind,
   DocumentListItem,
 } from "@/features/documents/types";
+import type { NoteCopyFormat } from "@/lib/clipboard/note-content";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import { cn } from "@/lib/utils";
 
-interface DocumentsSidebarProps {
+interface DocumentRowActionHandlers {
+  onEditRequested?: (item: DocumentListItem) => void;
+  onDeleteRequested?: (item: DocumentListItem) => void;
+  /** Notes only: copy the note's content in the given clipboard format. */
+  onCopyRequested?: (item: DocumentListItem, format: NoteCopyFormat) => void;
+  /** Notes only: open the AI flashcard generation dialog for the note. */
+  onGenerateRequested?: (item: DocumentListItem) => void;
+  /** When set, the generate item renders disabled with this as its tooltip. */
+  generateDisabledReason?: string;
+  /** Mindmaps only: download the mindmap as a PNG. */
+  onExportRequested?: (item: DocumentListItem) => void;
+}
+
+interface DocumentsSidebarProps extends DocumentRowActionHandlers {
   subjectId: string;
   items: DocumentListItem[];
   activeId?: string;
   activeKind?: DocumentKind;
-  onDeleteRequested?: (item: DocumentListItem) => void;
-  onEditRequested?: (item: DocumentListItem) => void;
   onNavigate?: (href: string, event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -45,9 +67,8 @@ export function DocumentsSidebar({
   items,
   activeId,
   activeKind,
-  onDeleteRequested,
-  onEditRequested,
   onNavigate,
+  ...rowActions
 }: Readonly<DocumentsSidebarProps>) {
   return (
     <aside className="min-w-0 border-border bg-transparent lg:flex lg:min-h-0 lg:flex-col lg:border-r">
@@ -78,8 +99,8 @@ export function DocumentsSidebar({
             const href = getDocumentDetailHref(item);
             const isActive = item.id === activeId && item.kind === activeKind;
             const Icon = item.kind === "mindmap" ? Workflow : FileText;
-            const canEdit = !!onEditRequested;
-            const canShowActions = canEdit || onDeleteRequested;
+            const canShowActions =
+              rowActions.onEditRequested || rowActions.onDeleteRequested;
 
             return (
               <div
@@ -111,39 +132,7 @@ export function DocumentsSidebar({
                   </span>
                 </Link>
                 {canShowActions ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className={`${ROW_ACTION_TRIGGER_CLASS} shrink-0 text-muted-foreground`}
-                        aria-label={`Open actions for ${item.title}`}
-                      >
-                        <MoreVertical className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {canEdit ? (
-                        <DropdownMenuItem
-                          onClick={() => onEditRequested(item)}
-                          className="cursor-pointer"
-                        >
-                          <Pencil className="size-4" />
-                          Edit
-                        </DropdownMenuItem>
-                      ) : null}
-                      {onDeleteRequested ? (
-                        <DropdownMenuItem
-                          onClick={() => onDeleteRequested(item)}
-                          className="cursor-pointer text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="size-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      ) : null}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <DocumentRowMenu item={item} {...rowActions} />
                 ) : null}
               </div>
             );
@@ -151,5 +140,124 @@ export function DocumentsSidebar({
         )}
       </nav>
     </aside>
+  );
+}
+
+interface DocumentRowMenuProps extends DocumentRowActionHandlers {
+  item: DocumentListItem;
+}
+
+/** Kebab menu for one sidebar row, mirroring the detail header menu of the
+ * same document kind so both entry points expose identical actions. */
+function DocumentRowMenu({
+  item,
+  ...handlers
+}: Readonly<DocumentRowMenuProps>) {
+  const kindItems =
+    item.kind === "note" ? (
+      <NoteRowMenuItems item={item} {...handlers} />
+    ) : (
+      <MindmapRowMenuItems item={item} {...handlers} />
+    );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className={`${ROW_ACTION_TRIGGER_CLASS} shrink-0 text-muted-foreground`}
+          aria-label={`Open actions for ${item.title}`}
+        >
+          <MoreVertical className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {handlers.onEditRequested ? (
+          <DropdownMenuItem
+            onClick={() => handlers.onEditRequested?.(item)}
+            className="cursor-pointer"
+          >
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {kindItems}
+        {handlers.onDeleteRequested ? (
+          <DropdownMenuItem
+            onClick={() => handlers.onDeleteRequested?.(item)}
+            className="cursor-pointer text-destructive focus:text-destructive"
+          >
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function NoteRowMenuItems({
+  item,
+  onGenerateRequested,
+  generateDisabledReason,
+  onCopyRequested,
+}: Readonly<DocumentRowMenuProps>) {
+  return (
+    <>
+      {onGenerateRequested ? (
+        <DropdownMenuItem
+          className="cursor-pointer"
+          disabled={!!generateDisabledReason}
+          title={generateDisabledReason}
+          onClick={() => onGenerateRequested(item)}
+        >
+          <Sparkles className="size-4" />
+          Generate flashcards
+        </DropdownMenuItem>
+      ) : null}
+      {onCopyRequested ? (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={() => onCopyRequested(item, "rich")}
+          >
+            <Clipboard className="size-4" />
+            Copy as rich text
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={() => onCopyRequested(item, "plain")}
+          >
+            <Clipboard className="size-4" />
+            Copy as plain text
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function MindmapRowMenuItems({
+  item,
+  onExportRequested,
+}: Readonly<DocumentRowMenuProps>) {
+  if (!onExportRequested) {
+    return null;
+  }
+  return (
+    <>
+      <DropdownMenuItem
+        className="cursor-pointer"
+        onClick={() => onExportRequested(item)}
+      >
+        <ImageDown className="size-4" />
+        Export as PNG
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+    </>
   );
 }

@@ -31,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -41,12 +42,14 @@ import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 import { getSubjectDocumentsHref } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
-import type { MindmapEntity } from "@/lib/server/api-contracts";
+import type { DeckOption, MindmapEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 
 interface MindmapDetailProps {
+  aiEnabled: boolean;
   backHref: string;
+  decks: DeckOption[];
   mindmap: MindmapEntity;
   documents: DocumentListItem[];
 }
@@ -54,7 +57,9 @@ interface MindmapDetailProps {
 const AUTOSAVE_DELAY_MS = 800;
 
 export function MindmapDetail({
+  aiEnabled,
   backHref,
+  decks,
   mindmap,
   documents,
 }: Readonly<MindmapDetailProps>) {
@@ -173,9 +178,12 @@ export function MindmapDetail({
             documents={sidebarDocuments}
             activeId={mindmap.id}
             activeKind="mindmap"
+            aiEnabled={aiEnabled}
+            decks={decks}
             onNavigate={(href, event) => void saveBeforeNavigation(href, event)}
             onEditActive={() => setEditOpen(true)}
             onDeleteActive={() => setDeleteOpen(true)}
+            onExportActive={() => void exportPngRef.current?.()}
           />
         ) : null}
 
@@ -228,6 +236,7 @@ export function MindmapDetail({
                   <ImageDown className="size-4" />
                   Export as PNG
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={() => setDeleteOpen(true)}
