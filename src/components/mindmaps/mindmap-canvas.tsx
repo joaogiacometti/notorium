@@ -100,9 +100,11 @@ function toEdge(
     label?: string;
     direction?: MindmapEdgeDirection;
     curveOffset?: { x: number; y: number };
+    cross?: boolean;
   },
 ): Edge {
   const direction = edge.direction ?? DEFAULT_EDGE_DIRECTION;
+  const cross = edge.cross === true;
   return {
     id: edge.id,
     type: "mindmap",
@@ -110,12 +112,13 @@ function toEdge(
     target: edge.target,
     sourceHandle: edge.sourceHandle,
     targetHandle: edge.targetHandle,
-    // Connections cannot be deleted (would orphan nodes); the Delete key and
-    // any selection-delete therefore skip edges.
-    deletable: false,
+    // Tree edges cannot be deleted (would orphan nodes). Cross-connections are
+    // safe to remove because they don't define the parent-child hierarchy.
+    deletable: cross,
     label: edge.label,
     data: {
       direction,
+      ...(cross ? { cross: true } : {}),
       ...(edge.curveOffset ? { curveOffset: edge.curveOffset } : {}),
     },
     ...directionMarkers(direction),
@@ -155,6 +158,7 @@ function toGraph(nodes: Node[], edges: Edge[]): MindmapGraph {
       ...(edge.data?.curveOffset
         ? { curveOffset: edge.data.curveOffset as { x: number; y: number } }
         : {}),
+      ...(edge.data?.cross === true ? { cross: true } : {}),
     })),
   };
 }
@@ -323,6 +327,7 @@ function MindmapCanvasInner({
             target: connection.target,
             sourceHandle: connection.sourceHandle ?? undefined,
             targetHandle: connection.targetHandle ?? undefined,
+            cross: true,
           }),
           current,
         ),
@@ -408,12 +413,33 @@ function MindmapCanvasInner({
     [getNodes, getEdges, setNodes, setEdges, takeSnapshot],
   );
 
+  const deleteCrossEdge = useCallback(
+    (edgeId: string) => {
+      takeSnapshot();
+      setEdges((current) =>
+        current.filter((edge) => edge.id !== edgeId || !edge.data?.cross),
+      );
+    },
+    [setEdges, takeSnapshot],
+  );
+
   const deleteSelected = useCallback(() => {
-    const selectedIds = getNodes()
+    const selectedNodeIds = getNodes()
       .filter((node) => node.selected && node.deletable !== false)
       .map((node) => node.id);
-    removeSubtrees(selectedIds);
-  }, [getNodes, removeSubtrees]);
+    const selectedCrossEdgeIds = getEdges()
+      .filter((edge) => edge.selected && edge.data?.cross === true)
+      .map((edge) => edge.id);
+    if (selectedCrossEdgeIds.length > 0) {
+      takeSnapshot();
+      setEdges((current) =>
+        current.filter((edge) => !selectedCrossEdgeIds.includes(edge.id)),
+      );
+    }
+    if (selectedNodeIds.length > 0) {
+      removeSubtrees(selectedNodeIds);
+    }
+  }, [getNodes, getEdges, setEdges, takeSnapshot, removeSubtrees]);
 
   const addChild = useCallback(
     (parentId: string, side: MindmapSide) => {
@@ -538,6 +564,7 @@ function MindmapCanvasInner({
         );
       },
       deleteNode: (nodeId) => removeSubtrees([...selectionTargetIds(nodeId)]),
+      deleteCrossEdge,
       deleteSelected,
       updateEdge: (edgeId, patch) =>
         setEdges((current) =>
@@ -584,6 +611,7 @@ function MindmapCanvasInner({
       takeSnapshot,
       removeSubtrees,
       deleteSelected,
+      deleteCrossEdge,
       selectionTargetIds,
       pendingEditNodeId,
       editingEdgeId,

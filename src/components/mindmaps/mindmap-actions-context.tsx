@@ -22,6 +22,8 @@ export interface MindmapActions {
   setNodeColor: (nodeId: string, color: MindmapNodeColor | null) => void;
   setNodeImage: (nodeId: string, url: string | null) => void;
   deleteNode: (nodeId: string) => void;
+  /** Remove a cross-connection edge (non-tree edges only). */
+  deleteCrossEdge: (edgeId: string) => void;
   /** Remove every selected node and its subtree in one undoable step. */
   deleteSelected: () => void;
   updateEdge: (

@@ -46,6 +46,9 @@ export const mindmapEdgeSchema = z.object({
   // Persisted bend of the curve, stored as an offset from the edge's midpoint
   // so the shape survives node moves. Absent means a plain bezier.
   curveOffset: z.object({ x: z.number(), y: z.number() }).optional(),
+  // True for user-drawn connections between existing nodes (cross-connections).
+  // Absent/false for tree edges that define the parent-child hierarchy.
+  cross: z.boolean().optional(),
 });
 
 export const mindmapGraphSchema = z.object({

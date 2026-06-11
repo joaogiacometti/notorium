@@ -2,11 +2,11 @@ import type { Edge, Node, NodeChange } from "@xyflow/react";
 import { getSourceHandleSide } from "@/features/mindmaps/sides";
 
 // Vertical room reserved per leaf row and horizontal gap between depth columns.
-export const ROW_STEP = 90;
-export const CHILD_OFFSET_X = 260;
+export const ROW_STEP = 72;
+export const CHILD_OFFSET_X = 210;
 // Minimum vertical clearance between adjacent nodes; tall nodes (e.g. with
 // images) reserve their measured height plus this gap instead of one ROW_STEP.
-export const ROW_GAP = 40;
+export const ROW_GAP = 24;
 // Assumed height for nodes not yet measured by React Flow (fresh nodes render
 // at roughly this height); keeps default rows exactly one ROW_STEP tall.
 const FALLBACK_NODE_HEIGHT = ROW_STEP - ROW_GAP;

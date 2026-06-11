@@ -14,6 +14,7 @@ import {
   ArrowRight,
   type LucideIcon,
   Minus,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useMindmapActions } from "@/components/mindmaps/mindmap-actions-context";
@@ -77,6 +78,7 @@ export function MindmapEdge({
   const direction =
     (data?.direction as MindmapEdgeDirection | undefined) ??
     DEFAULT_EDGE_DIRECTION;
+  const isCross = data?.cross === true;
 
   const midX = (sourceX + targetX) / 2;
   const midY = (sourceY + targetY) / 2;
@@ -191,6 +193,20 @@ export function MindmapEdge({
                     </button>
                   );
                 })}
+                {isCross ? (
+                  <>
+                    <div className="mx-0.5 h-5 w-px bg-border" />
+                    <button
+                      type="button"
+                      onClick={() => actions.deleteCrossEdge(id)}
+                      aria-label="Remove connection"
+                      title="Remove connection"
+                      className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </>
+                ) : null}
               </div>
             ) : null}
 
