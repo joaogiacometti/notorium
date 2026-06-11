@@ -23,6 +23,59 @@ export function getSourceHandleSide(
 }
 
 /**
+ * The source/target handle pair a tree edge uses to branch to one side. Right
+ * branches leave the parent's right and enter the child's left; left branches
+ * mirror that. Single source of truth for the handle convention.
+ *
+ * @example handlesForSide("right") // { sourceHandle: "r-source", targetHandle: "l-target" }
+ */
+export function handlesForSide(side: MindmapSide): {
+  sourceHandle: string;
+  targetHandle: string;
+} {
+  return side === "right"
+    ? { sourceHandle: "r-source", targetHandle: "l-target" }
+    : { sourceHandle: "l-source", targetHandle: "r-target" };
+}
+
+/**
+ * Collect `startIds` plus every node reachable from them via tree edges.
+ * Cross-connections are skipped: following one (e.g. a link back to an ancestor)
+ * would wrongly pull unrelated nodes into the subtree.
+ *
+ * @example collectDescendants(edges, ["branch-id"])
+ */
+export function collectDescendants(
+  edges: Edge[],
+  startIds: string[],
+): Set<string> {
+  const adjacency = new Map<string, string[]>();
+  for (const edge of edges) {
+    if (isCrossEdge(edge)) {
+      continue;
+    }
+    const targets = adjacency.get(edge.source) ?? [];
+    targets.push(edge.target);
+    adjacency.set(edge.source, targets);
+  }
+  const reached = new Set(startIds);
+  const stack = [...startIds];
+  while (stack.length > 0) {
+    const id = stack.pop();
+    if (!id) {
+      continue;
+    }
+    for (const target of adjacency.get(id) ?? []) {
+      if (!reached.has(target)) {
+        reached.add(target);
+        stack.push(target);
+      }
+    }
+  }
+  return reached;
+}
+
+/**
  * True for cross-connection edges, which link arbitrary nodes without defining
  * the parent-child hierarchy. Tree walks must skip them: following one (e.g. a
  * connection back to an ancestor) creates a cycle.

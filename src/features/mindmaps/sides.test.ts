@@ -1,9 +1,11 @@
 import type { Edge, Node } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 import {
+  collectDescendants,
   getDefaultChildSide,
   getNodeAllowedChildSides,
   getSourceHandleSide,
+  handlesForSide,
 } from "@/features/mindmaps/sides";
 
 function node(id: string, kind?: "root"): Node {
@@ -30,6 +32,39 @@ describe("getSourceHandleSide", () => {
     expect(getSourceHandleSide("l-source")).toBe("left");
     expect(getSourceHandleSide("r-source")).toBe("right");
     expect(getSourceHandleSide("unknown")).toBeNull();
+  });
+});
+
+describe("handlesForSide", () => {
+  it("maps each side to its source/target handle pair", () => {
+    expect(handlesForSide("right")).toEqual({
+      sourceHandle: "r-source",
+      targetHandle: "l-target",
+    });
+    expect(handlesForSide("left")).toEqual({
+      sourceHandle: "l-source",
+      targetHandle: "r-target",
+    });
+  });
+});
+
+describe("collectDescendants", () => {
+  it("reaches the full subtree via tree edges", () => {
+    const edges = [
+      edge("root", "a", "right"),
+      edge("a", "b", "right"),
+      edge("b", "c", "right"),
+      edge("root", "d", "left"),
+    ];
+    expect(collectDescendants(edges, ["a"])).toEqual(new Set(["a", "b", "c"]));
+  });
+
+  it("excludes nodes only linked by a cross edge", () => {
+    const edges: Edge[] = [
+      edge("root", "a", "right"),
+      { id: "x", source: "a", target: "z", data: { cross: true } },
+    ];
+    expect(collectDescendants(edges, ["a"])).toEqual(new Set(["a"]));
   });
 });
 

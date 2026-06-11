@@ -53,10 +53,13 @@ import {
   layoutMindmap,
   trackNodeHeightChanges,
 } from "@/features/mindmaps/layout";
+import { canReparent, reparentNode } from "@/features/mindmaps/reparent";
 import { serializeMindmapSelection } from "@/features/mindmaps/serialize";
 import {
+  collectDescendants,
   getDefaultChildSide,
   getNodeAllowedChildSides,
+  handlesForSide,
   isCrossEdge,
   type MindmapSide,
 } from "@/features/mindmaps/sides";
@@ -189,13 +192,11 @@ function createChildEdge(
   childId: string,
   side: MindmapSide,
 ): Edge {
-  const toRight = side === "right";
   return toEdge({
     id: crypto.randomUUID(),
     source: parentId,
     target: childId,
-    sourceHandle: toRight ? "r-source" : "l-source",
-    targetHandle: toRight ? "l-target" : "r-target",
+    ...handlesForSide(side),
   });
 }
 
@@ -212,36 +213,6 @@ function selectOnlyNewChild(
     selected: true,
   };
   return [...nodes.map((node) => ({ ...node, selected: false })), child];
-}
-
-/** Collect `startIds` plus every node reachable from them via tree edges. */
-function collectDescendants(edges: Edge[], startIds: string[]): Set<string> {
-  const adjacency = new Map<string, string[]>();
-  for (const edge of edges) {
-    // Cross-connections don't make the target a descendant; following them
-    // would delete nodes that are merely linked across the tree.
-    if (isCrossEdge(edge)) {
-      continue;
-    }
-    const targets = adjacency.get(edge.source) ?? [];
-    targets.push(edge.target);
-    adjacency.set(edge.source, targets);
-  }
-  const reached = new Set(startIds);
-  const stack = [...startIds];
-  while (stack.length > 0) {
-    const id = stack.pop();
-    if (!id) {
-      continue;
-    }
-    for (const target of adjacency.get(id) ?? []) {
-      if (!reached.has(target)) {
-        reached.add(target);
-        stack.push(target);
-      }
-    }
-  }
-  return reached;
 }
 
 function MindmapCanvasInner({
@@ -273,7 +244,13 @@ function MindmapCanvasInner({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const { getNode, getNodes, getEdges, screenToFlowPosition } = useReactFlow();
+  const {
+    getNode,
+    getNodes,
+    getEdges,
+    getIntersectingNodes,
+    screenToFlowPosition,
+  } = useReactFlow();
   const { resolvedTheme } = useTheme();
   const [pendingEditNodeId, setPendingEditNodeId] = useState<string | null>(
     null,
@@ -448,6 +425,96 @@ function MindmapCanvasInner({
       );
     },
     [setEdges, takeSnapshot],
+  );
+
+  // The node under a single dragged node that it can legally re-parent onto, or
+  // null. Multi-node drags only reposition, so re-parenting is skipped for them.
+  const findReparentTarget = useCallback(
+    (dragged: Node): Node | null => {
+      if (getNodes().filter((node) => node.selected).length > 1) {
+        return null;
+      }
+      const edges = getEdges();
+      for (const candidate of getIntersectingNodes(dragged)) {
+        if (canReparent(edges, dragged.id, candidate.id)) {
+          return candidate;
+        }
+      }
+      return null;
+    },
+    [getNodes, getEdges, getIntersectingNodes],
+  );
+
+  // Pick which side of the new parent the moved branch attaches to: the drop
+  // side for the root (which allows both), otherwise the parent's single branch.
+  const chooseReparentSide = useCallback(
+    (dragged: Node, target: Node): MindmapSide => {
+      if (target.data.kind === "root") {
+        return dragged.position.x >= target.position.x ? "right" : "left";
+      }
+      const allowed = getNodeAllowedChildSides(
+        getNodes(),
+        getEdges(),
+        target.id,
+      );
+      return getDefaultChildSide(allowed) ?? "right";
+    },
+    [getNodes, getEdges],
+  );
+
+  // Flag at most one node as the live drop target so it can highlight; a no-op
+  // when nothing changes so dragging does not thrash React state.
+  const setDropTarget = useCallback(
+    (targetId: string | null) => {
+      setNodes((current) => {
+        let changed = false;
+        const next = current.map((node) => {
+          const flag = node.id === targetId;
+          if ((node.data.dropTarget === true) === flag) {
+            return node;
+          }
+          changed = true;
+          return { ...node, data: { ...node.data, dropTarget: flag } };
+        });
+        return changed ? next : current;
+      });
+    },
+    [setNodes],
+  );
+
+  const onNodeDrag = useCallback(
+    (_event: MouseEvent | TouchEvent, node: Node) => {
+      setDropTarget(findReparentTarget(node)?.id ?? null);
+    },
+    [findReparentTarget, setDropTarget],
+  );
+
+  const onNodeDragStop = useCallback(
+    (_event: MouseEvent | TouchEvent, node: Node) => {
+      const target = findReparentTarget(node);
+      setDropTarget(null);
+      if (!target) {
+        return;
+      }
+      // The pre-drag snapshot from onNodeDragStart already covers this move.
+      const side = chooseReparentSide(node, target);
+      const nextEdges = reparentNode(getEdges(), node.id, target.id, side);
+      const selectedNodes = getNodes().map((current) => ({
+        ...current,
+        selected: current.id === node.id,
+      }));
+      setEdges(nextEdges);
+      setNodes(layoutMindmap(selectedNodes, nextEdges));
+    },
+    [
+      findReparentTarget,
+      setDropTarget,
+      chooseReparentSide,
+      getEdges,
+      getNodes,
+      setEdges,
+      setNodes,
+    ],
   );
 
   const deleteSelected = useCallback(() => {
@@ -730,6 +797,8 @@ function MindmapCanvasInner({
           onReconnect={onReconnect}
           onReconnectStart={takeSnapshot}
           onNodeDragStart={takeSnapshot}
+          onNodeDrag={onNodeDrag}
+          onNodeDragStop={onNodeDragStop}
           onEdgeDoubleClick={(_event, edge) => setEditingEdgeId(edge.id)}
           colorMode={resolvedTheme === "dark" ? "dark" : "light"}
           panOnDrag={effectiveMode === "hand"}

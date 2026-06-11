@@ -77,6 +77,7 @@ Students who want a private, lightweight study management workspace.
 - Selecting a connection shows an on-edge toolbar with arrowhead options (none, at the source node, at the target node, or both ends). Double-clicking a connection edits its label inline. Connections cannot be deleted, to avoid orphaning nodes.
 - Connections can be moved: drag either endpoint onto another node to re-attach it, or drag the connection's midpoint to bend the curve. The bend persists.
 - Adding a child onto an already-occupied position stacks the new node below the existing one instead of overlapping.
+- A node can be re-parented by dragging it onto another node: the dragged node and its whole subtree move under the target, and the branch flips to the target's side when needed (the root accepts both sides, choosing by drop position). The hovered target is highlighted during the drag. Dropping on empty canvas only repositions, as before. A node cannot be dropped onto itself, its current parent, or one of its own descendants. Re-parenting is undoable in one step. Dragging a multi-node selection only repositions.
 - Undo and redo are available with Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z for adds, moves, deletes, styling, reconnection, and bending.
 - Nodes and edges are stored as a JSON graph, including per-node color, bold, italic, and root kind, plus per-edge source/target handles, label, direction, and curve offset. The canvas recolors with the active theme.
 

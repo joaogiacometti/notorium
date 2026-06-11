@@ -62,6 +62,10 @@ export function MindmapNodeComponent({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const colorVar = data.color ? `var(--${data.color})` : undefined;
+  // Transient flag set by the canvas while a node is dragged over this one, so
+  // the user sees where a re-parenting drop will land. Not persisted.
+  const isDropTarget =
+    (data as MindmapNodeData & { dropTarget?: boolean }).dropTarget === true;
 
   const uploadImage = useCallback(
     async (file: File) => {
@@ -153,7 +157,11 @@ export function MindmapNodeComponent({
       style={{
         borderColor: colorVar ?? "var(--border)",
         borderWidth: 1,
-        boxShadow: selected ? "0 0 0 2px var(--primary)" : undefined,
+        boxShadow: isDropTarget
+          ? "0 0 0 3px var(--primary), 0 0 0 7px color-mix(in oklab, var(--primary) 35%, transparent)"
+          : selected
+            ? "0 0 0 2px var(--primary)"
+            : undefined,
         ...(colorVar
           ? { background: `color-mix(in oklab, ${colorVar} 12%, var(--card))` }
           : {}),
