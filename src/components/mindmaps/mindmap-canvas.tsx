@@ -23,7 +23,14 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import {
   type MindmapActions,
@@ -38,6 +45,10 @@ import {
   type MindmapEdgeDirection,
   type MindmapNodeColor,
 } from "@/features/mindmaps/constants";
+import {
+  exportMindmapToPng,
+  toPngFileName,
+} from "@/features/mindmaps/export-png";
 import {
   layoutMindmap,
   trackNodeHeightChanges,
@@ -59,11 +70,17 @@ import {
 } from "@/lib/mindmap/use-mindmap-mode-keys";
 import { cn } from "@/lib/utils";
 
+/** Imperative action the detail header's kebab menu triggers from outside the
+ * ReactFlowProvider. The canvas populates `exportRef.current` so the menu can
+ * export the live canvas (which carries measured node sizes) to a PNG. */
+export type MindmapExporter = () => Promise<void>;
+
 interface MindmapCanvasProps {
   initialGraph: MindmapGraph;
   title: string;
   onTitleChange: (title: string) => void;
   onGraphChange: (graph: MindmapGraph) => void;
+  exportRef?: RefObject<MindmapExporter | null>;
 }
 
 const nodeTypes = { mindmap: MindmapNodeComponent, root: MindmapRootNode };
@@ -232,6 +249,7 @@ function MindmapCanvasInner({
   title,
   onTitleChange,
   onGraphChange,
+  exportRef,
 }: Readonly<MindmapCanvasProps>) {
   const initialNodes = useMemo<Node[]>(
     () =>
@@ -471,6 +489,39 @@ function MindmapCanvasInner({
     );
     return true;
   }, [getNodes, getEdges]);
+
+  // Export the live canvas to a PNG. Reads `--background` at call time so the
+  // image matches the active theme rather than a hardcoded color.
+  const exportToPng = useCallback(async () => {
+    const backgroundColor =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--background")
+        .trim() || "#ffffff";
+    try {
+      await exportMindmapToPng(
+        getNodes(),
+        toPngFileName(title),
+        backgroundColor,
+      );
+      toast.success("Exported mindmap as PNG");
+    } catch {
+      toast.error("Couldn't export the mindmap");
+    }
+  }, [getNodes, title]);
+
+  // Hand the exporter to the detail header's kebab menu, which lives outside the
+  // ReactFlowProvider and so cannot read the live nodes itself.
+  useEffect(() => {
+    if (!exportRef) {
+      return;
+    }
+    exportRef.current = exportToPng;
+    return () => {
+      if (exportRef.current === exportToPng) {
+        exportRef.current = null;
+      }
+    };
+  }, [exportRef, exportToPng]);
 
   const addChild = useCallback(
     (parentId: string, side: MindmapSide) => {

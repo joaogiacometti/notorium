@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowLeft, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ImageDown,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +24,7 @@ import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
 import { LazyMindmapCanvas } from "@/components/mindmaps/lazy-mindmap-canvas";
+import type { MindmapExporter } from "@/components/mindmaps/mindmap-canvas";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +64,7 @@ export function MindmapDetail({
     ensureRootNode(parseMindmapGraph(mindmap.data), mindmap.title),
   ).current;
   const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const exportPngRef = useRef<MindmapExporter | null>(null);
   const { isZenMode, toggleZenMode } = useZenMode();
   const [title, setTitle] = useState(mindmap.title);
   const [graph, setGraph] = useState<MindmapGraph>(initialGraph);
@@ -214,6 +222,13 @@ export function MindmapDetail({
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => void exportPngRef.current?.()}
+                >
+                  <ImageDown className="size-4" />
+                  Export as PNG
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={() => setDeleteOpen(true)}
                 >
@@ -238,6 +253,7 @@ export function MindmapDetail({
               title={title}
               onTitleChange={setTitle}
               onGraphChange={setGraph}
+              exportRef={exportPngRef}
             />
           </div>
         </div>
