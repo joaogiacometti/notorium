@@ -23,6 +23,17 @@ export function getSourceHandleSide(
 }
 
 /**
+ * True for cross-connection edges, which link arbitrary nodes without defining
+ * the parent-child hierarchy. Tree walks must skip them: following one (e.g. a
+ * connection back to an ancestor) creates a cycle.
+ *
+ * @example edges.filter((edge) => !isCrossEdge(edge))
+ */
+export function isCrossEdge(edge: Edge): boolean {
+  return edge.data?.cross === true;
+}
+
+/**
  * Returns the side(s) where a node may add children.
  *
  * @example getNodeAllowedChildSides(nodes, edges, "branch-id")
@@ -32,11 +43,13 @@ export function getNodeAllowedChildSides(
   edges: Edge[],
   nodeId: string,
 ): MindmapAllowedSides {
-  const root = findRootNode(nodes, edges);
+  // Cross-connections must not override a node's tree parent when tracing.
+  const treeEdges = edges.filter((edge) => !isCrossEdge(edge));
+  const root = findRootNode(nodes, treeEdges);
   if (!root || root.id === nodeId) {
     return BOTH_SIDES;
   }
-  return traceRootBranchSide(edges, root.id, nodeId) ?? BOTH_SIDES;
+  return traceRootBranchSide(treeEdges, root.id, nodeId) ?? BOTH_SIDES;
 }
 
 /**

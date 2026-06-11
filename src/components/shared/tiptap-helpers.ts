@@ -4,6 +4,10 @@ import type { Editor } from "@tiptap/react";
 import { toast } from "sonner";
 import { uploadEditorImage } from "@/app/actions/attachments";
 import { LIMITS } from "@/lib/config/limits";
+import {
+  getPastedImageFile,
+  getPastedImageFileName,
+} from "@/lib/editor/clipboard-image";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { t } from "@/lib/server/server-action-errors";
 import { readFileAsBase64 } from "@/lib/utils";
@@ -31,32 +35,6 @@ export function shouldApplyNormalizedEditorValue(
 
 function insertImage(editor: Editor, src: string) {
   editor.chain().focus().setImage({ src }).run();
-}
-
-export function getPastedImageFile(event: ClipboardEvent): File | null {
-  const items = event.clipboardData?.items;
-  if (!items) {
-    return null;
-  }
-
-  for (const item of Array.from(items)) {
-    if (item.kind !== "file") {
-      continue;
-    }
-
-    const file = item.getAsFile();
-    if (!file) {
-      continue;
-    }
-
-    if (!file.type.toLowerCase().startsWith("image/")) {
-      continue;
-    }
-
-    return file;
-  }
-
-  return null;
 }
 
 export function handleEditorPaste({
@@ -90,16 +68,6 @@ export function handleEditorPaste({
   }
 
   return false;
-}
-
-export function getPastedImageFileName(file: File): string {
-  const name = file.name.trim();
-  if (name.length > 0) {
-    return name;
-  }
-
-  const extension = file.type.split("/")[1] ?? "png";
-  return `pasted-image.${extension}`;
 }
 
 export async function uploadPastedImage(

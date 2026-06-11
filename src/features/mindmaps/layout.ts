@@ -1,5 +1,5 @@
 import type { Edge, Node, NodeChange } from "@xyflow/react";
-import { getSourceHandleSide } from "@/features/mindmaps/sides";
+import { getSourceHandleSide, isCrossEdge } from "@/features/mindmaps/sides";
 
 // Vertical room reserved per leaf row and horizontal gap between depth columns.
 export const ROW_STEP = 72;
@@ -100,22 +100,33 @@ function findRoot(nodes: Node[], edges: Edge[]): Node | undefined {
  * const laidOut = layoutMindmap(nodes, edges);
  */
 export function layoutMindmap(nodes: Node[], edges: Edge[]): Node[] {
-  const root = findRoot(nodes, edges);
+  // Cross-connections don't define hierarchy; following one (e.g. a connection
+  // back to an ancestor) creates a cycle and the walk below never terminates.
+  const treeEdges = edges.filter((edge) => !isCrossEdge(edge));
+  const root = findRoot(nodes, treeEdges);
   if (!root) {
     return nodes;
   }
-  const children = buildChildren(nodes, edges);
+  const children = buildChildren(nodes, treeEdges);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   // A node's own row must fit its rendered height (image nodes exceed ROW_STEP).
   const rowSpan = (id: string) =>
     Math.max(ROW_STEP, nodeHeight(nodeById.get(id)) + ROW_GAP);
 
   const spanCache = new Map<string, number>();
+  // Tree edges can still cycle when the user reconnects an edge endpoint back
+  // into its own subtree; a revisited node contributes no extra span instead
+  // of recursing forever.
+  const visiting = new Set<string>();
   const subtreeSpan = (id: string): number => {
     const cached = spanCache.get(id);
     if (cached !== undefined) {
       return cached;
     }
+    if (visiting.has(id)) {
+      return 0;
+    }
+    visiting.add(id);
     const entry = children.get(id);
     const sumSide = (ids: string[]) =>
       ids.reduce((total, child) => total + subtreeSpan(child), 0);
@@ -132,6 +143,10 @@ export function layoutMindmap(nodes: Node[], edges: Edge[]): Node[] {
   // `position` is the node's top-left, so convert the row center to a top edge;
   // with uniform fallback heights this matches the previous layout exactly.
   const assign = (id: string, x: number, centerY: number) => {
+    // Already-positioned means a cycle led back here; stop instead of looping.
+    if (positions.has(id)) {
+      return;
+    }
     positions.set(id, { x, y: centerY - nodeHeight(nodeById.get(id)) / 2 });
     const entry = children.get(id);
     if (!entry) {

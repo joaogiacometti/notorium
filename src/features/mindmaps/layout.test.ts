@@ -26,6 +26,17 @@ function edge(source: string, target: string, side: "left" | "right"): Edge {
   };
 }
 
+function crossEdge(source: string, target: string): Edge {
+  return {
+    id: `x-${source}-${target}`,
+    source,
+    target,
+    sourceHandle: "r-source",
+    targetHandle: "l-target",
+    data: { cross: true },
+  };
+}
+
 function posOf(nodes: Node[], id: string) {
   const found = nodes.find((n) => n.id === id);
   if (!found) {
@@ -142,6 +153,32 @@ describe("layoutMindmap", () => {
 
   it("returns the input unchanged when there are no nodes", () => {
     expect(layoutMindmap([], [])).toEqual([]);
+  });
+
+  // Regression: a cross-connection back to an ancestor formed a cycle that
+  // sent subtreeSpan into infinite recursion (RangeError: max call stack).
+  it("ignores cross-connections so a link back to an ancestor cannot cycle", () => {
+    const nodes = [node("root", 0, 0, "root"), node("a"), node("b")];
+    const edges = [
+      edge("root", "a", "right"),
+      edge("a", "b", "right"),
+      crossEdge("b", "root"),
+    ];
+    const result = layoutMindmap(nodes, edges);
+    // b stays a depth-2 tree child; root is not re-laid-out as b's child.
+    expect(posOf(result, "b").x).toBe(2 * CHILD_OFFSET_X);
+    expect(posOf(result, "root")).toEqual({ x: 0, y: 0 });
+  });
+
+  it("survives a tree-edge cycle created by reconnecting an edge", () => {
+    const nodes = [node("root", 0, 0, "root"), node("a"), node("b")];
+    // a and b point at each other (possible by dragging an edge endpoint).
+    const edges = [
+      edge("root", "a", "right"),
+      edge("a", "b", "right"),
+      edge("b", "a", "right"),
+    ];
+    expect(() => layoutMindmap(nodes, edges)).not.toThrow();
   });
 });
 

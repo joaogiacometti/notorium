@@ -59,6 +59,22 @@ describe("getNodeAllowedChildSides", () => {
     const edges = [edge("root", "a", "left"), edge("a", "b", "right")];
     expect(getNodeAllowedChildSides(nodes, edges, "b")).toEqual(["left"]);
   });
+
+  it("ignores cross-connections when tracing a node's branch side", () => {
+    const nodes = [node("root", "root"), node("a"), node("b")];
+    const crossIntoA: Edge = {
+      ...edge("b", "a", "right"),
+      id: "x-b-a",
+      data: { cross: true },
+    };
+    // Without filtering, the cross edge would override a's tree parent (root).
+    const edges = [
+      edge("root", "a", "left"),
+      edge("root", "b", "right"),
+      crossIntoA,
+    ];
+    expect(getNodeAllowedChildSides(nodes, edges, "a")).toEqual(["left"]);
+  });
 });
 
 describe("getDefaultChildSide", () => {

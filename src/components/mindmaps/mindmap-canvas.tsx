@@ -44,6 +44,7 @@ import {
 import {
   getDefaultChildSide,
   getNodeAllowedChildSides,
+  isCrossEdge,
   type MindmapSide,
 } from "@/features/mindmaps/sides";
 import type { MindmapGraph } from "@/features/mindmaps/types";
@@ -193,10 +194,15 @@ function selectOnlyNewChild(
   return [...nodes.map((node) => ({ ...node, selected: false })), child];
 }
 
-/** Collect `startIds` plus every node reachable from them via source→target. */
+/** Collect `startIds` plus every node reachable from them via tree edges. */
 function collectDescendants(edges: Edge[], startIds: string[]): Set<string> {
   const adjacency = new Map<string, string[]>();
   for (const edge of edges) {
+    // Cross-connections don't make the target a descendant; following them
+    // would delete nodes that are merely linked across the tree.
+    if (isCrossEdge(edge)) {
+      continue;
+    }
     const targets = adjacency.get(edge.source) ?? [];
     targets.push(edge.target);
     adjacency.set(edge.source, targets);
@@ -417,7 +423,7 @@ function MindmapCanvasInner({
     (edgeId: string) => {
       takeSnapshot();
       setEdges((current) =>
-        current.filter((edge) => edge.id !== edgeId || !edge.data?.cross),
+        current.filter((edge) => edge.id !== edgeId || !isCrossEdge(edge)),
       );
     },
     [setEdges, takeSnapshot],
@@ -428,7 +434,7 @@ function MindmapCanvasInner({
       .filter((node) => node.selected && node.deletable !== false)
       .map((node) => node.id);
     const selectedCrossEdgeIds = getEdges()
-      .filter((edge) => edge.selected && edge.data?.cross === true)
+      .filter((edge) => edge.selected && isCrossEdge(edge))
       .map((edge) => edge.id);
     if (selectedCrossEdgeIds.length > 0) {
       takeSnapshot();

@@ -19,6 +19,10 @@ import { MINDMAP_NODE_COLOR_TOKENS } from "@/features/mindmaps/constants";
 import type { MindmapNode } from "@/features/mindmaps/types";
 import { LIMITS } from "@/lib/config/limits";
 import {
+  getPastedImageFile,
+  getPastedImageFileName,
+} from "@/lib/editor/clipboard-image";
+import {
   shouldKeepMindmapEditorAfterBlur,
   useMindmapWindowFocusRestore,
 } from "@/lib/mindmap/edit-focus";
@@ -75,7 +79,7 @@ export function MindmapNodeComponent({
           return;
         }
         const result = await uploadEditorImage({
-          fileName: file.name || `image.${file.type.split("/")[1] ?? "png"}`,
+          fileName: getPastedImageFileName(file),
           mimeType: file.type,
           dataBase64,
           context: "mindmaps",
@@ -91,6 +95,25 @@ export function MindmapNodeComponent({
     },
     [actions, id],
   );
+
+  // Ctrl/Cmd+V with an image in the clipboard attaches it to the single
+  // selected node, mirroring the toolbar attach button. Text pastes are left
+  // alone so label editing keeps its normal paste behavior.
+  useEffect(() => {
+    if (!selected || isMultiSelect || uploading) {
+      return;
+    }
+    const onPaste = (event: ClipboardEvent) => {
+      const file = getPastedImageFile(event);
+      if (!file) {
+        return;
+      }
+      event.preventDefault();
+      void uploadImage(file);
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [selected, isMultiSelect, uploading, uploadImage]);
 
   // Newly created nodes open straight into edit mode so the user can type.
   useEffect(() => {
