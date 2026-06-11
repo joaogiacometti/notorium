@@ -651,7 +651,7 @@ function MindmapCanvasInner({
           colorMode={resolvedTheme === "dark" ? "dark" : "light"}
           panOnDrag={effectiveMode === "hand"}
           selectionOnDrag={effectiveMode === "select"}
-          nodesDraggable={effectiveMode === "hand"}
+          nodesDraggable
           selectionMode={SelectionMode.Partial}
           selectionKeyCode={null}
           // Delete is handled in useMindmapModeKeys so removal is subtree-aware.

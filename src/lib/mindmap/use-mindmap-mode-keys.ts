@@ -119,5 +119,11 @@ export function useMindmapModeKeys({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [setMode, setSpaceHeld, deleteSelected, addChildToSelected, addSiblingToSelected]);
+  }, [
+    setMode,
+    setSpaceHeld,
+    deleteSelected,
+    addChildToSelected,
+    addSiblingToSelected,
+  ]);
 }
