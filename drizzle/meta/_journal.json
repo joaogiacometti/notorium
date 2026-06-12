@@ -309,6 +309,13 @@
       "when": 1781026774148,
       "tag": "0043_mushy_baron_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1781302647557,
+      "tag": "0044_lyrical_iron_monger",
+      "breakpoints": true
     }
   ]
 }

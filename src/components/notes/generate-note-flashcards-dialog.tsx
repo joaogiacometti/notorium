@@ -97,6 +97,7 @@ export function GenerateNoteFlashcardsDialog({
 
     for (const card of cards) {
       const result = await createFlashcard({
+        type: "basic",
         deckId: selectedDeckId ?? "",
         front: card.front,
         back: card.back,

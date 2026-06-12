@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
+import type { FlashcardFormValues } from "@/features/flashcards/validation";
 
-const values = {
+const values: FlashcardFormValues = {
+  type: "basic",
   deckId: "deck-1",
   front: "<p>Front</p>",
   back: "<p>Back</p>",
+  clozeSource: "",
 };
 
 describe("getCreateFlashcardResetValues", () => {
@@ -15,9 +18,11 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
+      type: "basic",
       deckId: "deck-1",
       front: "",
       back: "",
+      clozeSource: "",
     });
   });
 
@@ -28,9 +33,11 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
+      type: "basic",
       deckId: "deck-1",
       front: "<p>Front</p>",
       back: "",
+      clozeSource: "",
     });
   });
 
@@ -41,9 +48,11 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: true,
       }),
     ).toEqual({
+      type: "basic",
       deckId: "deck-1",
       front: "",
       back: "<p>Back</p>",
+      clozeSource: "",
     });
   });
 });

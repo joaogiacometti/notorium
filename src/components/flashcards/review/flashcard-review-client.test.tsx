@@ -81,6 +81,8 @@ function makeCard(id: string): FlashcardReviewEntity {
     id,
     front: `<p>${id} front</p>`,
     back: `<p>${id} back</p>`,
+    type: "basic",
+    clozeSource: null,
     state: "new",
     dueAt: new Date("2026-03-07T11:00:00.000Z"),
     stability: null,

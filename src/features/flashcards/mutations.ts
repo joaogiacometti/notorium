@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
@@ -7,18 +7,19 @@ import {
   generateFlashcardBackForUser,
   improveFlashcardBackForUser,
 } from "@/features/flashcards/ai-service";
+import {
+  createClozeNoteForUser,
+  deleteClozeNoteForUser,
+  editClozeNoteForUser,
+} from "@/features/flashcards/cloze-mutations";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   countFlashcardsByDeckForUser,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
-  getFlashcardRecordsForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
 import type {
-  BulkDeleteFlashcardsForm,
-  BulkMoveFlashcardsForm,
-  BulkResetFlashcardsForm,
   CreateFlashcardForm,
   DeleteFlashcardForm,
   EditFlashcardForm,
@@ -29,9 +30,6 @@ import { LIMITS } from "@/lib/config/limits";
 import { isUniqueViolationError } from "@/lib/db/errors";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import type {
-  BulkDeleteFlashcardsResult,
-  BulkMoveFlashcardsResult,
-  BulkResetFlashcardsResult,
   CreateFlashcardResult,
   EditFlashcardResult,
   FlashcardEntity,
@@ -42,7 +40,6 @@ import {
   type ActionErrorResult,
   actionError,
 } from "@/lib/server/server-action-errors";
-import { uniqueItems } from "@/lib/utils";
 
 export type DeleteFlashcardMutationResult =
   | {
@@ -52,9 +49,11 @@ export type DeleteFlashcardMutationResult =
     }
   | ActionErrorResult;
 
+type BasicFlashcardInput = { deckId: string; front: string; back: string };
+
 async function validateCreateFlashcardInput(
   userId: string,
-  data: CreateFlashcardForm,
+  data: BasicFlashcardInput,
 ): Promise<
   { error: ActionErrorResult } | { deckId: string; frontNormalized: string }
 > {
@@ -88,7 +87,7 @@ async function validateCreateFlashcardInput(
 async function createFlashcardRecord(
   userId: string,
   deckId: string,
-  data: CreateFlashcardForm,
+  data: BasicFlashcardInput,
   frontNormalized: string,
 ) {
   const schedulingState = getInitialFlashcardSchedulingState();
@@ -121,6 +120,14 @@ export async function createFlashcardForUser(
   userId: string,
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
+  if (data.type === "cloze") {
+    return createClozeNoteForUser(userId, {
+      deckId: data.deckId,
+      clozeSource: data.clozeSource,
+      back: data.back,
+    });
+  }
+
   const validation = await validateCreateFlashcardInput(userId, data);
 
   if ("error" in validation) {
@@ -153,25 +160,24 @@ type ValidateEditFlashcardResult =
       existingFlashcard: FlashcardEntity | null;
     };
 
+type BasicEditInput = {
+  id: string;
+  deckId: string;
+  front: string;
+  back: string;
+};
+
 async function validateEditFlashcardInput(
   userId: string,
-  data: EditFlashcardForm,
+  data: BasicEditInput,
+  existingFlashcard: FlashcardEntity,
 ): Promise<ValidateEditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
-  const [existingFlashcard, existingDeck, hasDuplicate] = await Promise.all([
-    getFlashcardByIdForUser(userId, data.id),
+  const [existingDeck, hasDuplicate] = await Promise.all([
     getDeckRecordForUser(userId, data.deckId),
     hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
   ]);
-
-  if (!existingFlashcard) {
-    return {
-      ok: false,
-      error: actionError("flashcards.notFound"),
-      existingFlashcard: null,
-    };
-  }
 
   if (!existingDeck) {
     return {
@@ -208,7 +214,7 @@ async function validateEditFlashcardInput(
 
 async function performFlashcardUpdate(
   userId: string,
-  data: EditFlashcardForm,
+  data: BasicEditInput,
   frontNormalized: string,
 ) {
   try {
@@ -240,13 +246,52 @@ export async function editFlashcardForUser(
   userId: string,
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
-  const validation = await validateEditFlashcardInput(userId, data);
+  const existingFlashcard = await getFlashcardByIdForUser(userId, data.id);
+  if (!existingFlashcard) {
+    return actionError("flashcards.notFound");
+  }
+
+  // Card type is fixed at creation. Mismatched edits would require a lossy
+  // delete-and-recreate, so they are rejected; the edit dialog locks the type.
+  if (data.type === "cloze") {
+    if (existingFlashcard.type !== "cloze") {
+      return actionError("flashcards.invalidData");
+    }
+    return editClozeNoteForUser(
+      userId,
+      {
+        id: data.id,
+        deckId: data.deckId,
+        clozeSource: data.clozeSource,
+        back: data.back,
+      },
+      existingFlashcard,
+    );
+  }
+
+  if (existingFlashcard.type === "cloze") {
+    return actionError("flashcards.invalidData");
+  }
+
+  return editBasicFlashcard(userId, data, existingFlashcard);
+}
+
+async function editBasicFlashcard(
+  userId: string,
+  data: BasicEditInput,
+  existingFlashcard: FlashcardEntity,
+): Promise<EditFlashcardResult> {
+  const validation = await validateEditFlashcardInput(
+    userId,
+    data,
+    existingFlashcard,
+  );
 
   if (!validation.ok) {
     return validation.error;
   }
 
-  const { frontNormalized, existingFlashcard } = validation;
+  const { frontNormalized } = validation;
   const previousAttachmentValues = [
     existingFlashcard.front,
     existingFlashcard.back,
@@ -330,6 +375,20 @@ export async function deleteFlashcardForUser(
     return actionError("flashcards.notFound");
   }
 
+  // Deleting any cloze sibling removes the whole note and all its siblings.
+  if (existingFlashcard.type === "cloze" && existingFlashcard.clozeNoteId) {
+    const removed = await deleteClozeNoteForUser(
+      userId,
+      existingFlashcard.clozeNoteId,
+    );
+    await cleanupAttachmentsAfterMutation(
+      userId,
+      removed.flatMap((card) => [card.front, card.back]),
+      [],
+    );
+    return { success: true, id: data.id, deckId: existingFlashcard.deckId };
+  }
+
   await getDb()
     .delete(flashcard)
     .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)));
@@ -343,116 +402,11 @@ export async function deleteFlashcardForUser(
   return { success: true, id: data.id, deckId: existingFlashcard.deckId };
 }
 
-export async function bulkDeleteFlashcardsForUser(
-  userId: string,
-  data: BulkDeleteFlashcardsForm,
-): Promise<BulkDeleteFlashcardsResult> {
-  const existingFlashcards = await Promise.all(
-    data.ids.map((id) => getFlashcardByIdForUser(userId, id)),
-  );
-
-  if (existingFlashcards.some((item) => !item)) {
-    return actionError("flashcards.notFound");
-  }
-
-  const ownedFlashcards = existingFlashcards.filter((item) => item !== null);
-
-  await getDb()
-    .delete(flashcard)
-    .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
-
-  await cleanupAttachmentsAfterMutation(
-    userId,
-    ownedFlashcards.flatMap((flashcard) => [flashcard.front, flashcard.back]),
-    [],
-  );
-
-  return {
-    success: true,
-    ids: data.ids,
-    deckIds: uniqueItems(ownedFlashcards.map((flashcard) => flashcard.deckId)),
-  };
-}
-
-export async function bulkMoveFlashcardsForUser(
-  userId: string,
-  data: BulkMoveFlashcardsForm,
-): Promise<BulkMoveFlashcardsResult> {
-  const existingFlashcards = await getFlashcardRecordsForUser(userId, data.ids);
-
-  if (existingFlashcards.length !== data.ids.length) {
-    return actionError("flashcards.notFound");
-  }
-
-  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
-
-  if (!existingDeck) {
-    return actionError("decks.notFound");
-  }
-
-  const movingToNewDeck = existingFlashcards.filter(
-    (fc) => fc.deckId !== data.deckId,
-  ).length;
-
-  if (movingToNewDeck > 0) {
-    const current = await countFlashcardsByDeckForUser(userId, data.deckId);
-
-    if (current + movingToNewDeck > LIMITS.maxFlashcardsPerDeck) {
-      return actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerDeck },
-      });
-    }
-  }
-
-  await getDb()
-    .update(flashcard)
-    .set({ deckId: data.deckId })
-    .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
-
-  return {
-    success: true,
-    ids: data.ids,
-    deckId: data.deckId,
-    previousDeckIds: uniqueItems(existingFlashcards.map((fc) => fc.deckId)),
-  };
-}
-
-export async function bulkResetFlashcardsForUser(
-  userId: string,
-  data: BulkResetFlashcardsForm,
-): Promise<BulkResetFlashcardsResult> {
-  const existingFlashcards = await getFlashcardRecordsForUser(userId, data.ids);
-
-  if (existingFlashcards.length !== data.ids.length) {
-    return actionError("flashcards.notFound");
-  }
-
-  const now = new Date();
-  const schedulingState = getInitialFlashcardSchedulingState(now);
-
-  await getDb()
-    .update(flashcard)
-    .set({
-      state: schedulingState.state,
-      dueAt: schedulingState.dueAt,
-      stability: schedulingState.stability,
-      difficulty: schedulingState.difficulty,
-      ease: schedulingState.ease,
-      intervalDays: schedulingState.intervalDays,
-      learningStep: schedulingState.learningStep,
-      lastReviewedAt: schedulingState.lastReviewedAt,
-      reviewCount: schedulingState.reviewCount,
-      lapseCount: schedulingState.lapseCount,
-      updatedAt: now,
-    })
-    .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
-
-  return {
-    success: true,
-    ids: data.ids,
-    deckIds: uniqueItems(existingFlashcards.map((fc) => fc.deckId)),
-  };
-}
+export {
+  bulkDeleteFlashcardsForUser,
+  bulkMoveFlashcardsForUser,
+  bulkResetFlashcardsForUser,
+} from "@/features/flashcards/bulk-mutations";
 
 export async function resetFlashcardForUser(
   userId: string,

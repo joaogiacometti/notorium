@@ -132,6 +132,7 @@ export function GenerateFlashcardsReview({
           onModeChange={typeToggle.onModeChange}
           disabled={typeToggle.disabled}
           options={typeToggle.options}
+          label="Mode"
         />
       ) : null}
       <div className="flex items-center justify-between">

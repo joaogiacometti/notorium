@@ -16,6 +16,8 @@ function makeCard(
     id: "card-1",
     front: "<p>Front</p>",
     back: "<p>Back</p>",
+    type: "basic",
+    clozeSource: null,
     state: "new",
     dueAt: new Date("2026-03-04T12:00:00.000Z"),
     stability: null,

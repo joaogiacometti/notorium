@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
-import type { CreateFlashcardForm } from "@/features/flashcards/validation";
+import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import type { DeckEntity } from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -31,11 +31,13 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
 function Harness({
   decks = [],
 }: Readonly<{ decks?: DeckEntity[] | undefined }>) {
-  const form = useForm<CreateFlashcardForm>({
+  const form = useForm<FlashcardFormValues>({
     defaultValues: {
+      type: "basic",
       deckId: "",
       front: "",
       back: "",
+      clozeSource: "",
     },
   });
 

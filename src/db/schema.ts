@@ -6,19 +6,23 @@ import {
   index,
   integer,
   numeric,
-  pgEnum,
   pgTable,
   text,
   timestamp,
   unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import {
+  assessmentStatusEnum,
+  assessmentTypeEnum,
+  flashcardReviewRatingEnum,
+  flashcardStateEnum,
+  flashcardTypeEnum,
+  notificationStatusEnum,
+  userAccessStatusEnum,
+} from "@/db/schema-enums";
 
-export const userAccessStatusEnum = pgEnum("user_access_status", [
-  "pending",
-  "approved",
-  "blocked",
-]);
+export * from "@/db/schema-enums";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -245,27 +249,6 @@ export const mindmap = pgTable(
   ],
 );
 
-export const assessmentTypeEnum = pgEnum("assessment_type", [
-  "exam",
-  "assignment",
-  "project",
-  "presentation",
-  "homework",
-  "other",
-]);
-
-export const assessmentStatusEnum = pgEnum("assessment_status", [
-  "pending",
-  "completed",
-]);
-
-export const flashcardStateEnum = pgEnum("flashcard_state", [
-  "new",
-  "learning",
-  "review",
-  "relearning",
-]);
-
 export const deck = pgTable(
   "deck",
   {
@@ -297,19 +280,6 @@ export const deck = pgTable(
     index("deck_userId_parentDeckId_idx").on(table.userId, table.parentDeckId),
   ],
 );
-
-export const flashcardReviewRatingEnum = pgEnum("flashcard_review_rating", [
-  "again",
-  "hard",
-  "good",
-  "easy",
-]);
-
-export const notificationStatusEnum = pgEnum("notification_status", [
-  "claimed",
-  "sent",
-  "failed",
-]);
 
 export const assessment = pgTable(
   "assessment",
@@ -425,6 +395,13 @@ export const flashcard = pgTable(
     front: text("front").notNull(),
     frontNormalized: text("front_normalized").notNull(),
     back: text("back").notNull(),
+    type: flashcardTypeEnum("type").notNull().default("basic"),
+    // Cloze siblings share one clozeNoteId. clozeOrdinal is the deletion this
+    // card tests; clozeSource holds the authored `{{cN::answer}}` rich text so
+    // edits can re-render every sibling. All three are null for basic cards.
+    clozeNoteId: text("cloze_note_id"),
+    clozeOrdinal: integer("cloze_ordinal"),
+    clozeSource: text("cloze_source"),
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
     stability: numeric("stability", { precision: 10, scale: 4 }),
@@ -454,6 +431,7 @@ export const flashcard = pgTable(
     ),
     index("flashcard_deckId_idx").on(table.deckId),
     index("flashcard_userId_idx").on(table.userId),
+    index("flashcard_clozeNoteId_idx").on(table.clozeNoteId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),

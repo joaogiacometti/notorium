@@ -60,6 +60,7 @@ export function EditFlashcardSplitForm({
             mode="split"
             onModeChange={onModeChange}
             options={modeOptions}
+            label="Mode"
           />
           <Field>
             <div className="flex h-9 items-center justify-between gap-3">

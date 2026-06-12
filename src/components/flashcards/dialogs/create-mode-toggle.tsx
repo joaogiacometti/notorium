@@ -12,12 +12,14 @@ interface CreateModeToggleProps<T extends string> {
   onModeChange: (mode: T) => void;
   disabled?: boolean;
   options?: ModeOption<T>[];
+  label?: string;
 }
 
 export function CreateModeToggle<T extends string>({
   mode,
   onModeChange,
   disabled,
+  label = "Type",
   options = [
     { value: "single" as T, label: "Single" },
     { value: "ai" as T, label: "Multiple" },
@@ -25,7 +27,7 @@ export function CreateModeToggle<T extends string>({
 }: Readonly<CreateModeToggleProps<T>>) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium">Type</span>
+      <span className="text-sm font-medium">{label}</span>
       <div className="flex w-fit rounded-lg border p-0.5">
         {options.map((option) => (
           <Button

@@ -113,6 +113,7 @@ describe("createFlashcardForUser", () => {
     );
 
     const result = await createFlashcardForUser("user-1", {
+      type: "basic",
       deckId: "deck-1",
       front: "<p>Same Front</p>",
       back: "<p>Back</p>",
@@ -143,6 +144,7 @@ describe("createFlashcardForUser", () => {
     );
 
     const result = await createFlashcardForUser("user-1", {
+      type: "basic",
       deckId: "deck-1",
       front: "<p>Front</p>",
       back: "<p>Back</p>",
@@ -212,6 +214,7 @@ describe("editFlashcardForUser", () => {
 
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
+      type: "basic",
       deckId: "deck-2",
       front: "<p>Updated front</p>",
       back: "<p>Updated back</p>",

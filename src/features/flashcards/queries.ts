@@ -179,6 +179,27 @@ export async function getFlashcardByIdForUser(
   return results[0]?.flashcard ?? null;
 }
 
+/**
+ * Loads every sibling card of a cloze note, ordered by deletion ordinal.
+ *
+ * @example
+ * const siblings = await getClozeSiblingsForUser(userId, "note-123");
+ */
+export async function getClozeSiblingsForUser(
+  userId: string,
+  clozeNoteId: string,
+): Promise<FlashcardEntity[]> {
+  const results = await getDb()
+    .select({ flashcard })
+    .from(flashcard)
+    .where(
+      and(eq(flashcard.clozeNoteId, clozeNoteId), eq(flashcard.userId, userId)),
+    )
+    .orderBy(flashcard.clozeOrdinal);
+
+  return results.map((row) => row.flashcard);
+}
+
 export async function getFlashcardDetailByIdForUser(
   userId: string,
   flashcardId: string,

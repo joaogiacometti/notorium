@@ -24,8 +24,9 @@ import {
 } from "@/components/ui/dialog";
 import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import {
-  type EditFlashcardForm,
-  editFlashcardSchema,
+  type FlashcardFormValues,
+  flashcardFormSchema,
+  toEditFlashcardPayload,
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
@@ -45,7 +46,10 @@ interface GeneratedCard {
 }
 
 interface EditFlashcardDialogProps {
-  flashcard: Pick<FlashcardEntity, "id" | "deckId" | "front" | "back">;
+  flashcard: Pick<
+    FlashcardEntity,
+    "id" | "deckId" | "front" | "back" | "type" | "clozeSource"
+  >;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   aiEnabled: boolean;
@@ -89,8 +93,8 @@ export function EditFlashcardDialog({
 
   const incomingValues = getEditFlashcardFormValues(flashcard);
 
-  const form = useForm<EditFlashcardForm>({
-    resolver: zodResolver(editFlashcardSchema),
+  const form = useForm<FlashcardFormValues>({
+    resolver: zodResolver(flashcardFormSchema),
     defaultValues: incomingValues,
   });
 
@@ -119,7 +123,10 @@ export function EditFlashcardDialog({
     },
     values: incomingValues,
     form,
-    onSubmitAction: editFlashcard,
+    onSubmitAction: (values) =>
+      editFlashcard(
+        toEditFlashcardPayload(values as FlashcardFormValues & { id: string }),
+      ),
     onSuccess: handleFlashcardUpdated,
     getSuccessValues: (submittedValues) => submittedValues,
     closeOnSuccess: false,
@@ -231,6 +238,7 @@ export function EditFlashcardDialog({
 
     for (const card of cards) {
       const result = await createFlashcard({
+        type: "basic",
         deckId: splitDeckId ?? "",
         front: card.front,
         back: card.back,
@@ -450,12 +458,19 @@ export function EditFlashcardDialog({
 }
 
 function getEditFlashcardFormValues(
-  flashcard: Pick<FlashcardEntity, "id" | "deckId" | "front" | "back">,
-): EditFlashcardForm {
+  flashcard: Pick<
+    FlashcardEntity,
+    "id" | "deckId" | "front" | "back" | "type" | "clozeSource"
+  >,
+): FlashcardFormValues {
+  const isCloze = flashcard.type === "cloze";
   return {
     id: flashcard.id,
+    type: isCloze ? "cloze" : "basic",
     deckId: flashcard.deckId,
-    front: flashcard.front,
-    back: flashcard.back,
+    // Cloze cards edit their source; the rendered front/back are derived.
+    front: isCloze ? "" : flashcard.front,
+    back: isCloze ? "" : flashcard.back,
+    clozeSource: flashcard.clozeSource ?? "",
   };
 }

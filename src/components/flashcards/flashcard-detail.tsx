@@ -40,9 +40,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FieldError } from "@/components/ui/field";
 import {
-  type EditFlashcardForm,
-  editFlashcardSchema,
+  type FlashcardFormValues,
+  flashcardFormSchema,
   hasRichTextContent,
+  toEditFlashcardPayload,
 } from "@/features/flashcards/validation";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
@@ -59,16 +60,18 @@ interface FlashcardDetailProps {
 
 const AUTOSAVE_DELAY_MS = 800;
 
-function getEditValues(flashcard: FlashcardDetailEntity): EditFlashcardForm {
+function getEditValues(flashcard: FlashcardDetailEntity): FlashcardFormValues {
   return {
     id: flashcard.id,
+    type: flashcard.type === "cloze" ? "cloze" : "basic",
     deckId: flashcard.deckId,
     front: flashcard.front,
     back: flashcard.back,
+    clozeSource: flashcard.clozeSource ?? "",
   };
 }
 
-function isSameFlashcardEdit(a: EditFlashcardForm, b: EditFlashcardForm) {
+function isSameFlashcardEdit(a: FlashcardFormValues, b: FlashcardFormValues) {
   return a.front === b.front && a.back === b.back;
 }
 
@@ -96,8 +99,8 @@ export function FlashcardDetail({
   const lastSavedValuesRef = useRef(getEditValues(flashcard));
   const saveSequenceRef = useRef(0);
 
-  const form = useForm<EditFlashcardForm>({
-    resolver: zodResolver(editFlashcardSchema),
+  const form = useForm<FlashcardFormValues>({
+    resolver: zodResolver(flashcardFormSchema),
     defaultValues: getEditValues(flashcard),
   });
 
@@ -128,7 +131,13 @@ export function FlashcardDetail({
   useBeforeUnload(hasDirtyValues || isSaving || isImageUploading);
 
   const saveFlashcardValues = useCallback(
-    async (values: EditFlashcardForm) => {
+    async (values: FlashcardFormValues) => {
+      // Cloze notes are edited through the create/edit dialog where the source
+      // is authored; the detail page's front/back autosave does not apply.
+      if (flashcard.type === "cloze") {
+        return false;
+      }
+
       const isValid = await form.trigger();
       if (!isValid) {
         return false;
@@ -138,7 +147,9 @@ export function FlashcardDetail({
       saveSequenceRef.current = saveSequence;
       setIsSaving(true);
 
-      const result = await editFlashcard(values);
+      const result = await editFlashcard(
+        toEditFlashcardPayload(values as FlashcardFormValues & { id: string }),
+      );
 
       if (saveSequence !== saveSequenceRef.current) {
         return result.success;
@@ -159,7 +170,7 @@ export function FlashcardDetail({
 
       return true;
     },
-    [form, queryClient],
+    [form, queryClient, flashcard.type],
   );
 
   async function handleGenerateAiBack() {
@@ -196,11 +207,13 @@ export function FlashcardDetail({
   }
 
   useEffect(() => {
-    const nextValues: EditFlashcardForm = {
+    const nextValues: FlashcardFormValues = {
       id: flashcard.id,
+      type: flashcard.type === "cloze" ? "cloze" : "basic",
       deckId: flashcard.deckId,
       front: debouncedValues.front,
       back: debouncedValues.back,
+      clozeSource: flashcard.clozeSource ?? "",
     };
 
     if (isSameFlashcardEdit(nextValues, lastSavedValuesRef.current)) {
@@ -216,6 +229,8 @@ export function FlashcardDetail({
     debouncedValues,
     flashcard.id,
     flashcard.deckId,
+    flashcard.type,
+    flashcard.clozeSource,
     isImageUploading,
     saveFlashcardValues,
   ]);

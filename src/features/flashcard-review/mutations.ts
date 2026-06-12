@@ -107,6 +107,8 @@ async function applyFlashcardReviewForUser(
           id: flashcard.id,
           front: flashcard.front,
           back: flashcard.back,
+          type: flashcard.type,
+          clozeSource: flashcard.clozeSource,
           state: flashcard.state,
           dueAt: flashcard.dueAt,
           stability: flashcard.stability,

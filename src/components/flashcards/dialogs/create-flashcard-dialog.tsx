@@ -31,10 +31,11 @@ import {
 import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import {
-  type CreateFlashcardForm,
-  createFlashcardSchema,
+  type FlashcardFormValues,
+  flashcardFormSchema,
   type GenerateFlashcardsForm,
   generateFlashcardsSchema,
+  toCreateFlashcardPayload,
 } from "@/features/flashcards/validation";
 import type { DeckEntity, FlashcardEntity } from "@/lib/server/api-contracts";
 
@@ -47,11 +48,13 @@ interface GeneratedCard {
 
 function getCreateFlashcardFormValues(
   deckId?: string | null,
-): CreateFlashcardForm {
+): FlashcardFormValues {
   return {
+    type: "basic",
     deckId: deckId ?? "",
     front: "",
     back: "",
+    clozeSource: "",
   };
 }
 
@@ -98,8 +101,8 @@ export function CreateFlashcardDialog({
     deckId ?? null,
   );
 
-  const singleForm = useForm<CreateFlashcardForm>({
-    resolver: zodResolver(createFlashcardSchema),
+  const singleForm = useForm<FlashcardFormValues>({
+    resolver: zodResolver(flashcardFormSchema),
     defaultValues: getCreateFlashcardFormValues(deckId),
   });
 
@@ -139,7 +142,8 @@ export function CreateFlashcardDialog({
     },
     values: getCreateFlashcardFormValues(deckId),
     form: singleForm,
-    onSubmitAction: createFlashcard,
+    onSubmitAction: (values) =>
+      createFlashcard(toCreateFlashcardPayload(values)),
     onSuccess: (flashcard) => {
       if (flashcard) {
         onCreated?.(flashcard);
@@ -194,6 +198,7 @@ export function CreateFlashcardDialog({
 
     for (const card of cards) {
       const result = await createFlashcard({
+        type: "basic",
         deckId: selectedDeckId ?? "",
         front: card.front,
         back: card.back,
@@ -399,6 +404,7 @@ export function CreateFlashcardDialog({
             <CreateModeToggle
               mode="ai"
               onModeChange={handleModeSwitch as (mode: string) => void}
+              label="Mode"
             />
             <Field>
               <FieldLabel htmlFor="ai-text">Resources</FieldLabel>

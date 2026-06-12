@@ -87,6 +87,8 @@ export type FlashcardReviewEntity = Pick<
   | "id"
   | "front"
   | "back"
+  | "type"
+  | "clozeSource"
   | "deckId"
   | "state"
   | "dueAt"

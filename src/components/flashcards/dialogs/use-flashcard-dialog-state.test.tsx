@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
-import type { CreateFlashcardForm } from "@/features/flashcards/validation";
+import type { FlashcardFormValues } from "@/features/flashcards/validation";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -36,13 +36,13 @@ vi.mock("@/app/actions/flashcards", () => ({
 interface HarnessProps {
   mode?: "create" | "edit";
   open: boolean;
-  values: CreateFlashcardForm;
+  values: FlashcardFormValues;
   onOpenChange?: (open: boolean) => void;
-  onSubmitAction?: (values: CreateFlashcardForm) => Promise<{ success: true }>;
+  onSubmitAction?: (values: FlashcardFormValues) => Promise<{ success: true }>;
   getSuccessValues?: (
-    values: CreateFlashcardForm,
+    values: FlashcardFormValues,
     options: { keepFrontAfterSubmit: boolean; keepBackAfterSubmit: boolean },
-  ) => CreateFlashcardForm;
+  ) => FlashcardFormValues;
 }
 
 function TestHarness({
@@ -53,7 +53,7 @@ function TestHarness({
   onSubmitAction = async () => ({ success: true }),
   getSuccessValues = (currentValues) => currentValues,
 }: Readonly<HarnessProps>) {
-  const form = useForm<CreateFlashcardForm>({
+  const form = useForm<FlashcardFormValues>({
     defaultValues: values,
   });
   const dialog = useFlashcardDialogState({
@@ -159,9 +159,11 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
+            type: "basic",
             deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
+            clozeSource: "",
           }}
         />,
       );
@@ -174,9 +176,11 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
+            type: "basic",
             deckId: "deck-2",
             front: "<p>Front B</p>",
             back: "<p>Back B</p>",
+            clozeSource: "",
           }}
         />,
       );
@@ -195,9 +199,11 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
+            type: "basic",
             deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
+            clozeSource: "",
           }}
           onSubmitAction={onSubmitAction}
           getSuccessValues={(currentValues) => currentValues}
@@ -215,9 +221,11 @@ describe("useFlashcardDialogState", () => {
     await flushTimers();
 
     expect(onSubmitAction).toHaveBeenCalledWith({
+      type: "basic",
       deckId: "deck-1",
       front: "<p>Front A</p>",
       back: "<p>Back A</p>",
+      clozeSource: "",
     });
     expect(checkFlashcardDuplicateMock).toHaveBeenCalledTimes(2);
     expect(checkFlashcardDuplicateMock).toHaveBeenLastCalledWith({
@@ -232,14 +240,18 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
+            type: "basic",
             deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
+            clozeSource: "",
           }}
           getSuccessValues={(currentValues, options) => ({
+            type: "basic",
             deckId: currentValues.deckId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
+            clozeSource: "",
           })}
         />,
       );
@@ -261,14 +273,18 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
+            type: "basic",
             deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
+            clozeSource: "",
           }}
           getSuccessValues={(currentValues, options) => ({
+            type: "basic",
             deckId: currentValues.deckId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
+            clozeSource: "",
           })}
         />,
       );
@@ -294,14 +310,18 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
+            type: "basic",
             deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
+            clozeSource: "",
           }}
           getSuccessValues={(currentValues, options) => ({
+            type: "basic",
             deckId: currentValues.deckId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
+            clozeSource: "",
           })}
         />,
       );
@@ -328,11 +348,13 @@ describe("useFlashcardDialogState", () => {
     });
 
     function ProposalHarness() {
-      const form = useForm<CreateFlashcardForm>({
+      const form = useForm<FlashcardFormValues>({
         defaultValues: {
+          type: "basic",
           deckId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
+          clozeSource: "",
         },
       });
       const dialog = useFlashcardDialogState({
@@ -341,9 +363,11 @@ describe("useFlashcardDialogState", () => {
         aiEnabled: true,
         onOpenChange: () => {},
         values: {
+          type: "basic",
           deckId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
+          clozeSource: "",
         },
         form,
         onSubmitAction: async () => ({ success: true }),
@@ -385,9 +409,11 @@ describe("useFlashcardDialogState", () => {
           open
           onOpenChange={onOpenChange}
           values={{
+            type: "basic",
             deckId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
+            clozeSource: "",
           }}
           onSubmitAction={onSubmitAction}
           getSuccessValues={(currentValues) => currentValues}

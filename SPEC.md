@@ -88,7 +88,13 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete flashcards within decks.
 - The flashcards manage table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
 - Flashcard manage search ranks front matches before back matches, deck-name matches, and recency tie-breakers.
-- Flashcard fields: front and back rich text.
+- Flashcards are one of two types, chosen at creation: basic (front and back rich text) or cloze.
+- Basic flashcard fields: front and back rich text.
+- Cloze flashcards are authored as a single rich-text source containing one or more deletion markers of the form `{{c1::answer}}`, with an optional hint as `{{c1::answer::hint}}`.
+- Each distinct cloze number (`c1`, `c2`, …) becomes its own independently scheduled card (Anki-style siblings): its front hides that deletion (showing the hint when given) while revealing the others, and its back highlights the revealed answer.
+- Editing a cloze card edits its source: kept deletions keep their review progress, added deletions become new cards, and removed deletions are deleted.
+- Deleting any cloze card deletes the whole note and all its sibling cards.
+- A flashcard's type is fixed after creation and cannot be switched between basic and cloze on edit.
 - Flashcard create and edit support AI generation of the back when the back is empty.
 - Flashcards can also be generated from a note detail page when AI is configured.
 - Generated AI flashcards use concise retrieval-cue fronts and minimal, directly testable answer bullets.

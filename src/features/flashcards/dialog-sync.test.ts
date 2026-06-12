@@ -3,47 +3,57 @@ import {
   haveFlashcardDialogValuesChanged,
   shouldSyncFlashcardDialogValues,
 } from "@/features/flashcards/dialog-sync";
+import type { FlashcardFormValues } from "@/features/flashcards/validation";
 
-const createValues = {
-  deckId: "deck-1",
-  front: "",
-  back: "",
-};
+function values(
+  overrides: Partial<FlashcardFormValues> = {},
+): FlashcardFormValues {
+  return {
+    type: "basic",
+    deckId: "deck-1",
+    front: "",
+    back: "",
+    clozeSource: "",
+    ...overrides,
+  };
+}
+
+const createValues = values();
 
 describe("haveFlashcardDialogValuesChanged", () => {
   it("returns false when flashcard dialog values are unchanged", () => {
-    expect(
-      haveFlashcardDialogValuesChanged(createValues, {
-        deckId: "deck-1",
-        front: "",
-        back: "",
-      }),
-    ).toBe(false);
+    expect(haveFlashcardDialogValuesChanged(createValues, values())).toBe(
+      false,
+    );
   });
 
   it("returns true when any tracked field changes", () => {
     expect(
-      haveFlashcardDialogValuesChanged(createValues, {
-        deckId: "deck-2",
-        front: "",
-        back: "",
-      }),
+      haveFlashcardDialogValuesChanged(
+        createValues,
+        values({ deckId: "deck-2" }),
+      ),
     ).toBe(true);
 
     expect(
-      haveFlashcardDialogValuesChanged(createValues, {
-        deckId: "deck-1",
-        front: "<p>Front</p>",
-        back: "",
-      }),
+      haveFlashcardDialogValuesChanged(
+        createValues,
+        values({ front: "<p>Front</p>" }),
+      ),
     ).toBe(true);
 
     expect(
-      haveFlashcardDialogValuesChanged(createValues, {
-        deckId: "deck-1",
-        front: "",
-        back: "<p>Back</p>",
-      }),
+      haveFlashcardDialogValuesChanged(
+        createValues,
+        values({ back: "<p>Back</p>" }),
+      ),
+    ).toBe(true);
+
+    expect(
+      haveFlashcardDialogValuesChanged(
+        createValues,
+        values({ clozeSource: "<p>{{c1::x}}</p>" }),
+      ),
     ).toBe(true);
   });
 });
@@ -66,11 +76,7 @@ describe("shouldSyncFlashcardDialogValues", () => {
         open: true,
         wasOpen: true,
         previousValues: createValues,
-        nextValues: {
-          deckId: "deck-1",
-          front: "",
-          back: "",
-        },
+        nextValues: values(),
       }),
     ).toBe(false);
   });
@@ -80,18 +86,17 @@ describe("shouldSyncFlashcardDialogValues", () => {
       shouldSyncFlashcardDialogValues({
         open: true,
         wasOpen: true,
-        previousValues: {
+        previousValues: values({
           id: "flashcard-1",
-          deckId: "deck-1",
           front: "<p>Front</p>",
           back: "<p>Back</p>",
-        },
-        nextValues: {
+        }),
+        nextValues: values({
           id: "flashcard-2",
           deckId: "deck-2",
           front: "<p>Other front</p>",
           back: "<p>Other back</p>",
-        },
+        }),
       }),
     ).toBe(true);
   });

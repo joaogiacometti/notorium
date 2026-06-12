@@ -58,6 +58,11 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.flashcards.frontMaxLength":
     "Front must be at most 1,000 characters.",
   "Validation.flashcards.frontRequired": "Front is required.",
+  "Validation.flashcards.clozeTextRequired": "Cloze text is required.",
+  "Validation.flashcards.clozeMarkersRequired":
+    "Add at least one cloze deletion, e.g. {{c1::answer}}.",
+  "Validation.flashcards.clozeMaxLength":
+    "Cloze text must be at most 1,000 characters.",
   "Validation.flashcards.deckRequired": "Deck is required.",
   "Validation.flashcards.subjectRequired": "Subject is required.",
   "Validation.flashcards.textMaxLength":

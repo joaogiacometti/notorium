@@ -1,6 +1,4 @@
-import type { CreateFlashcardForm } from "@/features/flashcards/validation";
-
-type FlashcardFormValues = CreateFlashcardForm & { id?: string };
+import type { FlashcardFormValues } from "@/features/flashcards/validation";
 
 interface FlashcardDialogSyncOptions<TValues extends FlashcardFormValues> {
   open: boolean;
@@ -20,7 +18,8 @@ export function haveFlashcardDialogValuesChanged<
     previousValues.id !== nextValues.id ||
     previousValues.deckId !== nextValues.deckId ||
     previousValues.front !== nextValues.front ||
-    previousValues.back !== nextValues.back
+    previousValues.back !== nextValues.back ||
+    previousValues.clozeSource !== nextValues.clozeSource
   );
 }
 

@@ -29,6 +29,8 @@ function makeCard(
     id,
     front: `<p>${id} front</p>`,
     back: `<p>${id} back</p>`,
+    type: "basic",
+    clozeSource: null,
     state: "new",
     dueAt,
     stability: null,

@@ -15,7 +15,7 @@ import {
 import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
 import {
-  type CreateFlashcardForm,
+  type FlashcardFormValues as FlashcardFormSchemaValues,
   hasRichTextContent,
 } from "@/features/flashcards/validation";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
@@ -23,7 +23,7 @@ import type { FlashcardEntity } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { t } from "@/lib/server/server-action-errors";
 
-type FlashcardFormValues = CreateFlashcardForm & { id?: string };
+type FlashcardFormValues = FlashcardFormSchemaValues;
 
 interface UseFlashcardDialogStateOptions<TValues extends FlashcardFormValues> {
   mode: "create" | "edit";
@@ -195,8 +195,12 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       savedTimerRef.current = null;
     }
     await cleanupDiscardedEditorAttachments(
-      [currentValues.front, currentValues.back],
-      [savedValuesRef.current.front, savedValuesRef.current.back],
+      [currentValues.front, currentValues.back, currentValues.clozeSource],
+      [
+        savedValuesRef.current.front,
+        savedValuesRef.current.back,
+        savedValuesRef.current.clozeSource,
+      ],
     );
     form.reset(savedValuesRef.current);
     setPreviousBack(null);
@@ -225,12 +229,14 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
     const hasFrontContent = hasRichTextContent(currentValues.front);
     const hasBackContent = hasRichTextContent(currentValues.back);
-    const hasContent = hasFrontContent || hasBackContent;
+    const hasClozeContent = hasRichTextContent(currentValues.clozeSource);
+    const hasContent = hasFrontContent || hasBackContent || hasClozeContent;
     const savedValues = savedValuesRef.current;
     const hasUnsavedChanges =
       mode === "edit"
         ? currentValues.front !== savedValues.front ||
           currentValues.back !== savedValues.back ||
+          currentValues.clozeSource !== savedValues.clozeSource ||
           currentValues.deckId !== savedValues.deckId
         : hasContent;
 
@@ -240,8 +246,12 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
 
     await cleanupDiscardedEditorAttachments(
-      [currentValues.front, currentValues.back],
-      [savedValuesRef.current.front, savedValuesRef.current.back],
+      [currentValues.front, currentValues.back, currentValues.clozeSource],
+      [
+        savedValuesRef.current.front,
+        savedValuesRef.current.back,
+        savedValuesRef.current.clozeSource,
+      ],
     );
     form.reset(savedValuesRef.current);
     setPreviousBack(null);
