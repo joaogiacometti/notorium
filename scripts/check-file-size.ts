@@ -28,7 +28,6 @@ const TEST_LIMIT = 800;
 const KNOWN_OVERSIZED: Record<string, number> = {
   // Declarative Drizzle schema; split by table is a larger refactor.
   "src/db/schema.ts": 753,
-  "src/components/flashcards/dialogs/edit-flashcard-dialog.tsx": 536,
   "src/components/shared/manager-data-table.tsx": 534,
   "src/components/shared/calendar-view.tsx": 527,
   "src/components/flashcards/review/flashcard-review-client.tsx": 518,

@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -12,21 +11,17 @@ import {
   editFlashcard,
   generateFlashcards,
 } from "@/app/actions/flashcards";
-import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
+import { EditFlashcardSplitForm } from "@/components/flashcards/dialogs/edit-flashcard-split-form";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
-import { DeckSelect } from "@/components/shared/deck-select";
-import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import {
   type EditFlashcardForm,
@@ -393,92 +388,22 @@ export function EditFlashcardDialog({
       );
     }
 
-    const hasFrontContent = splitFront.trim().length > 0;
-    const hasBackContent = splitBack.trim().length > 0;
-    const isSplitImageUploading = splitEditorPendingUploads > 0;
-
     return (
-      <form
+      <EditFlashcardSplitForm
+        decks={decks}
+        splitDeckId={splitDeckId}
+        splitFront={splitFront}
+        splitBack={splitBack}
+        isGenerating={isGenerating}
+        isSplitImageUploading={splitEditorPendingUploads > 0}
+        modeOptions={modeOptions}
+        onDeckChange={setSplitDeckId}
+        onFrontChange={setSplitFront}
+        onBackChange={setSplitBack}
+        onModeChange={(m) => handleModeSwitch(m as EditMode)}
+        onImageUploadPendingChange={handleSplitEditorUploadPendingChange}
         onSubmit={handleFormSubmit}
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
-      >
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-5 sm:px-6">
-          <FieldGroup className="gap-5">
-            <DeckSelect
-              value={splitDeckId}
-              onChange={setSplitDeckId}
-              decks={decks}
-              id="split-deck"
-            />
-            <CreateModeToggle
-              mode="split"
-              onModeChange={(m) => handleModeSwitch(m as EditMode)}
-              options={modeOptions}
-            />
-            <Field>
-              <div className="flex h-9 items-center justify-between gap-3">
-                <FieldLabel htmlFor="split-front">Front</FieldLabel>
-              </div>
-              <TiptapEditor
-                value={splitFront}
-                onChange={setSplitFront}
-                placeholder="e.g. What is photosynthesis?"
-                id="split-front"
-                contentClassName="min-h-11 max-h-[40svh]"
-                imageUploadContext="flashcards"
-                onImageUploadPendingChange={
-                  handleSplitEditorUploadPendingChange
-                }
-              />
-            </Field>
-            <Field>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                  <FieldLabel htmlFor="split-back">Back</FieldLabel>
-                </div>
-              </div>
-              <TiptapEditor
-                value={splitBack}
-                onChange={setSplitBack}
-                placeholder="e.g. Process plants use to convert light into energy."
-                id="split-back"
-                contentClassName="max-h-[10lh]"
-                imageUploadContext="flashcards"
-                onImageUploadPendingChange={
-                  handleSplitEditorUploadPendingChange
-                }
-              />
-            </Field>
-          </FieldGroup>
-        </div>
-        <div className="shrink-0 border-t px-4 py-4 sm:px-6">
-          <Button
-            type="submit"
-            disabled={
-              isGenerating ||
-              isSplitImageUploading ||
-              !hasFrontContent ||
-              !hasBackContent ||
-              !splitDeckId
-            }
-            className="w-full"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Splitting...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 size-4" />
-                {isSplitImageUploading
-                  ? "Uploading image..."
-                  : "Split Flashcard"}
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+      />
     );
   }
 
