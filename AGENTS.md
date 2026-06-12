@@ -203,6 +203,8 @@ These run in CI (`.github/workflows/checks.yml`) and locally. Do not weaken a gu
 - `bun run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries.
 - `bun run test:coverage` enforces coverage floors set in `vitest.config.ts`. Ratchet them up as coverage improves; never lower them.
 
+Lefthook (`lefthook.yml`) runs these locally before they reach CI: pre-commit formats and lints staged files with Biome; pre-push runs typecheck, tests, and the file-size guard. Hooks install automatically via the `prepare` script on `bun install`; run `bunx lefthook install` manually if needed.
+
 ## Definition of Done
 
 - Behavior matches `SPEC.md`.

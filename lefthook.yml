@@ -1,0 +1,23 @@
+# Local git hooks. Mirror the CI guards (.github/workflows/checks.yml) so
+# failures surface before a push instead of in CI. See AGENTS.md
+# "Automated Guards". Run `bunx lefthook install` after cloning.
+
+# Fast checks on the files being committed.
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,css}"
+      run: bunx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+
+# Slower whole-repo checks, deferred to push so commits stay quick.
+pre-push:
+  parallel: true
+  jobs:
+    - name: typecheck
+      run: bun run typecheck
+    - name: test
+      run: bun run test
+    - name: file-size
+      run: bun run check:size

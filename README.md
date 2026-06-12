@@ -64,6 +64,8 @@ The first account created on a new instance becomes an approved admin automatica
 | `bun run lint` | Run Biome checks, including architecture boundaries |
 | `bun run check:size` | Fail on source files over 500 lines |
 
+Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automatically on `bun install` and run these guards before each commit and push.
+
 ## More Docs
 
 - [Docs Index](./docs/README.md): setup, configuration, Docker, optional features, and operations
