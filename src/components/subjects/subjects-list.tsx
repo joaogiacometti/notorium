@@ -1,46 +1,31 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
-import {
-  Archive,
-  ArchiveRestore,
-  BookOpen,
-  Lock,
-  MoreVertical,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
-import Link from "next/link";
+import { BookOpen, Lock, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useState, useTransition } from "react";
-import { toast } from "sonner";
-import { getSubjectListItems, restoreSubject } from "@/app/actions/subjects";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { useEffect, useState } from "react";
+import { getSubjectListItems } from "@/app/actions/subjects";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
-import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
-import { SubjectText } from "@/components/shared/subject-text";
-import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { BulkArchiveSubjectsDialog } from "@/components/subjects/bulk-archive-subjects-dialog";
 import { BulkDeleteSubjectsDialog } from "@/components/subjects/bulk-delete-subjects-dialog";
 import { BulkRestoreSubjectsDialog } from "@/components/subjects/bulk-restore-subjects-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
+import {
+  getColumnClassName,
+  getSelectedSubjects,
+  getSubjectPageItems,
+  getSubjectsHref,
+  getVisibleSubjects,
+  isArchived,
+  type SubjectsSort,
+  type SubjectsStatusFilter,
+} from "@/components/subjects/subjects-list-utils";
+import { SubjectsSelectionToolbar } from "@/components/subjects/subjects-selection-toolbar";
+import { getSubjectColumns } from "@/components/subjects/subjects-table-columns";
 import { SubjectsTableSkeleton } from "@/components/subjects/subjects-table-skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -63,12 +48,8 @@ import type {
   SubjectEditDto,
   SubjectListItem,
 } from "@/lib/server/api-contracts";
-import { t } from "@/lib/server/server-action-errors";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
-
-type SubjectsStatusFilter = "active" | "archived";
-type SubjectsSort = "updatedDesc" | "nameAsc";
 
 interface SubjectsListProps {
   subjects: SubjectListItem[];
@@ -81,378 +62,6 @@ type SubjectActionTarget =
   | { action: "delete"; subject: { id: string; name: string } };
 
 type SubjectBulkAction = "archive" | "restore" | "delete";
-
-interface SubjectsTableActionsProps {
-  subject: SubjectListItem;
-  onArchived: (subject: SubjectListItem) => void;
-  onDeleted: (subject: SubjectListItem) => void;
-  onEdit: (subject: SubjectListItem) => void;
-  onRestored: () => void;
-}
-
-interface SubjectsSelectionToolbarProps {
-  total: number;
-  selectedCount: number;
-  canArchive: boolean;
-  canRestore: boolean;
-  onArchive: () => void;
-  onRestore: () => void;
-  onDelete: () => void;
-  onClearSelection: () => void;
-}
-
-interface SubjectsToolbarIconActionProps {
-  ariaLabel: string;
-  className: string;
-  icon: ReactNode;
-  onClick: () => void;
-}
-
-function isArchived(subject: SubjectListItem): boolean {
-  return subject.archivedAt !== null;
-}
-
-function getVisibleSubjects(
-  subjects: SubjectListItem[],
-  status: SubjectsStatusFilter,
-  searchQuery: string,
-  sortBy: SubjectsSort,
-): SubjectListItem[] {
-  const normalizedSearch = searchQuery.trim().toLowerCase();
-
-  return [...subjects]
-    .filter((subject) => matchesStatus(subject, status))
-    .filter((subject) => matchesSearch(subject, normalizedSearch))
-    .sort((left, right) => compareSubjects(left, right, sortBy));
-}
-
-function matchesStatus(
-  subject: SubjectListItem,
-  status: SubjectsStatusFilter,
-): boolean {
-  if (status === "archived") return isArchived(subject);
-  return !isArchived(subject);
-}
-
-function matchesSearch(subject: SubjectListItem, searchQuery: string): boolean {
-  if (!searchQuery) return true;
-
-  return subject.name.toLowerCase().includes(searchQuery);
-}
-
-function compareSubjects(
-  left: SubjectListItem,
-  right: SubjectListItem,
-  sortBy: SubjectsSort,
-): number {
-  if (sortBy === "nameAsc") return left.name.localeCompare(right.name);
-
-  return right.updatedAt.getTime() - left.updatedAt.getTime();
-}
-
-function getColumnClassName(columnId: string): string {
-  switch (columnId) {
-    case "select":
-      return "w-8 min-w-8 sm:w-9 sm:min-w-9";
-    case "subject":
-      return "min-w-0 max-w-[8.5rem] sm:min-w-[12rem] sm:max-w-none";
-    case "notesCount":
-      return "w-16 min-w-16 sm:w-[4.5rem] sm:min-w-[4.5rem]";
-    case "actions":
-      return "w-10 min-w-10 sm:w-14 sm:min-w-14";
-    default:
-      return "";
-  }
-}
-
-function getSelectedSubjects(
-  subjects: SubjectListItem[],
-  selectedSubjectIds: string[],
-): SubjectListItem[] {
-  const selectedIds = new Set(selectedSubjectIds);
-
-  return subjects.filter((subject) => selectedIds.has(subject.id));
-}
-
-function getSubjectPageItems(
-  subjects: SubjectListItem[],
-  pageIndex: number,
-  pageSize: number,
-): SubjectListItem[] {
-  const startIndex = pageIndex * pageSize;
-
-  return subjects.slice(startIndex, startIndex + pageSize);
-}
-
-function SubjectsToolbarIconAction({
-  ariaLabel,
-  className,
-  icon,
-  onClick,
-}: Readonly<SubjectsToolbarIconActionProps>) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={onClick}
-          className={className}
-          aria-label={ariaLabel}
-        >
-          {icon}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{ariaLabel}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-function SubjectsSelectionToolbar({
-  total,
-  selectedCount,
-  canArchive,
-  canRestore,
-  onArchive,
-  onRestore,
-  onDelete,
-  onClearSelection,
-}: Readonly<SubjectsSelectionToolbarProps>) {
-  const hasSelection = selectedCount > 0;
-
-  return (
-    <div className="flex min-h-8 flex-wrap items-center gap-2 sm:justify-between">
-      <Badge
-        variant="outline"
-        className={cn(
-          "rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px]",
-          hasSelection ? "text-foreground" : "text-muted-foreground",
-        )}
-      >
-        {hasSelection ? null : <Search className="size-3.5" />}
-        {hasSelection
-          ? selectedCount === 1
-            ? "1 selected"
-            : `${selectedCount} selected`
-          : `${total} subjects`}
-      </Badge>
-      <div
-        className={cn(
-          "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34",
-          hasSelection
-            ? "visible opacity-100"
-            : "pointer-events-none invisible opacity-0",
-        )}
-      >
-        {canArchive ? (
-          <SubjectsToolbarIconAction
-            ariaLabel="Archive"
-            onClick={onArchive}
-            className="rounded-md text-muted-foreground hover:text-foreground"
-            icon={<Archive className="size-4" />}
-          />
-        ) : null}
-        {canRestore ? (
-          <SubjectsToolbarIconAction
-            ariaLabel="Restore"
-            onClick={onRestore}
-            className="rounded-md text-muted-foreground hover:text-foreground"
-            icon={<ArchiveRestore className="size-4" />}
-          />
-        ) : null}
-        <SubjectsToolbarIconAction
-          ariaLabel="Delete"
-          onClick={onDelete}
-          className="rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
-          icon={<Trash2 className="size-4" />}
-        />
-        <div className="hidden h-5 w-px bg-border/60 sm:block" />
-        <SubjectsToolbarIconAction
-          ariaLabel="Clear selection"
-          onClick={onClearSelection}
-          className="rounded-md text-muted-foreground hover:text-foreground"
-          icon={<X className="size-4" />}
-        />
-      </div>
-    </div>
-  );
-}
-
-function formatNotesCount(notesCount: number): string {
-  return notesCount === 1 ? "1 note" : `${notesCount} notes`;
-}
-
-function renderSubjectLabel(subject: SubjectListItem) {
-  const content = (
-    <div className="min-w-0 max-w-full flex-1 overflow-hidden">
-      <SubjectText
-        value={subject.name}
-        mode="truncate"
-        className="block max-w-full text-sm font-semibold leading-5.5 text-foreground/95"
-      />
-    </div>
-  );
-
-  if (isArchived(subject)) {
-    return <div className="flex min-w-0 items-center py-1">{content}</div>;
-  }
-
-  return (
-    <Link
-      href={`/subjects/${subject.id}`}
-      aria-label={`Open ${subject.name}`}
-      className="flex min-w-0 max-w-full items-center py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      onClick={(event) => event.stopPropagation()}
-      onKeyDown={(event) => event.stopPropagation()}
-    >
-      {content}
-    </Link>
-  );
-}
-
-function getColumns({
-  onArchived,
-  onDeleted,
-  onEdit,
-  onRestored,
-}: Omit<SubjectsTableActionsProps, "subject">): ColumnDef<SubjectListItem>[] {
-  return [
-    {
-      id: "subject",
-      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
-      cell: ({ row }) => renderSubjectLabel(row.original),
-    },
-    {
-      accessorKey: "notesCount",
-      header: () => <TableHeaderLabel>Notes</TableHeaderLabel>,
-      cell: ({ row }) => (
-        <span className="whitespace-nowrap text-sm text-muted-foreground">
-          {formatNotesCount(row.original.notesCount)}
-        </span>
-      ),
-    },
-    {
-      id: "actions",
-      header: () => (
-        <div className="flex w-10 min-w-10 justify-start sm:w-14 sm:min-w-14" />
-      ),
-      cell: ({ row }) => (
-        <div className="flex w-10 min-w-10 items-center justify-start pl-1 sm:w-14 sm:min-w-14">
-          <SubjectsTableActions
-            subject={row.original}
-            onArchived={onArchived}
-            onDeleted={onDeleted}
-            onEdit={onEdit}
-            onRestored={onRestored}
-          />
-        </div>
-      ),
-      enableHiding: false,
-    },
-  ];
-}
-
-function SubjectsTableActions({
-  subject,
-  onArchived,
-  onDeleted,
-  onEdit,
-  onRestored,
-}: Readonly<SubjectsTableActionsProps>) {
-  const [isPending, startTransition] = useTransition();
-  const queryClient = useQueryClient();
-
-  function handleTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    event.stopPropagation();
-  }
-
-  function handleMenuSelect(
-    event: Event,
-    action: (subject: SubjectListItem) => void,
-  ) {
-    event.stopPropagation();
-    action(subject);
-  }
-
-  function handleRestore() {
-    startTransition(async () => {
-      const result = await restoreSubject({ id: subject.id });
-
-      if (result.success) {
-        await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-        onRestored();
-        return;
-      }
-
-      toast.error(t(result.errorCode, result.errorParams));
-    });
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            ROW_ACTION_TRIGGER_CLASS,
-            "size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground",
-          )}
-          aria-label="Open subject actions"
-          disabled={isPending}
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={handleTriggerKeyDown}
-        >
-          <AsyncButtonContent
-            pending={isPending}
-            idleLabel=""
-            pendingLabel=""
-            idleIcon={<MoreVertical className="size-3.5" />}
-          />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {isArchived(subject) ? (
-          <DropdownMenuItem
-            onSelect={(event) => {
-              event.stopPropagation();
-              handleRestore();
-            }}
-            className="cursor-pointer"
-          >
-            <ArchiveRestore className="size-4" />
-            Restore
-          </DropdownMenuItem>
-        ) : (
-          <>
-            <DropdownMenuItem
-              onSelect={(event) => handleMenuSelect(event, onEdit)}
-              className="cursor-pointer"
-            >
-              <Pencil className="size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={(event) => handleMenuSelect(event, onArchived)}
-              className="cursor-pointer"
-            >
-              <Archive className="size-4" />
-              Archive
-            </DropdownMenuItem>
-          </>
-        )}
-        <DropdownMenuItem
-          onSelect={(event) => handleMenuSelect(event, onDeleted)}
-          className="cursor-pointer text-destructive focus:text-destructive"
-        >
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 export function SubjectsList({
   subjects,
@@ -557,7 +166,7 @@ export function SubjectsList({
     setBulkAction(null);
   }
 
-  const columns = getColumns({
+  const columns = getSubjectColumns({
     onArchived: (subject) =>
       setActiveAction({
         action: "archive",
@@ -841,12 +450,4 @@ export function SubjectsList({
       </div>
     </TooltipProvider>
   );
-}
-
-function getSubjectsHref(status: SubjectsStatusFilter): string {
-  if (status === "active") {
-    return "/subjects";
-  }
-
-  return `/subjects?status=${status}`;
 }
