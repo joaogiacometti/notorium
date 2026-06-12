@@ -52,6 +52,7 @@ interface MindmapDetailProps {
   backHref: string;
   decks: DeckOption[];
   mindmap: MindmapEntity;
+  subjectName: string;
   documents: DocumentListItem[];
 }
 
@@ -62,6 +63,7 @@ export function MindmapDetail({
   backHref,
   decks,
   mindmap,
+  subjectName,
   documents,
 }: Readonly<MindmapDetailProps>) {
   const router = useRouter();
@@ -191,6 +193,7 @@ export function MindmapDetail({
         {isZenMode ? null : (
           <DocumentsNav
             subjectId={mindmap.subjectId}
+            subjectName={subjectName}
             documents={sidebarDocuments}
             activeId={mindmap.id}
             activeKind="mindmap"

@@ -3,6 +3,7 @@ import { NoteDetail } from "@/components/notes/note-detail";
 import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
 import { getSubjectDocumentsForUser } from "@/features/documents/queries";
 import { getNoteByIdForUser } from "@/features/notes/queries";
+import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import {
@@ -31,7 +32,10 @@ export default async function NotePage({ params }: Readonly<NotePageProps>) {
     redirect(getNoteDetailHref(note.subjectId, note.id));
   }
 
-  const documents = await getSubjectDocumentsForUser(session.user.id, id);
+  const [documents, subject] = await Promise.all([
+    getSubjectDocumentsForUser(session.user.id, id),
+    getActiveSubjectByIdForUser(session.user.id, id),
+  ]);
   const backLink = resolveNoteDetailBackLink(note.subjectId);
 
   return (
@@ -42,6 +46,7 @@ export default async function NotePage({ params }: Readonly<NotePageProps>) {
         aiEnabled={isAiEnabled()}
         decks={decks}
         note={note}
+        subjectName={subject?.name ?? ""}
         documents={documents}
       />
     </main>

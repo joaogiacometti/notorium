@@ -39,6 +39,7 @@ async function copySavedNoteContent(noteId: string, format: NoteCopyFormat) {
 
 interface DocumentsNavProps {
   subjectId: string;
+  subjectName: string;
   documents: DocumentListItem[];
   /** Omit both active props when no document is open (full list page). */
   activeId?: string;
@@ -68,6 +69,7 @@ interface DocumentsNavProps {
  */
 export function DocumentsNav({
   subjectId,
+  subjectName,
   documents,
   activeId,
   activeKind,
@@ -140,6 +142,7 @@ export function DocumentsNav({
     <>
       <DocumentsSidebar
         subjectId={subjectId}
+        subjectName={subjectName}
         items={documents}
         activeId={activeId}
         activeKind={activeKind}

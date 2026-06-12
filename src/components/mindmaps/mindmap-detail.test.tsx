@@ -115,6 +115,7 @@ function renderDetail(root: Root) {
       backHref="/subjects/subject-1"
       decks={[deck]}
       mindmap={mindmap}
+      subjectName="Subject 1"
       documents={documents}
     />,
   );

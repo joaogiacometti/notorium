@@ -47,6 +47,7 @@ export function SubjectDocumentsListPage({
       <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[14rem_minmax(0,1fr)]">
         <DocumentsNav
           subjectId={subject.id}
+          subjectName={subject.name}
           documents={documents}
           aiEnabled={aiEnabled}
           decks={decks}

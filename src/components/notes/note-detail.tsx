@@ -52,6 +52,7 @@ interface NoteDetailProps {
   backLabel: string;
   decks: DeckOption[];
   note: NoteEntity;
+  subjectName: string;
   documents: DocumentListItem[];
 }
 
@@ -75,6 +76,7 @@ export function NoteDetail({
   backLabel,
   decks,
   note,
+  subjectName,
   documents,
 }: Readonly<NoteDetailProps>) {
   const router = useRouter();
@@ -251,6 +253,7 @@ export function NoteDetail({
         {!isZenMode ? (
           <DocumentsNav
             subjectId={note.subjectId}
+            subjectName={subjectName}
             documents={sidebarDocuments}
             activeId={note.id}
             activeKind="note"

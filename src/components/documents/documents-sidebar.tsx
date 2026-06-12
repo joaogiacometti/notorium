@@ -45,6 +45,7 @@ interface DocumentRowActionHandlers {
 
 interface DocumentsSidebarProps extends DocumentRowActionHandlers {
   subjectId: string;
+  subjectName: string;
   items: DocumentListItem[];
   activeId?: string;
   activeKind?: DocumentKind;
@@ -64,6 +65,7 @@ function countByKind(items: DocumentListItem[], kind: DocumentKind) {
  */
 export function DocumentsSidebar({
   subjectId,
+  subjectName,
   items,
   activeId,
   activeKind,
@@ -77,6 +79,9 @@ export function DocumentsSidebar({
           <div className="min-w-0">
             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               Documents
+            </p>
+            <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
+              {subjectName}
             </p>
           </div>
           <CreateDocumentMenu

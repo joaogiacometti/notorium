@@ -15,8 +15,9 @@ export default function MindmapDetailLoading() {
           <aside className="min-w-0 border-border bg-transparent lg:flex lg:min-h-0 lg:flex-col lg:border-r">
             <div className="border-b border-border/60 p-4">
               <div className="flex min-w-0 items-center justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 space-y-1">
                   <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-5 w-32" />
                 </div>
                 <Skeleton className="h-9 w-20 shrink-0" />
               </div>

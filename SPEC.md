@@ -43,6 +43,7 @@ Students who want a private, lightweight study management workspace.
 
 - Each subject has a Documents area that holds both notes and mindmaps together.
 - The documents sidebar lists notes and mindmaps in one list ordered by most recent update, with a leading icon per item that distinguishes notes from mindmaps.
+- The documents sidebar header shows the current subject's name so the active subject is always visible from the documents list and from any open note or mindmap.
 - On note and mindmap detail pages and the full documents list, each sidebar row's kebab menu offers the same actions as that document kind's header kebab menu, and every action works without opening the document: notes offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Copy as rich text, Copy as plain text, and Delete; mindmaps offer Edit, Export as PNG, and Delete. Copy and export on a non-open document act on its last saved state; on the open document they act on the live editor content.
 - A single "Create" action offers "Note" or "Mindmap"; each prompts for a title and opens the new item.
 - Subject detail previews the 3 most recently updated documents (notes and mindmaps), with row links to each item, the "Create" action, and compact row action menus (edit title for notes, delete for both).

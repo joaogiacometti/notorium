@@ -214,6 +214,7 @@ function renderNoteDetail(
         backLabel="Back to Subject"
         decks={[deck]}
         note={note}
+        subjectName="Subject 1"
         documents={documents}
         {...props}
       />
