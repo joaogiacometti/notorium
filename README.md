@@ -60,7 +60,9 @@ The first account created on a new instance becomes an approved admin automatica
 | `bun dev` | Start the Next.js development server |
 | `bun run db:migrate` | Apply Drizzle migrations |
 | `bun run test` | Run the Vitest suite |
-| `bun run lint` | Run Biome checks |
+| `bun run test:coverage` | Run tests and enforce coverage thresholds |
+| `bun run lint` | Run Biome checks, including architecture boundaries |
+| `bun run check:size` | Fail on source files over 500 lines |
 
 ## More Docs
 

@@ -46,3 +46,12 @@ Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* serv
 Cross-cutting services live behind project-owned helpers in `src/lib/`, including Better Auth, AI providers, email, media storage, and rate limiting.
 
 The rich-text editor and read-only renderer (`src/components/shared/tiptap-editor.tsx` and `tiptap-renderer.tsx`) share their Tiptap extension sets through `src/lib/editor/build*Extensions()` helpers (tables, math). Both surfaces must register the same extensions: Tiptap drops unknown nodes when parsing stored HTML, so math or tables present only in the editor would vanish in the renderer. Math nodes (KaTeX) serialize their LaTeX into a `data-latex` attribute, which `src/lib/editor/rich-text.ts` surfaces as text so equations stay searchable and within length limits.
+
+## Enforced Boundaries
+
+Two boundaries above are machine-checked, not just convention (see the Automated Guards section in [AGENTS.md](../AGENTS.md)):
+
+- Server Actions (`src/app/actions/*`) cannot import `@/db/index`; they go through `src/features/*`. Enforced by a `noRestrictedImports` override in `biome.json`.
+- Components (`src/components/*`) cannot import `@/features/*/mutations`; writes flow through Server Actions. Enforced by the same rule. Server Components reading from `queries.ts` live under `src/app/*`, so they are unaffected.
+
+A separate guard, `bun run check:size`, keeps files under 500 lines.

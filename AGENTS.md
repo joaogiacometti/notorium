@@ -17,7 +17,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 ## Code Style
 
 - Functions: 4-20 lines. Split if longer.
-- Files: under 500 lines. Split by responsibility.
+- Files: under 500 lines. Split by responsibility. Enforced by `bun run check:size` (see Automated Guards).
 - One thing per function, one responsibility per module.
 - Names: specific and unique. Avoid `data`, `handler`, `Manager`, and other vague names.
 - Prefer names that return fewer than 5 grep hits in the codebase.
@@ -85,7 +85,8 @@ Only add optional files when they are needed.
 - Server Components read from `src/features/*` directly.
 - Do not call Server Actions from Server Components.
 - Keep Server Actions thin: authenticate, validate, delegate, revalidate, return typed result.
-- `src/app/actions/*` must not import `@/db/index` directly unless the exception is documented.
+- `src/app/actions/*` must not import `@/db/index` directly unless the exception is documented. Lint-enforced; document a genuine exception with a `biome-ignore` comment and reason.
+- `src/components/*` must not import `@/features/*/mutations`. Writes go through Server Actions. Lint-enforced.
 - Keep read logic in `src/features/*/queries.ts`.
 - Keep write logic in `src/features/*/mutations.ts`.
 - Keep validation schemas in `src/features/*/validation.ts` or `src/lib/validations/*`.
@@ -193,6 +194,14 @@ className =
 - Add a body when the reason is not obvious. Explain what changed and why; do not restate the diff.
 - Stage only files that belong to the requested change. Do not include unrelated worktree changes.
 - Before reporting success, confirm the commit hash and a clean `git status --short`.
+
+## Automated Guards
+
+These run in CI (`.github/workflows/checks.yml`) and locally. Do not weaken a guard to make a build pass; fix the code.
+
+- `bun run lint` (Biome) also enforces architecture boundaries via `noRestrictedImports` overrides in `biome.json`: Server Actions cannot import `@/db/index`; components cannot import `@/features/*/mutations`.
+- `bun run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries.
+- `bun run test:coverage` enforces coverage floors set in `vitest.config.ts`. Ratchet them up as coverage improves; never lower them.
 
 ## Definition of Done
 
