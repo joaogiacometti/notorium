@@ -1,9 +1,8 @@
 "use client";
 
 import { Check, Ghost, LaptopMinimal, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { type ComponentType, useEffect, useState } from "react";
-import { updateUserTheme } from "@/app/actions/theme";
+import type { ComponentType } from "react";
+import { useThemeControl } from "@/components/navbar/use-theme-control";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type AppTheme, isAppTheme, themeOptions } from "@/lib/theme";
+import { type AppTheme, themeOptions } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 interface ModeToggleProps {
@@ -148,14 +147,8 @@ export function ModeToggle({
   variant = "navbar",
   syncWithServer = true,
 }: Readonly<ModeToggleProps>) {
-  const { theme, resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const currentTheme = mounted && isAppTheme(theme) ? theme : "system";
+  const { currentTheme, resolvedTheme, mounted, setAppTheme } =
+    useThemeControl(syncWithServer);
   const TriggerIcon = themeIconById[currentTheme];
   const resolvedThemeLabel =
     mounted && resolvedTheme === "dark" ? "dark" : "light";
@@ -165,25 +158,8 @@ export function ModeToggle({
       ? "theme-switcher-floating-trigger"
       : "theme-switcher-navbar-trigger";
 
-  const handleThemeChange = async (nextTheme: AppTheme) => {
-    if (nextTheme === currentTheme) {
-      return;
-    }
-
-    setTheme(nextTheme);
-
-    if (!syncWithServer) {
-      return;
-    }
-
-    try {
-      const result = await updateUserTheme({ theme: nextTheme });
-      if (!result.success) {
-        setTheme(currentTheme);
-      }
-    } catch {
-      setTheme(currentTheme);
-    }
+  const handleThemeChange = (nextTheme: AppTheme) => {
+    void setAppTheme(nextTheme);
   };
 
   return (

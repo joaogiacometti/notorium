@@ -41,6 +41,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Global,
   },
   {
+    id: "command-palette",
+    kind: "keys",
+    keys: ["cmd+p", "ctrl+p"],
+    description: "Open command palette",
+    category: ShortcutCategory.Global,
+  },
+  {
     id: "global-shortcuts-help",
     kind: "keys",
     keys: ["?"],

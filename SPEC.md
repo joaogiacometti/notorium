@@ -226,6 +226,16 @@ Students who want a private, lightweight study management workspace.
 - Search result text matching the query is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
 - Empty queries show unfiltered data without highlighting.
 
+### Command Palette
+
+- Pressing `Ctrl`/`Cmd+P` opens a command palette for running actions and navigating, separate from Global Search (`Ctrl`/`Cmd+K`). The browser print shortcut is suppressed while the palette is available.
+- Commands are searchable by name and keyword and grouped as Create, Go to, and Settings.
+- Create commands open the existing create dialogs: Subject, Flashcard, Deck, Assessment, Note, and Mindmap.
+- Creating a Note or Mindmap requires a subject: on a subject page the current subject is used; elsewhere the palette shows a subject picker step before opening the create dialog. Created notes and mindmaps navigate to their detail page.
+- Go to commands navigate to Subjects, Flashcards, Planning, Archived Subjects, and Account.
+- Settings commands switch the theme (Light, Dark, System) and open the keyboard shortcuts help dialog.
+- The palette hotkey is suspended while another dialog is open.
+
 ### Keyboard Shortcuts Help
 
 - Pressing `?` outside an editable field opens a keyboard shortcuts dialog.

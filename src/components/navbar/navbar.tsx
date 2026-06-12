@@ -2,9 +2,11 @@ import { BookOpenText, LogIn, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { AccountMenu } from "@/components/navbar/account-menu";
 import { AppSectionNav } from "@/components/navbar/app-section-nav";
+import { CommandPalette } from "@/components/navbar/command-palette";
 import { GlobalSearch } from "@/components/navbar/global-search";
 import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { Button } from "@/components/ui/button";
+import { isAiEnabled } from "@/lib/ai/config";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
 export async function Navbar() {
@@ -39,6 +41,12 @@ export async function Navbar() {
         </div>
 
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          {session && (
+            <CommandPalette
+              userId={session.user.id}
+              aiEnabled={isAiEnabled()}
+            />
+          )}
           {session && <GlobalSearch userId={session.user.id} />}
           {session && <ModeToggle />}
           {session ? (

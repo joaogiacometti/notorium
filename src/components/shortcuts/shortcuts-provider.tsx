@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { ShortcutsHelpDialog } from "./shortcuts-help-dialog";
-import { ShortcutsDialogOpenProvider } from "./shortcuts-suspension-context";
+import {
+  ShortcutsDialogOpenProvider,
+  ShortcutsHelpOpenerProvider,
+} from "./shortcuts-suspension-context";
 
 interface ShortcutsProviderProps {
   children: React.ReactNode;
@@ -32,11 +35,15 @@ export function ShortcutsProvider({
 
   return (
     <ShortcutsDialogOpenProvider shortcutsDialogOpen={shortcutsOpen}>
-      {children}
-      <ShortcutsHelpDialog
-        open={shortcutsOpen}
-        onOpenChange={setShortcutsOpen}
-      />
+      <ShortcutsHelpOpenerProvider
+        openShortcutsHelp={() => setShortcutsOpen(true)}
+      >
+        {children}
+        <ShortcutsHelpDialog
+          open={shortcutsOpen}
+          onOpenChange={setShortcutsOpen}
+        />
+      </ShortcutsHelpOpenerProvider>
     </ShortcutsDialogOpenProvider>
   );
 }

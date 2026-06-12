@@ -78,6 +78,17 @@ describe("shortcutRegistry", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it("lists the command palette shortcut under Global", () => {
+    const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
+      (item) => item.id === "command-palette",
+    );
+    expect(shortcut).toMatchObject({
+      kind: "keys",
+      keys: ["cmd+p", "ctrl+p"],
+      description: "Open command palette",
+    });
+  });
+
   it("lists the mindmap Tab add-child shortcut", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
       (item) => item.id === "mindmap-add-child",
