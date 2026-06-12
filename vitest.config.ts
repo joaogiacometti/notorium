@@ -15,6 +15,15 @@ export default defineConfig({
         "src/app/**",
         "src/env.ts",
       ],
+      // Floors set ~5pts below the measured baseline (2026-06): they guard
+      // against regression, not to force a coverage sprint. Ratchet up as
+      // coverage improves; never lower to make a red build pass.
+      thresholds: {
+        statements: 47,
+        branches: 43,
+        functions: 44,
+        lines: 47,
+      },
     },
   },
   resolve: {

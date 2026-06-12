@@ -38,5 +38,44 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app/actions/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@/db/index": "Server Actions must not import @/db/index directly; read/write through src/features/*. If an exception is unavoidable, document it with a biome-ignore comment and the reason."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/components/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/features/*/mutations"],
+                    "message": "Components must not import feature mutations directly; writes go through Server Actions in src/app/actions/*."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
