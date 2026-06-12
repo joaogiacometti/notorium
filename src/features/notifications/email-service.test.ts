@@ -1,12 +1,23 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { sendAssessmentReminderEmails } from "@/features/notifications/email-service";
 
-const getServerEnvMock = vi.fn();
-const getUsersWithUpcomingAssessmentsMock = vi.fn();
-const sendEmailMock = vi.fn();
-const renderAssessmentReminderEmailMock = vi.fn();
-const claimUnsentAssessmentsMock = vi.fn();
-const markAssessmentNotificationsSentMock = vi.fn();
-const markAssessmentNotificationsFailedMock = vi.fn();
+const {
+  getServerEnvMock,
+  getUsersWithUpcomingAssessmentsMock,
+  sendEmailMock,
+  renderAssessmentReminderEmailMock,
+  claimUnsentAssessmentsMock,
+  markAssessmentNotificationsSentMock,
+  markAssessmentNotificationsFailedMock,
+} = vi.hoisted(() => ({
+  getServerEnvMock: vi.fn(),
+  getUsersWithUpcomingAssessmentsMock: vi.fn(),
+  sendEmailMock: vi.fn(),
+  renderAssessmentReminderEmailMock: vi.fn(),
+  claimUnsentAssessmentsMock: vi.fn(),
+  markAssessmentNotificationsSentMock: vi.fn(),
+  markAssessmentNotificationsFailedMock: vi.fn(),
+}));
 
 vi.mock("@/env", () => ({
   getServerEnv: getServerEnvMock,
@@ -30,14 +41,7 @@ vi.mock("@/features/notifications/mutations", () => ({
   markAssessmentNotificationsFailed: markAssessmentNotificationsFailedMock,
 }));
 
-let sendAssessmentReminderEmails: typeof import("@/features/notifications/email-service").sendAssessmentReminderEmails;
-
 describe("sendAssessmentReminderEmails", () => {
-  beforeAll(async () => {
-    ({ sendAssessmentReminderEmails } = await import(
-      "@/features/notifications/email-service"
-    ));
-  });
 
   beforeEach(() => {
     vi.clearAllMocks();

@@ -1,9 +1,7 @@
-import { createRequire } from "node:module";
 import type { FlashcardReviewLogEntity } from "@/lib/server/api-contracts";
 
 export const minimumOptimizationReviewCount = 64;
 const optimizationReviewBatchSize = 32;
-const require = createRequire(import.meta.url);
 
 type FsrsBindingReviewConstructor = new (
   rating: number,
@@ -36,8 +34,10 @@ interface FsrsBindingModule {
   ) => Promise<number[]>;
 }
 
-function getFsrsBindingModule(): FsrsBindingModule {
-  return require("@open-spaced-repetition/binding") as FsrsBindingModule;
+async function getFsrsBindingModule(): Promise<FsrsBindingModule> {
+  return (await import(
+    "@open-spaced-repetition/binding"
+  )) as unknown as FsrsBindingModule;
 }
 
 function mapRatingToBindingRating(
@@ -77,14 +77,14 @@ function getEligibleCardLogs(logs: FlashcardReviewLogEntity[]) {
     .filter(hasValidOptimizationHistory);
 }
 
-function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
+async function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
   const eligibleCardLogs = getEligibleCardLogs(logs);
 
   if (eligibleCardLogs.length === 0) {
     return [];
   }
 
-  const { FSRSBindingItem, FSRSBindingReview } = getFsrsBindingModule();
+  const { FSRSBindingItem, FSRSBindingReview } = await getFsrsBindingModule();
   const trainingSet: FsrsBindingItemInstance[] = [];
 
   for (const cardLogs of eligibleCardLogs) {
@@ -130,13 +130,13 @@ export async function optimizeFsrsParameters(
     return null;
   }
 
-  const trainingSet = buildTrainingSet(logs);
+  const trainingSet = await buildTrainingSet(logs);
 
   if (trainingSet.length === 0) {
     return null;
   }
 
-  const { computeParameters } = getFsrsBindingModule();
+  const { computeParameters } = await getFsrsBindingModule();
   return await computeParameters(trainingSet, {
     enableShortTerm: true,
     numRelearningSteps: 1,
