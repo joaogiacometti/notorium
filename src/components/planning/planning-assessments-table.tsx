@@ -8,21 +8,15 @@ import { getPlanningAssessmentsPage } from "@/app/actions/assessments";
 import { BulkDeleteAssessmentsDialog } from "@/components/assessments/bulk-delete-assessments-dialog";
 import { BulkUpdateAssessmentStatusDialog } from "@/components/assessments/bulk-update-assessment-status-dialog";
 import { LazyCreateAssessmentDialog as CreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
+import { PlanningAssessmentsFilters } from "@/components/planning/planning-assessments-filters";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
+import { buildAssessmentsParams } from "@/components/planning/planning-assessments-params";
 import { PlanningAssessmentsToolbar } from "@/components/planning/planning-assessments-toolbar";
-import { SubjectText } from "@/components/shared/subject-text";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -40,12 +34,7 @@ import {
   resolvePlanningAssessmentStatusFilter,
   resolvePlanningAssessmentTypeFilter,
 } from "@/features/assessments/assessment-filters";
-import {
-  assessmentTypeValues,
-  getAssessmentTypeLabel,
-} from "@/features/assessments/constants";
 import { LIMITS } from "@/lib/config/limits";
-import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
 import type {
   PlanningAssessmentsPage,
   SubjectEntity,
@@ -67,33 +56,6 @@ interface PlanningAssessmentsTableProps {
 const planningAssessmentsSearchDebounceMs = 200;
 const missingSubjectTooltipMessage =
   "Create a subject first to add assessments.";
-
-function buildAssessmentsParams({
-  pageSize,
-  search,
-  sortBy,
-  statusFilter,
-  subjectFilter,
-  typeFilter,
-}: Readonly<{
-  pageSize: number;
-  search: string;
-  sortBy: SortBy;
-  statusFilter: StatusFilter;
-  subjectFilter: string;
-  typeFilter: TypeFilter;
-}>) {
-  const query = new URLSearchParams({ view: "assessments" });
-
-  if (subjectFilter !== "all") query.set("subject", subjectFilter);
-  if (search) query.set("search", search);
-  if (statusFilter !== "pending") query.set("status", statusFilter);
-  if (typeFilter !== "all") query.set("type", typeFilter);
-  if (sortBy !== "smart") query.set("sort", sortBy);
-  if (pageSize !== DEFAULT_PAGE_SIZE) query.set("pageSize", String(pageSize));
-
-  return query.toString();
-}
 
 export function PlanningAssessmentsTable({
   initialSubjectId,
@@ -346,96 +308,27 @@ export function PlanningAssessmentsTable({
                   testId: "planning-add-assessment-disabled-trigger",
                 })}
               </div>
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-                <div className="min-w-0">
-                  <Select
-                    value={subjectFilter}
-                    onValueChange={setSubjectFilter}
-                    disabled={isAssessmentsScopeLoading}
-                  >
-                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
-                      <SelectValue placeholder="Filter by subject" />
-                    </SelectTrigger>
-                    <SelectContent align="start">
-                      <SelectItem value="all">All Subjects</SelectItem>
-                      {subjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id}>
-                          <SubjectText
-                            value={subject.name}
-                            mode="truncate"
-                            className="block max-w-full"
-                          />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-0">
-                  <Select
-                    value={statusFilter}
-                    disabled={isAssessmentsScopeLoading}
-                    onValueChange={(value) => {
-                      setStatusFilter(value as StatusFilter);
-                      setPageIndex(0);
-                    }}
-                  >
-                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
-                      <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent align="start">
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="overdue">Overdue</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-0">
-                  <Select
-                    value={typeFilter}
-                    disabled={isAssessmentsScopeLoading}
-                    onValueChange={(value) => {
-                      setTypeFilter(value as TypeFilter);
-                      setPageIndex(0);
-                    }}
-                  >
-                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
-                      <SelectValue placeholder="All Types" />
-                    </SelectTrigger>
-                    <SelectContent align="start">
-                      <SelectItem value="all">All Types</SelectItem>
-                      {assessmentTypeValues.map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {getAssessmentTypeLabel(value)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-0">
-                  <Select
-                    value={sortBy}
-                    disabled={isAssessmentsScopeLoading}
-                    onValueChange={(value) => {
-                      setSortBy(value as SortBy);
-                      setPageIndex(0);
-                    }}
-                  >
-                    <SelectTrigger className="h-10 w-full min-w-0 rounded-lg border-border/70 bg-background/80 px-3 shadow-xs sm:px-3.5">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent align="start">
-                      <SelectItem value="smart">Smart</SelectItem>
-                      <SelectItem value="dueDateAsc">Due Date Asc</SelectItem>
-                      <SelectItem value="dueDateDesc">Due Date Desc</SelectItem>
-                      <SelectItem value="updatedAtDesc">
-                        Recently Updated
-                      </SelectItem>
-                      <SelectItem value="scoreDesc">Score Desc</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <PlanningAssessmentsFilters
+                subjects={subjects}
+                subjectFilter={subjectFilter}
+                statusFilter={statusFilter}
+                typeFilter={typeFilter}
+                sortBy={sortBy}
+                disabled={isAssessmentsScopeLoading}
+                onSubjectFilterChange={setSubjectFilter}
+                onStatusFilterChange={(value) => {
+                  setStatusFilter(value);
+                  setPageIndex(0);
+                }}
+                onTypeFilterChange={(value) => {
+                  setTypeFilter(value);
+                  setPageIndex(0);
+                }}
+                onSortChange={(value) => {
+                  setSortBy(value);
+                  setPageIndex(0);
+                }}
+              />
               <div className="flex flex-wrap items-center gap-1.5">
                 {isAssessmentsScopeLoading ? (
                   <>
