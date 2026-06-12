@@ -13,11 +13,7 @@ import {
   getFlashcardReviewState,
   reviewFlashcard,
 } from "@/app/actions/flashcard-review";
-import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
-import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/dialogs/lazy-edit-flashcard-dialog";
-import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
-import { ExamExitConfirmationDialog } from "@/components/flashcards/review/exam-exit-confirmation-dialog";
-import { ExamResultsScreen } from "@/components/flashcards/review/exam-results-screen";
+import { FlashcardReviewFocusOverlays } from "@/components/flashcards/review/flashcard-review-focus-overlays";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
 import { useFlashcardExamController } from "@/components/flashcards/review/use-flashcard-exam-controller";
@@ -449,60 +445,32 @@ export function FlashcardReviewClient({
           examCurrentIndex={examSessionData?.currentIndex ?? 0}
           examTotalCards={examSessionData?.cards.length ?? 0}
         />
-        {currentCard ? (
-          <>
-            <EditFlashcardDialog
-              key={currentCard.id}
-              flashcard={currentCard}
-              open={editOpen}
-              onOpenChange={setEditOpen}
-              aiEnabled={aiEnabled}
-              onUpdated={handleFlashcardUpdated}
-              onDeleted={handleFlashcardDeleted}
-              className="z-120"
-              overlayClassName="z-120"
-            />
-            <DeleteFlashcardDialog
-              flashcardId={currentCard.id}
-              flashcardFront={currentCard.front}
-              open={deleteOpen}
-              onOpenChange={setDeleteOpen}
-              onDeleted={handleFlashcardDeleted}
-              className="z-120"
-              overlayClassName="z-120"
-            />
-            <ResetFlashcardDialog
-              flashcardId={currentCard.id}
-              flashcardFront={currentCard.front}
-              open={resetOpen}
-              onOpenChange={setResetOpen}
-              onReset={(updated) =>
-                handleFlashcardReset({
-                  ...updated,
-                  deckName: currentCard.deckName,
-                  deckPath: currentCard.deckPath,
-                })
-              }
-              className="z-120"
-              overlayClassName="z-120"
-            />
-          </>
-        ) : null}
-        {examSession.sessionComplete && examSessionData ? (
-          <ExamResultsScreen
-            totalCards={examSessionData.cards.length}
-            ratings={examSessionData.ratings}
-            duration={Math.floor(
-              (Date.now() - examSessionData.startedAt.getTime()) / 1000,
-            )}
-            onClose={handleCloseResults}
-            onRetryWeak={handleRetryWeakCards}
-          />
-        ) : null}
-        <ExamExitConfirmationDialog
-          open={showExitConfirmation}
-          onOpenChange={examController.setShowExitConfirmation}
-          onConfirm={handleConfirmExitExam}
+        <FlashcardReviewFocusOverlays
+          currentCard={currentCard}
+          aiEnabled={aiEnabled}
+          editOpen={editOpen}
+          deleteOpen={deleteOpen}
+          resetOpen={resetOpen}
+          onEditOpenChange={setEditOpen}
+          onDeleteOpenChange={setDeleteOpen}
+          onResetOpenChange={setResetOpen}
+          onUpdated={handleFlashcardUpdated}
+          onDeleted={handleFlashcardDeleted}
+          onReset={(updated) => {
+            if (!currentCard) return;
+            handleFlashcardReset({
+              ...updated,
+              deckName: currentCard.deckName,
+              deckPath: currentCard.deckPath,
+            });
+          }}
+          examSessionComplete={examSession.sessionComplete}
+          examResultsData={examSessionData}
+          onCloseResults={handleCloseResults}
+          onRetryWeakCards={handleRetryWeakCards}
+          showExitConfirmation={showExitConfirmation}
+          onShowExitConfirmationChange={examController.setShowExitConfirmation}
+          onConfirmExitExam={handleConfirmExitExam}
         />
       </>
     );
