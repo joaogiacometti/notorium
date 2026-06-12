@@ -42,7 +42,6 @@ vi.mock("@/features/notifications/mutations", () => ({
 }));
 
 describe("sendAssessmentReminderEmails", () => {
-
   beforeEach(() => {
     vi.clearAllMocks();
     getServerEnvMock.mockReturnValue({
