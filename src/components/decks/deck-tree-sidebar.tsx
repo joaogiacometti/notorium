@@ -16,6 +16,8 @@ import type {
 import {
   buildDeckViewHref,
   getTotalFlashcardsCount,
+  getVisibleExpandedIds,
+  incrementDeckTreeFlashcardCount,
   loadingRootDeckId,
   rootDeckId,
 } from "@/components/decks/deck-tree-sidebar-utils";
@@ -35,7 +37,6 @@ import {
   filterDeckTree,
   findDeckTreeNode,
   getDeckAncestorIds,
-  getExpandedIdsForVisibleTree,
   insertDeckTreeNode,
   isDeckDescendant,
   moveDeckTreeNode,
@@ -469,42 +470,4 @@ export function DeckTreeSidebar({
       ) : null}
     </>
   );
-}
-
-function incrementDeckTreeFlashcardCount(
-  nodes: DeckTreeNode[],
-  deckId: string,
-): DeckTreeNode[] {
-  return nodes.map((node) => {
-    if (node.id === deckId) {
-      return { ...node, flashcardCount: node.flashcardCount + 1 };
-    }
-
-    const children = incrementDeckTreeFlashcardCount(node.children, deckId);
-    const didChildChange = children.some(
-      (childNode, index) => childNode !== node.children[index],
-    );
-
-    return didChildChange
-      ? { ...node, children, flashcardCount: node.flashcardCount + 1 }
-      : node;
-  });
-}
-
-function getVisibleExpandedIds(
-  expandedIds: Set<string>,
-  filteredDeckTree: DeckTreeNode[],
-  searchQuery: string,
-): Set<string> {
-  const visibleExpandedIds = new Set(expandedIds);
-  const hasSearchQuery = searchQuery.trim().length > 0;
-  const searchExpandedIds = hasSearchQuery
-    ? getExpandedIdsForVisibleTree(filteredDeckTree)
-    : new Set<string>();
-
-  for (const deckId of searchExpandedIds) {
-    visibleExpandedIds.add(deckId);
-  }
-
-  return visibleExpandedIds;
 }
