@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "prepare": "lefthook install",
+    "prepare": "lefthook install || true",
     "typecheck": "tsc --noEmit",
     "lint": "biome check",
     "format": "biome format --write",
