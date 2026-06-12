@@ -8,13 +8,15 @@ import {
   type PaginationState,
   type Row,
   type RowSelectionState,
-  type Table as TanstackTable,
   useReactTable,
 } from "@tanstack/react-table";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import {
+  getSelectColumn,
+  shouldIgnoreRowClick,
+} from "@/components/shared/manager-data-table-helpers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -32,103 +34,6 @@ import {
 } from "@/components/ui/table";
 import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import { cn } from "@/lib/utils";
-
-interface SelectColumnHeaderProps {
-  selectionAriaLabel: string;
-}
-
-function SelectColumnHeader<TRow>({
-  table,
-  selectionAriaLabel,
-}: Readonly<SelectColumnHeaderProps & { table: TanstackTable<TRow> }>) {
-  let checked: boolean | "indeterminate" = false;
-  if (table.getIsAllPageRowsSelected()) checked = true;
-  else if (table.getIsSomePageRowsSelected()) checked = "indeterminate";
-
-  return (
-    <div className="flex h-full w-full items-center justify-center">
-      <Checkbox
-        checked={checked}
-        onCheckedChange={(checked) =>
-          table.toggleAllPageRowsSelected(Boolean(checked))
-        }
-        aria-label={selectionAriaLabel}
-        className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
-      />
-    </div>
-  );
-}
-
-interface SelectColumnCellProps {
-  selectionAriaLabel: string;
-}
-
-function SelectColumnCell<TRow>({
-  row,
-  selectionAriaLabel,
-}: Readonly<SelectColumnCellProps & { row: Row<TRow> }>) {
-  return (
-    <div className="flex h-full w-full items-center justify-center">
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(checked) => row.toggleSelected(Boolean(checked))}
-        aria-label={selectionAriaLabel}
-        className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
-      />
-    </div>
-  );
-}
-
-function shouldIgnoreRowClick(
-  target: EventTarget | null,
-  currentTarget: EventTarget | null,
-) {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  const interactiveAncestor = target.closest(
-    [
-      "a",
-      "button",
-      "input",
-      "select",
-      "textarea",
-      "[role='button']",
-      "[role='link']",
-      "[role='menuitem']",
-      "[role='checkbox']",
-      "[role='radio']",
-      "[data-no-row-click]",
-    ].join(", "),
-  );
-
-  return Boolean(
-    interactiveAncestor &&
-      interactiveAncestor instanceof HTMLElement &&
-      interactiveAncestor !== currentTarget,
-  );
-}
-
-function getSelectColumn<TRow>(selectionAriaLabel: string): ColumnDef<TRow> {
-  return {
-    id: "select",
-    size: 36,
-    header: ({ table }) => (
-      <SelectColumnHeader<TRow>
-        table={table}
-        selectionAriaLabel={selectionAriaLabel}
-      />
-    ),
-    cell: ({ row }) => (
-      <SelectColumnCell<TRow>
-        row={row}
-        selectionAriaLabel={selectionAriaLabel}
-      />
-    ),
-    enableHiding: false,
-  };
-}
 
 interface ManagerDataTableProps<TRow> {
   data: TRow[];
