@@ -5,12 +5,13 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { getDecks } from "@/app/actions/decks";
+import { generateFlashcards } from "@/app/actions/flashcard-generation";
 import {
   createFlashcard,
   deleteFlashcard,
   editFlashcard,
-  generateFlashcards,
 } from "@/app/actions/flashcards";
+import { getEditFlashcardFormValues } from "@/components/flashcards/dialogs/edit-flashcard-form-values";
 import { EditFlashcardSplitForm } from "@/components/flashcards/dialogs/edit-flashcard-split-form";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
@@ -476,32 +477,4 @@ export function EditFlashcardDialog({
       />
     </>
   );
-}
-
-function getEditFlashcardFormValues(
-  flashcard: Pick<
-    FlashcardEntity,
-    | "id"
-    | "deckId"
-    | "front"
-    | "back"
-    | "type"
-    | "clozeSource"
-    | "occlusionImagePathname"
-    | "occlusionRegions"
-  >,
-): FlashcardFormValues {
-  const isCloze = flashcard.type === "cloze";
-  const isOcclusion = flashcard.type === "occlusion";
-  return {
-    id: flashcard.id,
-    type: isOcclusion ? "occlusion" : isCloze ? "cloze" : "basic",
-    deckId: flashcard.deckId,
-    // Cloze and occlusion cards edit their source; front/back are derived.
-    front: isCloze || isOcclusion ? "" : flashcard.front,
-    back: isCloze || isOcclusion ? "" : flashcard.back,
-    clozeSource: flashcard.clozeSource ?? "",
-    occlusionImagePathname: flashcard.occlusionImagePathname ?? "",
-    occlusionRegions: flashcard.occlusionRegions ?? [],
-  };
 }

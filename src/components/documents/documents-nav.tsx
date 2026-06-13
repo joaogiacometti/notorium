@@ -8,6 +8,7 @@ import { getNoteById } from "@/app/actions/notes";
 import { DocumentsSidebar } from "@/components/documents/documents-sidebar";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
+import { GenerateMindmapFlashcardsDialog } from "@/components/mindmaps/generate-mindmap-flashcards-dialog";
 import { OffscreenMindmapPngExport } from "@/components/mindmaps/offscreen-mindmap-png-export";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
@@ -51,7 +52,7 @@ interface DocumentsNavProps {
   onDeleteActive?: () => void;
   /** Copies the active note with its unsaved in-editor content. */
   onCopyActive?: (format: NoteCopyFormat) => void;
-  /** Opens the active note's flashcard generation dialog in the parent. */
+  /** Opens the active document's flashcard generation dialog in the parent. */
   onGenerateActive?: () => void;
   /** Exports the active mindmap from its live canvas in the parent. */
   onExportActive?: () => void;
@@ -213,10 +214,20 @@ export function DocumentsNav({
           }}
         />
       ) : null}
-      {generateTarget ? (
+      {generateTarget?.kind === "note" ? (
         <GenerateNoteFlashcardsDialog
           decks={decks}
           noteId={generateTarget.id}
+          open
+          onOpenChange={(open) => {
+            if (!open) setGenerateTarget(null);
+          }}
+        />
+      ) : null}
+      {generateTarget?.kind === "mindmap" ? (
+        <GenerateMindmapFlashcardsDialog
+          decks={decks}
+          mindmapId={generateTarget.id}
           open
           onOpenChange={(open) => {
             if (!open) setGenerateTarget(null);

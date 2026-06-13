@@ -5,6 +5,7 @@ import {
   ImageDown,
   MoreVertical,
   Pencil,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -24,6 +25,7 @@ import { DocumentsNav } from "@/components/documents/documents-nav";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
+import { GenerateMindmapFlashcardsDialog } from "@/components/mindmaps/generate-mindmap-flashcards-dialog";
 import { LazyMindmapCanvas } from "@/components/mindmaps/lazy-mindmap-canvas";
 import type { MindmapExporter } from "@/components/mindmaps/mindmap-canvas";
 import { AppPageContainer } from "@/components/shared/app-page-container";
@@ -78,7 +80,9 @@ export function MindmapDetail({
   const [graph, setGraph] = useState<MindmapGraph>(initialGraph);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const hasDecks = decks.length > 0;
   const lastSavedRef = useRef(
     JSON.stringify({ title: mindmap.title, data: initialGraph }),
   );
@@ -202,6 +206,7 @@ export function MindmapDetail({
             onNavigate={(href, event) => void saveBeforeNavigation(href, event)}
             onEditActive={() => setEditOpen(true)}
             onDeleteActive={() => setDeleteOpen(true)}
+            onGenerateActive={() => setGenerateOpen(true)}
             onExportActive={() => void exportPngRef.current?.()}
           />
         )}
@@ -248,6 +253,21 @@ export function MindmapDetail({
                   <Pencil className="size-4" />
                   Edit
                 </DropdownMenuItem>
+                {aiEnabled ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => setGenerateOpen(true)}
+                    disabled={!hasDecks}
+                    title={
+                      hasDecks
+                        ? undefined
+                        : "Create a deck before generating flashcards."
+                    }
+                  >
+                    <Sparkles className="size-4" />
+                    Generate flashcards
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => void exportPngRef.current?.()}
@@ -308,6 +328,14 @@ export function MindmapDetail({
           setEditOpen(false);
         }}
       />
+      {aiEnabled ? (
+        <GenerateMindmapFlashcardsDialog
+          decks={decks}
+          mindmapId={mindmap.id}
+          open={generateOpen}
+          onOpenChange={setGenerateOpen}
+        />
+      ) : null}
     </AppPageContainer>
   );
 }

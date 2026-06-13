@@ -9,6 +9,7 @@ import {
   flashcardsManageQuerySchema,
   generateFlashcardBackSchema,
   generateFlashcardsSchema,
+  generateMindmapFlashcardsSchema,
   generateNoteFlashcardsSchema,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
@@ -183,6 +184,33 @@ describe("generateFlashcardsSchema", () => {
     const result = generateFlashcardsSchema.safeParse({
       deckId: "deck-123",
       text: "a".repeat(LIMITS.flashcardAiMaxInput + 1),
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("generateMindmapFlashcardsSchema", () => {
+  it("accepts mindmap and deck ids", () => {
+    const result = generateMindmapFlashcardsSchema.safeParse({
+      mindmapId: "mindmap-123",
+      deckId: "deck-123",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing mindmap id", () => {
+    const result = generateMindmapFlashcardsSchema.safeParse({
+      deckId: "deck-123",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing deck id", () => {
+    const result = generateMindmapFlashcardsSchema.safeParse({
+      mindmapId: "mindmap-123",
     });
 
     expect(result.success).toBe(false);

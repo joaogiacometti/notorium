@@ -2,11 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getDeckRecordForUser } from "@/features/decks/queries";
-import {
-  generateFlashcardsForUser as generateFlashcardsForUserService,
-  validateFlashcardsForUser,
-} from "@/features/flashcards/ai-service";
+import { validateFlashcardsForUser } from "@/features/flashcards/ai-service";
 import {
   bulkDeleteFlashcardsForUser,
   bulkMoveFlashcardsForUser,
@@ -17,9 +13,7 @@ import {
   generateFlashcardBackForUserInput,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
-import { buildNoteFlashcardSource } from "@/features/flashcards/note-source";
 import {
-  countFlashcardsByDeckForUser,
   getAllFlashcardIdsForDeck,
   getAllFlashcardIdsForUser,
   getFlashcardByIdForUser,
@@ -45,21 +39,14 @@ import {
   type FlashcardsManageQueryInput,
   flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
-  type GenerateFlashcardsForm,
-  type GenerateNoteFlashcardsForm,
   type GetFlashcardIdsForDeckForm,
   generateFlashcardBackSchema,
-  generateFlashcardsSchema,
-  generateNoteFlashcardsSchema,
   getFlashcardIdsForDeckSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type ValidateFlashcardsForm,
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import { getNoteByIdForUser } from "@/features/notes/queries";
-import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
-import { LIMITS } from "@/lib/config/limits";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
@@ -380,103 +367,6 @@ export async function getAllFlashcardIds(): Promise<
     async (userId) => {
       const flashcardIds = await getAllFlashcardIdsForUser(userId);
       return { success: true, flashcardIds };
-    },
-  );
-}
-
-export async function generateFlashcards(
-  data: GenerateFlashcardsForm,
-): Promise<
-  | { success: true; cards: Array<{ front: string; back: string }> }
-  | ActionErrorResult
-> {
-  return runValidatedUserAction(
-    generateFlashcardsSchema,
-    data,
-    "flashcards.ai.invalidData",
-    async (userId, parsedData) => {
-      const existingDeck = await getDeckRecordForUser(
-        userId,
-        parsedData.deckId,
-      );
-
-      if (!existingDeck) {
-        return actionError("decks.notFound");
-      }
-
-      const currentCount = await countFlashcardsByDeckForUser(
-        userId,
-        parsedData.deckId,
-      );
-
-      if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
-        return actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
-        });
-      }
-
-      const result = await generateFlashcardsForUserService({
-        userId,
-        deckName: existingDeck.name,
-        text: parsedData.text,
-      });
-
-      return result;
-    },
-  );
-}
-
-export async function generateFlashcardsFromNote(
-  data: GenerateNoteFlashcardsForm,
-): Promise<
-  | { success: true; cards: Array<{ front: string; back: string }> }
-  | ActionErrorResult
-> {
-  return runValidatedUserAction(
-    generateNoteFlashcardsSchema,
-    data,
-    "flashcards.ai.invalidData",
-    async (userId, parsedData) => {
-      const [existingNote, existingDeck] = await Promise.all([
-        getNoteByIdForUser(userId, parsedData.noteId),
-        getDeckRecordForUser(userId, parsedData.deckId),
-      ]);
-
-      if (!existingNote) {
-        return actionError("notes.notFound");
-      }
-
-      if (!existingDeck) {
-        return actionError("decks.notFound");
-      }
-
-      const currentCount = await countFlashcardsByDeckForUser(
-        userId,
-        parsedData.deckId,
-      );
-
-      if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
-        return actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
-        });
-      }
-
-      const subject = await getActiveSubjectByIdForUser(
-        userId,
-        existingNote.subjectId,
-      );
-      const result = await generateFlashcardsForUserService({
-        userId,
-        subjectName: subject?.name,
-        deckName: existingDeck.name,
-        noteTitle: existingNote.title,
-        text: buildNoteFlashcardSource({
-          title: existingNote.title,
-          content: existingNote.content,
-        }),
-      });
-
-      return result;
     },
   );
 }

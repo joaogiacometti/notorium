@@ -72,6 +72,35 @@ vi.mock("@/components/mindmaps/edit-mindmap-title-dialog", () => ({
   EditMindmapTitleDialog: () => null,
 }));
 
+vi.mock("@/components/mindmaps/generate-mindmap-flashcards-dialog", () => ({
+  GenerateMindmapFlashcardsDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="generate-mindmap-dialog" /> : null,
+}));
+
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuTrigger: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    disabled,
+    onClick,
+    title,
+  }: {
+    children: ReactNode;
+    disabled?: boolean;
+    onClick?: () => void;
+    title?: string;
+  }) => (
+    <button type="button" onClick={onClick} disabled={disabled} title={title}>
+      {children}
+    </button>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+}));
+
 vi.mock("@/components/shared/app-page-container", () => ({
   AppPageContainer: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
@@ -108,12 +137,15 @@ const documents: DocumentListItem[] = [
   },
 ];
 
-function renderDetail(root: Root) {
+function renderDetail(
+  root: Root,
+  overrides?: { aiEnabled?: boolean; decks?: DeckOption[] },
+) {
   root.render(
     <MindmapDetail
-      aiEnabled
+      aiEnabled={overrides?.aiEnabled ?? true}
       backHref="/subjects/subject-1"
-      decks={[deck]}
+      decks={overrides?.decks ?? [deck]}
       mindmap={mindmap}
       subjectName="Subject 1"
       documents={documents}
@@ -202,5 +234,51 @@ describe("MindmapDetail autosave", () => {
 
     expect(editMindmapMock).toHaveBeenCalledTimes(1);
     expect(toastErrorMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("MindmapDetail generate flashcards action", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    act(() => {
+      root = createRoot(container);
+    });
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it("hides the generate action when AI is disabled", () => {
+    act(() => renderDetail(root, { aiEnabled: false }));
+
+    expect(findButton(container, "Generate flashcards")).toBeUndefined();
+  });
+
+  it("disables the generate action when no decks exist", () => {
+    act(() => renderDetail(root, { decks: [] }));
+
+    const button = findButton(container, "Generate flashcards");
+
+    expect(button?.disabled).toBe(true);
+    expect(button?.title).toBe("Create a deck before generating flashcards.");
+  });
+
+  it("opens the generate dialog from the header menu", () => {
+    act(() => renderDetail(root));
+
+    act(() => {
+      findButton(container, "Generate flashcards")?.click();
+    });
+
+    expect(
+      container.querySelector('[data-testid="generate-mindmap-dialog"]'),
+    ).not.toBeNull();
   });
 });

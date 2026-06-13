@@ -30,6 +30,9 @@ vi.mock("@/app/actions/flashcards", () => ({
   createFlashcard: vi.fn(),
   deleteFlashcard: vi.fn(),
   editFlashcard: vi.fn(),
+}));
+
+vi.mock("@/app/actions/flashcard-generation", () => ({
   generateFlashcards: vi.fn(),
 }));
 
@@ -194,33 +197,6 @@ describe("paste-image loading flows", () => {
     });
     container.remove();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
-  });
-
-  it("disables AI generation in create dialog while resources editor uploads an image", async () => {
-    await act(async () => {
-      root.render(
-        <CreateFlashcardDialog open onOpenChange={() => {}} aiEnabled />,
-      );
-    });
-
-    await act(async () => {
-      (
-        document.body.querySelector(
-          '[data-testid="toggle-mode"]',
-        ) as HTMLButtonElement
-      ).click();
-    });
-
-    const button = Array.from(document.body.querySelectorAll("button")).find(
-      (item) => item.textContent?.includes("Generate Flashcards"),
-    ) as HTMLButtonElement;
-
-    await act(async () => {
-      editorCallbacks.get("ai-text")?.(true);
-    });
-
-    expect(button.disabled).toBe(true);
-    expect(button.textContent).toContain("Uploading image...");
   });
 
   it("renders create discard confirmation outside the embedded form", async () => {

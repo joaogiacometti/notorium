@@ -35,7 +35,7 @@ interface DocumentRowActionHandlers {
   onDeleteRequested?: (item: DocumentListItem) => void;
   /** Notes only: copy the note's content in the given clipboard format. */
   onCopyRequested?: (item: DocumentListItem, format: NoteCopyFormat) => void;
-  /** Notes only: open the AI flashcard generation dialog for the note. */
+  /** Notes and mindmaps: open the AI flashcard generation dialog. */
   onGenerateRequested?: (item: DocumentListItem) => void;
   /** When set, the generate item renders disabled with this as its tooltip. */
   generateDisabledReason?: string;
@@ -248,20 +248,35 @@ function NoteRowMenuItems({
 
 function MindmapRowMenuItems({
   item,
+  onGenerateRequested,
+  generateDisabledReason,
   onExportRequested,
 }: Readonly<DocumentRowMenuProps>) {
-  if (!onExportRequested) {
+  if (!onGenerateRequested && !onExportRequested) {
     return null;
   }
   return (
     <>
-      <DropdownMenuItem
-        className="cursor-pointer"
-        onClick={() => onExportRequested(item)}
-      >
-        <ImageDown className="size-4" />
-        Export as PNG
-      </DropdownMenuItem>
+      {onGenerateRequested ? (
+        <DropdownMenuItem
+          className="cursor-pointer"
+          disabled={!!generateDisabledReason}
+          title={generateDisabledReason}
+          onClick={() => onGenerateRequested(item)}
+        >
+          <Sparkles className="size-4" />
+          Generate flashcards
+        </DropdownMenuItem>
+      ) : null}
+      {onExportRequested ? (
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => onExportRequested(item)}
+        >
+          <ImageDown className="size-4" />
+          Export as PNG
+        </DropdownMenuItem>
+      ) : null}
       <DropdownMenuSeparator />
     </>
   );

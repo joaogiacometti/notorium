@@ -3,7 +3,7 @@
 import { Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { generateFlashcardsFromNote } from "@/app/actions/flashcard-generation";
+import { generateFlashcardsFromMindmap } from "@/app/actions/flashcard-generation";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 import { DeckSelect } from "@/components/shared/deck-select";
@@ -23,9 +23,9 @@ interface GeneratedCard {
   back: string;
 }
 
-interface GenerateNoteFlashcardsDialogProps {
+interface GenerateMindmapFlashcardsDialogProps {
   decks: DeckOption[];
-  noteId: string;
+  mindmapId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -38,7 +38,7 @@ function getGenerateErrorMessage(errorCode: string) {
     return "Daily limit reached for AI flashcard generation.";
   }
   if (errorCode === "flashcards.ai.emptyGeneration") {
-    return "Could not extract flashcards from this note. Try adding more content.";
+    return "Could not extract flashcards from this mindmap. Try adding more detail.";
   }
   if (errorCode === "limits.flashcardLimit") {
     return "Flashcard limit reached for this deck.";
@@ -47,12 +47,12 @@ function getGenerateErrorMessage(errorCode: string) {
   return "AI service temporarily unavailable. Try again later.";
 }
 
-export function GenerateNoteFlashcardsDialog({
+export function GenerateMindmapFlashcardsDialog({
   decks,
-  noteId,
+  mindmapId,
   open,
   onOpenChange,
-}: Readonly<GenerateNoteFlashcardsDialogProps>) {
+}: Readonly<GenerateMindmapFlashcardsDialogProps>) {
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(
     decks[0]?.id ?? null,
   );
@@ -71,8 +71,8 @@ export function GenerateNoteFlashcardsDialog({
     setIsGenerating(true);
     setGeneratedCards(null);
 
-    const result = await generateFlashcardsFromNote({
-      noteId,
+    const result = await generateFlashcardsFromMindmap({
+      mindmapId,
       deckId: selectedDeckId,
     });
 
@@ -145,7 +145,7 @@ export function GenerateNoteFlashcardsDialog({
         <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
           <DialogTitle>Generate Flashcards</DialogTitle>
           <DialogDescription>
-            Choose where to save flashcards generated from this note.
+            Choose where to save flashcards generated from this mindmap.
           </DialogDescription>
         </DialogHeader>
 
@@ -173,7 +173,7 @@ export function GenerateNoteFlashcardsDialog({
                   value={selectedDeckId}
                   onChange={setSelectedDeckId}
                   decks={decks}
-                  id="note-flashcards-deck"
+                  id="mindmap-flashcards-deck"
                 />
               </FieldGroup>
             </div>

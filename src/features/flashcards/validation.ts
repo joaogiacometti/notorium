@@ -468,3 +468,14 @@ export const generateNoteFlashcardsSchema = z.object({
 export type GenerateNoteFlashcardsForm = z.infer<
   typeof generateNoteFlashcardsSchema
 >;
+
+export const generateMindmapFlashcardsSchema = z.object({
+  mindmapId: idSchema,
+  deckId: z
+    .string()
+    .min(1, validationMessage("Validation.flashcards.deckRequired")),
+});
+
+export type GenerateMindmapFlashcardsForm = z.infer<
+  typeof generateMindmapFlashcardsSchema
+>;
