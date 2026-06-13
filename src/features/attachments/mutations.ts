@@ -14,6 +14,7 @@ import {
   isSupportedAttachmentImageMimeType,
   type UploadAssessmentAttachmentForm,
   type UploadEditorImageForm,
+  type UploadFlashcardOcclusionImageForm,
 } from "@/features/attachments/validation";
 import { LIMITS } from "@/lib/config/limits";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
@@ -26,6 +27,14 @@ export type UploadEditorImageResult =
   | {
       success: true;
       url: string;
+    }
+  | ActionErrorResult;
+
+export type UploadOcclusionImageResult =
+  | {
+      success: true;
+      url: string;
+      pathname: string;
     }
   | ActionErrorResult;
 
@@ -89,10 +98,21 @@ function decodeBase64Image(value: string): Uint8Array | null {
   }
 }
 
-export async function uploadEditorImageForUser(
+type UploadImageContext = "notes" | "flashcards" | "mindmaps";
+
+// Shared upload core for editor and occlusion images: validates, rate-limits,
+// and stores the bytes, returning both the read URL and the raw pathname.
+async function uploadAttachmentImageBytes(
   userId: string,
-  data: UploadEditorImageForm,
-): Promise<UploadEditorImageResult> {
+  data: {
+    fileName: string;
+    mimeType: string;
+    dataBase64: string;
+    context: UploadImageContext;
+  },
+): Promise<
+  { success: true; url: string; pathname: string } | ActionErrorResult
+> {
   if (!isSupportedAttachmentImageMimeType(data.mimeType)) {
     return actionError("attachments.mimeTypeNotAllowed");
   }
@@ -138,10 +158,37 @@ export async function uploadEditorImageForUser(
     return {
       success: true,
       url: buildAttachmentReadUrl(uploaded.pathname),
+      pathname: uploaded.pathname,
     };
   } catch {
     return actionError("attachments.uploadFailed");
   }
+}
+
+export async function uploadEditorImageForUser(
+  userId: string,
+  data: UploadEditorImageForm,
+): Promise<UploadEditorImageResult> {
+  const result = await uploadAttachmentImageBytes(userId, data);
+  return result.success ? { success: true, url: result.url } : result;
+}
+
+/**
+ * Uploads an image occlusion source image, returning its blob pathname so the
+ * card can persist it. Stored under the shared "flashcards" attachment context.
+ *
+ * @example
+ * await uploadFlashcardOcclusionImageForUser(userId, {
+ *   fileName: "heart.png",
+ *   mimeType: "image/png",
+ *   dataBase64,
+ * });
+ */
+export async function uploadFlashcardOcclusionImageForUser(
+  userId: string,
+  data: UploadFlashcardOcclusionImageForm,
+): Promise<UploadOcclusionImageResult> {
+  return uploadAttachmentImageBytes(userId, { ...data, context: "flashcards" });
 }
 
 export async function deleteEditorImagesForUser(

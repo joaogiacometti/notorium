@@ -28,6 +28,7 @@ import type {
   FlashcardListEntity,
   FlashcardManagePage,
 } from "@/lib/server/api-contracts";
+import { uniqueItems } from "@/lib/utils";
 
 async function getDeckPathMapForUser(
   userId: string,
@@ -93,6 +94,22 @@ export async function getFlashcardsForUser(
   }));
 }
 
+// Keep one representative row per occlusion note (its lowest mask id) so the
+// manage list shows one entry per image instead of one per mask. Non-occlusion
+// cards are always kept.
+const occlusionRepresentativeFilter = sql`(
+  ${flashcard.type} <> 'occlusion'
+  or ${flashcard.id} = (
+    select min(sub.id) from flashcard as sub
+    where sub.occlusion_note_id = ${flashcard.occlusionNoteId}
+  )
+)`;
+
+const occlusionMaskCount = sql<number>`(
+  select count(*)::int from flashcard as cnt
+  where cnt.occlusion_note_id = ${flashcard.occlusionNoteId}
+)`;
+
 export async function getFlashcardsManagePageForUser(
   userId: string,
   { pageIndex, pageSize, deckId, deckIds, search }: FlashcardsManageQueryInput,
@@ -100,7 +117,10 @@ export async function getFlashcardsManagePageForUser(
   const normalizedSearch = search?.trim() ?? "";
   const searchPattern = buildContainsSearchPattern(normalizedSearch);
   const offset = pageIndex * pageSize;
-  const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
+  const filters: SQL<unknown>[] = [
+    eq(flashcard.userId, userId),
+    occlusionRepresentativeFilter,
+  ];
   const scopedDeckIds = await resolveScopedDeckIds(userId, deckId, deckIds);
 
   if (scopedDeckIds && scopedDeckIds.length > 0) {
@@ -126,6 +146,9 @@ export async function getFlashcardsManagePageForUser(
         deckId: flashcard.deckId,
         updatedAt: flashcard.updatedAt,
         front: flashcard.front,
+        type: flashcard.type,
+        occlusionImagePathname: flashcard.occlusionImagePathname,
+        maskCount: occlusionMaskCount,
         deckName: deck.name,
       })
       .from(flashcard)
@@ -158,6 +181,10 @@ export async function getFlashcardsManagePageForUser(
       front: row.front,
       frontExcerpt: getRichTextExcerpt(row.front, 45),
       frontTitle: richTextToPlainText(row.front) || null,
+      type: row.type,
+      occlusionImagePathname:
+        row.type === "occlusion" ? row.occlusionImagePathname : null,
+      maskCount: row.type === "occlusion" ? row.maskCount : null,
       deckName: row.deckName,
       deckPath: deckPathMap.get(row.deckId) ?? row.deckName,
     })),
@@ -198,6 +225,76 @@ export async function getClozeSiblingsForUser(
     .orderBy(flashcard.clozeOrdinal);
 
   return results.map((row) => row.flashcard);
+}
+
+/**
+ * Loads every sibling card of an image occlusion note, ordered by id for a
+ * stable representative pick.
+ *
+ * @example
+ * const siblings = await getOcclusionSiblingsForUser(userId, "note-123");
+ */
+export async function getOcclusionSiblingsForUser(
+  userId: string,
+  occlusionNoteId: string,
+): Promise<FlashcardEntity[]> {
+  const results = await getDb()
+    .select({ flashcard })
+    .from(flashcard)
+    .where(
+      and(
+        eq(flashcard.occlusionNoteId, occlusionNoteId),
+        eq(flashcard.userId, userId),
+      ),
+    )
+    .orderBy(flashcard.id);
+
+  return results.map((row) => row.flashcard);
+}
+
+/**
+ * Expands a set of flashcard ids so that any occlusion card pulls in all of its
+ * note's sibling masks. Lets note-level bulk actions (move, reset, delete) act
+ * on the whole image even when only its representative row was selected.
+ *
+ * @example
+ * const ids = await expandOcclusionSiblingIds(userId, [representativeMaskId]);
+ */
+export async function expandOcclusionSiblingIds(
+  userId: string,
+  ids: string[],
+): Promise<string[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+  const rows = await getDb()
+    .select({ occlusionNoteId: flashcard.occlusionNoteId })
+    .from(flashcard)
+    .where(
+      and(
+        inArray(flashcard.id, ids),
+        eq(flashcard.userId, userId),
+        eq(flashcard.type, "occlusion"),
+      ),
+    );
+  const noteIds = uniqueItems(
+    rows
+      .map((row) => row.occlusionNoteId)
+      .filter((noteId): noteId is string => noteId !== null),
+  );
+  if (noteIds.length === 0) {
+    return ids;
+  }
+  const siblings = await getDb()
+    .select({ id: flashcard.id })
+    .from(flashcard)
+    .where(
+      and(
+        inArray(flashcard.occlusionNoteId, noteIds),
+        eq(flashcard.userId, userId),
+      ),
+    );
+  return uniqueItems([...ids, ...siblings.map((row) => row.id)]);
 }
 
 export async function getFlashcardDetailByIdForUser(

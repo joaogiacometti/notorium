@@ -17,5 +17,8 @@ export function getCreateFlashcardResetValues(
     front: options.keepFrontAfterSubmit ? values.front : "",
     back: options.keepBackAfterSubmit ? values.back : "",
     clozeSource: options.keepFrontAfterSubmit ? values.clozeSource : "",
+    // Occlusion image and masks are not "kept" — a fresh note starts blank.
+    occlusionImagePathname: "",
+    occlusionRegions: [],
   };
 }

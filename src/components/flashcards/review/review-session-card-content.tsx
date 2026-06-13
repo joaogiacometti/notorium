@@ -1,5 +1,6 @@
 "use client";
 
+import { OcclusionCardFace } from "@/components/flashcards/occlusion/occlusion-card-face";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import type { FlashcardReviewState } from "@/lib/server/api-contracts";
 
@@ -34,13 +35,46 @@ export function ReviewSessionCardContent({
       ) : null}
       <div className="relative flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">
         <div className="flex flex-col">
-          <CardFace title="Front" content={card.front} tone="front" />
-          {revealed ? (
-            <CardFace title="Answer" content={card.back} tone="back" />
-          ) : null}
+          {card.type === "occlusion" && card.occlusionImagePathname ? (
+            <OcclusionReviewFace card={card} revealed={revealed} />
+          ) : (
+            <>
+              <CardFace title="Front" content={card.front} tone="front" />
+              {revealed ? (
+                <CardFace title="Answer" content={card.back} tone="back" />
+              ) : null}
+            </>
+          )}
         </div>
       </div>
     </>
+  );
+}
+
+interface OcclusionReviewFaceProps {
+  card: ReviewCard;
+  revealed: boolean;
+}
+
+function OcclusionReviewFace({
+  card,
+  revealed,
+}: Readonly<OcclusionReviewFaceProps>) {
+  if (!card.occlusionImagePathname) {
+    return null;
+  }
+  return (
+    <div className="flex flex-col items-center gap-3 p-5 sm:p-6">
+      <OcclusionCardFace
+        imagePathname={card.occlusionImagePathname}
+        regions={card.occlusionRegions ?? []}
+        testedMaskId={card.occlusionMaskId}
+        revealed={revealed}
+      />
+      {revealed ? (
+        <p className="text-sm font-medium text-foreground">{card.back}</p>
+      ) : null}
+    </div>
   );
 }
 

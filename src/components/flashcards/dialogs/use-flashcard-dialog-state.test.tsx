@@ -164,6 +164,8 @@ describe("useFlashcardDialogState", () => {
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           }}
         />,
       );
@@ -181,6 +183,8 @@ describe("useFlashcardDialogState", () => {
             front: "<p>Front B</p>",
             back: "<p>Back B</p>",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           }}
         />,
       );
@@ -204,6 +208,8 @@ describe("useFlashcardDialogState", () => {
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           }}
           onSubmitAction={onSubmitAction}
           getSuccessValues={(currentValues) => currentValues}
@@ -226,6 +232,8 @@ describe("useFlashcardDialogState", () => {
       front: "<p>Front A</p>",
       back: "<p>Back A</p>",
       clozeSource: "",
+      occlusionImagePathname: "",
+      occlusionRegions: [],
     });
     expect(checkFlashcardDuplicateMock).toHaveBeenCalledTimes(2);
     expect(checkFlashcardDuplicateMock).toHaveBeenLastCalledWith({
@@ -245,6 +253,8 @@ describe("useFlashcardDialogState", () => {
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           }}
           getSuccessValues={(currentValues, options) => ({
             type: "basic",
@@ -252,6 +262,8 @@ describe("useFlashcardDialogState", () => {
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           })}
         />,
       );
@@ -278,6 +290,8 @@ describe("useFlashcardDialogState", () => {
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           }}
           getSuccessValues={(currentValues, options) => ({
             type: "basic",
@@ -285,6 +299,8 @@ describe("useFlashcardDialogState", () => {
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           })}
         />,
       );
@@ -315,6 +331,8 @@ describe("useFlashcardDialogState", () => {
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           }}
           getSuccessValues={(currentValues, options) => ({
             type: "basic",
@@ -322,6 +340,8 @@ describe("useFlashcardDialogState", () => {
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           })}
         />,
       );
@@ -355,6 +375,8 @@ describe("useFlashcardDialogState", () => {
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
           clozeSource: "",
+          occlusionImagePathname: "",
+          occlusionRegions: [],
         },
       });
       const dialog = useFlashcardDialogState({
@@ -368,6 +390,8 @@ describe("useFlashcardDialogState", () => {
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
           clozeSource: "",
+          occlusionImagePathname: "",
+          occlusionRegions: [],
         },
         form,
         onSubmitAction: async () => ({ success: true }),
@@ -414,6 +438,8 @@ describe("useFlashcardDialogState", () => {
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
+            occlusionImagePathname: "",
+            occlusionRegions: [],
           }}
           onSubmitAction={onSubmitAction}
           getSuccessValues={(currentValues) => currentValues}

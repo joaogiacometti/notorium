@@ -5,6 +5,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   numeric,
   pgTable,
   text,
@@ -21,6 +22,7 @@ import {
   notificationStatusEnum,
   userAccessStatusEnum,
 } from "@/db/schema-enums";
+import type { OcclusionRegion } from "@/features/flashcards/occlusion";
 
 export * from "@/db/schema-enums";
 
@@ -402,6 +404,13 @@ export const flashcard = pgTable(
     clozeNoteId: text("cloze_note_id"),
     clozeOrdinal: integer("cloze_ordinal"),
     clozeSource: text("cloze_source"),
+    // Image occlusion siblings share one occlusionNoteId and the same source
+    // image and region list; occlusionMaskId is the region this card tests.
+    // All four are null for basic and cloze cards.
+    occlusionNoteId: text("occlusion_note_id"),
+    occlusionImagePathname: text("occlusion_image_pathname"),
+    occlusionRegions: jsonb("occlusion_regions").$type<OcclusionRegion[]>(),
+    occlusionMaskId: text("occlusion_mask_id"),
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
     stability: numeric("stability", { precision: 10, scale: 4 }),
@@ -432,6 +441,7 @@ export const flashcard = pgTable(
     index("flashcard_deckId_idx").on(table.deckId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_clozeNoteId_idx").on(table.clozeNoteId),
+    index("flashcard_occlusionNoteId_idx").on(table.occlusionNoteId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),

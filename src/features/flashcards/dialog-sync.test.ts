@@ -14,6 +14,8 @@ function values(
     front: "",
     back: "",
     clozeSource: "",
+    occlusionImagePathname: "",
+    occlusionRegions: [],
     ...overrides,
   };
 }

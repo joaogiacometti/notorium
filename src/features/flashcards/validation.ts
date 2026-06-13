@@ -65,6 +65,26 @@ const deckIdField = z
   .string()
   .min(1, validationMessage("Validation.flashcards.deckRequired"));
 
+// A single rectangular mask, coordinates normalized to 0..1 of the image box.
+export const occlusionRegionSchema = z.object({
+  id: z.string().min(1),
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  width: z.number().gt(0).max(1),
+  height: z.number().gt(0).max(1),
+  label: z.string().max(LIMITS.occlusionLabelMax).optional(),
+});
+
+export const occlusionImagePathnameSchema = z
+  .string()
+  .min(1, validationMessage("Validation.flashcards.occlusionImageRequired"))
+  .max(512);
+
+export const occlusionRegionsSchema = z
+  .array(occlusionRegionSchema)
+  .min(1, validationMessage("Validation.flashcards.occlusionRegionsRequired"))
+  .max(LIMITS.maxOcclusionRegionsPerNote);
+
 // Attachment-bearing rich-text fields differ by card type: basic cards carry
 // front + back, cloze notes carry the source + optional extra.
 function flashcardAttachmentFields(value: unknown): string[] {
@@ -122,10 +142,21 @@ const clozeCreateObject = z.object({
   back: flashcardClozeExtraSchema,
 });
 
+const occlusionCreateObject = z.object({
+  type: z.literal("occlusion"),
+  deckId: deckIdField,
+  occlusionImagePathname: occlusionImagePathnameSchema,
+  occlusionRegions: occlusionRegionsSchema,
+});
+
 export const createFlashcardSchema = withFlashcardAttachmentLimit(
   z.preprocess(
     withDefaultBasicType,
-    z.discriminatedUnion("type", [basicCreateObject, clozeCreateObject]),
+    z.discriminatedUnion("type", [
+      basicCreateObject,
+      clozeCreateObject,
+      occlusionCreateObject,
+    ]),
   ),
 );
 
@@ -133,11 +164,16 @@ export type CreateFlashcardForm = z.infer<typeof createFlashcardSchema>;
 
 const basicEditObject = basicCreateObject.extend({ id: idSchema });
 const clozeEditObject = clozeCreateObject.extend({ id: idSchema });
+const occlusionEditObject = occlusionCreateObject.extend({ id: idSchema });
 
 export const editFlashcardSchema = withFlashcardAttachmentLimit(
   z.preprocess(
     withDefaultBasicType,
-    z.discriminatedUnion("type", [basicEditObject, clozeEditObject]),
+    z.discriminatedUnion("type", [
+      basicEditObject,
+      clozeEditObject,
+      occlusionEditObject,
+    ]),
   ),
 );
 
@@ -148,14 +184,31 @@ export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
 // active card type, then maps to the server union at submit time.
 export const flashcardFormSchema = z
   .object({
-    type: z.enum(["basic", "cloze"]),
+    type: z.enum(["basic", "cloze", "occlusion"]),
     id: z.string().optional(),
     deckId: deckIdField,
     front: z.string(),
     back: z.string(),
     clozeSource: z.string(),
+    occlusionImagePathname: z.string(),
+    occlusionRegions: z.array(occlusionRegionSchema),
   })
   .superRefine((value, ctx) => {
+    if (value.type === "occlusion") {
+      addFieldIssues(
+        ctx,
+        "occlusionImagePathname",
+        occlusionImagePathnameSchema,
+        value.occlusionImagePathname,
+      );
+      addFieldIssues(
+        ctx,
+        "occlusionRegions",
+        occlusionRegionsSchema,
+        value.occlusionRegions,
+      );
+      return;
+    }
     if (value.type === "cloze") {
       addFieldIssues(
         ctx,
@@ -213,6 +266,14 @@ function addFieldIssues(
 export function toCreateFlashcardPayload(
   values: FlashcardFormValues,
 ): CreateFlashcardForm {
+  if (values.type === "occlusion") {
+    return {
+      type: "occlusion",
+      deckId: values.deckId,
+      occlusionImagePathname: values.occlusionImagePathname,
+      occlusionRegions: values.occlusionRegions,
+    };
+  }
   if (values.type === "cloze") {
     return {
       type: "cloze",
@@ -238,6 +299,15 @@ export function toCreateFlashcardPayload(
 export function toEditFlashcardPayload(
   values: FlashcardFormValues & { id: string },
 ): EditFlashcardForm {
+  if (values.type === "occlusion") {
+    return {
+      id: values.id,
+      type: "occlusion",
+      deckId: values.deckId,
+      occlusionImagePathname: values.occlusionImagePathname,
+      occlusionRegions: values.occlusionRegions,
+    };
+  }
   if (values.type === "cloze") {
     return {
       id: values.id,

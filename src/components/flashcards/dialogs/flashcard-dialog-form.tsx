@@ -5,13 +5,14 @@ import { useState } from "react";
 import {
   Controller,
   type FieldPath,
-  type PathValue,
   type UseFormReturn,
   useWatch,
 } from "react-hook-form";
 import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
 import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
+import { FlashcardCardTypeField } from "@/components/flashcards/dialogs/flashcard-card-type-field";
 import { FlashcardClozeFields } from "@/components/flashcards/dialogs/flashcard-cloze-fields";
+import { OcclusionFields } from "@/components/flashcards/occlusion/occlusion-fields";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { DeckSelect } from "@/components/shared/deck-select";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
@@ -38,11 +39,6 @@ import type { DeckEntity } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 type FlashcardFormValues = FlashcardFormSchemaValues;
-
-const cardTypeOptions = [
-  { value: "basic", label: "Basic" },
-  { value: "cloze", label: "Cloze" },
-];
 
 interface FlashcardDialogDiscardConfig {
   open: boolean;
@@ -152,21 +148,14 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   const watchedBack = useWatch({
     control: form.control,
     name: "back" as FieldPath<TValues>,
-  });
+  }) as string | undefined;
 
   const cardType = useWatch({
     control: form.control,
     name: "type" as FieldPath<TValues>,
-  }) as "basic" | "cloze" | undefined;
+  }) as "basic" | "cloze" | "occlusion" | undefined;
   const isCloze = cardType === "cloze";
-
-  function handleCardTypeChange(nextType: string) {
-    form.setValue(
-      "type" as FieldPath<TValues>,
-      nextType as PathValue<TValues, FieldPath<TValues>>,
-      { shouldDirty: true, shouldValidate: true },
-    );
-  }
+  const isOcclusion = cardType === "occlusion";
 
   const hasBack = hasRichTextContent(watchedBack ?? "");
   const generateLabel = hasBack ? "Improve with AI" : "Generate with AI";
@@ -189,7 +178,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
               control={form.control}
               render={({ field, fieldState }) => (
                 <DeckSelect
-                  value={field.value ?? null}
+                  value={(field.value ?? null) as string | null}
                   onChange={field.onChange}
                   decks={decks}
                   id={`${formId}-deck`}
@@ -210,15 +199,19 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                 label="Mode"
               />
             ) : null}
-            <CreateModeToggle
-              mode={cardType ?? "basic"}
-              onModeChange={handleCardTypeChange}
-              options={cardTypeOptions}
-              label="Card type"
+            <FlashcardCardTypeField
+              form={form}
+              formId={formId}
               disabled={mode === "edit"}
             />
           </div>
-          {isCloze ? (
+          {isOcclusion ? (
+            <OcclusionFields
+              form={form}
+              formId={formId}
+              onImageUploadPendingChange={handleImageUploadPendingChange}
+            />
+          ) : isCloze ? (
             <FlashcardClozeFields
               form={form}
               formId={formId}
@@ -287,7 +280,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                       </div>
                       <TiptapEditor
                         key={`${formId}-front-${editorResetVersion ?? 0}`}
-                        value={field.value ?? ""}
+                        value={(field.value ?? "") as string}
                         onChange={field.onChange}
                         placeholder="e.g. What is photosynthesis?"
                         id={`${formId}-front`}
@@ -381,7 +374,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     ) : (
                       <TiptapEditor
                         key={`${formId}-back-${editorResetVersion ?? 0}`}
-                        value={field.value ?? ""}
+                        value={(field.value ?? "") as string}
                         onChange={field.onChange}
                         placeholder="e.g. Process plants use to convert light into energy."
                         id={`${formId}-back`}

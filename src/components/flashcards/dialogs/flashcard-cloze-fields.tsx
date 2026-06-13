@@ -67,7 +67,7 @@ export function FlashcardClozeFields<TValues extends FlashcardFormValues>({
           </div>
           <TiptapEditor
             key={`${formId}-cloze-${editorResetVersion ?? 0}`}
-            value={field.value ?? ""}
+            value={(field.value ?? "") as string}
             onChange={field.onChange}
             placeholder="e.g. The {{c1::mitochondria}} is the powerhouse of the {{c2::cell}}."
             id={`${formId}-cloze`}

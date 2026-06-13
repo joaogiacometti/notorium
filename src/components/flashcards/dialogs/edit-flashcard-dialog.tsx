@@ -48,7 +48,14 @@ interface GeneratedCard {
 interface EditFlashcardDialogProps {
   flashcard: Pick<
     FlashcardEntity,
-    "id" | "deckId" | "front" | "back" | "type" | "clozeSource"
+    | "id"
+    | "deckId"
+    | "front"
+    | "back"
+    | "type"
+    | "clozeSource"
+    | "occlusionImagePathname"
+    | "occlusionRegions"
   >;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -90,6 +97,11 @@ export function EditFlashcardDialog({
 
   const isSplitDirty =
     splitFront !== flashcard.front || splitBack !== flashcard.back;
+
+  // Split generates basic cards from front/back text. Cloze and occlusion cards
+  // have no authored front/back (they derive it), so splitting does not apply.
+  const canSplit = flashcard.type === "basic";
+  const splitEnabled = aiEnabled && canSplit;
 
   const incomingValues = getEditFlashcardFormValues(flashcard);
 
@@ -358,7 +370,7 @@ export function EditFlashcardDialog({
           }}
           noDialog
           typeToggle={
-            aiEnabled
+            splitEnabled
               ? {
                   mode: "edit",
                   onModeChange: (m) => handleModeSwitch(m as EditMode),
@@ -383,7 +395,7 @@ export function EditFlashcardDialog({
             onBack={handleBackToInput}
             isCreating={isCreating}
             typeToggle={
-              aiEnabled
+              splitEnabled
                 ? {
                     mode: "split",
                     onModeChange: (m) => handleModeSwitch(m as EditMode),
@@ -424,6 +436,15 @@ export function EditFlashcardDialog({
             className,
           )}
           overlayClassName={overlayClassName}
+          // Occlusion edit has no text field before the image-occlusion help
+          // (?) button, so while decks load (deck + type controls disabled) the
+          // dialog would auto-focus that button and flash its tooltip open. Skip
+          // initial auto-focus for occlusion; basic/cloze keep editor focus.
+          onOpenAutoFocus={
+            flashcard.type === "occlusion"
+              ? (event) => event.preventDefault()
+              : undefined
+          }
         >
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Edit Flashcard</DialogTitle>
@@ -460,17 +481,27 @@ export function EditFlashcardDialog({
 function getEditFlashcardFormValues(
   flashcard: Pick<
     FlashcardEntity,
-    "id" | "deckId" | "front" | "back" | "type" | "clozeSource"
+    | "id"
+    | "deckId"
+    | "front"
+    | "back"
+    | "type"
+    | "clozeSource"
+    | "occlusionImagePathname"
+    | "occlusionRegions"
   >,
 ): FlashcardFormValues {
   const isCloze = flashcard.type === "cloze";
+  const isOcclusion = flashcard.type === "occlusion";
   return {
     id: flashcard.id,
-    type: isCloze ? "cloze" : "basic",
+    type: isOcclusion ? "occlusion" : isCloze ? "cloze" : "basic",
     deckId: flashcard.deckId,
-    // Cloze cards edit their source; the rendered front/back are derived.
-    front: isCloze ? "" : flashcard.front,
-    back: isCloze ? "" : flashcard.back,
+    // Cloze and occlusion cards edit their source; front/back are derived.
+    front: isCloze || isOcclusion ? "" : flashcard.front,
+    back: isCloze || isOcclusion ? "" : flashcard.back,
     clozeSource: flashcard.clozeSource ?? "",
+    occlusionImagePathname: flashcard.occlusionImagePathname ?? "",
+    occlusionRegions: flashcard.occlusionRegions ?? [],
   };
 }

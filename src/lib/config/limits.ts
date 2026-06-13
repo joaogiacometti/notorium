@@ -34,6 +34,8 @@ export const LIMITS = {
   flashcardBatchSize: 500,
   flashcardAiFrontMax: 500,
   flashcardAiBackMax: 400,
+  maxOcclusionRegionsPerNote: 50,
+  occlusionLabelMax: 200,
 
   subjectNameMax: 100,
 

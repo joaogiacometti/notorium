@@ -55,6 +55,8 @@ function getCreateFlashcardFormValues(
     front: "",
     back: "",
     clozeSource: "",
+    occlusionImagePathname: "",
+    occlusionRegions: [],
   };
 }
 

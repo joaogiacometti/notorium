@@ -8,6 +8,8 @@ const values: FlashcardFormValues = {
   front: "<p>Front</p>",
   back: "<p>Back</p>",
   clozeSource: "",
+  occlusionImagePathname: "",
+  occlusionRegions: [],
 };
 
 describe("getCreateFlashcardResetValues", () => {
@@ -23,6 +25,8 @@ describe("getCreateFlashcardResetValues", () => {
       front: "",
       back: "",
       clozeSource: "",
+      occlusionImagePathname: "",
+      occlusionRegions: [],
     });
   });
 
@@ -38,6 +42,8 @@ describe("getCreateFlashcardResetValues", () => {
       front: "<p>Front</p>",
       back: "",
       clozeSource: "",
+      occlusionImagePathname: "",
+      occlusionRegions: [],
     });
   });
 
@@ -53,6 +59,8 @@ describe("getCreateFlashcardResetValues", () => {
       front: "",
       back: "<p>Back</p>",
       clozeSource: "",
+      occlusionImagePathname: "",
+      occlusionRegions: [],
     });
   });
 });

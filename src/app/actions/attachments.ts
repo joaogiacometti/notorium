@@ -5,8 +5,10 @@ import {
   deleteEditorImagesForUser,
   type UploadAssessmentAttachmentResult,
   type UploadEditorImageResult,
+  type UploadOcclusionImageResult,
   uploadAssessmentAttachmentForUser,
   uploadEditorImageForUser,
+  uploadFlashcardOcclusionImageForUser,
 } from "@/features/attachments/mutations";
 import {
   type DeleteAssessmentAttachmentForm,
@@ -15,8 +17,10 @@ import {
   deleteEditorImagesSchema,
   type UploadAssessmentAttachmentForm,
   type UploadEditorImageForm,
+  type UploadFlashcardOcclusionImageForm,
   uploadAssessmentAttachmentSchema,
   uploadEditorImageSchema,
+  uploadFlashcardOcclusionImageSchema,
 } from "@/features/attachments/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
@@ -29,6 +33,18 @@ export async function uploadEditorImage(
     data,
     "attachments.invalidData",
     async (userId, parsedData) => uploadEditorImageForUser(userId, parsedData),
+  );
+}
+
+export async function uploadFlashcardOcclusionImage(
+  data: UploadFlashcardOcclusionImageForm,
+): Promise<UploadOcclusionImageResult> {
+  return runValidatedUserAction(
+    uploadFlashcardOcclusionImageSchema,
+    data,
+    "attachments.invalidData",
+    async (userId, parsedData) =>
+      uploadFlashcardOcclusionImageForUser(userId, parsedData),
   );
 }
 

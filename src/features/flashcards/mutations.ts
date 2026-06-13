@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
@@ -14,7 +14,13 @@ import {
 } from "@/features/flashcards/cloze-mutations";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
+  createOcclusionNoteForUser,
+  deleteOcclusionNoteForUser,
+  editOcclusionNoteForUser,
+} from "@/features/flashcards/occlusion-mutations";
+import {
   countFlashcardsByDeckForUser,
+  expandOcclusionSiblingIds,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
   hasDuplicateFlashcardFrontForUser,
@@ -120,6 +126,14 @@ export async function createFlashcardForUser(
   userId: string,
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
+  if (data.type === "occlusion") {
+    return createOcclusionNoteForUser(userId, {
+      deckId: data.deckId,
+      occlusionImagePathname: data.occlusionImagePathname,
+      occlusionRegions: data.occlusionRegions,
+    });
+  }
+
   if (data.type === "cloze") {
     return createClozeNoteForUser(userId, {
       deckId: data.deckId,
@@ -253,6 +267,22 @@ export async function editFlashcardForUser(
 
   // Card type is fixed at creation. Mismatched edits would require a lossy
   // delete-and-recreate, so they are rejected; the edit dialog locks the type.
+  if (data.type === "occlusion") {
+    if (existingFlashcard.type !== "occlusion") {
+      return actionError("flashcards.invalidData");
+    }
+    return editOcclusionNoteForUser(
+      userId,
+      {
+        id: data.id,
+        deckId: data.deckId,
+        occlusionImagePathname: data.occlusionImagePathname,
+        occlusionRegions: data.occlusionRegions,
+      },
+      existingFlashcard,
+    );
+  }
+
   if (data.type === "cloze") {
     if (existingFlashcard.type !== "cloze") {
       return actionError("flashcards.invalidData");
@@ -269,7 +299,10 @@ export async function editFlashcardForUser(
     );
   }
 
-  if (existingFlashcard.type === "cloze") {
+  if (
+    existingFlashcard.type === "cloze" ||
+    existingFlashcard.type === "occlusion"
+  ) {
     return actionError("flashcards.invalidData");
   }
 
@@ -389,6 +422,16 @@ export async function deleteFlashcardForUser(
     return { success: true, id: data.id, deckId: existingFlashcard.deckId };
   }
 
+  // Deleting any occlusion sibling removes the whole note, its siblings, and the
+  // shared source image (handled inside deleteOcclusionNoteForUser).
+  if (
+    existingFlashcard.type === "occlusion" &&
+    existingFlashcard.occlusionNoteId
+  ) {
+    await deleteOcclusionNoteForUser(userId, existingFlashcard.occlusionNoteId);
+    return { success: true, id: data.id, deckId: existingFlashcard.deckId };
+  }
+
   await getDb()
     .delete(flashcard)
     .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)));
@@ -421,6 +464,9 @@ export async function resetFlashcardForUser(
   const now = new Date();
   const schedulingState = getInitialFlashcardSchedulingState(now);
 
+  // Resetting an occlusion card resets its whole note's masks together.
+  const ids = await expandOcclusionSiblingIds(userId, [data.id]);
+
   const updated = await getDb()
     .update(flashcard)
     .set({
@@ -436,8 +482,10 @@ export async function resetFlashcardForUser(
       lapseCount: schedulingState.lapseCount,
       updatedAt: now,
     })
-    .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)))
+    .where(and(inArray(flashcard.id, ids), eq(flashcard.userId, userId)))
     .returning();
 
-  return { success: true, flashcard: updated[0] };
+  const representative =
+    updated.find((card) => card.id === data.id) ?? updated[0];
+  return { success: true, flashcard: representative };
 }

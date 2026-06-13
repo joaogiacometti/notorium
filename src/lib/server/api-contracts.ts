@@ -63,13 +63,16 @@ export type FlashcardListEntity = FlashcardEntity & {
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "deckId" | "updatedAt"
+  "id" | "deckId" | "updatedAt" | "type"
 > & {
   front: string;
   frontExcerpt: string;
   frontTitle: string | null;
   deckName: string;
   deckPath: string;
+  // Occlusion notes collapse their per-mask sibling rows into one list row.
+  occlusionImagePathname: string | null;
+  maskCount: number | null;
 };
 export interface FlashcardManagePage {
   items: FlashcardManageItem[];
@@ -89,6 +92,9 @@ export type FlashcardReviewEntity = Pick<
   | "back"
   | "type"
   | "clozeSource"
+  | "occlusionImagePathname"
+  | "occlusionRegions"
+  | "occlusionMaskId"
   | "deckId"
   | "state"
   | "dueAt"

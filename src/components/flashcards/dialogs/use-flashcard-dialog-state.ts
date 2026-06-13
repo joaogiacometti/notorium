@@ -230,13 +230,24 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     const hasFrontContent = hasRichTextContent(currentValues.front);
     const hasBackContent = hasRichTextContent(currentValues.back);
     const hasClozeContent = hasRichTextContent(currentValues.clozeSource);
-    const hasContent = hasFrontContent || hasBackContent || hasClozeContent;
+    const hasOcclusionContent =
+      Boolean(currentValues.occlusionImagePathname) ||
+      (currentValues.occlusionRegions?.length ?? 0) > 0;
+    const hasContent =
+      hasFrontContent ||
+      hasBackContent ||
+      hasClozeContent ||
+      hasOcclusionContent;
     const savedValues = savedValuesRef.current;
     const hasUnsavedChanges =
       mode === "edit"
         ? currentValues.front !== savedValues.front ||
           currentValues.back !== savedValues.back ||
           currentValues.clozeSource !== savedValues.clozeSource ||
+          currentValues.occlusionImagePathname !==
+            savedValues.occlusionImagePathname ||
+          JSON.stringify(currentValues.occlusionRegions) !==
+            JSON.stringify(savedValues.occlusionRegions) ||
           currentValues.deckId !== savedValues.deckId
         : hasContent;
 

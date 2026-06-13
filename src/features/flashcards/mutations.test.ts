@@ -30,6 +30,9 @@ const getDeckRecordForUserMock = vi.fn();
 const getFlashcardByIdForUserMock = vi.fn();
 const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
+const expandOcclusionSiblingIdsMock = vi.fn(
+  (_userId: string, ids: string[]) => ids,
+);
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 const hasDuplicateFlashcardFrontForUserMock = vi.fn();
 const generateFlashcardBackForUserMock = vi.fn();
@@ -75,6 +78,7 @@ vi.mock("@/features/flashcards/fsrs", () => ({
 
 vi.mock("@/features/flashcards/queries", () => ({
   countFlashcardsByDeckForUser: countFlashcardsByDeckForUserMock,
+  expandOcclusionSiblingIds: expandOcclusionSiblingIdsMock,
   getFlashcardByIdForUser: getFlashcardByIdForUserMock,
   getFlashcardRecordForUser: getFlashcardRecordForUserMock,
   getFlashcardRecordsForUser: getFlashcardRecordsForUserMock,
