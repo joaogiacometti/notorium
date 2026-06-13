@@ -183,6 +183,7 @@ export function SubjectsList({
         subject: {
           id: subject.id,
           name: subject.name,
+          kind: subject.kind,
         },
       }),
     onRestored: () => {

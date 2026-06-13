@@ -257,6 +257,7 @@ function createSubject(
     id,
     userId: "user-1",
     name: `Subject ${id}`,
+    kind: "academic",
     notesCount: 0,
     totalClasses: null,
     maxMisses: null,
@@ -353,6 +354,18 @@ describe("SubjectsList", () => {
     expect(
       container.querySelector('[data-testid="create-subject-dialog"]'),
     ).toBeTruthy();
+  });
+
+  it("labels both academic and general subjects with a kind badge", async () => {
+    const academic = createSubject("1", { name: "Calculus", kind: "academic" });
+    const general = createSubject("2", { name: "Recipes", kind: "general" });
+
+    await act(async () => {
+      renderSubjectsList(root, queryClient, [academic, general]);
+    });
+
+    expect(container.textContent).toContain("Academic");
+    expect(container.textContent).toContain("General");
   });
 
   it("shows archived subjects when the archived filter is selected", async () => {

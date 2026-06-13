@@ -15,7 +15,7 @@ import type {
 } from "@/features/assessments/validation";
 import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
 import { getAssessmentAttachmentsForAssessments } from "@/features/attachments/queries";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { getActiveAcademicSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   AssessmentEntity,
@@ -73,7 +73,7 @@ export async function createAssessmentForUser(
   userId: string,
   data: CreateAssessmentForm,
 ): Promise<CreateAssessmentMutationResult> {
-  const existingSubject = await getActiveSubjectRecordForUser(
+  const existingSubject = await getActiveAcademicSubjectRecordForUser(
     userId,
     data.subjectId,
   );

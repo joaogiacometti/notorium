@@ -199,7 +199,7 @@ export type SearchData = {
   mindmaps: SearchMindmapResult[];
 };
 
-export type SubjectEditDto = Pick<SubjectEntity, "id" | "name">;
+export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "kind">;
 
 export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
 

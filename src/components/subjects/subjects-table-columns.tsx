@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getSubjectKindLabel } from "@/features/subjects/constants";
 import type { SubjectListItem } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
@@ -44,12 +45,15 @@ interface SubjectsTableActionsProps {
 
 function renderSubjectLabel(subject: SubjectListItem) {
   const content = (
-    <div className="min-w-0 max-w-full flex-1 overflow-hidden">
+    <div className="flex min-w-0 max-w-full flex-1 items-center gap-2 overflow-hidden">
       <SubjectText
         value={subject.name}
         mode="truncate"
-        className="block max-w-full text-sm font-semibold leading-5.5 text-foreground/95"
+        className="block min-w-0 max-w-full text-sm font-semibold leading-5.5 text-foreground/95"
       />
+      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        {getSubjectKindLabel(subject.kind)}
+      </span>
     </div>
   );
 

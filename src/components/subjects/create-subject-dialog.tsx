@@ -2,6 +2,7 @@
 
 import { createSubject } from "@/app/actions/subjects";
 import { SubjectDialogForm } from "@/components/subjects/subject-dialog-form";
+import { DEFAULT_SUBJECT_KIND } from "@/features/subjects/constants";
 import type { CreateSubjectForm } from "@/features/subjects/validation";
 
 interface CreateSubjectDialogProps {
@@ -14,6 +15,7 @@ interface CreateSubjectDialogProps {
 function getCreateSubjectFormValues(): CreateSubjectForm {
   return {
     name: "",
+    kind: DEFAULT_SUBJECT_KIND,
   };
 }
 

@@ -36,9 +36,12 @@ export type SubjectMutationResult =
     }
   | ActionErrorResult;
 
-function getSubjectMutationValues(values: Pick<CreateSubjectForm, "name">) {
+function getSubjectMutationValues(
+  values: Pick<CreateSubjectForm, "name" | "kind">,
+) {
   return {
     name: values.name.trim(),
+    kind: values.kind,
   };
 }
 

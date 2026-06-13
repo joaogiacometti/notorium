@@ -37,6 +37,7 @@ function createArchivedSubject(): SubjectEntity {
     id: "subject-1",
     userId: "user-1",
     name: "Archived Biology",
+    kind: "academic",
     totalClasses: null,
     maxMisses: null,
     archivedAt: new Date("2026-04-20T10:00:00.000Z"),

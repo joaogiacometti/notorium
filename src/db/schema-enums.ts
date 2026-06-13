@@ -12,6 +12,8 @@ export const userAccessStatusEnum = pgEnum("user_access_status", [
   "blocked",
 ]);
 
+export const subjectKindEnum = pgEnum("subject_kind", ["academic", "general"]);
+
 export const assessmentTypeEnum = pgEnum("assessment_type", [
   "exam",
   "assignment",

@@ -36,8 +36,13 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete subjects.
 - Archive and restore subjects.
 - Subjects list as a table with search, sorting, active/archived filters, page size controls, row selection, and bulk archive/restore/delete.
-- Subjects table shows subject title, notes count, and compact row actions. It does not show status, created, or updated columns.
-- Subject fields: name.
+- Subjects table shows subject title, notes count, and compact row actions. It does not show status, created, or updated columns. General subjects show a "General" tag next to their title.
+- Subject fields: name and kind.
+- Each subject has a kind, chosen at creation and editable later: `academic` or `general`.
+  - Academic subjects expose attendance and assessment tracking on their detail page, in addition to documents.
+  - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools.
+- New subjects default to `academic`. Existing subjects are `academic`.
+- Switching a subject from academic to general hides its attendance and assessment features without deleting the underlying records; switching back reveals them again.
 
 ### Documents
 
@@ -206,12 +211,14 @@ Students who want a private, lightweight study management workspace.
 
 ### Attendance
 
+- Available only for academic subjects.
 - Configure `totalClasses` and `maxMisses` per subject.
 - Record and delete misses by date.
 - Show progress, remaining misses, and attendance rate.
 
 ### Assessments
 
+- Available only for academic subjects; the planning page and assessment subject pickers list academic subjects only.
 - Create, read, update, and delete assessments per subject.
 - Assessments have a dedicated global planning page for full management and calendar-based timeline viewing.
 - The planning assessments table supports bulk selection with bulk mark pending, bulk mark completed, and bulk delete actions.
@@ -311,7 +318,7 @@ Students who want a private, lightweight study management workspace.
 - `instance_state`
   - `id`, `initialAdminUserId`, `initialAdminAssignedAt`, timestamps
 - `subject`
-  - `id`, `name`, `totalClasses`, `maxMisses`, timestamps, `userId`
+  - `id`, `name`, `kind` (`academic` | `general`), `totalClasses`, `maxMisses`, timestamps, `userId`
 - `deck`
   - `id`, `name`, `parentDeckId`, timestamps, `userId`
 - `flashcard`

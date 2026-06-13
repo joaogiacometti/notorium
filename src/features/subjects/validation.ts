@@ -1,31 +1,31 @@
 import { z } from "zod";
+import { subjectKindValues } from "@/features/subjects/constants";
 import { LIMITS } from "@/lib/config/limits";
 import { bulkIdsSchema } from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
+const subjectNameSchema = z
+  .string()
+  .trim()
+  .min(1, validationMessage("Validation.subjects.nameRequired"))
+  .max(
+    LIMITS.subjectNameMax,
+    validationMessage("Validation.subjects.nameMaxLength"),
+  );
+
+const subjectKindSchema = z.enum(subjectKindValues);
+
 export const createSubjectSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, validationMessage("Validation.subjects.nameRequired"))
-    .max(
-      LIMITS.subjectNameMax,
-      validationMessage("Validation.subjects.nameMaxLength"),
-    ),
+  name: subjectNameSchema,
+  kind: subjectKindSchema,
 });
 
 export type CreateSubjectForm = z.infer<typeof createSubjectSchema>;
 
 export const editSubjectSchema = z.object({
   id: z.string().min(1),
-  name: z
-    .string()
-    .trim()
-    .min(1, validationMessage("Validation.subjects.nameRequired"))
-    .max(
-      LIMITS.subjectNameMax,
-      validationMessage("Validation.subjects.nameMaxLength"),
-    ),
+  name: subjectNameSchema,
+  kind: subjectKindSchema,
 });
 
 export type EditSubjectForm = z.infer<typeof editSubjectSchema>;

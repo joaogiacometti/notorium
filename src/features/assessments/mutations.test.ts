@@ -21,7 +21,7 @@ const inArrayMock = vi.fn((column, values) => ({
 const getAssessmentRecordForUserMock = vi.fn();
 const getAssessmentRecordsForUserMock = vi.fn();
 const countAssessmentsBySubjectForUserMock = vi.fn();
-const getActiveSubjectRecordForUserMock = vi.fn();
+const getActiveAcademicSubjectRecordForUserMock = vi.fn();
 const getAssessmentAttachmentsForAssessmentsMock = vi.fn();
 const cleanupAttachmentPathnamesMock = vi.fn();
 
@@ -61,7 +61,8 @@ vi.mock("@/features/assessments/queries", () => ({
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getActiveSubjectRecordForUser: getActiveSubjectRecordForUserMock,
+  getActiveAcademicSubjectRecordForUser:
+    getActiveAcademicSubjectRecordForUserMock,
 }));
 
 describe("bulkDeleteAssessmentsForUser", () => {

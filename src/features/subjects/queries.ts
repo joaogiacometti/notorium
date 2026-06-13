@@ -16,6 +16,42 @@ export async function getSubjectsForUser(
     .orderBy(desc(subject.updatedAt));
 }
 
+export async function getAcademicSubjectsForUser(
+  userId: string,
+): Promise<SubjectEntity[]> {
+  return getDb()
+    .select()
+    .from(subject)
+    .where(
+      and(
+        eq(subject.userId, userId),
+        eq(subject.kind, "academic"),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .orderBy(desc(subject.updatedAt));
+}
+
+export async function getActiveAcademicSubjectRecordForUser(
+  userId: string,
+  subjectId: string,
+): Promise<{ id: string } | null> {
+  const results = await getDb()
+    .select({ id: subject.id })
+    .from(subject)
+    .where(
+      and(
+        eq(subject.id, subjectId),
+        eq(subject.userId, userId),
+        eq(subject.kind, "academic"),
+        isNull(subject.archivedAt),
+      ),
+    )
+    .limit(1);
+
+  return results[0] ?? null;
+}
+
 export async function getActiveSubjectByIdForUser(
   userId: string,
   subjectId: string,

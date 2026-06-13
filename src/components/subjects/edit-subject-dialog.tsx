@@ -16,6 +16,7 @@ function getEditSubjectFormValues(subject: SubjectEditDto): EditSubjectForm {
   return {
     id: subject.id,
     name: subject.name,
+    kind: subject.kind,
   };
 }
 
@@ -37,6 +38,7 @@ export function EditSubjectDialog({
         onSaved?.({
           id: nextValues.id,
           name: nextValues.name,
+          kind: nextValues.kind,
         });
       }}
     />

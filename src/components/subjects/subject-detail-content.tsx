@@ -3,6 +3,7 @@ import { DocumentsList } from "@/components/documents/documents-list";
 import { SubjectAssessmentsSummary } from "@/components/subjects/subject-assessments-summary";
 import { Separator } from "@/components/ui/separator";
 import type { DocumentListItem } from "@/features/documents/types";
+import { isAcademicSubject } from "@/features/subjects/constants";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
@@ -30,6 +31,10 @@ export function SubjectDetailContent({
   assessments,
   showAssessmentActions = true,
 }: Readonly<SubjectDetailContentProps>) {
+  if (!isAcademicSubject(subject.kind)) {
+    return <DocumentsList subjectId={subject.id} documents={documents} />;
+  }
+
   return (
     <>
       <AttendanceSummary

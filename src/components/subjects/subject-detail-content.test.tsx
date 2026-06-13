@@ -37,16 +37,18 @@ vi.mock("@/components/documents/documents-list", () => ({
   ),
 }));
 
-function createSubject(): SubjectEntity {
+function createSubject(overrides: Partial<SubjectEntity> = {}): SubjectEntity {
   return {
     id: "subject-1",
     userId: "user-1",
     name: "Biology",
+    kind: "academic",
     totalClasses: 20,
     maxMisses: 5,
     archivedAt: null,
     createdAt: new Date("2026-04-20T10:00:00.000Z"),
     updatedAt: new Date("2026-04-20T10:00:00.000Z"),
+    ...overrides,
   };
 }
 
@@ -123,5 +125,26 @@ describe("SubjectDetailContent", () => {
     });
 
     expect(container.textContent).not.toContain("Manage assessments");
+  });
+
+  it("hides attendance and assessments for general subjects", async () => {
+    await act(async () => {
+      root.render(
+        <SubjectDetailContent
+          subject={createSubject({ kind: "general" })}
+          documents={[]}
+          misses={[]}
+          assessments={[createAssessment()]}
+        />,
+      );
+    });
+
+    expect(container.textContent).not.toContain("Assessment summary");
+    expect(
+      container.querySelector('[data-testid="attendance-summary"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-testid="documents-list"]'),
+    ).toBeTruthy();
   });
 });

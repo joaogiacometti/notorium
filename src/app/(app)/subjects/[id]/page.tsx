@@ -3,6 +3,7 @@ import { SubjectDetail } from "@/components/subjects/subject-detail";
 import { getAssessmentsBySubjectForUser } from "@/features/assessments/queries";
 import { getMissesBySubjectForUser } from "@/features/attendance/queries";
 import { getSubjectDocumentsForUser } from "@/features/documents/queries";
+import { isAcademicSubject } from "@/features/subjects/constants";
 import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
 import { requireSession } from "@/lib/auth/auth";
 
@@ -16,16 +17,21 @@ export default async function SubjectPage({
   const session = await requireSession();
 
   const { id } = await params;
-  const [subject, documents, misses, assessments] = await Promise.all([
+  const [subject, documents] = await Promise.all([
     getActiveSubjectByIdForUser(session.user.id, id),
     getSubjectDocumentsForUser(session.user.id, id),
-    getMissesBySubjectForUser(session.user.id, id),
-    getAssessmentsBySubjectForUser(session.user.id, id),
   ]);
 
   if (!subject) {
     notFound();
   }
+
+  const [misses, assessments] = isAcademicSubject(subject.kind)
+    ? await Promise.all([
+        getMissesBySubjectForUser(session.user.id, id),
+        getAssessmentsBySubjectForUser(session.user.id, id),
+      ])
+    : [[], []];
 
   return (
     <main>

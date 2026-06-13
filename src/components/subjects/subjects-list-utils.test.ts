@@ -12,6 +12,7 @@ function makeSubject(
   overrides: Partial<SubjectListItem> & Pick<SubjectListItem, "id" | "name">,
 ): SubjectListItem {
   return {
+    kind: "academic",
     totalClasses: null,
     maxMisses: null,
     archivedAt: null,

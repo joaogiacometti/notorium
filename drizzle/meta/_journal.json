@@ -323,6 +323,13 @@
       "when": 1781316963374,
       "tag": "0045_certain_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1781372753491,
+      "tag": "0046_thin_black_knight",
+      "breakpoints": true
     }
   ]
 }

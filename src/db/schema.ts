@@ -20,6 +20,7 @@ import {
   flashcardStateEnum,
   flashcardTypeEnum,
   notificationStatusEnum,
+  subjectKindEnum,
   userAccessStatusEnum,
 } from "@/db/schema-enums";
 import type { OcclusionRegion } from "@/features/flashcards/occlusion";
@@ -127,6 +128,7 @@ export const subject = pgTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
+    kind: subjectKindEnum("kind").notNull().default("academic"),
     totalClasses: integer("total_classes"),
     maxMisses: integer("max_misses"),
 
@@ -143,6 +145,11 @@ export const subject = pgTable(
   (table) => [
     index("subject_userId_idx").on(table.userId),
     index("subject_userId_archivedAt_idx").on(table.userId, table.archivedAt),
+    index("subject_userId_kind_archivedAt_idx").on(
+      table.userId,
+      table.kind,
+      table.archivedAt,
+    ),
     index("subject_userId_archivedAt_updatedAt_idx").on(
       table.userId,
       table.archivedAt,

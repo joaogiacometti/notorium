@@ -6,7 +6,7 @@ import {
 } from "@/features/assessments/assessment-filters";
 import { getPlanningAssessmentsPageForUser } from "@/features/assessments/queries";
 import { resolvePlanningSubject } from "@/features/planning/view";
-import { getSubjectsForUser } from "@/features/subjects/queries";
+import { getAcademicSubjectsForUser } from "@/features/subjects/queries";
 
 interface PlanningAssessmentsPanelProps {
   initialSubjectId?: string;
@@ -27,7 +27,7 @@ export async function PlanningAssessmentsPanel({
   initialPageSize,
   userId,
 }: Readonly<PlanningAssessmentsPanelProps>) {
-  const subjects = await getSubjectsForUser(userId);
+  const subjects = await getAcademicSubjectsForUser(userId);
 
   const subjectNamesById = Object.fromEntries(
     subjects.map((subject) => [subject.id, subject.name]),
