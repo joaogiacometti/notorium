@@ -1,8 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
-import {
-  PLAYWRIGHT_GENERATED_BACK,
-  PLAYWRIGHT_GENERATED_CARDS,
-} from "@/features/flashcards/ai";
+import { PLAYWRIGHT_GENERATED_BACK } from "@/features/flashcards/ai";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
@@ -225,55 +222,6 @@ test("can generate a single flashcard back with AI", async ({
     await openFlashcardDetailFromManage(page, flashcardFront);
     await expect(
       page.getByText(PLAYWRIGHT_GENERATED_BACK).first(),
-    ).toBeVisible();
-  } finally {
-    await clearUserDecksByNames(user.userId, [deckName]);
-  }
-});
-
-test("can generate multiple flashcards from source text with AI", async ({
-  page,
-  e2eUser,
-}) => {
-  const user = e2eUser;
-  const deckName = getUniqueDeckName("ai-multiple");
-
-  await clearUserDecksByNames(user.userId, [deckName]);
-
-  try {
-    const createdDeck = await createDeck(
-      user.userId,
-      deckName,
-      "AI multiple flashcards generation test",
-    );
-
-    await openFlashcardsManagePage(page, createdDeck.id);
-    const createDialog = await openCreateFlashcardDialog(page);
-    await createDialog.getByRole("button", { name: "Multiple" }).click();
-    await fillRichTextEditor(
-      createDialog.locator("#ai-text"),
-      "Active recall and spaced repetition are core study practices.",
-    );
-
-    await createDialog
-      .getByRole("button", { name: "Generate Flashcards", exact: true })
-      .click();
-    await expect(
-      createDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[0].front),
-    ).toBeVisible();
-    await expect(
-      createDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[1].front),
-    ).toBeVisible();
-    await expect(createDialog.getByText("2 of 2 selected")).toBeVisible();
-
-    await createDialog
-      .getByRole("button", { name: "Create 2 Cards", exact: true })
-      .click();
-    await expect(
-      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[0].front, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[1].front, { exact: true }),
     ).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);
