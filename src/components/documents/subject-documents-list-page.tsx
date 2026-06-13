@@ -30,7 +30,7 @@ export function SubjectDocumentsListPage({
       maxWidth="7xl"
       className="lg:flex lg:h-[calc(100svh-4rem)] lg:flex-col lg:overflow-hidden lg:pb-6"
     >
-      <div className="mb-4 shrink-0">
+      <div className="mb-4 flex shrink-0 items-center gap-4">
         <Button
           type="button"
           variant="ghost"
@@ -40,9 +40,10 @@ export function SubjectDocumentsListPage({
         >
           <Link href={`/subjects/${subject.id}`}>
             <ArrowLeft className="size-4" />
-            Back to Subject
+            Back
           </Link>
         </Button>
+        <h1 className="truncate text-lg font-semibold">{subject.name}</h1>
       </div>
       <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[14rem_minmax(0,1fr)]">
         <DocumentsNav

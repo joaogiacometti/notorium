@@ -229,7 +229,7 @@ export function NoteDetail({
       )}
     >
       {!isZenMode ? (
-        <div className="mb-4 shrink-0">
+        <div className="mb-4 flex shrink-0 items-center gap-4">
           <Button
             type="button"
             variant="ghost"
@@ -242,6 +242,7 @@ export function NoteDetail({
               {backLabel}
             </Link>
           </Button>
+          <span className="truncate text-lg font-semibold">{subjectName}</span>
         </div>
       ) : null}
       <div

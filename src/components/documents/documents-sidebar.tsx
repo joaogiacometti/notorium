@@ -65,7 +65,7 @@ function countByKind(items: DocumentListItem[], kind: DocumentKind) {
  */
 export function DocumentsSidebar({
   subjectId,
-  subjectName,
+  subjectName: _subjectName,
   items,
   activeId,
   activeKind,
@@ -76,14 +76,9 @@ export function DocumentsSidebar({
     <aside className="min-w-0 border-border bg-transparent lg:flex lg:min-h-0 lg:flex-col lg:border-r">
       <div className="border-b border-border/60 p-4">
         <div className="flex min-w-0 items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Documents
-            </p>
-            <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
-              {subjectName}
-            </p>
-          </div>
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Documents
+          </p>
           <CreateDocumentMenu
             subjectId={subjectId}
             noteCount={countByKind(items, "note")}
