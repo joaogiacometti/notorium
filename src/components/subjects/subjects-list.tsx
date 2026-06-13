@@ -188,6 +188,7 @@ export function SubjectsList({
     onRestored: () => {
       void refreshSubjectsList();
     },
+    hasSelection: selectedSubjectIds.length > 0,
   });
   const createButton = (
     <Button

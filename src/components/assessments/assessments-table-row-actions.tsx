@@ -18,6 +18,7 @@ interface AssessmentsTableRowActionsProps {
   assessment: AssessmentEntity;
   onUpdated?: (assessment: AssessmentEntity) => void;
   onDeleted?: (id: string) => void;
+  hasSelection?: boolean;
 }
 
 function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -32,6 +33,7 @@ export function AssessmentsTableRowActions({
   assessment,
   onUpdated,
   onDeleted,
+  hasSelection = false,
 }: Readonly<AssessmentsTableRowActionsProps>) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -43,7 +45,7 @@ export function AssessmentsTableRowActions({
           <Button
             variant="ghost"
             size="icon"
-            className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground`}
+            className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground${hasSelection ? " invisible pointer-events-none" : ""}`}
             aria-label="Open actions"
             onClick={(event) => {
               event.stopPropagation();

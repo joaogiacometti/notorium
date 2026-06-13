@@ -90,6 +90,7 @@ function getColumns(
   onMoveRequested: (flashcard: FlashcardTarget) => void,
   onDeleteRequested: (flashcard: FlashcardTarget) => void,
   onResetRequested: (flashcard: FlashcardTarget) => void,
+  hasSelection: boolean,
 ): ColumnDef<FlashcardManageItem>[] {
   return [
     {
@@ -137,6 +138,7 @@ function getColumns(
                 front: row.original.front,
               })
             }
+            hasSelection={hasSelection}
           />
         </div>
       ),
@@ -161,6 +163,7 @@ export function FlashcardsManagerTable({
   onSelectedFlashcardIdsChange,
   onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
+  const hasSelection = selectedFlashcardIds.length > 0;
   const columns = useMemo(
     () =>
       getColumns(
@@ -168,8 +171,15 @@ export function FlashcardsManagerTable({
         onMoveRequested,
         onDeleteRequested,
         onResetRequested,
+        hasSelection,
       ),
-    [onDeleteRequested, onEditRequested, onMoveRequested, onResetRequested],
+    [
+      hasSelection,
+      onDeleteRequested,
+      onEditRequested,
+      onMoveRequested,
+      onResetRequested,
+    ],
   );
 
   return (

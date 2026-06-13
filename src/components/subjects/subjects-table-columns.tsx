@@ -39,6 +39,7 @@ interface SubjectsTableActionsProps {
   onDeleted: (subject: SubjectListItem) => void;
   onEdit: (subject: SubjectListItem) => void;
   onRestored: () => void;
+  hasSelection?: boolean;
 }
 
 function renderSubjectLabel(subject: SubjectListItem) {
@@ -75,6 +76,7 @@ function SubjectsTableActions({
   onDeleted,
   onEdit,
   onRestored,
+  hasSelection = false,
 }: Readonly<SubjectsTableActionsProps>) {
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
@@ -114,6 +116,7 @@ function SubjectsTableActions({
           className={cn(
             ROW_ACTION_TRIGGER_CLASS,
             "size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground",
+            hasSelection && "invisible pointer-events-none",
           )}
           aria-label="Open subject actions"
           disabled={isPending}
@@ -175,6 +178,7 @@ export function getSubjectColumns({
   onDeleted,
   onEdit,
   onRestored,
+  hasSelection,
 }: Omit<SubjectsTableActionsProps, "subject">): ColumnDef<SubjectListItem>[] {
   return [
     {
@@ -204,6 +208,7 @@ export function getSubjectColumns({
             onDeleted={onDeleted}
             onEdit={onEdit}
             onRestored={onRestored}
+            hasSelection={hasSelection}
           />
         </div>
       ),

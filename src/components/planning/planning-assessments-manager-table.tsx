@@ -108,6 +108,7 @@ function getColumns(
   subjectNamesById: Record<string, string>,
   todayIso: string,
   isLoading: boolean,
+  hasSelection: boolean,
   selectedSubjectId?: string,
 ): ColumnDef<AssessmentEntity>[] {
   const columns: ColumnDef<AssessmentEntity>[] = [
@@ -202,6 +203,7 @@ function getColumns(
               assessment={row.original}
               onUpdated={onUpdated}
               onDeleted={onDeleted}
+              hasSelection={hasSelection}
             />
           )}
         </div>
@@ -258,6 +260,7 @@ export function PlanningAssessmentsManagerTable({
   const [, startNavTransition] = useTransition();
   const finalGradeTone =
     finalGrade === null ? null : getStatusToneClasses(getScoreTone(finalGrade));
+  const hasSelection = selectedAssessmentIds.length > 0;
   const columns = useMemo(
     () =>
       getColumns(
@@ -266,9 +269,11 @@ export function PlanningAssessmentsManagerTable({
         subjectNamesById,
         todayIso,
         isLoading,
+        hasSelection,
         selectedSubjectId,
       ),
     [
+      hasSelection,
       isLoading,
       onDeleted,
       onUpdated,

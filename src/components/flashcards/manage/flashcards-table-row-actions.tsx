@@ -22,6 +22,7 @@ interface FlashcardsTableRowActionsProps {
   onMoveRequested: () => void;
   onResetRequested: () => void;
   onDeleteRequested: () => void;
+  hasSelection?: boolean;
 }
 
 export function FlashcardsTableRowActions({
@@ -29,6 +30,7 @@ export function FlashcardsTableRowActions({
   onMoveRequested,
   onResetRequested,
   onDeleteRequested,
+  hasSelection = false,
 }: Readonly<FlashcardsTableRowActionsProps>) {
   return (
     <DropdownMenu>
@@ -36,7 +38,7 @@ export function FlashcardsTableRowActions({
         <Button
           variant="ghost"
           size="icon"
-          className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground`}
+          className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground${hasSelection ? " invisible pointer-events-none" : ""}`}
           aria-label="Open flashcard actions"
         >
           <MoreVertical className="size-3.5" />
