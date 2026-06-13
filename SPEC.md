@@ -167,6 +167,7 @@ Students who want a private, lightweight study management workspace.
 - Global statistics view in the flashcards page.
 - Statistics respect the active deck filter.
 - Statistics show overview metrics for cards in scope, including due cards, reviewed vs never-reviewed cards, review/lapse totals, card-state distribution, rating distribution, and recent daily review activity.
+- A review activity heatmap shows daily review counts over the last 365 days as a calendar grid whose cell intensity reflects how many reviews happened that day, with current and longest day-streak counters derived from the same data. The current streak counts consecutive days with at least one review ending today, and a day with no reviews yet today does not break it. The heatmap and streaks respect the active deck filter, like the rest of the statistics view, and are hidden when no cards are in scope.
 
 ### Flashcard Refine
 

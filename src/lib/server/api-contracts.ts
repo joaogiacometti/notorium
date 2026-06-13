@@ -156,11 +156,18 @@ export interface FlashcardStatisticsTrendPoint {
   count: number;
 }
 
+export interface FlashcardStatisticsStreak {
+  current: number;
+  longest: number;
+}
+
 export interface FlashcardStatisticsState {
   summary: FlashcardStatisticsSummary;
   states: FlashcardStatisticsBreakdownItem[];
   ratings: FlashcardStatisticsBreakdownItem[];
   trend: FlashcardStatisticsTrendPoint[];
+  heatmap: FlashcardStatisticsTrendPoint[];
+  streak: FlashcardStatisticsStreak;
 }
 
 export type SearchSubjectResult = Pick<SubjectEntity, "id" | "name">;

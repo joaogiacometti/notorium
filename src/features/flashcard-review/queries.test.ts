@@ -217,15 +217,24 @@ describe("getFlashcardStatisticsForUser", () => {
       "flashcard_review_log_reviewed_at_column",
       expect.any(Date),
     );
-    const expectedTrendStart = new Date("2026-04-12T15:00:00.000Z");
-    expectedTrendStart.setHours(0, 0, 0, 0);
-    expectedTrendStart.setDate(expectedTrendStart.getDate() - 6);
+    const expectedHeatmapStart = new Date("2026-04-12T15:00:00.000Z");
+    expectedHeatmapStart.setHours(0, 0, 0, 0);
+    expectedHeatmapStart.setDate(expectedHeatmapStart.getDate() - 364);
 
     expect(
       (
         vi.mocked(gteMock).mock.calls[0]?.[1] as Date | undefined
       )?.toISOString(),
-    ).toBe(expectedTrendStart.toISOString());
+    ).toBe(expectedHeatmapStart.toISOString());
+
+    expect(result.heatmap).toHaveLength(365);
+    expect(result.heatmap.at(-1)).toEqual({ date: "2026-04-12", count: 2 });
+    expect(result.heatmap.filter((point) => point.count > 0)).toEqual([
+      { date: "2026-04-08", count: 3 },
+      { date: "2026-04-10", count: 5 },
+      { date: "2026-04-12", count: 2 },
+    ]);
+    expect(result.streak).toEqual({ current: 1, longest: 1 });
   });
 
   it("returns zeroed statistics when no cards are in scope", async () => {

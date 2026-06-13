@@ -46,6 +46,11 @@ const statistics: FlashcardStatisticsState = {
     { date: "2026-04-13", count: 0 },
     { date: "2026-04-14", count: 4 },
   ],
+  heatmap: [
+    { date: "2026-04-13", count: 0 },
+    { date: "2026-04-14", count: 4 },
+  ],
+  streak: { current: 1, longest: 1 },
 };
 
 describe("FlashcardsStatistics", () => {

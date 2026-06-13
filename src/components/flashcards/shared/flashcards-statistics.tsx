@@ -1,4 +1,5 @@
 import { BarChart3, CheckCircle2 } from "lucide-react";
+import { ReviewHeatmap } from "@/components/flashcards/shared/review-heatmap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFlashcardStudyHealth } from "@/features/flashcards/statistics-health";
 import type {
@@ -159,7 +160,7 @@ export function FlashcardsStatistics({
   decks: _decks,
   deckId: _deckId,
 }: Readonly<FlashcardsStatisticsProps>) {
-  const { summary, states, ratings, trend } = statistics;
+  const { summary, states, ratings, trend, heatmap, streak } = statistics;
   const studyHealth = getFlashcardStudyHealth(summary);
   const studyHealthTone = getStatusToneClasses(studyHealth.tone);
 
@@ -257,6 +258,9 @@ export function FlashcardsStatistics({
           )}
         </div>
       </div>
+      {summary.totalCards > 0 ? (
+        <ReviewHeatmap heatmap={heatmap} streak={streak} />
+      ) : null}
     </div>
   );
 }

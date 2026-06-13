@@ -144,6 +144,8 @@ const mockStatistics: import("@/lib/server/api-contracts").FlashcardStatisticsSt
     states: [],
     ratings: [],
     trend: [],
+    heatmap: [],
+    streak: { current: 0, longest: 0 },
   };
 
 const mockDeckTree: import("@/lib/server/api-contracts").DeckTreeNode[] = [];

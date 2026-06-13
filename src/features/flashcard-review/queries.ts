@@ -20,6 +20,7 @@ import {
   LEARN_AHEAD_STATES,
   LEARN_AHEAD_WINDOW_MS,
 } from "@/features/flashcard-review/constants";
+import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -27,6 +28,7 @@ import type {
   FlashcardReviewState,
   FlashcardReviewSummary,
   FlashcardStatisticsState,
+  FlashcardStatisticsTrendPoint,
 } from "@/lib/server/api-contracts";
 
 export interface GetDueFlashcardsOptions {
@@ -36,6 +38,7 @@ export interface GetDueFlashcardsOptions {
 }
 
 const recentTrendDays = 7;
+const heatmapDays = 365;
 
 async function getDeckPathMapForUser(
   userId: string,
@@ -160,11 +163,11 @@ export async function getFlashcardStatisticsForUser(
     reviewFilters.push(inArray(flashcard.deckId, descendantDeckIds));
   }
 
-  const trendStart = new Date(now);
-  trendStart.setHours(0, 0, 0, 0);
-  trendStart.setDate(trendStart.getDate() - (recentTrendDays - 1));
+  const heatmapStart = new Date(now);
+  heatmapStart.setHours(0, 0, 0, 0);
+  heatmapStart.setDate(heatmapStart.getDate() - (heatmapDays - 1));
 
-  const [summaryRows, stateRows, ratingRows, trendRows] = await Promise.all([
+  const [summaryRows, stateRows, ratingRows, heatmapRows] = await Promise.all([
     getDb()
       .select({
         totalCards: count(),
@@ -204,7 +207,7 @@ export async function getFlashcardStatisticsForUser(
       .innerJoin(flashcard, eq(flashcardReviewLog.flashcardId, flashcard.id))
       .innerJoin(deck, eq(flashcard.deckId, deck.id))
       .where(
-        and(...reviewFilters, gte(flashcardReviewLog.reviewedAt, trendStart)),
+        and(...reviewFilters, gte(flashcardReviewLog.reviewedAt, heatmapStart)),
       )
       .groupBy(sql`date_trunc('day', ${flashcardReviewLog.reviewedAt})`)
       .orderBy(sql`date_trunc('day', ${flashcardReviewLog.reviewedAt})`),
@@ -216,7 +219,18 @@ export async function getFlashcardStatisticsForUser(
   const reviewedCards = summaryRow?.reviewedCards ?? 0;
   const totalReviews = summaryRow?.totalReviews ?? 0;
   const totalLapses = summaryRow?.totalLapses ?? 0;
-  const trendByDate = new Map(trendRows.map((row) => [row.date, row.count]));
+  const countByDate = new Map(heatmapRows.map((row) => [row.date, row.count]));
+
+  const heatmap: FlashcardStatisticsTrendPoint[] = Array.from(
+    { length: heatmapDays },
+    (_, index) => {
+      const date = new Date(heatmapStart);
+      date.setDate(heatmapStart.getDate() + index);
+      const key = date.toISOString().slice(0, 10);
+
+      return { date: key, count: countByDate.get(key) ?? 0 };
+    },
+  );
 
   return {
     summary: {
@@ -254,16 +268,9 @@ export async function getFlashcardStatisticsForUser(
               : "Easy",
       count: ratingRows.find((row) => row.rating === ratingKey)?.count ?? 0,
     })),
-    trend: Array.from({ length: recentTrendDays }, (_, index) => {
-      const date = new Date(trendStart);
-      date.setDate(trendStart.getDate() + index);
-      const key = date.toISOString().slice(0, 10);
-
-      return {
-        date: key,
-        count: trendByDate.get(key) ?? 0,
-      };
-    }),
+    trend: heatmap.slice(heatmapDays - recentTrendDays),
+    heatmap,
+    streak: computeReviewStreaks(heatmap),
   };
 }
 
