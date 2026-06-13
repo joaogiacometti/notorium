@@ -184,10 +184,19 @@ export type SearchFlashcardResult = Pick<
   deckPath: string;
 };
 
+export type SearchMindmapResult = Pick<
+  MindmapEntity,
+  "id" | "title" | "subjectId"
+> & {
+  subjectName: string;
+  matchedNodeLabel?: string;
+};
+
 export type SearchData = {
   subjects: SearchSubjectResult[];
   notes: SearchNoteResult[];
   flashcards: SearchFlashcardResult[];
+  mindmaps: SearchMindmapResult[];
 };
 
 export type SubjectEditDto = Pick<SubjectEntity, "id" | "name">;

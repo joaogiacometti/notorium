@@ -120,6 +120,23 @@ export function getMindmapImagePathnames(data: string | null): string[] {
   return [...pathnames];
 }
 
+/**
+ * Find the first node label in a mindmap that contains `query` (case-insensitive).
+ * Returns undefined if nothing matches or the graph is empty.
+ *
+ * @example
+ * findMindmapNodeLabelMatch(mindmap.data, "separate ways"); // "Separate Ways"
+ */
+export function findMindmapNodeLabelMatch(
+  data: string | null,
+  query: string,
+): string | undefined {
+  const lower = query.toLowerCase();
+  return parseMindmapGraph(data).nodes.find((node) =>
+    node.data.label.toLowerCase().includes(lower),
+  )?.data.label;
+}
+
 /** Pathnames present in `previousData` but no longer referenced by `nextData`. */
 export function getRemovedMindmapImagePathnames(
   previousData: string | null,

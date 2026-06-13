@@ -3,6 +3,7 @@ import type { MindmapGraph } from "@/features/mindmaps/types";
 import {
   countMindmapNodes,
   ensureRootNode,
+  findMindmapNodeLabelMatch,
   getMindmapImagePathnames,
   getRemovedMindmapImagePathnames,
   parseMindmapGraph,
@@ -141,5 +142,41 @@ describe("getRemovedMindmapImagePathnames", () => {
   it("returns nothing when the image is unchanged", () => {
     const data = graphWithImage("notorium/mindmaps/u1/keep.png");
     expect(getRemovedMindmapImagePathnames(data, data)).toEqual([]);
+  });
+});
+
+describe("findMindmapNodeLabelMatch", () => {
+  function graphWithLabels(...labels: string[]): string {
+    return JSON.stringify({
+      nodes: labels.map((label, i) => ({
+        id: `n${i}`,
+        position: { x: 0, y: 0 },
+        data: { label },
+      })),
+      edges: [],
+    });
+  }
+
+  it("returns the matching label (case-insensitive)", () => {
+    const data = graphWithLabels("Root", "Separate Ways", "Partnership");
+    expect(findMindmapNodeLabelMatch(data, "separate ways")).toBe(
+      "Separate Ways",
+    );
+  });
+
+  it("returns the first match when multiple nodes match", () => {
+    const data = graphWithLabels("Bounded Context A", "Bounded Context B");
+    expect(findMindmapNodeLabelMatch(data, "bounded")).toBe(
+      "Bounded Context A",
+    );
+  });
+
+  it("returns undefined when no node matches", () => {
+    const data = graphWithLabels("Root", "Partnership");
+    expect(findMindmapNodeLabelMatch(data, "separate ways")).toBeUndefined();
+  });
+
+  it("returns undefined for null data", () => {
+    expect(findMindmapNodeLabelMatch(null, "anything")).toBeUndefined();
   });
 });

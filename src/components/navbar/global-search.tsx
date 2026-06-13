@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, FileText, Layers, Search } from "lucide-react";
+import { BookOpen, FileText, Layers, Network, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
@@ -20,6 +20,7 @@ import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import {
   getFlashcardDetailHref,
+  getMindmapDetailHref,
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
@@ -102,8 +103,12 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
   const subjects = currentData?.subjects ?? [];
   const notes = currentData?.notes ?? [];
   const flashcards = currentData?.flashcards ?? [];
+  const mindmaps = currentData?.mindmaps ?? [];
   const hasData =
-    subjects.length > 0 || notes.length > 0 || flashcards.length > 0;
+    subjects.length > 0 ||
+    notes.length > 0 ||
+    flashcards.length > 0 ||
+    mindmaps.length > 0;
   const flashcardsView =
     pathname === "/flashcards"
       ? (searchParams.get("view") ?? undefined)
@@ -128,13 +133,13 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
         open={open}
         onOpenChange={handleOpenChange}
         title="Global Search"
-        description="Search across all your subjects, notes, and flashcards"
+        description="Search across all your subjects, notes, flashcards, and mindmaps"
         commandProps={{ shouldFilter: false }}
       >
         <CommandInput
           value={query}
           onValueChange={setQuery}
-          placeholder="Search subjects, notes, and flashcards..."
+          placeholder="Search subjects, notes, flashcards, and mindmaps..."
         />
         <CommandList>
           {isResultsPending && <SearchSkeleton />}
@@ -142,7 +147,9 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
             <CommandEmpty>Sign in to search.</CommandEmpty>
           )}
           {!isResultsPending && isAuthenticated && !hasData && (
-            <CommandEmpty>No subjects, notes, or flashcards yet.</CommandEmpty>
+            <CommandEmpty>
+              No subjects, notes, flashcards, or mindmaps yet.
+            </CommandEmpty>
           )}
 
           {subjects.length > 0 && (
@@ -256,6 +263,47 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
                           highlightQuery,
                           120,
                         ),
+                        highlightQuery,
+                      )}
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {mindmaps.length > 0 && (
+            <CommandGroup
+              heading={showingRecents ? "Recent Mindmaps" : "Mindmaps"}
+            >
+              {mindmaps.map((mm) => (
+                <CommandItem
+                  key={mm.id}
+                  value={mm.id}
+                  onSelect={() =>
+                    handleSelect(getMindmapDetailHref(mm.subjectId, mm.id))
+                  }
+                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
+                >
+                  <div className="flex w-full min-w-0 items-center gap-2">
+                    <Network className="!size-4 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate">
+                      {renderSearchHighlightedText(mm.title, highlightQuery)}
+                    </span>
+                    <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+                      <span className="shrink-0">in</span>
+                      <span className="block min-w-0 flex-1 truncate">
+                        {renderSearchHighlightedText(
+                          mm.subjectName,
+                          highlightQuery,
+                        )}
+                      </span>
+                    </span>
+                  </div>
+                  {mm.matchedNodeLabel && (
+                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
+                      {renderSearchHighlightedText(
+                        mm.matchedNodeLabel,
                         highlightQuery,
                       )}
                     </span>
