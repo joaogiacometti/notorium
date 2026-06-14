@@ -379,109 +379,121 @@ export function removeInternalAttachmentImagesForTransfer(
   );
 }
 
-function normalizeRichTextForRenderingWithResolvedImageUrls(
-  value: string,
-  resolveImageUrl: (value: string) => string | null,
+type ParagraphReplacement = { index: number; length: number; html: string };
+
+// Wraps a resolved image source in a standalone, paragraph-replacing <img>.
+function imageParagraphHtml(src: string): string {
+  return `<img src="${escapeHtmlAttribute(src)}" alt="">`;
+}
+
+// Resolves a non-internal image candidate via the caller's async resolver, then
+// re-checks embeddability on the resolved URL. Returns null when the candidate
+// cannot be turned into a direct, embeddable image URL.
+async function resolveExternalImageUrl(
+  candidate: string,
+  resolveImageUrl: (value: string) => Promise<string | null>,
+): Promise<string | null> {
+  const resolved = await resolveImageUrl(candidate);
+  return resolved ? resolveEmbeddableImageUrl(resolved) : null;
+}
+
+// Splices the collected paragraph replacements back into the normalized markup.
+// Shared by the sync and async rendering normalizers.
+function applyParagraphReplacements(
+  normalizedImages: string,
+  replacements: ParagraphReplacement[],
 ): string {
-  const normalizedImages = normalizeUnsupportedImageMarkup(value);
-
-  if (!/<p>[\s\S]*<\/p>/i.test(normalizedImages)) {
-    return normalizedImages;
-  }
-
-  const paragraphPattern = /<p>([\s\S]*?)<\/p>/gi;
-  const matches = [...normalizedImages.matchAll(paragraphPattern)];
-  if (matches.length === 0) {
+  if (replacements.length === 0) {
     return normalizedImages;
   }
 
   let result = "";
   let lastIndex = 0;
-  let changed = normalizedImages !== value;
-
-  for (const match of matches) {
-    const [paragraphHtml, innerHtml] = match;
-    const index = match.index ?? 0;
-    const candidate = extractImageUrlCandidate(innerHtml);
-    let replacement = paragraphHtml;
-
-    if (candidate) {
-      if (isInternalAttachmentImageSource(candidate)) {
-        replacement = `<img src="${escapeHtmlAttribute(candidate)}" alt="">`;
-        changed = true;
-      } else {
-        const directImageUrl = resolveImageUrl(candidate);
-
-        if (directImageUrl) {
-          replacement = `<img src="${escapeHtmlAttribute(directImageUrl)}" alt="">`;
-          changed = true;
-        }
-      }
-    }
-
+  for (const { index, length, html } of replacements) {
     result += normalizedImages.slice(lastIndex, index);
-    result += replacement;
-    lastIndex = index + paragraphHtml.length;
+    result += html;
+    lastIndex = index + length;
+  }
+  result += normalizedImages.slice(lastIndex);
+  return result;
+}
+
+// Normalizes unsupported image markup and returns the paragraph matches that
+// need image resolution, or null when there is nothing to walk. Shared entry
+// point for both rendering normalizers.
+function prepareParagraphRendering(value: string): {
+  normalizedImages: string;
+  matches: RegExpMatchArray[] | null;
+} {
+  const normalizedImages = normalizeUnsupportedImageMarkup(value);
+
+  if (!/<p>[\s\S]*<\/p>/i.test(normalizedImages)) {
+    return { normalizedImages, matches: null };
   }
 
-  result += normalizedImages.slice(lastIndex);
-  return changed ? result : normalizedImages;
+  const matches = [...normalizedImages.matchAll(/<p>([\s\S]*?)<\/p>/gi)];
+  return { normalizedImages, matches: matches.length === 0 ? null : matches };
 }
 
 export function normalizeRichTextForStaticRendering(value: string): string {
-  return normalizeRichTextForRenderingWithResolvedImageUrls(
-    value,
-    resolveEmbeddableImageUrl,
-  );
+  const { normalizedImages, matches } = prepareParagraphRendering(value);
+  if (!matches) {
+    return normalizedImages;
+  }
+
+  const replacements: ParagraphReplacement[] = [];
+  for (const match of matches) {
+    const [paragraphHtml, innerHtml] = match;
+    const candidate = extractImageUrlCandidate(innerHtml);
+    if (!candidate) {
+      continue;
+    }
+
+    const directImageUrl = isInternalAttachmentImageSource(candidate)
+      ? candidate
+      : resolveEmbeddableImageUrl(candidate);
+
+    if (directImageUrl) {
+      replacements.push({
+        index: match.index ?? 0,
+        length: paragraphHtml.length,
+        html: imageParagraphHtml(directImageUrl),
+      });
+    }
+  }
+
+  return applyParagraphReplacements(normalizedImages, replacements);
 }
 
 export async function normalizeRichTextForRendering(
   value: string,
   resolveImageUrl: (value: string) => Promise<string | null>,
 ): Promise<string> {
-  const normalizedImages = normalizeUnsupportedImageMarkup(value);
-
-  if (!/<p>[\s\S]*<\/p>/i.test(normalizedImages)) {
+  const { normalizedImages, matches } = prepareParagraphRendering(value);
+  if (!matches) {
     return normalizedImages;
   }
 
-  const paragraphPattern = /<p>([\s\S]*?)<\/p>/gi;
-  const matches = [...normalizedImages.matchAll(paragraphPattern)];
-  if (matches.length === 0) {
-    return normalizedImages;
-  }
-
-  let result = "";
-  let lastIndex = 0;
-  let changed = normalizedImages !== value;
-
+  const replacements: ParagraphReplacement[] = [];
   for (const match of matches) {
     const [paragraphHtml, innerHtml] = match;
-    const index = match.index ?? 0;
     const candidate = extractImageUrlCandidate(innerHtml);
-    let replacement = paragraphHtml;
-
-    if (candidate) {
-      if (isInternalAttachmentImageSource(candidate)) {
-        replacement = `<img src="${escapeHtmlAttribute(candidate)}" alt="">`;
-        changed = true;
-      } else {
-        const resolvedImageUrl = await resolveImageUrl(candidate);
-        const directImageUrl =
-          resolvedImageUrl && resolveEmbeddableImageUrl(resolvedImageUrl);
-
-        if (directImageUrl) {
-          replacement = `<img src="${escapeHtmlAttribute(directImageUrl)}" alt="">`;
-          changed = true;
-        }
-      }
+    if (!candidate) {
+      continue;
     }
 
-    result += normalizedImages.slice(lastIndex, index);
-    result += replacement;
-    lastIndex = index + paragraphHtml.length;
+    const directImageUrl = isInternalAttachmentImageSource(candidate)
+      ? candidate
+      : await resolveExternalImageUrl(candidate, resolveImageUrl);
+
+    if (directImageUrl) {
+      replacements.push({
+        index: match.index ?? 0,
+        length: paragraphHtml.length,
+        html: imageParagraphHtml(directImageUrl),
+      });
+    }
   }
 
-  result += normalizedImages.slice(lastIndex);
-  return changed ? result : normalizedImages;
+  return applyParagraphReplacements(normalizedImages, replacements);
 }
