@@ -1,23 +1,25 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { mindmap, subject } from "@/db/schema";
-import { countMindmapNodes } from "@/features/mindmaps/utils";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import type {
   MindmapEntity,
   MindmapListItem,
 } from "@/lib/server/api-contracts";
 
+// Selects only list-preview columns, never the `data` graph blob. The subject
+// documents list merges mindmaps and notes by recency and never needs the graph
+// body, so pulling it (megabytes of JSON for image-heavy maps) just to drop it
+// was the dominant cost of the /subjects/[id]/documents render.
 export async function getMindmapsBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<MindmapListItem[]> {
-  const rows = await getDb()
+  return getDb()
     .select({
       id: mindmap.id,
       title: mindmap.title,
       updatedAt: mindmap.updatedAt,
-      data: mindmap.data,
     })
     .from(mindmap)
     .innerJoin(subject, eq(mindmap.subjectId, subject.id))
@@ -29,13 +31,6 @@ export async function getMindmapsBySubjectForUser(
       ),
     )
     .orderBy(desc(mindmap.updatedAt));
-
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    updatedAt: row.updatedAt,
-    nodeCount: countMindmapNodes(row.data),
-  }));
 }
 
 export async function getMindmapByIdForUser(

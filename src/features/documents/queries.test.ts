@@ -33,7 +33,6 @@ describe("getSubjectDocumentsForUser", () => {
         id: "mindmap-1",
         title: "Newer mindmap",
         updatedAt: new Date("2026-04-21T10:00:00.000Z"),
-        nodeCount: 3,
       },
     ]);
 

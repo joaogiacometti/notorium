@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import {
-  countMindmapNodes,
   ensureRootNode,
   findMindmapNodeLabelMatch,
   getMindmapImagePathnames,
@@ -33,16 +32,6 @@ describe("parseMindmapGraph", () => {
 
   it("returns an empty graph for invalid JSON", () => {
     expect(parseMindmapGraph("{not json")).toEqual({ nodes: [], edges: [] });
-  });
-});
-
-describe("countMindmapNodes", () => {
-  it("counts nodes in a persisted graph", () => {
-    const data = JSON.stringify({
-      nodes: [{ id: "a", position: { x: 0, y: 0 }, data: { label: "A" } }],
-      edges: [],
-    });
-    expect(countMindmapNodes(data)).toBe(1);
   });
 });
 

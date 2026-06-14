@@ -24,11 +24,6 @@ export function parseMindmapGraph(data: string | null): MindmapGraph {
   }
 }
 
-/** Count nodes in a persisted `data` column for list previews. */
-export function countMindmapNodes(data: string | null): number {
-  return parseMindmapGraph(data).nodes.length;
-}
-
 /** Stable id for the injected root node so re-ensuring never duplicates it. */
 const ROOT_NODE_ID = "root";
 
