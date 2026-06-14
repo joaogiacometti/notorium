@@ -4,7 +4,6 @@ import { LIMITS } from "@/lib/config/limits";
 const {
   getApprovedUserByEmailMock,
   getUserAccessStatusByEmailMock,
-  getUserPreferredThemeByEmailMock,
   isEmailDeliveryEnabledMock,
   consumeUserDailyRateLimitMock,
   requestPasswordResetMock,
@@ -16,7 +15,6 @@ const {
 } = vi.hoisted(() => ({
   getApprovedUserByEmailMock: vi.fn(),
   getUserAccessStatusByEmailMock: vi.fn(),
-  getUserPreferredThemeByEmailMock: vi.fn(),
   isEmailDeliveryEnabledMock: vi.fn(),
   consumeUserDailyRateLimitMock: vi.fn(),
   requestPasswordResetMock: vi.fn(),
@@ -38,7 +36,6 @@ vi.mock("@/features/auth/mutations", () => ({
 vi.mock("@/features/auth/queries", () => ({
   getApprovedUserByEmail: getApprovedUserByEmailMock,
   getUserAccessStatusByEmail: getUserAccessStatusByEmailMock,
-  getUserPreferredThemeByEmail: getUserPreferredThemeByEmailMock,
 }));
 
 vi.mock("@/lib/auth/auth", () => ({

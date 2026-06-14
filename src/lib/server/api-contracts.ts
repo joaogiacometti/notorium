@@ -12,7 +12,6 @@ import type {
   subject,
 } from "@/db/schema";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-import type { AppTheme } from "@/lib/theme";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
 export type NoteEntity = InferSelectModel<typeof note>;
@@ -222,7 +221,6 @@ export type AuthRedirectSuccessResult = {
   success: true;
   data: {
     redirectTo: string;
-    theme?: AppTheme;
   };
 };
 export type AuthRedirectResult = AuthRedirectSuccessResult | ActionErrorResult;

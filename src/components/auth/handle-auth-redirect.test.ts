@@ -11,26 +11,13 @@ describe("handle-auth-redirect", () => {
       success: true,
       data: {
         redirectTo: "/subjects",
-        theme: "catppuccin-mocha",
       },
     });
 
     expect(window.location.assign).toHaveBeenCalledWith("/subjects");
   });
 
-  it("navigates even when a theme is included in the payload", () => {
-    handleAuthRedirect({
-      success: true,
-      data: {
-        redirectTo: "/subjects",
-        theme: "dark",
-      },
-    });
-
-    expect(window.location.assign).toHaveBeenCalledWith("/subjects");
-  });
-
-  it("navigates when no theme is provided", () => {
+  it("navigates for pending-approval redirects", () => {
     handleAuthRedirect({
       success: true,
       data: {

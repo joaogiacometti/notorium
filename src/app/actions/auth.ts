@@ -1,13 +1,11 @@
 "use server";
 
-import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { getServerEnv } from "@/env";
 import { claimInitialAdminAccess } from "@/features/auth/mutations";
 import {
   getApprovedUserByEmail,
   getUserAccessStatusByEmail,
-  getUserPreferredThemeByEmail,
 } from "@/features/auth/queries";
 import { getAuth } from "@/lib/auth/auth";
 import { checkAuthRateLimit } from "@/lib/auth/rate-limit";
@@ -36,13 +34,11 @@ const passwordResetSuccess = { success: true } as const;
 
 function createAuthRedirectResult(
   redirectTo: string,
-  theme?: Awaited<ReturnType<typeof getUserPreferredThemeByEmail>>,
 ): AuthRedirectSuccessResult {
   return {
     success: true,
     data: {
       redirectTo,
-      theme,
     },
   };
 }
@@ -70,10 +66,6 @@ export const loginAction = async (
         return actionError("auth.accessBlocked");
       }
 
-      const preferredTheme = await getUserPreferredThemeByEmail(
-        parsedData.email,
-      );
-
       try {
         await getAuth().api.signInEmail({
           body: {
@@ -81,14 +73,11 @@ export const loginAction = async (
             password: parsedData.password,
           },
         });
-      } catch (error) {
-        if (error instanceof APIError) {
-          return actionError("auth.loginFailed");
-        }
+      } catch {
         return actionError("auth.loginFailed");
       }
 
-      return createAuthRedirectResult("/subjects", preferredTheme);
+      return createAuthRedirectResult("/subjects");
     },
   );
 };
@@ -116,20 +105,13 @@ export const signUpAction = async (
           },
         });
         createdUserId = result.user.id;
-      } catch (error) {
-        if (error instanceof APIError) {
-          return actionError("auth.signupFailed");
-        }
+      } catch {
         return actionError("auth.signupFailed");
       }
 
       const isInitialAdmin = await claimInitialAdminAccess(createdUserId);
 
       if (isInitialAdmin) {
-        const preferredTheme = await getUserPreferredThemeByEmail(
-          parsedData.email,
-        );
-
         try {
           await getAuth().api.signInEmail({
             body: {
@@ -137,14 +119,11 @@ export const signUpAction = async (
               password: parsedData.password,
             },
           });
-        } catch (error) {
-          if (error instanceof APIError) {
-            return actionError("auth.signupFailed");
-          }
+        } catch {
           return actionError("auth.signupFailed");
         }
 
-        return createAuthRedirectResult("/subjects", preferredTheme);
+        return createAuthRedirectResult("/subjects");
       }
 
       return createAuthRedirectResult("/login?pendingApproval=1");
@@ -188,10 +167,7 @@ export const requestPasswordResetAction = async (
             redirectTo: `${appUrl}/reset-password`,
           },
         });
-      } catch (error) {
-        if (error instanceof APIError) {
-          return actionError("auth.passwordResetRequestFailed");
-        }
+      } catch {
         return actionError("auth.passwordResetRequestFailed");
       }
 
@@ -215,10 +191,7 @@ export const resetPasswordAction = async (
             newPassword: parsedData.password,
           },
         });
-      } catch (error) {
-        if (error instanceof APIError) {
-          return actionError("auth.passwordResetFailed");
-        }
+      } catch {
         return actionError("auth.passwordResetFailed");
       }
 
