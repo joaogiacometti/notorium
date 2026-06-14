@@ -14,6 +14,7 @@ import { getDb } from "@/db/index";
 import { deck, flashcard } from "@/db/schema";
 import {
   getAllDecksWithPathsForUser,
+  getDeckPathForUser,
   getDescendantDeckIds,
 } from "@/features/decks/queries";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
@@ -301,25 +302,26 @@ export async function getFlashcardDetailByIdForUser(
   userId: string,
   flashcardId: string,
 ): Promise<FlashcardDetailEntity | null> {
-  const [results, deckPathMap] = await Promise.all([
-    getDb()
-      .select({ flashcard, deckName: deck.name })
-      .from(flashcard)
-      .innerJoin(deck, eq(flashcard.deckId, deck.id))
-      .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
-      .limit(1),
-    getDeckPathMapForUser(userId),
-  ]);
+  const results = await getDb()
+    .select({ flashcard, deckName: deck.name })
+    .from(flashcard)
+    .innerJoin(deck, eq(flashcard.deckId, deck.id))
+    .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
+    .limit(1);
 
   const result = results[0];
   if (!result) {
     return null;
   }
 
+  // Resolve only this card's deck path (one ancestor-chain walk) rather than
+  // materializing the whole library's path map just to read a single entry.
+  const deckPath = await getDeckPathForUser(userId, result.flashcard.deckId);
+
   return {
     ...result.flashcard,
     deckName: result.deckName,
-    deckPath: deckPathMap.get(result.flashcard.deckId) ?? result.deckName,
+    deckPath: deckPath || result.deckName,
   };
 }
 

@@ -14,6 +14,7 @@ import { getDb } from "@/db/index";
 import { deck, flashcard, flashcardReviewLog } from "@/db/schema";
 import {
   getAllDecksWithPathsForUser,
+  getDeckPathForUser,
   getDescendantDeckIds,
 } from "@/features/decks/queries";
 import {
@@ -315,23 +316,25 @@ export async function getReviewableFlashcardForUser(
   deckName: string;
   deckPath?: string;
 } | null> {
-  const [rows, deckPathMap] = await Promise.all([
-    getDb()
-      .select({ flashcard, deckName: deck.name })
-      .from(flashcard)
-      .innerJoin(deck, eq(flashcard.deckId, deck.id))
-      .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
-      .limit(1),
-    getDeckPathMapForUser(userId),
-  ]);
+  const rows = await getDb()
+    .select({ flashcard, deckName: deck.name })
+    .from(flashcard)
+    .innerJoin(deck, eq(flashcard.deckId, deck.id))
+    .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
+    .limit(1);
 
-  return rows[0]
-    ? {
-        ...rows[0].flashcard,
-        deckName: rows[0].deckName,
-        deckPath: deckPathMap.get(rows[0].flashcard.deckId) ?? rows[0].deckName,
-      }
-    : null;
+  if (!rows[0]) {
+    return null;
+  }
+
+  // One card only needs its own deck path, not the whole library's path map.
+  const deckPath = await getDeckPathForUser(userId, rows[0].flashcard.deckId);
+
+  return {
+    ...rows[0].flashcard,
+    deckName: rows[0].deckName,
+    deckPath: deckPath || rows[0].deckName,
+  };
 }
 
 export async function getAllFlashcardsForExam(
