@@ -195,6 +195,11 @@ className =
 - Stage only files that belong to the requested change. Do not include unrelated worktree changes.
 - Before reporting success, confirm the commit hash and a clean `git status --short`.
 
+## Workflow
+
+- Do not run linting, type checks, size checks, or tests during regular code changes. Run them only when the user explicitly asks to commit.
+- The user will test changes manually. Guards are commit gates, not coding gates.
+
 ## Automated Guards
 
 These run in CI (`.github/workflows/checks.yml`) and locally. Do not weaken a guard to make a build pass; fix the code.
