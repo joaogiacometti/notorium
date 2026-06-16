@@ -234,6 +234,21 @@ Students who want a private, lightweight study management workspace.
   - weighted average if at least one valid weight exists
   - simple average otherwise
 
+### Library
+
+- A top-level Library section, scoped per user, for uploading PDF books and reading them in the app.
+- Add a book by uploading a PDF and providing a title and optional author; the title pre-fills from the file name.
+- Only PDF files are accepted, capped at the configured maximum book size, with a per-user daily upload limit.
+- Books are private: a user only sees and can open their own books, and the book file is served through an ownership-checked route.
+- The library lists books in a paginated table showing title, author, saved reading progress (`Page X of Y` once the page count is known), and when the book was last read; clicking a row opens the book.
+- The table can be filtered with a search box that matches book title or author.
+- Each row has an actions menu to edit the book's title and author or delete the book; rows can be multi-selected to delete several books at once.
+- Opening a book renders the PDF in a scrollable in-app reader.
+- The reader tracks the page currently in view and saves it automatically as the user scrolls, so reopening the book returns to the last page read.
+- Saving is debounced while scrolling, deduplicated so unchanged pages are not re-saved, and flushed immediately when the tab is hidden or the reader is closed so a mid-scroll exit is not lost.
+- The reader restores to the saved page on open before enabling further saves, and the saved page is clamped to the book's page count.
+- Deleting a book removes both the stored file and the saved reading position and cannot be undone.
+
 ### Global Search
 
 - Search subjects, notes, and flashcards by text with case-insensitive matching.
@@ -305,11 +320,13 @@ Students who want a private, lightweight study management workspace.
 - A user can create a maximum of 50 assessments per subject.
 - A user can create a maximum of 2000 flashcards per deck.
 - A user can create a maximum of 200 decks.
+- A user can upload a maximum of 100 library books, each up to 20 MB, with at most 50 book uploads per UTC day.
 
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.
-- A user can only access or mutate their own subjects, notes, mindmaps, flashcards, attendance records, and assessments.
+- A user can only access or mutate their own subjects, notes, mindmaps, flashcards, attendance records, assessments, and library books.
+- Library book files are served only through an ownership-checked route; a user cannot read another user's book or saved page.
 - Account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
@@ -336,6 +353,8 @@ Students who want a private, lightweight study management workspace.
   - `id`, `missDate`, `subjectId`, timestamps, `userId`
 - `assessment`
   - `id`, `title`, `description`, `type`, `status`, `dueDate`, `score`, `weight`, `subjectId`, timestamps, `userId`
+- `library_book`
+  - `id`, `title`, `author`, `fileName`, `blobPathname`, `sizeBytes`, `totalPages`, `currentPage`, `lastReadAt`, timestamps, `userId`
 
 ## Out of Scope
 

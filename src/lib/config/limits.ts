@@ -27,6 +27,13 @@ export const LIMITS = {
   attachmentUploadRateLimitPrefix: "ratelimit:attachments:upload",
   attachmentUploadRateLimitPerDay: 200,
 
+  maxBooksPerUser: 100,
+  libraryBookMaxBytes: 20971520,
+  libraryBookTitleMax: 200,
+  libraryBookAuthorMax: 200,
+  libraryUploadRateLimitPrefix: "ratelimit:library:upload",
+  libraryUploadRateLimitPerDay: 50,
+
   flashcardFrontMax: 1000,
   flashcardBackMax: 4000,
   flashcardAiMaxInput: 10000,

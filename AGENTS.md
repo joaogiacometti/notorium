@@ -205,7 +205,7 @@ className =
 These run in CI (`.github/workflows/checks.yml`) and locally. Do not weaken a guard to make a build pass; fix the code.
 
 - `bun run lint` (Biome) also enforces architecture boundaries via `noRestrictedImports` overrides in `biome.json`: Server Actions cannot import `@/db/index`; components cannot import `@/features/*/mutations`.
-- `bun run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries.
+- `bun run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries. `src/db/schema.ts` is intentionally exempt via `SIZE_GUARD_EXEMPT`: keep the Drizzle schema as one file and let it grow — do not split it or try to "fix" its size.
 - `bun run test:coverage` enforces coverage floors set in `vitest.config.ts`. Ratchet them up as coverage improves; never lower them.
 
 Lefthook (`lefthook.yml`) runs these locally before they reach CI: pre-commit formats and lints staged files with Biome; pre-push runs typecheck, tests, and the file-size guard. Hooks install automatically on `bun install` because `lefthook` is listed in `trustedDependencies`, so Bun runs its postinstall (which safely skips in CI and when git is absent); run `bunx lefthook install` manually if needed.

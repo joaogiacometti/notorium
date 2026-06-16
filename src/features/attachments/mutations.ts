@@ -17,6 +17,7 @@ import {
   type UploadFlashcardOcclusionImageForm,
 } from "@/features/attachments/validation";
 import { LIMITS } from "@/lib/config/limits";
+import { decodeBase64File } from "@/lib/media-storage/decode-base64";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 import type { AssessmentAttachmentEntity } from "@/lib/server/api-contracts";
@@ -49,55 +50,6 @@ function buildAttachmentReadUrl(pathname: string): string {
   return `/api/attachments/blob?pathname=${encodeURIComponent(pathname)}`;
 }
 
-function normalizeBase64Payload(value: string): string | null {
-  const trimmed = value.trim();
-
-  if (trimmed.length === 0) {
-    return null;
-  }
-
-  if (!trimmed.startsWith("data:")) {
-    return trimmed;
-  }
-
-  const commaIndex = trimmed.indexOf(",");
-  if (commaIndex < 0 || commaIndex + 1 >= trimmed.length) {
-    return null;
-  }
-
-  return trimmed.slice(commaIndex + 1);
-}
-
-function decodeBase64Image(value: string): Uint8Array | null {
-  const payload = normalizeBase64Payload(value);
-
-  if (!payload) {
-    return null;
-  }
-
-  const normalized = payload.replaceAll(/\s+/g, "");
-
-  if (normalized.length === 0 || normalized.length % 4 !== 0) {
-    return null;
-  }
-
-  if (!/^[A-Za-z0-9+/]+=*$/.test(normalized)) {
-    return null;
-  }
-
-  try {
-    const decoded = Buffer.from(normalized, "base64");
-
-    if (decoded.byteLength === 0) {
-      return null;
-    }
-
-    return decoded;
-  } catch {
-    return null;
-  }
-}
-
 type UploadImageContext = "notes" | "flashcards" | "mindmaps";
 
 // Shared upload core for editor and occlusion images: validates, rate-limits,
@@ -117,7 +69,7 @@ async function uploadAttachmentImageBytes(
     return actionError("attachments.mimeTypeNotAllowed");
   }
 
-  const bytes = decodeBase64Image(data.dataBase64);
+  const bytes = decodeBase64File(data.dataBase64);
 
   if (!bytes) {
     return actionError("attachments.invalidData");
@@ -223,7 +175,7 @@ export async function uploadAssessmentAttachmentForUser(
     return actionError("attachments.mimeTypeNotAllowed");
   }
 
-  const bytes = decodeBase64Image(data.dataBase64);
+  const bytes = decodeBase64File(data.dataBase64);
 
   if (!bytes) {
     return actionError("attachments.invalidData");

@@ -7,6 +7,7 @@ import type {
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
+  libraryBook,
   mindmap,
   note,
   subject,
@@ -22,6 +23,7 @@ export type AssessmentEntity = InferSelectModel<typeof assessment>;
 export type AssessmentAttachmentEntity = InferSelectModel<
   typeof assessmentAttachment
 >;
+export type LibraryBookEntity = InferSelectModel<typeof libraryBook>;
 export type DeckEntity = InferSelectModel<typeof deck>;
 export interface DeckOption extends DeckEntity {
   path: string;
@@ -253,6 +255,12 @@ export type BulkUpdateAssessmentStatusResult =
     }
   | ActionErrorResult;
 export type BulkSubjectMutationResult =
+  | {
+      success: true;
+      ids: string[];
+    }
+  | ActionErrorResult;
+export type BulkLibraryMutationResult =
   | {
       success: true;
       ids: string[];

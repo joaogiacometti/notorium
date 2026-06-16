@@ -364,6 +364,40 @@ export const assessmentAttachment = pgTable(
   ],
 );
 
+export const libraryBook = pgTable(
+  "library_book",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    author: text("author"),
+    fileName: text("file_name").notNull(),
+    blobPathname: text("blob_pathname").notNull().unique(),
+    sizeBytes: integer("size_bytes").notNull(),
+    // Captured from the PDF on first successful render; null until then.
+    totalPages: integer("total_pages"),
+    // The reading position the user left off at. Defaults to the first page.
+    currentPage: integer("current_page").notNull().default(1),
+    lastReadAt: timestamp("last_read_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("library_book_userId_idx").on(table.userId),
+    index("library_book_userId_updatedAt_idx").on(
+      table.userId,
+      table.updatedAt,
+    ),
+  ],
+);
+
 export const notificationLog = pgTable(
   "notification_log",
   {
@@ -583,6 +617,7 @@ export const userRelations = relations(user, ({ many }) => ({
   flashcardReviewLogs: many(flashcardReviewLog),
   decks: many(deck),
   notificationLogs: many(notificationLog),
+  libraryBooks: many(libraryBook),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -608,6 +643,13 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   mindmaps: many(mindmap),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
+}));
+
+export const libraryBookRelations = relations(libraryBook, ({ one }) => ({
+  user: one(user, {
+    fields: [libraryBook.userId],
+    references: [user.id],
+  }),
 }));
 
 export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({

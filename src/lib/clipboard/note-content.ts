@@ -38,27 +38,33 @@ function canCopyRichText() {
 }
 
 function sanitizeRichHtmlForClipboard(html: string): string {
-  return DOMPurify.sanitize(html);
+  // Pre-parse with innerHTML before handing to DOMPurify so it walks an
+  // already-constructed DOM rather than re-parsing the string via
+  // createContextualFragment, which drops block elements like <p> in jsdom.
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  return DOMPurify.sanitize(container) as string;
 }
 
 function getPlainTextFromHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, "text/html");
+  const container = document.createElement("div");
+  container.innerHTML = html;
 
   // Math nodes serialize as empty elements with the LaTeX in data-latex, so
   // textContent would drop equations. Surface them as round-trippable $...$.
-  replaceMathNodesWithLatex(doc, "inline-math", "$");
-  replaceMathNodesWithLatex(doc, "block-math", "$$");
+  replaceMathNodesWithLatex(container, "inline-math", "$");
+  replaceMathNodesWithLatex(container, "block-math", "$$");
 
-  doc.querySelectorAll("br").forEach((br) => {
-    br.replaceWith(doc.createTextNode("\n"));
+  container.querySelectorAll("br").forEach((br) => {
+    br.replaceWith(document.createTextNode("\n"));
   });
-  doc
+  container
     .querySelectorAll("blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre")
     .forEach((el) => {
-      el.after(doc.createTextNode("\n"));
+      el.after(document.createTextNode("\n"));
     });
 
-  return (doc.body.textContent ?? "")
+  return (container.textContent ?? "")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
@@ -66,12 +72,14 @@ function getPlainTextFromHtml(html: string): string {
 }
 
 function replaceMathNodesWithLatex(
-  doc: Document,
+  container: Element,
   dataType: "inline-math" | "block-math",
   delimiter: "$" | "$$",
 ) {
-  doc.querySelectorAll(`[data-type="${dataType}"]`).forEach((element) => {
+  container.querySelectorAll(`[data-type="${dataType}"]`).forEach((element) => {
     const latex = element.getAttribute("data-latex") ?? "";
-    element.replaceWith(doc.createTextNode(`${delimiter}${latex}${delimiter}`));
+    element.replaceWith(
+      document.createTextNode(`${delimiter}${latex}${delimiter}`),
+    );
   });
 }

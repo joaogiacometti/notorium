@@ -7,7 +7,8 @@ export type MediaStorageUploadContext =
   | "notes"
   | "flashcards"
   | "assessments"
-  | "mindmaps";
+  | "mindmaps"
+  | "library";
 
 export interface UploadImageInput {
   userId: string;

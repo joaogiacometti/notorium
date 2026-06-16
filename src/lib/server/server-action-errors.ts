@@ -118,6 +118,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} attachments per assessment.`,
   "limits.attachmentSizeLimit": (params) =>
     `File size limit exceeded: maximum ${params?.max} bytes.`,
+  "limits.bookLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} books.`,
+  "limits.bookSizeLimit": (params) =>
+    `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.assessmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} assessments per subject.`,
   "limits.flashcardLimit": (params) =>
@@ -140,6 +144,13 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "mindmaps.notFound": "Mindmap not found.",
   "subjects.invalidData": "Invalid subject data.",
   "subjects.notFound": "Subject not found.",
+  "library.invalidData": "Invalid book data.",
+  "library.notFound": "Book not found.",
+  "library.uploadFailed": "Failed to upload book.",
+  "library.deleteFailed": "Failed to delete book.",
+  "library.mimeTypeNotAllowed": "Only PDF files are supported.",
+  "library.notConfigured":
+    "No media storage is configured. Contact your administrator.",
 };
 
 export function t(key: string, values?: ActionErrorParams): string {

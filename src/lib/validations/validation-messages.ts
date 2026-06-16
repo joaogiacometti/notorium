@@ -89,6 +89,12 @@ const VALIDATION_MESSAGES: Record<string, string> = {
     "Search query must be at most 200 characters.",
   "Validation.subjects.nameMaxLength": "Name must be at most 100 characters.",
   "Validation.subjects.nameRequired": "Name is required.",
+  "Validation.library.titleRequired": "Title is required.",
+  "Validation.library.titleMaxLength": "Title must be at most 200 characters.",
+  "Validation.library.authorMaxLength":
+    "Author must be at most 200 characters.",
+  "Validation.library.fileRequired": "Select a PDF file to upload.",
+  "Validation.library.pageInvalid": "Page must be a positive whole number.",
   "Validation.theme.invalid": "Invalid theme.",
 };
 

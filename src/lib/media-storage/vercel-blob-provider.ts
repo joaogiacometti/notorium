@@ -19,7 +19,7 @@ function sanitizeFileName(fileName: string): string {
     return "pasted-image";
   }
 
-  return normalized.slice(-120);
+  return normalized.slice(0, 120);
 }
 
 function buildPath(input: UploadImageInput): string {

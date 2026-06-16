@@ -98,15 +98,14 @@ export function CommandPalette({
   }
 
   function navigate(href: string) {
-    setOpen(false);
+    handleOpenChange(false);
     startNavTransition(() => router.push(href));
   }
 
   function openScopedDialog(dialog: ActiveCreateDialog, forSubjectId: string) {
     setSubjectId(forSubjectId);
     setActiveDialog(dialog);
-    setOpen(false);
-    goToPage("root");
+    handleOpenChange(false);
   }
 
   function runAction(action: PaletteAction) {
@@ -114,7 +113,7 @@ export function CommandPalette({
       navigate(action.href);
     } else if (action.kind === "create") {
       setActiveDialog(action.dialog);
-      setOpen(false);
+      handleOpenChange(false);
     } else if (action.kind === "create-in-subject") {
       const routeSubjectId = parseSubjectIdFromPath(pathname);
       if (routeSubjectId) {
@@ -125,9 +124,9 @@ export function CommandPalette({
       }
     } else if (action.kind === "theme") {
       void setAppTheme(action.theme);
-      setOpen(false);
+      handleOpenChange(false);
     } else {
-      setOpen(false);
+      handleOpenChange(false);
       openShortcutsHelp();
     }
   }

@@ -1,6 +1,7 @@
 import {
   Archive,
   BookOpen,
+  BookText,
   CalendarDays,
   ClipboardList,
   FileText,
@@ -19,7 +20,12 @@ import type { AppTheme } from "@/lib/theme";
 export type PaletteGroup = "Create" | "Go to" | "Settings";
 
 /** Dialogs that need no context and can open straight from the palette. */
-export type ContextFreeDialog = "subject" | "flashcard" | "deck" | "assessment";
+export type ContextFreeDialog =
+  | "subject"
+  | "flashcard"
+  | "deck"
+  | "assessment"
+  | "book";
 
 /** Dialogs that require a subject, resolved from route or a picker step. */
 export type SubjectScopedDialog = "note" | "mindmap";
@@ -45,7 +51,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "create-subject",
     label: "Create Subject",
     group: "Create",
-    keywords: ["new", "add", "subject", "course"],
+    keywords: ["new", "add", "create", "subject", "course"],
     icon: BookOpen,
     action: { kind: "create", dialog: "subject" },
   },
@@ -53,7 +59,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "create-flashcard",
     label: "Create Flashcard",
     group: "Create",
-    keywords: ["new", "add", "flashcard", "card"],
+    keywords: ["new", "add", "create", "flashcard", "card"],
     icon: Layers,
     action: { kind: "create", dialog: "flashcard" },
   },
@@ -61,7 +67,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "create-deck",
     label: "Create Deck",
     group: "Create",
-    keywords: ["new", "add", "deck", "folder"],
+    keywords: ["new", "add", "create", "deck", "folder"],
     icon: FolderPlus,
     action: { kind: "create", dialog: "deck" },
   },
@@ -69,7 +75,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "create-assessment",
     label: "Create Assessment",
     group: "Create",
-    keywords: ["new", "add", "assessment", "exam", "test", "quiz"],
+    keywords: ["new", "add", "create", "assessment", "exam", "test", "quiz"],
     icon: ClipboardList,
     action: { kind: "create", dialog: "assessment" },
   },
@@ -77,7 +83,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "create-note",
     label: "Create Note",
     group: "Create",
-    keywords: ["new", "add", "note", "document"],
+    keywords: ["new", "add", "create", "note", "document"],
     icon: FileText,
     action: { kind: "create-in-subject", dialog: "note" },
   },
@@ -85,7 +91,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "create-mindmap",
     label: "Create Mindmap",
     group: "Create",
-    keywords: ["new", "add", "mindmap", "map", "diagram"],
+    keywords: ["new", "add", "create", "mindmap", "map", "diagram"],
     icon: Network,
     action: { kind: "create-in-subject", dialog: "mindmap" },
   },
@@ -112,6 +118,22 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["planning", "calendar", "assessments", "schedule"],
     icon: CalendarDays,
     action: { kind: "navigate", href: "/planning" },
+  },
+  {
+    id: "add-book",
+    label: "Add Book",
+    group: "Create",
+    keywords: ["new", "add", "create", "book", "pdf", "upload", "library"],
+    icon: BookText,
+    action: { kind: "create", dialog: "book" },
+  },
+  {
+    id: "goto-library",
+    label: "Go to Library",
+    group: "Go to",
+    keywords: ["library", "books", "reading", "pdf"],
+    icon: BookText,
+    action: { kind: "navigate", href: "/library" },
   },
   {
     id: "goto-archived",

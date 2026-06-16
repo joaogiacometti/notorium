@@ -330,6 +330,13 @@
       "when": 1781372753491,
       "tag": "0046_thin_black_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1781530551743,
+      "tag": "0047_tearful_millenium_guard",
+      "breakpoints": true
     }
   ]
 }
