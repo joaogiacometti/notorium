@@ -144,6 +144,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "mindmaps.notFound": "Mindmap not found.",
   "subjects.invalidData": "Invalid subject data.",
   "subjects.notFound": "Subject not found.",
+  "subjects.duplicateName": "A subject with this name already exists.",
   "library.invalidData": "Invalid book data.",
   "library.notFound": "Book not found.",
   "library.uploadFailed": "Failed to upload book.",

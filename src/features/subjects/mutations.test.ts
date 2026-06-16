@@ -113,6 +113,71 @@ describe("createSubjectForUser", () => {
       kind: "general",
     });
   });
+
+  it("returns the duplicate name error on a unique constraint violation", async () => {
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    insertValuesMock.mockRejectedValueOnce({ code: "23505" });
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "History",
+      kind: "academic",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "subjects.duplicateName",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+  });
+
+  it("rethrows non-unique-violation insert errors", async () => {
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    const unexpected = new Error("connection lost");
+    insertValuesMock.mockRejectedValueOnce(unexpected);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    await expect(
+      createSubjectForUser("user-1", { name: "History", kind: "academic" }),
+    ).rejects.toThrow(unexpected);
+  });
+});
+
+describe("editSubjectForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns the duplicate name error on a unique constraint violation", async () => {
+    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+    });
+    updateWhereMock.mockRejectedValueOnce({ code: "23505" });
+
+    const { editSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await editSubjectForUser("user-1", {
+      id: "subject-1",
+      name: "History",
+      kind: "academic",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "subjects.duplicateName",
+      errorParams: undefined,
+      errorMessage: undefined,
+    });
+  });
 });
 
 describe("archiveSubjectForUser", () => {

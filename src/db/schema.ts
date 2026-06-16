@@ -156,6 +156,7 @@ export const subject = pgTable(
       table.updatedAt,
     ),
     index("subject_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
+    unique("subject_user_id_name_unique").on(table.userId, table.name),
   ],
 );
 

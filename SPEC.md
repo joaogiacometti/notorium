@@ -38,6 +38,7 @@ Students who want a private, lightweight study management workspace.
 - Subjects list as a table with search, sorting, active/archived filters, page size controls, row selection, and bulk archive/restore/delete.
 - Subjects table shows subject title, notes count, and compact row actions. It does not show status, created, or updated columns. General subjects show a "General" tag next to their title.
 - Subject fields: name and kind.
+- Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects (active or archived) is rejected with a duplicate-name error. Uniqueness is case-sensitive.
 - Each subject has a kind, chosen at creation and editable later: `academic` or `general`.
   - Academic subjects expose attendance and assessment tracking on their detail page, in addition to documents.
   - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools.

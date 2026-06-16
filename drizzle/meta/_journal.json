@@ -337,6 +337,20 @@
       "when": 1781530551743,
       "tag": "0047_tearful_millenium_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1781884800000,
+      "tag": "0048_dedup_subject_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1781884860000,
+      "tag": "0049_unique_subject_name_per_user",
+      "breakpoints": true
     }
   ]
 }

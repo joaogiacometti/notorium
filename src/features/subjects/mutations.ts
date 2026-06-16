@@ -23,6 +23,7 @@ import type {
   RestoreSubjectForm,
 } from "@/features/subjects/validation";
 import { LIMITS } from "@/lib/config/limits";
+import { isUniqueViolationError } from "@/lib/db/errors";
 import type { BulkSubjectMutationResult } from "@/lib/server/api-contracts";
 import {
   type ActionErrorResult,
@@ -57,9 +58,16 @@ export async function createSubjectForUser(
     });
   }
 
-  await getDb()
-    .insert(subject)
-    .values({ ...getSubjectMutationValues(data), userId });
+  try {
+    await getDb()
+      .insert(subject)
+      .values({ ...getSubjectMutationValues(data), userId });
+  } catch (error) {
+    if (isUniqueViolationError(error)) {
+      return actionError("subjects.duplicateName");
+    }
+    throw error;
+  }
 
   return { success: true };
 }
@@ -74,10 +82,17 @@ export async function editSubjectForUser(
     return actionError("subjects.notFound");
   }
 
-  await getDb()
-    .update(subject)
-    .set(getSubjectMutationValues(data))
-    .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
+  try {
+    await getDb()
+      .update(subject)
+      .set(getSubjectMutationValues(data))
+      .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
+  } catch (error) {
+    if (isUniqueViolationError(error)) {
+      return actionError("subjects.duplicateName");
+    }
+    throw error;
+  }
 
   return { success: true, subjectId: data.id };
 }
