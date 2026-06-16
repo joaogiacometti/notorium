@@ -1,13 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { put } from "@vercel/blob/client";
 import { Plus } from "lucide-react";
 import type React from "react";
 import { type ChangeEvent, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { uploadBook } from "@/app/actions/library";
+import { generateLibraryUploadToken, uploadBook } from "@/app/actions/library";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +32,6 @@ import {
 import { createBookSchema } from "@/features/library/validation";
 import { LIMITS } from "@/lib/config/limits";
 import { t } from "@/lib/server/server-action-errors";
-import { readFileAsBase64 } from "@/lib/utils";
 
 const MAX_BOOK_MB = Math.round(LIMITS.libraryBookMaxBytes / (1024 * 1024));
 
@@ -142,18 +142,29 @@ export function AddBookDialog({
   }
 
   async function uploadSelectedBook(values: BookMetadata, selected: File) {
-    const dataBase64 = await readFileAsBase64(selected);
-    if (!dataBase64) {
-      toast.error(t("library.invalidData"));
+    const tokenResult = await generateLibraryUploadToken({
+      fileName: selected.name,
+      mimeType: selected.type || LIBRARY_BOOK_MIME,
+    });
+
+    if (!tokenResult.success) {
+      toast.error(t(tokenResult.error));
       return;
     }
+
+    const blob = await put(tokenResult.pathname, selected, {
+      access: "private",
+      contentType: selected.type || LIBRARY_BOOK_MIME,
+      token: tokenResult.token,
+    });
 
     const result = await uploadBook({
       title: values.title,
       author: values.author,
       fileName: selected.name,
       mimeType: selected.type || LIBRARY_BOOK_MIME,
-      dataBase64,
+      blobPathname: blob.pathname,
+      sizeBytes: selected.size,
     });
 
     if (result.success) {

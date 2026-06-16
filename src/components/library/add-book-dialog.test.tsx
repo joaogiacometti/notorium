@@ -5,9 +5,19 @@ import { AddBookDialog } from "@/components/library/add-book-dialog";
 import { LIMITS } from "@/lib/config/limits";
 
 const uploadBookMock = vi.fn();
+const generateLibraryUploadTokenMock = vi.fn();
 
 vi.mock("@/app/actions/library", () => ({
   uploadBook: (...args: unknown[]) => uploadBookMock(...args),
+  generateLibraryUploadToken: (...args: unknown[]) =>
+    generateLibraryUploadTokenMock(...args),
+}));
+
+vi.mock("@vercel/blob/client", () => ({
+  put: vi.fn().mockResolvedValue({
+    url: "https://blob/notorium/library/user-1/book.pdf",
+    pathname: "notorium/library/user-1/book.pdf",
+  }),
 }));
 
 vi.mock("sonner", () => ({
@@ -134,6 +144,11 @@ describe("AddBookDialog file validation", () => {
   });
 
   it("uploads the book and closes the dialog on success", async () => {
+    generateLibraryUploadTokenMock.mockResolvedValue({
+      success: true,
+      token: "token-123",
+      pathname: "notorium/library/user-1/book.pdf",
+    });
     uploadBookMock.mockResolvedValue({ success: true, book: { id: "book-1" } });
     const onOpenChange = vi.fn();
     await act(async () => {

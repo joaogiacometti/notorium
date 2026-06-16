@@ -34,10 +34,32 @@ export const createBookSchema = z.object({
       isSupportedLibraryBookMime,
       validationMessage("Validation.library.fileRequired"),
     ),
-  dataBase64: z.string().trim().min(1),
+  blobPathname: z.string().trim().min(1),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(
+      LIMITS.libraryBookMaxBytes,
+      validationMessage("Validation.library.fileTooLarge"),
+    ),
 });
 
 export type CreateBookForm = z.infer<typeof createBookSchema>;
+
+export const generateTokenSchema = z.object({
+  fileName: z.string().trim().min(1).max(255),
+  mimeType: z
+    .string()
+    .trim()
+    .min(1)
+    .refine(
+      isSupportedLibraryBookMime,
+      validationMessage("Validation.library.fileRequired"),
+    ),
+});
+
+export type GenerateTokenForm = z.infer<typeof generateTokenSchema>;
 
 export const updateReadingPageSchema = z.object({
   bookId: z.string().trim().min(1),

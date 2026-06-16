@@ -7,6 +7,7 @@ import {
   getBookByIdForUser,
   getBookFileRecordsForUser,
 } from "@/features/library/queries";
+import { validateBookBlobPath } from "@/features/library/utils";
 import type {
   BulkDeleteBooksForm,
   CreateBookForm,
@@ -15,11 +16,7 @@ import type {
   UpdateReadingPageForm,
 } from "@/features/library/validation";
 import { LIMITS } from "@/lib/config/limits";
-import { decodeBase64File } from "@/lib/media-storage/decode-base64";
-import {
-  getMediaStorageProvider,
-  type MediaStorageProvider,
-} from "@/lib/media-storage/provider";
+import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 import type { LibraryBookEntity } from "@/lib/server/api-contracts";
 import {
@@ -33,31 +30,30 @@ export type CreateBookResult =
 
 function validateBookUpload(
   data: CreateBookForm,
-): { bytes: Uint8Array } | ActionErrorResult {
+  userId: string,
+): ActionErrorResult | null {
   if (!isSupportedLibraryBookMime(data.mimeType)) {
     return actionError("library.mimeTypeNotAllowed");
   }
 
-  const bytes = decodeBase64File(data.dataBase64);
-
-  if (!bytes) {
+  if (!validateBookBlobPath(userId, data.blobPathname)) {
     return actionError("library.invalidData");
   }
 
-  if (bytes.byteLength > LIMITS.libraryBookMaxBytes) {
+  if (data.sizeBytes > LIMITS.libraryBookMaxBytes) {
     return actionError("limits.bookSizeLimit", {
       errorParams: { max: LIMITS.libraryBookMaxBytes },
     });
   }
 
-  return { bytes };
+  return null;
 }
 
 // Verifies the per-user book limit, that storage is configured, and that the
-// daily upload rate limit has room, returning the provider on success.
+// daily upload rate limit has room.
 async function ensureBookUploadAllowed(
   userId: string,
-): Promise<MediaStorageProvider | ActionErrorResult> {
+): Promise<ActionErrorResult | null> {
   if ((await countBooksForUser(userId)) >= LIMITS.maxBooksPerUser) {
     return actionError("limits.bookLimit", {
       errorParams: { max: LIMITS.maxBooksPerUser },
@@ -81,27 +77,14 @@ async function ensureBookUploadAllowed(
     return actionError(rateLimit.errorCode);
   }
 
-  return provider;
+  return null;
 }
 
 async function storeUploadedBook(
   userId: string,
   data: CreateBookForm,
-  bytes: Uint8Array,
-  provider: MediaStorageProvider,
 ): Promise<CreateBookResult> {
-  let uploadedPathname: string | null = null;
-
   try {
-    const uploaded = await provider.uploadFile({
-      userId,
-      context: "library",
-      fileName: data.fileName,
-      mimeType: data.mimeType,
-      bytes,
-    });
-    uploadedPathname = uploaded.pathname;
-
     const [book] = await getDb()
       .insert(libraryBook)
       .values({
@@ -109,16 +92,14 @@ async function storeUploadedBook(
         title: data.title,
         author: data.author ?? null,
         fileName: data.fileName,
-        blobPathname: uploaded.pathname,
-        sizeBytes: bytes.byteLength,
+        blobPathname: data.blobPathname,
+        sizeBytes: data.sizeBytes,
       })
       .returning();
 
     return { success: true, book };
   } catch {
-    if (uploadedPathname) {
-      await deleteBookBlob(uploadedPathname);
-    }
+    await deleteBookBlob(data.blobPathname);
 
     return actionError("library.uploadFailed");
   }
@@ -151,17 +132,17 @@ export async function createBookForUser(
   userId: string,
   data: CreateBookForm,
 ): Promise<CreateBookResult> {
-  const validated = validateBookUpload(data);
-  if ("errorCode" in validated) {
-    return validated;
+  const validationError = validateBookUpload(data, userId);
+  if (validationError) {
+    return validationError;
   }
 
-  const prepared = await ensureBookUploadAllowed(userId);
-  if ("errorCode" in prepared) {
-    return prepared;
+  const blockError = await ensureBookUploadAllowed(userId);
+  if (blockError) {
+    return blockError;
   }
 
-  return storeUploadedBook(userId, data, validated.bytes, prepared);
+  return storeUploadedBook(userId, data);
 }
 
 // Clamps a requested page into [1, totalPages] so a stale or out-of-range

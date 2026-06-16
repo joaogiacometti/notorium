@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createBookSchema,
   deleteBookSchema,
+  generateTokenSchema,
   updateReadingPageSchema,
 } from "@/features/library/validation";
 import { LIMITS } from "@/lib/config/limits";
@@ -12,13 +13,14 @@ function validCreateInput(overrides: Record<string, unknown> = {}) {
     author: "Hunt & Thomas",
     fileName: "pragmatic.pdf",
     mimeType: "application/pdf",
-    dataBase64: "aGVsbG8=",
+    blobPathname: "notorium/library/user-1/uuid-pragmatic.pdf",
+    sizeBytes: 1024,
     ...overrides,
   };
 }
 
 describe("createBookSchema", () => {
-  it("accepts a valid PDF upload and trims the title", () => {
+  it("accepts a valid upload payload and trims the title", () => {
     const result = createBookSchema.safeParse(
       validCreateInput({ title: "  Clean Code  " }),
     );
@@ -54,6 +56,55 @@ describe("createBookSchema", () => {
       validCreateInput({ author: undefined }),
     );
     expect(result.success).toBe(true);
+  });
+
+  it("rejects a size exceeding the max bytes", () => {
+    expect(
+      createBookSchema.safeParse(
+        validCreateInput({ sizeBytes: LIMITS.libraryBookMaxBytes + 1 }),
+      ).success,
+    ).toBe(false);
+  });
+
+  it("rejects a negative size", () => {
+    expect(
+      createBookSchema.safeParse(validCreateInput({ sizeBytes: -1 })).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty blob pathname", () => {
+    expect(
+      createBookSchema.safeParse(validCreateInput({ blobPathname: "" }))
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe("generateTokenSchema", () => {
+  it("accepts a valid token request", () => {
+    const result = generateTokenSchema.safeParse({
+      fileName: "book.pdf",
+      mimeType: "application/pdf",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a non-pdf mime type", () => {
+    expect(
+      generateTokenSchema.safeParse({
+        fileName: "book.pdf",
+        mimeType: "image/png",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty file name", () => {
+    expect(
+      generateTokenSchema.safeParse({
+        fileName: "",
+        mimeType: "application/pdf",
+      }).success,
+    ).toBe(false);
   });
 });
 

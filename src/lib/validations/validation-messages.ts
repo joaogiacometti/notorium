@@ -94,6 +94,7 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.library.authorMaxLength":
     "Author must be at most 200 characters.",
   "Validation.library.fileRequired": "Select a PDF file to upload.",
+  "Validation.library.fileTooLarge": "File is too large.",
   "Validation.library.pageInvalid": "Page must be a positive whole number.",
   "Validation.theme.invalid": "Invalid theme.",
 };

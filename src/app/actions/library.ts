@@ -1,5 +1,6 @@
 "use server";
 
+import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
 import { revalidatePath } from "next/cache";
 import type { CreateBookResult } from "@/features/library/mutations";
 import {
@@ -10,9 +11,11 @@ import {
   updateReadingPageForUser,
 } from "@/features/library/mutations";
 import {
+  countBooksForUser,
   getBookByIdForUser,
   getBooksForUser,
 } from "@/features/library/queries";
+import { buildBookBlobPath } from "@/features/library/utils";
 import {
   type BulkDeleteBooksForm,
   bulkDeleteBooksSchema,
@@ -20,12 +23,16 @@ import {
   createBookSchema,
   type DeleteBookForm,
   deleteBookSchema,
+  type GenerateTokenForm,
+  generateTokenSchema,
   type UpdateBookForm,
   type UpdateReadingPageForm,
   updateBookSchema,
   updateReadingPageSchema,
 } from "@/features/library/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
+import { LIMITS } from "@/lib/config/limits";
+import { isMediaStorageConfigured } from "@/lib/media-storage/provider";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkLibraryMutationResult,
@@ -41,6 +48,39 @@ export async function getBooks(): Promise<LibraryBookEntity[]> {
 export async function getBook(id: string): Promise<LibraryBookEntity | null> {
   const userId = await getAuthenticatedUserId();
   return getBookByIdForUser(userId, id);
+}
+
+export type GenerateTokenResult =
+  | { success: true; token: string; pathname: string }
+  | { success: false; error: string };
+
+export async function generateLibraryUploadToken(
+  data: GenerateTokenForm,
+): Promise<GenerateTokenResult> {
+  const userId = await getAuthenticatedUserId();
+
+  const validated = generateTokenSchema.safeParse(data);
+  if (!validated.success) {
+    return { success: false, error: "library.invalidData" };
+  }
+
+  if ((await countBooksForUser(userId)) >= LIMITS.maxBooksPerUser) {
+    return { success: false, error: "limits.bookLimit" };
+  }
+
+  if (!isMediaStorageConfigured()) {
+    return { success: false, error: "library.notConfigured" };
+  }
+
+  const pathname = buildBookBlobPath(userId, validated.data.fileName);
+
+  const token = await generateClientTokenFromReadWriteToken({
+    pathname,
+    maximumSizeInBytes: LIMITS.libraryBookMaxBytes,
+    allowedContentTypes: ["application/pdf"],
+  });
+
+  return { success: true, token, pathname };
 }
 
 export async function uploadBook(

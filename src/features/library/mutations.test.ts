@@ -3,10 +3,8 @@ import { LIMITS } from "@/lib/config/limits";
 
 const countBooksForUserMock = vi.fn();
 const getBookByIdForUserMock = vi.fn();
-const decodeBase64FileMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
 const consumeUserDailyRateLimitMock = vi.fn();
-const uploadFileMock = vi.fn();
 const deleteFilesMock = vi.fn();
 const insertReturningMock = vi.fn();
 const insertValuesMock = vi.fn(() => ({ returning: insertReturningMock }));
@@ -41,8 +39,8 @@ vi.mock("@/features/library/queries", () => ({
   getBookByIdForUser: getBookByIdForUserMock,
 }));
 
-vi.mock("@/lib/media-storage/decode-base64", () => ({
-  decodeBase64File: decodeBase64FileMock,
+vi.mock("@/features/library/utils", () => ({
+  validateBookBlobPath: vi.fn(() => true),
 }));
 
 vi.mock("@/lib/media-storage/provider", () => ({
@@ -59,7 +57,8 @@ function validCreateInput(overrides: Record<string, unknown> = {}) {
     author: "Robert Martin",
     fileName: "clean-code.pdf",
     mimeType: "application/pdf",
-    dataBase64: "aGVsbG8=",
+    blobPathname: "notorium/library/user-1/uuid-clean-code.pdf",
+    sizeBytes: 1024,
     ...overrides,
   };
 }
@@ -67,22 +66,16 @@ function validCreateInput(overrides: Record<string, unknown> = {}) {
 describe("createBookForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    decodeBase64FileMock.mockReturnValue(new Uint8Array([1, 2, 3]));
     countBooksForUserMock.mockResolvedValue(0);
     consumeUserDailyRateLimitMock.mockResolvedValue({
       limited: false,
       remaining: LIMITS.libraryUploadRateLimitPerDay - 1,
       resetAt: "2026-06-16T00:00:00.000Z",
     });
-    uploadFileMock.mockResolvedValue({
-      url: "https://blob/notorium/library/user-1/book.pdf",
-      pathname: "notorium/library/user-1/book.pdf",
-    });
     insertReturningMock.mockResolvedValue([
       { id: "book-1", title: "Clean Code" },
     ]);
     getMediaStorageProviderMock.mockResolvedValue({
-      uploadFile: uploadFileMock,
       deleteFiles: deleteFilesMock,
     });
   });
@@ -102,8 +95,9 @@ describe("createBookForUser", () => {
     expect(getMediaStorageProviderMock).not.toHaveBeenCalled();
   });
 
-  it("rejects an undecodable base64 payload", async () => {
-    decodeBase64FileMock.mockReturnValueOnce(null);
+  it("rejects an invalid blob pathname", async () => {
+    const utilsModule = await import("@/features/library/utils");
+    vi.mocked(utilsModule.validateBookBlobPath).mockReturnValueOnce(false);
     const { createBookForUser } = await import("@/features/library/mutations");
 
     const result = await createBookForUser("user-1", validCreateInput());
@@ -115,12 +109,12 @@ describe("createBookForUser", () => {
   });
 
   it("rejects a file larger than the size limit", async () => {
-    decodeBase64FileMock.mockReturnValueOnce(
-      new Uint8Array(LIMITS.libraryBookMaxBytes + 1),
-    );
     const { createBookForUser } = await import("@/features/library/mutations");
 
-    const result = await createBookForUser("user-1", validCreateInput());
+    const result = await createBookForUser(
+      "user-1",
+      validCreateInput({ sizeBytes: LIMITS.libraryBookMaxBytes + 1 }),
+    );
 
     expect(result).toMatchObject({
       success: false,
@@ -139,7 +133,7 @@ describe("createBookForUser", () => {
       success: false,
       errorCode: "limits.bookLimit",
     });
-    expect(uploadFileMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   it("returns notConfigured when storage is unavailable", async () => {
@@ -169,10 +163,10 @@ describe("createBookForUser", () => {
       success: false,
       errorCode: "auth.rateLimited",
     });
-    expect(uploadFileMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("uploads the file and inserts the book on success", async () => {
+  it("inserts the book on success without uploading to blob", async () => {
     const { createBookForUser } = await import("@/features/library/mutations");
 
     const result = await createBookForUser("user-1", validCreateInput());
@@ -181,16 +175,13 @@ describe("createBookForUser", () => {
       success: true,
       book: { id: "book-1", title: "Clean Code" },
     });
-    expect(uploadFileMock).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: "user-1", context: "library" }),
-    );
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
       title: "Clean Code",
       author: "Robert Martin",
       fileName: "clean-code.pdf",
-      blobPathname: "notorium/library/user-1/book.pdf",
-      sizeBytes: 3,
+      blobPathname: "notorium/library/user-1/uuid-clean-code.pdf",
+      sizeBytes: 1024,
     });
   });
 
@@ -205,7 +196,7 @@ describe("createBookForUser", () => {
       errorCode: "library.uploadFailed",
     });
     expect(deleteFilesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/library/user-1/book.pdf"],
+      pathnames: ["notorium/library/user-1/uuid-clean-code.pdf"],
     });
   });
 });
@@ -280,7 +271,6 @@ describe("deleteBookForUser", () => {
     vi.clearAllMocks();
     deleteWhereMock.mockResolvedValue(undefined);
     getMediaStorageProviderMock.mockResolvedValue({
-      uploadFile: uploadFileMock,
       deleteFiles: deleteFilesMock,
     });
   });
