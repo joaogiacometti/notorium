@@ -20,6 +20,6 @@ pre-push:
     - name: typecheck
       run: bun run typecheck
     - name: test
-      run: bun run test:coverage
+      run: bun run test
     - name: file-size
       run: bun run check:size

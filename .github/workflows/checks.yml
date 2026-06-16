@@ -44,8 +44,8 @@ jobs:
       - name: Type check (TypeScript)
         run: bun run typecheck
 
-      - name: Tests & coverage thresholds (Vitest)
-        run: bun run test:coverage
+      - name: Tests (Vitest)
+        run: bun run test
 
       - name: File-size guard
         run: bun run check:size

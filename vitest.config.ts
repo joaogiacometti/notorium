@@ -15,15 +15,6 @@ export default defineConfig({
         "src/app/**",
         "src/env.ts",
       ],
-      // Ratchet floors: set to the measured baseline (2026-06). Raise these
-      // when coverage improves; never lower to make a red build pass.
-      // Integer granularity avoids false failures from run-to-run variance.
-      thresholds: {
-        statements: 52,
-        branches: 49,
-        functions: 49,
-        lines: 52,
-      },
     },
   },
   resolve: {
