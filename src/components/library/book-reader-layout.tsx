@@ -10,6 +10,7 @@ import { Scroller } from "@embedpdf/plugin-scroll/react";
 import { SelectionLayer } from "@embedpdf/plugin-selection/react";
 import { TilingLayer } from "@embedpdf/plugin-tiling/react";
 import { Viewport } from "@embedpdf/plugin-viewport/react";
+import { ZoomGestureWrapper } from "@embedpdf/plugin-zoom/react";
 import { linkAnnotationRenderer } from "@/components/library/book-reader-link-renderer";
 import { ReaderNavHistoryProvider } from "@/components/library/book-reader-nav-history";
 import { ReaderThumbnails } from "@/components/library/book-reader-thumbnails";
@@ -26,11 +27,13 @@ interface ReaderLayoutProps {
 // Rendered inside the EmbedPDF provider, so every child can reach the plugin
 // hooks. GlobalPointerProvider (around the viewport) and the per-page
 // PagePointerProvider feed pointer events to the interaction manager that drives
-// text selection; RenderLayer paints each page at base resolution, TilingLayer
-// overlays sharp tiles on zoom, SelectionLayer draws the selection, and
-// AnnotationLayer renders the PDF's clickable LINK hotspots on top. The
-// render/tiling layers set pointer-events:none so the gesture reaches the
-// pointer provider instead of native-dragging the page image.
+// text selection; ZoomGestureWrapper wraps the Scroller to feed pinch and
+// ctrl/cmd+wheel gestures to the zoom plugin. RenderLayer paints each page at
+// base resolution, TilingLayer overlays sharp tiles on zoom, SelectionLayer
+// draws the selection, and AnnotationLayer renders the PDF's clickable LINK
+// hotspots on top. The render/tiling layers set pointer-events:none so the
+// gesture reaches the pointer provider instead of native-dragging the page
+// image.
 export function ReaderLayout({
   documentId,
   bookId,
@@ -56,49 +59,54 @@ export function ReaderLayout({
           <div className="relative flex-1">
             <GlobalPointerProvider documentId={documentId}>
               <Viewport documentId={documentId} className="bg-muted/40">
-                <Scroller
-                  documentId={documentId}
-                  renderPage={({ pageIndex }) => (
-                    <PagePointerProvider
-                      documentId={documentId}
-                      pageIndex={pageIndex}
-                      className="bg-background shadow-sm"
-                    >
-                      {/* pointer-events:none lets the drag fall through the page
-                          image to the pointer provider instead of starting a
-                          native image drag; SelectionLayer stays on top. */}
-                      <RenderLayer
+                {/* ZoomGestureWrapper wires pinch-to-zoom on touch and
+                    ctrl/cmd+wheel zoom on desktop into the zoom plugin. */}
+                <ZoomGestureWrapper documentId={documentId}>
+                  <Scroller
+                    documentId={documentId}
+                    renderPage={({ pageIndex }) => (
+                      <PagePointerProvider
                         documentId={documentId}
                         pageIndex={pageIndex}
-                        scale={1}
-                        style={{ pointerEvents: "none" }}
-                      />
-                      <TilingLayer
-                        documentId={documentId}
-                        pageIndex={pageIndex}
-                        style={{ pointerEvents: "none" }}
-                      />
-                      <SelectionLayer
-                        documentId={documentId}
-                        pageIndex={pageIndex}
-                      />
-                      {/* Drawn last so link hotspots sit on top. The layer fills
-                          the page but stays pointer-transparent; only the LINK
-                          overlays re-enable pointer events, so text selection
-                          elsewhere is unaffected. */}
-                      <AnnotationLayer
-                        documentId={documentId}
-                        pageIndex={pageIndex}
-                        annotationRenderers={[linkAnnotationRenderer]}
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          pointerEvents: "none",
-                        }}
-                      />
-                    </PagePointerProvider>
-                  )}
-                />
+                        className="bg-background shadow-sm"
+                      >
+                        {/* pointer-events:none lets the drag fall through the
+                            page image to the pointer provider instead of
+                            starting a native image drag; SelectionLayer stays
+                            on top. */}
+                        <RenderLayer
+                          documentId={documentId}
+                          pageIndex={pageIndex}
+                          scale={1}
+                          style={{ pointerEvents: "none" }}
+                        />
+                        <TilingLayer
+                          documentId={documentId}
+                          pageIndex={pageIndex}
+                          style={{ pointerEvents: "none" }}
+                        />
+                        <SelectionLayer
+                          documentId={documentId}
+                          pageIndex={pageIndex}
+                        />
+                        {/* Drawn last so link hotspots sit on top. The layer
+                            fills the page but stays pointer-transparent; only
+                            the LINK overlays re-enable pointer events, so text
+                            selection elsewhere is unaffected. */}
+                        <AnnotationLayer
+                          documentId={documentId}
+                          pageIndex={pageIndex}
+                          annotationRenderers={[linkAnnotationRenderer]}
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            pointerEvents: "none",
+                          }}
+                        />
+                      </PagePointerProvider>
+                    )}
+                  />
+                </ZoomGestureWrapper>
               </Viewport>
             </GlobalPointerProvider>
           </div>

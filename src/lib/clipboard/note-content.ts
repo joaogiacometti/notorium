@@ -41,9 +41,15 @@ function sanitizeRichHtmlForClipboard(html: string): string {
   // Pre-parse with innerHTML before handing to DOMPurify so it walks an
   // already-constructed DOM rather than re-parsing the string via
   // createContextualFragment, which drops block elements like <p> in jsdom.
+  // DOMPurify.sanitize on an element returns its outerHTML, which includes the
+  // wrapper <div>. Re-parse and extract the inner element's innerHTML.
   const container = document.createElement("div");
   container.innerHTML = html;
-  return DOMPurify.sanitize(container) as string;
+  const outerHtml = DOMPurify.sanitize(container);
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = outerHtml;
+  const innerDiv = wrapper.firstElementChild;
+  return innerDiv ? (innerDiv as HTMLElement).innerHTML : "";
 }
 
 function getPlainTextFromHtml(html: string): string {
@@ -77,7 +83,7 @@ function replaceMathNodesWithLatex(
   delimiter: "$" | "$$",
 ) {
   container.querySelectorAll(`[data-type="${dataType}"]`).forEach((element) => {
-    const latex = element.getAttribute("data-latex") ?? "";
+    const latex = (element as HTMLElement).dataset.latex ?? "";
     element.replaceWith(
       document.createTextNode(`${delimiter}${latex}${delimiter}`),
     );

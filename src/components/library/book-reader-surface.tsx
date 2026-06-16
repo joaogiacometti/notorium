@@ -8,6 +8,7 @@ import { AnnotationPluginPackage } from "@embedpdf/plugin-annotation/react";
 import { DocumentManagerPluginPackage } from "@embedpdf/plugin-document-manager/react";
 import { FullscreenPluginPackage } from "@embedpdf/plugin-fullscreen/react";
 import { InteractionManagerPluginPackage } from "@embedpdf/plugin-interaction-manager/react";
+import { PanPluginPackage } from "@embedpdf/plugin-pan/react";
 import { RenderPluginPackage } from "@embedpdf/plugin-render/react";
 import { ScrollPluginPackage } from "@embedpdf/plugin-scroll/react";
 import { SelectionPluginPackage } from "@embedpdf/plugin-selection/react";
@@ -82,12 +83,15 @@ function ReaderEngine({
 }
 
 // Registers the rendering pipeline (document/viewport/scroll/render/tiling) plus
-// the interactive plugins the toolbar and sidebar drive. The annotation plugin
-// is registered in a fully locked mode so existing PDF annotations are not
-// editable, while LINK annotations stay clickable: the plugin renders them with
-// a pointer cursor and auto-mounts a navigation handler that opens URI links and
-// scrolls to internal go-to targets. Annotation authoring stays out until the
-// annotations feature lands.
+// the interactive plugins the toolbar and sidebar drive. The pan plugin makes
+// drag-to-scroll the default interaction mode on touch devices so a finger drag
+// pans the page instead of starting a text selection; mouse devices keep
+// selection as the default. The annotation plugin is registered in a fully
+// locked mode so existing PDF annotations are not editable, while LINK
+// annotations stay clickable: the plugin renders them with a pointer cursor and
+// auto-mounts a navigation handler that opens URI links and scrolls to internal
+// go-to targets. Annotation authoring stays out until the annotations feature
+// lands.
 function buildReaderPlugins(fileUrl: string) {
   return [
     createPluginRegistration(DocumentManagerPluginPackage, {
@@ -97,9 +101,12 @@ function buildReaderPlugins(fileUrl: string) {
     createPluginRegistration(ScrollPluginPackage),
     createPluginRegistration(RenderPluginPackage),
     createPluginRegistration(TilingPluginPackage),
-    // Selection (and the future annotation plugin) requires the
+    // Selection, pan, and the future annotation plugin require the
     // interaction-manager capability, so it must be registered before them.
     createPluginRegistration(InteractionManagerPluginPackage),
+    // Pan becomes the default interaction mode only on touch devices, so a
+    // finger drag scrolls the page instead of selecting text.
+    createPluginRegistration(PanPluginPackage, { defaultMode: "mobile" }),
     // Selection renders the text layer over each page so the rasterized PDF
     // becomes selectable/copyable instead of an inert image.
     createPluginRegistration(SelectionPluginPackage),

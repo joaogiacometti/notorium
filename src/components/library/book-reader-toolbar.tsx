@@ -99,7 +99,6 @@ export function ReaderToolbar({
         </ToolbarButton>
         <ToolbarButton
           label="Fit width"
-          className="hidden sm:flex"
           onClick={() => zoom.provides?.requestZoom(ZoomMode.FitWidth)}
         >
           <MoveHorizontal className="size-4" />

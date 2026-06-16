@@ -243,7 +243,7 @@ Students who want a private, lightweight study management workspace.
 - The library lists books in a paginated table showing title, author, saved reading progress (`Page X of Y` once the page count is known), and when the book was last read; clicking a row opens the book.
 - The table can be filtered with a search box that matches book title or author.
 - Each row has an actions menu to edit the book's title and author or delete the book; rows can be multi-selected to delete several books at once.
-- Opening a book renders the PDF in a scrollable in-app reader.
+- Opening a book renders the PDF in a scrollable in-app reader with zoom, single/two-page spread, and fullscreen controls. On touch devices a finger drag scrolls the page (instead of selecting text) and pinch zooms; on desktop the mouse selects text and ctrl/cmd+wheel zooms.
 - The reader tracks the page currently in view and saves it automatically as the user scrolls, so reopening the book returns to the last page read.
 - Saving is debounced while scrolling, deduplicated so unchanged pages are not re-saved, and flushed immediately when the tab is hidden or the reader is closed so a mid-scroll exit is not lost.
 - The reader restores to the saved page on open before enabling further saves, and the saved page is clamped to the book's page count.
