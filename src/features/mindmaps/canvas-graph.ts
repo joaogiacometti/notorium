@@ -2,6 +2,7 @@ import type { Edge, EdgeMarker, Node } from "@xyflow/react";
 import { MarkerType } from "@xyflow/react";
 import {
   DEFAULT_EDGE_DIRECTION,
+  MINDMAP_IMAGE_DEFAULT_SIZE,
   MINDMAP_NODE_COLOR_TOKENS,
   type MindmapEdgeDirection,
   type MindmapNodeColor,
@@ -71,6 +72,41 @@ export function toEdge(edge: PersistedEdge): Edge {
   };
 }
 
+/** Build the React Flow runtime node for one persisted node. The root's label is
+ * driven by the live mindmap title and it is made permanent; image nodes restore
+ * their persisted size (falling back to the default) and stay outside the tree. */
+function toRuntimeNode(
+  node: MindmapGraph["nodes"][number],
+  title: string,
+): Node {
+  if (node.data.kind === "image") {
+    return {
+      id: node.id,
+      type: "image",
+      position: node.position,
+      width: node.data.width ?? MINDMAP_IMAGE_DEFAULT_SIZE,
+      height: node.data.height ?? MINDMAP_IMAGE_DEFAULT_SIZE,
+      data: { ...node.data },
+    };
+  }
+  const isRoot = node.data.kind === "root";
+  return {
+    id: node.id,
+    type: isRoot ? "root" : "mindmap",
+    position: node.position,
+    data: isRoot ? { ...node.data, label: title } : { ...node.data },
+    ...(isRoot ? { deletable: false } : {}),
+  };
+}
+
+/** Map a persisted graph's nodes into React Flow runtime nodes. */
+export function toRuntimeNodes(
+  nodes: MindmapGraph["nodes"],
+  title: string,
+): Node[] {
+  return nodes.map((node) => toRuntimeNode(node, title));
+}
+
 /** A color value is only persisted when it is a known theme token. */
 function asNodeColor(value: unknown): MindmapNodeColor | undefined {
   return MINDMAP_NODE_COLOR_TOKENS.includes(value as MindmapNodeColor)
@@ -78,11 +114,32 @@ function asNodeColor(value: unknown): MindmapNodeColor | undefined {
     : undefined;
 }
 
+/** Positive measured size of a node, falling back to its requested size. */
+function persistedSize(
+  measured: unknown,
+  requested: unknown,
+): number | undefined {
+  const value = typeof measured === "number" ? measured : requested;
+  return typeof value === "number" && value > 0 ? value : undefined;
+}
+
+/** The resized dimensions of an image node, preferring React Flow's measured
+ * size (what `NodeResizer` writes) over the originally requested size. */
+function imageNodeSize(node: Node): { width?: number; height?: number } {
+  const width = persistedSize(node.measured?.width, node.width);
+  const height = persistedSize(node.measured?.height, node.height);
+  return {
+    ...(width ? { width } : {}),
+    ...(height ? { height } : {}),
+  };
+}
+
 /** Serialize the live React Flow nodes/edges back into the persisted graph. */
 export function toGraph(nodes: Node[], edges: Edge[]): MindmapGraph {
   return {
     nodes: nodes.map((node) => {
       const color = asNodeColor(node.data.color);
+      const isImage = node.data.kind === "image";
       return {
         id: node.id,
         position: node.position,
@@ -92,6 +149,9 @@ export function toGraph(nodes: Node[], edges: Edge[]): MindmapGraph {
           ...(node.data.bold === true ? { bold: true } : {}),
           ...(node.data.italic === true ? { italic: true } : {}),
           ...(node.data.kind === "root" ? { kind: "root" as const } : {}),
+          ...(isImage
+            ? { kind: "image" as const, ...imageNodeSize(node) }
+            : {}),
           ...(typeof node.data.imageUrl === "string"
             ? { imageUrl: node.data.imageUrl }
             : {}),

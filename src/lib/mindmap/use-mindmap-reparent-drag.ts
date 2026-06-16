@@ -90,6 +90,11 @@ export function useMindmapReparentDrag({
       }
       const edges = getEdges();
       for (const candidate of getIntersectingNodes(dragged)) {
+        // Standalone image nodes are not part of the tree; never reparent onto
+        // one (and an image being dragged has no tree parent to move).
+        if (candidate.data.kind === "image") {
+          continue;
+        }
         if (canReparent(edges, dragged.id, candidate.id)) {
           return candidate;
         }

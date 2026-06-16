@@ -907,3 +907,12 @@
 .mindmap-canvas .react-flow__edgelabel-renderer {
   z-index: 1001;
 }
+
+/* Standalone image nodes fill their whole bounds with the picture, so nudge the
+   left/right connection handles a hair off the border to keep the body grabbable. */
+.mindmap-canvas .react-flow__node-image .react-flow__handle-left {
+  transform: translate(calc(-50% - 2px), -50%);
+}
+.mindmap-canvas .react-flow__node-image .react-flow__handle-right {
+  transform: translate(calc(50% + 2px), -50%);
+}

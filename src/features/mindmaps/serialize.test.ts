@@ -87,4 +87,16 @@ describe("serializeMindmapSelection", () => {
 
     expect(serializeMindmapSelection(nodes, edges, ["a"])).toBe("- A\n  - B");
   });
+
+  it("skips standalone image nodes, which carry no text", () => {
+    const image: Node = {
+      id: "img",
+      type: "image",
+      position: { x: 0, y: 0 },
+      data: { label: "", kind: "image", imageUrl: "/api/attachments/blob?p=x" },
+    };
+    const nodes = [node("a", "Alpha"), image];
+
+    expect(serializeMindmapSelection(nodes, [], ["a", "img"])).toBe("- Alpha");
+  });
 });

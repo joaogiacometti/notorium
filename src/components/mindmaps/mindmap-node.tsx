@@ -9,19 +9,14 @@ import {
 } from "@xyflow/react";
 import { Bold, ImageIcon, Italic, Loader2, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import { uploadEditorImage } from "@/app/actions/attachments";
 import { useMindmapActions } from "@/components/mindmaps/mindmap-actions-context";
 import { MindmapAddButtons } from "@/components/mindmaps/mindmap-add-buttons";
 import { MindmapHandles } from "@/components/mindmaps/mindmap-handles";
+import { MindmapToolbarButton } from "@/components/mindmaps/mindmap-toolbar-button";
 import { SUPPORTED_ATTACHMENT_IMAGE_MIME_TYPES } from "@/features/attachments/validation";
 import { MINDMAP_NODE_COLOR_TOKENS } from "@/features/mindmaps/constants";
 import type { MindmapNode } from "@/features/mindmaps/types";
-import { LIMITS } from "@/lib/config/limits";
-import {
-  getPastedImageFile,
-  getPastedImageFileName,
-} from "@/lib/editor/clipboard-image";
+import { getPastedImageFile } from "@/lib/editor/clipboard-image";
 import {
   shouldKeepMindmapEditorAfterBlur,
   useMindmapWindowFocusRestore,
@@ -30,8 +25,8 @@ import {
   firstSelectedNodeId,
   selectedNodeCount,
 } from "@/lib/mindmap/selection-store";
-import { t } from "@/lib/server/server-action-errors";
-import { cn, readFileAsBase64 } from "@/lib/utils";
+import { uploadMindmapImage } from "@/lib/mindmap/upload-mindmap-image";
+import { cn } from "@/lib/utils";
 
 const IMAGE_ACCEPT = SUPPORTED_ATTACHMENT_IMAGE_MIME_TYPES.join(",");
 
@@ -69,30 +64,12 @@ export function MindmapNodeComponent({
 
   const uploadImage = useCallback(
     async (file: File) => {
-      if (file.size > LIMITS.attachmentMaxBytes) {
-        toast.error(
-          t("limits.attachmentSizeLimit", { max: LIMITS.attachmentMaxBytes }),
-        );
-        return;
-      }
       setUploading(true);
       try {
-        const dataBase64 = await readFileAsBase64(file);
-        if (!dataBase64) {
-          toast.error(t("attachments.uploadFailed"));
-          return;
+        const url = await uploadMindmapImage(file);
+        if (url) {
+          actions.setNodeImage(id, url);
         }
-        const result = await uploadEditorImage({
-          fileName: getPastedImageFileName(file),
-          mimeType: file.type,
-          dataBase64,
-          context: "mindmaps",
-        });
-        if (!result.success) {
-          toast.error(t(result.errorCode, result.errorParams));
-          return;
-        }
-        actions.setNodeImage(id, result.url);
       } finally {
         setUploading(false);
       }
@@ -169,20 +146,20 @@ export function MindmapNodeComponent({
     >
       <NodeToolbar isVisible={showToolbar} position={Position.Top}>
         <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-md">
-          <ToolbarButton
+          <MindmapToolbarButton
             label="Bold"
             active={Boolean(data.bold)}
             onClick={() => actions.toggleNodeStyle(id, "bold")}
           >
             <Bold className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
+          </MindmapToolbarButton>
+          <MindmapToolbarButton
             label="Italic"
             active={Boolean(data.italic)}
             onClick={() => actions.toggleNodeStyle(id, "italic")}
           >
             <Italic className="size-4" />
-          </ToolbarButton>
+          </MindmapToolbarButton>
           <div className="mx-0.5 h-5 w-px bg-border" />
           <ColorSwatch
             label="Default color"
@@ -201,7 +178,7 @@ export function MindmapNodeComponent({
           ))}
           <div className="mx-0.5 h-5 w-px bg-border" />
           {isMultiSelect ? null : (
-            <ToolbarButton
+            <MindmapToolbarButton
               label={data.imageUrl ? "Replace image" : "Add image"}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -210,15 +187,15 @@ export function MindmapNodeComponent({
               ) : (
                 <ImageIcon className="size-4" />
               )}
-            </ToolbarButton>
+            </MindmapToolbarButton>
           )}
-          <ToolbarButton
+          <MindmapToolbarButton
             label="Delete node"
             destructive
             onClick={() => actions.deleteNode(id)}
           >
             <Trash2 className="size-4" />
-          </ToolbarButton>
+          </MindmapToolbarButton>
         </div>
       </NodeToolbar>
       <MindmapAddButtons
@@ -300,41 +277,6 @@ export function MindmapNodeComponent({
         </button>
       )}
     </div>
-  );
-}
-
-interface ToolbarButtonProps {
-  label: string;
-  active?: boolean;
-  destructive?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-function ToolbarButton({
-  label,
-  active,
-  destructive,
-  onClick,
-  children,
-}: Readonly<ToolbarButtonProps>) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-pressed={active}
-      title={label}
-      className={cn(
-        "flex size-7 items-center justify-center rounded-md transition-colors",
-        active
-          ? "bg-primary/10 text-foreground"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-        destructive && "hover:bg-destructive/10 hover:text-destructive",
-      )}
-    >
-      {children}
-    </button>
   );
 }
 

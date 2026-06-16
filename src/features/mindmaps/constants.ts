@@ -24,3 +24,10 @@ export const MINDMAP_EDGE_DIRECTIONS = [
 export type MindmapEdgeDirection = (typeof MINDMAP_EDGE_DIRECTIONS)[number];
 
 export const DEFAULT_EDGE_DIRECTION: MindmapEdgeDirection = "forward";
+
+// Standalone image nodes (pasted onto empty canvas). The longest side of a fresh
+// paste is scaled to fit this box; the user can then resize down to the minimum.
+export const MINDMAP_IMAGE_MAX_SIZE = 320;
+export const MINDMAP_IMAGE_MIN_SIZE = 48;
+// Fallback box for images whose natural size can't be read before placement.
+export const MINDMAP_IMAGE_DEFAULT_SIZE = 240;

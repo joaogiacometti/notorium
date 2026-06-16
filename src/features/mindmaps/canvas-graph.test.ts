@@ -6,7 +6,9 @@ import {
   selectOnlyNewChild,
   toEdge,
   toGraph,
+  toRuntimeNodes,
 } from "@/features/mindmaps/canvas-graph";
+import { MINDMAP_IMAGE_DEFAULT_SIZE } from "@/features/mindmaps/constants";
 
 function baseNode(overrides: Partial<Node> = {}): Node {
   return {
@@ -80,6 +82,96 @@ describe("toGraph", () => {
   it("preserves the root kind", () => {
     const nodes = [baseNode({ data: { label: "Root", kind: "root" } })];
     expect(toGraph(nodes, []).nodes[0].data.kind).toBe("root");
+  });
+
+  it("persists an image node's kind, url, and measured size", () => {
+    const nodes = [
+      baseNode({
+        data: {
+          label: "",
+          kind: "image",
+          imageUrl: "/api/attachments/blob?p=x",
+        },
+        measured: { width: 300, height: 180 },
+      }),
+    ];
+    const data = toGraph(nodes, []).nodes[0].data;
+    expect(data.kind).toBe("image");
+    expect(data.imageUrl).toBe("/api/attachments/blob?p=x");
+    expect(data.width).toBe(300);
+    expect(data.height).toBe(180);
+  });
+
+  it("prefers a measured size over the requested width/height", () => {
+    const nodes = [
+      baseNode({
+        data: { label: "", kind: "image", imageUrl: "https://x/y.png" },
+        width: 320,
+        height: 320,
+        measured: { width: 260, height: 140 },
+      }),
+    ];
+    const data = toGraph(nodes, []).nodes[0].data;
+    expect(data.width).toBe(260);
+    expect(data.height).toBe(140);
+  });
+});
+
+describe("toRuntimeNodes", () => {
+  it("drives the root label from the live title and makes it permanent", () => {
+    const runtime = toRuntimeNodes(
+      [
+        {
+          id: "r",
+          position: { x: 0, y: 0 },
+          data: { label: "stale", kind: "root" },
+        },
+      ],
+      "Live Title",
+    );
+    expect(runtime[0].type).toBe("root");
+    expect(runtime[0].data.label).toBe("Live Title");
+    expect(runtime[0].deletable).toBe(false);
+  });
+
+  it("restores an image node's type and persisted size", () => {
+    const runtime = toRuntimeNodes(
+      [
+        {
+          id: "img",
+          position: { x: 5, y: 6 },
+          data: { label: "", kind: "image", width: 200, height: 120 },
+        },
+      ],
+      "T",
+    );
+    expect(runtime[0].type).toBe("image");
+    expect(runtime[0].width).toBe(200);
+    expect(runtime[0].height).toBe(120);
+  });
+
+  it("falls back to the default size for an image without dimensions", () => {
+    const runtime = toRuntimeNodes(
+      [
+        {
+          id: "img",
+          position: { x: 0, y: 0 },
+          data: { label: "", kind: "image" },
+        },
+      ],
+      "T",
+    );
+    expect(runtime[0].width).toBe(MINDMAP_IMAGE_DEFAULT_SIZE);
+    expect(runtime[0].height).toBe(MINDMAP_IMAGE_DEFAULT_SIZE);
+  });
+
+  it("maps a plain node to the mindmap type", () => {
+    const runtime = toRuntimeNodes(
+      [{ id: "n", position: { x: 0, y: 0 }, data: { label: "Idea" } }],
+      "T",
+    );
+    expect(runtime[0].type).toBe("mindmap");
+    expect(runtime[0].deletable).toBeUndefined();
   });
 });
 

@@ -126,6 +126,10 @@ export function serializeMindmapSelection(
   const visited = new Set<string>();
   // Walk nodes in their own order so the outline is stable and matches the map.
   for (const node of nodes) {
+    // Standalone image nodes carry no text; skip them so the outline stays clean.
+    if (node.data.kind === "image") {
+      continue;
+    }
     if (
       selected.has(node.id) &&
       !hasSelectedAncestor(node.id, selected, parents)

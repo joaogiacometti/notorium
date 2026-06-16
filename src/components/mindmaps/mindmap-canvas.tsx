@@ -31,12 +31,17 @@ import {
 import { toast } from "sonner";
 import { MindmapActionsProvider } from "@/components/mindmaps/mindmap-actions-context";
 import { MindmapEdge } from "@/components/mindmaps/mindmap-edge";
+import { MindmapImageNode } from "@/components/mindmaps/mindmap-image-node";
 import { MindmapModeToolbar } from "@/components/mindmaps/mindmap-mode-toolbar";
 import { MindmapNodeComponent } from "@/components/mindmaps/mindmap-node";
 import { MindmapRootNode } from "@/components/mindmaps/mindmap-root-node";
 import { useMindmapCanvasActions } from "@/components/mindmaps/use-mindmap-canvas-actions";
 import { useMindmapPngExport } from "@/components/mindmaps/use-mindmap-png-export";
-import { toEdge, toGraph } from "@/features/mindmaps/canvas-graph";
+import {
+  toEdge,
+  toGraph,
+  toRuntimeNodes,
+} from "@/features/mindmaps/canvas-graph";
 import { layoutMindmap } from "@/features/mindmaps/layout";
 import { serializeMindmapSelection } from "@/features/mindmaps/serialize";
 import { collectDescendants, isCrossEdge } from "@/features/mindmaps/sides";
@@ -45,6 +50,7 @@ import { syncRootNodeLabel } from "@/features/mindmaps/utils";
 import { useMindmapAddChild } from "@/lib/mindmap/use-mindmap-add-child";
 import { useMindmapCopyKey } from "@/lib/mindmap/use-mindmap-copy-key";
 import { useMindmapHistory } from "@/lib/mindmap/use-mindmap-history";
+import { useMindmapImagePaste } from "@/lib/mindmap/use-mindmap-image-paste";
 import {
   type MindmapMode,
   useMindmapModeKeys,
@@ -69,7 +75,11 @@ interface MindmapCanvasProps {
   onNodesMeasured?: () => void;
 }
 
-const nodeTypes = { mindmap: MindmapNodeComponent, root: MindmapRootNode };
+const nodeTypes = {
+  mindmap: MindmapNodeComponent,
+  root: MindmapRootNode,
+  image: MindmapImageNode,
+};
 const edgeTypes = { mindmap: MindmapEdge };
 
 // React Flow's chrome reads these CSS variables; map them to theme tokens so
@@ -92,18 +102,7 @@ function MindmapCanvasInner({
   onNodesMeasured,
 }: Readonly<MindmapCanvasProps>) {
   const initialNodes = useMemo<Node[]>(
-    () =>
-      initialGraph.nodes.map((node) => ({
-        id: node.id,
-        type: node.data.kind === "root" ? "root" : "mindmap",
-        position: node.position,
-        data:
-          node.data.kind === "root"
-            ? { ...node.data, label: title }
-            : { ...node.data },
-        // The root node is permanent: block Delete-key removal.
-        ...(node.data.kind === "root" ? { deletable: false } : {}),
-      })),
+    () => toRuntimeNodes(initialGraph.nodes, title),
     [initialGraph, title],
   );
   const initialEdges = useMemo<Edge[]>(
@@ -404,6 +403,15 @@ function MindmapCanvasInner({
       setEdges((current) => reconnectEdge(oldEdge, connection, current)),
     [setEdges],
   );
+
+  // Ctrl/Cmd+V over empty canvas drops a standalone, resizable image node.
+  useMindmapImagePaste({
+    getNodes,
+    setNodes,
+    screenToFlowPosition,
+    takeSnapshot,
+    canvasWrapperRef,
+  });
 
   return (
     <MindmapActionsProvider value={actions}>

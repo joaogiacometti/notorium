@@ -123,6 +123,44 @@ describe("editMindmapSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts a standalone image node with kind and size", () => {
+    const data = JSON.stringify({
+      nodes: [
+        {
+          id: "img1",
+          position: { x: 10, y: 20 },
+          data: {
+            label: "",
+            kind: "image",
+            width: 320,
+            height: 180,
+            imageUrl: "https://example.com/a.png",
+          },
+        },
+      ],
+      edges: [],
+    });
+    expect(
+      editMindmapSchema.safeParse({ id: "m1", title: "Map", data }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a non-positive image node size", () => {
+    const data = JSON.stringify({
+      nodes: [
+        {
+          id: "img1",
+          position: { x: 0, y: 0 },
+          data: { label: "", kind: "image", width: 0, height: 180 },
+        },
+      ],
+      edges: [],
+    });
+    expect(
+      editMindmapSchema.safeParse({ id: "m1", title: "Map", data }).success,
+    ).toBe(false);
+  });
+
   it("rejects a non-url node image", () => {
     const data = JSON.stringify({
       nodes: [

@@ -15,9 +15,14 @@ export const mindmapNodeSchema = z.object({
     bold: z.boolean().optional(),
     italic: z.boolean().optional(),
     // The single root node sits at the center and stays in sync with the
-    // mindmap title. Absence means a regular branch node. Optional so legacy
-    // graphs (created before the root node) validate without a migration.
-    kind: z.enum(["root", "branch"]).optional(),
+    // mindmap title. Absence means a regular branch node. `image` is a
+    // free-floating standalone image (pasted onto empty canvas), not part of the
+    // hierarchy. Optional so legacy graphs validate without a migration.
+    kind: z.enum(["root", "branch", "image"]).optional(),
+    // Rendered size of an image node, persisted so a resize survives reloads.
+    // Only set for `kind: "image"`; branch/root nodes auto-size to content.
+    width: z.number().positive().max(4096).optional(),
+    height: z.number().positive().max(4096).optional(),
     // Node image. Holds the internal attachment read URL
     // (`/api/attachments/blob?pathname=...`, relative) or an absolute http(s)
     // URL. Optional so text-only nodes and legacy graphs validate unchanged.
