@@ -147,15 +147,20 @@ export function SubjectAssessmentsSummary({
                 key={a.id}
                 className="group flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/35"
               >
-                <TypeIcon
-                  className={`size-4 shrink-0 ${typeStyle.iconColor}`}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium leading-5">
-                    {a.title}
-                  </p>
-                  <AssessmentMeta assessment={a} todayIso={todayIso} />
-                </div>
+                <Link
+                  href={`/assessments/${a.id}?subjectId=${subjectId}`}
+                  className="flex min-w-0 flex-1 items-center gap-3"
+                >
+                  <TypeIcon
+                    className={`size-4 shrink-0 ${typeStyle.iconColor}`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium leading-5">
+                      {a.title}
+                    </p>
+                    <AssessmentMeta assessment={a} todayIso={todayIso} />
+                  </div>
+                </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button

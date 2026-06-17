@@ -1,13 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, FileText, Layers, Network, Search } from "lucide-react";
+import { BookOpen, FileText, Layers, Network } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
-import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
   CommandEmpty,
@@ -31,11 +30,26 @@ import {
 
 interface GlobalSearchProps {
   userId: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
+export function GlobalSearch({
+  userId,
+  open: openProp,
+  onOpenChange,
+}: Readonly<GlobalSearchProps>) {
   const shortcutsSuspended = useShortcutsDialogOpen();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+
+  function setOpen(next: boolean) {
+    if (openProp === undefined) {
+      setInternalOpen(next);
+    }
+    onOpenChange?.(next);
+  }
+
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 200);
   const pathname = usePathname();
@@ -72,13 +86,17 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
 
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        const next = !open;
+        if (openProp === undefined) {
+          setInternalOpen(next);
+        }
+        onOpenChange?.(next);
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [shortcutsSuspended]);
+  }, [shortcutsSuspended, open, openProp, onOpenChange]);
 
   function handleSelect(path: string) {
     setOpen(false);
@@ -119,201 +137,188 @@ export function GlobalSearch({ userId }: Readonly<GlobalSearchProps>) {
       : undefined;
 
   return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        aria-label="Search"
-        className="size-9 justify-center px-0 text-sm leading-none text-muted-foreground"
-        onClick={() => setOpen(true)}
-      >
-        <Search className="size-4 shrink-0" />
-      </Button>
-      <CommandDialog
-        open={open}
-        onOpenChange={handleOpenChange}
-        title="Global Search"
-        description="Search across all your subjects, notes, flashcards, and mindmaps"
-        commandProps={{ shouldFilter: false }}
-      >
-        <CommandInput
-          value={query}
-          onValueChange={setQuery}
-          placeholder="Search subjects, notes, flashcards, and mindmaps..."
-        />
-        <CommandList>
-          {isResultsPending && <SearchSkeleton />}
-          {!isResultsPending && !isAuthenticated && (
-            <CommandEmpty>Sign in to search.</CommandEmpty>
-          )}
-          {!isResultsPending && isAuthenticated && !hasData && (
-            <CommandEmpty>
-              No subjects, notes, flashcards, or mindmaps yet.
-            </CommandEmpty>
-          )}
+    <CommandDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="Global Search"
+      description="Search across all your subjects, notes, flashcards, and mindmaps"
+      commandProps={{ shouldFilter: false }}
+    >
+      <CommandInput
+        value={query}
+        onValueChange={setQuery}
+        placeholder="Search subjects, notes, flashcards, and mindmaps..."
+      />
+      <CommandList>
+        {isResultsPending && <SearchSkeleton />}
+        {!isResultsPending && !isAuthenticated && (
+          <CommandEmpty>Sign in to search.</CommandEmpty>
+        )}
+        {!isResultsPending && isAuthenticated && !hasData && (
+          <CommandEmpty>
+            No subjects, notes, flashcards, or mindmaps yet.
+          </CommandEmpty>
+        )}
 
-          {subjects.length > 0 && (
-            <CommandGroup
-              heading={showingRecents ? `Recent Subjects` : "Subjects"}
-            >
-              {subjects.map((subj) => (
-                <CommandItem
-                  key={subj.id}
-                  value={subj.id}
-                  onSelect={() => handleSelect(`/subjects/${subj.id}`)}
-                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-                >
-                  <div className="flex w-full min-w-0 items-center gap-2">
-                    <BookOpen className="!size-4 text-muted-foreground" />
+        {subjects.length > 0 && (
+          <CommandGroup
+            heading={showingRecents ? `Recent Subjects` : "Subjects"}
+          >
+            {subjects.map((subj) => (
+              <CommandItem
+                key={subj.id}
+                value={subj.id}
+                onSelect={() => handleSelect(`/subjects/${subj.id}`)}
+                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
+              >
+                <div className="flex w-full min-w-0 items-center gap-2">
+                  <BookOpen className="!size-4 text-muted-foreground" />
+                  <span className="block min-w-0 flex-1 truncate">
+                    {renderSearchHighlightedText(subj.name, highlightQuery)}
+                  </span>
+                </div>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {notes.length > 0 && (
+          <CommandGroup heading={showingRecents ? `Recent Notes` : "Notes"}>
+            {notes.map((n) => (
+              <CommandItem
+                key={n.id}
+                value={n.id}
+                onSelect={() =>
+                  handleSelect(getNoteDetailHref(n.subjectId, n.id))
+                }
+                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
+              >
+                <div className="flex w-full min-w-0 items-center gap-2">
+                  <FileText className="!size-4 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate">
+                    {renderSearchHighlightedText(n.title, highlightQuery)}
+                  </span>
+                  <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+                    <span className="shrink-0">in</span>
                     <span className="block min-w-0 flex-1 truncate">
-                      {renderSearchHighlightedText(subj.name, highlightQuery)}
+                      {renderSearchHighlightedText(
+                        n.subjectName,
+                        highlightQuery,
+                      )}
                     </span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
+                  </span>
+                </div>
+                {n.content && (
+                  <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
+                    {renderSearchHighlightedText(
+                      buildSearchMatchSnippet(
+                        richTextToPlainText(n.content),
+                        highlightQuery,
+                        LIMITS.contentPreviewTruncate,
+                      ),
+                      highlightQuery,
+                    )}
+                  </span>
+                )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
-          {notes.length > 0 && (
-            <CommandGroup heading={showingRecents ? `Recent Notes` : "Notes"}>
-              {notes.map((n) => (
-                <CommandItem
-                  key={n.id}
-                  value={n.id}
-                  onSelect={() =>
-                    handleSelect(getNoteDetailHref(n.subjectId, n.id))
-                  }
-                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-                >
-                  <div className="flex w-full min-w-0 items-center gap-2">
-                    <FileText className="!size-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">
-                      {renderSearchHighlightedText(n.title, highlightQuery)}
-                    </span>
-                    <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                      <span className="shrink-0">in</span>
-                      <span className="block min-w-0 flex-1 truncate">
-                        {renderSearchHighlightedText(
-                          n.subjectName,
-                          highlightQuery,
-                        )}
-                      </span>
-                    </span>
-                  </div>
-                  {n.content && (
-                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
-                      {renderSearchHighlightedText(
-                        buildSearchMatchSnippet(
-                          richTextToPlainText(n.content),
-                          highlightQuery,
-                          LIMITS.contentPreviewTruncate,
-                        ),
+        {flashcards.length > 0 && (
+          <CommandGroup
+            heading={showingRecents ? `Recent Flashcards` : "Flashcards"}
+          >
+            {flashcards.map((fc) => (
+              <CommandItem
+                key={fc.id}
+                value={fc.id}
+                onSelect={() =>
+                  handleSelect(
+                    getFlashcardDetailHref(fc.id, {
+                      from: flashcardsView ? "flashcards-manage" : undefined,
+                      view: flashcardsView,
+                      deckId: flashcardsDeckId,
+                    }),
+                  )
+                }
+                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
+              >
+                <div className="flex w-full min-w-0 items-center gap-2">
+                  <Layers className="!size-4 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate">
+                    {renderSearchHighlightedText(
+                      buildSearchMatchSnippet(
+                        richTextToPlainText(fc.front),
                         highlightQuery,
-                      )}
-                    </span>
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
+                        80,
+                      ),
+                      highlightQuery,
+                    )}
+                  </span>
+                  <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+                    <span className="shrink-0">in</span>
+                    <span className="block flex-1 truncate">{fc.deckPath}</span>
+                  </span>
+                </div>
+                {fc.back && (
+                  <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
+                    {renderSearchHighlightedText(
+                      buildSearchMatchSnippet(
+                        richTextToPlainText(fc.back),
+                        highlightQuery,
+                        120,
+                      ),
+                      highlightQuery,
+                    )}
+                  </span>
+                )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
-          {flashcards.length > 0 && (
-            <CommandGroup
-              heading={showingRecents ? `Recent Flashcards` : "Flashcards"}
-            >
-              {flashcards.map((fc) => (
-                <CommandItem
-                  key={fc.id}
-                  value={fc.id}
-                  onSelect={() =>
-                    handleSelect(
-                      getFlashcardDetailHref(fc.id, {
-                        from: flashcardsView ? "flashcards-manage" : undefined,
-                        view: flashcardsView,
-                        deckId: flashcardsDeckId,
-                      }),
-                    )
-                  }
-                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-                >
-                  <div className="flex w-full min-w-0 items-center gap-2">
-                    <Layers className="!size-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">
+        {mindmaps.length > 0 && (
+          <CommandGroup
+            heading={showingRecents ? "Recent Mindmaps" : "Mindmaps"}
+          >
+            {mindmaps.map((mm) => (
+              <CommandItem
+                key={mm.id}
+                value={mm.id}
+                onSelect={() =>
+                  handleSelect(getMindmapDetailHref(mm.subjectId, mm.id))
+                }
+                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
+              >
+                <div className="flex w-full min-w-0 items-center gap-2">
+                  <Network className="!size-4 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate">
+                    {renderSearchHighlightedText(mm.title, highlightQuery)}
+                  </span>
+                  <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+                    <span className="shrink-0">in</span>
+                    <span className="block min-w-0 flex-1 truncate">
                       {renderSearchHighlightedText(
-                        buildSearchMatchSnippet(
-                          richTextToPlainText(fc.front),
-                          highlightQuery,
-                          80,
-                        ),
+                        mm.subjectName,
                         highlightQuery,
                       )}
                     </span>
-                    <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                      <span className="shrink-0">in</span>
-                      <span className="block flex-1 truncate">
-                        {fc.deckPath}
-                      </span>
-                    </span>
-                  </div>
-                  {fc.back && (
-                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
-                      {renderSearchHighlightedText(
-                        buildSearchMatchSnippet(
-                          richTextToPlainText(fc.back),
-                          highlightQuery,
-                          120,
-                        ),
-                        highlightQuery,
-                      )}
-                    </span>
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-
-          {mindmaps.length > 0 && (
-            <CommandGroup
-              heading={showingRecents ? "Recent Mindmaps" : "Mindmaps"}
-            >
-              {mindmaps.map((mm) => (
-                <CommandItem
-                  key={mm.id}
-                  value={mm.id}
-                  onSelect={() =>
-                    handleSelect(getMindmapDetailHref(mm.subjectId, mm.id))
-                  }
-                  className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-                >
-                  <div className="flex w-full min-w-0 items-center gap-2">
-                    <Network className="!size-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">
-                      {renderSearchHighlightedText(mm.title, highlightQuery)}
-                    </span>
-                    <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                      <span className="shrink-0">in</span>
-                      <span className="block min-w-0 flex-1 truncate">
-                        {renderSearchHighlightedText(
-                          mm.subjectName,
-                          highlightQuery,
-                        )}
-                      </span>
-                    </span>
-                  </div>
-                  {mm.matchedNodeLabel && (
-                    <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
-                      {renderSearchHighlightedText(
-                        mm.matchedNodeLabel,
-                        highlightQuery,
-                      )}
-                    </span>
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-        </CommandList>
-      </CommandDialog>
-    </>
+                  </span>
+                </div>
+                {mm.matchedNodeLabel && (
+                  <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
+                    {renderSearchHighlightedText(
+                      mm.matchedNodeLabel,
+                      highlightQuery,
+                    )}
+                  </span>
+                )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+      </CommandList>
+    </CommandDialog>
   );
 }

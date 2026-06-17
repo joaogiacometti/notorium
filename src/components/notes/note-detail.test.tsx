@@ -4,14 +4,11 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteDetail } from "@/components/notes/note-detail";
-import type { DocumentListItem } from "@/features/documents/types";
 import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
 
 const {
   copyNoteContentMock,
-  createNoteMock,
   editNoteMock,
-  getNoteByIdMock,
   pushMock,
   refreshMock,
   toastErrorMock,
@@ -19,9 +16,7 @@ const {
   toastSuccessMock,
 } = vi.hoisted(() => ({
   copyNoteContentMock: vi.fn(),
-  createNoteMock: vi.fn(),
   editNoteMock: vi.fn(),
-  getNoteByIdMock: vi.fn(),
   pushMock: vi.fn(),
   refreshMock: vi.fn(),
   toastErrorMock: vi.fn(),
@@ -41,9 +36,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/app/actions/notes", () => ({
-  createNote: createNoteMock,
   editNote: editNoteMock,
-  getNoteById: getNoteByIdMock,
 }));
 
 vi.mock("@/components/notes/delete-note-dialog", () => ({
@@ -63,33 +56,9 @@ vi.mock("@/components/notes/delete-note-dialog", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/notes/edit-note-title-dialog", () => ({
-  EditNoteTitleDialog: ({
-    note,
-    open,
-  }: {
-    note: Pick<NoteEntity, "id" | "title">;
-    open: boolean;
-  }) =>
-    open ? (
-      <div data-note-id={note.id} data-testid="edit-note-title-dialog">
-        {note.title}
-      </div>
-    ) : null,
-}));
-
 vi.mock("@/components/notes/generate-note-flashcards-dialog", () => ({
   GenerateNoteFlashcardsDialog: ({ open }: { open: boolean }) =>
     open ? <div data-testid="generate-note-flashcards-dialog" /> : null,
-}));
-
-vi.mock("@/components/mindmaps/create-mindmap-dialog", () => ({
-  CreateMindmapDialog: () => null,
-}));
-
-vi.mock("@/components/mindmaps/delete-mindmap-dialog", () => ({
-  DeleteMindmapDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="delete-mindmap-dialog" /> : null,
 }));
 
 vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
@@ -162,32 +131,6 @@ const note: NoteEntity = {
   updatedAt: new Date("2026-04-20T10:00:00.000Z"),
 };
 
-const otherNote: NoteEntity = {
-  ...note,
-  id: "note-2",
-  title: "Cell respiration",
-  content: "Mitochondria notes.",
-  createdAt: new Date("2026-04-21T10:00:00.000Z"),
-  updatedAt: new Date("2026-04-21T10:00:00.000Z"),
-};
-
-const documents: DocumentListItem[] = [
-  {
-    id: note.id,
-    title: note.title,
-    updatedAt: note.updatedAt,
-    kind: "note",
-    subjectId: note.subjectId,
-  },
-  {
-    id: otherNote.id,
-    title: otherNote.title,
-    updatedAt: otherNote.updatedAt,
-    kind: "note",
-    subjectId: otherNote.subjectId,
-  },
-];
-
 const deck: DeckOption = {
   id: "deck-1",
   userId: "user-1",
@@ -210,12 +153,9 @@ function renderNoteDetail(
     <QueryClientProvider client={queryClient}>
       <NoteDetail
         aiEnabled
-        backHref="/subjects/subject-1"
-        backLabel="Back to Subject"
         decks={[deck]}
         note={note}
         subjectName="Subject 1"
-        documents={documents}
         {...props}
       />
     </QueryClientProvider>,
@@ -276,11 +216,6 @@ describe("NoteDetail", () => {
     vi.useFakeTimers();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     copyNoteContentMock.mockResolvedValue(undefined);
-    createNoteMock.mockResolvedValue({
-      success: true,
-      subjectId: "subject-1",
-      noteId: "note-3",
-    });
     editNoteMock.mockResolvedValue({ success: true, subjectId: "subject-1" });
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -295,20 +230,6 @@ describe("NoteDetail", () => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
     vi.useRealTimers();
     vi.clearAllMocks();
-  });
-
-  it("renders same-subject notes with the active note highlighted", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    expect(container.textContent).toContain("Photosynthesis note");
-    expect(container.textContent).toContain("Cell respiration");
-    const activeNoteLink = container.querySelector('a[aria-current="page"]');
-
-    expect(activeNoteLink?.textContent).toContain("Photosynthesis note");
-    expect(activeNoteLink?.parentElement?.className).toContain("bg-muted/45");
-    expect(activeNoteLink?.parentElement?.className).not.toContain("bg-accent");
   });
 
   it("renders editable title and content without an edit action", async () => {
@@ -331,9 +252,7 @@ describe("NoteDetail", () => {
     ).not.toContain("overflow-hidden");
     expect(getContentInput(container)?.value).toBe(note.content);
     expect(
-      container.querySelector(
-        'button[aria-label="Open actions for Photosynthesis note"]',
-      ),
+      container.querySelector('button[aria-label="Open note actions"]'),
     ).toBeTruthy();
   });
 
@@ -359,46 +278,6 @@ describe("NoteDetail", () => {
     });
 
     expect(container.textContent).not.toContain("Auto-save enabled");
-  });
-
-  it("creates a title-only note from the sidebar and redirects to it", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    const createNoteItem = Array.from(
-      container.querySelectorAll("button"),
-    ).find((button) => button.textContent?.trim() === "Note");
-
-    await act(async () => {
-      createNoteItem?.click();
-    });
-
-    const titleInput = document.querySelector<HTMLInputElement>(
-      "#form-create-note-title-input",
-    );
-
-    await act(async () => {
-      changeFormControlValue(titleInput, "Lab review");
-    });
-
-    await act(async () => {
-      document
-        .querySelector<HTMLFormElement>("#form-create-note-title")
-        ?.dispatchEvent(
-          new Event("submit", { bubbles: true, cancelable: true }),
-        );
-      await Promise.resolve();
-    });
-
-    expect(createNoteMock).toHaveBeenCalledWith({
-      subjectId: "subject-1",
-      title: "Lab review",
-      content: "",
-    });
-    expect(pushMock).toHaveBeenCalledWith(
-      "/subjects/subject-1/documents/notes/note-3",
-    );
   });
 
   it("autosaves title and content edits", async () => {
@@ -450,56 +329,6 @@ describe("NoteDetail", () => {
     });
 
     expect(getContentInput(container)?.value).toBe("Newer local draft");
-  });
-
-  it("flushes valid edits before sidebar navigation", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    await act(async () => {
-      changeFormControlValue(getTitleInput(container), "Navigation save");
-    });
-
-    await act(async () => {
-      container
-        .querySelector<HTMLAnchorElement>(
-          'a[href="/subjects/subject-1/documents/notes/note-2"]',
-        )
-        ?.click();
-      await Promise.resolve();
-    });
-
-    expect(editNoteMock).toHaveBeenCalledWith({
-      id: note.id,
-      title: "Navigation save",
-      content: note.content,
-    });
-    expect(pushMock).toHaveBeenCalledWith(
-      "/subjects/subject-1/documents/notes/note-2",
-    );
-  });
-
-  it("blocks sidebar navigation when inline edits are invalid", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    await act(async () => {
-      changeFormControlValue(getTitleInput(container), "");
-    });
-
-    await act(async () => {
-      container
-        .querySelector<HTMLAnchorElement>(
-          'a[href="/subjects/subject-1/documents/notes/note-2"]',
-        )
-        ?.click();
-      await Promise.resolve();
-    });
-
-    expect(editNoteMock).not.toHaveBeenCalled();
-    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("hides the generate action when AI is disabled", async () => {
@@ -598,54 +427,14 @@ describe("NoteDetail", () => {
     ).toBeTruthy();
   });
 
-  it("opens the sidebar edit dialog for another note", async () => {
+  it("enters zen mode, hiding the breadcrumb bar", async () => {
     await act(async () => {
       renderNoteDetail(root);
     });
 
-    const editButtons = Array.from(container.querySelectorAll("button")).filter(
-      (button) => button.textContent?.includes("Edit"),
-    );
-
-    await act(async () => {
-      editButtons.at(1)?.click();
-    });
-
-    const dialog = container.querySelector(
-      '[data-testid="edit-note-title-dialog"]',
-    );
-
-    expect(dialog?.getAttribute("data-note-id")).toBe(otherNote.id);
-    expect(dialog?.textContent).toContain(otherNote.title);
-  });
-
-  it("opens the sidebar delete dialog for another note", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    const deleteButtons = Array.from(
-      container.querySelectorAll("button"),
-    ).filter((button) => button.textContent?.includes("Delete"));
-
-    await act(async () => {
-      deleteButtons.at(1)?.click();
-    });
-
-    const dialog = container.querySelector(
-      '[data-testid="delete-note-dialog"]',
-    );
-
-    expect(dialog?.getAttribute("data-note-id")).toBe(otherNote.id);
-    expect(dialog?.textContent).toContain(otherNote.title);
-  });
-
-  it("enters zen mode, hiding the back link and documents sidebar", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    expect(container.textContent).toContain("Back to Subject");
+    expect(
+      container.querySelector('nav[aria-label="Breadcrumb"]'),
+    ).toBeTruthy();
 
     await act(async () => {
       container
@@ -653,8 +442,7 @@ describe("NoteDetail", () => {
         ?.click();
     });
 
-    expect(container.textContent).not.toContain("Back to Subject");
-    expect(container.textContent).not.toContain("Cell respiration");
+    expect(container.querySelector('nav[aria-label="Breadcrumb"]')).toBeFalsy();
     expect(
       container.querySelector('button[aria-label="Exit zen mode"]'),
     ).toBeTruthy();
@@ -662,7 +450,7 @@ describe("NoteDetail", () => {
     expect(getContentInput(container)).toBeTruthy();
   });
 
-  it("exits zen mode on Escape and restores the sidebar", async () => {
+  it("exits zen mode on Escape and restores the breadcrumb", async () => {
     await act(async () => {
       renderNoteDetail(root);
     });
@@ -683,60 +471,11 @@ describe("NoteDetail", () => {
       );
     });
 
-    expect(container.textContent).toContain("Back to Subject");
-    expect(container.textContent).toContain("Cell respiration");
+    expect(
+      container.querySelector('nav[aria-label="Breadcrumb"]'),
+    ).toBeTruthy();
     expect(
       container.querySelector('button[aria-label="Enter zen mode"]'),
-    ).toBeTruthy();
-  });
-
-  it("copies a non-active note's saved content from its sidebar menu", async () => {
-    getNoteByIdMock.mockResolvedValue(otherNote);
-
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    // Buttons appear sidebar-first: [active row, other row, header menu].
-    await act(async () => {
-      findButtons(container, "Copy as rich text").at(1)?.click();
-      await Promise.resolve();
-    });
-
-    expect(getNoteByIdMock).toHaveBeenCalledWith(otherNote.id);
-    expect(copyNoteContentMock).toHaveBeenCalledWith(otherNote.content, "rich");
-    expect(toastSuccessMock).toHaveBeenCalledWith("Note copied.");
-  });
-
-  it("shows an error toast when a non-active note cannot be fetched", async () => {
-    getNoteByIdMock.mockResolvedValue(null);
-
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    await act(async () => {
-      findButtons(container, "Copy as plain text").at(1)?.click();
-      await Promise.resolve();
-    });
-
-    expect(copyNoteContentMock).not.toHaveBeenCalled();
-    expect(toastErrorMock).toHaveBeenCalledWith("Could not copy note.");
-  });
-
-  it("opens the generate dialog for a non-active note from its sidebar menu", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    await act(async () => {
-      findButtons(container, "Generate flashcards").at(1)?.click();
-    });
-
-    expect(
-      container.querySelector(
-        '[data-testid="generate-note-flashcards-dialog"]',
-      ),
     ).toBeTruthy();
   });
 
@@ -750,24 +489,5 @@ describe("NoteDetail", () => {
     });
 
     expect(document.activeElement).toBe(getTitleInput(container));
-  });
-
-  it("focuses the inline title from the active sidebar edit action", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    const editButtons = Array.from(container.querySelectorAll("button")).filter(
-      (button) => button.textContent?.includes("Edit"),
-    );
-
-    await act(async () => {
-      editButtons.at(0)?.click();
-    });
-
-    expect(document.activeElement).toBe(getTitleInput(container));
-    expect(
-      container.querySelector('[data-testid="edit-note-title-dialog"]'),
-    ).toBeNull();
   });
 });

@@ -38,10 +38,8 @@ test("first signup becomes approved admin immediately", async ({ page }) => {
   await page.locator("#form-signup-confirm-password").fill(firstUser.password);
   await page.getByRole("button", { name: "Create Account" }).click();
 
-  await page.waitForURL("**/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
+  await page.waitForURL((url) => url.pathname === "/");
+  await expect(page.getByTestId("home-greeting")).toBeVisible();
   await expect(page.getByTestId("account-menu-trigger")).toBeVisible();
   await expect(page.getByTestId("theme-switcher-navbar-trigger")).toBeVisible();
   await expect(page.getByTestId("theme-switcher-floating-trigger")).toHaveCount(

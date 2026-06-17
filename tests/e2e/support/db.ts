@@ -394,19 +394,12 @@ export async function updateSubjectAttendanceSettings(
     .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)));
 }
 
-export async function createSubject(
-  userId: string,
-  name: string,
-  options?: {
-    archivedAt?: Date | null;
-  },
-) {
+export async function createSubject(userId: string, name: string) {
   const [newSubject] = await getDb()
     .insert(subject)
     .values({
       userId,
       name,
-      archivedAt: options?.archivedAt ?? null,
     })
     .returning({ id: subject.id });
 

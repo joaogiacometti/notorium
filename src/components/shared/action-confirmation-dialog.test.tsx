@@ -62,14 +62,14 @@ describe("ActionConfirmationDialog", () => {
     expect(confirmButton?.dataset.variant).toBe("destructive");
   });
 
-  it("uses primary styling for reversible confirmations", async () => {
+  it("uses primary styling for non-destructive confirmations", async () => {
     await renderDialog({
       root,
-      confirmLabel: "Archive",
+      confirmLabel: "Confirm",
       confirmVariant: "default",
     });
 
-    const confirmButton = findButton("Archive", container);
+    const confirmButton = findButton("Confirm", container);
 
     expect(confirmButton?.dataset.variant).toBe("default");
   });

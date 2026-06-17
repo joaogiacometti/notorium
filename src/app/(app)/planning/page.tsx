@@ -1,4 +1,3 @@
-import { CalendarDays } from "lucide-react";
 import { PlanningAssessmentsPanel } from "@/components/planning/planning-assessments-panel";
 import { PlanningCalendarPanel } from "@/components/planning/planning-calendar-panel";
 import { PlanningViewSwitch } from "@/components/planning/planning-view-switch";
@@ -30,8 +29,7 @@ export default async function PlanningPage({
 
   return (
     <FeaturePageShell
-      description="Switch between assessment management and your calendar timeline."
-      icon={CalendarDays}
+      icon="calendar-days"
       isolateContentScroll={currentView === "assessments"}
       switcher={
         <PlanningViewSwitch

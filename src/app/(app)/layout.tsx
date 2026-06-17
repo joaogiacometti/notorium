@@ -1,13 +1,40 @@
-import { Navbar } from "@/components/navbar/navbar";
+import { AccountSettingsProvider } from "@/components/account/account-settings-provider";
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
+import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
+import { getSubjectTreeForUser } from "@/features/subjects/queries";
+import { isAiEnabled } from "@/lib/ai/config";
+import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
-export default function AuthenticatedAppLayout({
+export default async function AuthenticatedAppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const authState = await getOptionalSessionAccess();
+  const session = authState?.session ?? null;
+  const [tree, decks] = session
+    ? await Promise.all([
+        getSubjectTreeForUser(session.user.id),
+        getAllDecksWithPathsForUser(session.user.id),
+      ])
+    : [null, []];
+  const accountName =
+    session?.user.name?.trim() || session?.user.email || "Account";
+
   return (
     <ShortcutsProvider>
-      <AppLayoutClient navbar={<Navbar />}>{children}</AppLayoutClient>
+      <AccountSettingsProvider userId={session?.user.id ?? ""}>
+        <AppLayoutClient
+          tree={tree}
+          decks={decks}
+          accountName={accountName}
+          email={session?.user.email ?? ""}
+          isAdmin={authState?.account.isAdmin ?? false}
+          userId={session?.user.id ?? ""}
+          aiEnabled={isAiEnabled()}
+        >
+          {children}
+        </AppLayoutClient>
+      </AccountSettingsProvider>
     </ShortcutsProvider>
   );
 }

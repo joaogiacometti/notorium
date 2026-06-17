@@ -16,7 +16,7 @@ import type {
   EditMindmapForm,
   EditMindmapTitleForm,
 } from "@/features/mindmaps/validation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import {
   type ActionErrorResult,
@@ -43,10 +43,7 @@ export async function createMindmapForUser(
   userId: string,
   data: CreateMindmapForm,
 ): Promise<CreateMindmapMutationResult> {
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    data.subjectId,
-  );
+  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
   const current = await countMindmapsBySubjectForUser(userId, data.subjectId);
 
   if (!existingSubject) {

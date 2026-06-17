@@ -15,7 +15,7 @@ export default async function Page({
   const { token, error } = await searchParams;
 
   if (session) {
-    redirect("/subjects");
+    redirect("/");
   }
 
   if (!isEmailDeliveryEnabled()) {

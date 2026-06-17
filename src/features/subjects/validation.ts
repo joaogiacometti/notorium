@@ -18,9 +18,17 @@ const subjectKindSchema = z.enum(subjectKindValues);
 export const createSubjectSchema = z.object({
   name: subjectNameSchema,
   kind: subjectKindSchema,
+  parentSubjectId: z.string().min(1).optional(),
 });
 
 export type CreateSubjectForm = z.infer<typeof createSubjectSchema>;
+
+export const moveSubjectSchema = z.object({
+  id: z.string().min(1),
+  parentSubjectId: z.string().min(1).optional(),
+});
+
+export type MoveSubjectForm = z.infer<typeof moveSubjectSchema>;
 
 export const editSubjectSchema = z.object({
   id: z.string().min(1),
@@ -35,30 +43,6 @@ export const deleteSubjectSchema = z.object({
 });
 
 export type DeleteSubjectForm = z.infer<typeof deleteSubjectSchema>;
-
-export const archiveSubjectSchema = z.object({
-  id: z.string().min(1),
-});
-
-export type ArchiveSubjectForm = z.infer<typeof archiveSubjectSchema>;
-
-export const restoreSubjectSchema = z.object({
-  id: z.string().min(1),
-});
-
-export type RestoreSubjectForm = z.infer<typeof restoreSubjectSchema>;
-
-export const bulkArchiveSubjectsSchema = z.object({
-  ids: bulkIdsSchema,
-});
-
-export type BulkArchiveSubjectsForm = z.infer<typeof bulkArchiveSubjectsSchema>;
-
-export const bulkRestoreSubjectsSchema = z.object({
-  ids: bulkIdsSchema,
-});
-
-export type BulkRestoreSubjectsForm = z.infer<typeof bulkRestoreSubjectsSchema>;
 
 export const bulkDeleteSubjectsSchema = z.object({
   ids: bulkIdsSchema,

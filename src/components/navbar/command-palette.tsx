@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { getSubjects } from "@/app/actions/subjects";
+import { useOpenAccountSettings } from "@/components/account/account-settings-provider";
 import {
   type PaletteAction,
   type PaletteCommand,
@@ -42,6 +43,7 @@ export function CommandPalette({
 }: Readonly<CommandPaletteProps>) {
   const shortcutsSuspended = useShortcutsDialogOpen();
   const openShortcutsHelp = useOpenShortcutsHelp();
+  const openAccountSettings = useOpenAccountSettings();
   const { setAppTheme } = useThemeControl();
   const router = useRouter();
   const pathname = usePathname();
@@ -125,6 +127,9 @@ export function CommandPalette({
     } else if (action.kind === "theme") {
       void setAppTheme(action.theme);
       handleOpenChange(false);
+    } else if (action.kind === "open-settings") {
+      handleOpenChange(false);
+      openAccountSettings();
     } else {
       handleOpenChange(false);
       openShortcutsHelp();

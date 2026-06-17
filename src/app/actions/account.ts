@@ -9,6 +9,7 @@ import {
   updateAccountSchema,
 } from "@/features/account/validation";
 import {
+  getFsrsOptimizationSettings,
   optimizeFsrsParametersForUser,
   resetFsrsOptimizationForUser,
   updateFsrsOptimizationPreferences as updateFsrsOptimizationPreferencesForUser,
@@ -25,13 +26,20 @@ import {
   updateNotificationPreferences as updateNotificationPreferencesForUser,
   updateUserAccessStatusForUser,
 } from "@/features/user/mutations";
+import { getNotificationPreferences } from "@/features/user/queries";
 import { isAdminUser } from "@/lib/auth/access-control";
-import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
+import {
+  getAuth,
+  getAuthenticatedUserId,
+  requireSession,
+} from "@/lib/auth/auth";
+import { isEmailDeliveryEnabled } from "@/lib/email/config";
 import {
   runValidatedAction,
   runValidatedUserAction,
 } from "@/lib/server/action-runner";
 import type {
+  AccountSettings,
   FlashcardOptimizationResult,
   MutationResult,
 } from "@/lib/server/api-contracts";
@@ -40,6 +48,34 @@ import {
   type UpdateUserAccessInput,
   updateUserAccessSchema,
 } from "@/lib/validations/access-control";
+import { areWorkflowsEnabled } from "@/lib/workflows/config";
+
+/**
+ * Read every field the account settings dialog renders. Called lazily when the
+ * dialog opens so app pages never pay for these queries on each navigation.
+ *
+ * @example
+ * const settings = await getAccountSettings();
+ */
+export async function getAccountSettings(): Promise<AccountSettings> {
+  const session = await requireSession();
+  const emailEnabled = isEmailDeliveryEnabled();
+  const [notificationPrefs, fsrsOptimization] = await Promise.all([
+    emailEnabled ? getNotificationPreferences(session.user.id) : null,
+    getFsrsOptimizationSettings(session.user.id),
+  ]);
+
+  return {
+    name: session.user.name,
+    email: session.user.email,
+    createdAt: new Date(session.user.createdAt).toISOString(),
+    emailEnabled,
+    workflowsEnabled: areWorkflowsEnabled(),
+    notificationsEnabled: notificationPrefs?.notificationsEnabled ?? false,
+    notificationDaysBefore: notificationPrefs?.notificationDaysBefore ?? 1,
+    fsrsOptimization,
+  };
+}
 
 export async function updateAccount(
   data: UpdateAccountForm,

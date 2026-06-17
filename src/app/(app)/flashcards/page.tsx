@@ -1,4 +1,3 @@
-import { Layers3 } from "lucide-react";
 import { FlashcardsPageClient } from "@/components/flashcards/flashcards-page-client";
 import { FlashcardsViewSwitch } from "@/components/flashcards/shared/flashcards-view-switch";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
@@ -77,8 +76,7 @@ export default async function FlashcardsPage({
   return (
     <FeaturePageShell
       title="Flashcards"
-      description="Review due cards, manage your library, or inspect study statistics."
-      icon={Layers3}
+      icon="layers-3"
       switcher={
         <FlashcardsViewSwitch
           currentView={currentView}

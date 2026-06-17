@@ -4,7 +4,6 @@ import { FileText, MoreVertical, Pencil, Trash2, Workflow } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CreateDocumentMenu } from "@/components/documents/create-document-menu";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
@@ -22,51 +21,18 @@ import { formatRelativeTime } from "@/lib/dates/format";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 
 interface DocumentsListProps {
-  subjectId: string;
   documents: DocumentListItem[];
 }
 
-const SUBJECT_DOCUMENT_PREVIEW_COUNT = 3;
-
-export function DocumentsList({
-  subjectId,
-  documents,
-}: Readonly<DocumentsListProps>) {
+export function DocumentsList({ documents }: Readonly<DocumentsListProps>) {
   const router = useRouter();
   const [editTarget, setEditTarget] = useState<DocumentListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentListItem | null>(
     null,
   );
 
-  const noteCount = documents.filter((item) => item.kind === "note").length;
-  const mindmapCount = documents.length - noteCount;
-  const previewDocuments = documents.slice(0, SUBJECT_DOCUMENT_PREVIEW_COUNT);
-  const hasMore = documents.length > SUBJECT_DOCUMENT_PREVIEW_COUNT;
-  const fullDocumentsHref = `/subjects/${subjectId}/documents`;
-
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-tight">Documents</h2>
-          <div className="flex gap-2">
-            {documents.length > 0 ? (
-              <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <Link href={fullDocumentsHref}>Manage</Link>
-              </Button>
-            ) : null}
-            <CreateDocumentMenu
-              subjectId={subjectId}
-              noteCount={noteCount}
-              mindmapCount={mindmapCount}
-            />
-          </div>
-        </div>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Write study notes and map ideas as mindmaps.
-        </p>
-      </div>
-
       {documents.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-5 sm:p-6">
           <div>
@@ -78,7 +44,7 @@ export function DocumentsList({
         </div>
       ) : (
         <div className="space-y-1">
-          {previewDocuments.map((item) => {
+          {documents.map((item) => {
             const Icon = item.kind === "mindmap" ? Workflow : FileText;
 
             return (
@@ -134,17 +100,6 @@ export function DocumentsList({
               </div>
             );
           })}
-          {hasMore ? (
-            <Button
-              variant="outline"
-              className="mt-3 w-full border-dashed"
-              asChild
-            >
-              <Link href={fullDocumentsHref}>
-                View all {documents.length} documents
-              </Link>
-            </Button>
-          ) : null}
         </div>
       )}
 

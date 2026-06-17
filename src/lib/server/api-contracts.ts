@@ -15,6 +15,14 @@ import type {
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
+export interface SubjectOption extends SubjectEntity {
+  path: string;
+}
+export interface SubjectTreeNode extends SubjectEntity {
+  documentCount: number;
+  children: SubjectTreeNode[];
+  path: string;
+}
 export type NoteEntity = InferSelectModel<typeof note>;
 export type MindmapEntity = InferSelectModel<typeof mindmap>;
 export type MindmapListItem = Pick<MindmapEntity, "id" | "title" | "updatedAt">;
@@ -130,6 +138,21 @@ export interface FlashcardReviewState {
   scheduler: FlashcardReviewSchedulerSettings;
 }
 
+/**
+ * Everything the account settings dialog renders, fetched lazily when the
+ * dialog opens so no app page pays for these queries on every navigation.
+ */
+export interface AccountSettings {
+  name: string;
+  email: string;
+  createdAt: string;
+  emailEnabled: boolean;
+  workflowsEnabled: boolean;
+  notificationsEnabled: boolean;
+  notificationDaysBefore: number;
+  fsrsOptimization: FlashcardOptimizationSettings;
+}
+
 export interface FlashcardStatisticsSummary {
   totalCards: number;
   dueCards: number;
@@ -204,8 +227,6 @@ export type SearchData = {
 
 export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "kind">;
 
-export type NoteEditDto = Pick<NoteEntity, "id" | "title" | "content">;
-
 export type MutationResult = { success: true } | ActionErrorResult;
 export type FlashcardOptimizationResult =
   | {
@@ -258,6 +279,14 @@ export type BulkSubjectMutationResult =
   | {
       success: true;
       ids: string[];
+    }
+  | ActionErrorResult;
+export type MoveSubjectResult =
+  | {
+      success: true;
+      id: string;
+      previousParentSubjectId: string | null;
+      newParentSubjectId: string | null;
     }
   | ActionErrorResult;
 export type BulkLibraryMutationResult =
@@ -348,14 +377,6 @@ export interface FlashcardValidationItem {
   deckPath?: string;
   deckId: string;
 }
-
-export type ValidateFlashcardsResult =
-  | {
-      success: true;
-      issues: FlashcardValidationIssue[];
-      flashcards: FlashcardValidationItem[];
-    }
-  | ActionErrorResult;
 
 export type CreateDeckResult =
   | {

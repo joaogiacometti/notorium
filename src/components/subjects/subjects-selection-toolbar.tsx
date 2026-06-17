@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, Search, Trash2, X } from "lucide-react";
+import { Search, Trash2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,6 @@ interface SubjectsToolbarIconActionProps {
 interface SubjectsSelectionToolbarProps {
   total: number;
   selectedCount: number;
-  canArchive: boolean;
-  canRestore: boolean;
-  onArchive: () => void;
-  onRestore: () => void;
   onDelete: () => void;
   onClearSelection: () => void;
 }
@@ -57,10 +53,6 @@ function SubjectsToolbarIconAction({
 export function SubjectsSelectionToolbar({
   total,
   selectedCount,
-  canArchive,
-  canRestore,
-  onArchive,
-  onRestore,
   onDelete,
   onClearSelection,
 }: Readonly<SubjectsSelectionToolbarProps>) {
@@ -90,22 +82,6 @@ export function SubjectsSelectionToolbar({
             : "pointer-events-none invisible opacity-0",
         )}
       >
-        {canArchive ? (
-          <SubjectsToolbarIconAction
-            ariaLabel="Archive"
-            onClick={onArchive}
-            className="rounded-md text-muted-foreground hover:text-foreground"
-            icon={<Archive className="size-4" />}
-          />
-        ) : null}
-        {canRestore ? (
-          <SubjectsToolbarIconAction
-            ariaLabel="Restore"
-            onClick={onRestore}
-            className="rounded-md text-muted-foreground hover:text-foreground"
-            icon={<ArchiveRestore className="size-4" />}
-          />
-        ) : null}
         <SubjectsToolbarIconAction
           ariaLabel="Delete"
           onClick={onDelete}

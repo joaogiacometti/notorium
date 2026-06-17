@@ -19,9 +19,13 @@ function getUniqueDeckName(testTitle: string) {
 }
 
 async function openAccountPage(page: Page) {
-  await page.goto("/account");
+  // Account settings live in a dialog; the `?settings=` deep link opens it
+  // directly to the Flashcards section from any app page.
+  await page.goto("/planning?settings=flashcards");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Manage Account", exact: true }),
+    dialog.getByText("Flashcard Optimization", { exact: true }),
   ).toBeVisible();
 }
 

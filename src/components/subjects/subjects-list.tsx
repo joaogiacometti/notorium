@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSubjectListItems } from "@/app/actions/subjects";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
-import { BulkArchiveSubjectsDialog } from "@/components/subjects/bulk-archive-subjects-dialog";
 import { BulkDeleteSubjectsDialog } from "@/components/subjects/bulk-delete-subjects-dialog";
-import { BulkRestoreSubjectsDialog } from "@/components/subjects/bulk-restore-subjects-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
@@ -15,11 +13,8 @@ import {
   getColumnClassName,
   getSelectedSubjects,
   getSubjectPageItems,
-  getSubjectsHref,
   getVisibleSubjects,
-  isArchived,
   type SubjectsSort,
-  type SubjectsStatusFilter,
 } from "@/components/subjects/subjects-list-utils";
 import { SubjectsSelectionToolbar } from "@/components/subjects/subjects-selection-toolbar";
 import { getSubjectColumns } from "@/components/subjects/subjects-table-columns";
@@ -34,14 +29,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getTotalSubjectCount } from "@/features/subjects/subjects-count";
 import { LIMITS } from "@/lib/config/limits";
 import { PAGE_SIZE_OPTIONS } from "@/lib/pagination/page-size";
 import type {
@@ -49,27 +42,20 @@ import type {
   SubjectListItem,
 } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
-import { cn } from "@/lib/utils";
 
 interface SubjectsListProps {
   subjects: SubjectListItem[];
-  initialStatus: SubjectsStatusFilter;
 }
 
 type SubjectActionTarget =
   | { action: "edit"; subject: SubjectEditDto }
-  | { action: "archive"; subject: { id: string; name: string } }
   | { action: "delete"; subject: { id: string; name: string } };
 
-type SubjectBulkAction = "archive" | "restore" | "delete";
+type SubjectBulkAction = "delete";
 
-export function SubjectsList({
-  subjects,
-  initialStatus,
-}: Readonly<SubjectsListProps>) {
+export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {
   const router = useRouter();
   const [subjectItems, setSubjectItems] = useState(subjects);
-  const [status, setStatus] = useState<SubjectsStatusFilter>(initialStatus);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SubjectsSort>("updatedDesc");
   const [pageIndex, setPageIndex] = useState(0);
@@ -81,16 +67,8 @@ export function SubjectsList({
     null,
   );
   const warningTone = getStatusToneClasses("warning");
-  const activeCount = subjectItems.filter(
-    (subject) => !isArchived(subject),
-  ).length;
-  const archivedCount = subjectItems.length - activeCount;
-  const visibleSubjects = getVisibleSubjects(
-    subjectItems,
-    status,
-    searchQuery,
-    sortBy,
-  );
+  const totalSubjects = subjectItems.length;
+  const visibleSubjects = getVisibleSubjects(subjectItems, searchQuery, sortBy);
   const pageCount = Math.max(1, Math.ceil(visibleSubjects.length / pageSize));
   const pageSubjects = getSubjectPageItems(
     visibleSubjects,
@@ -101,22 +79,14 @@ export function SubjectsList({
     visibleSubjects,
     selectedSubjectIds,
   );
-  const selectedActiveSubjectIds = selectedSubjects
-    .filter((subject) => !isArchived(subject))
-    .map((subject) => subject.id);
-  const selectedArchivedSubjectIds = selectedSubjects
-    .filter(isArchived)
-    .map((subject) => subject.id);
-  const totalSubjects = getTotalSubjectCount(activeCount, archivedCount);
+  const selectedSubjectIdsForBulk = selectedSubjects.map(
+    (subject) => subject.id,
+  );
   const isAtLimit = totalSubjects >= LIMITS.maxSubjects;
 
   useEffect(() => {
     setSubjectItems(subjects);
   }, [subjects]);
-
-  useEffect(() => {
-    setStatus(initialStatus);
-  }, [initialStatus]);
 
   useEffect(() => {
     setPageIndex((currentPageIndex) =>
@@ -141,13 +111,6 @@ export function SubjectsList({
     setSubjectItems(latestSubjects);
   }
 
-  function handleStatusChange(value: string) {
-    const nextStatus = value as SubjectsStatusFilter;
-    setStatus(nextStatus);
-    setPageIndex(0);
-    router.replace(getSubjectsHref(nextStatus));
-  }
-
   function handleSearchChange(value: string) {
     setSearchQuery(value);
     setPageIndex(0);
@@ -167,11 +130,6 @@ export function SubjectsList({
   }
 
   const columns = getSubjectColumns({
-    onArchived: (subject) =>
-      setActiveAction({
-        action: "archive",
-        subject: { id: subject.id, name: subject.name },
-      }),
     onDeleted: (subject) =>
       setActiveAction({
         action: "delete",
@@ -186,9 +144,6 @@ export function SubjectsList({
           kind: subject.kind,
         },
       }),
-    onRestored: () => {
-      void refreshSubjectsList();
-    },
     hasSelection: selectedSubjectIds.length > 0,
   });
   const createButton = (
@@ -235,7 +190,7 @@ export function SubjectsList({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          Archive or delete a subject to create another one.
+                          Delete a subject to create another one.
                         </TooltipContent>
                       </Tooltip>
                     ) : (
@@ -249,23 +204,10 @@ export function SubjectsList({
                   }}
                 />
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <Tabs value={status} onValueChange={handleStatusChange}>
-                  <TabsList className="w-full sm:w-auto">
-                    <TabsTrigger value="active">
-                      Active
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]">
-                        {activeCount}
-                      </span>
-                    </TabsTrigger>
-                    <TabsTrigger value="archived">
-                      Archived
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]">
-                        {archivedCount}
-                      </span>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  {totalSubjects} subject{totalSubjects !== 1 ? "s" : ""}
+                </span>
                 <Select
                   value={sortBy}
                   onValueChange={(value) => {
@@ -287,10 +229,6 @@ export function SubjectsList({
               <SubjectsSelectionToolbar
                 total={visibleSubjects.length}
                 selectedCount={selectedSubjectIds.length}
-                canArchive={selectedActiveSubjectIds.length > 0}
-                canRestore={selectedArchivedSubjectIds.length > 0}
-                onArchive={() => setBulkAction("archive")}
-                onRestore={() => setBulkAction("restore")}
                 onDelete={() => setBulkAction("delete")}
                 onClearSelection={() => setSelectedSubjectIds([])}
               />
@@ -304,7 +242,7 @@ export function SubjectsList({
           >
             <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
             <p className={warningTone.text}>
-              {`You've reached the system limit of ${LIMITS.maxSubjects} subjects. Please archive or delete subjects to create more.`}
+              {`You've reached the system limit of ${LIMITS.maxSubjects} subjects. Please delete subjects to create more.`}
             </p>
           </div>
         ) : null}
@@ -332,13 +270,8 @@ export function SubjectsList({
               emptyLabel="No subjects match your filters."
               getRowId={(subject) => subject.id}
               getRowAriaLabel={(subject) => `Open ${subject.name}`}
-              getRowClassName={(subject) =>
-                isArchived(subject) ? "text-muted-foreground" : ""
-              }
               onRowClick={(subject) => {
-                if (!isArchived(subject)) {
-                  router.push(`/subjects/${subject.id}`);
-                }
+                router.push(`/subjects/${subject.id}`);
               }}
               exposeRowNavigationRole={false}
               onPageIndexChange={setPageIndex}
@@ -363,12 +296,7 @@ export function SubjectsList({
               columnResizeMode="onEnd"
               scrollAreaClassName="min-w-0 overflow-x-auto overflow-y-auto"
               getHeaderCellClassName={getColumnClassName}
-              getBodyCellClassName={(columnId) =>
-                cn(
-                  "px-3 py-2.5 align-middle sm:py-3",
-                  getColumnClassName(columnId),
-                )
-              }
+              getBodyCellClassName={getColumnClassName}
               wrapperClassName="min-w-0"
             />
           </Card>
@@ -395,21 +323,6 @@ export function SubjectsList({
             }}
           />
         ) : null}
-        {activeAction?.action === "archive" ? (
-          <DeleteSubjectDialog
-            subjectId={activeAction.subject.id}
-            subjectName={activeAction.subject.name}
-            open
-            onOpenChange={(open) => {
-              if (!open) setActiveAction(null);
-            }}
-            mode="archive"
-            onSuccess={() => {
-              void refreshSubjectsList();
-              setActiveAction(null);
-            }}
-          />
-        ) : null}
         {activeAction?.action === "delete" ? (
           <DeleteSubjectDialog
             subjectId={activeAction.subject.id}
@@ -418,31 +331,14 @@ export function SubjectsList({
             onOpenChange={(open) => {
               if (!open) setActiveAction(null);
             }}
-            mode="delete"
             onSuccess={() => {
               void refreshSubjectsList();
               setActiveAction(null);
             }}
           />
         ) : null}
-        <BulkArchiveSubjectsDialog
-          ids={selectedActiveSubjectIds}
-          open={bulkAction === "archive"}
-          onOpenChange={(open) => {
-            if (!open) setBulkAction(null);
-          }}
-          onArchived={handleBulkSuccess}
-        />
-        <BulkRestoreSubjectsDialog
-          ids={selectedArchivedSubjectIds}
-          open={bulkAction === "restore"}
-          onOpenChange={(open) => {
-            if (!open) setBulkAction(null);
-          }}
-          onRestored={handleBulkSuccess}
-        />
         <BulkDeleteSubjectsDialog
-          ids={selectedSubjectIds}
+          ids={selectedSubjectIdsForBulk}
           open={bulkAction === "delete"}
           onOpenChange={(open) => {
             if (!open) setBulkAction(null);

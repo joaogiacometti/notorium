@@ -351,6 +351,27 @@
       "when": 1781884860000,
       "tag": "0049_unique_subject_name_per_user",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1781884920000,
+      "tag": "0050_long_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1781884980000,
+      "tag": "0051_steep_dakota_north",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1781885040000,
+      "tag": "0052_familiar_captain_universe",
+      "breakpoints": true
     }
   ]
 }

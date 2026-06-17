@@ -23,6 +23,34 @@ export async function getNotesBySubjectForUser(
     .then((rows) => rows.map((row) => row.note));
 }
 
+/**
+ * Most recently updated notes across all of a user's active subjects, used by
+ * the home dashboard's "recent documents" card. Selects only list-preview
+ * columns (never the `content` blob).
+ *
+ * @example
+ * const notes = await getRecentNotesForUser(userId, 5);
+ */
+export async function getRecentNotesForUser(
+  userId: string,
+  limit: number,
+): Promise<Pick<NoteEntity, "id" | "title" | "updatedAt" | "subjectId">[]> {
+  return getDb()
+    .select({
+      id: note.id,
+      title: note.title,
+      updatedAt: note.updatedAt,
+      subjectId: note.subjectId,
+    })
+    .from(note)
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(eq(note.userId, userId), ...getOwnedActiveSubjectFilters(userId)),
+    )
+    .orderBy(desc(note.updatedAt))
+    .limit(limit);
+}
+
 export async function getNoteByIdForUser(
   userId: string,
   noteId: string,

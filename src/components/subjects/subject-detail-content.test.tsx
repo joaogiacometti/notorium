@@ -32,9 +32,15 @@ vi.mock("@/components/attendance/attendance-summary", () => ({
 }));
 
 vi.mock("@/components/documents/documents-list", () => ({
-  DocumentsList: ({ subjectId }: { subjectId: string }) => (
-    <section data-testid="documents-list">{subjectId}</section>
-  ),
+  DocumentsList: () => <section data-testid="documents-list" />,
+}));
+
+vi.mock("@/components/documents/create-document-menu", () => ({
+  CreateDocumentMenu: () => <button type="button">Create</button>,
+}));
+
+vi.mock("@/components/subjects/subject-subfolder-grid", () => ({
+  SubjectSubfolderGrid: () => <section data-testid="subfolder-grid" />,
 }));
 
 function createSubject(overrides: Partial<SubjectEntity> = {}): SubjectEntity {
@@ -44,8 +50,8 @@ function createSubject(overrides: Partial<SubjectEntity> = {}): SubjectEntity {
     name: "Biology",
     kind: "academic",
     totalClasses: 20,
+    parentSubjectId: null,
     maxMisses: 5,
-    archivedAt: null,
     createdAt: new Date("2026-04-20T10:00:00.000Z"),
     updatedAt: new Date("2026-04-20T10:00:00.000Z"),
     ...overrides,
@@ -94,6 +100,7 @@ describe("SubjectDetailContent", () => {
       root.render(
         <SubjectDetailContent
           subject={createSubject()}
+          childSubjects={[]}
           documents={[]}
           misses={[]}
           assessments={[createAssessment()]}
@@ -116,6 +123,7 @@ describe("SubjectDetailContent", () => {
       root.render(
         <SubjectDetailContent
           subject={createSubject()}
+          childSubjects={[]}
           documents={[]}
           misses={[]}
           assessments={[]}
@@ -132,7 +140,16 @@ describe("SubjectDetailContent", () => {
       root.render(
         <SubjectDetailContent
           subject={createSubject({ kind: "general" })}
-          documents={[]}
+          childSubjects={[]}
+          documents={[
+            {
+              id: "doc-1",
+              title: "Doc",
+              updatedAt: new Date(),
+              kind: "note",
+              subjectId: "subject-1",
+            },
+          ]}
           misses={[]}
           assessments={[createAssessment()]}
         />,

@@ -8,7 +8,6 @@ import {
   resolveAssessmentDetailBackLink,
   resolveDetailPageReturnContext,
   resolveFlashcardDetailBackLink,
-  resolveNoteDetailBackLink,
 } from "@/lib/navigation/detail-page-back-link";
 
 describe("resolveDetailPageReturnContext", () => {
@@ -103,15 +102,6 @@ describe("resolveFlashcardDetailBackLink", () => {
     expect(resolveFlashcardDetailBackLink({})).toEqual({
       href: "/flashcards",
       label: "flashcards",
-    });
-  });
-});
-
-describe("resolveNoteDetailBackLink", () => {
-  it("returns the owning subject", () => {
-    expect(resolveNoteDetailBackLink("subject-2")).toEqual({
-      href: "/subjects/subject-2",
-      label: "Back to Subject",
     });
   });
 });

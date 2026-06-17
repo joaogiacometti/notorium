@@ -11,7 +11,7 @@ const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const countMindmapsBySubjectForUserMock = vi.fn();
 const getMindmapByIdForUserMock = vi.fn();
-const getActiveSubjectRecordForUserMock = vi.fn();
+const getSubjectRecordForUserMock = vi.fn();
 const cleanupAttachmentPathnamesMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
@@ -34,7 +34,7 @@ vi.mock("@/features/mindmaps/queries", () => ({
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getActiveSubjectRecordForUser: getActiveSubjectRecordForUserMock,
+  getSubjectRecordForUser: getSubjectRecordForUserMock,
 }));
 
 vi.mock("@/features/attachments/cleanup", () => ({
@@ -50,7 +50,7 @@ describe("createMindmapForUser", () => {
     const randomUUIDSpy = vi
       .spyOn(crypto, "randomUUID")
       .mockReturnValue("mindmap-new");
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+    getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
     });
     countMindmapsBySubjectForUserMock.mockResolvedValueOnce(0);
@@ -81,7 +81,7 @@ describe("createMindmapForUser", () => {
   });
 
   it("rejects creation for a subject the user does not own", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce(null);
+    getSubjectRecordForUserMock.mockResolvedValueOnce(null);
     countMindmapsBySubjectForUserMock.mockResolvedValueOnce(0);
 
     const { createMindmapForUser } = await import(
@@ -98,7 +98,7 @@ describe("createMindmapForUser", () => {
   });
 
   it("rejects creation when the per-subject limit is reached", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+    getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
     });
     countMindmapsBySubjectForUserMock.mockResolvedValueOnce(100);

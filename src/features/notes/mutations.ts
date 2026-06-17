@@ -11,7 +11,7 @@ import type {
   DeleteNoteForm,
   EditNoteForm,
 } from "@/features/notes/validation";
-import { getActiveSubjectRecordForUser } from "@/features/subjects/queries";
+import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import {
   type ActionErrorResult,
@@ -46,10 +46,7 @@ export async function createNoteForUser(
   userId: string,
   data: CreateNoteForm,
 ): Promise<CreateNoteMutationResult> {
-  const existingSubject = await getActiveSubjectRecordForUser(
-    userId,
-    data.subjectId,
-  );
+  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
   const current = await countNotesBySubjectForUser(userId, data.subjectId);
 
   if (!existingSubject) {

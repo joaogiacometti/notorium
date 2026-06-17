@@ -12,7 +12,7 @@ export default async function Page({ searchParams }: Readonly<LoginPageProps>) {
   const { pendingApproval } = await searchParams;
 
   if (session) {
-    redirect("/subjects");
+    redirect("/");
   }
 
   return (

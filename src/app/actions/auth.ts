@@ -77,7 +77,7 @@ export const loginAction = async (
         return actionError("auth.loginFailed");
       }
 
-      return createAuthRedirectResult("/subjects");
+      return createAuthRedirectResult("/");
     },
   );
 };
@@ -123,7 +123,7 @@ export const signUpAction = async (
           return actionError("auth.signupFailed");
         }
 
-        return createAuthRedirectResult("/subjects");
+        return createAuthRedirectResult("/");
       }
 
       return createAuthRedirectResult("/login?pendingApproval=1");

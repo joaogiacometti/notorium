@@ -11,8 +11,8 @@ import type {
   RecordMissForm,
 } from "@/features/attendance/validation";
 import {
-  getActiveAcademicSubjectRecordForUser,
-  getActiveSubjectRecordForUser,
+  getAcademicSubjectRecordForUser,
+  getSubjectRecordForUser,
 } from "@/features/subjects/queries";
 import {
   type ActionErrorResult,
@@ -30,7 +30,7 @@ export async function updateAttendanceSettingsForUser(
   userId: string,
   data: AttendanceSettingsForm,
 ): Promise<AttendanceMutationResult> {
-  const existing = await getActiveAcademicSubjectRecordForUser(
+  const existing = await getAcademicSubjectRecordForUser(
     userId,
     data.subjectId,
   );
@@ -54,7 +54,7 @@ export async function recordMissForUser(
   userId: string,
   data: RecordMissForm,
 ): Promise<AttendanceMutationResult> {
-  const existingSubject = await getActiveAcademicSubjectRecordForUser(
+  const existingSubject = await getAcademicSubjectRecordForUser(
     userId,
     data.subjectId,
   );
@@ -105,7 +105,7 @@ export async function removeAttendanceSettingsForUser(
   userId: string,
   subjectId: string,
 ): Promise<AttendanceMutationResult> {
-  const existing = await getActiveSubjectRecordForUser(userId, subjectId);
+  const existing = await getSubjectRecordForUser(userId, subjectId);
 
   if (!existing) {
     return actionError("subjects.notFound");

@@ -1,16 +1,11 @@
 "use client";
 
-import { CalendarDays, FolderKanban, Layers3, Library } from "lucide-react";
+import { CalendarDays, Layers3, Library } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const sections = [
-  {
-    href: "/subjects",
-    label: "Subjects",
-    icon: FolderKanban,
-  },
   {
     href: "/planning",
     label: "Planning",

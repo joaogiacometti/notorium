@@ -1,11 +1,11 @@
 import {
-  Archive,
   BookOpen,
   BookText,
   CalendarDays,
   ClipboardList,
   FileText,
   FolderPlus,
+  Home,
   Keyboard,
   LaptopMinimal,
   Layers,
@@ -35,6 +35,7 @@ export type PaletteAction =
   | { kind: "create"; dialog: ContextFreeDialog }
   | { kind: "create-in-subject"; dialog: SubjectScopedDialog }
   | { kind: "theme"; theme: AppTheme }
+  | { kind: "open-settings" }
   | { kind: "shortcuts-help" };
 
 export interface PaletteCommand {
@@ -96,12 +97,12 @@ export const paletteCommands: PaletteCommand[] = [
     action: { kind: "create-in-subject", dialog: "mindmap" },
   },
   {
-    id: "goto-subjects",
-    label: "Go to Subjects",
+    id: "goto-home",
+    label: "Go to Home",
     group: "Go to",
-    keywords: ["subjects", "courses", "home"],
-    icon: BookOpen,
-    action: { kind: "navigate", href: "/subjects" },
+    keywords: ["home", "dashboard", "overview", "start"],
+    icon: Home,
+    action: { kind: "navigate", href: "/" },
   },
   {
     id: "goto-flashcards",
@@ -136,20 +137,12 @@ export const paletteCommands: PaletteCommand[] = [
     action: { kind: "navigate", href: "/library" },
   },
   {
-    id: "goto-archived",
-    label: "Go to Archived Subjects",
-    group: "Go to",
-    keywords: ["archived", "subjects", "hidden"],
-    icon: Archive,
-    action: { kind: "navigate", href: "/subjects/archived" },
-  },
-  {
-    id: "goto-account",
-    label: "Go to Account",
-    group: "Go to",
+    id: "open-settings",
+    label: "Open Settings",
+    group: "Settings",
     keywords: ["account", "settings", "profile", "preferences"],
     icon: UserCog,
-    action: { kind: "navigate", href: "/account" },
+    action: { kind: "open-settings" },
   },
   {
     id: "theme-light",
@@ -194,15 +187,15 @@ export const paletteGroupOrder: PaletteGroup[] = [
 
 /**
  * Resolve the active subject id from a route so subject-scoped creates can skip
- * the picker. Returns null off subject pages and on the archived list.
+ * the picker. Returns null off subject pages.
  *
  * @example
- * parseSubjectIdFromPath("/subjects/abc/documents"); // "abc"
+ * parseSubjectIdFromPath("/subjects/abc/documents/notes/n1"); // "abc"
  */
 export function parseSubjectIdFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/subjects\/([^/]+)/);
   const segment = match?.[1];
-  if (!segment || segment === "archived") {
+  if (!segment) {
     return null;
   }
   return segment;

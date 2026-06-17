@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  archiveSubjectSchema,
-  bulkArchiveSubjectsSchema,
   bulkDeleteSubjectsSchema,
-  bulkRestoreSubjectsSchema,
   createSubjectSchema,
   deleteSubjectSchema,
   editSubjectSchema,
-  restoreSubjectSchema,
 } from "@/features/subjects/validation";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -131,48 +127,14 @@ describe("deleteSubjectSchema", () => {
   });
 });
 
-describe("archiveSubjectSchema", () => {
-  it("requires a non-empty id", () => {
-    expect(archiveSubjectSchema.safeParse({}).success).toBe(false);
-    expect(archiveSubjectSchema.safeParse({ id: "" }).success).toBe(false);
-  });
-
-  it("accepts a valid id", () => {
-    expect(archiveSubjectSchema.safeParse({ id: "subject-1" }).success).toBe(
-      true,
-    );
-  });
-});
-
-describe("restoreSubjectSchema", () => {
-  it("requires a non-empty id", () => {
-    expect(restoreSubjectSchema.safeParse({}).success).toBe(false);
-    expect(restoreSubjectSchema.safeParse({ id: "" }).success).toBe(false);
-  });
-
-  it("accepts a valid id", () => {
-    expect(restoreSubjectSchema.safeParse({ id: "subject-1" }).success).toBe(
-      true,
-    );
-  });
-});
-
-describe("bulk subject schemas", () => {
-  it("reject empty ids", () => {
-    expect(bulkArchiveSubjectsSchema.safeParse({ ids: [] }).success).toBe(
-      false,
-    );
-    expect(bulkRestoreSubjectsSchema.safeParse({ ids: [] }).success).toBe(
-      false,
-    );
+describe("bulk delete subject schema", () => {
+  it("rejects empty ids", () => {
     expect(bulkDeleteSubjectsSchema.safeParse({ ids: [] }).success).toBe(false);
   });
 
-  it("accept non-empty ids", () => {
+  it("accepts non-empty ids", () => {
     const input = { ids: ["subject-1"] };
 
-    expect(bulkArchiveSubjectsSchema.safeParse(input).success).toBe(true);
-    expect(bulkRestoreSubjectsSchema.safeParse(input).success).toBe(true);
     expect(bulkDeleteSubjectsSchema.safeParse(input).success).toBe(true);
   });
 });

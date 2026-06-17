@@ -68,10 +68,8 @@ test("approved user can reset password through app email flow", async ({
   await expect(page.getByText("Login failed.")).toBeVisible();
 
   await loginWithPassword(page, credentials.email, newPassword);
-  await page.waitForURL("**/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
+  await page.waitForURL((url) => url.pathname === "/");
+  await expect(page.getByTestId("home-greeting")).toBeVisible();
 });
 
 test("inactive and missing accounts get generic reset response without email", async ({

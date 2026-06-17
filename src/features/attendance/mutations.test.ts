@@ -16,7 +16,7 @@ const updateMock = vi.fn(() => ({
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 
-const getActiveSubjectRecordForUserMock = vi.fn();
+const getSubjectRecordForUserMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -45,7 +45,7 @@ vi.mock("@/db/schema", () => ({
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getActiveSubjectRecordForUser: getActiveSubjectRecordForUserMock,
+  getSubjectRecordForUser: getSubjectRecordForUserMock,
 }));
 
 describe("removeAttendanceSettingsForUser", () => {
@@ -54,7 +54,7 @@ describe("removeAttendanceSettingsForUser", () => {
   });
 
   it("returns notFound when the subject does not exist", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce(null);
+    getSubjectRecordForUserMock.mockResolvedValueOnce(null);
 
     const { removeAttendanceSettingsForUser } = await import(
       "@/features/attendance/mutations"
@@ -73,7 +73,7 @@ describe("removeAttendanceSettingsForUser", () => {
   });
 
   it("deletes all attendance misses and clears settings for the subject", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+    getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
       userId: "user-1",
       name: "Math",
@@ -96,7 +96,7 @@ describe("removeAttendanceSettingsForUser", () => {
   });
 
   it("uses correct conditions for deleting attendance misses", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+    getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
       userId: "user-1",
       name: "Math",
@@ -117,7 +117,7 @@ describe("removeAttendanceSettingsForUser", () => {
   });
 
   it("sets totalClasses and maxMisses to null on the subject", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+    getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
       userId: "user-1",
       name: "Math",

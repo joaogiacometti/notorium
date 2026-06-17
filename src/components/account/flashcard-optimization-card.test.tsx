@@ -213,7 +213,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Save Preferences",
+      (element) => element.textContent === "Save",
     );
 
     expect(saveButton).toBeTruthy();
@@ -244,7 +244,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Save Preferences",
+      (element) => element.textContent === "Save",
     );
     await act(async () => {
       saveButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));

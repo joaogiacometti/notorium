@@ -5,11 +5,7 @@ export const detailPageOriginValues = [
 
 export type DetailPageOrigin = (typeof detailPageOriginValues)[number];
 
-export type DetailPageBackLabel =
-  | "Back to Subject"
-  | "flashcards"
-  | "planning"
-  | "subject";
+export type DetailPageBackLabel = "flashcards" | "planning" | "subject";
 export type FlashcardsReturnView = "manage" | "review" | "statistics";
 
 export interface DetailPageBackLink {
@@ -106,10 +102,6 @@ export function getFlashcardDetailHref(
   });
 }
 
-export function getSubjectDocumentsHref(subjectId: string) {
-  return `/subjects/${subjectId}/documents`;
-}
-
 export function getNoteDetailHref(subjectId: string, noteId: string) {
   return `/subjects/${subjectId}/documents/notes/${noteId}`;
 }
@@ -164,15 +156,6 @@ export function resolveFlashcardDetailBackLink(
   return {
     href: "/flashcards",
     label: "flashcards",
-  };
-}
-
-export function resolveNoteDetailBackLink(
-  subjectId: string,
-): DetailPageBackLink {
-  return {
-    href: `/subjects/${subjectId}`,
-    label: "Back to Subject",
   };
 }
 

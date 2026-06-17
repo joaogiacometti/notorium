@@ -33,12 +33,11 @@ Students who want a private, lightweight study management workspace.
 
 ### Subjects
 
-- Create, read, update, and delete subjects.
-- Archive and restore subjects.
-- Subjects list as a table with search, sorting, active/archived filters, page size controls, row selection, and bulk archive/restore/delete.
+- Create, read, update, and hard-delete subjects.
+- Subjects list as a table with search, sorting, page size controls, row selection, and bulk delete.
 - Subjects table shows subject title, notes count, and compact row actions. It does not show status, created, or updated columns. General subjects show a "General" tag next to their title.
 - Subject fields: name and kind.
-- Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects (active or archived) is rejected with a duplicate-name error. Uniqueness is case-sensitive.
+- Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects is rejected with a duplicate-name error. Uniqueness is case-sensitive.
 - Each subject has a kind, chosen at creation and editable later: `academic` or `general`.
   - Academic subjects expose attendance and assessment tracking on their detail page, in addition to documents.
   - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools.
@@ -48,13 +47,12 @@ Students who want a private, lightweight study management workspace.
 ### Documents
 
 - Each subject has a Documents area that holds both notes and mindmaps together.
-- The documents sidebar lists notes and mindmaps in one list ordered by most recent update, with a leading icon per item that distinguishes notes from mindmaps.
-- The documents sidebar header shows the current subject's name so the active subject is always visible from the documents list and from any open note or mindmap.
-- On note and mindmap detail pages and the full documents list, each sidebar row's kebab menu offers the same actions as that document kind's header kebab menu, and every action works without opening the document: notes offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Copy as rich text, Copy as plain text, and Delete; mindmaps offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Export as PNG, and Delete. Copy and export on a non-open document act on its last saved state; on the open document they act on the live editor content.
+- Document navigation lives in the global subject tree sidebar (the app frame): expanding a subject lists its notes and mindmaps, so note and mindmap detail pages no longer carry their own in-page documents sidebar and the editor or canvas spans the full content width.
+- Each note and mindmap row in the tree sidebar has a kebab menu with the same actions as that document kind's detail-page header menu, working without opening the document: notes offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Copy as rich text, Copy as plain text, and Delete; mindmaps offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Export as PNG, and Delete. These act on the document's last saved state; renames and deletes refresh the subject's rows in place.
+- Document row management (rename, delete, generate, export) happens through the subject tree sidebar's kebab menus. The sidebar remains the persistent navigator; a subject's own page is a browsable overview of that subject, not a separate cross-subject documents list.
 - A single "Create" action offers "Note" or "Mindmap"; each prompts for a title and opens the new item.
-- Subject detail previews the 3 most recently updated documents (notes and mindmaps), with row links to each item, the "Create" action, and compact row action menus (edit title for notes, delete for both).
-- The full documents list shows a simple center indicator until a document is selected; its rows expose the same per-kind kebab actions as the detail-page sidebar.
-- Note and mindmap detail pages offer a zen mode toggle next to the document actions menu. Zen mode expands the editor or canvas to a full-screen, distraction-free view that hides the navbar, back link, and documents sidebar while keeping the title and document actions available. `Escape` or the toggle exits; an `Escape` that closes a dialog, menu, or inline connection-label edit does not also exit zen mode.
+- A subject's page is its browsable "home". A sticky top bar shows the subject's full ancestor path as a breadcrumb (each segment links to that subject), so the body carries no separate title block. The body shows the subject's direct subfolders as a grid of cards (each linking into the subfolder, with rolled-up document and subfolder counts), followed by a Documents section: a "Documents" heading with the "Create" action and the subject's complete list of documents (notes and mindmaps, no preview cap) with row links and compact action menus (edit title for notes, delete for both). Academic root subjects also show attendance and assessment summaries above these sections.
+- Note and mindmap detail pages offer a zen mode toggle next to the document actions menu. Zen mode expands the editor or canvas to a full-screen, distraction-free view that hides the breadcrumb bar while keeping the title and document actions available. `Escape` or the toggle exits; an `Escape` that closes a dialog, menu, or inline connection-label edit does not also exit zen mode.
 - There is no standalone top-level mindmaps route; mindmaps live only inside their subject.
 
 #### Notes
@@ -63,7 +61,7 @@ Students who want a private, lightweight study management workspace.
 - Notes use rich text editing and rendering.
 - Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, tables, LaTeX math, and other shared editor formatting exposed by the app.
 - Math renders with KaTeX in both editing and reading. Inline math is typed as `$...$`; the `/math` slash command inserts a block equation. Equations are editable by clicking them, and their LaTeX stays searchable.
-- Note detail shows the subject's documents in the shared documents sidebar with full per-kind row action menus, and edits the active note inline with auto-save. The header kebab (three-dot) menu offers Edit (focuses the inline title), Generate flashcards (when AI is configured), Copy as rich text, Copy as plain text, and Delete.
+- Note detail edits the active note inline with auto-save across the full content width. The header kebab (three-dot) menu offers Edit (focuses the inline title), Generate flashcards (when AI is configured), Copy as rich text, Copy as plain text, and Delete.
 - Note detail supports copying note content as rich text or plain text.
 - Note content renders images from:
   - pasted direct image URLs
@@ -76,7 +74,7 @@ Students who want a private, lightweight study management workspace.
 #### Mindmaps
 
 - Create, read, update, and delete mindmaps per subject. Mindmaps are scoped to a subject, like notes, and appear in the subject's documents area.
-- Mindmap detail shows the subject's documents in the shared documents sidebar alongside the canvas, and edits a node-and-edge canvas centered on a distinct root node whose label stays in sync with the mindmap title (editing either updates the other). Users edit node labels (double-click), connect nodes with edges, drag nodes, and pan/zoom. Title and graph changes auto-save.
+- Mindmap detail edits a full-width node-and-edge canvas centered on a distinct root node whose label stays in sync with the mindmap title (editing either updates the other). Users edit node labels (double-click), connect nodes with edges, drag nodes, and pan/zoom. Title and graph changes auto-save.
 - The header kebab (three-dot) menu offers Edit, Generate flashcards (when AI is configured), Export as PNG, and Delete. Export as PNG rasterizes the whole map (framed with even padding, on the active theme's background) and downloads it as a file named after the mindmap title. Exporting a mindmap that is not currently open renders its saved graph offscreen before capturing.
 - When AI is configured, users can generate flashcards from a mindmap into a selected deck. The AI source is a nested outline of the map's node labels and edge-relation labels (cross-connections excluded), so card quality reflects how detailed the map is. Generated mindmap flashcards are reviewed before creation.
 - Canvas keyboard shortcuts (suppressed while typing in a field): `V` switches to select mode, `H` switches to pan mode, holding `Space` pans temporarily, `Tab` adds a child to the selected node in its allowed branch direction, `Delete`/`Backspace` removes the selected node and its descendants, and `Ctrl`/`Cmd+C` copies the selected nodes and their subtrees to the clipboard as a nested markdown outline for pasting into an AI chat (it yields to a live text selection so ordinary copy still works).
@@ -150,9 +148,9 @@ Students who want a private, lightweight study management workspace.
 - A 20-minute learn-ahead window is applied to `learning` and `relearning` cards only: a card whose `dueAt` is within the next 20 minutes is treated as due and kept in the current session. This matches Anki's `collapseTime` behavior and prevents short-interval cards (e.g. `Again → 1m`) from vanishing mid-session.
 - Review logs are stored per user.
 - Review parameters support per-user tuning.
-- Users can manually optimize FSRS parameters from the Account page using their review history.
-- Users can reset FSRS optimization from the Account page to restore default scheduler tuning without deleting review history or flashcard progress.
-- Users can enable automatic FSRS optimization from the Account page when workflows are configured; automatic optimization runs on a fixed 30-day cadence and does not rewrite existing card due dates.
+- Users can manually optimize FSRS parameters from the account settings dialog using their review history.
+- Users can reset FSRS optimization from the account settings dialog to restore default scheduler tuning without deleting review history or flashcard progress.
+- Users can enable automatic FSRS optimization from the account settings dialog when workflows are configured; automatic optimization runs on a fixed 30-day cadence and does not rewrite existing card due dates.
 - Keyboard shortcuts on the review screen:
   - `Enter` or `Space` reveals the back when hidden.
   - `Enter` or `Space` grades `Good` after the back is shown.
@@ -196,7 +194,7 @@ Students who want a private, lightweight study management workspace.
 
 - Full-screen, distraction-free review experience optimized for mobile.
 - Due-card review sessions are focus-only and start from the `Start review` action card on the review hub.
-- Hides navbar and all non-essential UI elements.
+- Hides the left menu and all non-essential UI elements.
 - Shows progress bar, card content, and rating buttons only.
 - Shows a card actions menu for edit, reset review progress, and delete.
 - Keyboard shortcuts:
@@ -256,7 +254,7 @@ Students who want a private, lightweight study management workspace.
 - Search subjects, notes, and flashcards by text with case-insensitive matching.
 - Flashcard search results navigate to the flashcard detail page.
 - Flashcard search results display deck paths using `::` notation.
-- Search is user-scoped and accessible from the navbar.
+- Search is user-scoped and accessible from the left menu (and the `Cmd/Ctrl+K` shortcut).
 - Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
 - Search result text matching the query is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
@@ -268,8 +266,8 @@ Students who want a private, lightweight study management workspace.
 - Commands are searchable by name and keyword and grouped as Create, Go to, and Settings.
 - Create commands open the existing create dialogs: Subject, Flashcard, Deck, Assessment, Note, and Mindmap.
 - Creating a Note or Mindmap requires a subject: on a subject page the current subject is used; elsewhere the palette shows a subject picker step before opening the create dialog. Created notes and mindmaps navigate to their detail page.
-- Go to commands navigate to Subjects, Flashcards, Planning, Archived Subjects, and Account.
-- Settings commands switch the theme (Light, Dark, System) and open the keyboard shortcuts help dialog.
+- Go to commands navigate to Flashcards, Planning, and Library.
+- Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.
 - The palette hotkey is suspended while another dialog is open.
 
 ### Keyboard Shortcuts Help
@@ -281,35 +279,38 @@ Students who want a private, lightweight study management workspace.
 
 ### Account
 
-- View account details.
-- Navigate Account settings sections with in-page shortcuts on the Account page.
-- Update display name.
+- Account settings open in a dialog (not a route), reachable from the account menu ("Settings") and the "Open Settings" command. The dialog has a left sidebar of sections (Account, Appearance, Notifications, Flashcards) and renders the active section on the right; its data is fetched lazily when the dialog opens.
+- The sidebar has a search box; typing filters individual settings rows across every section into one flat list (matching row labels and keywords), replaces the content heading with the quoted query, and swaps the section list for a "Clear Search" control. Clearing the search restores the section list.
+- A `?settings=<section>` query parameter on any app page opens the dialog to that section once on load, then strips the parameter from the URL.
+- View account details and update display name.
 - View flashcard optimization status, including the last FSRS optimization date.
 - Reset flashcard optimization to default FSRS tuning while keeping review history.
-- Admin-only access management page to approve, block, or set pending for users.
+- Admin-only access management page to approve, block, or set pending for users (separate `/admin` route).
 - Delete account and all user-owned data.
 
 ### Email Notifications
 
 - Users can opt in to daily email reminders for upcoming pending assessments.
 - Only approved users are eligible to receive reminder emails.
-- Notifications are disabled by default; users enable them from the Account settings page.
+- Notifications are disabled by default; users enable them from the Notifications section of the account settings dialog.
 - Users choose a lead time of 1, 3, or 7 days before the assessment due date.
 - An email is triggered by calling `GET /api/notifications/assessments` (secured with `Authorization: Bearer <CRON_SECRET>`).
 - The endpoint is designed to be called once per day by a GitHub Actions workflow.
 - Each email lists the user's pending assessments that fall within their configured window, along with subject names and due dates.
-- The email contains a link to the planning page.
+- The email contains a link to the planning page and a footer link that opens the notifications settings (`/planning?settings=notifications`).
 - Requires `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `CRON_SECRET` environment variables; if unconfigured, the endpoint returns `503`.
-- The "Email Notifications" preferences card is hidden on the Account page unless both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured, and notification preferences are not queried from the database.
+- The "Email Notifications" preferences card and its settings dialog section are hidden unless both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured, and notification preferences are not queried from the database.
 
 ### UI/UX Baseline
 
 - Responsive layout for desktop and mobile.
+- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments, recently edited documents (notes and mindmaps across all subjects), and a quick-access grid of recently updated subjects with a create action. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
+- Every page shows a sticky top bar with a breadcrumb trail (e.g. `Subject / Documents / Note`) that indicates the current location and replaces per-page "Back to …" links. Intermediate crumbs link to ancestors; the current page is the unlinked final crumb.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.
 - Dialog mutation feedback follows a two-mode rule: **close on success** for straightforward create/edit dialogs (user sees the result appear in the list); **button saved state** (1200 ms "Saved ✓" transition on the submit button) for dialogs that stay open as a progress checkpoint, where the user continues working after saving (e.g. create flashcard, edit flashcard). Inline auto-save surfaces compact saving, saved, and error status near the edited content.
 - Action confirmation dialogs use one shared layout and footer pattern. Reversible or non-destructive confirmations use the primary confirm button; irreversible delete/remove/discard confirmations use destructive styling.
-- Theme toggle with `light`, `dark`, `halloween`, `catppuccin-mocha`, and `system`; authenticated users access it from the navbar, and signed-out users access it from a floating top-right control.
+- Theme toggle with `light`, `dark`, `halloween`, `catppuccin-mocha`, and `system`; authenticated users choose it from the Appearance card in account settings, and signed-out users access it from a floating top-right control.
 - Installed PWA launch uses the static dark theme background before app code loads; browser and installed PWA chrome follows the active theme after the app loads, including `halloween` and `catppuccin-mocha`.
 - Custom not-found page.
 

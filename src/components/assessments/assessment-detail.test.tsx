@@ -100,8 +100,11 @@ describe("AssessmentDetail", () => {
       root.render(
         <AssessmentDetail
           attachmentsEnabled={attachmentsEnabled}
-          backHref="/planning"
-          backLabel="Back to Planning"
+          breadcrumb={[
+            { label: "Planning", href: "/planning" },
+            { label: "Final exam" },
+          ]}
+          returnHref="/planning"
           detail={createAssessmentDetail()}
         />,
       );

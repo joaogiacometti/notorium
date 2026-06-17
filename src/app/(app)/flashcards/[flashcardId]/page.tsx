@@ -33,8 +33,11 @@ export default async function FlashcardDetailPage({
   return (
     <main>
       <FlashcardDetail
-        backHref={backLink.href}
-        backLabel="Back to Flashcards"
+        breadcrumb={[
+          { label: "Flashcards", href: backLink.href, icon: "layers" },
+          { label: flashcard.deckPath },
+        ]}
+        returnHref={backLink.href}
         flashcard={flashcard}
         aiEnabled={aiEnabled}
       />

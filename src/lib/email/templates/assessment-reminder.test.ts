@@ -78,14 +78,16 @@ describe("renderAssessmentReminderEmail", () => {
     expect(html).toContain("https://app.example.com/planning");
   });
 
-  it("includes the account URL in the footer", () => {
+  it("includes the settings deep link in the footer", () => {
     const { html } = renderAssessmentReminderEmail({
       userName: "Eve",
       assessments: [baseAssessment],
       appUrl: "https://app.example.com",
     });
 
-    expect(html).toContain("https://app.example.com/account");
+    expect(html).toContain(
+      "https://app.example.com/planning?settings=notifications",
+    );
   });
 
   it("includes the subject name in the HTML", () => {

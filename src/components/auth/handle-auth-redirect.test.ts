@@ -10,11 +10,11 @@ describe("handle-auth-redirect", () => {
     handleAuthRedirect({
       success: true,
       data: {
-        redirectTo: "/subjects",
+        redirectTo: "/",
       },
     });
 
-    expect(window.location.assign).toHaveBeenCalledWith("/subjects");
+    expect(window.location.assign).toHaveBeenCalledWith("/");
   });
 
   it("navigates for pending-approval redirects", () => {

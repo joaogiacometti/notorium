@@ -40,7 +40,9 @@ export function renderAssessmentReminderEmail({
 }: AssessmentReminderData): { subject: string; html: string } {
   const count = assessments.length;
   const planningUrl = `${appUrl}/planning`;
-  const accountUrl = `${appUrl}/account`;
+  // Notifications live in the settings dialog, not a route; the `?settings=`
+  // deep link opens it on the notifications section from any app page.
+  const accountUrl = `${appUrl}/planning?settings=notifications`;
 
   const escapedFirstTitle = escapeHtml(assessments[0].title);
   const subject =

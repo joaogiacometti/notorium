@@ -1,6 +1,7 @@
 import { Shield } from "lucide-react";
 import { UserAccessManagementCard } from "@/components/admin/user-access-management-card";
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { PageTopBar } from "@/components/shared/page-top-bar";
 import { getManagedUsers } from "@/lib/auth/access-control";
 import { requireAdminSession } from "@/lib/auth/auth";
 
@@ -10,6 +11,7 @@ export default async function AdminPage() {
 
   return (
     <main>
+      <PageTopBar breadcrumb={[{ label: "Admin", icon: "shield" }]} />
       <AppPageContainer maxWidth="3xl">
         <div className="mb-6 flex min-w-0 items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">

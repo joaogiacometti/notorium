@@ -1,5 +1,15 @@
 import { addDays } from "date-fns";
-import { and, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { PlanningAssessmentsQueryInput } from "@/features/assessments/validation";
@@ -27,6 +37,34 @@ export async function getAssessmentsForUser(
       ),
     )
     .orderBy(desc(assessment.updatedAt))
+    .then((rows) => rows.map((row) => row.assessment));
+}
+
+/**
+ * Soonest upcoming assessments (due today or later) across all of a user's
+ * active subjects, ordered by due date, used by the home dashboard. Assessments
+ * with no due date are excluded by the `>=` comparison.
+ *
+ * @example
+ * const upcoming = await getUpcomingAssessmentsForUser(userId, 5);
+ */
+export async function getUpcomingAssessmentsForUser(
+  userId: string,
+  limit: number,
+): Promise<AssessmentEntity[]> {
+  return getDb()
+    .select({ assessment })
+    .from(assessment)
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
+    .where(
+      and(
+        eq(assessment.userId, userId),
+        gte(assessment.dueDate, getTodayIso()),
+        ...getOwnedActiveSubjectFilters(userId),
+      ),
+    )
+    .orderBy(asc(assessment.dueDate))
+    .limit(limit)
     .then((rows) => rows.map((row) => row.assessment));
 }
 

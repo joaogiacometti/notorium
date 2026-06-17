@@ -1,5 +1,7 @@
 export const LIMITS = {
   maxSubjects: 50,
+  maxChildSubjectsPerSubject: 50,
+  maxSubjectNestingDepth: 4,
   maxNotesPerSubject: 100,
   maxMindmapsPerSubject: 100,
   maxNodesPerMindmap: 200,

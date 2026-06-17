@@ -1,15 +1,11 @@
 import { redirect } from "next/navigation";
 import { NoteDetail } from "@/components/notes/note-detail";
 import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
-import { getSubjectDocumentsForUser } from "@/features/documents/queries";
 import { getNoteByIdForUser } from "@/features/notes/queries";
-import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
+import { getSubjectByIdForUser } from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
-import {
-  getNoteDetailHref,
-  resolveNoteDetailBackLink,
-} from "@/lib/navigation/detail-page-back-link";
+import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
 
 interface NotePageProps {
   params: Promise<{ id: string; noteId: string }>;
@@ -32,22 +28,15 @@ export default async function NotePage({ params }: Readonly<NotePageProps>) {
     redirect(getNoteDetailHref(note.subjectId, note.id));
   }
 
-  const [documents, subject] = await Promise.all([
-    getSubjectDocumentsForUser(session.user.id, id),
-    getActiveSubjectByIdForUser(session.user.id, id),
-  ]);
-  const backLink = resolveNoteDetailBackLink(note.subjectId);
+  const subject = await getSubjectByIdForUser(session.user.id, id);
 
   return (
     <main>
       <NoteDetail
-        backHref={backLink.href}
-        backLabel={backLink.label}
         aiEnabled={isAiEnabled()}
         decks={decks}
         note={note}
         subjectName={subject?.name ?? ""}
-        documents={documents}
       />
     </main>
   );

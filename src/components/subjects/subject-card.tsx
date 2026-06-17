@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { SubjectText } from "@/components/shared/subject-text";
@@ -18,14 +18,12 @@ import type { SubjectEntity } from "@/lib/server/api-contracts";
 interface SubjectCardProps {
   subject: SubjectEntity;
   onEditRequested: () => void;
-  onArchiveRequested: () => void;
   onDeleteRequested: () => void;
 }
 
 export function SubjectCard({
   subject,
   onEditRequested,
-  onArchiveRequested,
   onDeleteRequested,
 }: Readonly<SubjectCardProps>) {
   return (
@@ -66,13 +64,6 @@ export function SubjectCard({
             >
               <Pencil className="size-4" />
               Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onArchiveRequested}
-              className="cursor-pointer"
-            >
-              <Archive className="size-4" />
-              Archive
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onDeleteRequested}

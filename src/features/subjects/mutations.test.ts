@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const insertValuesMock = vi.fn();
+const insertReturningMock = vi.fn();
+const insertValuesMock = vi.fn(() => ({
+  returning: insertReturningMock,
+}));
 const insertMock = vi.fn(() => ({
   values: insertValuesMock,
 }));
@@ -21,10 +24,12 @@ const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const isNotNullMock = vi.fn((column) => ({ column, operator: "isNotNull" }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const countTotalSubjectsForUserMock = vi.fn();
-const getActiveSubjectRecordForUserMock = vi.fn();
-const getArchivedSubjectRecordForUserMock = vi.fn();
+const countChildSubjectsForUserMock = vi.fn();
 const getSubjectRecordForUserMock = vi.fn();
 const getSubjectRecordsForUserMock = vi.fn();
+const getSubjectTreeRecordForUserMock = vi.fn();
+const getSubjectDepthForUserMock = vi.fn();
+const isSubjectAncestorOfMock = vi.fn();
 const getSubjectAttachmentPathnamesForUserMock = vi.fn();
 const cleanupAttachmentPathnamesMock = vi.fn();
 
@@ -46,7 +51,6 @@ vi.mock("drizzle-orm", () => ({
 
 vi.mock("@/db/schema", () => ({
   subject: {
-    archivedAt: "subject_archived_at_column",
     id: "subject_id_column",
     userId: "subject_user_id_column",
   },
@@ -60,10 +64,12 @@ vi.mock("@/features/attachments/cleanup", () => ({
 
 vi.mock("@/features/subjects/queries", () => ({
   countTotalSubjectsForUser: countTotalSubjectsForUserMock,
-  getActiveSubjectRecordForUser: getActiveSubjectRecordForUserMock,
-  getArchivedSubjectRecordForUser: getArchivedSubjectRecordForUserMock,
+  countChildSubjectsForUser: countChildSubjectsForUserMock,
   getSubjectRecordForUser: getSubjectRecordForUserMock,
   getSubjectRecordsForUser: getSubjectRecordsForUserMock,
+  getSubjectTreeRecordForUser: getSubjectTreeRecordForUserMock,
+  getSubjectDepthForUser: getSubjectDepthForUserMock,
+  isSubjectAncestorOf: isSubjectAncestorOfMock,
 }));
 
 describe("createSubjectForUser", () => {
@@ -93,9 +99,9 @@ describe("createSubjectForUser", () => {
     expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("creates a subject when the user is below the total subject limit", async () => {
+  it("creates a root subject when the user is below the total subject limit", async () => {
     countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
-    insertValuesMock.mockResolvedValueOnce([]);
+    insertReturningMock.mockResolvedValueOnce([{ id: "subject-1" }]);
 
     const { createSubjectForUser } = await import(
       "@/features/subjects/mutations"
@@ -106,17 +112,131 @@ describe("createSubjectForUser", () => {
       kind: "general",
     });
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, subjectId: "subject-1" });
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
       name: "History",
       kind: "general",
+      parentSubjectId: null,
     });
+  });
+
+  it("nests under a parent and forces general kind for subfolders", async () => {
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "parent-1",
+      parentSubjectId: null,
+      name: "Root",
+    });
+    getSubjectDepthForUserMock.mockResolvedValueOnce(1);
+    insertReturningMock.mockResolvedValueOnce([{ id: "child-1" }]);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Chapter 1",
+      kind: "academic",
+      parentSubjectId: "parent-1",
+    });
+
+    expect(result).toEqual({ success: true, subjectId: "child-1" });
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      name: "Chapter 1",
+      kind: "general",
+      parentSubjectId: "parent-1",
+    });
+  });
+
+  it("rejects nesting past the depth cap", async () => {
+    const { LIMITS } = await import("@/lib/config/limits");
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "parent-1",
+      parentSubjectId: null,
+      name: "Root",
+    });
+    getSubjectDepthForUserMock.mockResolvedValueOnce(
+      LIMITS.maxSubjectNestingDepth,
+    );
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Too deep",
+      kind: "general",
+      parentSubjectId: "parent-1",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "limits.subjectNestingDepthLimit",
+    });
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects nesting past the child-count cap", async () => {
+    const { LIMITS } = await import("@/lib/config/limits");
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(
+      LIMITS.maxChildSubjectsPerSubject,
+    );
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "parent-1",
+      parentSubjectId: null,
+      name: "Root",
+    });
+    getSubjectDepthForUserMock.mockResolvedValueOnce(1);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "One too many",
+      kind: "general",
+      parentSubjectId: "parent-1",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "limits.childSubjectLimit",
+    });
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("returns notFound when the parent does not exist", async () => {
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce(null);
+    getSubjectDepthForUserMock.mockResolvedValueOnce(null);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Orphan",
+      kind: "general",
+      parentSubjectId: "missing",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.notFound",
+    });
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   it("returns the duplicate name error on a unique constraint violation", async () => {
     countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
-    insertValuesMock.mockRejectedValueOnce({ code: "23505" });
+    insertReturningMock.mockRejectedValueOnce({ code: "23505" });
 
     const { createSubjectForUser } = await import(
       "@/features/subjects/mutations"
@@ -138,7 +258,7 @@ describe("createSubjectForUser", () => {
   it("rethrows non-unique-violation insert errors", async () => {
     countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
     const unexpected = new Error("connection lost");
-    insertValuesMock.mockRejectedValueOnce(unexpected);
+    insertReturningMock.mockRejectedValueOnce(unexpected);
 
     const { createSubjectForUser } = await import(
       "@/features/subjects/mutations"
@@ -156,7 +276,7 @@ describe("editSubjectForUser", () => {
   });
 
   it("returns the duplicate name error on a unique constraint violation", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+    getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
     });
     updateWhereMock.mockRejectedValueOnce({ code: "23505" });
@@ -176,92 +296,6 @@ describe("editSubjectForUser", () => {
       errorCode: "subjects.duplicateName",
       errorParams: undefined,
       errorMessage: undefined,
-    });
-  });
-});
-
-describe("archiveSubjectForUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns notFound when the subject is inaccessible", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce(null);
-
-    const { archiveSubjectForUser } = await import(
-      "@/features/subjects/mutations"
-    );
-
-    const result = await archiveSubjectForUser("user-1", { id: "subject-1" });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "subjects.notFound",
-      errorParams: undefined,
-      errorMessage: undefined,
-    });
-    expect(updateMock).not.toHaveBeenCalled();
-  });
-
-  it("archives the active subject and returns its id", async () => {
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-1",
-    });
-    updateWhereMock.mockResolvedValueOnce([]);
-
-    const { archiveSubjectForUser } = await import(
-      "@/features/subjects/mutations"
-    );
-
-    const result = await archiveSubjectForUser("user-1", { id: "subject-1" });
-
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
-    expect(updateSetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        archivedAt: expect.any(Date),
-      }),
-    );
-  });
-});
-
-describe("restoreSubjectForUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns notFound when the subject is not archived or inaccessible", async () => {
-    getArchivedSubjectRecordForUserMock.mockResolvedValueOnce(null);
-
-    const { restoreSubjectForUser } = await import(
-      "@/features/subjects/mutations"
-    );
-
-    const result = await restoreSubjectForUser("user-1", { id: "subject-1" });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "subjects.notFound",
-      errorParams: undefined,
-      errorMessage: undefined,
-    });
-    expect(updateMock).not.toHaveBeenCalled();
-  });
-
-  it("clears archivedAt and returns the subject id", async () => {
-    getArchivedSubjectRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-1",
-    });
-    updateWhereMock.mockResolvedValueOnce([]);
-
-    const { restoreSubjectForUser } = await import(
-      "@/features/subjects/mutations"
-    );
-
-    const result = await restoreSubjectForUser("user-1", { id: "subject-1" });
-
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
-    expect(updateSetMock).toHaveBeenCalledWith({
-      archivedAt: null,
     });
   });
 });
@@ -290,99 +324,162 @@ describe("deleteSubjectForUser", () => {
   });
 });
 
-describe("bulkArchiveSubjectsForUser", () => {
+describe("moveSubjectForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("archives only owned active subjects", async () => {
-    getSubjectRecordsForUserMock.mockResolvedValueOnce([
-      { id: "subject-1", archivedAt: null },
-      { id: "subject-2", archivedAt: null },
-    ]);
-    updateWhereMock.mockResolvedValueOnce([]);
+  it("returns notFound when the subject is inaccessible", async () => {
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce(null);
 
-    const { bulkArchiveSubjectsForUser } = await import(
+    const { moveSubjectForUser } = await import(
       "@/features/subjects/mutations"
     );
 
-    const result = await bulkArchiveSubjectsForUser("user-1", {
-      ids: ["subject-1", "subject-2"],
+    const result = await moveSubjectForUser("user-1", {
+      id: "subject-1",
+      parentSubjectId: "parent-1",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.notFound",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("no-ops when the parent is unchanged", async () => {
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      parentSubjectId: "parent-1",
+      name: "Sub",
+    });
+
+    const { moveSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await moveSubjectForUser("user-1", {
+      id: "subject-1",
+      parentSubjectId: "parent-1",
     });
 
     expect(result).toEqual({
       success: true,
-      ids: ["subject-1", "subject-2"],
+      id: "subject-1",
+      previousParentSubjectId: "parent-1",
+      newParentSubjectId: "parent-1",
     });
-    expect(updateSetMock).toHaveBeenCalledWith({
-      archivedAt: expect.any(Date),
-    });
-    expect(isNullMock).toHaveBeenCalledWith("subject_archived_at_column");
+    expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("rejects missing or archived subjects", async () => {
-    getSubjectRecordsForUserMock.mockResolvedValueOnce([
-      { id: "subject-1", archivedAt: new Date("2026-04-20T10:00:00.000Z") },
-    ]);
+  it("rejects moving a subject into itself", async () => {
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      parentSubjectId: null,
+      name: "Sub",
+    });
 
-    const { bulkArchiveSubjectsForUser } = await import(
+    const { moveSubjectForUser } = await import(
       "@/features/subjects/mutations"
     );
 
-    const result = await bulkArchiveSubjectsForUser("user-1", {
-      ids: ["subject-1", "subject-2"],
+    const result = await moveSubjectForUser("user-1", {
+      id: "subject-1",
+      parentSubjectId: "subject-1",
     });
 
     expect(result).toMatchObject({
       success: false,
-      errorCode: "subjects.notFound",
+      errorCode: "subjects.cannotMoveIntoSelf",
     });
     expect(updateMock).not.toHaveBeenCalled();
   });
-});
 
-describe("bulkRestoreSubjectsForUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it("rejects a move that would create a cycle", async () => {
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      parentSubjectId: null,
+      name: "Sub",
+    });
+    isSubjectAncestorOfMock.mockResolvedValueOnce(true);
+
+    const { moveSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await moveSubjectForUser("user-1", {
+      id: "subject-1",
+      parentSubjectId: "descendant-1",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.wouldCreateCycle",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("restores only owned archived subjects", async () => {
-    getSubjectRecordsForUserMock.mockResolvedValueOnce([
-      { id: "subject-1", archivedAt: new Date("2026-04-20T10:00:00.000Z") },
-    ]);
+  it("moves a subject under a new parent", async () => {
+    getSubjectTreeRecordForUserMock
+      .mockResolvedValueOnce({
+        id: "subject-1",
+        parentSubjectId: null,
+        name: "Sub",
+      })
+      .mockResolvedValueOnce({
+        id: "parent-2",
+        parentSubjectId: null,
+        name: "Parent 2",
+      });
+    isSubjectAncestorOfMock.mockResolvedValueOnce(false);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectDepthForUserMock.mockResolvedValueOnce(1);
     updateWhereMock.mockResolvedValueOnce([]);
 
-    const { bulkRestoreSubjectsForUser } = await import(
+    const { moveSubjectForUser } = await import(
       "@/features/subjects/mutations"
     );
 
-    const result = await bulkRestoreSubjectsForUser("user-1", {
-      ids: ["subject-1"],
+    const result = await moveSubjectForUser("user-1", {
+      id: "subject-1",
+      parentSubjectId: "parent-2",
     });
 
-    expect(result).toEqual({ success: true, ids: ["subject-1"] });
-    expect(updateSetMock).toHaveBeenCalledWith({ archivedAt: null });
-    expect(isNotNullMock).toHaveBeenCalledWith("subject_archived_at_column");
+    expect(result).toEqual({
+      success: true,
+      id: "subject-1",
+      previousParentSubjectId: null,
+      newParentSubjectId: "parent-2",
+    });
+    expect(updateSetMock).toHaveBeenCalledWith({
+      parentSubjectId: "parent-2",
+    });
   });
 
-  it("rejects active subjects", async () => {
-    getSubjectRecordsForUserMock.mockResolvedValueOnce([
-      { id: "subject-1", archivedAt: null },
-    ]);
+  it("moves a subject to the root", async () => {
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "subject-1",
+      parentSubjectId: "parent-1",
+      name: "Sub",
+    });
+    updateWhereMock.mockResolvedValueOnce([]);
 
-    const { bulkRestoreSubjectsForUser } = await import(
+    const { moveSubjectForUser } = await import(
       "@/features/subjects/mutations"
     );
 
-    const result = await bulkRestoreSubjectsForUser("user-1", {
-      ids: ["subject-1"],
+    const result = await moveSubjectForUser("user-1", {
+      id: "subject-1",
     });
 
-    expect(result).toMatchObject({
-      success: false,
-      errorCode: "subjects.notFound",
+    expect(result).toEqual({
+      success: true,
+      id: "subject-1",
+      previousParentSubjectId: "parent-1",
+      newParentSubjectId: null,
     });
-    expect(updateMock).not.toHaveBeenCalled();
+    expect(updateSetMock).toHaveBeenCalledWith({ parentSubjectId: null });
   });
 });
 
@@ -393,8 +490,8 @@ describe("bulkDeleteSubjectsForUser", () => {
 
   it("deletes owned subjects and returns deleted ids", async () => {
     getSubjectRecordsForUserMock.mockResolvedValueOnce([
-      { id: "subject-1", archivedAt: null },
-      { id: "subject-2", archivedAt: new Date("2026-04-20T10:00:00.000Z") },
+      { id: "subject-1" },
+      { id: "subject-2" },
     ]);
     getSubjectAttachmentPathnamesForUserMock
       .mockResolvedValueOnce(["attachment-1"])
@@ -424,9 +521,7 @@ describe("bulkDeleteSubjectsForUser", () => {
   });
 
   it("rejects inaccessible subjects", async () => {
-    getSubjectRecordsForUserMock.mockResolvedValueOnce([
-      { id: "subject-1", archivedAt: null },
-    ]);
+    getSubjectRecordsForUserMock.mockResolvedValueOnce([{ id: "subject-1" }]);
 
     const { bulkDeleteSubjectsForUser } = await import(
       "@/features/subjects/mutations"

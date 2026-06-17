@@ -1,22 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Bell } from "lucide-react";
 import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateNotificationPreferences } from "@/app/actions/account";
+import {
+  SettingsRow,
+  SettingsSection,
+} from "@/components/account/settings-section";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { FieldDescription, FieldGroup } from "@/components/ui/field";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -80,87 +74,67 @@ export function NotificationPreferencesCard({
   }
 
   return (
-    <Card className="gap-4 py-5">
-      <CardHeader className="pb-0">
-        <div className="flex items-start gap-3">
-          <div className="rounded-md bg-primary/10 p-2 text-primary">
-            <Bell className="size-4" />
-          </div>
-          <div className="space-y-1">
-            <CardTitle>Email Notifications</CardTitle>
-            <CardDescription>
-              Get daily reminders for pending assessments near their due date.
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <form
-          id="form-account-notifications"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FieldGroup className="gap-4">
-            <div className="grid gap-1 rounded-lg border bg-muted/20 px-3 py-2.5 text-sm sm:grid-cols-2 sm:gap-3">
-              <p className="sm:text-left">
-                <span className="text-muted-foreground">Channel:</span> Email
-              </p>
-              <p className="sm:text-right">
-                <span className="text-muted-foreground">Frequency:</span> Daily
-              </p>
-            </div>
+    <form
+      id="form-account-notifications"
+      onSubmit={form.handleSubmit(onSubmit)}
+    >
+      <SettingsSection title="Notifications">
+        <SettingsRow
+          label="Email reminders"
+          description="Receive a daily email when pending assessments are near their due date."
+          keywords="notifications assessment due"
+          action={
+            <Controller
+              name="notificationsEnabled"
+              control={form.control}
+              render={({ field }) => (
+                <Switch
+                  id="notifications-enabled-toggle"
+                  aria-label="Enable email reminders"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+          }
+        />
 
-            <div className="flex items-center justify-between gap-4 rounded-lg border bg-card px-3 py-2.5">
-              <div className="space-y-0.5">
-                <Label htmlFor="notifications-enabled-toggle">
-                  Enable reminders
-                </Label>
-                <FieldDescription className="text-xs sm:text-sm">
-                  Receive an email when pending assessments are near their due
-                  date.
-                </FieldDescription>
-              </div>
+        {notificationsEnabled ? (
+          <SettingsRow
+            label="Lead time"
+            description="How early to send the reminder."
+            keywords="notifications email reminder days"
+            action={
               <Controller
-                name="notificationsEnabled"
+                name="notificationDaysBefore"
                 control={form.control}
                 render={({ field }) => (
-                  <Switch
-                    id="notifications-enabled-toggle"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id="notifications-days-before-select"
+                      className="w-full sm:w-44"
+                    >
+                      <SelectValue placeholder="Select lead time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {notificationDaysBeforeValues.map((days) => (
+                        <SelectItem key={days} value={days}>
+                          {DAYS_BEFORE_LABELS[days]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               />
-            </div>
+            }
+          />
+        ) : null}
 
-            {notificationsEnabled && (
-              <div className="space-y-2 rounded-lg border bg-card px-3 py-2.5">
-                <Label htmlFor="notifications-days-before-select">
-                  Remind me
-                </Label>
-                <Controller
-                  name="notificationDaysBefore"
-                  control={form.control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger
-                        id="notifications-days-before-select"
-                        className="w-full sm:w-60"
-                      >
-                        <SelectValue placeholder="Select lead time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {notificationDaysBeforeValues.map((days) => (
-                          <SelectItem key={days} value={days}>
-                            {DAYS_BEFORE_LABELS[days]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-            )}
-
+        <SettingsRow
+          label="Save changes"
+          description="Apply your reminder preferences."
+          keywords="notifications email reminder lead time"
+          action={
             <Button
               type="submit"
               form="form-account-notifications"
@@ -169,13 +143,13 @@ export function NotificationPreferencesCard({
             >
               <AsyncButtonContent
                 pending={isPending}
-                idleLabel="Save Preferences"
+                idleLabel="Save"
                 pendingLabel="Saving..."
               />
             </Button>
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
+          }
+        />
+      </SettingsSection>
+    </form>
   );
 }

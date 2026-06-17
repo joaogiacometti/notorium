@@ -7,7 +7,7 @@ export default async function Page() {
   const session = await getOptionalSession();
 
   if (session) {
-    redirect("/subjects");
+    redirect("/");
   }
 
   if (!isEmailDeliveryEnabled()) {

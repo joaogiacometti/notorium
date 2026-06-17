@@ -1,14 +1,12 @@
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { PageTopBarSkeleton } from "@/components/shared/page-top-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FlashcardDetailLoading() {
   return (
     <main>
+      <PageTopBarSkeleton />
       <AppPageContainer maxWidth="3xl">
-        <div className="mb-4 shrink-0">
-          <Skeleton className="h-9 w-44" />
-        </div>
-
         <div className="mb-6 flex min-w-0 items-start justify-between gap-2 sm:gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <Skeleton className="h-4 w-48" />

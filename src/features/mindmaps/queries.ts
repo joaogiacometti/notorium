@@ -33,6 +33,34 @@ export async function getMindmapsBySubjectForUser(
     .orderBy(desc(mindmap.updatedAt));
 }
 
+/**
+ * Most recently updated mindmaps across all of a user's active subjects, used by
+ * the home dashboard's "recent documents" card. Never selects the `data` graph
+ * blob (see getMindmapsBySubjectForUser).
+ *
+ * @example
+ * const mindmaps = await getRecentMindmapsForUser(userId, 5);
+ */
+export async function getRecentMindmapsForUser(
+  userId: string,
+  limit: number,
+): Promise<(MindmapListItem & Pick<MindmapEntity, "subjectId">)[]> {
+  return getDb()
+    .select({
+      id: mindmap.id,
+      title: mindmap.title,
+      updatedAt: mindmap.updatedAt,
+      subjectId: mindmap.subjectId,
+    })
+    .from(mindmap)
+    .innerJoin(subject, eq(mindmap.subjectId, subject.id))
+    .where(
+      and(eq(mindmap.userId, userId), ...getOwnedActiveSubjectFilters(userId)),
+    )
+    .orderBy(desc(mindmap.updatedAt))
+    .limit(limit);
+}
+
 export async function getMindmapByIdForUser(
   userId: string,
   mindmapId: string,

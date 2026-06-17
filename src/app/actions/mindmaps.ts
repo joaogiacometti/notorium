@@ -24,9 +24,8 @@ import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MindmapEntity } from "@/lib/server/api-contracts";
 
-function revalidateSubjectDocuments(subjectId: string) {
+function revalidateSubject(subjectId: string) {
   revalidatePath(`/subjects/${subjectId}`);
-  revalidatePath(`/subjects/${subjectId}/documents`);
 }
 
 export async function getMindmapById(
@@ -47,7 +46,7 @@ export async function createMindmap(
   );
 
   if (result.success) {
-    revalidateSubjectDocuments(result.subjectId);
+    revalidateSubject(result.subjectId);
   }
 
   return result;
@@ -64,7 +63,7 @@ export async function editMindmap(
   );
 
   if (result.success) {
-    revalidateSubjectDocuments(result.subjectId);
+    revalidateSubject(result.subjectId);
     revalidatePath(
       `/subjects/${result.subjectId}/documents/mindmaps/${data.id}`,
     );
@@ -84,7 +83,7 @@ export async function editMindmapTitle(
   );
 
   if (result.success) {
-    revalidateSubjectDocuments(result.subjectId);
+    revalidateSubject(result.subjectId);
     revalidatePath(
       `/subjects/${result.subjectId}/documents/mindmaps/${data.id}`,
     );
@@ -104,7 +103,7 @@ export async function deleteMindmap(
   );
 
   if (result.success) {
-    revalidateSubjectDocuments(result.subjectId);
+    revalidateSubject(result.subjectId);
   }
 
   return result;

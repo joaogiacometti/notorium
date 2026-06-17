@@ -1,15 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  bulkArchiveSubjectsForUserMock,
   bulkDeleteSubjectsForUserMock,
-  bulkRestoreSubjectsForUserMock,
   getAuthenticatedUserIdMock,
   revalidatePathMock,
 } = vi.hoisted(() => ({
-  bulkArchiveSubjectsForUserMock: vi.fn(),
   bulkDeleteSubjectsForUserMock: vi.fn(),
-  bulkRestoreSubjectsForUserMock: vi.fn(),
   getAuthenticatedUserIdMock: vi.fn(),
   revalidatePathMock: vi.fn(),
 }));
@@ -23,20 +19,15 @@ vi.mock("@/lib/auth/auth", () => ({
 }));
 
 vi.mock("@/features/subjects/mutations", () => ({
-  archiveSubjectForUser: vi.fn(),
-  bulkArchiveSubjectsForUser: bulkArchiveSubjectsForUserMock,
   bulkDeleteSubjectsForUser: bulkDeleteSubjectsForUserMock,
-  bulkRestoreSubjectsForUser: bulkRestoreSubjectsForUserMock,
   createSubjectForUser: vi.fn(),
   deleteSubjectForUser: vi.fn(),
   editSubjectForUser: vi.fn(),
-  restoreSubjectForUser: vi.fn(),
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getActiveSubjectByIdForUser: vi.fn(),
+  getSubjectByIdForUser: vi.fn(),
   getAllSubjectsForUser: vi.fn(),
-  getArchivedSubjectsForUser: vi.fn(),
   getSubjectsForUser: vi.fn(),
 }));
 
@@ -44,30 +35,6 @@ describe("subject bulk actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getAuthenticatedUserIdMock.mockResolvedValue("user-1");
-  });
-
-  it("bulkArchiveSubjects rejects empty ids before mutation", async () => {
-    const { bulkArchiveSubjects } = await import("@/app/actions/subjects");
-
-    const result = await bulkArchiveSubjects({ ids: [] });
-
-    expect(result).toMatchObject({
-      success: false,
-      errorCode: "ServerErrors.common.invalidRequest",
-    });
-    expect(bulkArchiveSubjectsForUserMock).not.toHaveBeenCalled();
-  });
-
-  it("bulkRestoreSubjects rejects empty ids before mutation", async () => {
-    const { bulkRestoreSubjects } = await import("@/app/actions/subjects");
-
-    const result = await bulkRestoreSubjects({ ids: [] });
-
-    expect(result).toMatchObject({
-      success: false,
-      errorCode: "ServerErrors.common.invalidRequest",
-    });
-    expect(bulkRestoreSubjectsForUserMock).not.toHaveBeenCalled();
   });
 
   it("bulkDeleteSubjects rejects empty ids before mutation", async () => {
@@ -96,7 +63,6 @@ describe("subject bulk actions", () => {
     expect(bulkDeleteSubjectsForUserMock).toHaveBeenCalledWith("user-1", {
       ids: ["subject-1"],
     });
-    expect(revalidatePathMock).toHaveBeenCalledWith("/subjects");
-    expect(revalidatePathMock).toHaveBeenCalledWith("/subjects/archived");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/", "layout");
   });
 });

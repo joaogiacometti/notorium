@@ -1,14 +1,12 @@
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { PageTopBarSkeleton } from "@/components/shared/page-top-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AssessmentDetailLoading() {
   return (
     <main>
-      <AppPageContainer maxWidth="3xl">
-        <div className="mb-6">
-          <Skeleton className="h-9 w-40" />
-        </div>
-
+      <PageTopBarSkeleton />
+      <AppPageContainer maxWidth="5xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 items-start gap-4">
             <Skeleton className="size-12 shrink-0 rounded-xl" />

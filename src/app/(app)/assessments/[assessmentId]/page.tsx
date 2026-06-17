@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AssessmentDetail } from "@/components/assessments/assessment-detail";
+import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
 import { getAssessmentDetailForUser } from "@/features/assessments/queries";
 import { requireSession } from "@/lib/auth/auth";
 import { isMediaStorageConfigured } from "@/lib/media-storage/provider";
@@ -36,18 +37,20 @@ export default async function AssessmentPage({
     detail.subject.id,
   );
 
-  const backLabel =
-    backLink.label === "flashcards"
-      ? "Back to Flashcards"
-      : backLink.label === "planning"
-        ? "Back to Planning"
-        : "Back to Subject";
+  const rootCrumb: BreadcrumbItem =
+    backLink.label === "planning"
+      ? { label: "Planning", href: backLink.href }
+      : {
+          label: detail.subject.name,
+          href: `/subjects/${detail.subject.id}`,
+          icon: "book-open",
+        };
 
   return (
     <main>
       <AssessmentDetail
-        backHref={backLink.href}
-        backLabel={backLabel}
+        breadcrumb={[rootCrumb, { label: detail.assessment.title }]}
+        returnHref={backLink.href}
         attachmentsEnabled={attachmentsEnabled}
         detail={detail}
       />

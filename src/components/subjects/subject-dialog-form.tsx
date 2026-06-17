@@ -79,6 +79,10 @@ interface SubjectDialogFormProps {
   onOpenChange: (open: boolean) => void;
   trigger?: React.ReactNode;
   values: SubjectFormValues;
+  /** Hides the academic/general selector; used for subfolders (always general). */
+  hideKind?: boolean;
+  /** Overrides the dialog heading, e.g. "Create Subfolder". */
+  title?: string;
   onSubmitAction: (
     values: SubjectFormValues,
   ) => Promise<{ success: true } | ActionErrorResult>;
@@ -103,6 +107,8 @@ export function SubjectDialogForm({
   onOpenChange,
   trigger,
   values,
+  hideKind = false,
+  title,
   onSubmitAction,
   onSuccess,
 }: Readonly<SubjectDialogFormProps>) {
@@ -148,7 +154,7 @@ export function SubjectDialogForm({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Create Subject" : "Edit Subject"}
+            {title ?? (mode === "create" ? "Create Subject" : "Edit Subject")}
           </DialogTitle>
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
@@ -172,25 +178,30 @@ export function SubjectDialogForm({
                 </Field>
               )}
             />
-            <Controller
-              name="kind"
-              control={form.control}
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-kind`}>Type</FieldLabel>
-                  <div id={`${formId}-kind`} className="grid grid-cols-2 gap-2">
-                    {subjectKindValues.map((kind) => (
-                      <SubjectKindOption
-                        key={kind}
-                        kind={kind}
-                        selected={field.value === kind}
-                        onSelect={field.onChange}
-                      />
-                    ))}
-                  </div>
-                </Field>
-              )}
-            />
+            {hideKind ? null : (
+              <Controller
+                name="kind"
+                control={form.control}
+                render={({ field }) => (
+                  <Field>
+                    <FieldLabel htmlFor={`${formId}-kind`}>Type</FieldLabel>
+                    <div
+                      id={`${formId}-kind`}
+                      className="grid grid-cols-2 gap-2"
+                    >
+                      {subjectKindValues.map((kind) => (
+                        <SubjectKindOption
+                          key={kind}
+                          kind={kind}
+                          selected={field.value === kind}
+                          onSelect={field.onChange}
+                        />
+                      ))}
+                    </div>
+                  </Field>
+                )}
+              />
+            )}
             <Button
               type="submit"
               form={formId}

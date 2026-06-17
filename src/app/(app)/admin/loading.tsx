@@ -1,9 +1,11 @@
 import { AppPageContainer } from "@/components/shared/app-page-container";
+import { PageTopBarSkeleton } from "@/components/shared/page-top-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminLoading() {
   return (
     <main>
+      <PageTopBarSkeleton />
       <AppPageContainer maxWidth="3xl">
         <div className="mb-6 flex min-w-0 items-start gap-4">
           <Skeleton className="size-12 shrink-0 rounded-xl" />

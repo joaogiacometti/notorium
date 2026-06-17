@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BrainCircuit, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -11,18 +11,13 @@ import {
   resetFlashcardSchedulerOptimization,
   updateFsrsOptimizationPreferences,
 } from "@/app/actions/account";
+import {
+  SettingsRow,
+  SettingsSection,
+} from "@/components/account/settings-section";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { FieldDescription, FieldGroup } from "@/components/ui/field";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   type UpdateFsrsOptimizationPreferencesForm,
@@ -105,28 +100,13 @@ export function FlashcardOptimizationCard({
 
   return (
     <>
-      <Card className="gap-4 py-5">
-        <CardHeader className="pb-0">
-          <div className="flex items-start gap-3">
-            <div className="rounded-md bg-primary/10 p-2 text-primary">
-              <BrainCircuit className="size-4" />
-            </div>
-            <div className="space-y-1">
-              <CardTitle>Flashcard Optimization</CardTitle>
-              <CardDescription>
-                Tune FSRS scheduling from your review history.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <FieldGroup className="gap-4">
-            <div className="rounded-lg border bg-muted/20 px-3 py-2.5 text-sm">
-              <span className="text-muted-foreground">Last optimized:</span>{" "}
-              {getLastOptimizedLabel(settings.lastOptimizedAt)}
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
+      <SettingsSection title="Flashcards">
+        <SettingsRow
+          label="FSRS optimization"
+          description={`Last optimized: ${getLastOptimizedLabel(settings.lastOptimizedAt)}`}
+          keywords="flashcard scheduler optimize review"
+          action={
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Button
                 type="button"
                 onClick={handleOptimizeNow}
@@ -150,54 +130,49 @@ export function FlashcardOptimizationCard({
                 Reset
               </Button>
             </div>
+          }
+        />
 
-            {workflowsEnabled && (
+        {workflowsEnabled ? (
+          <SettingsRow
+            label="Automatic optimization"
+            description="Run FSRS optimization every 30 days when the scheduled workflow runs."
+            keywords="flashcard scheduler auto fsrs"
+            action={
               <form
                 id="form-fsrs-optimization"
                 onSubmit={form.handleSubmit(onSubmit)}
+                className="flex items-center gap-3"
               >
-                <FieldGroup className="gap-4">
-                  <div className="flex items-center justify-between gap-4 rounded-lg border bg-card px-3 py-2.5">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="automatic-optimization-toggle">
-                        Automatic optimization
-                      </Label>
-                      <FieldDescription className="text-xs sm:text-sm">
-                        Run FSRS optimization every 30 days when the scheduled
-                        workflow runs.
-                      </FieldDescription>
-                    </div>
-                    <Controller
-                      name="automaticOptimizationEnabled"
-                      control={form.control}
-                      render={({ field }) => (
-                        <Switch
-                          id="automatic-optimization-toggle"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
+                <Controller
+                  name="automaticOptimizationEnabled"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Switch
+                      id="automatic-optimization-toggle"
+                      aria-label="Automatic optimization"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    form="form-fsrs-optimization"
-                    disabled={isSaving || !preferencesChanged}
-                    className="w-full sm:w-fit"
-                  >
-                    <AsyncButtonContent
-                      pending={isSaving}
-                      idleLabel="Save Preferences"
-                      pendingLabel="Saving..."
-                    />
-                  </Button>
-                </FieldGroup>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  form="form-fsrs-optimization"
+                  disabled={isSaving || !preferencesChanged}
+                  size="sm"
+                >
+                  <AsyncButtonContent
+                    pending={isSaving}
+                    idleLabel="Save"
+                    pendingLabel="Saving..."
+                  />
+                </Button>
               </form>
-            )}
-          </FieldGroup>
-        </CardContent>
-      </Card>
+            }
+          />
+        ) : null}
+      </SettingsSection>
 
       <ActionConfirmationDialog
         open={resetOpen}

@@ -108,6 +108,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "Failed to update FSRS optimization settings.",
   "limits.subjectLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} subjects.`,
+  "limits.childSubjectLimit": (params) =>
+    `System limit reached: a subject can have up to ${params?.max} subfolders.`,
+  "limits.subjectNestingDepthLimit": (params) =>
+    `System limit reached: subjects can only be nested up to ${params?.max} levels deep.`,
   "limits.noteLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} notes per subject.`,
   "limits.mindmapLimit": (params) =>
@@ -145,6 +149,9 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "subjects.invalidData": "Invalid subject data.",
   "subjects.notFound": "Subject not found.",
   "subjects.duplicateName": "A subject with this name already exists.",
+  "subjects.cannotMoveIntoSelf": "A subject cannot be moved into itself.",
+  "subjects.wouldCreateCycle":
+    "This move would create a circular subject hierarchy.",
   "library.invalidData": "Invalid book data.",
   "library.notFound": "Book not found.",
   "library.uploadFailed": "Failed to upload book.",

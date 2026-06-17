@@ -3,7 +3,6 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MindmapDetail } from "@/components/mindmaps/mindmap-detail";
-import type { DocumentListItem } from "@/features/documents/types";
 import type { DeckOption, MindmapEntity } from "@/lib/server/api-contracts";
 
 const { editMindmapMock, pushMock, toastErrorMock, toastSuccessMock } =
@@ -58,10 +57,6 @@ vi.mock("@/components/mindmaps/lazy-mindmap-canvas", () => ({
       </button>
     );
   },
-}));
-
-vi.mock("@/components/documents/documents-nav", () => ({
-  DocumentsNav: () => <nav />,
 }));
 
 vi.mock("@/components/mindmaps/delete-mindmap-dialog", () => ({
@@ -127,16 +122,6 @@ const deck: DeckOption = {
   updatedAt: new Date("2026-04-20T10:00:00.000Z"),
 };
 
-const documents: DocumentListItem[] = [
-  {
-    id: mindmap.id,
-    title: mindmap.title,
-    updatedAt: mindmap.updatedAt,
-    kind: "mindmap",
-    subjectId: mindmap.subjectId,
-  },
-];
-
 function renderDetail(
   root: Root,
   overrides?: { aiEnabled?: boolean; decks?: DeckOption[] },
@@ -144,11 +129,9 @@ function renderDetail(
   root.render(
     <MindmapDetail
       aiEnabled={overrides?.aiEnabled ?? true}
-      backHref="/subjects/subject-1"
       decks={overrides?.decks ?? [deck]}
       mindmap={mindmap}
       subjectName="Subject 1"
-      documents={documents}
     />,
   );
 }

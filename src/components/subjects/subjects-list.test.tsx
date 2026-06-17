@@ -14,7 +14,6 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 const routerPushMock = vi.fn();
 const routerReplaceMock = vi.fn();
 const getAllSubjectsMock = vi.fn();
-const restoreSubjectMock = vi.fn();
 
 vi.mock("next/link", () => ({
   default: ({
@@ -39,29 +38,9 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/app/actions/subjects", () => ({
-  bulkArchiveSubjects: vi.fn(),
   bulkDeleteSubjects: vi.fn(),
-  bulkRestoreSubjects: vi.fn(),
   getAllSubjects: (...args: unknown[]) => getAllSubjectsMock(...args),
   getSubjectListItems: (...args: unknown[]) => getAllSubjectsMock(...args),
-  restoreSubject: (...args: unknown[]) => restoreSubjectMock(...args),
-}));
-
-vi.mock("@/components/subjects/bulk-archive-subjects-dialog", () => ({
-  BulkArchiveSubjectsDialog: ({
-    ids,
-    open,
-    onArchived,
-  }: {
-    ids: string[];
-    open: boolean;
-    onArchived: (ids: string[]) => void;
-  }) =>
-    open ? (
-      <button type="button" onClick={() => onArchived(ids)}>
-        Confirm bulk archive
-      </button>
-    ) : null,
 }));
 
 vi.mock("@/components/subjects/bulk-delete-subjects-dialog", () => ({
@@ -77,23 +56,6 @@ vi.mock("@/components/subjects/bulk-delete-subjects-dialog", () => ({
     open ? (
       <button type="button" onClick={() => onDeleted(ids)}>
         Confirm bulk delete
-      </button>
-    ) : null,
-}));
-
-vi.mock("@/components/subjects/bulk-restore-subjects-dialog", () => ({
-  BulkRestoreSubjectsDialog: ({
-    ids,
-    open,
-    onRestored,
-  }: {
-    ids: string[];
-    open: boolean;
-    onRestored: (ids: string[]) => void;
-  }) =>
-    open ? (
-      <button type="button" onClick={() => onRestored(ids)}>
-        Confirm bulk restore
       </button>
     ) : null,
 }));
@@ -259,9 +221,9 @@ function createSubject(
     name: `Subject ${id}`,
     kind: "academic",
     notesCount: 0,
+    parentSubjectId: null,
     totalClasses: null,
     maxMisses: null,
-    archivedAt: null,
     createdAt: new Date("2026-04-20T10:00:00.000Z"),
     updatedAt: new Date("2026-04-21T10:00:00.000Z"),
     ...overrides,
@@ -296,11 +258,10 @@ function renderSubjectsList(
   root: Root,
   queryClient: QueryClient,
   subjects: SubjectListItem[],
-  initialStatus: "active" | "archived" = "active",
 ) {
   root.render(
     <QueryClientProvider client={queryClient}>
-      <SubjectsList initialStatus={initialStatus} subjects={subjects} />
+      <SubjectsList subjects={subjects} />
     </QueryClientProvider>,
   );
 }
@@ -366,23 +327,6 @@ describe("SubjectsList", () => {
 
     expect(container.textContent).toContain("Academic");
     expect(container.textContent).toContain("General");
-  });
-
-  it("shows archived subjects when the archived filter is selected", async () => {
-    const active = createSubject("1", { name: "Active Biology" });
-    const archived = createSubject("2", {
-      name: "Archived History",
-      archivedAt: new Date("2026-04-25T10:00:00.000Z"),
-    });
-
-    await act(async () => {
-      renderSubjectsList(root, queryClient, [active, archived], "archived");
-    });
-
-    expect(container.textContent).not.toContain("Active Biology");
-    expect(container.textContent).toContain("Archived History");
-    expect(container.textContent).toContain("Restore");
-    expect(container.textContent).not.toContain("Edit");
   });
 
   it("filters subjects by name", async () => {
@@ -489,7 +433,7 @@ describe("SubjectsList", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("shows archive, delete, and clear actions for selected active rows", async () => {
+  it("shows delete and clear actions for selected active rows", async () => {
     await act(async () => {
       renderSubjectsList(root, queryClient, [createSubject("1")]);
     });
@@ -499,56 +443,8 @@ describe("SubjectsList", () => {
     });
 
     expect(container.textContent).toContain("1 selected");
-    expect(findButtonByLabel(container, "Archive")).toBeTruthy();
     expect(findButtonByLabel(container, "Delete")).toBeTruthy();
     expect(findButtonByLabel(container, "Clear selection")).toBeTruthy();
-    expect(findButtonByLabel(container, "Restore")).toBeFalsy();
-  });
-
-  it("shows restore, delete, and clear actions for selected archived rows", async () => {
-    const archived = createSubject("1", {
-      archivedAt: new Date("2026-04-25T10:00:00.000Z"),
-    });
-
-    await act(async () => {
-      renderSubjectsList(root, queryClient, [archived], "archived");
-    });
-
-    await act(async () => {
-      selectSubjectAt(container, 0);
-    });
-
-    expect(findButtonByLabel(container, "Restore")).toBeTruthy();
-    expect(findButtonByLabel(container, "Delete")).toBeTruthy();
-    expect(findButtonByLabel(container, "Clear selection")).toBeTruthy();
-    expect(findButtonByLabel(container, "Archive")).toBeFalsy();
-  });
-
-  it("refreshes subjects and clears selection after bulk success", async () => {
-    getAllSubjectsMock.mockResolvedValueOnce([]);
-
-    await act(async () => {
-      renderSubjectsList(root, queryClient, [createSubject("1")]);
-    });
-
-    await act(async () => {
-      selectSubjectAt(container, 0);
-    });
-
-    await act(async () => {
-      findButtonByLabel(container, "Archive")?.dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
-    });
-
-    await act(async () => {
-      findButton(container, "Confirm bulk archive")?.dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
-    });
-
-    expect(getAllSubjectsMock).toHaveBeenCalled();
-    expect(container.textContent).not.toContain("1 selected");
   });
 
   it("renders the subjects table loading footer skeleton", async () => {

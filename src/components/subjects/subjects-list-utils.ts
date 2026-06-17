@@ -1,19 +1,6 @@
 import type { SubjectListItem } from "@/lib/server/api-contracts";
 
-export type SubjectsStatusFilter = "active" | "archived";
 export type SubjectsSort = "updatedDesc" | "nameAsc";
-
-export function isArchived(subject: SubjectListItem): boolean {
-  return subject.archivedAt !== null;
-}
-
-function matchesStatus(
-  subject: SubjectListItem,
-  status: SubjectsStatusFilter,
-): boolean {
-  if (status === "archived") return isArchived(subject);
-  return !isArchived(subject);
-}
 
 function matchesSearch(subject: SubjectListItem, searchQuery: string): boolean {
   if (!searchQuery) return true;
@@ -33,14 +20,12 @@ function compareSubjects(
 
 export function getVisibleSubjects(
   subjects: SubjectListItem[],
-  status: SubjectsStatusFilter,
   searchQuery: string,
   sortBy: SubjectsSort,
 ): SubjectListItem[] {
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
   return [...subjects]
-    .filter((subject) => matchesStatus(subject, status))
     .filter((subject) => matchesSearch(subject, normalizedSearch))
     .sort((left, right) => compareSubjects(left, right, sortBy));
 }
@@ -81,12 +66,4 @@ export function getSubjectPageItems(
 
 export function formatNotesCount(notesCount: number): string {
   return notesCount === 1 ? "1 note" : `${notesCount} notes`;
-}
-
-export function getSubjectsHref(status: SubjectsStatusFilter): string {
-  if (status === "active") {
-    return "/subjects";
-  }
-
-  return `/subjects?status=${status}`;
 }

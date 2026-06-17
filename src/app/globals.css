@@ -492,9 +492,6 @@
   body {
     @apply bg-background text-foreground;
   }
-  .halloween body {
-    background-color: var(--background);
-  }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   a[href],
@@ -503,36 +500,6 @@
     cursor: pointer;
   }
 }
-
-.halloween nav {
-  background-color: color-mix(in oklab, var(--background) 84%, black);
-  border-bottom-color: color-mix(in oklab, var(--primary) 22%, var(--border));
-  box-shadow: 0 1px 0 color-mix(in oklab, var(--primary) 12%, transparent);
-}
-
-.halloween main > section:first-child {
-  position: relative;
-  overflow: hidden;
-}
-
-.halloween main > section:first-child::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      circle at 15% 20%,
-      color-mix(in oklab, var(--primary) 12%, transparent) 0%,
-      transparent 34%
-    ),
-    radial-gradient(
-      circle at 85% 15%,
-      color-mix(in oklab, var(--accent) 14%, transparent) 0%,
-      transparent 30%
-    );
-  pointer-events: none;
-}
-
 /* Tiptap shared prose styles */
 .tiptap-content,
 .tiptap-wrapper .tiptap {

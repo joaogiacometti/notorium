@@ -49,7 +49,6 @@ export async function getUsersWithUpcomingAssessments(
         eq(user.notificationsEnabled, true),
         eq(assessment.status, "pending"),
         isNotNull(assessment.dueDate),
-        isNull(subject.archivedAt),
         gte(assessment.dueDate, todayIso),
         sql`${assessment.dueDate} <= (${todayIso}::date + ${user.notificationDaysBefore} * interval '1 day')::date`,
         or(isNull(notificationLog.id), eq(notificationLog.status, "failed")),

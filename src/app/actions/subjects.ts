@@ -1,58 +1,48 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getSubjectDocumentsForUser } from "@/features/documents/queries";
+import type { DocumentListItem } from "@/features/documents/types";
 import {
-  archiveSubjectForUser,
-  bulkArchiveSubjectsForUser,
   bulkDeleteSubjectsForUser,
-  bulkRestoreSubjectsForUser,
   createSubjectForUser,
   deleteSubjectForUser,
   editSubjectForUser,
-  restoreSubjectForUser,
+  moveSubjectForUser,
 } from "@/features/subjects/mutations";
 import {
-  getActiveSubjectByIdForUser,
   getAllSubjectsForUser,
-  getArchivedSubjectsForUser,
+  getSubjectByIdForUser,
   getSubjectListItemsForUser,
   getSubjectsForUser,
+  getSubjectTreeForUser,
 } from "@/features/subjects/queries";
 import {
-  type ArchiveSubjectForm,
-  archiveSubjectSchema,
-  type BulkArchiveSubjectsForm,
   type BulkDeleteSubjectsForm,
-  type BulkRestoreSubjectsForm,
-  bulkArchiveSubjectsSchema,
   bulkDeleteSubjectsSchema,
-  bulkRestoreSubjectsSchema,
   type CreateSubjectForm,
   createSubjectSchema,
   type DeleteSubjectForm,
   deleteSubjectSchema,
   type EditSubjectForm,
   editSubjectSchema,
-  type RestoreSubjectForm,
-  restoreSubjectSchema,
+  type MoveSubjectForm,
+  moveSubjectSchema,
 } from "@/features/subjects/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkSubjectMutationResult,
+  MoveSubjectResult,
   MutationResult,
   SubjectEntity,
   SubjectListItem,
+  SubjectTreeNode,
 } from "@/lib/server/api-contracts";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
   return getSubjectsForUser(userId);
-}
-
-export async function getArchivedSubjects(): Promise<SubjectEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getArchivedSubjectsForUser(userId);
 }
 
 export async function getAllSubjects(): Promise<SubjectEntity[]> {
@@ -69,7 +59,23 @@ export async function getSubjectById(
   id: string,
 ): Promise<SubjectEntity | null> {
   const userId = await getAuthenticatedUserId();
-  return getActiveSubjectByIdForUser(userId, id);
+  return getSubjectByIdForUser(userId, id);
+}
+
+export async function getSubjectTree(): Promise<SubjectTreeNode[]> {
+  const userId = await getAuthenticatedUserId();
+  return getSubjectTreeForUser(userId);
+}
+
+/**
+ * Lazily loads one subject's notes + mindmaps for the tree sidebar, fetched the
+ * first time a subject node is expanded. Ownership is enforced by `userId`.
+ */
+export async function getSubjectDocuments(
+  subjectId: string,
+): Promise<DocumentListItem[]> {
+  const userId = await getAuthenticatedUserId();
+  return getSubjectDocumentsForUser(userId, subjectId);
 }
 
 export async function createSubject(
@@ -83,8 +89,24 @@ export async function createSubject(
   );
 
   if (result.success) {
-    revalidatePath("/subjects");
-    revalidatePath("/subjects/archived");
+    revalidatePath("/", "layout");
+  }
+
+  return result;
+}
+
+export async function moveSubject(
+  data: MoveSubjectForm,
+): Promise<MoveSubjectResult> {
+  const result = await runValidatedUserAction(
+    moveSubjectSchema,
+    data,
+    "subjects.invalidData",
+    async (userId, parsedData) => moveSubjectForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    revalidatePath("/", "layout");
   }
 
   return result;
@@ -101,44 +123,8 @@ export async function editSubject(
   );
 
   if (result.success) {
-    revalidatePath("/subjects");
+    revalidatePath("/", "layout");
     revalidatePath(`/subjects/${data.id}`);
-  }
-
-  return result;
-}
-
-export async function archiveSubject(
-  data: ArchiveSubjectForm,
-): Promise<MutationResult> {
-  const result = await runValidatedUserAction(
-    archiveSubjectSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => archiveSubjectForUser(userId, parsedData),
-  );
-
-  if (result.success) {
-    revalidatePath("/subjects");
-    revalidatePath("/subjects/archived");
-  }
-
-  return result;
-}
-
-export async function restoreSubject(
-  data: RestoreSubjectForm,
-): Promise<MutationResult> {
-  const result = await runValidatedUserAction(
-    restoreSubjectSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => restoreSubjectForUser(userId, parsedData),
-  );
-
-  if (result.success) {
-    revalidatePath("/subjects");
-    revalidatePath("/subjects/archived");
   }
 
   return result;
@@ -155,45 +141,7 @@ export async function deleteSubject(
   );
 
   if (result.success) {
-    revalidatePath("/subjects");
-  }
-
-  return result;
-}
-
-export async function bulkArchiveSubjects(
-  data: BulkArchiveSubjectsForm,
-): Promise<BulkSubjectMutationResult> {
-  const result = await runValidatedUserAction(
-    bulkArchiveSubjectsSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) =>
-      bulkArchiveSubjectsForUser(userId, parsedData),
-  );
-
-  if (result.success) {
-    revalidatePath("/subjects");
-    revalidatePath("/subjects/archived");
-  }
-
-  return result;
-}
-
-export async function bulkRestoreSubjects(
-  data: BulkRestoreSubjectsForm,
-): Promise<BulkSubjectMutationResult> {
-  const result = await runValidatedUserAction(
-    bulkRestoreSubjectsSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) =>
-      bulkRestoreSubjectsForUser(userId, parsedData),
-  );
-
-  if (result.success) {
-    revalidatePath("/subjects");
-    revalidatePath("/subjects/archived");
+    revalidatePath("/", "layout");
   }
 
   return result;
@@ -210,8 +158,7 @@ export async function bulkDeleteSubjects(
   );
 
   if (result.success) {
-    revalidatePath("/subjects");
-    revalidatePath("/subjects/archived");
+    revalidatePath("/", "layout");
   }
 
   return result;

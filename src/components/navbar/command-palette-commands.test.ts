@@ -18,7 +18,7 @@ describe("paletteCommands", () => {
     }
   });
 
-  it("covers each create, navigate, theme, and shortcuts action", () => {
+  it("covers each create, navigate, theme, settings, and shortcuts action", () => {
     const kinds = new Set(
       paletteCommands.map((command) => command.action.kind),
     );
@@ -26,18 +26,22 @@ describe("paletteCommands", () => {
     expect(kinds).toContain("create-in-subject");
     expect(kinds).toContain("navigate");
     expect(kinds).toContain("theme");
+    expect(kinds).toContain("open-settings");
     expect(kinds).toContain("shortcuts-help");
+  });
+
+  it("navigates Home to the root route", () => {
+    const home = paletteCommands.find((command) => command.id === "goto-home");
+    expect(home?.action).toEqual({ kind: "navigate", href: "/" });
   });
 });
 
 describe("parseSubjectIdFromPath", () => {
   it("extracts the subject id from a subject route", () => {
-    expect(parseSubjectIdFromPath("/subjects/abc/documents")).toBe("abc");
+    expect(parseSubjectIdFromPath("/subjects/abc/documents/notes/n1")).toBe(
+      "abc",
+    );
     expect(parseSubjectIdFromPath("/subjects/abc")).toBe("abc");
-  });
-
-  it("returns null for the archived list", () => {
-    expect(parseSubjectIdFromPath("/subjects/archived")).toBeNull();
   });
 
   it("returns null off subject routes", () => {

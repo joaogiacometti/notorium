@@ -4,10 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 
-const SOFT_HYPHEN = "\u00ad";
-
 vi.mock("@/app/actions/subjects", () => ({
-  archiveSubject: vi.fn(),
   deleteSubject: vi.fn(),
 }));
 
@@ -98,7 +95,6 @@ describe("DeleteSubjectDialog", () => {
             subjectName="test"
             open
             onOpenChange={vi.fn()}
-            mode="delete"
           />
         </QueryClientProvider>,
       );
@@ -119,54 +115,8 @@ describe("DeleteSubjectDialog", () => {
     expect(subjectName?.className).not.toContain("block");
   });
 
-  it("keeps long subject names word-wrapped", async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <DeleteSubjectDialog
-            subjectId="subject-1"
-            subjectName={"a".repeat(80)}
-            open
-            onOpenChange={vi.fn()}
-            mode="archive"
-          />
-        </QueryClientProvider>,
-      );
-    });
-
-    const description = container.querySelector(
-      "[data-testid='dialog-description']",
-    );
-    const subjectName = Array.from(container.querySelectorAll("span")).find(
-      (element) =>
-        element.textContent?.replaceAll(SOFT_HYPHEN, "") === "a".repeat(80),
-    );
-    const normalizedDescription = description?.textContent?.replaceAll(
-      SOFT_HYPHEN,
-      "",
-    );
-
-    expect(normalizedDescription).toContain(
-      `Are you sure you want to archive ${"a".repeat(80)}?`,
-    );
-    expect(subjectName?.className).toContain("inline");
-    expect(subjectName?.className).toContain("max-w-full");
-    expect(subjectName?.className).toContain("wrap-break-word");
-    expect(subjectName?.className).toContain("hyphens-manual");
-    expect(subjectName?.className).not.toContain("break-all");
-    expect(subjectName?.textContent).toContain(SOFT_HYPHEN);
-  });
-
-  it("uses primary styling when archiving a subject", async () => {
-    await renderSubjectDialog("archive", root, queryClient);
-
-    const archiveButton = findButton("Archive", container);
-
-    expect(archiveButton?.dataset.variant).toBe("default");
-  });
-
   it("uses destructive styling when deleting a subject", async () => {
-    await renderSubjectDialog("delete", root, queryClient);
+    await renderSubjectDialog(root, queryClient);
 
     const deleteButton = findButton("Delete", container);
 
@@ -174,11 +124,7 @@ describe("DeleteSubjectDialog", () => {
   });
 });
 
-async function renderSubjectDialog(
-  mode: "archive" | "delete",
-  root: Root,
-  queryClient: QueryClient,
-) {
+async function renderSubjectDialog(root: Root, queryClient: QueryClient) {
   await act(async () => {
     root.render(
       <QueryClientProvider client={queryClient}>
@@ -187,7 +133,6 @@ async function renderSubjectDialog(
           subjectName="test"
           open
           onOpenChange={vi.fn()}
-          mode={mode}
         />
       </QueryClientProvider>,
     );

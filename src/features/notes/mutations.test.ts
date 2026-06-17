@@ -17,7 +17,7 @@ const deleteMock = vi.fn(() => ({
 }));
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
-const getActiveSubjectRecordForUserMock = vi.fn();
+const getSubjectRecordForUserMock = vi.fn();
 const countNotesBySubjectForUserMock = vi.fn();
 const getNoteByIdForUserMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
@@ -44,7 +44,7 @@ vi.mock("@/db/schema", () => ({
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getActiveSubjectRecordForUser: getActiveSubjectRecordForUserMock,
+  getSubjectRecordForUser: getSubjectRecordForUserMock,
 }));
 
 vi.mock("@/features/notes/queries", () => ({
@@ -65,7 +65,7 @@ describe("createNoteForUser", () => {
     const randomUUIDSpy = vi
       .spyOn(crypto, "randomUUID")
       .mockReturnValue("note-new" as ReturnType<typeof crypto.randomUUID>);
-    getActiveSubjectRecordForUserMock.mockResolvedValueOnce({
+    getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
     });
     countNotesBySubjectForUserMock.mockResolvedValueOnce(0);

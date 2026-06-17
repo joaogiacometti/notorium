@@ -128,11 +128,14 @@ export const subject = pgTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
+    parentSubjectId: text("parent_subject_id").references(
+      (): AnyPgColumn => subject.id,
+      { onDelete: "cascade" },
+    ),
     kind: subjectKindEnum("kind").notNull().default("academic"),
     totalClasses: integer("total_classes"),
     maxMisses: integer("max_misses"),
 
-    archivedAt: timestamp("archived_at"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -143,20 +146,14 @@ export const subject = pgTable(
       .notNull(),
   },
   (table) => [
+    uniqueIndex("subject_userId_parentSubjectId_name_unique").on(
+      table.userId,
+      sql`coalesce(${table.parentSubjectId}, '__root_subject__')`,
+      table.name,
+    ),
+    index("subject_parentSubjectId_idx").on(table.parentSubjectId),
     index("subject_userId_idx").on(table.userId),
-    index("subject_userId_archivedAt_idx").on(table.userId, table.archivedAt),
-    index("subject_userId_kind_archivedAt_idx").on(
-      table.userId,
-      table.kind,
-      table.archivedAt,
-    ),
-    index("subject_userId_archivedAt_updatedAt_idx").on(
-      table.userId,
-      table.archivedAt,
-      table.updatedAt,
-    ),
     index("subject_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
-    unique("subject_user_id_name_unique").on(table.userId, table.name),
   ],
 );
 
@@ -636,6 +633,12 @@ export const accountRelations = relations(account, ({ one }) => ({
 }));
 
 export const subjectRelations = relations(subject, ({ one, many }) => ({
+  parentSubject: one(subject, {
+    fields: [subject.parentSubjectId],
+    references: [subject.id],
+    relationName: "subjectHierarchy",
+  }),
+  childSubjects: many(subject, { relationName: "subjectHierarchy" }),
   user: one(user, {
     fields: [subject.userId],
     references: [user.id],

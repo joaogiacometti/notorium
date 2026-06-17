@@ -15,7 +15,7 @@ import {
 } from "@/features/flashcards/validation";
 import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
 import { getNoteByIdForUser } from "@/features/notes/queries";
-import { getActiveSubjectByIdForUser } from "@/features/subjects/queries";
+import { getSubjectByIdForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import {
@@ -100,7 +100,7 @@ export async function generateFlashcardsFromNote(
         });
       }
 
-      const subject = await getActiveSubjectByIdForUser(
+      const subject = await getSubjectByIdForUser(
         userId,
         existingNote.subjectId,
       );
@@ -155,7 +155,7 @@ export async function generateFlashcardsFromMindmap(
         });
       }
 
-      const subject = await getActiveSubjectByIdForUser(
+      const subject = await getSubjectByIdForUser(
         userId,
         existingMindmap.subjectId,
       );

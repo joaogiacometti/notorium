@@ -82,7 +82,7 @@ The workflow skips itself when either secret is missing.
 
 ## FSRS Optimization Workflow
 
-Users can manually optimize flashcard FSRS parameters from the Account page.
+Users can manually optimize flashcard FSRS parameters from the Flashcards section of the account settings dialog.
 Automatic optimization is available only when `CRON_SECRET` is configured.
 
 The automatic optimization endpoint is:

@@ -197,9 +197,9 @@ test("can delete a note", async ({ page, e2eUser }) => {
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
 
     await expect(deleteDialog).toHaveCount(0);
-    await expect(page).toHaveURL(/\/subjects\/.+\/documents$/);
+    await expect(page).toHaveURL(/\/subjects\/.+/);
     await expect(
-      page.getByRole("heading", { name: "Select a document", exact: true }),
+      page.getByRole("heading", { name: "Documents", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: `Open ${noteTitle}`, exact: true }),

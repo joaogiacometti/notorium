@@ -1,118 +1,75 @@
-"use client";
-
-import { Archive, ArrowLeft, BookOpen, Pencil, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { DetailPageLayout } from "@/components/shared/detail-page-layout";
-import { SubjectText } from "@/components/shared/subject-text";
-import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
-import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
+import { AppPageContainer } from "@/components/shared/app-page-container";
+import {
+  type BreadcrumbItem,
+  PageTopBar,
+} from "@/components/shared/page-top-bar";
 import { SubjectDetailContent } from "@/components/subjects/subject-detail-content";
-import { Button } from "@/components/ui/button";
 import type { DocumentListItem } from "@/features/documents/types";
-import { formatRelativeTime } from "@/lib/dates/format";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
   SubjectEntity,
+  SubjectTreeNode,
 } from "@/lib/server/api-contracts";
 
 interface SubjectDetailProps {
   subject: SubjectEntity;
+  ancestors: SubjectEntity[];
+  childSubjects: SubjectTreeNode[];
   documents: DocumentListItem[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
 }
 
+/**
+ * Subject page body. Editing, renaming, and deleting a subject all live in the
+ * left menu's subject tree, so this view is the full-path breadcrumb top bar and
+ * the subject's "home" content (summaries, subfolders, documents).
+ */
 export function SubjectDetail({
   subject,
+  ancestors,
+  childSubjects,
   documents,
   misses,
   assessments,
 }: Readonly<SubjectDetailProps>) {
-  const router = useRouter();
-  const [, startNavTransition] = useTransition();
-  const [editOpen, setEditOpen] = useState(false);
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-
   return (
-    <DetailPageLayout
-      actions={
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            data-testid="subject-detail-edit"
-            className="flex-1 gap-1.5 sm:flex-none"
-            onClick={() => setEditOpen(true)}
-          >
-            <Pencil className="size-3.5" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            data-testid="subject-detail-archive"
-            className="flex-1 gap-1.5 sm:flex-none"
-            onClick={() => setArchiveOpen(true)}
-          >
-            <Archive className="size-3.5" />
-            Archive
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            data-testid="subject-detail-delete"
-            className="flex-1 gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground sm:flex-none"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="size-3.5" />
-            Delete
-          </Button>
-        </>
-      }
-      backHref="/subjects"
-      backIcon={ArrowLeft}
-      backLabel="Back to Subjects"
-      meta={<span>Created {formatRelativeTime(subject.createdAt)}</span>}
-      title={<SubjectText value={subject.name} mode="wrap" />}
-      titleIcon={BookOpen}
-    >
-      <SubjectDetailContent
-        subject={subject}
-        documents={documents}
-        misses={misses}
-        assessments={assessments}
-      />
-
-      <EditSubjectDialog
-        subject={subject}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-      />
-      <DeleteSubjectDialog
-        subjectId={subject.id}
-        subjectName={subject.name}
-        open={archiveOpen}
-        onOpenChange={setArchiveOpen}
-        mode="archive"
-        onSuccess={() => {
-          setArchiveOpen(false);
-          startNavTransition(() => router.push("/subjects"));
-        }}
-      />
-      <DeleteSubjectDialog
-        subjectId={subject.id}
-        subjectName={subject.name}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        mode="delete"
-        onSuccess={() => {
-          setDeleteOpen(false);
-          startNavTransition(() => router.push("/subjects"));
-        }}
-      />
-    </DetailPageLayout>
+    <>
+      <PageTopBar breadcrumb={buildSubjectBreadcrumb(subject, ancestors)} />
+      <AppPageContainer maxWidth="5xl">
+        <SubjectDetailContent
+          subject={subject}
+          childSubjects={childSubjects}
+          documents={documents}
+          misses={misses}
+          assessments={assessments}
+        />
+      </AppPageContainer>
+    </>
   );
+}
+
+/**
+ * Builds the full ancestor path for the top bar, e.g.
+ * `Math / bruh / kjfheasfklaes`. Ancestors arrive root-first; each links to its
+ * own page while the current subject is the unlinked final crumb.
+ */
+function buildSubjectBreadcrumb(
+  subject: SubjectEntity,
+  ancestors: SubjectEntity[],
+): BreadcrumbItem[] {
+  const ancestorCrumbs: BreadcrumbItem[] = ancestors.map((ancestor, index) => ({
+    label: ancestor.name,
+    href: `/subjects/${ancestor.id}`,
+    icon: index === 0 ? "book-open" : undefined,
+  }));
+
+  return [
+    ...ancestorCrumbs,
+    {
+      label: subject.name,
+      icon: ancestorCrumbs.length === 0 ? "book-open" : undefined,
+    },
+  ];
 }
