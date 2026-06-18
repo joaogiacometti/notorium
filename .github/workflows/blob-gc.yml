@@ -1,0 +1,36 @@
+name: Blob Orphan GC
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Trigger Orphan Blob Sweep
+    if: github.repository != 'joaogiacometti/notorium'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger scheduled blob sweep
+        env:
+          NOTORIUM_APP_URL: ${{ secrets.NOTORIUM_APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$NOTORIUM_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Skipping blob sweep because required secrets are not configured."
+            exit 0
+          fi
+
+          curl --fail-with-body --silent --show-error \
+            --max-time 300 \
+            -X GET \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "${NOTORIUM_APP_URL%/}/api/cron/blob-gc"

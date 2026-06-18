@@ -35,6 +35,11 @@ export interface ListImagesInput {
   prefix: string;
 }
 
+export interface StoredBlobEntry {
+  pathname: string;
+  uploadedAt: Date;
+}
+
 export interface ReadImageResult {
   stream: ReadableStream<Uint8Array>;
   contentType: string;
@@ -49,6 +54,7 @@ export interface MediaStorageProvider {
   readFile(input: ReadImageInput): Promise<ReadImageResult | null>;
   deleteFiles(input: DeleteImagesInput): Promise<void>;
   listFilePathnames(input: ListImagesInput): Promise<string[]>;
+  listFileEntries(input: ListImagesInput): Promise<StoredBlobEntry[]>;
   uploadImage(input: UploadImageInput): Promise<UploadImageResult>;
   readImage(input: ReadImageInput): Promise<ReadImageResult | null>;
   deleteImages(input: DeleteImagesInput): Promise<void>;

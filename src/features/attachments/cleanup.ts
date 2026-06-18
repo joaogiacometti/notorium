@@ -1,20 +1,20 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { assessment, assessmentAttachment, flashcard, note } from "@/db/schema";
+import {
+  assessment,
+  assessmentAttachment,
+  flashcard,
+  mindmap,
+  note,
+} from "@/db/schema";
 import { getOwnedAttachmentPathnames } from "@/features/attachments/pathname";
 import { getDescendantDeckIds } from "@/features/decks/queries";
+import { getMindmapImagePathnames } from "@/features/mindmaps/utils";
 import { getInternalAttachmentPathnames } from "@/lib/editor/rich-text";
 import {
   getMediaStorageProvider,
   type MediaStorageProvider,
 } from "@/lib/media-storage/provider";
-
-const ATTACHMENT_ACCOUNT_CONTEXTS = [
-  "notes",
-  "flashcards",
-  "assessments",
-  "mindmaps",
-];
 
 async function deleteProviderPathnames(
   provider: MediaStorageProvider,
@@ -26,20 +26,6 @@ async function deleteProviderPathnames(
   }
 
   await provider.deleteImages({ pathnames });
-}
-
-async function listProviderPathnames(
-  provider: MediaStorageProvider,
-  prefix: string,
-): Promise<string[]> {
-  if (
-    "listFilePathnames" in provider &&
-    typeof provider.listFilePathnames === "function"
-  ) {
-    return (await provider.listFilePathnames({ prefix })) ?? [];
-  }
-
-  return (await provider.listImagePathnames({ prefix })) ?? [];
 }
 
 export async function cleanupAttachmentPathnames(
@@ -63,28 +49,19 @@ export async function cleanupAttachmentPathnames(
   } catch {}
 }
 
-export async function listAccountAttachmentPathnames(
-  provider: MediaStorageProvider,
-  userId: string,
-): Promise<string[]> {
-  const pathnames = await Promise.all(
-    ATTACHMENT_ACCOUNT_CONTEXTS.map((context) =>
-      listProviderPathnames(provider, `notorium/${context}/${userId}/`),
-    ),
-  );
-
-  return pathnames.flat();
-}
-
 export async function getSubjectAttachmentPathnamesForUser(
   userId: string,
   subjectId: string,
 ): Promise<string[]> {
-  const [notes, attachments] = await Promise.all([
+  const [notes, mindmaps, attachments] = await Promise.all([
     getDb()
       .select({ content: note.content })
       .from(note)
       .where(and(eq(note.userId, userId), eq(note.subjectId, subjectId))),
+    getDb()
+      .select({ data: mindmap.data })
+      .from(mindmap)
+      .where(and(eq(mindmap.userId, userId), eq(mindmap.subjectId, subjectId))),
     getDb()
       .select({ blobPathname: assessmentAttachment.blobPathname })
       .from(assessmentAttachment)
@@ -101,6 +78,7 @@ export async function getSubjectAttachmentPathnamesForUser(
     ...notes.flatMap((item) =>
       getInternalAttachmentPathnames(item.content ?? ""),
     ),
+    ...mindmaps.flatMap((item) => getMindmapImagePathnames(item.data)),
     ...attachments.map((item) => item.blobPathname),
   ];
 }

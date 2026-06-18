@@ -1,10 +1,6 @@
 import { headers } from "next/headers";
-import {
-  cleanupAttachmentPathnames,
-  listAccountAttachmentPathnames,
-} from "@/features/attachments/cleanup";
+import { purgeUserBlobs } from "@/features/attachments/blob-gc";
 import { getAuth } from "@/lib/auth/auth";
-import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import {
   type ActionErrorResult,
   actionError,
@@ -15,18 +11,6 @@ export type AccountMutationResult = { success: true } | ActionErrorResult;
 export async function deleteAccountForUser(
   userId: string,
 ): Promise<AccountMutationResult> {
-  const provider = await getMediaStorageProvider();
-  let attachmentPathnames: string[] = [];
-
-  if (provider) {
-    try {
-      attachmentPathnames = await listAccountAttachmentPathnames(
-        provider,
-        userId,
-      );
-    } catch {}
-  }
-
   try {
     const requestHeaders = await headers();
     await getAuth().api.deleteUser({
@@ -39,7 +23,9 @@ export async function deleteAccountForUser(
     return actionError("account.deleteFailed");
   }
 
-  await cleanupAttachmentPathnames(userId, attachmentPathnames);
+  // Best-effort: blob removal must not fail account deletion. The orphan sweep
+  // is the backstop for anything left behind here.
+  await purgeUserBlobs(userId);
 
   return { success: true };
 }

@@ -8,6 +8,7 @@ import type {
   MediaStorageProvider,
   ReadImageInput,
   ReadImageResult,
+  StoredBlobEntry,
   UploadImageInput,
   UploadImageResult,
 } from "@/lib/media-storage/provider";
@@ -63,7 +64,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
       token: getBlobToken(),
     });
 
-    if (!result || result.statusCode !== 200 || !result.blob.contentType) {
+    if (result?.statusCode !== 200 || !result.blob.contentType) {
       return null;
     }
 
@@ -105,11 +106,34 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     return pathnames;
   }
 
+  async function listFileEntries(
+    input: ListImagesInput,
+  ): Promise<StoredBlobEntry[]> {
+    const entries: StoredBlobEntry[] = [];
+    let cursor: string | undefined;
+
+    do {
+      const result = await list({
+        token: getBlobToken(),
+        prefix: input.prefix,
+        cursor,
+      });
+
+      for (const blob of result.blobs) {
+        entries.push({ pathname: blob.pathname, uploadedAt: blob.uploadedAt });
+      }
+      cursor = result.hasMore ? result.cursor : undefined;
+    } while (cursor);
+
+    return entries;
+  }
+
   return {
     uploadFile,
     readFile,
     deleteFiles,
     listFilePathnames,
+    listFileEntries,
     async uploadImage(input: UploadImageInput): Promise<UploadImageResult> {
       return uploadFile(input);
     },

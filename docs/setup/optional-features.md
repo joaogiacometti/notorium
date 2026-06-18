@@ -101,6 +101,32 @@ The repository includes `.github/workflows/fsrs-optimization.yml` for a monthly 
 
 The workflow skips itself when either secret is missing.
 
+## Blob Orphan Garbage Collection
+
+Deleting content removes its blobs immediately. As a safety net for blobs left
+behind by cascade deletes or transient delete failures, a sweep removes blobs
+that no live database row references and that are older than a 24-hour grace
+period (so freshly uploaded blobs awaiting their database reference are never
+collected). Requires `BLOB_READ_WRITE_TOKEN` and `CRON_SECRET`.
+
+The sweep endpoint is:
+
+```text
+GET /api/cron/blob-gc
+Authorization: Bearer <CRON_SECRET>
+```
+
+Pass `?dryRun=1` to report orphan counts without deleting anything.
+
+The repository includes `.github/workflows/blob-gc.yml` for a weekly GitHub Actions trigger. Configure these repository secrets in your fork or deployment repository:
+
+| Secret | Purpose |
+| --- | --- |
+| `NOTORIUM_APP_URL` | Deployed app base URL |
+| `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
+
+The workflow skips itself when either secret is missing.
+
 ## Upstash Rate Limiting
 
 The default local setup uses Redis through `RATE_LIMIT_BACKEND=redis` and `REDIS_URL`.
