@@ -5,6 +5,7 @@ import { EmbedPDF } from "@embedpdf/core/react";
 import { usePdfiumEngine } from "@embedpdf/engines/react";
 import { LockModeType } from "@embedpdf/plugin-annotation";
 import { AnnotationPluginPackage } from "@embedpdf/plugin-annotation/react";
+import { BookmarkPluginPackage } from "@embedpdf/plugin-bookmark/react";
 import { DocumentManagerPluginPackage } from "@embedpdf/plugin-document-manager/react";
 import { FullscreenPluginPackage } from "@embedpdf/plugin-fullscreen/react";
 import { InteractionManagerPluginPackage } from "@embedpdf/plugin-interaction-manager/react";
@@ -114,12 +115,21 @@ function buildReaderPlugins(fileUrl: string) {
     createPluginRegistration(AnnotationPluginPackage, {
       locked: { type: LockModeType.All },
     }),
+    // FitPage so a book opens showing the whole page; FitWidth stretched small
+    // page sizes to the viewport width, opening at an oversized zoom (~450%).
     createPluginRegistration(ZoomPluginPackage, {
-      defaultZoomLevel: ZoomMode.FitWidth,
+      defaultZoomLevel: ZoomMode.FitPage,
     }),
     createPluginRegistration(SpreadPluginPackage),
     createPluginRegistration(FullscreenPluginPackage),
-    createPluginRegistration(ThumbnailPluginPackage),
+    // "instant" so re-opening the Pages sidebar snaps to the current page
+    // instead of smooth-scrolling the thumbnail rail to it on every mount.
+    createPluginRegistration(ThumbnailPluginPackage, {
+      scrollBehavior: "instant",
+    }),
+    // Reads the document's embedded outline so the sidebar's Content view can
+    // list the table of contents.
+    createPluginRegistration(BookmarkPluginPackage),
   ];
 }
 

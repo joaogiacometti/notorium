@@ -4,9 +4,8 @@ import { PdfAnnotationSubtype, type PdfLinkAnnoObject } from "@embedpdf/models";
 import {
   type AnnotationRendererProps,
   createRenderer,
-  useAnnotationCapability,
 } from "@embedpdf/plugin-annotation/react";
-import { useReaderNavHistory } from "@/components/library/book-reader-nav-history";
+import { useNavigateTarget } from "@/components/library/use-reader-navigate-target";
 import { cn } from "@/lib/utils";
 
 // Custom renderer for PDF LINK annotations. The reader runs the annotation
@@ -20,36 +19,12 @@ function LinkHotspot({
   annotation,
   documentId,
 }: Readonly<AnnotationRendererProps<PdfLinkAnnoObject>>) {
-  const { provides } = useAnnotationCapability();
-  const history = useReaderNavHistory();
-
-  // Record where we are before jumping so the toolbar's back control can return
-  // here; drop the record again if the link turned out to be an external URI (or
-  // unsupported), which opens elsewhere rather than moving the page.
-  const navigate = () => {
-    const target = annotation.object.target;
-    if (!target || !provides) return;
-    history.recordCurrentView();
-    provides
-      .forDocument(documentId)
-      .navigateTarget(target)
-      .wait(
-        (result) => {
-          if (
-            result.outcome !== "navigated" &&
-            result.outcome !== "destination"
-          ) {
-            history.discardLastView();
-          }
-        },
-        () => history.discardLastView(),
-      );
-  };
+  const navigate = useNavigateTarget(documentId);
 
   return (
     <button
       type="button"
-      onClick={navigate}
+      onClick={() => navigate(annotation.object.target)}
       className={cn(
         "h-full w-full cursor-pointer rounded-[2px]",
         "border-b border-(--primary) bg-(--primary)/10",

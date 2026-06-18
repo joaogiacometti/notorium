@@ -14,7 +14,7 @@ import { ZoomGestureWrapper } from "@embedpdf/plugin-zoom/react";
 import { linkAnnotationRenderer } from "@/components/library/book-reader-link-renderer";
 import { ReaderNavHistoryProvider } from "@/components/library/book-reader-nav-history";
 import { ReaderSelectionMenu } from "@/components/library/book-reader-selection-menu";
-import { ReaderThumbnails } from "@/components/library/book-reader-thumbnails";
+import { ReaderSidebar } from "@/components/library/book-reader-sidebar";
 import { ReaderToolbar } from "@/components/library/book-reader-toolbar";
 import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shortcut";
 import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
@@ -56,8 +56,8 @@ export function ReaderLayout({
     <ReaderNavHistoryProvider documentId={documentId}>
       <div className="flex h-full flex-col bg-background">
         <ReaderToolbar documentId={documentId} title={title} />
-        <div className="flex min-h-0 flex-1">
-          <ReaderThumbnails documentId={documentId} />
+        <div className="flex min-h-0 min-w-0 flex-1">
+          <ReaderSidebar documentId={documentId} />
           {/* GlobalPointerProvider tracks pointermove/up across the viewport so a
               drag forms a text selection; its 100%-sized box needs this sized
               flex child as a definite parent. select-none suppresses the
@@ -66,7 +66,13 @@ export function ReaderLayout({
               its own rectangles — so a native selection only interferes, dragging
               a ghost of the page image during pan and fighting the synthetic
               selection during a select drag. */}
-          <div className="relative flex-1 select-none">
+          {/* min-w-0 + overflow-hidden keep this flex child from growing past
+              the column when a page is wider than the viewport (zoomed in or a
+              wide page): without min-w-0 a flex item's auto min-width refuses to
+              shrink below its content, so the whole reader overflows sideways on
+              mobile and you cannot pan back to the clipped edge. The Viewport
+              owns its own internal scroll, so clipping here is safe. */}
+          <div className="relative min-w-0 flex-1 select-none overflow-hidden">
             <GlobalPointerProvider documentId={documentId}>
               <Viewport documentId={documentId} className="bg-muted/40">
                 {/* ZoomGestureWrapper wires pinch-to-zoom on touch and

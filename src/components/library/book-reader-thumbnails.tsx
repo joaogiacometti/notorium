@@ -11,34 +11,36 @@ interface ReaderThumbnailsProps {
 // Virtualized page-thumbnail rail. ThumbnailsPane only yields the rows in view,
 // each carrying its absolute `top` offset; we position items with it and mount
 // the real bitmap via ThumbImg, so large books never render every page at once.
+// The sidebar owns the surrounding panel; this fills it.
 export function ReaderThumbnails({
   documentId,
 }: Readonly<ReaderThumbnailsProps>) {
   const { state, provides } = useScroll(documentId);
 
   return (
-    <aside className="hidden w-44 shrink-0 border-r border-border/70 bg-background md:block">
-      <ThumbnailsPane
-        documentId={documentId}
-        style={{ width: "100%", height: "100%" }}
-      >
-        {(meta) => (
-          <ThumbnailRow
-            key={meta.pageIndex}
-            top={meta.top}
-            height={meta.wrapperHeight}
-            labelHeight={meta.labelHeight}
-            pageNumber={meta.pageIndex + 1}
-            isActive={meta.pageIndex + 1 === state.currentPage}
-            onSelect={() =>
-              provides?.scrollToPage({ pageNumber: meta.pageIndex + 1 })
-            }
-          >
-            <ThumbImg documentId={documentId} meta={meta} />
-          </ThumbnailRow>
-        )}
-      </ThumbnailsPane>
-    </aside>
+    <ThumbnailsPane
+      documentId={documentId}
+      style={{ width: "100%", height: "100%" }}
+    >
+      {(meta) => (
+        <ThumbnailRow
+          key={meta.pageIndex}
+          top={meta.top}
+          height={meta.wrapperHeight}
+          labelHeight={meta.labelHeight}
+          pageNumber={meta.pageIndex + 1}
+          isActive={meta.pageIndex + 1 === state.currentPage}
+          onSelect={() =>
+            provides?.scrollToPage({
+              pageNumber: meta.pageIndex + 1,
+              behavior: "instant",
+            })
+          }
+        >
+          <ThumbImg documentId={documentId} meta={meta} />
+        </ThumbnailRow>
+      )}
+    </ThumbnailsPane>
   );
 }
 
