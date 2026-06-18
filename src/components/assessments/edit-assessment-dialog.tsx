@@ -18,6 +18,7 @@ interface EditAssessmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated?: (assessment: AssessmentEntity) => void;
+  focusField?: "title" | "description";
 }
 
 function getEditAssessmentFormValues(
@@ -40,6 +41,7 @@ export function EditAssessmentDialog({
   open,
   onOpenChange,
   onUpdated,
+  focusField,
 }: Readonly<EditAssessmentDialogProps>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<EditAssessmentFormInput, unknown, EditAssessmentForm>({
@@ -85,6 +87,7 @@ export function EditAssessmentDialog({
       pendingSubmitLabel="Saving..."
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
+      focusField={focusField}
     />
   );
 }

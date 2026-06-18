@@ -90,6 +90,7 @@ Only add optional files when they are needed.
 - Keep read logic in `src/features/*/queries.ts`.
 - Keep write logic in `src/features/*/mutations.ts`.
 - Keep validation schemas in `src/features/*/validation.ts` or `src/lib/validations/*`.
+- Read and write cookies only through Next.js: `cookies()` from `next/headers` on the server, and a Server Action for client-initiated writes. Never touch `document.cookie` directly.
 - Every `page.tsx` needs a matching `loading.tsx` that mirrors the page layout.
 - When changing a page or detail header, check its matching `loading.tsx` in the same change. Loading screens should stay simple, but must not miss major layout regions or primary action slots that would cause obvious shift or broken expectations.
 - `/planning` is the canonical planning route. Do not add aliases like `/assessments` or `/calendar`.

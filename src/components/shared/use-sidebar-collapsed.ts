@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { setSidebarCollapsed } from "@/app/actions/sidebar";
 
 const STORAGE_KEY = "notorium:sidebar-collapsed";
 
@@ -10,24 +11,24 @@ interface SidebarCollapsedControl {
 }
 
 /**
- * Desktop left-menu collapsed state, persisted to localStorage so the choice
- * survives reloads. Defaults to expanded on the server and first client render
- * (avoiding hydration mismatch), then loads the stored value on mount.
+ * Desktop left-menu collapsed state, persisted to localStorage and a cookie so
+ * the choice survives reloads without a visible transition. The server reads
+ * the cookie and passes the initial value, so SSR and client hydration agree
+ * from the first paint.
  *
  * @example
- * const { collapsed, setCollapsed } = useSidebarCollapsed();
+ * const { collapsed, setCollapsed } = useSidebarCollapsed(initialCollapsed);
  */
-export function useSidebarCollapsed(): SidebarCollapsedControl {
-  const [collapsed, setCollapsedState] = useState(false);
+export function useSidebarCollapsed(
+  initialCollapsed = false,
+): SidebarCollapsedControl {
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
 
-  useEffect(() => {
-    setCollapsedState(window.localStorage.getItem(STORAGE_KEY) === "true");
-  }, []);
-
-  function setCollapsed(next: boolean) {
-    setCollapsedState(next);
-    window.localStorage.setItem(STORAGE_KEY, String(next));
+  function persistCollapsed(next: boolean) {
+    setCollapsed(next);
+    globalThis.localStorage.setItem(STORAGE_KEY, String(next));
+    void setSidebarCollapsed(next);
   }
 
-  return { collapsed, setCollapsed };
+  return { collapsed, setCollapsed: persistCollapsed };
 }

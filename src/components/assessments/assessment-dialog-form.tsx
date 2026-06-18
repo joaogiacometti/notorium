@@ -73,6 +73,7 @@ interface AssessmentDialogFormProps<
   subjects?: SubjectEntity[];
   attachmentsSlot?: ReactNode;
   isSubmitting: boolean;
+  focusField?: "title" | "description";
 }
 
 export function AssessmentDialogForm<
@@ -91,6 +92,7 @@ export function AssessmentDialogForm<
   subjects,
   attachmentsSlot,
   isSubmitting,
+  focusField = "title",
 }: Readonly<AssessmentDialogFormProps<TValues, TSubmitValues>>) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,7 +162,7 @@ export function AssessmentDialogForm<
                     id={`${formId}-title`}
                     placeholder="e.g. Midterm 1"
                     aria-invalid={fieldState.invalid}
-                    autoFocus
+                    autoFocus={focusField === "title"}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -183,6 +185,7 @@ export function AssessmentDialogForm<
                     rows={3}
                     className="resize-none"
                     aria-invalid={fieldState.invalid}
+                    autoFocus={focusField === "description"}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

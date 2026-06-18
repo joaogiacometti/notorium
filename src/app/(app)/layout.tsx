@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { AccountSettingsProvider } from "@/components/account/account-settings-provider";
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
@@ -20,6 +21,10 @@ export default async function AuthenticatedAppLayout({
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
 
+  const cookieStore = await cookies();
+  const initialSidebarCollapsed =
+    cookieStore.get("notorium:sidebar-collapsed")?.value === "true";
+
   return (
     <ShortcutsProvider>
       <AccountSettingsProvider userId={session?.user.id ?? ""}>
@@ -31,6 +36,7 @@ export default async function AuthenticatedAppLayout({
           isAdmin={authState?.account.isAdmin ?? false}
           userId={session?.user.id ?? ""}
           aiEnabled={isAiEnabled()}
+          initialSidebarCollapsed={initialSidebarCollapsed}
         >
           {children}
         </AppLayoutClient>

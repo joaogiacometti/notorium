@@ -22,6 +22,7 @@ interface AppLayoutClientProps {
   isAdmin: boolean;
   userId: string;
   aiEnabled: boolean;
+  initialSidebarCollapsed: boolean;
   children: React.ReactNode;
 }
 
@@ -100,11 +101,14 @@ export function AppLayoutClient({
   isAdmin,
   userId,
   aiEnabled,
+  initialSidebarCollapsed,
   children,
 }: Readonly<AppLayoutClientProps>) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
-  const { collapsed, setCollapsed } = useSidebarCollapsed();
+  const { collapsed, setCollapsed } = useSidebarCollapsed(
+    initialSidebarCollapsed,
+  );
   const showSidebar = tree != null && !isImmersiveRoute(pathname);
 
   // The sidebar mounts twice (mobile sheet + desktop aside), so the keyboard
