@@ -102,6 +102,23 @@ describe("toGraph", () => {
     expect(data.height).toBe(180);
   });
 
+  it("drops image nodes that are still uploading (no url yet)", () => {
+    const uploading = baseNode({
+      data: { label: "", kind: "image", uploading: true },
+    });
+    const ready = baseNode({
+      id: "ready",
+      data: {
+        label: "",
+        kind: "image",
+        imageUrl: "/api/attachments/blob?p=y",
+      },
+    });
+    const graph = toGraph([uploading, ready], []);
+    expect(graph.nodes).toHaveLength(1);
+    expect(graph.nodes[0].id).toBe("ready");
+  });
+
   it("prefers a measured size over the requested width/height", () => {
     const nodes = [
       baseNode({

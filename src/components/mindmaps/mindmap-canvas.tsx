@@ -447,6 +447,10 @@ function MindmapCanvasInner({
           // Delete is handled in useMindmapModeKeys so removal is subtree-aware.
           deleteKeyCode={null}
           proOptions={{ hideAttribution: true }}
+          // Center the viewport on the saved graph (the root and its children)
+          // on initial mount so the user lands on content, not empty canvas.
+          fitView
+          fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
         >
           <Panel position="top-left">
             <MindmapModeToolbar mode={mode} onModeChange={setMode} />

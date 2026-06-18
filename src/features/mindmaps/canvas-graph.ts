@@ -134,30 +134,36 @@ function imageNodeSize(node: Node): { width?: number; height?: number } {
   };
 }
 
-/** Serialize the live React Flow nodes/edges back into the persisted graph. */
+/** Serialize the live React Flow nodes/edges back into the persisted graph.
+ * Transient image nodes that are still uploading (no `imageUrl` yet) are
+ * dropped so a debounce-autosave mid-upload never persists a broken node. */
 export function toGraph(nodes: Node[], edges: Edge[]): MindmapGraph {
   return {
-    nodes: nodes.map((node) => {
-      const color = asNodeColor(node.data.color);
-      const isImage = node.data.kind === "image";
-      return {
-        id: node.id,
-        position: node.position,
-        data: {
-          label: typeof node.data.label === "string" ? node.data.label : "",
-          ...(color ? { color } : {}),
-          ...(node.data.bold === true ? { bold: true } : {}),
-          ...(node.data.italic === true ? { italic: true } : {}),
-          ...(node.data.kind === "root" ? { kind: "root" as const } : {}),
-          ...(isImage
-            ? { kind: "image" as const, ...imageNodeSize(node) }
-            : {}),
-          ...(typeof node.data.imageUrl === "string"
-            ? { imageUrl: node.data.imageUrl }
-            : {}),
-        },
-      };
-    }),
+    nodes: nodes
+      .filter(
+        (node) => !(node.data.kind === "image" && node.data.uploading === true),
+      )
+      .map((node) => {
+        const color = asNodeColor(node.data.color);
+        const isImage = node.data.kind === "image";
+        return {
+          id: node.id,
+          position: node.position,
+          data: {
+            label: typeof node.data.label === "string" ? node.data.label : "",
+            ...(color ? { color } : {}),
+            ...(node.data.bold === true ? { bold: true } : {}),
+            ...(node.data.italic === true ? { italic: true } : {}),
+            ...(node.data.kind === "root" ? { kind: "root" as const } : {}),
+            ...(isImage
+              ? { kind: "image" as const, ...imageNodeSize(node) }
+              : {}),
+            ...(typeof node.data.imageUrl === "string"
+              ? { imageUrl: node.data.imageUrl }
+              : {}),
+          },
+        };
+      }),
     edges: edges.map((edge) => ({
       id: edge.id,
       source: edge.source,

@@ -6,7 +6,7 @@ import {
   NodeToolbar,
   Position,
 } from "@xyflow/react";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useMindmapActions } from "@/components/mindmaps/mindmap-actions-context";
 import { MindmapHandles } from "@/components/mindmaps/mindmap-handles";
 import { MindmapToolbarButton } from "@/components/mindmaps/mindmap-toolbar-button";
@@ -27,6 +27,29 @@ export function MindmapImageNode({
 }: Readonly<NodeProps & { data: MindmapNodeData }>) {
   const actions = useMindmapActions();
   const imageUrl = typeof data.imageUrl === "string" ? data.imageUrl : null;
+  // Transient flag set by the paste handler while the upload is in flight, so
+  // the node shows a loading placeholder instead of an empty box. Not persisted.
+  const uploading =
+    (data as MindmapNodeData & { uploading?: boolean }).uploading === true;
+
+  let nodeContent: React.ReactNode = null;
+  if (imageUrl) {
+    nodeContent = (
+      // biome-ignore lint/performance/noImgElement: node images are user uploads served from our own attachment endpoint; next/image optimization does not apply
+      <img
+        src={imageUrl}
+        alt=""
+        draggable={false}
+        className="size-full select-none rounded-md object-contain"
+      />
+    );
+  } else if (uploading) {
+    nodeContent = (
+      <div className="flex size-full items-center justify-center rounded-md bg-muted/30">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     // No `overflow-hidden` here: it would clip the connection handles (which match
@@ -67,15 +90,7 @@ export function MindmapImageNode({
         </div>
       </NodeToolbar>
       <MindmapHandles />
-      {imageUrl ? (
-        // biome-ignore lint/performance/noImgElement: node images are user uploads served from our own attachment endpoint; next/image optimization does not apply
-        <img
-          src={imageUrl}
-          alt=""
-          draggable={false}
-          className="size-full select-none rounded-md object-contain"
-        />
-      ) : null}
+      {nodeContent}
     </div>
   );
 }
