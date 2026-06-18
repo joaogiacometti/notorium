@@ -13,8 +13,11 @@ import { Viewport } from "@embedpdf/plugin-viewport/react";
 import { ZoomGestureWrapper } from "@embedpdf/plugin-zoom/react";
 import { linkAnnotationRenderer } from "@/components/library/book-reader-link-renderer";
 import { ReaderNavHistoryProvider } from "@/components/library/book-reader-nav-history";
+import { ReaderSelectionMenu } from "@/components/library/book-reader-selection-menu";
 import { ReaderThumbnails } from "@/components/library/book-reader-thumbnails";
 import { ReaderToolbar } from "@/components/library/book-reader-toolbar";
+import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shortcut";
+import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
 import { useReadingPosition } from "@/components/library/use-reading-position";
 
 interface ReaderLayoutProps {
@@ -41,6 +44,8 @@ export function ReaderLayout({
   initialPage,
 }: Readonly<ReaderLayoutProps>) {
   useReadingPosition({ documentId, bookId, initialPage });
+  useReaderCopyShortcut(documentId);
+  useReaderModeShortcuts(documentId);
 
   // h-full fills the fullscreen wrapper the provider auto-mounts around these
   // children; that wrapper (not this div) is the fullscreen target.
@@ -55,8 +60,13 @@ export function ReaderLayout({
           <ReaderThumbnails documentId={documentId} />
           {/* GlobalPointerProvider tracks pointermove/up across the viewport so a
               drag forms a text selection; its 100%-sized box needs this sized
-              flex child as a definite parent. */}
-          <div className="relative flex-1">
+              flex child as a definite parent. select-none suppresses the
+              browser's own text/range selection (user-select is inherited, so it
+              cascades to every page): EmbedPDF selection is synthetic — it paints
+              its own rectangles — so a native selection only interferes, dragging
+              a ghost of the page image during pan and fighting the synthetic
+              selection during a select drag. */}
+          <div className="relative flex-1 select-none">
             <GlobalPointerProvider documentId={documentId}>
               <Viewport documentId={documentId} className="bg-muted/40">
                 {/* ZoomGestureWrapper wires pinch-to-zoom on touch and
@@ -78,6 +88,7 @@ export function ReaderLayout({
                           documentId={documentId}
                           pageIndex={pageIndex}
                           scale={1}
+                          draggable={false}
                           style={{ pointerEvents: "none" }}
                         />
                         <TilingLayer
@@ -111,6 +122,7 @@ export function ReaderLayout({
             </GlobalPointerProvider>
           </div>
         </div>
+        <ReaderSelectionMenu documentId={documentId} />
       </div>
     </ReaderNavHistoryProvider>
   );

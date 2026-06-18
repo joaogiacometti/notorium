@@ -3,6 +3,7 @@ export enum ShortcutCategory {
   NotesEditor = "notes_editor",
   Mindmap = "mindmap",
   FlashcardReview = "flashcard_review",
+  Reader = "reader",
 }
 
 /**
@@ -30,6 +31,7 @@ export const shortcutCategorySections: ShortcutCategorySection[] = [
   { category: ShortcutCategory.NotesEditor, label: "Notes editor" },
   { category: ShortcutCategory.Mindmap, label: "Mindmap" },
   { category: ShortcutCategory.FlashcardReview, label: "Flashcard review" },
+  { category: ShortcutCategory.Reader, label: "Library reader" },
 ];
 
 export const shortcutRegistry: Shortcut[] = [
@@ -250,6 +252,27 @@ export const shortcutRegistry: Shortcut[] = [
     description: "Exit focus / exam mode",
     category: ShortcutCategory.FlashcardReview,
   },
+  {
+    id: "reader-select-tool",
+    kind: "keys",
+    keys: ["v"],
+    description: "Select text tool",
+    category: ShortcutCategory.Reader,
+  },
+  {
+    id: "reader-pan-tool",
+    kind: "keys",
+    keys: ["h"],
+    description: "Hand (pan) tool",
+    category: ShortcutCategory.Reader,
+  },
+  {
+    id: "reader-copy-selection",
+    kind: "keys",
+    keys: ["cmd+c", "ctrl+c"],
+    description: "Copy selected text",
+    category: ShortcutCategory.Reader,
+  },
 ];
 
 export function getShortcutsByCategory(category: ShortcutCategory): Shortcut[] {
@@ -275,6 +298,9 @@ export function getActiveShortcutCategories(
   }
   if (pathname.startsWith("/flashcards")) {
     active.push(ShortcutCategory.FlashcardReview);
+  }
+  if (pathname.startsWith("/library/")) {
+    active.push(ShortcutCategory.Reader);
   }
   return active;
 }

@@ -7,6 +7,12 @@ const deleteImagesMock = vi.fn();
 const listImagePathnamesMock = vi.fn();
 const headersMock = vi.fn();
 
+const { cleanupAttachmentPathnamesMock, listAccountAttachmentPathnamesMock } =
+  vi.hoisted(() => ({
+    cleanupAttachmentPathnamesMock: vi.fn(),
+    listAccountAttachmentPathnamesMock: vi.fn(),
+  }));
+
 vi.mock("next/headers", () => ({
   headers: headersMock,
 }));
@@ -24,6 +30,15 @@ vi.mock("@/lib/media-storage/provider", () => ({
   getMediaStorageProvider: getMediaStorageProviderMock,
 }));
 
+vi.mock("@/features/attachments/cleanup", () => ({
+  cleanupAttachmentPathnames: cleanupAttachmentPathnamesMock,
+  listAccountAttachmentPathnames: listAccountAttachmentPathnamesMock,
+  getSubjectAttachmentPathnamesForUser: vi.fn(),
+  getDeckAttachmentPathnamesForUser: vi.fn(),
+}));
+
+const ATTACHMENT_CONTEXTS = ["notes", "flashcards", "assessments", "mindmaps"];
+
 describe("deleteAccountForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -36,6 +51,46 @@ describe("deleteAccountForUser", () => {
       deleteImages: deleteImagesMock,
       listImagePathnames: listImagePathnamesMock,
     });
+
+    cleanupAttachmentPathnamesMock.mockImplementation(
+      async (_userId: string, pathnames: string[]) => {
+        if (pathnames.length === 0) {
+          return;
+        }
+
+        const provider = await getMediaStorageProviderMock();
+
+        if (!provider) {
+          return;
+        }
+
+        try {
+          await provider.deleteImages({ pathnames });
+        } catch {
+          // silently ignore cleanup failures
+        }
+      },
+    );
+
+    listAccountAttachmentPathnamesMock.mockImplementation(
+      async (provider: Record<string, unknown>, userId: string) => {
+        const results = await Promise.all(
+          ATTACHMENT_CONTEXTS.map(async (context) => {
+            const result = await (
+              provider.listImagePathnames as (args: {
+                prefix: string;
+              }) => Promise<string[] | undefined>
+            )({
+              prefix: `notorium/${context}/${userId}/`,
+            });
+
+            return result ?? [];
+          }),
+        );
+
+        return results.flat();
+      },
+    );
   });
 
   it("deletes the user before cleaning up owned note and flashcard blobs", async () => {

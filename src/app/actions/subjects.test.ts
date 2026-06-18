@@ -25,6 +25,11 @@ vi.mock("@/features/subjects/mutations", () => ({
   editSubjectForUser: vi.fn(),
 }));
 
+vi.mock("@/features/documents/queries", () => ({
+  getSubjectDocumentsForUser: vi.fn(),
+  getRecentDocumentsForUser: vi.fn(),
+}));
+
 vi.mock("@/features/subjects/queries", () => ({
   getSubjectByIdForUser: vi.fn(),
   getAllSubjectsForUser: vi.fn(),

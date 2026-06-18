@@ -1,5 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const defaultBetterAuthMock = vi.fn(() => ({ api: {} }));
+const defaultDrizzleAdapterMock = vi.fn(() => "adapter");
+const defaultGetDbMock = vi.fn(() => ({ db: true }));
+
+vi.mock("better-auth", () => ({
+  betterAuth: defaultBetterAuthMock,
+}));
+
+vi.mock("better-auth/adapters/drizzle", () => ({
+  drizzleAdapter: defaultDrizzleAdapterMock,
+}));
+
+vi.mock("@/db/index", () => ({
+  getDb: defaultGetDbMock,
+}));
+
 const ORIGINAL_DATABASE_URL = process.env.DATABASE_URL;
 const ORIGINAL_SKIP_ENV_VALIDATION = process.env.SKIP_ENV_VALIDATION;
 

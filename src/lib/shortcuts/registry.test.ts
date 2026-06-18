@@ -89,6 +89,28 @@ describe("shortcutRegistry", () => {
     });
   });
 
+  it("lists the reader copy shortcut under Reader", () => {
+    const shortcut = getShortcutsByCategory(ShortcutCategory.Reader).find(
+      (item) => item.id === "reader-copy-selection",
+    );
+    expect(shortcut).toMatchObject({
+      kind: "keys",
+      keys: ["cmd+c", "ctrl+c"],
+      description: "Copy selected text",
+    });
+  });
+
+  it("lists the reader select (v) and pan (h) tool shortcuts", () => {
+    const reader = getShortcutsByCategory(ShortcutCategory.Reader);
+    expect(
+      reader.find((item) => item.id === "reader-select-tool"),
+    ).toMatchObject({ keys: ["v"], description: "Select text tool" });
+    expect(reader.find((item) => item.id === "reader-pan-tool")).toMatchObject({
+      keys: ["h"],
+      description: "Hand (pan) tool",
+    });
+  });
+
   it("lists the mindmap Tab add-child shortcut", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
       (item) => item.id === "mindmap-add-child",
@@ -129,6 +151,16 @@ describe("getActiveShortcutCategories", () => {
     expect(getActiveShortcutCategories("/flashcards/abc")).toEqual([
       ShortcutCategory.Global,
       ShortcutCategory.FlashcardReview,
+    ]);
+  });
+
+  it("marks the reader active on a book page but not the library list", () => {
+    expect(getActiveShortcutCategories("/library/book-1")).toEqual([
+      ShortcutCategory.Global,
+      ShortcutCategory.Reader,
+    ]);
+    expect(getActiveShortcutCategories("/library")).toEqual([
+      ShortcutCategory.Global,
     ]);
   });
 });
