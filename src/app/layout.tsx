@@ -1,7 +1,6 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
-import { ModeToggle } from "@/components/navbar/theme-switcher";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 import { Toaster } from "@/components/ui/sonner";
@@ -54,9 +53,6 @@ export default async function RootLayout({
         >
           <QueryProvider>
             {children}
-            {!session && (
-              <ModeToggle variant="floating" syncWithServer={false} />
-            )}
             <Toaster />
             <SpeedInsights />
             <ServiceWorkerRegister />
