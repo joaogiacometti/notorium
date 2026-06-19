@@ -36,7 +36,7 @@ export interface BookReaderProps {
 // without it the viewport measures zero and gates its pages to a blank area.
 export function BookReaderSurface(props: Readonly<BookReaderProps>) {
   return (
-    <div className="h-[calc(100svh-3.5rem)]">
+    <div className="h-svh">
       <ReaderEngine {...props} />
     </div>
   );

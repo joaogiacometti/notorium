@@ -14,7 +14,7 @@ const BookReaderSurface = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[calc(100svh-3.5rem)] items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-svh items-center justify-center text-sm text-muted-foreground">
         Loading book…
       </div>
     ),

@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LibraryBookLoading() {
   return (
-    <div className="flex h-[calc(100svh-3.5rem)] flex-col">
+    <div className="flex h-svh flex-col">
       <div className="flex items-center gap-3 border-b border-border/70 bg-background px-4 py-2.5">
         <Skeleton className="h-8 w-24 rounded-md" />
         <Skeleton className="h-4 w-48" />
