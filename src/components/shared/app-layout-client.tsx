@@ -3,7 +3,7 @@
 import { CalendarDays, Home, Layers, Library, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppSidebar } from "@/components/navbar/app-sidebar";
 import { CommandPalette } from "@/components/navbar/command-palette";
 import { GlobalSearch } from "@/components/navbar/global-search";
@@ -15,6 +15,7 @@ import { WindowDock } from "@/components/windows/window-dock";
 import { WindowManagerProvider } from "@/components/windows/window-manager-context";
 import { WindowOverlay } from "@/components/windows/window-overlay";
 import type { DeckOption, SubjectTreeNode } from "@/lib/server/api-contracts";
+import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutClientProps {
@@ -112,6 +113,22 @@ export function AppLayoutClient({
   const { collapsed, setCollapsed } = useSidebarCollapsed(
     initialSidebarCollapsed,
   );
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key.toLowerCase() !== "b") return;
+      if (!e.metaKey && !e.ctrlKey) return;
+      if (e.altKey || e.shiftKey) return;
+      if (isEditableTarget(e.target)) return;
+
+      e.preventDefault();
+      setCollapsed(!collapsed);
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [collapsed, setCollapsed]);
+
   const showSidebar = tree != null && !isImmersiveRoute(pathname);
 
   // The sidebar mounts twice (mobile sheet + desktop aside), so the keyboard

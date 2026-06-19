@@ -89,6 +89,17 @@ describe("shortcutRegistry", () => {
     });
   });
 
+  it("lists the toggle-sidebar shortcut under Global", () => {
+    const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
+      (item) => item.id === "global-toggle-sidebar",
+    );
+    expect(shortcut).toMatchObject({
+      kind: "keys",
+      keys: ["cmd+b", "ctrl+b"],
+      description: "Toggle sidebar",
+    });
+  });
+
   it("lists the minimize-window shortcut under Global", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
       (item) => item.id === "global-minimize-window",
@@ -122,7 +133,31 @@ describe("shortcutRegistry", () => {
     });
     expect(
       reader.find((item) => item.id === "reader-toggle-sidebar"),
-    ).toMatchObject({ keys: ["b"], description: "Toggle sidebar" });
+    ).toMatchObject({
+      keys: ["cmd+b", "ctrl+b"],
+      description: "Toggle sidebar",
+    });
+  });
+
+  it("lists reader zoom, fullscreen, and spread shortcuts", () => {
+    const reader = getShortcutsByCategory(ShortcutCategory.Reader);
+    expect(reader.find((item) => item.id === "reader-zoom-in")).toMatchObject({
+      keys: ["cmd+=", "ctrl+="],
+      description: "Zoom in",
+    });
+    expect(reader.find((item) => item.id === "reader-zoom-out")).toMatchObject({
+      keys: ["cmd+-", "ctrl+-"],
+      description: "Zoom out",
+    });
+    expect(reader.find((item) => item.id === "reader-fit-width")).toMatchObject(
+      { keys: ["cmd+0", "ctrl+0"], description: "Fit width" },
+    );
+    expect(
+      reader.find((item) => item.id === "reader-toggle-fullscreen"),
+    ).toMatchObject({ keys: ["f"], description: "Toggle fullscreen" });
+    expect(
+      reader.find((item) => item.id === "reader-toggle-spread"),
+    ).toMatchObject({ keys: ["d"], description: "Toggle two-page spread" });
   });
 
   it("lists the mindmap Tab add-child shortcut", () => {

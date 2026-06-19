@@ -20,9 +20,11 @@ function modeForKey(key: string): ReaderInteractionMode | null {
   return null;
 }
 
-// V selects text, H switches to the hand/pan tool, and B toggles the sidebar.
-// Plain keys only: a modifier means a different command (Ctrl/Cmd+V is paste,
-// Cmd+H hides the window on macOS), and typing in a field is left untouched.
+// V selects text, H switches to the hand/pan tool, and Cmd/Ctrl+B toggles the
+// sidebar. Plain keys only for mode switching: a modifier means a different
+// command (Ctrl/Cmd+V is paste, Cmd+H hides the window on macOS), and typing in
+// a field is left untouched. Cmd/Ctrl+B is the exception so the sidebar toggle
+// mirrors the global shortcut.
 export function useReaderModeShortcuts({
   documentId,
   onToggleSidebar,
@@ -31,13 +33,18 @@ export function useReaderModeShortcuts({
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (isEditableTarget(event.target)) return;
-      if (event.key === "b" || event.key === "B") {
-        event.preventDefault();
-        onToggleSidebar?.();
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
+        if (event.key.toLowerCase() === "b") {
+          event.preventDefault();
+          onToggleSidebar?.();
+        }
         return;
       }
+      if (isEditableTarget(event.target)) return;
       const mode = modeForKey(event.key);
       if (!mode) return;
       event.preventDefault();

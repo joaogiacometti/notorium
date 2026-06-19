@@ -19,6 +19,7 @@ import { ReaderSidebar } from "@/components/library/book-reader-sidebar";
 import { ReaderSidebarToggle } from "@/components/library/book-reader-sidebar-toggle";
 import { ReaderToolbar } from "@/components/library/book-reader-toolbar";
 import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shortcut";
+import { useReaderDisplayShortcuts } from "@/components/library/use-reader-display-shortcuts";
 import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
 import { useReaderSidebarCollapsed } from "@/components/library/use-reader-sidebar-collapsed";
 import { useReadingPosition } from "@/components/library/use-reading-position";
@@ -54,6 +55,7 @@ export function ReaderLayout({
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
     useReaderSidebarCollapsed();
   useReaderModeShortcuts({ documentId, onToggleSidebar: toggleSidebar });
+  useReaderDisplayShortcuts({ documentId });
 
   // h-full fills the fullscreen wrapper the provider auto-mounts around these
   // children; that wrapper (not this div) is the fullscreen target.

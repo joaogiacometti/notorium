@@ -57,6 +57,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Global,
   },
   {
+    id: "global-toggle-sidebar",
+    kind: "keys",
+    keys: ["cmd+b", "ctrl+b"],
+    description: "Toggle sidebar",
+    category: ShortcutCategory.Global,
+  },
+  {
     id: "global-minimize-window",
     kind: "keys",
     keys: ["escape"],
@@ -283,8 +290,43 @@ export const shortcutRegistry: Shortcut[] = [
   {
     id: "reader-toggle-sidebar",
     kind: "keys",
-    keys: ["b"],
+    keys: ["cmd+b", "ctrl+b"],
     description: "Toggle sidebar",
+    category: ShortcutCategory.Reader,
+  },
+  {
+    id: "reader-zoom-in",
+    kind: "keys",
+    keys: ["cmd+=", "ctrl+="],
+    description: "Zoom in",
+    category: ShortcutCategory.Reader,
+  },
+  {
+    id: "reader-zoom-out",
+    kind: "keys",
+    keys: ["cmd+-", "ctrl+-"],
+    description: "Zoom out",
+    category: ShortcutCategory.Reader,
+  },
+  {
+    id: "reader-fit-width",
+    kind: "keys",
+    keys: ["cmd+0", "ctrl+0"],
+    description: "Fit width",
+    category: ShortcutCategory.Reader,
+  },
+  {
+    id: "reader-toggle-fullscreen",
+    kind: "keys",
+    keys: ["f"],
+    description: "Toggle fullscreen",
+    category: ShortcutCategory.Reader,
+  },
+  {
+    id: "reader-toggle-spread",
+    kind: "keys",
+    keys: ["d"],
+    description: "Toggle two-page spread",
     category: ShortcutCategory.Reader,
   },
 ];

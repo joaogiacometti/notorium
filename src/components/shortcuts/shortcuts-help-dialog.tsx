@@ -31,15 +31,17 @@ export function ShortcutsHelpDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[85vh] flex flex-col">
-        <DialogTitle className="text-lg font-semibold">
-          Keyboard shortcuts
-        </DialogTitle>
-        <DialogDescription className="sr-only">
-          A list of keyboard shortcuts available on this page.
-        </DialogDescription>
+      <DialogContent className="sm:max-w-6xl max-h-[88vh] flex flex-col">
+        <div className="flex flex-col gap-0.5">
+          <DialogTitle className="text-lg font-semibold leading-none">
+            Keyboard shortcuts
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Shortcuts available on this page are highlighted.
+          </DialogDescription>
+        </div>
 
-        <div className="grid items-start gap-4 md:grid-cols-2 mt-2 overflow-y-auto p-1 -m-1">
+        <div className="mt-3 overflow-y-auto p-1 -m-1 md:columns-2 lg:columns-3 [column-gap:1rem]">
           {shortcutCategorySections.map((section) => (
             <ShortcutCategorySectionView
               key={section.category}
@@ -71,24 +73,31 @@ function ShortcutCategorySectionView({
   return (
     <section
       className={cn(
-        "rounded-lg border bg-card",
+        "mb-4 break-inside-avoid overflow-hidden rounded-xl border bg-card shadow-xs transition-colors",
         isActive && "border-primary/40 ring-1 ring-primary/20",
       )}
     >
       <header
         className={cn(
-          "flex items-center justify-between gap-2 rounded-t-lg border-b px-4 py-2.5",
+          "flex items-center justify-between gap-2 border-b px-4 py-2.5",
           isActive ? "bg-primary/5" : "bg-muted/40",
         )}
       >
         <h3
           className={cn(
             "text-sm",
-            isActive ? "font-bold" : "font-medium text-muted-foreground",
+            isActive
+              ? "font-semibold text-foreground"
+              : "font-medium text-muted-foreground",
           )}
         >
           {section.label}
         </h3>
+        {isActive && (
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+            This page
+          </span>
+        )}
       </header>
       <div className="divide-y divide-border/60 px-4">
         {shortcuts.map((shortcut) => (
@@ -105,13 +114,13 @@ interface ShortcutRowProps {
 
 function ShortcutRow({ shortcut }: Readonly<ShortcutRowProps>) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <span className="text-sm">{shortcut.description}</span>
-      <div className="flex shrink-0 gap-1">
+    <div className="group flex items-center justify-between gap-4 py-2">
+      <span className="text-sm text-foreground/90">{shortcut.description}</span>
+      <div className="flex shrink-0 items-center gap-1">
         {displayShortcutKeys(shortcut).map((key) => (
           <kbd
             key={key}
-            className="pointer-events-none inline-flex h-5 min-w-5 select-none items-center justify-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground shadow-xs"
+            className="pointer-events-none inline-flex h-6 min-w-6 select-none items-center justify-center gap-1 rounded-md border border-b-2 bg-muted px-1.5 font-mono text-xs font-semibold text-muted-foreground shadow-xs"
           >
             {key}
           </kbd>
