@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -331,6 +332,47 @@ describe("uploadAssessmentAttachmentForUser", () => {
       mimeType: "application/pdf",
       sizeBytes: 6,
     });
+  });
+
+  it("optimizes image attachments to webp before storing and recording metadata", async () => {
+    const png = await sharp({
+      create: {
+        width: 512,
+        height: 512,
+        channels: 3,
+        background: { r: 180, g: 90, b: 30 },
+      },
+    })
+      .png()
+      .toBuffer();
+
+    const { uploadAssessmentAttachmentForUser } = await import(
+      "@/features/attachments/mutations"
+    );
+
+    await uploadAssessmentAttachmentForUser(
+      "user-1",
+      createValidAssessmentAttachmentPayload({
+        fileName: "diagram.png",
+        mimeType: "image/png",
+        dataBase64: png.toString("base64"),
+      }),
+    );
+
+    expect(uploadFileMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: "assessments",
+        fileName: "diagram.webp",
+        mimeType: "image/webp",
+        bytes: expect.any(Uint8Array),
+      }),
+    );
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileName: "diagram.webp",
+        mimeType: "image/webp",
+      }),
+    );
   });
 });
 

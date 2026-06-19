@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     "@open-spaced-repetition/binding",
     "@vercel/blob",
     "pg",
+    "sharp",
   ],
 };
 

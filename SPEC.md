@@ -68,6 +68,7 @@ Students who want a private, lightweight study management workspace.
   - pasted image uploads stored in private blob storage
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
+- Uploaded images (note, flashcard, mindmap, and assessment image attachments) are automatically optimized to WebP on upload, with a maximum dimension cap, to reduce stored size and bandwidth without a visible quality loss. The original is kept only if optimization would not make the file smaller. Non-image uploads such as PDFs are stored as-is.
 - When AI is configured, users can generate flashcards from a note into a selected deck.
 - Generated note flashcards are reviewed before creation.
 

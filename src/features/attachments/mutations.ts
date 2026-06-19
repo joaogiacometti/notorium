@@ -18,6 +18,7 @@ import {
 } from "@/features/attachments/validation";
 import { LIMITS } from "@/lib/config/limits";
 import { decodeBase64File } from "@/lib/media-storage/decode-base64";
+import { optimizeImageForStorage } from "@/lib/media-storage/optimize-image";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 import type { AssessmentAttachmentEntity } from "@/lib/server/api-contracts";
@@ -98,13 +99,19 @@ async function uploadAttachmentImageBytes(
     return actionError(rateLimit.errorCode);
   }
 
+  const optimized = await optimizeImageForStorage({
+    bytes,
+    mimeType: data.mimeType,
+    fileName: data.fileName,
+  });
+
   try {
     const uploaded = await provider.uploadImage({
       userId,
       context: data.context,
-      fileName: data.fileName,
-      mimeType: data.mimeType,
-      bytes,
+      fileName: optimized.fileName,
+      mimeType: optimized.mimeType,
+      bytes: optimized.bytes,
     });
 
     return {
@@ -219,15 +226,21 @@ export async function uploadAssessmentAttachmentForUser(
     return actionError(rateLimit.errorCode);
   }
 
+  const optimized = await optimizeImageForStorage({
+    bytes,
+    mimeType: data.mimeType,
+    fileName: data.fileName,
+  });
+
   let uploadedPathname: string | null = null;
 
   try {
     const uploaded = await provider.uploadFile({
       userId,
       context: "assessments",
-      fileName: data.fileName,
-      mimeType: data.mimeType,
-      bytes,
+      fileName: optimized.fileName,
+      mimeType: optimized.mimeType,
+      bytes: optimized.bytes,
     });
     uploadedPathname = uploaded.pathname;
 
@@ -236,10 +249,10 @@ export async function uploadAssessmentAttachmentForUser(
       .values({
         assessmentId: data.assessmentId,
         userId,
-        fileName: data.fileName,
+        fileName: optimized.fileName,
         blobPathname: uploaded.pathname,
-        mimeType: data.mimeType,
-        sizeBytes: bytes.byteLength,
+        mimeType: optimized.mimeType,
+        sizeBytes: optimized.bytes.byteLength,
       })
       .returning();
 
