@@ -9,15 +9,22 @@ type SidebarView = "pages" | "content";
 
 interface ReaderSidebarProps {
   documentId: string;
+  isCollapsed: boolean;
 }
 
 // Left rail with a Pages/Content switch: "Pages" shows the virtualized page
 // thumbnails, "Content" shows the PDF outline (table of contents). Only the
 // active panel mounts, so switching to Content tears down the thumbnail
 // virtualizer instead of leaving it measuring a hidden box. Hidden on small
-// screens, matching the thumbnail rail's prior behavior.
-export function ReaderSidebar({ documentId }: Readonly<ReaderSidebarProps>) {
+// screens, matching the thumbnail rail's prior behavior. Collapsing hides the
+// rail entirely; the toolbar button expands it again.
+export function ReaderSidebar({
+  documentId,
+  isCollapsed,
+}: Readonly<ReaderSidebarProps>) {
   const [view, setView] = useState<SidebarView>("pages");
+
+  if (isCollapsed) return null;
 
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-border/70 bg-background md:flex">

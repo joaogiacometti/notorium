@@ -280,6 +280,13 @@ export const shortcutRegistry: Shortcut[] = [
     description: "Copy selected text",
     category: ShortcutCategory.Reader,
   },
+  {
+    id: "reader-toggle-sidebar",
+    kind: "keys",
+    keys: ["b"],
+    description: "Toggle sidebar",
+    category: ShortcutCategory.Reader,
+  },
 ];
 
 export function getShortcutsByCategory(category: ShortcutCategory): Shortcut[] {

@@ -18,6 +18,7 @@ import { ReaderSidebar } from "@/components/library/book-reader-sidebar";
 import { ReaderToolbar } from "@/components/library/book-reader-toolbar";
 import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shortcut";
 import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
+import { useReaderSidebarCollapsed } from "@/components/library/use-reader-sidebar-collapsed";
 import { useReadingPosition } from "@/components/library/use-reading-position";
 
 interface ReaderLayoutProps {
@@ -45,7 +46,9 @@ export function ReaderLayout({
 }: Readonly<ReaderLayoutProps>) {
   useReadingPosition({ documentId, bookId, initialPage });
   useReaderCopyShortcut(documentId);
-  useReaderModeShortcuts(documentId);
+  const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
+    useReaderSidebarCollapsed();
+  useReaderModeShortcuts({ documentId, onToggleSidebar: toggleSidebar });
 
   // h-full fills the fullscreen wrapper the provider auto-mounts around these
   // children; that wrapper (not this div) is the fullscreen target.
@@ -55,9 +58,17 @@ export function ReaderLayout({
   return (
     <ReaderNavHistoryProvider documentId={documentId}>
       <div className="flex h-full flex-col bg-background">
-        <ReaderToolbar documentId={documentId} title={title} />
+        <ReaderToolbar
+          documentId={documentId}
+          title={title}
+          isSidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+        />
         <div className="flex min-h-0 min-w-0 flex-1">
-          <ReaderSidebar documentId={documentId} />
+          <ReaderSidebar
+            documentId={documentId}
+            isCollapsed={sidebarCollapsed}
+          />
           {/* GlobalPointerProvider tracks pointermove/up across the viewport so a
               drag forms a text selection; its 100%-sized box needs this sized
               flex child as a definite parent. select-none suppresses the

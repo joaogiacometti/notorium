@@ -111,7 +111,7 @@ describe("shortcutRegistry", () => {
     });
   });
 
-  it("lists the reader select (v) and pan (h) tool shortcuts", () => {
+  it("lists the reader select (v), pan (h), and sidebar (b) shortcuts", () => {
     const reader = getShortcutsByCategory(ShortcutCategory.Reader);
     expect(
       reader.find((item) => item.id === "reader-select-tool"),
@@ -120,6 +120,9 @@ describe("shortcutRegistry", () => {
       keys: ["h"],
       description: "Hand (pan) tool",
     });
+    expect(
+      reader.find((item) => item.id === "reader-toggle-sidebar"),
+    ).toMatchObject({ keys: ["b"], description: "Toggle sidebar" });
   });
 
   it("lists the mindmap Tab add-child shortcut", () => {

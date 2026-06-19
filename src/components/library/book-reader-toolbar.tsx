@@ -18,6 +18,8 @@ import {
   Minimize,
   MousePointer2,
   MoveHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
   Square,
   ZoomIn,
   ZoomOut,
@@ -43,6 +45,8 @@ import { cn } from "@/lib/utils";
 interface ReaderToolbarProps {
   documentId: string;
   title: string;
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
 }
 
 // Top control bar wired to EmbedPDF's zoom, spread, and fullscreen plugins.
@@ -53,6 +57,8 @@ interface ReaderToolbarProps {
 export function ReaderToolbar({
   documentId,
   title,
+  isSidebarCollapsed,
+  onToggleSidebar,
 }: Readonly<ReaderToolbarProps>) {
   const zoom = useZoom(documentId);
   const spread = useSpread(documentId);
@@ -83,6 +89,17 @@ export function ReaderToolbar({
             <span className="hidden sm:inline">Library</span>
           </Link>
         </Button>
+        <ToolbarButton
+          label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden md:flex"
+          onClick={onToggleSidebar}
+        >
+          {isSidebarCollapsed ? (
+            <PanelLeftOpen className="size-4" />
+          ) : (
+            <PanelLeftClose className="size-4" />
+          )}
+        </ToolbarButton>
         <p className="ml-1 hidden min-w-0 truncate text-sm font-medium lg:block lg:max-w-[8rem] xl:max-w-[14rem] 2xl:max-w-xs">
           {title}
         </p>
