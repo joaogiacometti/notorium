@@ -21,6 +21,7 @@ import type {
   SubjectDocumentsState,
   SubjectEditTarget,
 } from "@/components/subjects/tree/subject-tree-types";
+import type { DraggedDocument } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,8 +43,9 @@ interface SubjectTreeNodeItemProps {
   documentsBySubject: SubjectDocumentsState;
   documentActions: DocumentRowActionHandlers;
   draggedSubjectId: string | null;
+  draggedDocumentId: string | null;
   dropTargetId: string | null;
-  movingSubjectId: string | null;
+  pendingMoveId: string | null;
   onToggle: (subjectId: string) => void;
   onCreateChild: (parentSubjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
@@ -51,6 +53,7 @@ interface SubjectTreeNodeItemProps {
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
   onDragStart: (subjectId: string) => void;
+  onDocumentDragStart: (document: DraggedDocument) => void;
   onDragTarget: (targetId: string) => void;
   onDropTarget: (targetId: string) => void;
   onDragEnd: () => void;
@@ -69,8 +72,9 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     documentsBySubject,
     documentActions,
     draggedSubjectId,
+    draggedDocumentId,
     dropTargetId,
-    movingSubjectId,
+    pendingMoveId,
     onToggle,
     onCreateChild,
     onCreateNote,
@@ -78,6 +82,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     onEdit,
     onDelete,
     onDragStart,
+    onDocumentDragStart,
     onDragTarget,
     onDropTarget,
     onDragEnd,
@@ -89,7 +94,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
   const isExpandable = hasChildSubjects || node.documentCount > 0;
   const isDragging = draggedSubjectId === node.id;
   const isDropTarget = dropTargetId === node.id;
-  const isMoving = movingSubjectId === node.id;
+  const isMoving = pendingMoveId === node.id;
   const documents = documentsBySubject.get(node.id);
 
   return (
@@ -164,6 +169,10 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
             depth={depth + 1}
             activeHref={activeHref}
             documentActions={documentActions}
+            draggedDocumentId={draggedDocumentId}
+            pendingMoveId={pendingMoveId}
+            onDocumentDragStart={onDocumentDragStart}
+            onDragEnd={onDragEnd}
           />
         </div>
       ) : null}
@@ -212,6 +221,10 @@ interface DocumentRowsProps {
   depth: number;
   activeHref: string;
   documentActions: DocumentRowActionHandlers;
+  draggedDocumentId: string | null;
+  pendingMoveId: string | null;
+  onDocumentDragStart: (document: DraggedDocument) => void;
+  onDragEnd: () => void;
 }
 
 function DocumentRows({
@@ -219,6 +232,10 @@ function DocumentRows({
   depth,
   activeHref,
   documentActions,
+  draggedDocumentId,
+  pendingMoveId,
+  onDocumentDragStart,
+  onDragEnd,
 }: Readonly<DocumentRowsProps>) {
   if (documents === "loading") {
     return (
@@ -242,6 +259,8 @@ function DocumentRows({
         const href = getDocumentDetailHref(document);
         const Icon = document.kind === "mindmap" ? Workflow : FileText;
         const isActive = href === activeHref;
+        const isDragging = draggedDocumentId === document.id;
+        const isMoving = pendingMoveId === document.id;
 
         return (
           <div
@@ -251,15 +270,33 @@ function DocumentRows({
               isActive
                 ? "bg-muted/60 text-foreground"
                 : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+              isDragging && "opacity-50",
             )}
             style={{ paddingLeft: `${depth * INDENT_REM + 1.5}rem` }}
           >
             <Link
               href={href}
+              draggable
+              onDragStart={(event) => {
+                event.stopPropagation();
+                onDocumentDragStart({
+                  kind: document.kind,
+                  id: document.id,
+                  sourceSubjectId: document.subjectId,
+                });
+              }}
+              onDragEnd={onDragEnd}
               aria-current={isActive ? "page" : undefined}
               className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-sm focus-visible:outline-none"
             >
-              <Icon className="size-3.5 shrink-0" aria-hidden />
+              {isMoving ? (
+                <Loader2
+                  className="size-3.5 shrink-0 animate-spin"
+                  aria-hidden
+                />
+              ) : (
+                <Icon className="size-3.5 shrink-0" aria-hidden />
+              )}
               <span className="min-w-0 truncate" title={document.title}>
                 {document.title}
               </span>

@@ -11,6 +11,7 @@ import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import { SubjectTreeNodeItem } from "@/components/subjects/tree/subject-tree-node-item";
+import { SubjectTreeRootDropZone } from "@/components/subjects/tree/subject-tree-root-drop-zone";
 import type {
   SubjectDeleteTarget,
   SubjectDocumentsState,
@@ -21,13 +22,13 @@ import {
   useSubjectDragAndDrop,
 } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
+import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { DeckOption, SubjectTreeNode } from "@/lib/server/api-contracts";
 import {
   findSubjectTreeNode,
   getSubjectAncestorIds,
   moveSubjectTreeNode,
 } from "@/lib/trees/subject-tree";
-import { cn } from "@/lib/utils";
 
 interface SubjectTreeSidebarProps {
   tree: SubjectTreeNode[];
@@ -46,6 +47,22 @@ function getActiveSubjectId(pathname: string): string | undefined {
     return undefined;
   }
   return candidate;
+}
+
+/**
+ * Subject id whose document rows must be revealed because a note or mindmap
+ * under it is open. Matches `/subjects/[id]/documents/(notes|mindmaps)/[docId]`,
+ * so the tree can expand that subject and load its documents on first paint.
+ */
+function getActiveDocumentSubjectId(pathname: string): string | undefined {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments[0] !== "subjects" || segments[2] !== "documents") {
+    return undefined;
+  }
+  if (segments[3] !== "notes" && segments[3] !== "mindmaps") {
+    return undefined;
+  }
+  return segments[1];
 }
 
 export function SubjectTreeSidebar({
@@ -86,13 +103,22 @@ export function SubjectTreeSidebar({
     });
 
   const activeSubjectId = getActiveSubjectId(pathname);
+  const activeDocumentSubjectId = getActiveDocumentSubjectId(pathname);
+  // Highlight a subject only when it is the destination itself, not when one of
+  // its documents is open; otherwise the parent and the document both appear
+  // selected. The document row highlights itself via its href.
+  const selectedSubjectId = activeDocumentSubjectId
+    ? undefined
+    : activeSubjectId;
 
   const {
     draggedSubjectId,
+    draggedDocument,
     dropTargetId,
-    pendingMoveSubjectId,
+    pendingMoveId,
     clearDragState,
     handleDragStart,
+    handleDocumentDragStart,
     handleDragTarget,
     handleDropTarget,
   } = useSubjectDragAndDrop({
@@ -108,29 +134,97 @@ export function SubjectTreeSidebar({
       }
       refreshTree();
     },
+    onDocumentMoved: (document, newSubjectId) => {
+      // Drop the moved document from its origin's cached list, then reveal and
+      // reload the destination so both branches reflect the move immediately.
+      setDocumentsBySubject((current) => {
+        const source = current.get(document.sourceSubjectId);
+        if (!Array.isArray(source)) {
+          return current;
+        }
+        return new Map(current).set(
+          document.sourceSubjectId,
+          source.filter((item) => item.id !== document.id),
+        );
+      });
+      setExpandedIds((current) => new Set(current).add(newSubjectId));
+      void loadDocuments(newSubjectId);
+
+      // If the moved document is the one currently open, its old URL no longer
+      // matches its subject and the page would server-redirect mid-refresh.
+      // Navigate to the new URL directly instead; that push also reconciles the
+      // server-side document counts. Otherwise just refresh the tree counts.
+      const oldHref = getDocumentDetailHref({
+        kind: document.kind,
+        subjectId: document.sourceSubjectId,
+        id: document.id,
+      });
+      if (pathname === oldHref) {
+        router.push(
+          getDocumentDetailHref({
+            kind: document.kind,
+            subjectId: newSubjectId,
+            id: document.id,
+          }),
+        );
+        return;
+      }
+      refreshTree();
+    },
   });
 
   useEffect(() => {
     setLocalTree(tree);
   }, [tree]);
 
-  // Reveal the active subject by expanding its ancestor chain.
+  // Reveal the active location by expanding the active subject's ancestor
+  // chain. When a note or mindmap is open, also expand its containing subject so
+  // the document row itself is visible (ancestors alone leave it collapsed).
   useEffect(() => {
     if (!activeSubjectId) {
       return;
     }
-    const ancestorIds = getSubjectAncestorIds(localTree, activeSubjectId);
-    if (ancestorIds.length === 0) {
+    const idsToExpand = getSubjectAncestorIds(localTree, activeSubjectId);
+    if (activeDocumentSubjectId) {
+      idsToExpand.push(activeDocumentSubjectId);
+    }
+    if (idsToExpand.length === 0) {
       return;
     }
     setExpandedIds((current) => {
       const next = new Set(current);
-      for (const ancestorId of ancestorIds) {
-        next.add(ancestorId);
+      for (const id of idsToExpand) {
+        next.add(id);
       }
       return next;
     });
-  }, [localTree, activeSubjectId]);
+  }, [localTree, activeSubjectId, activeDocumentSubjectId]);
+
+  // Load the open document's subject rows on first paint so the active note or
+  // mindmap appears in the tree without a manual expand.
+  useEffect(() => {
+    if (
+      !activeDocumentSubjectId ||
+      documentsBySubject.has(activeDocumentSubjectId)
+    ) {
+      return;
+    }
+    const node = findSubjectTreeNode(localTree, activeDocumentSubjectId);
+    if (!node || node.documentCount === 0) {
+      return;
+    }
+    // Inlined rather than calling loadDocuments so the effect depends only on
+    // stable values (the setter and the server action), not a render-local fn.
+    const subjectId = activeDocumentSubjectId;
+    setDocumentsBySubject((current) =>
+      new Map(current).set(subjectId, "loading"),
+    );
+    void getSubjectDocuments(subjectId).then((documents) => {
+      setDocumentsBySubject((current) =>
+        new Map(current).set(subjectId, documents),
+      );
+    });
+  }, [localTree, activeDocumentSubjectId, documentsBySubject]);
 
   function refreshTree() {
     startTransition(() => {
@@ -235,7 +329,7 @@ export function SubjectTreeSidebar({
           className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-1 pb-4"
         >
           {draggedSubjectId ? (
-            <RootDropZone
+            <SubjectTreeRootDropZone
               isActive={dropTargetId === SUBJECT_TREE_ROOT_ID}
               onDragTarget={() => handleDragTarget(SUBJECT_TREE_ROOT_ID)}
               onDropTarget={() => void handleDropTarget(SUBJECT_TREE_ROOT_ID)}
@@ -243,12 +337,21 @@ export function SubjectTreeSidebar({
           ) : null}
 
           {localTree.length === 0 ? (
-            <SubjectsEmptyState
-              onCreate={() => {
-                setCreateParentId(undefined);
-                setCreateOpen(true);
-              }}
-            />
+            <div className="mt-2 rounded-lg border border-dashed border-border/70 p-4 text-center">
+              <p className="text-sm text-muted-foreground">No subjects yet.</p>
+              <Button
+                type="button"
+                size="sm"
+                className="mt-3 gap-1.5"
+                onClick={() => {
+                  setCreateParentId(undefined);
+                  setCreateOpen(true);
+                }}
+              >
+                <FolderPlus className="size-4" />
+                Create your first subject
+              </Button>
+            </div>
           ) : (
             localTree.map((node) => (
               <SubjectTreeNodeItem
@@ -256,13 +359,14 @@ export function SubjectTreeSidebar({
                 node={node}
                 depth={0}
                 expandedIds={expandedIds}
-                activeSubjectId={activeSubjectId}
+                activeSubjectId={selectedSubjectId}
                 activeHref={pathname}
                 documentsBySubject={documentsBySubject}
                 documentActions={documentActions}
                 draggedSubjectId={draggedSubjectId}
+                draggedDocumentId={draggedDocument?.id ?? null}
                 dropTargetId={dropTargetId}
-                movingSubjectId={pendingMoveSubjectId}
+                pendingMoveId={pendingMoveId}
                 onToggle={handleToggle}
                 onCreateChild={openCreateChild}
                 onCreateNote={openCreateNote}
@@ -270,6 +374,7 @@ export function SubjectTreeSidebar({
                 onEdit={setEditTarget}
                 onDelete={setDeleteTarget}
                 onDragStart={handleDragStart}
+                onDocumentDragStart={handleDocumentDragStart}
                 onDragTarget={handleDragTarget}
                 onDropTarget={(targetId) => void handleDropTarget(targetId)}
                 onDragEnd={clearDragState}
@@ -351,61 +456,5 @@ export function SubjectTreeSidebar({
         />
       ) : null}
     </>
-  );
-}
-
-interface RootDropZoneProps {
-  isActive: boolean;
-  onDragTarget: () => void;
-  onDropTarget: () => void;
-}
-
-/** Drop strip shown while dragging; dropping here moves a subject to the top level. */
-function RootDropZone({
-  isActive,
-  onDragTarget,
-  onDropTarget,
-}: Readonly<RootDropZoneProps>) {
-  return (
-    <button
-      type="button"
-      onDragOver={(event) => {
-        event.preventDefault();
-        onDragTarget();
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        onDropTarget();
-      }}
-      className={cn(
-        "mb-1 w-full rounded-md border border-dashed px-2 py-1.5 text-center text-[11px] transition-colors",
-        isActive
-          ? "border-[color:var(--intent-info-border)] bg-background text-foreground"
-          : "border-border/70 text-muted-foreground",
-      )}
-    >
-      Move to top level
-    </button>
-  );
-}
-
-interface SubjectsEmptyStateProps {
-  onCreate: () => void;
-}
-
-function SubjectsEmptyState({ onCreate }: Readonly<SubjectsEmptyStateProps>) {
-  return (
-    <div className="mt-2 rounded-lg border border-dashed border-border/70 p-4 text-center">
-      <p className="text-sm text-muted-foreground">No subjects yet.</p>
-      <Button
-        type="button"
-        size="sm"
-        className="mt-3 gap-1.5"
-        onClick={onCreate}
-      >
-        <FolderPlus className="size-4" />
-        Create your first subject
-      </Button>
-    </div>
   );
 }

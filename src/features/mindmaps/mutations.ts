@@ -2,6 +2,10 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { mindmap } from "@/db/schema";
 import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
+import type {
+  MoveDocumentMutationInput,
+  MoveDocumentResult,
+} from "@/features/documents/types";
 import {
   countMindmapsBySubjectForUser,
   getMindmapByIdForUser,
@@ -109,6 +113,65 @@ export async function editMindmapTitleForUser(
     .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
 
   return { success: true, mindmapId: data.id, subjectId: existing.subjectId };
+}
+
+/**
+ * Reparents a mindmap to another subject (drag-and-drop in the tree). Enforces
+ * ownership of both mindmap and target subject, and the target's mindmap limit.
+ * A move to the current subject is a no-op success.
+ */
+export async function moveMindmapForUser(
+  userId: string,
+  data: MoveDocumentMutationInput,
+): Promise<MoveDocumentResult> {
+  const existing = await getMindmapByIdForUser(userId, data.id);
+
+  if (!existing) {
+    return actionError("mindmaps.notFound");
+  }
+
+  if (existing.subjectId === data.subjectId) {
+    return {
+      success: true,
+      subjectId: data.subjectId,
+      previousSubjectId: data.subjectId,
+    };
+  }
+
+  const targetError = await validateMindmapMoveTarget(userId, data.subjectId);
+  if (targetError) {
+    return targetError;
+  }
+
+  await getDb()
+    .update(mindmap)
+    .set({ subjectId: data.subjectId })
+    .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
+
+  return {
+    success: true,
+    subjectId: data.subjectId,
+    previousSubjectId: existing.subjectId,
+  };
+}
+
+async function validateMindmapMoveTarget(
+  userId: string,
+  subjectId: string,
+): Promise<ActionErrorResult | null> {
+  const targetSubject = await getSubjectRecordForUser(userId, subjectId);
+  if (!targetSubject) {
+    return actionError("subjects.notFound");
+  }
+
+  const current = await countMindmapsBySubjectForUser(userId, subjectId);
+  if (current >= LIMITS.maxMindmapsPerSubject) {
+    return actionError("limits.mindmapLimit", {
+      errorParams: { max: LIMITS.maxMindmapsPerSubject },
+    });
+  }
+
+  return null;
 }
 
 export async function deleteMindmapForUser(

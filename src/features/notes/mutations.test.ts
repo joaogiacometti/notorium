@@ -64,7 +64,7 @@ describe("createNoteForUser", () => {
   it("returns the created note id", async () => {
     const randomUUIDSpy = vi
       .spyOn(crypto, "randomUUID")
-      .mockReturnValue("note-new" as ReturnType<typeof crypto.randomUUID>);
+      .mockReturnValue("note-new");
     getSubjectRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",
     });
@@ -169,6 +169,116 @@ describe("editNoteForUser", () => {
     expect(deleteImagesMock).toHaveBeenCalledWith({
       pathnames: ["notorium/notes/user-1/old.png"],
     });
+  });
+});
+
+describe("moveNoteForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reparents the note to the target subject", async () => {
+    getNoteByIdForUserMock.mockResolvedValueOnce({
+      id: "note-1",
+      subjectId: "subject-1",
+    });
+    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-2" });
+    countNotesBySubjectForUserMock.mockResolvedValueOnce(0);
+
+    const { moveNoteForUser } = await import("@/features/notes/mutations");
+
+    const result = await moveNoteForUser("user-1", {
+      id: "note-1",
+      subjectId: "subject-2",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      subjectId: "subject-2",
+      previousSubjectId: "subject-1",
+    });
+    expect(updateSetMock).toHaveBeenCalledWith({ subjectId: "subject-2" });
+  });
+
+  it("is a no-op when the target subject is unchanged", async () => {
+    getNoteByIdForUserMock.mockResolvedValueOnce({
+      id: "note-1",
+      subjectId: "subject-1",
+    });
+
+    const { moveNoteForUser } = await import("@/features/notes/mutations");
+
+    const result = await moveNoteForUser("user-1", {
+      id: "note-1",
+      subjectId: "subject-1",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      subjectId: "subject-1",
+      previousSubjectId: "subject-1",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("returns notFound when the note is missing", async () => {
+    getNoteByIdForUserMock.mockResolvedValueOnce(null);
+
+    const { moveNoteForUser } = await import("@/features/notes/mutations");
+
+    const result = await moveNoteForUser("user-1", {
+      id: "missing",
+      subjectId: "subject-2",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "notes.notFound",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a move to a subject the user does not own", async () => {
+    getNoteByIdForUserMock.mockResolvedValueOnce({
+      id: "note-1",
+      subjectId: "subject-1",
+    });
+    getSubjectRecordForUserMock.mockResolvedValueOnce(null);
+
+    const { moveNoteForUser } = await import("@/features/notes/mutations");
+
+    const result = await moveNoteForUser("user-1", {
+      id: "note-1",
+      subjectId: "subject-foreign",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.notFound",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a move when the target subject is at its note limit", async () => {
+    getNoteByIdForUserMock.mockResolvedValueOnce({
+      id: "note-1",
+      subjectId: "subject-1",
+    });
+    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-2" });
+    countNotesBySubjectForUserMock.mockResolvedValueOnce(1000);
+
+    const { moveNoteForUser } = await import("@/features/notes/mutations");
+
+    const result = await moveNoteForUser("user-1", {
+      id: "note-1",
+      subjectId: "subject-2",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "limits.noteLimit",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
   });
 });
 

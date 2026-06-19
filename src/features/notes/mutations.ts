@@ -2,6 +2,10 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { note } from "@/db/schema";
 import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
+import type {
+  MoveDocumentMutationInput,
+  MoveDocumentResult,
+} from "@/features/documents/types";
 import {
   countNotesBySubjectForUser,
   getNoteByIdForUser,
@@ -95,6 +99,64 @@ export async function editNoteForUser(
   );
 
   return { success: true, subjectId: existing.subjectId };
+}
+
+/**
+ * Reparents a note to another subject (drag-and-drop in the tree). Enforces
+ * ownership of both note and target subject, and the target's note limit. A
+ * move to the current subject is a no-op success.
+ */
+export async function moveNoteForUser(
+  userId: string,
+  data: MoveDocumentMutationInput,
+): Promise<MoveDocumentResult> {
+  const existing = await getNoteByIdForUser(userId, data.id);
+
+  if (!existing) {
+    return actionError("notes.notFound");
+  }
+
+  if (existing.subjectId === data.subjectId) {
+    return noteMoveResult(existing.subjectId, existing.subjectId);
+  }
+
+  const targetError = await validateNoteMoveTarget(userId, data.subjectId);
+  if (targetError) {
+    return targetError;
+  }
+
+  await getDb()
+    .update(note)
+    .set({ subjectId: data.subjectId })
+    .where(and(eq(note.id, data.id), eq(note.userId, userId)));
+
+  return noteMoveResult(data.subjectId, existing.subjectId);
+}
+
+function noteMoveResult(
+  subjectId: string,
+  previousSubjectId: string,
+): MoveDocumentResult {
+  return { success: true, subjectId, previousSubjectId };
+}
+
+async function validateNoteMoveTarget(
+  userId: string,
+  subjectId: string,
+): Promise<ActionErrorResult | null> {
+  const targetSubject = await getSubjectRecordForUser(userId, subjectId);
+  if (!targetSubject) {
+    return actionError("subjects.notFound");
+  }
+
+  const current = await countNotesBySubjectForUser(userId, subjectId);
+  if (current >= LIMITS.maxNotesPerSubject) {
+    return actionError("limits.noteLimit", {
+      errorParams: { max: LIMITS.maxNotesPerSubject },
+    });
+  }
+
+  return null;
 }
 
 export async function deleteNoteForUser(

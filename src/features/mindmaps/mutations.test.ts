@@ -254,3 +254,120 @@ describe("editMindmapTitleForUser", () => {
     expect(updateMock).not.toHaveBeenCalled();
   });
 });
+
+describe("moveMindmapForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reparents the mindmap to the target subject", async () => {
+    getMindmapByIdForUserMock.mockResolvedValueOnce({
+      id: "mindmap-1",
+      subjectId: "subject-1",
+    });
+    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-2" });
+    countMindmapsBySubjectForUserMock.mockResolvedValueOnce(0);
+
+    const { moveMindmapForUser } = await import(
+      "@/features/mindmaps/mutations"
+    );
+
+    const result = await moveMindmapForUser("user-1", {
+      id: "mindmap-1",
+      subjectId: "subject-2",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      subjectId: "subject-2",
+      previousSubjectId: "subject-1",
+    });
+    expect(updateSetMock).toHaveBeenCalledWith({ subjectId: "subject-2" });
+  });
+
+  it("is a no-op when the target subject is unchanged", async () => {
+    getMindmapByIdForUserMock.mockResolvedValueOnce({
+      id: "mindmap-1",
+      subjectId: "subject-1",
+    });
+
+    const { moveMindmapForUser } = await import(
+      "@/features/mindmaps/mutations"
+    );
+
+    const result = await moveMindmapForUser("user-1", {
+      id: "mindmap-1",
+      subjectId: "subject-1",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      subjectId: "subject-1",
+      previousSubjectId: "subject-1",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("returns not found for a mindmap the user does not own", async () => {
+    getMindmapByIdForUserMock.mockResolvedValueOnce(null);
+
+    const { moveMindmapForUser } = await import(
+      "@/features/mindmaps/mutations"
+    );
+
+    const result = await moveMindmapForUser("user-1", {
+      id: "missing",
+      subjectId: "subject-2",
+    });
+
+    expect(result).toEqual({ success: false, errorCode: "mindmaps.notFound" });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a move to a subject the user does not own", async () => {
+    getMindmapByIdForUserMock.mockResolvedValueOnce({
+      id: "mindmap-1",
+      subjectId: "subject-1",
+    });
+    getSubjectRecordForUserMock.mockResolvedValueOnce(null);
+
+    const { moveMindmapForUser } = await import(
+      "@/features/mindmaps/mutations"
+    );
+
+    const result = await moveMindmapForUser("user-1", {
+      id: "mindmap-1",
+      subjectId: "subject-foreign",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.notFound",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a move when the target subject is at its mindmap limit", async () => {
+    getMindmapByIdForUserMock.mockResolvedValueOnce({
+      id: "mindmap-1",
+      subjectId: "subject-1",
+    });
+    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-2" });
+    countMindmapsBySubjectForUserMock.mockResolvedValueOnce(100);
+
+    const { moveMindmapForUser } = await import(
+      "@/features/mindmaps/mutations"
+    );
+
+    const result = await moveMindmapForUser("user-1", {
+      id: "mindmap-1",
+      subjectId: "subject-2",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "limits.mindmapLimit",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+});
