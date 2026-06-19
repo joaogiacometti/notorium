@@ -11,10 +11,12 @@ import { SelectionLayer } from "@embedpdf/plugin-selection/react";
 import { TilingLayer } from "@embedpdf/plugin-tiling/react";
 import { Viewport } from "@embedpdf/plugin-viewport/react";
 import { ZoomGestureWrapper } from "@embedpdf/plugin-zoom/react";
+import { ReaderInteractionTools } from "@/components/library/book-reader-interaction-tools";
 import { linkAnnotationRenderer } from "@/components/library/book-reader-link-renderer";
 import { ReaderNavHistoryProvider } from "@/components/library/book-reader-nav-history";
 import { ReaderSelectionMenu } from "@/components/library/book-reader-selection-menu";
 import { ReaderSidebar } from "@/components/library/book-reader-sidebar";
+import { ReaderSidebarToggle } from "@/components/library/book-reader-sidebar-toggle";
 import { ReaderToolbar } from "@/components/library/book-reader-toolbar";
 import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shortcut";
 import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
@@ -61,12 +63,7 @@ export function ReaderLayout({
   return (
     <ReaderNavHistoryProvider documentId={documentId}>
       <div className="flex h-full flex-col bg-background">
-        <ReaderToolbar
-          documentId={documentId}
-          title={title}
-          isSidebarCollapsed={sidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
-        />
+        <ReaderToolbar documentId={documentId} title={title} />
         <div className="flex min-h-0 min-w-0 flex-1">
           <ReaderSidebar
             documentId={documentId}
@@ -88,6 +85,11 @@ export function ReaderLayout({
               mobile and you cannot pan back to the clipped edge. The Viewport
               owns its own internal scroll, so clipping here is safe. */}
           <div className="relative min-w-0 flex-1 select-none overflow-hidden">
+            <ReaderSidebarToggle
+              isCollapsed={sidebarCollapsed}
+              onToggle={toggleSidebar}
+            />
+            <ReaderInteractionTools documentId={documentId} />
             <GlobalPointerProvider documentId={documentId}>
               <Viewport documentId={documentId} className="bg-muted/40">
                 {/* ZoomGestureWrapper wires pinch-to-zoom on touch and

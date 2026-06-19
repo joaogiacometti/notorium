@@ -1,8 +1,6 @@
 "use client";
 
 import { useFullscreen } from "@embedpdf/plugin-fullscreen/react";
-import { useInteractionManagerCapability } from "@embedpdf/plugin-interaction-manager/react";
-import { usePan } from "@embedpdf/plugin-pan/react";
 import { useScroll } from "@embedpdf/plugin-scroll/react";
 import { SpreadMode } from "@embedpdf/plugin-spread";
 import { useSpread } from "@embedpdf/plugin-spread/react";
@@ -13,13 +11,9 @@ import {
   Columns2,
   CornerUpLeft,
   Ellipsis,
-  Hand,
   Maximize,
   Minimize,
-  MousePointer2,
   MoveHorizontal,
-  PanelLeftClose,
-  PanelLeftOpen,
   Square,
   ZoomIn,
   ZoomOut,
@@ -28,11 +22,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useReaderNavHistory } from "@/components/library/book-reader-nav-history";
-import {
-  PAN_MODE,
-  POINTER_MODE,
-  type ReaderInteractionMode,
-} from "@/components/library/reader-interaction-modes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -45,33 +34,24 @@ import { cn } from "@/lib/utils";
 interface ReaderToolbarProps {
   documentId: string;
   title: string;
-  isSidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
 }
 
 // Top control bar wired to EmbedPDF's zoom, spread, and fullscreen plugins.
 // Each control reads live state from its plugin hook and calls back into the
 // plugin's capability scope, so the viewer stays the single source of truth
-// instead of mirroring state here. Left/right groups both flex-1 so the page
-// navigator stays absolutely centered between them.
+// instead of mirroring state here. This bar owns document position (page nav)
+// and document-wide tools; the sidebar toggle and the pan/select interaction
+// tools live docked to the canvas itself. Left/right groups both flex-1 so the
+// page navigator stays absolutely centered between them.
 export function ReaderToolbar({
   documentId,
   title,
-  isSidebarCollapsed,
-  onToggleSidebar,
 }: Readonly<ReaderToolbarProps>) {
   const zoom = useZoom(documentId);
   const spread = useSpread(documentId);
   const fullscreen = useFullscreen();
-  const pan = usePan(documentId);
-  const interaction = useInteractionManagerCapability();
   const navHistory = useReaderNavHistory();
 
-  function activateMode(mode: ReaderInteractionMode) {
-    interaction.provides?.forDocument(documentId).activate(mode);
-  }
-
-  const zoomPercent = Math.round((zoom.state?.currentZoomLevel ?? 1) * 100);
   const isSpread = spread.spreadMode !== SpreadMode.None;
   const isFullscreen = fullscreen.state.isFullscreen;
 
@@ -89,17 +69,6 @@ export function ReaderToolbar({
             <span className="hidden sm:inline">Library</span>
           </Link>
         </Button>
-        <ToolbarButton
-          label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden md:flex"
-          onClick={onToggleSidebar}
-        >
-          {isSidebarCollapsed ? (
-            <PanelLeftOpen className="size-4" />
-          ) : (
-            <PanelLeftClose className="size-4" />
-          )}
-        </ToolbarButton>
         <p className="ml-1 hidden min-w-0 truncate text-sm font-medium lg:block lg:max-w-[8rem] xl:max-w-[14rem] 2xl:max-w-xs">
           {title}
         </p>
@@ -114,86 +83,12 @@ export function ReaderToolbar({
         )}
       </div>
 
-      <div className="absolute left-1/2 -translate-x-1/2">
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
         <PageNavigator documentId={documentId} />
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-1">
-        {/* Select/Move toggle: pick text selection or drag-to-scroll. Always
-            visible so both desktop and touch users can switch — pan defaults on
-            touch, selection on desktop, but either can override here. */}
-        <div className="mr-1 flex items-center gap-0.5 rounded-md border border-border/70 p-0.5">
-          <ToolbarButton
-            label="Select text"
-            active={!pan.isPanning}
-            onClick={() => activateMode(POINTER_MODE)}
-          >
-            <MousePointer2 className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            label="Move"
-            active={pan.isPanning}
-            onClick={() => activateMode(PAN_MODE)}
-          >
-            <Hand className="size-4" />
-          </ToolbarButton>
-        </div>
-        <ToolbarButton
-          label="Zoom out"
-          className="hidden sm:flex"
-          onClick={() => zoom.provides?.zoomOut()}
-        >
-          <ZoomOut className="size-4" />
-        </ToolbarButton>
-        <span className="hidden w-11 text-center text-xs tabular-nums text-muted-foreground sm:block">
-          {zoomPercent}%
-        </span>
-        <ToolbarButton
-          label="Zoom in"
-          className="hidden sm:flex"
-          onClick={() => zoom.provides?.zoomIn()}
-        >
-          <ZoomIn className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label="Fit width"
-          className="hidden sm:flex"
-          onClick={() => zoom.provides?.requestZoom(ZoomMode.FitWidth)}
-        >
-          <MoveHorizontal className="size-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          label={isSpread ? "Single page" : "Two pages"}
-          active={isSpread}
-          className="hidden sm:flex"
-          onClick={() =>
-            spread.provides?.setSpreadMode(
-              isSpread ? SpreadMode.None : SpreadMode.Odd,
-            )
-          }
-        >
-          {isSpread ? (
-            <Square className="size-4" />
-          ) : (
-            <Columns2 className="size-4" />
-          )}
-        </ToolbarButton>
-
-        <ToolbarButton
-          label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-          active={isFullscreen}
-          className="hidden sm:flex"
-          onClick={() => fullscreen.provides?.toggleFullscreen()}
-        >
-          {isFullscreen ? (
-            <Minimize className="size-4" />
-          ) : (
-            <Maximize className="size-4" />
-          )}
-        </ToolbarButton>
-
-        {/* Mobile overflow dropdown: tools that don't fit on small screens. */}
+        {/* Tools dropdown: zoom, spread, fullscreen. */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -201,7 +96,7 @@ export function ReaderToolbar({
               size="icon"
               aria-label="More tools"
               title="More tools"
-              className="size-8 text-muted-foreground hover:text-foreground sm:hidden"
+              className="size-8 text-muted-foreground hover:text-foreground"
             >
               <Ellipsis className="size-4" />
             </Button>
@@ -220,9 +115,6 @@ export function ReaderToolbar({
             >
               <ZoomIn className="size-4" />
               Zoom in
-              <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                {zoomPercent}%
-              </span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => zoom.provides?.requestZoom(ZoomMode.FitWidth)}
