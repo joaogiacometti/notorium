@@ -9,7 +9,6 @@ import {
   useWatch,
 } from "react-hook-form";
 import { toast } from "sonner";
-import { uploadFlashcardOcclusionImage } from "@/app/actions/attachments";
 import { OcclusionImageCanvas } from "@/components/flashcards/occlusion/occlusion-image-canvas";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -21,6 +20,8 @@ import {
 } from "@/components/ui/tooltip";
 import type { OcclusionRegion } from "@/features/flashcards/occlusion";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import { uploadAttachmentImage } from "@/lib/attachments/upload-attachment-image";
+import { LIMITS } from "@/lib/config/limits";
 import { t } from "@/lib/server/server-action-errors";
 
 interface OcclusionFieldsProps<TValues extends FlashcardFormValues> {
@@ -31,15 +32,6 @@ interface OcclusionFieldsProps<TValues extends FlashcardFormValues> {
 
 function blobUrl(pathname: string): string {
   return `/api/attachments/blob?pathname=${encodeURIComponent(pathname)}`;
-}
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
 }
 
 /**
@@ -85,15 +77,16 @@ export function OcclusionFields<TValues extends FlashcardFormValues>({
     if (!file) {
       return;
     }
+    if (file.size > LIMITS.attachmentMaxBytes) {
+      toast.error(
+        t("limits.attachmentSizeLimit", { max: LIMITS.attachmentMaxBytes }),
+      );
+      return;
+    }
     setIsUploading(true);
     onImageUploadPendingChange(true);
     try {
-      const dataBase64 = await readFileAsDataUrl(file);
-      const result = await uploadFlashcardOcclusionImage({
-        fileName: file.name,
-        mimeType: file.type,
-        dataBase64,
-      });
+      const result = await uploadAttachmentImage(file, "flashcards");
       if (!result.success) {
         toast.error(t(result.errorCode, result.errorParams));
         return;
@@ -104,8 +97,13 @@ export function OcclusionFields<TValues extends FlashcardFormValues>({
         { shouldDirty: true, shouldValidate: true },
       );
       // Masks are positioned for the previous image; a new image invalidates
-      // them, so replacing the image clears all existing regions.
-      setRegions([]);
+      // them. Clear without validating so the "draw a mask" error doesn't
+      // appear before the user has had a chance to draw anything.
+      form.setValue(
+        regionsField,
+        [] as PathValue<TValues, FieldPath<TValues>>,
+        { shouldDirty: true, shouldValidate: false },
+      );
     } finally {
       setIsUploading(false);
       onImageUploadPendingChange(false);

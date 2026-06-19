@@ -13,8 +13,7 @@ import {
   isSupportedAssessmentAttachmentMimeType,
   isSupportedAttachmentImageMimeType,
   type UploadAssessmentAttachmentForm,
-  type UploadEditorImageForm,
-  type UploadFlashcardOcclusionImageForm,
+  type UploadImageContext,
 } from "@/features/attachments/validation";
 import { LIMITS } from "@/lib/config/limits";
 import { decodeBase64File } from "@/lib/media-storage/decode-base64";
@@ -25,14 +24,7 @@ import type { AssessmentAttachmentEntity } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { actionError } from "@/lib/server/server-action-errors";
 
-export type UploadEditorImageResult =
-  | {
-      success: true;
-      url: string;
-    }
-  | ActionErrorResult;
-
-export type UploadOcclusionImageResult =
+export type UploadAttachmentImageResult =
   | {
       success: true;
       url: string;
@@ -51,32 +43,42 @@ function buildAttachmentReadUrl(pathname: string): string {
   return `/api/attachments/blob?pathname=${encodeURIComponent(pathname)}`;
 }
 
-type UploadImageContext = "notes" | "flashcards" | "mindmaps";
+export interface UploadAttachmentImageInput {
+  fileName: string;
+  mimeType: string;
+  bytes: Uint8Array;
+  context: UploadImageContext;
+}
 
-// Shared upload core for editor and occlusion images: validates, rate-limits,
-// and stores the bytes, returning both the read URL and the raw pathname.
-async function uploadAttachmentImageBytes(
+/**
+ * Validates, rate-limits, optimizes, and stores an attachment image's raw bytes,
+ * returning both its authenticated read URL and the stored blob pathname. Shared
+ * by the note/flashcard/mindmap editor-image upload and the occlusion
+ * source-image upload, which reach it through the POST /api/attachments/image
+ * route handler rather than a Server Action — Server Actions cap request bodies
+ * at 1 MB, which even a single phone photo exceeds once transferred.
+ *
+ * @example
+ * await uploadAttachmentImageForUser(userId, {
+ *   fileName: "heart.png",
+ *   mimeType: "image/png",
+ *   bytes,
+ *   context: "flashcards",
+ * });
+ */
+export async function uploadAttachmentImageForUser(
   userId: string,
-  data: {
-    fileName: string;
-    mimeType: string;
-    dataBase64: string;
-    context: UploadImageContext;
-  },
-): Promise<
-  { success: true; url: string; pathname: string } | ActionErrorResult
-> {
+  data: UploadAttachmentImageInput,
+): Promise<UploadAttachmentImageResult> {
   if (!isSupportedAttachmentImageMimeType(data.mimeType)) {
     return actionError("attachments.mimeTypeNotAllowed");
   }
 
-  const bytes = decodeBase64File(data.dataBase64);
-
-  if (!bytes) {
+  if (data.bytes.byteLength === 0) {
     return actionError("attachments.invalidData");
   }
 
-  if (bytes.byteLength > LIMITS.attachmentMaxBytes) {
+  if (data.bytes.byteLength > LIMITS.attachmentMaxBytes) {
     return actionError("limits.attachmentSizeLimit", {
       errorParams: { max: LIMITS.attachmentMaxBytes },
     });
@@ -100,7 +102,7 @@ async function uploadAttachmentImageBytes(
   }
 
   const optimized = await optimizeImageForStorage({
-    bytes,
+    bytes: data.bytes,
     mimeType: data.mimeType,
     fileName: data.fileName,
   });
@@ -122,32 +124,6 @@ async function uploadAttachmentImageBytes(
   } catch {
     return actionError("attachments.uploadFailed");
   }
-}
-
-export async function uploadEditorImageForUser(
-  userId: string,
-  data: UploadEditorImageForm,
-): Promise<UploadEditorImageResult> {
-  const result = await uploadAttachmentImageBytes(userId, data);
-  return result.success ? { success: true, url: result.url } : result;
-}
-
-/**
- * Uploads an image occlusion source image, returning its blob pathname so the
- * card can persist it. Stored under the shared "flashcards" attachment context.
- *
- * @example
- * await uploadFlashcardOcclusionImageForUser(userId, {
- *   fileName: "heart.png",
- *   mimeType: "image/png",
- *   dataBase64,
- * });
- */
-export async function uploadFlashcardOcclusionImageForUser(
-  userId: string,
-  data: UploadFlashcardOcclusionImageForm,
-): Promise<UploadOcclusionImageResult> {
-  return uploadAttachmentImageBytes(userId, { ...data, context: "flashcards" });
 }
 
 export async function deleteEditorImagesForUser(

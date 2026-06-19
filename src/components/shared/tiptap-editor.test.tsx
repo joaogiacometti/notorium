@@ -8,7 +8,7 @@ import {
 } from "@/components/shared/tiptap-helpers";
 
 const toastErrorMock = vi.fn();
-const uploadEditorImageMock = vi.fn();
+const uploadAttachmentImageMock = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -16,8 +16,9 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@/app/actions/attachments", () => ({
-  uploadEditorImage: (...args: unknown[]) => uploadEditorImageMock(...args),
+vi.mock("@/lib/attachments/upload-attachment-image", () => ({
+  uploadAttachmentImage: (...args: unknown[]) =>
+    uploadAttachmentImageMock(...args),
 }));
 
 function createFile(name: string, size: number, type = "image/png") {
@@ -54,34 +55,9 @@ function createClipboardEvent(file?: File) {
 }
 
 describe("uploadPastedImage", () => {
-  let readAsDataURLMock: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
     toastErrorMock.mockReset();
-    uploadEditorImageMock.mockReset();
-    readAsDataURLMock = vi.fn(function readAsDataURL(
-      this: FileReader,
-      file: Blob,
-    ) {
-      queueMicrotask(() => {
-        Object.defineProperty(this, "result", {
-          configurable: true,
-          value: `data:image/png;base64,${Buffer.from("uploaded").toString("base64")}`,
-        });
-        this.onload?.(
-          new ProgressEvent("load", {
-            lengthComputable: true,
-            loaded: file.size,
-          }) as ProgressEvent<FileReader>,
-        );
-      });
-    });
-
-    Object.defineProperty(FileReader.prototype, "readAsDataURL", {
-      configurable: true,
-      writable: true,
-      value: readAsDataURLMock,
-    });
+    uploadAttachmentImageMock.mockReset();
   });
 
   afterEach(() => {
@@ -94,9 +70,10 @@ describe("uploadPastedImage", () => {
       finish: vi.fn(),
     };
 
-    uploadEditorImageMock.mockResolvedValue({
+    uploadAttachmentImageMock.mockResolvedValue({
       success: true,
       url: "/api/attachments/blob?pathname=image.png",
+      pathname: "image.png",
     });
 
     await uploadPastedImage(
@@ -107,21 +84,14 @@ describe("uploadPastedImage", () => {
     );
 
     expect(tracker.start).toHaveBeenCalledTimes(1);
-    expect(uploadEditorImageMock).toHaveBeenCalledTimes(1);
+    expect(uploadAttachmentImageMock).toHaveBeenCalledTimes(1);
     expect(tracker.finish).toHaveBeenCalledTimes(1);
   });
 
-  it("clears pending state when reading the file fails", async () => {
-    Object.defineProperty(FileReader.prototype, "readAsDataURL", {
-      configurable: true,
-      writable: true,
-      value: function readAsDataURL(this: FileReader) {
-        queueMicrotask(() => {
-          this.onerror?.(
-            new ProgressEvent("error") as ProgressEvent<FileReader>,
-          );
-        });
-      },
+  it("toasts and clears pending state when the upload fails", async () => {
+    uploadAttachmentImageMock.mockResolvedValue({
+      success: false,
+      errorCode: "attachments.uploadFailed",
     });
 
     const tracker = {
@@ -136,7 +106,7 @@ describe("uploadPastedImage", () => {
       tracker,
     );
 
-    expect(uploadEditorImageMock).not.toHaveBeenCalled();
+    expect(uploadAttachmentImageMock).toHaveBeenCalledTimes(1);
     expect(tracker.start).toHaveBeenCalledTimes(1);
     expect(tracker.finish).toHaveBeenCalledTimes(1);
     expect(toastErrorMock).toHaveBeenCalledTimes(1);
@@ -158,7 +128,7 @@ describe("uploadPastedImage", () => {
       },
     };
 
-    uploadEditorImageMock
+    uploadAttachmentImageMock
       .mockImplementationOnce(
         () =>
           new Promise((resolve) => {
@@ -225,7 +195,7 @@ describe("uploadPastedImage", () => {
     });
 
     expect(handled).toBe(true);
-    expect(uploadEditorImageMock).not.toHaveBeenCalled();
+    expect(uploadAttachmentImageMock).not.toHaveBeenCalled();
     expect(tracker.start).not.toHaveBeenCalled();
     expect(tracker.finish).not.toHaveBeenCalled();
   });

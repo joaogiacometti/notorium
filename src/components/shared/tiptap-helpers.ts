@@ -2,7 +2,7 @@ import { Extension } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import { toast } from "sonner";
-import { uploadEditorImage } from "@/app/actions/attachments";
+import { uploadAttachmentImage } from "@/lib/attachments/upload-attachment-image";
 import { LIMITS } from "@/lib/config/limits";
 import {
   getPastedImageFile,
@@ -10,7 +10,6 @@ import {
 } from "@/lib/editor/clipboard-image";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { t } from "@/lib/server/server-action-errors";
-import { readFileAsBase64 } from "@/lib/utils";
 
 export type EditorImageUploadContext = "notes" | "flashcards";
 
@@ -85,26 +84,10 @@ export async function uploadPastedImage(
       return;
     }
 
-    const dataBase64 = await readFileAsBase64(file);
-
-    if (!dataBase64) {
-      toast.error(t("attachments.uploadFailed"));
-      return;
-    }
-
-    let result: Awaited<ReturnType<typeof uploadEditorImage>>;
-
-    try {
-      result = await uploadEditorImage({
-        fileName: getPastedImageFileName(file),
-        mimeType: file.type,
-        dataBase64,
-        context,
-      });
-    } catch {
-      toast.error(t("attachments.uploadFailed"));
-      return;
-    }
+    const namedFile = new File([file], getPastedImageFileName(file), {
+      type: file.type,
+    });
+    const result = await uploadAttachmentImage(namedFile, context);
 
     if (!result.success) {
       toast.error(t(result.errorCode, result.errorParams));

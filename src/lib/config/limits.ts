@@ -23,7 +23,11 @@ export const LIMITS = {
   noteTitleMax: 200,
   noteContentMax: 100000,
   noteContentPreviewLength: 100,
-  attachmentMaxBytes: 5242880,
+  // 4 MB. Editor/occlusion images upload as multipart bytes to the
+  // /api/attachments/image route handler; Vercel caps function request bodies at
+  // 4.5 MB, so the accepted size stays safely below that (with multipart
+  // overhead headroom). Server-side optimization shrinks most uploads further.
+  attachmentMaxBytes: 4194304,
   assessmentAttachmentMaxBytes: 10485760,
   attachmentSignedReadTtlSeconds: 300,
   attachmentUploadRateLimitPrefix: "ratelimit:attachments:upload",

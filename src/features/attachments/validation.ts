@@ -41,24 +41,25 @@ export function isSupportedAssessmentAttachmentMimeType(
   return supportedAssessmentMimeTypeSet.has(value.trim().toLowerCase());
 }
 
-export const uploadEditorImageSchema = z.object({
-  fileName: z.string().trim().min(1).max(255),
-  mimeType: z.string().trim().min(1).refine(isSupportedAttachmentImageMimeType),
-  dataBase64: z.string().trim().min(1),
-  context: z.enum(["notes", "flashcards", "mindmaps"]),
-});
+// Attachment image uploads (editor images and occlusion source images) are sent
+// as raw multipart bytes through the POST /api/attachments/image route handler,
+// not a Server Action, so there is no base64 upload schema here — only the
+// shared context whitelist the route validates the form field against.
+export const UPLOAD_IMAGE_CONTEXTS = [
+  "notes",
+  "flashcards",
+  "mindmaps",
+] as const;
 
-export type UploadEditorImageForm = z.infer<typeof uploadEditorImageSchema>;
+export type UploadImageContext = (typeof UPLOAD_IMAGE_CONTEXTS)[number];
 
-export const uploadFlashcardOcclusionImageSchema = z.object({
-  fileName: z.string().trim().min(1).max(255),
-  mimeType: z.string().trim().min(1).refine(isSupportedAttachmentImageMimeType),
-  dataBase64: z.string().trim().min(1),
-});
+const uploadImageContextSet = new Set<string>(UPLOAD_IMAGE_CONTEXTS);
 
-export type UploadFlashcardOcclusionImageForm = z.infer<
-  typeof uploadFlashcardOcclusionImageSchema
->;
+export function isUploadImageContext(
+  value: string,
+): value is UploadImageContext {
+  return uploadImageContextSet.has(value);
+}
 
 export const deleteEditorImagesSchema = z.object({
   pathnames: z.array(z.string().trim().min(1).max(512)).max(100),

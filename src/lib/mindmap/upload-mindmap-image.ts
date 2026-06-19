@@ -1,11 +1,10 @@
 "use client";
 
 import { toast } from "sonner";
-import { uploadEditorImage } from "@/app/actions/attachments";
+import { uploadAttachmentImage } from "@/lib/attachments/upload-attachment-image";
 import { LIMITS } from "@/lib/config/limits";
 import { getPastedImageFileName } from "@/lib/editor/clipboard-image";
 import { t } from "@/lib/server/server-action-errors";
-import { readFileAsBase64 } from "@/lib/utils";
 
 /**
  * Upload one image file to the mindmap attachment store and return its read URL,
@@ -23,17 +22,10 @@ export async function uploadMindmapImage(file: File): Promise<string | null> {
     );
     return null;
   }
-  const dataBase64 = await readFileAsBase64(file);
-  if (!dataBase64) {
-    toast.error(t("attachments.uploadFailed"));
-    return null;
-  }
-  const result = await uploadEditorImage({
-    fileName: getPastedImageFileName(file),
-    mimeType: file.type,
-    dataBase64,
-    context: "mindmaps",
+  const namedFile = new File([file], getPastedImageFileName(file), {
+    type: file.type,
   });
+  const result = await uploadAttachmentImage(namedFile, "mindmaps");
   if (!result.success) {
     toast.error(t(result.errorCode, result.errorParams));
     return null;

@@ -59,13 +59,13 @@ function createValidPayload(overrides: Record<string, unknown> = {}) {
   return {
     fileName: "pasted-image.png",
     mimeType: "image/png",
-    dataBase64: Buffer.from("hello").toString("base64"),
+    bytes: new Uint8Array(Buffer.from("hello")),
     context: "notes" as const,
     ...overrides,
   };
 }
 
-describe("uploadEditorImageForUser", () => {
+describe("uploadAttachmentImageForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -89,11 +89,11 @@ describe("uploadEditorImageForUser", () => {
   });
 
   it("returns mimeTypeNotAllowed when mime type is unsupported", async () => {
-    const { uploadEditorImageForUser } = await import(
+    const { uploadAttachmentImageForUser } = await import(
       "@/features/attachments/mutations"
     );
 
-    const result = await uploadEditorImageForUser(
+    const result = await uploadAttachmentImageForUser(
       "user-1",
       createValidPayload({ mimeType: "image/svg+xml" }),
     );
@@ -108,14 +108,14 @@ describe("uploadEditorImageForUser", () => {
     expect(getMediaStorageProviderMock).not.toHaveBeenCalled();
   });
 
-  it("returns invalidData when base64 payload is invalid", async () => {
-    const { uploadEditorImageForUser } = await import(
+  it("returns invalidData when the byte payload is empty", async () => {
+    const { uploadAttachmentImageForUser } = await import(
       "@/features/attachments/mutations"
     );
 
-    const result = await uploadEditorImageForUser(
+    const result = await uploadAttachmentImageForUser(
       "user-1",
-      createValidPayload({ dataBase64: "%%%" }),
+      createValidPayload({ bytes: new Uint8Array(0) }),
     );
 
     expect(result).toEqual({
@@ -129,17 +129,15 @@ describe("uploadEditorImageForUser", () => {
   });
 
   it("returns size limit error when payload exceeds max bytes", async () => {
-    const oversized = Buffer.alloc(LIMITS.attachmentMaxBytes + 1)
-      .fill(1)
-      .toString("base64");
+    const oversized = new Uint8Array(LIMITS.attachmentMaxBytes + 1);
 
-    const { uploadEditorImageForUser } = await import(
+    const { uploadAttachmentImageForUser } = await import(
       "@/features/attachments/mutations"
     );
 
-    const result = await uploadEditorImageForUser(
+    const result = await uploadAttachmentImageForUser(
       "user-1",
-      createValidPayload({ dataBase64: oversized }),
+      createValidPayload({ bytes: oversized }),
     );
 
     expect(result).toEqual({
@@ -160,11 +158,11 @@ describe("uploadEditorImageForUser", () => {
       resetAt: "2026-04-13T00:00:00.000Z",
     });
 
-    const { uploadEditorImageForUser } = await import(
+    const { uploadAttachmentImageForUser } = await import(
       "@/features/attachments/mutations"
     );
 
-    const result = await uploadEditorImageForUser(
+    const result = await uploadAttachmentImageForUser(
       "user-1",
       createValidPayload(),
     );
@@ -182,11 +180,11 @@ describe("uploadEditorImageForUser", () => {
   it("returns notConfigured when no storage provider is configured", async () => {
     getMediaStorageProviderMock.mockResolvedValueOnce(null);
 
-    const { uploadEditorImageForUser } = await import(
+    const { uploadAttachmentImageForUser } = await import(
       "@/features/attachments/mutations"
     );
 
-    const result = await uploadEditorImageForUser(
+    const result = await uploadAttachmentImageForUser(
       "user-1",
       createValidPayload(),
     );
@@ -201,11 +199,11 @@ describe("uploadEditorImageForUser", () => {
   });
 
   it("uploads and returns authenticated read URL when provider is configured", async () => {
-    const { uploadEditorImageForUser } = await import(
+    const { uploadAttachmentImageForUser } = await import(
       "@/features/attachments/mutations"
     );
 
-    const result = await uploadEditorImageForUser(
+    const result = await uploadAttachmentImageForUser(
       "user-1",
       createValidPayload({ context: "flashcards" }),
     );
@@ -213,6 +211,7 @@ describe("uploadEditorImageForUser", () => {
     expect(result).toEqual({
       success: true,
       url: "/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Fimage.png",
+      pathname: "notorium/flashcards/user-1/image.png",
     });
     expect(consumeUserDailyRateLimitMock).toHaveBeenCalledWith({
       prefix: LIMITS.attachmentUploadRateLimitPrefix,
