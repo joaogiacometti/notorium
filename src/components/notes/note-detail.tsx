@@ -48,6 +48,10 @@ interface NoteDetailProps {
   decks: DeckOption[];
   note: NoteEntity;
   subjectName: string;
+  /** When hosted in a floating window: drop the page top bar and fill height. */
+  embedded?: boolean;
+  /** Called instead of navigating after delete when embedded in a window. */
+  onClosed?: () => void;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -69,6 +73,8 @@ export function NoteDetail({
   decks,
   note,
   subjectName,
+  embedded = false,
+  onClosed,
 }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -188,7 +194,7 @@ export function NoteDetail({
 
   return (
     <>
-      {!isZenMode ? (
+      {!isZenMode && !embedded ? (
         <PageTopBar
           breadcrumb={[
             {
@@ -206,19 +212,21 @@ export function NoteDetail({
           "lg:flex lg:flex-col lg:overflow-hidden",
           isZenMode
             ? "fixed inset-0 z-50 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
-            : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
+            : embedded
+              ? "flex h-full min-h-0 max-w-none flex-col overflow-hidden p-3"
+              : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
         )}
       >
         <div
           className={cn(
             "flex flex-col gap-6 lg:min-h-0 lg:flex-1",
-            isZenMode ? "min-h-0 flex-1" : null,
+            isZenMode || embedded ? "min-h-0 flex-1" : null,
           )}
         >
           <form
             className={cn(
               "min-w-0 space-y-4",
-              isZenMode
+              isZenMode || embedded
                 ? "flex min-h-0 flex-1 flex-col"
                 : "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:space-y-4",
             )}
@@ -329,7 +337,7 @@ export function NoteDetail({
                 <div
                   className={cn(
                     "min-h-0 w-full min-w-0 overflow-hidden",
-                    isZenMode ? "flex flex-1" : "lg:flex lg:flex-1",
+                    isZenMode || embedded ? "flex flex-1" : "lg:flex lg:flex-1",
                   )}
                 >
                   <TiptapEditor
@@ -341,13 +349,13 @@ export function NoteDetail({
                     imageUploadContext="notes"
                     className={cn(
                       "w-full min-w-0 overflow-hidden",
-                      isZenMode
+                      isZenMode || embedded
                         ? "flex min-h-0 flex-1 flex-col"
                         : "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col",
                     )}
                     contentClassName={cn(
                       "w-full min-w-0 overflow-x-hidden",
-                      isZenMode
+                      isZenMode || embedded
                         ? "min-h-0 max-h-none flex-1 overflow-y-auto"
                         : "min-h-[60svh] lg:min-h-0 lg:max-h-none lg:flex-1 lg:overflow-y-auto",
                     )}
@@ -369,6 +377,10 @@ export function NoteDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
+            if (embedded) {
+              onClosed?.();
+              return;
+            }
             startNavTransition(() =>
               router.push(`/subjects/${note.subjectId}`),
             );

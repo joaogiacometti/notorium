@@ -265,12 +265,20 @@ Students who want a private, lightweight study management workspace.
 ### Command Palette
 
 - Pressing `Ctrl`/`Cmd+P` opens a command palette for running actions and navigating, separate from Global Search (`Ctrl`/`Cmd+K`). The browser print shortcut is suppressed while the palette is available.
-- Commands are searchable by name and keyword and grouped as Create, Go to, and Settings.
+- Commands are searchable by name and keyword and grouped as Create, Windows, Go to, and Settings.
 - Create commands open the existing create dialogs: Subject, Flashcard, Deck, Assessment, Note, and Mindmap.
 - Creating a Note or Mindmap requires a subject: on a subject page the current subject is used; elsewhere the palette shows a subject picker step before opening the create dialog. Created notes and mindmaps navigate to their detail page.
 - Go to commands navigate to Flashcards, Planning, and Library.
 - Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.
 - The palette hotkey is suspended while another dialog is open.
+
+### Floating Windows
+
+- The palette's Windows commands let a user open a Mindmap editor, Note editor, or the Flashcard create form as a floating window layered over the current page, without navigating away. This is the way to keep reading a PDF in the Library reader while editing a mindmap or capturing flashcards.
+- "New Mindmap/Note in Window" reuses the same subject + title create flow as the normal create commands, but opens the new document in a window instead of navigating. "New Flashcard in Window" opens the create form directly. "Open Document in Window" lists existing notes and mindmaps to open one by id.
+- Only one window is visible at a time; the rest are minimized to a bottom dock (taskbar). Clicking a dock chip restores that window and minimizes whichever was visible, so the user alternates a window with the page behind it. `Esc` minimizes the active window. The dock chip shows each window's icon and live title and can close the window.
+- The window overlay has no modal backdrop, so the page behind stays visible and interactive around the panel. Windowed editors autosave exactly like their full-page versions; deleting a document from inside a window closes that window. Inactive windows stay mounted (hidden) so their editor state and unsaved input survive minimize/restore. Open windows persist while navigating between app pages.
+- A window can be moved by dragging its title bar and resized by dragging any edge or corner, so the user can park it aside and keep reading the page underneath. New windows open at a cascaded position; each window remembers its position and size for the session and is clamped to stay on screen, down to a minimum usable size.
 
 ### Keyboard Shortcuts Help
 

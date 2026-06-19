@@ -50,6 +50,10 @@ interface MindmapDetailProps {
   decks: DeckOption[];
   mindmap: MindmapEntity;
   subjectName: string;
+  /** When hosted in a floating window: drop the page top bar and fill height. */
+  embedded?: boolean;
+  /** Called instead of navigating after delete when embedded in a window. */
+  onClosed?: () => void;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -59,6 +63,8 @@ export function MindmapDetail({
   decks,
   mindmap,
   subjectName,
+  embedded = false,
+  onClosed,
 }: Readonly<MindmapDetailProps>) {
   const router = useRouter();
   const [, startNavTransition] = useTransition();
@@ -141,7 +147,7 @@ export function MindmapDetail({
 
   return (
     <>
-      {isZenMode ? null : (
+      {isZenMode || embedded ? null : (
         <PageTopBar
           breadcrumb={[
             {
@@ -159,19 +165,21 @@ export function MindmapDetail({
           "lg:flex lg:flex-col lg:overflow-hidden",
           isZenMode
             ? "fixed inset-0 z-50 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
-            : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
+            : embedded
+              ? "flex h-full min-h-0 max-w-none flex-col overflow-hidden p-3"
+              : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
         )}
       >
         <div
           className={cn(
             "flex flex-col gap-6 lg:min-h-0 lg:flex-1",
-            isZenMode ? "min-h-0 flex-1" : null,
+            isZenMode || embedded ? "min-h-0 flex-1" : null,
           )}
         >
           <div
             className={cn(
               "min-w-0",
-              isZenMode
+              isZenMode || embedded
                 ? "flex min-h-0 flex-1 flex-col"
                 : "lg:flex lg:min-h-0 lg:flex-col lg:flex-1",
             )}
@@ -250,7 +258,9 @@ export function MindmapDetail({
             <div
               className={cn(
                 "flex-1 overflow-hidden rounded-lg border border-border",
-                isZenMode ? "h-auto min-h-0" : "h-[60svh] lg:h-auto lg:min-h-0",
+                isZenMode || embedded
+                  ? "h-auto min-h-0"
+                  : "h-[60svh] lg:h-auto lg:min-h-0",
               )}
             >
               <LazyMindmapCanvas
@@ -271,6 +281,10 @@ export function MindmapDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
+            if (embedded) {
+              onClosed?.();
+              return;
+            }
             startNavTransition(() =>
               router.push(`/subjects/${mindmap.subjectId}`),
             );

@@ -1,8 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { FileText, Network } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  getOpenableDocuments,
+  type OpenableDocument,
+} from "@/app/actions/documents";
 import { getSubjects } from "@/app/actions/subjects";
 import { useOpenAccountSettings } from "@/components/account/account-settings-provider";
 import {
@@ -29,13 +34,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useWindowManager } from "@/components/windows/window-manager-context";
 
 interface CommandPaletteProps {
   userId: string;
   aiEnabled: boolean;
 }
 
-type PalettePage = "root" | "pick-subject";
+type PalettePage = "root" | "pick-subject" | "open-doc";
 
 export function CommandPalette({
   userId,
@@ -45,6 +51,7 @@ export function CommandPalette({
   const openShortcutsHelp = useOpenShortcutsHelp();
   const openAccountSettings = useOpenAccountSettings();
   const { setAppTheme } = useThemeControl();
+  const { openWindow } = useWindowManager();
   const router = useRouter();
   const pathname = usePathname();
   const [, startNavTransition] = useTransition();
@@ -58,6 +65,9 @@ export function CommandPalette({
     null,
   );
   const [subjectId, setSubjectId] = useState<string | null>(null);
+  // When true, a successful note/mindmap create opens a window instead of
+  // navigating to its page.
+  const [createInWindow, setCreateInWindow] = useState(false);
 
   const { data: subjects = [] } = useQuery({
     queryKey: ["command-palette-subjects", userId],
@@ -65,6 +75,14 @@ export function CommandPalette({
     enabled: open && userId.length > 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
+  });
+
+  const { data: documents = [] } = useQuery({
+    queryKey: ["command-palette-documents", userId],
+    queryFn: () => getOpenableDocuments(),
+    enabled: open && page === "open-doc" && userId.length > 0,
+    staleTime: 1000 * 60,
+    gcTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
@@ -110,20 +128,42 @@ export function CommandPalette({
     handleOpenChange(false);
   }
 
+  function startScopedCreate(dialog: ActiveCreateDialog) {
+    const routeSubjectId = parseSubjectIdFromPath(pathname);
+    if (routeSubjectId) {
+      openScopedDialog(dialog, routeSubjectId);
+    } else {
+      setPendingScopedDialog(dialog);
+      goToPage("pick-subject");
+    }
+  }
+
+  function openDocumentWindow(kind: "mindmap" | "note", docId: string) {
+    setCreateInWindow(false);
+    closeActiveDialog();
+    openWindow({ kind, docId });
+  }
+
   function runAction(action: PaletteAction) {
     if (action.kind === "navigate") {
       navigate(action.href);
     } else if (action.kind === "create") {
+      setCreateInWindow(false);
       setActiveDialog(action.dialog);
       handleOpenChange(false);
     } else if (action.kind === "create-in-subject") {
-      const routeSubjectId = parseSubjectIdFromPath(pathname);
-      if (routeSubjectId) {
-        openScopedDialog(action.dialog, routeSubjectId);
+      setCreateInWindow(false);
+      startScopedCreate(action.dialog);
+    } else if (action.kind === "open-window-create") {
+      if (action.create === "flashcard") {
+        handleOpenChange(false);
+        openWindow({ kind: "flashcard" });
       } else {
-        setPendingScopedDialog(action.dialog);
-        goToPage("pick-subject");
+        setCreateInWindow(true);
+        startScopedCreate(action.create);
       }
+    } else if (action.kind === "open-window-existing") {
+      goToPage("open-doc");
     } else if (action.kind === "theme") {
       void setAppTheme(action.theme);
       handleOpenChange(false);
@@ -146,6 +186,7 @@ export function CommandPalette({
   function closeActiveDialog() {
     setActiveDialog(null);
     setSubjectId(null);
+    setCreateInWindow(false);
   }
 
   return (
@@ -162,12 +203,22 @@ export function CommandPalette({
             onSearchChange={setSearch}
             onRun={runAction}
           />
-        ) : (
+        ) : page === "pick-subject" ? (
           <SubjectPickerPage
             search={search}
             onSearchChange={setSearch}
             subjects={subjects}
             onPick={handleSubjectPicked}
+          />
+        ) : (
+          <DocumentPickerPage
+            search={search}
+            onSearchChange={setSearch}
+            documents={documents}
+            onPick={(kind, docId) => {
+              handleOpenChange(false);
+              openWindow({ kind, docId });
+            }}
           />
         )}
       </CommandDialog>
@@ -178,6 +229,8 @@ export function CommandPalette({
         aiEnabled={aiEnabled}
         onClose={closeActiveDialog}
         onNavigate={navigate}
+        createInWindow={createInWindow}
+        onOpenDocumentWindow={openDocumentWindow}
       />
     </>
   );
@@ -308,6 +361,49 @@ function SubjectPickerPage({
               {subject.name}
             </CommandItem>
           ))}
+        </CommandGroup>
+      </CommandList>
+    </>
+  );
+}
+
+interface DocumentPickerPageProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+  documents: OpenableDocument[];
+  onPick: (kind: "mindmap" | "note", docId: string) => void;
+}
+
+function DocumentPickerPage({
+  search,
+  onSearchChange,
+  documents,
+  onPick,
+}: Readonly<DocumentPickerPageProps>) {
+  return (
+    <>
+      <PaletteSearchInput
+        placeholder="Open a document in a window..."
+        value={search}
+        onValueChange={onSearchChange}
+      />
+      <CommandList>
+        <CommandEmpty>No documents found.</CommandEmpty>
+        <CommandGroup heading="Open in window">
+          {documents.map((document) => {
+            const Icon = document.kind === "mindmap" ? Network : FileText;
+            return (
+              <CommandItem
+                key={`${document.kind}-${document.id}`}
+                value={`${document.title} ${document.id}`}
+                onSelect={() => onPick(document.kind, document.id)}
+                className="cursor-pointer gap-2"
+              >
+                <Icon className="!size-4 text-muted-foreground" />
+                <span className="truncate">{document.title || "Untitled"}</span>
+              </CommandItem>
+            );
+          })}
         </CommandGroup>
       </CommandList>
     </>

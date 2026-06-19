@@ -89,6 +89,17 @@ describe("shortcutRegistry", () => {
     });
   });
 
+  it("lists the minimize-window shortcut under Global", () => {
+    const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
+      (item) => item.id === "global-minimize-window",
+    );
+    expect(shortcut).toMatchObject({
+      kind: "keys",
+      keys: ["escape"],
+      description: "Minimize the active floating window",
+    });
+  });
+
   it("lists the reader copy shortcut under Reader", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Reader).find(
       (item) => item.id === "reader-copy-selection",

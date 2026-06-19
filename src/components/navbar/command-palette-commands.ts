@@ -9,6 +9,7 @@ import {
   Keyboard,
   LaptopMinimal,
   Layers,
+  LayoutGrid,
   type LucideIcon,
   Moon,
   Network,
@@ -17,7 +18,10 @@ import {
 } from "lucide-react";
 import type { AppTheme } from "@/lib/theme";
 
-export type PaletteGroup = "Create" | "Go to" | "Settings";
+export type PaletteGroup = "Create" | "Windows" | "Go to" | "Settings";
+
+/** Editor kinds that can be created or opened inside a floating window. */
+export type WindowCreateKind = "mindmap" | "note" | "flashcard";
 
 /** Dialogs that need no context and can open straight from the palette. */
 export type ContextFreeDialog =
@@ -34,6 +38,8 @@ export type PaletteAction =
   | { kind: "navigate"; href: string }
   | { kind: "create"; dialog: ContextFreeDialog }
   | { kind: "create-in-subject"; dialog: SubjectScopedDialog }
+  | { kind: "open-window-create"; create: WindowCreateKind }
+  | { kind: "open-window-existing" }
   | { kind: "theme"; theme: AppTheme }
   | { kind: "open-settings" }
   | { kind: "shortcuts-help" };
@@ -95,6 +101,45 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["new", "add", "create", "mindmap", "map", "diagram"],
     icon: Network,
     action: { kind: "create-in-subject", dialog: "mindmap" },
+  },
+  {
+    id: "window-mindmap",
+    label: "New Mindmap in Window",
+    group: "Windows",
+    keywords: ["window", "overlay", "mindmap", "multitask", "reader", "float"],
+    icon: Network,
+    action: { kind: "open-window-create", create: "mindmap" },
+  },
+  {
+    id: "window-note",
+    label: "New Note in Window",
+    group: "Windows",
+    keywords: ["window", "overlay", "note", "multitask", "reader", "float"],
+    icon: FileText,
+    action: { kind: "open-window-create", create: "note" },
+  },
+  {
+    id: "window-flashcard",
+    label: "New Flashcard in Window",
+    group: "Windows",
+    keywords: [
+      "window",
+      "overlay",
+      "flashcard",
+      "multitask",
+      "reader",
+      "float",
+    ],
+    icon: Layers,
+    action: { kind: "open-window-create", create: "flashcard" },
+  },
+  {
+    id: "window-open-document",
+    label: "Open Document in Window",
+    group: "Windows",
+    keywords: ["window", "overlay", "open", "note", "mindmap", "existing"],
+    icon: LayoutGrid,
+    action: { kind: "open-window-existing" },
   },
   {
     id: "goto-home",
@@ -181,6 +226,7 @@ export const paletteCommands: PaletteCommand[] = [
 /** Group order for rendering the palette. */
 export const paletteGroupOrder: PaletteGroup[] = [
   "Create",
+  "Windows",
   "Go to",
   "Settings",
 ];

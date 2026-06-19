@@ -1,12 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { getDecks } from "@/app/actions/decks";
-import { createFlashcard } from "@/app/actions/flashcards";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
-import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
+import { useCreateFlashcardForm } from "@/components/flashcards/dialogs/use-create-flashcard-form";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import {
   Dialog,
@@ -15,27 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
-import {
-  type FlashcardFormValues,
-  flashcardFormSchema,
-  toCreateFlashcardPayload,
-} from "@/features/flashcards/validation";
-import type { DeckEntity, FlashcardEntity } from "@/lib/server/api-contracts";
-
-function getCreateFlashcardFormValues(
-  deckId?: string | null,
-): FlashcardFormValues {
-  return {
-    type: "basic",
-    deckId: deckId ?? "",
-    front: "",
-    back: "",
-    clozeSource: "",
-    occlusionImagePathname: "",
-    occlusionRegions: [],
-  };
-}
+import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 interface CreateFlashcardDialogProps {
   deckId?: string;
@@ -54,39 +29,12 @@ export function CreateFlashcardDialog({
   onCreated,
   aiEnabled,
 }: Readonly<CreateFlashcardDialogProps>) {
-  const [decks, setDecks] = useState<DeckEntity[]>([]);
-
-  const singleForm = useForm<FlashcardFormValues>({
-    resolver: zodResolver(flashcardFormSchema),
-    defaultValues: getCreateFlashcardFormValues(deckId),
-  });
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    void getDecks().then((fetchedDecks) => {
-      setDecks(fetchedDecks);
-    });
-  }, [open]);
-
-  const dialog = useFlashcardDialogState({
-    mode: "create",
+  const { decks, form, dialog } = useCreateFlashcardForm({
     open,
     aiEnabled,
     onOpenChange,
-    values: getCreateFlashcardFormValues(deckId),
-    form: singleForm,
-    onSubmitAction: (values) =>
-      createFlashcard(toCreateFlashcardPayload(values)),
-    onSuccess: (flashcard) => {
-      if (flashcard) {
-        onCreated?.(flashcard);
-      }
-    },
-    getSuccessValues: (submittedValues, keepValues) =>
-      getCreateFlashcardResetValues(submittedValues, keepValues),
-    closeOnSuccess: false,
+    onCreated,
+    deckId,
   });
 
   return (
@@ -103,7 +51,7 @@ export function CreateFlashcardDialog({
             open={open}
             onOpenChange={dialog.handleOpenChange}
             trigger={null}
-            form={singleForm}
+            form={form}
             formId="form-create-flashcard"
             editorResetVersion={dialog.editorResetVersion}
             decks={decks}
