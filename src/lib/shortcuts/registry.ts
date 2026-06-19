@@ -329,6 +329,13 @@ export const shortcutRegistry: Shortcut[] = [
     description: "Toggle two-page spread",
     category: ShortcutCategory.Reader,
   },
+  {
+    id: "reader-highlight-tool",
+    kind: "keys",
+    keys: ["y"],
+    description: "Toggle highlight tool",
+    category: ShortcutCategory.Reader,
+  },
 ];
 
 export function getShortcutsByCategory(category: ShortcutCategory): Shortcut[] {

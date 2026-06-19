@@ -158,6 +158,9 @@ describe("shortcutRegistry", () => {
     expect(
       reader.find((item) => item.id === "reader-toggle-spread"),
     ).toMatchObject({ keys: ["d"], description: "Toggle two-page spread" });
+    expect(
+      reader.find((item) => item.id === "reader-highlight-tool"),
+    ).toMatchObject({ keys: ["y"], description: "Toggle highlight tool" });
   });
 
   it("lists the mindmap Tab add-child shortcut", () => {

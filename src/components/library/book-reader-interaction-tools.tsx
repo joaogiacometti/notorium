@@ -1,9 +1,11 @@
 "use client";
 
+import { useAnnotation } from "@embedpdf/plugin-annotation/react";
 import { useInteractionManagerCapability } from "@embedpdf/plugin-interaction-manager/react";
 import { usePan } from "@embedpdf/plugin-pan/react";
-import { Hand, MousePointer2 } from "lucide-react";
+import { Hand, Highlighter, MousePointer2 } from "lucide-react";
 import type { ReactNode } from "react";
+import { HIGHLIGHT_TOOL_ID } from "@/components/library/book-reader-annotation-config";
 import {
   PAN_MODE,
   POINTER_MODE,
@@ -27,26 +29,41 @@ export function ReaderInteractionTools({
 }: Readonly<ReaderInteractionToolsProps>) {
   const pan = usePan(documentId);
   const interaction = useInteractionManagerCapability();
+  const { provides: annotationApi, state } = useAnnotation(documentId);
+
+  const isHighlighting = state?.activeToolId === HIGHLIGHT_TOOL_ID;
 
   function activateMode(mode: ReaderInteractionMode) {
+    annotationApi?.setActiveTool(null);
     interaction.provides?.forDocument(documentId).activate(mode);
+  }
+
+  function toggleHighlight() {
+    annotationApi?.setActiveTool(isHighlighting ? null : HIGHLIGHT_TOOL_ID);
   }
 
   return (
     <div className="absolute left-3 top-3 z-10 flex flex-col gap-0.5 rounded-md border border-border/70 bg-background/95 p-0.5 shadow-sm backdrop-blur">
       <InteractionToolButton
         label="Select text"
-        active={!pan.isPanning}
+        active={!pan.isPanning && !isHighlighting}
         onClick={() => activateMode(POINTER_MODE)}
       >
         <MousePointer2 className="size-4" />
       </InteractionToolButton>
       <InteractionToolButton
         label="Move"
-        active={pan.isPanning}
+        active={pan.isPanning && !isHighlighting}
         onClick={() => activateMode(PAN_MODE)}
       >
         <Hand className="size-4" />
+      </InteractionToolButton>
+      <InteractionToolButton
+        label="Highlight"
+        active={isHighlighting}
+        onClick={toggleHighlight}
+      >
+        <Highlighter className="size-4" />
       </InteractionToolButton>
     </div>
   );

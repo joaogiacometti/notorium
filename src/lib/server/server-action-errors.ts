@@ -158,6 +158,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "library.uploadFailed": "Failed to upload book.",
   "library.deleteFailed": "Failed to delete book.",
   "library.mimeTypeNotAllowed": "Only PDF files are supported.",
+  "library.annotationLimit":
+    "This book has reached the maximum of {max} highlights.",
   "library.notConfigured":
     "No media storage is configured. Contact your administrator.",
 };

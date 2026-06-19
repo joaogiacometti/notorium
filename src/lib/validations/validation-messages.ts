@@ -96,6 +96,8 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.library.fileRequired": "Select a PDF file to upload.",
   "Validation.library.fileTooLarge": "File is too large.",
   "Validation.library.pageInvalid": "Page must be a positive whole number.",
+  "Validation.library.invalidData": "Invalid highlight data.",
+  "Validation.library.noteMaxLength": "Note must be at most 4,000 characters.",
   "Validation.theme.invalid": "Invalid theme.",
 };
 

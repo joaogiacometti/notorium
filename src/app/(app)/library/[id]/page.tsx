@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { BookReader } from "@/components/library/book-reader";
 import { getBookByIdForUser } from "@/features/library/queries";
+import { getAnnotationsForBook } from "@/features/library-annotations/queries";
 import { getReaderColorMode } from "@/features/user/queries";
 import { requireSession } from "@/lib/auth/auth";
 
@@ -13,9 +14,10 @@ export default async function LibraryBookPage({
 }: Readonly<LibraryBookPageProps>) {
   const session = await requireSession();
   const { id } = await params;
-  const [book, readerColorInverted] = await Promise.all([
+  const [book, readerColorInverted, initialAnnotations] = await Promise.all([
     getBookByIdForUser(session.user.id, id),
     getReaderColorMode(session.user.id),
+    getAnnotationsForBook(session.user.id, id),
   ]);
 
   if (!book) {
@@ -29,6 +31,7 @@ export default async function LibraryBookPage({
       title={book.title}
       initialPage={book.currentPage}
       readerColorInverted={readerColorInverted}
+      initialAnnotations={initialAnnotations}
     />
   );
 }

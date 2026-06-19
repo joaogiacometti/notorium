@@ -21,7 +21,14 @@ import { ZoomMode } from "@embedpdf/plugin-zoom";
 import { ZoomPluginPackage } from "@embedpdf/plugin-zoom/react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
+import {
+  HIGHLIGHT_CATEGORY,
+  HIGHLIGHT_COLOR,
+  HIGHLIGHT_OPACITY,
+  HIGHLIGHT_TOOL_ID,
+} from "@/components/library/book-reader-annotation-config";
 import { ReaderLayout } from "@/components/library/book-reader-layout";
+import type { BookAnnotationDto } from "@/features/library-annotations/types";
 
 export interface BookReaderProps {
   bookId: string;
@@ -29,6 +36,7 @@ export interface BookReaderProps {
   title: string;
   initialPage: number;
   readerColorInverted: boolean;
+  initialAnnotations: BookAnnotationDto[];
 }
 
 // EmbedPDF auto-mounts the fullscreen plugin's wrapper around its children,
@@ -49,6 +57,7 @@ function ReaderEngine({
   title,
   initialPage,
   readerColorInverted,
+  initialAnnotations,
 }: Readonly<BookReaderProps>) {
   const { engine, isLoading, error } = usePdfiumEngine();
 
@@ -79,6 +88,7 @@ function ReaderEngine({
             title={title}
             initialPage={initialPage}
             readerColorInverted={readerColorInverted}
+            initialAnnotations={initialAnnotations}
           />
         );
       }}
@@ -90,12 +100,13 @@ function ReaderEngine({
 // the interactive plugins the toolbar and sidebar drive. The pan plugin makes
 // drag-to-scroll the default interaction mode on touch devices so a finger drag
 // pans the page instead of starting a text selection; mouse devices keep
-// selection as the default. The annotation plugin is registered in a fully
-// locked mode so existing PDF annotations are not editable, while LINK
-// annotations stay clickable: the plugin renders them with a pointer cursor and
-// auto-mounts a navigation handler that opens URI links and scrolls to internal
-// go-to targets. Annotation authoring stays out until the annotations feature
-// lands.
+// selection as the default. The annotation plugin locks every category EXCEPT
+// our user-highlight category: pre-existing PDF annotations stay read-only and
+// LINK annotations stay clickable (rendered with a pointer cursor, navigation
+// auto-mounted), while the user's own highlights remain selectable so notes can
+// be edited and highlights deleted. The built-in "highlight" tool is overridden
+// to tag created highlights with our category and to paint them in the reader's
+// highlighter color.
 function buildReaderPlugins(fileUrl: string) {
   return [
     createPluginRegistration(DocumentManagerPluginPackage, {
@@ -114,9 +125,28 @@ function buildReaderPlugins(fileUrl: string) {
     // Selection renders the text layer over each page so the rasterized PDF
     // becomes selectable/copyable instead of an inert image.
     createPluginRegistration(SelectionPluginPackage),
-    // Locked so the reader stays read-only; LINK annotations remain clickable.
+    // Everything locked except the user-highlight category, so existing PDF
+    // annotations and links stay read-only while the user's highlights can be
+    // selected, annotated, and deleted.
     createPluginRegistration(AnnotationPluginPackage, {
-      locked: { type: LockModeType.All },
+      locked: { type: LockModeType.Exclude, categories: [HIGHLIGHT_CATEGORY] },
+      // Creating a highlight should just highlight; it must not auto-select the
+      // new annotation and pop its note panel. The user opens the panel by
+      // clicking the highlight afterwards. The tool-level `behavior` is what the
+      // highlight tool actually honors — the plugin-level flag alone is not
+      // enough, so set both.
+      selectAfterCreate: false,
+      tools: [
+        {
+          id: HIGHLIGHT_TOOL_ID,
+          categories: ["annotation", HIGHLIGHT_CATEGORY],
+          behavior: { selectAfterCreate: false },
+          defaults: {
+            strokeColor: HIGHLIGHT_COLOR,
+            opacity: HIGHLIGHT_OPACITY,
+          },
+        },
+      ],
     }),
     // FitPage so a book opens showing the whole page; FitWidth stretched small
     // page sizes to the viewport width, opening at an oversized zoom (~450%).

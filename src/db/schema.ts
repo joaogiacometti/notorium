@@ -399,6 +399,45 @@ export const libraryBook = pgTable(
   ],
 );
 
+// One row per user-authored highlight in a book. The full EmbedPDF annotation
+// object (geometry, color, quads, and the note text in its `contents` field) is
+// stored as JSON so it round-trips back into the reader with no mapping. The PDF
+// blob itself is never modified; the reader re-imports these rows on open.
+export const libraryAnnotation = pgTable(
+  "library_annotation",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => libraryBook.id, { onDelete: "cascade" }),
+    // The annotation id EmbedPDF assigns in the reader. Stable across a reading
+    // session, so it is the upsert key that ties an edit back to its row.
+    annotationUid: text("annotation_uid").notNull(),
+    pageIndex: integer("page_index").notNull(),
+    // The serialized PdfAnnotationObject; `Date` fields are stored as ISO
+    // strings and revived on load by the mappers.
+    data: jsonb("data").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    unique("library_annotation_book_uid_key").on(
+      table.bookId,
+      table.annotationUid,
+    ),
+    index("library_annotation_userId_idx").on(table.userId),
+    index("library_annotation_bookId_idx").on(table.bookId),
+  ],
+);
+
 export const notificationLog = pgTable(
   "notification_log",
   {
@@ -652,12 +691,27 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   assessments: many(assessment),
 }));
 
-export const libraryBookRelations = relations(libraryBook, ({ one }) => ({
+export const libraryBookRelations = relations(libraryBook, ({ one, many }) => ({
   user: one(user, {
     fields: [libraryBook.userId],
     references: [user.id],
   }),
+  annotations: many(libraryAnnotation),
 }));
+
+export const libraryAnnotationRelations = relations(
+  libraryAnnotation,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [libraryAnnotation.userId],
+      references: [user.id],
+    }),
+    book: one(libraryBook, {
+      fields: [libraryAnnotation.bookId],
+      references: [libraryBook.id],
+    }),
+  }),
+);
 
 export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
   subject: one(subject, {

@@ -39,6 +39,8 @@ export const LIMITS = {
   libraryBookAuthorMax: 200,
   libraryUploadRateLimitPrefix: "ratelimit:library:upload",
   libraryUploadRateLimitPerDay: 50,
+  maxAnnotationsPerBook: 5000,
+  libraryAnnotationNoteMax: 4000,
 
   flashcardFrontMax: 1000,
   flashcardBackMax: 4000,
