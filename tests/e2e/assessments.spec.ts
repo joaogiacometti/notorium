@@ -6,6 +6,7 @@ import {
   createAssessment,
   createSubject,
 } from "./support/db";
+import { breadcrumbCurrent } from "./support/page-chrome";
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("assessment-subject", testTitle);
@@ -23,9 +24,7 @@ async function openPlanningAssessments(page: Page, subjectId?: string) {
   }
 
   await page.goto(`/planning?${searchParams.toString()}`);
-  await expect(
-    page.getByRole("heading", { name: "Planning", exact: true }),
-  ).toBeVisible();
+  await expect(breadcrumbCurrent(page, "Planning")).toBeVisible();
 }
 
 async function openAssessmentDetailFromPlanning(
@@ -195,13 +194,9 @@ test("can delete an assessment from detail page", async ({ page, e2eUser }) => {
       .click();
 
     await expect(deleteDialog).toHaveCount(0);
-    await expect(
-      page.getByRole("heading", { name: "Planning", exact: true }),
-    ).toBeVisible();
+    await expect(breadcrumbCurrent(page, "Planning")).toBeVisible();
     await page.reload();
-    await expect(
-      page.getByRole("heading", { name: "Planning", exact: true }),
-    ).toBeVisible();
+    await expect(breadcrumbCurrent(page, "Planning")).toBeVisible();
     await expect(
       page.getByRole("link", {
         name: `Open details for ${assessmentTitle}`,

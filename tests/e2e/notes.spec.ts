@@ -10,7 +10,10 @@ import {
   createSubject,
   getNoteById,
 } from "./support/db";
-import { openSubjectDetailByName } from "./support/subjects";
+import {
+  openSubjectDetailByName,
+  openSubjectSidebarActions,
+} from "./support/subjects";
 
 function escapeRegex(value: string) {
   return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
@@ -60,9 +63,15 @@ async function openNoteActions(page: Page) {
     .click();
 }
 
-async function createSidebarNote(page: Page, title: string) {
-  await page.getByRole("button", { name: "Create document" }).click();
-  await page.getByRole("menuitem", { name: "Note" }).click();
+async function createSidebarNote(
+  page: Page,
+  subjectName: string,
+  title: string,
+) {
+  // After the refactor the note detail view has no create button; notes are
+  // created from the left-menu subject tree's "New note" action.
+  await openSubjectSidebarActions(page, subjectName);
+  await page.getByRole("menuitem", { name: "New note", exact: true }).click();
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
   await createDialog.getByRole("button", { name: "Create Note" }).click();
@@ -79,8 +88,8 @@ test("can create and open a note", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    await createSubject(user.userId, subjectName);
-    await openSubjectDetailByName(page, subjectName);
+    const createdSubject = await createSubject(user.userId, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
 
     await createNoteFromDialog(page, noteTitle);
 
@@ -113,7 +122,7 @@ test("can edit a note", async ({ page, e2eUser }) => {
       "Initial",
     );
 
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
     await openNoteDetailByTitle(page, initialTitle);
 
     await page.locator("#form-edit-note-title").fill(updatedTitle);
@@ -160,9 +169,9 @@ test("can create a title-only note from detail sidebar", async ({
 
     await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
 
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
     await openNoteDetailByTitle(page, initialTitle);
-    await createSidebarNote(page, newTitle);
+    await createSidebarNote(page, subjectName, newTitle);
 
     await expect(page).toHaveURL(/\/subjects\/.+\/documents\/notes\/.+$/);
     await expect(page.locator("#form-edit-note-content")).toBeVisible();
@@ -188,7 +197,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
       "Delete from detail page",
     );
 
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
     await openNoteDetailByTitle(page, noteTitle);
 
     await openNoteActions(page);
@@ -232,7 +241,7 @@ test("can generate flashcards from a note with AI", async ({
       "Active recall and spaced repetition are core study practices.",
     );
 
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
     await openNoteDetailByTitle(page, noteTitle);
 
     await openNoteActions(page);

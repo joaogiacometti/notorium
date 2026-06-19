@@ -7,41 +7,31 @@ import {
   clearUserSubjectsByNames,
   createSubject,
 } from "./support/db";
-import { openSubjectDetailByName } from "./support/subjects";
+import { breadcrumbCurrent } from "./support/page-chrome";
+import {
+  getSubjectSidebarLink,
+  openSubjectSidebarActions,
+} from "./support/subjects";
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("subject", testTitle);
 }
 
-function getSubjectRow(page: Page, name: string) {
-  return page.getByRole("row").filter({ hasText: name });
+/**
+ * Subject edit/delete only update the sidebar tree after a `router.refresh()`
+ * server round-trip, which races test assertions under parallel load. Reloading
+ * after the mutation gives a deterministic, fully server-rendered tree to assert
+ * against. The mutation is already committed once its dialog closes on success.
+ */
+async function reloadAppShell(page: Page) {
+  await page.reload();
+  await expect(page.getByTestId("home-greeting")).toBeVisible();
 }
 
-async function selectSubjectRow(page: Page, name: string) {
-  const row = getSubjectRow(page, name);
-  await expect(row).toBeVisible();
-  await row.locator('td[data-no-row-click="true"]').first().click();
-  await expect(
-    row.getByRole("checkbox", { name: "Select subject" }),
-  ).toHaveAttribute("aria-checked", "true");
-}
-
-async function openSubjectActions(page: Page, name: string) {
-  const row = getSubjectRow(page, name);
-  await expect(row).toBeVisible();
-  await row.hover();
-  const actionsButton = row.getByRole("button", {
-    name: "Open subject actions",
-  });
-
-  await expect(actionsButton).toBeVisible();
-  await actionsButton.click();
-}
-
-async function openActiveSubjectActions(page: Page, name: string) {
-  await openSubjectActions(page, name);
-  await expect(page.getByRole("menuitem", { name: "Edit" })).toBeVisible();
-  await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+/** Waits for the app shell to be ready by checking the home greeting. */
+async function waitForAppShell(page: Page) {
+  await page.goto("/");
+  await expect(page.getByTestId("home-greeting")).toBeVisible();
 }
 
 test("can create a subject", async ({ page, e2eUser }) => {
@@ -53,23 +43,27 @@ test("can create a subject", async ({ page, e2eUser }) => {
     await clearUserSubjectsByNames(user.userId, cleanupNames);
     registerCleanup(() => clearUserSubjectsByNames(user.userId, cleanupNames));
 
-    await page.goto("/subjects");
-    await expect(
-      page.getByRole("heading", { name: "Subjects", exact: true }),
-    ).toBeVisible();
+    await waitForAppShell(page);
 
-    await page.locator("#btn-create-subject").click();
+    // Open the create dialog from the home dashboard. The sidebar's Subjects
+    // header exposes a second "New subject" button, so scope to the dashboard
+    // to keep the target unambiguous.
+    await page
+      .getByTestId("home-dashboard")
+      .getByRole("button", { name: "New subject", exact: true })
+      .click();
     const createDialog = page.getByRole("dialog", { name: "Create Subject" });
     await createDialog
       .locator("#form-create-subject-name")
       .fill(initialSubjectName);
     await createDialog.getByRole("button", { name: "Create Subject" }).click();
 
-    const subjectRow = getSubjectRow(page, initialSubjectName);
+    // Verify the subject appears in the sidebar tree.
+    await expect(getSubjectSidebarLink(page, initialSubjectName)).toBeVisible();
 
-    await expect(subjectRow).toBeVisible();
-
-    await openSubjectDetailByName(page, initialSubjectName);
+    // Navigate to its detail page.
+    await getSubjectSidebarLink(page, initialSubjectName).click();
+    await expect(breadcrumbCurrent(page, initialSubjectName)).toBeVisible();
   });
 });
 
@@ -85,12 +79,9 @@ test("can edit a subject", async ({ page, e2eUser }) => {
 
     await createSubject(user.userId, initialSubjectName);
 
-    await page.goto("/subjects");
-    await expect(
-      page.getByRole("heading", { name: "Subjects", exact: true }),
-    ).toBeVisible();
+    await waitForAppShell(page);
 
-    await openActiveSubjectActions(page, initialSubjectName);
+    await openSubjectSidebarActions(page, initialSubjectName);
     await page.getByRole("menuitem", { name: "Edit" }).click();
     const editDialog = page.getByRole("dialog", { name: "Edit Subject" });
     await editDialog
@@ -99,11 +90,13 @@ test("can edit a subject", async ({ page, e2eUser }) => {
     await editDialog.getByRole("button", { name: "Save Changes" }).click();
     await expect(editDialog).not.toBeVisible();
 
-    const editedRow = getSubjectRow(page, updatedSubjectName);
+    // Reload for a deterministic tree, then verify the rename is reflected.
+    await reloadAppShell(page);
+    await expect(getSubjectSidebarLink(page, updatedSubjectName)).toBeVisible();
 
-    await expect(editedRow).toBeVisible();
-
-    await openSubjectDetailByName(page, updatedSubjectName);
+    // Navigate to the renamed subject's detail page.
+    await getSubjectSidebarLink(page, updatedSubjectName).click();
+    await expect(breadcrumbCurrent(page, updatedSubjectName)).toBeVisible();
   });
 });
 
@@ -118,22 +111,31 @@ test("can delete a subject", async ({ page, e2eUser }) => {
 
     await createSubject(user.userId, initialSubjectName);
 
-    await page.goto("/subjects");
-    await expect(
-      page.getByRole("heading", { name: "Subjects", exact: true }),
-    ).toBeVisible();
+    await waitForAppShell(page);
 
-    await openSubjectDetailByName(page, initialSubjectName);
+    await openSubjectSidebarActions(page, initialSubjectName);
+    await page.getByRole("menuitem", { name: "Delete" }).click();
 
-    await page.getByTestId("subject-detail-delete").click();
-    await page.getByTestId("confirm-delete-subject").click();
+    const deleteDialog = page.getByRole("dialog", {
+      name: "Delete Subject",
+    });
+    await deleteDialog
+      .getByRole("button", { name: "Delete", exact: true })
+      .click();
+    await expect(deleteDialog).not.toBeVisible();
 
-    await page.waitForURL("**/subjects");
-    await expect(getSubjectRow(page, initialSubjectName)).toHaveCount(0);
+    // Reload for a deterministic tree; the subject should be gone.
+    await reloadAppShell(page);
+    await expect(getSubjectSidebarLink(page, initialSubjectName)).toHaveCount(
+      0,
+    );
   });
 });
 
-test("can bulk delete selected subjects", async ({ page, e2eUser }) => {
+test("can delete multiple subjects from the sidebar", async ({
+  page,
+  e2eUser,
+}) => {
   await runWithCleanup(async (registerCleanup) => {
     const user = e2eUser;
     const names = [
@@ -148,16 +150,26 @@ test("can bulk delete selected subjects", async ({ page, e2eUser }) => {
       await createSubject(user.userId, name);
     }
 
-    await page.goto("/subjects");
-    await selectSubjectRow(page, names[0]);
-    await selectSubjectRow(page, names[1]);
-    await page.getByRole("button", { name: "Delete" }).click();
-    const deleteDialog = page.getByRole("dialog", { name: "Delete Subjects" });
-    await deleteDialog.getByRole("button", { name: "Delete" }).click();
-    await expect(deleteDialog).not.toBeVisible();
+    await waitForAppShell(page);
 
+    // Delete subjects one-by-one through the sidebar context menu,
+    // since the new UI doesn't have a bulk selection table.
     for (const name of names) {
-      await expect(getSubjectRow(page, name)).toHaveCount(0);
+      await openSubjectSidebarActions(page, name);
+      await page.getByRole("menuitem", { name: "Delete" }).click();
+      const deleteDialog = page.getByRole("dialog", {
+        name: "Delete Subject",
+      });
+      await deleteDialog
+        .getByRole("button", { name: "Delete", exact: true })
+        .click();
+      await expect(deleteDialog).not.toBeVisible();
+    }
+
+    // Reload for a deterministic tree; both subjects should be gone.
+    await reloadAppShell(page);
+    for (const name of names) {
+      await expect(getSubjectSidebarLink(page, name)).toHaveCount(0);
     }
   });
 });

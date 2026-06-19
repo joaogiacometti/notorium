@@ -23,7 +23,7 @@ test("can configure attendance settings", async ({ page, e2eUser }) => {
     const createdSubject = await createSubject(user.userId, subjectName);
 
     await clearUserAttendanceMissesBySubject(user.userId, createdSubject.id);
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
 
     await expect(page.getByText("No attendance settings yet")).toBeVisible();
 
@@ -66,7 +66,7 @@ test("can record a miss and rejects duplicate dates", async ({
     );
     await clearUserAttendanceMissesBySubject(user.userId, createdSubject.id);
 
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
 
     await page.locator("#btn-record-miss").click();
     const recordDialog = page.getByRole("dialog", { name: "Record a Miss" });
@@ -111,7 +111,7 @@ test("can delete a recorded miss", async ({ page, e2eUser }) => {
     await clearUserAttendanceMissesBySubject(user.userId, createdSubject.id);
     await createAttendanceMiss(user.userId, createdSubject.id, missDate);
 
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
 
     await page.getByRole("button", { name: "Recorded Misses" }).click();
     const missDateText = page.getByText(/Mar 11, 2026/);
@@ -147,7 +147,7 @@ test("can remove attendance configuration", async ({ page, e2eUser }) => {
     await clearUserAttendanceMissesBySubject(user.userId, createdSubject.id);
     await createAttendanceMiss(user.userId, createdSubject.id, missDate);
 
-    await openSubjectDetailByName(page, subjectName);
+    await openSubjectDetailByName(page, subjectName, createdSubject.id);
     await expect(page.getByText("3 misses remaining")).toBeVisible();
 
     await page.getByRole("button", { name: "Manage" }).click();

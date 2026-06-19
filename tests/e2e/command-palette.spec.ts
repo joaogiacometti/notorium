@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
+import { breadcrumbCurrent } from "./support/page-chrome";
 
 async function openCommandPalette(page: Page) {
   await page.keyboard.press("ControlOrMeta+p");
@@ -12,17 +13,15 @@ test("opens with Ctrl/Cmd+P and navigates to a section", async ({ page }) => {
   await page.goto("/flashcards");
 
   await openCommandPalette(page);
-  await page.getByPlaceholder("Type a command or search...").fill("subjects");
-  await page.getByRole("option", { name: "Go to Subjects" }).click();
+  await page.getByPlaceholder("Type a command or search...").fill("library");
+  await page.getByRole("option", { name: "Go to Library" }).click();
 
-  await page.waitForURL("**/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
+  await page.waitForURL("**/library");
+  await expect(breadcrumbCurrent(page, "Library")).toBeVisible();
 });
 
 test("runs the create subject command from the palette", async ({ page }) => {
-  await page.goto("/subjects");
+  await page.goto("/");
 
   await openCommandPalette(page);
   await page.getByPlaceholder("Type a command or search...").fill("subject");

@@ -6,6 +6,7 @@ import {
   createDeck,
   createFlashcardForDeck,
 } from "./support/db";
+import { breadcrumbCurrent } from "./support/page-chrome";
 
 function getUniqueDeckName(testTitle: string) {
   return getPrefixedValue("deck", testTitle);
@@ -35,13 +36,16 @@ async function openFlashcardsPage(
   }
 
   await page.goto(`/flashcards?${query.toString()}`);
-  await expect(
-    page.getByRole("heading", { name: "Flashcards", exact: true }),
-  ).toBeVisible();
+  await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 }
 
 function getDeckSidebar(page: Page) {
-  return page.getByRole("complementary").first();
+  // The deck sidebar is a nested <aside> inside the app's left-menu landmark,
+  // so `getByRole("complementary")` is ambiguous. Anchor on the deck tree's
+  // own scope test id and walk up to its enclosing <aside>.
+  return page
+    .getByTestId("deck-tree-root-scope")
+    .locator("xpath=ancestor::aside[1]");
 }
 
 function getDeckButton(sidebar: Locator, deckName: string, count: number) {

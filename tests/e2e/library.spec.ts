@@ -1,11 +1,10 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
+import { breadcrumbCurrent } from "./support/page-chrome";
 
 async function openLibraryPage(page: Page) {
   await page.goto("/library");
-  await expect(
-    page.getByRole("heading", { name: "Library", exact: true }),
-  ).toBeVisible();
+  await expect(breadcrumbCurrent(page, "Library")).toBeVisible();
 }
 
 async function openCommandPalette(page: Page) {
@@ -16,16 +15,14 @@ async function openCommandPalette(page: Page) {
 }
 
 test("navigates to the library from the command palette", async ({ page }) => {
-  await page.goto("/subjects");
+  await page.goto("/");
 
   await openCommandPalette(page);
   await page.getByPlaceholder("Type a command or search...").fill("library");
   await page.getByRole("option", { name: "Go to Library" }).click();
 
   await page.waitForURL("**/library");
-  await expect(
-    page.getByRole("heading", { name: "Library", exact: true }),
-  ).toBeVisible();
+  await expect(breadcrumbCurrent(page, "Library")).toBeVisible();
 });
 
 test("opens the add book dialog from the library page", async ({ page }) => {

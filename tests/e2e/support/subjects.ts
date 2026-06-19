@@ -1,35 +1,55 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect } from "./authenticated-test";
+import { breadcrumbCurrent } from "./page-chrome";
 
-export async function openSubjectDetailByName(page: Page, subjectName: string) {
-  await page.goto("/subjects");
-  await expect(
-    page.getByRole("heading", { name: "Subjects", exact: true }),
-  ).toBeVisible();
+/**
+ * Opens a subject's detail page by navigating directly to `/subjects/{id}`.
+ * After the layout refactor the standalone `/subjects` listing page was removed
+ * and subjects live in the left-menu tree, so tests create the subject via the
+ * DB fixture and open it by its known id. Asserts the breadcrumb top bar shows
+ * the subject name so callers can rely on the page being ready.
+ */
+export async function openSubjectDetailByName(
+  page: Page,
+  subjectName: string,
+  subjectId: string,
+) {
+  await page.goto(`/subjects/${subjectId}`);
 
-  const subjectRow = page.getByRole("row").filter({
-    has: page.getByRole("link", { name: `Open ${subjectName}`, exact: true }),
-  });
+  await expect(breadcrumbCurrent(page, subjectName)).toBeVisible();
+}
 
-  await expect(subjectRow).toHaveCount(1);
+/** Locates a subject link inside the left-menu subject tree by its name. */
+export function getSubjectSidebarLink(
+  page: Page,
+  subjectName: string,
+): Locator {
+  return page
+    .locator('nav[aria-label="Subjects"]')
+    .getByRole("link")
+    .filter({ hasText: subjectName })
+    .first();
+}
 
-  const subjectLink = subjectRow.getByRole("link", {
-    name: `Open ${subjectName}`,
-    exact: true,
-  });
+/**
+ * Opens a subject's context menu from the left-menu subject tree. The kebab
+ * button only reveals on row hover (`sm:group-hover`), so hover the enclosing
+ * row first, then open the actions menu.
+ */
+export async function openSubjectSidebarActions(
+  page: Page,
+  subjectName: string,
+) {
+  const subjectLink = getSubjectSidebarLink(page, subjectName);
   await expect(subjectLink).toBeVisible();
 
-  const subjectHref = await subjectLink.getAttribute("href");
-  expect(subjectHref).toBeTruthy();
+  const row = subjectLink.locator("xpath=ancestor::div[1]");
+  await row.hover();
 
-  if (!subjectHref) {
-    throw new Error(`Missing href for subject: ${subjectName}`);
-  }
-
-  await page.goto(subjectHref);
-  await expect(
-    page.getByRole("heading", { name: subjectName, exact: true }),
-  ).toBeVisible();
-
-  await expect(page.getByTestId("subject-detail-edit")).toBeVisible();
+  const actionsButton = row.getByRole("button", {
+    name: `Actions for ${subjectName}`,
+    exact: true,
+  });
+  await expect(actionsButton).toBeVisible();
+  await actionsButton.click();
 }

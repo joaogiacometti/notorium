@@ -7,6 +7,7 @@ import {
   createDeck,
   createFlashcardForDeck,
 } from "./support/db";
+import { breadcrumbCurrent } from "./support/page-chrome";
 
 function getUniqueFlashcardFront(testTitle: string) {
   return getPrefixedValue("flashcard-front", testTitle);
@@ -33,9 +34,7 @@ async function openFlashcardsManagePage(page: Page, deckId?: string) {
   }
 
   await page.goto(`/flashcards?${query.toString()}`);
-  await expect(
-    page.getByRole("heading", { name: "Flashcards", exact: true }),
-  ).toBeVisible();
+  await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 }
 
 async function openFlashcardsReviewPage(page: Page, deckId?: string) {
@@ -47,9 +46,7 @@ async function openFlashcardsReviewPage(page: Page, deckId?: string) {
   }
 
   await page.goto(`/flashcards?${query.toString()}`);
-  await expect(
-    page.getByRole("heading", { name: "Flashcards", exact: true }),
-  ).toBeVisible();
+  await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 }
 
 async function openFlashcardsStatisticsPage(page: Page, deckId?: string) {
@@ -61,13 +58,16 @@ async function openFlashcardsStatisticsPage(page: Page, deckId?: string) {
   }
 
   await page.goto(`/flashcards?${query.toString()}`);
-  await expect(
-    page.getByRole("heading", { name: "Flashcards", exact: true }),
-  ).toBeVisible();
+  await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 }
 
 function getDeckSidebar(page: Page) {
-  return page.getByRole("complementary").first();
+  // The deck sidebar is a nested <aside> inside the app's left-menu landmark,
+  // so `getByRole("complementary")` is ambiguous. Anchor on the deck tree's
+  // own scope test id and walk up to its enclosing <aside>.
+  return page
+    .getByTestId("deck-tree-root-scope")
+    .locator("xpath=ancestor::aside[1]");
 }
 
 function getDeckButton(sidebar: Locator, deckName: string, count: number) {
@@ -163,10 +163,9 @@ test("can create and open a flashcard", async ({ page, e2eUser }) => {
 
     await openFlashcardDetailFromManage(page, flashcardFront);
     await expect(
-      page.getByRole("main").getByRole("link", {
-        name: "Back to Flashcards",
-        exact: true,
-      }),
+      page
+        .locator('nav[aria-label="Breadcrumb"]')
+        .getByRole("link", { name: "Flashcards", exact: true }),
     ).toBeVisible();
     await expect(page.getByText("Front", { exact: true })).toBeVisible();
     await expect(page.getByText("Back", { exact: true })).toBeVisible();
@@ -381,9 +380,7 @@ test("can delete a flashcard", async ({ page, e2eUser }) => {
       .click();
 
     await expect(deleteDialog).toHaveCount(0);
-    await expect(
-      page.getByRole("heading", { name: "Flashcards", exact: true }),
-    ).toBeVisible();
+    await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
     await expect(page).toHaveURL(/\/flashcards\?view=manage/);
 
     await openFlashcardsManagePage(page, createdDeck.id);
@@ -526,9 +523,7 @@ test("can enter and exit Focus Mode", async ({ page, e2eUser }) => {
 
     await page.getByRole("button", { name: "Exit Focus Mode" }).click();
 
-    await expect(
-      page.getByRole("heading", { name: "Flashcards", exact: true }),
-    ).toBeVisible();
+    await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);
   }
@@ -621,9 +616,7 @@ test("can start exam mode from review hub on first click", async ({
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Exit Focus Mode" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Flashcards", exact: true }),
-    ).toBeVisible();
+    await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
   } finally {
     await clearUserDecksByNames(user.userId, [deckName]);
   }
@@ -683,9 +676,7 @@ test("review and exam actions respect deck scope", async ({
     await expect(page.getByText(examDeckFront, { exact: true })).toHaveCount(0);
 
     await page.getByRole("button", { name: "Exit Focus Mode" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Flashcards", exact: true }),
-    ).toBeVisible();
+    await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 
     await openFlashcardsReviewPage(page, examOnlyDeck.id);
 
@@ -736,9 +727,7 @@ test("review hub updates immediately when deck is changed from the sidebar", asy
     );
 
     await openFlashcardsReviewPage(page, populatedDeck.id);
-    await expect(
-      page.getByRole("heading", { name: "Flashcards", exact: true }),
-    ).toBeVisible();
+    await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 
     await expect(page.getByText("1 due", { exact: true })).toBeVisible();
     await expect(page.getByText("1 card", { exact: true })).toBeVisible();

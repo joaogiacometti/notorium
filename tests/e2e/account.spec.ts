@@ -25,7 +25,7 @@ async function openAccountPage(page: Page) {
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(
-    dialog.getByText("Flashcard Optimization", { exact: true }),
+    dialog.getByText("FSRS optimization", { exact: true }),
   ).toBeVisible();
 }
 
