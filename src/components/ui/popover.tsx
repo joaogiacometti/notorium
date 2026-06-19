@@ -11,9 +11,15 @@ function Popover(
 }
 
 function PopoverTrigger(
-  props: React.ComponentProps<typeof PopoverPrimitive.Trigger>,
+  props: Readonly<React.ComponentProps<typeof PopoverPrimitive.Trigger>>,
 ) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
+}
+
+function PopoverPortal(
+  props: Readonly<React.ComponentProps<typeof PopoverPrimitive.Portal>>,
+) {
+  return <PopoverPrimitive.Portal {...props} />;
 }
 
 function PopoverContent({
@@ -36,4 +42,4 @@ function PopoverContent({
   );
 }
 
-export { Popover, PopoverContent, PopoverTrigger };
+export { Popover, PopoverContent, PopoverPortal, PopoverTrigger };

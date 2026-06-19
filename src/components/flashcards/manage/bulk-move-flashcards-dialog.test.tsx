@@ -52,10 +52,12 @@ const decks: DeckOption[] = [
 ];
 
 function getCombobox(): HTMLButtonElement {
-  const combobox = document.body.querySelector('button[role="combobox"]');
+  const combobox = document.body.querySelector(
+    'button[aria-haspopup="listbox"]',
+  );
 
   if (!(combobox instanceof HTMLButtonElement)) {
-    throw new TypeError("Expected combobox trigger button");
+    throw new TypeError("Expected listbox trigger button");
   }
 
   return combobox;

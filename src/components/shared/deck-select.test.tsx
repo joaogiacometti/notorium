@@ -30,10 +30,10 @@ const decks: DeckOption[] = [
 ];
 
 function getCombobox(container: HTMLElement): HTMLButtonElement {
-  const combobox = container.querySelector('button[role="combobox"]');
+  const combobox = container.querySelector('button[aria-haspopup="listbox"]');
 
   if (!(combobox instanceof HTMLButtonElement)) {
-    throw new Error("Expected combobox trigger button");
+    throw new TypeError("Expected listbox trigger button");
   }
 
   return combobox;
@@ -53,7 +53,7 @@ function getCommandItems(): HTMLElement[] {
 
 function setInputValue(input: HTMLInputElement, value: string) {
   const valueSetter = Object.getOwnPropertyDescriptor(
-    window.HTMLInputElement.prototype,
+    globalThis.HTMLInputElement.prototype,
     "value",
   )?.set;
 
@@ -187,5 +187,35 @@ describe("DeckSelect", () => {
 
     expect(getSearchInput()).toBeNull();
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("portals the dropdown to document.body so it escapes clipped ancestors", async () => {
+    const clippedContainer = document.createElement("div");
+    clippedContainer.style.overflow = "hidden";
+    clippedContainer.style.height = "0";
+    document.body.appendChild(clippedContainer);
+    const clippedRoot = createRoot(clippedContainer);
+
+    await act(async () => {
+      clippedRoot.render(
+        <DeckSelect value={null} onChange={vi.fn()} decks={decks} />,
+      );
+    });
+
+    await act(async () => {
+      getCombobox(clippedContainer).click();
+    });
+
+    const popperWrapper = document.body.querySelector(
+      "[data-radix-popper-content-wrapper]",
+    );
+
+    expect(popperWrapper).toBeTruthy();
+    expect(popperWrapper?.parentElement).toBe(document.body);
+
+    await act(async () => {
+      clippedRoot.unmount();
+    });
+    clippedContainer.remove();
   });
 });
