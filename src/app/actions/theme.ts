@@ -1,6 +1,6 @@
 "use server";
 
-import { updateUserTheme as updateUserThemeForUser } from "@/features/user/mutations";
+import { updateUserThemeForUser } from "@/features/user/mutations";
 import type { UpdateUserThemeForm } from "@/features/user/validation";
 import { updateUserThemeSchema } from "@/features/user/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";

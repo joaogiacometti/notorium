@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "reader_color_inverted" boolean DEFAULT false NOT NULL;

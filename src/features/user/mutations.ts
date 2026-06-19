@@ -12,7 +12,7 @@ import type { UpdateUserAccessInput } from "@/lib/validations/access-control";
 
 export type UserMutationResult = { success: true } | ActionErrorResult;
 
-export async function updateUserTheme(
+export async function updateUserThemeForUser(
   userId: string,
   theme: AppTheme,
 ): Promise<void> {
@@ -53,7 +53,7 @@ export async function updateUserAccessStatusForUser(
   return { success: true };
 }
 
-export async function updateNotificationPreferences(
+export async function updateNotificationPreferencesForUser(
   userId: string,
   data: UpdateNotificationPreferencesForm,
 ): Promise<UserMutationResult> {
@@ -66,4 +66,14 @@ export async function updateNotificationPreferences(
     .where(eq(user.id, userId));
 
   return { success: true };
+}
+
+export async function updateReaderColorModeForUser(
+  userId: string,
+  inverted: boolean,
+): Promise<void> {
+  await getDb()
+    .update(user)
+    .set({ readerColorInverted: inverted })
+    .where(eq(user.id, userId));
 }

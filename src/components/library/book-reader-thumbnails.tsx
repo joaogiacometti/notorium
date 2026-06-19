@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface ReaderThumbnailsProps {
   documentId: string;
+  readerColorInverted: boolean;
 }
 
 // Virtualized page-thumbnail rail. ThumbnailsPane only yields the rows in view,
@@ -14,33 +15,37 @@ interface ReaderThumbnailsProps {
 // The sidebar owns the surrounding panel; this fills it.
 export function ReaderThumbnails({
   documentId,
+  readerColorInverted,
 }: Readonly<ReaderThumbnailsProps>) {
   const { state, provides } = useScroll(documentId);
 
   return (
-    <ThumbnailsPane
-      documentId={documentId}
-      style={{ width: "100%", height: "100%" }}
-    >
-      {(meta) => (
-        <ThumbnailRow
-          key={meta.pageIndex}
-          top={meta.top}
-          height={meta.wrapperHeight}
-          labelHeight={meta.labelHeight}
-          pageNumber={meta.pageIndex + 1}
-          isActive={meta.pageIndex + 1 === state.currentPage}
-          onSelect={() =>
-            provides?.scrollToPage({
-              pageNumber: meta.pageIndex + 1,
-              behavior: "instant",
-            })
-          }
-        >
-          <ThumbImg documentId={documentId} meta={meta} />
-        </ThumbnailRow>
-      )}
-    </ThumbnailsPane>
+    <div className="h-full w-full bg-background">
+      <ThumbnailsPane
+        documentId={documentId}
+        style={{ width: "100%", height: "100%" }}
+      >
+        {(meta) => (
+          <ThumbnailRow
+            key={meta.pageIndex}
+            top={meta.top}
+            height={meta.wrapperHeight}
+            labelHeight={meta.labelHeight}
+            pageNumber={meta.pageIndex + 1}
+            isActive={meta.pageIndex + 1 === state.currentPage}
+            readerColorInverted={readerColorInverted}
+            onSelect={() =>
+              provides?.scrollToPage({
+                pageNumber: meta.pageIndex + 1,
+                behavior: "instant",
+              })
+            }
+          >
+            <ThumbImg documentId={documentId} meta={meta} />
+          </ThumbnailRow>
+        )}
+      </ThumbnailsPane>
+    </div>
   );
 }
 
@@ -50,6 +55,7 @@ interface ThumbnailRowProps {
   labelHeight: number;
   pageNumber: number;
   isActive: boolean;
+  readerColorInverted: boolean;
   onSelect: () => void;
   children: React.ReactNode;
 }
@@ -60,6 +66,7 @@ function ThumbnailRow({
   labelHeight,
   pageNumber,
   isActive,
+  readerColorInverted,
   onSelect,
   children,
 }: Readonly<ThumbnailRowProps>) {
@@ -80,7 +87,11 @@ function ThumbnailRow({
             : "border-border/70 hover:border-foreground/40",
         )}
       >
-        {children}
+        {readerColorInverted ? (
+          <span className="reader-invert">{children}</span>
+        ) : (
+          children
+        )}
       </button>
       <span
         className={cn(

@@ -44,6 +44,9 @@ export const user = pgTable("user", {
   notificationDaysBefore: integer("notification_days_before")
     .notNull()
     .default(1),
+  readerColorInverted: boolean("reader_color_inverted")
+    .notNull()
+    .default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

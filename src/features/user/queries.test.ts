@@ -27,6 +27,7 @@ vi.mock("@/db/schema", () => ({
     preferredTheme: "user_preferred_theme_column",
     notificationsEnabled: "user_notifications_enabled_column",
     notificationDaysBefore: "user_notification_days_before_column",
+    readerColorInverted: "user_reader_color_inverted_column",
   },
 }));
 
@@ -60,5 +61,38 @@ describe("getUserPreferredTheme", () => {
     const result = await getUserPreferredTheme("user-1");
 
     expect(result).toBe("system");
+  });
+});
+
+describe("getReaderColorMode", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns true when the user has inverted colors enabled", async () => {
+    limitMock.mockResolvedValueOnce([{ readerColorInverted: true }]);
+
+    const { getReaderColorMode } = await import("@/features/user/queries");
+    const result = await getReaderColorMode("user-1");
+
+    expect(result).toBe(true);
+  });
+
+  it("returns false when the user has inverted colors disabled", async () => {
+    limitMock.mockResolvedValueOnce([{ readerColorInverted: false }]);
+
+    const { getReaderColorMode } = await import("@/features/user/queries");
+    const result = await getReaderColorMode("user-1");
+
+    expect(result).toBe(false);
+  });
+
+  it("falls back to false when the user row is missing", async () => {
+    limitMock.mockResolvedValueOnce([]);
+
+    const { getReaderColorMode } = await import("@/features/user/queries");
+    const result = await getReaderColorMode("user-1");
+
+    expect(result).toBe(false);
   });
 });

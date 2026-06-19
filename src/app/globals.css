@@ -883,3 +883,11 @@
 .mindmap-canvas .react-flow__node-image .react-flow__handle-right {
   transform: translate(calc(50% + 2px), -50%);
 }
+
+/* Library reader: invert page raster colors so white PDF backgrounds become
+   dark and text becomes light, like Zotero's invert-colors mode. Applied only
+   to the render/tiling layers, so text selection and link annotations on top
+   keep their normal colors. */
+.reader-invert {
+  filter: invert(1) hue-rotate(180deg);
+}

@@ -34,10 +34,11 @@ vi.mock("@/db/schema", () => ({
     id: "user_id_column",
     preferredTheme: "user_preferred_theme_column",
     accessStatus: "user_access_status_column",
+    readerColorInverted: "user_reader_color_inverted_column",
   },
 }));
 
-describe("updateUserTheme", () => {
+describe("updateUserThemeForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -45,10 +46,31 @@ describe("updateUserTheme", () => {
   it("updates the user theme", async () => {
     updateWhereMock.mockResolvedValueOnce(undefined);
 
-    const { updateUserTheme } = await import("@/features/user/mutations");
-    await updateUserTheme("user-1", "dark");
+    const { updateUserThemeForUser } = await import(
+      "@/features/user/mutations"
+    );
+    await updateUserThemeForUser("user-1", "dark");
 
     expect(updateMock).toHaveBeenCalled();
+  });
+});
+
+describe("updateReaderColorModeForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("updates the reader color inverted flag", async () => {
+    updateWhereMock.mockResolvedValueOnce(undefined);
+
+    const { updateReaderColorModeForUser } = await import(
+      "@/features/user/mutations"
+    );
+    await updateReaderColorModeForUser("user-1", true);
+
+    expect(updateSetMock).toHaveBeenCalledWith({
+      readerColorInverted: true,
+    });
   });
 });
 

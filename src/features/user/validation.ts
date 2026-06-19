@@ -9,3 +9,11 @@ export const updateUserThemeSchema = z.object({
 });
 
 export type UpdateUserThemeForm = z.infer<typeof updateUserThemeSchema>;
+
+export const updateReaderColorModeSchema = z.object({
+  inverted: z.boolean(),
+});
+
+export type UpdateReaderColorModeForm = z.infer<
+  typeof updateReaderColorModeSchema
+>;

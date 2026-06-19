@@ -6,6 +6,7 @@ const {
   requireSessionMock,
   getFsrsOptimizationSettingsMock,
   getNotificationPreferencesMock,
+  getReaderColorModeMock,
   isEmailDeliveryEnabledMock,
   areWorkflowsEnabledMock,
 } = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const {
   requireSessionMock: vi.fn(),
   getFsrsOptimizationSettingsMock: vi.fn(),
   getNotificationPreferencesMock: vi.fn(),
+  getReaderColorModeMock: vi.fn(),
   isEmailDeliveryEnabledMock: vi.fn(),
   areWorkflowsEnabledMock: vi.fn(),
 }));
@@ -35,11 +37,13 @@ vi.mock("@/features/flashcards/fsrs/settings", () => ({
 
 vi.mock("@/features/user/mutations", () => ({
   updateNotificationPreferences: vi.fn(),
+  updateReaderColorMode: vi.fn(),
   updateUserAccessStatusForUser: vi.fn(),
 }));
 
 vi.mock("@/features/user/queries", () => ({
   getNotificationPreferences: getNotificationPreferencesMock,
+  getReaderColorMode: getReaderColorModeMock,
 }));
 
 vi.mock("@/lib/auth/access-control", () => ({
@@ -81,6 +85,7 @@ describe("account actions", () => {
       notificationsEnabled: true,
       notificationDaysBefore: 3,
     });
+    getReaderColorModeMock.mockResolvedValue(true);
     getFsrsOptimizationSettingsMock.mockResolvedValue({
       automaticOptimizationEnabled: false,
       lastOptimizedAt: null,
@@ -99,6 +104,7 @@ describe("account actions", () => {
       workflowsEnabled: false,
       notificationsEnabled: true,
       notificationDaysBefore: 3,
+      readerColorInverted: true,
       fsrsOptimization: {
         automaticOptimizationEnabled: false,
         lastOptimizedAt: null,
@@ -118,6 +124,7 @@ describe("account actions", () => {
     });
     isEmailDeliveryEnabledMock.mockReturnValue(false);
     areWorkflowsEnabledMock.mockReturnValue(true);
+    getReaderColorModeMock.mockResolvedValue(false);
     getFsrsOptimizationSettingsMock.mockResolvedValue({
       automaticOptimizationEnabled: true,
       lastOptimizedAt: null,
@@ -132,6 +139,7 @@ describe("account actions", () => {
     expect(result.emailEnabled).toBe(false);
     expect(result.notificationsEnabled).toBe(false);
     expect(result.notificationDaysBefore).toBe(1);
+    expect(result.readerColorInverted).toBe(false);
   });
 
   it("resets flashcard scheduler optimization for the authenticated user", async () => {

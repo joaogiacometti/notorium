@@ -10,6 +10,7 @@ type SidebarView = "pages" | "content";
 interface ReaderSidebarProps {
   documentId: string;
   isCollapsed: boolean;
+  readerColorInverted: boolean;
 }
 
 // Left rail with a Pages/Content switch: "Pages" shows the virtualized page
@@ -21,6 +22,7 @@ interface ReaderSidebarProps {
 export function ReaderSidebar({
   documentId,
   isCollapsed,
+  readerColorInverted,
 }: Readonly<ReaderSidebarProps>) {
   const [view, setView] = useState<SidebarView>("pages");
 
@@ -40,7 +42,10 @@ export function ReaderSidebar({
       </Tabs>
       <div className="min-h-0 flex-1">
         {view === "pages" ? (
-          <ReaderThumbnails documentId={documentId} />
+          <ReaderThumbnails
+            documentId={documentId}
+            readerColorInverted={readerColorInverted}
+          />
         ) : (
           <ReaderOutline documentId={documentId} />
         )}

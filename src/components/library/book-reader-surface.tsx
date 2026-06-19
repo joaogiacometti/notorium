@@ -28,6 +28,7 @@ export interface BookReaderProps {
   fileUrl: string;
   title: string;
   initialPage: number;
+  readerColorInverted: boolean;
 }
 
 // EmbedPDF auto-mounts the fullscreen plugin's wrapper around its children,
@@ -47,6 +48,7 @@ function ReaderEngine({
   fileUrl,
   title,
   initialPage,
+  readerColorInverted,
 }: Readonly<BookReaderProps>) {
   const { engine, isLoading, error } = usePdfiumEngine();
 
@@ -76,6 +78,7 @@ function ReaderEngine({
             bookId={bookId}
             title={title}
             initialPage={initialPage}
+            readerColorInverted={readerColorInverted}
           />
         );
       }}

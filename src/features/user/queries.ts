@@ -31,3 +31,13 @@ export async function getNotificationPreferences(userId: string): Promise<{
     notificationDaysBefore: result?.notificationDaysBefore ?? 1,
   };
 }
+
+export async function getReaderColorMode(userId: string): Promise<boolean> {
+  const [result] = await getDb()
+    .select({ readerColorInverted: user.readerColorInverted })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  return result?.readerColorInverted ?? false;
+}

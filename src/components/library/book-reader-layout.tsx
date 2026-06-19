@@ -20,12 +20,14 @@ import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shor
 import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
 import { useReaderSidebarCollapsed } from "@/components/library/use-reader-sidebar-collapsed";
 import { useReadingPosition } from "@/components/library/use-reading-position";
+import { cn } from "@/lib/utils";
 
 interface ReaderLayoutProps {
   documentId: string;
   bookId: string;
   title: string;
   initialPage: number;
+  readerColorInverted: boolean;
 }
 
 // Rendered inside the EmbedPDF provider, so every child can reach the plugin
@@ -43,6 +45,7 @@ export function ReaderLayout({
   bookId,
   title,
   initialPage,
+  readerColorInverted,
 }: Readonly<ReaderLayoutProps>) {
   useReadingPosition({ documentId, bookId, initialPage });
   useReaderCopyShortcut(documentId);
@@ -68,6 +71,7 @@ export function ReaderLayout({
           <ReaderSidebar
             documentId={documentId}
             isCollapsed={sidebarCollapsed}
+            readerColorInverted={readerColorInverted}
           />
           {/* GlobalPointerProvider tracks pointermove/up across the viewport so a
               drag forms a text selection; its 100%-sized box needs this sized
@@ -97,22 +101,33 @@ export function ReaderLayout({
                         pageIndex={pageIndex}
                         className="bg-background shadow-sm"
                       >
-                        {/* pointer-events:none lets the drag fall through the
-                            page image to the pointer provider instead of
-                            starting a native image drag; SelectionLayer stays
-                            on top. */}
-                        <RenderLayer
-                          documentId={documentId}
-                          pageIndex={pageIndex}
-                          scale={1}
-                          draggable={false}
-                          style={{ pointerEvents: "none" }}
-                        />
-                        <TilingLayer
-                          documentId={documentId}
-                          pageIndex={pageIndex}
-                          style={{ pointerEvents: "none" }}
-                        />
+                        {/* The render and tiling layers are wrapped so the
+                            invert filter can be applied only to the PDF raster
+                            content; SelectionLayer and AnnotationLayer stay
+                            outside the wrapper and keep their normal colors. */}
+                        <div
+                          className={cn(
+                            "absolute inset-0 pointer-events-none",
+                            readerColorInverted && "reader-invert",
+                          )}
+                        >
+                          {/* pointer-events:none lets the drag fall through the
+                              page image to the pointer provider instead of
+                              starting a native image drag; SelectionLayer stays
+                              on top. */}
+                          <RenderLayer
+                            documentId={documentId}
+                            pageIndex={pageIndex}
+                            scale={1}
+                            draggable={false}
+                            style={{ pointerEvents: "none" }}
+                          />
+                          <TilingLayer
+                            documentId={documentId}
+                            pageIndex={pageIndex}
+                            style={{ pointerEvents: "none" }}
+                          />
+                        </div>
                         <SelectionLayer
                           documentId={documentId}
                           pageIndex={pageIndex}

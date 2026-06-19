@@ -150,6 +150,7 @@ export interface AccountSettings {
   workflowsEnabled: boolean;
   notificationsEnabled: boolean;
   notificationDaysBefore: number;
+  readerColorInverted: boolean;
   fsrsOptimization: FlashcardOptimizationSettings;
 }
 
