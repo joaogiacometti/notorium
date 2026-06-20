@@ -41,6 +41,11 @@ export const LIMITS = {
   libraryUploadRateLimitPerDay: 50,
   maxAnnotationsPerBook: 5000,
   libraryAnnotationNoteMax: 4000,
+  // Ask-AI-about-selection in the book reader: the selected passage sent as
+  // context, each chat turn, and how many turns a thread can hold.
+  aiAskSourceMax: 8000,
+  aiAskMessageMax: 4000,
+  aiAskMaxMessages: 20,
 
   flashcardFrontMax: 1000,
   flashcardBackMax: 4000,
@@ -91,10 +96,12 @@ export const LIMITS = {
   aiFlashcardGenerationRateLimitPrefix: "ratelimit:ai:generation",
   aiValidationRateLimitPrefix: "ratelimit:ai:validation",
   aiMergeSynthesisRateLimitPrefix: "ratelimit:ai:merge",
+  aiAskRateLimitPrefix: "ratelimit:ai:ask",
   aiBackGenerationRateLimitPerDay: 500,
   aiFlashcardGenerationRateLimitPerDay: 250,
   aiValidationRateLimitPerDay: 200,
   aiMergeSynthesisRateLimitPerDay: 100,
+  aiAskRateLimitPerDay: 250,
   trustedProxyCount: 0,
   ipAddressMaxLength: 64,
 } as const;
@@ -107,4 +114,7 @@ export const AI_LIMITS = {
   maxValidationExplanationLength: 300,
   maxMergeSynthesisTokens: 800,
   maxMergeRationaleLength: 300,
+  // Kept modest: tutor answers should be concise, and ~800 tokens stays under
+  // the aiAskMessageMax character cap the answer schema enforces.
+  maxAskTokens: 800,
 } as const;

@@ -30,6 +30,7 @@ import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-sho
 import { useReaderSidebarCollapsed } from "@/components/library/use-reader-sidebar-collapsed";
 import { useReadingPosition } from "@/components/library/use-reading-position";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
+import type { DeckOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 interface ReaderLayoutProps {
@@ -39,6 +40,8 @@ interface ReaderLayoutProps {
   initialPage: number;
   readerColorInverted: boolean;
   initialAnnotations: BookAnnotationDto[];
+  aiEnabled: boolean;
+  decks: DeckOption[];
 }
 
 interface ReaderPageProps {
@@ -136,6 +139,8 @@ export function ReaderLayout({
   initialPage,
   readerColorInverted,
   initialAnnotations,
+  aiEnabled,
+  decks,
 }: Readonly<ReaderLayoutProps>) {
   useReadingPosition({ documentId, bookId, initialPage });
   useReaderAnnotations({ documentId, bookId, initialAnnotations });
@@ -177,7 +182,11 @@ export function ReaderLayout({
             </GlobalPointerProvider>
           </div>
         </div>
-        <ReaderSelectionMenu documentId={documentId} />
+        <ReaderSelectionMenu
+          documentId={documentId}
+          aiEnabled={aiEnabled}
+          decks={decks}
+        />
       </div>
     </ReaderNavHistoryProvider>
   );

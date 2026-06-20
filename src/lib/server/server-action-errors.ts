@@ -162,6 +162,11 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "This book has reached the maximum of {max} highlights.",
   "library.notConfigured":
     "No media storage is configured. Contact your administrator.",
+  "library.ai.invalidData": "Invalid input for asking AI about the selection.",
+  "library.ai.notConfigured":
+    "AI features are not configured for this instance.",
+  "library.ai.unavailable": "AI is temporarily unavailable. Try again later.",
+  "limits.aiAskPerDay": "Daily limit reached for asking AI.",
 };
 
 export function t(key: string, values?: ActionErrorParams): string {
