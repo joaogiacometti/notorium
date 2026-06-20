@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { ensureRootNode, parseMindmapGraph } from "@/features/mindmaps/utils";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
@@ -54,6 +55,8 @@ interface MindmapDetailProps {
   embedded?: boolean;
   /** Called instead of navigating after delete when embedded in a window. */
   onClosed?: () => void;
+  /** When embedded: flush a pending autosave before the window closes. */
+  registerCloseRequest?: (request: () => void) => () => void;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -65,6 +68,7 @@ export function MindmapDetail({
   subjectName,
   embedded = false,
   onClosed,
+  registerCloseRequest,
 }: Readonly<MindmapDetailProps>) {
   const router = useRouter();
   const [, startNavTransition] = useTransition();
@@ -144,6 +148,15 @@ export function MindmapDetail({
   useEffect(() => {
     void save(debouncedTitle, debouncedGraph);
   }, [debouncedTitle, debouncedGraph, save]);
+
+  // Mindmaps autosave, so closing the window flushes any pending edit then
+  // closes rather than prompting to discard.
+  useWindowCloseGuard(registerCloseRequest, async () => {
+    if (isDirty) {
+      await save(title, graph);
+    }
+    onClosed?.();
+  });
 
   return (
     <>

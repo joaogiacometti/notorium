@@ -21,7 +21,8 @@ const kindIcons: Record<WindowKind, LucideIcon> = {
  * windows are open.
  */
 export function WindowDock() {
-  const { windows, activeWindowId, toggle, closeWindow } = useWindowManager();
+  const { windows, activeWindowId, toggle, requestCloseWindow } =
+    useWindowManager();
 
   if (windows.length === 0) {
     return null;
@@ -60,7 +61,7 @@ export function WindowDock() {
                   ? "hover:bg-primary-foreground/20"
                   : "hover:bg-foreground/10",
               )}
-              onClick={() => closeWindow(window.id)}
+              onClick={() => requestCloseWindow(window.id)}
             >
               <X className="size-3.5" />
             </button>

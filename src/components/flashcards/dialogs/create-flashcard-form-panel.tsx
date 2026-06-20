@@ -3,6 +3,7 @@
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
 import { useCreateFlashcardForm } from "@/components/flashcards/dialogs/use-create-flashcard-form";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
+import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 interface CreateFlashcardFormPanelProps {
@@ -10,6 +11,11 @@ interface CreateFlashcardFormPanelProps {
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
   deckId?: string;
+  /**
+   * When hosted in a floating window: lets the window's close button run the
+   * unsaved-changes discard flow instead of closing without warning.
+   */
+  registerCloseRequest?: (request: () => void) => () => void;
 }
 
 /**
@@ -22,6 +28,7 @@ export function CreateFlashcardFormPanel({
   onOpenChange,
   onCreated,
   deckId,
+  registerCloseRequest,
 }: Readonly<CreateFlashcardFormPanelProps>) {
   const { decks, form, dialog } = useCreateFlashcardForm({
     open: true,
@@ -29,6 +36,12 @@ export function CreateFlashcardFormPanel({
     onOpenChange,
     onCreated,
     deckId,
+  });
+
+  // Closing the window runs the same guarded close as the form's own discard
+  // flow: prompt when there is content, otherwise close immediately.
+  useWindowCloseGuard(registerCloseRequest, () => {
+    void dialog.handleOpenChange(false);
   });
 
   return (

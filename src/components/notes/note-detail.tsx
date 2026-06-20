@@ -36,6 +36,7 @@ import {
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
@@ -52,6 +53,8 @@ interface NoteDetailProps {
   embedded?: boolean;
   /** Called instead of navigating after delete when embedded in a window. */
   onClosed?: () => void;
+  /** When embedded: flush a pending autosave before the window closes. */
+  registerCloseRequest?: (request: () => void) => () => void;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -75,6 +78,7 @@ export function NoteDetail({
   subjectName,
   embedded = false,
   onClosed,
+  registerCloseRequest,
 }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -182,6 +186,15 @@ export function NoteDetail({
     note.id,
     saveNoteValues,
   ]);
+
+  // Notes autosave, so closing the window flushes any pending edit then closes
+  // rather than prompting to discard.
+  useWindowCloseGuard(registerCloseRequest, async () => {
+    if (hasDirtyValues) {
+      await saveNoteValues(form.getValues());
+    }
+    onClosed?.();
+  });
 
   async function copyNoteContent(format: NoteCopyFormat) {
     try {

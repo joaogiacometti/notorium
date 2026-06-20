@@ -33,13 +33,16 @@ export function WindowContent({
   aiEnabled,
   decks,
 }: Readonly<WindowContentProps>) {
-  const { closeWindow } = useWindowManager();
+  const { closeWindow, registerCloseRequest } = useWindowManager();
   const onClosed = () => closeWindow(window.id);
+  const registerClose = (request: () => void) =>
+    registerCloseRequest(window.id, request);
 
   if (window.kind === "flashcard") {
     return (
       <CreateFlashcardFormPanel
         aiEnabled={aiEnabled}
+        registerCloseRequest={registerClose}
         onOpenChange={(open) => {
           if (!open) {
             onClosed();
@@ -55,6 +58,7 @@ export function WindowContent({
       aiEnabled={aiEnabled}
       decks={decks}
       onClosed={onClosed}
+      registerCloseRequest={registerClose}
     />
   );
 }
@@ -64,6 +68,7 @@ interface DocumentWindowContentProps {
   aiEnabled: boolean;
   decks: DeckOption[];
   onClosed: () => void;
+  registerCloseRequest: (request: () => void) => () => void;
 }
 
 function DocumentWindowContent({
@@ -71,6 +76,7 @@ function DocumentWindowContent({
   aiEnabled,
   decks,
   onClosed,
+  registerCloseRequest,
 }: Readonly<DocumentWindowContentProps>) {
   const { setWindowTitle } = useWindowManager();
   const docId = window.docId ?? "";
@@ -105,6 +111,7 @@ function DocumentWindowContent({
       <MindmapDetail
         embedded
         onClosed={onClosed}
+        registerCloseRequest={registerCloseRequest}
         aiEnabled={aiEnabled}
         decks={decks}
         mindmap={data as MindmapEntity}
@@ -117,6 +124,7 @@ function DocumentWindowContent({
     <NoteDetail
       embedded
       onClosed={onClosed}
+      registerCloseRequest={registerCloseRequest}
       aiEnabled={aiEnabled}
       decks={decks}
       note={data as NoteEntity}

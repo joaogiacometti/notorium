@@ -105,6 +105,62 @@ describe("WindowManagerProvider", () => {
     expect(api.activeWindowId).toBeNull();
   });
 
+  it("runs a registered close guard instead of closing the window", () => {
+    act(() => api.openWindow({ kind: "flashcard" }));
+    const id = api.windows[0].id;
+    let calls = 0;
+    act(() => {
+      api.registerCloseRequest(id, () => {
+        calls += 1;
+      });
+    });
+
+    act(() => api.requestCloseWindow(id));
+
+    expect(calls).toBe(1);
+    expect(api.windows).toHaveLength(1);
+  });
+
+  it("closes directly when no close guard is registered", () => {
+    act(() => api.openWindow({ kind: "note", docId: "n1" }));
+    const id = api.windows[0].id;
+
+    act(() => api.requestCloseWindow(id));
+
+    expect(api.windows).toHaveLength(0);
+  });
+
+  it("falls back to a direct close after the guard is unregistered", () => {
+    act(() => api.openWindow({ kind: "note", docId: "n1" }));
+    const id = api.windows[0].id;
+    let unregister: () => void = () => {};
+    act(() => {
+      unregister = api.registerCloseRequest(id, () => {});
+    });
+
+    act(() => unregister());
+    act(() => api.requestCloseWindow(id));
+
+    expect(api.windows).toHaveLength(0);
+  });
+
+  it("clears a window's close guard when it is closed", () => {
+    act(() => api.openWindow({ kind: "flashcard" }));
+    const id = api.windows[0].id;
+    let calls = 0;
+    act(() => {
+      api.registerCloseRequest(id, () => {
+        calls += 1;
+      });
+    });
+
+    act(() => api.closeWindow(id));
+    act(() => api.requestCloseWindow(id));
+
+    expect(calls).toBe(0);
+    expect(api.windows).toHaveLength(0);
+  });
+
   it("updates a window title for the dock label", () => {
     act(() => api.openWindow({ kind: "mindmap", docId: "m1" }));
     const id = api.windows[0].id;

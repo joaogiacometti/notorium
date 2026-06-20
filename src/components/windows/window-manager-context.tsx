@@ -45,6 +45,16 @@ export interface WindowManagerContextValue {
   activeWindowId: string | null;
   openWindow: (spec: OpenWindowSpec) => void;
   closeWindow: (id: string) => void;
+  /**
+   * Close button entry point: runs the window content's registered guard (e.g.
+   * a discard dialog or autosave flush) when present, otherwise closes directly.
+   */
+  requestCloseWindow: (id: string) => void;
+  /**
+   * Window content registers a guarded-close handler that fully owns closing the
+   * window. Returns an unregister cleanup. See {@link useWindowCloseGuard}.
+   */
+  registerCloseRequest: (id: string, request: () => void) => () => void;
   minimizeActive: () => void;
   restore: (id: string) => void;
   /** Dock click: minimize when already active, otherwise restore. */
@@ -106,6 +116,55 @@ export function WindowManagerProvider({
   const [windows, setWindows] = useState<WindowInstance[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   const nextIdRef = useRef(0);
+  const closeRequestsRef = useRef<Map<string, () => void>>(new Map());
+
+  // Mutators below only touch the state setters (stable) and refs, so they are
+  // created once and kept stable across renders. This matters because effects
+  // that sync a window's title depend on `setWindowTitle`; an unstable identity
+  // would re-run them every render and loop. `setWindowTitle` also bails when
+  // the title is unchanged so a settled sync produces no state churn.
+  const closeWindow = useRef((id: string) => {
+    closeRequestsRef.current.delete(id);
+    setWindows((current) => current.filter((window) => window.id !== id));
+    setActiveWindowId((current) => (current === id ? null : current));
+  }).current;
+
+  const setWindowTitle = useRef((id: string, title: string) => {
+    setWindows((current) => {
+      const target = current.find((window) => window.id === id);
+      if (!target || target.title === title) {
+        return current;
+      }
+      return current.map((window) =>
+        window.id === id ? { ...window, title } : window,
+      );
+    });
+  }).current;
+
+  const setWindowGeometry = useRef((id: string, geometry: WindowGeometry) => {
+    setWindows((current) =>
+      current.map((window) =>
+        window.id === id ? { ...window, geometry } : window,
+      ),
+    );
+  }).current;
+
+  const registerCloseRequest = useRef((id: string, request: () => void) => {
+    closeRequestsRef.current.set(id, request);
+    return () => {
+      if (closeRequestsRef.current.get(id) === request) {
+        closeRequestsRef.current.delete(id);
+      }
+    };
+  }).current;
+  const requestCloseWindow = useRef((id: string) => {
+    const request = closeRequestsRef.current.get(id);
+    if (request) {
+      request();
+      return;
+    }
+    closeWindow(id);
+  }).current;
 
   const value = useMemo<WindowManagerContextValue>(() => {
     function openWindow(spec: OpenWindowSpec) {
@@ -133,11 +192,6 @@ export function WindowManagerProvider({
       setActiveWindowId(id);
     }
 
-    function closeWindow(id: string) {
-      setWindows((current) => current.filter((window) => window.id !== id));
-      setActiveWindowId((current) => (current === id ? null : current));
-    }
-
     function restore(id: string) {
       setActiveWindowId(id);
     }
@@ -150,34 +204,28 @@ export function WindowManagerProvider({
       setActiveWindowId((current) => (current === id ? null : id));
     }
 
-    function setWindowTitle(id: string, title: string) {
-      setWindows((current) =>
-        current.map((window) =>
-          window.id === id ? { ...window, title } : window,
-        ),
-      );
-    }
-
-    function setWindowGeometry(id: string, geometry: WindowGeometry) {
-      setWindows((current) =>
-        current.map((window) =>
-          window.id === id ? { ...window, geometry } : window,
-        ),
-      );
-    }
-
     return {
       windows,
       activeWindowId,
       openWindow,
       closeWindow,
+      requestCloseWindow,
+      registerCloseRequest,
       restore,
       minimizeActive,
       toggle,
       setWindowTitle,
       setWindowGeometry,
     };
-  }, [windows, activeWindowId]);
+  }, [
+    windows,
+    activeWindowId,
+    closeWindow,
+    setWindowTitle,
+    setWindowGeometry,
+    requestCloseWindow,
+    registerCloseRequest,
+  ]);
 
   return (
     <WindowManagerContext.Provider value={value}>

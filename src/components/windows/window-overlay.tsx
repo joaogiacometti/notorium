@@ -96,7 +96,8 @@ function WindowFrame({
   aiEnabled,
   decks,
 }: Readonly<WindowFrameProps>) {
-  const { closeWindow, minimizeActive, setWindowGeometry } = useWindowManager();
+  const { requestCloseWindow, minimizeActive, setWindowGeometry } =
+    useWindowManager();
   const frameRef = useRef<HTMLDivElement>(null);
   const { startMove, startResize } = useWindowDrag(
     frameRef,
@@ -149,7 +150,7 @@ function WindowFrame({
           size="icon"
           className="size-7"
           aria-label="Close window"
-          onClick={() => closeWindow(window.id)}
+          onClick={() => requestCloseWindow(window.id)}
         >
           <X className="size-4" />
         </Button>
