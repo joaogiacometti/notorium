@@ -258,7 +258,8 @@ Students who want a private, lightweight study management workspace.
 
 ### Global Search
 
-- Search subjects, notes, and flashcards by text with case-insensitive matching.
+- Search subjects, notes, flashcards, mindmaps, and library books by text with case-insensitive matching.
+- Library books match on title and author, and book results navigate to the book reader.
 - Flashcard search results navigate to the flashcard detail page.
 - Flashcard search results display deck paths using `::` notation.
 - Search is user-scoped and accessible from the left menu (and the `Cmd/Ctrl+K` shortcut).
@@ -319,7 +320,7 @@ Students who want a private, lightweight study management workspace.
 ### UI/UX Baseline
 
 - Responsive layout for desktop and mobile.
-- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments, recently edited documents (notes and mindmaps across all subjects), and a quick-access grid of recently updated subjects with a create action. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
+- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments, recently edited documents (notes and mindmaps across all subjects), recently opened library books (each linking to its reader), and a quick-access grid of recently updated subjects with a create action. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
 - Every page shows a sticky top bar with a breadcrumb trail (e.g. `Subject / Documents / Note`) that indicates the current location and replaces per-page "Back to …" links. Intermediate crumbs link to ancestors; the current page is the unlinked final crumb.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.

@@ -14,11 +14,11 @@ export async function getSearchData(query?: string): Promise<SearchData> {
   const parsed = searchQuerySchema.safeParse(query);
 
   if (!parsed.success) {
-    return { subjects: [], notes: [], flashcards: [], mindmaps: [] };
+    return { subjects: [], notes: [], flashcards: [], mindmaps: [], books: [] };
   }
 
   if (parsed.data.length < LIMITS.searchQueryMin) {
-    return { subjects: [], notes: [], flashcards: [], mindmaps: [] };
+    return { subjects: [], notes: [], flashcards: [], mindmaps: [], books: [] };
   }
 
   return getSearchDataForUser(userId, parsed.data);

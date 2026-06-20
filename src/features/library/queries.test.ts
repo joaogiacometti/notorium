@@ -52,6 +52,22 @@ describe("library queries", () => {
     );
   });
 
+  it("lists a user's most recent books limited to the requested count", async () => {
+    const books = [{ id: "book-1" }, { id: "book-2" }];
+    whereMock.mockReturnValueOnce({ orderBy: orderByMock });
+    orderByMock.mockReturnValueOnce({ limit: limitMock });
+    limitMock.mockResolvedValueOnce(books);
+
+    const result = await queries.getRecentBooksForUser("user-1", 6);
+
+    expect(result).toBe(books);
+    expect(limitMock).toHaveBeenCalledWith(6);
+    expect(eqMock).toHaveBeenCalledWith(
+      "library_book_user_id_column",
+      "user-1",
+    );
+  });
+
   it("returns a single owned book by id", async () => {
     const book = { id: "book-1", userId: "user-1" };
     whereMock.mockReturnValueOnce({ limit: limitMock });

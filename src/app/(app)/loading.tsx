@@ -17,6 +17,7 @@ export default function HomeLoading() {
             </div>
             <CardSkeleton lines={3} />
             <CardSkeleton lines={3} />
+            <CardSkeleton lines={3} />
           </div>
         </AppPageContainer>
       </main>

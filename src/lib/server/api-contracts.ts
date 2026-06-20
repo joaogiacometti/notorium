@@ -219,11 +219,17 @@ export type SearchMindmapResult = Pick<
   matchedNodeLabel?: string;
 };
 
+export type SearchBookResult = Pick<
+  LibraryBookEntity,
+  "id" | "title" | "author"
+>;
+
 export type SearchData = {
   subjects: SearchSubjectResult[];
   notes: SearchNoteResult[];
   flashcards: SearchFlashcardResult[];
   mindmaps: SearchMindmapResult[];
+  books: SearchBookResult[];
 };
 
 export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "kind">;

@@ -18,6 +18,25 @@ export async function getBooksForUser(
     .orderBy(desc(libraryBook.updatedAt));
 }
 
+/**
+ * Loads the user's most recently active books for the home dashboard, ordered
+ * by `updatedAt` so reading-position updates surface the books in progress.
+ *
+ * @example
+ * await getRecentBooksForUser(userId, 6); // [{ id, title, ... }]
+ */
+export async function getRecentBooksForUser(
+  userId: string,
+  limit: number,
+): Promise<LibraryBookEntity[]> {
+  return getDb()
+    .select()
+    .from(libraryBook)
+    .where(eq(libraryBook.userId, userId))
+    .orderBy(desc(libraryBook.updatedAt))
+    .limit(limit);
+}
+
 export async function getBookByIdForUser(
   userId: string,
   bookId: string,
