@@ -3,6 +3,7 @@ import {
   createBookSchema,
   deleteBookSchema,
   generateTokenSchema,
+  updateBookZoomSchema,
   updateReadingPageSchema,
 } from "@/features/library/validation";
 import { LIMITS } from "@/lib/config/limits";
@@ -128,6 +129,57 @@ describe("updateReadingPageSchema", () => {
     expect(
       updateReadingPageSchema.safeParse({ bookId: "book-1", page: 1.5 })
         .success,
+    ).toBe(false);
+  });
+});
+
+describe("updateBookZoomSchema", () => {
+  it("accepts a fit-mode zoom for a device", () => {
+    const result = updateBookZoomSchema.safeParse({
+      bookId: "book-1",
+      device: "mobile",
+      zoom: "fit-width",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a numeric scale within range", () => {
+    expect(
+      updateBookZoomSchema.safeParse({
+        bookId: "book-1",
+        device: "desktop",
+        zoom: "1.5",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a numeric scale out of range", () => {
+    expect(
+      updateBookZoomSchema.safeParse({
+        bookId: "book-1",
+        device: "desktop",
+        zoom: "42",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown zoom mode", () => {
+    expect(
+      updateBookZoomSchema.safeParse({
+        bookId: "book-1",
+        device: "mobile",
+        zoom: "fit-everything",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown device", () => {
+    expect(
+      updateBookZoomSchema.safeParse({
+        bookId: "book-1",
+        device: "tablet",
+        zoom: "fit-page",
+      }).success,
     ).toBe(false);
   });
 });

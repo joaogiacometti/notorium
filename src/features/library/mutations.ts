@@ -13,6 +13,7 @@ import type {
   CreateBookForm,
   DeleteBookForm,
   UpdateBookForm,
+  UpdateBookZoomForm,
   UpdateReadingPageForm,
 } from "@/features/library/validation";
 import { LIMITS } from "@/lib/config/limits";
@@ -171,6 +172,33 @@ export async function updateReadingPageForUser(
   await getDb()
     .update(libraryBook)
     .set({ currentPage: page, totalPages, lastReadAt: new Date() })
+    .where(
+      and(eq(libraryBook.id, data.bookId), eq(libraryBook.userId, userId)),
+    );
+
+  return { success: true };
+}
+
+// Persists the reader zoom for one device class without touching the other, so
+// a phone and a laptop keep independent zooms for the same book.
+export async function updateBookZoomForUser(
+  userId: string,
+  data: UpdateBookZoomForm,
+): Promise<{ success: true } | ActionErrorResult> {
+  const existing = await getBookByIdForUser(userId, data.bookId);
+
+  if (!existing) {
+    return actionError("library.notFound");
+  }
+
+  const column =
+    data.device === "mobile"
+      ? { zoomMobile: data.zoom }
+      : { zoomDesktop: data.zoom };
+
+  await getDb()
+    .update(libraryBook)
+    .set(column)
     .where(
       and(eq(libraryBook.id, data.bookId), eq(libraryBook.userId, userId)),
     );

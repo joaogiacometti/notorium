@@ -17,6 +17,8 @@ function makeBook(
     sizeBytes: 1024,
     totalPages: null,
     currentPage: 1,
+    zoomMobile: null,
+    zoomDesktop: null,
     lastReadAt: null,
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-01-01"),

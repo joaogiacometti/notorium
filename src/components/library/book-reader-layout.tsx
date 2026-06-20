@@ -28,6 +28,7 @@ import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shor
 import { useReaderDisplayShortcuts } from "@/components/library/use-reader-display-shortcuts";
 import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
 import { useReaderSidebarCollapsed } from "@/components/library/use-reader-sidebar-collapsed";
+import { useReaderZoom } from "@/components/library/use-reader-zoom";
 import { useReadingPosition } from "@/components/library/use-reading-position";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
 import type { DeckOption } from "@/lib/server/api-contracts";
@@ -38,6 +39,8 @@ interface ReaderLayoutProps {
   bookId: string;
   title: string;
   initialPage: number;
+  initialZoomMobile: string | null;
+  initialZoomDesktop: string | null;
   readerColorInverted: boolean;
   initialAnnotations: BookAnnotationDto[];
   aiEnabled: boolean;
@@ -137,12 +140,20 @@ export function ReaderLayout({
   bookId,
   title,
   initialPage,
+  initialZoomMobile,
+  initialZoomDesktop,
   readerColorInverted,
   initialAnnotations,
   aiEnabled,
   decks,
 }: Readonly<ReaderLayoutProps>) {
   useReadingPosition({ documentId, bookId, initialPage });
+  useReaderZoom({
+    documentId,
+    bookId,
+    initialZoomMobile,
+    initialZoomDesktop,
+  });
   useReaderAnnotations({ documentId, bookId, initialAnnotations });
   useReaderAnnotationShortcut(documentId);
   useReaderCopyShortcut(documentId);

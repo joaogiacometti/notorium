@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isSupportedLibraryBookMime } from "@/features/library/constants";
+import { isValidStoredZoom, READER_DEVICES } from "@/features/library/zoom";
 import { LIMITS } from "@/lib/config/limits";
 import { bulkIdsSchema } from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
@@ -71,6 +72,21 @@ export const updateReadingPageSchema = z.object({
 });
 
 export type UpdateReadingPageForm = z.infer<typeof updateReadingPageSchema>;
+
+export const updateBookZoomSchema = z.object({
+  bookId: z.string().trim().min(1),
+  device: z.enum(READER_DEVICES),
+  zoom: z
+    .string()
+    .trim()
+    .min(1)
+    .refine(
+      isValidStoredZoom,
+      validationMessage("Validation.library.zoomInvalid"),
+    ),
+});
+
+export type UpdateBookZoomForm = z.infer<typeof updateBookZoomSchema>;
 
 export const updateBookSchema = z.object({
   bookId: z.string().trim().min(1),

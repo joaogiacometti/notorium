@@ -8,6 +8,7 @@ import {
   createBookForUser,
   deleteBookForUser,
   updateBookForUser,
+  updateBookZoomForUser,
   updateReadingPageForUser,
 } from "@/features/library/mutations";
 import {
@@ -26,8 +27,10 @@ import {
   type GenerateTokenForm,
   generateTokenSchema,
   type UpdateBookForm,
+  type UpdateBookZoomForm,
   type UpdateReadingPageForm,
   updateBookSchema,
+  updateBookZoomSchema,
   updateReadingPageSchema,
 } from "@/features/library/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
@@ -113,6 +116,23 @@ export async function updateReadingPage(
     data,
     "library.invalidData",
     async (userId, parsedData) => updateReadingPageForUser(userId, parsedData),
+  );
+}
+
+/**
+ * Persists the reader zoom for the current device class. Like
+ * `updateReadingPage`, it intentionally skips `revalidatePath`: it can fire as
+ * the user pinches/scrolls-to-zoom, the client already holds the live zoom, and
+ * the value is re-read on the next reader open.
+ */
+export async function updateBookZoom(
+  data: UpdateBookZoomForm,
+): Promise<MutationResult> {
+  return runValidatedUserAction(
+    updateBookZoomSchema,
+    data,
+    "library.invalidData",
+    async (userId, parsedData) => updateBookZoomForUser(userId, parsedData),
   );
 }
 

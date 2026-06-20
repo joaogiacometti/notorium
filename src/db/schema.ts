@@ -383,6 +383,12 @@ export const libraryBook = pgTable(
     totalPages: integer("total_pages"),
     // The reading position the user left off at. Defaults to the first page.
     currentPage: integer("current_page").notNull().default(1),
+    // The reader zoom level the user left off at, persisted per device class so
+    // a phone and a laptop keep independent zooms for the same book. Stored as a
+    // serialized ZoomLevel (a "fit-page"/"fit-width"/"automatic" mode string or a
+    // numeric scale as text); null means use the reader default (fit page).
+    zoomMobile: text("zoom_mobile"),
+    zoomDesktop: text("zoom_desktop"),
     lastReadAt: timestamp("last_read_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

@@ -34,6 +34,8 @@ export default async function LibraryBookPage({
       fileUrl={`/api/library/${book.id}`}
       title={book.title}
       initialPage={book.currentPage}
+      initialZoomMobile={book.zoomMobile}
+      initialZoomDesktop={book.zoomDesktop}
       readerColorInverted={readerColorInverted}
       initialAnnotations={initialAnnotations}
       aiEnabled={isAiEnabled()}

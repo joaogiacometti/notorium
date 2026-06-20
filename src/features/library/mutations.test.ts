@@ -266,6 +266,63 @@ describe("updateReadingPageForUser", () => {
   });
 });
 
+describe("updateBookZoomForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    updateWhereMock.mockResolvedValue(undefined);
+  });
+
+  it("returns notFound when the book is not owned by the user", async () => {
+    getBookByIdForUserMock.mockResolvedValueOnce(null);
+    const { updateBookZoomForUser } = await import(
+      "@/features/library/mutations"
+    );
+
+    const result = await updateBookZoomForUser("user-1", {
+      bookId: "book-1",
+      device: "mobile",
+      zoom: "fit-width",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "library.notFound",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("writes only the mobile column for a mobile device", async () => {
+    getBookByIdForUserMock.mockResolvedValueOnce({ id: "book-1" });
+    const { updateBookZoomForUser } = await import(
+      "@/features/library/mutations"
+    );
+
+    const result = await updateBookZoomForUser("user-1", {
+      bookId: "book-1",
+      device: "mobile",
+      zoom: "1.5",
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(updateSetMock).toHaveBeenCalledWith({ zoomMobile: "1.5" });
+  });
+
+  it("writes only the desktop column for a desktop device", async () => {
+    getBookByIdForUserMock.mockResolvedValueOnce({ id: "book-1" });
+    const { updateBookZoomForUser } = await import(
+      "@/features/library/mutations"
+    );
+
+    await updateBookZoomForUser("user-1", {
+      bookId: "book-1",
+      device: "desktop",
+      zoom: "fit-page",
+    });
+
+    expect(updateSetMock).toHaveBeenCalledWith({ zoomDesktop: "fit-page" });
+  });
+});
+
 describe("deleteBookForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();

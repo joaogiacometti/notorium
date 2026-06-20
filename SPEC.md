@@ -251,6 +251,7 @@ Students who want a private, lightweight study management workspace.
 - The reader tracks the page currently in view and saves it automatically as the user scrolls, so reopening the book returns to the last page read.
 - Saving is debounced while scrolling, deduplicated so unchanged pages are not re-saved, and flushed immediately when the tab is hidden or the reader is closed so a mid-scroll exit is not lost.
 - The reader restores to the saved page on open before enabling further saves, and the saved page is clamped to the book's page count.
+- The reader also remembers the zoom level per book, stored separately for touch ("mobile") and pointer ("desktop") devices so a phone and a laptop keep independent zooms for the same book. The saved zoom is restored on open once the page is laid out (falling back to the default fit-to-page when none is stored), and changes are persisted with the same debounce, dedupe, and flush-on-hide/close behavior as the reading position.
 - The reader's canvas tools include a Highlighter alongside Select/Move. With the Highlighter active, selecting text creates a highlight over it; the newly created highlight is selected so its note panel opens immediately.
 - Selecting a highlight opens a panel to write or edit a note attached to it (kept with the highlight, capped at the configured note length) and to delete the highlight. Only the user's own highlights are editable; the PDF's existing annotations stay read-only and links stay clickable.
 - Highlights and their notes are saved per book as they are created, edited, and deleted, scoped to the owning user, and are restored into the reader when the book is reopened. Each book is capped at the configured maximum number of highlights.
@@ -375,7 +376,7 @@ Students who want a private, lightweight study management workspace.
 - `assessment`
   - `id`, `title`, `description`, `type`, `status`, `dueDate`, `score`, `weight`, `subjectId`, timestamps, `userId`
 - `library_book`
-  - `id`, `title`, `author`, `fileName`, `blobPathname`, `sizeBytes`, `totalPages`, `currentPage`, `lastReadAt`, timestamps, `userId`
+  - `id`, `title`, `author`, `fileName`, `blobPathname`, `sizeBytes`, `totalPages`, `currentPage`, `zoomMobile`, `zoomDesktop`, `lastReadAt`, timestamps, `userId`
 - `library_annotation`
   - `id`, `bookId`, `annotationUid`, `pageIndex`, `data` (JSON highlight object whose `contents` field holds the note), timestamps, `userId`
 

@@ -36,6 +36,8 @@ export interface BookReaderProps {
   fileUrl: string;
   title: string;
   initialPage: number;
+  initialZoomMobile: string | null;
+  initialZoomDesktop: string | null;
   readerColorInverted: boolean;
   initialAnnotations: BookAnnotationDto[];
   aiEnabled: boolean;
@@ -59,6 +61,8 @@ function ReaderEngine({
   fileUrl,
   title,
   initialPage,
+  initialZoomMobile,
+  initialZoomDesktop,
   readerColorInverted,
   initialAnnotations,
   aiEnabled,
@@ -92,6 +96,8 @@ function ReaderEngine({
             bookId={bookId}
             title={title}
             initialPage={initialPage}
+            initialZoomMobile={initialZoomMobile}
+            initialZoomDesktop={initialZoomDesktop}
             readerColorInverted={readerColorInverted}
             initialAnnotations={initialAnnotations}
             aiEnabled={aiEnabled}
