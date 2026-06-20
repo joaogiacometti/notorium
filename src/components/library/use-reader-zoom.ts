@@ -98,13 +98,29 @@ export function useReaderZoom({
   // is available, then enable saves. Seeding lastSaved with the restored value
   // (above) dedupes the change this triggers. Depends on `zoom` so a capability
   // that lags the layout event is not missed.
+  //
+  // requestZoom re-anchors scroll to the viewport center using the viewport's
+  // reported scroll metrics, which still reflect the top of the document at
+  // this point: the page restore's scrollToPage only schedules a rAF, and the
+  // resulting DOM scroll event has not reported back into viewportMetrics yet.
+  // Left alone, requestZoom would scroll back to page 1 and clobber the page
+  // restore (the "changed zoom and page" bug). Capture the page the scroll
+  // plugin already recorded via startPageChange, then re-scroll to it after the
+  // zoom's own scroll so the saved page lands on top at the new scale.
   useEffect(() => {
-    if (hasRestoredRef.current || !layoutReady || !zoom) return;
+    if (hasRestoredRef.current || !layoutReady || !zoom || !scrollCapability) {
+      return;
+    }
     hasRestoredRef.current = true;
     if (initialZoom && isValidStoredZoom(initialZoom)) {
+      const scrollScope = scrollCapability.forDocument(documentId);
+      const page = scrollScope.getCurrentPage();
       zoom.requestZoom(parseStoredZoom(initialZoom));
+      if (page > 1) {
+        scrollScope.scrollToPage({ pageNumber: page, behavior: "instant" });
+      }
     }
-  }, [layoutReady, zoom, initialZoom]);
+  }, [layoutReady, zoom, initialZoom, scrollCapability, documentId]);
 
   // Debounce-persist the current zoom after restore, skipping redundant writes.
   useEffect(() => {
