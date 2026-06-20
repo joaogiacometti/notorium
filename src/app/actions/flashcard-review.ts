@@ -31,7 +31,7 @@ export async function getDueFlashcards(
 }
 
 export async function getFlashcardReviewSummary(
-  options: Pick<GetDueFlashcardsOptions, "deckId" | "deckIds"> = {},
+  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
 ): Promise<FlashcardReviewSummary> {
   const userId = await getAuthenticatedUserId();
   await ensureFsrsSettings(userId);
@@ -57,7 +57,7 @@ export async function reviewFlashcard(
 }
 
 export async function getExamFlashcards(
-  options: Pick<GetDueFlashcardsOptions, "deckId" | "deckIds"> = {},
+  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
 ): Promise<FlashcardReviewEntity[]> {
   const userId = await getAuthenticatedUserId();
   await ensureFsrsSettings(userId);

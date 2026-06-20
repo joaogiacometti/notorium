@@ -17,14 +17,12 @@ interface DetailPageReturnContextInput {
   from?: string;
   subjectId?: string;
   view?: string;
-  deckId?: string;
 }
 
 interface DetailPageReturnContext {
   from?: DetailPageOrigin;
   subjectId?: string;
   view?: FlashcardsReturnView;
-  deckId?: string;
 }
 
 function isDetailPageOrigin(value: string): value is DetailPageOrigin {
@@ -49,7 +47,6 @@ export function resolveDetailPageReturnContext(
         : undefined,
     view:
       input.view && isFlashcardsReturnView(input.view) ? input.view : undefined,
-    deckId: input.deckId && input.deckId.length > 0 ? input.deckId : undefined,
   };
 }
 
@@ -72,11 +69,15 @@ function withSearchParams(
 
 export function getFlashcardsHref(
   view: FlashcardsReturnView = "manage",
-  deckId?: string,
+  subjectId?: string,
+  options?: { focus?: boolean },
 ) {
   return withSearchParams("/flashcards", {
     view,
-    deckId,
+    subjectId,
+    // `focus=1` tells the review view to jump straight into the full-screen
+    // focus session instead of landing on the review hub.
+    focus: options?.focus ? "1" : undefined,
   });
 }
 
@@ -98,7 +99,7 @@ export function getFlashcardDetailHref(
   return withSearchParams(`/flashcards/${flashcardId}`, {
     from: context.from,
     view: context.view,
-    deckId: context.deckId,
+    subjectId: context.subjectId,
   });
 }
 
@@ -141,14 +142,14 @@ export function resolveFlashcardDetailBackLink(
 
   if (context.from === "flashcards-manage") {
     return {
-      href: getFlashcardsHref(context.view, context.deckId),
+      href: getFlashcardsHref(context.view, context.subjectId),
       label: "flashcards",
     };
   }
 
-  if (context.view || context.deckId) {
+  if (context.view || context.subjectId) {
     return {
-      href: getFlashcardsHref(context.view ?? "manage", context.deckId),
+      href: getFlashcardsHref(context.view ?? "manage", context.subjectId),
       label: "flashcards",
     };
   }

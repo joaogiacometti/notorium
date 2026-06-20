@@ -55,7 +55,6 @@ function isPlaywrightAiFixtureMode() {
 export async function generateFlashcardBackContent(input: {
   settings: ResolvedAiSettings;
   subjectName?: string;
-  deckName?: string;
   front: string;
 }): Promise<string> {
   if (isPlaywrightAiFixtureMode()) {
@@ -70,7 +69,6 @@ export async function generateFlashcardBackContent(input: {
     system: flashcardBackSystemPrompt,
     prompt: buildGenerateFlashcardBackPrompt({
       subjectName: input.subjectName,
-      deckName: input.deckName,
       front: frontText,
     }),
     maxOutputTokens: AI_LIMITS.maxBackTokens,
@@ -91,7 +89,6 @@ export async function generateFlashcardBackContent(input: {
 export async function improveFlashcardBackContent(input: {
   settings: ResolvedAiSettings;
   subjectName?: string;
-  deckName?: string;
   front: string;
   currentBack: string;
 }): Promise<string> {
@@ -109,7 +106,6 @@ export async function improveFlashcardBackContent(input: {
     system: flashcardBackImproveSystemPrompt,
     prompt: buildImproveFlashcardBackPrompt({
       subjectName: input.subjectName,
-      deckName: input.deckName,
       front: frontText,
       currentBack: backText,
     }),
@@ -131,7 +127,6 @@ export async function improveFlashcardBackContent(input: {
 export async function generateFlashcardsFromText(input: {
   settings: ResolvedAiSettings;
   subjectName?: string;
-  deckName?: string;
   noteTitle?: string;
   text: string;
 }): Promise<Array<{ front: string; back: string }>> {
@@ -145,7 +140,6 @@ export async function generateFlashcardsFromText(input: {
     system: flashcardsGenerationSystemPrompt,
     prompt: buildGenerateFlashcardsPrompt({
       subjectName: input.subjectName,
-      deckName: input.deckName,
       noteTitle: input.noteTitle,
       text: input.text,
     }),

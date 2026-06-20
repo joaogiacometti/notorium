@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   getAllFlashcardIds,
-  getFlashcardIdsForDeck,
+  getFlashcardIdsForSubject,
   validateFlashcards,
 } from "@/app/actions/flashcards";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
@@ -33,14 +33,14 @@ interface ValidateFlashcardsDialogProps {
     issues: FlashcardValidationIssue[],
     flashcards: FlashcardValidationItem[],
   ) => void;
-  currentDeckId?: string;
+  currentSubjectId?: string;
 }
 
 export function ValidateFlashcardsDialog({
   open,
   onOpenChange,
   onValidationStarted,
-  currentDeckId,
+  currentSubjectId,
 }: Readonly<ValidateFlashcardsDialogProps>) {
   const [isValidating, setIsValidating] = useState(false);
 
@@ -50,9 +50,9 @@ export function ValidateFlashcardsDialog({
     try {
       let flashcardIds: string[];
 
-      if (currentDeckId) {
-        const idsResult = await getFlashcardIdsForDeck({
-          deckId: currentDeckId,
+      if (currentSubjectId) {
+        const idsResult = await getFlashcardIdsForSubject({
+          subjectId: currentSubjectId,
         });
 
         if ("errorCode" in idsResult) {
@@ -113,7 +113,9 @@ export function ValidateFlashcardsDialog({
     }
   };
 
-  const scopeLabel = currentDeckId ? "the selected deck" : "all flashcards";
+  const scopeLabel = currentSubjectId
+    ? "the selected subject"
+    : "all flashcards";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

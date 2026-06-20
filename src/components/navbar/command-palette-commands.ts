@@ -4,7 +4,6 @@ import {
   CalendarDays,
   ClipboardList,
   FileText,
-  FolderPlus,
   Home,
   Keyboard,
   LaptopMinimal,
@@ -24,12 +23,7 @@ export type PaletteGroup = "Create" | "Windows" | "Go to" | "Settings";
 export type WindowCreateKind = "mindmap" | "note" | "flashcard";
 
 /** Dialogs that need no context and can open straight from the palette. */
-export type ContextFreeDialog =
-  | "subject"
-  | "flashcard"
-  | "deck"
-  | "assessment"
-  | "book";
+export type ContextFreeDialog = "subject" | "flashcard" | "assessment" | "book";
 
 /** Dialogs that require a subject, resolved from route or a picker step. */
 export type SubjectScopedDialog = "note" | "mindmap";
@@ -69,14 +63,6 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["new", "add", "create", "flashcard", "card"],
     icon: Layers,
     action: { kind: "create", dialog: "flashcard" },
-  },
-  {
-    id: "create-deck",
-    label: "Create Deck",
-    group: "Create",
-    keywords: ["new", "add", "create", "deck", "folder"],
-    icon: FolderPlus,
-    action: { kind: "create", dialog: "deck" },
   },
   {
     id: "create-assessment",
@@ -153,7 +139,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "goto-flashcards",
     label: "Go to Flashcards",
     group: "Go to",
-    keywords: ["flashcards", "review", "cards", "decks"],
+    keywords: ["flashcards", "review", "cards", "subjects"],
     icon: Layers,
     action: { kind: "navigate", href: "/flashcards" },
   },

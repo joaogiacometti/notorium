@@ -14,8 +14,8 @@ import { FlashcardCardTypeField } from "@/components/flashcards/dialogs/flashcar
 import { FlashcardClozeFields } from "@/components/flashcards/dialogs/flashcard-cloze-fields";
 import { OcclusionFields } from "@/components/flashcards/occlusion/occlusion-fields";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { DeckSelect } from "@/components/shared/deck-select";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +35,7 @@ import {
   type FlashcardFormValues as FlashcardFormSchemaValues,
   hasRichTextContent,
 } from "@/features/flashcards/validation";
-import type { DeckEntity } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 type FlashcardFormValues = FlashcardFormSchemaValues;
@@ -76,7 +76,7 @@ interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   form: UseFormReturn<TValues>;
   formId: string;
   editorResetVersion?: number;
-  decks?: DeckEntity[];
+  subjects?: SubjectOption[];
   onSubmit: (values: TValues) => Promise<void>;
   isSubmitting: boolean;
   isSaved?: boolean;
@@ -111,7 +111,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   form,
   formId,
   editorResetVersion,
-  decks,
+  subjects,
   onSubmit,
   isSubmitting,
   isSaved,
@@ -172,19 +172,19 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
         <FieldGroup className="gap-5">
-          {decks ? (
+          {subjects ? (
             <Controller
-              name={"deckId" as FieldPath<TValues>}
+              name={"subjectId" as FieldPath<TValues>}
               control={form.control}
               render={({ field, fieldState }) => (
-                <DeckSelect
+                <SubjectSelect
                   value={(field.value ?? null) as string | null}
                   onChange={field.onChange}
-                  decks={decks}
-                  id={`${formId}-deck`}
+                  subjects={subjects}
+                  id={`${formId}-subject`}
                   error={fieldState.error?.message as string}
                   ariaInvalid={fieldState.invalid}
-                  disabled={decks.length === 0}
+                  disabled={subjects.length === 0}
                 />
               )}
             />

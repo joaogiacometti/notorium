@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MindmapDetail } from "@/components/mindmaps/mindmap-detail";
-import type { DeckOption, MindmapEntity } from "@/lib/server/api-contracts";
+import type { MindmapEntity, SubjectOption } from "@/lib/server/api-contracts";
 
 const { editMindmapMock, pushMock, toastErrorMock, toastSuccessMock } =
   vi.hoisted(() => ({
@@ -112,10 +112,13 @@ const mindmap: MindmapEntity = {
   updatedAt: new Date("2026-04-20T10:00:00.000Z"),
 };
 
-const deck: DeckOption = {
+const deck: SubjectOption = {
   id: "deck-1",
   userId: "user-1",
-  parentDeckId: null,
+  parentSubjectId: null,
+  kind: "general",
+  totalClasses: null,
+  maxMisses: null,
   name: "Biology",
   path: "Biology",
   createdAt: new Date("2026-04-20T10:00:00.000Z"),
@@ -124,14 +127,15 @@ const deck: DeckOption = {
 
 function renderDetail(
   root: Root,
-  overrides?: { aiEnabled?: boolean; decks?: DeckOption[] },
+  overrides?: { aiEnabled?: boolean; subjects?: SubjectOption[] },
 ) {
   root.render(
     <MindmapDetail
       aiEnabled={overrides?.aiEnabled ?? true}
-      decks={overrides?.decks ?? [deck]}
+      subjects={overrides?.subjects ?? [deck]}
       mindmap={mindmap}
       subjectName="Subject 1"
+      subjectHref="/subjects/subject-1"
     />,
   );
 }
@@ -245,12 +249,14 @@ describe("MindmapDetail generate flashcards action", () => {
   });
 
   it("disables the generate action when no decks exist", () => {
-    act(() => renderDetail(root, { decks: [] }));
+    act(() => renderDetail(root, { subjects: [] }));
 
     const button = findButton(container, "Generate flashcards");
 
     expect(button?.disabled).toBe(true);
-    expect(button?.title).toBe("Create a deck before generating flashcards.");
+    expect(button?.title).toBe(
+      "Create a subject before generating flashcards.",
+    );
   });
 
   it("opens the generate dialog from the header menu", () => {

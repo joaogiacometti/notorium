@@ -52,9 +52,9 @@ function makeCard(): FlashcardReviewEntity {
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
-    deckId: "deck-1",
-    deckName: "Biology",
-    deckPath: "Biology",
+    subjectId: "deck-1",
+    subjectName: "Biology",
+    subjectPath: "Biology",
   };
 }
 
@@ -179,7 +179,7 @@ describe("FocusModeOverlay", () => {
         <FocusModeOverlay
           currentCard={currentCard}
           reviewState={makeReviewState(currentCard)}
-          decks={[]}
+          subjects={[]}
           progress={0}
           revealed={false}
           isPending={false}

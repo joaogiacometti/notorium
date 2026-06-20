@@ -17,12 +17,12 @@ import {
   useWindowManager,
   type WindowInstance,
 } from "@/components/windows/window-manager-context";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 interface WindowOverlayProps {
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
 }
 
 /**
@@ -35,7 +35,7 @@ interface WindowOverlayProps {
  */
 export function WindowOverlay({
   aiEnabled,
-  decks,
+  subjects,
 }: Readonly<WindowOverlayProps>) {
   const { windows, activeWindowId, minimizeActive } = useWindowManager();
 
@@ -64,7 +64,7 @@ export function WindowOverlay({
           window={window}
           active={window.id === activeWindowId}
           aiEnabled={aiEnabled}
-          decks={decks}
+          subjects={subjects}
         />
       ))}
     </div>,
@@ -87,14 +87,14 @@ interface WindowFrameProps {
   window: WindowInstance;
   active: boolean;
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
 }
 
 function WindowFrame({
   window,
   active,
   aiEnabled,
-  decks,
+  subjects,
 }: Readonly<WindowFrameProps>) {
   const { requestCloseWindow, minimizeActive, setWindowGeometry } =
     useWindowManager();
@@ -156,7 +156,11 @@ function WindowFrame({
         </Button>
       </div>
       <div className="min-h-0 flex-1 overflow-hidden">
-        <WindowContent window={window} aiEnabled={aiEnabled} decks={decks} />
+        <WindowContent
+          window={window}
+          aiEnabled={aiEnabled}
+          subjects={subjects}
+        />
       </div>
       {RESIZE_HANDLES.map((handle) => (
         <div

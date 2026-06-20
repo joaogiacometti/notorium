@@ -61,9 +61,9 @@ export const flashcardClozeExtraSchema = z
   )
   .default("");
 
-const deckIdField = z
+const subjectIdField = z
   .string()
-  .min(1, validationMessage("Validation.flashcards.deckRequired"));
+  .min(1, validationMessage("Validation.flashcards.subjectRequired"));
 
 // A single rectangular mask, coordinates normalized to 0..1 of the image box.
 export const occlusionRegionSchema = z.object({
@@ -130,21 +130,21 @@ function withDefaultBasicType(value: unknown): unknown {
 
 const basicCreateObject = z.object({
   type: z.literal("basic"),
-  deckId: deckIdField,
+  subjectId: subjectIdField,
   front: flashcardFrontSchema,
   back: flashcardBackSchema,
 });
 
 const clozeCreateObject = z.object({
   type: z.literal("cloze"),
-  deckId: deckIdField,
+  subjectId: subjectIdField,
   clozeSource: flashcardClozeSourceSchema,
   back: flashcardClozeExtraSchema,
 });
 
 const occlusionCreateObject = z.object({
   type: z.literal("occlusion"),
-  deckId: deckIdField,
+  subjectId: subjectIdField,
   occlusionImagePathname: occlusionImagePathnameSchema,
   occlusionRegions: occlusionRegionsSchema,
 });
@@ -186,7 +186,7 @@ export const flashcardFormSchema = z
   .object({
     type: z.enum(["basic", "cloze", "occlusion"]),
     id: z.string().optional(),
-    deckId: deckIdField,
+    subjectId: subjectIdField,
     front: z.string(),
     back: z.string(),
     clozeSource: z.string(),
@@ -261,7 +261,7 @@ function addFieldIssues(
  * Maps flat form values to the server create payload, dropping inactive fields.
  *
  * @example
- * toCreateFlashcardPayload({ type: "cloze", deckId, clozeSource, back, front: "" });
+ * toCreateFlashcardPayload({ type: "cloze", subjectId, clozeSource, back, front: "" });
  */
 export function toCreateFlashcardPayload(
   values: FlashcardFormValues,
@@ -269,7 +269,7 @@ export function toCreateFlashcardPayload(
   if (values.type === "occlusion") {
     return {
       type: "occlusion",
-      deckId: values.deckId,
+      subjectId: values.subjectId,
       occlusionImagePathname: values.occlusionImagePathname,
       occlusionRegions: values.occlusionRegions,
     };
@@ -277,14 +277,14 @@ export function toCreateFlashcardPayload(
   if (values.type === "cloze") {
     return {
       type: "cloze",
-      deckId: values.deckId,
+      subjectId: values.subjectId,
       clozeSource: values.clozeSource,
       back: values.back,
     };
   }
   return {
     type: "basic",
-    deckId: values.deckId,
+    subjectId: values.subjectId,
     front: values.front,
     back: values.back,
   };
@@ -294,7 +294,7 @@ export function toCreateFlashcardPayload(
  * Maps flat form values (with an id) to the server edit payload.
  *
  * @example
- * toEditFlashcardPayload({ id, type: "basic", deckId, front, back, clozeSource: "" });
+ * toEditFlashcardPayload({ id, type: "basic", subjectId, front, back, clozeSource: "" });
  */
 export function toEditFlashcardPayload(
   values: FlashcardFormValues & { id: string },
@@ -303,7 +303,7 @@ export function toEditFlashcardPayload(
     return {
       id: values.id,
       type: "occlusion",
-      deckId: values.deckId,
+      subjectId: values.subjectId,
       occlusionImagePathname: values.occlusionImagePathname,
       occlusionRegions: values.occlusionRegions,
     };
@@ -312,7 +312,7 @@ export function toEditFlashcardPayload(
     return {
       id: values.id,
       type: "cloze",
-      deckId: values.deckId,
+      subjectId: values.subjectId,
       clozeSource: values.clozeSource,
       back: values.back,
     };
@@ -320,16 +320,14 @@ export function toEditFlashcardPayload(
   return {
     id: values.id,
     type: "basic",
-    deckId: values.deckId,
+    subjectId: values.subjectId,
     front: values.front,
     back: values.back,
   };
 }
 
 export const generateFlashcardBackSchema = z.object({
-  deckId: z
-    .string()
-    .min(1, validationMessage("Validation.flashcards.deckRequired")),
+  subjectId: subjectIdField,
   front: flashcardFrontSchema,
   currentBack: flashcardBackSchema.optional(),
 });
@@ -371,9 +369,7 @@ export type BulkResetFlashcardsForm = z.infer<typeof bulkResetFlashcardsSchema>;
 
 export const bulkMoveFlashcardsSchema = z.object({
   ids: bulkIdsSchema,
-  deckId: z
-    .string()
-    .min(1, validationMessage("Validation.flashcards.deckRequired")),
+  subjectId: subjectIdField,
 });
 
 export type BulkMoveFlashcardsForm = z.infer<typeof bulkMoveFlashcardsSchema>;
@@ -416,8 +412,8 @@ export const flashcardsManageQuerySchema = z.object({
     .min(LIMITS.pageSizeMin)
     .max(LIMITS.pageSizeMax)
     .default(25),
-  deckId: idSchema.optional(),
-  deckIds: optionalBulkIdsSchema,
+  subjectId: idSchema.optional(),
+  subjectIds: optionalBulkIdsSchema,
   search: z.string().trim().max(LIMITS.searchQueryMax).optional(),
 });
 
@@ -435,18 +431,16 @@ export const validateFlashcardsSchema = z.object({
 
 export type ValidateFlashcardsForm = z.infer<typeof validateFlashcardsSchema>;
 
-export const getFlashcardIdsForDeckSchema = z.object({
-  deckId: z.string().min(1),
+export const getFlashcardIdsForSubjectSchema = z.object({
+  subjectId: z.string().min(1),
 });
 
-export type GetFlashcardIdsForDeckForm = z.infer<
-  typeof getFlashcardIdsForDeckSchema
+export type GetFlashcardIdsForSubjectForm = z.infer<
+  typeof getFlashcardIdsForSubjectSchema
 >;
 
 export const generateFlashcardsSchema = z.object({
-  deckId: z
-    .string()
-    .min(1, validationMessage("Validation.flashcards.deckRequired")),
+  subjectId: subjectIdField,
   text: z
     .string()
     .min(1, validationMessage("Validation.flashcards.textRequired"))
@@ -460,9 +454,7 @@ export type GenerateFlashcardsForm = z.infer<typeof generateFlashcardsSchema>;
 
 export const generateNoteFlashcardsSchema = z.object({
   noteId: idSchema,
-  deckId: z
-    .string()
-    .min(1, validationMessage("Validation.flashcards.deckRequired")),
+  subjectId: subjectIdField,
 });
 
 export type GenerateNoteFlashcardsForm = z.infer<
@@ -471,9 +463,7 @@ export type GenerateNoteFlashcardsForm = z.infer<
 
 export const generateMindmapFlashcardsSchema = z.object({
   mindmapId: idSchema,
-  deckId: z
-    .string()
-    .min(1, validationMessage("Validation.flashcards.deckRequired")),
+  subjectId: subjectIdField,
 });
 
 export type GenerateMindmapFlashcardsForm = z.infer<

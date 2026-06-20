@@ -31,7 +31,7 @@ import { useReaderSidebarCollapsed } from "@/components/library/use-reader-sideb
 import { useReaderZoom } from "@/components/library/use-reader-zoom";
 import { useReadingPosition } from "@/components/library/use-reading-position";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 interface ReaderLayoutProps {
@@ -44,7 +44,7 @@ interface ReaderLayoutProps {
   readerColorInverted: boolean;
   initialAnnotations: BookAnnotationDto[];
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
 }
 
 interface ReaderPageProps {
@@ -145,7 +145,7 @@ export function ReaderLayout({
   readerColorInverted,
   initialAnnotations,
   aiEnabled,
-  decks,
+  subjects,
 }: Readonly<ReaderLayoutProps>) {
   useReadingPosition({ documentId, bookId, initialPage });
   useReaderZoom({
@@ -196,7 +196,7 @@ export function ReaderLayout({
         <ReaderSelectionMenu
           documentId={documentId}
           aiEnabled={aiEnabled}
-          decks={decks}
+          subjects={subjects}
         />
       </div>
     </ReaderNavHistoryProvider>

@@ -11,14 +11,14 @@ import type {
 import { useExamSession } from "./use-exam-session";
 
 interface UseFlashcardExamControllerParams {
-  selectedDeckId?: string;
+  selectedSubjectId?: string;
   isPending: boolean;
   resetFocusViewState: () => void;
   setFocusMode: (isFocusMode: boolean) => void;
 }
 
-function getExamScopeKey(deckId?: string) {
-  return deckId ?? "all";
+function getExamScopeKey(subjectId?: string) {
+  return subjectId ?? "all";
 }
 
 /**
@@ -26,14 +26,14 @@ function getExamScopeKey(deckId?: string) {
  *
  * @example
  * const examController = useFlashcardExamController({
- *   selectedDeckId,
+ *   selectedSubjectId,
  *   isPending,
  *   resetFocusViewState,
  *   setFocusMode,
  * });
  */
 export function useFlashcardExamController({
-  selectedDeckId,
+  selectedSubjectId,
   isPending,
   resetFocusViewState,
   setFocusMode,
@@ -43,7 +43,7 @@ export function useFlashcardExamController({
   );
   const [isLoadingExamCards, setIsLoadingExamCards] = useState(false);
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
-  const examScopeRef = useRef<{ deckId?: string }>({});
+  const examScopeRef = useRef<{ subjectId?: string }>({});
   const examCardsRequestIdRef = useRef(0);
   const examCardsRequestRef = useRef<{
     scopeKey: string;
@@ -54,14 +54,14 @@ export function useFlashcardExamController({
   const isExamMode = !!examSessionData;
 
   useEffect(() => {
-    if (examScopeRef.current.deckId !== selectedDeckId) {
+    if (examScopeRef.current.subjectId !== selectedSubjectId) {
       setExamCards(null);
-      examScopeRef.current = { deckId: selectedDeckId };
+      examScopeRef.current = { subjectId: selectedSubjectId };
       examCardsRequestIdRef.current += 1;
       examCardsRequestRef.current = null;
       setIsLoadingExamCards(false);
     }
-  }, [selectedDeckId]);
+  }, [selectedSubjectId]);
 
   async function ensureExamCardsLoaded(): Promise<
     FlashcardReviewEntity[] | null
@@ -70,7 +70,7 @@ export function useFlashcardExamController({
       return examCards;
     }
 
-    const scopeKey = getExamScopeKey(selectedDeckId);
+    const scopeKey = getExamScopeKey(selectedSubjectId);
     if (examCardsRequestRef.current?.scopeKey === scopeKey) {
       return examCardsRequestRef.current.promise;
     }
@@ -79,7 +79,7 @@ export function useFlashcardExamController({
     examCardsRequestIdRef.current = requestId;
 
     setIsLoadingExamCards(true);
-    const request = getExamFlashcards({ deckId: selectedDeckId })
+    const request = getExamFlashcards({ subjectId: selectedSubjectId })
       .then((cards) => {
         if (examCardsRequestIdRef.current === requestId) {
           setExamCards(cards);
@@ -124,7 +124,7 @@ export function useFlashcardExamController({
       return;
     }
 
-    examSession.startSession(cards, { deckId: selectedDeckId });
+    examSession.startSession(cards, { subjectId: selectedSubjectId });
     resetFocusViewState();
     setFocusMode(true);
   }
@@ -172,7 +172,7 @@ export function useFlashcardExamController({
       return;
     }
 
-    examSession.startSession(weakCards, { deckId: selectedDeckId });
+    examSession.startSession(weakCards, { subjectId: selectedSubjectId });
     resetFocusViewState();
     setFocusMode(true);
   }

@@ -31,16 +31,10 @@ vi.mock("@/components/attendance/attendance-summary", () => ({
   ),
 }));
 
-vi.mock("@/components/documents/documents-list", () => ({
-  DocumentsList: () => <section data-testid="documents-list" />,
-}));
-
-vi.mock("@/components/documents/create-document-menu", () => ({
-  CreateDocumentMenu: () => <button type="button">Create</button>,
-}));
-
-vi.mock("@/components/subjects/subject-subfolder-grid", () => ({
-  SubjectSubfolderGrid: () => <section data-testid="subfolder-grid" />,
+vi.mock("@/components/subjects/subject-assessments-summary", () => ({
+  SubjectAssessmentsSummary: ({ subjectId }: { subjectId: string }) => (
+    <section data-testid="assessments-summary">{subjectId}</section>
+  ),
 }));
 
 function createSubject(overrides: Partial<SubjectEntity> = {}): SubjectEntity {
@@ -95,73 +89,42 @@ describe("SubjectDetailContent", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the read-only subject sections", async () => {
+  it("renders attendance and assessment dashboards for academic subjects", async () => {
     await act(async () => {
       root.render(
         <SubjectDetailContent
           subject={createSubject()}
-          childSubjects={[]}
-          documents={[]}
           misses={[]}
           assessments={[createAssessment()]}
         />,
       );
     });
 
-    expect(container.textContent).toContain("Assessment summary");
-    expect(container.textContent).toContain("80.0");
     expect(
       container.querySelector('[data-testid="attendance-summary"]'),
     ).toBeTruthy();
     expect(
-      container.querySelector('[data-testid="documents-list"]'),
+      container.querySelector('[data-testid="assessments-summary"]'),
     ).toBeTruthy();
   });
 
-  it("can render without online assessment actions", async () => {
-    await act(async () => {
-      root.render(
-        <SubjectDetailContent
-          subject={createSubject()}
-          childSubjects={[]}
-          documents={[]}
-          misses={[]}
-          assessments={[]}
-          showAssessmentActions={false}
-        />,
-      );
-    });
-
-    expect(container.textContent).not.toContain("Manage assessments");
-  });
-
-  it("hides attendance and assessments for general subjects", async () => {
+  it("shows a sidebar pointer for general subjects without dashboards", async () => {
     await act(async () => {
       root.render(
         <SubjectDetailContent
           subject={createSubject({ kind: "general" })}
-          childSubjects={[]}
-          documents={[
-            {
-              id: "doc-1",
-              title: "Doc",
-              updatedAt: new Date(),
-              kind: "note",
-              subjectId: "subject-1",
-            },
-          ]}
           misses={[]}
-          assessments={[createAssessment()]}
+          assessments={[]}
         />,
       );
     });
 
-    expect(container.textContent).not.toContain("Assessment summary");
+    expect(container.textContent).toContain("Managed in the sidebar");
     expect(
       container.querySelector('[data-testid="attendance-summary"]'),
     ).toBeNull();
     expect(
-      container.querySelector('[data-testid="documents-list"]'),
-    ).toBeTruthy();
+      container.querySelector('[data-testid="assessments-summary"]'),
+    ).toBeNull();
   });
 });

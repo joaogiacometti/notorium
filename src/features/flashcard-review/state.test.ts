@@ -44,7 +44,7 @@ function makeCard(
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
-    deckId: "deck-1",
+    subjectId: "deck-1",
     ...overrides,
   };
 }

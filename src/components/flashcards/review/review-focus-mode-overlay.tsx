@@ -20,18 +20,18 @@ import {
 import type { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
-  DeckEntity,
-  DeckOption,
   FlashcardReviewState,
+  SubjectEntity,
+  SubjectOption,
 } from "@/lib/server/api-contracts";
-import { isDeckOption } from "@/lib/utils";
+import { isSubjectOption } from "@/lib/utils";
 
 type ReviewCard = FlashcardReviewState["cards"][number];
 
 interface FocusModeOverlayProps {
   currentCard: ReviewCard | null;
   reviewState: FlashcardReviewState;
-  decks: Array<DeckEntity | DeckOption>;
+  subjects: Array<SubjectEntity | SubjectOption>;
   progress: number;
   revealed: boolean;
   isPending: boolean;
@@ -52,7 +52,7 @@ interface FocusModeOverlayProps {
  * Routes the focus overlay to the due-review or exam session presentation.
  *
  * @example
- * <FocusModeOverlay currentCard={card} reviewState={state} decks={decks} progress={0} revealed={false} isPending={false} pendingGrade={null} previewLabels={null} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
+ * <FocusModeOverlay currentCard={card} reviewState={state} subjects={subjects} progress={0} revealed={false} isPending={false} pendingGrade={null} previewLabels={null} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
  */
 export function FocusModeOverlay(props: Readonly<FocusModeOverlayProps>) {
   if (!props.currentCard) {
@@ -75,7 +75,7 @@ interface SessionOverlayProps extends FocusModeOverlayProps {
 function DueReviewFocusModeOverlay({
   currentCard,
   reviewState,
-  decks,
+  subjects,
   progress,
   revealed,
   isPending,
@@ -115,7 +115,7 @@ function DueReviewFocusModeOverlay({
     >
       <ReviewSessionCardContent
         card={currentCard}
-        deckLabel={getDeckLabel(currentCard, decks)}
+        subjectLabel={getSubjectLabel(currentCard, subjects)}
         revealed={revealed}
       />
     </ReviewSessionShell>
@@ -124,7 +124,7 @@ function DueReviewFocusModeOverlay({
 
 function ExamFocusModeOverlay({
   currentCard,
-  decks,
+  subjects,
   progress,
   revealed,
   isPending,
@@ -167,7 +167,7 @@ function ExamFocusModeOverlay({
     >
       <ReviewSessionCardContent
         card={currentCard}
-        deckLabel={getDeckLabel(currentCard, decks)}
+        subjectLabel={getSubjectLabel(currentCard, subjects)}
         revealed={revealed}
       />
     </ReviewSessionShell>
@@ -309,21 +309,25 @@ function ExamBadge() {
   );
 }
 
-function getDeckLabel(
+function getSubjectLabel(
   currentCard: ReviewCard,
-  decks: Array<DeckEntity | DeckOption>,
+  subjects: Array<SubjectEntity | SubjectOption>,
 ) {
-  const currentDeck = decks.find((deck) => deck.id === currentCard.deckId);
-
-  if (currentCard.deckPath) {
-    return currentCard.deckPath;
+  if (currentCard.subjectPath) {
+    return currentCard.subjectPath;
   }
 
-  if (!currentDeck) {
+  const currentSubject = subjects?.find(
+    (subject) => subject.id === currentCard.subjectId,
+  );
+
+  if (!currentSubject) {
     return "";
   }
 
-  return isDeckOption(currentDeck) ? currentDeck.path : currentDeck.name;
+  return isSubjectOption(currentSubject)
+    ? currentSubject.path
+    : currentSubject.name;
 }
 
 function getDueReviewHeaderText(reviewState: FlashcardReviewState) {

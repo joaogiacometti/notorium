@@ -356,7 +356,7 @@ export interface FlashcardForMergeSynthesis {
   id: string;
   front: string;
   back: string;
-  deckName: string;
+  subjectName: string;
 }
 
 export function buildMergeSynthesisPrompt(input: {
@@ -365,7 +365,7 @@ export function buildMergeSynthesisPrompt(input: {
 }): string {
   const formatCard = (card: FlashcardForMergeSynthesis, label: string) =>
     `${label} (ID: ${card.id})
-Deck: ${card.deckName}
+Subject: ${card.subjectName}
 Front: ${card.front}
 Back: ${card.back}`;
 
@@ -383,12 +383,10 @@ Back: ${card.back}`;
 
 export function buildGenerateFlashcardBackPrompt(input: {
   subjectName?: string;
-  deckName?: string;
   front: string;
 }): string {
   return [
     ...(input.subjectName ? [`Subject context: ${input.subjectName}`] : []),
-    ...(input.deckName ? [`Deck context: ${input.deckName}`] : []),
     "Task: Write the back of a study flashcard for the front below.",
     input.subjectName
       ? "Use the subject only as background context. Answer only what the front asks."
@@ -399,13 +397,11 @@ export function buildGenerateFlashcardBackPrompt(input: {
 
 export function buildImproveFlashcardBackPrompt(input: {
   subjectName?: string;
-  deckName?: string;
   front: string;
   currentBack: string;
 }): string {
   return [
     ...(input.subjectName ? [`Subject context: ${input.subjectName}`] : []),
-    ...(input.deckName ? [`Deck context: ${input.deckName}`] : []),
     `Front: ${input.front}`,
     `Current back: ${input.currentBack}`,
     "",
@@ -415,13 +411,11 @@ export function buildImproveFlashcardBackPrompt(input: {
 
 export function buildGenerateFlashcardsPrompt(input: {
   subjectName?: string;
-  deckName?: string;
   noteTitle?: string;
   text: string;
 }): string {
   return [
     ...(input.subjectName ? [`Subject: ${input.subjectName}`] : []),
-    ...(input.deckName ? [`Deck: ${input.deckName}`] : []),
     ...(input.noteTitle ? [`Note title: ${input.noteTitle}`] : []),
     "",
     "Source material:",
@@ -435,7 +429,7 @@ export interface FlashcardForValidation {
   id: string;
   front: string;
   back: string;
-  deckName: string;
+  subjectName: string;
 }
 
 export function buildValidateFlashcardsPrompt(
@@ -445,7 +439,7 @@ export function buildValidateFlashcardsPrompt(
     .map(
       (card, index) =>
         `Card ${index + 1} (ID: ${card.id})
-Deck: ${card.deckName}
+Subject: ${card.subjectName}
 Front: ${card.front}
 Back: ${card.back}`,
     )

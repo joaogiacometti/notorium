@@ -113,12 +113,12 @@ export async function getRefineGroupsForUser(
         GROUP BY flashcard_id
         HAVING count(*) >= ${windowSize}
       )
-      SELECT f.id, f.front, f.back, f.deck_id AS "deckId",
-             d.name AS "deckName", f.review_count AS "reviewCount",
+      SELECT f.id, f.front, f.back, f.subject_id AS "subjectId",
+             d.name AS "subjectName", f.review_count AS "reviewCount",
              f.lapse_count AS "lapseCount", r.recent_ratings AS "recentRatings"
       FROM recent r
       INNER JOIN flashcard f ON f.id = r.flashcard_id AND f.user_id = ${userId}
-      INNER JOIN deck d ON d.id = f.deck_id
+      INNER JOIN subject d ON d.id = f.subject_id
       ORDER BY f.last_reviewed_at DESC NULLS LAST
     `,
   );
@@ -129,29 +129,29 @@ export async function getRefineGroupsForUser(
 
 /**
  * Find merge candidates similar to the given card via trigram similarity
- * across all the user's cards, ranking same-deck matches first.
+ * across all the user's cards, ranking same-subject matches first.
  *
  * Example: const candidates = await findSimilarFlashcardsForUser(userId, card);
  */
 export async function findSimilarFlashcardsForUser(
   userId: string,
-  source: { id: string; deckId: string; front: string; back: string },
+  source: { id: string; subjectId: string | null; front: string; back: string },
 ): Promise<RefineMergeCandidate[]> {
   const frontText = richTextToPlainText(source.front);
   const backText = richTextToPlainText(source.back);
   const result = await getDb().execute(
     sql`
-      SELECT f.id, f.front, f.back, f.deck_id AS "deckId",
-             d.name AS "deckName"
+      SELECT f.id, f.front, f.back, f.subject_id AS "subjectId",
+             d.name AS "subjectName"
       FROM flashcard f
-      INNER JOIN deck d ON d.id = f.deck_id
+      INNER JOIN subject d ON d.id = f.subject_id
       WHERE f.user_id = ${userId}
         AND f.id != ${source.id}
         AND (
           similarity(f.front, ${frontText}) > ${REFINE_FRONT_SIMILARITY_THRESHOLD}
           OR similarity(f.back, ${backText}) > ${REFINE_BACK_SIMILARITY_THRESHOLD}
         )
-      ORDER BY (f.deck_id = ${source.deckId}) DESC,
+      ORDER BY (f.subject_id = ${source.subjectId}) DESC,
                greatest(
                  similarity(f.front, ${frontText}),
                  similarity(f.back, ${backText})

@@ -2,7 +2,6 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { type flashcard, flashcard as flashcardTable } from "@/db/schema";
 import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
-import { getDeckRecordForUser } from "@/features/decks/queries";
 import {
   parseClozeOrdinals,
   renderClozeBack,
@@ -10,9 +9,10 @@ import {
 } from "@/features/flashcards/cloze";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
-  countFlashcardsByDeckForUser,
+  countFlashcardsBySubjectForUser,
   getClozeSiblingsForUser,
 } from "@/features/flashcards/queries";
+import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { isUniqueViolationError } from "@/lib/db/errors";
 import {
@@ -32,7 +32,7 @@ import {
 type FlashcardInsert = typeof flashcard.$inferInsert;
 
 export interface ClozeNoteInput {
-  deckId: string;
+  subjectId: string;
   clozeSource: string;
   back: string;
 }
@@ -73,7 +73,7 @@ function buildSiblingInsert(
     data.back,
   );
   return {
-    deckId: data.deckId,
+    subjectId: data.subjectId,
     userId,
     type: "cloze",
     clozeNoteId,
@@ -95,18 +95,18 @@ function buildSiblingInsert(
   };
 }
 
-async function assertDeckCapacity(
+async function assertSubjectCapacity(
   userId: string,
-  deckId: string,
+  subjectId: string,
   additionalCards: number,
 ): Promise<ActionErrorResult | null> {
   if (additionalCards <= 0) {
     return null;
   }
-  const currentCount = await countFlashcardsByDeckForUser(userId, deckId);
-  if (currentCount + additionalCards > LIMITS.maxFlashcardsPerDeck) {
+  const currentCount = await countFlashcardsBySubjectForUser(userId, subjectId);
+  if (currentCount + additionalCards > LIMITS.maxFlashcardsPerSubject) {
     return actionError("limits.flashcardLimit", {
-      errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
     });
   }
   return null;
@@ -118,21 +118,21 @@ async function assertDeckCapacity(
  * representative card.
  *
  * @example
- * await createClozeNoteForUser(userId, { deckId, clozeSource, back: "" });
+ * await createClozeNoteForUser(userId, { subjectId, clozeSource, back: "" });
  */
 export async function createClozeNoteForUser(
   userId: string,
   data: ClozeNoteInput,
 ): Promise<CreateFlashcardResult> {
-  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
-  if (!existingDeck) {
-    return actionError("decks.notFound");
+  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
+  if (!existingSubject) {
+    return actionError("subjects.notFound");
   }
 
   const ordinals = parseClozeOrdinals(data.clozeSource);
-  const overCapacity = await assertDeckCapacity(
+  const overCapacity = await assertSubjectCapacity(
     userId,
-    data.deckId,
+    data.subjectId,
     ordinals.length,
   );
   if (overCapacity) {
@@ -174,7 +174,11 @@ async function syncSiblings(
     if (existing) {
       await db
         .update(flashcardTable)
-        .set({ deckId: data.deckId, clozeSource: data.clozeSource, ...content })
+        .set({
+          subjectId: data.subjectId,
+          clozeSource: data.clozeSource,
+          ...content,
+        })
         .where(eq(flashcardTable.id, existing.id));
     } else {
       await db
@@ -198,32 +202,32 @@ async function syncSiblings(
  * their FSRS state), inserts new ordinals, and deletes removed ones.
  *
  * @example
- * await editClozeNoteForUser(userId, { deckId, clozeSource, back }, existing);
+ * await editClozeNoteForUser(userId, { subjectId, clozeSource, back }, existing);
  */
 export async function editClozeNoteForUser(
   userId: string,
   data: ClozeNoteInput & { id: string },
   existingFlashcard: FlashcardEntity,
 ): Promise<EditFlashcardResult> {
-  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
-  if (!existingDeck) {
-    return actionError("decks.notFound");
+  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
+  if (!existingSubject) {
+    return actionError("subjects.notFound");
   }
 
   const clozeNoteId = existingFlashcard.clozeNoteId ?? crypto.randomUUID();
   const siblings = await getClozeSiblingsForUser(userId, clozeNoteId);
   const newOrdinals = parseClozeOrdinals(data.clozeSource);
-  // Moving decks shifts every surviving sibling into the target deck; staying
+  // Moving subjects shifts every surviving sibling into the target subject; staying
   // put only adds the brand-new ordinals there.
-  const deckChanged = existingFlashcard.deckId !== data.deckId;
-  const additionalCards = deckChanged
+  const subjectChanged = existingFlashcard.subjectId !== data.subjectId;
+  const additionalCards = subjectChanged
     ? newOrdinals.length
     : newOrdinals.filter(
         (ordinal) => !siblings.some((card) => card.clozeOrdinal === ordinal),
       ).length;
-  const overCapacity = await assertDeckCapacity(
+  const overCapacity = await assertSubjectCapacity(
     userId,
-    data.deckId,
+    data.subjectId,
     additionalCards,
   );
   if (overCapacity) {
@@ -257,7 +261,7 @@ export async function editClozeNoteForUser(
   return {
     success: true,
     flashcard: representative,
-    previousDeckId: existingFlashcard.deckId,
+    previousSubjectId: existingFlashcard.subjectId,
   };
 }
 

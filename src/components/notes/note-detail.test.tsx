@@ -4,7 +4,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteDetail } from "@/components/notes/note-detail";
-import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
+import type { NoteEntity, SubjectOption } from "@/lib/server/api-contracts";
 
 const {
   copyNoteContentMock,
@@ -131,10 +131,13 @@ const note: NoteEntity = {
   updatedAt: new Date("2026-04-20T10:00:00.000Z"),
 };
 
-const deck: DeckOption = {
+const deck: SubjectOption = {
   id: "deck-1",
   userId: "user-1",
-  parentDeckId: null,
+  parentSubjectId: null,
+  kind: "general",
+  totalClasses: null,
+  maxMisses: null,
   name: "Biology",
   path: "Biology",
   createdAt: new Date("2026-04-20T10:00:00.000Z"),
@@ -153,9 +156,10 @@ function renderNoteDetail(
     <QueryClientProvider client={queryClient}>
       <NoteDetail
         aiEnabled
-        decks={[deck]}
+        subjects={[deck]}
         note={note}
         subjectName="Subject 1"
+        subjectHref="/subjects/subject-1"
         {...props}
       />
     </QueryClientProvider>,
@@ -341,13 +345,15 @@ describe("NoteDetail", () => {
 
   it("disables the generate action when no decks exist", async () => {
     await act(async () => {
-      renderNoteDetail(root, { decks: [] });
+      renderNoteDetail(root, { subjects: [] });
     });
 
     const button = findButton(container, "Generate flashcards");
 
     expect(button?.disabled).toBe(true);
-    expect(button?.title).toBe("Create a deck before generating flashcards.");
+    expect(button?.title).toBe(
+      "Create a subject before generating flashcards.",
+    );
   });
 
   it("opens the generate dialog", async () => {

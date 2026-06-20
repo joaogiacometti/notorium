@@ -3,7 +3,6 @@ import type {
   assessment,
   assessmentAttachment,
   attendanceMiss,
-  deck,
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
@@ -20,6 +19,9 @@ export interface SubjectOption extends SubjectEntity {
 }
 export interface SubjectTreeNode extends SubjectEntity {
   documentCount: number;
+  // Cards due now in this subject and all descendants. Drives the sidebar
+  // review indicator; 0 when nothing is due.
+  dueFlashcardCount: number;
   children: SubjectTreeNode[];
   path: string;
 }
@@ -32,18 +34,6 @@ export type AssessmentAttachmentEntity = InferSelectModel<
   typeof assessmentAttachment
 >;
 export type LibraryBookEntity = InferSelectModel<typeof libraryBook>;
-export type DeckEntity = InferSelectModel<typeof deck>;
-export interface DeckOption extends DeckEntity {
-  path: string;
-}
-export interface DeckWithCount extends DeckEntity {
-  flashcardCount: number;
-}
-export interface DeckTreeNode extends DeckEntity {
-  flashcardCount: number;
-  children: DeckTreeNode[];
-  path: string;
-}
 export interface AssessmentDetailEntity {
   assessment: AssessmentEntity;
   subject: Pick<SubjectEntity, "id" | "name">;
@@ -58,22 +48,22 @@ export interface PlanningAssessmentsPage {
 }
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 export type FlashcardDetailEntity = FlashcardEntity & {
-  deckName: string;
-  deckPath: string;
+  subjectName: string;
+  subjectPath: string;
 };
 export type FlashcardListEntity = FlashcardEntity & {
-  deckName: string;
-  deckPath: string;
+  subjectName: string;
+  subjectPath: string;
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "deckId" | "updatedAt" | "type"
+  "id" | "subjectId" | "updatedAt" | "type"
 > & {
   front: string;
   frontExcerpt: string;
   frontTitle: string | null;
-  deckName: string;
-  deckPath: string;
+  subjectName: string;
+  subjectPath: string;
   // Occlusion notes collapse their per-mask sibling rows into one list row.
   occlusionImagePathname: string | null;
   maskCount: number | null;
@@ -81,7 +71,7 @@ export type FlashcardManageItem = Pick<
 export interface FlashcardManagePage {
   items: FlashcardManageItem[];
   total: number;
-  deckCardCount: number | null;
+  subjectCardCount: number | null;
 }
 export type FlashcardReviewLogEntity = InferSelectModel<
   typeof flashcardReviewLog
@@ -99,7 +89,7 @@ export type FlashcardReviewEntity = Pick<
   | "occlusionImagePathname"
   | "occlusionRegions"
   | "occlusionMaskId"
-  | "deckId"
+  | "subjectId"
   | "state"
   | "dueAt"
   | "stability"
@@ -111,8 +101,8 @@ export type FlashcardReviewEntity = Pick<
   | "reviewCount"
   | "lapseCount"
 > & {
-  deckName?: string;
-  deckPath?: string;
+  subjectName?: string;
+  subjectPath?: string;
 };
 
 export interface FlashcardReviewSummary {
@@ -205,10 +195,10 @@ export type SearchNoteResult = Pick<
 
 export type SearchFlashcardResult = Pick<
   FlashcardEntity,
-  "id" | "front" | "back" | "deckId"
+  "id" | "front" | "back" | "subjectId"
 > & {
-  deckName: string;
-  deckPath: string;
+  subjectName: string;
+  subjectPath: string;
 };
 
 export type SearchMindmapResult = Pick<
@@ -319,7 +309,7 @@ export type EditFlashcardResult =
   | {
       success: true;
       flashcard: FlashcardEntity;
-      previousDeckId: string;
+      previousSubjectId: string | null;
     }
   | ActionErrorResult;
 export type GenerateFlashcardBackResult =
@@ -332,29 +322,29 @@ export type DeleteFlashcardResult =
   | {
       success: true;
       id: string;
-      deckId: string;
+      subjectId: string | null;
     }
   | ActionErrorResult;
 export type BulkDeleteFlashcardsResult =
   | {
       success: true;
       ids: string[];
-      deckIds: string[];
+      subjectIds: string[];
     }
   | ActionErrorResult;
 export type BulkResetFlashcardsResult =
   | {
       success: true;
       ids: string[];
-      deckIds: string[];
+      subjectIds: string[];
     }
   | ActionErrorResult;
 export type BulkMoveFlashcardsResult =
   | {
       success: true;
       ids: string[];
-      deckId: string;
-      previousDeckIds: string[];
+      subjectId: string;
+      previousSubjectIds: string[];
     }
   | ActionErrorResult;
 export type ResetFlashcardResult =
@@ -380,35 +370,7 @@ export interface FlashcardValidationIssue {
 export interface FlashcardValidationItem {
   id: string;
   front: string;
-  deckName: string;
-  deckPath?: string;
-  deckId: string;
+  subjectName: string;
+  subjectPath?: string;
+  subjectId: string | null;
 }
-
-export type CreateDeckResult =
-  | {
-      success: true;
-      deck: DeckEntity;
-    }
-  | ActionErrorResult;
-export type EditDeckResult =
-  | {
-      success: true;
-      deck: DeckEntity;
-    }
-  | ActionErrorResult;
-export type DeleteDeckResult =
-  | {
-      success: true;
-      id: string;
-      parentDeckId: string | null;
-    }
-  | ActionErrorResult;
-export type MoveDeckResult =
-  | {
-      success: true;
-      id: string;
-      previousParentDeckId: string | null;
-      newParentDeckId: string | null;
-    }
-  | ActionErrorResult;

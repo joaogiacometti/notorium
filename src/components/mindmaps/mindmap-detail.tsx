@@ -42,15 +42,20 @@ import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
-import type { DeckOption, MindmapEntity } from "@/lib/server/api-contracts";
+import type { MindmapEntity, SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 
 interface MindmapDetailProps {
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   mindmap: MindmapEntity;
   subjectName: string;
+  /**
+   * The subject's detail-page href, or `null` for general subjects (which have
+   * no page). Drives the breadcrumb link and post-delete navigation.
+   */
+  subjectHref: string | null;
   /** When hosted in a floating window: drop the page top bar and fill height. */
   embedded?: boolean;
   /** Called instead of navigating after delete when embedded in a window. */
@@ -63,9 +68,10 @@ const AUTOSAVE_DELAY_MS = 800;
 
 export function MindmapDetail({
   aiEnabled,
-  decks,
+  subjects,
   mindmap,
   subjectName,
+  subjectHref,
   embedded = false,
   onClosed,
   registerCloseRequest,
@@ -84,7 +90,7 @@ export function MindmapDetail({
   const [editOpen, setEditOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const hasDecks = decks.length > 0;
+  const hasSubjects = subjects.length > 0;
   const lastSavedRef = useRef(
     JSON.stringify({ title: mindmap.title, data: initialGraph }),
   );
@@ -165,7 +171,7 @@ export function MindmapDetail({
           breadcrumb={[
             {
               label: subjectName,
-              href: `/subjects/${mindmap.subjectId}`,
+              href: subjectHref ?? undefined,
               icon: "book-open",
             },
             { label: title || mindmap.title || "Untitled" },
@@ -235,11 +241,11 @@ export function MindmapDetail({
                     <DropdownMenuItem
                       className="cursor-pointer"
                       onClick={() => setGenerateOpen(true)}
-                      disabled={!hasDecks}
+                      disabled={!hasSubjects}
                       title={
-                        hasDecks
+                        hasSubjects
                           ? undefined
-                          : "Create a deck before generating flashcards."
+                          : "Create a subject before generating flashcards."
                       }
                     >
                       <Sparkles className="size-4" />
@@ -298,9 +304,7 @@ export function MindmapDetail({
               onClosed?.();
               return;
             }
-            startNavTransition(() =>
-              router.push(`/subjects/${mindmap.subjectId}`),
-            );
+            startNavTransition(() => router.push(subjectHref ?? "/"));
           }}
         />
         <EditMindmapTitleDialog
@@ -314,7 +318,7 @@ export function MindmapDetail({
         />
         {aiEnabled ? (
           <GenerateMindmapFlashcardsDialog
-            decks={decks}
+            subjects={subjects}
             mindmapId={mindmap.id}
             open={generateOpen}
             onOpenChange={setGenerateOpen}

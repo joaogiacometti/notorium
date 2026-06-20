@@ -18,7 +18,6 @@ import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 interface GenerateFlashcardBackForUserInput {
   userId: string;
   subjectName?: string;
-  deckName?: string;
   front: string;
 }
 
@@ -35,7 +34,6 @@ type GenerateFlashcardBackForUserResult =
 export async function generateFlashcardBackForUser({
   userId,
   subjectName,
-  deckName,
   front,
 }: GenerateFlashcardBackForUserInput): Promise<GenerateFlashcardBackForUserResult> {
   try {
@@ -57,7 +55,6 @@ export async function generateFlashcardBackForUser({
     const back = await generateFlashcardBackContent({
       settings,
       subjectName,
-      deckName,
       front,
     });
 
@@ -83,7 +80,6 @@ export async function generateFlashcardBackForUser({
 interface ImproveFlashcardBackForUserInput {
   userId: string;
   subjectName?: string;
-  deckName?: string;
   front: string;
   currentBack: string;
 }
@@ -101,7 +97,6 @@ type ImproveFlashcardBackForUserResult =
 export async function improveFlashcardBackForUser({
   userId,
   subjectName,
-  deckName,
   front,
   currentBack,
 }: ImproveFlashcardBackForUserInput): Promise<ImproveFlashcardBackForUserResult> {
@@ -124,7 +119,6 @@ export async function improveFlashcardBackForUser({
     const back = await improveFlashcardBackContent({
       settings,
       subjectName,
-      deckName,
       front,
       currentBack,
     });
@@ -151,7 +145,6 @@ export async function improveFlashcardBackForUser({
 interface GenerateFlashcardsForUserInput {
   userId: string;
   subjectName?: string;
-  deckName?: string;
   noteTitle?: string;
   text: string;
 }
@@ -170,7 +163,6 @@ type GenerateFlashcardsForUserResult =
 export async function generateFlashcardsForUser({
   userId,
   subjectName,
-  deckName,
   noteTitle,
   text,
 }: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
@@ -193,7 +185,6 @@ export async function generateFlashcardsForUser({
     const cards = await generateFlashcardsFromText({
       settings,
       subjectName,
-      deckName,
       noteTitle,
       text,
     });
@@ -280,7 +271,7 @@ export async function synthesizeRefineProposalForUser({
       id: card.id,
       front: richTextToPlainTextWithImagePlaceholders(card.front),
       back: richTextToPlainTextWithImagePlaceholders(card.back),
-      deckName: card.deckName,
+      subjectName: card.subjectName,
     });
 
     const synthesis = await synthesizeRefineProposalWithAi({
@@ -362,7 +353,7 @@ export async function validateFlashcardsForUser({
       id: card.id,
       front: richTextToPlainTextWithImagePlaceholders(card.front),
       back: richTextToPlainTextWithImagePlaceholders(card.back),
-      deckName: card.deckName,
+      subjectName: card.subjectName,
     }));
 
     const validation = await validateFlashcardsWithAi({

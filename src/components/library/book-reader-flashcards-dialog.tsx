@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { generateFlashcards } from "@/app/actions/flashcard-generation";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
-import { DeckSelect } from "@/components/shared/deck-select";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
-import type { DeckOption, FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectOption,
+} from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface GeneratedCard {
@@ -25,7 +28,7 @@ interface GeneratedCard {
 }
 
 interface ReaderFlashcardsDialogProps {
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   sourceText: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,13 +37,13 @@ interface ReaderFlashcardsDialogProps {
 // Generates flashcards from the passage the reader selected, then reuses the
 // shared review/create flow so the user picks which cards to keep.
 export function ReaderFlashcardsDialog({
-  decks,
+  subjects,
   sourceText,
   open,
   onOpenChange,
 }: Readonly<ReaderFlashcardsDialogProps>) {
-  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(
-    decks[0]?.id ?? null,
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
+    subjects[0]?.id ?? null,
   );
   const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(
     null,
@@ -49,8 +52,8 @@ export function ReaderFlashcardsDialog({
   const [isCreating, setIsCreating] = useState(false);
 
   async function handleGenerate() {
-    if (!selectedDeckId) {
-      toast.error("Select a deck before generating flashcards.");
+    if (!selectedSubjectId) {
+      toast.error("Select a subject before generating flashcards.");
       return;
     }
 
@@ -58,7 +61,7 @@ export function ReaderFlashcardsDialog({
     setGeneratedCards(null);
 
     const result = await generateFlashcards({
-      deckId: selectedDeckId,
+      subjectId: selectedSubjectId,
       text: sourceText,
     });
 
@@ -82,7 +85,7 @@ export function ReaderFlashcardsDialog({
     for (const card of cards) {
       const result = await createFlashcard({
         type: "basic",
-        deckId: selectedDeckId ?? "",
+        subjectId: selectedSubjectId ?? "",
         front: card.front,
         back: card.back,
       });
@@ -157,17 +160,17 @@ export function ReaderFlashcardsDialog({
               <blockquote className="mb-4 max-h-32 overflow-y-auto rounded-md border-border border-l-2 bg-muted/50 px-3 py-2 text-muted-foreground text-sm">
                 {sourceText}
               </blockquote>
-              {decks.length === 0 ? (
+              {subjects.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  Create a deck first to generate flashcards.
+                  Create a subject first to generate flashcards.
                 </p>
               ) : (
                 <FieldGroup className="gap-4">
-                  <DeckSelect
-                    value={selectedDeckId}
-                    onChange={setSelectedDeckId}
-                    decks={decks}
-                    id="reader-flashcards-deck"
+                  <SubjectSelect
+                    value={selectedSubjectId}
+                    onChange={setSelectedSubjectId}
+                    subjects={subjects}
+                    id="reader-flashcards-subject"
                   />
                 </FieldGroup>
               )}
@@ -175,7 +178,7 @@ export function ReaderFlashcardsDialog({
             <div className="shrink-0 border-t px-4 py-4 sm:px-6">
               <Button
                 type="submit"
-                disabled={isGenerating || !selectedDeckId}
+                disabled={isGenerating || !selectedSubjectId}
                 className="w-full"
               >
                 {isGenerating ? (

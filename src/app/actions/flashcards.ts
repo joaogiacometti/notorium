@@ -14,7 +14,7 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
-  getAllFlashcardIdsForDeck,
+  getAllFlashcardIdsForSubject,
   getAllFlashcardIdsForUser,
   getFlashcardByIdForUser,
   getFlashcardsByIdsForValidation,
@@ -39,9 +39,9 @@ import {
   type FlashcardsManageQueryInput,
   flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
-  type GetFlashcardIdsForDeckForm,
+  type GetFlashcardIdsForSubjectForm,
   generateFlashcardBackSchema,
-  getFlashcardIdsForDeckSchema,
+  getFlashcardIdsForSubjectSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type ValidateFlashcardsForm,
@@ -149,7 +149,7 @@ export async function deleteFlashcard(
       return {
         success: true as const,
         id: parsedData.id,
-        deckId: mutationResult.deckId,
+        subjectId: mutationResult.subjectId,
       };
     },
   );
@@ -262,17 +262,17 @@ export async function getFlashcardForManage(
   );
 }
 
-export async function getFlashcardIdsForDeck(
-  data: GetFlashcardIdsForDeckForm,
+export async function getFlashcardIdsForSubject(
+  data: GetFlashcardIdsForSubjectForm,
 ): Promise<{ success: true; flashcardIds: string[] } | ActionErrorResult> {
   return runValidatedUserAction(
-    getFlashcardIdsForDeckSchema,
+    getFlashcardIdsForSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
-      const flashcardIds = await getAllFlashcardIdsForDeck(
+      const flashcardIds = await getAllFlashcardIdsForSubject(
         userId,
-        parsedData.deckId,
+        parsedData.subjectId,
       );
 
       return { success: true, flashcardIds };
@@ -292,9 +292,9 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
       flashcards: Array<{
         id: string;
         front: string;
-        deckName: string;
-        deckPath?: string;
-        deckId: string;
+        subjectName: string;
+        subjectPath?: string;
+        subjectId: string | null;
       }>;
     }
   | ActionErrorResult
@@ -349,8 +349,8 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
         flashcards: flashcards.map((card) => ({
           id: card.id,
           front: card.front,
-          deckName: card.deckName,
-          deckId: card.deckId,
+          subjectName: card.subjectName,
+          subjectId: card.subjectId,
         })),
       };
     },

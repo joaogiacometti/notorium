@@ -8,7 +8,7 @@ type ReviewCard = FlashcardReviewState["cards"][number];
 
 interface ReviewSessionCardContentProps {
   card: ReviewCard;
-  deckLabel: string;
+  subjectLabel: string;
   revealed: boolean;
 }
 
@@ -19,18 +19,18 @@ const reviewRichTextClassName =
  * Renders the active flashcard content for review and exam sessions.
  *
  * @example
- * <ReviewSessionCardContent card={card} deckLabel="Biology" revealed />
+ * <ReviewSessionCardContent card={card} subjectLabel="Biology" revealed />
  */
 export function ReviewSessionCardContent({
   card,
-  deckLabel,
+  subjectLabel,
   revealed,
 }: Readonly<ReviewSessionCardContentProps>) {
   return (
     <>
-      {deckLabel ? (
+      {subjectLabel ? (
         <p className="mb-3 truncate text-xs font-semibold tracking-wider text-primary/80 uppercase">
-          {deckLabel}
+          {subjectLabel}
         </p>
       ) : null}
       <div className="relative flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">

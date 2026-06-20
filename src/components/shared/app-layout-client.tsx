@@ -14,13 +14,16 @@ import { useSidebarCollapsed } from "@/components/shared/use-sidebar-collapsed";
 import { WindowDock } from "@/components/windows/window-dock";
 import { WindowManagerProvider } from "@/components/windows/window-manager-context";
 import { WindowOverlay } from "@/components/windows/window-overlay";
-import type { DeckOption, SubjectTreeNode } from "@/lib/server/api-contracts";
+import type {
+  SubjectOption,
+  SubjectTreeNode,
+} from "@/lib/server/api-contracts";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutClientProps {
   tree: SubjectTreeNode[] | null;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   accountName: string;
   email: string;
   isAdmin: boolean;
@@ -99,7 +102,7 @@ function CollapsedSidebar({
 
 export function AppLayoutClient({
   tree,
-  decks,
+  subjects,
   accountName,
   email,
   isAdmin,
@@ -136,7 +139,7 @@ export function AppLayoutClient({
   const sidebar = tree ? (
     <AppSidebar
       tree={tree}
-      decks={decks}
+      subjects={subjects}
       aiEnabled={aiEnabled}
       accountName={accountName}
       email={email}
@@ -183,7 +186,7 @@ export function AppLayoutClient({
           <MobileSidebarSheet>{sidebar}</MobileSidebarSheet>
         ) : null}
         {mainRow}
-        <WindowOverlay aiEnabled={aiEnabled} decks={decks} />
+        <WindowOverlay aiEnabled={aiEnabled} subjects={subjects} />
         <WindowDock />
       </div>
     </WindowManagerProvider>

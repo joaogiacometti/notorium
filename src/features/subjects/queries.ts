@@ -1,6 +1,6 @@
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { mindmap, note, subject } from "@/db/schema";
+import { flashcard, mindmap, note, subject } from "@/db/schema";
 import type {
   SubjectEntity,
   SubjectListItem,
@@ -63,9 +63,9 @@ export async function getSubjectByIdForUser(
 export async function getSubjectRecordForUser(
   userId: string,
   subjectId: string,
-): Promise<{ id: string } | null> {
+): Promise<{ id: string; name: string } | null> {
   const results = await getDb()
-    .select({ id: subject.id })
+    .select({ id: subject.id, name: subject.name })
     .from(subject)
     .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)))
     .limit(1);
@@ -346,7 +346,10 @@ export async function getSubjectTreeForUser(
     .where(eq(subject.userId, userId))
     .orderBy(subject.name);
 
-  const documentCounts = await getDocumentCountsBySubject(userId);
+  const [documentCounts, dueFlashcardCounts] = await Promise.all([
+    getDocumentCountsBySubject(userId),
+    getDueFlashcardCountsBySubject(userId, new Date()),
+  ]);
 
   const nodeMap = new Map<string, SubjectTreeNode>();
 
@@ -354,6 +357,7 @@ export async function getSubjectTreeForUser(
     nodeMap.set(s.id, {
       ...s,
       documentCount: documentCounts.get(s.id) ?? 0,
+      dueFlashcardCount: dueFlashcardCounts.get(s.id) ?? 0,
       children: [],
       path: "",
     });
@@ -385,18 +389,22 @@ export async function getSubjectTreeForUser(
     }
   }
 
-  function applySubtreeDocumentCounts(node: SubjectTreeNode): number {
-    const childDocumentCount = node.children.reduce(
-      (total, childNode) => total + applySubtreeDocumentCounts(childNode),
-      0,
-    );
-
-    node.documentCount += childDocumentCount;
-    return node.documentCount;
+  // Roll up document and due-card counts so a collapsed parent reflects its
+  // whole subtree (e.g. the sidebar review badge counts descendant cards too).
+  function applySubtreeCounts(node: SubjectTreeNode): {
+    documents: number;
+    due: number;
+  } {
+    for (const childNode of node.children) {
+      const childTotals = applySubtreeCounts(childNode);
+      node.documentCount += childTotals.documents;
+      node.dueFlashcardCount += childTotals.due;
+    }
+    return { documents: node.documentCount, due: node.dueFlashcardCount };
   }
 
   for (const rootNode of roots) {
-    applySubtreeDocumentCounts(rootNode);
+    applySubtreeCounts(rootNode);
   }
 
   return roots;
@@ -425,6 +433,30 @@ async function getDocumentCountsBySubject(
   const counts = new Map<string, number>();
   for (const row of [...noteCounts, ...mindmapCounts]) {
     counts.set(row.subjectId, (counts.get(row.subjectId) ?? 0) + row.count);
+  }
+  return counts;
+}
+
+/**
+ * Direct (non-rolled-up) count of cards due at `now` keyed by subject id. Seeds
+ * the sidebar review indicator in {@link getSubjectTreeForUser}; subtree totals
+ * are accumulated there. Cards with a null subject (mid-migration) are skipped.
+ */
+async function getDueFlashcardCountsBySubject(
+  userId: string,
+  now: Date,
+): Promise<Map<string, number>> {
+  const rows = await getDb()
+    .select({ subjectId: flashcard.subjectId, count: count() })
+    .from(flashcard)
+    .where(and(eq(flashcard.userId, userId), lte(flashcard.dueAt, now)))
+    .groupBy(flashcard.subjectId);
+
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (row.subjectId) {
+      counts.set(row.subjectId, row.count);
+    }
   }
   return counts;
 }

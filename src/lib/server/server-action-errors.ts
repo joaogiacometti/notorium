@@ -62,14 +62,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
   "attachments.notConfigured":
     "No media storage is configured. Contact your administrator.",
-  "decks.invalidData": "Invalid deck data.",
-  "decks.notFound": "Deck not found.",
-  "decks.duplicateName": "A deck with this name already exists.",
-  "decks.cannotEditDefault": "Cannot edit this deck.",
-  "decks.cannotDeleteDefault": "Cannot delete this deck.",
-  "decks.cannotMoveIntoSelf": "A deck cannot be moved into itself.",
-  "decks.wouldCreateCycle": "This move would create a circular deck hierarchy.",
-  "decks.wrongSubject": "Deck does not belong to the selected scope.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
   "flashcards.duplicateFront": "A flashcard with this front already exists.",
@@ -129,13 +121,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "limits.assessmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} assessments per subject.`,
   "limits.flashcardLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} flashcards per deck.`,
-  "limits.deckLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} decks.`,
-  "limits.childDeckLimit": (params) =>
-    `System limit reached: a deck can have up to ${params?.max} child decks.`,
-  "limits.deckNestingDepthLimit": (params) =>
-    `System limit reached: decks can only be nested up to ${params?.max} levels deep.`,
+    `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
   "limits.aiBackGenerationPerDay":
     "Daily limit reached for AI back generation.",
   "limits.aiFlashcardGenerationPerDay":

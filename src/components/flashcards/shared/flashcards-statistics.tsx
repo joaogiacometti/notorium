@@ -2,16 +2,11 @@ import { BarChart3, CheckCircle2 } from "lucide-react";
 import { ReviewHeatmap } from "@/components/flashcards/shared/review-heatmap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFlashcardStudyHealth } from "@/features/flashcards/statistics-health";
-import type {
-  DeckEntity,
-  FlashcardStatisticsState,
-} from "@/lib/server/api-contracts";
+import type { FlashcardStatisticsState } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface FlashcardsStatisticsProps {
   statistics: FlashcardStatisticsState;
-  decks: DeckEntity[];
-  deckId?: string;
 }
 
 const stateColors: Record<string, string> = {
@@ -157,8 +152,6 @@ function TrendSection({
 
 export function FlashcardsStatistics({
   statistics,
-  decks: _decks,
-  deckId: _deckId,
 }: Readonly<FlashcardsStatisticsProps>) {
   const { summary, states, ratings, trend, heatmap, streak } = statistics;
   const studyHealth = getFlashcardStudyHealth(summary);

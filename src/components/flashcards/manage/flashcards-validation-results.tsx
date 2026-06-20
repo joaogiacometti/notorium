@@ -31,8 +31,8 @@ interface ValidationResultRow {
   front: string;
   issueType: "incorrect" | "confusing" | "duplicate";
   explanation: string;
-  deckPath: string;
-  deckId: string;
+  subjectPath: string;
+  subjectId: string;
 }
 
 const flashcardFrontPreviewLength = 30;
@@ -79,7 +79,7 @@ function getColumnClassName(columnId: string) {
       return "min-w-[6rem]";
     case "issue":
       return "min-w-[9rem]";
-    case "deckPath":
+    case "subjectPath":
       return "w-24 min-w-20";
     case "actions":
       return "w-14 min-w-14";
@@ -130,15 +130,15 @@ function getColumns(
       ),
     },
     {
-      accessorKey: "deckPath",
+      accessorKey: "subjectPath",
       size: 112,
-      header: () => <TableHeaderLabel>Deck</TableHeaderLabel>,
+      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
       cell: ({ row }) => (
         <span
           className="truncate text-sm text-muted-foreground"
-          title={row.original.deckPath}
+          title={row.original.subjectPath}
         >
-          {row.original.deckPath}
+          {row.original.subjectPath}
         </span>
       ),
     },
@@ -183,8 +183,8 @@ export function FlashcardsValidationResults({
         front: flashcard.front,
         issueType: issue.issueType,
         explanation: issue.explanation,
-        deckPath: flashcard.deckPath ?? flashcard.deckName,
-        deckId: flashcard.deckId,
+        subjectPath: flashcard.subjectPath ?? flashcard.subjectName,
+        subjectId: flashcard.subjectId,
       };
     })
     .filter((row): row is ValidationResultRow => row !== null);

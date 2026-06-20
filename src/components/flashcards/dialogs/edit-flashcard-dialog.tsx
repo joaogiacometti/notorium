@@ -4,13 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { getDecks } from "@/app/actions/decks";
 import { generateFlashcards } from "@/app/actions/flashcard-generation";
 import {
   createFlashcard,
   deleteFlashcard,
   editFlashcard,
 } from "@/app/actions/flashcards";
+import { getSubjectOptions } from "@/app/actions/subjects";
 import { getEditFlashcardFormValues } from "@/components/flashcards/dialogs/edit-flashcard-form-values";
 import { EditFlashcardSplitForm } from "@/components/flashcards/dialogs/edit-flashcard-split-form";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
@@ -31,7 +31,10 @@ import {
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import type { DeckEntity, FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectOption,
+} from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 type EditMode = "edit" | "split";
@@ -50,7 +53,7 @@ interface EditFlashcardDialogProps {
   flashcard: Pick<
     FlashcardEntity,
     | "id"
-    | "deckId"
+    | "subjectId"
     | "front"
     | "back"
     | "type"
@@ -87,13 +90,13 @@ export function EditFlashcardDialog({
     useState(false);
   const [discardOnCloseDialogOpen, setDiscardOnCloseDialogOpen] =
     useState(false);
-  const [splitDeckId, setSplitDeckId] = useState<string | null>(
-    flashcard.deckId ?? null,
+  const [splitSubjectId, setSplitSubjectId] = useState<string | null>(
+    flashcard.subjectId ?? null,
   );
   const [splitFront, setSplitFront] = useState(flashcard.front);
   const [splitBack, setSplitBack] = useState(flashcard.back);
-  const [decks, setDecks] = useState<DeckEntity[]>([]);
-  const [_splitDecks, setSplitDecks] = useState<DeckEntity[]>([]);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [_splitSubjects, setSplitSubjects] = useState<SubjectOption[]>([]);
   const [splitEditorPendingUploads, setSplitEditorPendingUploads] = useState(0);
 
   const isSplitDirty =
@@ -113,9 +116,9 @@ export function EditFlashcardDialog({
 
   useEffect(() => {
     if (open) {
-      void getDecks().then((fetchedDecks) => {
-        setDecks(fetchedDecks);
-        setSplitDecks(fetchedDecks);
+      void getSubjectOptions().then((fetchedSubjects) => {
+        setSubjects(fetchedSubjects);
+        setSplitSubjects(fetchedSubjects);
       });
     }
   }, [open]);
@@ -130,7 +133,7 @@ export function EditFlashcardDialog({
         setMode("edit");
         setSplitFront(flashcard.front);
         setSplitBack(flashcard.back);
-        setSplitDeckId(flashcard.deckId ?? null);
+        setSplitSubjectId(flashcard.subjectId ?? null);
       }
       onOpenChange(nextOpen);
     },
@@ -165,7 +168,7 @@ export function EditFlashcardDialog({
     setMode("edit");
     setSplitFront(flashcard.front);
     setSplitBack(flashcard.back);
-    setSplitDeckId(flashcard.deckId ?? null);
+    setSplitSubjectId(flashcard.subjectId ?? null);
   }
 
   function handleSplitEditorUploadPendingChange(pending: boolean) {
@@ -219,7 +222,7 @@ export function EditFlashcardDialog({
     setGeneratedCards(null);
 
     const result = await generateFlashcards({
-      deckId: splitDeckId ?? "",
+      subjectId: splitSubjectId ?? "",
       text: combinedText,
     });
 
@@ -252,7 +255,7 @@ export function EditFlashcardDialog({
     for (const card of cards) {
       const result = await createFlashcard({
         type: "basic",
-        deckId: splitDeckId ?? "",
+        subjectId: splitSubjectId ?? "",
         front: card.front,
         back: card.back,
       });
@@ -300,11 +303,13 @@ export function EditFlashcardDialog({
     if (mode === "edit" && newMode === "split") {
       setSplitFront(form.getValues("front"));
       setSplitBack(form.getValues("back"));
-      setSplitDeckId(form.getValues("deckId") ?? flashcard.deckId ?? null);
+      setSplitSubjectId(
+        form.getValues("subjectId") ?? flashcard.subjectId ?? null,
+      );
     } else if (mode === "split" && newMode === "edit") {
       form.setValue("front", splitFront, { shouldDirty: true });
       form.setValue("back", splitBack, { shouldDirty: true });
-      form.setValue("deckId", splitDeckId ?? "");
+      form.setValue("subjectId", splitSubjectId ?? "");
     }
     setMode(newMode);
   }
@@ -345,7 +350,7 @@ export function EditFlashcardDialog({
           onOpenChange={dialog.handleOpenChange}
           form={form}
           formId="form-edit-flashcard"
-          decks={decks}
+          subjects={subjects}
           onSubmit={dialog.handleSubmit}
           isSubmitting={dialog.isSubmitting}
           isSaved={dialog.isSaved}
@@ -411,14 +416,14 @@ export function EditFlashcardDialog({
 
     return (
       <EditFlashcardSplitForm
-        decks={decks}
-        splitDeckId={splitDeckId}
+        subjects={subjects}
+        splitSubjectId={splitSubjectId}
         splitFront={splitFront}
         splitBack={splitBack}
         isGenerating={isGenerating}
         isSplitImageUploading={splitEditorPendingUploads > 0}
         modeOptions={modeOptions}
-        onDeckChange={setSplitDeckId}
+        onSubjectChange={setSplitSubjectId}
         onFrontChange={setSplitFront}
         onBackChange={setSplitBack}
         onModeChange={(m) => handleModeSwitch(m as EditMode)}
@@ -438,7 +443,7 @@ export function EditFlashcardDialog({
           )}
           overlayClassName={overlayClassName}
           // Occlusion edit has no text field before the image-occlusion help
-          // (?) button, so while decks load (deck + type controls disabled) the
+          // (?) button, so while subjects load (subject + type controls disabled) the
           // dialog would auto-focus that button and flash its tooltip open. Skip
           // initial auto-focus for occlusion; basic/cloze keep editor focus.
           onOpenAutoFocus={

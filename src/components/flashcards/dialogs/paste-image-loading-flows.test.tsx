@@ -22,8 +22,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@/app/actions/decks", () => ({
-  getDecks: vi.fn().mockResolvedValue([]),
+vi.mock("@/app/actions/subjects", () => ({
+  getSubjectOptions: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({
@@ -133,7 +133,7 @@ function ControlledGenerateFlashcardsReviewHarness({
 
 const flashcard = {
   id: "flashcard-1",
-  deckId: "deck-1",
+  subjectId: "deck-1",
   front: "<p>Front</p>",
   frontNormalized: "front",
   back: "<p>Back</p>",

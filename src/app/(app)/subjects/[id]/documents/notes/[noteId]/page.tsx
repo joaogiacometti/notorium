@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import { NoteDetail } from "@/components/notes/note-detail";
-import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
 import { getNoteByIdForUser } from "@/features/notes/queries";
-import { getSubjectByIdForUser } from "@/features/subjects/queries";
+import { getSubjectPageHref } from "@/features/subjects/constants";
+import {
+  getAllSubjectsWithPathsForUser,
+  getSubjectByIdForUser,
+} from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
@@ -15,9 +18,9 @@ export default async function NotePage({ params }: Readonly<NotePageProps>) {
   const session = await requireSession();
 
   const { id, noteId } = await params;
-  const [note, decks] = await Promise.all([
+  const [note, subjects] = await Promise.all([
     getNoteByIdForUser(session.user.id, noteId),
-    getAllDecksWithPathsForUser(session.user.id),
+    getAllSubjectsWithPathsForUser(session.user.id),
   ]);
 
   if (!note) {
@@ -34,9 +37,10 @@ export default async function NotePage({ params }: Readonly<NotePageProps>) {
     <main>
       <NoteDetail
         aiEnabled={isAiEnabled()}
-        decks={decks}
+        subjects={subjects}
         note={note}
         subjectName={subject?.name ?? ""}
+        subjectHref={subject ? getSubjectPageHref(subject) : null}
       />
     </main>
   );

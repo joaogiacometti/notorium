@@ -13,7 +13,7 @@ export function getCreateFlashcardResetValues(
 ): FlashcardFormValues {
   return {
     type: values.type,
-    deckId: values.deckId,
+    subjectId: values.subjectId,
     front: options.keepFrontAfterSubmit ? values.front : "",
     back: options.keepBackAfterSubmit ? values.back : "",
     clozeSource: options.keepFrontAfterSubmit ? values.clozeSource : "",

@@ -2,8 +2,10 @@ import { cookies } from "next/headers";
 import { AccountSettingsProvider } from "@/components/account/account-settings-provider";
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
-import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
-import { getSubjectTreeForUser } from "@/features/subjects/queries";
+import {
+  getAllSubjectsWithPathsForUser,
+  getSubjectTreeForUser,
+} from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
@@ -12,10 +14,10 @@ export default async function AuthenticatedAppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const authState = await getOptionalSessionAccess();
   const session = authState?.session ?? null;
-  const [tree, decks] = session
+  const [tree, subjects] = session
     ? await Promise.all([
         getSubjectTreeForUser(session.user.id),
-        getAllDecksWithPathsForUser(session.user.id),
+        getAllSubjectsWithPathsForUser(session.user.id),
       ])
     : [null, []];
   const accountName =
@@ -30,7 +32,7 @@ export default async function AuthenticatedAppLayout({
       <AccountSettingsProvider userId={session?.user.id ?? ""}>
         <AppLayoutClient
           tree={tree}
-          decks={decks}
+          subjects={subjects}
           accountName={accountName}
           email={session?.user.email ?? ""}
           isAdmin={authState?.account.isAdmin ?? false}

@@ -80,7 +80,7 @@ function getEditValues(flashcard: FlashcardDetailEntity): FlashcardFormValues {
   return {
     id: flashcard.id,
     type: getFlashcardEditType(flashcard.type),
-    deckId: flashcard.deckId,
+    subjectId: flashcard.subjectId ?? "",
     front: flashcard.front,
     back: flashcard.back,
     clozeSource: flashcard.clozeSource ?? "",
@@ -197,7 +197,7 @@ export function FlashcardDetail({
       ? watchedBack
       : undefined;
     const result = await generateFlashcardBack({
-      deckId: flashcard.deckId,
+      subjectId: flashcard.subjectId ?? "",
       front: watchedFront,
       currentBack,
     });
@@ -228,7 +228,7 @@ export function FlashcardDetail({
     const nextValues: FlashcardFormValues = {
       id: flashcard.id,
       type: getFlashcardEditType(flashcard.type),
-      deckId: flashcard.deckId,
+      subjectId: flashcard.subjectId ?? "",
       front: debouncedValues.front,
       back: debouncedValues.back,
       clozeSource: flashcard.clozeSource ?? "",
@@ -248,7 +248,7 @@ export function FlashcardDetail({
   }, [
     debouncedValues,
     flashcard.id,
-    flashcard.deckId,
+    flashcard.subjectId,
     flashcard.type,
     flashcard.clozeSource,
     flashcard.occlusionImagePathname,
@@ -265,9 +265,9 @@ export function FlashcardDetail({
           <div className="flex min-w-0 flex-col gap-1">
             <span
               className="truncate text-sm font-medium text-foreground"
-              title={flashcard.deckPath}
+              title={flashcard.subjectPath}
             >
-              Deck: {flashcard.deckPath}
+              Subject: {flashcard.subjectPath}
             </span>
             <span className="text-xs text-muted-foreground/60">
               Created {formatRelativeTime(flashcard.createdAt)}

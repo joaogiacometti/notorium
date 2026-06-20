@@ -8,7 +8,7 @@ const rows = ["row-1", "row-2", "row-3", "row-4"];
 
 export function FlashcardsStatisticsLoading() {
   return (
-    <FlashcardsLoadingShell withWorkspace mobileScopeFirst>
+    <FlashcardsLoadingShell>
       <div
         className="flex flex-col gap-3 lg:h-full lg:min-h-0"
         data-testid="flashcards-statistics-loading"

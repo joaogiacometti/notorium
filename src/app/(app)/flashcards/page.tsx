@@ -2,15 +2,12 @@ import { FlashcardsPageClient } from "@/components/flashcards/flashcards-page-cl
 import { FlashcardsViewSwitch } from "@/components/flashcards/shared/flashcards-view-switch";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import {
-  getAllDecksWithPathsForUser,
-  getDeckTreeForUser,
-} from "@/features/decks/queries";
-import {
   getFlashcardReviewStateForUser,
   getFlashcardStatisticsForUser,
 } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
+import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { resolvePageSize } from "@/lib/pagination/page-size";
@@ -18,9 +15,10 @@ import { resolvePageSize } from "@/lib/pagination/page-size";
 interface FlashcardsPageProps {
   searchParams: Promise<{
     view?: string;
-    deckId?: string;
+    subjectId?: string;
     search?: string;
     pageSize?: string;
+    focus?: string;
   }>;
 }
 
@@ -29,16 +27,16 @@ export default async function FlashcardsPage({
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
   const aiEnabled = isAiEnabled();
-  const { view, deckId, search, pageSize } = await searchParams;
+  const { view, subjectId, search, pageSize, focus } = await searchParams;
   const currentView = resolveFlashcardsView(view);
+  const autoStartReview = currentView === "review" && focus === "1";
   const initialPageSize = resolvePageSize(pageSize);
-  const [decks, deckTree] = await Promise.all([
-    getAllDecksWithPathsForUser(session.user.id),
-    getDeckTreeForUser(session.user.id),
-  ]);
+  const subjects = await getAllSubjectsWithPathsForUser(session.user.id);
 
-  const scopedDeckId =
-    deckId && decks.some((deck) => deck.id === deckId) ? deckId : undefined;
+  const scopedSubjectId =
+    subjectId && subjects.some((subject) => subject.id === subjectId)
+      ? subjectId
+      : undefined;
   const initialManageSearch =
     currentView === "manage" ? search?.trim() : undefined;
 
@@ -47,20 +45,20 @@ export default async function FlashcardsPage({
     {
       pageIndex: 0,
       pageSize: initialPageSize,
-      deckId: scopedDeckId,
+      subjectId: scopedSubjectId,
       search: initialManageSearch,
     },
   );
 
   const initialReviewState = getFlashcardReviewStateForUser(session.user.id, {
-    deckId: scopedDeckId,
+    subjectId: scopedSubjectId,
     limit: 50,
   });
 
   const statistics = getFlashcardStatisticsForUser(
     session.user.id,
     new Date(),
-    { deckId: scopedDeckId },
+    { subjectId: scopedSubjectId },
   );
 
   const [
@@ -83,17 +81,17 @@ export default async function FlashcardsPage({
           manageLabel="Manage"
           reviewLabel="Review"
           statisticsLabel="Statistics"
-          deckId={scopedDeckId}
+          subjectId={scopedSubjectId}
         />
       }
     >
       <FlashcardsPageClient
         currentView={currentView}
-        scopedDeckId={scopedDeckId}
+        scopedSubjectId={scopedSubjectId}
+        autoStartReview={autoStartReview}
         initialSearch={initialManageSearch}
         initialPageSize={initialPageSize}
-        deckTree={deckTree}
-        decks={decks}
+        subjects={subjects}
         initialManagePageData={initialManagePageDataResult}
         initialReviewState={initialReviewStateResult}
         statistics={statisticsResult}

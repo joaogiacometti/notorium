@@ -13,7 +13,7 @@ import {
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 interface CreateFlashcardDialogProps {
-  deckId?: string;
+  subjectId?: string;
   trigger?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -22,19 +22,19 @@ interface CreateFlashcardDialogProps {
 }
 
 export function CreateFlashcardDialog({
-  deckId,
+  subjectId,
   trigger,
   open,
   onOpenChange,
   onCreated,
   aiEnabled,
 }: Readonly<CreateFlashcardDialogProps>) {
-  const { decks, form, dialog } = useCreateFlashcardForm({
+  const { subjects, form, dialog } = useCreateFlashcardForm({
     open,
     aiEnabled,
     onOpenChange,
     onCreated,
-    deckId,
+    subjectId,
   });
 
   return (
@@ -54,7 +54,7 @@ export function CreateFlashcardDialog({
             form={form}
             formId="form-create-flashcard"
             editorResetVersion={dialog.editorResetVersion}
-            decks={decks}
+            subjects={subjects}
             onSubmit={dialog.handleSubmit}
             isSubmitting={dialog.isSubmitting}
             isSaved={dialog.isSaved}

@@ -25,8 +25,8 @@ vi.mock("@/features/attachments/pathname", () => ({
   getOwnedAttachmentPathnames: (pathnames: string[]) => pathnames,
 }));
 
-vi.mock("@/features/decks/queries", () => ({
-  getDescendantDeckIds: vi.fn(),
+vi.mock("@/features/subjects/queries", () => ({
+  getDescendantSubjectIds: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/features/mindmaps/utils", () => ({

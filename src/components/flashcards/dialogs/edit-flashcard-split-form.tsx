@@ -3,21 +3,21 @@
 import { Loader2, Sparkles } from "lucide-react";
 import type { SyntheticEvent } from "react";
 import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
-import { DeckSelect } from "@/components/shared/deck-select";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import type { DeckEntity } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
 interface EditFlashcardSplitFormProps {
-  decks: DeckEntity[];
-  splitDeckId: string | null;
+  subjects: SubjectOption[];
+  splitSubjectId: string | null;
   splitFront: string;
   splitBack: string;
   isGenerating: boolean;
   isSplitImageUploading: boolean;
   modeOptions: Array<{ value: string; label: string }>;
-  onDeckChange: (value: string | null) => void;
+  onSubjectChange: (value: string | null) => void;
   onFrontChange: (value: string) => void;
   onBackChange: (value: string) => void;
   onModeChange: (mode: string) => void;
@@ -26,14 +26,14 @@ interface EditFlashcardSplitFormProps {
 }
 
 export function EditFlashcardSplitForm({
-  decks,
-  splitDeckId,
+  subjects,
+  splitSubjectId,
   splitFront,
   splitBack,
   isGenerating,
   isSplitImageUploading,
   modeOptions,
-  onDeckChange,
+  onSubjectChange,
   onFrontChange,
   onBackChange,
   onModeChange,
@@ -50,11 +50,11 @@ export function EditFlashcardSplitForm({
     >
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-5 sm:px-6">
         <FieldGroup className="gap-5">
-          <DeckSelect
-            value={splitDeckId}
-            onChange={onDeckChange}
-            decks={decks}
-            id="split-deck"
+          <SubjectSelect
+            value={splitSubjectId}
+            onChange={onSubjectChange}
+            subjects={subjects}
+            id="split-subject"
           />
           <CreateModeToggle
             mode="split"
@@ -102,7 +102,7 @@ export function EditFlashcardSplitForm({
             isSplitImageUploading ||
             !hasFrontContent ||
             !hasBackContent ||
-            !splitDeckId
+            !splitSubjectId
           }
           className="w-full"
         >

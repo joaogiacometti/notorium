@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useMemo, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { FlashcardReviewFocusOverlays } from "@/components/flashcards/review/flashcard-review-focus-overlays";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
@@ -13,23 +13,29 @@ import {
   isEditableFlashcardReviewKeyboardTarget,
 } from "@/features/flashcard-review/shortcuts";
 import type {
-  DeckEntity,
-  DeckOption,
   FlashcardReviewState,
+  SubjectEntity,
+  SubjectOption,
 } from "@/lib/server/api-contracts";
 
 interface FlashcardReviewClientProps {
   initialState: FlashcardReviewState;
-  decks: Array<DeckEntity | DeckOption>;
-  deckId?: string;
+  subjects: Array<SubjectEntity | SubjectOption>;
+  subjectId?: string;
+  /**
+   * When true, jump straight into the full-screen focus session on mount
+   * instead of showing the review hub. Only honored when cards are due.
+   */
+  autoStartReview?: boolean;
   embedded?: boolean;
   aiEnabled: boolean;
 }
 
 export function FlashcardReviewClient({
   initialState,
-  decks,
-  deckId,
+  subjects,
+  subjectId,
+  autoStartReview = false,
   embedded = false,
   aiEnabled,
 }: Readonly<FlashcardReviewClientProps>) {
@@ -49,13 +55,13 @@ export function FlashcardReviewClient({
 
   const controller = useFlashcardReviewController({
     initialState,
-    deckId,
+    subjectId,
     resetFocusViewState,
     setFocusMode: setIsFocusMode,
   });
   const {
     reviewState,
-    selectedDeckId,
+    selectedSubjectId,
     examController,
     isExamMode,
     currentCard,
@@ -86,8 +92,8 @@ export function FlashcardReviewClient({
   const examBadgeText = `${reviewState.summary.totalCount} ${
     reviewState.summary.totalCount === 1 ? "card" : "cards"
   }`;
-  const examScopeLabel = selectedDeckId
-    ? "All cards in deck"
+  const examScopeLabel = selectedSubjectId
+    ? "All cards in subject"
     : "All flashcards";
 
   const progress = isExamMode
@@ -177,6 +183,18 @@ export function FlashcardReviewClient({
     return () => document.removeEventListener("keydown", handleReviewKeyDown);
   }, []);
 
+  // Honor a deep link (e.g. the sidebar "Review flashcards" action) that asks to
+  // open the full-screen focus session directly. Only when cards are due, and
+  // only once so exiting focus mode returns to the hub instead of re-triggering.
+  const hasAutoStartedRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoStartedRef.current || !autoStartReview || !hasDueCards) {
+      return;
+    }
+    hasAutoStartedRef.current = true;
+    handleStartReviewMode();
+  }, [autoStartReview, hasDueCards, handleStartReviewMode]);
+
   const content = (
     <div className="relative min-h-0">
       <ReviewHubView
@@ -199,7 +217,7 @@ export function FlashcardReviewClient({
         <FocusModeOverlay
           currentCard={currentCard}
           reviewState={reviewState}
-          decks={decks}
+          subjects={subjects}
           progress={progress}
           revealed={revealed}
           isPending={isPending}
@@ -232,8 +250,8 @@ export function FlashcardReviewClient({
             if (!currentCard) return;
             handleFlashcardReset({
               ...updated,
-              deckName: currentCard.deckName,
-              deckPath: currentCard.deckPath,
+              subjectName: currentCard.subjectName,
+              subjectPath: currentCard.subjectPath,
             });
           }}
           examSessionComplete={examSession.sessionComplete}

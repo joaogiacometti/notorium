@@ -2,8 +2,8 @@ export interface RefineCardSummary {
   id: string;
   front: string;
   back: string;
-  deckId: string;
-  deckName: string;
+  subjectId: string | null;
+  subjectName: string;
   reviewCount: number;
   lapseCount: number;
 }
@@ -17,8 +17,8 @@ export interface RefineMergeCandidate {
   id: string;
   front: string;
   back: string;
-  deckId: string;
-  deckName: string;
+  subjectId: string | null;
+  subjectName: string;
 }
 
 export type RefineProposalAction = "relate" | "merge";

@@ -14,8 +14,8 @@ const deleteMock = vi.fn(() => ({ where: deleteWhereMock }));
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
-const getDeckRecordForUserMock = vi.fn();
-const countFlashcardsByDeckForUserMock = vi.fn();
+const getSubjectRecordForUserMock = vi.fn();
+const countFlashcardsBySubjectForUserMock = vi.fn();
 const getOcclusionSiblingsForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 const deleteImagesMock = vi.fn();
@@ -44,8 +44,8 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/decks/queries", () => ({
-  getDeckRecordForUser: getDeckRecordForUserMock,
+vi.mock("@/features/subjects/queries", () => ({
+  getSubjectRecordForUser: getSubjectRecordForUserMock,
 }));
 
 vi.mock("@/features/flashcards/fsrs", () => ({
@@ -53,7 +53,7 @@ vi.mock("@/features/flashcards/fsrs", () => ({
 }));
 
 vi.mock("@/features/flashcards/queries", () => ({
-  countFlashcardsByDeckForUser: countFlashcardsByDeckForUserMock,
+  countFlashcardsBySubjectForUser: countFlashcardsBySubjectForUserMock,
   getOcclusionSiblingsForUser: getOcclusionSiblingsForUserMock,
 }));
 
@@ -87,8 +87,11 @@ function regions(): OcclusionRegion[] {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  getDeckRecordForUserMock.mockResolvedValue({ id: "deck-1", name: "Anatomy" });
-  countFlashcardsByDeckForUserMock.mockResolvedValue(0);
+  getSubjectRecordForUserMock.mockResolvedValue({
+    id: "deck-1",
+    name: "Anatomy",
+  });
+  countFlashcardsBySubjectForUserMock.mockResolvedValue(0);
   getInitialFlashcardSchedulingStateMock.mockReturnValue(scheduling);
   deleteImagesMock.mockResolvedValue(undefined);
   getMediaStorageProviderMock.mockResolvedValue({
@@ -108,7 +111,7 @@ describe("createOcclusionNoteForUser", () => {
     );
 
     const result = await createOcclusionNoteForUser("user-1", {
-      deckId: "deck-1",
+      subjectId: "deck-1",
       occlusionImagePathname: imageA,
       occlusionRegions: regions(),
     });
@@ -141,7 +144,7 @@ describe("createOcclusionNoteForUser", () => {
     );
 
     const result = await createOcclusionNoteForUser("user-1", {
-      deckId: "deck-1",
+      subjectId: "deck-1",
       occlusionImagePathname: imageA,
       occlusionRegions: [{ id: "x", x: 0, y: 0, width: 0, height: 0 }],
     });
@@ -151,14 +154,14 @@ describe("createOcclusionNoteForUser", () => {
   });
 
   it("rejects when the deck would exceed its card limit", async () => {
-    countFlashcardsByDeckForUserMock.mockResolvedValueOnce(2000);
+    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(2000);
 
     const { createOcclusionNoteForUser } = await import(
       "@/features/flashcards/occlusion-mutations"
     );
 
     const result = await createOcclusionNoteForUser("user-1", {
-      deckId: "deck-1",
+      subjectId: "deck-1",
       occlusionImagePathname: imageA,
       occlusionRegions: regions(),
     });
@@ -176,7 +179,7 @@ describe("editOcclusionNoteForUser", () => {
       occlusionNoteId: "note-1",
       occlusionMaskId: "mask-1",
       occlusionImagePathname: imageA,
-      deckId: "deck-1",
+      subjectId: "deck-1",
     };
     const stale = { id: "sib-stale", occlusionMaskId: "mask-old" };
     getOcclusionSiblingsForUserMock
@@ -194,7 +197,7 @@ describe("editOcclusionNoteForUser", () => {
       "user-1",
       {
         id: "sib-1",
-        deckId: "deck-1",
+        subjectId: "deck-1",
         occlusionImagePathname: imageA,
         occlusionRegions: regions(),
       },
@@ -216,7 +219,7 @@ describe("editOcclusionNoteForUser", () => {
       occlusionNoteId: "note-1",
       occlusionMaskId: "mask-1",
       occlusionImagePathname: imageA,
-      deckId: "deck-1",
+      subjectId: "deck-1",
     };
     getOcclusionSiblingsForUserMock
       .mockResolvedValueOnce([existing])
@@ -230,7 +233,7 @@ describe("editOcclusionNoteForUser", () => {
       "user-1",
       {
         id: "sib-1",
-        deckId: "deck-1",
+        subjectId: "deck-1",
         occlusionImagePathname: imageB,
         occlusionRegions: regions(),
       },

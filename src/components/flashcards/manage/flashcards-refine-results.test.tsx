@@ -57,8 +57,8 @@ function buildRefineCard(
     id: "card-1",
     front: "What is a B-tree?",
     back: "A balanced tree.",
-    deckId: "deck-1",
-    deckName: "Databases",
+    subjectId: "deck-1",
+    subjectName: "Databases",
     reviewCount: 5,
     lapseCount: 0,
     ...overrides,
@@ -209,7 +209,7 @@ describe("FlashcardsRefineResults", () => {
     });
 
     expect(generateFlashcardBackMock).toHaveBeenCalledWith({
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "Struggling front",
       currentBack: "A balanced tree.",
     });

@@ -393,6 +393,13 @@
       "when": 1781920781794,
       "tag": "0055_light_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1781957253859,
+      "tag": "0056_slow_machine_man",
+      "breakpoints": true
     }
   ]
 }

@@ -13,9 +13,17 @@ export function normalizeSubjectTree(
       (total, childNode) => total + childNode.documentCount,
       0,
     );
+    const previousChildDueCount = node.children.reduce(
+      (total, childNode) => total + childNode.dueFlashcardCount,
+      0,
+    );
     const directDocumentCount = Math.max(
       0,
       node.documentCount - previousChildCount,
+    );
+    const directDueCount = Math.max(
+      0,
+      node.dueFlashcardCount - previousChildDueCount,
     );
     const nextPath = parentPath ? `${parentPath}::${node.name}` : node.name;
     const nextDocumentCount =
@@ -24,12 +32,19 @@ export function normalizeSubjectTree(
         (total, childNode) => total + childNode.documentCount,
         0,
       );
+    const nextDueFlashcardCount =
+      directDueCount +
+      normalizedChildren.reduce(
+        (total, childNode) => total + childNode.dueFlashcardCount,
+        0,
+      );
 
     return {
       ...node,
       children: normalizedChildren,
       path: nextPath,
       documentCount: nextDocumentCount,
+      dueFlashcardCount: nextDueFlashcardCount,
     };
   });
 }

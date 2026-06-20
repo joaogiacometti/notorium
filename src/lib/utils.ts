@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { DeckEntity, DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectEntity, SubjectOption } from "@/lib/server/api-contracts";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,8 +39,8 @@ export function readFileAsBase64(file: File): Promise<string | null> {
   });
 }
 
-export function isDeckOption(
-  deck: DeckEntity | DeckOption,
-): deck is DeckOption {
-  return "path" in deck && typeof deck.path === "string";
+export function isSubjectOption(
+  subject: SubjectEntity | SubjectOption,
+): subject is SubjectOption {
+  return "path" in subject && typeof subject.path === "string";
 }

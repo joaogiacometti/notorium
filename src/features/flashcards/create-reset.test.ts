@@ -4,7 +4,7 @@ import type { FlashcardFormValues } from "@/features/flashcards/validation";
 
 const values: FlashcardFormValues = {
   type: "basic",
-  deckId: "deck-1",
+  subjectId: "deck-1",
   front: "<p>Front</p>",
   back: "<p>Back</p>",
   clozeSource: "",
@@ -21,7 +21,7 @@ describe("getCreateFlashcardResetValues", () => {
       }),
     ).toEqual({
       type: "basic",
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "",
       back: "",
       clozeSource: "",
@@ -38,7 +38,7 @@ describe("getCreateFlashcardResetValues", () => {
       }),
     ).toEqual({
       type: "basic",
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "<p>Front</p>",
       back: "",
       clozeSource: "",
@@ -55,7 +55,7 @@ describe("getCreateFlashcardResetValues", () => {
       }),
     ).toEqual({
       type: "basic",
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "",
       back: "<p>Back</p>",
       clozeSource: "",

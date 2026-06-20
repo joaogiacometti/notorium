@@ -16,13 +16,13 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { DeckEntity, DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectEntity, SubjectOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
-interface DeckSelectProps {
+interface SubjectSelectProps {
   value: string | null;
   onChange: (value: string | null) => void;
-  decks: Array<DeckEntity | DeckOption>;
+  subjects: Array<SubjectEntity | SubjectOption>;
   placeholder?: string;
   id?: string;
   label?: string;
@@ -31,8 +31,8 @@ interface DeckSelectProps {
   disabled?: boolean;
 }
 
-interface DeckSelectDropdownProps {
-  decks: Array<DeckEntity | DeckOption>;
+interface SubjectSelectDropdownProps {
+  subjects: Array<SubjectEntity | SubjectOption>;
   value: string | null;
   listboxId: string;
   searchQuery: string;
@@ -41,31 +41,31 @@ interface DeckSelectDropdownProps {
   inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
-function getDeckLabel(deck: DeckEntity | DeckOption): string {
-  return "path" in deck ? deck.path : deck.name;
+function getSubjectLabel(subject: SubjectEntity | SubjectOption): string {
+  return "path" in subject ? subject.path : subject.name;
 }
 
-function filterDecks(
-  decks: Array<DeckEntity | DeckOption>,
+function filterSubjects(
+  subjects: Array<SubjectEntity | SubjectOption>,
   query: string,
-): Array<DeckEntity | DeckOption> {
+): Array<SubjectEntity | SubjectOption> {
   const normalized = query.trim().toLowerCase();
-  if (normalized.length === 0) return decks;
-  return decks.filter((deck) =>
-    getDeckLabel(deck).toLowerCase().includes(normalized),
+  if (normalized.length === 0) return subjects;
+  return subjects.filter((subject) =>
+    getSubjectLabel(subject).toLowerCase().includes(normalized),
   );
 }
 
-function DeckSelectDropdown({
-  decks,
+function SubjectSelectDropdown({
+  subjects,
   value,
   listboxId,
   searchQuery,
   onSearchChange,
   onSelect,
   inputRef,
-}: Readonly<DeckSelectDropdownProps>) {
-  const filtered = filterDecks(decks, searchQuery);
+}: Readonly<SubjectSelectDropdownProps>) {
+  const filtered = filterSubjects(subjects, searchQuery);
 
   return (
     <PopoverPortal>
@@ -78,19 +78,19 @@ function DeckSelectDropdown({
             ref={inputRef}
             value={searchQuery}
             onValueChange={onSearchChange}
-            placeholder="Search decks by path"
+            placeholder="Search subjects by path"
           />
           <CommandList id={listboxId}>
-            <CommandEmpty>No decks found.</CommandEmpty>
-            {filtered.map((deck) => {
-              const deckLabel = getDeckLabel(deck);
-              const isSelected = deck.id === value;
+            <CommandEmpty>No subjects found.</CommandEmpty>
+            {filtered.map((subject) => {
+              const subjectLabel = getSubjectLabel(subject);
+              const isSelected = subject.id === value;
 
               return (
                 <CommandItem
-                  key={deck.id}
-                  value={deckLabel}
-                  onSelect={() => onSelect(deck.id)}
+                  key={subject.id}
+                  value={subjectLabel}
+                  onSelect={() => onSelect(subject.id)}
                   className="gap-2"
                 >
                   <Check
@@ -99,7 +99,7 @@ function DeckSelectDropdown({
                       isSelected ? "opacity-100" : "opacity-0",
                     )}
                   />
-                  <span className="truncate">{deckLabel}</span>
+                  <span className="truncate">{subjectLabel}</span>
                 </CommandItem>
               );
             })}
@@ -110,23 +110,24 @@ function DeckSelectDropdown({
   );
 }
 
-export function DeckSelect({
+export function SubjectSelect({
   value,
   onChange,
-  decks,
-  placeholder = "Select a deck",
+  subjects,
+  placeholder = "Select a subject",
   id,
-  label = "Deck",
+  label = "Subject",
   error,
   ariaInvalid,
   disabled,
-}: Readonly<DeckSelectProps>) {
+}: Readonly<SubjectSelectProps>) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listboxId = useId();
 
-  const selectedDeck = decks.find((deck) => deck.id === value) ?? null;
+  const selectedSubject =
+    subjects.find((subject) => subject.id === value) ?? null;
 
   useEffect(() => {
     if (!open) {
@@ -160,16 +161,16 @@ export function DeckSelect({
             className={cn(
               "border-input data-[placeholder=true]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 data-invalid:ring-destructive/20 data-invalid:border-destructive inline-flex h-9 w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
             )}
-            data-placeholder={selectedDeck ? undefined : "true"}
+            data-placeholder={selectedSubject ? undefined : "true"}
           >
             <span className="min-w-0 flex-1 truncate text-left">
-              {selectedDeck ? getDeckLabel(selectedDeck) : placeholder}
+              {selectedSubject ? getSubjectLabel(selectedSubject) : placeholder}
             </span>
             <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
           </button>
         </PopoverTrigger>
-        <DeckSelectDropdown
-          decks={decks}
+        <SubjectSelectDropdown
+          subjects={subjects}
           value={value}
           listboxId={listboxId}
           searchQuery={searchQuery}

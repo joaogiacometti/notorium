@@ -1,7 +1,6 @@
 "use client";
 
 import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
-import { CreateDeckDialog } from "@/components/decks/create-deck-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
 import { AddBookDialog } from "@/components/library/add-book-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
@@ -68,11 +67,6 @@ export function CommandPaletteDialogs({
         open={activeDialog === "flashcard"}
         onOpenChange={handleOpenChange}
         aiEnabled={aiEnabled}
-      />
-      <CreateDeckDialog
-        trigger={null}
-        open={activeDialog === "deck"}
-        onOpenChange={handleOpenChange}
       />
       <CreateAssessmentDialog
         subjects={subjects.filter((subject) => isAcademicSubject(subject.kind))}

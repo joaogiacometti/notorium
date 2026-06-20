@@ -248,7 +248,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
             savedValues.occlusionImagePathname ||
           JSON.stringify(currentValues.occlusionRegions) !==
             JSON.stringify(savedValues.occlusionRegions) ||
-          currentValues.deckId !== savedValues.deckId
+          currentValues.subjectId !== savedValues.subjectId
         : hasContent;
 
     if ((hasUnsavedChanges || proposedBack) && !isSubmitting) {
@@ -350,7 +350,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     setIsGeneratingBack(true);
 
     const result = await generateFlashcardBack({
-      deckId: currentValues.deckId ?? "",
+      subjectId: currentValues.subjectId ?? "",
       front: currentValues.front,
       currentBack: hasBack ? currentValues.back : undefined,
     });
@@ -401,7 +401,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
   const canUseAiBack =
     aiEnabled &&
-    (currentValues.deckId ?? "").length > 0 &&
+    (currentValues.subjectId ?? "").length > 0 &&
     hasRichTextContent(currentValues.front) &&
     !isGeneratingBack &&
     !isSubmitting &&

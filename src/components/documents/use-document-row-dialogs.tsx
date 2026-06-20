@@ -17,7 +17,7 @@ import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
 // Copies a note that is not open in the editor: its content is not in client
 // state, so the last saved version is fetched before writing to the clipboard.
@@ -36,7 +36,7 @@ async function copySavedNoteContent(noteId: string, format: NoteCopyFormat) {
 
 interface UseDocumentRowDialogsArgs {
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   /** Called after an edit or delete succeeds, before `router.refresh()`, so a
    * caller with its own client-side document state can reload that subject. */
   onChanged?: (item: DocumentListItem) => void;
@@ -54,12 +54,12 @@ interface DocumentRowDialogs {
  * document actions on their kebab menus.
  *
  * @example
- * const { handlers, dialogs } = useDocumentRowDialogs({ aiEnabled, decks });
+ * const { handlers, dialogs } = useDocumentRowDialogs({ aiEnabled, subjects });
  * return (<><DocumentRowMenu item={doc} {...handlers} />{dialogs}</>);
  */
 export function useDocumentRowDialogs({
   aiEnabled,
-  decks,
+  subjects,
   onChanged,
 }: Readonly<UseDocumentRowDialogsArgs>): DocumentRowDialogs {
   const router = useRouter();
@@ -86,9 +86,9 @@ export function useDocumentRowDialogs({
       ? (item) => setGenerateTarget(item)
       : undefined,
     generateDisabledReason:
-      decks.length > 0
+      subjects.length > 0
         ? undefined
-        : "Create a deck before generating flashcards.",
+        : "Create a subject before generating flashcards.",
     onExportRequested: (item) => setExportTargetId(item.id),
   };
 
@@ -154,7 +154,7 @@ export function useDocumentRowDialogs({
       ) : null}
       {generateTarget?.kind === "note" ? (
         <GenerateNoteFlashcardsDialog
-          decks={decks}
+          subjects={subjects}
           noteId={generateTarget.id}
           open
           onOpenChange={(open) => {
@@ -164,7 +164,7 @@ export function useDocumentRowDialogs({
       ) : null}
       {generateTarget?.kind === "mindmap" ? (
         <GenerateMindmapFlashcardsDialog
-          decks={decks}
+          subjects={subjects}
           mindmapId={generateTarget.id}
           open
           onOpenChange={(open) => {

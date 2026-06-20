@@ -61,7 +61,7 @@ function getColumnClassName(columnId: string) {
       return "min-w-[6rem]";
     case "group":
       return "w-24 min-w-24";
-    case "deckName":
+    case "subjectName":
       return "w-24 min-w-20";
     case "actions":
       return "w-36 min-w-36";
@@ -145,15 +145,15 @@ function getColumns(
       ),
     },
     {
-      accessorKey: "deckName",
+      accessorKey: "subjectName",
       size: 96,
-      header: () => <TableHeaderLabel>Deck</TableHeaderLabel>,
+      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
       cell: ({ row }) => (
         <span
           className="block max-w-[7rem] truncate text-sm text-muted-foreground"
-          title={row.original.card.deckName}
+          title={row.original.card.subjectName}
         >
-          {row.original.card.deckName}
+          {row.original.card.subjectName}
         </span>
       ),
     },

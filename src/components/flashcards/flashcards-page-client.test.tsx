@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act } from "react";
+import { act, type ComponentProps } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlashcardsPageClient } from "./flashcards-page-client";
@@ -14,109 +14,26 @@ vi.mock("next/navigation", () => ({
     refresh: vi.fn(),
   }),
   usePathname: () => "/flashcards",
-  useTransition: () => [vi.fn(), vi.fn()],
-}));
-
-vi.mock("@/components/decks/create-deck-dialog", () => ({
-  CreateDeckDialog: ({ trigger }: { trigger: React.ReactNode }) => trigger,
-}));
-
-vi.mock("@/components/decks/edit-deck-dialog", () => ({
-  EditDeckDialog: ({
-    deck,
-    open,
-    onSaved,
-  }: {
-    deck: { id: string; name: string };
-    open: boolean;
-    onSaved?: (deck: { id: string; name: string }) => void;
-  }) =>
-    open ? (
-      <button
-        type="button"
-        onClick={() => onSaved?.({ id: deck.id, name: "Renamed" })}
-      >
-        Confirm
-      </button>
-    ) : null,
-}));
-
-vi.mock("@/components/decks/delete-deck-dialog", () => ({
-  DeleteDeckDialog: ({
-    deckId,
-    open,
-    onDeleted,
-  }: {
-    deckId: string;
-    open: boolean;
-    onDeleted?: (deckId: string) => void;
-  }) =>
-    open ? (
-      <div>
-        <button type="button" onClick={() => onDeleted?.(deckId)}>
-          Confirm Delete
-        </button>
-      </div>
-    ) : null,
-}));
-
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => children,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) =>
-    children,
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuItem: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => (
-    <button type="button" onClick={onClick}>
-      {children}
-    </button>
-  ),
+  useTransition: () => [false, vi.fn()],
 }));
 
 vi.mock("@/components/flashcards/manage/flashcards-manager", () => ({
-  FlashcardsManager: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="flashcards-manager">{children}</div>
-  ),
+  FlashcardsManager: () => <div data-testid="flashcards-manager" />,
 }));
 
 vi.mock("@/components/flashcards/review/flashcard-review-client", () => ({
-  FlashcardReviewClient: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="flashcard-review">{children}</div>
-  ),
+  FlashcardReviewClient: () => <div data-testid="flashcard-review" />,
 }));
 
 vi.mock("@/components/flashcards/shared/flashcards-statistics", () => ({
-  FlashcardsStatistics: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="flashcards-statistics">{children}</div>
-  ),
-}));
-
-vi.mock("@/components/decks/deck-tree-sidebar", () => ({
-  DeckTreeSidebar: ({
-    children,
-    className,
-  }: {
-    children?: React.ReactNode;
-    className?: string;
-  }) => (
-    <aside className={className} data-testid="deck-tree-sidebar">
-      {children}
-    </aside>
-  ),
+  FlashcardsStatistics: () => <div data-testid="flashcards-statistics" />,
 }));
 
 const mockManagePageData: import("@/lib/server/api-contracts").FlashcardManagePage =
   {
     items: [],
     total: 0,
-    deckCardCount: null,
+    subjectCardCount: null,
   };
 
 const mockReviewState: import("@/lib/server/api-contracts").FlashcardReviewState =
@@ -148,34 +65,26 @@ const mockStatistics: import("@/lib/server/api-contracts").FlashcardStatisticsSt
     streak: { current: 0, longest: 0 },
   };
 
-const mockDeckTree: import("@/lib/server/api-contracts").DeckTreeNode[] = [];
-const mockDecks: import("@/lib/server/api-contracts").DeckOption[] = [
+const mockSubjects: import("@/lib/server/api-contracts").SubjectOption[] = [
   {
-    id: "deck-1",
+    id: "subject-1",
     name: "Database 1",
     path: "CS::Database 1",
+    kind: "general",
+    totalClasses: null,
+    maxMisses: null,
     userId: "user-1",
-    parentDeckId: "deck-parent",
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-  },
-  {
-    id: "deck-2",
-    name: "Network",
-    path: "CS::Network",
-    userId: "user-1",
-    parentDeckId: "deck-parent",
+    parentSubjectId: "subject-parent",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   },
 ];
 
-const defaultProps = {
-  currentView: "manage" as const,
-  scopedDeckId: undefined,
+const defaultProps: ComponentProps<typeof FlashcardsPageClient> = {
+  currentView: "manage",
+  scopedSubjectId: undefined,
   initialPageSize: 25,
-  deckTree: mockDeckTree,
-  decks: mockDecks,
+  subjects: mockSubjects,
   initialManagePageData: mockManagePageData,
   initialReviewState: mockReviewState,
   statistics: mockStatistics,
@@ -187,13 +96,22 @@ describe("FlashcardsPageClient", () => {
   let root: Root;
   let queryClient: QueryClient;
 
+  function render(props: Partial<typeof defaultProps> = {}) {
+    return act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlashcardsPageClient {...defaultProps} {...props} />
+        </QueryClientProvider>,
+      );
+    });
+  }
+
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
     queryClient = new QueryClient();
-    vi.useFakeTimers();
   });
 
   afterEach(async () => {
@@ -202,94 +120,41 @@ describe("FlashcardsPageClient", () => {
     });
     container.remove();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
-    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
-  it("renders sidebar always visible", async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <FlashcardsPageClient {...defaultProps} />
-        </QueryClientProvider>,
-      );
-    });
+  it("always shows the subject scope filter and no deck tree", async () => {
+    await render();
 
-    act(() => {
-      vi.runAllTimers();
-    });
-
+    expect(
+      container.querySelector('[data-testid="subject-scope-filter"]'),
+    ).toBeTruthy();
     expect(
       container.querySelector('[data-testid="deck-tree-sidebar"]'),
-    ).toBeTruthy();
-  });
-
-  it("keeps the deck sidebar available on manage view", async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <FlashcardsPageClient {...defaultProps} />
-        </QueryClientProvider>,
-      );
-    });
-
-    const sidebar = container.querySelector(
-      '[data-testid="deck-tree-sidebar"]',
-    );
-
-    expect(sidebar?.className).not.toContain("hidden lg:block");
-    expect(
-      container.querySelector('[data-testid="mobile-deck-scope-picker"]'),
     ).toBeNull();
   });
 
-  it("uses a compact mobile scope picker on review view", async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <FlashcardsPageClient
-            {...defaultProps}
-            currentView="review"
-            scopedDeckId="deck-1"
-          />
-        </QueryClientProvider>,
-      );
-    });
+  it("renders the manager on the manage view", async () => {
+    await render();
 
-    const sidebar = container.querySelector(
-      '[data-testid="deck-tree-sidebar"]',
-    );
-    const scopePicker = container.querySelector(
-      '[data-testid="mobile-deck-scope-picker"]',
-    );
-
-    expect(sidebar?.className).toContain("hidden lg:block");
-    expect(scopePicker).toBeTruthy();
-    expect(scopePicker?.textContent).toContain("CS::Database 1");
+    expect(
+      container.querySelector('[data-testid="flashcards-manager"]'),
+    ).toBeTruthy();
   });
 
-  it("uses a compact mobile scope picker on statistics view", async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <FlashcardsPageClient
-            {...defaultProps}
-            currentView="statistics"
-            scopedDeckId="deck-2"
-          />
-        </QueryClientProvider>,
-      );
-    });
+  it("renders the review client on the review view", async () => {
+    await render({ currentView: "review", scopedSubjectId: "subject-1" });
 
-    const sidebar = container.querySelector(
-      '[data-testid="deck-tree-sidebar"]',
-    );
-    const scopePicker = container.querySelector(
-      '[data-testid="mobile-deck-scope-picker"]',
-    );
+    expect(
+      container.querySelector('[data-testid="flashcard-review"]'),
+    ).toBeTruthy();
+  });
 
-    expect(sidebar?.className).toContain("hidden lg:block");
-    expect(scopePicker).toBeTruthy();
-    expect(scopePicker?.textContent).toContain("CS::Network");
+  it("renders statistics on the statistics view", async () => {
+    await render({ currentView: "statistics", scopedSubjectId: "subject-1" });
+
+    expect(
+      container.querySelector('[data-testid="flashcards-statistics"]'),
+    ).toBeTruthy();
   });
 });

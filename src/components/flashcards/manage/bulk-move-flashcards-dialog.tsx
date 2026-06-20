@@ -4,10 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { getDecks } from "@/app/actions/decks";
 import { bulkMoveFlashcards } from "@/app/actions/flashcards";
+import { getSubjectOptions } from "@/app/actions/subjects";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { DeckSelect } from "@/components/shared/deck-select";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +22,7 @@ import {
   type BulkMoveFlashcardsForm,
   bulkMoveFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import type { DeckEntity } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface BulkMoveFlashcardsDialogProps {
@@ -39,12 +39,12 @@ export function BulkMoveFlashcardsDialog({
   onOpenChange,
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
   const [isPending, startTransition] = useTransition();
-  const [decks, setDecks] = useState<DeckEntity[]>([]);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const form = useForm<BulkMoveFlashcardsForm>({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
     defaultValues: {
       ids,
-      deckId: "",
+      subjectId: "",
     },
   });
 
@@ -53,13 +53,15 @@ export function BulkMoveFlashcardsDialog({
       return;
     }
 
-    form.reset({ ids, deckId: "" });
-    void getDecks().then((fetchedDecks) => setDecks(fetchedDecks));
+    form.reset({ ids, subjectId: "" });
+    void getSubjectOptions().then((fetchedSubjects) =>
+      setSubjects(fetchedSubjects),
+    );
   }, [form, open, ids]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      form.reset({ ids, deckId: "" });
+      form.reset({ ids, subjectId: "" });
     }
     onOpenChange(nextOpen);
   }
@@ -71,7 +73,7 @@ export function BulkMoveFlashcardsDialog({
       if (result.success) {
         onMoved(result.ids);
         onOpenChange(false);
-        form.reset({ ids: [], deckId: "" });
+        form.reset({ ids: [], subjectId: "" });
         return;
       }
 
@@ -82,8 +84,8 @@ export function BulkMoveFlashcardsDialog({
   const count = ids.length;
   const descriptionText =
     count === 1
-      ? "Move 1 selected flashcard to another deck."
-      : `Move ${count} selected flashcards to another deck.`;
+      ? "Move 1 selected flashcard to another subject."
+      : `Move ${count} selected flashcards to another subject.`;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -95,14 +97,14 @@ export function BulkMoveFlashcardsDialog({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-5">
             <Controller
-              name="deckId"
+              name="subjectId"
               control={form.control}
               render={({ field, fieldState }) => (
-                <DeckSelect
+                <SubjectSelect
                   value={field.value ?? null}
                   onChange={field.onChange}
-                  decks={decks}
-                  id="bulk-move-flashcards-deck"
+                  subjects={subjects}
+                  id="bulk-move-flashcards-subject"
                   error={fieldState.error?.message as string}
                   ariaInvalid={fieldState.invalid}
                 />

@@ -2,6 +2,7 @@ import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { HomeCreateSubjectButton } from "@/components/home/home-create-subject-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSubjectPageHref } from "@/features/subjects/constants";
 import type { SubjectListItem } from "@/lib/server/api-contracts";
 
 interface SubjectsOverviewCardProps {
@@ -11,6 +12,9 @@ interface SubjectsOverviewCardProps {
 function notesCountLabel(count: number): string {
   return count === 1 ? "1 note" : `${count} notes`;
 }
+
+const tileClassName =
+  "flex items-center gap-2 rounded-lg border border-border/70 bg-card/50 px-3 py-2 text-sm";
 
 /**
  * Dashboard card with a quick-access grid of the user's most recently updated
@@ -37,23 +41,49 @@ export function SubjectsOverviewCard({
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {subjects.map((subject) => (
               <li key={subject.id}>
-                <Link
-                  href={`/subjects/${subject.id}`}
-                  className="flex items-center gap-2 rounded-lg border border-border/70 bg-card/50 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:bg-muted/40"
-                >
-                  <BookOpen className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-                    {subject.name}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {notesCountLabel(subject.notesCount)}
-                  </span>
-                </Link>
+                <SubjectTile subject={subject} />
               </li>
             ))}
           </ul>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+interface SubjectTileProps {
+  subject: SubjectListItem;
+}
+
+/**
+ * A recent-subject tile. Academic subjects link to their dashboard; general
+ * subjects have no page (they live only in the sidebar), so their tile is inert
+ * — shown for context but not clickable.
+ */
+function SubjectTile({ subject }: Readonly<SubjectTileProps>) {
+  const href = getSubjectPageHref(subject);
+  const body = (
+    <>
+      <BookOpen className="size-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+        {subject.name}
+      </span>
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {notesCountLabel(subject.notesCount)}
+      </span>
+    </>
+  );
+
+  if (!href) {
+    return <div className={tileClassName}>{body}</div>;
+  }
+
+  return (
+    <Link
+      href={href}
+      className={`${tileClassName} transition-colors hover:border-primary/30 hover:bg-muted/40`}
+    >
+      {body}
+    </Link>
   );
 }

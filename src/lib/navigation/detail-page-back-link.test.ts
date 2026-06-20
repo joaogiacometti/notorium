@@ -17,13 +17,11 @@ describe("resolveDetailPageReturnContext", () => {
         from: "flashcards-manage",
         subjectId: "subject-1",
         view: "review",
-        deckId: "deck-1",
       }),
     ).toEqual({
       from: "flashcards-manage",
       subjectId: "subject-1",
       view: "review",
-      deckId: "deck-1",
     });
   });
 
@@ -33,13 +31,11 @@ describe("resolveDetailPageReturnContext", () => {
         from: "invalid",
         subjectId: "subject-1",
         view: "invalid",
-        deckId: "deck-1",
       }),
     ).toEqual({
       from: undefined,
       subjectId: "subject-1",
       view: undefined,
-      deckId: "deck-1",
     });
   });
 });
@@ -50,10 +46,10 @@ describe("detail href builders", () => {
       getFlashcardDetailHref("flashcard-1", {
         from: "flashcards-manage",
         view: "statistics",
-        deckId: "deck-1",
+        subjectId: "deck-1",
       }),
     ).toBe(
-      "/flashcards/flashcard-1?from=flashcards-manage&view=statistics&deckId=deck-1",
+      "/flashcards/flashcard-1?from=flashcards-manage&view=statistics&subjectId=deck-1",
     );
   });
 
@@ -90,7 +86,7 @@ describe("resolveFlashcardDetailBackLink", () => {
       resolveFlashcardDetailBackLink({
         from: "flashcards-manage",
         view: "review",
-        deckId: "deck-1",
+        subjectId: "deck-1",
       }),
     ).toEqual({
       href: getFlashcardsHref("review", "deck-1"),

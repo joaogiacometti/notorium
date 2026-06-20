@@ -12,15 +12,15 @@ import {
   type WindowInstance,
 } from "@/components/windows/window-manager-context";
 import type {
-  DeckOption,
   MindmapEntity,
   NoteEntity,
+  SubjectOption,
 } from "@/lib/server/api-contracts";
 
 interface WindowContentProps {
   window: WindowInstance;
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
 }
 
 /**
@@ -31,7 +31,7 @@ interface WindowContentProps {
 export function WindowContent({
   window,
   aiEnabled,
-  decks,
+  subjects,
 }: Readonly<WindowContentProps>) {
   const { closeWindow, registerCloseRequest } = useWindowManager();
   const onClosed = () => closeWindow(window.id);
@@ -56,7 +56,7 @@ export function WindowContent({
     <DocumentWindowContent
       window={window}
       aiEnabled={aiEnabled}
-      decks={decks}
+      subjects={subjects}
       onClosed={onClosed}
       registerCloseRequest={registerClose}
     />
@@ -66,7 +66,7 @@ export function WindowContent({
 interface DocumentWindowContentProps {
   window: WindowInstance;
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   onClosed: () => void;
   registerCloseRequest: (request: () => void) => () => void;
 }
@@ -74,7 +74,7 @@ interface DocumentWindowContentProps {
 function DocumentWindowContent({
   window,
   aiEnabled,
-  decks,
+  subjects,
   onClosed,
   registerCloseRequest,
 }: Readonly<DocumentWindowContentProps>) {
@@ -113,9 +113,10 @@ function DocumentWindowContent({
         onClosed={onClosed}
         registerCloseRequest={registerCloseRequest}
         aiEnabled={aiEnabled}
-        decks={decks}
+        subjects={subjects}
         mindmap={data as MindmapEntity}
         subjectName=""
+        subjectHref={null}
       />
     );
   }
@@ -126,9 +127,10 @@ function DocumentWindowContent({
       onClosed={onClosed}
       registerCloseRequest={registerCloseRequest}
       aiEnabled={aiEnabled}
-      decks={decks}
+      subjects={subjects}
       note={data as NoteEntity}
       subjectName=""
+      subjectHref={null}
     />
   );
 }

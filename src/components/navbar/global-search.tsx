@@ -133,9 +133,9 @@ export function GlobalSearch({
     pathname === "/flashcards"
       ? (searchParams.get("view") ?? undefined)
       : undefined;
-  const flashcardsDeckId =
+  const flashcardsSubjectId =
     pathname === "/flashcards"
-      ? (searchParams.get("deckId") ?? undefined)
+      ? (searchParams.get("subjectId") ?? undefined)
       : undefined;
 
   return (
@@ -240,7 +240,7 @@ export function GlobalSearch({
                     getFlashcardDetailHref(fc.id, {
                       from: flashcardsView ? "flashcards-manage" : undefined,
                       view: flashcardsView,
-                      deckId: flashcardsDeckId,
+                      subjectId: flashcardsSubjectId,
                     }),
                   )
                 }
@@ -260,7 +260,9 @@ export function GlobalSearch({
                   </span>
                   <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
                     <span className="shrink-0">in</span>
-                    <span className="block flex-1 truncate">{fc.deckPath}</span>
+                    <span className="block flex-1 truncate">
+                      {fc.subjectPath}
+                    </span>
                   </span>
                 </div>
                 {fc.back && (

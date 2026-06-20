@@ -33,7 +33,7 @@ export function ImproveCardDialog({
     const result = await editFlashcard({
       id: card.id,
       type: "basic",
-      deckId: card.deckId,
+      subjectId: card.subjectId ?? "",
       front: card.front,
       back: proposedBack,
     });

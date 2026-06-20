@@ -40,15 +40,20 @@ import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
-import type { DeckOption, NoteEntity } from "@/lib/server/api-contracts";
+import type { NoteEntity, SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   note: NoteEntity;
   subjectName: string;
+  /**
+   * The subject's detail-page href, or `null` for general subjects (which have
+   * no page). Drives the breadcrumb link and post-delete navigation.
+   */
+  subjectHref: string | null;
   /** When hosted in a floating window: drop the page top bar and fill height. */
   embedded?: boolean;
   /** Called instead of navigating after delete when embedded in a window. */
@@ -73,9 +78,10 @@ function isSameNoteEdit(left: EditNoteForm, right: EditNoteForm) {
 
 export function NoteDetail({
   aiEnabled,
-  decks,
+  subjects,
   note,
   subjectName,
+  subjectHref,
   embedded = false,
   onClosed,
   registerCloseRequest,
@@ -91,7 +97,7 @@ export function NoteDetail({
   const lastSavedValuesRef = useRef(getEditValues(note));
   const saveSequenceRef = useRef(0);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
-  const hasDecks = decks.length > 0;
+  const hasSubjects = subjects.length > 0;
   const form = useForm<EditNoteForm>({
     resolver: zodResolver(editNoteSchema),
     defaultValues: getEditValues(note),
@@ -212,7 +218,7 @@ export function NoteDetail({
           breadcrumb={[
             {
               label: subjectName,
-              href: `/subjects/${note.subjectId}`,
+              href: subjectHref ?? undefined,
               icon: "book-open",
             },
             { label: watchedTitle || note.title || "Untitled" },
@@ -304,11 +310,11 @@ export function NoteDetail({
                       <DropdownMenuItem
                         className="cursor-pointer"
                         onClick={() => setGenerateOpen(true)}
-                        disabled={!hasDecks}
+                        disabled={!hasSubjects}
                         title={
-                          hasDecks
+                          hasSubjects
                             ? undefined
-                            : "Create a deck before generating flashcards."
+                            : "Create a subject before generating flashcards."
                         }
                       >
                         <Sparkles className="size-4" />
@@ -394,14 +400,12 @@ export function NoteDetail({
               onClosed?.();
               return;
             }
-            startNavTransition(() =>
-              router.push(`/subjects/${note.subjectId}`),
-            );
+            startNavTransition(() => router.push(subjectHref ?? "/"));
           }}
         />
         {aiEnabled ? (
           <GenerateNoteFlashcardsDialog
-            decks={decks}
+            subjects={subjects}
             noteId={note.id}
             open={generateOpen}
             onOpenChange={setGenerateOpen}

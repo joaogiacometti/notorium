@@ -8,8 +8,8 @@ import {
   note,
 } from "@/db/schema";
 import { getOwnedAttachmentPathnames } from "@/features/attachments/pathname";
-import { getDescendantDeckIds } from "@/features/decks/queries";
 import { getMindmapImagePathnames } from "@/features/mindmaps/utils";
+import { getDescendantSubjectIds } from "@/features/subjects/queries";
 import { getInternalAttachmentPathnames } from "@/lib/editor/rich-text";
 import {
   getMediaStorageProvider,
@@ -49,11 +49,20 @@ export async function cleanupAttachmentPathnames(
   } catch {}
 }
 
+/**
+ * Collects every attachment pathname owned by a subject: notes, mindmaps,
+ * assessment attachments on the subject itself, plus flashcard images across
+ * the subject and its descendants (cards now live on subjects, not decks).
+ *
+ * @example
+ * const pathnames = await getSubjectAttachmentPathnamesForUser(userId, subjectId);
+ */
 export async function getSubjectAttachmentPathnamesForUser(
   userId: string,
   subjectId: string,
 ): Promise<string[]> {
-  const [notes, mindmaps, attachments] = await Promise.all([
+  const descendantSubjectIds = await getDescendantSubjectIds(userId, subjectId);
+  const [notes, mindmaps, attachments, flashcards] = await Promise.all([
     getDb()
       .select({ content: note.content })
       .from(note)
@@ -72,6 +81,17 @@ export async function getSubjectAttachmentPathnamesForUser(
       .where(
         and(eq(assessment.userId, userId), eq(assessment.subjectId, subjectId)),
       ),
+    descendantSubjectIds.length > 0
+      ? getDb()
+          .select({ front: flashcard.front, back: flashcard.back })
+          .from(flashcard)
+          .where(
+            and(
+              eq(flashcard.userId, userId),
+              inArray(flashcard.subjectId, descendantSubjectIds),
+            ),
+          )
+      : Promise.resolve([]),
   ]);
 
   return [
@@ -80,27 +100,8 @@ export async function getSubjectAttachmentPathnamesForUser(
     ),
     ...mindmaps.flatMap((item) => getMindmapImagePathnames(item.data)),
     ...attachments.map((item) => item.blobPathname),
+    ...flashcards.flatMap((item) =>
+      getInternalAttachmentPathnames(`${item.front}${item.back}`),
+    ),
   ];
-}
-
-export async function getDeckAttachmentPathnamesForUser(
-  userId: string,
-  deckId: string,
-): Promise<string[]> {
-  const deckIds = await getDescendantDeckIds(userId, deckId);
-
-  if (deckIds.length === 0) {
-    return [];
-  }
-
-  const flashcards = await getDb()
-    .select({ front: flashcard.front, back: flashcard.back })
-    .from(flashcard)
-    .where(
-      and(eq(flashcard.userId, userId), inArray(flashcard.deckId, deckIds)),
-    );
-
-  return flashcards.flatMap((item) =>
-    getInternalAttachmentPathnames(`${item.front}${item.back}`),
-  );
 }

@@ -39,8 +39,8 @@ Students who want a private, lightweight study management workspace.
 - Subject fields: name and kind.
 - Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects is rejected with a duplicate-name error. Uniqueness is case-sensitive.
 - Each subject has a kind, chosen at creation and editable later: `academic` or `general`.
-  - Academic subjects expose attendance and assessment tracking on their detail page, in addition to documents.
-  - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools.
+  - Academic subjects expose attendance and assessment tracking. Their detail page is the dashboard for both, and is the only thing the sidebar tree can't surface, so clicking an academic subject in the sidebar opens it.
+  - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools. They have no dashboard, so they are pure containers managed entirely in the sidebar tree: their label there is inert (expand via the chevron) and shows no navigation cursor. Visiting a general subject's URL directly renders a short notice pointing back to the sidebar.
 - New subjects default to `academic`. Existing subjects are `academic`.
 - Switching a subject from academic to general hides its attendance and assessment features without deleting the underlying records; switching back reveals them again.
 
@@ -48,11 +48,11 @@ Students who want a private, lightweight study management workspace.
 
 - Each subject has a Documents area that holds both notes and mindmaps together.
 - Document navigation lives in the global subject tree sidebar (the app frame): expanding a subject lists its notes and mindmaps, so note and mindmap detail pages no longer carry their own in-page documents sidebar and the editor or canvas spans the full content width.
-- Each note and mindmap row in the tree sidebar has a kebab menu with the same actions as that document kind's detail-page header menu, working without opening the document: notes offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Copy as rich text, Copy as plain text, and Delete; mindmaps offer Edit, Generate flashcards (when AI is configured; disabled until a deck exists), Export as PNG, and Delete. These act on the document's last saved state; renames and deletes refresh the subject's rows in place.
-- Document row management (rename, delete, generate, export) happens through the subject tree sidebar's kebab menus. The sidebar remains the persistent navigator; a subject's own page is a browsable overview of that subject, not a separate cross-subject documents list.
+- Each note and mindmap row in the tree sidebar has a kebab menu with the same actions as that document kind's detail-page header menu, working without opening the document: notes offer Edit, Generate flashcards (when AI is configured; disabled until a subject exists), Copy as rich text, Copy as plain text, and Delete; mindmaps offer Edit, Generate flashcards (when AI is configured; disabled until a subject exists), Export as PNG, and Delete. These act on the document's last saved state; renames and deletes refresh the subject's rows in place.
+- Document row management (rename, delete, generate, export) happens through the subject tree sidebar's kebab menus. The sidebar remains the persistent navigator; an academic subject's own page is its attendance/assessment dashboard, not a documents list.
 - The tree sidebar supports drag-and-drop reorganization. A subject (including a subsubject) can be dragged onto another subject to become its child, or onto the "Move to top level" zone to become a root subject; a subject cannot be dropped onto itself, its current parent, or one of its own descendants. A note or mindmap can be dragged onto any subject to move it under that subject; documents cannot be dropped on the top-level zone (every document belongs to a subject) or onto the subject they already belong to. Moves are rejected when the destination would exceed its note or mindmap limit, and the dragged row shows a spinner while the move is in flight. The destination branch expands to reveal the moved item.
-- A single "Create" action offers "Note" or "Mindmap"; each prompts for a title and opens the new item.
-- A subject's page is its browsable "home". A sticky top bar shows the subject's full ancestor path as a breadcrumb (each segment links to that subject), so the body carries no separate title block. The body shows the subject's direct subfolders as a grid of cards (each linking into the subfolder, with rolled-up document and subfolder counts), followed by a Documents section: a "Documents" heading with the "Create" action and the subject's complete list of documents (notes and mindmaps, no preview cap) with row links and compact action menus (edit title for notes, delete for both). Academic root subjects also show attendance and assessment summaries above these sections.
+- Each subject's sidebar kebab menu groups its create actions under a "New" submenu offering Subfolder, Note, or Mindmap; each prompts for a title and opens the new item.
+- A subject's page is reached only for the academic dashboard. A sticky top bar shows the subject's full ancestor path as a breadcrumb (each academic segment links to its page; general ancestors render as plain text since they have no page), so the body carries no separate title block. For academic subjects the body is the attendance summary and the assessment summary, each with its own create/manage actions and empty states. A general subject's page shows only a short dashed-card notice that its notes, mindmaps, and subfolders are managed in the sidebar.
 - Note and mindmap detail pages offer a zen mode toggle next to the document actions menu. Zen mode expands the editor or canvas to a full-screen, distraction-free view that hides the breadcrumb bar while keeping the title and document actions available. `Escape` or the toggle exits; an `Escape` that closes a dialog, menu, or inline connection-label edit does not also exit zen mode.
 - There is no standalone top-level mindmaps route; mindmaps live only inside their subject.
 
@@ -70,7 +70,7 @@ Students who want a private, lightweight study management workspace.
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
 - Uploaded images (note, flashcard, mindmap, and assessment image attachments) are automatically optimized to WebP on upload, with a maximum dimension cap, to reduce stored size and bandwidth without a visible quality loss. The original is kept only if optimization would not make the file smaller. Non-image uploads such as PDFs are stored as-is.
-- When AI is configured, users can generate flashcards from a note into a selected deck.
+- When AI is configured, users can generate flashcards from a note into a selected subject.
 - Generated note flashcards are reviewed before creation.
 
 #### Mindmaps
@@ -78,7 +78,7 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete mindmaps per subject. Mindmaps are scoped to a subject, like notes, and appear in the subject's documents area.
 - Mindmap detail edits a full-width node-and-edge canvas centered on a distinct root node whose label stays in sync with the mindmap title (editing either updates the other). Users edit node labels (double-click), connect nodes with edges, drag nodes, and pan/zoom. Title and graph changes auto-save. The canvas opens fit-to-view so the saved graph (including the root) is centered in the viewport on load, never stranding the user on empty canvas.
 - The header kebab (three-dot) menu offers Edit, Generate flashcards (when AI is configured), Export as PNG, and Delete. Export as PNG rasterizes the whole map (framed with even padding, on the active theme's background) and downloads it as a file named after the mindmap title. Exporting a mindmap that is not currently open renders its saved graph offscreen before capturing.
-- When AI is configured, users can generate flashcards from a mindmap into a selected deck. The AI source is a nested outline of the map's node labels and edge-relation labels (cross-connections excluded), so card quality reflects how detailed the map is. Generated mindmap flashcards are reviewed before creation.
+- When AI is configured, users can generate flashcards from a mindmap into a selected subject. The AI source is a nested outline of the map's node labels and edge-relation labels (cross-connections excluded), so card quality reflects how detailed the map is. Generated mindmap flashcards are reviewed before creation.
 - Canvas keyboard shortcuts (suppressed while typing in a field): `V` switches to select mode, `H` switches to pan mode, holding `Space` pans temporarily, `Tab` adds a child to the selected node in its allowed branch direction, `Delete`/`Backspace` removes the selected node and its descendants, and `Ctrl`/`Cmd+C` copies the selected nodes and their subtrees to the clipboard as a nested markdown outline for pasting into an AI chat (it yields to a live text selection so ordinary copy still works).
 - Connections flow horizontally between the left and right sides of nodes. The map grows by branching: the root shows "+" buttons on its left and right, while non-root nodes only show the "+" button for their root-branch side. Dragging a connection onto empty canvas also creates a new node linked to the source. There is no standalone "add node" button. A newly created node is selected and immediately in edit mode so the user can type right away. Leaving the browser or app while editing a node label preserves the active editor so typing can continue after returning.
 - Selecting a node shows a floating toolbar with bold, italic, a color picker, an image button, and delete. The image button uploads a picture that renders inside the node; pasting an image from the clipboard (Ctrl/Cmd+V) onto a single selected non-root node attaches it the same way; a selected node with an image shows a remove control. Deleting a node also deletes its descendants so no children are orphaned. The root node is permanent and only offers the two add-child buttons.
@@ -93,9 +93,9 @@ Students who want a private, lightweight study management workspace.
 
 ### Flashcards
 
-- Create, read, update, and delete flashcards within decks.
+- Create, read, update, and delete flashcards within subjects.
 - The flashcards manage table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
-- Flashcard manage search ranks front matches before back matches, deck-name matches, and recency tie-breakers.
+- Flashcard manage search ranks front matches before back matches, subject-name matches, and recency tie-breakers.
 - Flashcards are one of three types, chosen at creation: basic (front and back rich text), cloze, or image occlusion.
 - Basic flashcard fields: front and back rich text.
 - Cloze flashcards are authored as a single rich-text source containing one or more deletion markers of the form `{{c1::answer}}`, with an optional hint as `{{c1::answer::hint}}`.
@@ -127,19 +127,16 @@ Students who want a private, lightweight study management workspace.
 - When AI env vars are configured, the manage toolbar shows a sparkles `AI` dropdown with `Validate cards` and `Refine cards` entries; without AI the dropdown is hidden.
 - In the flashcards manage toolbar, every icon-only action must show a descriptive tooltip on hover and keyboard focus instead of relying on icon recognition alone.
 
-### Decks
+### Flashcard organization by subject
 
-- Decks are global to the user and are not owned by subjects.
-- Decks support unlimited nesting through `parentDeckId`.
-- Deck paths use `::` notation for display and searchable pickers.
-- Deck names must be unique among sibling decks, including root-level decks.
-- Users can create, rename, and delete decks from the flashcards area.
-- Users can add a flashcard to a specific deck from that deck's sidebar actions menu.
-- Users can drag decks in the flashcards tree to change parent decks or move them back to the root level.
-- Deleting a deck also deletes its child decks and all flashcards inside that subtree.
-- The flashcards page uses a deck tree sidebar, and deck-scoped review/manage/statistics include cards from descendant decks.
-- Flashcard creation is unavailable until the user has at least one deck; the manage toolbar shows a hover/focus hint telling the user to create a deck first.
-- When creating or editing a flashcard, the user must choose one of their decks.
+- Flashcards belong to a subject (`flashcard.subjectId`); there is no separate deck concept.
+- Subjects already form the user's hierarchy (see Subjects); flashcards reuse it, so subject paths use `::` notation in display and searchable pickers, and review/manage/statistics scoped to a subject include cards from descendant subjects.
+- There is no in-page flashcard tree. The flashcards page is two global surfaces — review everything and manage all flashcards — with a subject filter dropdown that scopes the current view via the `?subjectId` URL param.
+- The global subject sidebar shows a per-subject "due" indicator counting cards due now in that subject and its descendants; clicking the indicator opens the full-screen review session directly, scoped to that subject.
+- Each subject's sidebar kebab menu has a "Review flashcards" entry that opens the full-screen review session directly (scoped to that subject and its descendants, when cards are due; otherwise it lands on the review hub), and a "Manage flashcards" entry that opens the manage view pre-filtered to that subject. Both review entry points request the focus session via a `focus=1` URL flag the review view honors on load.
+- Flashcard creation is unavailable until the user has at least one subject; the manage toolbar and document/book generate actions show a hover/focus hint telling the user to create a subject first.
+- When creating, editing, moving, or generating a flashcard, the user chooses one of their subjects.
+- Deleting a subject deletes its descendant subjects and all flashcards inside that subtree (alongside its notes, mindmaps, and assessments).
 
 ### Flashcard Review
 
@@ -167,14 +164,14 @@ Students who want a private, lightweight study management workspace.
 ### Flashcard Statistics
 
 - Global statistics view in the flashcards page.
-- Statistics respect the active deck filter.
+- Statistics respect the active subject filter.
 - Statistics show overview metrics for cards in scope, including due cards, reviewed vs never-reviewed cards, review/lapse totals, card-state distribution, rating distribution, and recent daily review activity.
-- A review activity heatmap shows daily review counts over the last 365 days as a calendar grid whose cell intensity reflects how many reviews happened that day, with current and longest day-streak counters derived from the same data. The current streak counts consecutive days with at least one review ending today, and a day with no reviews yet today does not break it. The heatmap and streaks respect the active deck filter, like the rest of the statistics view, and are hidden when no cards are in scope.
+- A review activity heatmap shows daily review counts over the last 365 days as a calendar grid whose cell intensity reflects how many reviews happened that day, with current and longest day-streak counters derived from the same data. The current streak counts consecutive days with at least one review ending today, and a day with no reviews yet today does not break it. The heatmap and streaks respect the active subject filter, like the rest of the statistics view, and are hidden when no cards are in scope.
 
 ### Flashcard Refine
 
 - Refine is a mode inside the manage view, entered via the `Refine cards` entry of the manage toolbar AI dropdown. It is only available when AI env vars are configured.
-- Refine candidates load on demand when the mode is entered; they are global to the user and are not filtered by the selected deck scope or search.
+- Refine candidates load on demand when the mode is entered; they are global to the user and are not filtered by the selected subject scope or search.
 - While in refine mode the manage area shows the candidates as table rows with per-row actions, and the toolbar shows the mastered/struggling counts plus `Refresh Refine` and `Exit Refine` actions.
 - Refine surfaces two groups derived from each card's most recent reviews:
   - Mastered: the last 3 reviews are all `Good` or `Easy`.
@@ -182,9 +179,9 @@ Students who want a private, lightweight study management workspace.
 - `Hard` is neutral: it breaks both streaks without counting toward either group.
 - Cards with fewer than 3 reviews never appear; each group is capped at 50 cards.
 - Mastered cards offer a "Level up" action:
-  - Similar cards are found across all the user's cards via trigram similarity, ranking same-deck matches first.
+  - Similar cards are found across all the user's cards via trigram similarity, ranking same-subject matches first.
   - The AI chooses one outcome: relate (preferred), merge (rare), or decline.
-  - Relate: the AI proposes one new card testing the relationship between the mastered card and related ones (contrast, computation, application). On accept, the new card is created in the mastered card's deck with fresh scheduling state and the original cards are kept.
+  - Relate: the AI proposes one new card testing the relationship between the mastered card and related ones (contrast, computation, application). On accept, the new card is created in the mastered card's subject with fresh scheduling state and the original cards are kept.
   - Merge: only for true redundancy (same fact, different wording). On accept, the merged card replaces the source cards (including the mastered card), which are deleted; lineage rows snapshot each deleted card's front and back.
   - Decline: when no candidate supports a meaningful relationship or merge, the user sees an informational notice instead of a proposal.
   - The user always previews the proposed card — and, for merges, the cards that will be deleted — before accepting.
@@ -206,7 +203,7 @@ Students who want a private, lightweight study management workspace.
 ### Exam Mode
 
 - Accessed from the flashcard review hub via the `Start exam` action card.
-- Uses the active deck filter as the exam scope.
+- Uses the active subject filter as the exam scope.
 - The first tap/click on `Start exam` loads scoped exam cards and enters exam mode in a single interaction.
 - Runs in focus-mode UI with exam progress shown as `Card X of Y`.
 - Exam sessions do not modify due-card scheduling state for regular spaced-repetition reviews.
@@ -245,7 +242,7 @@ Students who want a private, lightweight study management workspace.
 - The library lists books in a paginated table showing title, author, saved reading progress (`Page X of Y` once the page count is known), and when the book was last read; clicking a row opens the book.
 - The table can be filtered with a search box that matches book title or author.
 - Each row has an actions menu to edit the book's title and author or delete the book; rows can be multi-selected to delete several books at once.
-- Opening a book renders the PDF in a scrollable in-app reader with zoom, single/two-page spread, and fullscreen controls. A Select/Move toggle in the toolbar switches the drag behavior between selecting text and dragging to scroll the page; it defaults to Move on touch devices and Select on desktop, and either can be overridden (on desktop `V` selects and `H` switches to the hand/pan tool). Selecting text shows a floating toolbar next to where the pointer finished selecting; its Copy action copies the selected text to the clipboard and clears the selection, working on both desktop and touch; scrolling dismisses it, and on desktop `Ctrl`/`Cmd+C` also copies the active selection. When AI is configured, the toolbar also offers Ask AI and Flashcards actions for the selected passage. Ask AI opens a chat dialog where the user asks questions about the passage and can ask follow-ups in the same thread; the passage stays pinned as context. Flashcards opens the flashcard generation dialog seeded with the passage, where the user picks a deck, then reviews and selects which generated cards to create (disabled until a deck exists). Pinch zooms on touch and ctrl/cmd+wheel zooms on desktop. A book opens fit to the whole page.
+- Opening a book renders the PDF in a scrollable in-app reader with zoom, single/two-page spread, and fullscreen controls. A Select/Move toggle in the toolbar switches the drag behavior between selecting text and dragging to scroll the page; it defaults to Move on touch devices and Select on desktop, and either can be overridden (on desktop `V` selects and `H` switches to the hand/pan tool). Selecting text shows a floating toolbar next to where the pointer finished selecting; its Copy action copies the selected text to the clipboard and clears the selection, working on both desktop and touch; scrolling dismisses it, and on desktop `Ctrl`/`Cmd+C` also copies the active selection. When AI is configured, the toolbar also offers Ask AI and Flashcards actions for the selected passage. Ask AI opens a chat dialog where the user asks questions about the passage and can ask follow-ups in the same thread; the passage stays pinned as context. Flashcards opens the flashcard generation dialog seeded with the passage, where the user picks a subject, then reviews and selects which generated cards to create (disabled until a subject exists). Pinch zooms on touch and ctrl/cmd+wheel zooms on desktop. A book opens fit to the whole page.
 - The reader respects the user's "Dark PDF reader" setting from the Appearance section of account settings. When enabled, it applies a CSS filter to the rendered PDF pages so white backgrounds become dark and text becomes light (similar to Zotero's invert-colors mode); text selection and link annotations stay un-inverted.
 - The reader has a left sidebar (desktop only) with a Pages/Content switch: "Pages" shows a virtualized rail of page thumbnails that scroll the book when clicked, and "Content" shows the PDF's table of contents (its embedded outline). Outline entries jump to their destination and record back-history like an internal link; an entry without a target is inert. Books with no embedded outline show an empty-contents message.
 - The reader tracks the page currently in view and saves it automatically as the user scrolls, so reopening the book returns to the last page read.
@@ -259,10 +256,10 @@ Students who want a private, lightweight study management workspace.
 
 ### Global Search
 
-- Search subjects, notes, flashcards, mindmaps, and library books by text with case-insensitive matching.
+- Search subjects, notes, flashcards, mindmaps, and library books by text with case-insensitive matching. Only academic subjects appear as subject results, since general subjects have no page to open; their notes and mindmaps stay searchable.
 - Library books match on title and author, and book results navigate to the book reader.
 - Flashcard search results navigate to the flashcard detail page.
-- Flashcard search results display deck paths using `::` notation.
+- Flashcard search results display subject paths using `::` notation.
 - Search is user-scoped and accessible from the left menu (and the `Cmd/Ctrl+K` shortcut).
 - Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
@@ -273,7 +270,7 @@ Students who want a private, lightweight study management workspace.
 
 - Pressing `Ctrl`/`Cmd+P` opens a command palette for running actions and navigating, separate from Global Search (`Ctrl`/`Cmd+K`). The browser print shortcut is suppressed while the palette is available.
 - Commands are searchable by name and keyword and grouped as Create, Windows, Go to, and Settings.
-- Create commands open the existing create dialogs: Subject, Flashcard, Deck, Assessment, Note, and Mindmap.
+- Create commands open the existing create dialogs: Subject, Flashcard, Assessment, Note, and Mindmap.
 - Creating a Note or Mindmap requires a subject: on a subject page the current subject is used; elsewhere the palette shows a subject picker step before opening the create dialog. Created notes and mindmaps navigate to their detail page.
 - Go to commands navigate to Flashcards, Planning, and Library.
 - Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.
@@ -322,7 +319,7 @@ Students who want a private, lightweight study management workspace.
 ### UI/UX Baseline
 
 - Responsive layout for desktop and mobile.
-- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments, recently edited documents (notes and mindmaps across all subjects), recently opened library books (each linking to its reader), and a quick-access grid of recently updated subjects with a create action. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
+- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments, recently edited documents (notes and mindmaps across all subjects), recently opened library books (each linking to its reader), and a quick-access grid of recently updated subjects with a create action (academic subjects link to their page; general subjects are shown but not clickable, since they have no page). On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
 - Every page shows a sticky top bar with a breadcrumb trail (e.g. `Subject / Documents / Note`) that indicates the current location and replaces per-page "Back to …" links. Intermediate crumbs link to ancestors; the current page is the unlinked final crumb.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.
@@ -340,8 +337,7 @@ Students who want a private, lightweight study management workspace.
 - A user can create a maximum of 100 mindmaps per subject.
 - A mindmap can have a maximum of 200 nodes.
 - A user can create a maximum of 50 assessments per subject.
-- A user can create a maximum of 2000 flashcards per deck.
-- A user can create a maximum of 200 decks.
+- A user can create a maximum of 2000 flashcards per subject.
 - A user can upload a maximum of 100 library books, each up to 20 MB, with at most 50 book uploads per UTC day.
 
 ## Data Ownership and Security Rules
@@ -358,11 +354,9 @@ Students who want a private, lightweight study management workspace.
 - `instance_state`
   - `id`, `initialAdminUserId`, `initialAdminAssignedAt`, timestamps
 - `subject`
-  - `id`, `name`, `kind` (`academic` | `general`), `totalClasses`, `maxMisses`, timestamps, `userId`
-- `deck`
-  - `id`, `name`, `parentDeckId`, timestamps, `userId`
+  - `id`, `name`, `parentSubjectId`, `kind` (`academic` | `general`), `totalClasses`, `maxMisses`, timestamps, `userId`
 - `flashcard`
-  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `deckId`, timestamps, `userId`
+  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
   - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, `automaticOptimizationEnabled`, optimization timestamps
 - `flashcard_review_log`

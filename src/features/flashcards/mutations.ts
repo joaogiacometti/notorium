@@ -2,11 +2,6 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
-import { getDeckRecordForUser } from "@/features/decks/queries";
-import {
-  generateFlashcardBackForUser,
-  improveFlashcardBackForUser,
-} from "@/features/flashcards/ai-service";
 import {
   createClozeNoteForUser,
   deleteClozeNoteForUser,
@@ -19,7 +14,7 @@ import {
   editOcclusionNoteForUser,
 } from "@/features/flashcards/occlusion-mutations";
 import {
-  countFlashcardsByDeckForUser,
+  countFlashcardsBySubjectForUser,
   expandOcclusionSiblingIds,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
@@ -29,9 +24,9 @@ import type {
   CreateFlashcardForm,
   DeleteFlashcardForm,
   EditFlashcardForm,
-  GenerateFlashcardBackForm,
   ResetFlashcardForm,
 } from "@/features/flashcards/validation";
+import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { isUniqueViolationError } from "@/lib/db/errors";
 import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
@@ -39,7 +34,6 @@ import type {
   CreateFlashcardResult,
   EditFlashcardResult,
   FlashcardEntity,
-  GenerateFlashcardBackResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
 import {
@@ -51,34 +45,34 @@ export type DeleteFlashcardMutationResult =
   | {
       success: true;
       id: string;
-      deckId: string;
+      subjectId: string | null;
     }
   | ActionErrorResult;
 
-type BasicFlashcardInput = { deckId: string; front: string; back: string };
+type BasicFlashcardInput = { subjectId: string; front: string; back: string };
 
 async function validateCreateFlashcardInput(
   userId: string,
   data: BasicFlashcardInput,
 ): Promise<
-  { error: ActionErrorResult } | { deckId: string; frontNormalized: string }
+  { error: ActionErrorResult } | { subjectId: string; frontNormalized: string }
 > {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
-  const [existingDeck, currentCount, hasDuplicate] = await Promise.all([
-    getDeckRecordForUser(userId, data.deckId),
-    countFlashcardsByDeckForUser(userId, data.deckId),
+  const [existingSubject, currentCount, hasDuplicate] = await Promise.all([
+    getSubjectRecordForUser(userId, data.subjectId),
+    countFlashcardsBySubjectForUser(userId, data.subjectId),
     hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
   ]);
 
-  if (!existingDeck) {
-    return { error: actionError("decks.notFound") };
+  if (!existingSubject) {
+    return { error: actionError("subjects.notFound") };
   }
 
-  if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
+  if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
     return {
       error: actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+        errorParams: { max: LIMITS.maxFlashcardsPerSubject },
       }),
     };
   }
@@ -87,12 +81,12 @@ async function validateCreateFlashcardInput(
     return { error: actionError("flashcards.duplicateFront") };
   }
 
-  return { deckId: data.deckId, frontNormalized };
+  return { subjectId: data.subjectId, frontNormalized };
 }
 
 async function createFlashcardRecord(
   userId: string,
-  deckId: string,
+  subjectId: string,
   data: BasicFlashcardInput,
   frontNormalized: string,
 ) {
@@ -101,7 +95,7 @@ async function createFlashcardRecord(
   const inserted = await getDb()
     .insert(flashcard)
     .values({
-      deckId,
+      subjectId,
       userId,
       front: data.front,
       frontNormalized,
@@ -128,7 +122,7 @@ export async function createFlashcardForUser(
 ): Promise<CreateFlashcardResult> {
   if (data.type === "occlusion") {
     return createOcclusionNoteForUser(userId, {
-      deckId: data.deckId,
+      subjectId: data.subjectId,
       occlusionImagePathname: data.occlusionImagePathname,
       occlusionRegions: data.occlusionRegions,
     });
@@ -136,7 +130,7 @@ export async function createFlashcardForUser(
 
   if (data.type === "cloze") {
     return createClozeNoteForUser(userId, {
-      deckId: data.deckId,
+      subjectId: data.subjectId,
       clozeSource: data.clozeSource,
       back: data.back,
     });
@@ -151,7 +145,7 @@ export async function createFlashcardForUser(
   try {
     const flashcardRecord = await createFlashcardRecord(
       userId,
-      validation.deckId,
+      validation.subjectId,
       data,
       validation.frontNormalized,
     );
@@ -176,7 +170,7 @@ type ValidateEditFlashcardResult =
 
 type BasicEditInput = {
   id: string;
-  deckId: string;
+  subjectId: string;
   front: string;
   back: string;
 };
@@ -188,27 +182,30 @@ async function validateEditFlashcardInput(
 ): Promise<ValidateEditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
-  const [existingDeck, hasDuplicate] = await Promise.all([
-    getDeckRecordForUser(userId, data.deckId),
+  const [existingSubject, hasDuplicate] = await Promise.all([
+    getSubjectRecordForUser(userId, data.subjectId),
     hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
   ]);
 
-  if (!existingDeck) {
+  if (!existingSubject) {
     return {
       ok: false,
-      error: actionError("decks.notFound"),
+      error: actionError("subjects.notFound"),
       existingFlashcard,
     };
   }
 
-  if (existingFlashcard.deckId !== data.deckId) {
-    const current = await countFlashcardsByDeckForUser(userId, data.deckId);
+  if (existingFlashcard.subjectId !== data.subjectId) {
+    const current = await countFlashcardsBySubjectForUser(
+      userId,
+      data.subjectId,
+    );
 
-    if (current >= LIMITS.maxFlashcardsPerDeck) {
+    if (current >= LIMITS.maxFlashcardsPerSubject) {
       return {
         ok: false,
         error: actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
         }),
         existingFlashcard,
       };
@@ -235,7 +232,7 @@ async function performFlashcardUpdate(
     const updated = await getDb()
       .update(flashcard)
       .set({
-        deckId: data.deckId,
+        subjectId: data.subjectId,
         front: data.front,
         frontNormalized,
         back: data.back,
@@ -275,7 +272,7 @@ export async function editFlashcardForUser(
       userId,
       {
         id: data.id,
-        deckId: data.deckId,
+        subjectId: data.subjectId,
         occlusionImagePathname: data.occlusionImagePathname,
         occlusionRegions: data.occlusionRegions,
       },
@@ -291,7 +288,7 @@ export async function editFlashcardForUser(
       userId,
       {
         id: data.id,
-        deckId: data.deckId,
+        subjectId: data.subjectId,
         clozeSource: data.clozeSource,
         back: data.back,
       },
@@ -352,51 +349,11 @@ async function editBasicFlashcard(
   return {
     success: true,
     flashcard: updatedFlashcard,
-    previousDeckId: existingFlashcard.deckId,
+    previousSubjectId: existingFlashcard.subjectId,
   };
 }
 
-function mapAiServiceResult(
-  result:
-    | { success: true; back: string }
-    | { success: false; errorCode: string },
-): GenerateFlashcardBackResult {
-  if (!result.success) {
-    return actionError(result.errorCode);
-  }
-
-  return { success: true, back: result.back };
-}
-
-export async function generateFlashcardBackForUserInput(
-  userId: string,
-  data: GenerateFlashcardBackForm,
-): Promise<GenerateFlashcardBackResult> {
-  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
-
-  if (!existingDeck) {
-    return actionError("decks.notFound");
-  }
-
-  if (data.currentBack) {
-    const result = await improveFlashcardBackForUser({
-      userId,
-      deckName: existingDeck.name,
-      front: data.front,
-      currentBack: data.currentBack,
-    });
-
-    return mapAiServiceResult(result);
-  }
-
-  const result = await generateFlashcardBackForUser({
-    userId,
-    deckName: existingDeck.name,
-    front: data.front,
-  });
-
-  return mapAiServiceResult(result);
-}
+export { generateFlashcardBackForUserInput } from "@/features/flashcards/back-generation";
 
 export async function deleteFlashcardForUser(
   userId: string,
@@ -419,7 +376,11 @@ export async function deleteFlashcardForUser(
       removed.flatMap((card) => [card.front, card.back]),
       [],
     );
-    return { success: true, id: data.id, deckId: existingFlashcard.deckId };
+    return {
+      success: true,
+      id: data.id,
+      subjectId: existingFlashcard.subjectId,
+    };
   }
 
   // Deleting any occlusion sibling removes the whole note, its siblings, and the
@@ -429,7 +390,11 @@ export async function deleteFlashcardForUser(
     existingFlashcard.occlusionNoteId
   ) {
     await deleteOcclusionNoteForUser(userId, existingFlashcard.occlusionNoteId);
-    return { success: true, id: data.id, deckId: existingFlashcard.deckId };
+    return {
+      success: true,
+      id: data.id,
+      subjectId: existingFlashcard.subjectId,
+    };
   }
 
   await getDb()
@@ -442,7 +407,7 @@ export async function deleteFlashcardForUser(
     [],
   );
 
-  return { success: true, id: data.id, deckId: existingFlashcard.deckId };
+  return { success: true, id: data.id, subjectId: existingFlashcard.subjectId };
 }
 
 export {

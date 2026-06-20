@@ -74,7 +74,7 @@ function TestHarness({
     <div>
       <output data-testid="front">{currentValues.front}</output>
       <output data-testid="back">{currentValues.back}</output>
-      <output data-testid="deckId">{currentValues.deckId}</output>
+      <output data-testid="subjectId">{currentValues.subjectId}</output>
       <output data-testid="duplicate">
         {dialog.isDuplicateFront ? "true" : "false"}
       </output>
@@ -160,7 +160,7 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             type: "basic",
-            deckId: "deck-1",
+            subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
@@ -179,7 +179,7 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             type: "basic",
-            deckId: "deck-2",
+            subjectId: "deck-2",
             front: "<p>Front B</p>",
             back: "<p>Back B</p>",
             clozeSource: "",
@@ -190,7 +190,7 @@ describe("useFlashcardDialogState", () => {
       );
     });
 
-    expect(getByTestId(container, "deckId").textContent).toBe("deck-2");
+    expect(getByTestId(container, "subjectId").textContent).toBe("deck-2");
     expect(getByTestId(container, "front").textContent).toBe("<p>Front B</p>");
     expect(getByTestId(container, "back").textContent).toBe("<p>Back B</p>");
   });
@@ -204,7 +204,7 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             type: "basic",
-            deckId: "deck-1",
+            subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
@@ -228,7 +228,7 @@ describe("useFlashcardDialogState", () => {
 
     expect(onSubmitAction).toHaveBeenCalledWith({
       type: "basic",
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "<p>Front A</p>",
       back: "<p>Back A</p>",
       clozeSource: "",
@@ -249,7 +249,7 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             type: "basic",
-            deckId: "deck-1",
+            subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
@@ -258,7 +258,7 @@ describe("useFlashcardDialogState", () => {
           }}
           getSuccessValues={(currentValues, options) => ({
             type: "basic",
-            deckId: currentValues.deckId,
+            subjectId: currentValues.subjectId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
             clozeSource: "",
@@ -286,7 +286,7 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             type: "basic",
-            deckId: "deck-1",
+            subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
@@ -295,7 +295,7 @@ describe("useFlashcardDialogState", () => {
           }}
           getSuccessValues={(currentValues, options) => ({
             type: "basic",
-            deckId: currentValues.deckId,
+            subjectId: currentValues.subjectId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
             clozeSource: "",
@@ -327,7 +327,7 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             type: "basic",
-            deckId: "deck-1",
+            subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",
@@ -336,7 +336,7 @@ describe("useFlashcardDialogState", () => {
           }}
           getSuccessValues={(currentValues, options) => ({
             type: "basic",
-            deckId: currentValues.deckId,
+            subjectId: currentValues.subjectId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
             clozeSource: "",
@@ -371,7 +371,7 @@ describe("useFlashcardDialogState", () => {
       const form = useForm<FlashcardFormValues>({
         defaultValues: {
           type: "basic",
-          deckId: "deck-1",
+          subjectId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
           clozeSource: "",
@@ -386,7 +386,7 @@ describe("useFlashcardDialogState", () => {
         onOpenChange: () => {},
         values: {
           type: "basic",
-          deckId: "deck-1",
+          subjectId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
           clozeSource: "",
@@ -434,7 +434,7 @@ describe("useFlashcardDialogState", () => {
           onOpenChange={onOpenChange}
           values={{
             type: "basic",
-            deckId: "deck-1",
+            subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
             clozeSource: "",

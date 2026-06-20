@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import { MindmapDetail } from "@/components/mindmaps/mindmap-detail";
-import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
 import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
-import { getSubjectByIdForUser } from "@/features/subjects/queries";
+import { getSubjectPageHref } from "@/features/subjects/constants";
+import {
+  getAllSubjectsWithPathsForUser,
+  getSubjectByIdForUser,
+} from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { getMindmapDetailHref } from "@/lib/navigation/detail-page-back-link";
@@ -17,10 +20,10 @@ export default async function MindmapPage({
   const session = await requireSession();
 
   const { id, mindmapId } = await params;
-  // Decks feed the editor's "Generate flashcards" action in the actions menu.
-  const [mindmap, decks] = await Promise.all([
+  // Subjects feed the editor's "Generate flashcards" action in the actions menu.
+  const [mindmap, subjects] = await Promise.all([
     getMindmapByIdForUser(session.user.id, mindmapId),
-    getAllDecksWithPathsForUser(session.user.id),
+    getAllSubjectsWithPathsForUser(session.user.id),
   ]);
 
   if (!mindmap) {
@@ -37,9 +40,10 @@ export default async function MindmapPage({
     <main>
       <MindmapDetail
         aiEnabled={isAiEnabled()}
-        decks={decks}
+        subjects={subjects}
         mindmap={mindmap}
         subjectName={subject?.name ?? ""}
+        subjectHref={subject ? getSubjectPageHref(subject) : null}
       />
     </main>
   );

@@ -3,7 +3,7 @@ import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
 
 interface ExamSessionScope {
-  deckId?: string;
+  subjectId?: string;
 }
 
 interface ExamSession {

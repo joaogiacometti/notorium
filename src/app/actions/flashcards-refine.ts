@@ -88,7 +88,7 @@ export async function proposeFlashcardMerge(
           id: primary.id,
           front: primary.front,
           back: primary.back,
-          deckName: primary.deckName,
+          subjectName: primary.subjectName,
         },
         candidates,
       });

@@ -23,7 +23,10 @@ import {
 } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
-import type { DeckOption, SubjectTreeNode } from "@/lib/server/api-contracts";
+import type {
+  SubjectOption,
+  SubjectTreeNode,
+} from "@/lib/server/api-contracts";
 import {
   findSubjectTreeNode,
   getSubjectAncestorIds,
@@ -32,7 +35,7 @@ import {
 
 interface SubjectTreeSidebarProps {
   tree: SubjectTreeNode[];
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   aiEnabled: boolean;
 }
 
@@ -67,7 +70,7 @@ function getActiveDocumentSubjectId(pathname: string): string | undefined {
 
 export function SubjectTreeSidebar({
   tree,
-  decks,
+  subjects,
   aiEnabled,
 }: Readonly<SubjectTreeSidebarProps>) {
   const router = useRouter();
@@ -98,7 +101,7 @@ export function SubjectTreeSidebar({
   const { handlers: documentActions, dialogs: documentDialogs } =
     useDocumentRowDialogs({
       aiEnabled,
-      decks,
+      subjects,
       onChanged: (item) => void loadDocuments(item.subjectId),
     });
 

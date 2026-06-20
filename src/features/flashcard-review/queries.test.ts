@@ -11,8 +11,8 @@ const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const lteMock = vi.fn((column, value) => ({ column, operator: "lte", value }));
 const orMock = vi.fn((...conditions) => conditions);
 const sqlMock = vi.fn((strings, ...values) => ({ strings, values }));
-const getDescendantDeckIdsMock = vi.fn();
-const getAllDecksWithPathsForUserMock = vi.fn();
+const getDescendantSubjectIdsMock = vi.fn();
+const getAllSubjectsWithPathsForUserMock = vi.fn();
 const ensureFsrsSettingsMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
@@ -34,9 +34,9 @@ vi.mock("drizzle-orm", () => ({
   sql: sqlMock,
 }));
 
-vi.mock("@/features/decks/queries", () => ({
-  getAllDecksWithPathsForUser: getAllDecksWithPathsForUserMock,
-  getDescendantDeckIds: getDescendantDeckIdsMock,
+vi.mock("@/features/subjects/queries", () => ({
+  getAllSubjectsWithPathsForUser: getAllSubjectsWithPathsForUserMock,
+  getDescendantSubjectIds: getDescendantSubjectIdsMock,
 }));
 
 vi.mock("@/db/schema", () => ({
@@ -48,7 +48,6 @@ vi.mock("@/db/schema", () => ({
     id: "flashcard_id_column",
     userId: "flashcard_user_id_column",
     subjectId: "flashcard_subject_id_column",
-    deckId: "flashcard_deck_id_column",
     dueAt: "flashcard_due_at_column",
     reviewCount: "flashcard_review_count_column",
     lapseCount: "flashcard_lapse_count_column",
@@ -130,8 +129,8 @@ describe("getFlashcardStatisticsForUser", () => {
     vi.resetModules();
     vi.clearAllMocks();
     selectMock.mockReset();
-    getDescendantDeckIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
-    getAllDecksWithPathsForUserMock.mockResolvedValue([]);
+    getDescendantSubjectIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
+    getAllSubjectsWithPathsForUserMock.mockResolvedValue([]);
     ensureFsrsSettingsMock.mockResolvedValue({
       desiredRetention: "0.9",
       weights: [],
@@ -169,7 +168,7 @@ describe("getFlashcardStatisticsForUser", () => {
       "user-1",
       new Date("2026-04-12T15:00:00.000Z"),
       {
-        deckId: "deck-1",
+        subjectId: "deck-1",
       },
     );
 
@@ -204,8 +203,11 @@ describe("getFlashcardStatisticsForUser", () => {
       { date: "2026-04-11", count: 0 },
       { date: "2026-04-12", count: 2 },
     ]);
-    expect(getDescendantDeckIdsMock).toHaveBeenCalledWith("user-1", "deck-1");
-    expect(inArrayMock).toHaveBeenCalledWith("flashcard_deck_id_column", [
+    expect(getDescendantSubjectIdsMock).toHaveBeenCalledWith(
+      "user-1",
+      "deck-1",
+    );
+    expect(inArrayMock).toHaveBeenCalledWith("flashcard_subject_id_column", [
       "deck-1",
       "deck-1-child",
     ]);
@@ -284,8 +286,8 @@ describe("getFlashcardReviewStateForUser", () => {
     vi.resetModules();
     vi.clearAllMocks();
     selectMock.mockReset();
-    getDescendantDeckIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
-    getAllDecksWithPathsForUserMock.mockResolvedValue([
+    getDescendantSubjectIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
+    getAllSubjectsWithPathsForUserMock.mockResolvedValue([
       { id: "deck-1", path: "Deck 1" },
       { id: "deck-1-child", path: "Deck 1::Child" },
     ]);
@@ -314,7 +316,7 @@ describe("getFlashcardReviewStateForUser", () => {
                   {
                     flashcard: {
                       id: "flashcard-1",
-                      deckId: "deck-1",
+                      subjectId: "deck-1",
                       dueAt: new Date("2026-04-12T14:00:00.000Z"),
                       front: "Front",
                       back: "Back",
@@ -332,7 +334,7 @@ describe("getFlashcardReviewStateForUser", () => {
                       updatedAt: new Date("2026-04-12T13:00:00.000Z"),
                       frontNormalized: "front",
                     },
-                    deckName: "Deck 1",
+                    subjectName: "Deck 1",
                   },
                 ]),
               }),
@@ -344,7 +346,7 @@ describe("getFlashcardReviewStateForUser", () => {
 
     const { getFlashcardReviewStateForUser } = await import("./queries");
     const result = await getFlashcardReviewStateForUser("user-1", {
-      deckId: "deck-1",
+      subjectId: "deck-1",
       limit: 50,
     });
 
@@ -355,17 +357,20 @@ describe("getFlashcardReviewStateForUser", () => {
     expect(result.cards).toHaveLength(1);
     expect(result.cards[0]).toMatchObject({
       id: "flashcard-1",
-      deckId: "deck-1",
-      deckName: "Deck 1",
-      deckPath: "Deck 1",
+      subjectId: "deck-1",
+      subjectName: "Deck 1",
+      subjectPath: "Deck 1",
       state: "new",
     });
     expect(result.scheduler).toEqual({
       desiredRetention: "0.9",
       weights: [["w", 1]],
     });
-    expect(getDescendantDeckIdsMock).toHaveBeenCalledWith("user-1", "deck-1");
-    expect(inArrayMock).toHaveBeenCalledWith("flashcard_deck_id_column", [
+    expect(getDescendantSubjectIdsMock).toHaveBeenCalledWith(
+      "user-1",
+      "deck-1",
+    );
+    expect(inArrayMock).toHaveBeenCalledWith("flashcard_subject_id_column", [
       "deck-1",
       "deck-1-child",
     ]);

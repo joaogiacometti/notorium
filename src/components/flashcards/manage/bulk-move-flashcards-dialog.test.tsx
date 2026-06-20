@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -16,8 +16,8 @@ const { bulkMoveFlashcardsMock, getDecksMock, toastErrorMock } = vi.hoisted(
   }),
 );
 
-vi.mock("@/app/actions/decks", () => ({
-  getDecks: getDecksMock,
+vi.mock("@/app/actions/subjects", () => ({
+  getSubjectOptions: getDecksMock,
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({
@@ -30,11 +30,14 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const decks: DeckOption[] = [
+const subjects: SubjectOption[] = [
   {
     id: "deck-1",
     userId: "user-1",
-    parentDeckId: null,
+    parentSubjectId: null,
+    kind: "general",
+    totalClasses: null,
+    maxMisses: null,
     name: "Spanish",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -43,7 +46,10 @@ const decks: DeckOption[] = [
   {
     id: "deck-2",
     userId: "user-1",
-    parentDeckId: "deck-1",
+    parentSubjectId: "deck-1",
+    kind: "general",
+    totalClasses: null,
+    maxMisses: null,
     name: "Verbs",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -78,7 +84,7 @@ describe("BulkMoveFlashcardsDialog", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    getDecksMock.mockResolvedValue(decks);
+    getDecksMock.mockResolvedValue(subjects);
     bulkMoveFlashcardsMock.mockResolvedValue({
       success: true,
       ids: ["flashcard-1"],
@@ -94,7 +100,7 @@ describe("BulkMoveFlashcardsDialog", () => {
     vi.clearAllMocks();
   });
 
-  it("does not refetch decks or reset the selected deck on rerender with the same ids", async () => {
+  it("does not refetch decks or reset the selected subject on rerender with the same ids", async () => {
     const onMoved = vi.fn();
     const onOpenChange = vi.fn();
     const ids = ["flashcard-1"];

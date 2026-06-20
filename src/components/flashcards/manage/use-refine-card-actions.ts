@@ -43,7 +43,7 @@ export function useRefineCardActions() {
 
     try {
       const result = await generateFlashcardBack({
-        deckId: card.deckId,
+        subjectId: card.subjectId ?? "",
         front: card.front,
         currentBack: card.back,
       });

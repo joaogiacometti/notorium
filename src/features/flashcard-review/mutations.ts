@@ -122,7 +122,7 @@ async function applyFlashcardReviewForUser(
           lastReviewedAt: flashcard.lastReviewedAt,
           reviewCount: flashcard.reviewCount,
           lapseCount: flashcard.lapseCount,
-          deckId: flashcard.deckId,
+          subjectId: flashcard.subjectId,
         });
 
       await tx.insert(flashcardReviewLog).values({

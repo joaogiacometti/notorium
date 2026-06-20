@@ -59,14 +59,14 @@ vi.mock("@/lib/db/errors", () => ({
 
 const primaryCard = {
   id: "flashcard-1",
-  deckId: "deck-1",
+  subjectId: "deck-1",
   front: "<p>Primary front</p>",
   back: "<p>Primary back</p>",
 };
 
 const sourceCard = {
   id: "flashcard-2",
-  deckId: "deck-1",
+  subjectId: "deck-1",
   front: "<p>Source front</p>",
   back: "<p>Source back</p>",
 };
@@ -126,7 +126,7 @@ describe("applyFlashcardMergeForUser", () => {
   it("creates the merged card, logs lineage, and deletes sources", async () => {
     selectWhereMock.mockResolvedValueOnce([primaryCard, sourceCard]);
     txInsertReturningMock.mockResolvedValueOnce([
-      { id: "flashcard-3", deckId: "deck-1", front: "<p>Merged front</p>" },
+      { id: "flashcard-3", subjectId: "deck-1", front: "<p>Merged front</p>" },
     ]);
 
     const { applyFlashcardMergeForUser } = await import(
@@ -139,7 +139,7 @@ describe("applyFlashcardMergeForUser", () => {
       success: true,
       flashcard: {
         id: "flashcard-3",
-        deckId: "deck-1",
+        subjectId: "deck-1",
         front: "<p>Merged front</p>",
       },
       deletedIds: ["flashcard-1", "flashcard-2"],
@@ -148,7 +148,7 @@ describe("applyFlashcardMergeForUser", () => {
     expect(txInsertValuesMock).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        deckId: "deck-1",
+        subjectId: "deck-1",
         userId: "user-1",
         front: "<p>Merged front</p>",
         frontNormalized: "merged front",
@@ -217,7 +217,11 @@ describe("applyRefineProposalForUser", () => {
   it("creates a relationship card without deleting the sources", async () => {
     selectWhereMock.mockResolvedValueOnce([primaryCard, sourceCard]);
     dbInsertReturningMock.mockResolvedValueOnce([
-      { id: "flashcard-3", deckId: "deck-1", front: "<p>Relation front</p>" },
+      {
+        id: "flashcard-3",
+        subjectId: "deck-1",
+        front: "<p>Relation front</p>",
+      },
     ]);
 
     const { applyRefineProposalForUser } = await import(
@@ -230,14 +234,14 @@ describe("applyRefineProposalForUser", () => {
       success: true,
       flashcard: {
         id: "flashcard-3",
-        deckId: "deck-1",
+        subjectId: "deck-1",
         front: "<p>Relation front</p>",
       },
       deletedIds: [],
     });
     expect(dbInsertValuesMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        deckId: "deck-1",
+        subjectId: "deck-1",
         userId: "user-1",
         front: "<p>Relation front</p>",
         frontNormalized: "relation front",
@@ -290,7 +294,7 @@ describe("applyRefineProposalForUser", () => {
     selectWhereMock.mockResolvedValueOnce([primaryCard, sourceCard]);
     cleanupAttachmentsAfterMutationMock.mockResolvedValue(undefined);
     txInsertReturningMock.mockResolvedValueOnce([
-      { id: "flashcard-3", deckId: "deck-1" },
+      { id: "flashcard-3", subjectId: "deck-1" },
     ]);
 
     const { applyRefineProposalForUser } = await import(

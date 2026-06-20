@@ -16,38 +16,42 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { FlashcardsView } from "@/features/flashcards/view";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
-interface MobileDeckScopePickerProps {
-  decks: DeckOption[];
+interface SubjectScopeFilterProps {
+  subjects: SubjectOption[];
   view: FlashcardsView;
-  selectedDeckId?: string;
+  selectedSubjectId?: string;
   className?: string;
 }
 
-const allDecksValue = "__all_decks__";
+const allSubjectsValue = "__all_subjects__";
 
 /**
- * Shows a compact deck scope selector for mobile flashcard review.
+ * Subject filter for the flashcards hub. Replaces the old in-page deck tree:
+ * picking a subject scopes the current view to that subject (and descendants)
+ * by setting `?subjectId`; "All subjects" clears the filter.
  *
  * @example
- * <MobileDeckScopePicker decks={decks} selectedDeckId="deck-1" />
+ * <SubjectScopeFilter subjects={subjects} view="manage" selectedSubjectId="s-1" />
  */
-export function MobileDeckScopePicker({
-  decks,
+export function SubjectScopeFilter({
+  subjects,
   view,
-  selectedDeckId,
+  selectedSubjectId,
   className,
-}: Readonly<MobileDeckScopePickerProps>) {
+}: Readonly<SubjectScopeFilterProps>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const selectedDeck = decks.find((deck) => deck.id === selectedDeckId);
-  const selectedLabel = selectedDeck?.path ?? "All Decks";
-  const filteredDecks = getFilteredDecks(decks, searchQuery);
+  const selectedSubject = subjects.find(
+    (subject) => subject.id === selectedSubjectId,
+  );
+  const selectedLabel = selectedSubject?.path ?? "All subjects";
+  const filteredSubjects = getFilteredSubjects(subjects, searchQuery);
 
   useEffect(() => {
     if (!open) {
@@ -59,41 +63,32 @@ export function MobileDeckScopePicker({
   }, [open]);
 
   function handleSelect(value: string) {
-    const nextDeckId = value === allDecksValue ? undefined : value;
+    const nextSubjectId = value === allSubjectsValue ? undefined : value;
     setOpen(false);
     setSearchQuery("");
 
-    if (nextDeckId === selectedDeckId) {
+    if (nextSubjectId === selectedSubjectId) {
       return;
     }
 
     startTransition(() => {
-      router.replace(getScopeHref(view, nextDeckId));
+      router.replace(getScopeHref(view, nextSubjectId));
     });
   }
 
   return (
-    <section
-      className={cn(
-        "rounded-xl border border-border/70 bg-card/85 p-3 shadow-xs",
-        className,
-      )}
-      data-testid="mobile-deck-scope-picker"
+    <div
+      className={cn("flex items-center gap-2", className)}
+      data-testid="subject-scope-filter"
     >
-      <p
-        id="mobile-deck-scope-picker-label"
-        className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase"
-      >
-        Deck scope
-      </p>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
             role="combobox"
             aria-expanded={open}
-            aria-labelledby="mobile-deck-scope-picker-label"
-            className="mt-2 inline-flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-border/70 bg-background px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            aria-label="Filter by subject"
+            className="inline-flex h-9 w-full max-w-xs items-center justify-between gap-2 rounded-md border border-border/70 bg-background px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <span className="min-w-0 flex-1 truncate text-left">
               {selectedLabel}
@@ -110,22 +105,22 @@ export function MobileDeckScopePicker({
               ref={inputRef}
               value={searchQuery}
               onValueChange={setSearchQuery}
-              placeholder="Search deck paths"
+              placeholder="Search subject paths"
             />
             <CommandList>
-              <CommandEmpty>No decks found.</CommandEmpty>
+              <CommandEmpty>No subjects found.</CommandEmpty>
               <ScopeCommandItem
-                value={allDecksValue}
-                label="All Decks"
-                selected={!selectedDeckId}
+                value={allSubjectsValue}
+                label="All subjects"
+                selected={!selectedSubjectId}
                 onSelect={handleSelect}
               />
-              {filteredDecks.map((deck) => (
+              {filteredSubjects.map((subject) => (
                 <ScopeCommandItem
-                  key={deck.id}
-                  value={deck.id}
-                  label={deck.path}
-                  selected={deck.id === selectedDeckId}
+                  key={subject.id}
+                  value={subject.id}
+                  label={subject.path}
+                  selected={subject.id === selectedSubjectId}
                   onSelect={handleSelect}
                 />
               ))}
@@ -133,7 +128,7 @@ export function MobileDeckScopePicker({
           </Command>
         </PopoverContent>
       </Popover>
-    </section>
+    </div>
   );
 }
 
@@ -165,24 +160,24 @@ function ScopeCommandItem({
   );
 }
 
-function getFilteredDecks(decks: DeckOption[], query: string) {
+function getFilteredSubjects(subjects: SubjectOption[], query: string) {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (normalizedQuery.length === 0) {
-    return decks;
+    return subjects;
   }
 
-  return decks.filter((deck) =>
-    deck.path.toLowerCase().includes(normalizedQuery),
+  return subjects.filter((subject) =>
+    subject.path.toLowerCase().includes(normalizedQuery),
   );
 }
 
-function getScopeHref(view: FlashcardsView, deckId?: string) {
+function getScopeHref(view: FlashcardsView, subjectId?: string) {
   const params = new URLSearchParams();
   params.set("view", view);
 
-  if (deckId) {
-    params.set("deckId", deckId);
+  if (subjectId) {
+    params.set("subjectId", subjectId);
   }
 
   return `/flashcards?${params.toString()}`;

@@ -12,6 +12,7 @@ import {
 } from "@/features/subjects/mutations";
 import {
   getAllSubjectsForUser,
+  getAllSubjectsWithPathsForUser,
   getSubjectByIdForUser,
   getSubjectListItemsForUser,
   getSubjectsForUser,
@@ -37,12 +38,22 @@ import type {
   MutationResult,
   SubjectEntity,
   SubjectListItem,
+  SubjectOption,
   SubjectTreeNode,
 } from "@/lib/server/api-contracts";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
   const userId = await getAuthenticatedUserId();
   return getSubjectsForUser(userId);
+}
+
+/**
+ * Subjects with full `path` labels, for the flashcard subject pickers (create,
+ * edit, move). Mirrors the old `getDecks` action.
+ */
+export async function getSubjectOptions(): Promise<SubjectOption[]> {
+  const userId = await getAuthenticatedUserId();
+  return getAllSubjectsWithPathsForUser(userId);
 }
 
 export async function getAllSubjects(): Promise<SubjectEntity[]> {

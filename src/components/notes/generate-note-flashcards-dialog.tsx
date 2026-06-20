@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { generateFlashcardsFromNote } from "@/app/actions/flashcard-generation";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
-import { DeckSelect } from "@/components/shared/deck-select";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
-import type { DeckOption, FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectOption,
+} from "@/lib/server/api-contracts";
 
 interface GeneratedCard {
   front: string;
@@ -24,7 +27,7 @@ interface GeneratedCard {
 }
 
 interface GenerateNoteFlashcardsDialogProps {
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   noteId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,20 +44,20 @@ function getGenerateErrorMessage(errorCode: string) {
     return "Could not extract flashcards from this note. Try adding more content.";
   }
   if (errorCode === "limits.flashcardLimit") {
-    return "Flashcard limit reached for this deck.";
+    return "Flashcard limit reached for this subject.";
   }
 
   return "AI service temporarily unavailable. Try again later.";
 }
 
 export function GenerateNoteFlashcardsDialog({
-  decks,
+  subjects,
   noteId,
   open,
   onOpenChange,
 }: Readonly<GenerateNoteFlashcardsDialogProps>) {
-  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(
-    decks[0]?.id ?? null,
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
+    subjects[0]?.id ?? null,
   );
   const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(
     null,
@@ -63,8 +66,8 @@ export function GenerateNoteFlashcardsDialog({
   const [isCreating, setIsCreating] = useState(false);
 
   async function handleGenerate() {
-    if (!selectedDeckId) {
-      toast.error("Select a deck before generating flashcards.");
+    if (!selectedSubjectId) {
+      toast.error("Select a subject before generating flashcards.");
       return;
     }
 
@@ -73,7 +76,7 @@ export function GenerateNoteFlashcardsDialog({
 
     const result = await generateFlashcardsFromNote({
       noteId,
-      deckId: selectedDeckId,
+      subjectId: selectedSubjectId,
     });
 
     setIsGenerating(false);
@@ -96,7 +99,7 @@ export function GenerateNoteFlashcardsDialog({
     for (const card of cards) {
       const result = await createFlashcard({
         type: "basic",
-        deckId: selectedDeckId ?? "",
+        subjectId: selectedSubjectId ?? "",
         front: card.front,
         back: card.back,
       });
@@ -169,18 +172,18 @@ export function GenerateNoteFlashcardsDialog({
           >
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-5 sm:px-6">
               <FieldGroup className="gap-4">
-                <DeckSelect
-                  value={selectedDeckId}
-                  onChange={setSelectedDeckId}
-                  decks={decks}
-                  id="note-flashcards-deck"
+                <SubjectSelect
+                  value={selectedSubjectId}
+                  onChange={setSelectedSubjectId}
+                  subjects={subjects}
+                  id="note-flashcards-subject"
                 />
               </FieldGroup>
             </div>
             <div className="shrink-0 border-t px-4 py-4 sm:px-6">
               <Button
                 type="submit"
-                disabled={isGenerating || !selectedDeckId}
+                disabled={isGenerating || !selectedSubjectId}
                 className="w-full"
               >
                 {isGenerating ? (

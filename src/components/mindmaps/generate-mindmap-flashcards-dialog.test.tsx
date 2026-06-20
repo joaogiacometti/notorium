@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GenerateMindmapFlashcardsDialog } from "@/components/mindmaps/generate-mindmap-flashcards-dialog";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
 const { generateMock, createMock, toastErrorMock, toastSuccessMock } =
   vi.hoisted(() => ({
@@ -28,8 +28,8 @@ vi.mock("sonner", () => ({
   toast: { error: toastErrorMock, success: toastSuccessMock },
 }));
 
-vi.mock("@/components/shared/deck-select", () => ({
-  DeckSelect: () => null,
+vi.mock("@/components/shared/subject-select", () => ({
+  SubjectSelect: () => null,
 }));
 
 // Surface the review step as a single button that creates the generated cards,
@@ -52,10 +52,13 @@ vi.mock("@/components/flashcards/dialogs/generate-flashcards-review", () => ({
   ),
 }));
 
-const deck: DeckOption = {
+const deck: SubjectOption = {
   id: "deck-1",
   userId: "user-1",
-  parentDeckId: null,
+  parentSubjectId: null,
+  kind: "general",
+  totalClasses: null,
+  maxMisses: null,
   name: "Biology",
   path: "Biology",
   createdAt: new Date("2026-04-20T10:00:00.000Z"),
@@ -86,7 +89,7 @@ describe("GenerateMindmapFlashcardsDialog", () => {
       root = createRoot(container);
       root.render(
         <GenerateMindmapFlashcardsDialog
-          decks={[deck]}
+          subjects={[deck]}
           mindmapId="mindmap-1"
           open
           onOpenChange={onOpenChange}
@@ -113,7 +116,7 @@ describe("GenerateMindmapFlashcardsDialog", () => {
 
     expect(generateMock).toHaveBeenCalledWith({
       mindmapId: "mindmap-1",
-      deckId: "deck-1",
+      subjectId: "deck-1",
     });
     expect(toastErrorMock).toHaveBeenCalledWith(
       "Could not extract flashcards from this mindmap. Try adding more detail.",

@@ -35,7 +35,7 @@ export async function applyRefineProposalForUser(
 }
 
 /**
- * Create the new relationship card in the primary card's deck. Source cards
+ * Create the new relationship card in the primary card's subject. Source cards
  * are only verified for ownership — nothing is deleted.
  */
 async function createRelatedFlashcardForUser(
@@ -55,7 +55,7 @@ async function createRelatedFlashcardForUser(
     const inserted = await getDb()
       .insert(flashcard)
       .values({
-        deckId: primaryCard.deckId,
+        subjectId: primaryCard.subjectId,
         userId,
         front: data.front,
         frontNormalized: normalizeRichTextForUniqueness(data.front),
@@ -136,7 +136,7 @@ export async function applyFlashcardMergeForUser(
       const inserted = await tx
         .insert(flashcard)
         .values({
-          deckId: primaryCard.deckId,
+          subjectId: primaryCard.subjectId,
           userId,
           front: data.front,
           frontNormalized,

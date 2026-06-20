@@ -29,7 +29,7 @@ import {
 } from "@/components/library/book-reader-annotation-config";
 import { ReaderLayout } from "@/components/library/book-reader-layout";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
 export interface BookReaderProps {
   bookId: string;
@@ -41,7 +41,7 @@ export interface BookReaderProps {
   readerColorInverted: boolean;
   initialAnnotations: BookAnnotationDto[];
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
 }
 
 // EmbedPDF auto-mounts the fullscreen plugin's wrapper around its children,
@@ -66,7 +66,7 @@ function ReaderEngine({
   readerColorInverted,
   initialAnnotations,
   aiEnabled,
-  decks,
+  subjects,
 }: Readonly<BookReaderProps>) {
   const { engine, isLoading, error } = usePdfiumEngine();
 
@@ -101,7 +101,7 @@ function ReaderEngine({
             readerColorInverted={readerColorInverted}
             initialAnnotations={initialAnnotations}
             aiEnabled={aiEnabled}
-            decks={decks}
+            subjects={subjects}
           />
         );
       }}

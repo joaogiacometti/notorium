@@ -45,3 +45,19 @@ export function getSubjectKindDescription(kind: SubjectKind): string {
 export function isAcademicSubject(kind: SubjectKind): boolean {
   return kind === "academic";
 }
+
+/**
+ * The detail-page href for a subject, or `null` when the subject has no page.
+ * Only academic subjects have a page (their attendance/assessment dashboard);
+ * general subjects are pure containers that live only in the sidebar tree, so
+ * they are never linked to. Use this everywhere a subject could be rendered as
+ * a navigation target so the rule stays consistent.
+ *
+ * @example getSubjectPageHref({ id: "s1", kind: "general" }) // null
+ */
+export function getSubjectPageHref(subject: {
+  id: string;
+  kind: SubjectKind;
+}): string | null {
+  return isAcademicSubject(subject.kind) ? `/subjects/${subject.id}` : null;
+}

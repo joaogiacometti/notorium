@@ -2,7 +2,6 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { type flashcard, flashcard as flashcardTable } from "@/db/schema";
 import { getOwnedAttachmentPathnames } from "@/features/attachments/pathname";
-import { getDeckRecordForUser } from "@/features/decks/queries";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   deriveOcclusionBack,
@@ -13,9 +12,10 @@ import {
   occlusionFrontNormalized,
 } from "@/features/flashcards/occlusion";
 import {
-  countFlashcardsByDeckForUser,
+  countFlashcardsBySubjectForUser,
   getOcclusionSiblingsForUser,
 } from "@/features/flashcards/queries";
+import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { isUniqueViolationError } from "@/lib/db/errors";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
@@ -32,7 +32,7 @@ import {
 type FlashcardInsert = typeof flashcard.$inferInsert;
 
 export interface OcclusionNoteInput {
-  deckId: string;
+  subjectId: string;
   occlusionImagePathname: string;
   occlusionRegions: OcclusionRegion[];
 }
@@ -53,7 +53,7 @@ function buildOcclusionInsert(
   const region = regions[index];
   const scheduling = getInitialFlashcardSchedulingState();
   return {
-    deckId: data.deckId,
+    subjectId: data.subjectId,
     userId,
     type: "occlusion",
     occlusionNoteId,
@@ -76,18 +76,18 @@ function buildOcclusionInsert(
   };
 }
 
-async function assertDeckCapacity(
+async function assertSubjectCapacity(
   userId: string,
-  deckId: string,
+  subjectId: string,
   additionalCards: number,
 ): Promise<ActionErrorResult | null> {
   if (additionalCards <= 0) {
     return null;
   }
-  const currentCount = await countFlashcardsByDeckForUser(userId, deckId);
-  if (currentCount + additionalCards > LIMITS.maxFlashcardsPerDeck) {
+  const currentCount = await countFlashcardsBySubjectForUser(userId, subjectId);
+  if (currentCount + additionalCards > LIMITS.maxFlashcardsPerSubject) {
     return actionError("limits.flashcardLimit", {
-      errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+      errorParams: { max: LIMITS.maxFlashcardsPerSubject },
     });
   }
   return null;
@@ -126,7 +126,7 @@ export async function cleanupOcclusionImagesForUser(
  *
  * @example
  * await createOcclusionNoteForUser(userId, {
- *   deckId,
+ *   subjectId,
  *   occlusionImagePathname,
  *   occlusionRegions,
  * });
@@ -135,9 +135,9 @@ export async function createOcclusionNoteForUser(
   userId: string,
   data: OcclusionNoteInput,
 ): Promise<CreateFlashcardResult> {
-  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
-  if (!existingDeck) {
-    return actionError("decks.notFound");
+  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
+  if (!existingSubject) {
+    return actionError("subjects.notFound");
   }
 
   const regions = sanitizeRegions(data.occlusionRegions);
@@ -145,9 +145,9 @@ export async function createOcclusionNoteForUser(
     return actionError("flashcards.invalidData");
   }
 
-  const overCapacity = await assertDeckCapacity(
+  const overCapacity = await assertSubjectCapacity(
     userId,
-    data.deckId,
+    data.subjectId,
     regions.length,
   );
   if (overCapacity) {
@@ -199,7 +199,7 @@ async function syncSiblings(
       await db
         .update(flashcardTable)
         .set({
-          deckId: insert.deckId,
+          subjectId: insert.subjectId,
           occlusionImagePathname: insert.occlusionImagePathname,
           occlusionRegions: insert.occlusionRegions,
           front: insert.front,
@@ -236,9 +236,9 @@ export async function editOcclusionNoteForUser(
   data: OcclusionNoteInput & { id: string },
   existingFlashcard: FlashcardEntity,
 ): Promise<EditFlashcardResult> {
-  const existingDeck = await getDeckRecordForUser(userId, data.deckId);
-  if (!existingDeck) {
-    return actionError("decks.notFound");
+  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
+  if (!existingSubject) {
+    return actionError("subjects.notFound");
   }
 
   const regions = sanitizeRegions(data.occlusionRegions);
@@ -252,13 +252,13 @@ export async function editOcclusionNoteForUser(
   const existingMaskIds = new Set(
     siblings.map((card) => card.occlusionMaskId ?? ""),
   );
-  const deckChanged = existingFlashcard.deckId !== data.deckId;
-  const additionalCards = deckChanged
+  const subjectChanged = existingFlashcard.subjectId !== data.subjectId;
+  const additionalCards = subjectChanged
     ? regions.length
     : regions.filter((region) => !existingMaskIds.has(region.id)).length;
-  const overCapacity = await assertDeckCapacity(
+  const overCapacity = await assertSubjectCapacity(
     userId,
-    data.deckId,
+    data.subjectId,
     additionalCards,
   );
   if (overCapacity) {
@@ -292,7 +292,7 @@ export async function editOcclusionNoteForUser(
   return {
     success: true,
     flashcard: representative,
-    previousDeckId: existingFlashcard.deckId,
+    previousSubjectId: existingFlashcard.subjectId,
   };
 }
 

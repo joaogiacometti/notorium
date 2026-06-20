@@ -96,9 +96,9 @@ function makeCard(id: string): FlashcardReviewEntity {
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
-    deckId: "deck-1",
-    deckName: "Biology",
-    deckPath: "Biology",
+    subjectId: "deck-1",
+    subjectName: "Biology",
+    subjectPath: "Biology",
   };
 }
 
@@ -169,7 +169,7 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(getFlashcardReviewStateMock).toHaveBeenCalledWith({
-      deckId: undefined,
+      subjectId: undefined,
       limit: 50,
     });
     expect(container.textContent).toContain("5 due");
@@ -318,7 +318,7 @@ describe("FlashcardReviewClient", () => {
       root.render(
         <FlashcardReviewClient
           initialState={initialState}
-          decks={[]}
+          subjects={[]}
           aiEnabled={false}
         />,
       );

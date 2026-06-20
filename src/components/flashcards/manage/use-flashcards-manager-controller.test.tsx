@@ -27,7 +27,7 @@ vi.mock("@/app/actions/flashcards", () => ({
   getFlashcardForManage: vi.fn(),
   getFlashcardsManagePage: vi
     .fn()
-    .mockResolvedValue({ items: [], total: 0, deckCardCount: null }),
+    .mockResolvedValue({ items: [], total: 0, subjectCardCount: null }),
   validateFlashcards: vi.fn(),
 }));
 
@@ -42,7 +42,7 @@ vi.mock("sonner", () => ({
 const emptyPageData: FlashcardManagePage = {
   items: [],
   total: 0,
-  deckCardCount: null,
+  subjectCardCount: null,
 };
 
 function ControllerHarness({

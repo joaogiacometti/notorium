@@ -10,7 +10,7 @@ interface CreateFlashcardFormPanelProps {
   aiEnabled: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
-  deckId?: string;
+  subjectId?: string;
   /**
    * When hosted in a floating window: lets the window's close button run the
    * unsaved-changes discard flow instead of closing without warning.
@@ -27,15 +27,15 @@ export function CreateFlashcardFormPanel({
   aiEnabled,
   onOpenChange,
   onCreated,
-  deckId,
+  subjectId,
   registerCloseRequest,
 }: Readonly<CreateFlashcardFormPanelProps>) {
-  const { decks, form, dialog } = useCreateFlashcardForm({
+  const { subjects, form, dialog } = useCreateFlashcardForm({
     open: true,
     aiEnabled,
     onOpenChange,
     onCreated,
-    deckId,
+    subjectId,
   });
 
   // Closing the window runs the same guarded close as the form's own discard
@@ -54,7 +54,7 @@ export function CreateFlashcardFormPanel({
         form={form}
         formId="form-window-flashcard"
         editorResetVersion={dialog.editorResetVersion}
-        decks={decks}
+        subjects={subjects}
         onSubmit={dialog.handleSubmit}
         isSubmitting={dialog.isSubmitting}
         isSaved={dialog.isSaved}

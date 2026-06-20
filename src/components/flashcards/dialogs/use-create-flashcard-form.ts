@@ -3,8 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getDecks } from "@/app/actions/decks";
 import { createFlashcard } from "@/app/actions/flashcards";
+import { getSubjectOptions } from "@/app/actions/subjects";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import {
@@ -12,15 +12,18 @@ import {
   flashcardFormSchema,
   toCreateFlashcardPayload,
 } from "@/features/flashcards/validation";
-import type { DeckEntity, FlashcardEntity } from "@/lib/server/api-contracts";
+import type {
+  FlashcardEntity,
+  SubjectOption,
+} from "@/lib/server/api-contracts";
 
-/** Empty create-flashcard form values, optionally pre-selecting a deck. */
+/** Empty create-flashcard form values, optionally pre-selecting a subject. */
 export function getCreateFlashcardFormValues(
-  deckId?: string | null,
+  subjectId?: string | null,
 ): FlashcardFormValues {
   return {
     type: "basic",
-    deckId: deckId ?? "",
+    subjectId: subjectId ?? "",
     front: "",
     back: "",
     clozeSource: "",
@@ -34,38 +37,38 @@ interface UseCreateFlashcardFormOptions {
   aiEnabled: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
-  deckId?: string;
+  subjectId?: string;
 }
 
 /**
- * Shared create-flashcard wiring: loads decks, owns the form, and drives submit
+ * Shared create-flashcard wiring: loads subjects, owns the form, and drives submit
  * via {@link useFlashcardDialogState} with `closeOnSuccess: false` so the form
  * stays open for rapid consecutive captures. Used by both the create dialog and
  * the floating flashcard window so the logic lives in exactly one place.
  *
  * @example
- * const { decks, form, dialog } = useCreateFlashcardForm({ open, aiEnabled, onOpenChange });
+ * const { subjects, form, dialog } = useCreateFlashcardForm({ open, aiEnabled, onOpenChange });
  */
 export function useCreateFlashcardForm({
   open,
   aiEnabled,
   onOpenChange,
   onCreated,
-  deckId,
+  subjectId,
 }: Readonly<UseCreateFlashcardFormOptions>) {
-  const [decks, setDecks] = useState<DeckEntity[]>([]);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
 
   const form = useForm<FlashcardFormValues>({
     resolver: zodResolver(flashcardFormSchema),
-    defaultValues: getCreateFlashcardFormValues(deckId),
+    defaultValues: getCreateFlashcardFormValues(subjectId),
   });
 
   useEffect(() => {
     if (!open) {
       return;
     }
-    void getDecks().then((fetchedDecks) => {
-      setDecks(fetchedDecks);
+    void getSubjectOptions().then((fetchedSubjects) => {
+      setSubjects(fetchedSubjects);
     });
   }, [open]);
 
@@ -74,7 +77,7 @@ export function useCreateFlashcardForm({
     open,
     aiEnabled,
     onOpenChange,
-    values: getCreateFlashcardFormValues(deckId),
+    values: getCreateFlashcardFormValues(subjectId),
     form,
     onSubmitAction: (values) =>
       createFlashcard(toCreateFlashcardPayload(values)),
@@ -88,5 +91,5 @@ export function useCreateFlashcardForm({
     closeOnSuccess: false,
   });
 
-  return { decks, form, dialog };
+  return { subjects, form, dialog };
 }

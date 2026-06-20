@@ -1,112 +1,80 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { DeckTreeSidebar } from "@/components/decks/deck-tree-sidebar";
-import { LazyCreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
 import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
 import { FlashcardsStatistics } from "@/components/flashcards/shared/flashcards-statistics";
-import { MobileDeckScopePicker } from "@/components/flashcards/shared/mobile-deck-scope-picker";
+import { SubjectScopeFilter } from "@/components/flashcards/shared/subject-scope-filter";
 import type { FlashcardsView } from "@/features/flashcards/view";
 import type {
-  DeckOption,
-  DeckTreeNode,
   FlashcardManagePage,
   FlashcardReviewState,
   FlashcardStatisticsState,
+  SubjectOption,
 } from "@/lib/server/api-contracts";
 
 interface FlashcardsPageClientProps {
   currentView: FlashcardsView;
-  scopedDeckId?: string;
+  scopedSubjectId?: string;
+  /** Jump straight into the full-screen focus session (review view only). */
+  autoStartReview?: boolean;
   initialSearch?: string;
   initialPageSize: number;
-  deckTree: DeckTreeNode[];
-  decks: DeckOption[];
+  subjects: SubjectOption[];
   initialManagePageData: FlashcardManagePage;
   initialReviewState: FlashcardReviewState;
   statistics: FlashcardStatisticsState;
   aiEnabled: boolean;
 }
 
+/**
+ * Flashcards hub. There is no in-page tree: review and statistics run globally
+ * (or scoped when the sidebar deep-links a subject), and manage lists every
+ * card with a subject filter. Scope lives in the `?subjectId` URL param.
+ */
 export function FlashcardsPageClient({
   currentView,
-  scopedDeckId,
+  scopedSubjectId,
+  autoStartReview,
   initialSearch,
   initialPageSize,
-  deckTree,
-  decks,
+  subjects,
   initialManagePageData,
   initialReviewState,
   statistics,
   aiEnabled,
 }: Readonly<FlashcardsPageClientProps>) {
-  const scopeKey = `${currentView}:${scopedDeckId ?? "all"}`;
-  const queryClient = useQueryClient();
-  const isReviewView = currentView === "review";
-  const isStatisticsView = currentView === "statistics";
-  const isCompactScopeView = isReviewView || isStatisticsView;
-
-  function handleDeckDeleted() {
-    void queryClient.invalidateQueries({
-      queryKey: ["flashcards-manage-page"],
-    });
-  }
-
-  function handleFlashcardCreated() {
-    void queryClient.invalidateQueries({
-      queryKey: ["flashcards-manage-page"],
-    });
-  }
+  const scopeKey = `${currentView}:${scopedSubjectId ?? "all"}`;
 
   return (
-    <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
-      <DeckTreeSidebar
-        deckTree={deckTree}
-        selectedDeckId={scopedDeckId}
-        currentView={currentView}
-        aiEnabled={aiEnabled}
-        className={isCompactScopeView ? "hidden lg:block" : undefined}
-        CreateFlashcardDialogComponent={LazyCreateFlashcardDialog}
-        onFlashcardCreated={handleFlashcardCreated}
-        onDeckDeleted={handleDeckDeleted}
+    <div className="flex min-w-0 flex-col gap-4 lg:h-full lg:min-h-0">
+      <SubjectScopeFilter
+        subjects={subjects}
+        view={currentView}
+        selectedSubjectId={scopedSubjectId}
       />
-      {isCompactScopeView && (
-        <div className="min-w-0 space-y-3 lg:min-h-0">
-          <MobileDeckScopePicker
-            decks={decks}
-            view={currentView}
-            selectedDeckId={scopedDeckId}
-            className="lg:hidden"
-          />
-          {isReviewView && (
-            <FlashcardReviewClient
-              key={scopeKey}
-              initialState={initialReviewState}
-              deckId={scopedDeckId}
-              decks={decks}
-              aiEnabled={aiEnabled}
-              embedded
-            />
-          )}
-          {isStatisticsView && (
-            <FlashcardsStatistics
-              statistics={statistics}
-              decks={decks}
-              deckId={scopedDeckId}
-            />
-          )}
-        </div>
+      {currentView === "review" && (
+        <FlashcardReviewClient
+          key={scopeKey}
+          initialState={initialReviewState}
+          subjectId={scopedSubjectId}
+          subjects={subjects}
+          aiEnabled={aiEnabled}
+          autoStartReview={autoStartReview}
+          embedded
+        />
+      )}
+      {currentView === "statistics" && (
+        <FlashcardsStatistics statistics={statistics} />
       )}
       {currentView === "manage" && (
         <FlashcardsManager
           key={scopeKey}
           initialPageData={initialManagePageData}
-          initialDeckId={scopedDeckId}
+          initialSubjectId={scopedSubjectId}
           initialSearch={initialSearch}
           initialPageSize={initialPageSize}
           aiEnabled={aiEnabled}
-          hasDecks={decks.length > 0}
+          hasSubjects={subjects.length > 0}
         />
       )}
     </div>

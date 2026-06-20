@@ -1,10 +1,9 @@
 "use server";
 
-import { getDeckRecordForUser } from "@/features/decks/queries";
 import { generateFlashcardsForUser as generateFlashcardsForUserService } from "@/features/flashcards/ai-service";
 import { buildMindmapFlashcardSource } from "@/features/flashcards/mindmap-source";
 import { buildNoteFlashcardSource } from "@/features/flashcards/note-source";
-import { countFlashcardsByDeckForUser } from "@/features/flashcards/queries";
+import { countFlashcardsBySubjectForUser } from "@/features/flashcards/queries";
 import {
   type GenerateFlashcardsForm,
   type GenerateMindmapFlashcardsForm,
@@ -15,7 +14,7 @@ import {
 } from "@/features/flashcards/validation";
 import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
 import { getNoteByIdForUser } from "@/features/notes/queries";
-import { getSubjectByIdForUser } from "@/features/subjects/queries";
+import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import {
@@ -34,29 +33,29 @@ export async function generateFlashcards(
     data,
     "flashcards.ai.invalidData",
     async (userId, parsedData) => {
-      const existingDeck = await getDeckRecordForUser(
+      const existingSubject = await getSubjectRecordForUser(
         userId,
-        parsedData.deckId,
+        parsedData.subjectId,
       );
 
-      if (!existingDeck) {
-        return actionError("decks.notFound");
+      if (!existingSubject) {
+        return actionError("subjects.notFound");
       }
 
-      const currentCount = await countFlashcardsByDeckForUser(
+      const currentCount = await countFlashcardsBySubjectForUser(
         userId,
-        parsedData.deckId,
+        parsedData.subjectId,
       );
 
-      if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
+      if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
         return actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
         });
       }
 
       const result = await generateFlashcardsForUserService({
         userId,
-        deckName: existingDeck.name,
+        subjectName: existingSubject.name,
         text: parsedData.text,
       });
 
@@ -76,38 +75,33 @@ export async function generateFlashcardsFromNote(
     data,
     "flashcards.ai.invalidData",
     async (userId, parsedData) => {
-      const [existingNote, existingDeck] = await Promise.all([
+      const [existingNote, existingSubject] = await Promise.all([
         getNoteByIdForUser(userId, parsedData.noteId),
-        getDeckRecordForUser(userId, parsedData.deckId),
+        getSubjectRecordForUser(userId, parsedData.subjectId),
       ]);
 
       if (!existingNote) {
         return actionError("notes.notFound");
       }
 
-      if (!existingDeck) {
-        return actionError("decks.notFound");
+      if (!existingSubject) {
+        return actionError("subjects.notFound");
       }
 
-      const currentCount = await countFlashcardsByDeckForUser(
+      const currentCount = await countFlashcardsBySubjectForUser(
         userId,
-        parsedData.deckId,
+        parsedData.subjectId,
       );
 
-      if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
+      if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
         return actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
         });
       }
 
-      const subject = await getSubjectByIdForUser(
-        userId,
-        existingNote.subjectId,
-      );
       const result = await generateFlashcardsForUserService({
         userId,
-        subjectName: subject?.name,
-        deckName: existingDeck.name,
+        subjectName: existingSubject.name,
         noteTitle: existingNote.title,
         text: buildNoteFlashcardSource({
           title: existingNote.title,
@@ -131,38 +125,33 @@ export async function generateFlashcardsFromMindmap(
     data,
     "flashcards.ai.invalidData",
     async (userId, parsedData) => {
-      const [existingMindmap, existingDeck] = await Promise.all([
+      const [existingMindmap, existingSubject] = await Promise.all([
         getMindmapByIdForUser(userId, parsedData.mindmapId),
-        getDeckRecordForUser(userId, parsedData.deckId),
+        getSubjectRecordForUser(userId, parsedData.subjectId),
       ]);
 
       if (!existingMindmap) {
         return actionError("mindmaps.notFound");
       }
 
-      if (!existingDeck) {
-        return actionError("decks.notFound");
+      if (!existingSubject) {
+        return actionError("subjects.notFound");
       }
 
-      const currentCount = await countFlashcardsByDeckForUser(
+      const currentCount = await countFlashcardsBySubjectForUser(
         userId,
-        parsedData.deckId,
+        parsedData.subjectId,
       );
 
-      if (currentCount >= LIMITS.maxFlashcardsPerDeck) {
+      if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
         return actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerDeck },
+          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
         });
       }
 
-      const subject = await getSubjectByIdForUser(
-        userId,
-        existingMindmap.subjectId,
-      );
       const result = await generateFlashcardsForUserService({
         userId,
-        subjectName: subject?.name,
-        deckName: existingDeck.name,
+        subjectName: existingSubject.name,
         noteTitle: existingMindmap.title,
         text: buildMindmapFlashcardSource({
           title: existingMindmap.title,

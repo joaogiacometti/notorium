@@ -5,13 +5,17 @@ import {
   ChevronRight,
   FileText,
   FolderPlus,
+  GraduationCap,
+  Layers,
   Loader2,
   MoreHorizontal,
   Pencil,
+  Plus,
   Trash2,
   Workflow,
 } from "lucide-react";
 import Link from "next/link";
+import type { DragEvent } from "react";
 import {
   type DocumentRowActionHandlers,
   DocumentRowMenu,
@@ -27,10 +31,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { DocumentListItem } from "@/features/documents/types";
-import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
+import { isAcademicSubject } from "@/features/subjects/constants";
+import {
+  getDocumentDetailHref,
+  getFlashcardsHref,
+} from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -115,35 +127,16 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
           isExpanded={isExpanded}
           onToggle={() => onToggle(node.id)}
         />
-        <Link
-          href={`/subjects/${node.id}`}
-          draggable
-          onDragStart={(event) => {
-            event.stopPropagation();
-            onDragStart(node.id);
-          }}
-          onDragOver={(event) => {
-            event.preventDefault();
-            onDragTarget(node.id);
-          }}
-          onDrop={(event) => {
-            event.preventDefault();
-            onDropTarget(node.id);
-          }}
+        <SubjectNodeLabel
+          node={node}
+          isMoving={isMoving}
+          isSelected={isSelected}
+          onDragStart={onDragStart}
+          onDragTarget={onDragTarget}
+          onDropTarget={onDropTarget}
           onDragEnd={onDragEnd}
-          aria-current={isSelected ? "page" : undefined}
-          className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-sm focus-visible:outline-none"
-        >
-          {isMoving ? (
-            <Loader2
-              className="size-3.5 shrink-0 animate-spin text-muted-foreground"
-              aria-hidden
-            />
-          ) : null}
-          <span className="min-w-0 truncate font-medium" title={node.path}>
-            {node.name}
-          </span>
-        </Link>
+        />
+        <DueReviewBadge subjectId={node.id} dueCount={node.dueFlashcardCount} />
         <SubjectActionsMenu
           node={node}
           onCreateChild={onCreateChild}
@@ -177,6 +170,88 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+interface SubjectNodeLabelProps {
+  node: SubjectTreeNode;
+  isMoving: boolean;
+  isSelected: boolean;
+  onDragStart: (subjectId: string) => void;
+  onDragTarget: (targetId: string) => void;
+  onDropTarget: (targetId: string) => void;
+  onDragEnd: () => void;
+}
+
+/**
+ * The subject label inside a tree row. Academic subjects link to their
+ * attendance/assessments page; general subjects have no dedicated page (the
+ * sidebar fully manages their contents), so their label is inert text and the
+ * chevron is the only expand control.
+ */
+function SubjectNodeLabel({
+  node,
+  isMoving,
+  isSelected,
+  onDragStart,
+  onDragTarget,
+  onDropTarget,
+  onDragEnd,
+}: Readonly<SubjectNodeLabelProps>) {
+  const dragProps = {
+    draggable: true,
+    onDragStart: (event: DragEvent<HTMLElement>) => {
+      event.stopPropagation();
+      onDragStart(node.id);
+    },
+    onDragOver: (event: DragEvent<HTMLElement>) => {
+      event.preventDefault();
+      onDragTarget(node.id);
+    },
+    onDrop: (event: DragEvent<HTMLElement>) => {
+      event.preventDefault();
+      onDropTarget(node.id);
+    },
+    onDragEnd,
+    className:
+      "flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm focus-visible:outline-none",
+  };
+
+  const content = (
+    <>
+      {isMoving ? (
+        <Loader2
+          className="size-3.5 shrink-0 animate-spin text-muted-foreground"
+          aria-hidden
+        />
+      ) : null}
+      <span className="min-w-0 truncate font-medium" title={node.path}>
+        {node.name}
+      </span>
+    </>
+  );
+
+  // Academic subjects own a page (attendance/assessments), so their label is a
+  // navigable link. General subjects have no page — they are pure containers
+  // managed in this tree — so their label is inert text (expand via the
+  // chevron) and never shows the pointer cursor that would imply navigation.
+  if (isAcademicSubject(node.kind)) {
+    return (
+      <Link
+        href={`/subjects/${node.id}`}
+        aria-current={isSelected ? "page" : undefined}
+        {...dragProps}
+        className={cn(dragProps.className, "cursor-pointer")}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <span {...dragProps} className={cn(dragProps.className, "cursor-default")}>
+      {content}
+    </span>
   );
 }
 
@@ -309,6 +384,35 @@ function DocumentRows({
   );
 }
 
+interface DueReviewBadgeProps {
+  subjectId: string;
+  dueCount: number;
+}
+
+/**
+ * Sidebar review indicator. Hidden when nothing is due; clicking jumps straight
+ * into a review session scoped to this subject and its descendants.
+ */
+function DueReviewBadge({
+  subjectId,
+  dueCount,
+}: Readonly<DueReviewBadgeProps>) {
+  if (dueCount <= 0) {
+    return null;
+  }
+
+  return (
+    <Link
+      href={getFlashcardsHref("review", subjectId, { focus: true })}
+      onClick={(event) => event.stopPropagation()}
+      aria-label={`Review ${dueCount} due ${dueCount === 1 ? "card" : "cards"} in this subject`}
+      className="shrink-0 rounded-full bg-(--intent-info-bg) px-2 py-0.5 text-[10px] font-medium tabular-nums text-(--intent-info-text) transition-colors hover:bg-(--intent-info-bg-hover)"
+    >
+      {dueCount}
+    </Link>
+  );
+}
+
 interface SubjectActionsMenuProps {
   node: SubjectTreeNode;
   onCreateChild: (parentSubjectId: string) => void;
@@ -340,18 +444,39 @@ function SubjectActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onCreateChild(node.id)}>
-          <FolderPlus className="size-4" />
-          New subfolder
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Plus className="size-4" />
+            New
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={() => onCreateChild(node.id)}>
+              <FolderPlus className="size-4" />
+              Subfolder
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onCreateNote(node.id)}>
+              <FileText className="size-4" />
+              Note
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onCreateMindmap(node.id)}>
+              <Workflow className="size-4" />
+              Mindmap
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuItem asChild>
+          <Link href={getFlashcardsHref("review", node.id, { focus: true })}>
+            <GraduationCap className="size-4" />
+            Review flashcards
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onCreateNote(node.id)}>
-          <FileText className="size-4" />
-          New note
+        <DropdownMenuItem asChild>
+          <Link href={getFlashcardsHref("manage", node.id)}>
+            <Layers className="size-4" />
+            Manage flashcards
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onCreateMindmap(node.id)}>
-          <Workflow className="size-4" />
-          New mindmap
-        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() =>
             onEdit({ id: node.id, name: node.name, kind: node.kind })

@@ -5,7 +5,7 @@ import { Copy, Layers, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ReaderAskAiDialog } from "@/components/library/book-reader-ask-ai-dialog";
 import { ReaderFlashcardsDialog } from "@/components/library/book-reader-flashcards-dialog";
-import type { DeckOption } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
 // Gap between the pointer and the toolbar, and a rough footprint used to keep it
 // from spilling off the viewport edges. The toolbar is wider when the AI actions
@@ -23,7 +23,7 @@ interface PointerAnchor {
 interface ReaderSelectionMenuProps {
   documentId: string;
   aiEnabled: boolean;
-  decks: DeckOption[];
+  subjects: SubjectOption[];
 }
 
 // Floating action bar anchored to where the pointer finished selecting, so it
@@ -35,7 +35,7 @@ interface ReaderSelectionMenuProps {
 export function ReaderSelectionMenu({
   documentId,
   aiEnabled,
-  decks,
+  subjects,
 }: Readonly<ReaderSelectionMenuProps>) {
   const selection = useSelectionCapability();
   const pointer = useRef<PointerAnchor>({ x: 0, y: 0 });
@@ -140,7 +140,7 @@ export function ReaderSelectionMenu({
 
       {aiEnabled && flashcardsText !== null ? (
         <ReaderFlashcardsDialog
-          decks={decks}
+          subjects={subjects}
           sourceText={flashcardsText}
           open
           onOpenChange={(open) => {

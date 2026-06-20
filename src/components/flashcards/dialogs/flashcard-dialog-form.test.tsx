@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
-import type { DeckEntity } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -29,12 +29,12 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
 }));
 
 function Harness({
-  decks = [],
-}: Readonly<{ decks?: DeckEntity[] | undefined }>) {
+  subjects = [],
+}: Readonly<{ subjects?: SubjectOption[] | undefined }>) {
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
       type: "basic",
-      deckId: "",
+      subjectId: "",
       front: "",
       back: "",
       clozeSource: "",
@@ -48,7 +48,7 @@ function Harness({
       onOpenChange={() => {}}
       form={form}
       formId="form-create-flashcard"
-      decks={decks}
+      subjects={subjects}
       onSubmit={async () => {}}
       isSubmitting={false}
       discard={{
@@ -142,15 +142,15 @@ describe("FlashcardDialogForm", () => {
 
   it("renders the deck selector while decks are still loading", async () => {
     await act(async () => {
-      root.render(<Harness decks={[]} />);
+      root.render(<Harness subjects={[]} />);
     });
 
     const deckSelect = container.querySelector(
-      "#form-create-flashcard-deck",
+      "#form-create-flashcard-subject",
     ) as HTMLButtonElement;
 
     expect(deckSelect).not.toBeNull();
     expect(deckSelect.disabled).toBe(true);
-    expect(deckSelect.textContent).toContain("Select a deck");
+    expect(deckSelect.textContent).toContain("Select a subject");
   });
 });

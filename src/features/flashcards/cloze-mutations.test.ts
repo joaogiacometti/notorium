@@ -14,8 +14,8 @@ const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const cleanupAttachmentsAfterMutationMock = vi.fn();
-const getDeckRecordForUserMock = vi.fn();
-const countFlashcardsByDeckForUserMock = vi.fn();
+const getSubjectRecordForUserMock = vi.fn();
+const countFlashcardsBySubjectForUserMock = vi.fn();
 const getClozeSiblingsForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 
@@ -46,8 +46,8 @@ vi.mock("@/features/attachments", () => ({
   cleanupAttachmentsAfterMutation: cleanupAttachmentsAfterMutationMock,
 }));
 
-vi.mock("@/features/decks/queries", () => ({
-  getDeckRecordForUser: getDeckRecordForUserMock,
+vi.mock("@/features/subjects/queries", () => ({
+  getSubjectRecordForUser: getSubjectRecordForUserMock,
 }));
 
 vi.mock("@/features/flashcards/fsrs", () => ({
@@ -55,7 +55,7 @@ vi.mock("@/features/flashcards/fsrs", () => ({
 }));
 
 vi.mock("@/features/flashcards/queries", () => ({
-  countFlashcardsByDeckForUser: countFlashcardsByDeckForUserMock,
+  countFlashcardsBySubjectForUser: countFlashcardsBySubjectForUserMock,
   getClozeSiblingsForUser: getClozeSiblingsForUserMock,
 }));
 
@@ -76,8 +76,11 @@ describe("createClozeNoteForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanupAttachmentsAfterMutationMock.mockResolvedValue(undefined);
-    getDeckRecordForUserMock.mockResolvedValue({ id: "deck-1", name: "Bio" });
-    countFlashcardsByDeckForUserMock.mockResolvedValue(0);
+    getSubjectRecordForUserMock.mockResolvedValue({
+      id: "deck-1",
+      name: "Bio",
+    });
+    countFlashcardsBySubjectForUserMock.mockResolvedValue(0);
     getInitialFlashcardSchedulingStateMock.mockReturnValue(scheduling);
   });
 
@@ -92,7 +95,7 @@ describe("createClozeNoteForUser", () => {
     );
 
     const result = await createClozeNoteForUser("user-1", {
-      deckId: "deck-1",
+      subjectId: "deck-1",
       clozeSource: "<p>{{c1::a}} and {{c2::b}}</p>",
       back: "",
     });
@@ -115,14 +118,14 @@ describe("createClozeNoteForUser", () => {
   });
 
   it("rejects when the deck is missing", async () => {
-    getDeckRecordForUserMock.mockResolvedValueOnce(null);
+    getSubjectRecordForUserMock.mockResolvedValueOnce(null);
 
     const { createClozeNoteForUser } = await import(
       "@/features/flashcards/cloze-mutations"
     );
 
     const result = await createClozeNoteForUser("user-1", {
-      deckId: "missing",
+      subjectId: "missing",
       clozeSource: "<p>{{c1::a}}</p>",
       back: "",
     });
@@ -132,14 +135,14 @@ describe("createClozeNoteForUser", () => {
   });
 
   it("rejects when the deck would exceed its card limit", async () => {
-    countFlashcardsByDeckForUserMock.mockResolvedValueOnce(2000);
+    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(2000);
 
     const { createClozeNoteForUser } = await import(
       "@/features/flashcards/cloze-mutations"
     );
 
     const result = await createClozeNoteForUser("user-1", {
-      deckId: "deck-1",
+      subjectId: "deck-1",
       clozeSource: "<p>{{c1::a}}</p>",
       back: "",
     });
@@ -153,8 +156,11 @@ describe("editClozeNoteForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanupAttachmentsAfterMutationMock.mockResolvedValue(undefined);
-    getDeckRecordForUserMock.mockResolvedValue({ id: "deck-1", name: "Bio" });
-    countFlashcardsByDeckForUserMock.mockResolvedValue(1);
+    getSubjectRecordForUserMock.mockResolvedValue({
+      id: "deck-1",
+      name: "Bio",
+    });
+    countFlashcardsBySubjectForUserMock.mockResolvedValue(1);
     getInitialFlashcardSchedulingStateMock.mockReturnValue(scheduling);
   });
 
@@ -164,7 +170,7 @@ describe("editClozeNoteForUser", () => {
       type: "cloze" as const,
       clozeNoteId: "note-1",
       clozeOrdinal: 1,
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "<p>old</p>",
       back: "<p>old</p>",
     };
@@ -184,7 +190,7 @@ describe("editClozeNoteForUser", () => {
       "user-1",
       {
         id: "sib-1",
-        deckId: "deck-1",
+        subjectId: "deck-1",
         clozeSource: "<p>{{c1::a}} and {{c2::b}}</p>",
         back: "",
       },
@@ -196,7 +202,7 @@ describe("editClozeNoteForUser", () => {
     expect(updateMock).toHaveBeenCalledTimes(1);
     expect(insertMock).toHaveBeenCalledTimes(1);
     if (result.success) {
-      expect(result.previousDeckId).toBe("deck-1");
+      expect(result.previousSubjectId).toBe("deck-1");
     }
   });
 });

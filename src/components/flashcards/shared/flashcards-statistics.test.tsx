@@ -74,13 +74,7 @@ describe("FlashcardsStatistics", () => {
 
   it("does not render the Cards mini-stat and keeps Due now, Reviewed, and Untouched", async () => {
     await act(async () => {
-      root.render(
-        <FlashcardsStatistics
-          statistics={statistics}
-          decks={[]}
-          deckId={undefined}
-        />,
-      );
+      root.render(<FlashcardsStatistics statistics={statistics} />);
     });
 
     expect(hasParagraphWithText(container, "Cards")).toBe(false);

@@ -26,20 +26,20 @@ import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
-  initialDeckId?: string;
+  initialSubjectId?: string;
   initialSearch?: string;
   initialPageSize: number;
   aiEnabled: boolean;
-  hasDecks: boolean;
+  hasSubjects: boolean;
 }
 
 export function FlashcardsManager({
   initialPageData,
-  initialDeckId,
+  initialSubjectId,
   initialSearch,
   initialPageSize,
   aiEnabled,
-  hasDecks,
+  hasSubjects,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
@@ -54,14 +54,14 @@ export function FlashcardsManager({
     editingFlashcard,
     editingFlashcardId,
     flashcards,
-    isAtDeckLimit,
+    isAtSubjectLimit,
     managePageQuery,
     pageIndex,
     searchQuery,
     refreshManagePage,
     cacheUpdatedFlashcard,
     resetTarget,
-    selectedDeckId,
+    selectedSubjectId,
     selectedFlashcardIds,
     setBulkDeleteOpen,
     setBulkMoveOpen,
@@ -99,7 +99,7 @@ export function FlashcardsManager({
     exitRefine,
   } = useFlashcardsManagerController({
     initialPageData,
-    initialDeckId,
+    initialSubjectId,
     initialSearch,
     initialPageSize,
   });
@@ -156,7 +156,7 @@ export function FlashcardsManager({
                 getFlashcardDetailHref(row.id, {
                   from: "flashcards-manage",
                   view: "manage",
-                  deckId: selectedDeckId,
+                  subjectId: selectedSubjectId,
                 }),
               ),
             )
@@ -182,7 +182,7 @@ export function FlashcardsManager({
         refineStrugglingCount={refineGroups.struggling.length}
         isLoadingRefineGroups={isLoadingRefineGroups}
         aiEnabled={aiEnabled}
-        hasDecks={hasDecks}
+        hasSubjects={hasSubjects}
         onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
         onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}
@@ -195,13 +195,13 @@ export function FlashcardsManager({
         onOpenBulkResetDialog={() => setBulkResetOpen(true)}
         onClearSelection={() => setSelectedFlashcardIds([])}
       />
-      {selectedDeckId && isAtDeckLimit && (
+      {selectedSubjectId && isAtSubjectLimit && (
         <div
           className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 text-sm shadow-xs ${warningTone.border} ${warningTone.bg}`}
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {`You've reached the limit of ${LIMITS.maxFlashcardsPerDeck} flashcards per deck. Please delete existing ones to create more.`}
+            {`You've reached the limit of ${LIMITS.maxFlashcardsPerSubject} flashcards per subject. Please delete existing ones to create more.`}
           </p>
         </div>
       )}
@@ -210,7 +210,7 @@ export function FlashcardsManager({
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={refreshManagePage}
-        deckId={selectedDeckId}
+        subjectId={selectedSubjectId}
         aiEnabled={aiEnabled}
       />
       {editingFlashcardId !== null && editingFlashcard && (
@@ -237,10 +237,12 @@ export function FlashcardsManager({
                 updateValidationFlashcard({
                   id: result.flashcard.id,
                   front: result.flashcard.front,
-                  deckName: existingCard?.deckName ?? "",
-                  deckPath:
-                    existingCard?.deckPath ?? existingCard?.deckName ?? "",
-                  deckId: result.flashcard.deckId,
+                  subjectName: existingCard?.subjectName ?? "",
+                  subjectPath:
+                    existingCard?.subjectPath ??
+                    existingCard?.subjectName ??
+                    "",
+                  subjectId: result.flashcard.subjectId ?? "",
                 });
               }
             }
@@ -336,7 +338,7 @@ export function FlashcardsManager({
           open={validateDialogOpen}
           onOpenChange={setValidateDialogOpen}
           onValidationStarted={handleValidationStarted}
-          currentDeckId={selectedDeckId}
+          currentSubjectId={selectedSubjectId}
         />
       ) : null}
       <ValidateAgainDialog

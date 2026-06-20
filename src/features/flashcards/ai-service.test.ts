@@ -95,7 +95,7 @@ describe("flashcards ai service", () => {
     const result = await generateFlashcardBackForUser({
       userId: "user-1",
       front: "<p>What is ATP?</p>",
-      deckName: "Biology",
+      subjectName: "Biology",
     });
 
     expect(result).toEqual({
@@ -108,8 +108,7 @@ describe("flashcards ai service", () => {
         model: "openai/gpt-4.1-mini",
         apiKey: "sk-or-v1-test",
       },
-      subjectName: undefined,
-      deckName: "Biology",
+      subjectName: "Biology",
       front: "<p>What is ATP?</p>",
     });
   });
@@ -150,7 +149,6 @@ describe("flashcards ai service", () => {
     const result = await generateFlashcardsForUser({
       userId: "user-1",
       subjectName: "Biology",
-      deckName: "Metabolism",
       noteTitle: "Photosynthesis lecture",
       text: "Chloroplasts contain chlorophyll.",
     });
@@ -166,7 +164,6 @@ describe("flashcards ai service", () => {
         apiKey: "sk-or-v1-test",
       },
       subjectName: "Biology",
-      deckName: "Metabolism",
       noteTitle: "Photosynthesis lecture",
       text: "Chloroplasts contain chlorophyll.",
     });
@@ -191,7 +188,7 @@ describe("flashcards ai service", () => {
           id: "f1",
           front: "<p>Front</p>",
           back: "<p>Back</p>",
-          deckName: "Biology",
+          subjectName: "Biology",
         },
       ],
     });
@@ -221,14 +218,14 @@ describe("flashcards ai service", () => {
         id: "f1",
         front: "<p>Front</p>",
         back: "<p>Back</p>",
-        deckName: "Biology",
+        subjectName: "Biology",
       },
       candidates: [
         {
           id: "f2",
           front: "<p>Other front</p>",
           back: "<p>Other back</p>",
-          deckName: "Biology",
+          subjectName: "Biology",
         },
       ],
     });
@@ -251,7 +248,7 @@ describe("flashcards ai service", () => {
         id: "f1",
         front: "<p>Front</p>",
         back: "<p>Back</p>",
-        deckName: "Biology",
+        subjectName: "Biology",
       },
       candidates: [],
     });
@@ -276,14 +273,14 @@ describe("flashcards ai service", () => {
         id: "f1",
         front: "<p>Front</p>",
         back: "<p>Back</p>",
-        deckName: "Biology",
+        subjectName: "Biology",
       },
       candidates: [
         {
           id: "f2",
           front: "<p>Other front</p>",
           back: "<p>Other back</p>",
-          deckName: "Biology",
+          subjectName: "Biology",
         },
       ],
     });
@@ -313,14 +310,14 @@ describe("flashcards ai service", () => {
         id: "f1",
         front: "<p>Front</p>",
         back: "<p>Back</p>",
-        deckName: "Biology",
+        subjectName: "Biology",
       },
       candidates: [
         {
           id: "f2",
           front: "<p>Other front</p>",
           back: "<p>Other back</p>",
-          deckName: "Biology",
+          subjectName: "Biology",
         },
       ],
     });
@@ -345,14 +342,14 @@ describe("flashcards ai service", () => {
         id: "f1",
         front: "Front",
         back: "Back",
-        deckName: "Biology",
+        subjectName: "Biology",
       },
       candidates: [
         {
           id: "f2",
           front: "Other front",
           back: "Other back",
-          deckName: "Biology",
+          subjectName: "Biology",
         },
       ],
     });

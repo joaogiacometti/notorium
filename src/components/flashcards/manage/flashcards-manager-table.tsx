@@ -36,7 +36,7 @@ function getColumnClassName(columnId: string) {
       return "w-9 min-w-9";
     case "front":
       return "min-w-[7.5rem] max-w-[8.5rem] sm:min-w-[10rem] sm:max-w-[12rem] lg:min-w-[8rem] lg:max-w-[11rem]";
-    case "deckPath":
+    case "subjectPath":
       return "min-w-[5.5rem] sm:min-w-[7rem] lg:min-w-[4rem] lg:max-w-[9rem]";
     case "actions":
       return "w-14 min-w-14";
@@ -100,15 +100,15 @@ function getColumns(
       cell: ({ row }) => <FlashcardFrontCell item={row.original} />,
     },
     {
-      accessorKey: "deckPath",
+      accessorKey: "subjectPath",
       size: 140,
-      header: () => <TableHeaderLabel>Deck</TableHeaderLabel>,
+      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
           className="min-w-0 overflow-hidden truncate py-1 text-sm leading-6 text-muted-foreground"
-          title={row.original.deckPath ?? undefined}
+          title={row.original.subjectPath ?? undefined}
         >
-          {row.original.deckPath}
+          {row.original.subjectPath}
         </div>
       ),
     },

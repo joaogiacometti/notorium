@@ -508,9 +508,18 @@ export const flashcard = pgTable(
     lastReviewedAt: timestamp("last_reviewed_at"),
     reviewCount: integer("review_count").notNull().default(0),
     lapseCount: integer("lapse_count").notNull().default(0),
-    deckId: text("deck_id")
-      .notNull()
-      .references((): AnyPgColumn => deck.id, { onDelete: "cascade" }),
+    // Migration A (additive): flashcards are moving from decks to subjects.
+    // deckId is now nullable and vestigial — new cards are created against a
+    // subject. Migration B drops deckId + the deck table once the backfill
+    // (scripts/backfill-decks-to-subjects.ts) has repointed every legacy row.
+    deckId: text("deck_id").references((): AnyPgColumn => deck.id, {
+      onDelete: "cascade",
+    }),
+    // Nullable until the backfill repoints every row; Migration B makes this
+    // notNull.
+    subjectId: text("subject_id").references((): AnyPgColumn => subject.id, {
+      onDelete: "cascade",
+    }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -526,6 +535,7 @@ export const flashcard = pgTable(
       table.frontNormalized,
     ),
     index("flashcard_deckId_idx").on(table.deckId),
+    index("flashcard_subjectId_idx").on(table.subjectId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_clozeNoteId_idx").on(table.clozeNoteId),
     index("flashcard_occlusionNoteId_idx").on(table.occlusionNoteId),
@@ -535,6 +545,11 @@ export const flashcard = pgTable(
     index("flashcard_userId_deckId_updatedAt_idx").on(
       table.userId,
       table.deckId,
+      table.updatedAt,
+    ),
+    index("flashcard_userId_subjectId_updatedAt_idx").on(
+      table.userId,
+      table.subjectId,
       table.updatedAt,
     ),
     index("flashcard_front_trgm_idx").using(
@@ -695,6 +710,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   mindmaps: many(mindmap),
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
+  flashcards: many(flashcard),
 }));
 
 export const libraryBookRelations = relations(libraryBook, ({ one, many }) => ({
@@ -797,6 +813,10 @@ export const flashcardRelations = relations(flashcard, ({ one }) => ({
   deck: one(deck, {
     fields: [flashcard.deckId],
     references: [deck.id],
+  }),
+  subject: one(subject, {
+    fields: [flashcard.subjectId],
+    references: [subject.id],
   }),
   user: one(user, {
     fields: [flashcard.userId],

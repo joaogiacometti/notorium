@@ -43,7 +43,7 @@ const baseProps = {
   refineStrugglingCount: 0,
   isLoadingRefineGroups: false,
   aiEnabled: false,
-  hasDecks: true,
+  hasSubjects: true,
   onOpenValidateDialog: vi.fn(),
   onOpenCreateDialog: vi.fn(),
   onOpenValidateAgainDialog: vi.fn(),
@@ -87,7 +87,7 @@ describe("FlashcardsManagerToolbar", () => {
 
   it("enables the create action when decks exist", async () => {
     await act(async () => {
-      root.render(<FlashcardsManagerToolbar {...baseProps} hasDecks />);
+      root.render(<FlashcardsManagerToolbar {...baseProps} hasSubjects />);
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
@@ -106,7 +106,9 @@ describe("FlashcardsManagerToolbar", () => {
 
   it("disables the create action and shows a tooltip when no decks exist", async () => {
     await act(async () => {
-      root.render(<FlashcardsManagerToolbar {...baseProps} hasDecks={false} />);
+      root.render(
+        <FlashcardsManagerToolbar {...baseProps} hasSubjects={false} />,
+      );
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
@@ -126,7 +128,7 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     expect(document.body.textContent).toContain(
-      "Create a deck first to add flashcards.",
+      "Create a subject first to add flashcards.",
     );
 
     await act(async () => {

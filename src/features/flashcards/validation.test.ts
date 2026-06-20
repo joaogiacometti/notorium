@@ -21,7 +21,7 @@ const richBack = "<p>4</p>";
 describe("createFlashcardSchema", () => {
   it("accepts valid input", () => {
     const result = createFlashcardSchema.safeParse({
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: richFront,
       back: richBack,
     });
@@ -29,7 +29,7 @@ describe("createFlashcardSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects missing deckId", () => {
+  it("rejects missing subjectId", () => {
     const result = createFlashcardSchema.safeParse({
       front: richFront,
       back: richBack,
@@ -40,7 +40,7 @@ describe("createFlashcardSchema", () => {
 
   it("rejects empty rich text front", () => {
     const result = createFlashcardSchema.safeParse({
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "<p> </p>",
       back: richBack,
     });
@@ -58,7 +58,7 @@ describe("createFlashcardSchema", () => {
       '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Foverflow.png">';
 
     const result = createFlashcardSchema.safeParse({
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front,
       back,
     });
@@ -71,7 +71,7 @@ describe("editFlashcardSchema", () => {
   it("accepts valid input", () => {
     const result = editFlashcardSchema.safeParse({
       id: "flashcard-1",
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: richFront,
       back: richBack,
     });
@@ -81,7 +81,7 @@ describe("editFlashcardSchema", () => {
 
   it("rejects missing id", () => {
     const result = editFlashcardSchema.safeParse({
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: richFront,
       back: richBack,
     });
@@ -93,7 +93,7 @@ describe("editFlashcardSchema", () => {
 describe("generateFlashcardBackSchema", () => {
   it("accepts valid input", () => {
     const result = generateFlashcardBackSchema.safeParse({
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "<p>What is ATP?</p>",
     });
 
@@ -102,7 +102,7 @@ describe("generateFlashcardBackSchema", () => {
 
   it("accepts optional currentBack", () => {
     const result = generateFlashcardBackSchema.safeParse({
-      deckId: "deck-1",
+      subjectId: "deck-1",
       front: "<p>What is ATP?</p>",
       currentBack: "<p>Energy molecule</p>",
     });
@@ -122,7 +122,7 @@ describe("delete and bulk schemas", () => {
     expect(
       bulkMoveFlashcardsSchema.safeParse({
         ids: ["flashcard-1", "flashcard-2"],
-        deckId: "deck-2",
+        subjectId: "deck-2",
       }).success,
     ).toBe(true);
   });
@@ -164,16 +164,16 @@ describe("flashcardsManageQuerySchema", () => {
 describe("generateFlashcardsSchema", () => {
   it("accepts valid deck and text", () => {
     const result = generateFlashcardsSchema.safeParse({
-      deckId: "deck-123",
+      subjectId: "deck-123",
       text: "Some text to generate flashcards from.",
     });
 
     expect(result.success).toBe(true);
   });
 
-  it("rejects empty deckId", () => {
+  it("rejects empty subjectId", () => {
     const result = generateFlashcardsSchema.safeParse({
-      deckId: "",
+      subjectId: "",
       text: "Some text",
     });
 
@@ -182,7 +182,7 @@ describe("generateFlashcardsSchema", () => {
 
   it("rejects text longer than max characters", () => {
     const result = generateFlashcardsSchema.safeParse({
-      deckId: "deck-123",
+      subjectId: "deck-123",
       text: "a".repeat(LIMITS.flashcardAiMaxInput + 1),
     });
 
@@ -194,7 +194,7 @@ describe("generateMindmapFlashcardsSchema", () => {
   it("accepts mindmap and deck ids", () => {
     const result = generateMindmapFlashcardsSchema.safeParse({
       mindmapId: "mindmap-123",
-      deckId: "deck-123",
+      subjectId: "deck-123",
     });
 
     expect(result.success).toBe(true);
@@ -202,7 +202,7 @@ describe("generateMindmapFlashcardsSchema", () => {
 
   it("rejects missing mindmap id", () => {
     const result = generateMindmapFlashcardsSchema.safeParse({
-      deckId: "deck-123",
+      subjectId: "deck-123",
     });
 
     expect(result.success).toBe(false);
@@ -221,7 +221,7 @@ describe("generateNoteFlashcardsSchema", () => {
   it("accepts note and deck ids", () => {
     const result = generateNoteFlashcardsSchema.safeParse({
       noteId: "note-123",
-      deckId: "deck-123",
+      subjectId: "deck-123",
     });
 
     expect(result.success).toBe(true);
@@ -229,7 +229,7 @@ describe("generateNoteFlashcardsSchema", () => {
 
   it("rejects missing note id", () => {
     const result = generateNoteFlashcardsSchema.safeParse({
-      deckId: "deck-123",
+      subjectId: "deck-123",
     });
 
     expect(result.success).toBe(false);

@@ -30,7 +30,7 @@ const reviewBatchLimit = 50;
 
 interface UseFlashcardReviewControllerParams {
   initialState: FlashcardReviewState;
-  deckId?: string;
+  subjectId?: string;
   resetFocusViewState: () => void;
   setFocusMode: (isFocusMode: boolean) => void;
 }
@@ -44,14 +44,14 @@ interface UseFlashcardReviewControllerParams {
  * @example
  * const controller = useFlashcardReviewController({
  *   initialState,
- *   deckId,
+ *   subjectId,
  *   resetFocusViewState,
  *   setFocusMode: setIsFocusMode,
  * });
  */
 export function useFlashcardReviewController({
   initialState,
-  deckId,
+  subjectId,
   resetFocusViewState,
   setFocusMode,
 }: UseFlashcardReviewControllerParams) {
@@ -63,14 +63,14 @@ export function useFlashcardReviewController({
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
   const isRefreshingOnReturnRef = useRef(false);
-  const [selectedDeckId, setSelectedDeckId] = useState(deckId);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(subjectId);
 
   useEffect(() => {
-    setSelectedDeckId(deckId);
-  }, [deckId]);
+    setSelectedSubjectId(subjectId);
+  }, [subjectId]);
 
   const examController = useFlashcardExamController({
-    selectedDeckId,
+    selectedSubjectId,
     isPending,
     resetFocusViewState,
     setFocusMode,
@@ -107,7 +107,7 @@ export function useFlashcardReviewController({
       refillRequestIdRef.current = requestId;
 
       const nextState = await getFlashcardReviewState({
-        deckId: selectedDeckId,
+        subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
       });
 
@@ -141,7 +141,7 @@ export function useFlashcardReviewController({
     isRefreshingOnReturnRef.current = true;
     try {
       const nextState = await getFlashcardReviewState({
-        deckId: selectedDeckId,
+        subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
       });
 
@@ -181,9 +181,9 @@ export function useFlashcardReviewController({
       return;
     }
 
-    if (deckId && updatedFlashcard.deckId !== deckId) {
+    if (subjectId && updatedFlashcard.subjectId !== subjectId) {
       const nextState = await getFlashcardReviewState({
-        deckId: selectedDeckId,
+        subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
       });
 
@@ -281,7 +281,7 @@ export function useFlashcardReviewController({
 
   return {
     reviewState,
-    selectedDeckId,
+    selectedSubjectId,
     examController,
     isExamMode,
     currentCard,

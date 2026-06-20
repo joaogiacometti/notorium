@@ -10,7 +10,7 @@ function values(
 ): FlashcardFormValues {
   return {
     type: "basic",
-    deckId: "deck-1",
+    subjectId: "deck-1",
     front: "",
     back: "",
     clozeSource: "",
@@ -33,7 +33,7 @@ describe("haveFlashcardDialogValuesChanged", () => {
     expect(
       haveFlashcardDialogValuesChanged(
         createValues,
-        values({ deckId: "deck-2" }),
+        values({ subjectId: "deck-2" }),
       ),
     ).toBe(true);
 
@@ -95,7 +95,7 @@ describe("shouldSyncFlashcardDialogValues", () => {
         }),
         nextValues: values({
           id: "flashcard-2",
-          deckId: "deck-2",
+          subjectId: "deck-2",
           front: "<p>Other front</p>",
           back: "<p>Other back</p>",
         }),

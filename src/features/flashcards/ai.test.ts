@@ -34,14 +34,13 @@ describe("buildGenerateFlashcardBackPrompt", () => {
     expect(result).toContain("Front: What is photosynthesis?");
   });
 
-  it("includes deck context when provided", () => {
+  it("includes subject context when provided", () => {
     const result = buildGenerateFlashcardBackPrompt({
-      subjectName: "Biology",
-      deckName: "Metabolism",
+      subjectName: "Metabolism",
       front: "What is ATP?",
     });
 
-    expect(result).toContain("Deck context: Metabolism");
+    expect(result).toContain("Subject context: Metabolism");
   });
 });
 
@@ -52,21 +51,21 @@ describe("buildMergeSynthesisPrompt", () => {
         id: "f1",
         front: "DNS acronym",
         back: "Domain Name System.",
-        deckName: "Networking",
+        subjectName: "Networking",
       },
       candidates: [
         {
           id: "f2",
           front: "DNS role",
           back: "Resolves names to IP addresses.",
-          deckName: "Networking",
+          subjectName: "Networking",
         },
       ],
     });
 
     expect(result).toContain("Primary mastered card (ID: f1)");
     expect(result).toContain("Candidate 1 (ID: f2)");
-    expect(result).toContain("Deck: Networking");
+    expect(result).toContain("Subject: Networking");
     expect(result).toContain("Front: DNS role");
   });
 });
@@ -324,25 +323,14 @@ describe("buildGenerateFlashcardsPrompt", () => {
     expect(prompt).toContain("DNS translates domain names to IP addresses.");
   });
 
-  it("includes deck context when provided", () => {
-    const prompt = buildGenerateFlashcardsPrompt({
-      subjectName: "Computer Science",
-      deckName: "Networking",
-      text: "DNS translates domain names to IP addresses.",
-    });
-    expect(prompt).toContain("Deck: Networking");
-  });
-
   it("includes note title when provided", () => {
     const prompt = buildGenerateFlashcardsPrompt({
       subjectName: "Biology",
-      deckName: "Metabolism",
       noteTitle: "Photosynthesis lecture",
       text: "Chloroplasts contain chlorophyll.",
     });
 
     expect(prompt).toContain("Subject: Biology");
-    expect(prompt).toContain("Deck: Metabolism");
     expect(prompt).toContain("Note title: Photosynthesis lecture");
     expect(prompt).toContain("Chloroplasts contain chlorophyll.");
   });

@@ -7,13 +7,13 @@ import type { FlashcardEntity } from "@/lib/server/api-contracts";
  * empty and the source/regions fields carry the editable content instead.
  *
  * @example
- * getEditFlashcardFormValues(flashcard) // { type, deckId, front, back, ... }
+ * getEditFlashcardFormValues(flashcard) // { type, subjectId, front, back, ... }
  */
 export function getEditFlashcardFormValues(
   flashcard: Pick<
     FlashcardEntity,
     | "id"
-    | "deckId"
+    | "subjectId"
     | "front"
     | "back"
     | "type"
@@ -27,7 +27,7 @@ export function getEditFlashcardFormValues(
   return {
     id: flashcard.id,
     type: isOcclusion ? "occlusion" : isCloze ? "cloze" : "basic",
-    deckId: flashcard.deckId,
+    subjectId: flashcard.subjectId ?? "",
     // Cloze and occlusion cards edit their source; front/back are derived.
     front: isCloze || isOcclusion ? "" : flashcard.front,
     back: isCloze || isOcclusion ? "" : flashcard.back,

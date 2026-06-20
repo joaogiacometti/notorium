@@ -32,7 +32,7 @@ interface FlashcardsManagerToolbarProps {
   refineStrugglingCount: number;
   isLoadingRefineGroups: boolean;
   aiEnabled: boolean;
-  hasDecks: boolean;
+  hasSubjects: boolean;
   onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
   onOpenValidateAgainDialog: () => void;
@@ -170,7 +170,7 @@ export function FlashcardsManagerToolbar({
   refineStrugglingCount,
   isLoadingRefineGroups,
   aiEnabled,
-  hasDecks,
+  hasSubjects,
   onOpenValidateDialog,
   onOpenCreateDialog,
   onOpenValidateAgainDialog,
@@ -196,7 +196,7 @@ export function FlashcardsManagerToolbar({
     <Button
       type="button"
       onClick={onOpenCreateDialog}
-      disabled={!hasDecks}
+      disabled={!hasSubjects}
       className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
     >
       <CopyPlus className="size-4" />
@@ -218,7 +218,7 @@ export function FlashcardsManagerToolbar({
                     onChange={(event) =>
                       onSearchQueryChange(event.target.value)
                     }
-                    placeholder="Search front, back, or deck path..."
+                    placeholder="Search front, back, or subject path..."
                     className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
                   />
                 </div>
@@ -232,7 +232,7 @@ export function FlashcardsManagerToolbar({
                     onStartRefine={onStartRefine}
                   />
                 ) : null}
-                {hasDecks ? (
+                {hasSubjects ? (
                   createButton
                 ) : (
                   <Tooltip>
@@ -245,7 +245,7 @@ export function FlashcardsManagerToolbar({
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Create a deck first to add flashcards.
+                      Create a subject first to add flashcards.
                     </TooltipContent>
                   </Tooltip>
                 )}

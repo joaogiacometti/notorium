@@ -4,19 +4,16 @@ import {
   PageTopBar,
 } from "@/components/shared/page-top-bar";
 import { SubjectDetailContent } from "@/components/subjects/subject-detail-content";
-import type { DocumentListItem } from "@/features/documents/types";
+import { isAcademicSubject } from "@/features/subjects/constants";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
   SubjectEntity,
-  SubjectTreeNode,
 } from "@/lib/server/api-contracts";
 
 interface SubjectDetailProps {
   subject: SubjectEntity;
   ancestors: SubjectEntity[];
-  childSubjects: SubjectTreeNode[];
-  documents: DocumentListItem[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
 }
@@ -24,13 +21,11 @@ interface SubjectDetailProps {
 /**
  * Subject page body. Editing, renaming, and deleting a subject all live in the
  * left menu's subject tree, so this view is the full-path breadcrumb top bar and
- * the subject's "home" content (summaries, subfolders, documents).
+ * the subject's academic attendance/assessment dashboards.
  */
 export function SubjectDetail({
   subject,
   ancestors,
-  childSubjects,
-  documents,
   misses,
   assessments,
 }: Readonly<SubjectDetailProps>) {
@@ -40,8 +35,6 @@ export function SubjectDetail({
       <AppPageContainer maxWidth="5xl">
         <SubjectDetailContent
           subject={subject}
-          childSubjects={childSubjects}
-          documents={documents}
           misses={misses}
           assessments={assessments}
         />
@@ -52,8 +45,9 @@ export function SubjectDetail({
 
 /**
  * Builds the full ancestor path for the top bar, e.g.
- * `Math / bruh / kjfheasfklaes`. Ancestors arrive root-first; each links to its
- * own page while the current subject is the unlinked final crumb.
+ * `Math / bruh / kjfheasfklaes`. Ancestors arrive root-first; the current
+ * subject is the unlinked final crumb. Only academic ancestors are linked,
+ * since general subjects have no page (they live only in the sidebar tree).
  */
 function buildSubjectBreadcrumb(
   subject: SubjectEntity,
@@ -61,7 +55,9 @@ function buildSubjectBreadcrumb(
 ): BreadcrumbItem[] {
   const ancestorCrumbs: BreadcrumbItem[] = ancestors.map((ancestor, index) => ({
     label: ancestor.name,
-    href: `/subjects/${ancestor.id}`,
+    href: isAcademicSubject(ancestor.kind)
+      ? `/subjects/${ancestor.id}`
+      : undefined,
     icon: index === 0 ? "book-open" : undefined,
   }));
 

@@ -26,7 +26,7 @@ const flashcardManagerSearchDebounceMs = 200;
 
 interface UseFlashcardsManagerControllerOptions {
   initialPageData: FlashcardManagePage;
-  initialDeckId?: string;
+  initialSubjectId?: string;
   initialSearch?: string;
   initialPageSize: number;
 }
@@ -37,17 +37,17 @@ export type FlashcardTarget = {
 };
 
 function buildManageParams({
-  deckId,
+  subjectId,
   pageSize,
   search,
 }: Readonly<{
-  deckId?: string;
+  subjectId?: string;
   pageSize: number;
   search: string;
 }>) {
   const query = new URLSearchParams({ view: "manage" });
 
-  if (deckId) query.set("deckId", deckId);
+  if (subjectId) query.set("subjectId", subjectId);
   if (search) query.set("search", search);
   if (pageSize !== DEFAULT_PAGE_SIZE) query.set("pageSize", String(pageSize));
 
@@ -56,7 +56,7 @@ function buildManageParams({
 
 export function useFlashcardsManagerController({
   initialPageData,
-  initialDeckId,
+  initialSubjectId,
   initialSearch,
   initialPageSize,
 }: Readonly<UseFlashcardsManagerControllerOptions>) {
@@ -95,17 +95,17 @@ export function useFlashcardsManagerController({
   const [validateDialogOpen, setValidateDialogOpen] = useState(false);
   const [validateAgainDialogOpen, setValidateAgainDialogOpen] = useState(false);
   const [isValidatingAgain, setIsValidatingAgain] = useState(false);
-  const [selectedDeckId, setSelectedDeckId] = useState<string | undefined>(
-    initialDeckId,
-  );
+  const [selectedSubjectId, setSelectedSubjectId] = useState<
+    string | undefined
+  >(initialSubjectId);
   const [pageSizeState, setPageSizeState] = useState(initialPageSize);
   const pathnameRef = useRef(pathname);
   const routerRef = useRef(router);
   const hasSyncedUrlRef = useRef(false);
   pathnameRef.current = pathname;
   routerRef.current = router;
-  const selectedDeckIdRef = useRef(selectedDeckId);
-  selectedDeckIdRef.current = selectedDeckId;
+  const selectedSubjectIdRef = useRef(selectedSubjectId);
+  selectedSubjectIdRef.current = selectedSubjectId;
   const {
     pageIndex,
     resolvedSearchQuery,
@@ -128,7 +128,7 @@ export function useFlashcardsManagerController({
     }
 
     const query = buildManageParams({
-      deckId: selectedDeckIdRef.current,
+      subjectId: selectedSubjectIdRef.current,
       pageSize: pageSizeState,
       search: resolvedSearchQuery,
     });
@@ -138,12 +138,12 @@ export function useFlashcardsManagerController({
     });
   }, [pageSizeState, resolvedSearchQuery]);
 
-  function handleDeckChange(nextDeckId: string | undefined) {
+  function handleSubjectChange(nextSubjectId: string | undefined) {
     setSelectedFlashcardIds([]);
-    setSelectedDeckId(nextDeckId);
+    setSelectedSubjectId(nextSubjectId);
 
     const query = buildManageParams({
-      deckId: nextDeckId,
+      subjectId: nextSubjectId,
       pageSize: pageSizeState,
       search: resolvedSearchQuery,
     });
@@ -164,26 +164,26 @@ export function useFlashcardsManagerController({
       "flashcards-manage-page",
       pageIndex,
       pageSizeState,
-      selectedDeckId ?? "all",
+      selectedSubjectId ?? "all",
       resolvedSearchQuery,
     ],
     queryFn: async () => {
       const result = await getFlashcardsManagePage({
         pageIndex,
         pageSize: pageSizeState,
-        deckId: selectedDeckId,
+        subjectId: selectedSubjectId,
         search: resolvedSearchQuery,
       });
 
       if ("errorCode" in result) {
-        return { items: [], total: 0, deckCardCount: null };
+        return { items: [], total: 0, subjectCardCount: null };
       }
 
       return result;
     },
     initialData:
       pageIndex === 0 &&
-      (selectedDeckId ?? undefined) === (initialDeckId ?? undefined) &&
+      (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
       pageSizeState === initialPageSize &&
       resolvedSearchQuery === (initialSearch ?? "")
         ? initialPageData
@@ -212,10 +212,10 @@ export function useFlashcardsManagerController({
   const pageData = managePageQuery.data ?? initialPageData;
   const flashcards = pageData.items;
   const total = pageData.total;
-  const deckCardCount = pageData.deckCardCount ?? 0;
-  const isAtDeckLimit =
-    selectedDeckId !== undefined &&
-    deckCardCount >= LIMITS.maxFlashcardsPerDeck;
+  const subjectCardCount = pageData.subjectCardCount ?? 0;
+  const isAtSubjectLimit =
+    selectedSubjectId !== undefined &&
+    subjectCardCount >= LIMITS.maxFlashcardsPerSubject;
 
   useEffect(() => {
     const pageIds = new Set(flashcards.map((flashcard) => flashcard.id));
@@ -339,9 +339,9 @@ export function useFlashcardsManagerController({
   function updateValidationFlashcard(updated: {
     id: string;
     front: string;
-    deckName: string;
-    deckPath?: string;
-    deckId: string;
+    subjectName: string;
+    subjectPath?: string;
+    subjectId: string;
   }) {
     setValidationFlashcards((prev) =>
       prev.map((card) => (card.id === updated.id ? updated : card)),
@@ -367,8 +367,8 @@ export function useFlashcardsManagerController({
     editFlashcardQuery,
     editingFlashcardId,
     flashcards,
-    isAtDeckLimit,
-    deckCardCount,
+    isAtSubjectLimit,
+    subjectCardCount,
     managePageQuery,
     pageIndex,
     refreshManagePage,
@@ -376,7 +376,7 @@ export function useFlashcardsManagerController({
     resetTarget,
     resolvedSearchQuery,
     searchQuery,
-    selectedDeckId,
+    selectedSubjectId,
     selectedFlashcardIds,
     setBulkDeleteOpen,
     setBulkMoveOpen,
@@ -389,9 +389,9 @@ export function useFlashcardsManagerController({
     setPageSize,
     setResetTarget,
     setSearchQuery,
-    setSelectedDeckId,
+    setSelectedSubjectId,
     setSelectedFlashcardIds,
-    handleDeckChange,
+    handleSubjectChange,
     total,
     pageSize: pageSizeState,
     editingFlashcard: editFlashcardQuery.data,

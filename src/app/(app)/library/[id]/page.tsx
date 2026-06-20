@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { BookReader } from "@/components/library/book-reader";
-import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
 import { getBookByIdForUser } from "@/features/library/queries";
 import { getAnnotationsForBook } from "@/features/library-annotations/queries";
+import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getReaderColorMode } from "@/features/user/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
@@ -16,12 +16,12 @@ export default async function LibraryBookPage({
 }: Readonly<LibraryBookPageProps>) {
   const session = await requireSession();
   const { id } = await params;
-  const [book, readerColorInverted, initialAnnotations, decks] =
+  const [book, readerColorInverted, initialAnnotations, subjects] =
     await Promise.all([
       getBookByIdForUser(session.user.id, id),
       getReaderColorMode(session.user.id),
       getAnnotationsForBook(session.user.id, id),
-      getAllDecksWithPathsForUser(session.user.id),
+      getAllSubjectsWithPathsForUser(session.user.id),
     ]);
 
   if (!book) {
@@ -39,7 +39,7 @@ export default async function LibraryBookPage({
       readerColorInverted={readerColorInverted}
       initialAnnotations={initialAnnotations}
       aiEnabled={isAiEnabled()}
-      decks={decks}
+      subjects={subjects}
     />
   );
 }

@@ -1,15 +1,8 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import {
-  deck,
-  flashcard,
-  libraryBook,
-  mindmap,
-  note,
-  subject,
-} from "@/db/schema";
-import { getAllDecksWithPathsForUser } from "@/features/decks/queries";
+import { flashcard, libraryBook, mindmap, note, subject } from "@/db/schema";
 import { findMindmapNodeLabelMatch } from "@/features/mindmaps/utils";
+import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { LIMITS } from "@/lib/config/limits";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
@@ -21,9 +14,14 @@ export async function getSearchDataForUser(
 ): Promise<SearchData> {
   const searchPattern = buildContainsSearchPattern(searchQuery);
   const subjectFilters = getOwnedActiveSubjectFilters(userId);
-  const deckPathMap = await getAllDecksWithPathsForUser(userId).then(
-    (decks) =>
-      new Map(decks.map((currentDeck) => [currentDeck.id, currentDeck.path])),
+  const subjectPathMap = await getAllSubjectsWithPathsForUser(userId).then(
+    (subjects) =>
+      new Map(
+        subjects.map((currentSubject) => [
+          currentSubject.id,
+          currentSubject.path,
+        ]),
+      ),
   );
 
   const [allSubjects, allNotes, allFlashcards, allMindmaps, allBooks] =
@@ -38,6 +36,9 @@ export async function getSearchDataForUser(
           and(
             eq(subject.userId, userId),
             ...subjectFilters,
+            // General subjects have no page, so they are never search targets;
+            // their notes and mindmaps remain searchable below.
+            eq(subject.kind, "academic"),
             ilike(subject.name, searchPattern),
           ),
         )
@@ -71,11 +72,11 @@ export async function getSearchDataForUser(
           id: flashcard.id,
           front: flashcard.front,
           back: flashcard.back,
-          deckId: flashcard.deckId,
-          deckName: deck.name,
+          subjectId: flashcard.subjectId,
+          subjectName: subject.name,
         })
         .from(flashcard)
-        .innerJoin(deck, eq(flashcard.deckId, deck.id))
+        .innerJoin(subject, eq(flashcard.subjectId, subject.id))
         .where(
           and(
             eq(flashcard.userId, userId),
@@ -135,7 +136,10 @@ export async function getSearchDataForUser(
     notes: allNotes,
     flashcards: allFlashcards.map((flashcard) => ({
       ...flashcard,
-      deckPath: deckPathMap.get(flashcard.deckId) ?? flashcard.deckName,
+      subjectPath:
+        (flashcard.subjectId
+          ? subjectPathMap.get(flashcard.subjectId)
+          : undefined) ?? flashcard.subjectName,
     })),
     mindmaps: allMindmaps.map(({ data, title, ...rest }) => ({
       ...rest,
@@ -152,9 +156,14 @@ export async function getRecentSearchDataForUser(
   userId: string,
 ): Promise<SearchData> {
   const subjectFilters = getOwnedActiveSubjectFilters(userId);
-  const deckPathMap = await getAllDecksWithPathsForUser(userId).then(
-    (decks) =>
-      new Map(decks.map((currentDeck) => [currentDeck.id, currentDeck.path])),
+  const subjectPathMap = await getAllSubjectsWithPathsForUser(userId).then(
+    (subjects) =>
+      new Map(
+        subjects.map((currentSubject) => [
+          currentSubject.id,
+          currentSubject.path,
+        ]),
+      ),
   );
 
   const [allSubjects, allNotes, allFlashcards, allMindmaps, allBooks] =
@@ -165,7 +174,14 @@ export async function getRecentSearchDataForUser(
           name: subject.name,
         })
         .from(subject)
-        .where(and(eq(subject.userId, userId), ...subjectFilters))
+        .where(
+          and(
+            eq(subject.userId, userId),
+            ...subjectFilters,
+            // General subjects have no page, so they are never search targets.
+            eq(subject.kind, "academic"),
+          ),
+        )
         .orderBy(desc(subject.updatedAt))
         .limit(LIMITS.recentItemsLimit),
       getDb()
@@ -186,11 +202,11 @@ export async function getRecentSearchDataForUser(
           id: flashcard.id,
           front: flashcard.front,
           back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
-          deckId: flashcard.deckId,
-          deckName: deck.name,
+          subjectId: flashcard.subjectId,
+          subjectName: subject.name,
         })
         .from(flashcard)
-        .innerJoin(deck, eq(flashcard.deckId, deck.id))
+        .innerJoin(subject, eq(flashcard.subjectId, subject.id))
         .where(eq(flashcard.userId, userId))
         .orderBy(desc(flashcard.updatedAt))
         .limit(LIMITS.recentItemsLimit),
@@ -223,7 +239,10 @@ export async function getRecentSearchDataForUser(
     notes: allNotes,
     flashcards: allFlashcards.map((flashcard) => ({
       ...flashcard,
-      deckPath: deckPathMap.get(flashcard.deckId) ?? flashcard.deckName,
+      subjectPath:
+        (flashcard.subjectId
+          ? subjectPathMap.get(flashcard.subjectId)
+          : undefined) ?? flashcard.subjectName,
     })),
     mindmaps: allMindmaps,
     books: allBooks,

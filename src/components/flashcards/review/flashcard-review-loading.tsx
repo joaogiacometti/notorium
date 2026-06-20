@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function FlashcardReviewLoading() {
   return (
-    <FlashcardsLoadingShell withWorkspace mobileScopeFirst>
+    <FlashcardsLoadingShell>
       <div
         className="flex h-full min-h-0 flex-col overflow-y-auto"
         data-testid="flashcards-review-loading"
