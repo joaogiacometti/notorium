@@ -18,6 +18,12 @@ export interface Shortcut {
   keys: string[];
   description: string;
   category: ShortcutCategory;
+  /**
+   * Universal OS-level shortcuts (e.g. plain copy) that every user already
+   * knows. Kept in the registry for completeness but hidden from the help
+   * dialog so it stays focused on app-specific shortcuts.
+   */
+  universal?: boolean;
 }
 
 export interface ShortcutCategorySection {
@@ -286,6 +292,7 @@ export const shortcutRegistry: Shortcut[] = [
     keys: ["cmd+c", "ctrl+c"],
     description: "Copy selected text",
     category: ShortcutCategory.Reader,
+    universal: true,
   },
   {
     id: "reader-toggle-sidebar",
@@ -424,4 +431,49 @@ export function displayShortcutKeys(shortcut: Shortcut): string[] {
   return shortcut.kind === "typed"
     ? shortcut.keys
     : formatShortcutKeys(shortcut.keys);
+}
+
+const hasModifier = (chord: string, modifier: "cmd" | "meta" | "ctrl") =>
+  chord.split("+").includes(modifier);
+
+/**
+ * A two-chord pair that only differs by Cmd vs Ctrl, e.g.
+ * `["cmd+k", "ctrl+k"]`. Such pairs are platform variants of one binding, not
+ * genuine alternatives like `["enter", "space"]`.
+ */
+function isPlatformChordPair(keys: string[]): boolean {
+  if (keys.length !== 2) {
+    return false;
+  }
+  const [first, second] = keys;
+  const firstMeta = hasModifier(first, "cmd") || hasModifier(first, "meta");
+  const secondMeta = hasModifier(second, "cmd") || hasModifier(second, "meta");
+  return (
+    (firstMeta && hasModifier(second, "ctrl")) ||
+    (secondMeta && hasModifier(first, "ctrl"))
+  );
+}
+
+/**
+ * Display strings for a shortcut, collapsing Cmd/Ctrl platform pairs to the
+ * single chord that matches the user's OS so the help dialog never shows both.
+ * Genuine alternatives (`enter`/`space`) and typed triggers are kept intact.
+ *
+ * @example
+ * resolvePlatformShortcutKeys(searchShortcut, true); // ["⌘ + k"]
+ * resolvePlatformShortcutKeys(searchShortcut, false); // ["Ctrl + k"]
+ */
+export function resolvePlatformShortcutKeys(
+  shortcut: Shortcut,
+  isMac: boolean,
+): string[] {
+  if (shortcut.kind === "typed" || !isPlatformChordPair(shortcut.keys)) {
+    return displayShortcutKeys(shortcut);
+  }
+  const chord = shortcut.keys.find((candidate) =>
+    isMac
+      ? hasModifier(candidate, "cmd") || hasModifier(candidate, "meta")
+      : hasModifier(candidate, "ctrl"),
+  );
+  return formatShortcutKeys(chord ? [chord] : shortcut.keys);
 }

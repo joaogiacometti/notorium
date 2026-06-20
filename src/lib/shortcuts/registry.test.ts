@@ -4,6 +4,7 @@ import {
   formatShortcutKeys,
   getActiveShortcutCategories,
   getShortcutsByCategory,
+  resolvePlatformShortcutKeys,
   type Shortcut,
   ShortcutCategory,
   shortcutCategorySections,
@@ -55,7 +56,61 @@ describe("displayShortcutKeys", () => {
   });
 });
 
+describe("resolvePlatformShortcutKeys", () => {
+  const searchShortcut: Shortcut = {
+    id: "test-search",
+    kind: "keys",
+    keys: ["cmd+k", "ctrl+k"],
+    description: "Search",
+    category: ShortcutCategory.Global,
+  };
+
+  it("collapses a Cmd/Ctrl pair to the Cmd chord on Mac", () => {
+    expect(resolvePlatformShortcutKeys(searchShortcut, true)).toEqual([
+      "⌘ + k",
+    ]);
+  });
+
+  it("collapses a Cmd/Ctrl pair to the Ctrl chord off Mac", () => {
+    expect(resolvePlatformShortcutKeys(searchShortcut, false)).toEqual([
+      "Ctrl + k",
+    ]);
+  });
+
+  it("keeps genuine alternatives that are not platform variants", () => {
+    const reveal: Shortcut = {
+      id: "test-reveal",
+      kind: "keys",
+      keys: ["enter", "space"],
+      description: "Reveal",
+      category: ShortcutCategory.FlashcardReview,
+    };
+    expect(resolvePlatformShortcutKeys(reveal, true)).toEqual([
+      "Enter",
+      "Space",
+    ]);
+  });
+
+  it("returns typed triggers verbatim", () => {
+    const typed: Shortcut = {
+      id: "test-typed",
+      kind: "typed",
+      keys: ["/table"],
+      description: "Insert table",
+      category: ShortcutCategory.NotesEditor,
+    };
+    expect(resolvePlatformShortcutKeys(typed, false)).toEqual(["/table"]);
+  });
+});
+
 describe("shortcutRegistry", () => {
+  it("flags universal OS shortcuts so the help dialog can hide them", () => {
+    const copy = shortcutRegistry.find(
+      (shortcut) => shortcut.id === "reader-copy-selection",
+    );
+    expect(copy?.universal).toBe(true);
+  });
+
   it("has at least one shortcut in every displayed category", () => {
     for (const section of shortcutCategorySections) {
       expect(getShortcutsByCategory(section.category).length).toBeGreaterThan(
