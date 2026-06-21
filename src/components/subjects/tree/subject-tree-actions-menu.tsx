@@ -2,13 +2,17 @@
 
 import {
   BookOpen,
+  CalendarX,
+  ClipboardList,
+  Files,
   FileText,
   FolderPlus,
   GraduationCap,
   Layers,
+  ListChecks,
   MoreHorizontal,
   Pencil,
-  Plus,
+  SquarePen,
   Trash2,
   Workflow,
 } from "lucide-react";
@@ -28,29 +32,37 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { isAcademicSubject } from "@/features/subjects/constants";
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 
 interface SubjectActionsMenuProps {
   node: SubjectTreeNode;
   onCreateChild: (parentSubjectId: string) => void;
+  onCreateAssessment: (subjectId: string) => void;
+  onRecordMiss: (subjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreateMindmap: (subjectId: string) => void;
   onCreateBook: (subjectId: string) => void;
+  onCreateFlashcard: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
 }
 
 /**
- * The per-subject kebab menu in the tree row. Groups create actions under a
- * "New" submenu and exposes flashcard review/manage plus edit and delete.
+ * The per-subject kebab menu in the tree row. Create actions are grouped by kind
+ * — Document, Flashcards, and (for academic subjects) Academics — alongside
+ * Subfolder, edit, and delete.
  */
 export function SubjectActionsMenu({
   node,
   onCreateChild,
+  onCreateAssessment,
+  onRecordMiss,
   onCreateNote,
   onCreateMindmap,
   onCreateBook,
+  onCreateFlashcard,
   onEdit,
   onDelete,
 }: Readonly<SubjectActionsMenuProps>) {
@@ -68,16 +80,17 @@ export function SubjectActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onCreateChild(node.id)}>
+          <FolderPlus className="size-4" />
+          Subfolder
+        </DropdownMenuItem>
+
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <Plus className="size-4" />
-            New
+            <Files className="size-4" />
+            Document
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => onCreateChild(node.id)}>
-              <FolderPlus className="size-4" />
-              Subfolder
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onCreateNote(node.id)}>
               <FileText className="size-4" />
               Note
@@ -92,18 +105,55 @@ export function SubjectActionsMenu({
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        <DropdownMenuItem asChild>
-          <Link href={getFlashcardsHref("review", node.id, { focus: true })}>
-            <GraduationCap className="size-4" />
-            Review flashcards
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href={getFlashcardsHref("manage", node.id)}>
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
             <Layers className="size-4" />
-            Manage flashcards
-          </Link>
-        </DropdownMenuItem>
+            Flashcards
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={() => onCreateFlashcard(node.id)}>
+              <SquarePen className="size-4" />
+              Add flashcard
+            </DropdownMenuItem>
+            {node.dueFlashcardCount > 0 && (
+              <DropdownMenuItem asChild>
+                <Link
+                  href={getFlashcardsHref("review", node.id, { focus: true })}
+                >
+                  <GraduationCap className="size-4" />
+                  Review flashcards
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link href={getFlashcardsHref("manage", node.id)}>
+                <ListChecks className="size-4" />
+                Manage flashcards
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        {isAcademicSubject(node.kind) && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <GraduationCap className="size-4" />
+              Academics
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem onClick={() => onCreateAssessment(node.id)}>
+                <ClipboardList className="size-4" />
+                Assessment
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onRecordMiss(node.id)}>
+                <CalendarX className="size-4" />
+                Miss
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
+
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() =>

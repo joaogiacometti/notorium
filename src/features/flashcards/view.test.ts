@@ -10,8 +10,8 @@ describe("resolveFlashcardsView", () => {
     expect(resolveFlashcardsView("manage")).toBe("manage");
   });
 
-  it("returns statistics for the statistics view", () => {
-    expect(resolveFlashcardsView("statistics")).toBe("statistics");
+  it("falls back to review for the removed statistics view", () => {
+    expect(resolveFlashcardsView("statistics")).toBe("review");
   });
 
   it("falls back to review for legacy refine links", () => {

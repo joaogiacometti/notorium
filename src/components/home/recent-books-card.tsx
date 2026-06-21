@@ -24,16 +24,16 @@ export function RecentBooksCard({ books }: Readonly<RecentBooksCardProps>) {
             Books you add to your library will show up here.
           </p>
         ) : (
-          <ul className="grid gap-2 gap-x-6 sm:grid-cols-2">
+          <ul className="grid gap-1">
             {books.map((book) => (
-              <li key={book.id}>
+              <li key={book.id} className="min-w-0">
                 <Link
                   href={
                     book.subjectId
                       ? getBookDetailHref(book.subjectId, book.id)
                       : "/"
                   }
-                  className="flex items-center gap-2 rounded-md text-sm text-muted-foreground hover:text-foreground"
+                  className="-mx-2 flex min-w-0 items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
                 >
                   <BookMarked className="size-4 shrink-0" />
                   <span className="min-w-0 flex-1 truncate font-medium text-foreground">

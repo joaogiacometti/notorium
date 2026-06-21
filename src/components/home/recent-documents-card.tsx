@@ -26,12 +26,12 @@ export function RecentDocumentsCard({
             Notes and mindmaps you edit will show up here.
           </p>
         ) : (
-          <ul className="grid gap-2 gap-x-6 sm:grid-cols-2">
+          <ul className="grid gap-1">
             {documents.map((document) => (
               <li key={`${document.kind}-${document.id}`}>
                 <Link
                   href={getDocumentDetailHref(document)}
-                  className="flex items-center gap-2 rounded-md text-sm text-muted-foreground hover:text-foreground"
+                  className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
                 >
                   {document.kind === "note" ? (
                     <FileText className="size-4 shrink-0" />

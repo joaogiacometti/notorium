@@ -6,7 +6,7 @@ export const detailPageOriginValues = [
 export type DetailPageOrigin = (typeof detailPageOriginValues)[number];
 
 export type DetailPageBackLabel = "flashcards" | "planning" | "subject";
-export type FlashcardsReturnView = "manage" | "review" | "statistics";
+export type FlashcardsReturnView = "manage" | "review";
 
 export interface DetailPageBackLink {
   href: string;
@@ -30,7 +30,7 @@ function isDetailPageOrigin(value: string): value is DetailPageOrigin {
 }
 
 function isFlashcardsReturnView(value: string): value is FlashcardsReturnView {
-  return ["manage", "review", "statistics"].includes(value);
+  return ["manage", "review"].includes(value);
 }
 
 export function resolveDetailPageReturnContext(

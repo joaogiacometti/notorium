@@ -25,10 +25,6 @@ vi.mock("@/components/flashcards/review/flashcard-review-client", () => ({
   FlashcardReviewClient: () => <div data-testid="flashcard-review" />,
 }));
 
-vi.mock("@/components/flashcards/shared/flashcards-statistics", () => ({
-  FlashcardsStatistics: () => <div data-testid="flashcards-statistics" />,
-}));
-
 const mockManagePageData: import("@/lib/server/api-contracts").FlashcardManagePage =
   {
     items: [],
@@ -44,25 +40,6 @@ const mockReviewState: import("@/lib/server/api-contracts").FlashcardReviewState
       desiredRetention: 0.9,
       weights: [0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.9, 2.4, 4.9, 6.7],
     },
-  };
-
-const mockStatistics: import("@/lib/server/api-contracts").FlashcardStatisticsState =
-  {
-    summary: {
-      totalCards: 0,
-      dueCards: 0,
-      reviewedCards: 0,
-      neverReviewedCards: 0,
-      totalReviews: 0,
-      totalLapses: 0,
-      averageReviewsPerCard: 0,
-      averageLapsesPerReviewedCard: 0,
-    },
-    states: [],
-    ratings: [],
-    trend: [],
-    heatmap: [],
-    streak: { current: 0, longest: 0 },
   };
 
 const mockSubjects: import("@/lib/server/api-contracts").SubjectOption[] = [
@@ -87,7 +64,6 @@ const defaultProps: ComponentProps<typeof FlashcardsPageClient> = {
   subjects: mockSubjects,
   initialManagePageData: mockManagePageData,
   initialReviewState: mockReviewState,
-  statistics: mockStatistics,
   aiEnabled: false,
 };
 
@@ -147,14 +123,6 @@ describe("FlashcardsPageClient", () => {
 
     expect(
       container.querySelector('[data-testid="flashcard-review"]'),
-    ).toBeTruthy();
-  });
-
-  it("renders statistics on the statistics view", async () => {
-    await render({ currentView: "statistics", scopedSubjectId: "subject-1" });
-
-    expect(
-      container.querySelector('[data-testid="flashcards-statistics"]'),
     ).toBeTruthy();
   });
 });

@@ -19,10 +19,7 @@ export function FlashcardsLoadingShell({
       className="flex min-w-0 flex-col gap-4 lg:h-full lg:min-h-0"
       data-testid="flashcards-loading-shell"
     >
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-4 w-12 rounded-md" />
-        <Skeleton className="h-9 w-full max-w-xs rounded-md" />
-      </div>
+      <Skeleton className="h-9 w-full max-w-xs rounded-md" />
       {children}
     </div>
   );

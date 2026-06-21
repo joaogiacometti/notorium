@@ -12,11 +12,16 @@ interface HomeGreetingProps {
  */
 export function HomeGreeting({ name }: Readonly<HomeGreetingProps>) {
   return (
-    <h1
-      data-testid="home-greeting"
-      className="text-2xl font-semibold text-foreground"
-    >
-      Welcome back, {name}
-    </h1>
+    <div className="space-y-1">
+      <h1
+        data-testid="home-greeting"
+        className="text-2xl font-semibold tracking-tight text-foreground"
+      >
+        Welcome back, {name}
+      </h1>
+      <p className="text-sm text-muted-foreground">
+        Here's what's happening across your subjects.
+      </p>
+    </div>
   );
 }

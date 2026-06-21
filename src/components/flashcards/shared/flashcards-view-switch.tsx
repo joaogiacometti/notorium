@@ -11,7 +11,6 @@ interface FlashcardsViewSwitchProps {
   currentView: FlashcardsView;
   manageLabel: string;
   reviewLabel: string;
-  statisticsLabel: string;
   subjectId?: string;
 }
 
@@ -28,7 +27,6 @@ export function FlashcardsViewSwitch({
   currentView,
   manageLabel,
   reviewLabel,
-  statisticsLabel,
   subjectId,
 }: Readonly<FlashcardsViewSwitchProps>) {
   const router = useRouter();
@@ -62,7 +60,6 @@ export function FlashcardsViewSwitch({
   const tabs: Array<{ view: FlashcardsView; label: string }> = [
     { view: "review", label: reviewLabel },
     { view: "manage", label: manageLabel },
-    { view: "statistics", label: statisticsLabel },
   ];
 
   return (

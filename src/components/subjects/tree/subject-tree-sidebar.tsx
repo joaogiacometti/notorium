@@ -5,16 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getSubjectDocuments } from "@/app/actions/subjects";
 import { useDocumentRowDialogs } from "@/components/documents/use-document-row-dialogs";
-import { AddBookDialog } from "@/components/library/add-book-dialog";
-import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
-import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
-import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
-import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
-import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import {
   getActiveDocumentSubjectId,
   getActiveSubjectId,
 } from "@/components/subjects/tree/subject-tree-active-path";
+import { SubjectTreeDialogs } from "@/components/subjects/tree/subject-tree-dialogs";
 import { SubjectTreeNodeItem } from "@/components/subjects/tree/subject-tree-node-item";
 import { SubjectTreeRootDropZone } from "@/components/subjects/tree/subject-tree-root-drop-zone";
 import type {
@@ -74,6 +69,15 @@ export function SubjectTreeSidebar({
     string | null
   >(null);
   const [createBookSubjectId, setCreateBookSubjectId] = useState<string | null>(
+    null,
+  );
+  const [createFlashcardSubjectId, setCreateFlashcardSubjectId] = useState<
+    string | null
+  >(null);
+  const [createAssessmentSubjectId, setCreateAssessmentSubjectId] = useState<
+    string | null
+  >(null);
+  const [recordMissSubjectId, setRecordMissSubjectId] = useState<string | null>(
     null,
   );
 
@@ -285,6 +289,18 @@ export function SubjectTreeSidebar({
     setCreateBookSubjectId(subjectId);
   }
 
+  function openCreateFlashcard(subjectId: string) {
+    setCreateFlashcardSubjectId(subjectId);
+  }
+
+  function openCreateAssessment(subjectId: string) {
+    setCreateAssessmentSubjectId(subjectId);
+  }
+
+  function openRecordMiss(subjectId: string) {
+    setRecordMissSubjectId(subjectId);
+  }
+
   function handleBookUploaded(book: { id: string; subjectId: string }) {
     setCreateBookSubjectId(null);
     setExpandedIds((current) => new Set(current).add(book.subjectId));
@@ -366,9 +382,12 @@ export function SubjectTreeSidebar({
                 pendingMoveId={pendingMoveId}
                 onToggle={handleToggle}
                 onCreateChild={openCreateChild}
+                onCreateAssessment={openCreateAssessment}
+                onRecordMiss={openRecordMiss}
                 onCreateNote={openCreateNote}
                 onCreateMindmap={openCreateMindmap}
                 onCreateBook={openCreateBook}
+                onCreateFlashcard={openCreateFlashcard}
                 onEdit={setEditTarget}
                 onDelete={setDeleteTarget}
                 onDragStart={handleDragStart}
@@ -382,91 +401,34 @@ export function SubjectTreeSidebar({
         </nav>
       </div>
 
-      {documentDialogs}
-
-      <CreateSubjectDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        parentSubjectId={createParentId}
-        onCreated={handleSubjectCreated}
+      <SubjectTreeDialogs
+        documentDialogs={documentDialogs}
+        aiEnabled={aiEnabled}
+        createOpen={createOpen}
+        onCreateOpenChange={setCreateOpen}
+        createParentId={createParentId}
+        onSubjectCreated={handleSubjectCreated}
+        editTarget={editTarget}
+        onEditTargetChange={setEditTarget}
+        deleteTarget={deleteTarget}
+        onDeleteTargetChange={setDeleteTarget}
+        createNoteSubjectId={createNoteSubjectId}
+        onCreateNoteSubjectIdChange={setCreateNoteSubjectId}
+        onNoteCreated={handleNoteCreated}
+        createMindmapSubjectId={createMindmapSubjectId}
+        onCreateMindmapSubjectIdChange={setCreateMindmapSubjectId}
+        onMindmapCreated={handleMindmapCreated}
+        createBookSubjectId={createBookSubjectId}
+        onCreateBookSubjectIdChange={setCreateBookSubjectId}
+        onBookUploaded={handleBookUploaded}
+        createFlashcardSubjectId={createFlashcardSubjectId}
+        onCreateFlashcardSubjectIdChange={setCreateFlashcardSubjectId}
+        createAssessmentSubjectId={createAssessmentSubjectId}
+        onCreateAssessmentSubjectIdChange={setCreateAssessmentSubjectId}
+        recordMissSubjectId={recordMissSubjectId}
+        onRecordMissSubjectIdChange={setRecordMissSubjectId}
+        onRefreshTree={refreshTree}
       />
-
-      {editTarget ? (
-        <EditSubjectDialog
-          subject={editTarget}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditTarget(null);
-            }
-          }}
-          onSaved={() => {
-            setEditTarget(null);
-            refreshTree();
-          }}
-        />
-      ) : null}
-
-      {deleteTarget ? (
-        <DeleteSubjectDialog
-          subjectId={deleteTarget.id}
-          subjectName={deleteTarget.name}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setDeleteTarget(null);
-            }
-          }}
-          onSuccess={() => {
-            setDeleteTarget(null);
-            refreshTree();
-          }}
-        />
-      ) : null}
-
-      {createNoteSubjectId ? (
-        <CreateNoteTitleDialog
-          subjectId={createNoteSubjectId}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setCreateNoteSubjectId(null);
-            }
-          }}
-          onSuccess={(noteId) => {
-            handleNoteCreated(noteId);
-          }}
-        />
-      ) : null}
-
-      {createMindmapSubjectId ? (
-        <CreateMindmapDialog
-          subjectId={createMindmapSubjectId}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setCreateMindmapSubjectId(null);
-            }
-          }}
-          onSuccess={(mindmapId) => {
-            handleMindmapCreated(mindmapId);
-          }}
-        />
-      ) : null}
-
-      {createBookSubjectId ? (
-        <AddBookDialog
-          trigger={null}
-          subjectId={createBookSubjectId}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setCreateBookSubjectId(null);
-            }
-          }}
-          onUploaded={handleBookUploaded}
-        />
-      ) : null}
     </>
   );
 }

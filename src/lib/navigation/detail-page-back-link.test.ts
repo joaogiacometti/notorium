@@ -45,11 +45,11 @@ describe("detail href builders", () => {
     expect(
       getFlashcardDetailHref("flashcard-1", {
         from: "flashcards-manage",
-        view: "statistics",
+        view: "manage",
         subjectId: "deck-1",
       }),
     ).toBe(
-      "/flashcards/flashcard-1?from=flashcards-manage&view=statistics&subjectId=deck-1",
+      "/flashcards/flashcard-1?from=flashcards-manage&view=manage&subjectId=deck-1",
     );
   });
 

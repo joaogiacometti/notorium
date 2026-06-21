@@ -120,8 +120,8 @@ Students who want a private, lightweight study management workspace.
   - pasted image uploads stored in private blob storage
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
-- Flashcards have a global top-level page with review, management, and statistics views.
-- The default flashcards page opens in the review view, with management and statistics available as alternate global views.
+- Flashcards have a global top-level page with review and management views.
+- The default flashcards page opens in the review view, with management available as an alternate global view.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
 - Flashcard review remains available in the global flashcards page.
 - When AI env vars are configured, the manage toolbar shows a sparkles `AI` dropdown with `Validate cards` and `Refine cards` entries; without AI the dropdown is hidden.
@@ -130,7 +130,7 @@ Students who want a private, lightweight study management workspace.
 ### Flashcard organization by subject
 
 - Flashcards belong to a subject (`flashcard.subjectId`); there is no separate deck concept.
-- Subjects already form the user's hierarchy (see Subjects); flashcards reuse it, so subject paths use `::` notation in display and searchable pickers, and review/manage/statistics scoped to a subject include cards from descendant subjects.
+- Subjects already form the user's hierarchy (see Subjects); flashcards reuse it, so subject paths use `::` notation in display and searchable pickers, and review/manage scoped to a subject include cards from descendant subjects.
 - There is no in-page flashcard tree. The flashcards page is two global surfaces — review everything and manage all flashcards — with a subject filter dropdown that scopes the current view via the `?subjectId` URL param.
 - The global subject sidebar shows a per-subject "due" indicator counting cards due now in that subject and its descendants; clicking the indicator opens the full-screen review session directly, scoped to that subject.
 - Each subject's sidebar kebab menu has a "Review flashcards" entry that opens the full-screen review session directly (scoped to that subject and its descendants, when cards are due; otherwise it lands on the review hub), and a "Manage flashcards" entry that opens the manage view pre-filtered to that subject. Both review entry points request the focus session via a `focus=1` URL flag the review view honors on load.
@@ -161,12 +161,10 @@ Students who want a private, lightweight study management workspace.
   - `3` grades `Good` after reveal.
   - `4` grades `Easy` after reveal.
 
-### Flashcard Statistics
+### Review activity
 
-- Global statistics view in the flashcards page.
-- Statistics respect the active subject filter.
-- Statistics show overview metrics for cards in scope, including due cards, reviewed vs never-reviewed cards, review/lapse totals, card-state distribution, rating distribution, and recent daily review activity.
-- A review activity heatmap shows daily review counts over the last 365 days as a calendar grid whose cell intensity reflects how many reviews happened that day, with current and longest day-streak counters derived from the same data. The current streak counts consecutive days with at least one review ending today, and a day with no reviews yet today does not break it. The heatmap and streaks respect the active subject filter, like the rest of the statistics view, and are hidden when no cards are in scope.
+- The Home dashboard shows a review-activity card with a heatmap of daily review counts over the last 365 days, rendered as a calendar grid whose cell intensity reflects how many reviews happened that day, plus current and longest day-streak counters derived from the same data. The current streak counts consecutive days with at least one review ending today, and a day with no reviews yet today does not break it.
+- The heatmap and streaks aggregate every flashcard review for the user; the card shows an empty-state hint when there are no reviews in the last year.
 
 ### Flashcard Refine
 
@@ -319,7 +317,7 @@ Students who want a private, lightweight study management workspace.
 ### UI/UX Baseline
 
 - Responsive layout for desktop and mobile.
-- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments, recently edited documents (notes and mindmaps across all subjects), recently opened library books (each linking to its reader), and a quick-access grid of recently updated subjects with a create action (academic subjects link to their page; general subjects are shown but not clickable, since they have no page). On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
+- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments (up to three), a review-activity heatmap with study streaks, recently edited documents (notes and mindmaps across all subjects), and recently opened library books (each linking to its reader). Subjects are managed in the sidebar tree, not on the dashboard. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
 - Every page shows a sticky top bar with a breadcrumb trail (e.g. `Subject / Documents / Note`) that indicates the current location and replaces per-page "Back to …" links. Intermediate crumbs link to ancestors; the current page is the unlinked final crumb.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.

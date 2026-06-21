@@ -1,11 +1,12 @@
-import { Flame } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity, Flame } from "lucide-react";
+import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
+import { Card, CardContent } from "@/components/ui/card";
 import type {
   FlashcardStatisticsStreak,
   FlashcardStatisticsTrendPoint,
 } from "@/lib/server/api-contracts";
 
-interface ReviewHeatmapProps {
+interface ReviewActivityCardProps {
   heatmap: FlashcardStatisticsTrendPoint[];
   streak: FlashcardStatisticsStreak;
 }
@@ -87,25 +88,34 @@ function HeatmapLegend() {
   );
 }
 
-export function ReviewHeatmap({
+/**
+ * Dashboard card showing a GitHub-style heatmap of the user's flashcard reviews
+ * over the trailing year, with their current and longest study streaks. Moved
+ * here from the retired flashcards Statistics view so the home page surfaces the
+ * single review signal worth keeping at a glance.
+ */
+export function ReviewActivityCard({
   heatmap,
   streak,
-}: Readonly<ReviewHeatmapProps>) {
+}: Readonly<ReviewActivityCardProps>) {
   const weeks = buildWeeks(heatmap);
   const totalReviews = heatmap.reduce((sum, point) => sum + point.count, 0);
 
   return (
-    <Card className="gap-0 rounded-xl border-border/70 py-0 shadow-none">
-      <CardHeader className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-0">
-        <CardTitle className="text-sm">Review activity</CardTitle>
-        <div className="flex items-center gap-4">
-          <StreakStat label="day streak" value={streak.current} />
-          <StreakStat label="longest" value={streak.longest} />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2 p-4">
+    <Card className="gap-3 py-4">
+      <DashboardCardHeader
+        icon={Activity}
+        title="Review activity"
+        action={
+          <div className="flex items-center gap-4">
+            <StreakStat label="day streak" value={streak.current} />
+            <StreakStat label="longest" value={streak.longest} />
+          </div>
+        }
+      />
+      <CardContent className="space-y-2.5">
         {totalReviews === 0 ? (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             No reviews in the last year. Start reviewing to build a streak.
           </p>
         ) : (

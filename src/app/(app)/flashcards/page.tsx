@@ -1,10 +1,7 @@
 import { FlashcardsPageClient } from "@/components/flashcards/flashcards-page-client";
 import { FlashcardsViewSwitch } from "@/components/flashcards/shared/flashcards-view-switch";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
-import {
-  getFlashcardReviewStateForUser,
-  getFlashcardStatisticsForUser,
-} from "@/features/flashcard-review/queries";
+import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
@@ -55,21 +52,8 @@ export default async function FlashcardsPage({
     limit: 50,
   });
 
-  const statistics = getFlashcardStatisticsForUser(
-    session.user.id,
-    new Date(),
-    { subjectId: scopedSubjectId },
-  );
-
-  const [
-    initialManagePageDataResult,
-    initialReviewStateResult,
-    statisticsResult,
-  ] = await Promise.all([
-    initialManagePageData,
-    initialReviewState,
-    statistics,
-  ]);
+  const [initialManagePageDataResult, initialReviewStateResult] =
+    await Promise.all([initialManagePageData, initialReviewState]);
 
   return (
     <FeaturePageShell
@@ -80,7 +64,6 @@ export default async function FlashcardsPage({
           currentView={currentView}
           manageLabel="Manage"
           reviewLabel="Review"
-          statisticsLabel="Statistics"
           subjectId={scopedSubjectId}
         />
       }
@@ -94,7 +77,6 @@ export default async function FlashcardsPage({
         subjects={subjects}
         initialManagePageData={initialManagePageDataResult}
         initialReviewState={initialReviewStateResult}
-        statistics={statisticsResult}
         aiEnabled={aiEnabled}
       />
     </FeaturePageShell>

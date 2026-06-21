@@ -20,7 +20,6 @@ export default function FlashcardsLoading() {
           currentView={resolveFlashcardsView(view ?? undefined)}
           manageLabel="Manage"
           reviewLabel="Review"
-          statisticsLabel="Statistics"
           subjectId={subjectId}
         />
       }

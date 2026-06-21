@@ -144,23 +144,6 @@ export interface AccountSettings {
   fsrsOptimization: FlashcardOptimizationSettings;
 }
 
-export interface FlashcardStatisticsSummary {
-  totalCards: number;
-  dueCards: number;
-  reviewedCards: number;
-  neverReviewedCards: number;
-  totalReviews: number;
-  totalLapses: number;
-  averageReviewsPerCard: number;
-  averageLapsesPerReviewedCard: number;
-}
-
-export interface FlashcardStatisticsBreakdownItem {
-  key: string;
-  label: string;
-  count: number;
-}
-
 export interface FlashcardStatisticsTrendPoint {
   date: string;
   count: number;
@@ -171,11 +154,11 @@ export interface FlashcardStatisticsStreak {
   longest: number;
 }
 
-export interface FlashcardStatisticsState {
-  summary: FlashcardStatisticsSummary;
-  states: FlashcardStatisticsBreakdownItem[];
-  ratings: FlashcardStatisticsBreakdownItem[];
-  trend: FlashcardStatisticsTrendPoint[];
+/**
+ * Daily review counts for the trailing year plus the derived study streaks.
+ * Powers the "Review activity" heatmap on the home dashboard.
+ */
+export interface FlashcardReviewActivity {
   heatmap: FlashcardStatisticsTrendPoint[];
   streak: FlashcardStatisticsStreak;
 }

@@ -72,42 +72,6 @@ vi.mock("@/features/flashcards/fsrs/settings", () => ({
   ensureFsrsSettings: ensureFsrsSettingsMock,
 }));
 
-function mockFlashcardWhereOnce(value: unknown) {
-  selectMock.mockImplementationOnce(() => ({
-    from: () => ({
-      innerJoin: () => ({
-        where: vi.fn().mockResolvedValue(value),
-      }),
-    }),
-  }));
-}
-
-function mockFlashcardGroupByOnce(value: unknown) {
-  selectMock.mockImplementationOnce(() => ({
-    from: () => ({
-      innerJoin: () => ({
-        where: () => ({
-          groupBy: vi.fn().mockResolvedValue(value),
-        }),
-      }),
-    }),
-  }));
-}
-
-function mockReviewGroupByOnce(value: unknown) {
-  selectMock.mockImplementationOnce(() => ({
-    from: () => ({
-      innerJoin: () => ({
-        innerJoin: () => ({
-          where: () => ({
-            groupBy: vi.fn().mockResolvedValue(value),
-          }),
-        }),
-      }),
-    }),
-  }));
-}
-
 function mockReviewTrendOnce(value: unknown) {
   selectMock.mockImplementationOnce(() => ({
     from: () => ({
@@ -124,7 +88,7 @@ function mockReviewTrendOnce(value: unknown) {
   }));
 }
 
-describe("getFlashcardStatisticsForUser", () => {
+describe("getFlashcardReviewActivityForUser", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -137,34 +101,15 @@ describe("getFlashcardStatisticsForUser", () => {
     });
   });
 
-  it("returns aggregated statistics for the scoped flashcards", async () => {
-    mockFlashcardWhereOnce([
-      {
-        totalCards: 6,
-        dueCards: 2,
-        reviewedCards: 4,
-        totalReviews: 18,
-        totalLapses: 5,
-      },
-    ]);
-    mockFlashcardGroupByOnce([
-      { state: "new", count: 2 },
-      { state: "review", count: 3 },
-      { state: "relearning", count: 1 },
-    ]);
-    mockReviewGroupByOnce([
-      { rating: "again", count: 2 },
-      { rating: "good", count: 9 },
-      { rating: "easy", count: 7 },
-    ]);
+  it("returns the trailing-year heatmap and streaks for the scope", async () => {
     mockReviewTrendOnce([
       { date: "2026-04-08", count: 3 },
       { date: "2026-04-10", count: 5 },
       { date: "2026-04-12", count: 2 },
     ]);
 
-    const { getFlashcardStatisticsForUser } = await import("./queries");
-    const result = await getFlashcardStatisticsForUser(
+    const { getFlashcardReviewActivityForUser } = await import("./queries");
+    const result = await getFlashcardReviewActivityForUser(
       "user-1",
       new Date("2026-04-12T15:00:00.000Z"),
       {
@@ -172,37 +117,6 @@ describe("getFlashcardStatisticsForUser", () => {
       },
     );
 
-    expect(result.summary).toEqual({
-      totalCards: 6,
-      dueCards: 2,
-      reviewedCards: 4,
-      neverReviewedCards: 2,
-      totalReviews: 18,
-      totalLapses: 5,
-      averageReviewsPerCard: 3,
-      averageLapsesPerReviewedCard: 1.25,
-    });
-    expect(result.states).toEqual([
-      { key: "new", label: "New", count: 2 },
-      { key: "learning", label: "Learning", count: 0 },
-      { key: "review", label: "Review", count: 3 },
-      { key: "relearning", label: "Relearning", count: 1 },
-    ]);
-    expect(result.ratings).toEqual([
-      { key: "again", label: "Again", count: 2 },
-      { key: "hard", label: "Hard", count: 0 },
-      { key: "good", label: "Good", count: 9 },
-      { key: "easy", label: "Easy", count: 7 },
-    ]);
-    expect(result.trend).toEqual([
-      { date: "2026-04-06", count: 0 },
-      { date: "2026-04-07", count: 0 },
-      { date: "2026-04-08", count: 3 },
-      { date: "2026-04-09", count: 0 },
-      { date: "2026-04-10", count: 5 },
-      { date: "2026-04-11", count: 0 },
-      { date: "2026-04-12", count: 2 },
-    ]);
     expect(getDescendantSubjectIdsMock).toHaveBeenCalledWith(
       "user-1",
       "deck-1",
@@ -239,45 +153,18 @@ describe("getFlashcardStatisticsForUser", () => {
     expect(result.streak).toEqual({ current: 1, longest: 1 });
   });
 
-  it("returns zeroed statistics when no cards are in scope", async () => {
-    mockFlashcardWhereOnce([
-      {
-        totalCards: 0,
-        dueCards: 0,
-        reviewedCards: 0,
-        totalReviews: 0,
-        totalLapses: 0,
-      },
-    ]);
-    mockFlashcardGroupByOnce([]);
-    mockReviewGroupByOnce([]);
+  it("returns a zero-filled heatmap when there are no reviews", async () => {
     mockReviewTrendOnce([]);
 
-    const { getFlashcardStatisticsForUser } = await import("./queries");
-    const result = await getFlashcardStatisticsForUser(
+    const { getFlashcardReviewActivityForUser } = await import("./queries");
+    const result = await getFlashcardReviewActivityForUser(
       "user-1",
       new Date("2026-04-12T15:00:00.000Z"),
     );
 
-    expect(result.summary).toEqual({
-      totalCards: 0,
-      dueCards: 0,
-      reviewedCards: 0,
-      neverReviewedCards: 0,
-      totalReviews: 0,
-      totalLapses: 0,
-      averageReviewsPerCard: 0,
-      averageLapsesPerReviewedCard: 0,
-    });
-    expect(result.trend).toEqual([
-      { date: "2026-04-06", count: 0 },
-      { date: "2026-04-07", count: 0 },
-      { date: "2026-04-08", count: 0 },
-      { date: "2026-04-09", count: 0 },
-      { date: "2026-04-10", count: 0 },
-      { date: "2026-04-11", count: 0 },
-      { date: "2026-04-12", count: 0 },
-    ]);
+    expect(result.heatmap).toHaveLength(365);
+    expect(result.heatmap.every((point) => point.count === 0)).toBe(true);
+    expect(result.streak).toEqual({ current: 0, longest: 0 });
   });
 });
 

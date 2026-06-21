@@ -2,11 +2,7 @@ import { redirect } from "next/navigation";
 import { BookReader } from "@/components/library/book-reader";
 import { getBookByIdForUser } from "@/features/library/queries";
 import { getAnnotationsForBook } from "@/features/library-annotations/queries";
-import { getSubjectPageHref } from "@/features/subjects/constants";
-import {
-  getAllSubjectsWithPathsForUser,
-  getSubjectByIdForUser,
-} from "@/features/subjects/queries";
+import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getReaderColorMode } from "@/features/user/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
@@ -38,8 +34,6 @@ export default async function BookPage({ params }: Readonly<BookPageProps>) {
     redirect(getBookDetailHref(book.subjectId, book.id));
   }
 
-  const subject = await getSubjectByIdForUser(session.user.id, id);
-
   return (
     <BookReader
       bookId={book.id}
@@ -52,8 +46,8 @@ export default async function BookPage({ params }: Readonly<BookPageProps>) {
       initialAnnotations={initialAnnotations}
       aiEnabled={isAiEnabled()}
       subjects={subjects}
-      backHref={(subject && getSubjectPageHref(subject)) || "/"}
-      backLabel={subject?.name ?? "Home"}
+      backHref="/"
+      backLabel="Home"
     />
   );
 }

@@ -2,13 +2,11 @@
 
 import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
-import { FlashcardsStatistics } from "@/components/flashcards/shared/flashcards-statistics";
 import { SubjectScopeFilter } from "@/components/flashcards/shared/subject-scope-filter";
 import type { FlashcardsView } from "@/features/flashcards/view";
 import type {
   FlashcardManagePage,
   FlashcardReviewState,
-  FlashcardStatisticsState,
   SubjectOption,
 } from "@/lib/server/api-contracts";
 
@@ -22,14 +20,13 @@ interface FlashcardsPageClientProps {
   subjects: SubjectOption[];
   initialManagePageData: FlashcardManagePage;
   initialReviewState: FlashcardReviewState;
-  statistics: FlashcardStatisticsState;
   aiEnabled: boolean;
 }
 
 /**
- * Flashcards hub. There is no in-page tree: review and statistics run globally
- * (or scoped when the sidebar deep-links a subject), and manage lists every
- * card with a subject filter. Scope lives in the `?subjectId` URL param.
+ * Flashcards hub. There is no in-page tree: review runs globally (or scoped
+ * when the sidebar deep-links a subject), and manage lists every card with a
+ * subject filter. Scope lives in the `?subjectId` URL param.
  */
 export function FlashcardsPageClient({
   currentView,
@@ -40,7 +37,6 @@ export function FlashcardsPageClient({
   subjects,
   initialManagePageData,
   initialReviewState,
-  statistics,
   aiEnabled,
 }: Readonly<FlashcardsPageClientProps>) {
   const scopeKey = `${currentView}:${scopedSubjectId ?? "all"}`;
@@ -62,9 +58,6 @@ export function FlashcardsPageClient({
           autoStartReview={autoStartReview}
           embedded
         />
-      )}
-      {currentView === "statistics" && (
-        <FlashcardsStatistics statistics={statistics} />
       )}
       {currentView === "manage" && (
         <FlashcardsManager

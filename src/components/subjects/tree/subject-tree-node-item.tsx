@@ -39,9 +39,12 @@ interface SubjectTreeNodeItemProps {
   pendingMoveId: string | null;
   onToggle: (subjectId: string) => void;
   onCreateChild: (parentSubjectId: string) => void;
+  onCreateAssessment: (subjectId: string) => void;
+  onRecordMiss: (subjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreateMindmap: (subjectId: string) => void;
   onCreateBook: (subjectId: string) => void;
+  onCreateFlashcard: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
   onDragStart: (subjectId: string) => void;
@@ -66,9 +69,12 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     pendingMoveId,
     onToggle,
     onCreateChild,
+    onCreateAssessment,
+    onRecordMiss,
     onCreateNote,
     onCreateMindmap,
     onCreateBook,
+    onCreateFlashcard,
     onEdit,
     onDelete,
     onDragStart,
@@ -118,9 +124,12 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
         <SubjectActionsMenu
           node={node}
           onCreateChild={onCreateChild}
+          onCreateAssessment={onCreateAssessment}
+          onRecordMiss={onRecordMiss}
           onCreateNote={onCreateNote}
           onCreateMindmap={onCreateMindmap}
           onCreateBook={onCreateBook}
+          onCreateFlashcard={onCreateFlashcard}
           onEdit={onEdit}
           onDelete={onDelete}
         />
