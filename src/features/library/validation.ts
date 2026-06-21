@@ -23,9 +23,15 @@ const bookAuthorSchema = z
   )
   .optional();
 
+const bookSubjectIdSchema = z
+  .string()
+  .trim()
+  .min(1, validationMessage("Validation.library.subjectRequired"));
+
 export const createBookSchema = z.object({
   title: bookTitleSchema,
   author: bookAuthorSchema,
+  subjectId: bookSubjectIdSchema,
   fileName: z.string().trim().min(1).max(255),
   mimeType: z
     .string()

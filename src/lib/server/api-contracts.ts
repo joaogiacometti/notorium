@@ -211,7 +211,7 @@ export type SearchMindmapResult = Pick<
 
 export type SearchBookResult = Pick<
   LibraryBookEntity,
-  "id" | "title" | "author"
+  "id" | "title" | "author" | "subjectId"
 >;
 
 export type SearchData = {

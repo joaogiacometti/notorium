@@ -1,6 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { libraryBook } from "@/db/schema";
+import type {
+  MoveDocumentMutationInput,
+  MoveDocumentResult,
+} from "@/features/documents/types";
 import { isSupportedLibraryBookMime } from "@/features/library/constants";
 import {
   countBooksForUser,
@@ -16,6 +20,7 @@ import type {
   UpdateBookZoomForm,
   UpdateReadingPageForm,
 } from "@/features/library/validation";
+import { getSubjectByIdForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
@@ -90,6 +95,7 @@ async function storeUploadedBook(
       .insert(libraryBook)
       .values({
         userId,
+        subjectId: data.subjectId,
         title: data.title,
         author: data.author ?? null,
         fileName: data.fileName,
@@ -136,6 +142,10 @@ export async function createBookForUser(
   const validationError = validateBookUpload(data, userId);
   if (validationError) {
     return validationError;
+  }
+
+  if (!(await getSubjectByIdForUser(userId, data.subjectId))) {
+    return actionError("library.invalidData");
   }
 
   const blockError = await ensureBookUploadAllowed(userId);
@@ -249,6 +259,39 @@ export async function deleteBookForUser(
     );
 
   return { success: true };
+}
+
+/**
+ * Reparents a book to another subject (sidebar tree drag-and-drop). Mirrors the
+ * note/mindmap move so books behave like any other subject document. Returns
+ * both subjects so the caller can revalidate each side.
+ *
+ * @example moveBookForUser(userId, { id, subjectId: targetSubjectId })
+ */
+export async function moveBookForUser(
+  userId: string,
+  data: MoveDocumentMutationInput,
+): Promise<MoveDocumentResult> {
+  const existing = await getBookByIdForUser(userId, data.id);
+
+  if (!existing) {
+    return actionError("library.notFound");
+  }
+
+  if (!(await getSubjectByIdForUser(userId, data.subjectId))) {
+    return actionError("library.invalidData");
+  }
+
+  await getDb()
+    .update(libraryBook)
+    .set({ subjectId: data.subjectId })
+    .where(and(eq(libraryBook.id, data.id), eq(libraryBook.userId, userId)));
+
+  return {
+    success: true,
+    subjectId: data.subjectId,
+    previousSubjectId: existing.subjectId ?? data.subjectId,
+  };
 }
 
 export async function bulkDeleteBooksForUser(

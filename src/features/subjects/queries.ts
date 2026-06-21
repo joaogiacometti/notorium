@@ -1,6 +1,6 @@
 import { and, count, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, mindmap, note, subject } from "@/db/schema";
+import { flashcard, libraryBook, mindmap, note, subject } from "@/db/schema";
 import type {
   SubjectEntity,
   SubjectListItem,
@@ -411,13 +411,14 @@ export async function getSubjectTreeForUser(
 }
 
 /**
- * Direct (non-rolled-up) note + mindmap counts keyed by subject id. Used to
- * seed {@link getSubjectTreeForUser} before subtree counts are accumulated.
+ * Direct (non-rolled-up) note + mindmap + book counts keyed by subject id. Used
+ * to seed {@link getSubjectTreeForUser} before subtree counts are accumulated.
+ * Books with a null subject (mid-migration) are skipped.
  */
 async function getDocumentCountsBySubject(
   userId: string,
 ): Promise<Map<string, number>> {
-  const [noteCounts, mindmapCounts] = await Promise.all([
+  const [noteCounts, mindmapCounts, bookCounts] = await Promise.all([
     getDb()
       .select({ subjectId: note.subjectId, count: count() })
       .from(note)
@@ -428,10 +429,16 @@ async function getDocumentCountsBySubject(
       .from(mindmap)
       .where(eq(mindmap.userId, userId))
       .groupBy(mindmap.subjectId),
+    getDb()
+      .select({ subjectId: libraryBook.subjectId, count: count() })
+      .from(libraryBook)
+      .where(eq(libraryBook.userId, userId))
+      .groupBy(libraryBook.subjectId),
   ]);
 
   const counts = new Map<string, number>();
-  for (const row of [...noteCounts, ...mindmapCounts]) {
+  for (const row of [...noteCounts, ...mindmapCounts, ...bookCounts]) {
+    if (!row.subjectId) continue;
     counts.set(row.subjectId, (counts.get(row.subjectId) ?? 0) + row.count);
   }
   return counts;

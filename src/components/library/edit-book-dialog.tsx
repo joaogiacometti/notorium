@@ -40,12 +40,15 @@ interface EditBookDialogProps {
   book: EditBookDialogBook;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called after a successful save so callers can refresh their own state. */
+  onSaved?: () => void;
 }
 
 export function EditBookDialog({
   book,
   open,
   onOpenChange,
+  onSaved,
 }: Readonly<EditBookDialogProps>) {
   const form = useForm<BookMetadata>({
     resolver: zodResolver(bookMetadataSchema),
@@ -65,6 +68,7 @@ export function EditBookDialog({
 
     if (result.success) {
       onOpenChange(false);
+      onSaved?.();
       return;
     }
 

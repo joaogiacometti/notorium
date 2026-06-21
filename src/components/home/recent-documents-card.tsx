@@ -1,6 +1,7 @@
 import { FileText, Network } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
+import { Card, CardContent } from "@/components/ui/card";
 import type { DocumentListItem } from "@/features/documents/types";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
@@ -18,9 +19,7 @@ export function RecentDocumentsCard({
 }: Readonly<RecentDocumentsCardProps>) {
   return (
     <Card className="gap-3 py-4">
-      <CardHeader>
-        <CardTitle className="text-base">Recent documents</CardTitle>
-      </CardHeader>
+      <DashboardCardHeader icon={FileText} title="Recent documents" />
       <CardContent>
         {documents.length === 0 ? (
           <p className="text-sm text-muted-foreground">

@@ -1,7 +1,8 @@
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
+import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
 import { HomeCreateSubjectButton } from "@/components/home/home-create-subject-button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { getSubjectPageHref } from "@/features/subjects/constants";
 import type { SubjectListItem } from "@/lib/server/api-contracts";
 
@@ -27,10 +28,11 @@ export function SubjectsOverviewCard({
 }: Readonly<SubjectsOverviewCardProps>) {
   return (
     <Card className="gap-3 py-4">
-      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-        <CardTitle className="text-base">Recent subjects</CardTitle>
-        <HomeCreateSubjectButton />
-      </CardHeader>
+      <DashboardCardHeader
+        icon={BookOpen}
+        title="Recent subjects"
+        action={<HomeCreateSubjectButton />}
+      />
       <CardContent>
         {subjects.length === 0 ? (
           <p className="text-sm text-muted-foreground">

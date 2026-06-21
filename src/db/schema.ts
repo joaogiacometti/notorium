@@ -374,6 +374,13 @@ export const libraryBook = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    // Migration A (additive): books are moving from the standalone /library into
+    // the shared subject tree. subjectId is nullable until the backfill
+    // (scripts/backfill-books-to-subjects.ts) repoints every legacy row into the
+    // user's default "Library" subject. Migration B makes this notNull.
+    subjectId: text("subject_id").references((): AnyPgColumn => subject.id, {
+      onDelete: "cascade",
+    }),
     title: text("title").notNull(),
     author: text("author"),
     fileName: text("file_name").notNull(),
@@ -401,6 +408,10 @@ export const libraryBook = pgTable(
     index("library_book_userId_updatedAt_idx").on(
       table.userId,
       table.updatedAt,
+    ),
+    index("library_book_userId_subjectId_idx").on(
+      table.userId,
+      table.subjectId,
     ),
   ],
 );
@@ -711,12 +722,17 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
   flashcards: many(flashcard),
+  books: many(libraryBook),
 }));
 
 export const libraryBookRelations = relations(libraryBook, ({ one, many }) => ({
   user: one(user, {
     fields: [libraryBook.userId],
     references: [user.id],
+  }),
+  subject: one(subject, {
+    fields: [libraryBook.subjectId],
+    references: [subject.id],
   }),
   annotations: many(libraryAnnotation),
 }));

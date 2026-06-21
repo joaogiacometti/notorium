@@ -12,6 +12,7 @@ import { PlanningAssessmentsFilters } from "@/components/planning/planning-asses
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
 import { buildAssessmentsParams } from "@/components/planning/planning-assessments-params";
 import { PlanningAssessmentsToolbar } from "@/components/planning/planning-assessments-toolbar";
+import { EmptyState } from "@/components/shared/empty-state";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -401,22 +402,21 @@ export function PlanningAssessmentsTable({
             />
           </Card>
         ) : (
-          <div className="flex max-h-[clamp(18rem,52svh,32rem)] flex-col items-center justify-center overflow-auto rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center lg:min-h-0 lg:max-h-none lg:flex-1 lg:py-20">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <ClipboardList className="size-6" />
-            </div>
-            <h2 className="mb-1 text-lg font-semibold">No assessments yet</h2>
-            <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-              Assessments you add to your subjects will appear here.
-            </p>
-            <div className="flex justify-center">
-              {renderAddAssessmentButton({
-                className: "gap-1.5",
-                wrapperClassName: "inline-flex",
-                testId: "planning-empty-add-assessment-disabled-trigger",
-              })}
-            </div>
-          </div>
+          <EmptyState
+            icon={ClipboardList}
+            title="No assessments yet"
+            description="Assessments you add to your subjects will appear here."
+            className="max-h-[clamp(18rem,52svh,32rem)] overflow-auto py-12 lg:min-h-0 lg:max-h-none lg:flex-1 lg:py-20"
+            action={
+              <div className="flex justify-center">
+                {renderAddAssessmentButton({
+                  className: "gap-1.5",
+                  wrapperClassName: "inline-flex",
+                  testId: "planning-empty-add-assessment-disabled-trigger",
+                })}
+              </div>
+            }
+          />
         )}
         <CreateAssessmentDialog
           open={createOpen}

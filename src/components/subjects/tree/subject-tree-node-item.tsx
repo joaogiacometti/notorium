@@ -3,23 +3,16 @@
 import {
   ChevronDown,
   ChevronRight,
-  FileText,
-  FolderPlus,
+  Folder,
   GraduationCap,
-  Layers,
   Loader2,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Trash2,
-  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import type { DragEvent } from "react";
-import {
-  type DocumentRowActionHandlers,
-  DocumentRowMenu,
-} from "@/components/documents/document-row-menu";
+import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
+import { SubjectActionsMenu } from "@/components/subjects/tree/subject-tree-actions-menu";
+import { INDENT_REM } from "@/components/subjects/tree/subject-tree-constants";
+import { DocumentRows } from "@/components/subjects/tree/subject-tree-document-rows";
 import type {
   SubjectDeleteTarget,
   SubjectDocumentsState,
@@ -27,22 +20,8 @@ import type {
 } from "@/components/subjects/tree/subject-tree-types";
 import type { DraggedDocument } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { DocumentListItem } from "@/features/documents/types";
 import { isAcademicSubject } from "@/features/subjects/constants";
-import {
-  getDocumentDetailHref,
-  getFlashcardsHref,
-} from "@/lib/navigation/detail-page-back-link";
+import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +41,7 @@ interface SubjectTreeNodeItemProps {
   onCreateChild: (parentSubjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreateMindmap: (subjectId: string) => void;
+  onCreateBook: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
   onDragStart: (subjectId: string) => void;
@@ -70,9 +50,6 @@ interface SubjectTreeNodeItemProps {
   onDropTarget: (targetId: string) => void;
   onDragEnd: () => void;
 }
-
-/** Indentation per nesting level, in rem, applied to a node's content row. */
-const INDENT_REM = 0.75;
 
 export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
   const {
@@ -91,6 +68,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     onCreateChild,
     onCreateNote,
     onCreateMindmap,
+    onCreateBook,
     onEdit,
     onDelete,
     onDragStart,
@@ -142,6 +120,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
           onCreateChild={onCreateChild}
           onCreateNote={onCreateNote}
           onCreateMindmap={onCreateMindmap}
+          onCreateBook={onCreateBook}
           onEdit={onEdit}
           onDelete={onDelete}
         />
@@ -217,6 +196,13 @@ function SubjectNodeLabel({
       "flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm focus-visible:outline-none",
   };
 
+  const isAcademic = isAcademicSubject(node.kind);
+
+  // A leading icon makes the kind legible at a glance: a graduation cap marks
+  // academic subjects, which open their own dashboard page, while a folder
+  // marks general subjects, which are pure containers with nowhere to navigate.
+  const KindIcon = isAcademic ? GraduationCap : Folder;
+
   const content = (
     <>
       {isMoving ? (
@@ -224,8 +210,20 @@ function SubjectNodeLabel({
           className="size-3.5 shrink-0 animate-spin text-muted-foreground"
           aria-hidden
         />
-      ) : null}
-      <span className="min-w-0 truncate font-medium" title={node.path}>
+      ) : (
+        <KindIcon
+          className="size-3.5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+      )}
+      <span
+        className={cn(
+          "min-w-0 truncate font-medium",
+          // Reinforce the link affordance on hover for academic subjects only.
+          isAcademic && "group-hover:underline group-hover:underline-offset-2",
+        )}
+        title={node.path}
+      >
         {node.name}
       </span>
     </>
@@ -235,7 +233,7 @@ function SubjectNodeLabel({
   // navigable link. General subjects have no page — they are pure containers
   // managed in this tree — so their label is inert text (expand via the
   // chevron) and never shows the pointer cursor that would imply navigation.
-  if (isAcademicSubject(node.kind)) {
+  if (isAcademic) {
     return (
       <Link
         href={`/subjects/${node.id}`}
@@ -291,99 +289,6 @@ function ExpandButton({
   );
 }
 
-interface DocumentRowsProps {
-  documents: DocumentListItem[] | "loading" | undefined;
-  depth: number;
-  activeHref: string;
-  documentActions: DocumentRowActionHandlers;
-  draggedDocumentId: string | null;
-  pendingMoveId: string | null;
-  onDocumentDragStart: (document: DraggedDocument) => void;
-  onDragEnd: () => void;
-}
-
-function DocumentRows({
-  documents,
-  depth,
-  activeHref,
-  documentActions,
-  draggedDocumentId,
-  pendingMoveId,
-  onDocumentDragStart,
-  onDragEnd,
-}: Readonly<DocumentRowsProps>) {
-  if (documents === "loading") {
-    return (
-      <div
-        className="flex items-center gap-2 py-1.5 text-xs text-muted-foreground"
-        style={{ paddingLeft: `${depth * INDENT_REM + 1.5}rem` }}
-      >
-        <Loader2 className="size-3.5 animate-spin" aria-hidden />
-        Loading…
-      </div>
-    );
-  }
-
-  if (!documents || documents.length === 0) {
-    return null;
-  }
-
-  return (
-    <>
-      {documents.map((document) => {
-        const href = getDocumentDetailHref(document);
-        const Icon = document.kind === "mindmap" ? Workflow : FileText;
-        const isActive = href === activeHref;
-        const isDragging = draggedDocumentId === document.id;
-        const isMoving = pendingMoveId === document.id;
-
-        return (
-          <div
-            key={`${document.kind}-${document.id}`}
-            className={cn(
-              "group flex items-center gap-1 rounded-md pr-1 transition-colors",
-              isActive
-                ? "bg-muted/60 text-foreground"
-                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
-              isDragging && "opacity-50",
-            )}
-            style={{ paddingLeft: `${depth * INDENT_REM + 1.5}rem` }}
-          >
-            <Link
-              href={href}
-              draggable
-              onDragStart={(event) => {
-                event.stopPropagation();
-                onDocumentDragStart({
-                  kind: document.kind,
-                  id: document.id,
-                  sourceSubjectId: document.subjectId,
-                });
-              }}
-              onDragEnd={onDragEnd}
-              aria-current={isActive ? "page" : undefined}
-              className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-sm focus-visible:outline-none"
-            >
-              {isMoving ? (
-                <Loader2
-                  className="size-3.5 shrink-0 animate-spin"
-                  aria-hidden
-                />
-              ) : (
-                <Icon className="size-3.5 shrink-0" aria-hidden />
-              )}
-              <span className="min-w-0 truncate" title={document.title}>
-                {document.title}
-              </span>
-            </Link>
-            <DocumentRowMenu item={document} {...documentActions} />
-          </div>
-        );
-      })}
-    </>
-  );
-}
-
 interface DueReviewBadgeProps {
   subjectId: string;
   dueCount: number;
@@ -410,89 +315,5 @@ function DueReviewBadge({
     >
       {dueCount}
     </Link>
-  );
-}
-
-interface SubjectActionsMenuProps {
-  node: SubjectTreeNode;
-  onCreateChild: (parentSubjectId: string) => void;
-  onCreateNote: (subjectId: string) => void;
-  onCreateMindmap: (subjectId: string) => void;
-  onEdit: (subject: SubjectEditTarget) => void;
-  onDelete: (subject: SubjectDeleteTarget) => void;
-}
-
-function SubjectActionsMenu({
-  node,
-  onCreateChild,
-  onCreateNote,
-  onCreateMindmap,
-  onEdit,
-  onDelete,
-}: Readonly<SubjectActionsMenuProps>) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-6 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-          aria-label={`Actions for ${node.name}`}
-        >
-          <MoreHorizontal className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Plus className="size-4" />
-            New
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => onCreateChild(node.id)}>
-              <FolderPlus className="size-4" />
-              Subfolder
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onCreateNote(node.id)}>
-              <FileText className="size-4" />
-              Note
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onCreateMindmap(node.id)}>
-              <Workflow className="size-4" />
-              Mindmap
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuItem asChild>
-          <Link href={getFlashcardsHref("review", node.id, { focus: true })}>
-            <GraduationCap className="size-4" />
-            Review flashcards
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href={getFlashcardsHref("manage", node.id)}>
-            <Layers className="size-4" />
-            Manage flashcards
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() =>
-            onEdit({ id: node.id, name: node.name, kind: node.kind })
-          }
-        >
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
-          onClick={() => onDelete({ id: node.id, name: node.path })}
-        >
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

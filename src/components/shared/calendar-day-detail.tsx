@@ -108,7 +108,7 @@ function DayDetailHeader({
 function EmptyDayDetail({ emptyLabel }: Readonly<{ emptyLabel: string }>) {
   return (
     <div className="p-3 pt-0">
-      <div className="rounded-lg border border-dashed border-border/70 bg-background/50 px-3 py-5 text-center">
+      <div className="rounded-lg border border-dashed border-border/60 bg-background/50 px-3 py-5 text-center">
         <CalendarCheck
           className="mx-auto size-5 text-muted-foreground"
           aria-hidden="true"

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getNotesBySubjectForUserMock = vi.fn();
 const getMindmapsBySubjectForUserMock = vi.fn();
+const getBooksBySubjectForUserMock = vi.fn();
 const getRecentNotesForUserMock = vi.fn();
 const getRecentMindmapsForUserMock = vi.fn();
 
@@ -13,6 +14,10 @@ vi.mock("@/features/notes/queries", () => ({
 vi.mock("@/features/mindmaps/queries", () => ({
   getMindmapsBySubjectForUser: getMindmapsBySubjectForUserMock,
   getRecentMindmapsForUser: getRecentMindmapsForUserMock,
+}));
+
+vi.mock("@/features/library/queries", () => ({
+  getBooksBySubjectForUser: getBooksBySubjectForUserMock,
 }));
 
 describe("getSubjectDocumentsForUser", () => {
@@ -39,6 +44,7 @@ describe("getSubjectDocumentsForUser", () => {
         updatedAt: new Date("2026-04-21T10:00:00.000Z"),
       },
     ]);
+    getBooksBySubjectForUserMock.mockResolvedValueOnce([]);
 
     const { getSubjectDocumentsForUser } = await import(
       "@/features/documents/queries"
@@ -64,9 +70,38 @@ describe("getSubjectDocumentsForUser", () => {
     ]);
   });
 
+  it("includes books interleaved by recency with author preserved", async () => {
+    getNotesBySubjectForUserMock.mockResolvedValueOnce([]);
+    getMindmapsBySubjectForUserMock.mockResolvedValueOnce([]);
+    getBooksBySubjectForUserMock.mockResolvedValueOnce([
+      {
+        id: "book-1",
+        title: "Clean Code",
+        author: "Robert Martin",
+        updatedAt: new Date("2026-04-20T10:00:00.000Z"),
+      },
+    ]);
+
+    const { getSubjectDocumentsForUser } = await import(
+      "@/features/documents/queries"
+    );
+
+    expect(await getSubjectDocumentsForUser("user-1", "subject-1")).toEqual([
+      {
+        id: "book-1",
+        title: "Clean Code",
+        author: "Robert Martin",
+        updatedAt: new Date("2026-04-20T10:00:00.000Z"),
+        kind: "book",
+        subjectId: "subject-1",
+      },
+    ]);
+  });
+
   it("returns an empty list when the subject has no documents", async () => {
     getNotesBySubjectForUserMock.mockResolvedValueOnce([]);
     getMindmapsBySubjectForUserMock.mockResolvedValueOnce([]);
+    getBooksBySubjectForUserMock.mockResolvedValueOnce([]);
 
     const { getSubjectDocumentsForUser } = await import(
       "@/features/documents/queries"

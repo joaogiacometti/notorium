@@ -57,6 +57,7 @@ function validUpload(overrides: Record<string, unknown> = {}) {
   return {
     title: "Clean Code",
     author: "Robert Martin",
+    subjectId: "subject-1",
     fileName: "clean-code.pdf",
     mimeType: "application/pdf",
     blobPathname: "notorium/library/user-1/uuid-clean-code.pdf",
@@ -148,7 +149,7 @@ describe("library actions", () => {
     });
   });
 
-  it("uploadBook revalidates the library route on success", async () => {
+  it("uploadBook revalidates the app layout on success", async () => {
     createBookForUserMock.mockResolvedValue({
       success: true,
       book: { id: "book-1" },
@@ -158,7 +159,7 @@ describe("library actions", () => {
     const result = await uploadBook(validUpload());
 
     expect(result).toMatchObject({ success: true });
-    expect(revalidatePathMock).toHaveBeenCalledWith("/library");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/", "layout");
   });
 
   it("uploadBook rejects invalid input before the mutation runs", async () => {
@@ -200,13 +201,13 @@ describe("library actions", () => {
     expect(updateReadingPageForUserMock).not.toHaveBeenCalled();
   });
 
-  it("deleteBook revalidates the library route on success", async () => {
+  it("deleteBook revalidates the app layout on success", async () => {
     deleteBookForUserMock.mockResolvedValue({ success: true });
     const { deleteBook } = await import("@/app/actions/library");
 
     const result = await deleteBook({ bookId: "book-1" });
 
     expect(result).toMatchObject({ success: true });
-    expect(revalidatePathMock).toHaveBeenCalledWith("/library");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/", "layout");
   });
 });

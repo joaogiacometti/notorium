@@ -1,8 +1,5 @@
-import { AppPageContainer } from "@/components/shared/app-page-container";
-import {
-  type BreadcrumbItem,
-  PageTopBar,
-} from "@/components/shared/page-top-bar";
+import { DetailPageLayout } from "@/components/shared/detail-page-layout";
+import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
 import { SubjectDetailContent } from "@/components/subjects/subject-detail-content";
 import { isAcademicSubject } from "@/features/subjects/constants";
 import type {
@@ -30,16 +27,16 @@ export function SubjectDetail({
   assessments,
 }: Readonly<SubjectDetailProps>) {
   return (
-    <>
-      <PageTopBar breadcrumb={buildSubjectBreadcrumb(subject, ancestors)} />
-      <AppPageContainer maxWidth="5xl">
-        <SubjectDetailContent
-          subject={subject}
-          misses={misses}
-          assessments={assessments}
-        />
-      </AppPageContainer>
-    </>
+    <DetailPageLayout
+      breadcrumb={buildSubjectBreadcrumb(subject, ancestors)}
+      maxWidth="5xl"
+    >
+      <SubjectDetailContent
+        subject={subject}
+        misses={misses}
+        assessments={assessments}
+      />
+    </DetailPageLayout>
   );
 }
 

@@ -261,12 +261,11 @@ describe("getActiveShortcutCategories", () => {
     ]);
   });
 
-  it("marks the reader active on a book page but not the library list", () => {
-    expect(getActiveShortcutCategories("/library/book-1")).toEqual([
-      ShortcutCategory.Global,
-      ShortcutCategory.Reader,
-    ]);
-    expect(getActiveShortcutCategories("/library")).toEqual([
+  it("marks the reader active on a book page but not the subject dashboard", () => {
+    expect(
+      getActiveShortcutCategories("/subjects/s1/documents/books/book-1"),
+    ).toEqual([ShortcutCategory.Global, ShortcutCategory.Reader]);
+    expect(getActiveShortcutCategories("/subjects/s1")).toEqual([
       ShortcutCategory.Global,
     ]);
   });

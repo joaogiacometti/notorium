@@ -149,10 +149,19 @@ describe("AddBookDialog file validation", () => {
       token: "token-123",
       pathname: "notorium/library/user-1/book.pdf",
     });
-    uploadBookMock.mockResolvedValue({ success: true, book: { id: "book-1" } });
+    uploadBookMock.mockResolvedValue({
+      success: true,
+      book: { id: "book-1", subjectId: "subject-1" },
+    });
     const onOpenChange = vi.fn();
     await act(async () => {
-      root.render(<AddBookDialog open onOpenChange={onOpenChange} />);
+      root.render(
+        <AddBookDialog
+          open
+          onOpenChange={onOpenChange}
+          subjectId="subject-1"
+        />,
+      );
     });
 
     const input = getFileInput(container);
@@ -173,6 +182,7 @@ describe("AddBookDialog file validation", () => {
         title: "Clean Code",
         fileName: "Clean Code.pdf",
         mimeType: "application/pdf",
+        subjectId: "subject-1",
       }),
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);

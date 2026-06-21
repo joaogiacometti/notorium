@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Layers3, Library } from "lucide-react";
+import { CalendarDays, Layers3 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -15,11 +15,6 @@ const sections = [
     href: "/flashcards",
     label: "Flashcards",
     icon: Layers3,
-  },
-  {
-    href: "/library",
-    label: "Library",
-    icon: Library,
   },
 ] as const;
 

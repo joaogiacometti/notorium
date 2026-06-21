@@ -155,6 +155,7 @@ Only add optional files when they are needed.
 
 ## Styling
 
+- `docs/ui-conventions.md` is the design-system source of truth: pick the matching role (page frame, surface tier, typography, dashed-border role, z-index layer, transition) instead of inventing a one-off class string. Update it when a convention changes.
 - Use Tailwind CSS 4.
 - Use `cn()` from `src/lib/utils.ts` for conditional classes.
 - Never use hardcoded Tailwind color classes.

@@ -27,12 +27,9 @@ import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-bac
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
 import { OcclusionCardFace } from "@/components/flashcards/occlusion/occlusion-card-face";
-import { AppPageContainer } from "@/components/shared/app-page-container";
+import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
-import {
-  type BreadcrumbItem,
-  PageTopBar,
-} from "@/components/shared/page-top-bar";
+import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -258,190 +255,187 @@ export function FlashcardDetail({
   ]);
 
   return (
-    <>
-      <PageTopBar breadcrumb={breadcrumb} />
-      <AppPageContainer maxWidth="3xl">
-        <div className="mb-6 flex min-w-0 items-start justify-between gap-2 sm:gap-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <span
-              className="truncate text-sm font-medium text-foreground"
-              title={flashcard.subjectPath}
-            >
-              Subject: {flashcard.subjectPath}
-            </span>
-            <span className="text-xs text-muted-foreground/60">
-              Created {formatRelativeTime(flashcard.createdAt)}
-            </span>
-          </div>
-
-          <div className="flex shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-lg"
-                  className="size-10 shrink-0"
-                  aria-label="Open flashcard actions"
-                >
-                  <MoreVertical className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => setResetOpen(true)}
-                >
-                  <RotateCcw className="size-4" />
-                  Reset
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => setMoveOpen(true)}
-                >
-                  <ArrowRightLeft className="size-4" />
-                  Move
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  <Trash2 className="size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+    <DetailPageLayout breadcrumb={breadcrumb} maxWidth="3xl">
+      <div className="mb-6 flex min-w-0 items-start justify-between gap-2 sm:gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span
+            className="truncate text-sm font-medium text-foreground"
+            title={flashcard.subjectPath}
+          >
+            Subject: {flashcard.subjectPath}
+          </span>
+          <span className="text-xs text-muted-foreground/60">
+            Created {formatRelativeTime(flashcard.createdAt)}
+          </span>
         </div>
 
-        {flashcard.type === "occlusion" && flashcard.occlusionImagePathname ? (
-          <div className="flex flex-col items-center gap-3">
-            <OcclusionCardFace
-              imagePathname={flashcard.occlusionImagePathname}
-              regions={flashcard.occlusionRegions ?? []}
-              testedMaskId={flashcard.occlusionMaskId}
-              revealed
-            />
-            <p className="text-sm text-muted-foreground">
-              Edit the image and masks from the flashcards list. This page is
-              read-only for image occlusion cards.
-            </p>
-          </div>
-        ) : (
-          <form className="space-y-4">
-            <Controller
-              name="front"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className="min-w-0 space-y-2">
+        <div className="flex shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="size-10 shrink-0"
+                aria-label="Open flashcard actions"
+              >
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setResetOpen(true)}
+              >
+                <RotateCcw className="size-4" />
+                Reset
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setMoveOpen(true)}
+              >
+                <ArrowRightLeft className="size-4" />
+                Move
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {flashcard.type === "occlusion" && flashcard.occlusionImagePathname ? (
+        <div className="flex flex-col items-center gap-3">
+          <OcclusionCardFace
+            imagePathname={flashcard.occlusionImagePathname}
+            regions={flashcard.occlusionRegions ?? []}
+            testedMaskId={flashcard.occlusionMaskId}
+            revealed
+          />
+          <p className="text-sm text-muted-foreground">
+            Edit the image and masks from the flashcards list. This page is
+            read-only for image occlusion cards.
+          </p>
+        </div>
+      ) : (
+        <form className="space-y-4">
+          <Controller
+            name="front"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <div className="min-w-0 space-y-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Front
+                </h2>
+                <TiptapEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Front of the flashcard..."
+                  id="form-edit-flashcard-front"
+                  aria-invalid={fieldState.invalid}
+                  imageUploadContext="flashcards"
+                  contentClassName="min-h-40"
+                  onImageUploadPendingChange={setIsFrontImageUploading}
+                />
+                {fieldState.invalid ? (
+                  <FieldError className="mt-2" errors={[fieldState.error]} />
+                ) : null}
+              </div>
+            )}
+          />
+
+          <Controller
+            name="back"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <div className="min-w-0 space-y-2">
+                <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Front
+                    Back
                   </h2>
+                  {aiEnabled ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
+                      onClick={() => void handleGenerateAiBack()}
+                      disabled={
+                        !hasRichTextContent(watchedFront) ||
+                        isGeneratingAiBack ||
+                        !!aiProposedBack
+                      }
+                    >
+                      {isGeneratingAiBack ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="size-3.5" />
+                      )}
+                      {aiBackLabel}
+                    </Button>
+                  ) : null}
+                </div>
+                {aiProposedBack && aiPreviousBack !== null ? (
+                  <FlashcardBackDiff
+                    previousBack={aiPreviousBack}
+                    proposedBack={aiProposedBack}
+                    originalLabel="Original"
+                    proposedLabel="Proposed"
+                    acceptLabel="Accept"
+                    rejectLabel="Reject"
+                    onAccept={handleAiAccept}
+                    onReject={handleAiReject}
+                  />
+                ) : (
                   <TiptapEditor
                     value={field.value}
                     onChange={field.onChange}
-                    placeholder="Front of the flashcard..."
-                    id="form-edit-flashcard-front"
+                    placeholder="Back of the flashcard..."
+                    id="form-edit-flashcard-back"
                     aria-invalid={fieldState.invalid}
                     imageUploadContext="flashcards"
                     contentClassName="min-h-40"
-                    onImageUploadPendingChange={setIsFrontImageUploading}
+                    onImageUploadPendingChange={setIsBackImageUploading}
                   />
-                  {fieldState.invalid ? (
-                    <FieldError className="mt-2" errors={[fieldState.error]} />
-                  ) : null}
-                </div>
-              )}
-            />
+                )}
+                {fieldState.invalid ? (
+                  <FieldError className="mt-2" errors={[fieldState.error]} />
+                ) : null}
+              </div>
+            )}
+          />
+        </form>
+      )}
 
-            <Controller
-              name="back"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className="min-w-0 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Back
-                    </h2>
-                    {aiEnabled ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="xs"
-                        className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                        onClick={() => void handleGenerateAiBack()}
-                        disabled={
-                          !hasRichTextContent(watchedFront) ||
-                          isGeneratingAiBack ||
-                          !!aiProposedBack
-                        }
-                      >
-                        {isGeneratingAiBack ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="size-3.5" />
-                        )}
-                        {aiBackLabel}
-                      </Button>
-                    ) : null}
-                  </div>
-                  {aiProposedBack && aiPreviousBack !== null ? (
-                    <FlashcardBackDiff
-                      previousBack={aiPreviousBack}
-                      proposedBack={aiProposedBack}
-                      originalLabel="Original"
-                      proposedLabel="Proposed"
-                      acceptLabel="Accept"
-                      rejectLabel="Reject"
-                      onAccept={handleAiAccept}
-                      onReject={handleAiReject}
-                    />
-                  ) : (
-                    <TiptapEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Back of the flashcard..."
-                      id="form-edit-flashcard-back"
-                      aria-invalid={fieldState.invalid}
-                      imageUploadContext="flashcards"
-                      contentClassName="min-h-40"
-                      onImageUploadPendingChange={setIsBackImageUploading}
-                    />
-                  )}
-                  {fieldState.invalid ? (
-                    <FieldError className="mt-2" errors={[fieldState.error]} />
-                  ) : null}
-                </div>
-              )}
-            />
-          </form>
-        )}
-
-        <ResetFlashcardDialog
-          flashcardId={flashcard.id}
-          flashcardFront={watchedFront}
-          open={resetOpen}
-          onOpenChange={setResetOpen}
-          onReset={() => setResetOpen(false)}
-        />
-        <BulkMoveFlashcardsDialog
-          ids={moveIds}
-          open={moveOpen}
-          onOpenChange={setMoveOpen}
-          onMoved={() => setMoveOpen(false)}
-        />
-        <DeleteFlashcardDialog
-          flashcardId={flashcard.id}
-          flashcardFront={watchedFront}
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          onDeleted={() => {
-            setDeleteOpen(false);
-            startNavTransition(() => router.push(returnHref));
-          }}
-        />
-      </AppPageContainer>
-    </>
+      <ResetFlashcardDialog
+        flashcardId={flashcard.id}
+        flashcardFront={watchedFront}
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        onReset={() => setResetOpen(false)}
+      />
+      <BulkMoveFlashcardsDialog
+        ids={moveIds}
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        onMoved={() => setMoveOpen(false)}
+      />
+      <DeleteFlashcardDialog
+        flashcardId={flashcard.id}
+        flashcardFront={watchedFront}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => {
+          setDeleteOpen(false);
+          startNavTransition(() => router.push(returnHref));
+        }}
+      />
+    </DetailPageLayout>
   );
 }

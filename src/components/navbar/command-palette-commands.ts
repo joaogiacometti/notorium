@@ -1,6 +1,5 @@
 import {
   BookOpen,
-  BookText,
   CalendarDays,
   ClipboardList,
   FileText,
@@ -23,7 +22,7 @@ export type PaletteGroup = "Create" | "Windows" | "Go to" | "Settings";
 export type WindowCreateKind = "mindmap" | "note" | "flashcard";
 
 /** Dialogs that need no context and can open straight from the palette. */
-export type ContextFreeDialog = "subject" | "flashcard" | "assessment" | "book";
+export type ContextFreeDialog = "subject" | "flashcard" | "assessment";
 
 /** Dialogs that require a subject, resolved from route or a picker step. */
 export type SubjectScopedDialog = "note" | "mindmap";
@@ -150,22 +149,6 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["planning", "calendar", "assessments", "schedule"],
     icon: CalendarDays,
     action: { kind: "navigate", href: "/planning" },
-  },
-  {
-    id: "add-book",
-    label: "Add Book",
-    group: "Create",
-    keywords: ["new", "add", "create", "book", "pdf", "upload", "library"],
-    icon: BookText,
-    action: { kind: "create", dialog: "book" },
-  },
-  {
-    id: "goto-library",
-    label: "Go to Library",
-    group: "Go to",
-    keywords: ["library", "books", "reading", "pdf"],
-    icon: BookText,
-    action: { kind: "navigate", href: "/library" },
   },
   {
     id: "open-settings",

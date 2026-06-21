@@ -369,7 +369,7 @@ export function getActiveShortcutCategories(
   if (pathname.startsWith("/flashcards")) {
     active.push(ShortcutCategory.FlashcardReview);
   }
-  if (pathname.startsWith("/library/")) {
+  if (pathname.includes("/documents/books/")) {
     active.push(ShortcutCategory.Reader);
   }
   return active;

@@ -1,6 +1,7 @@
 import { CalendarDays } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { assessmentTypeLabels } from "@/features/assessments/assessments";
 import { formatDateShort } from "@/lib/dates/format";
 import { getAssessmentDetailHref } from "@/lib/navigation/detail-page-back-link";
@@ -19,10 +20,7 @@ export function UpcomingAssessmentsCard({
 }: Readonly<UpcomingAssessmentsCardProps>) {
   return (
     <Card className="gap-3 py-4">
-      <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-        <CalendarDays className="size-4 text-muted-foreground" />
-        <CardTitle className="text-base">Upcoming assessments</CardTitle>
-      </CardHeader>
+      <DashboardCardHeader icon={CalendarDays} title="Upcoming assessments" />
       <CardContent className="flex flex-1 flex-col gap-2.5">
         {assessments.length === 0 ? (
           <p className="text-sm text-muted-foreground">

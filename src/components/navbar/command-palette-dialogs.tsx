@@ -2,7 +2,6 @@
 
 import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
-import { AddBookDialog } from "@/components/library/add-book-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import type {
   ContextFreeDialog,
@@ -53,11 +52,6 @@ export function CommandPaletteDialogs({
 
   return (
     <>
-      <AddBookDialog
-        trigger={null}
-        open={activeDialog === "book"}
-        onOpenChange={handleOpenChange}
-      />
       <CreateSubjectDialog
         trigger={null}
         open={activeDialog === "subject"}

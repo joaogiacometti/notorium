@@ -11,6 +11,8 @@ interface DeleteBookDialogProps {
   bookTitle: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called after a successful delete so callers can refresh their own state. */
+  onDeleted?: () => void;
 }
 
 export function DeleteBookDialog({
@@ -18,6 +20,7 @@ export function DeleteBookDialog({
   bookTitle,
   open,
   onOpenChange,
+  onDeleted,
 }: Readonly<DeleteBookDialogProps>) {
   const [isPending, startTransition] = useTransition();
 
@@ -26,6 +29,7 @@ export function DeleteBookDialog({
       const result = await deleteBook({ bookId });
       if (result.success) {
         onOpenChange(false);
+        onDeleted?.();
       } else {
         toast.error(t(result.errorCode, result.errorParams));
       }

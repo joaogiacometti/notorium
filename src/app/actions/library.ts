@@ -97,7 +97,8 @@ export async function uploadBook(
   );
 
   if (result.success) {
-    revalidatePath("/library");
+    // Refresh the sidebar subject tree (book rows + counts) everywhere.
+    revalidatePath("/", "layout");
   }
 
   return result;
@@ -147,8 +148,7 @@ export async function updateBook(
   );
 
   if (result.success) {
-    revalidatePath("/library");
-    revalidatePath(`/library/${data.bookId}`);
+    revalidatePath("/", "layout");
   }
 
   return result;
@@ -165,7 +165,7 @@ export async function deleteBook(
   );
 
   if (result.success) {
-    revalidatePath("/library");
+    revalidatePath("/", "layout");
   }
 
   return result;
@@ -182,7 +182,7 @@ export async function bulkDeleteBooks(
   );
 
   if (result.success) {
-    revalidatePath("/library");
+    revalidatePath("/", "layout");
   }
 
   return result;

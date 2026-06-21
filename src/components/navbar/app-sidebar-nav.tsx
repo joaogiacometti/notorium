@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Home, Layers, Library, Search } from "lucide-react";
+import { CalendarDays, Home, Layers, Search } from "lucide-react";
 import {
   SidebarNavLink,
   sidebarRowClassName,
@@ -11,7 +11,6 @@ const sections = [
   { href: "/", label: "Home", icon: Home, exact: true },
   { href: "/planning", label: "Planning", icon: CalendarDays },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
-  { href: "/library", label: "Library", icon: Library },
 ] as const;
 
 interface AppSidebarNavProps {

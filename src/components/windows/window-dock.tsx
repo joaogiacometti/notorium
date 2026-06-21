@@ -29,7 +29,7 @@ export function WindowDock() {
   }
 
   return (
-    <div className="-translate-x-1/2 fixed bottom-3 left-1/2 z-[45] flex max-w-[calc(100vw-1.5rem)] items-center gap-1.5 overflow-x-auto rounded-full border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur">
+    <div className="-translate-x-1/2 fixed bottom-3 left-1/2 z-45 flex max-w-[calc(100vw-1.5rem)] items-center gap-1.5 overflow-x-auto rounded-full border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur">
       {windows.map((window) => {
         const Icon = kindIcons[window.kind];
         const active = window.id === activeWindowId;

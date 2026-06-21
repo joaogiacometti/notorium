@@ -87,6 +87,7 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.subjects.nameMaxLength": "Name must be at most 100 characters.",
   "Validation.subjects.nameRequired": "Name is required.",
   "Validation.library.titleRequired": "Title is required.",
+  "Validation.library.subjectRequired": "Select a subject for this book.",
   "Validation.library.titleMaxLength": "Title must be at most 200 characters.",
   "Validation.library.authorMaxLength":
     "Author must be at most 200 characters.",

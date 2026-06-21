@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Home, Layers, Library, Search } from "lucide-react";
+import { CalendarDays, Home, Layers, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,7 +39,13 @@ interface AppLayoutClientProps {
  */
 function isImmersiveRoute(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
-  return segments[0] === "library" && segments.length >= 2;
+  // The full-screen book reader at /subjects/[id]/documents/books/[bookId].
+  return (
+    segments[0] === "subjects" &&
+    segments[2] === "documents" &&
+    segments[3] === "books" &&
+    segments.length >= 5
+  );
 }
 
 const collapsedLinks = [
@@ -47,7 +53,6 @@ const collapsedLinks = [
   { href: "/", label: "Home", icon: Home, exact: true },
   { href: "/planning", label: "Planning", icon: CalendarDays },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
-  { href: "/library", label: "Library", icon: Library },
 ] as const;
 
 /**

@@ -12,6 +12,7 @@ function validCreateInput(overrides: Record<string, unknown> = {}) {
   return {
     title: "The Pragmatic Programmer",
     author: "Hunt & Thomas",
+    subjectId: "subject-1",
     fileName: "pragmatic.pdf",
     mimeType: "application/pdf",
     blobPathname: "notorium/library/user-1/uuid-pragmatic.pdf",
@@ -77,6 +78,12 @@ describe("createBookSchema", () => {
     expect(
       createBookSchema.safeParse(validCreateInput({ blobPathname: "" }))
         .success,
+    ).toBe(false);
+  });
+
+  it("rejects a missing subject id", () => {
+    expect(
+      createBookSchema.safeParse(validCreateInput({ subjectId: "" })).success,
     ).toBe(false);
   });
 });

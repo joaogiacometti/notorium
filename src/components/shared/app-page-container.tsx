@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+export type AppPageContainerMaxWidth = "3xl" | "4xl" | "5xl" | "7xl";
+
 interface AppPageContainerProps {
   children: ReactNode;
   className?: string;
-  maxWidth?: "3xl" | "4xl" | "5xl" | "7xl";
+  maxWidth?: AppPageContainerMaxWidth;
 }
 
 const maxWidthStyles = {

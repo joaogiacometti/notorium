@@ -1,7 +1,9 @@
 import { BookMarked } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/dates/format";
+import { getBookDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { LibraryBookEntity } from "@/lib/server/api-contracts";
 
 interface RecentBooksCardProps {
@@ -15,9 +17,7 @@ interface RecentBooksCardProps {
 export function RecentBooksCard({ books }: Readonly<RecentBooksCardProps>) {
   return (
     <Card className="gap-3 py-4">
-      <CardHeader>
-        <CardTitle className="text-base">Recent books</CardTitle>
-      </CardHeader>
+      <DashboardCardHeader icon={BookMarked} title="Recent books" />
       <CardContent>
         {books.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -28,7 +28,11 @@ export function RecentBooksCard({ books }: Readonly<RecentBooksCardProps>) {
             {books.map((book) => (
               <li key={book.id}>
                 <Link
-                  href={`/library/${book.id}`}
+                  href={
+                    book.subjectId
+                      ? getBookDetailHref(book.subjectId, book.id)
+                      : "/"
+                  }
                   className="flex items-center gap-2 rounded-md text-sm text-muted-foreground hover:text-foreground"
                 >
                   <BookMarked className="size-4 shrink-0" />

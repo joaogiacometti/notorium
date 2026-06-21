@@ -22,7 +22,7 @@ export default function AssessmentDetailLoading() {
 
           {/* Two cards */}
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
+            <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
               <Skeleton className="mb-3 h-4 w-16" />
               <div className="space-y-3">
                 <Skeleton className="h-4 w-full" />
@@ -31,7 +31,7 @@ export default function AssessmentDetailLoading() {
                 <Skeleton className="h-4 w-3/4" />
               </div>
             </div>
-            <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
+            <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
               <Skeleton className="mb-3 h-4 w-16" />
               <Skeleton className="mb-4 h-9 w-32" />
               <Skeleton className="mb-4 h-1.5 w-full rounded-full" />
@@ -44,13 +44,13 @@ export default function AssessmentDetailLoading() {
           </div>
 
           {/* Description */}
-          <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
+          <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
             <Skeleton className="mb-3 h-4 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>
 
           {/* Attachments */}
-          <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
+          <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-20" />

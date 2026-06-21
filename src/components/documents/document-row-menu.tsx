@@ -8,6 +8,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
+import type React from "react";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,12 +50,13 @@ export function DocumentRowMenu({
   item,
   ...handlers
 }: Readonly<DocumentRowMenuProps>) {
-  const kindItems =
-    item.kind === "note" ? (
-      <NoteRowMenuItems item={item} {...handlers} />
-    ) : (
-      <MindmapRowMenuItems item={item} {...handlers} />
-    );
+  // Books carry no kind-specific actions; only the shared Edit/Delete apply.
+  let kindItems: React.ReactNode = null;
+  if (item.kind === "note") {
+    kindItems = <NoteRowMenuItems item={item} {...handlers} />;
+  } else if (item.kind === "mindmap") {
+    kindItems = <MindmapRowMenuItems item={item} {...handlers} />;
+  }
 
   return (
     <DropdownMenu>

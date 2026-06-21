@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { generateLibraryUploadToken, uploadBook } from "@/app/actions/library";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,13 +32,19 @@ import {
 } from "@/features/library/constants";
 import { createBookSchema } from "@/features/library/validation";
 import { LIMITS } from "@/lib/config/limits";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 const MAX_BOOK_MB = Math.round(LIMITS.libraryBookMaxBytes / (1024 * 1024));
 
-// Reuse the server schema's title/author rules so the dialog never drifts from
-// the validation the Server Action enforces.
-const bookMetadataSchema = createBookSchema.pick({ title: true, author: true });
+// Reuse the server schema's metadata rules so the dialog never drifts from the
+// validation the Server Action enforces. subjectId is included so a book can
+// never be created without a subject.
+const bookMetadataSchema = createBookSchema.pick({
+  title: true,
+  author: true,
+  subjectId: true,
+});
 type BookMetadata = z.infer<typeof bookMetadataSchema>;
 
 function validateBookFile(file: File | null): string | null {
@@ -62,12 +69,25 @@ interface AddBookDialogProps {
   trigger?: React.ReactNode | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Subject the book is filed under. Pass from a subject's books view to lock
+   * the subject and hide the picker. Omit (global entry points) to render the
+   * picker fed by `subjects`.
+   */
+  subjectId?: string;
+  /** Picker options used only when `subjectId` is not preset. */
+  subjects?: SubjectOption[];
+  /** Called with the new book after a successful upload. */
+  onUploaded?: (book: { id: string; subjectId: string }) => void;
 }
 
 export function AddBookDialog({
   trigger,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  subjectId: presetSubjectId,
+  subjects,
+  onUploaded,
 }: Readonly<AddBookDialogProps> = {}) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -80,11 +100,11 @@ export function AddBookDialog({
 
   const form = useForm<BookMetadata>({
     resolver: zodResolver(bookMetadataSchema),
-    defaultValues: { title: "", author: "" },
+    defaultValues: { title: "", author: "", subjectId: presetSubjectId ?? "" },
   });
 
   function resetState() {
-    form.reset({ title: "", author: "" });
+    form.reset({ title: "", author: "", subjectId: presetSubjectId ?? "" });
     setFile(null);
     setFileError(null);
     if (fileInputRef.current) {
@@ -161,6 +181,7 @@ export function AddBookDialog({
     const result = await uploadBook({
       title: values.title,
       author: values.author,
+      subjectId: values.subjectId,
       fileName: selected.name,
       mimeType: selected.type || LIBRARY_BOOK_MIME,
       blobPathname: blob.pathname,
@@ -169,6 +190,10 @@ export function AddBookDialog({
 
     if (result.success) {
       handleOpenChange(false);
+      onUploaded?.({
+        id: result.book.id,
+        subjectId: result.book.subjectId ?? values.subjectId,
+      });
       return;
     }
 
@@ -245,6 +270,24 @@ export function AddBookDialog({
                 </Field>
               )}
             />
+
+            {presetSubjectId === undefined ? (
+              <Controller
+                name="subjectId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <SubjectSelect
+                    id="form-add-book-subject"
+                    value={field.value || null}
+                    onChange={(next) => field.onChange(next ?? "")}
+                    subjects={subjects ?? []}
+                    disabled={(subjects?.length ?? 0) === 0}
+                    ariaInvalid={fieldState.invalid}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            ) : null}
 
             <Button
               type="submit"

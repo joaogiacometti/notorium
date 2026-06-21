@@ -83,9 +83,9 @@ export function AssessmentAttachmentsSection({
   }
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
+    <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <Paperclip className="size-3.5" />
           Attachments
           {attachments.length > 0 && (

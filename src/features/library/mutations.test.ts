@@ -39,6 +39,12 @@ vi.mock("@/features/library/queries", () => ({
   getBookByIdForUser: getBookByIdForUserMock,
 }));
 
+const getSubjectByIdForUserMock = vi.fn();
+
+vi.mock("@/features/subjects/queries", () => ({
+  getSubjectByIdForUser: getSubjectByIdForUserMock,
+}));
+
 vi.mock("@/features/library/utils", () => ({
   validateBookBlobPath: vi.fn(() => true),
 }));
@@ -55,6 +61,7 @@ function validCreateInput(overrides: Record<string, unknown> = {}) {
   return {
     title: "Clean Code",
     author: "Robert Martin",
+    subjectId: "subject-1",
     fileName: "clean-code.pdf",
     mimeType: "application/pdf",
     blobPathname: "notorium/library/user-1/uuid-clean-code.pdf",
@@ -66,6 +73,7 @@ function validCreateInput(overrides: Record<string, unknown> = {}) {
 describe("createBookForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getSubjectByIdForUserMock.mockResolvedValue({ id: "subject-1" });
     countBooksForUserMock.mockResolvedValue(0);
     consumeUserDailyRateLimitMock.mockResolvedValue({
       limited: false,
@@ -177,6 +185,7 @@ describe("createBookForUser", () => {
     });
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
+      subjectId: "subject-1",
       title: "Clean Code",
       author: "Robert Martin",
       fileName: "clean-code.pdf",

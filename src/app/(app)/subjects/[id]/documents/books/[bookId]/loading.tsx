@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function LibraryBookLoading() {
+export default function BookLoading() {
   return (
     <div className="flex h-svh flex-col">
       <div className="flex items-center gap-3 border-b border-border/70 bg-background px-4 py-2.5">

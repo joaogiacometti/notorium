@@ -45,6 +45,8 @@ interface ReaderLayoutProps {
   initialAnnotations: BookAnnotationDto[];
   aiEnabled: boolean;
   subjects: SubjectOption[];
+  backHref: string;
+  backLabel: string;
 }
 
 interface ReaderPageProps {
@@ -146,6 +148,8 @@ export function ReaderLayout({
   initialAnnotations,
   aiEnabled,
   subjects,
+  backHref,
+  backLabel,
 }: Readonly<ReaderLayoutProps>) {
   useReadingPosition({ documentId, bookId, initialPage });
   useReaderZoom({
@@ -165,7 +169,12 @@ export function ReaderLayout({
   return (
     <ReaderNavHistoryProvider documentId={documentId}>
       <div className="flex h-full flex-col bg-background">
-        <ReaderToolbar documentId={documentId} title={title} />
+        <ReaderToolbar
+          documentId={documentId}
+          title={title}
+          backHref={backHref}
+          backLabel={backLabel}
+        />
         <div className="flex min-h-0 min-w-0 flex-1">
           <ReaderSidebar
             documentId={documentId}

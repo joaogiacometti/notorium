@@ -4,6 +4,7 @@ import { BookOpen, Lock, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSubjectListItems } from "@/app/actions/subjects";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { BulkDeleteSubjectsDialog } from "@/components/subjects/bulk-delete-subjects-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
@@ -248,20 +249,18 @@ export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {
         ) : null}
 
         {subjectItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 py-20 text-center lg:min-h-0 lg:flex-1">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <BookOpen className="size-6" />
-            </div>
-            <h2 className="mb-1 text-lg font-semibold">No subjects yet</h2>
-            <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-              Create your first subject to start organizing your notes and
-              tracking your academic progress.
-            </p>
-            <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-4" />
-              Create Subject
-            </Button>
-          </div>
+          <EmptyState
+            icon={BookOpen}
+            title="No subjects yet"
+            description="Create your first subject to start organizing your notes and tracking your academic progress."
+            className="lg:min-h-0 lg:flex-1"
+            action={
+              <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
+                <Plus className="size-4" />
+                Create Subject
+              </Button>
+            }
+          />
         ) : (
           <Card className="h-[clamp(22rem,58svh,36rem)] min-w-0 overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:h-auto lg:min-h-0 lg:flex-1">
             <ManagerDataTable

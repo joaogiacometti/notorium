@@ -5,11 +5,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getSubjectDocuments } from "@/app/actions/subjects";
 import { useDocumentRowDialogs } from "@/components/documents/use-document-row-dialogs";
+import { AddBookDialog } from "@/components/library/add-book-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
+import {
+  getActiveDocumentSubjectId,
+  getActiveSubjectId,
+} from "@/components/subjects/tree/subject-tree-active-path";
 import { SubjectTreeNodeItem } from "@/components/subjects/tree/subject-tree-node-item";
 import { SubjectTreeRootDropZone } from "@/components/subjects/tree/subject-tree-root-drop-zone";
 import type {
@@ -22,7 +27,10 @@ import {
   useSubjectDragAndDrop,
 } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
-import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
+import {
+  getBookDetailHref,
+  getDocumentDetailHref,
+} from "@/lib/navigation/detail-page-back-link";
 import type {
   SubjectOption,
   SubjectTreeNode,
@@ -37,35 +45,6 @@ interface SubjectTreeSidebarProps {
   tree: SubjectTreeNode[];
   subjects: SubjectOption[];
   aiEnabled: boolean;
-}
-
-/** Extracts the active subject id from a `/subjects/[id]/...` pathname. */
-function getActiveSubjectId(pathname: string): string | undefined {
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments[0] !== "subjects") {
-    return undefined;
-  }
-  const candidate = segments[1];
-  if (!candidate) {
-    return undefined;
-  }
-  return candidate;
-}
-
-/**
- * Subject id whose document rows must be revealed because a note or mindmap
- * under it is open. Matches `/subjects/[id]/documents/(notes|mindmaps)/[docId]`,
- * so the tree can expand that subject and load its documents on first paint.
- */
-function getActiveDocumentSubjectId(pathname: string): string | undefined {
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments[0] !== "subjects" || segments[2] !== "documents") {
-    return undefined;
-  }
-  if (segments[3] !== "notes" && segments[3] !== "mindmaps") {
-    return undefined;
-  }
-  return segments[1];
 }
 
 export function SubjectTreeSidebar({
@@ -94,6 +73,9 @@ export function SubjectTreeSidebar({
   const [createMindmapSubjectId, setCreateMindmapSubjectId] = useState<
     string | null
   >(null);
+  const [createBookSubjectId, setCreateBookSubjectId] = useState<string | null>(
+    null,
+  );
 
   // Document kebab actions (edit/delete/generate/copy/export) reuse the shared
   // dialog host; reload the affected subject's documents so the tree reflects
@@ -299,6 +281,18 @@ export function SubjectTreeSidebar({
     refreshTree();
   }
 
+  function openCreateBook(subjectId: string) {
+    setCreateBookSubjectId(subjectId);
+  }
+
+  function handleBookUploaded(book: { id: string; subjectId: string }) {
+    setCreateBookSubjectId(null);
+    setExpandedIds((current) => new Set(current).add(book.subjectId));
+    void loadDocuments(book.subjectId);
+    router.push(getBookDetailHref(book.subjectId, book.id));
+    refreshTree();
+  }
+
   function handleSubjectCreated() {
     if (createParentId) {
       setExpandedIds((current) => new Set(current).add(createParentId));
@@ -340,7 +334,7 @@ export function SubjectTreeSidebar({
           ) : null}
 
           {localTree.length === 0 ? (
-            <div className="mt-2 rounded-lg border border-dashed border-border/70 p-4 text-center">
+            <div className="mt-2 rounded-lg border border-dashed border-border/60 p-4 text-center">
               <p className="text-sm text-muted-foreground">No subjects yet.</p>
               <Button
                 type="button"
@@ -374,6 +368,7 @@ export function SubjectTreeSidebar({
                 onCreateChild={openCreateChild}
                 onCreateNote={openCreateNote}
                 onCreateMindmap={openCreateMindmap}
+                onCreateBook={openCreateBook}
                 onEdit={setEditTarget}
                 onDelete={setDeleteTarget}
                 onDragStart={handleDragStart}
@@ -456,6 +451,20 @@ export function SubjectTreeSidebar({
           onSuccess={(mindmapId) => {
             handleMindmapCreated(mindmapId);
           }}
+        />
+      ) : null}
+
+      {createBookSubjectId ? (
+        <AddBookDialog
+          trigger={null}
+          subjectId={createBookSubjectId}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreateBookSubjectId(null);
+            }
+          }}
+          onUploaded={handleBookUploaded}
         />
       ) : null}
     </>

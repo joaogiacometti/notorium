@@ -1,6 +1,7 @@
 import { Layers } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
+import { Card, CardContent } from "@/components/ui/card";
 import type { FlashcardReviewSummary } from "@/lib/server/api-contracts";
 
 interface FlashcardsDueCardProps {
@@ -18,10 +19,7 @@ export function FlashcardsDueCard({
 
   return (
     <Card className="gap-3 py-4">
-      <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-        <Layers className="size-4 text-muted-foreground" />
-        <CardTitle className="text-base">Flashcards due</CardTitle>
-      </CardHeader>
+      <DashboardCardHeader icon={Layers} title="Flashcards due" />
       <CardContent className="flex flex-1 flex-col gap-1.5">
         <p className="text-3xl font-semibold text-foreground">
           {summary.dueCount}

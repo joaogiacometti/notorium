@@ -34,6 +34,8 @@ import { cn } from "@/lib/utils";
 interface ReaderToolbarProps {
   documentId: string;
   title: string;
+  backHref: string;
+  backLabel: string;
 }
 
 // Top control bar wired to EmbedPDF's zoom, spread, and fullscreen plugins.
@@ -46,6 +48,8 @@ interface ReaderToolbarProps {
 export function ReaderToolbar({
   documentId,
   title,
+  backHref,
+  backLabel,
 }: Readonly<ReaderToolbarProps>) {
   const zoom = useZoom(documentId);
   const spread = useSpread(documentId);
@@ -64,9 +68,9 @@ export function ReaderToolbar({
           className="shrink-0 gap-1.5 text-muted-foreground hover:text-foreground"
           asChild
         >
-          <Link href="/library">
+          <Link href={backHref}>
             <ArrowLeft className="size-4" />
-            <span className="hidden sm:inline">Library</span>
+            <span className="hidden sm:inline">{backLabel}</span>
           </Link>
         </Button>
         <p className="ml-1 hidden min-w-0 truncate text-sm font-medium lg:block lg:max-w-[8rem] xl:max-w-[14rem] 2xl:max-w-xs">

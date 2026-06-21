@@ -37,6 +37,26 @@ export async function getRecentBooksForUser(
     .limit(limit);
 }
 
+/**
+ * Loads every book the user filed under one subject, newest activity first.
+ * Powers the per-subject books view that replaced the standalone /library.
+ *
+ * @example
+ * await getBooksBySubjectForUser(userId, subjectId); // [{ id, title, ... }]
+ */
+export async function getBooksBySubjectForUser(
+  userId: string,
+  subjectId: string,
+): Promise<LibraryBookEntity[]> {
+  return getDb()
+    .select()
+    .from(libraryBook)
+    .where(
+      and(eq(libraryBook.userId, userId), eq(libraryBook.subjectId, subjectId)),
+    )
+    .orderBy(desc(libraryBook.updatedAt));
+}
+
 export async function getBookByIdForUser(
   userId: string,
   bookId: string,

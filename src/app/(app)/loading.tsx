@@ -27,8 +27,9 @@ export default function HomeLoading() {
 
 function CardSkeleton({ lines }: Readonly<{ lines: number }>) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="gap-3 py-4">
+      <CardHeader className="flex flex-row items-center gap-2 space-y-0">
+        <Skeleton className="size-4 rounded-md" />
         <Skeleton className="h-5 w-40" />
       </CardHeader>
       <CardContent className="space-y-2.5">

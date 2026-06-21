@@ -116,6 +116,7 @@ export async function getSearchDataForUser(
           id: libraryBook.id,
           title: libraryBook.title,
           author: libraryBook.author,
+          subjectId: libraryBook.subjectId,
         })
         .from(libraryBook)
         .where(
@@ -227,6 +228,7 @@ export async function getRecentSearchDataForUser(
           id: libraryBook.id,
           title: libraryBook.title,
           author: libraryBook.author,
+          subjectId: libraryBook.subjectId,
         })
         .from(libraryBook)
         .where(eq(libraryBook.userId, userId))

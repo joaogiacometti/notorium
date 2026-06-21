@@ -19,6 +19,7 @@ Use this index to find the narrowest source of truth before reading broader docs
 ## Architecture Guides
 
 - [architecture.md](./architecture.md): source layout, data flow, and ownership boundaries for agents and contributors
+- [ui-conventions.md](./ui-conventions.md): the visual/interaction design system — primitives, page frames, surfaces, typography, dashed-border roles, z-index ladder, and transitions
 
 ## Operations Guides
 

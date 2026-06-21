@@ -18,6 +18,7 @@ import {
 import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import {
+  getBookDetailHref,
   getFlashcardDetailHref,
   getMindmapDetailHref,
   getNoteDetailHref,
@@ -329,7 +330,11 @@ export function GlobalSearch({
               <CommandItem
                 key={book.id}
                 value={book.id}
-                onSelect={() => handleSelect(`/library/${book.id}`)}
+                onSelect={() =>
+                  book.subjectId
+                    ? handleSelect(getBookDetailHref(book.subjectId, book.id))
+                    : undefined
+                }
                 className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
               >
                 <div className="flex w-full min-w-0 items-center gap-2">

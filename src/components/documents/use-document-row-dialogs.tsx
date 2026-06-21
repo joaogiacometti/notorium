@@ -5,6 +5,8 @@ import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { getNoteById } from "@/app/actions/notes";
 import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
+import { DeleteBookDialog } from "@/components/library/delete-book-dialog";
+import { EditBookDialog } from "@/components/library/edit-book-dialog";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
 import { GenerateMindmapFlashcardsDialog } from "@/components/mindmaps/generate-mindmap-flashcards-dialog";
@@ -118,6 +120,39 @@ export function useDocumentRowDialogs({
           onSuccess={() => {
             const target = editTarget;
             setEditTarget(null);
+            handleChanged(target);
+          }}
+        />
+      ) : null}
+      {editTarget?.kind === "book" ? (
+        <EditBookDialog
+          book={{
+            id: editTarget.id,
+            title: editTarget.title,
+            author: editTarget.author ?? null,
+          }}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditTarget(null);
+          }}
+          onSaved={() => {
+            const target = editTarget;
+            setEditTarget(null);
+            handleChanged(target);
+          }}
+        />
+      ) : null}
+      {deleteTarget?.kind === "book" ? (
+        <DeleteBookDialog
+          bookId={deleteTarget.id}
+          bookTitle={deleteTarget.title}
+          open
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          onDeleted={() => {
+            const target = deleteTarget;
+            setDeleteTarget(null);
             handleChanged(target);
           }}
         />

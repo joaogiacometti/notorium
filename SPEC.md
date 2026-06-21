@@ -39,8 +39,8 @@ Students who want a private, lightweight study management workspace.
 - Subject fields: name and kind.
 - Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects is rejected with a duplicate-name error. Uniqueness is case-sensitive.
 - Each subject has a kind, chosen at creation and editable later: `academic` or `general`.
-  - Academic subjects expose attendance and assessment tracking. Their detail page is the dashboard for both, and is the only thing the sidebar tree can't surface, so clicking an academic subject in the sidebar opens it.
-  - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools. They have no dashboard, so they are pure containers managed entirely in the sidebar tree: their label there is inert (expand via the chevron) and shows no navigation cursor. Visiting a general subject's URL directly renders a short notice pointing back to the sidebar.
+  - Academic subjects expose attendance and assessment tracking. Their detail page is the dashboard for both, and is the only thing the sidebar tree can't surface, so clicking an academic subject in the sidebar opens it. In the sidebar tree a graduation-cap icon marks academic subjects and their label underlines on hover to signal it is a link.
+  - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools. They have no dashboard, so they are pure containers managed entirely in the sidebar tree: a folder icon marks them and their label is inert (expand via the chevron), shows no navigation cursor, and does not underline on hover. Visiting a general subject's URL directly renders a short notice pointing back to the sidebar.
 - New subjects default to `academic`. Existing subjects are `academic`.
 - Switching a subject from academic to general hides its attendance and assessment features without deleting the underlying records; switching back reveals them again.
 

@@ -6,16 +6,15 @@ import { useRef, useState, useTransition } from "react";
 import { AssessmentAttachmentsSection } from "@/components/assessments/assessment-attachments-section";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
-import { AppPageContainer } from "@/components/shared/app-page-container";
-import {
-  type BreadcrumbItem,
-  PageTopBar,
-} from "@/components/shared/page-top-bar";
+import { DetailPageLayout } from "@/components/shared/detail-page-layout";
+import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
+import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { Button } from "@/components/ui/button";
 import { isAssessmentOverdue } from "@/features/assessments/assessments";
 import {
   ASSESSMENT_STATUS_LABEL,
   ASSESSMENT_STATUS_TONE,
+  ASSESSMENT_STATUS_TONE_NAME,
   getAssessmentTypeLabel,
   resolveAssessmentStatus,
 } from "@/features/assessments/constants";
@@ -81,8 +80,8 @@ function AssessmentGradingCard({
   updatedAt,
 }: Readonly<AssessmentGradingCardProps>) {
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
-      <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Grading
       </h3>
       {scoreValue === null ? (
@@ -135,8 +134,8 @@ function AssessmentDescriptionSection({
 }: Readonly<AssessmentDescriptionSectionProps>) {
   if (!description) {
     return (
-      <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
-        <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Description
         </h3>
         <button
@@ -152,8 +151,8 @@ function AssessmentDescriptionSection({
   }
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
-      <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Description
       </h3>
       <p className="wrap-break-word hyphens-auto text-sm leading-6 text-foreground/90">
@@ -204,122 +203,115 @@ export function AssessmentDetail({
   const weight = formatNumber(currentAssessment.weight, "%");
 
   return (
-    <>
-      <PageTopBar breadcrumb={breadcrumb} />
-      <AppPageContainer maxWidth="4xl">
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <h1 className="truncate text-2xl font-semibold text-foreground">
-                {currentAssessment.title}
-              </h1>
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                  statusTone.border,
-                  statusTone.bg,
-                  statusTone.text,
-                )}
-              >
-                <Clock className="size-3" />
-                {statusLabel}
-              </span>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => {
-                  editFocusFieldRef.current = "title";
-                  setEditOpen(true);
-                }}
-              >
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-(--intent-danger-text) hover:bg-(--intent-danger-fill) hover:text-(--intent-danger-text)"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+    <DetailPageLayout breadcrumb={breadcrumb} maxWidth="4xl">
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <h1 className="truncate text-2xl font-bold tracking-tight text-foreground">
+              {currentAssessment.title}
+            </h1>
+            <StatusToneBadge
+              tone={ASSESSMENT_STATUS_TONE_NAME[assessmentStatus]}
+              className="gap-1.5"
+            >
+              <Clock className="size-3" />
+              {statusLabel}
+            </StatusToneBadge>
           </div>
-
-          {/* Two cards */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Details card */}
-            <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5">
-              <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Details
-              </h3>
-              <dl className="space-y-3">
-                <DetailRow label="Subject">{detail.subject.name}</DetailRow>
-                <DetailRow label="Type">{typeLabel}</DetailRow>
-                <DetailRow label="Status">
-                  <span className={statusTone.text}>{statusLabel}</span>
-                </DetailRow>
-                <DetailRow label="Due date">
-                  {formatDateWithRelative(
-                    currentAssessment.dueDate,
-                    "No due date",
-                  )}
-                </DetailRow>
-              </dl>
-            </div>
-
-            <AssessmentGradingCard
-              scoreValue={scoreValue}
-              maxScore={maxScore}
-              percentage={percentage}
-              scoreTone={scoreTone}
-              weight={weight}
-              createdAt={currentAssessment.createdAt}
-              updatedAt={currentAssessment.updatedAt}
-            />
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                editFocusFieldRef.current = "title";
+                setEditOpen(true);
+              }}
+            >
+              <Pencil className="size-3.5" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-(--intent-danger-text) hover:bg-(--intent-danger-fill) hover:text-(--intent-danger-text)"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="size-3.5" />
+              Delete
+            </Button>
           </div>
-
-          <AssessmentDescriptionSection
-            description={currentAssessment.description}
-            onAddDescription={() => {
-              editFocusFieldRef.current = "description";
-              setEditOpen(true);
-            }}
-          />
-
-          {attachmentsEnabled && (
-            <AssessmentAttachmentsSection
-              assessmentId={currentAssessment.id}
-              initialAttachments={detail.attachments}
-            />
-          )}
         </div>
 
-        <EditAssessmentDialog
-          assessment={currentAssessment}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          focusField={editFocusFieldRef.current}
-          onUpdated={(assessment) => {
-            setCurrentAssessment(assessment);
+        {/* Two cards */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Details card */}
+          <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Details
+            </h3>
+            <dl className="space-y-3">
+              <DetailRow label="Subject">{detail.subject.name}</DetailRow>
+              <DetailRow label="Type">{typeLabel}</DetailRow>
+              <DetailRow label="Status">
+                <span className={statusTone.text}>{statusLabel}</span>
+              </DetailRow>
+              <DetailRow label="Due date">
+                {formatDateWithRelative(
+                  currentAssessment.dueDate,
+                  "No due date",
+                )}
+              </DetailRow>
+            </dl>
+          </div>
+
+          <AssessmentGradingCard
+            scoreValue={scoreValue}
+            maxScore={maxScore}
+            percentage={percentage}
+            scoreTone={scoreTone}
+            weight={weight}
+            createdAt={currentAssessment.createdAt}
+            updatedAt={currentAssessment.updatedAt}
+          />
+        </div>
+
+        <AssessmentDescriptionSection
+          description={currentAssessment.description}
+          onAddDescription={() => {
+            editFocusFieldRef.current = "description";
+            setEditOpen(true);
           }}
         />
-        <DeleteAssessmentDialog
-          assessmentId={currentAssessment.id}
-          assessmentTitle={currentAssessment.title}
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          onDeleted={() => {
-            setDeleteOpen(false);
-            startNavTransition(() => router.push(returnHref));
-          }}
-        />
-      </AppPageContainer>
-    </>
+
+        {attachmentsEnabled && (
+          <AssessmentAttachmentsSection
+            assessmentId={currentAssessment.id}
+            initialAttachments={detail.attachments}
+          />
+        )}
+      </div>
+
+      <EditAssessmentDialog
+        assessment={currentAssessment}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        focusField={editFocusFieldRef.current}
+        onUpdated={(assessment) => {
+          setCurrentAssessment(assessment);
+        }}
+      />
+      <DeleteAssessmentDialog
+        assessmentId={currentAssessment.id}
+        assessmentTitle={currentAssessment.title}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => {
+          setDeleteOpen(false);
+          startNavTransition(() => router.push(returnHref));
+        }}
+      />
+    </DetailPageLayout>
   );
 }
