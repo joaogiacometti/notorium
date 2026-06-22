@@ -42,8 +42,6 @@ export interface BookReaderProps {
   initialAnnotations: BookAnnotationDto[];
   aiEnabled: boolean;
   subjects: SubjectOption[];
-  backHref: string;
-  backLabel: string;
 }
 
 // EmbedPDF auto-mounts the fullscreen plugin's wrapper around its children,
@@ -69,8 +67,6 @@ function ReaderEngine({
   initialAnnotations,
   aiEnabled,
   subjects,
-  backHref,
-  backLabel,
 }: Readonly<BookReaderProps>) {
   const { engine, isLoading, error } = usePdfiumEngine();
 
@@ -106,8 +102,6 @@ function ReaderEngine({
             initialAnnotations={initialAnnotations}
             aiEnabled={aiEnabled}
             subjects={subjects}
-            backHref={backHref}
-            backLabel={backLabel}
           />
         );
       }}

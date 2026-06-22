@@ -46,8 +46,6 @@ export default async function BookPage({ params }: Readonly<BookPageProps>) {
       initialAnnotations={initialAnnotations}
       aiEnabled={isAiEnabled()}
       subjects={subjects}
-      backHref="/"
-      backLabel="Home"
     />
   );
 }

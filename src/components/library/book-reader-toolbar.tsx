@@ -7,7 +7,6 @@ import { useSpread } from "@embedpdf/plugin-spread/react";
 import { ZoomMode } from "@embedpdf/plugin-zoom";
 import { useZoom } from "@embedpdf/plugin-zoom/react";
 import {
-  ArrowLeft,
   Columns2,
   CornerUpLeft,
   Ellipsis,
@@ -18,7 +17,6 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useReaderNavHistory } from "@/components/library/book-reader-nav-history";
@@ -34,8 +32,6 @@ import { cn } from "@/lib/utils";
 interface ReaderToolbarProps {
   documentId: string;
   title: string;
-  backHref: string;
-  backLabel: string;
 }
 
 // Top control bar wired to EmbedPDF's zoom, spread, and fullscreen plugins.
@@ -48,8 +44,6 @@ interface ReaderToolbarProps {
 export function ReaderToolbar({
   documentId,
   title,
-  backHref,
-  backLabel,
 }: Readonly<ReaderToolbarProps>) {
   const zoom = useZoom(documentId);
   const spread = useSpread(documentId);
@@ -62,18 +56,7 @@ export function ReaderToolbar({
   return (
     <header className="relative flex items-center gap-1 border-b border-border/70 bg-background px-3 py-2">
       <div className="flex min-w-0 flex-1 items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="shrink-0 gap-1.5 text-muted-foreground hover:text-foreground"
-          asChild
-        >
-          <Link href={backHref}>
-            <ArrowLeft className="size-4" />
-            <span className="hidden sm:inline">{backLabel}</span>
-          </Link>
-        </Button>
-        <p className="ml-1 hidden min-w-0 truncate text-sm font-medium lg:block lg:max-w-[8rem] xl:max-w-[14rem] 2xl:max-w-xs">
+        <p className="hidden min-w-0 truncate text-sm font-medium lg:block lg:max-w-[8rem] xl:max-w-[14rem] 2xl:max-w-xs">
           {title}
         </p>
         {navHistory.canGoBack && (

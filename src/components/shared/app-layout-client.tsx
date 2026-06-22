@@ -33,21 +33,6 @@ interface AppLayoutClientProps {
   children: React.ReactNode;
 }
 
-/**
- * Immersive routes render full-width without the left menu (e.g. the book
- * reader), so the content gets the entire viewport width.
- */
-function isImmersiveRoute(pathname: string): boolean {
-  const segments = pathname.split("/").filter(Boolean);
-  // The full-screen book reader at /subjects/[id]/documents/books/[bookId].
-  return (
-    segments[0] === "subjects" &&
-    segments[2] === "documents" &&
-    segments[3] === "books" &&
-    segments.length >= 5
-  );
-}
-
 const collapsedLinks = [
   // Home matches `/` exactly so it doesn't stay active on every nested route.
   { href: "/", label: "Home", icon: Home, exact: true },
@@ -116,7 +101,6 @@ export function AppLayoutClient({
   initialSidebarCollapsed,
   children,
 }: Readonly<AppLayoutClientProps>) {
-  const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const { collapsed, setCollapsed } = useSidebarCollapsed(
     initialSidebarCollapsed,
@@ -137,7 +121,7 @@ export function AppLayoutClient({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [collapsed, setCollapsed]);
 
-  const showSidebar = tree != null && !isImmersiveRoute(pathname);
+  const showSidebar = tree != null;
 
   // The sidebar mounts twice (mobile sheet + desktop aside), so the keyboard
   // dialogs live here in the shell to keep a single listener and dialog.
