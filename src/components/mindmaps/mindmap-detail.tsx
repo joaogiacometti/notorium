@@ -183,7 +183,7 @@ export function MindmapDetail({
         className={cn(
           "lg:flex lg:flex-col lg:overflow-hidden",
           isZenMode
-            ? "fixed inset-0 z-50 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
+            ? "fixed inset-0 z-35 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
             : embedded
               ? "flex h-full min-h-0 max-w-none flex-col overflow-hidden p-3"
               : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",

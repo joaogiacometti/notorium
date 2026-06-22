@@ -86,11 +86,17 @@ Bare-number Tailwind v4 values (no `z-[n]` brackets). Layers, low → high:
 | --- | --- |
 | Sticky table/section headers | `10` |
 | Sticky page top bar | `30` |
+| Immersive fullscreen surface (book reader + note/mindmap zen) | `35` |
 | Floating window overlay | `40` |
 | Window dock | `45` |
-| Dialogs, zen-mode editors | `50` |
+| Dialogs | `50` |
 | Full-screen review surfaces | `110` |
 | Dialogs above review surfaces | `120` |
+
+Immersive fullscreen (the book reader's fullscreen toggle and note/mindmap zen
+mode) is a CSS overlay (`fixed inset-0 z-35`), **not** the browser Fullscreen
+API. It sits below the overlay band so menus, dialogs, windows, and toasts stay
+layered above it without portal retargeting. Keep it below `40`.
 
 ## Transitions
 

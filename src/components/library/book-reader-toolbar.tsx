@@ -1,6 +1,5 @@
 "use client";
 
-import { useFullscreen } from "@embedpdf/plugin-fullscreen/react";
 import { useScroll } from "@embedpdf/plugin-scroll/react";
 import { SpreadMode } from "@embedpdf/plugin-spread";
 import { useSpread } from "@embedpdf/plugin-spread/react";
@@ -19,6 +18,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { useReaderFullscreen } from "@/components/library/book-reader-fullscreen";
 import { useReaderNavHistory } from "@/components/library/book-reader-nav-history";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,10 +34,11 @@ interface ReaderToolbarProps {
   title: string;
 }
 
-// Top control bar wired to EmbedPDF's zoom, spread, and fullscreen plugins.
-// Each control reads live state from its plugin hook and calls back into the
-// plugin's capability scope, so the viewer stays the single source of truth
-// instead of mirroring state here. This bar owns document position (page nav)
+// Top control bar wired to EmbedPDF's zoom and spread plugins, plus the reader's
+// CSS fullscreen context. Each plugin control reads live state from its hook and
+// calls back into the plugin's capability scope, so the viewer stays the single
+// source of truth instead of mirroring state here. This bar owns document
+// position (page nav)
 // and document-wide tools; the sidebar toggle and the pan/select interaction
 // tools live docked to the canvas itself. Left/right groups both flex-1 so the
 // page navigator stays absolutely centered between them.
@@ -47,11 +48,10 @@ export function ReaderToolbar({
 }: Readonly<ReaderToolbarProps>) {
   const zoom = useZoom(documentId);
   const spread = useSpread(documentId);
-  const fullscreen = useFullscreen();
+  const { isFullscreen, toggleFullscreen } = useReaderFullscreen();
   const navHistory = useReaderNavHistory();
 
   const isSpread = spread.spreadMode !== SpreadMode.None;
-  const isFullscreen = fullscreen.state.isFullscreen;
 
   return (
     <header className="relative flex items-center gap-1 border-b border-border/70 bg-background px-3 py-2">
@@ -110,10 +110,7 @@ export function ReaderToolbar({
               <MoveHorizontal className="size-4" />
               Fit width
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => fullscreen.provides?.toggleFullscreen()}
-              className="gap-2.5"
-            >
+            <DropdownMenuItem onClick={toggleFullscreen} className="gap-2.5">
               {isFullscreen ? (
                 <Minimize className="size-4" />
               ) : (

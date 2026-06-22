@@ -7,7 +7,6 @@ import { LockModeType } from "@embedpdf/plugin-annotation";
 import { AnnotationPluginPackage } from "@embedpdf/plugin-annotation/react";
 import { BookmarkPluginPackage } from "@embedpdf/plugin-bookmark/react";
 import { DocumentManagerPluginPackage } from "@embedpdf/plugin-document-manager/react";
-import { FullscreenPluginPackage } from "@embedpdf/plugin-fullscreen/react";
 import { InteractionManagerPluginPackage } from "@embedpdf/plugin-interaction-manager/react";
 import { PanPluginPackage } from "@embedpdf/plugin-pan/react";
 import { RenderPluginPackage } from "@embedpdf/plugin-render/react";
@@ -27,9 +26,12 @@ import {
   HIGHLIGHT_OPACITY,
   HIGHLIGHT_TOOL_ID,
 } from "@/components/library/book-reader-annotation-config";
+import { ReaderFullscreenContext } from "@/components/library/book-reader-fullscreen";
 import { ReaderLayout } from "@/components/library/book-reader-layout";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
+import { useZenMode } from "@/lib/editor/use-zen-mode";
 import type { SubjectOption } from "@/lib/server/api-contracts";
+import { cn } from "@/lib/utils";
 
 export interface BookReaderProps {
   bookId: string;
@@ -44,15 +46,24 @@ export interface BookReaderProps {
   subjects: SubjectOption[];
 }
 
-// EmbedPDF auto-mounts the fullscreen plugin's wrapper around its children,
-// and that wrapper sizes itself to `height: 100%`. This fixed-height parent
-// gives that wrapper (and the viewport beneath it) a definite height to fill;
+// The `h-svh` parent gives the viewport beneath a definite height to fill;
 // without it the viewport measures zero and gates its pages to a blank area.
+// Fullscreen is CSS-driven (an in-app overlay at z-35), matching note/mindmap
+// zen mode so the shared z-index ladder keeps menus, dialogs, windows, and
+// toasts layered above it — unlike the browser Fullscreen API, which hides
+// everything portaled to document.body.
 export function BookReaderSurface(props: Readonly<BookReaderProps>) {
+  const { isZenMode, toggleZenMode } = useZenMode();
   return (
-    <div className="h-svh">
-      <ReaderEngine {...props} />
-    </div>
+    <ReaderFullscreenContext.Provider
+      value={{ isFullscreen: isZenMode, toggleFullscreen: toggleZenMode }}
+    >
+      <div
+        className={cn("h-svh", isZenMode && "fixed inset-0 z-35 bg-background")}
+      >
+        <ReaderEngine {...props} />
+      </div>
+    </ReaderFullscreenContext.Provider>
   );
 }
 
@@ -167,7 +178,6 @@ function buildReaderPlugins(fileUrl: string) {
       defaultZoomLevel: ZoomMode.FitPage,
     }),
     createPluginRegistration(SpreadPluginPackage),
-    createPluginRegistration(FullscreenPluginPackage),
     // "instant" so re-opening the Pages sidebar snaps to the current page
     // instead of smooth-scrolling the thumbnail rail to it on every mount.
     createPluginRegistration(ThumbnailPluginPackage, {

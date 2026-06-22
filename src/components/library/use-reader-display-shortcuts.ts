@@ -1,11 +1,11 @@
 "use client";
 
-import { useFullscreen } from "@embedpdf/plugin-fullscreen/react";
 import { SpreadMode } from "@embedpdf/plugin-spread";
 import { useSpread } from "@embedpdf/plugin-spread/react";
 import { ZoomMode } from "@embedpdf/plugin-zoom";
 import { useZoom } from "@embedpdf/plugin-zoom/react";
 import { useEffect } from "react";
+import { useReaderFullscreen } from "@/components/library/book-reader-fullscreen";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 
 interface UseReaderDisplayShortcutsOptions {
@@ -19,7 +19,7 @@ export function useReaderDisplayShortcuts({
 }: Readonly<UseReaderDisplayShortcutsOptions>) {
   const zoom = useZoom(documentId);
   const spread = useSpread(documentId);
-  const fullscreen = useFullscreen();
+  const { toggleFullscreen } = useReaderFullscreen();
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -50,7 +50,7 @@ export function useReaderDisplayShortcuts({
 
       if (event.key.toLowerCase() === "f") {
         event.preventDefault();
-        fullscreen.provides?.toggleFullscreen();
+        toggleFullscreen();
         return;
       }
       if (event.key.toLowerCase() === "d") {
@@ -64,5 +64,5 @@ export function useReaderDisplayShortcuts({
 
     globalThis.addEventListener("keydown", onKeyDown);
     return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [zoom.provides, spread.provides, spread.spreadMode, fullscreen.provides]);
+  }, [zoom.provides, spread.provides, spread.spreadMode, toggleFullscreen]);
 }
