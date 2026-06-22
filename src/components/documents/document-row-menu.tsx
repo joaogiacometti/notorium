@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type React from "react";
+import { useRef } from "react";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,11 @@ interface DocumentRowMenuProps extends DocumentRowActionHandlers {
   item: DocumentListItem;
 }
 
+interface DocumentRowKindItemsProps extends DocumentRowMenuProps {
+  /** Marks the next close as a dialog open so the menu releases focus to it. */
+  onOpenDialog: (action: () => void) => void;
+}
+
 /**
  * Kebab menu for one document row, mirroring the detail header menu of the same
  * document kind so every entry point (documents list, subject tree) exposes
@@ -50,12 +56,31 @@ export function DocumentRowMenu({
   item,
   ...handlers
 }: Readonly<DocumentRowMenuProps>) {
+  // Edit/Delete/Generate open dialogs. Defer the dialog open until the menu has
+  // fully closed: while the dropdown plays its close animation it still traps
+  // focus, so opening the dialog now would let that trap steal focus back from
+  // the dialog's autofocused field. Running the action in onCloseAutoFocus (and
+  // preventing the default trigger refocus) opens the dialog only once the menu
+  // is gone, so its field keeps focus.
+  const pendingActionRef = useRef<(() => void) | null>(null);
+  function openDialog(action: () => void) {
+    pendingActionRef.current = action;
+  }
+
   // Books carry no kind-specific actions; only the shared Edit/Delete apply.
   let kindItems: React.ReactNode = null;
   if (item.kind === "note") {
-    kindItems = <NoteRowMenuItems item={item} {...handlers} />;
+    kindItems = (
+      <NoteRowMenuItems item={item} onOpenDialog={openDialog} {...handlers} />
+    );
   } else if (item.kind === "mindmap") {
-    kindItems = <MindmapRowMenuItems item={item} {...handlers} />;
+    kindItems = (
+      <MindmapRowMenuItems
+        item={item}
+        onOpenDialog={openDialog}
+        {...handlers}
+      />
+    );
   }
 
   return (
@@ -71,10 +96,20 @@ export function DocumentRowMenu({
           <MoreVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(event) => {
+          const action = pendingActionRef.current;
+          if (action) {
+            pendingActionRef.current = null;
+            event.preventDefault();
+            action();
+          }
+        }}
+      >
         {handlers.onEditRequested ? (
           <DropdownMenuItem
-            onClick={() => handlers.onEditRequested?.(item)}
+            onClick={() => openDialog(() => handlers.onEditRequested?.(item))}
             className="cursor-pointer"
           >
             <Pencil className="size-4" />
@@ -84,7 +119,7 @@ export function DocumentRowMenu({
         {kindItems}
         {handlers.onDeleteRequested ? (
           <DropdownMenuItem
-            onClick={() => handlers.onDeleteRequested?.(item)}
+            onClick={() => openDialog(() => handlers.onDeleteRequested?.(item))}
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             <Trash2 className="size-4" />
@@ -101,7 +136,8 @@ function NoteRowMenuItems({
   onGenerateRequested,
   generateDisabledReason,
   onCopyRequested,
-}: Readonly<DocumentRowMenuProps>) {
+  onOpenDialog,
+}: Readonly<DocumentRowKindItemsProps>) {
   return (
     <>
       {onGenerateRequested ? (
@@ -109,7 +145,7 @@ function NoteRowMenuItems({
           className="cursor-pointer"
           disabled={!!generateDisabledReason}
           title={generateDisabledReason}
-          onClick={() => onGenerateRequested(item)}
+          onClick={() => onOpenDialog(() => onGenerateRequested(item))}
         >
           <Sparkles className="size-4" />
           Generate flashcards
@@ -144,7 +180,8 @@ function MindmapRowMenuItems({
   onGenerateRequested,
   generateDisabledReason,
   onExportRequested,
-}: Readonly<DocumentRowMenuProps>) {
+  onOpenDialog,
+}: Readonly<DocumentRowKindItemsProps>) {
   if (!onGenerateRequested && !onExportRequested) {
     return null;
   }
@@ -155,7 +192,7 @@ function MindmapRowMenuItems({
           className="cursor-pointer"
           disabled={!!generateDisabledReason}
           title={generateDisabledReason}
-          onClick={() => onGenerateRequested(item)}
+          onClick={() => onOpenDialog(() => onGenerateRequested(item))}
         >
           <Sparkles className="size-4" />
           Generate flashcards

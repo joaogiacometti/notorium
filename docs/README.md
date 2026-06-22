@@ -4,7 +4,7 @@ Use this index to find the narrowest source of truth before reading broader docs
 
 ## Canonical Root Docs
 
-- [README.md](../README.md): quick local setup only
+- [README.md](../README.md): project overview, feature summary, and quick local setup
 - [SPEC.md](../SPEC.md): product behavior, UX rules, and acceptance criteria
 - [AGENTS.md](../AGENTS.md): engineering rules, architecture guidance, and testing expectations
 - [CONTRIBUTING.md](../CONTRIBUTING.md): contributor workflow and PR expectations

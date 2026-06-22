@@ -2,7 +2,6 @@ import { z } from "zod";
 import { isSupportedLibraryBookMime } from "@/features/library/constants";
 import { isValidStoredZoom, READER_DEVICES } from "@/features/library/zoom";
 import { LIMITS } from "@/lib/config/limits";
-import { bulkIdsSchema } from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 const bookTitleSchema = z
@@ -107,9 +106,3 @@ export const deleteBookSchema = z.object({
 });
 
 export type DeleteBookForm = z.infer<typeof deleteBookSchema>;
-
-export const bulkDeleteBooksSchema = z.object({
-  ids: bulkIdsSchema,
-});
-
-export type BulkDeleteBooksForm = z.infer<typeof bulkDeleteBooksSchema>;

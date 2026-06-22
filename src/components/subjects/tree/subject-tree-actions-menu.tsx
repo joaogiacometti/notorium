@@ -17,6 +17,7 @@ import {
   Workflow,
 } from "lucide-react";
 import Link from "next/link";
+import { useRef } from "react";
 import type {
   SubjectDeleteTarget,
   SubjectEditTarget,
@@ -66,6 +67,17 @@ export function SubjectActionsMenu({
   onEdit,
   onDelete,
 }: Readonly<SubjectActionsMenuProps>) {
+  // Each create/edit item opens a dialog. Defer the dialog open until the menu
+  // has fully closed: while the dropdown plays its close animation it still
+  // traps focus, so opening the dialog now would let that trap steal focus back
+  // from the dialog's autofocused input. Running the action in onCloseAutoFocus
+  // (and preventing the default trigger refocus) opens the dialog only once the
+  // menu is gone, so its input keeps focus.
+  const pendingActionRef = useRef<(() => void) | null>(null);
+  function openDialog(action: () => void) {
+    pendingActionRef.current = action;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -79,8 +91,20 @@ export function SubjectActionsMenu({
           <MoreHorizontal className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onCreateChild(node.id)}>
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(event) => {
+          const action = pendingActionRef.current;
+          if (action) {
+            pendingActionRef.current = null;
+            event.preventDefault();
+            action();
+          }
+        }}
+      >
+        <DropdownMenuItem
+          onClick={() => openDialog(() => onCreateChild(node.id))}
+        >
           <FolderPlus className="size-4" />
           Subfolder
         </DropdownMenuItem>
@@ -91,15 +115,21 @@ export function SubjectActionsMenu({
             Document
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => onCreateNote(node.id)}>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreateNote(node.id))}
+            >
               <FileText className="size-4" />
               Note
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onCreateMindmap(node.id)}>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreateMindmap(node.id))}
+            >
               <Workflow className="size-4" />
               Mindmap
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onCreateBook(node.id)}>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreateBook(node.id))}
+            >
               <BookOpen className="size-4" />
               Book
             </DropdownMenuItem>
@@ -112,7 +142,9 @@ export function SubjectActionsMenu({
             Flashcards
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => onCreateFlashcard(node.id)}>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreateFlashcard(node.id))}
+            >
               <SquarePen className="size-4" />
               Add flashcard
             </DropdownMenuItem>
@@ -142,11 +174,15 @@ export function SubjectActionsMenu({
               Academics
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
-              <DropdownMenuItem onClick={() => onCreateAssessment(node.id)}>
+              <DropdownMenuItem
+                onClick={() => openDialog(() => onCreateAssessment(node.id))}
+              >
                 <ClipboardList className="size-4" />
                 Assessment
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onRecordMiss(node.id)}>
+              <DropdownMenuItem
+                onClick={() => openDialog(() => onRecordMiss(node.id))}
+              >
                 <CalendarX className="size-4" />
                 Miss
               </DropdownMenuItem>
@@ -157,7 +193,9 @@ export function SubjectActionsMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() =>
-            onEdit({ id: node.id, name: node.name, kind: node.kind })
+            openDialog(() =>
+              onEdit({ id: node.id, name: node.name, kind: node.kind }),
+            )
           }
         >
           <Pencil className="size-4" />
@@ -165,7 +203,9 @@ export function SubjectActionsMenu({
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
-          onClick={() => onDelete({ id: node.id, name: node.path })}
+          onClick={() =>
+            openDialog(() => onDelete({ id: node.id, name: node.path }))
+          }
         >
           <Trash2 className="size-4" />
           Delete

@@ -11,12 +11,9 @@ import {
   moveSubjectForUser,
 } from "@/features/subjects/mutations";
 import {
-  getAllSubjectsForUser,
   getAllSubjectsWithPathsForUser,
-  getSubjectByIdForUser,
   getSubjectListItemsForUser,
   getSubjectsForUser,
-  getSubjectTreeForUser,
 } from "@/features/subjects/queries";
 import {
   type BulkDeleteSubjectsForm,
@@ -39,7 +36,6 @@ import type {
   SubjectEntity,
   SubjectListItem,
   SubjectOption,
-  SubjectTreeNode,
 } from "@/lib/server/api-contracts";
 
 export async function getSubjects(): Promise<SubjectEntity[]> {
@@ -56,26 +52,9 @@ export async function getSubjectOptions(): Promise<SubjectOption[]> {
   return getAllSubjectsWithPathsForUser(userId);
 }
 
-export async function getAllSubjects(): Promise<SubjectEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getAllSubjectsForUser(userId);
-}
-
 export async function getSubjectListItems(): Promise<SubjectListItem[]> {
   const userId = await getAuthenticatedUserId();
   return getSubjectListItemsForUser(userId);
-}
-
-export async function getSubjectById(
-  id: string,
-): Promise<SubjectEntity | null> {
-  const userId = await getAuthenticatedUserId();
-  return getSubjectByIdForUser(userId, id);
-}
-
-export async function getSubjectTree(): Promise<SubjectTreeNode[]> {
-  const userId = await getAuthenticatedUserId();
-  return getSubjectTreeForUser(userId);
 }
 
 /**

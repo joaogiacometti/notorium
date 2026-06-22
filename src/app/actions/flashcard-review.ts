@@ -4,9 +4,7 @@ import { reviewFlashcardForUser } from "@/features/flashcard-review/mutations";
 import {
   type GetDueFlashcardsOptions,
   getAllFlashcardsForExam,
-  getDueFlashcardsForUser,
   getFlashcardReviewStateForUser,
-  getFlashcardReviewSummaryForUser,
 } from "@/features/flashcard-review/queries";
 import {
   type ReviewFlashcardForm,
@@ -18,25 +16,8 @@ import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
-  FlashcardReviewSummary,
   ReviewFlashcardResult,
 } from "@/lib/server/api-contracts";
-
-export async function getDueFlashcards(
-  options: GetDueFlashcardsOptions = {},
-): Promise<FlashcardReviewEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  await ensureFsrsSettings(userId);
-  return getDueFlashcardsForUser(userId, new Date(), options);
-}
-
-export async function getFlashcardReviewSummary(
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
-): Promise<FlashcardReviewSummary> {
-  const userId = await getAuthenticatedUserId();
-  await ensureFsrsSettings(userId);
-  return getFlashcardReviewSummaryForUser(userId, new Date(), options);
-}
 
 export async function getFlashcardReviewState(
   options: GetDueFlashcardsOptions = {},

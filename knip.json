@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "entry": ["scripts/*.ts"],
+  "ignore": ["src/components/ui/**", "src/test/server-only.ts", "public/sw.js"],
+  "ignoreDependencies": ["@embedpdf/pdfium", "@types/katex"],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "error",
+    "unlisted": "error",
+    "unresolved": "error",
+    "binaries": "error",
+    "exports": "warn",
+    "nsExports": "warn",
+    "types": "warn",
+    "nsTypes": "warn",
+    "enumMembers": "warn",
+    "duplicates": "warn"
+  }
+}

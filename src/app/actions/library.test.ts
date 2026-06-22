@@ -39,8 +39,6 @@ vi.mock("@/features/library/mutations", () => ({
 }));
 
 vi.mock("@/features/library/queries", () => ({
-  getBooksForUser: vi.fn(),
-  getBookByIdForUser: vi.fn(),
   countBooksForUser: countBooksForUserMock,
 }));
 

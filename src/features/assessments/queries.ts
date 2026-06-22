@@ -23,23 +23,6 @@ import type {
 } from "@/lib/server/api-contracts";
 import { getTodayIso } from "./assessments";
 
-export async function getAssessmentsForUser(
-  userId: string,
-): Promise<AssessmentEntity[]> {
-  return getDb()
-    .select({ assessment })
-    .from(assessment)
-    .innerJoin(subject, eq(assessment.subjectId, subject.id))
-    .where(
-      and(
-        eq(assessment.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
-    .orderBy(desc(assessment.updatedAt))
-    .then((rows) => rows.map((row) => row.assessment));
-}
-
 /**
  * Soonest upcoming assessments (due today or later) across all of a user's
  * active subjects, ordered by due date, used by the home dashboard. Assessments

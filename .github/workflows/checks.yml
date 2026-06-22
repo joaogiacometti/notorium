@@ -49,3 +49,6 @@ jobs:
 
       - name: File-size guard
         run: bun run check:size
+
+      - name: Dead-code guard (Knip)
+        run: bun run check:deadcode

@@ -7,7 +7,6 @@ import {
   removeAttendanceSettingsForUser,
   updateAttendanceSettingsForUser,
 } from "@/features/attendance/mutations";
-import { getMissesBySubjectForUser } from "@/features/attendance/queries";
 import {
   type AttendanceSettingsForm,
   attendanceSettingsSchema,
@@ -18,12 +17,8 @@ import {
   recordMissSchema,
   removeAttendanceSettingsSchema,
 } from "@/features/attendance/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
-import type {
-  AttendanceMissEntity,
-  MutationResult,
-} from "@/lib/server/api-contracts";
+import type { MutationResult } from "@/lib/server/api-contracts";
 
 export async function updateAttendanceSettings(
   data: AttendanceSettingsForm,
@@ -59,13 +54,6 @@ export async function removeAttendanceSettings(
   }
 
   return result;
-}
-
-export async function getMissesBySubject(
-  subjectId: string,
-): Promise<AttendanceMissEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getMissesBySubjectForUser(userId, subjectId);
 }
 
 export async function recordMiss(

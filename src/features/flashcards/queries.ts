@@ -26,7 +26,6 @@ import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
   FlashcardDetailEntity,
   FlashcardEntity,
-  FlashcardListEntity,
   FlashcardManagePage,
 } from "@/lib/server/api-contracts";
 import { uniqueItems } from "@/lib/utils";
@@ -73,29 +72,6 @@ export function getFlashcardsManageOrderBy(
     end`,
     desc(flashcard.updatedAt),
   ];
-}
-
-export async function getFlashcardsForUser(
-  userId: string,
-): Promise<FlashcardListEntity[]> {
-  const [rows, subjectPathMap] = await Promise.all([
-    getDb()
-      .select({ flashcard, subjectName: subject.name })
-      .from(flashcard)
-      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-      .where(eq(flashcard.userId, userId))
-      .orderBy(desc(flashcard.updatedAt)),
-    getSubjectPathMapForUser(userId),
-  ]);
-
-  return rows.map((row) => ({
-    ...row.flashcard,
-    subjectName: row.subjectName,
-    subjectPath:
-      (row.flashcard.subjectId
-        ? subjectPathMap.get(row.flashcard.subjectId)
-        : undefined) ?? row.subjectName,
-  }));
 }
 
 // Keep one representative row per occlusion note (its lowest mask id) so the

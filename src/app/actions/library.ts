@@ -4,22 +4,15 @@ import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
 import { revalidatePath } from "next/cache";
 import type { CreateBookResult } from "@/features/library/mutations";
 import {
-  bulkDeleteBooksForUser,
   createBookForUser,
   deleteBookForUser,
   updateBookForUser,
   updateBookZoomForUser,
   updateReadingPageForUser,
 } from "@/features/library/mutations";
-import {
-  countBooksForUser,
-  getBookByIdForUser,
-  getBooksForUser,
-} from "@/features/library/queries";
+import { countBooksForUser } from "@/features/library/queries";
 import { buildBookBlobPath } from "@/features/library/utils";
 import {
-  type BulkDeleteBooksForm,
-  bulkDeleteBooksSchema,
   type CreateBookForm,
   createBookSchema,
   type DeleteBookForm,
@@ -37,21 +30,7 @@ import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { LIMITS } from "@/lib/config/limits";
 import { isMediaStorageConfigured } from "@/lib/media-storage/provider";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
-import type {
-  BulkLibraryMutationResult,
-  LibraryBookEntity,
-  MutationResult,
-} from "@/lib/server/api-contracts";
-
-export async function getBooks(): Promise<LibraryBookEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getBooksForUser(userId);
-}
-
-export async function getBook(id: string): Promise<LibraryBookEntity | null> {
-  const userId = await getAuthenticatedUserId();
-  return getBookByIdForUser(userId, id);
-}
+import type { MutationResult } from "@/lib/server/api-contracts";
 
 export type GenerateTokenResult =
   | { success: true; token: string; pathname: string }
@@ -162,23 +141,6 @@ export async function deleteBook(
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => deleteBookForUser(userId, parsedData),
-  );
-
-  if (result.success) {
-    revalidatePath("/", "layout");
-  }
-
-  return result;
-}
-
-export async function bulkDeleteBooks(
-  data: BulkDeleteBooksForm,
-): Promise<BulkLibraryMutationResult> {
-  const result = await runValidatedUserAction(
-    bulkDeleteBooksSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => bulkDeleteBooksForUser(userId, parsedData),
   );
 
   if (result.success) {

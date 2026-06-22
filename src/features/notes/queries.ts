@@ -71,26 +71,6 @@ export async function getNoteByIdForUser(
   return results[0]?.note ?? null;
 }
 
-export async function getNoteRecordForUser(
-  userId: string,
-  noteId: string,
-): Promise<Pick<NoteEntity, "id" | "subjectId"> | null> {
-  const results = await getDb()
-    .select({ id: note.id, subjectId: note.subjectId })
-    .from(note)
-    .innerJoin(subject, eq(note.subjectId, subject.id))
-    .where(
-      and(
-        eq(note.id, noteId),
-        eq(note.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
-    .limit(1);
-
-  return results[0] ?? null;
-}
-
 export async function countNotesBySubjectForUser(
   userId: string,
   subjectId: string,

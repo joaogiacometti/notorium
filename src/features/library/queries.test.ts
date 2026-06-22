@@ -38,20 +38,6 @@ describe("library queries", () => {
     vi.clearAllMocks();
   });
 
-  it("lists a user's books ordered by most recently updated", async () => {
-    const books = [{ id: "book-1" }, { id: "book-2" }];
-    whereMock.mockReturnValueOnce({ orderBy: orderByMock });
-    orderByMock.mockResolvedValueOnce(books);
-
-    const result = await queries.getBooksForUser("user-1");
-
-    expect(result).toBe(books);
-    expect(eqMock).toHaveBeenCalledWith(
-      "library_book_user_id_column",
-      "user-1",
-    );
-  });
-
   it("lists a user's most recent books limited to the requested count", async () => {
     const books = [{ id: "book-1" }, { id: "book-2" }];
     whereMock.mockReturnValueOnce({ orderBy: orderByMock });

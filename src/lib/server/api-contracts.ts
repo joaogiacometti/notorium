@@ -51,10 +51,6 @@ export type FlashcardDetailEntity = FlashcardEntity & {
   subjectName: string;
   subjectPath: string;
 };
-export type FlashcardListEntity = FlashcardEntity & {
-  subjectName: string;
-  subjectPath: string;
-};
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
   "id" | "subjectId" | "updatedAt" | "type"
@@ -267,12 +263,6 @@ export type MoveSubjectResult =
       id: string;
       previousParentSubjectId: string | null;
       newParentSubjectId: string | null;
-    }
-  | ActionErrorResult;
-export type BulkLibraryMutationResult =
-  | {
-      success: true;
-      ids: string[];
     }
   | ActionErrorResult;
 export type ReviewFlashcardResult =

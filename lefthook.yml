@@ -23,3 +23,5 @@ pre-push:
       run: bun run test
     - name: file-size
       run: bun run check:size
+    - name: deadcode
+      run: bun run check:deadcode

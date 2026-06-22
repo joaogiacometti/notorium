@@ -7,10 +7,7 @@ import {
   deleteNoteForUser,
   editNoteForUser,
 } from "@/features/notes/mutations";
-import {
-  getNoteByIdForUser,
-  getNotesBySubjectForUser,
-} from "@/features/notes/queries";
+import { getNoteByIdForUser } from "@/features/notes/queries";
 import {
   type CreateNoteForm,
   createNoteSchema,
@@ -22,13 +19,6 @@ import {
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MutationResult, NoteEntity } from "@/lib/server/api-contracts";
-
-export async function getNotesBySubject(
-  subjectId: string,
-): Promise<NoteEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getNotesBySubjectForUser(userId, subjectId);
-}
 
 export async function getNoteById(id: string): Promise<NoteEntity | null> {
   const userId = await getAuthenticatedUserId();

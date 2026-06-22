@@ -39,7 +39,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/app/actions/subjects", () => ({
   bulkDeleteSubjects: vi.fn(),
-  getAllSubjects: (...args: unknown[]) => getAllSubjectsMock(...args),
   getSubjectListItems: (...args: unknown[]) => getAllSubjectsMock(...args),
 }));
 

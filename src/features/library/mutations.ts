@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { libraryBook } from "@/db/schema";
 import type {
@@ -9,11 +9,9 @@ import { isSupportedLibraryBookMime } from "@/features/library/constants";
 import {
   countBooksForUser,
   getBookByIdForUser,
-  getBookFileRecordsForUser,
 } from "@/features/library/queries";
 import { validateBookBlobPath } from "@/features/library/utils";
 import type {
-  BulkDeleteBooksForm,
   CreateBookForm,
   DeleteBookForm,
   UpdateBookForm,
@@ -292,31 +290,4 @@ export async function moveBookForUser(
     subjectId: data.subjectId,
     previousSubjectId: existing.subjectId ?? data.subjectId,
   };
-}
-
-export async function bulkDeleteBooksForUser(
-  userId: string,
-  data: BulkDeleteBooksForm,
-): Promise<{ success: true; ids: string[] } | ActionErrorResult> {
-  const records = await getBookFileRecordsForUser(userId, data.ids);
-
-  if (records.length !== data.ids.length) {
-    return actionError("library.notFound");
-  }
-
-  const deletedFiles = await deleteBookBlobs(
-    records.map((record) => record.blobPathname),
-  );
-
-  if (!deletedFiles) {
-    return actionError("library.deleteFailed");
-  }
-
-  await getDb()
-    .delete(libraryBook)
-    .where(
-      and(inArray(libraryBook.id, data.ids), eq(libraryBook.userId, userId)),
-    );
-
-  return { success: true, ids: data.ids };
 }

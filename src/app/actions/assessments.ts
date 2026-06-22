@@ -8,11 +8,7 @@ import {
   deleteAssessmentForUser,
   editAssessmentForUser,
 } from "@/features/assessments/mutations";
-import {
-  getAssessmentsBySubjectForUser,
-  getAssessmentsForUser,
-  getPlanningAssessmentsPageForUser,
-} from "@/features/assessments/queries";
+import { getPlanningAssessmentsPageForUser } from "@/features/assessments/queries";
 import {
   type BulkDeleteAssessmentsForm,
   type BulkUpdateAssessmentStatusForm,
@@ -27,10 +23,8 @@ import {
   type PlanningAssessmentsQueryInput,
   planningAssessmentsQuerySchema,
 } from "@/features/assessments/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
-  AssessmentEntity,
   BulkDeleteAssessmentsResult,
   BulkUpdateAssessmentStatusResult,
   CreateAssessmentResult,
@@ -39,18 +33,6 @@ import type {
   PlanningAssessmentsPage,
 } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-
-export async function getAssessmentsBySubject(
-  subjectId: string,
-): Promise<AssessmentEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getAssessmentsBySubjectForUser(userId, subjectId);
-}
-
-export async function getAssessments(): Promise<AssessmentEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getAssessmentsForUser(userId);
-}
 
 export async function getPlanningAssessmentsPage(
   data: PlanningAssessmentsQueryInput,

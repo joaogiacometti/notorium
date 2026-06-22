@@ -9,7 +9,7 @@
 
 ## Product Goal
 
-Notorium helps students organize academic work in one place by combining subjects, notes, flashcards, attendance tracking, assessments, and fast personal search.
+Notorium helps students organize academic work in one place by combining subjects, notes, mindmaps, flashcards, a PDF library, attendance tracking, assessments, and fast personal search.
 
 ## Target Users
 

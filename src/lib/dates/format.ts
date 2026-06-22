@@ -3,7 +3,6 @@ import {
   differenceInCalendarDays,
   format,
   formatDistanceToNow,
-  formatDistanceToNowStrict,
 } from "date-fns";
 
 export function formatDateLong(date: Date | string): string {
@@ -59,10 +58,6 @@ export function formatDateShort(date: Date | string): string {
 
 export function formatRelativeTime(date: Date | string): string {
   return formatDistanceToNow(new Date(date), { addSuffix: true });
-}
-
-export function formatRelativeTimeStrict(date: Date | string): string {
-  return formatDistanceToNowStrict(new Date(date), { addSuffix: false });
 }
 
 export function formatIsoDate(date: Date): string {

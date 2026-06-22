@@ -1,5 +1,3 @@
-import { Ghost, LaptopMinimal, Moon, Sun } from "lucide-react";
-import type { ComponentType } from "react";
 import type { AppTheme, themeOptions } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
@@ -26,39 +24,6 @@ export const themeDescriptionById: Record<AppTheme, string> = {
   dark: "Classic low-light contrast",
   halloween: "Warm seasonal orange accents",
   "catppuccin-mocha": "Soft and cozy dark palette",
-};
-
-function CatppuccinMochaIcon({ className }: Readonly<{ className?: string }>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M5 9.5h11a0 0 0 0 1 0 0V14a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V9.5a0 0 0 0 1 0 0Z" />
-      <path d="M16 10.5h1.7a2.3 2.3 0 0 1 0 4.6H16" />
-      <path d="M7 6.5v2" />
-      <path d="M10 5.5v3" />
-      <path d="M13 6.5v2" />
-      <path d="M4.5 18.5h12.5" />
-    </svg>
-  );
-}
-
-export const themeIconById: Record<
-  AppTheme,
-  ComponentType<{ className?: string }>
-> = {
-  system: LaptopMinimal,
-  light: Sun,
-  dark: Moon,
-  halloween: Ghost,
-  "catppuccin-mocha": CatppuccinMochaIcon,
 };
 
 const themePreviewPaletteById: Record<
