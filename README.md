@@ -13,7 +13,7 @@ It is built for a single trusted group: the first account becomes an admin, and 
 - **Library** — upload PDF books and read them in an in-app reader with zoom, two-page spread, thumbnails, outline navigation, per-device saved reading position, text selection, and highlights with notes.
 - **Attendance & Assessments** — per-subject absence tracking and an assessment planner with a calendar/planning view and optional email reminders.
 - **AI assistance (optional)** — generate flashcards from notes, mindmaps, or a selected PDF passage, refine and de-duplicate decks, and ask questions about a passage.
-- **Search, command palette, and floating windows** — case-insensitive search across all content (`Cmd/Ctrl+K`), an action palette (`Cmd/Ctrl+P`), and draggable editor windows that layer over the page (e.g. take notes while reading a PDF).
+- **Search, command palette, and floating windows** — case-insensitive search across all content (`Cmd/Ctrl+K`), an action palette (`Cmd/Ctrl+P`), and draggable editor windows that layer over the page (e.g. take notes or edit flashcards while reading a PDF).
 
 See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 

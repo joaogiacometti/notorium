@@ -21,10 +21,10 @@ export interface WindowGeometry {
 }
 
 /**
- * A single open window. `docId` is the mindmap/note id to load, or null for
- * the flashcard-creation window (which has no backing document). `geometry`
- * is the user-controlled position and size so windows can be moved and resized
- * over the page behind them.
+ * A single open window. `docId` is the mindmap/note id to load, the flashcard
+ * id to edit, or null for the flashcard-creation window. `geometry` is the
+ * user-controlled position and size so windows can be moved and resized over
+ * the page behind them.
  */
 export interface WindowInstance {
   id: string;
@@ -70,6 +70,9 @@ const WindowManagerContext = createContext<WindowManagerContextValue | null>(
 function defaultTitle(spec: OpenWindowSpec): string {
   if (spec.title && spec.title.trim().length > 0) {
     return spec.title;
+  }
+  if (spec.kind === "flashcard" && spec.docId) {
+    return "Edit Flashcard";
   }
   return spec.kind === "flashcard" ? "New Flashcard" : "Untitled";
 }

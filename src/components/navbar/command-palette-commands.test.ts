@@ -30,6 +30,7 @@ describe("paletteCommands", () => {
     expect(kinds).toContain("shortcuts-help");
     expect(kinds).toContain("open-window-create");
     expect(kinds).toContain("open-window-existing");
+    expect(kinds).toContain("open-window-flashcard-edit");
   });
 
   it("navigates Home to the root route", () => {
@@ -54,6 +55,14 @@ describe("paletteCommands", () => {
     expect(paletteGroupOrder.indexOf("Windows")).toBe(
       paletteGroupOrder.indexOf("Create") + 1,
     );
+  });
+
+  it("offers flashcard editing as a window command", () => {
+    const command = paletteCommands.find(
+      (currentCommand) => currentCommand.id === "window-edit-flashcard",
+    );
+
+    expect(command?.action).toEqual({ kind: "open-window-flashcard-edit" });
   });
 });
 

@@ -1,39 +1,32 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Network } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
-import {
-  getOpenableDocuments,
-  type OpenableDocument,
-} from "@/app/actions/documents";
+import { useEffect, useState, useTransition } from "react";
+import { getOpenableDocuments } from "@/app/actions/documents";
+import { getFlashcardsManagePage } from "@/app/actions/flashcards";
 import { getSubjects } from "@/app/actions/subjects";
 import { useOpenAccountSettings } from "@/components/account/account-settings-provider";
 import {
   type PaletteAction,
-  type PaletteCommand,
-  paletteCommands,
-  paletteGroupOrder,
   parseSubjectIdFromPath,
 } from "@/components/navbar/command-palette-commands";
 import {
   type ActiveCreateDialog,
   CommandPaletteDialogs,
 } from "@/components/navbar/command-palette-dialogs";
+import {
+  DocumentPickerPage,
+  FlashcardPickerPage,
+  RootPage,
+  SubjectPickerPage,
+} from "@/components/navbar/command-palette-pages";
 import { useThemeControl } from "@/components/navbar/use-theme-control";
 import {
   useOpenShortcutsHelp,
   useShortcutsDialogOpen,
 } from "@/components/shortcuts/shortcuts-suspension-context";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { CommandDialog } from "@/components/ui/command";
 import { useWindowManager } from "@/components/windows/window-manager-context";
 
 interface CommandPaletteProps {
@@ -41,7 +34,7 @@ interface CommandPaletteProps {
   aiEnabled: boolean;
 }
 
-type PalettePage = "root" | "pick-subject" | "open-doc";
+type PalettePage = "root" | "pick-subject" | "open-doc" | "edit-flashcard";
 
 export function CommandPalette({
   userId,
@@ -82,6 +75,26 @@ export function CommandPalette({
     queryFn: () => getOpenableDocuments(),
     enabled: open && page === "open-doc" && userId.length > 0,
     staleTime: 1000 * 60,
+    gcTime: 1000 * 60 * 5,
+  });
+
+  const { data: flashcards = [] } = useQuery({
+    queryKey: ["command-palette-flashcards", userId, search],
+    queryFn: async () => {
+      const result = await getFlashcardsManagePage({
+        pageIndex: 0,
+        pageSize: 25,
+        search,
+      });
+
+      if ("errorCode" in result) {
+        return [];
+      }
+
+      return result.items;
+    },
+    enabled: open && page === "edit-flashcard" && userId.length > 0,
+    staleTime: 1000 * 20,
     gcTime: 1000 * 60 * 5,
   });
 
@@ -164,6 +177,8 @@ export function CommandPalette({
       }
     } else if (action.kind === "open-window-existing") {
       goToPage("open-doc");
+    } else if (action.kind === "open-window-flashcard-edit") {
+      goToPage("edit-flashcard");
     } else if (action.kind === "theme") {
       void setAppTheme(action.theme);
       handleOpenChange(false);
@@ -210,7 +225,7 @@ export function CommandPalette({
             subjects={subjects}
             onPick={handleSubjectPicked}
           />
-        ) : (
+        ) : page === "open-doc" ? (
           <DocumentPickerPage
             search={search}
             onSearchChange={setSearch}
@@ -218,6 +233,20 @@ export function CommandPalette({
             onPick={(kind, docId) => {
               handleOpenChange(false);
               openWindow({ kind, docId });
+            }}
+          />
+        ) : (
+          <FlashcardPickerPage
+            search={search}
+            onSearchChange={setSearch}
+            flashcards={flashcards}
+            onPick={(flashcard) => {
+              handleOpenChange(false);
+              openWindow({
+                kind: "flashcard",
+                docId: flashcard.id,
+                title: flashcard.frontTitle ?? flashcard.frontExcerpt,
+              });
             }}
           />
         )}
@@ -232,180 +261,6 @@ export function CommandPalette({
         createInWindow={createInWindow}
         onOpenDocumentWindow={openDocumentWindow}
       />
-    </>
-  );
-}
-
-interface PaletteSearchInputProps {
-  placeholder: string;
-  value: string;
-  onValueChange: (value: string) => void;
-}
-
-/**
- * Search box that grabs focus on mount. Radix only auto-focuses the first input
- * when the dialog opens, so swapping palette pages would otherwise leave the new
- * input unfocused, breaking arrow-key navigation and typing until a manual click.
- *
- * @example
- * <PaletteSearchInput placeholder="Select a subject..." value={s} onValueChange={setS} />
- */
-function PaletteSearchInput({
-  placeholder,
-  value,
-  onValueChange,
-}: Readonly<PaletteSearchInputProps>) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  return (
-    <CommandInput
-      ref={inputRef}
-      placeholder={placeholder}
-      value={value}
-      onValueChange={onValueChange}
-    />
-  );
-}
-
-interface RootPageProps {
-  search: string;
-  onSearchChange: (value: string) => void;
-  onRun: (action: PaletteAction) => void;
-}
-
-function RootPage({ search, onSearchChange, onRun }: Readonly<RootPageProps>) {
-  return (
-    <>
-      <PaletteSearchInput
-        placeholder="Type a command or search..."
-        value={search}
-        onValueChange={onSearchChange}
-      />
-      <CommandList>
-        <CommandEmpty>No matching commands.</CommandEmpty>
-        {paletteGroupOrder.map((group) => (
-          <CommandGroup key={group} heading={group}>
-            {paletteCommands
-              .filter((command) => command.group === group)
-              .map((command) => (
-                <PaletteCommandItem
-                  key={command.id}
-                  command={command}
-                  onRun={onRun}
-                />
-              ))}
-          </CommandGroup>
-        ))}
-      </CommandList>
-    </>
-  );
-}
-
-interface PaletteCommandItemProps {
-  command: PaletteCommand;
-  onRun: (action: PaletteAction) => void;
-}
-
-function PaletteCommandItem({
-  command,
-  onRun,
-}: Readonly<PaletteCommandItemProps>) {
-  const Icon = command.icon;
-  return (
-    <CommandItem
-      value={command.label}
-      keywords={command.keywords}
-      onSelect={() => onRun(command.action)}
-      className="cursor-pointer gap-2"
-    >
-      <Icon className="!size-4 text-muted-foreground" />
-      <span>{command.label}</span>
-    </CommandItem>
-  );
-}
-
-interface SubjectPickerPageProps {
-  search: string;
-  onSearchChange: (value: string) => void;
-  subjects: { id: string; name: string }[];
-  onPick: (subjectId: string) => void;
-}
-
-function SubjectPickerPage({
-  search,
-  onSearchChange,
-  subjects,
-  onPick,
-}: Readonly<SubjectPickerPageProps>) {
-  return (
-    <>
-      <PaletteSearchInput
-        placeholder="Select a subject..."
-        value={search}
-        onValueChange={onSearchChange}
-      />
-      <CommandList>
-        <CommandEmpty>No subjects found.</CommandEmpty>
-        <CommandGroup heading="Select a subject">
-          {subjects.map((subject) => (
-            <CommandItem
-              key={subject.id}
-              value={subject.name}
-              onSelect={() => onPick(subject.id)}
-              className="cursor-pointer"
-            >
-              {subject.name}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </>
-  );
-}
-
-interface DocumentPickerPageProps {
-  search: string;
-  onSearchChange: (value: string) => void;
-  documents: OpenableDocument[];
-  onPick: (kind: "mindmap" | "note", docId: string) => void;
-}
-
-function DocumentPickerPage({
-  search,
-  onSearchChange,
-  documents,
-  onPick,
-}: Readonly<DocumentPickerPageProps>) {
-  return (
-    <>
-      <PaletteSearchInput
-        placeholder="Open a document in a window..."
-        value={search}
-        onValueChange={onSearchChange}
-      />
-      <CommandList>
-        <CommandEmpty>No documents found.</CommandEmpty>
-        <CommandGroup heading="Open in window">
-          {documents.map((document) => {
-            const Icon = document.kind === "mindmap" ? Network : FileText;
-            return (
-              <CommandItem
-                key={`${document.kind}-${document.id}`}
-                value={`${document.title} ${document.id}`}
-                onSelect={() => onPick(document.kind, document.id)}
-                className="cursor-pointer gap-2"
-              >
-                <Icon className="!size-4 text-muted-foreground" />
-                <span className="truncate">{document.title || "Untitled"}</span>
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
-      </CommandList>
     </>
   );
 }

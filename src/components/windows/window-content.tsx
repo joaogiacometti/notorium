@@ -2,16 +2,20 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { getFlashcardForManage } from "@/app/actions/flashcards";
 import { getMindmapById } from "@/app/actions/mindmaps";
 import { getNoteById } from "@/app/actions/notes";
 import { CreateFlashcardFormPanel } from "@/components/flashcards/dialogs/create-flashcard-form-panel";
+import { EditFlashcardDialog } from "@/components/flashcards/dialogs/edit-flashcard-dialog";
 import { MindmapDetail } from "@/components/mindmaps/mindmap-detail";
 import { NoteDetail } from "@/components/notes/note-detail";
 import {
   useWindowManager,
   type WindowInstance,
 } from "@/components/windows/window-manager-context";
+import { richTextToPlainText } from "@/lib/editor/rich-text";
 import type {
+  FlashcardEntity,
   MindmapEntity,
   NoteEntity,
   SubjectOption,
@@ -39,6 +43,17 @@ export function WindowContent({
     registerCloseRequest(window.id, request);
 
   if (window.kind === "flashcard") {
+    if (window.docId) {
+      return (
+        <FlashcardEditWindowContent
+          window={window}
+          aiEnabled={aiEnabled}
+          onClosed={onClosed}
+          registerCloseRequest={registerClose}
+        />
+      );
+    }
+
     return (
       <CreateFlashcardFormPanel
         aiEnabled={aiEnabled}
@@ -59,6 +74,68 @@ export function WindowContent({
       subjects={subjects}
       onClosed={onClosed}
       registerCloseRequest={registerClose}
+    />
+  );
+}
+
+interface FlashcardEditWindowContentProps {
+  window: WindowInstance;
+  aiEnabled: boolean;
+  onClosed: () => void;
+  registerCloseRequest: (request: () => void) => () => void;
+}
+
+function FlashcardEditWindowContent({
+  window,
+  aiEnabled,
+  onClosed,
+  registerCloseRequest,
+}: Readonly<FlashcardEditWindowContentProps>) {
+  const { setWindowTitle } = useWindowManager();
+  const flashcardId = window.docId ?? "";
+  const { data, isPending, isError, refetch } =
+    useQuery<FlashcardEntity | null>({
+      queryKey: ["window-flashcard-edit", flashcardId],
+      queryFn: async () => {
+        const result = await getFlashcardForManage({ id: flashcardId });
+        if ("errorCode" in result) {
+          return null;
+        }
+        return result.flashcard;
+      },
+      enabled: flashcardId.length > 0,
+    });
+
+  useEffect(() => {
+    if (data?.front) {
+      setWindowTitle(window.id, richTextToPlainText(data.front) || "Flashcard");
+    }
+  }, [data?.front, window.id, setWindowTitle]);
+
+  if (isPending) {
+    return <WindowStatus message="Loading…" />;
+  }
+
+  if (isError || !data) {
+    return <WindowStatus message="This flashcard could not be found." />;
+  }
+
+  return (
+    <EditFlashcardDialog
+      flashcard={data}
+      open
+      aiEnabled={aiEnabled}
+      noDialog
+      registerCloseRequest={registerCloseRequest}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClosed();
+        }
+      }}
+      onUpdated={() => {
+        void refetch();
+      }}
+      onDeleted={onClosed}
     />
   );
 }

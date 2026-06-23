@@ -33,6 +33,7 @@ export type PaletteAction =
   | { kind: "create-in-subject"; dialog: SubjectScopedDialog }
   | { kind: "open-window-create"; create: WindowCreateKind }
   | { kind: "open-window-existing" }
+  | { kind: "open-window-flashcard-edit" }
   | { kind: "theme"; theme: AppTheme }
   | { kind: "open-settings" }
   | { kind: "shortcuts-help" };
@@ -125,6 +126,22 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["window", "overlay", "open", "note", "mindmap", "existing"],
     icon: LayoutGrid,
     action: { kind: "open-window-existing" },
+  },
+  {
+    id: "window-edit-flashcard",
+    label: "Edit Flashcard in Window",
+    group: "Windows",
+    keywords: [
+      "window",
+      "overlay",
+      "open",
+      "edit",
+      "flashcard",
+      "card",
+      "existing",
+    ],
+    icon: Layers,
+    action: { kind: "open-window-flashcard-edit" },
   },
   {
     id: "goto-home",

@@ -70,6 +70,33 @@ describe("WindowManagerProvider", () => {
     expect(api.windows).toHaveLength(1);
   });
 
+  it("keeps flashcard create and edit windows separate", () => {
+    act(() => api.openWindow({ kind: "flashcard" }));
+    act(() => api.openWindow({ kind: "flashcard", docId: "fc1" }));
+
+    expect(api.windows).toHaveLength(2);
+    expect(api.windows[0]).toMatchObject({
+      kind: "flashcard",
+      docId: null,
+      title: "New Flashcard",
+    });
+    expect(api.windows[1]).toMatchObject({
+      kind: "flashcard",
+      docId: "fc1",
+      title: "Edit Flashcard",
+    });
+  });
+
+  it("reactivates an existing flashcard edit window", () => {
+    act(() => api.openWindow({ kind: "flashcard", docId: "fc1" }));
+    const firstId = api.windows[0].id;
+
+    act(() => api.openWindow({ kind: "flashcard", docId: "fc1" }));
+
+    expect(api.windows).toHaveLength(1);
+    expect(api.activeWindowId).toBe(firstId);
+  });
+
   it("minimizes and restores so only one window is active at a time", () => {
     act(() => api.openWindow({ kind: "mindmap", docId: "m1" }));
     const firstId = api.windows[0].id;
