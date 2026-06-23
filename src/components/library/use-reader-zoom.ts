@@ -5,6 +5,7 @@ import { type ZoomLevel, ZoomMode } from "@embedpdf/plugin-zoom";
 import { useZoom } from "@embedpdf/plugin-zoom/react";
 import { useEffect, useRef, useState } from "react";
 import { updateBookZoom } from "@/app/actions/library";
+import { detectReaderDevice } from "@/components/library/reader-device";
 import {
   isValidStoredZoom,
   type ReaderDevice,
@@ -20,15 +21,6 @@ interface UseReaderZoomOptions {
   bookId: string;
   initialZoomMobile: string | null;
   initialZoomDesktop: string | null;
-}
-
-// Mirrors the pan plugin's touch heuristic so "mobile" means the same device
-// class across the reader. Computed once; a reader session does not switch
-// between a touch and a pointer device mid-read.
-function detectReaderDevice(): ReaderDevice {
-  if (typeof window === "undefined") return "desktop";
-  const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-  return isTouch ? "mobile" : "desktop";
 }
 
 // The default the zoom plugin opens at (see book-reader-surface). Used as the
