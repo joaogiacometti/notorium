@@ -42,6 +42,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - Bug fixes get a regression test.
 - Mock external I/O, APIs, DB, and filesystem with named fake classes or helpers, not inline stubs.
 - Tests must be F.I.R.S.T: fast, independent, repeatable, self-validating, timely.
+- Good tests verify observable behavior, stable contracts, or deterministic transformations. Bad tests mirror implementation text, CSS class strings, prompt wording, or call order unless that exact detail is the public contract.
 - Keep Vitest tests next to source with `.test.ts` or `.test.tsx`.
 - Add Playwright coverage only for critical user workflows: navigation, auth/permissions, writes, persistence, destructive actions, or cross-page flow integrity.
 - Do not add Playwright tests for presentation-only changes unless explicitly requested.
