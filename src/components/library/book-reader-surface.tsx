@@ -173,6 +173,7 @@ function buildReaderPlugins(fileUrl: string) {
           categories: ["annotation", HIGHLIGHT_CATEGORY],
           behavior: { selectAfterCreate: false },
           defaults: {
+            custom: { category: HIGHLIGHT_CATEGORY },
             strokeColor: HIGHLIGHT_COLOR,
             opacity: HIGHLIGHT_OPACITY,
           },

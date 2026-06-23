@@ -44,6 +44,7 @@ function ReaderLoadingSidebar() {
         <div className="flex h-9 items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-0.75">
           <Skeleton className="h-7 flex-1 rounded-md" />
           <Skeleton className="h-7 flex-1 rounded-md" />
+          <Skeleton className="h-7 flex-1 rounded-md" />
         </div>
       </div>
       <div className="min-h-0 flex-1 space-y-3 overflow-hidden p-2 pt-0">

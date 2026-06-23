@@ -9,6 +9,7 @@ import {
   deleteBookAnnotation,
   saveBookAnnotation,
 } from "@/app/actions/library-annotations";
+import { HIGHLIGHT_CATEGORY } from "@/components/library/book-reader-annotation-config";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
 import type { HighlightAnnotationInput } from "@/features/library-annotations/validation";
 import { t } from "@/lib/server/server-action-errors";
@@ -42,7 +43,13 @@ function toAnnotationTransferItems(
   annotations: BookAnnotationDto[],
 ): AnnotationTransferItem[] {
   const items: unknown = annotations.map((entry) => ({
-    annotation: entry.annotation,
+    annotation: {
+      ...entry.annotation,
+      custom: {
+        ...(entry.annotation.custom as Record<string, unknown> | undefined),
+        category: HIGHLIGHT_CATEGORY,
+      },
+    },
   }));
   return items as AnnotationTransferItem[];
 }

@@ -169,6 +169,7 @@ export function ReaderLayout({
         <div className="flex min-h-0 min-w-0 flex-1">
           <ReaderSidebar
             documentId={documentId}
+            initialAnnotations={initialAnnotations}
             isCollapsed={sidebarCollapsed}
             readerColorInverted={readerColorInverted}
           />
