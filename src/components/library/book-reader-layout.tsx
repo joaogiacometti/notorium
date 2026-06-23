@@ -49,6 +49,7 @@ interface ReaderLayoutProps {
 
 interface ReaderPageProps {
   documentId: string;
+  bookId: string;
   pageIndex: number;
   readerColorInverted: boolean;
 }
@@ -59,6 +60,7 @@ interface ReaderPageProps {
 // SelectionLayer and AnnotationLayer stay outside to keep their normal colors.
 function ReaderPage({
   documentId,
+  bookId,
   pageIndex,
   readerColorInverted,
 }: Readonly<ReaderPageProps>) {
@@ -92,7 +94,7 @@ function ReaderPage({
         documentId={documentId}
         pageIndex={pageIndex}
         annotationRenderers={[linkAnnotationRenderer]}
-        selectionMenu={createSelectionMenuRenderer(documentId)}
+        selectionMenu={createSelectionMenuRenderer(documentId, bookId)}
         style={{
           position: "absolute",
           inset: 0,
@@ -107,11 +109,16 @@ function ReaderPage({
 // AnnotationLayer's selectionMenu don't create inline components inside
 // ReaderLayout (SonarQube S6478). Each closes over the stable values once at
 // module level instead of re-creating a component identity on every render.
-function createPageRenderer(documentId: string, readerColorInverted: boolean) {
+function createPageRenderer(
+  documentId: string,
+  bookId: string,
+  readerColorInverted: boolean,
+) {
   return function renderPage({ pageIndex }: { pageIndex: number }) {
     return (
       <ReaderPage
         documentId={documentId}
+        bookId={bookId}
         pageIndex={pageIndex}
         readerColorInverted={readerColorInverted}
       />
@@ -119,9 +126,15 @@ function createPageRenderer(documentId: string, readerColorInverted: boolean) {
   };
 }
 
-function createSelectionMenuRenderer(documentId: string) {
+function createSelectionMenuRenderer(documentId: string, bookId: string) {
   return function renderSelectionMenu(menuProps: AnnotationSelectionMenuProps) {
-    return <ReaderAnnotationMenu {...menuProps} documentId={documentId} />;
+    return (
+      <ReaderAnnotationMenu
+        {...menuProps}
+        documentId={documentId}
+        bookId={bookId}
+      />
+    );
   };
 }
 
@@ -186,6 +199,7 @@ export function ReaderLayout({
                     documentId={documentId}
                     renderPage={createPageRenderer(
                       documentId,
+                      bookId,
                       readerColorInverted,
                     )}
                   />
