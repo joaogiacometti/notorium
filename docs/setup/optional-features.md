@@ -118,6 +118,13 @@ Authorization: Bearer <CRON_SECRET>
 
 Pass `?dryRun=1` to report orphan counts without deleting anything.
 
+A safety circuit breaker guards against a regression turning the sweep
+destructive: if orphans exceed half of all scanned blobs, the sweep deletes
+nothing, reports `"aborted": true`, and the endpoint returns HTTP 409 so the
+scheduled workflow fails loudly for a human to investigate. A healthy store is
+mostly referenced, so a sweep wanting to delete most of it signals a broken
+reference collector or a save path stranding uploads — not real garbage.
+
 The repository includes `.github/workflows/blob-gc.yml` for a weekly GitHub Actions trigger. Configure these repository secrets in your fork or deployment repository:
 
 | Secret | Purpose |

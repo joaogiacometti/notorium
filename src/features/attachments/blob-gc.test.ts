@@ -40,6 +40,33 @@ describe("selectOrphanBlobs", () => {
   });
 });
 
+describe("exceedsOrphanSafetyLimit", () => {
+  it("trips when orphans exceed the fraction on a large enough store", async () => {
+    const { exceedsOrphanSafetyLimit } = await import(
+      "@/features/attachments/blob-gc"
+    );
+
+    // The incident: 114 of 168 blobs flagged as orphans (~68%).
+    expect(exceedsOrphanSafetyLimit(114, 168, 0.5)).toBe(true);
+  });
+
+  it("allows normal cleanup below the fraction", async () => {
+    const { exceedsOrphanSafetyLimit } = await import(
+      "@/features/attachments/blob-gc"
+    );
+
+    expect(exceedsOrphanSafetyLimit(30, 168, 0.5)).toBe(false);
+  });
+
+  it("never trips on small stores where a few orphans dominate", async () => {
+    const { exceedsOrphanSafetyLimit } = await import(
+      "@/features/attachments/blob-gc"
+    );
+
+    expect(exceedsOrphanSafetyLimit(5, 6, 0.5)).toBe(false);
+  });
+});
+
 describe("sweepOrphanBlobs", () => {
   const deleteFilesMock = vi.fn();
   const listFileEntriesMock = vi.fn();
@@ -81,6 +108,26 @@ describe("sweepOrphanBlobs", () => {
       deleted: 1,
       dryRun: false,
     });
+  });
+
+  it("aborts without deleting when orphans exceed the safety fraction", async () => {
+    const entries = Array.from({ length: 25 }, (_, index) =>
+      entry(`notorium/notes/u/orphan-${index}.png`, 10 * DAY),
+    );
+    listFileEntriesMock.mockResolvedValue(entries);
+    // Only two of twenty-five are referenced: ~92% orphans, well past the brake.
+    collectAllReferencedPathnamesMock.mockResolvedValue(
+      new Set([
+        "notorium/notes/u/orphan-0.png",
+        "notorium/notes/u/orphan-1.png",
+      ]),
+    );
+
+    const { sweepOrphanBlobs } = await import("@/features/attachments/blob-gc");
+    const report = await sweepOrphanBlobs({ minAgeMs: DAY });
+
+    expect(deleteFilesMock).not.toHaveBeenCalled();
+    expect(report).toMatchObject({ aborted: true, deleted: 0, orphaned: 23 });
   });
 
   it("does not delete when dryRun is set", async () => {

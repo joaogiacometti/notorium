@@ -24,11 +24,26 @@ const USER_BLOB_CONTEXTS = [
 // grace period keeps the sweep from deleting freshly uploaded, in-flight blobs.
 const DEFAULT_MIN_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
 
+// Circuit breaker. A healthy store is mostly referenced, so a sweep that wants
+// to delete a large share of everything is the signature of a regression
+// (e.g. a reference collector that stopped matching, or a save path that strands
+// uploads) rather than real garbage. Above this fraction the sweep refuses to
+// delete and reports `aborted` so a human investigates before data is lost. The
+// minimum-scan floor keeps tiny stores — where a couple of orphans trivially
+// exceed any fraction — from tripping the brake on normal cleanup.
+const DEFAULT_MAX_DELETE_FRACTION = 0.5;
+const SAFETY_MIN_SCAN_FOR_FRACTION = 20;
+
 export interface BlobSweepOptions {
   /** When true, report orphans without deleting them. */
   dryRun?: boolean;
   /** Minimum age before a blob is eligible for collection. */
   minAgeMs?: number;
+  /**
+   * Refuse to delete when orphans exceed this fraction of scanned blobs (the
+   * safety circuit breaker). Defaults to {@link DEFAULT_MAX_DELETE_FRACTION}.
+   */
+  maxDeleteFraction?: number;
 }
 
 export interface BlobSweepReport {
@@ -38,6 +53,31 @@ export interface BlobSweepReport {
   skippedTooNew: number;
   deleted: number;
   dryRun: boolean;
+  /**
+   * True when the safety circuit breaker blocked deletion because orphans
+   * exceeded {@link BlobSweepOptions.maxDeleteFraction}. Nothing was deleted.
+   */
+  aborted: boolean;
+}
+
+/**
+ * Reports whether a sweep would delete an unsafe share of the store, which
+ * signals a regression rather than real garbage. Pure so the circuit-breaker
+ * threshold can be tested without a provider or database.
+ *
+ * @example
+ * if (exceedsOrphanSafetyLimit(114, 168, 0.5)) abortSweep();
+ */
+export function exceedsOrphanSafetyLimit(
+  orphanCount: number,
+  scannedCount: number,
+  maxFraction: number,
+): boolean {
+  if (scannedCount < SAFETY_MIN_SCAN_FOR_FRACTION) {
+    return false;
+  }
+
+  return orphanCount / scannedCount > maxFraction;
 }
 
 /**
@@ -91,6 +131,8 @@ export async function sweepOrphanBlobs(
 
   const minAgeMs = options.minAgeMs ?? DEFAULT_MIN_ORPHAN_AGE_MS;
   const dryRun = options.dryRun ?? false;
+  const maxDeleteFraction =
+    options.maxDeleteFraction ?? DEFAULT_MAX_DELETE_FRACTION;
 
   const [entries, referenced] = await Promise.all([
     provider.listFileEntries({ prefix: BLOB_ROOT_PREFIX }),
@@ -104,7 +146,13 @@ export async function sweepOrphanBlobs(
     minAgeMs,
   );
 
-  if (orphans.length > 0 && !dryRun) {
+  const aborted = exceedsOrphanSafetyLimit(
+    orphans.length,
+    entries.length,
+    maxDeleteFraction,
+  );
+
+  if (orphans.length > 0 && !dryRun && !aborted) {
     await provider.deleteFiles({ pathnames: orphans });
   }
 
@@ -113,8 +161,9 @@ export async function sweepOrphanBlobs(
     referenced: referenced.size,
     orphaned: orphans.length,
     skippedTooNew,
-    deleted: dryRun ? 0 : orphans.length,
+    deleted: dryRun || aborted ? 0 : orphans.length,
     dryRun,
+    aborted,
   };
 }
 

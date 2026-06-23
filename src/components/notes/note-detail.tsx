@@ -193,6 +193,40 @@ export function NoteDetail({
     saveNoteValues,
   ]);
 
+  // Persist immediately when an image upload settles. An image lands in the
+  // content only after its upload resolves, and the 800ms debounced autosave can
+  // lose the race against a fast navigation — stranding the uploaded blob with
+  // no note referencing it, which the orphan GC then reclaims and the image
+  // "disappears". Saving on the upload's falling edge writes the reference at
+  // once instead of waiting for the debounce.
+  const wasImageUploadingRef = useRef(false);
+  useEffect(() => {
+    const justFinished = wasImageUploadingRef.current && !isImageUploading;
+    wasImageUploadingRef.current = isImageUploading;
+
+    if (!justFinished) {
+      return;
+    }
+
+    const values = form.getValues();
+    if (!isSameNoteEdit(values, lastSavedValuesRef.current)) {
+      void saveNoteValues(values);
+    }
+  }, [form, isImageUploading, saveNoteValues]);
+
+  // Flush a pending autosave when the editor unmounts (e.g. client-side
+  // navigation to another note), which neither the debounce nor the browser
+  // `beforeunload` guard catches. Without this, edits made inside the debounce
+  // window — including a just-added image — are lost on navigation. The ref is
+  // reassigned every render so the unmount-only effect reads the latest values.
+  const flushPendingSaveRef = useRef<() => void>(() => {});
+  flushPendingSaveRef.current = () => {
+    if (hasDirtyValues && !isImageUploading) {
+      void saveNoteValues(form.getValues());
+    }
+  };
+  useEffect(() => () => flushPendingSaveRef.current(), []);
+
   // Notes autosave, so closing the window flushes any pending edit then closes
   // rather than prompting to discard.
   useWindowCloseGuard(registerCloseRequest, async () => {
