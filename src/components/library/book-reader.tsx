@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { BookReaderLoadingFrame } from "@/components/library/book-reader-loading-frame";
 import type { BookReaderProps } from "@/components/library/book-reader-surface";
 
 // EmbedPDF's pdfium engine is WebAssembly that loads and runs only in the
@@ -13,11 +14,7 @@ const BookReaderSurface = dynamic(
     ),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-svh items-center justify-center text-sm text-muted-foreground">
-        Loading book…
-      </div>
-    ),
+    loading: () => <BookReaderLoadingFrame />,
   },
 );
 

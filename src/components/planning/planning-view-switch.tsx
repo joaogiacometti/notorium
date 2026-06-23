@@ -67,9 +67,11 @@ export function PlanningViewSwitch({
           disabled={isPending}
           onClick={() => handleViewSwitch("assessments")}
         >
-          {loadingView === "assessments" ? (
-            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          ) : null}
+          <span className="grid size-3.5 place-items-center" aria-hidden="true">
+            {loadingView === "assessments" ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : null}
+          </span>
           <span
             className={loadingView === "assessments" ? "opacity-90" : undefined}
           >
@@ -81,9 +83,11 @@ export function PlanningViewSwitch({
           disabled={isPending}
           onClick={() => handleViewSwitch("calendar")}
         >
-          {loadingView === "calendar" ? (
-            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          ) : null}
+          <span className="grid size-3.5 place-items-center" aria-hidden="true">
+            {loadingView === "calendar" ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : null}
+          </span>
           <span
             className={loadingView === "calendar" ? "opacity-90" : undefined}
           >

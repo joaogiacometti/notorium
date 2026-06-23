@@ -18,7 +18,6 @@ import { TilingPluginPackage } from "@embedpdf/plugin-tiling/react";
 import { ViewportPluginPackage } from "@embedpdf/plugin-viewport/react";
 import { ZoomMode } from "@embedpdf/plugin-zoom";
 import { ZoomPluginPackage } from "@embedpdf/plugin-zoom/react";
-import type { ReactNode } from "react";
 import { useMemo } from "react";
 import {
   HIGHLIGHT_CATEGORY,
@@ -28,6 +27,7 @@ import {
 } from "@/components/library/book-reader-annotation-config";
 import { ReaderFullscreenContext } from "@/components/library/book-reader-fullscreen";
 import { ReaderLayout } from "@/components/library/book-reader-layout";
+import { BookReaderLoadingFrame } from "@/components/library/book-reader-loading-frame";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 import type { SubjectOption } from "@/lib/server/api-contracts";
@@ -54,10 +54,12 @@ export interface BookReaderProps {
 // everything portaled to document.body.
 export function BookReaderSurface(props: Readonly<BookReaderProps>) {
   const { isZenMode, toggleZenMode } = useZenMode();
+  const fullscreenValue = useMemo(
+    () => ({ isFullscreen: isZenMode, toggleFullscreen: toggleZenMode }),
+    [isZenMode, toggleZenMode],
+  );
   return (
-    <ReaderFullscreenContext.Provider
-      value={{ isFullscreen: isZenMode, toggleFullscreen: toggleZenMode }}
-    >
+    <ReaderFullscreenContext.Provider value={fullscreenValue}>
       <div
         className={cn("h-svh", isZenMode && "fixed inset-0 z-35 bg-background")}
       >
@@ -85,21 +87,26 @@ function ReaderEngine({
   // a new array would re-initialize the whole viewer (correctness, not perf).
   const plugins = useMemo(() => buildReaderPlugins(fileUrl), [fileUrl]);
 
-  if (error)
-    return <ReaderMessage>This book could not be loaded.</ReaderMessage>;
-  if (isLoading || !engine) return <ReaderMessage>Loading book…</ReaderMessage>;
+  if (error) {
+    return <BookReaderLoadingFrame message="This book could not be loaded." />;
+  }
+  if (isLoading || !engine) {
+    return <BookReaderLoadingFrame />;
+  }
 
   return (
     <EmbedPDF engine={engine} plugins={plugins}>
       {({ activeDocumentId, activeDocument }) => {
         if (activeDocument?.status === "error") {
-          return <ReaderMessage>This book could not be loaded.</ReaderMessage>;
+          return (
+            <BookReaderLoadingFrame message="This book could not be loaded." />
+          );
         }
         // Gate on a fully loaded document: the zoom plugin's auto-fit recalc
         // queries spread pages on the first viewport resize and throws if the
         // document is still loading.
         if (!activeDocumentId || activeDocument?.status !== "loaded") {
-          return <ReaderMessage>Loading book…</ReaderMessage>;
+          return <BookReaderLoadingFrame />;
         }
         return (
           <ReaderLayout
@@ -187,12 +194,4 @@ function buildReaderPlugins(fileUrl: string) {
     // list the table of contents.
     createPluginRegistration(BookmarkPluginPackage),
   ];
-}
-
-function ReaderMessage({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-      {children}
-    </div>
-  );
 }
