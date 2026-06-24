@@ -16,7 +16,22 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import type { FlashcardManageItem } from "@/lib/server/api-contracts";
+
+const PALETTE_LOADING_DELAY_MS = 150;
+const PALETTE_LOADING_MINIMUM_VISIBLE_MS = 250;
+const PALETTE_LOADING_SKELETON = (
+  <div aria-hidden="true" className="space-y-2 p-2">
+    <Skeleton className="h-4 w-28" />
+    <div className="space-y-1">
+      <Skeleton className="h-8 w-full" />
+      <Skeleton className="h-8 w-full" />
+      <Skeleton className="h-8 w-full" />
+    </div>
+  </div>
+);
 
 interface PaletteSearchInputProps {
   placeholder: string;
@@ -123,6 +138,7 @@ interface SubjectPickerPageProps {
   search: string;
   onSearchChange: (value: string) => void;
   subjects: { id: string; name: string }[];
+  isLoading: boolean;
   onPick: (subjectId: string) => void;
 }
 
@@ -130,14 +146,20 @@ interface SubjectPickerPageProps {
  * Renders the subject picker used before subject-scoped create dialogs.
  *
  * @example
- * <SubjectPickerPage search="" onSearchChange={setSearch} subjects={subjects} onPick={setSubjectId} />
+ * <SubjectPickerPage search="" onSearchChange={setSearch} subjects={subjects} isLoading={false} onPick={setSubjectId} />
  */
 export function SubjectPickerPage({
   search,
   onSearchChange,
   subjects,
+  isLoading,
   onPick,
 }: Readonly<SubjectPickerPageProps>) {
+  const showLoadingSkeleton = useSmoothedLoadingState(isLoading, {
+    delayMs: PALETTE_LOADING_DELAY_MS,
+    minimumVisibleMs: PALETTE_LOADING_MINIMUM_VISIBLE_MS,
+  });
+
   return (
     <>
       <PaletteSearchInput
@@ -146,7 +168,8 @@ export function SubjectPickerPage({
         onValueChange={onSearchChange}
       />
       <CommandList>
-        <CommandEmpty>No subjects found.</CommandEmpty>
+        {showLoadingSkeleton && PALETTE_LOADING_SKELETON}
+        {!isLoading && <CommandEmpty>No subjects found.</CommandEmpty>}
         <CommandGroup heading="Select a subject">
           {subjects.map((subject) => (
             <CommandItem
@@ -168,6 +191,7 @@ interface DocumentPickerPageProps {
   search: string;
   onSearchChange: (value: string) => void;
   documents: OpenableDocument[];
+  isLoading: boolean;
   onPick: (kind: "mindmap" | "note", docId: string) => void;
 }
 
@@ -175,14 +199,20 @@ interface DocumentPickerPageProps {
  * Renders existing notes and mindmaps that can be opened in a window.
  *
  * @example
- * <DocumentPickerPage search="" onSearchChange={setSearch} documents={documents} onPick={openDocument} />
+ * <DocumentPickerPage search="" onSearchChange={setSearch} documents={documents} isLoading={false} onPick={openDocument} />
  */
 export function DocumentPickerPage({
   search,
   onSearchChange,
   documents,
+  isLoading,
   onPick,
 }: Readonly<DocumentPickerPageProps>) {
+  const showLoadingSkeleton = useSmoothedLoadingState(isLoading, {
+    delayMs: PALETTE_LOADING_DELAY_MS,
+    minimumVisibleMs: PALETTE_LOADING_MINIMUM_VISIBLE_MS,
+  });
+
   return (
     <>
       <PaletteSearchInput
@@ -191,7 +221,8 @@ export function DocumentPickerPage({
         onValueChange={onSearchChange}
       />
       <CommandList>
-        <CommandEmpty>No documents found.</CommandEmpty>
+        {showLoadingSkeleton && PALETTE_LOADING_SKELETON}
+        {!isLoading && <CommandEmpty>No documents found.</CommandEmpty>}
         <CommandGroup heading="Open in window">
           {documents.map((document) => {
             const Icon = document.kind === "mindmap" ? Network : FileText;
@@ -202,7 +233,7 @@ export function DocumentPickerPage({
                 onSelect={() => onPick(document.kind, document.id)}
                 className="cursor-pointer gap-2"
               >
-                <Icon className="!size-4 text-muted-foreground" />
+                <Icon className="size-4! text-muted-foreground" />
                 <span className="truncate">{document.title || "Untitled"}</span>
               </CommandItem>
             );
@@ -217,6 +248,7 @@ interface FlashcardPickerPageProps {
   search: string;
   onSearchChange: (value: string) => void;
   flashcards: FlashcardManageItem[];
+  isLoading: boolean;
   onPick: (flashcard: FlashcardManageItem) => void;
 }
 
@@ -224,14 +256,20 @@ interface FlashcardPickerPageProps {
  * Renders searchable flashcard results for opening the edit form in a window.
  *
  * @example
- * <FlashcardPickerPage search="" onSearchChange={setSearch} flashcards={cards} onPick={openCard} />
+ * <FlashcardPickerPage search="" onSearchChange={setSearch} flashcards={cards} isLoading={false} onPick={openCard} />
  */
 export function FlashcardPickerPage({
   search,
   onSearchChange,
   flashcards,
+  isLoading,
   onPick,
 }: Readonly<FlashcardPickerPageProps>) {
+  const showLoadingSkeleton = useSmoothedLoadingState(isLoading, {
+    delayMs: PALETTE_LOADING_DELAY_MS,
+    minimumVisibleMs: PALETTE_LOADING_MINIMUM_VISIBLE_MS,
+  });
+
   return (
     <>
       <PaletteSearchInput
@@ -240,7 +278,8 @@ export function FlashcardPickerPage({
         onValueChange={onSearchChange}
       />
       <CommandList>
-        <CommandEmpty>No flashcards found.</CommandEmpty>
+        {showLoadingSkeleton && PALETTE_LOADING_SKELETON}
+        {!isLoading && <CommandEmpty>No flashcards found.</CommandEmpty>}
         <CommandGroup heading="Edit flashcard in window">
           {flashcards.map((flashcard) => (
             <CommandItem
@@ -249,7 +288,7 @@ export function FlashcardPickerPage({
               onSelect={() => onPick(flashcard)}
               className="cursor-pointer gap-2"
             >
-              <Layers className="!size-4 text-muted-foreground" />
+              <Layers className="size-4! text-muted-foreground" />
               <span className="min-w-0 flex-1 truncate">
                 {flashcard.frontTitle ?? flashcard.frontExcerpt}
               </span>

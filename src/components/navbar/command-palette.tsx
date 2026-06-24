@@ -62,7 +62,7 @@ export function CommandPalette({
   // navigating to its page.
   const [createInWindow, setCreateInWindow] = useState(false);
 
-  const { data: subjects = [] } = useQuery({
+  const { data: subjects = [], isPending: isSubjectsPending } = useQuery({
     queryKey: ["command-palette-subjects", userId],
     queryFn: () => getSubjects(),
     enabled: open && userId.length > 0,
@@ -70,7 +70,7 @@ export function CommandPalette({
     gcTime: 1000 * 60 * 15,
   });
 
-  const { data: documents = [] } = useQuery({
+  const { data: documents = [], isPending: isDocumentsPending } = useQuery({
     queryKey: ["command-palette-documents", userId],
     queryFn: () => getOpenableDocuments(),
     enabled: open && page === "open-doc" && userId.length > 0,
@@ -78,7 +78,7 @@ export function CommandPalette({
     gcTime: 1000 * 60 * 5,
   });
 
-  const { data: flashcards = [] } = useQuery({
+  const { data: flashcards = [], isPending: isFlashcardsPending } = useQuery({
     queryKey: ["command-palette-flashcards", userId, search],
     queryFn: async () => {
       const result = await getFlashcardsManagePage({
@@ -223,6 +223,7 @@ export function CommandPalette({
             search={search}
             onSearchChange={setSearch}
             subjects={subjects}
+            isLoading={isSubjectsPending}
             onPick={handleSubjectPicked}
           />
         ) : page === "open-doc" ? (
@@ -230,6 +231,7 @@ export function CommandPalette({
             search={search}
             onSearchChange={setSearch}
             documents={documents}
+            isLoading={isDocumentsPending}
             onPick={(kind, docId) => {
               handleOpenChange(false);
               openWindow({ kind, docId });
@@ -240,6 +242,7 @@ export function CommandPalette({
             search={search}
             onSearchChange={setSearch}
             flashcards={flashcards}
+            isLoading={isFlashcardsPending}
             onPick={(flashcard) => {
               handleOpenChange(false);
               openWindow({

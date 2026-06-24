@@ -270,6 +270,7 @@ Students who want a private, lightweight study management workspace.
 - Commands are searchable by name and keyword and grouped as Create, Windows, Go to, and Settings.
 - Create commands open the existing create dialogs: Subject, Flashcard, Assessment, Note, and Mindmap.
 - Creating a Note or Mindmap requires a subject: on a subject page the current subject is used; elsewhere the palette shows a subject picker step before opening the create dialog. Created notes and mindmaps navigate to their detail page.
+- Async picker steps show a loading state while their subject, document, or flashcard results are still loading; empty-state messages render only after loading completes with no matching results.
 - Go to commands navigate to Flashcards, Planning, and Library.
 - Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.
 - The palette hotkey is suspended while another dialog is open.
