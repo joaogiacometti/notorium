@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useEffectEvent } from "react";
 import {
   type ReviewGrade,
   reviewGradeValues,
@@ -32,9 +35,45 @@ interface GetFlashcardReviewShortcutActionInput {
   isRepeat: boolean;
 }
 
+interface UseFlashcardReviewShortcutsOptions {
+  shortcutsSuspended: boolean;
+  isFocusMode: boolean;
+  isExamMode: boolean;
+  revealed: boolean;
+  hasCurrentCard: boolean;
+  isPending: boolean;
+  isDialogOpen: boolean;
+  onReveal: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onReset: () => void;
+  onGrade: (grade: ReviewGrade) => void;
+  onExitExamMode: () => void;
+  onExitFocusMode: () => void;
+}
+
 const gradeKeyMap: Record<string, ReviewGrade> = Object.fromEntries(
   reviewGradeValues.map((grade, index) => [String(index + 1), grade]),
 ) as Record<string, ReviewGrade>;
+
+/**
+ * Wires flashcard review keyboard shortcuts for the focus/exam view.
+ *
+ * @example
+ * useFlashcardReviewShortcuts({ shortcutsSuspended, isFocusMode, isExamMode, revealed, hasCurrentCard, isPending, isDialogOpen, onReveal, onEdit, onDelete, onReset, onGrade, onExitExamMode, onExitFocusMode });
+ */
+export function useFlashcardReviewShortcuts(
+  options: UseFlashcardReviewShortcutsOptions,
+) {
+  const handleReviewKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    handleFlashcardReviewKeyDown(event, options);
+  });
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleReviewKeyDown);
+    return () => document.removeEventListener("keydown", handleReviewKeyDown);
+  }, []);
+}
 
 export function getFlashcardReviewShortcutAction({
   key,
@@ -98,4 +137,49 @@ export function isEditableFlashcardReviewKeyboardTarget(
   }
 
   return element.closest("input, textarea, select, [contenteditable]") !== null;
+}
+
+function handleFlashcardReviewKeyDown(
+  event: KeyboardEvent,
+  options: UseFlashcardReviewShortcutsOptions,
+) {
+  if (options.shortcutsSuspended) return;
+  if (handleReviewEscape(event, options)) return;
+  if (!options.isFocusMode) return;
+  const action = getFlashcardReviewShortcutAction({
+    key: event.key,
+    revealed: options.revealed,
+    hasCurrentCard: options.hasCurrentCard,
+    isPending: options.isPending,
+    isDialogOpen: options.isDialogOpen,
+    isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
+    hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
+    isRepeat: event.repeat,
+  });
+  if (!action) return;
+  event.preventDefault();
+  runFlashcardReviewShortcutAction(action, options);
+}
+
+function handleReviewEscape(
+  event: KeyboardEvent,
+  options: UseFlashcardReviewShortcutsOptions,
+): boolean {
+  if (!options.isFocusMode || event.key !== "Escape") return false;
+  if (options.isDialogOpen) return true;
+  event.preventDefault();
+  if (options.isExamMode) options.onExitExamMode();
+  else options.onExitFocusMode();
+  return true;
+}
+
+function runFlashcardReviewShortcutAction(
+  action: FlashcardReviewShortcutAction,
+  options: UseFlashcardReviewShortcutsOptions,
+) {
+  if (action.type === "reveal") options.onReveal();
+  else if (action.type === "edit") options.onEdit();
+  else if (action.type === "delete") options.onDelete();
+  else if (action.type === "reset") options.onReset();
+  else options.onGrade(action.grade);
 }

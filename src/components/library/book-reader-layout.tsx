@@ -1,39 +1,19 @@
 "use client";
 
-import {
-  AnnotationLayer,
-  type AnnotationSelectionMenuProps,
-} from "@embedpdf/plugin-annotation/react";
-import {
-  GlobalPointerProvider,
-  PagePointerProvider,
-} from "@embedpdf/plugin-interaction-manager/react";
-import { RenderLayer } from "@embedpdf/plugin-render/react";
+import { GlobalPointerProvider } from "@embedpdf/plugin-interaction-manager/react";
 import { Scroller } from "@embedpdf/plugin-scroll/react";
-import { SearchLayer } from "@embedpdf/plugin-search/react";
-import { SelectionLayer } from "@embedpdf/plugin-selection/react";
-import { TilingLayer } from "@embedpdf/plugin-tiling/react";
 import { Viewport } from "@embedpdf/plugin-viewport/react";
 import { ZoomGestureWrapper } from "@embedpdf/plugin-zoom/react";
-import { ReaderAnnotationMenu } from "@/components/library/book-reader-annotation-menu";
-import { useReaderAnnotations } from "@/components/library/book-reader-annotations";
 import { ReaderInteractionTools } from "@/components/library/book-reader-interaction-tools";
-import { linkAnnotationRenderer } from "@/components/library/book-reader-link-renderer";
 import { ReaderNavHistoryProvider } from "@/components/library/book-reader-nav-history";
+import { createReaderPageRenderer } from "@/components/library/book-reader-page-layers";
 import { ReaderSelectionMenu } from "@/components/library/book-reader-selection-menu";
 import { ReaderSidebar } from "@/components/library/book-reader-sidebar";
 import { ReaderSidebarToggle } from "@/components/library/book-reader-sidebar-toggle";
 import { ReaderToolbar } from "@/components/library/book-reader-toolbar";
-import { useReaderAnnotationShortcut } from "@/components/library/use-reader-annotation-shortcut";
-import { useReaderCopyShortcut } from "@/components/library/use-reader-copy-shortcut";
-import { useReaderDisplayShortcuts } from "@/components/library/use-reader-display-shortcuts";
-import { useReaderModeShortcuts } from "@/components/library/use-reader-mode-shortcuts";
-import { useReaderSidebarCollapsed } from "@/components/library/use-reader-sidebar-collapsed";
-import { useReaderZoom } from "@/components/library/use-reader-zoom";
-import { useReadingPosition } from "@/components/library/use-reading-position";
+import { useReaderSession } from "@/components/library/use-reader-session";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
 import type { SubjectOption } from "@/lib/server/api-contracts";
-import { cn } from "@/lib/utils";
 
 interface ReaderLayoutProps {
   documentId: string;
@@ -46,104 +26,6 @@ interface ReaderLayoutProps {
   initialAnnotations: BookAnnotationDto[];
   aiEnabled: boolean;
   subjects: SubjectOption[];
-}
-
-interface ReaderPageProps {
-  documentId: string;
-  bookId: string;
-  pageIndex: number;
-  readerColorInverted: boolean;
-}
-
-// Rendered inside the PagePointerProvider so child layers feed pointer events
-// to the interaction manager for text selection. The render and tiling layers
-// live inside a wrapper that applies an optional invert filter for dark mode;
-// SelectionLayer and AnnotationLayer stay outside to keep their normal colors.
-function ReaderPage({
-  documentId,
-  bookId,
-  pageIndex,
-  readerColorInverted,
-}: Readonly<ReaderPageProps>) {
-  return (
-    <PagePointerProvider
-      documentId={documentId}
-      pageIndex={pageIndex}
-      className="bg-background shadow-sm"
-    >
-      <div
-        className={cn(
-          "absolute inset-0 pointer-events-none",
-          readerColorInverted && "reader-invert",
-        )}
-      >
-        <RenderLayer
-          documentId={documentId}
-          pageIndex={pageIndex}
-          scale={1}
-          draggable={false}
-          style={{ pointerEvents: "none" }}
-        />
-        <TilingLayer
-          documentId={documentId}
-          pageIndex={pageIndex}
-          style={{ pointerEvents: "none" }}
-        />
-      </div>
-      <SelectionLayer documentId={documentId} pageIndex={pageIndex} />
-      <SearchLayer
-        documentId={documentId}
-        pageIndex={pageIndex}
-        highlightColor="var(--intent-warning-bg)"
-        activeHighlightColor="var(--intent-warning-fill)"
-        style={{ position: "absolute", inset: 0 }}
-      />
-      <AnnotationLayer
-        documentId={documentId}
-        pageIndex={pageIndex}
-        annotationRenderers={[linkAnnotationRenderer]}
-        selectionMenu={createSelectionMenuRenderer(documentId, bookId)}
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-        }}
-      />
-    </PagePointerProvider>
-  );
-}
-
-// Thin adapters for EmbedPDF render props so the Scroller's renderPage and
-// AnnotationLayer's selectionMenu don't create inline components inside
-// ReaderLayout (SonarQube S6478). Each closes over the stable values once at
-// module level instead of re-creating a component identity on every render.
-function createPageRenderer(
-  documentId: string,
-  bookId: string,
-  readerColorInverted: boolean,
-) {
-  return function renderPage({ pageIndex }: { pageIndex: number }) {
-    return (
-      <ReaderPage
-        documentId={documentId}
-        bookId={bookId}
-        pageIndex={pageIndex}
-        readerColorInverted={readerColorInverted}
-      />
-    );
-  };
-}
-
-function createSelectionMenuRenderer(documentId: string, bookId: string) {
-  return function renderSelectionMenu(menuProps: AnnotationSelectionMenuProps) {
-    return (
-      <ReaderAnnotationMenu
-        {...menuProps}
-        documentId={documentId}
-        bookId={bookId}
-      />
-    );
-  };
 }
 
 // Rendered inside the EmbedPDF provider, so every child can reach the plugin
@@ -168,20 +50,15 @@ export function ReaderLayout({
   aiEnabled,
   subjects,
 }: Readonly<ReaderLayoutProps>) {
-  useReadingPosition({ documentId, bookId, initialPage });
-  useReaderZoom({
-    documentId,
-    bookId,
-    initialZoomMobile,
-    initialZoomDesktop,
-  });
-  useReaderAnnotations({ documentId, bookId, initialAnnotations });
-  useReaderAnnotationShortcut(documentId);
-  useReaderCopyShortcut(documentId);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
-    useReaderSidebarCollapsed();
-  useReaderModeShortcuts({ documentId, onToggleSidebar: toggleSidebar });
-  useReaderDisplayShortcuts({ documentId });
+    useReaderSession({
+      documentId,
+      bookId,
+      initialPage,
+      initialAnnotations,
+      initialZoomMobile,
+      initialZoomDesktop,
+    });
 
   return (
     <ReaderNavHistoryProvider documentId={documentId}>
@@ -205,7 +82,7 @@ export function ReaderLayout({
                 <ZoomGestureWrapper documentId={documentId}>
                   <Scroller
                     documentId={documentId}
-                    renderPage={createPageRenderer(
+                    renderPage={createReaderPageRenderer(
                       documentId,
                       bookId,
                       readerColorInverted,

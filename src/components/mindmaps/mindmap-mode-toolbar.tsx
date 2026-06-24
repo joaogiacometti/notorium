@@ -1,7 +1,7 @@
 "use client";
 
 import { Hand, MousePointer2 } from "lucide-react";
-import type { MindmapMode } from "@/lib/mindmap/use-mindmap-mode-keys";
+import type { MindmapMode } from "@/lib/mindmap/use-mindmap-shortcuts";
 import { cn } from "@/lib/utils";
 
 interface MindmapModeToolbarProps {

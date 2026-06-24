@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlashcardReviewFocusOverlays } from "@/components/flashcards/review/flashcard-review-focus-overlays";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
@@ -8,10 +8,7 @@ import { useFlashcardReviewController } from "@/components/flashcards/review/use
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
-import {
-  getFlashcardReviewShortcutAction,
-  isEditableFlashcardReviewKeyboardTarget,
-} from "@/features/flashcard-review/shortcuts";
+import { useFlashcardReviewShortcuts } from "@/features/flashcard-review/shortcuts";
 import type {
   FlashcardReviewState,
   SubjectEntity,
@@ -113,75 +110,22 @@ export function FlashcardReviewClient({
     [currentCard, reviewState.scheduler],
   );
 
-  const handleReviewKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if (shortcutsSuspended) {
-      return;
-    }
-
-    if (isFocusMode && event.key === "Escape") {
-      // Let an open dialog own Escape so unsaved-changes confirmation can
-      // appear instead of unmounting the whole focus view.
-      if (editOpen || deleteOpen || resetOpen) {
-        return;
-      }
-      event.preventDefault();
-      if (isExamMode) {
-        handleExitExamMode();
-      } else {
-        setIsFocusMode(false);
-      }
-      return;
-    }
-
-    if (!isFocusMode) {
-      return;
-    }
-
-    const action = getFlashcardReviewShortcutAction({
-      key: event.key,
-      revealed,
-      hasCurrentCard: currentCard !== null,
-      isPending,
-      isDialogOpen: editOpen || deleteOpen || resetOpen,
-      isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
-      hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
-      isRepeat: event.repeat,
-    });
-
-    if (!action) {
-      return;
-    }
-
-    event.preventDefault();
-
-    if (action.type === "reveal") {
-      setRevealed(true);
-      return;
-    }
-
-    if (action.type === "edit") {
-      setEditOpen(true);
-      return;
-    }
-
-    if (action.type === "delete") {
-      setDeleteOpen(true);
-      return;
-    }
-
-    if (action.type === "reset") {
-      setResetOpen(true);
-      return;
-    }
-
-    handleGrade(action.grade);
+  useFlashcardReviewShortcuts({
+    shortcutsSuspended,
+    isFocusMode,
+    isExamMode,
+    revealed,
+    hasCurrentCard: currentCard !== null,
+    isPending,
+    isDialogOpen: editOpen || deleteOpen || resetOpen,
+    onReveal: () => setRevealed(true),
+    onEdit: () => setEditOpen(true),
+    onDelete: () => setDeleteOpen(true),
+    onReset: () => setResetOpen(true),
+    onGrade: handleGrade,
+    onExitExamMode: handleExitExamMode,
+    onExitFocusMode: () => setIsFocusMode(false),
   });
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleReviewKeyDown);
-
-    return () => document.removeEventListener("keydown", handleReviewKeyDown);
-  }, []);
 
   // Honor a deep link (e.g. the sidebar "Review flashcards" action) that asks to
   // open the full-screen focus session directly. Only when cards are due, and

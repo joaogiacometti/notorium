@@ -48,14 +48,13 @@ import { collectDescendants, isCrossEdge } from "@/features/mindmaps/sides";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { syncRootNodeLabel } from "@/features/mindmaps/utils";
 import { useMindmapAddChild } from "@/lib/mindmap/use-mindmap-add-child";
-import { useMindmapCopyKey } from "@/lib/mindmap/use-mindmap-copy-key";
 import { useMindmapHistory } from "@/lib/mindmap/use-mindmap-history";
 import { useMindmapImagePaste } from "@/lib/mindmap/use-mindmap-image-paste";
+import { useMindmapReparentDrag } from "@/lib/mindmap/use-mindmap-reparent-drag";
 import {
   type MindmapMode,
-  useMindmapModeKeys,
-} from "@/lib/mindmap/use-mindmap-mode-keys";
-import { useMindmapReparentDrag } from "@/lib/mindmap/use-mindmap-reparent-drag";
+  useMindmapShortcuts,
+} from "@/lib/mindmap/use-mindmap-shortcuts";
 import { cn } from "@/lib/utils";
 
 /** Imperative action the detail header's kebab menu triggers from outside the
@@ -146,7 +145,7 @@ function MindmapCanvasInner({
   // Holding Space temporarily pans regardless of the chosen tool.
   const effectiveMode: MindmapMode = spaceHeld ? "hand" : mode;
 
-  const { takeSnapshot } = useMindmapHistory({
+  const { takeSnapshot, undo, redo } = useMindmapHistory({
     nodes,
     edges,
     setNodes: (next) => setNodes(next),
@@ -372,14 +371,16 @@ function MindmapCanvasInner({
     setPendingEditNodeId,
   });
 
-  useMindmapModeKeys({
+  useMindmapShortcuts({
     setMode,
     setSpaceHeld,
     deleteSelected,
     addChildToSelected,
     addSiblingToSelected,
+    copySelected,
+    undo,
+    redo,
   });
-  useMindmapCopyKey(copySelected);
 
   const actions = useMindmapCanvasActions({
     getNode,
@@ -444,7 +445,7 @@ function MindmapCanvasInner({
           nodesDraggable
           selectionMode={SelectionMode.Partial}
           selectionKeyCode={null}
-          // Delete is handled in useMindmapModeKeys so removal is subtree-aware.
+          // Delete is handled in useMindmapShortcuts so removal is subtree-aware.
           deleteKeyCode={null}
           proOptions={{ hideAttribution: true }}
           // Center the viewport on the saved graph (the root and its children)

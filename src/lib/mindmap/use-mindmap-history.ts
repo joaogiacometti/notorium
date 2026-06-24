@@ -1,7 +1,7 @@
 "use client";
 
 import type { Edge, Node } from "@xyflow/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 /** One reversible point in the editor: the full node and edge arrays. */
 export interface MindmapSnapshot {
@@ -30,7 +30,6 @@ const MAX_HISTORY = 100;
 /**
  * Undo/redo for the mindmap canvas. React Flow ships no history, so we snapshot
  * the node/edge arrays before each mutation and restore them on undo/redo.
- * `Ctrl/Cmd+Z` undoes, `Ctrl/Cmd+Shift+Z` redoes.
  *
  * @example
  * const { takeSnapshot, undo } = useMindmapHistory({ nodes, edges, setNodes, setEdges });
@@ -90,25 +89,6 @@ export function useMindmapHistory({
     setEdges(next.edges);
     sync();
   }, [setNodes, setEdges, sync]);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        !(event.ctrlKey || event.metaKey) ||
-        event.key.toLowerCase() !== "z"
-      ) {
-        return;
-      }
-      event.preventDefault();
-      if (event.shiftKey) {
-        redo();
-      } else {
-        undo();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [undo, redo]);
 
   return { takeSnapshot, undo, redo, canUndo, canRedo };
 }

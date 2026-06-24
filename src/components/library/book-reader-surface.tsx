@@ -165,11 +165,8 @@ function buildReaderPlugins(fileUrl: string) {
     // selected, annotated, and deleted.
     createPluginRegistration(AnnotationPluginPackage, {
       locked: { type: LockModeType.Exclude, categories: [HIGHLIGHT_CATEGORY] },
-      // Creating a highlight should just highlight; it must not auto-select the
-      // new annotation and pop its note panel. The user opens the panel by
-      // clicking the highlight afterwards. The tool-level `behavior` is what the
-      // highlight tool actually honors — the plugin-level flag alone is not
-      // enough, so set both.
+      // The tool-level `behavior` is what the highlight tool actually honors:
+      // set both so highlighting stays quick and the note panel opens on click.
       selectAfterCreate: false,
       tools: [
         {

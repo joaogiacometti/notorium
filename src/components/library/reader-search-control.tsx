@@ -7,11 +7,10 @@ import type {
   KeyboardEvent as ReactKeyboardEvent,
   ReactNode,
   Ref,
-  RefObject,
 } from "react";
 import { useEffect, useRef, useState } from "react";
+import { useReaderSearchShortcut } from "@/components/library/use-reader-shortcuts";
 import { Button } from "@/components/ui/button";
-import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
 
 interface ReaderSearchControlProps {
@@ -60,7 +59,7 @@ export function ReaderSearchControl({
     globalThis.setTimeout(() => inputRef.current?.select(), 0);
   }
 
-  useReaderFindShortcut({ inputRef, openSearch: focusSearch });
+  useReaderSearchShortcut({ inputRef, openSearch: focusSearch });
   useSearchOnQueryChange({ query, open, searchProvides: search.provides });
   useScrollToActiveResult({
     activeResultIndex: search.state.activeResultIndex,
@@ -107,33 +106,6 @@ export function ReaderSearchControl({
       </Button>
     </div>
   );
-}
-
-interface UseReaderFindShortcutOptions {
-  inputRef: RefObject<HTMLInputElement | null>;
-  openSearch: () => void;
-}
-
-function useReaderFindShortcut({
-  inputRef,
-  openSearch,
-}: Readonly<UseReaderFindShortcutOptions>) {
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (!isFindShortcut(event)) return;
-      if (event.target !== inputRef.current && isEditableTarget(event.target)) {
-        return;
-      }
-      event.preventDefault();
-      openSearch();
-    }
-    globalThis.addEventListener("keydown", onKeyDown);
-    return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [inputRef, openSearch]);
-}
-
-function isFindShortcut(event: KeyboardEvent): boolean {
-  return (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f";
 }
 
 interface UseSearchOnQueryChangeOptions {
