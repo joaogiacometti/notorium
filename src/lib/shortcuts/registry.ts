@@ -302,6 +302,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Reader,
   },
   {
+    id: "reader-search",
+    kind: "keys",
+    keys: ["cmd+f", "ctrl+f"],
+    description: "Search in book",
+    category: ShortcutCategory.Reader,
+  },
+  {
     id: "reader-zoom-in",
     kind: "keys",
     keys: ["cmd+=", "ctrl+="],

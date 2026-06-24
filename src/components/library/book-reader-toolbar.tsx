@@ -20,6 +20,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useReaderFullscreen } from "@/components/library/book-reader-fullscreen";
 import { useReaderNavHistory } from "@/components/library/book-reader-nav-history";
+import { ReaderSearchControl } from "@/components/library/reader-search-control";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -75,6 +76,7 @@ export function ReaderToolbar({
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-1">
+        <ReaderSearchControl documentId={documentId} />
         {/* Tools dropdown: zoom, spread, fullscreen. */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -165,7 +167,7 @@ function PageNavigator({ documentId }: Readonly<PageNavigatorProps>) {
     }
     const page = Math.min(Math.max(target, 1), state.totalPages);
     setValue(String(page));
-    provides?.scrollToPage({ pageNumber: page, behavior: "smooth" });
+    provides?.scrollToPage({ pageNumber: page, behavior: "instant" });
   }
 
   return (

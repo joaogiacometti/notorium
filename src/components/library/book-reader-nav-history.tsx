@@ -93,7 +93,7 @@ export function ReaderNavHistoryProvider({
     provides?.scrollToPage({
       pageNumber: view.pageNumber,
       pageCoordinates: { x: view.x, y: view.y },
-      behavior: "smooth",
+      behavior: "instant",
     });
   };
 

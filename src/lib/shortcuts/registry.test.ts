@@ -192,6 +192,10 @@ describe("shortcutRegistry", () => {
       keys: ["cmd+b", "ctrl+b"],
       description: "Toggle sidebar",
     });
+    expect(reader.find((item) => item.id === "reader-search")).toMatchObject({
+      keys: ["cmd+f", "ctrl+f"],
+      description: "Search in book",
+    });
   });
 
   it("lists reader zoom, fullscreen, and spread shortcuts", () => {

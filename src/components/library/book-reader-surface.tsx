@@ -11,6 +11,7 @@ import { InteractionManagerPluginPackage } from "@embedpdf/plugin-interaction-ma
 import { PanPluginPackage } from "@embedpdf/plugin-pan/react";
 import { RenderPluginPackage } from "@embedpdf/plugin-render/react";
 import { ScrollPluginPackage } from "@embedpdf/plugin-scroll/react";
+import { SearchPluginPackage } from "@embedpdf/plugin-search/react";
 import { SelectionPluginPackage } from "@embedpdf/plugin-selection/react";
 import { SpreadPluginPackage } from "@embedpdf/plugin-spread/react";
 import { ThumbnailPluginPackage } from "@embedpdf/plugin-thumbnail/react";
@@ -156,6 +157,9 @@ function buildReaderPlugins(fileUrl: string) {
     // Selection renders the text layer over each page so the rasterized PDF
     // becomes selectable/copyable instead of an inert image.
     createPluginRegistration(SelectionPluginPackage),
+    // Search owns document-wide text matching; SearchLayer is mounted per page
+    // in the layout so EmbedPDF paints its native result highlights.
+    createPluginRegistration(SearchPluginPackage),
     // Everything locked except the user-highlight category, so existing PDF
     // annotations and links stay read-only while the user's highlights can be
     // selected, annotated, and deleted.
@@ -186,8 +190,7 @@ function buildReaderPlugins(fileUrl: string) {
       defaultZoomLevel: ZoomMode.FitPage,
     }),
     createPluginRegistration(SpreadPluginPackage),
-    // "instant" so re-opening the Pages sidebar snaps to the current page
-    // instead of smooth-scrolling the thumbnail rail to it on every mount.
+    // "instant" so re-opening the Pages sidebar snaps to the current page.
     createPluginRegistration(ThumbnailPluginPackage, {
       scrollBehavior: "instant",
     }),

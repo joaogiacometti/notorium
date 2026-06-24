@@ -46,7 +46,7 @@ export function ReaderAskAiDialog({
   }, [open]);
 
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    threadEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, []);
 
   async function handleAsk() {

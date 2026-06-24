@@ -10,6 +10,7 @@ import {
 } from "@embedpdf/plugin-interaction-manager/react";
 import { RenderLayer } from "@embedpdf/plugin-render/react";
 import { Scroller } from "@embedpdf/plugin-scroll/react";
+import { SearchLayer } from "@embedpdf/plugin-search/react";
 import { SelectionLayer } from "@embedpdf/plugin-selection/react";
 import { TilingLayer } from "@embedpdf/plugin-tiling/react";
 import { Viewport } from "@embedpdf/plugin-viewport/react";
@@ -90,6 +91,13 @@ function ReaderPage({
         />
       </div>
       <SelectionLayer documentId={documentId} pageIndex={pageIndex} />
+      <SearchLayer
+        documentId={documentId}
+        pageIndex={pageIndex}
+        highlightColor="var(--intent-warning-bg)"
+        activeHighlightColor="var(--intent-warning-fill)"
+        style={{ position: "absolute", inset: 0 }}
+      />
       <AnnotationLayer
         documentId={documentId}
         pageIndex={pageIndex}
