@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 
 interface MindmapDetailProps {
   aiEnabled: boolean;
-  subjects: SubjectOption[];
+  subjects?: SubjectOption[];
   mindmap: MindmapEntity;
   subjectName: string;
   /**
@@ -90,7 +90,7 @@ export function MindmapDetail({
   const [editOpen, setEditOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const hasSubjects = subjects.length > 0;
+  const hasSubjects = subjects ? subjects.length > 0 : true;
   const lastSavedRef = useRef(
     JSON.stringify({ title: mindmap.title, data: initialGraph }),
   );

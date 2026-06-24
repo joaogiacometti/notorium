@@ -1,10 +1,11 @@
 "use client";
 
 import { Loader2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { generateFlashcardsFromMindmap } from "@/app/actions/flashcard-generation";
 import { createFlashcard } from "@/app/actions/flashcards";
+import { getSubjectOptions } from "@/app/actions/subjects";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ interface GeneratedCard {
 }
 
 interface GenerateMindmapFlashcardsDialogProps {
-  subjects: SubjectOption[];
+  subjects?: SubjectOption[];
   mindmapId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -56,14 +57,37 @@ export function GenerateMindmapFlashcardsDialog({
   open,
   onOpenChange,
 }: Readonly<GenerateMindmapFlashcardsDialogProps>) {
+  const [loadedSubjects, setLoadedSubjects] = useState<SubjectOption[] | null>(
+    subjects ?? null,
+  );
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
-    subjects[0]?.id ?? null,
+    subjects?.[0]?.id ?? null,
   );
   const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(
     null,
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
+  const subjectOptions = loadedSubjects ?? [];
+
+  useEffect(() => {
+    if (!open || loadedSubjects) return;
+
+    setIsLoadingSubjects(true);
+    getSubjectOptions()
+      .then((nextSubjects) => {
+        setLoadedSubjects(nextSubjects);
+        setSelectedSubjectId(
+          (current) => current ?? nextSubjects[0]?.id ?? null,
+        );
+      })
+      .catch(() => {
+        setLoadedSubjects([]);
+        toast.error("Could not load subjects.");
+      })
+      .finally(() => setIsLoadingSubjects(false));
+  }, [loadedSubjects, open]);
 
   async function handleGenerate() {
     if (!selectedSubjectId) {
@@ -175,18 +199,26 @@ export function GenerateMindmapFlashcardsDialog({
                 <SubjectSelect
                   value={selectedSubjectId}
                   onChange={setSelectedSubjectId}
-                  subjects={subjects}
+                  subjects={subjectOptions}
                   id="mindmap-flashcards-subject"
+                  disabled={isLoadingSubjects}
                 />
               </FieldGroup>
             </div>
             <div className="shrink-0 border-t px-4 py-4 sm:px-6">
               <Button
                 type="submit"
-                disabled={isGenerating || !selectedSubjectId}
+                disabled={
+                  isLoadingSubjects || isGenerating || !selectedSubjectId
+                }
                 className="w-full"
               >
-                {isGenerating ? (
+                {isLoadingSubjects ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Loading subjects...
+                  </>
+                ) : isGenerating ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
                     Generating...

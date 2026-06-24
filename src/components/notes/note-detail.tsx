@@ -46,7 +46,7 @@ import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
   aiEnabled: boolean;
-  subjects: SubjectOption[];
+  subjects?: SubjectOption[];
   note: NoteEntity;
   subjectName: string;
   /**
@@ -97,7 +97,7 @@ export function NoteDetail({
   const lastSavedValuesRef = useRef(getEditValues(note));
   const saveSequenceRef = useRef(0);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
-  const hasSubjects = subjects.length > 0;
+  const hasSubjects = subjects ? subjects.length > 0 : true;
   const form = useForm<EditNoteForm>({
     resolver: zodResolver(editNoteSchema),
     defaultValues: getEditValues(note),
