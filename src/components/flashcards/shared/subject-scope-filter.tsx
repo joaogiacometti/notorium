@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { FlashcardsView } from "@/features/flashcards/view";
+import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ interface SubjectScopeFilterProps {
   view: FlashcardsView;
   selectedSubjectId?: string;
   className?: string;
+  onPendingChange?: (pending: boolean) => void;
 }
 
 const allSubjectsValue = "__all_subjects__";
@@ -41,9 +43,16 @@ export function SubjectScopeFilter({
   view,
   selectedSubjectId,
   className,
+  onPendingChange,
 }: Readonly<SubjectScopeFilterProps>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [pendingSubjectId, setPendingSubjectId] = useState<string | null>(null);
+  const isPending = pendingSubjectId !== null;
+  const isPendingVisible = useSmoothedLoadingState(isPending, {
+    delayMs: 0,
+    minimumVisibleMs: 180,
+  });
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -52,6 +61,23 @@ export function SubjectScopeFilter({
   );
   const selectedLabel = selectedSubject?.path ?? "All subjects";
   const filteredSubjects = getFilteredSubjects(subjects, searchQuery);
+
+  useEffect(() => {
+    if (pendingSubjectId === null) {
+      return;
+    }
+
+    const requestedId =
+      pendingSubjectId === allSubjectsValue ? undefined : pendingSubjectId;
+
+    if (selectedSubjectId === requestedId) {
+      setPendingSubjectId(null);
+    }
+  }, [selectedSubjectId, pendingSubjectId]);
+
+  useEffect(() => {
+    onPendingChange?.(isPendingVisible);
+  }, [isPendingVisible, onPendingChange]);
 
   useEffect(() => {
     if (!open) {
@@ -71,6 +97,8 @@ export function SubjectScopeFilter({
       return;
     }
 
+    setPendingSubjectId(value);
+
     startTransition(() => {
       router.replace(getScopeHref(view, nextSubjectId));
     });
@@ -88,12 +116,17 @@ export function SubjectScopeFilter({
             role="combobox"
             aria-expanded={open}
             aria-label="Filter by subject"
-            className="inline-flex h-9 w-full max-w-xs items-center justify-between gap-2 rounded-md border border-border/70 bg-background px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            disabled={isPending}
+            className="inline-flex h-9 w-full max-w-xs items-center justify-between gap-2 rounded-md border border-border/70 bg-background px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
           >
             <span className="min-w-0 flex-1 truncate text-left">
               {selectedLabel}
             </span>
-            <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+            {isPendingVisible ? (
+              <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+            ) : (
+              <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+            )}
           </button>
         </PopoverTrigger>
         <PopoverContent
