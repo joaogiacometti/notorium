@@ -222,10 +222,20 @@ function useScrollToActiveResult({
   results,
   scrollToPage,
 }: Readonly<UseScrollToActiveResultOptions>) {
+  const lastScrolledResultKey = useRef<string | null>(null);
+
   useEffect(() => {
     const result = results[activeResultIndex];
     if (!result) return;
     const rect = result.rects[0];
+    const resultKey = [
+      activeResultIndex,
+      result.pageIndex,
+      rect?.origin.x ?? "",
+      rect?.origin.y ?? "",
+    ].join(":");
+    if (resultKey === lastScrolledResultKey.current) return;
+    lastScrolledResultKey.current = resultKey;
     scrollToPage?.({
       pageNumber: result.pageIndex + 1,
       pageCoordinates: rect
