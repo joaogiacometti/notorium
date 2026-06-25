@@ -46,6 +46,21 @@ function nodeLabel(node: Node | undefined): string {
   return text.length > 0 ? text : "Untitled";
 }
 
+function appendNodeLabelLine(
+  label: string,
+  depth: number,
+  lines: string[],
+  edgeLabel?: string,
+): void {
+  const [firstLine = "", ...rest] = label.split("\n");
+  const indent = INDENT.repeat(depth);
+  const prefix = edgeLabel ? `${edgeLabel} → ` : "";
+  lines.push(`${indent}- ${prefix}${firstLine}`);
+  for (const line of rest) {
+    lines.push(`${indent}${INDENT}${line}`);
+  }
+}
+
 /** True when a tree ancestor of `id` is also selected, so `id` will be rendered
  * nested under that ancestor instead of as its own top-level branch. */
 function hasSelectedAncestor(
@@ -83,10 +98,7 @@ function appendSubtree(
     return;
   }
   visited.add(id);
-  const prefix = edgeLabel ? `${edgeLabel} → ` : "";
-  lines.push(
-    `${INDENT.repeat(depth)}- ${prefix}${nodeLabel(nodeById.get(id))}`,
-  );
+  appendNodeLabelLine(nodeLabel(nodeById.get(id)), depth, lines, edgeLabel);
   for (const child of children.get(id) ?? []) {
     appendSubtree(
       child.id,

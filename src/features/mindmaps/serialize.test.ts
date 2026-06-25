@@ -51,6 +51,17 @@ describe("serializeMindmapSelection", () => {
     );
   });
 
+  it("preserves multiline labels such as fenced code blocks", () => {
+    const code =
+      "```ts\nclass Email {\n  constructor(readonly value: string) {}\n}\n```";
+    const nodes = [node("a", "Value object"), node("b", code)];
+    const edges = [edge("a", "b", "example")];
+
+    expect(serializeMindmapSelection(nodes, edges, ["a"])).toBe(
+      "- Value object\n  - example → ```ts\n    class Email {\n      constructor(readonly value: string) {}\n    }\n    ```",
+    );
+  });
+
   it("does not repeat a selected node nested under another selected ancestor", () => {
     const nodes = [node("root", "Root"), node("child", "Child")];
     const edges = [edge("root", "child")];

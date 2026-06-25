@@ -9,7 +9,7 @@ const LANGUAGE_RULE =
   "Output language: English only. Regardless of the source material or card language, all generated text must be in English.";
 
 const MATH_RULE =
-  "Math notation: write mathematical expressions as LaTeX — $...$ for inline math (e.g. $E = mc^2$) and $$...$$ for a standalone block equation. Do not use \\( \\), \\[ \\], Unicode math symbols, or images. This LaTeX is the only exception to the plain-text rule.";
+  "Math notation: write mathematical expressions as LaTeX — $...$ for inline math (e.g. $E = mc^2$) and $$...$$ for a standalone block equation. Do not use \\( \\), \\[ \\], Unicode math symbols, or add new images. This LaTeX is the only exception to the plain-text rule.";
 
 export const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(LIMITS.flashcardAiBackMax),
@@ -215,6 +215,8 @@ Rules:
 - Do not repeat, restate, or paraphrase the front in the back.
 - Do not include extra context, examples, caveats, or details beyond the source material.
 - Avoid trivial or obvious information.
+- If the source material includes an explicit code example that explains the concept, preserve the smallest useful snippet in the back as a fenced code block instead of summarizing it away.
+- If source material contains image placeholders like {{IMAGE_0}}, include the exact placeholder in the back of any card that depends on that image.
 - Output as many cards as the material warrants, but prefer fewer high-value cards over many weak cards.
 - ${MATH_RULE}
 

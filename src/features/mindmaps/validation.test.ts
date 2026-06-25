@@ -87,6 +87,22 @@ describe("editMindmapSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts code-sized multiline node labels", () => {
+    const data = JSON.stringify({
+      nodes: [
+        {
+          id: "n1",
+          position: { x: 0, y: 0 },
+          data: { label: `\`\`\`ts\n${"a".repeat(1000)}\n\`\`\`` },
+        },
+      ],
+      edges: [],
+    });
+    expect(
+      editMindmapSchema.safeParse({ id: "m1", title: "Map", data }).success,
+    ).toBe(true);
+  });
+
   it("accepts node bold, italic, and root kind", () => {
     const data = JSON.stringify({
       nodes: [

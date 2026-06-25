@@ -223,6 +223,16 @@ describe("normalizeGeneratedBack", () => {
       "Queue implements point-to-point delivery where each message is processed by exactly one consumer.\n- Topic implements publish-subscribe delivery where one message is broadcast to all subscribed consumers.\n- Queues are optimized for task distribution and load balancing among workers.\n- Topics are optimized for event notification and broadcasting data to multiple independent systems.",
     );
   });
+
+  it("normalizes dangling dash bullets before wrapped text and code blocks", () => {
+    expect(
+      normalizeGeneratedBack(
+        "- Suitable for simple business logic - Requires rollback actions -\nShould be avoided on core subdomains - May lead to code duplication -\n\n```sql\nUPDATE users SET visits = visits + 1\n```",
+      ),
+    ).toBe(
+      "- Suitable for simple business logic\n- Requires rollback actions\n- Should be avoided on core subdomains\n- May lead to code duplication\n\n```sql\nUPDATE users SET visits = visits + 1\n```",
+    );
+  });
 });
 
 describe("plainTextToRichText", () => {
@@ -352,6 +362,12 @@ describe("flashcardsGenerationSystemPrompt", () => {
     );
     expect(flashcardsGenerationSystemPrompt).toContain(
       "Do not repeat, restate, or paraphrase the front in the back.",
+    );
+  });
+
+  it("allows source code examples when they are explicit source material", () => {
+    expect(flashcardsGenerationSystemPrompt).toContain(
+      "preserve the smallest useful snippet in the back as a fenced code block",
     );
   });
 

@@ -39,4 +39,12 @@ describe("plainTextToRichText math conversion", () => {
       '<p>Newton&#39;s second law:</p><div data-type="block-math" data-latex="F = ma"></div><p>holds</p>',
     );
   });
+
+  it("converts fenced code blocks into rich text code blocks", () => {
+    expect(
+      plainTextToRichText("Example:\n\n```csharp\nclass Person\n{\n}\n```"),
+    ).toBe(
+      '<p>Example:</p><pre><code class="language-csharp">class Person\n{\n}</code></pre>',
+    );
+  });
 });

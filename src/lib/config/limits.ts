@@ -7,6 +7,7 @@ export const LIMITS = {
   maxNodesPerMindmap: 200,
   maxAttachmentsPerMindmap: 50,
   mindmapTitleMax: 200,
+  mindmapNodeLabelMax: 4000,
   mindmapEdgeLabelMax: 100,
   mindmapDataMaxBytes: 200000,
   maxAttachmentsPerNote: 20,
@@ -48,7 +49,7 @@ export const LIMITS = {
   flashcardAiMaxOutput: 50,
   flashcardBatchSize: 500,
   flashcardAiFrontMax: 500,
-  flashcardAiBackMax: 400,
+  flashcardAiBackMax: 1200,
   maxOcclusionRegionsPerNote: 50,
   occlusionLabelMax: 200,
 

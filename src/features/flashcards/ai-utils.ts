@@ -7,6 +7,11 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
+function codeBlockHtml(language: string, code: string): string {
+  const className = language ? ` class="language-${escapeHtml(language)}"` : "";
+  return `<pre><code${className}>${escapeHtml(code.trimEnd())}</code></pre>`;
+}
+
 export function normalizeLine(value: string) {
   return value.replaceAll(/\s+/g, " ").trim();
 }
@@ -17,6 +22,8 @@ const PROSE_HEADER_RE =
   /^(Here (?:are|is)\s+(?:the\s+)?(?:key\s+)?(?:points?|answer)|Key points?|Summary|Definition)\s*:\s*\n(?=(?:[-*]\s+|\d+\.\s+))/i;
 
 const INLINE_BULLET_RE = /(?<!\n) - /g;
+const LINE_BREAK_BULLET_RE = / -[ \t]*\n(?=\S)/g;
+const DANGLING_BULLET_RE = / -[ \t]*(?=\n\s*\n|$)/g;
 
 export function normalizeGeneratedBack(value: string): string {
   let normalized = value.replaceAll("\r\n", "\n").trim();
@@ -28,6 +35,8 @@ export function normalizeGeneratedBack(value: string): string {
   } while (normalized !== prev);
 
   normalized = normalized.replace(PROSE_HEADER_RE, "").trim();
+  normalized = normalized.replace(LINE_BREAK_BULLET_RE, "\n- ");
+  normalized = normalized.replace(DANGLING_BULLET_RE, "");
   normalized = normalized.replace(INLINE_BULLET_RE, "\n- ");
 
   return normalized;
@@ -95,20 +104,14 @@ function classifyLines(lines: string[]): BlockType {
   return "paragraph";
 }
 
-export function plainTextToRichText(value: string): string {
-  const { text, segments } = extractMathSegments(value);
-
-  const blocks = text
+function textBlocksToRichText(value: string): string {
+  const blocks = value
     .replaceAll("\r\n", "\n")
     .split(/\n\s*\n/g)
     .map((block) => block.trim())
     .filter((block) => block.length > 0);
 
-  if (blocks.length === 0) {
-    return "";
-  }
-
-  const html = blocks
+  return blocks
     .map((block) => {
       const lines = block
         .split("\n")
@@ -134,6 +137,25 @@ export function plainTextToRichText(value: string): string {
       return `<p>${escapeHtml(lines.join(" "))}</p>`;
     })
     .join("");
+}
+
+export function plainTextToRichText(value: string): string {
+  const { text, segments } = extractMathSegments(value);
+  const chunks: string[] = [];
+  let cursor = 0;
+
+  for (const match of text.matchAll(/```([A-Za-z0-9_-]*)\n([\s\S]*?)```/g)) {
+    const index = match.index ?? 0;
+    chunks.push(textBlocksToRichText(text.slice(cursor, index)));
+    chunks.push(codeBlockHtml(match[1] ?? "", match[2] ?? ""));
+    cursor = index + match[0].length;
+  }
+  chunks.push(textBlocksToRichText(text.slice(cursor)));
+
+  const html = chunks.join("");
+  if (html.length === 0) {
+    return "";
+  }
 
   return renderMathSegments(html, segments);
 }

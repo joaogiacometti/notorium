@@ -1,7 +1,7 @@
 "use server";
 
 import { generateFlashcardsForUser as generateFlashcardsForUserService } from "@/features/flashcards/ai-service";
-import { buildMindmapFlashcardSource } from "@/features/flashcards/mindmap-source";
+import { buildMindmapFlashcardSourceWithImages } from "@/features/flashcards/mindmap-source";
 import { buildNoteFlashcardSource } from "@/features/flashcards/note-source";
 import { countFlashcardsBySubjectForUser } from "@/features/flashcards/queries";
 import {
@@ -21,6 +21,14 @@ import {
   type ActionErrorResult,
   actionError,
 } from "@/lib/server/server-action-errors";
+
+function restoreUsedMindmapImages(value: string, images: string[]): string {
+  let result = value;
+  images.forEach((image, index) => {
+    result = result.replaceAll(`{{IMAGE_${index}}}`, image);
+  });
+  return result;
+}
 
 export async function generateFlashcards(
   data: GenerateFlashcardsForm,
@@ -149,17 +157,28 @@ export async function generateFlashcardsFromMindmap(
         });
       }
 
+      const source = buildMindmapFlashcardSourceWithImages({
+        title: existingMindmap.title,
+        data: existingMindmap.data,
+      });
       const result = await generateFlashcardsForUserService({
         userId,
         subjectName: existingSubject.name,
         noteTitle: existingMindmap.title,
-        text: buildMindmapFlashcardSource({
-          title: existingMindmap.title,
-          data: existingMindmap.data,
-        }),
+        text: source.text,
       });
 
-      return result;
+      if (!result.success || source.images.length === 0) {
+        return result;
+      }
+
+      return {
+        ...result,
+        cards: result.cards.map((card) => ({
+          front: card.front,
+          back: restoreUsedMindmapImages(card.back, source.images),
+        })),
+      };
     },
   );
 }

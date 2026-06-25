@@ -10,7 +10,7 @@ export const mindmapNodeSchema = z.object({
   id: z.string().min(1),
   position: z.object({ x: z.number(), y: z.number() }),
   data: z.object({
-    label: z.string().max(LIMITS.mindmapTitleMax),
+    label: z.string().max(LIMITS.mindmapNodeLabelMax),
     color: z.enum(MINDMAP_NODE_COLOR_TOKENS).optional(),
     bold: z.boolean().optional(),
     italic: z.boolean().optional(),

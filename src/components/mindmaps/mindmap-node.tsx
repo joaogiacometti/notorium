@@ -16,6 +16,7 @@ import { MindmapToolbarButton } from "@/components/mindmaps/mindmap-toolbar-butt
 import { SUPPORTED_ATTACHMENT_IMAGE_MIME_TYPES } from "@/features/attachments/validation";
 import { MINDMAP_NODE_COLOR_TOKENS } from "@/features/mindmaps/constants";
 import type { MindmapNode } from "@/features/mindmaps/types";
+import { LIMITS } from "@/lib/config/limits";
 import { getPastedImageFile } from "@/lib/editor/clipboard-image";
 import {
   shouldKeepMindmapEditorAfterBlur,
@@ -130,6 +131,26 @@ export function MindmapNodeComponent({
       setEditing(true);
     }
   }, [id, actions]);
+
+  useEffect(() => {
+    if (!selected || isMultiSelect || editing) {
+      return;
+    }
+    const onPaste = (event: ClipboardEvent) => {
+      if (getPastedImageFile(event)) {
+        return;
+      }
+      const pastedText = event.clipboardData?.getData("text/plain") ?? "";
+      const text = pastedText.slice(0, LIMITS.mindmapNodeLabelMax);
+      if (!text) {
+        return;
+      }
+      event.preventDefault();
+      updateNodeData(id, { label: text });
+    };
+    globalThis.addEventListener("paste", onPaste);
+    return () => globalThis.removeEventListener("paste", onPaste);
+  }, [id, selected, isMultiSelect, editing, updateNodeData]);
 
   const resize = useCallback(() => {
     const element = textareaRef.current;
@@ -380,6 +401,7 @@ function NodeLabel({
       ref={setTextareaRef}
       rows={1}
       value={label}
+      maxLength={LIMITS.mindmapNodeLabelMax}
       onChange={(event) => onChange(event.target.value)}
       onBlur={() => {
         if (shouldKeepMindmapEditorAfterBlur()) {
