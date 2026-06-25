@@ -53,6 +53,7 @@ export function FlashcardReviewClient({
   const controller = useFlashcardReviewController({
     initialState,
     subjectId,
+    isFocusMode,
     resetFocusViewState,
     setFocusMode: setIsFocusMode,
   });

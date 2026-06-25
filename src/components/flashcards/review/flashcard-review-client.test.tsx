@@ -236,6 +236,29 @@ describe("FlashcardReviewClient", () => {
     expect(getFlashcardReviewStateMock).not.toHaveBeenCalled();
   });
 
+  it("skips return refresh while review focus mode is active", async () => {
+    await renderReviewClient(makeReviewState(1, [makeCard("card-1")]));
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="flashcard-review-start-button"]',
+        )
+        ?.click();
+    });
+
+    expect(
+      container.querySelector('[data-testid="review-focus-mode"]'),
+    ).toBeTruthy();
+
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(getFlashcardReviewStateMock).not.toHaveBeenCalled();
+  });
+
   it("submits grades through the review server action", async () => {
     const card = makeCard("card-1");
     reviewFlashcardMock.mockResolvedValue({

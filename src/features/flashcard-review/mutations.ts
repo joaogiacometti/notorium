@@ -147,7 +147,11 @@ async function applyFlashcardReviewForUser(
   return {
     success: true,
     reviewedCardId: existingCard.id,
-    flashcard: updatedCard,
+    flashcard: {
+      ...updatedCard,
+      subjectName: existingCard.subjectName,
+      subjectPath: existingCard.subjectPath,
+    },
   };
 }
 

@@ -133,6 +133,8 @@ describe("reviewFlashcardForUser", () => {
       lastReviewedAt: new Date("2026-03-03T12:00:00.000Z"),
       reviewCount: 10,
       lapseCount: 0,
+      subjectName: "Biology",
+      subjectPath: "Biology::Cells",
     });
     scheduleFlashcardReviewMock.mockReturnValueOnce({
       state: "review",
@@ -189,6 +191,8 @@ describe("reviewFlashcardForUser", () => {
         id: "flashcard-1",
         reviewCount: 11,
         intervalDays: 7,
+        subjectName: "Biology",
+        subjectPath: "Biology::Cells",
       }),
     });
     expect(setMock).toHaveBeenCalledWith(

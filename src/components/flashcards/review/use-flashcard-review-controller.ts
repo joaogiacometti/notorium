@@ -31,6 +31,7 @@ const reviewBatchLimit = 50;
 interface UseFlashcardReviewControllerParams {
   initialState: FlashcardReviewState;
   subjectId?: string;
+  isFocusMode: boolean;
   resetFocusViewState: () => void;
   setFocusMode: (isFocusMode: boolean) => void;
 }
@@ -52,6 +53,7 @@ interface UseFlashcardReviewControllerParams {
 export function useFlashcardReviewController({
   initialState,
   subjectId,
+  isFocusMode,
   resetFocusViewState,
   setFocusMode,
 }: UseFlashcardReviewControllerParams) {
@@ -134,7 +136,12 @@ export function useFlashcardReviewController({
   }
 
   const refreshReviewStateOnReturn = useEffectEvent(async () => {
-    if (isExamMode || isPending || isRefreshingOnReturnRef.current) {
+    if (
+      isFocusMode ||
+      isExamMode ||
+      isPending ||
+      isRefreshingOnReturnRef.current
+    ) {
       return;
     }
 
