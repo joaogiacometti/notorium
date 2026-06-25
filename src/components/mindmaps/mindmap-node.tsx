@@ -32,6 +32,14 @@ const IMAGE_ACCEPT = SUPPORTED_ATTACHMENT_IMAGE_MIME_TYPES.join(",");
 
 type MindmapNodeData = MindmapNode["data"];
 
+function focusLabelTextarea(element: HTMLTextAreaElement | null) {
+  if (!element) {
+    return;
+  }
+  element.focus();
+  element.select();
+}
+
 /**
  * Manages image upload, paste-to-attach, and the hidden file input for a single
  * mindmap node. Keeps the upload state and clipboard listener self-contained so
@@ -136,9 +144,11 @@ export function MindmapNodeComponent({
     if (!editing) {
       return;
     }
-    resize();
-    textareaRef.current?.focus();
-    textareaRef.current?.select();
+    const timeoutId = window.setTimeout(() => {
+      resize();
+      focusLabelTextarea(textareaRef.current);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [editing, resize]);
   useMindmapWindowFocusRestore(editing, textareaRef);
 
@@ -268,6 +278,7 @@ export function MindmapNodeComponent({
         bold={Boolean(data.bold)}
         italic={Boolean(data.italic)}
         textareaRef={textareaRef}
+        onEditorMount={focusLabelTextarea}
         onEditStart={() => setEditing(true)}
         onEditEnd={() => setEditing(false)}
         onChange={(value) => {
@@ -317,6 +328,7 @@ interface NodeLabelProps {
   bold: boolean;
   italic: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  onEditorMount: (element: HTMLTextAreaElement | null) => void;
   onEditStart: () => void;
   onEditEnd: () => void;
   onChange: (value: string) => void;
@@ -331,10 +343,20 @@ function NodeLabel({
   bold,
   italic,
   textareaRef,
+  onEditorMount,
   onEditStart,
   onEditEnd,
   onChange,
 }: Readonly<NodeLabelProps>) {
+  const setTextareaRef = useCallback(
+    (element: HTMLTextAreaElement | null) => {
+      textareaRef.current = element;
+      if (element) {
+        onEditorMount(element);
+      }
+    },
+    [textareaRef, onEditorMount],
+  );
   const displayClass = cn(
     "block w-full whitespace-pre-wrap break-words text-left",
     bold && "font-bold",
@@ -355,7 +377,7 @@ function NodeLabel({
 
   return (
     <textarea
-      ref={textareaRef}
+      ref={setTextareaRef}
       rows={1}
       value={label}
       onChange={(event) => onChange(event.target.value)}

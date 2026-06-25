@@ -8,7 +8,7 @@ It is built for a single trusted group: the first account becomes an admin, and 
 
 - **Subjects** — a nestable tree of academic or general subjects, navigated from a persistent sidebar with drag-and-drop reorganization.
 - **Notes** — rich-text notes with tables, syntax-highlighted code, and searchable LaTeX math (KaTeX), edited inline with autosave.
-- **Mindmaps** — free-form React Flow canvases scoped to a subject, exportable as PNG.
+- **Mindmaps** — branch-ordered React Flow canvases scoped to a subject, exportable as PNG.
 - **Flashcards** — basic, cloze, and image-occlusion cards organized by subject, reviewed with an FSRS spaced-repetition scheduler. Focus Mode and Exam Mode tune the review session.
 - **Library** — upload PDF books and read them in an in-app reader with zoom, two-page spread, in-PDF text search, thumbnails, outline and highlight navigation, per-device saved reading position, text selection, and highlights with notes.
 - **Attendance & Assessments** — per-subject absence tracking and an assessment planner with a calendar/planning view and optional email reminders.

@@ -6,7 +6,6 @@ import {
   type Connection,
   Controls,
   type Edge,
-  type FinalConnectionState,
   type Node,
   type OnConnect,
   Panel,
@@ -215,70 +214,6 @@ function MindmapCanvasInner({
     [setEdges, takeSnapshot],
   );
 
-  // Dropping a dragged connection onto empty canvas creates a new node and
-  // links it to the source, so users can grow a map by branching.
-  const onConnectEnd = useCallback(
-    (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
-      if (connectionState.isValid) {
-        return;
-      }
-
-      const fromNodeId = connectionState.fromNode?.id;
-      if (!fromNodeId) {
-        return;
-      }
-
-      // A touch end can carry an empty changedTouches list; bail rather than
-      // dereferencing an undefined point and crashing the drop handler.
-      const point = "changedTouches" in event ? event.changedTouches[0] : event;
-      if (!point) {
-        return;
-      }
-      const newNodeId = crypto.randomUUID();
-      const dropPosition = screenToFlowPosition({
-        x: point.clientX,
-        y: point.clientY,
-      });
-      takeSnapshot();
-
-      setNodes((current) =>
-        current
-          .map((node) => ({ ...node, selected: false }))
-          .concat({
-            id: newNodeId,
-            type: "mindmap",
-            position: dropPosition,
-            data: { label: "New idea" },
-            selected: true,
-          }),
-      );
-      setPendingEditNodeId(newNodeId);
-
-      const fromIsSource = connectionState.fromHandle?.type !== "target";
-      // Attach the new node on the side it was dropped relative to the source.
-      const droppedRight =
-        dropPosition.x >=
-        (connectionState.fromNode?.position.x ?? dropPosition.x);
-      const childHandle = droppedRight ? "l-target" : "r-target";
-      setEdges((current) =>
-        current.concat(
-          toEdge({
-            id: crypto.randomUUID(),
-            source: fromIsSource ? fromNodeId : newNodeId,
-            target: fromIsSource ? newNodeId : fromNodeId,
-            sourceHandle: fromIsSource
-              ? (connectionState.fromHandle?.id ?? undefined)
-              : childHandle,
-            targetHandle: fromIsSource
-              ? childHandle
-              : (connectionState.fromHandle?.id ?? undefined),
-          }),
-        ),
-      );
-    },
-    [screenToFlowPosition, setNodes, setEdges, takeSnapshot],
-  );
-
   // Remove the given nodes plus every descendant so no children are orphaned.
   const removeSubtrees = useCallback(
     (startIds: string[]) => {
@@ -432,7 +367,6 @@ function MindmapCanvasInner({
           onNodesChange={onNodesChangeWithRelayout}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onConnectEnd={onConnectEnd}
           onReconnect={onReconnect}
           onReconnectStart={takeSnapshot}
           onNodeDragStart={onNodeDragStart}

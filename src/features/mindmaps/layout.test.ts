@@ -76,6 +76,24 @@ describe("layoutMindmap", () => {
     expect(ys).toEqual([-ROW_STEP, 0, ROW_STEP]);
   });
 
+  it("orders same-side siblings by their current vertical position", () => {
+    const nodes = [
+      node("root", 0, 0, "root"),
+      node("first", 0, 2),
+      node("second", 0, -1),
+      node("third", 0, 1),
+    ];
+    const edges = [
+      edge("root", "first", "right"),
+      edge("root", "second", "right"),
+      edge("root", "third", "right"),
+    ];
+    const result = layoutMindmap(nodes, edges);
+
+    expect(posOf(result, "second").y).toBeLessThan(posOf(result, "third").y);
+    expect(posOf(result, "third").y).toBeLessThan(posOf(result, "first").y);
+  });
+
   it("does not overlap neighbouring branches when a middle node gains a child", () => {
     // root with three children, each already holding one same-side child.
     const nodes = [

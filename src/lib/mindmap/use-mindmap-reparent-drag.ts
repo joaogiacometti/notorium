@@ -53,17 +53,17 @@ export function useMindmapReparentDrag({
   // Re-run the layout when an already-rendered node changes height (image
   // added/removed or finished loading) so nodes below it are pushed clear.
   const knownNodeHeightsRef = useRef(new Map<string, number>());
-  // After a reparent, React Flow fires a drag-end position change (dragging:
-  // false) that arrives after setNodes(layoutMindmap(…)) is already queued.
+  // After a layout snap, React Flow fires a drag-end position change (dragging:
+  // false) that arrives after setNodes(layoutMindmap(...)) is already queued.
   // In React 18's batched flush the position delta wins if it lands last,
   // moving the node back to the raw drop position instead of its layout slot.
-  // We store the reparented node id here and skip exactly that one change so
+  // We store the snapped node id here and skip exactly that one change so
   // the layout result is never overridden.
-  const reparentedNodeIdRef = useRef<string | null>(null);
+  const layoutLockedNodeIdRef = useRef<string | null>(null);
 
   const onNodesChangeWithRelayout = useCallback(
     (changes: NodeChange[]) => {
-      const pendingId = reparentedNodeIdRef.current;
+      const pendingId = layoutLockedNodeIdRef.current;
       const filtered = pendingId
         ? changes.filter(
             (c) =>
@@ -71,7 +71,7 @@ export function useMindmapReparentDrag({
           )
         : changes;
       if (filtered.length !== changes.length) {
-        reparentedNodeIdRef.current = null;
+        layoutLockedNodeIdRef.current = null;
       }
       onNodesChange(filtered);
       if (trackNodeHeightChanges(filtered, knownNodeHeightsRef.current)) {
@@ -141,10 +141,10 @@ export function useMindmapReparentDrag({
     [setNodes],
   );
 
-  // Snapshot for undo, and clear any stale reparent guard so a missed drag-end
-  // change from a previous reparent can never swallow this drag's updates.
+  // Snapshot for undo, and clear any stale layout guard so a missed drag-end
+  // change from a previous snap can never swallow this drag's updates.
   const onNodeDragStart = useCallback(() => {
-    reparentedNodeIdRef.current = null;
+    layoutLockedNodeIdRef.current = null;
     takeSnapshot();
   }, [takeSnapshot]);
 
@@ -160,6 +160,20 @@ export function useMindmapReparentDrag({
       const target = findReparentTarget(node);
       setDropTarget(null);
       if (!target) {
+        if (
+          node.data.kind !== "image" &&
+          getNodes().filter((current) => current.selected).length <= 1
+        ) {
+          layoutLockedNodeIdRef.current = node.id;
+          setNodes(
+            layoutMindmap(
+              getNodes().map((current) =>
+                current.id === node.id ? { ...node, selected: true } : current,
+              ),
+              getEdges(),
+            ),
+          );
+        }
         return;
       }
       // The pre-drag snapshot from onNodeDragStart already covers this move.
@@ -173,7 +187,7 @@ export function useMindmapReparentDrag({
           ? { ...node, selected: true }
           : { ...current, selected: false },
       );
-      reparentedNodeIdRef.current = node.id;
+      layoutLockedNodeIdRef.current = node.id;
       setEdges(nextEdges);
       setNodes(layoutMindmap(selectedNodes, nextEdges));
     },
