@@ -31,6 +31,24 @@ export function getSubjectSidebarLink(
     .first();
 }
 
+/** Expands a subject row in the left-menu tree so its documents are loaded. */
+export async function expandSubjectSidebarRow(page: Page, subjectName: string) {
+  const subjectLink = getSubjectSidebarLink(page, subjectName);
+  await expect(subjectLink).toBeVisible();
+
+  const row = subjectLink.locator("xpath=ancestor::div[1]");
+  const expandButton = row.getByRole("button", {
+    name: "Expand subject",
+    exact: true,
+  });
+
+  if ((await expandButton.count()) === 0) {
+    return;
+  }
+
+  await expandButton.click();
+}
+
 /**
  * Opens a subject's context menu from the left-menu subject tree. The kebab
  * button only reveals on row hover (`sm:group-hover`), so hover the enclosing

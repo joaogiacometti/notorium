@@ -221,6 +221,7 @@ export function AssessmentDetail({
           </div>
           <div className="flex shrink-0 gap-2">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               className="gap-1.5"
@@ -233,8 +234,10 @@ export function AssessmentDetail({
               Edit
             </Button>
             <Button
+              type="button"
               variant="outline"
               size="sm"
+              aria-label="Delete assessment"
               className="gap-1.5 text-(--intent-danger-text) hover:bg-(--intent-danger-fill) hover:text-(--intent-danger-text)"
               onClick={() => setDeleteOpen(true)}
             >

@@ -13,7 +13,10 @@ import type { Locator, Page } from "@playwright/test";
  * await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
  */
 export function breadcrumbCurrent(page: Page, label: string): Locator {
+  const escapedLabel = label.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
   return page
-    .locator('nav[aria-label="Breadcrumb"] [aria-current="page"]')
-    .filter({ hasText: label });
+    .locator('nav[aria-label="Breadcrumb"] [aria-current="page"] span')
+    .filter({ hasText: new RegExp(`^${escapedLabel}$`) })
+    .last();
 }

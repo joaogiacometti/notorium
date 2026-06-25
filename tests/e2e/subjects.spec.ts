@@ -45,11 +45,7 @@ test("can create a subject", async ({ page, e2eUser }) => {
 
     await waitForAppShell(page);
 
-    // Open the create dialog from the home dashboard. The sidebar's Subjects
-    // header exposes a second "New subject" button, so scope to the dashboard
-    // to keep the target unambiguous.
     await page
-      .getByTestId("home-dashboard")
       .getByRole("button", { name: "New subject", exact: true })
       .click();
     const createDialog = page.getByRole("dialog", { name: "Create Subject" });

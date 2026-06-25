@@ -2,7 +2,7 @@
 
 import { FolderPlus, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { getSubjectDocuments } from "@/app/actions/subjects";
 import { useDocumentRowDialogs } from "@/components/documents/use-document-row-dialogs";
 import {
@@ -54,6 +54,7 @@ export function SubjectTreeSidebar({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [documentsBySubject, setDocumentsBySubject] =
     useState<SubjectDocumentsState>(() => new Map());
+  const previousDocumentSubjectIdRef = useRef<string | undefined>(undefined);
   const [createParentId, setCreateParentId] = useState<string | undefined>(
     undefined,
   );
@@ -214,6 +215,30 @@ export function SubjectTreeSidebar({
       );
     });
   }, [localTree, activeDocumentSubjectId, documentsBySubject]);
+
+  useEffect(() => {
+    const previousDocumentSubjectId = previousDocumentSubjectIdRef.current;
+    previousDocumentSubjectIdRef.current = activeDocumentSubjectId;
+
+    if (
+      !activeSubjectId ||
+      activeDocumentSubjectId ||
+      previousDocumentSubjectId !== activeSubjectId ||
+      !documentsBySubject.has(activeSubjectId)
+    ) {
+      return;
+    }
+
+    const subjectId = activeSubjectId;
+    setDocumentsBySubject((current) =>
+      new Map(current).set(subjectId, "loading"),
+    );
+    void getSubjectDocuments(subjectId).then((documents) => {
+      setDocumentsBySubject((current) =>
+        new Map(current).set(subjectId, documents),
+      );
+    });
+  }, [activeSubjectId, activeDocumentSubjectId, documentsBySubject]);
 
   function refreshTree() {
     startTransition(() => {

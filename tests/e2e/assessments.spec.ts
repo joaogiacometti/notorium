@@ -184,7 +184,9 @@ test("can delete an assessment from detail page", async ({ page, e2eUser }) => {
     await openPlanningAssessments(page, createdSubject.id);
     await openAssessmentDetailFromPlanning(page, assessmentTitle);
 
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Delete assessment", exact: true })
+      .click();
 
     const deleteDialog = page.getByRole("dialog", {
       name: "Delete Assessment",

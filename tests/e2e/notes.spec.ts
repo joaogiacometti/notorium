@@ -3,14 +3,13 @@ import { PLAYWRIGHT_GENERATED_CARDS } from "@/features/flashcards/ai";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
-  clearUserDecksByNames,
   clearUserSubjectsByNames,
-  createDeck,
   createNote,
   createSubject,
   getNoteById,
 } from "./support/db";
 import {
+  expandSubjectSidebarRow,
   openSubjectDetailByName,
   openSubjectSidebarActions,
 } from "./support/subjects";
@@ -27,13 +26,7 @@ function getUniqueNoteTitle(testTitle: string) {
   return getPrefixedValue("note", testTitle);
 }
 
-function getUniqueDeckName(testTitle: string) {
-  return getPrefixedValue("note-deck", testTitle);
-}
-
 async function createNoteFromDialog(page: Page, title: string) {
-  await page.getByRole("button", { name: "Create document" }).click();
-  await page.getByRole("menuitem", { name: "Note" }).click();
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
   await createDialog.getByRole("button", { name: "Create Note" }).click();
@@ -42,7 +35,7 @@ async function createNoteFromDialog(page: Page, title: string) {
 
 async function openNoteDetailByTitle(page: Page, noteTitle: string) {
   const noteLink = page
-    .getByRole("link", { name: `Open ${noteTitle}`, exact: true })
+    .getByRole("link", { name: noteTitle, exact: true })
     .first();
   await expect(noteLink).toBeVisible();
   const noteHref = await noteLink.getAttribute("href");
@@ -63,15 +56,20 @@ async function openNoteActions(page: Page) {
     .click();
 }
 
+async function clickSubjectNewNote(page: Page, subjectName: string) {
+  await openSubjectSidebarActions(page, subjectName);
+  await page.getByRole("menuitem", { name: "Document", exact: true }).hover();
+  await page.getByRole("menuitem", { name: "Note", exact: true }).click();
+}
+
 async function createSidebarNote(
   page: Page,
   subjectName: string,
   title: string,
 ) {
   // After the refactor the note detail view has no create button; notes are
-  // created from the left-menu subject tree's "New note" action.
-  await openSubjectSidebarActions(page, subjectName);
-  await page.getByRole("menuitem", { name: "New note", exact: true }).click();
+  // created from the left-menu subject tree's document submenu.
+  await clickSubjectNewNote(page, subjectName);
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
   await createDialog.getByRole("button", { name: "Create Note" }).click();
@@ -91,6 +89,7 @@ test("can create and open a note", async ({ page, e2eUser }) => {
     const createdSubject = await createSubject(user.userId, subjectName);
     await openSubjectDetailByName(page, subjectName, createdSubject.id);
 
+    await clickSubjectNewNote(page, subjectName);
     await createNoteFromDialog(page, noteTitle);
 
     await expect(page).toHaveURL(/\/subjects\/.+\/documents\/notes\/.+$/);
@@ -123,6 +122,7 @@ test("can edit a note", async ({ page, e2eUser }) => {
     );
 
     await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, initialTitle);
 
     await page.locator("#form-edit-note-title").fill(updatedTitle);
@@ -170,6 +170,7 @@ test("can create a title-only note from detail sidebar", async ({
     await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
 
     await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, initialTitle);
     await createSidebarNote(page, subjectName, newTitle);
 
@@ -198,6 +199,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
     );
 
     await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, noteTitle);
 
     await openNoteActions(page);
@@ -208,10 +210,10 @@ test("can delete a note", async ({ page, e2eUser }) => {
     await expect(deleteDialog).toHaveCount(0);
     await expect(page).toHaveURL(/\/subjects\/.+/);
     await expect(
-      page.getByRole("heading", { name: "Documents", exact: true }),
+      page.getByRole("heading", { name: "Attendance", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: `Open ${noteTitle}`, exact: true }),
+      page.getByRole("link", { name: noteTitle, exact: true }),
     ).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
@@ -225,14 +227,11 @@ test("can generate flashcards from a note with AI", async ({
   const user = e2eUser;
   const subjectName = getUniqueSubjectName("ai-flashcards");
   const noteTitle = getUniqueNoteTitle("ai-flashcards");
-  const deckName = getUniqueDeckName("ai-flashcards");
 
   await clearUserSubjectsByNames(user.userId, [subjectName]);
-  await clearUserDecksByNames(user.userId, [deckName]);
 
   try {
     const createdSubject = await createSubject(user.userId, subjectName);
-    const createdDeck = await createDeck(user.userId, deckName);
 
     await createNote(
       user.userId,
@@ -242,6 +241,7 @@ test("can generate flashcards from a note with AI", async ({
     );
 
     await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, noteTitle);
 
     await openNoteActions(page);
@@ -268,7 +268,7 @@ test("can generate flashcards from a note with AI", async ({
       .click();
     await expect(generateDialog).toHaveCount(0);
 
-    await page.goto(`/flashcards?view=manage&deckId=${createdDeck.id}`);
+    await page.goto(`/flashcards?view=manage&subjectId=${createdSubject.id}`);
     await expect(
       page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[0].front, { exact: true }),
     ).toBeVisible();
@@ -277,6 +277,5 @@ test("can generate flashcards from a note with AI", async ({
     ).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(user.userId, [subjectName]);
-    await clearUserDecksByNames(user.userId, [deckName]);
   }
 });
