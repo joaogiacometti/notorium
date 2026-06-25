@@ -59,6 +59,19 @@ describe("copyNoteContentToClipboard", () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
+  it("sanitizes rich note HTML before copying", async () => {
+    await copyNoteContentToClipboard(
+      '<p>Safe</p><img src="x" onerror="alert(1)"><script>alert(2)</script>',
+      "rich",
+    );
+
+    const item = write.mock.calls[0]?.[0]?.[0] as FakeClipboardItem;
+    expect(await item.items["text/html"].text()).toBe(
+      '<p>Safe</p><img src="x">',
+    );
+    expect(await item.items["text/plain"].text()).toBe("Safe");
+  });
+
   it("falls back to plain text when rich copy is unsupported", async () => {
     Object.defineProperty(globalThis, "ClipboardItem", {
       configurable: true,

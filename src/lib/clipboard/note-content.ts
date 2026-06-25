@@ -38,18 +38,10 @@ function canCopyRichText() {
 }
 
 function sanitizeRichHtmlForClipboard(html: string): string {
-  // Pre-parse with innerHTML before handing to DOMPurify so it walks an
-  // already-constructed DOM rather than re-parsing the string via
-  // createContextualFragment, which drops block elements like <p> in jsdom.
-  // DOMPurify.sanitize on an element returns its outerHTML, which includes the
-  // wrapper <div>. Re-parse and extract the inner element's innerHTML.
+  const fragment = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
   const container = document.createElement("div");
-  container.innerHTML = html;
-  const outerHtml = DOMPurify.sanitize(container);
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = outerHtml;
-  const innerDiv = wrapper.firstElementChild;
-  return innerDiv ? (innerDiv as HTMLElement).innerHTML : "";
+  container.append(fragment);
+  return container.innerHTML;
 }
 
 function getPlainTextFromHtml(html: string): string {
