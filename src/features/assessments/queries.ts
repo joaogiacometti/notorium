@@ -272,90 +272,79 @@ export async function getPlanningAssessmentsPageForUser(
 ): Promise<PlanningAssessmentsPage> {
   const offset = input.pageIndex * input.pageSize;
   const filters = getPlanningAssessmentFilters(userId, input);
-  const [items, totalRows, allCountRows, subjectCountRows, finalGradeRows] =
-    await Promise.all([
-      getDb()
-        .select({ assessment })
-        .from(assessment)
-        .innerJoin(subject, eq(assessment.subjectId, subject.id))
-        .where(and(...filters))
-        .orderBy(...getPlanningAssessmentOrderBy(input.sortBy))
-        .limit(input.pageSize)
-        .offset(offset)
-        .then((rows) => rows.map((row) => row.assessment)),
-      getDb()
-        .select({ total: count() })
-        .from(assessment)
-        .innerJoin(subject, eq(assessment.subjectId, subject.id))
-        .where(and(...filters)),
-      getDb()
-        .select({ total: count() })
-        .from(assessment)
-        .innerJoin(subject, eq(assessment.subjectId, subject.id))
-        .where(
-          and(
-            eq(assessment.userId, userId),
-            ...getOwnedActiveSubjectFilters(userId),
-          ),
+  const [items, totalRows, subjectStatsRows] = await Promise.all([
+    getDb()
+      .select({ assessment })
+      .from(assessment)
+      .innerJoin(subject, eq(assessment.subjectId, subject.id))
+      .where(and(...filters))
+      .orderBy(...getPlanningAssessmentOrderBy(input.sortBy))
+      .limit(input.pageSize)
+      .offset(offset)
+      .then((rows) => rows.map((row) => row.assessment)),
+    getDb()
+      .select({ total: count() })
+      .from(assessment)
+      .innerJoin(subject, eq(assessment.subjectId, subject.id))
+      .where(and(...filters)),
+    input.subjectId
+      ? getDb()
+          .select({
+            total: count(),
+            weightedSum: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then ${assessment.score} * ${assessment.weight} else 0 end), 0)`,
+            totalWeight: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then ${assessment.weight} else 0 end), 0)`,
+            weightedCount: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then 1 else 0 end), 0)`,
+            averageScore: sql<
+              number | null
+            >`avg(case when ${assessment.status} = 'completed' and ${assessment.score} is not null then ${assessment.score} end)`,
+          })
+          .from(assessment)
+          .innerJoin(subject, eq(assessment.subjectId, subject.id))
+          .where(
+            and(
+              eq(assessment.userId, userId),
+              eq(assessment.subjectId, input.subjectId),
+              ...getOwnedActiveSubjectFilters(userId),
+            ),
+          )
+      : Promise.resolve([]),
+  ]);
+
+  const total = totalRows[0]?.total ?? 0;
+  const subjectStats = subjectStatsRows[0];
+  let hasAnyAssessments = total > 0 || (subjectStats?.total ?? 0) > 0;
+  if (!hasAnyAssessments) {
+    const rows = await getDb()
+      .select({ id: assessment.id })
+      .from(assessment)
+      .innerJoin(subject, eq(assessment.subjectId, subject.id))
+      .where(
+        and(
+          eq(assessment.userId, userId),
+          ...getOwnedActiveSubjectFilters(userId),
         ),
-      input.subjectId
-        ? getDb()
-            .select({ total: count() })
-            .from(assessment)
-            .innerJoin(subject, eq(assessment.subjectId, subject.id))
-            .where(
-              and(
-                eq(assessment.userId, userId),
-                eq(assessment.subjectId, input.subjectId),
-                ...getOwnedActiveSubjectFilters(userId),
-              ),
-            )
-        : Promise.resolve([]),
-      input.subjectId
-        ? getDb()
-            .select({
-              weightedSum: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then ${assessment.score} * ${assessment.weight} else 0 end), 0)`,
-              totalWeight: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then ${assessment.weight} else 0 end), 0)`,
-              weightedCount: sql<number>`coalesce(sum(case when ${assessment.status} = 'completed' and ${assessment.score} is not null and ${assessment.weight} is not null and ${assessment.weight} > 0 then 1 else 0 end), 0)`,
-              averageScore: sql<
-                number | null
-              >`avg(case when ${assessment.status} = 'completed' and ${assessment.score} is not null then ${assessment.score} end)`,
-            })
-            .from(assessment)
-            .innerJoin(subject, eq(assessment.subjectId, subject.id))
-            .where(
-              and(
-                eq(assessment.userId, userId),
-                eq(assessment.subjectId, input.subjectId),
-                ...getOwnedActiveSubjectFilters(userId),
-              ),
-            )
-        : Promise.resolve([]),
-    ]);
+      )
+      .limit(1);
+
+    hasAnyAssessments = rows.length > 0;
+  }
 
   return {
     items,
-    total: totalRows[0]?.total ?? 0,
-    allCount: allCountRows[0]?.total ?? 0,
-    subjectAssessmentCount: input.subjectId
-      ? (subjectCountRows[0]?.total ?? 0)
-      : null,
+    total,
+    hasAnyAssessments,
+    subjectAssessmentCount: input.subjectId ? (subjectStats?.total ?? 0) : null,
     subjectFinalGrade: input.subjectId
       ? (() => {
-          const finalGradeRow = finalGradeRows[0];
-
-          if (!finalGradeRow) {
+          if (!subjectStats) {
             return null;
           }
 
-          if (
-            finalGradeRow.weightedCount > 0 &&
-            finalGradeRow.totalWeight > 0
-          ) {
-            return finalGradeRow.weightedSum / finalGradeRow.totalWeight;
+          if (subjectStats.weightedCount > 0 && subjectStats.totalWeight > 0) {
+            return subjectStats.weightedSum / subjectStats.totalWeight;
           }
 
-          return finalGradeRow.averageScore ?? null;
+          return subjectStats.averageScore ?? null;
         })()
       : null,
   };

@@ -44,7 +44,7 @@ vi.mock("@/components/planning/planning-assessments-manager-table", () => ({
 const emptyPageData: PlanningAssessmentsPage = {
   items: [],
   total: 0,
-  allCount: 0,
+  hasAnyAssessments: false,
   subjectAssessmentCount: null,
   subjectFinalGrade: null,
 };
@@ -177,7 +177,7 @@ describe("PlanningAssessmentsTable", () => {
   it("defaults the assessment status filter to pending", async () => {
     const pageData = {
       ...emptyPageData,
-      allCount: 1,
+      hasAnyAssessments: true,
       total: 1,
     };
 
@@ -196,7 +196,7 @@ describe("PlanningAssessmentsTable", () => {
     await renderTable([createSubject()], {
       initialPageData: {
         ...emptyPageData,
-        allCount: 1,
+        hasAnyAssessments: true,
         total: 1,
       },
     });
@@ -215,7 +215,7 @@ describe("PlanningAssessmentsTable", () => {
       initialStatus: "all",
       initialPageData: {
         ...emptyPageData,
-        allCount: 1,
+        hasAnyAssessments: true,
         total: 1,
       },
     });

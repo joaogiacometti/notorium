@@ -606,7 +606,6 @@ export const flashcardSchedulerSettings = pgTable(
   },
   (table) => [
     unique("flashcard_scheduler_settings_userId_unique").on(table.userId),
-    index("flashcard_scheduler_settings_userId_idx").on(table.userId),
   ],
 );
 

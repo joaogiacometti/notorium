@@ -170,7 +170,7 @@ export function PlanningAssessmentsTable({
         return {
           items: [],
           total: 0,
-          allCount: 0,
+          hasAnyAssessments: false,
           subjectAssessmentCount: null,
           subjectFinalGrade: null,
         } satisfies PlanningAssessmentsPage;
@@ -195,7 +195,7 @@ export function PlanningAssessmentsTable({
   const pageData = assessmentsQuery.data ?? initialPageData;
   const assessments = pageData.items;
   const total = pageData.total;
-  const hasAnyAssessments = pageData.allCount > 0;
+  const hasAnyAssessments = pageData.hasAnyAssessments;
   const selectedSubjectCount = pageData.subjectAssessmentCount ?? 0;
   const isAssessmentsScopeLoading =
     assessmentsQuery.isFetching && assessmentsQuery.isPlaceholderData;

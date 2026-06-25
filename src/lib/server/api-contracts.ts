@@ -42,7 +42,7 @@ export interface AssessmentDetailEntity {
 export interface PlanningAssessmentsPage {
   items: AssessmentEntity[];
   total: number;
-  allCount: number;
+  hasAnyAssessments: boolean;
   subjectAssessmentCount: number | null;
   subjectFinalGrade: number | null;
 }
