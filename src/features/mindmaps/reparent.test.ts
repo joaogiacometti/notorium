@@ -38,8 +38,12 @@ describe("canReparent", () => {
     expect(canReparent(tree, "a", "a")).toBe(false);
   });
 
-  it("rejects moving a node onto its current parent (no-op)", () => {
-    expect(canReparent(tree, "a", "root")).toBe(false);
+  it("rejects moving a node onto its current parent without changing side", () => {
+    expect(canReparent(tree, "a", "root", "right")).toBe(false);
+  });
+
+  it("accepts moving a node across sides under its current parent", () => {
+    expect(canReparent(tree, "a", "root", "left")).toBe(true);
   });
 
   it("rejects moving a node onto one of its descendants (cycle)", () => {
@@ -84,6 +88,14 @@ describe("reparentNode", () => {
     expect(
       getSourceHandleSide(next.find((e) => e.target === "d")?.sourceHandle),
     ).toBe("right");
+  });
+
+  it("flips a root child to the other side without changing parent", () => {
+    const next = reparentNode(tree, "a", "root", "left");
+    expect(next.find((e) => e.target === "a")?.source).toBe("root");
+    expect(
+      getSourceHandleSide(next.find((e) => e.target === "a")?.sourceHandle),
+    ).toBe("left");
   });
 
   it("leaves subtree edges untouched when the side does not change", () => {

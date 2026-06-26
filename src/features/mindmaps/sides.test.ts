@@ -2,6 +2,7 @@ import type { Edge, Node } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 import {
   collectDescendants,
+  getBalancedRootChildSide,
   getDefaultChildSide,
   getNodeAllowedChildSides,
   getSourceHandleSide,
@@ -118,5 +119,40 @@ describe("getDefaultChildSide", () => {
     expect(getDefaultChildSide(["right"])).toBe("right");
     expect(getDefaultChildSide(["left"])).toBe("left");
     expect(getDefaultChildSide([])).toBeNull();
+  });
+});
+
+describe("getBalancedRootChildSide", () => {
+  it("keeps right as the empty and tied default", () => {
+    expect(getBalancedRootChildSide([], "root")).toBe("right");
+    expect(
+      getBalancedRootChildSide(
+        [edge("root", "a", "left"), edge("root", "b", "right")],
+        "root",
+      ),
+    ).toBe("right");
+  });
+
+  it("returns the side with fewer direct root children", () => {
+    expect(
+      getBalancedRootChildSide(
+        [
+          edge("root", "a", "right"),
+          edge("root", "b", "right"),
+          edge("root", "c", "left"),
+        ],
+        "root",
+      ),
+    ).toBe("left");
+  });
+
+  it("ignores deeper and cross edges", () => {
+    const cross: Edge = { ...edge("root", "x", "left"), data: { cross: true } };
+    expect(
+      getBalancedRootChildSide(
+        [edge("root", "a", "left"), edge("a", "b", "right"), cross],
+        "root",
+      ),
+    ).toBe("right");
   });
 });

@@ -15,22 +15,29 @@ function incomingTreeEdge(edges: Edge[], nodeId: string): Edge | undefined {
 /**
  * True when `nodeId` may be moved under `newParentId`. Rejects a move that would
  * detach the node or create a cycle: onto itself, onto its current parent
- * (no-op), onto one of its own descendants, or when the node has no tree parent
- * (the root, which must stay the tree's anchor).
+ * without a side change, onto one of its own descendants, or when the node has
+ * no tree parent (the root, which must stay the tree's anchor).
  *
- * @example canReparent(edges, "cells", "chemistry")
+ * @example canReparent(edges, "cells", "chemistry", "right")
  */
 export function canReparent(
   edges: Edge[],
   nodeId: string,
   newParentId: string,
+  newSide?: MindmapSide,
 ): boolean {
   if (nodeId === newParentId) {
     return false;
   }
   const parentEdge = incomingTreeEdge(edges, nodeId);
-  if (!parentEdge || parentEdge.source === newParentId) {
+  if (!parentEdge) {
     return false;
+  }
+  if (parentEdge.source === newParentId) {
+    return (
+      newSide !== undefined &&
+      getSourceHandleSide(parentEdge.sourceHandle) !== newSide
+    );
   }
   return !collectDescendants(edges, [nodeId]).has(newParentId);
 }

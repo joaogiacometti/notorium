@@ -119,6 +119,28 @@ export function getDefaultChildSide(
   return sides[0] ?? null;
 }
 
+/**
+ * Returns the side with fewer direct root children, keeping right as the tie
+ * default so a new empty map still starts where users expect.
+ *
+ * @example getBalancedRootChildSide(edges, "root")
+ */
+export function getBalancedRootChildSide(
+  edges: Edge[],
+  rootId: string,
+): MindmapSide {
+  let left = 0;
+  let right = 0;
+  for (const edge of edges) {
+    if (edge.source !== rootId || isCrossEdge(edge)) {
+      continue;
+    }
+    if (getSourceHandleSide(edge.sourceHandle) === "left") left += 1;
+    else if (getSourceHandleSide(edge.sourceHandle) === "right") right += 1;
+  }
+  return left < right ? "left" : "right";
+}
+
 function findRootNode(nodes: Node[], edges: Edge[]): Node | undefined {
   const explicit = nodes.find((node) => node.data.kind === "root");
   if (explicit) {

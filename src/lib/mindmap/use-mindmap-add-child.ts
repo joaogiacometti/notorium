@@ -8,6 +8,7 @@ import {
 } from "@/features/mindmaps/canvas-graph";
 import { layoutMindmap } from "@/features/mindmaps/layout";
 import {
+  getBalancedRootChildSide,
   getDefaultChildSide,
   getNodeAllowedChildSides,
   type MindmapSide,
@@ -98,11 +99,15 @@ export function useMindmapAddChild({
     if (selectedNodes.length !== 1) {
       return;
     }
-    const side = getDefaultChildSide(getAllowedChildSides(selectedNodes[0].id));
+    const selected = selectedNodes[0];
+    const side =
+      selected.data.kind === "root"
+        ? getBalancedRootChildSide(getEdges(), selected.id)
+        : getDefaultChildSide(getAllowedChildSides(selected.id));
     if (side) {
-      addChild(selectedNodes[0].id, side);
+      addChild(selected.id, side);
     }
-  }, [getNodes, getAllowedChildSides, addChild]);
+  }, [getNodes, getEdges, getAllowedChildSides, addChild]);
 
   const addSiblingToSelected = useCallback(() => {
     const selectedNodes = getNodes().filter((node) => node.selected);

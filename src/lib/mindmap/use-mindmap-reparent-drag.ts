@@ -10,6 +10,8 @@ import { canReparent, reparentNode } from "@/features/mindmaps/reparent";
 import {
   getDefaultChildSide,
   getNodeAllowedChildSides,
+  getSourceHandleSide,
+  isCrossEdge,
   type MindmapSide,
 } from "@/features/mindmaps/sides";
 
@@ -30,6 +32,71 @@ interface UseMindmapReparentDrag {
   onNodeDragStart: () => void;
   onNodeDrag: (event: MouseEvent | TouchEvent, node: Node) => void;
   onNodeDragStop: (event: MouseEvent | TouchEvent, node: Node) => void;
+}
+
+interface ReparentDrop {
+  highlightId: string;
+  parentId: string;
+  side: MindmapSide;
+}
+
+const SIBLING_DROP_GAP = 40;
+
+function nodeCenterX(node: Node): number {
+  return node.position.x + (node.measured?.width ?? node.width ?? 0) / 2;
+}
+
+function nodeHeight(node: Node): number {
+  return node.measured?.height ?? node.height ?? 0;
+}
+
+function nodeWidth(node: Node): number {
+  return node.measured?.width ?? node.width ?? 0;
+}
+
+function overlapsHorizontally(a: Node, b: Node): boolean {
+  return (
+    a.position.x < b.position.x + nodeWidth(b) &&
+    a.position.x + nodeWidth(a) > b.position.x
+  );
+}
+
+function isSiblingDropNear(dragged: Node, target: Node): boolean {
+  if (target.data.kind === "root" || !overlapsHorizontally(dragged, target)) {
+    return false;
+  }
+  const draggedTop = dragged.position.y;
+  const draggedBottom = dragged.position.y + nodeHeight(dragged);
+  const targetTop = target.position.y;
+  const targetBottom = target.position.y + nodeHeight(target);
+  return (
+    Math.abs(draggedBottom - targetTop) <= SIBLING_DROP_GAP ||
+    Math.abs(draggedTop - targetBottom) <= SIBLING_DROP_GAP
+  );
+}
+
+function siblingDropTarget(
+  dragged: Node,
+  target: Node,
+  edges: Edge[],
+): ReparentDrop | null {
+  if (!isSiblingDropNear(dragged, target)) {
+    return null;
+  }
+  const parentEdge = edges.find(
+    (edge) => edge.target === target.id && !isCrossEdge(edge),
+  );
+  const side = getSourceHandleSide(parentEdge?.sourceHandle);
+  return parentEdge && side
+    ? { highlightId: target.id, parentId: parentEdge.source, side }
+    : null;
+}
+
+function withoutDropTarget(node: Node): Node {
+  if (node.data.dropTarget !== true) {
+    return node;
+  }
+  return { ...node, data: { ...node.data, dropTarget: false } };
 }
 
 /**
@@ -81,10 +148,27 @@ export function useMindmapReparentDrag({
     [onNodesChange, setNodes, getEdges],
   );
 
+  // Pick which side of the new parent the moved branch attaches to: the drop
+  // side for the root (which allows both), otherwise the parent's single branch.
+  const chooseReparentSide = useCallback(
+    (dragged: Node, target: Node): MindmapSide => {
+      if (target.data.kind === "root") {
+        return nodeCenterX(dragged) >= nodeCenterX(target) ? "right" : "left";
+      }
+      const allowed = getNodeAllowedChildSides(
+        getNodes(),
+        getEdges(),
+        target.id,
+      );
+      return getDefaultChildSide(allowed) ?? "right";
+    },
+    [getNodes, getEdges],
+  );
+
   // The node under a single dragged node that it can legally re-parent onto, or
   // null. Multi-node drags only reposition, so re-parenting is skipped for them.
   const findReparentTarget = useCallback(
-    (dragged: Node): Node | null => {
+    (dragged: Node): ReparentDrop | null => {
       if (getNodes().filter((node) => node.selected).length > 1) {
         return null;
       }
@@ -95,30 +179,26 @@ export function useMindmapReparentDrag({
         if (candidate.data.kind === "image") {
           continue;
         }
-        if (canReparent(edges, dragged.id, candidate.id)) {
-          return candidate;
+        const side = chooseReparentSide(dragged, candidate);
+        if (canReparent(edges, dragged.id, candidate.id, side)) {
+          return { highlightId: candidate.id, parentId: candidate.id, side };
+        }
+      }
+      for (const candidate of getNodes()) {
+        if (candidate.id === dragged.id || candidate.data.kind === "image") {
+          continue;
+        }
+        const sibling = siblingDropTarget(dragged, candidate, edges);
+        if (
+          sibling &&
+          canReparent(edges, dragged.id, sibling.parentId, sibling.side)
+        ) {
+          return sibling;
         }
       }
       return null;
     },
-    [getNodes, getEdges, getIntersectingNodes],
-  );
-
-  // Pick which side of the new parent the moved branch attaches to: the drop
-  // side for the root (which allows both), otherwise the parent's single branch.
-  const chooseReparentSide = useCallback(
-    (dragged: Node, target: Node): MindmapSide => {
-      if (target.data.kind === "root") {
-        return dragged.position.x >= target.position.x ? "right" : "left";
-      }
-      const allowed = getNodeAllowedChildSides(
-        getNodes(),
-        getEdges(),
-        target.id,
-      );
-      return getDefaultChildSide(allowed) ?? "right";
-    },
-    [getNodes, getEdges],
+    [getNodes, getEdges, getIntersectingNodes, chooseReparentSide],
   );
 
   // Flag at most one node as the live drop target so it can highlight; a no-op
@@ -150,7 +230,7 @@ export function useMindmapReparentDrag({
 
   const onNodeDrag = useCallback(
     (_event: MouseEvent | TouchEvent, node: Node) => {
-      setDropTarget(findReparentTarget(node)?.id ?? null);
+      setDropTarget(findReparentTarget(node)?.highlightId ?? null);
     },
     [findReparentTarget, setDropTarget],
   );
@@ -168,7 +248,9 @@ export function useMindmapReparentDrag({
           setNodes(
             layoutMindmap(
               getNodes().map((current) =>
-                current.id === node.id ? { ...node, selected: true } : current,
+                current.id === node.id
+                  ? withoutDropTarget({ ...node, selected: true })
+                  : withoutDropTarget(current),
               ),
               getEdges(),
             ),
@@ -177,29 +259,25 @@ export function useMindmapReparentDrag({
         return;
       }
       // The pre-drag snapshot from onNodeDragStart already covers this move.
-      const side = chooseReparentSide(node, target);
-      const nextEdges = reparentNode(getEdges(), node.id, target.id, side);
+      const nextEdges = reparentNode(
+        getEdges(),
+        node.id,
+        target.parentId,
+        target.side,
+      );
       // Use the `node` parameter (accurate drop position from React Flow's
       // internal drag tracking) rather than getNodes() for the dragged node,
       // so the layout sorts siblings by the actual drop Y and not stale state.
       const selectedNodes = getNodes().map((current) =>
         current.id === node.id
-          ? { ...node, selected: true }
-          : { ...current, selected: false },
+          ? withoutDropTarget({ ...node, selected: true })
+          : withoutDropTarget({ ...current, selected: false }),
       );
       layoutLockedNodeIdRef.current = node.id;
       setEdges(nextEdges);
       setNodes(layoutMindmap(selectedNodes, nextEdges));
     },
-    [
-      findReparentTarget,
-      setDropTarget,
-      chooseReparentSide,
-      getEdges,
-      getNodes,
-      setEdges,
-      setNodes,
-    ],
+    [findReparentTarget, setDropTarget, getEdges, getNodes, setEdges, setNodes],
   );
 
   return {
