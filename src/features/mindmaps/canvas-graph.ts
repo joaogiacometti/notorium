@@ -198,16 +198,27 @@ export function createChildEdge(
   });
 }
 
-/** Deselect every existing node and append a new selected child of `parent`. */
+/**
+ * Deselect every existing node and append a new selected child of `parent`.
+ *
+ * @example
+ * const nodes = selectOnlyNewChild(
+ *   currentNodes,
+ *   parent,
+ *   "child-1",
+ *   parent.position.y + 1,
+ * );
+ */
 export function selectOnlyNewChild(
   nodes: Node[],
   parent: Node,
   childId: string,
+  childY = Number.MAX_SAFE_INTEGER,
 ): Node[] {
   const child: Node = {
     id: childId,
     type: "mindmap",
-    position: { x: parent.position.x, y: Number.MAX_SAFE_INTEGER },
+    position: { x: parent.position.x, y: childY },
     data: { label: "New idea" },
     selected: true,
   };

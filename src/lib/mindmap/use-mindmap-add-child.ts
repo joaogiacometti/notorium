@@ -14,6 +14,16 @@ import {
   type MindmapSide,
 } from "@/features/mindmaps/sides";
 
+/**
+ * Position a new sibling just after the selected node in layout sort order.
+ *
+ * @example
+ * const y = getSiblingInsertY(selectedNode);
+ */
+export function getSiblingInsertY(selected: Node): number {
+  return selected.position.y + 1;
+}
+
 interface UseMindmapAddChildParams {
   getNode: (id: string) => Node | undefined;
   getNodes: () => Node[];
@@ -26,7 +36,7 @@ interface UseMindmapAddChildParams {
 }
 
 interface UseMindmapAddChild {
-  addChild: (parentId: string, side: MindmapSide) => void;
+  addChild: (parentId: string, side: MindmapSide, childY?: number) => void;
   getAllowedChildSides: (nodeId: string) => readonly MindmapSide[];
   /** Tab: add a child to the single selected node on its default side. */
   addChildToSelected: () => void;
@@ -52,7 +62,7 @@ export function useMindmapAddChild({
   setPendingEditNodeId,
 }: UseMindmapAddChildParams): UseMindmapAddChild {
   const addChild = useCallback(
-    (parentId: string, side: MindmapSide) => {
+    (parentId: string, side: MindmapSide, childY?: number) => {
       const parent = getNode(parentId);
       if (!parent) {
         return;
@@ -72,7 +82,12 @@ export function useMindmapAddChild({
       const nextEdges = currentEdges.concat(
         createChildEdge(parentId, newNodeId, side),
       );
-      const nextNodes = selectOnlyNewChild(currentNodes, parent, newNodeId);
+      const nextNodes = selectOnlyNewChild(
+        currentNodes,
+        parent,
+        newNodeId,
+        childY,
+      );
       setNodes(layoutMindmap(nextNodes, nextEdges));
       setEdges(nextEdges);
       setPendingEditNodeId(newNodeId);
@@ -114,14 +129,15 @@ export function useMindmapAddChild({
     if (selectedNodes.length !== 1) {
       return;
     }
-    const nodeId = selectedNodes[0].id;
+    const selected = selectedNodes[0];
+    const nodeId = selected.id;
     const parentEdge = getEdges().find((edge) => edge.target === nodeId);
     if (!parentEdge) {
       return;
     }
     const side: MindmapSide =
       parentEdge.sourceHandle === "r-source" ? "right" : "left";
-    addChild(parentEdge.source, side);
+    addChild(parentEdge.source, side, getSiblingInsertY(selected));
   }, [getNodes, getEdges, addChild]);
 
   return {

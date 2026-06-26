@@ -212,4 +212,11 @@ describe("selectOnlyNewChild", () => {
     );
     expect(result.at(-1)?.id).toBe("new");
   });
+
+  it("uses the requested child y before layout sorts siblings", () => {
+    const parent = baseNode({ id: "p", position: { x: 10, y: 0 } });
+    const result = selectOnlyNewChild([parent], parent, "new", 73);
+
+    expect(result.at(-1)?.position).toEqual({ x: 10, y: 73 });
+  });
 });
