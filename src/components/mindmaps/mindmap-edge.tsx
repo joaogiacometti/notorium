@@ -16,7 +16,7 @@ import {
   Minus,
   Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { useMindmapActions } from "@/components/mindmaps/mindmap-actions-context";
 import {
   DEFAULT_EDGE_DIRECTION,
@@ -42,6 +42,44 @@ const DIRECTION_LABELS: Record<MindmapEdgeDirection, string> = {
 };
 
 type CurveOffset = { x: number; y: number };
+
+interface EdgePath {
+  path: string;
+  anchorX: number;
+  anchorY: number;
+}
+
+function treeEdgePath(
+  sourceX: number,
+  sourceY: number,
+  targetX: number,
+  targetY: number,
+): EdgePath {
+  const branchX = sourceX + (targetX - sourceX) * 0.42;
+  const radius = Math.min(
+    12,
+    Math.abs(branchX - sourceX) / 2,
+    Math.abs(targetY - sourceY) / 2,
+  );
+  if (radius <= 1) {
+    return {
+      path: `M ${sourceX},${sourceY} L ${targetX},${targetY}`,
+      anchorX: (sourceX + targetX) / 2,
+      anchorY: (sourceY + targetY) / 2,
+    };
+  }
+  const sweep = targetY > sourceY ? 1 : -1;
+  const sourceSweep = targetX > sourceX ? 1 : -1;
+  const path = [
+    `M ${sourceX},${sourceY}`,
+    `L ${branchX - radius * sourceSweep},${sourceY}`,
+    `Q ${branchX},${sourceY} ${branchX},${sourceY + radius * sweep}`,
+    `L ${branchX},${targetY - radius * sweep}`,
+    `Q ${branchX},${targetY} ${branchX + radius * sourceSweep},${targetY}`,
+    `L ${targetX},${targetY}`,
+  ].join(" ");
+  return { path, anchorX: branchX, anchorY: (sourceY + targetY) / 2 };
+}
 
 /**
  * Mindmap connection. Renders a bezier (optionally bent via `data.curveOffset`)
@@ -79,6 +117,13 @@ export function MindmapEdge({
     (data?.direction as MindmapEdgeDirection | undefined) ??
     DEFAULT_EDGE_DIRECTION;
   const isCross = data?.cross === true;
+  const edgeStyle: CSSProperties = {
+    stroke: selected ? "var(--primary)" : "var(--muted-foreground)",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    strokeWidth: selected ? 2.25 : 1.5,
+    opacity: selected ? 1 : isCross ? 0.72 : 0.64,
+  };
 
   const midX = (sourceX + targetX) / 2;
   const midY = (sourceY + targetY) / 2;
@@ -94,7 +139,7 @@ export function MindmapEdge({
     path = `M ${sourceX},${sourceY} Q ${ctrlX},${ctrlY} ${targetX},${targetY}`;
     anchorX = midX + offset.x / 2;
     anchorY = midY + offset.y / 2;
-  } else {
+  } else if (isCross) {
     const [bezier, labelX, labelY] = getBezierPath({
       sourceX,
       sourceY,
@@ -106,6 +151,11 @@ export function MindmapEdge({
     path = bezier;
     anchorX = labelX;
     anchorY = labelY;
+  } else {
+    const edgePath = treeEdgePath(sourceX, sourceY, targetX, targetY);
+    path = edgePath.path;
+    anchorX = edgePath.anchorX;
+    anchorY = edgePath.anchorY;
   }
 
   const editing = actions.editingEdgeId === id;
@@ -157,6 +207,7 @@ export function MindmapEdge({
         path={path}
         markerStart={markerStart}
         markerEnd={markerEnd}
+        style={isCross ? undefined : edgeStyle}
       />
       <EdgeLabelRenderer>
         <div
@@ -234,7 +285,7 @@ export function MindmapEdge({
                 className="h-7 w-32 rounded-md border border-border bg-card px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               />
             ) : typeof label === "string" && label.length > 0 ? (
-              <span className="rounded bg-card px-1 text-xs text-muted-foreground shadow-sm">
+              <span className="w-max max-w-48 whitespace-normal rounded-md border border-border bg-card px-2 py-1 text-center text-xs leading-snug text-muted-foreground shadow-sm">
                 {label}
               </span>
             ) : null}
