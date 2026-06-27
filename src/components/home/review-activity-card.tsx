@@ -1,6 +1,7 @@
 import { Activity, Flame } from "lucide-react";
 import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   FlashcardStatisticsStreak,
   FlashcardStatisticsTrendPoint,
@@ -63,7 +64,7 @@ function StreakStat({
 }: Readonly<{ label: string; value: number }>) {
   return (
     <div className="flex items-center gap-1.5">
-      <Flame className="size-3.5 text-(--chart-2)" />
+      <Flame className="size-3.5 text-chart-2" />
       <span className="text-base font-semibold leading-none tabular-nums">
         {value}
       </span>
@@ -120,12 +121,12 @@ export function ReviewActivityCard({
           </p>
         ) : (
           <div className="overflow-x-auto pb-1">
-            <div className="flex gap-[3px]">
+            <div className="flex gap-0.75">
               {weeks.map((week, weekIndex) => (
                 <div
                   // biome-ignore lint/suspicious/noArrayIndexKey: week columns are positional and stable
                   key={weekIndex}
-                  className="flex flex-col gap-[3px]"
+                  className="flex flex-col gap-0.75"
                 >
                   {week.map((cell, dayIndex) =>
                     cell ? (
@@ -157,6 +158,31 @@ export function ReviewActivityCard({
             {totalReviews} reviews in the last year
           </p>
           <HeatmapLegend />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Loading placeholder matching {@link ReviewActivityCard}'s reserved shape.
+ *
+ * @example
+ * <ReviewActivityCardSkeleton />
+ */
+export function ReviewActivityCardSkeleton() {
+  return (
+    <Card className="gap-3 py-4">
+      <CardHeader className="flex flex-row items-center gap-2 space-y-0">
+        <Skeleton className="size-4 rounded-md" />
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="ml-auto h-4 w-32" />
+      </CardHeader>
+      <CardContent className="space-y-2.5">
+        <Skeleton className="h-24 w-full rounded-md" />
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-24" />
         </div>
       </CardContent>
     </Card>

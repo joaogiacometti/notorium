@@ -55,9 +55,9 @@ export function ReaderToolbar({
   const isSpread = spread.spreadMode !== SpreadMode.None;
 
   return (
-    <header className="relative flex items-center gap-1 border-b border-border/70 bg-background px-3 py-2">
+    <header className="relative flex h-12 shrink-0 items-center gap-1 border-b border-border/70 bg-background px-3 py-2">
       <div className="flex min-w-0 flex-1 items-center gap-1">
-        <p className="hidden min-w-0 truncate text-sm font-medium lg:block lg:max-w-[8rem] xl:max-w-[14rem] 2xl:max-w-xs">
+        <p className="hidden min-w-0 truncate text-sm font-medium lg:block lg:max-w-32 xl:max-w-56 2xl:max-w-xs">
           {title}
         </p>
         {navHistory.canGoBack && (
