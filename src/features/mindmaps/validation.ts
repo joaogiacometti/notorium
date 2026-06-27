@@ -120,6 +120,14 @@ export const editMindmapSchema = z.object({
 
 export type EditMindmapForm = z.infer<typeof editMindmapSchema>;
 
+export const splitMindmapSchema = z.object({
+  id: z.string().min(1),
+  nodeId: z.string().min(1),
+  data: mindmapDataSchema,
+});
+
+export type SplitMindmapForm = z.infer<typeof splitMindmapSchema>;
+
 export const editMindmapTitleSchema = z.object({
   id: z.string().min(1),
   title: mindmapTitleSchema,

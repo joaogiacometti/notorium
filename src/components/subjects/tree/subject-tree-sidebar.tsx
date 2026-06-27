@@ -167,6 +167,37 @@ export function SubjectTreeSidebar({
     setLocalTree(tree);
   }, [tree]);
 
+  useEffect(() => {
+    const onDocumentsChanged = (event: Event) => {
+      const subjectId = (event as CustomEvent<{ subjectId?: string }>).detail
+        ?.subjectId;
+      if (!subjectId) {
+        return;
+      }
+      setExpandedIds((current) => new Set(current).add(subjectId));
+      setDocumentsBySubject((current) =>
+        new Map(current).set(subjectId, "loading"),
+      );
+      void getSubjectDocuments(subjectId).then((documents) => {
+        setDocumentsBySubject((current) =>
+          new Map(current).set(subjectId, documents),
+        );
+      });
+      startTransition(() => {
+        router.refresh();
+      });
+    };
+    window.addEventListener(
+      "notorium:subject-documents-changed",
+      onDocumentsChanged,
+    );
+    return () =>
+      window.removeEventListener(
+        "notorium:subject-documents-changed",
+        onDocumentsChanged,
+      );
+  }, [router]);
+
   // Reveal the active location by expanding the active subject's ancestor
   // chain. When a note or mindmap is open, also expand its containing subject so
   // the document row itself is visible (ancestors alone leave it collapsed).

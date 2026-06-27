@@ -17,7 +17,7 @@ import {
   useTransition,
 } from "react";
 import { toast } from "sonner";
-import { editMindmap } from "@/app/actions/mindmaps";
+import { editMindmap, splitMindmap } from "@/app/actions/mindmaps";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
@@ -149,6 +149,30 @@ export function MindmapDetail({
       }
     },
     [mindmap.id],
+  );
+
+  const onSplitIntoMindmap = useCallback(
+    async (nodeId: string, nextGraph: MindmapGraph) => {
+      await save(title, nextGraph);
+      const result = await splitMindmap({
+        id: mindmap.id,
+        nodeId,
+        data: JSON.stringify(nextGraph),
+      });
+      if (!result.success) {
+        toast.error(t(result.errorCode, result.errorParams));
+        return false;
+      }
+      toast.success("Moved branch into a new mindmap");
+      window.dispatchEvent(
+        new CustomEvent("notorium:subject-documents-changed", {
+          detail: { subjectId: result.subjectId },
+        }),
+      );
+      router.refresh();
+      return true;
+    },
+    [mindmap.id, router, save, title],
   );
 
   useEffect(() => {
@@ -287,6 +311,7 @@ export function MindmapDetail({
                 title={title}
                 onTitleChange={setTitle}
                 onGraphChange={setGraph}
+                onSplitIntoMindmap={onSplitIntoMindmap}
                 exportRef={exportPngRef}
               />
             </div>

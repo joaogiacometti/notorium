@@ -8,6 +8,7 @@ import {
   editMindmapForUser,
   editMindmapTitleForUser,
   type MindmapMutationResult,
+  splitMindmapForUser,
 } from "@/features/mindmaps/mutations";
 import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
 import {
@@ -19,6 +20,8 @@ import {
   type EditMindmapTitleForm,
   editMindmapSchema,
   editMindmapTitleSchema,
+  type SplitMindmapForm,
+  splitMindmapSchema,
 } from "@/features/mindmaps/validation";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
@@ -60,6 +63,26 @@ export async function editMindmap(
     data,
     "mindmaps.invalidData",
     async (userId, parsedData) => editMindmapForUser(userId, parsedData),
+  );
+
+  if (result.success) {
+    revalidateSubject(result.subjectId);
+    revalidatePath(
+      `/subjects/${result.subjectId}/documents/mindmaps/${data.id}`,
+    );
+  }
+
+  return result;
+}
+
+export async function splitMindmap(
+  data: SplitMindmapForm,
+): Promise<CreateMindmapMutationResult> {
+  const result = await runValidatedUserAction(
+    splitMindmapSchema,
+    data,
+    "mindmaps.invalidData",
+    async (userId, parsedData) => splitMindmapForUser(userId, parsedData),
   );
 
   if (result.success) {

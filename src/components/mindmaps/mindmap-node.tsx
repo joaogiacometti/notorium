@@ -7,7 +7,15 @@ import {
   useReactFlow,
   useStore,
 } from "@xyflow/react";
-import { Bold, ImageIcon, Italic, Loader2, Trash2, X } from "lucide-react";
+import {
+  Bold,
+  ImageIcon,
+  Italic,
+  Loader2,
+  Scissors,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMindmapActions } from "@/components/mindmaps/mindmap-actions-context";
 import { MindmapAddButtons } from "@/components/mindmaps/mindmap-add-buttons";
@@ -118,6 +126,7 @@ export function MindmapNodeComponent({
     isMultiSelect,
   );
   const [editing, setEditing] = useState(false);
+  const [splitting, setSplitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const colorVar = data.color ? `var(--${data.color})` : undefined;
   // Transient flag set by the canvas while a node is dragged over this one, so
@@ -263,6 +272,24 @@ export function MindmapNodeComponent({
             imageUrl={data.imageUrl}
             onClick={() => fileInputRef.current?.click()}
           />
+          {!isMultiSelect ? (
+            <MindmapToolbarButton
+              label="Break into new mindmap"
+              disabled={splitting}
+              onClick={() => {
+                setSplitting(true);
+                void actions.splitIntoMindmap(id).finally(() => {
+                  setSplitting(false);
+                });
+              }}
+            >
+              {splitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Scissors className="size-4" />
+              )}
+            </MindmapToolbarButton>
+          ) : null}
           <MindmapToolbarButton
             label="Delete node"
             destructive

@@ -6,6 +6,7 @@ interface MindmapToolbarButtonProps {
   label: string;
   active?: boolean;
   destructive?: boolean;
+  disabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }
@@ -24,6 +25,7 @@ export function MindmapToolbarButton({
   label,
   active,
   destructive,
+  disabled,
   onClick,
   children,
 }: Readonly<MindmapToolbarButtonProps>) {
@@ -31,6 +33,7 @@ export function MindmapToolbarButton({
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
       aria-pressed={active}
       title={label}
@@ -40,6 +43,7 @@ export function MindmapToolbarButton({
           ? "bg-primary/10 text-foreground"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
         destructive && "hover:bg-destructive/10 hover:text-destructive",
+        disabled && "pointer-events-none opacity-60",
       )}
     >
       {children}

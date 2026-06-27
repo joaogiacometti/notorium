@@ -10,6 +10,7 @@ import {
   countMindmapsBySubjectForUser,
   getMindmapByIdForUser,
 } from "@/features/mindmaps/queries";
+import { splitMindmapGraph } from "@/features/mindmaps/split";
 import {
   getMindmapImagePathnames,
   getRemovedMindmapImagePathnames,
@@ -19,6 +20,7 @@ import type {
   DeleteMindmapForm,
   EditMindmapForm,
   EditMindmapTitleForm,
+  SplitMindmapForm,
 } from "@/features/mindmaps/validation";
 import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
@@ -95,6 +97,50 @@ export async function editMindmapForUser(
   );
 
   return { success: true, mindmapId: data.id, subjectId: existing.subjectId };
+}
+
+export async function splitMindmapForUser(
+  userId: string,
+  data: SplitMindmapForm,
+): Promise<CreateMindmapMutationResult> {
+  const existing = await getMindmapByIdForUser(userId, data.id);
+
+  if (!existing) {
+    return actionError("mindmaps.notFound");
+  }
+
+  const current = await countMindmapsBySubjectForUser(
+    userId,
+    existing.subjectId,
+  );
+  if (current >= LIMITS.maxMindmapsPerSubject) {
+    return actionError("limits.mindmapLimit", {
+      errorParams: { max: LIMITS.maxMindmapsPerSubject },
+    });
+  }
+
+  const split = splitMindmapGraph(JSON.parse(data.data), data.nodeId);
+  if (!split) {
+    return actionError("mindmaps.invalidData");
+  }
+
+  const mindmapId = crypto.randomUUID();
+  const db = getDb();
+  await db.transaction(async (tx) => {
+    await tx.insert(mindmap).values({
+      id: mindmapId,
+      title: split.title,
+      data: JSON.stringify(split.splitGraph),
+      subjectId: existing.subjectId,
+      userId,
+    });
+    await tx
+      .update(mindmap)
+      .set({ data: JSON.stringify(split.remainingGraph) })
+      .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
+  });
+
+  return { success: true, mindmapId, subjectId: existing.subjectId };
 }
 
 export async function editMindmapTitleForUser(

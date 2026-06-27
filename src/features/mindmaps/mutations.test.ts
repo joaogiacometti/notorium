@@ -7,6 +7,15 @@ const updateSetMock = vi.fn(() => ({ where: updateWhereMock }));
 const updateMock = vi.fn(() => ({ set: updateSetMock }));
 const deleteWhereMock = vi.fn();
 const deleteMock = vi.fn(() => ({ where: deleteWhereMock }));
+interface TransactionMock {
+  insert: typeof insertMock;
+  update: typeof updateMock;
+  delete: typeof deleteMock;
+}
+const transactionMock = vi.fn(
+  async (callback: (tx: TransactionMock) => unknown) =>
+    callback({ insert: insertMock, update: updateMock, delete: deleteMock }),
+);
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const countMindmapsBySubjectForUserMock = vi.fn();
@@ -19,6 +28,7 @@ vi.mock("@/db/index", () => ({
     insert: insertMock,
     update: updateMock,
     delete: deleteMock,
+    transaction: transactionMock,
   }),
 }));
 
@@ -165,6 +175,82 @@ describe("editMindmapForUser", () => {
 
     expect(result).toEqual({ success: false, errorCode: "mindmaps.notFound" });
     expect(updateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("splitMindmapForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("creates a new mindmap from a subtree and removes it from the original", async () => {
+    const randomUUIDSpy = vi
+      .spyOn(crypto, "randomUUID")
+      .mockReturnValue("mindmap-split");
+    getMindmapByIdForUserMock.mockResolvedValueOnce({
+      id: "mindmap-1",
+      subjectId: "subject-1",
+      data: null,
+    });
+    countMindmapsBySubjectForUserMock.mockResolvedValueOnce(0);
+
+    const { splitMindmapForUser } = await import(
+      "@/features/mindmaps/mutations"
+    );
+
+    const data = JSON.stringify({
+      nodes: [
+        {
+          id: "root",
+          position: { x: 0, y: 0 },
+          data: { label: "Original", kind: "root" },
+        },
+        { id: "a", position: { x: 200, y: 0 }, data: { label: "Branch" } },
+      ],
+      edges: [{ id: "root-a", source: "root", target: "a" }],
+    });
+
+    const result = await splitMindmapForUser("user-1", {
+      id: "mindmap-1",
+      nodeId: "a",
+      data,
+    });
+
+    expect(result).toEqual({
+      success: true,
+      mindmapId: "mindmap-split",
+      subjectId: "subject-1",
+    });
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      id: "mindmap-split",
+      title: "Branch",
+      data: JSON.stringify({
+        nodes: [
+          {
+            id: "root",
+            position: { x: 0, y: 0 },
+            data: { label: "Branch", kind: "root" },
+          },
+        ],
+        edges: [],
+      }),
+      subjectId: "subject-1",
+      userId: "user-1",
+    });
+    expect(updateSetMock).toHaveBeenCalledWith({
+      data: JSON.stringify({
+        nodes: [
+          {
+            id: "root",
+            position: { x: 0, y: 0 },
+            data: { label: "Original", kind: "root" },
+          },
+        ],
+        edges: [],
+      }),
+    });
+
+    randomUUIDSpy.mockRestore();
   });
 });
 
