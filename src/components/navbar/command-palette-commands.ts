@@ -26,6 +26,7 @@ export type ContextFreeDialog =
   | "subject"
   | "flashcard"
   | "assessment"
+  | "book"
   | "note"
   | "mindmap";
 
@@ -72,6 +73,14 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["new", "add", "create", "assessment", "exam", "test", "quiz"],
     icon: ClipboardList,
     action: { kind: "create", dialog: "assessment" },
+  },
+  {
+    id: "create-book",
+    label: "Add Book",
+    group: "Create",
+    keywords: ["new", "add", "create", "book", "pdf", "library"],
+    icon: BookOpen,
+    action: { kind: "create", dialog: "book" },
   },
   {
     id: "create-note",

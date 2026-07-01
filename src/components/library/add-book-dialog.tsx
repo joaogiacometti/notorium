@@ -11,6 +11,7 @@ import type { z } from "zod";
 import { generateLibraryUploadToken, uploadBook } from "@/app/actions/library";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectSelect } from "@/components/shared/subject-select";
+import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -86,7 +87,7 @@ export function AddBookDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   subjectId: presetSubjectId,
-  subjects,
+  subjects: initialSubjects,
   onUploaded,
 }: Readonly<AddBookDialogProps> = {}) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -101,6 +102,14 @@ export function AddBookDialog({
   const form = useForm<BookMetadata>({
     resolver: zodResolver(bookMetadataSchema),
     defaultValues: { title: "", author: "", subjectId: presetSubjectId ?? "" },
+  });
+  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+    initialSubjects,
+    onSubjectCreated: (createdSubjectId) =>
+      form.setValue("subjectId", createdSubjectId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      }),
   });
 
   function resetState() {
@@ -280,10 +289,10 @@ export function AddBookDialog({
                     id="form-add-book-subject"
                     value={field.value || null}
                     onChange={(next) => field.onChange(next ?? "")}
-                    subjects={subjects ?? []}
-                    disabled={(subjects?.length ?? 0) === 0}
+                    subjects={subjects}
                     ariaInvalid={fieldState.invalid}
                     error={fieldState.error?.message}
+                    onCreateSubject={handleCreateSubject}
                   />
                 )}
               />

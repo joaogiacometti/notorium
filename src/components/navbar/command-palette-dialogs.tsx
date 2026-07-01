@@ -2,12 +2,14 @@
 
 import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
+import { AddBookDialog } from "@/components/library/add-book-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import type { ContextFreeDialog } from "@/components/navbar/command-palette-commands";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { isAcademicSubject } from "@/features/subjects/constants";
 import {
+  getBookDetailHref,
   getMindmapDetailHref,
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
@@ -64,6 +66,16 @@ export function CommandPaletteDialogs({
         subjects={subjects.filter((subject) => isAcademicSubject(subject.kind))}
         open={activeDialog === "assessment"}
         onOpenChange={handleOpenChange}
+      />
+      <AddBookDialog
+        trigger={null}
+        subjectId={subjectId ?? undefined}
+        subjects={subjects}
+        open={activeDialog === "book"}
+        onOpenChange={handleOpenChange}
+        onUploaded={(book) =>
+          onNavigate(getBookDetailHref(book.subjectId, book.id))
+        }
       />
       <CreateNoteTitleDialog
         subjectId={subjectId ?? undefined}

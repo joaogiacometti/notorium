@@ -1,16 +1,54 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AddBookDialog } from "@/components/library/add-book-dialog";
 import { LIMITS } from "@/lib/config/limits";
 
 const uploadBookMock = vi.fn();
 const generateLibraryUploadTokenMock = vi.fn();
+const createSubjectMock = vi.fn();
+const getSubjectOptionsMock = vi.fn();
+const subjectSelectProps: Array<{
+  disabled?: boolean;
+  value: string | null;
+  onChange: (value: string | null) => void;
+  onCreateSubject?: (name: string) => Promise<boolean>;
+}> = [];
+
+vi.mock("server-only", () => ({}));
 
 vi.mock("@/app/actions/library", () => ({
   uploadBook: (...args: unknown[]) => uploadBookMock(...args),
   generateLibraryUploadToken: (...args: unknown[]) =>
     generateLibraryUploadTokenMock(...args),
+}));
+
+vi.mock("@/app/actions/subjects", () => ({
+  createSubject: (...args: unknown[]) => createSubjectMock(...args),
+  getSubjectOptions: (...args: unknown[]) => getSubjectOptionsMock(...args),
+}));
+
+vi.mock("@/components/shared/subject-select", () => ({
+  SubjectSelect: (props: {
+    disabled?: boolean;
+    value: string | null;
+    onChange: (value: string | null) => void;
+    onCreateSubject?: (name: string) => Promise<boolean>;
+  }) => {
+    subjectSelectProps.push(props);
+    return (
+      <button
+        type="button"
+        data-testid="create-subject"
+        disabled={props.disabled}
+        onClick={() => {
+          void props.onCreateSubject?.("Biology");
+        }}
+      >
+        Create Biology
+      </button>
+    );
+  },
 }));
 
 vi.mock("@vercel/blob/client", () => ({
@@ -84,9 +122,11 @@ function getError(container: HTMLElement): string | undefined {
 describe("AddBookDialog file validation", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+    queryClient = new QueryClient();
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -98,12 +138,26 @@ describe("AddBookDialog file validation", () => {
     });
     container.remove();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
+    subjectSelectProps.length = 0;
     vi.clearAllMocks();
   });
 
-  async function render() {
+  async function render(
+    props: Partial<
+      React.ComponentProps<
+        typeof import("@/components/library/add-book-dialog").AddBookDialog
+      >
+    > = {},
+  ) {
+    const { AddBookDialog } = await import(
+      "@/components/library/add-book-dialog"
+    );
     await act(async () => {
-      root.render(<AddBookDialog open onOpenChange={vi.fn()} />);
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <AddBookDialog open onOpenChange={vi.fn()} {...props} />
+        </QueryClientProvider>,
+      );
     });
   }
 
@@ -154,15 +208,7 @@ describe("AddBookDialog file validation", () => {
       book: { id: "book-1", subjectId: "subject-1" },
     });
     const onOpenChange = vi.fn();
-    await act(async () => {
-      root.render(
-        <AddBookDialog
-          open
-          onOpenChange={onOpenChange}
-          subjectId="subject-1"
-        />,
-      );
-    });
+    await render({ onOpenChange, subjectId: "subject-1" });
 
     const input = getFileInput(container);
     await selectFile(input, makePdf("Clean Code.pdf"));
@@ -186,5 +232,35 @@ describe("AddBookDialog file validation", () => {
       }),
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("creates and selects a subject from the picker", async () => {
+    createSubjectMock.mockResolvedValue({
+      success: true,
+      subjectId: "subject-2",
+    });
+    getSubjectOptionsMock.mockResolvedValue([
+      { id: "subject-2", name: "Biology", path: "Biology", kind: "general" },
+    ]);
+    await render();
+    const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    const button = container.querySelector<HTMLButtonElement>(
+      '[data-testid="create-subject"]',
+    );
+    await act(async () => {
+      button?.click();
+    });
+
+    expect(subjectSelectProps.at(-1)?.disabled).toBeUndefined();
+    expect(createSubjectMock).toHaveBeenCalledWith({
+      name: "Biology",
+      kind: "general",
+    });
+    expect(getSubjectOptionsMock).toHaveBeenCalledOnce();
+    expect(subjectSelectProps.at(-1)?.value).toBe("subject-2");
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+      queryKey: ["command-palette-subjects"],
+    });
   });
 });

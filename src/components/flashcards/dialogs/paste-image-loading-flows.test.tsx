@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -201,10 +202,13 @@ describe("paste-image loading flows", () => {
 
   it("renders create discard confirmation outside the embedded form", async () => {
     flashcardDialogState.current.discardDialogOpen = true;
+    const queryClient = new QueryClient();
 
     await act(async () => {
       root.render(
-        <CreateFlashcardDialog open onOpenChange={() => {}} aiEnabled />,
+        <QueryClientProvider client={queryClient}>
+          <CreateFlashcardDialog open onOpenChange={() => {}} aiEnabled />
+        </QueryClientProvider>,
       );
     });
 

@@ -268,8 +268,8 @@ Students who want a private, lightweight study management workspace.
 
 - Pressing `Ctrl`/`Cmd+P` opens a command palette for running actions and navigating, separate from Global Search (`Ctrl`/`Cmd+K`). The browser print shortcut is suppressed while the palette is available.
 - Commands are searchable by name and keyword and grouped as Create, Windows, Go to, and Settings.
-- Create commands open the existing create dialogs: Subject, Flashcard, Assessment, Note, and Mindmap.
-- Creating a Note or Mindmap requires a subject: the create dialog preselects the current subject on subject pages, otherwise the user chooses a subject in the dialog. The subject picker can create a new root general subject inline. Created notes and mindmaps navigate to their detail page.
+- Create commands open the existing create dialogs: Subject, Flashcard, Assessment, Book, Note, and Mindmap.
+- Creating a Book, Note, or Mindmap requires a subject: the create dialog preselects the current subject on subject pages, otherwise the user chooses a subject in the dialog. The subject picker can create a new root general subject inline. Created books, notes, and mindmaps navigate to their detail page.
 - Async picker steps show a loading state while their subject, document, or flashcard results are still loading; empty-state messages render only after loading completes with no matching results.
 - Go to commands navigate to Flashcards, Planning, and Library.
 - Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.

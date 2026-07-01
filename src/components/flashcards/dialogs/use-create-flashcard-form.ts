@@ -1,23 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { createFlashcard } from "@/app/actions/flashcards";
-import { createSubject, getSubjectOptions } from "@/app/actions/subjects";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
+import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
   toCreateFlashcardPayload,
 } from "@/features/flashcards/validation";
-import type {
-  FlashcardEntity,
-  SubjectOption,
-} from "@/lib/server/api-contracts";
-import { t } from "@/lib/server/server-action-errors";
+import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 /** Empty create-flashcard form values, optionally pre-selecting a subject. */
 export function getCreateFlashcardFormValues(
@@ -58,37 +52,19 @@ export function useCreateFlashcardForm({
   onCreated,
   subjectId,
 }: Readonly<UseCreateFlashcardFormOptions>) {
-  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
-
   const form = useForm<FlashcardFormValues>({
     resolver: zodResolver(flashcardFormSchema),
     defaultValues: getCreateFlashcardFormValues(subjectId),
   });
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    void getSubjectOptions().then((fetchedSubjects) => {
-      setSubjects(fetchedSubjects);
-    });
-  }, [open]);
-
-  async function handleCreateSubject(name: string): Promise<boolean> {
-    const result = await createSubject({ name, kind: "general" });
-    if (!result.success) {
-      toast.error(t(result.errorCode, result.errorParams));
-      return false;
-    }
-
-    const fetchedSubjects = await getSubjectOptions();
-    setSubjects(fetchedSubjects);
-    form.setValue("subjectId", result.subjectId ?? "", {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    return true;
-  }
+  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+    open,
+    loadSubjectsOnOpen: true,
+    onSubjectCreated: (createdSubjectId) =>
+      form.setValue("subjectId", createdSubjectId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      }),
+  });
 
   const dialog = useFlashcardDialogState({
     mode: "create",

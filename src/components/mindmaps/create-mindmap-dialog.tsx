@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createMindmap } from "@/app/actions/mindmaps";
-import { createSubject, getSubjectOptions } from "@/app/actions/subjects";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectSelect } from "@/components/shared/subject-select";
+import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,37 +49,24 @@ export function CreateMindmapDialog({
   trigger,
 }: Readonly<CreateMindmapDialogProps>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [subjects, setSubjects] = useState(initialSubjects ?? []);
   const form = useForm<CreateMindmapForm>({
     resolver: zodResolver(createMindmapSchema),
     defaultValues: { subjectId: subjectId ?? "", title: "" },
   });
-
-  useEffect(() => {
-    setSubjects(initialSubjects ?? []);
-  }, [initialSubjects]);
+  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+    initialSubjects,
+    onSubjectCreated: (createdSubjectId) =>
+      form.setValue("subjectId", createdSubjectId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      }),
+  });
 
   useEffect(() => {
     if (open) {
       form.reset({ subjectId: subjectId ?? "", title: "" });
     }
   }, [form, open, subjectId]);
-
-  async function handleCreateSubject(name: string): Promise<boolean> {
-    const result = await createSubject({ name, kind: "general" });
-    if (!result.success) {
-      toast.error(t(result.errorCode, result.errorParams));
-      return false;
-    }
-
-    const fetchedSubjects = await getSubjectOptions();
-    setSubjects(fetchedSubjects);
-    form.setValue("subjectId", result.subjectId ?? "", {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    return true;
-  }
 
   async function handleSubmit(data: CreateMindmapForm) {
     if (isSubmitting) {
