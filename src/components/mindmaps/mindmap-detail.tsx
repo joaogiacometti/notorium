@@ -35,12 +35,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useOptionalWindowManager } from "@/components/windows/window-manager-context";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { ensureRootNode, parseMindmapGraph } from "@/features/mindmaps/utils";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
-
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { MindmapEntity, SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
@@ -58,6 +58,8 @@ interface MindmapDetailProps {
   subjectHref: string | null;
   /** When hosted in a floating window: drop the page top bar and fill height. */
   embedded?: boolean;
+  /** True only for the focused floating window instance. */
+  focusedInWindow?: boolean;
   /** Called instead of navigating after delete when embedded in a window. */
   onClosed?: () => void;
   /** When embedded: flush a pending autosave before the window closes. */
@@ -73,10 +75,12 @@ export function MindmapDetail({
   subjectName,
   subjectHref,
   embedded = false,
+  focusedInWindow = false,
   onClosed,
   registerCloseRequest,
 }: Readonly<MindmapDetailProps>) {
   const router = useRouter();
+  const focusedWindowId = useOptionalWindowManager()?.focusedWindowId ?? null;
   const [, startNavTransition] = useTransition();
   const initialGraph = useRef(
     ensureRootNode(parseMindmapGraph(mindmap.data), mindmap.title),
@@ -105,6 +109,9 @@ export function MindmapDetail({
     [title, graph],
   );
   const isDirty = currentSnapshot !== lastSavedRef.current;
+  const shortcutsEnabled = embedded
+    ? focusedInWindow
+    : focusedWindowId === null;
   useBeforeUnload(isDirty || isSaving);
 
   const save = useCallback(
@@ -313,6 +320,7 @@ export function MindmapDetail({
                 onGraphChange={setGraph}
                 onSplitIntoMindmap={onSplitIntoMindmap}
                 exportRef={exportPngRef}
+                shortcutsEnabled={shortcutsEnabled}
               />
             </div>
           </div>

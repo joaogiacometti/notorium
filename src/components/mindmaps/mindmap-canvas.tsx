@@ -71,6 +71,7 @@ interface MindmapCanvasProps {
     graph: MindmapGraph,
   ) => Promise<boolean>;
   exportRef?: RefObject<MindmapExporter | null>;
+  shortcutsEnabled?: boolean;
   /** Fires once, after every node has a measured size. The offscreen PNG
    * export render waits for this before capturing, so the framed bounds are
    * computed from real node dimensions instead of zero-sized placeholders. */
@@ -102,6 +103,7 @@ function MindmapCanvasInner({
   onGraphChange,
   onSplitIntoMindmap,
   exportRef,
+  shortcutsEnabled = true,
   onNodesMeasured,
 }: Readonly<MindmapCanvasProps>) {
   const initialNodes = useMemo<Node[]>(
@@ -329,6 +331,7 @@ function MindmapCanvasInner({
   });
 
   useMindmapShortcuts({
+    enabled: shortcutsEnabled,
     setMode,
     setSpaceHeld,
     deleteSelected,

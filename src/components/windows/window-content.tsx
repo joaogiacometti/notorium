@@ -23,6 +23,7 @@ import type {
 
 interface WindowContentProps {
   window: WindowInstance;
+  focused: boolean;
   aiEnabled: boolean;
   subjects: SubjectOption[];
 }
@@ -34,6 +35,7 @@ interface WindowContentProps {
  */
 export function WindowContent({
   window,
+  focused,
   aiEnabled,
   subjects,
 }: Readonly<WindowContentProps>) {
@@ -70,6 +72,7 @@ export function WindowContent({
   return (
     <DocumentWindowContent
       window={window}
+      focused={focused}
       aiEnabled={aiEnabled}
       subjects={subjects}
       onClosed={onClosed}
@@ -142,6 +145,7 @@ function FlashcardEditWindowContent({
 
 interface DocumentWindowContentProps {
   window: WindowInstance;
+  focused: boolean;
   aiEnabled: boolean;
   subjects: SubjectOption[];
   onClosed: () => void;
@@ -150,6 +154,7 @@ interface DocumentWindowContentProps {
 
 function DocumentWindowContent({
   window,
+  focused,
   aiEnabled,
   subjects,
   onClosed,
@@ -187,6 +192,7 @@ function DocumentWindowContent({
     return (
       <MindmapDetail
         embedded
+        focusedInWindow={focused}
         onClosed={onClosed}
         registerCloseRequest={registerCloseRequest}
         aiEnabled={aiEnabled}

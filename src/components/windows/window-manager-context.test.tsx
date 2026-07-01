@@ -50,6 +50,7 @@ describe("WindowManagerProvider", () => {
     expect(api.windows).toHaveLength(1);
     expect(api.windows[0]).toMatchObject({ kind: "mindmap", docId: "m1" });
     expect(api.activeWindowId).toBe(api.windows[0].id);
+    expect(api.focusedWindowId).toBe(api.windows[0].id);
   });
 
   it("reactivates an existing window for the same kind and doc instead of duplicating", () => {
@@ -61,6 +62,7 @@ describe("WindowManagerProvider", () => {
 
     expect(api.windows).toHaveLength(2);
     expect(api.activeWindowId).toBe(firstId);
+    expect(api.focusedWindowId).toBe(firstId);
   });
 
   it("keeps a single flashcard window across repeated opens", () => {
@@ -95,6 +97,7 @@ describe("WindowManagerProvider", () => {
 
     expect(api.windows).toHaveLength(1);
     expect(api.activeWindowId).toBe(firstId);
+    expect(api.focusedWindowId).toBe(firstId);
   });
 
   it("minimizes and restores so only one window is active at a time", () => {
@@ -103,12 +106,15 @@ describe("WindowManagerProvider", () => {
     act(() => api.openWindow({ kind: "note", docId: "n1" }));
 
     expect(api.activeWindowId).toBe(api.windows[1].id);
+    expect(api.focusedWindowId).toBe(api.windows[1].id);
 
     act(() => api.minimizeActive());
     expect(api.activeWindowId).toBeNull();
+    expect(api.focusedWindowId).toBeNull();
 
     act(() => api.restore(firstId));
     expect(api.activeWindowId).toBe(firstId);
+    expect(api.focusedWindowId).toBe(firstId);
   });
 
   it("toggles a window between active and minimized", () => {
@@ -117,9 +123,21 @@ describe("WindowManagerProvider", () => {
 
     act(() => api.toggle(id));
     expect(api.activeWindowId).toBeNull();
+    expect(api.focusedWindowId).toBeNull();
 
     act(() => api.toggle(id));
     expect(api.activeWindowId).toBe(id);
+    expect(api.focusedWindowId).toBe(id);
+  });
+
+  it("focuses the page without minimizing the visible window", () => {
+    act(() => api.openWindow({ kind: "mindmap", docId: "m1" }));
+    const id = api.windows[0].id;
+
+    act(() => api.focusWindow(null));
+
+    expect(api.activeWindowId).toBe(id);
+    expect(api.focusedWindowId).toBeNull();
   });
 
   it("clears the active id when the active window is closed", () => {
@@ -130,6 +148,7 @@ describe("WindowManagerProvider", () => {
 
     expect(api.windows).toHaveLength(0);
     expect(api.activeWindowId).toBeNull();
+    expect(api.focusedWindowId).toBeNull();
   });
 
   it("runs a registered close guard instead of closing the window", () => {

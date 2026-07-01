@@ -7,6 +7,7 @@ import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
 import { useFlashcardReviewController } from "@/components/flashcards/review/use-flashcard-review-controller";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
+import { useOptionalWindowManager } from "@/components/windows/window-manager-context";
 import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import { useFlashcardReviewShortcuts } from "@/features/flashcard-review/shortcuts";
 import type {
@@ -37,6 +38,7 @@ export function FlashcardReviewClient({
   aiEnabled,
 }: Readonly<FlashcardReviewClientProps>) {
   const shortcutsSuspended = useShortcutsDialogOpen();
+  const focusedWindowId = useOptionalWindowManager()?.focusedWindowId ?? null;
   const [revealed, setRevealed] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -112,6 +114,7 @@ export function FlashcardReviewClient({
   );
 
   useFlashcardReviewShortcuts({
+    shortcutsEnabled: embedded || focusedWindowId === null,
     shortcutsSuspended,
     isFocusMode,
     isExamMode,

@@ -43,6 +43,7 @@ export interface OpenWindowSpec {
 export interface WindowManagerContextValue {
   windows: WindowInstance[];
   activeWindowId: string | null;
+  focusedWindowId: string | null;
   openWindow: (spec: OpenWindowSpec) => void;
   closeWindow: (id: string) => void;
   /**
@@ -59,6 +60,7 @@ export interface WindowManagerContextValue {
   restore: (id: string) => void;
   /** Dock click: minimize when already active, otherwise restore. */
   toggle: (id: string) => void;
+  focusWindow: (id: string | null) => void;
   setWindowTitle: (id: string, title: string) => void;
   setWindowGeometry: (id: string, geometry: WindowGeometry) => void;
 }
@@ -118,6 +120,7 @@ export function WindowManagerProvider({
 }: Readonly<{ children: ReactNode }>) {
   const [windows, setWindows] = useState<WindowInstance[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
+  const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
   const nextIdRef = useRef(0);
   const closeRequestsRef = useRef<Map<string, () => void>>(new Map());
 
@@ -130,6 +133,7 @@ export function WindowManagerProvider({
     closeRequestsRef.current.delete(id);
     setWindows((current) => current.filter((window) => window.id !== id));
     setActiveWindowId((current) => (current === id ? null : current));
+    setFocusedWindowId((current) => (current === id ? null : current));
   }).current;
 
   const setWindowTitle = useRef((id: string, title: string) => {
@@ -177,6 +181,7 @@ export function WindowManagerProvider({
       );
       if (existing) {
         setActiveWindowId(existing.id);
+        setFocusedWindowId(existing.id);
         return;
       }
 
@@ -193,23 +198,33 @@ export function WindowManagerProvider({
         },
       ]);
       setActiveWindowId(id);
+      setFocusedWindowId(id);
     }
 
     function restore(id: string) {
       setActiveWindowId(id);
+      setFocusedWindowId(id);
     }
 
     function minimizeActive() {
       setActiveWindowId(null);
+      setFocusedWindowId(null);
     }
 
     function toggle(id: string) {
-      setActiveWindowId((current) => (current === id ? null : id));
+      const next = activeWindowId === id ? null : id;
+      setActiveWindowId(next);
+      setFocusedWindowId(next);
+    }
+
+    function focusWindow(id: string | null) {
+      setFocusedWindowId(id);
     }
 
     return {
       windows,
       activeWindowId,
+      focusedWindowId,
       openWindow,
       closeWindow,
       requestCloseWindow,
@@ -217,12 +232,14 @@ export function WindowManagerProvider({
       restore,
       minimizeActive,
       toggle,
+      focusWindow,
       setWindowTitle,
       setWindowGeometry,
     };
   }, [
     windows,
     activeWindowId,
+    focusedWindowId,
     closeWindow,
     setWindowTitle,
     setWindowGeometry,
@@ -249,4 +266,14 @@ export function useWindowManager(): WindowManagerContextValue {
     );
   }
   return context;
+}
+
+/**
+ * Reads the floating window manager when the app shell has mounted it.
+ *
+ * @example
+ * const focusedWindowId = useOptionalWindowManager()?.focusedWindowId ?? null;
+ */
+export function useOptionalWindowManager(): WindowManagerContextValue | null {
+  return useContext(WindowManagerContext);
 }

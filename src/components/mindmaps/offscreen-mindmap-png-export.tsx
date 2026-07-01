@@ -85,6 +85,7 @@ export function OffscreenMindmapPngExport({
         onTitleChange={() => {}}
         onGraphChange={() => {}}
         exportRef={exportRef}
+        shortcutsEnabled={false}
         onNodesMeasured={exportAfterImagesSettle}
       />
     </div>

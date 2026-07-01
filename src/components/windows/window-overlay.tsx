@@ -37,10 +37,16 @@ export function WindowOverlay({
   aiEnabled,
   subjects,
 }: Readonly<WindowOverlayProps>) {
-  const { windows, activeWindowId, minimizeActive } = useWindowManager();
+  const {
+    windows,
+    activeWindowId,
+    focusedWindowId,
+    focusWindow,
+    minimizeActive,
+  } = useWindowManager();
 
   useEffect(() => {
-    if (!activeWindowId) {
+    if (!focusedWindowId) {
       return;
     }
     function handleKeyDown(event: KeyboardEvent) {
@@ -50,7 +56,22 @@ export function WindowOverlay({
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [activeWindowId, minimizeActive]);
+  }, [focusedWindowId, minimizeActive]);
+
+  useEffect(() => {
+    function focusEventSurface(event: PointerEvent | FocusEvent) {
+      const target = event.target;
+      const element = target instanceof Element ? target : null;
+      const frame = element?.closest<HTMLElement>("[data-window-id]");
+      focusWindow(frame?.dataset.windowId ?? null);
+    }
+    document.addEventListener("pointerdown", focusEventSurface, true);
+    document.addEventListener("focusin", focusEventSurface, true);
+    return () => {
+      document.removeEventListener("pointerdown", focusEventSurface, true);
+      document.removeEventListener("focusin", focusEventSurface, true);
+    };
+  }, [focusWindow]);
 
   if (windows.length === 0 || typeof document === "undefined") {
     return null;
@@ -63,6 +84,7 @@ export function WindowOverlay({
           key={window.id}
           window={window}
           active={window.id === activeWindowId}
+          focused={window.id === focusedWindowId}
           aiEnabled={aiEnabled}
           subjects={subjects}
         />
@@ -86,6 +108,7 @@ const RESIZE_HANDLES: ReadonlyArray<{ edge: ResizeEdge; className: string }> = [
 interface WindowFrameProps {
   window: WindowInstance;
   active: boolean;
+  focused: boolean;
   aiEnabled: boolean;
   subjects: SubjectOption[];
 }
@@ -93,6 +116,7 @@ interface WindowFrameProps {
 function WindowFrame({
   window,
   active,
+  focused,
   aiEnabled,
   subjects,
 }: Readonly<WindowFrameProps>) {
@@ -115,6 +139,7 @@ function WindowFrame({
   return (
     <div
       ref={frameRef}
+      data-window-id={window.id}
       aria-hidden={!active}
       style={{
         left: window.geometry.x,
@@ -158,6 +183,7 @@ function WindowFrame({
       <div className="min-h-0 flex-1 overflow-hidden">
         <WindowContent
           window={window}
+          focused={focused}
           aiEnabled={aiEnabled}
           subjects={subjects}
         />

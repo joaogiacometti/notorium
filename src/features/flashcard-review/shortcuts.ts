@@ -36,6 +36,7 @@ interface GetFlashcardReviewShortcutActionInput {
 }
 
 interface UseFlashcardReviewShortcutsOptions {
+  shortcutsEnabled: boolean;
   shortcutsSuspended: boolean;
   isFocusMode: boolean;
   isExamMode: boolean;
@@ -60,7 +61,7 @@ const gradeKeyMap: Record<string, ReviewGrade> = Object.fromEntries(
  * Wires flashcard review keyboard shortcuts for the focus/exam view.
  *
  * @example
- * useFlashcardReviewShortcuts({ shortcutsSuspended, isFocusMode, isExamMode, revealed, hasCurrentCard, isPending, isDialogOpen, onReveal, onEdit, onDelete, onReset, onGrade, onExitExamMode, onExitFocusMode });
+ * useFlashcardReviewShortcuts({ shortcutsEnabled, shortcutsSuspended, isFocusMode, isExamMode, revealed, hasCurrentCard, isPending, isDialogOpen, onReveal, onEdit, onDelete, onReset, onGrade, onExitExamMode, onExitFocusMode });
  */
 export function useFlashcardReviewShortcuts(
   options: UseFlashcardReviewShortcutsOptions,
@@ -143,6 +144,7 @@ function handleFlashcardReviewKeyDown(
   event: KeyboardEvent,
   options: UseFlashcardReviewShortcutsOptions,
 ) {
+  if (!options.shortcutsEnabled) return;
   if (options.shortcutsSuspended) return;
   if (handleReviewEscape(event, options)) return;
   if (!options.isFocusMode) return;

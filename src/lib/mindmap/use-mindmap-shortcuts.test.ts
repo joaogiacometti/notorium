@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { describe, expect, it, vi } from "vitest";
 import {
   isEditableTarget,
   isMindmapCopyChord,
   resolveMindmapKey,
+  useMindmapShortcuts,
 } from "@/lib/mindmap/use-mindmap-shortcuts";
 
 function copyEvent(overrides: Partial<KeyboardEvent>): KeyboardEvent {
@@ -15,6 +18,10 @@ function copyEvent(overrides: Partial<KeyboardEvent>): KeyboardEvent {
     ...overrides,
   } as KeyboardEvent;
 }
+
+type ReactActEnvironmentGlobal = typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT?: boolean;
+};
 
 describe("resolveMindmapKey", () => {
   it("maps V to select and H to hand", () => {
@@ -90,5 +97,51 @@ describe("isEditableTarget", () => {
   it("treats plain elements and null as not editable", () => {
     expect(isEditableTarget(document.createElement("div"))).toBe(false);
     expect(isEditableTarget(null)).toBe(false);
+  });
+});
+
+function MindmapShortcutHarness({
+  enabled,
+  onMode,
+}: Readonly<{
+  enabled: boolean;
+  onMode: () => void;
+}>) {
+  useMindmapShortcuts({
+    enabled,
+    setMode: onMode,
+    setSpaceHeld: () => {},
+    deleteSelected: () => {},
+    addChildToSelected: () => {},
+    addSiblingToSelected: () => {},
+    copySelected: () => false,
+    undo: () => {},
+    redo: () => {},
+  });
+  return null;
+}
+
+describe("useMindmapShortcuts", () => {
+  it("does not handle keys while disabled", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    const onMode = vi.fn();
+    document.body.appendChild(container);
+    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+
+    try {
+      await act(async () => {
+        root.render(
+          createElement(MindmapShortcutHarness, { enabled: false, onMode }),
+        );
+      });
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "v" }));
+      expect(onMode).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+      (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT =
+        false;
+    }
   });
 });

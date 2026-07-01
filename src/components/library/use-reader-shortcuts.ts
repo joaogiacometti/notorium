@@ -15,6 +15,7 @@ import {
   POINTER_MODE,
   type ReaderInteractionMode,
 } from "@/components/library/reader-interaction-modes";
+import { useOptionalWindowManager } from "@/components/windows/window-manager-context";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 
 interface UseReaderShortcutsOptions {
@@ -32,9 +33,10 @@ export function useReaderShortcuts({
   documentId,
   onToggleSidebar,
 }: Readonly<UseReaderShortcutsOptions>) {
-  useReaderToolShortcuts(documentId, onToggleSidebar);
-  useReaderDisplayShortcuts(documentId);
-  useReaderCopyShortcut(documentId);
+  const enabled = useOptionalWindowManager()?.focusedWindowId == null;
+  useReaderToolShortcuts(documentId, onToggleSidebar, enabled);
+  useReaderDisplayShortcuts(documentId, enabled);
+  useReaderCopyShortcut(documentId, enabled);
 }
 
 interface UseReaderSearchShortcutOptions {
@@ -52,8 +54,10 @@ export function useReaderSearchShortcut({
   inputRef,
   openSearch,
 }: Readonly<UseReaderSearchShortcutOptions>) {
+  const enabled = useOptionalWindowManager()?.focusedWindowId == null;
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (!enabled) return;
       if (!isFindShortcut(event)) return;
       if (event.target !== inputRef.current && isEditableTarget(event.target)) {
         return;
@@ -63,12 +67,13 @@ export function useReaderSearchShortcut({
     }
     globalThis.addEventListener("keydown", onKeyDown);
     return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [inputRef, openSearch]);
+  }, [enabled, inputRef, openSearch]);
 }
 
 function useReaderToolShortcuts(
   documentId: string,
   onToggleSidebar: () => void,
+  enabled: boolean,
 ) {
   const interaction = useInteractionManagerCapability();
   const { provides: annotationApi, state } = useAnnotation(documentId);
@@ -77,6 +82,7 @@ function useReaderToolShortcuts(
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (!enabled) return;
       if (handleSidebarShortcut(event, onToggleSidebar)) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (isEditableTarget(event.target)) return;
@@ -95,16 +101,23 @@ function useReaderToolShortcuts(
     }
     globalThis.addEventListener("keydown", onKeyDown);
     return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [annotationApi, documentId, interaction.provides, onToggleSidebar]);
+  }, [
+    annotationApi,
+    documentId,
+    enabled,
+    interaction.provides,
+    onToggleSidebar,
+  ]);
 }
 
-function useReaderDisplayShortcuts(documentId: string) {
+function useReaderDisplayShortcuts(documentId: string, enabled: boolean) {
   const zoom = useZoom(documentId);
   const spread = useSpread(documentId);
   const { toggleFullscreen } = useReaderFullscreen();
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (!enabled) return;
       if (isEditableTarget(event.target)) return;
       if (handleZoomShortcut(event, zoom.provides)) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -120,10 +133,16 @@ function useReaderDisplayShortcuts(documentId: string) {
     }
     globalThis.addEventListener("keydown", onKeyDown);
     return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [zoom.provides, spread.provides, spread.spreadMode, toggleFullscreen]);
+  }, [
+    enabled,
+    zoom.provides,
+    spread.provides,
+    spread.spreadMode,
+    toggleFullscreen,
+  ]);
 }
 
-function useReaderCopyShortcut(documentId: string) {
+function useReaderCopyShortcut(documentId: string, enabled: boolean) {
   const selection = useSelectionCapability();
   const hasSelection = useRef(false);
 
@@ -137,6 +156,7 @@ function useReaderCopyShortcut(documentId: string) {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (!enabled) return;
       const isCopy = (event.metaKey || event.ctrlKey) && event.key === "c";
       if (!isCopy || !hasSelection.current || isEditableTarget(event.target)) {
         return;
@@ -146,7 +166,7 @@ function useReaderCopyShortcut(documentId: string) {
     }
     globalThis.addEventListener("keydown", onKeyDown);
     return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [selection.provides, documentId]);
+  }, [selection.provides, documentId, enabled]);
 }
 
 function modeForKey(key: string): ReaderInteractionMode | null {

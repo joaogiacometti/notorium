@@ -6,6 +6,7 @@ import { useEffect } from "react";
 export type MindmapMode = "select" | "hand";
 
 interface UseMindmapShortcutsParams {
+  enabled?: boolean;
   setMode: (mode: MindmapMode) => void;
   setSpaceHeld: (held: boolean) => void;
   deleteSelected: () => void;
@@ -31,6 +32,7 @@ type MindmapKeyAction =
  * useMindmapShortcuts({ setMode, setSpaceHeld, deleteSelected, addChildToSelected, addSiblingToSelected, copySelected, undo, redo });
  */
 export function useMindmapShortcuts({
+  enabled = true,
   setMode,
   setSpaceHeld,
   deleteSelected,
@@ -41,6 +43,7 @@ export function useMindmapShortcuts({
   redo,
 }: UseMindmapShortcutsParams): void {
   useEffect(() => {
+    if (!enabled) return;
     const onKeyDown = (event: KeyboardEvent) => {
       handleMindmapKeyDown(event, {
         setMode,
@@ -65,6 +68,7 @@ export function useMindmapShortcuts({
       window.removeEventListener("keyup", onKeyUp);
     };
   }, [
+    enabled,
     setMode,
     setSpaceHeld,
     deleteSelected,
