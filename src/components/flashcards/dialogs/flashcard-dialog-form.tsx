@@ -77,6 +77,7 @@ interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   formId: string;
   editorResetVersion?: number;
   subjects?: SubjectOption[];
+  onCreateSubject?: (name: string) => Promise<boolean>;
   onSubmit: (values: TValues) => Promise<void>;
   isSubmitting: boolean;
   isSaved?: boolean;
@@ -112,6 +113,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   formId,
   editorResetVersion,
   subjects,
+  onCreateSubject,
   onSubmit,
   isSubmitting,
   isSaved,
@@ -184,7 +186,10 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   id={`${formId}-subject`}
                   error={fieldState.error?.message as string}
                   ariaInvalid={fieldState.invalid}
-                  disabled={subjects.length === 0}
+                  disabled={subjects.length === 0 && !onCreateSubject}
+                  onCreateSubject={
+                    mode === "create" ? onCreateSubject : undefined
+                  }
                 />
               )}
             />

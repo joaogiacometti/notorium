@@ -3,10 +3,7 @@
 import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
-import type {
-  ContextFreeDialog,
-  SubjectScopedDialog,
-} from "@/components/navbar/command-palette-commands";
+import type { ContextFreeDialog } from "@/components/navbar/command-palette-commands";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { isAcademicSubject } from "@/features/subjects/constants";
@@ -14,14 +11,14 @@ import {
   getMindmapDetailHref,
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
-import type { SubjectEntity } from "@/lib/server/api-contracts";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 
-export type ActiveCreateDialog = ContextFreeDialog | SubjectScopedDialog;
+export type ActiveCreateDialog = ContextFreeDialog;
 
 interface CommandPaletteDialogsProps {
   activeDialog: ActiveCreateDialog | null;
   subjectId: string | null;
-  subjects: SubjectEntity[];
+  subjects: SubjectOption[];
   aiEnabled: boolean;
   onClose: () => void;
   onNavigate: (href: string) => void;
@@ -60,6 +57,7 @@ export function CommandPaletteDialogs({
       <CreateFlashcardDialog
         open={activeDialog === "flashcard"}
         onOpenChange={handleOpenChange}
+        subjectId={subjectId ?? undefined}
         aiEnabled={aiEnabled}
       />
       <CreateAssessmentDialog
@@ -67,30 +65,28 @@ export function CommandPaletteDialogs({
         open={activeDialog === "assessment"}
         onOpenChange={handleOpenChange}
       />
-      {subjectId ? (
-        <CreateNoteTitleDialog
-          subjectId={subjectId}
-          open={activeDialog === "note"}
-          onOpenChange={handleOpenChange}
-          onSuccess={(noteId) =>
-            createInWindow
-              ? onOpenDocumentWindow("note", noteId)
-              : onNavigate(getNoteDetailHref(subjectId, noteId))
-          }
-        />
-      ) : null}
-      {subjectId ? (
-        <CreateMindmapDialog
-          subjectId={subjectId}
-          open={activeDialog === "mindmap"}
-          onOpenChange={handleOpenChange}
-          onSuccess={(mindmapId) =>
-            createInWindow
-              ? onOpenDocumentWindow("mindmap", mindmapId)
-              : onNavigate(getMindmapDetailHref(subjectId, mindmapId))
-          }
-        />
-      ) : null}
+      <CreateNoteTitleDialog
+        subjectId={subjectId ?? undefined}
+        subjects={subjects}
+        open={activeDialog === "note"}
+        onOpenChange={handleOpenChange}
+        onSuccess={(noteId, createdSubjectId) =>
+          createInWindow
+            ? onOpenDocumentWindow("note", noteId)
+            : onNavigate(getNoteDetailHref(createdSubjectId, noteId))
+        }
+      />
+      <CreateMindmapDialog
+        subjectId={subjectId ?? undefined}
+        subjects={subjects}
+        open={activeDialog === "mindmap"}
+        onOpenChange={handleOpenChange}
+        onSuccess={(mindmapId, createdSubjectId) =>
+          createInWindow
+            ? onOpenDocumentWindow("mindmap", mindmapId)
+            : onNavigate(getMindmapDetailHref(createdSubjectId, mindmapId))
+        }
+      />
     </>
   );
 }

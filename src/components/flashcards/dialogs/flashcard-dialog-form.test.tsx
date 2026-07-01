@@ -30,7 +30,11 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
 
 function Harness({
   subjects = [],
-}: Readonly<{ subjects?: SubjectOption[] | undefined }>) {
+  onCreateSubject,
+}: Readonly<{
+  subjects?: SubjectOption[] | undefined;
+  onCreateSubject?: (name: string) => Promise<boolean>;
+}>) {
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
       type: "basic",
@@ -49,6 +53,7 @@ function Harness({
       form={form}
       formId="form-create-flashcard"
       subjects={subjects}
+      onCreateSubject={onCreateSubject}
       onSubmit={async () => {}}
       isSubmitting={false}
       discard={{
@@ -80,6 +85,31 @@ function Harness({
       noDialog
     />
   );
+}
+
+function getSubjectOption(name: string): SubjectOption {
+  const now = new Date();
+  return {
+    id: name.toLowerCase(),
+    name,
+    path: name,
+    kind: "academic",
+    parentSubjectId: null,
+    totalClasses: null,
+    maxMisses: null,
+    userId: "user-1",
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function setInputValue(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set;
+  valueSetter?.call(input, value);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 describe("FlashcardDialogForm", () => {
@@ -152,5 +182,44 @@ describe("FlashcardDialogForm", () => {
     expect(deckSelect).not.toBeNull();
     expect(deckSelect.disabled).toBe(true);
     expect(deckSelect.textContent).toContain("Select a subject");
+  });
+
+  it("creates a subject from the filtered create row", async () => {
+    const onCreateSubject = vi.fn().mockResolvedValue(true);
+    await act(async () => {
+      root.render(
+        <Harness
+          subjects={[getSubjectOption("CS")]}
+          onCreateSubject={onCreateSubject}
+        />,
+      );
+    });
+
+    const subjectSelect = container.querySelector(
+      "#form-create-flashcard-subject",
+    ) as HTMLButtonElement;
+    expect(subjectSelect.disabled).toBe(false);
+
+    await act(async () => {
+      subjectSelect.click();
+    });
+
+    const searchInput = document.body.querySelector(
+      'input[placeholder="Search subjects by path"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      setInputValue(searchInput, "Biology");
+    });
+
+    const createItem = Array.from(
+      document.body.querySelectorAll('[data-slot="command-item"]'),
+    ).find((item) => item.textContent?.includes("Create Biology"));
+    expect(createItem).toBeDefined();
+
+    await act(async () => {
+      (createItem as HTMLElement).click();
+    });
+
+    expect(onCreateSubject).toHaveBeenCalledWith("Biology");
   });
 });

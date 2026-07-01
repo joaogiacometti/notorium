@@ -30,13 +30,14 @@ export function CreateFlashcardFormPanel({
   subjectId,
   registerCloseRequest,
 }: Readonly<CreateFlashcardFormPanelProps>) {
-  const { subjects, form, dialog } = useCreateFlashcardForm({
-    open: true,
-    aiEnabled,
-    onOpenChange,
-    onCreated,
-    subjectId,
-  });
+  const { subjects, form, dialog, handleCreateSubject } =
+    useCreateFlashcardForm({
+      open: true,
+      aiEnabled,
+      onOpenChange,
+      onCreated,
+      subjectId,
+    });
 
   // Closing the window runs the same guarded close as the form's own discard
   // flow: prompt when there is content, otherwise close immediately.
@@ -55,6 +56,7 @@ export function CreateFlashcardFormPanel({
         formId="form-window-flashcard"
         editorResetVersion={dialog.editorResetVersion}
         subjects={subjects}
+        onCreateSubject={handleCreateSubject}
         onSubmit={dialog.handleSubmit}
         isSubmitting={dialog.isSubmitting}
         isSaved={dialog.isSaved}

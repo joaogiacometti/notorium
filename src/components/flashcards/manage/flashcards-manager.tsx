@@ -30,7 +30,6 @@ interface FlashcardsManagerProps {
   initialSearch?: string;
   initialPageSize: number;
   aiEnabled: boolean;
-  hasSubjects: boolean;
 }
 
 export function FlashcardsManager({
@@ -39,7 +38,6 @@ export function FlashcardsManager({
   initialSearch,
   initialPageSize,
   aiEnabled,
-  hasSubjects,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
@@ -182,7 +180,6 @@ export function FlashcardsManager({
         refineStrugglingCount={refineGroups.struggling.length}
         isLoadingRefineGroups={isLoadingRefineGroups}
         aiEnabled={aiEnabled}
-        hasSubjects={hasSubjects}
         onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
         onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}

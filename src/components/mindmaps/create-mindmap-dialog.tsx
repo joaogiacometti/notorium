@@ -1,11 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createMindmap } from "@/app/actions/mindmaps";
+import { createSubject, getSubjectOptions } from "@/app/actions/subjects";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,34 +28,60 @@ import {
   type CreateMindmapForm,
   createMindmapSchema,
 } from "@/features/mindmaps/validation";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface CreateMindmapDialogProps {
-  subjectId: string;
+  subjectId?: string;
+  subjects?: SubjectOption[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (mindmapId: string) => void;
+  onSuccess: (mindmapId: string, subjectId: string) => void;
   trigger?: React.ReactNode;
 }
 
-type CreateMindmapTitleForm = Pick<CreateMindmapForm, "title">;
-
-const createMindmapTitleSchema = createMindmapSchema.pick({ title: true });
-
 export function CreateMindmapDialog({
   subjectId,
+  subjects: initialSubjects,
   open,
   onOpenChange,
   onSuccess,
   trigger,
 }: Readonly<CreateMindmapDialogProps>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const form = useForm<CreateMindmapTitleForm>({
-    resolver: zodResolver(createMindmapTitleSchema),
-    defaultValues: { title: "" },
+  const [subjects, setSubjects] = useState(initialSubjects ?? []);
+  const form = useForm<CreateMindmapForm>({
+    resolver: zodResolver(createMindmapSchema),
+    defaultValues: { subjectId: subjectId ?? "", title: "" },
   });
 
-  async function handleSubmit(data: CreateMindmapTitleForm) {
+  useEffect(() => {
+    setSubjects(initialSubjects ?? []);
+  }, [initialSubjects]);
+
+  useEffect(() => {
+    if (open) {
+      form.reset({ subjectId: subjectId ?? "", title: "" });
+    }
+  }, [form, open, subjectId]);
+
+  async function handleCreateSubject(name: string): Promise<boolean> {
+    const result = await createSubject({ name, kind: "general" });
+    if (!result.success) {
+      toast.error(t(result.errorCode, result.errorParams));
+      return false;
+    }
+
+    const fetchedSubjects = await getSubjectOptions();
+    setSubjects(fetchedSubjects);
+    form.setValue("subjectId", result.subjectId ?? "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    return true;
+  }
+
+  async function handleSubmit(data: CreateMindmapForm) {
     if (isSubmitting) {
       return;
     }
@@ -61,16 +89,19 @@ export function CreateMindmapDialog({
     setIsSubmitting(true);
 
     try {
-      const result = await createMindmap({ title: data.title, subjectId });
+      const result = await createMindmap({
+        title: data.title,
+        subjectId: data.subjectId,
+      });
 
       if (!result.success) {
         toast.error(t(result.errorCode, result.errorParams));
         return;
       }
 
-      form.reset({ title: "" });
+      form.reset({ subjectId: subjectId ?? "", title: "" });
       onOpenChange(false);
-      onSuccess(result.mindmapId);
+      onSuccess(result.mindmapId, data.subjectId);
     } finally {
       setIsSubmitting(false);
     }
@@ -78,7 +109,7 @@ export function CreateMindmapDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      form.reset({ title: "" });
+      form.reset({ subjectId: subjectId ?? "", title: "" });
     }
 
     onOpenChange(nextOpen);
@@ -99,6 +130,23 @@ export function CreateMindmapDialog({
           onSubmit={form.handleSubmit(handleSubmit)}
         >
           <FieldGroup className="gap-4">
+            {initialSubjects ? (
+              <Controller
+                name="subjectId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <SubjectSelect
+                    value={field.value}
+                    onChange={(value) => field.onChange(value ?? "")}
+                    subjects={subjects}
+                    id="form-create-mindmap-subject"
+                    error={fieldState.error?.message}
+                    ariaInvalid={fieldState.invalid}
+                    onCreateSubject={handleCreateSubject}
+                  />
+                )}
+              />
+            ) : null}
             <Controller
               name="title"
               control={form.control}

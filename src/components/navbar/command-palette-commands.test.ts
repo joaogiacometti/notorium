@@ -23,7 +23,6 @@ describe("paletteCommands", () => {
       paletteCommands.map((command) => command.action.kind),
     );
     expect(kinds).toContain("create");
-    expect(kinds).toContain("create-in-subject");
     expect(kinds).toContain("navigate");
     expect(kinds).toContain("theme");
     expect(kinds).toContain("open-settings");

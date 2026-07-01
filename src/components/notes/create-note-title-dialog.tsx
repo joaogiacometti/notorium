@@ -2,11 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createNote } from "@/app/actions/notes";
+import { createSubject, getSubjectOptions } from "@/app/actions/subjects";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,22 +29,21 @@ import {
   type CreateNoteForm,
   createNoteSchema,
 } from "@/features/notes/validation";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface CreateNoteTitleDialogProps {
-  subjectId: string;
+  subjectId?: string;
+  subjects?: SubjectOption[];
   trigger?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (noteId: string) => void;
+  onSuccess: (noteId: string, subjectId: string) => void;
 }
-
-type CreateNoteTitleForm = Pick<CreateNoteForm, "title">;
-
-const createNoteTitleSchema = createNoteSchema.pick({ title: true });
 
 export function CreateNoteTitleDialog({
   subjectId,
+  subjects: initialSubjects,
   trigger,
   open,
   onOpenChange,
@@ -50,12 +51,42 @@ export function CreateNoteTitleDialog({
 }: Readonly<CreateNoteTitleDialogProps>) {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const form = useForm<CreateNoteTitleForm>({
-    resolver: zodResolver(createNoteTitleSchema),
-    defaultValues: { title: "" },
+  const [subjects, setSubjects] = useState(initialSubjects ?? []);
+  const form = useForm<CreateNoteForm>({
+    resolver: zodResolver(createNoteSchema),
+    defaultValues: { subjectId: subjectId ?? "", title: "", content: "" },
   });
 
-  async function handleSubmit(data: CreateNoteTitleForm) {
+  useEffect(() => {
+    setSubjects(initialSubjects ?? []);
+  }, [initialSubjects]);
+
+  useEffect(() => {
+    if (open) {
+      form.reset({ subjectId: subjectId ?? "", title: "", content: "" });
+    }
+  }, [form, open, subjectId]);
+
+  async function handleCreateSubject(name: string): Promise<boolean> {
+    const result = await createSubject({ name, kind: "general" });
+    if (!result.success) {
+      toast.error(t(result.errorCode, result.errorParams));
+      return false;
+    }
+
+    const fetchedSubjects = await getSubjectOptions();
+    setSubjects(fetchedSubjects);
+    await queryClient.invalidateQueries({
+      queryKey: ["command-palette-subjects"],
+    });
+    form.setValue("subjectId", result.subjectId ?? "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    return true;
+  }
+
+  async function handleSubmit(data: CreateNoteForm) {
     if (isSubmitting) {
       return;
     }
@@ -64,7 +95,7 @@ export function CreateNoteTitleDialog({
 
     try {
       const result = await createNote({
-        subjectId,
+        subjectId: data.subjectId,
         title: data.title,
         content: "",
       });
@@ -75,9 +106,9 @@ export function CreateNoteTitleDialog({
       }
 
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      form.reset({ title: "" });
+      form.reset({ subjectId: subjectId ?? "", title: "", content: "" });
       onOpenChange(false);
-      onSuccess(result.noteId);
+      onSuccess(result.noteId, data.subjectId);
     } finally {
       setIsSubmitting(false);
     }
@@ -85,7 +116,7 @@ export function CreateNoteTitleDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      form.reset({ title: "" });
+      form.reset({ subjectId: subjectId ?? "", title: "", content: "" });
     }
 
     onOpenChange(nextOpen);
@@ -106,6 +137,23 @@ export function CreateNoteTitleDialog({
           onSubmit={form.handleSubmit(handleSubmit)}
         >
           <FieldGroup className="gap-4">
+            {initialSubjects ? (
+              <Controller
+                name="subjectId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <SubjectSelect
+                    value={field.value}
+                    onChange={(value) => field.onChange(value ?? "")}
+                    subjects={subjects}
+                    id="form-create-note-subject"
+                    error={fieldState.error?.message}
+                    ariaInvalid={fieldState.invalid}
+                    onCreateSubject={handleCreateSubject}
+                  />
+                )}
+              />
+            ) : null}
             <Controller
               name="title"
               control={form.control}

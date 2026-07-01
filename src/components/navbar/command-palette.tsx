@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getOpenableDocuments } from "@/app/actions/documents";
 import { getFlashcardsManagePage } from "@/app/actions/flashcards";
-import { getSubjects } from "@/app/actions/subjects";
+import { getSubjectOptions } from "@/app/actions/subjects";
 import { useOpenAccountSettings } from "@/components/account/account-settings-provider";
 import {
   type PaletteAction,
@@ -19,7 +19,6 @@ import {
   DocumentPickerPage,
   FlashcardPickerPage,
   RootPage,
-  SubjectPickerPage,
 } from "@/components/navbar/command-palette-pages";
 import { useThemeControl } from "@/components/navbar/use-theme-control";
 import {
@@ -34,7 +33,7 @@ interface CommandPaletteProps {
   aiEnabled: boolean;
 }
 
-type PalettePage = "root" | "pick-subject" | "open-doc" | "edit-flashcard";
+type PalettePage = "root" | "open-doc" | "edit-flashcard";
 
 export function CommandPalette({
   userId,
@@ -52,8 +51,6 @@ export function CommandPalette({
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState<PalettePage>("root");
   const [search, setSearch] = useState("");
-  const [pendingScopedDialog, setPendingScopedDialog] =
-    useState<ActiveCreateDialog | null>(null);
   const [activeDialog, setActiveDialog] = useState<ActiveCreateDialog | null>(
     null,
   );
@@ -62,10 +59,10 @@ export function CommandPalette({
   // navigating to its page.
   const [createInWindow, setCreateInWindow] = useState(false);
 
-  const { data: subjects = [], isPending: isSubjectsPending } = useQuery({
+  const { data: subjects = [] } = useQuery({
     queryKey: ["command-palette-subjects", userId],
-    queryFn: () => getSubjects(),
-    enabled: open && userId.length > 0,
+    queryFn: () => getSubjectOptions(),
+    enabled: (open || activeDialog !== null) && userId.length > 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
   });
@@ -126,29 +123,12 @@ export function CommandPalette({
     setOpen(nextOpen);
     if (!nextOpen) {
       goToPage("root");
-      setPendingScopedDialog(null);
     }
   }
 
   function navigate(href: string) {
     handleOpenChange(false);
     startNavTransition(() => router.push(href));
-  }
-
-  function openScopedDialog(dialog: ActiveCreateDialog, forSubjectId: string) {
-    setSubjectId(forSubjectId);
-    setActiveDialog(dialog);
-    handleOpenChange(false);
-  }
-
-  function startScopedCreate(dialog: ActiveCreateDialog) {
-    const routeSubjectId = parseSubjectIdFromPath(pathname);
-    if (routeSubjectId) {
-      openScopedDialog(dialog, routeSubjectId);
-    } else {
-      setPendingScopedDialog(dialog);
-      goToPage("pick-subject");
-    }
   }
 
   function openDocumentWindow(kind: "mindmap" | "note", docId: string) {
@@ -162,18 +142,18 @@ export function CommandPalette({
       navigate(action.href);
     } else if (action.kind === "create") {
       setCreateInWindow(false);
+      setSubjectId(parseSubjectIdFromPath(pathname));
       setActiveDialog(action.dialog);
       handleOpenChange(false);
-    } else if (action.kind === "create-in-subject") {
-      setCreateInWindow(false);
-      startScopedCreate(action.dialog);
     } else if (action.kind === "open-window-create") {
       if (action.create === "flashcard") {
         handleOpenChange(false);
         openWindow({ kind: "flashcard" });
       } else {
         setCreateInWindow(true);
-        startScopedCreate(action.create);
+        setSubjectId(parseSubjectIdFromPath(pathname));
+        setActiveDialog(action.create);
+        handleOpenChange(false);
       }
     } else if (action.kind === "open-window-existing") {
       goToPage("open-doc");
@@ -188,13 +168,6 @@ export function CommandPalette({
     } else {
       handleOpenChange(false);
       openShortcutsHelp();
-    }
-  }
-
-  function handleSubjectPicked(pickedSubjectId: string) {
-    if (pendingScopedDialog) {
-      openScopedDialog(pendingScopedDialog, pickedSubjectId);
-      setPendingScopedDialog(null);
     }
   }
 
@@ -217,14 +190,6 @@ export function CommandPalette({
             search={search}
             onSearchChange={setSearch}
             onRun={runAction}
-          />
-        ) : page === "pick-subject" ? (
-          <SubjectPickerPage
-            search={search}
-            onSearchChange={setSearch}
-            subjects={subjects}
-            isLoading={isSubjectsPending}
-            onPick={handleSubjectPicked}
           />
         ) : page === "open-doc" ? (
           <DocumentPickerPage

@@ -113,7 +113,6 @@ export function FlashcardsPageClient({
           initialSearch={initialSearch}
           initialPageSize={initialPageSize}
           aiEnabled={aiEnabled}
-          hasSubjects={subjects.length > 0}
         />
       )}
     </div>

@@ -9,6 +9,7 @@ import {
   deleteSubjectForUser,
   editSubjectForUser,
   moveSubjectForUser,
+  type SubjectMutationResult,
 } from "@/features/subjects/mutations";
 import {
   getAllSubjectsWithPathsForUser,
@@ -70,7 +71,7 @@ export async function getSubjectDocuments(
 
 export async function createSubject(
   data: CreateSubjectForm,
-): Promise<MutationResult> {
+): Promise<SubjectMutationResult> {
   const result = await runValidatedUserAction(
     createSubjectSchema,
     data,

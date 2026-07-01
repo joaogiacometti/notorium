@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   Command,
@@ -29,6 +29,7 @@ interface SubjectSelectProps {
   error?: string;
   ariaInvalid?: boolean;
   disabled?: boolean;
+  onCreateSubject?: (name: string) => Promise<boolean>;
 }
 
 interface SubjectSelectDropdownProps {
@@ -38,6 +39,8 @@ interface SubjectSelectDropdownProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSelect: (id: string) => void;
+  onCreateSubject?: (name: string) => Promise<boolean>;
+  isCreatingSubject: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -56,6 +59,20 @@ function filterSubjects(
   );
 }
 
+function canCreateSubject(
+  subjects: Array<SubjectEntity | SubjectOption>,
+  query: string,
+): boolean {
+  const name = query.trim();
+  return (
+    name.length > 0 &&
+    !subjects.some(
+      (subject) =>
+        getSubjectLabel(subject).toLowerCase() === name.toLowerCase(),
+    )
+  );
+}
+
 function SubjectSelectDropdown({
   subjects,
   value,
@@ -63,9 +80,21 @@ function SubjectSelectDropdown({
   searchQuery,
   onSearchChange,
   onSelect,
+  onCreateSubject,
+  isCreatingSubject,
   inputRef,
 }: Readonly<SubjectSelectDropdownProps>) {
   const filtered = filterSubjects(subjects, searchQuery);
+  const createName = searchQuery.trim();
+  const showCreate = onCreateSubject && canCreateSubject(subjects, searchQuery);
+
+  function handleCreateSelect() {
+    if (!onCreateSubject) {
+      return;
+    }
+
+    void onCreateSubject(createName);
+  }
 
   return (
     <PopoverPortal>
@@ -103,6 +132,21 @@ function SubjectSelectDropdown({
                 </CommandItem>
               );
             })}
+            {showCreate ? (
+              <CommandItem
+                value={`Create ${createName}`}
+                disabled={isCreatingSubject}
+                onSelect={handleCreateSelect}
+                className="gap-2 border-border border-t"
+              >
+                {isCreatingSubject ? (
+                  <Loader2 className="size-4 shrink-0 animate-spin" />
+                ) : (
+                  <Plus className="size-4 shrink-0" />
+                )}
+                <span className="truncate">Create {createName}</span>
+              </CommandItem>
+            ) : null}
           </CommandList>
         </Command>
       </PopoverContent>
@@ -120,9 +164,11 @@ export function SubjectSelect({
   error,
   ariaInvalid,
   disabled,
+  onCreateSubject,
 }: Readonly<SubjectSelectProps>) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreatingSubject, setIsCreatingSubject] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listboxId = useId();
 
@@ -142,6 +188,24 @@ export function SubjectSelect({
     onChange(nextValue);
     setOpen(false);
     setSearchQuery("");
+  }
+
+  async function handleCreateSubject(name: string) {
+    if (!onCreateSubject || isCreatingSubject) {
+      return false;
+    }
+
+    setIsCreatingSubject(true);
+    try {
+      const created = await onCreateSubject(name);
+      if (created) {
+        setOpen(false);
+        setSearchQuery("");
+      }
+      return created;
+    } finally {
+      setIsCreatingSubject(false);
+    }
   }
 
   return (
@@ -176,6 +240,8 @@ export function SubjectSelect({
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onSelect={handleSelect}
+          onCreateSubject={onCreateSubject ? handleCreateSubject : undefined}
+          isCreatingSubject={isCreatingSubject}
           inputRef={inputRef}
         />
       </Popover>

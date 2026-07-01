@@ -43,7 +43,6 @@ const baseProps = {
   refineStrugglingCount: 0,
   isLoadingRefineGroups: false,
   aiEnabled: false,
-  hasSubjects: true,
   onOpenValidateDialog: vi.fn(),
   onOpenCreateDialog: vi.fn(),
   onOpenValidateAgainDialog: vi.fn(),
@@ -85,9 +84,9 @@ describe("FlashcardsManagerToolbar", () => {
     vi.clearAllMocks();
   });
 
-  it("enables the create action when decks exist", async () => {
+  it("opens the create action", async () => {
     await act(async () => {
-      root.render(<FlashcardsManagerToolbar {...baseProps} hasSubjects />);
+      root.render(<FlashcardsManagerToolbar {...baseProps} />);
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
@@ -102,40 +101,6 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     expect(baseProps.onOpenCreateDialog).toHaveBeenCalledOnce();
-  });
-
-  it("disables the create action and shows a tooltip when no decks exist", async () => {
-    await act(async () => {
-      root.render(
-        <FlashcardsManagerToolbar {...baseProps} hasSubjects={false} />,
-      );
-    });
-
-    const button = Array.from(container.querySelectorAll("button")).find(
-      (currentButton) => currentButton.textContent?.includes("New Flashcard"),
-    ) as HTMLButtonElement | undefined;
-    const trigger = container.querySelector<HTMLElement>(
-      '[data-testid="new-flashcard-disabled-trigger"]',
-    );
-
-    expect(button).toBeTruthy();
-    expect(button?.disabled).toBe(true);
-    expect(trigger).toBeTruthy();
-
-    await act(async () => {
-      trigger?.focus();
-      vi.runAllTimers();
-    });
-
-    expect(document.body.textContent).toContain(
-      "Create a subject first to add flashcards.",
-    );
-
-    await act(async () => {
-      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(baseProps.onOpenCreateDialog).not.toHaveBeenCalled();
   });
 
   it("shows hover and focus tooltips for selection toolbar actions", async () => {

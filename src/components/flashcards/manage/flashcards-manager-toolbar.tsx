@@ -10,12 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface FlashcardsManagerToolbarProps {
@@ -32,7 +27,6 @@ interface FlashcardsManagerToolbarProps {
   refineStrugglingCount: number;
   isLoadingRefineGroups: boolean;
   aiEnabled: boolean;
-  hasSubjects: boolean;
   onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
   onOpenValidateAgainDialog: () => void;
@@ -170,7 +164,6 @@ export function FlashcardsManagerToolbar({
   refineStrugglingCount,
   isLoadingRefineGroups,
   aiEnabled,
-  hasSubjects,
   onOpenValidateDialog,
   onOpenCreateDialog,
   onOpenValidateAgainDialog,
@@ -196,7 +189,6 @@ export function FlashcardsManagerToolbar({
     <Button
       type="button"
       onClick={onOpenCreateDialog}
-      disabled={!hasSubjects}
       className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
     >
       <CopyPlus className="size-4" />
@@ -232,23 +224,7 @@ export function FlashcardsManagerToolbar({
                     onStartRefine={onStartRefine}
                   />
                 ) : null}
-                {hasSubjects ? (
-                  createButton
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span
-                        className="inline-flex flex-1 sm:flex-initial"
-                        data-testid="new-flashcard-disabled-trigger"
-                      >
-                        {createButton}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Create a subject first to add flashcards.
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+                {createButton}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:justify-between">

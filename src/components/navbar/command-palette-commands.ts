@@ -21,16 +21,17 @@ export type PaletteGroup = "Create" | "Windows" | "Go to" | "Settings";
 /** Editor kinds that can be created or opened inside a floating window. */
 export type WindowCreateKind = "mindmap" | "note" | "flashcard";
 
-/** Dialogs that need no context and can open straight from the palette. */
-export type ContextFreeDialog = "subject" | "flashcard" | "assessment";
-
-/** Dialogs that require a subject, resolved from route or a picker step. */
-export type SubjectScopedDialog = "note" | "mindmap";
+/** Dialogs that open straight from the palette. */
+export type ContextFreeDialog =
+  | "subject"
+  | "flashcard"
+  | "assessment"
+  | "note"
+  | "mindmap";
 
 export type PaletteAction =
   | { kind: "navigate"; href: string }
   | { kind: "create"; dialog: ContextFreeDialog }
-  | { kind: "create-in-subject"; dialog: SubjectScopedDialog }
   | { kind: "open-window-create"; create: WindowCreateKind }
   | { kind: "open-window-existing" }
   | { kind: "open-window-flashcard-edit" }
@@ -78,7 +79,7 @@ export const paletteCommands: PaletteCommand[] = [
     group: "Create",
     keywords: ["new", "add", "create", "note", "document"],
     icon: FileText,
-    action: { kind: "create-in-subject", dialog: "note" },
+    action: { kind: "create", dialog: "note" },
   },
   {
     id: "create-mindmap",
@@ -86,7 +87,7 @@ export const paletteCommands: PaletteCommand[] = [
     group: "Create",
     keywords: ["new", "add", "create", "mindmap", "map", "diagram"],
     icon: Network,
-    action: { kind: "create-in-subject", dialog: "mindmap" },
+    action: { kind: "create", dialog: "mindmap" },
   },
   {
     id: "window-mindmap",

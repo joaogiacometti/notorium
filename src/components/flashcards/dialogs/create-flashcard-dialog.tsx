@@ -29,13 +29,14 @@ export function CreateFlashcardDialog({
   onCreated,
   aiEnabled,
 }: Readonly<CreateFlashcardDialogProps>) {
-  const { subjects, form, dialog } = useCreateFlashcardForm({
-    open,
-    aiEnabled,
-    onOpenChange,
-    onCreated,
-    subjectId,
-  });
+  const { subjects, form, dialog, handleCreateSubject } =
+    useCreateFlashcardForm({
+      open,
+      aiEnabled,
+      onOpenChange,
+      onCreated,
+      subjectId,
+    });
 
   return (
     <>
@@ -55,6 +56,7 @@ export function CreateFlashcardDialog({
             formId="form-create-flashcard"
             editorResetVersion={dialog.editorResetVersion}
             subjects={subjects}
+            onCreateSubject={handleCreateSubject}
             onSubmit={dialog.handleSubmit}
             isSubmitting={dialog.isSubmitting}
             isSaved={dialog.isSaved}
