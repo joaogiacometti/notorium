@@ -40,6 +40,8 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - Tests run with one command: `bun run test`.
 - Every new function gets a test.
 - Bug fixes get a regression test.
+- Prefer TDD for bug fixes and behavior changes: write or update the failing test first, then implement the smallest fix.
+- For UI-only or mechanical refactors, tests may follow the change when a failing-first test would add no useful signal.
 - Mock external I/O, APIs, DB, and filesystem with named fake classes or helpers, not inline stubs.
 - Tests must be F.I.R.S.T: fast, independent, repeatable, self-validating, timely.
 - Good tests verify observable behavior, stable contracts, or deterministic transformations. Bad tests mirror implementation text, CSS class strings, prompt wording, or call order unless that exact detail is the public contract.
@@ -197,11 +199,6 @@ className =
 - Add a body when the reason is not obvious. Explain what changed and why; do not restate the diff.
 - Stage only files that belong to the requested change. Do not include unrelated worktree changes.
 - Before reporting success, confirm the commit hash and a clean `git status --short`.
-
-## Workflow
-
-- Do not run linting, type checks, size checks, or tests during regular code changes. Run them only when the user explicitly asks to commit.
-- The user will test changes manually. Guards are commit gates, not coding gates.
 
 ## Automated Guards
 
