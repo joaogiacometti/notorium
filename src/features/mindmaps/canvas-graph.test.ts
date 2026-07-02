@@ -163,6 +163,7 @@ describe("toRuntimeNodes", () => {
       "T",
     );
     expect(runtime[0].type).toBe("image");
+    expect(runtime[0].focusable).toBe(false);
     expect(runtime[0].width).toBe(200);
     expect(runtime[0].height).toBe(120);
   });

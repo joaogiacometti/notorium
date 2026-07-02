@@ -223,7 +223,7 @@ export function MindmapNodeComponent({
 
   return (
     <div
-      className="w-48 rounded-md border bg-(--card) px-3 py-2 text-sm text-(--card-foreground) shadow-sm"
+      className="w-48 rounded-md border bg-card px-3 py-2 text-sm text-card-foreground shadow-sm"
       style={{
         borderColor: colorVar ?? "var(--border)",
         borderWidth: 1,

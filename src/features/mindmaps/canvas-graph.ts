@@ -86,6 +86,7 @@ function toRuntimeNode(
       position: node.position,
       width: node.data.width ?? MINDMAP_IMAGE_DEFAULT_SIZE,
       height: node.data.height ?? MINDMAP_IMAGE_DEFAULT_SIZE,
+      focusable: false,
       data: { ...node.data },
     };
   }

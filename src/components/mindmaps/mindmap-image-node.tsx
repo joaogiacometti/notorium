@@ -56,7 +56,7 @@ export function MindmapImageNode({
     // normal nodes) and the corner resize handles, both rendered half-outside the
     // node border. The img is rounded instead so corners still look clean.
     <div
-      className="relative size-full rounded-md border bg-(--card)"
+      className="relative size-full rounded-md border bg-card"
       style={{
         borderColor: "var(--border)",
         boxShadow: selected ? "0 0 0 2px var(--primary)" : undefined,

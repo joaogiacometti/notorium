@@ -115,6 +115,9 @@ export function useMindmapAddChild({
       return;
     }
     const selected = selectedNodes[0];
+    if (selected.data.kind === "image") {
+      return;
+    }
     const side =
       selected.data.kind === "root"
         ? getBalancedRootChildSide(getEdges(), selected.id)
