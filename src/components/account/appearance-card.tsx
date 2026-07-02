@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { updateReaderColorMode } from "@/app/actions/account";
@@ -32,6 +33,7 @@ export function AppearanceCard({
 }: Readonly<AppearanceCardProps>) {
   const { currentTheme, resolvedTheme, mounted, setAppTheme } =
     useThemeControl(true);
+  const queryClient = useQueryClient();
   const [inverted, setInverted] = useState(readerColorInverted);
   const resolvedThemeLabel =
     mounted && resolvedTheme === "dark" ? "dark" : "light";
@@ -49,7 +51,9 @@ export function AppearanceCard({
     const result = await updateReaderColorMode({ inverted: nextInverted });
     if (!result.success) {
       setInverted(!nextInverted);
+      return;
     }
+    await queryClient.invalidateQueries({ queryKey: ["account-settings"] });
   }
 
   return (

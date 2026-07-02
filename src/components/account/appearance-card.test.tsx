@@ -4,11 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppearanceCard } from "@/components/account/appearance-card";
 
 const {
+  invalidateQueriesMock,
   setThemeMock,
   updateReaderColorModeMock,
   updateUserThemeMock,
   themeState,
 } = vi.hoisted(() => ({
+  invalidateQueriesMock: vi.fn(),
   setThemeMock: vi.fn(),
   updateReaderColorModeMock: vi.fn(),
   updateUserThemeMock: vi.fn(),
@@ -16,6 +18,12 @@ const {
     theme: "dark",
     resolvedTheme: "dark",
   },
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({
+    invalidateQueries: invalidateQueriesMock,
+  }),
 }));
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -53,11 +61,13 @@ describe("AppearanceCard", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    invalidateQueriesMock.mockReset();
     setThemeMock.mockReset();
     updateUserThemeMock.mockReset();
     updateReaderColorModeMock.mockReset();
     themeState.theme = "dark";
     themeState.resolvedTheme = "dark";
+    invalidateQueriesMock.mockResolvedValue(undefined);
     updateUserThemeMock.mockResolvedValue({ success: true });
     updateReaderColorModeMock.mockResolvedValue({ success: true });
   });
@@ -124,6 +134,9 @@ describe("AppearanceCard", () => {
     });
 
     expect(updateReaderColorModeMock).toHaveBeenCalledWith({ inverted: true });
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["account-settings"],
+    });
   });
 
   it("rolls back the reader color toggle when the server action fails", async () => {
