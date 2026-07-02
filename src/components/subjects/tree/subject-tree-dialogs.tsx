@@ -44,6 +44,7 @@ interface SubjectTreeDialogsProps {
   onRecordMissSubjectIdChange: (id: string | null) => void;
   /** Re-fetch tree counts after a mutating dialog completes. */
   onRefreshTree: () => void;
+  onSubjectDeleted: (subjectId: string) => void;
 }
 
 /**
@@ -79,6 +80,7 @@ export function SubjectTreeDialogs({
   recordMissSubjectId,
   onRecordMissSubjectIdChange,
   onRefreshTree,
+  onSubjectDeleted,
 }: Readonly<SubjectTreeDialogsProps>) {
   return (
     <>
@@ -118,8 +120,9 @@ export function SubjectTreeDialogs({
             }
           }}
           onSuccess={() => {
+            const deletedSubjectId = deleteTarget.id;
             onDeleteTargetChange(null);
-            onRefreshTree();
+            onSubjectDeleted(deletedSubjectId);
           }}
         />
       ) : null}

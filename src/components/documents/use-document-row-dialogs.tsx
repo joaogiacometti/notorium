@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { getNoteById } from "@/app/actions/notes";
@@ -19,6 +19,7 @@ import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
+import { getDocumentDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
 // Copies a note that is not open in the editor: its content is not in client
@@ -65,6 +66,7 @@ export function useDocumentRowDialogs({
   onChanged,
 }: Readonly<UseDocumentRowDialogsArgs>): DocumentRowDialogs {
   const router = useRouter();
+  const pathname = usePathname();
   const [editTarget, setEditTarget] = useState<DocumentListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentListItem | null>(
     null,
@@ -76,6 +78,15 @@ export function useDocumentRowDialogs({
 
   function handleChanged(item: DocumentListItem) {
     onChanged?.(item);
+    router.refresh();
+  }
+
+  function handleDeleted(item: DocumentListItem) {
+    onChanged?.(item);
+    const redirectHref = getDocumentDeleteRedirectHref(pathname, item);
+    if (redirectHref) {
+      router.push(redirectHref);
+    }
     router.refresh();
   }
 
@@ -153,7 +164,7 @@ export function useDocumentRowDialogs({
           onDeleted={() => {
             const target = deleteTarget;
             setDeleteTarget(null);
-            handleChanged(target);
+            handleDeleted(target);
           }}
         />
       ) : null}
@@ -168,7 +179,7 @@ export function useDocumentRowDialogs({
           onSuccess={() => {
             const target = deleteTarget;
             setDeleteTarget(null);
-            handleChanged(target);
+            handleDeleted(target);
           }}
         />
       ) : null}
@@ -183,7 +194,7 @@ export function useDocumentRowDialogs({
           onSuccess={() => {
             const target = deleteTarget;
             setDeleteTarget(null);
-            handleChanged(target);
+            handleDeleted(target);
           }}
         />
       ) : null}

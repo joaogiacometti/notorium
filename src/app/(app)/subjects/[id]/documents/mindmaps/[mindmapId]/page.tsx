@@ -23,7 +23,7 @@ export default async function MindmapPage({
   ]);
 
   if (!mindmap) {
-    redirect(`/subjects/${id}`);
+    redirect("/");
   }
 
   if (mindmap.subjectId !== id) {

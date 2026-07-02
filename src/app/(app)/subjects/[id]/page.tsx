@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { SubjectDetail } from "@/components/subjects/subject-detail";
 import { getAssessmentsBySubjectForUser } from "@/features/assessments/queries";
 import { getMissesBySubjectForUser } from "@/features/attendance/queries";
@@ -28,12 +28,14 @@ export default async function SubjectPage({
     notFound();
   }
 
-  const [misses, assessments] = isAcademicSubject(subject.kind)
-    ? await Promise.all([
-        getMissesBySubjectForUser(session.user.id, id),
-        getAssessmentsBySubjectForUser(session.user.id, id),
-      ])
-    : [[], []];
+  if (!isAcademicSubject(subject.kind)) {
+    redirect("/");
+  }
+
+  const [misses, assessments] = await Promise.all([
+    getMissesBySubjectForUser(session.user.id, id),
+    getAssessmentsBySubjectForUser(session.user.id, id),
+  ]);
 
   return (
     <main>

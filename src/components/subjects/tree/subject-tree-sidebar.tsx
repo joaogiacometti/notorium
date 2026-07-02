@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderPlus, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { getSubjectDocuments } from "@/app/actions/subjects";
@@ -10,6 +10,7 @@ import {
   getActiveSubjectId,
 } from "@/components/subjects/tree/subject-tree-active-path";
 import { SubjectTreeDialogs } from "@/components/subjects/tree/subject-tree-dialogs";
+import { SubjectTreeEmptyState } from "@/components/subjects/tree/subject-tree-empty-state";
 import { SubjectTreeNodeItem } from "@/components/subjects/tree/subject-tree-node-item";
 import { SubjectTreeRootDropZone } from "@/components/subjects/tree/subject-tree-root-drop-zone";
 import type {
@@ -22,6 +23,7 @@ import {
   useSubjectDragAndDrop,
 } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
+import { getSubjectDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
 import {
   getBookDetailHref,
   getDocumentDetailHref,
@@ -314,6 +316,11 @@ export function SubjectTreeSidebar({
     setCreateOpen(true);
   }
 
+  function openCreateRoot() {
+    setCreateParentId(undefined);
+    setCreateOpen(true);
+  }
+
   function openCreateNote(subjectId: string) {
     setCreateNoteSubjectId(subjectId);
   }
@@ -373,6 +380,18 @@ export function SubjectTreeSidebar({
     refreshTree();
   }
 
+  function handleSubjectDeleted(subjectId: string) {
+    const redirectHref = getSubjectDeleteRedirectHref(
+      pathname,
+      localTree,
+      subjectId,
+    );
+    if (redirectHref) {
+      router.push(redirectHref);
+    }
+    refreshTree();
+  }
+
   return (
     <>
       <div className="flex h-full min-h-0 flex-col">
@@ -385,10 +404,7 @@ export function SubjectTreeSidebar({
             variant="ghost"
             size="icon-sm"
             aria-label="New subject"
-            onClick={() => {
-              setCreateParentId(undefined);
-              setCreateOpen(true);
-            }}
+            onClick={openCreateRoot}
           >
             <Plus className="size-4" />
           </Button>
@@ -407,21 +423,7 @@ export function SubjectTreeSidebar({
           ) : null}
 
           {localTree.length === 0 ? (
-            <div className="mt-2 rounded-lg border border-dashed border-border/60 p-4 text-center">
-              <p className="text-sm text-muted-foreground">No subjects yet.</p>
-              <Button
-                type="button"
-                size="sm"
-                className="mt-3 gap-1.5"
-                onClick={() => {
-                  setCreateParentId(undefined);
-                  setCreateOpen(true);
-                }}
-              >
-                <FolderPlus className="size-4" />
-                Create your first subject
-              </Button>
-            </div>
+            <SubjectTreeEmptyState onCreateSubject={openCreateRoot} />
           ) : (
             localTree.map((node) => (
               <SubjectTreeNodeItem
@@ -485,6 +487,7 @@ export function SubjectTreeSidebar({
         recordMissSubjectId={recordMissSubjectId}
         onRecordMissSubjectIdChange={setRecordMissSubjectId}
         onRefreshTree={refreshTree}
+        onSubjectDeleted={handleSubjectDeleted}
       />
     </>
   );

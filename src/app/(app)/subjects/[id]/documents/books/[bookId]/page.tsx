@@ -25,7 +25,7 @@ export default async function BookPage({ params }: Readonly<BookPageProps>) {
     ]);
 
   if (!book) {
-    redirect(`/subjects/${id}`);
+    redirect("/");
   }
 
   // The book moved to another subject since this URL was opened; send the reader

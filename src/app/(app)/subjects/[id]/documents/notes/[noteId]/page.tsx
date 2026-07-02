@@ -21,7 +21,7 @@ export default async function NotePage({ params }: Readonly<NotePageProps>) {
   ]);
 
   if (!note) {
-    redirect(`/subjects/${id}`);
+    redirect("/");
   }
 
   if (note.subjectId !== id) {
