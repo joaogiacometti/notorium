@@ -58,42 +58,29 @@ export function PlanningViewSwitch({
   }
 
   const loadingView = isPendingVisible ? pendingView : null;
+  const tabs: Array<{ view: PlanningView; label: string }> = [
+    { view: "assessments", label: assessmentsLabel },
+    { view: "calendar", label: calendarLabel },
+  ];
 
   return (
     <Tabs value={currentView}>
       <TabsList>
-        <TabsTrigger
-          value="assessments"
-          disabled={isPending}
-          onClick={() => handleViewSwitch("assessments")}
-        >
-          <span className="grid size-3.5 place-items-center" aria-hidden="true">
-            {loadingView === "assessments" ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : null}
-          </span>
-          <span
-            className={loadingView === "assessments" ? "opacity-90" : undefined}
+        {tabs.map(({ view, label }) => (
+          <TabsTrigger
+            key={view}
+            value={view}
+            disabled={isPending}
+            onClick={() => handleViewSwitch(view)}
           >
-            {assessmentsLabel}
-          </span>
-        </TabsTrigger>
-        <TabsTrigger
-          value="calendar"
-          disabled={isPending}
-          onClick={() => handleViewSwitch("calendar")}
-        >
-          <span className="grid size-3.5 place-items-center" aria-hidden="true">
-            {loadingView === "calendar" ? (
-              <Loader2 className="size-3.5 animate-spin" />
+            {loadingView === view ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
             ) : null}
-          </span>
-          <span
-            className={loadingView === "calendar" ? "opacity-90" : undefined}
-          >
-            {calendarLabel}
-          </span>
-        </TabsTrigger>
+            <span className={loadingView === view ? "opacity-90" : undefined}>
+              {label}
+            </span>
+          </TabsTrigger>
+        ))}
       </TabsList>
     </Tabs>
   );
