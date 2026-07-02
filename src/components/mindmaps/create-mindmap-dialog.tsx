@@ -30,6 +30,7 @@ import {
 } from "@/features/mindmaps/validation";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
+import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 
 interface CreateMindmapDialogProps {
   subjectId?: string;
@@ -86,6 +87,7 @@ export function CreateMindmapDialog({
         return;
       }
 
+      notifySubjectDocumentsChanged(result.subjectId);
       form.reset({ subjectId: subjectId ?? "", title: "" });
       onOpenChange(false);
       onSuccess(result.mindmapId, data.subjectId);

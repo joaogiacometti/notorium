@@ -30,6 +30,7 @@ import type {
   SubjectOption,
   SubjectTreeNode,
 } from "@/lib/server/api-contracts";
+import { SUBJECT_DOCUMENTS_CHANGED_EVENT } from "@/lib/trees/subject-documents-events";
 import {
   findSubjectTreeNode,
   getSubjectAncestorIds,
@@ -188,12 +189,12 @@ export function SubjectTreeSidebar({
       });
     };
     window.addEventListener(
-      "notorium:subject-documents-changed",
+      SUBJECT_DOCUMENTS_CHANGED_EVENT,
       onDocumentsChanged,
     );
     return () =>
       window.removeEventListener(
-        "notorium:subject-documents-changed",
+        SUBJECT_DOCUMENTS_CHANGED_EVENT,
         onDocumentsChanged,
       );
   }, [router]);

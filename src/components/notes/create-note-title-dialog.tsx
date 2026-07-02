@@ -31,6 +31,7 @@ import {
 } from "@/features/notes/validation";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
+import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 
 interface CreateNoteTitleDialogProps {
   subjectId?: string;
@@ -90,6 +91,7 @@ export function CreateNoteTitleDialog({
       }
 
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+      notifySubjectDocumentsChanged(result.subjectId);
       form.reset({ subjectId: subjectId ?? "", title: "", content: "" });
       onOpenChange(false);
       onSuccess(result.noteId, data.subjectId);

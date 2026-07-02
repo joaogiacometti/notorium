@@ -44,6 +44,7 @@ import { useZenMode } from "@/lib/editor/use-zen-mode";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { MindmapEntity, SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
+import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { cn } from "@/lib/utils";
 
 interface MindmapDetailProps {
@@ -171,11 +172,7 @@ export function MindmapDetail({
         return false;
       }
       toast.success("Moved branch into a new mindmap");
-      window.dispatchEvent(
-        new CustomEvent("notorium:subject-documents-changed", {
-          detail: { subjectId: result.subjectId },
-        }),
-      );
+      notifySubjectDocumentsChanged(result.subjectId);
       router.refresh();
       return true;
     },
