@@ -10,38 +10,47 @@ export const ROW_GAP = 24;
 // Assumed height for nodes not yet measured by React Flow (fresh nodes render
 // at roughly this height); keeps default rows exactly one ROW_STEP tall.
 const FALLBACK_NODE_HEIGHT = ROW_STEP - ROW_GAP;
+const FALLBACK_NODE_WIDTH = 192;
+const COLUMN_GAP = CHILD_OFFSET_X - FALLBACK_NODE_WIDTH;
 
 /** Rendered height of a node, falling back for nodes not yet measured. */
 function nodeHeight(node: Node | undefined): number {
   return node?.measured?.height ?? node?.height ?? FALLBACK_NODE_HEIGHT;
 }
 
+function nodeWidth(node: Node | undefined): number {
+  return node?.measured?.width ?? node?.width ?? FALLBACK_NODE_WIDTH;
+}
+
 /**
- * Record node heights from React Flow change events into `knownHeights` and
- * report whether any already-measured node changed height — the signal that
- * the layout must be recomputed (e.g. an image was added to a node, or its
- * image finished loading). First measurements (initial mount, fresh nodes)
- * only seed the map so saved layouts don't reflow on load.
+ * Record node sizes from React Flow change events into `knownSizes` and report
+ * whether any already-measured node changed size — the signal that the layout
+ * must be recomputed. First measurements only seed the map so saved layouts
+ * don't reflow on load.
  *
  * @example
- * if (trackNodeHeightChanges(changes, heightsRef.current)) relayout();
+ * if (trackNodeSizeChanges(changes, sizesRef.current)) relayout();
  */
-export function trackNodeHeightChanges(
+export function trackNodeSizeChanges(
   changes: NodeChange[],
-  knownHeights: Map<string, number>,
+  knownSizes: Map<string, { width: number; height: number }>,
 ): boolean {
   let resized = false;
   for (const change of changes) {
     if (change.type === "remove") {
-      knownHeights.delete(change.id);
+      knownSizes.delete(change.id);
       continue;
     }
     if (change.type !== "dimensions" || !change.dimensions) {
       continue;
     }
-    const previous = knownHeights.get(change.id);
-    knownHeights.set(change.id, change.dimensions.height);
-    if (previous !== undefined && previous !== change.dimensions.height) {
+    const previous = knownSizes.get(change.id);
+    knownSizes.set(change.id, change.dimensions);
+    if (
+      previous !== undefined &&
+      (previous.width !== change.dimensions.width ||
+        previous.height !== change.dimensions.height)
+    ) {
       resized = true;
     }
   }
@@ -155,11 +164,17 @@ export function layoutMindmap(nodes: Node[], edges: Edge[]): Node[] {
     for (const side of ["left", "right"] as const) {
       const ids = entry[side];
       const sideSpan = ids.reduce((t, c) => t + subtreeSpan(c), 0);
-      const childX = x + (side === "right" ? CHILD_OFFSET_X : -CHILD_OFFSET_X);
+      const rightChildX = x + nodeWidth(nodeById.get(id)) + COLUMN_GAP;
       let cursor = centerY - sideSpan / 2;
       for (const childId of ids) {
         const childSpan = subtreeSpan(childId);
-        assign(childId, childX, cursor + childSpan / 2);
+        assign(
+          childId,
+          side === "right"
+            ? rightChildX
+            : x - nodeWidth(nodeById.get(childId)) - COLUMN_GAP,
+          cursor + childSpan / 2,
+        );
         cursor += childSpan;
       }
     }

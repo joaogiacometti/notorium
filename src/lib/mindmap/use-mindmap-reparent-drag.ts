@@ -4,7 +4,7 @@ import type { Edge, Node, NodeChange } from "@xyflow/react";
 import { type Dispatch, type SetStateAction, useCallback, useRef } from "react";
 import {
   layoutMindmap,
-  trackNodeHeightChanges,
+  trackNodeSizeChanges,
 } from "@/features/mindmaps/layout";
 import { canReparent, reparentNode } from "@/features/mindmaps/reparent";
 import {
@@ -117,9 +117,11 @@ export function useMindmapReparentDrag({
   onNodesChange,
   takeSnapshot,
 }: UseMindmapReparentDragParams): UseMindmapReparentDrag {
-  // Re-run the layout when an already-rendered node changes height (image
-  // added/removed or finished loading) so nodes below it are pushed clear.
-  const knownNodeHeightsRef = useRef(new Map<string, number>());
+  // Re-run the layout when an already-rendered node changes size so neighbors
+  // are pushed clear.
+  const knownNodeSizesRef = useRef(
+    new Map<string, { width: number; height: number }>(),
+  );
   // After a layout snap, React Flow fires a drag-end position change (dragging:
   // false) that arrives after setNodes(layoutMindmap(...)) is already queued.
   // In React 18's batched flush the position delta wins if it lands last,
@@ -141,7 +143,7 @@ export function useMindmapReparentDrag({
         layoutLockedNodeIdRef.current = null;
       }
       onNodesChange(filtered);
-      if (trackNodeHeightChanges(filtered, knownNodeHeightsRef.current)) {
+      if (trackNodeSizeChanges(filtered, knownNodeSizesRef.current)) {
         setNodes((current) => layoutMindmap(current, getEdges()));
       }
     },

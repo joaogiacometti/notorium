@@ -4,7 +4,7 @@ import {
   CHILD_OFFSET_X,
   layoutMindmap,
   ROW_STEP,
-  trackNodeHeightChanges,
+  trackNodeSizeChanges,
 } from "./layout";
 
 function node(id: string, x = 0, y = 0, kind?: "root" | "branch"): Node {
@@ -14,6 +14,15 @@ function node(id: string, x = 0, y = 0, kind?: "root" | "branch"): Node {
     position: { x, y },
     data: kind ? { label: id, kind } : { label: id },
   };
+}
+
+function measuredNode(
+  id: string,
+  width: number,
+  height = 48,
+  kind?: "root" | "branch",
+): Node {
+  return { ...node(id, 0, 0, kind), measured: { width, height } };
 }
 
 function edge(source: string, target: string, side: "left" | "right"): Edge {
@@ -169,6 +178,19 @@ describe("layoutMindmap", () => {
     expect(belowPos.y).toBeGreaterThan(tallPos.y + 300);
   });
 
+  it("pushes children clear of a measured wide parent", () => {
+    const root = measuredNode("root", 320, 56, "root");
+    const child = measuredNode("child", 192);
+    const result = layoutMindmap(
+      [root, child],
+      [edge("root", "child", "right")],
+    );
+
+    expect(posOf(result, "child").x).toBeGreaterThan(
+      posOf(result, "root").x + 320,
+    );
+  });
+
   it("returns the input unchanged when there are no nodes", () => {
     expect(layoutMindmap([], [])).toEqual([]);
   });
@@ -200,39 +222,56 @@ describe("layoutMindmap", () => {
   });
 });
 
-function dimensionChange(id: string, height: number): NodeChange {
-  return { id, type: "dimensions", dimensions: { width: 200, height } };
+function dimensionChange(
+  id: string,
+  width: number,
+  height: number,
+): NodeChange {
+  return { id, type: "dimensions", dimensions: { width, height } };
 }
 
-describe("trackNodeHeightChanges", () => {
+describe("trackNodeSizeChanges", () => {
   it("seeds first measurements without requesting a relayout", () => {
-    const heights = new Map<string, number>();
-    const resized = trackNodeHeightChanges([dimensionChange("a", 46)], heights);
+    const sizes = new Map<string, { width: number; height: number }>();
+    const resized = trackNodeSizeChanges(
+      [dimensionChange("a", 200, 46)],
+      sizes,
+    );
     expect(resized).toBe(false);
-    expect(heights.get("a")).toBe(46);
+    expect(sizes.get("a")).toEqual({ width: 200, height: 46 });
   });
 
   it("requests a relayout when a measured node changes height", () => {
-    const heights = new Map([["a", 46]]);
+    const sizes = new Map([["a", { width: 200, height: 46 }]]);
     // e.g. an image was attached to 'a' and its render grew to 300px.
-    const resized = trackNodeHeightChanges(
-      [dimensionChange("a", 300)],
-      heights,
+    const resized = trackNodeSizeChanges(
+      [dimensionChange("a", 200, 300)],
+      sizes,
     );
     expect(resized).toBe(true);
-    expect(heights.get("a")).toBe(300);
+    expect(sizes.get("a")).toEqual({ width: 200, height: 300 });
   });
 
-  it("ignores repeat measurements at the same height", () => {
-    const heights = new Map([["a", 46]]);
-    expect(trackNodeHeightChanges([dimensionChange("a", 46)], heights)).toBe(
+  it("requests a relayout when a measured node changes width", () => {
+    const sizes = new Map([["a", { width: 200, height: 46 }]]);
+    const resized = trackNodeSizeChanges(
+      [dimensionChange("a", 320, 46)],
+      sizes,
+    );
+    expect(resized).toBe(true);
+    expect(sizes.get("a")).toEqual({ width: 320, height: 46 });
+  });
+
+  it("ignores repeat measurements at the same size", () => {
+    const sizes = new Map([["a", { width: 200, height: 46 }]]);
+    expect(trackNodeSizeChanges([dimensionChange("a", 200, 46)], sizes)).toBe(
       false,
     );
   });
 
   it("forgets removed nodes so re-adding the id seeds fresh", () => {
-    const heights = new Map([["a", 46]]);
-    trackNodeHeightChanges([{ id: "a", type: "remove" }], heights);
-    expect(heights.has("a")).toBe(false);
+    const sizes = new Map([["a", { width: 200, height: 46 }]]);
+    trackNodeSizeChanges([{ id: "a", type: "remove" }], sizes);
+    expect(sizes.has("a")).toBe(false);
   });
 });

@@ -406,7 +406,7 @@ function NodeLabel({
     [textareaRef, onEditorMount],
   );
   const displayClass = cn(
-    "block w-full whitespace-pre-wrap break-words text-left",
+    "block w-full whitespace-pre-wrap break-words text-left [overflow-wrap:anywhere]",
     bold && "font-bold",
     italic && "italic",
   );
@@ -444,7 +444,7 @@ function NodeLabel({
       }}
       aria-label="Node label"
       className={cn(
-        "nodrag block w-full resize-none overflow-hidden break-words bg-transparent outline-none",
+        "nodrag block w-full resize-none overflow-hidden break-words bg-transparent outline-none [overflow-wrap:anywhere]",
         bold && "font-bold",
         italic && "italic",
       )}

@@ -50,7 +50,7 @@ export function MindmapRootNode({
 
   return (
     <div
-      className="min-w-48 max-w-72 rounded-xl bg-(--primary) px-5 py-3 text-center text-base font-semibold text-(--primary-foreground) shadow-md"
+      className="w-48 rounded-xl bg-primary px-5 py-3 text-center text-base font-semibold text-primary-foreground shadow-md"
       style={{ boxShadow: selected ? "0 0 0 2px var(--ring)" : undefined }}
     >
       <MindmapAddButtons
@@ -82,14 +82,14 @@ export function MindmapRootNode({
             }
           }}
           aria-label="Mindmap title"
-          className="nodrag block w-full resize-none overflow-hidden break-words bg-transparent text-center font-semibold outline-none placeholder:text-(--primary-foreground)/60"
+          className="nodrag block w-full resize-none overflow-hidden wrap-break-word bg-transparent text-center font-semibold outline-none placeholder:text-(--primary-foreground)/60"
           placeholder="Untitled mindmap"
         />
       ) : (
         <button
           type="button"
           onDoubleClick={() => setEditing(true)}
-          className="block w-full whitespace-pre-wrap break-words"
+          className="block w-full whitespace-pre-wrap wrap-anywhere"
         >
           {data.label || "Untitled mindmap"}
         </button>
