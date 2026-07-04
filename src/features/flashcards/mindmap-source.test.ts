@@ -84,6 +84,31 @@ describe("buildMindmapFlashcardSource", () => {
     );
   });
 
+  it("renders only the selected node subtree when a source node is provided", () => {
+    const data = makeGraph(
+      [
+        { id: "root", label: "Root" },
+        { id: "a", label: "Included" },
+        { id: "a-child", label: "Included child" },
+        { id: "b", label: "Excluded" },
+      ],
+      [
+        { id: "e1", source: "root", target: "a" },
+        { id: "e2", source: "a", target: "a-child" },
+        { id: "e3", source: "root", target: "b" },
+        { id: "x1", source: "a-child", target: "b", cross: true },
+      ],
+    );
+
+    const result = buildMindmapFlashcardSource({
+      title: "Map",
+      data,
+      sourceNodeId: "a",
+    });
+
+    expect(result).toBe("Title: Map\n\n- Included\n  - Included child");
+  });
+
   it("returns image placeholders and their matching rich-text images", () => {
     const data = makeGraph(
       [

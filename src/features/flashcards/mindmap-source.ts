@@ -1,7 +1,7 @@
 import type { Node } from "@xyflow/react";
 import { toEdge } from "@/features/mindmaps/canvas-graph";
 import { serializeMindmapSelection } from "@/features/mindmaps/serialize";
-import { isCrossEdge } from "@/features/mindmaps/sides";
+import { collectDescendants, isCrossEdge } from "@/features/mindmaps/sides";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { parseMindmapGraph } from "@/features/mindmaps/utils";
 import { LIMITS } from "@/lib/config/limits";
@@ -9,6 +9,7 @@ import { LIMITS } from "@/lib/config/limits";
 interface BuildMindmapFlashcardSourceInput {
   title: string;
   data?: string | null;
+  sourceNodeId?: string | null;
 }
 
 interface MindmapFlashcardSource {
@@ -57,30 +58,35 @@ function formatNodeLabelForAi(value: string): string {
   return `\`\`\`${codeFenceLanguage(trimmed)}\n${trimmed}\n\`\`\``;
 }
 
-function withImagePlaceholders(graph: MindmapGraph): {
+function withImagePlaceholders(
+  graph: MindmapGraph,
+  includedIds: Set<string>,
+): {
   nodes: Node[];
   images: string[];
 } {
   const images: string[] = [];
-  const nodes: Node[] = graph.nodes.map((node) => {
-    const imageUrl =
-      typeof node.data.imageUrl === "string" ? node.data.imageUrl : null;
-    const placeholder = imageUrl ? `{{IMAGE_${images.length}}}` : "";
-    if (imageUrl) {
-      images.push(imageHtml(imageUrl));
-    }
-    const label =
-      node.data.kind === "image"
-        ? placeholder
-        : [formatNodeLabelForAi(node.data.label), placeholder]
-            .filter(Boolean)
-            .join("\n");
-    return {
-      id: node.id,
-      position: node.position,
-      data: { label, kind: node.data.kind },
-    };
-  });
+  const nodes: Node[] = graph.nodes
+    .filter((node) => includedIds.has(node.id))
+    .map((node) => {
+      const imageUrl =
+        typeof node.data.imageUrl === "string" ? node.data.imageUrl : null;
+      const placeholder = imageUrl ? `{{IMAGE_${images.length}}}` : "";
+      if (imageUrl) {
+        images.push(imageHtml(imageUrl));
+      }
+      const label =
+        node.data.kind === "image"
+          ? placeholder
+          : [formatNodeLabelForAi(node.data.label), placeholder]
+              .filter(Boolean)
+              .join("\n");
+      return {
+        id: node.id,
+        position: node.position,
+        data: { label, kind: node.data.kind },
+      };
+    });
   return { nodes, images };
 }
 
@@ -95,13 +101,31 @@ function crossConnectionLines(
   nodes: Node[],
   edges: ReturnType<typeof toEdge>[],
 ): string[] {
-  return edges.filter(isCrossEdge).map((edge) => {
-    const relation =
-      typeof edge.label === "string" && edge.label.trim().length > 0
-        ? ` -- ${edge.label.trim()} -- `
-        : " -- ";
-    return `- ${nodeLabel(nodes, edge.source)}${relation}${nodeLabel(nodes, edge.target)}`;
-  });
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  return edges
+    .filter(isCrossEdge)
+    .map((edge) => {
+      if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) {
+        return null;
+      }
+      const relation =
+        typeof edge.label === "string" && edge.label.trim().length > 0
+          ? ` -- ${edge.label.trim()} -- `
+          : " -- ";
+      return `- ${nodeLabel(nodes, edge.source)}${relation}${nodeLabel(nodes, edge.target)}`;
+    })
+    .filter((line): line is string => Boolean(line));
+}
+
+function selectedNodeIds(
+  graph: MindmapGraph,
+  edges: ReturnType<typeof toEdge>[],
+  sourceNodeId?: string | null,
+): Set<string> {
+  if (!sourceNodeId) {
+    return new Set(graph.nodes.map((node) => node.id));
+  }
+  return collectDescendants(edges, [sourceNodeId]);
 }
 
 /**
@@ -116,8 +140,10 @@ function crossConnectionLines(
 export function buildMindmapFlashcardSource({
   title,
   data,
+  sourceNodeId,
 }: BuildMindmapFlashcardSourceInput): string {
-  return buildMindmapFlashcardSourceWithImages({ title, data }).text;
+  return buildMindmapFlashcardSourceWithImages({ title, data, sourceNodeId })
+    .text;
 }
 
 /**
@@ -129,16 +155,23 @@ export function buildMindmapFlashcardSource({
 export function buildMindmapFlashcardSourceWithImages({
   title,
   data,
+  sourceNodeId,
 }: BuildMindmapFlashcardSourceInput): MindmapFlashcardSource {
   const graph = parseMindmapGraph(data ?? null);
   // serializeMindmapSelection reads cross-edge state from `edge.data.cross`, so
   // persisted edges must pass through toEdge before the tree walk.
   const edges = graph.edges.map(toEdge);
-  const { nodes, images } = withImagePlaceholders(graph);
+  const includedIds = selectedNodeIds(graph, edges, sourceNodeId);
+  const { nodes, images } = withImagePlaceholders(graph, includedIds);
+  const selectedIds = sourceNodeId
+    ? [sourceNodeId]
+    : nodes.map((node) => node.id);
   const outline = serializeMindmapSelection(
     nodes,
-    edges,
-    nodes.map((node) => node.id),
+    edges.filter(
+      (edge) => includedIds.has(edge.source) && includedIds.has(edge.target),
+    ),
+    selectedIds,
   );
   const crossLines = crossConnectionLines(nodes, edges);
   const related =

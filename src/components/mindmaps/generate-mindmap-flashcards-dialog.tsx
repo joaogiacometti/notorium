@@ -30,6 +30,7 @@ interface GeneratedCard {
 interface GenerateMindmapFlashcardsDialogProps {
   subjects?: SubjectOption[];
   mindmapId: string;
+  sourceNodeId?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -54,6 +55,7 @@ function getGenerateErrorMessage(errorCode: string) {
 export function GenerateMindmapFlashcardsDialog({
   subjects,
   mindmapId,
+  sourceNodeId = null,
   open,
   onOpenChange,
 }: Readonly<GenerateMindmapFlashcardsDialogProps>) {
@@ -101,6 +103,7 @@ export function GenerateMindmapFlashcardsDialog({
     const result = await generateFlashcardsFromMindmap({
       mindmapId,
       subjectId: selectedSubjectId,
+      ...(sourceNodeId ? { sourceNodeId } : {}),
     });
 
     setIsGenerating(false);
@@ -172,7 +175,8 @@ export function GenerateMindmapFlashcardsDialog({
         <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
           <DialogTitle>Generate Flashcards</DialogTitle>
           <DialogDescription>
-            Choose where to save flashcards generated from this mindmap.
+            Choose where to save flashcards generated from{" "}
+            {sourceNodeId ? "this branch" : "this mindmap"}.
           </DialogDescription>
         </DialogHeader>
 

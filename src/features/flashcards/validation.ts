@@ -463,6 +463,7 @@ export type GenerateNoteFlashcardsForm = z.infer<
 
 export const generateMindmapFlashcardsSchema = z.object({
   mindmapId: idSchema,
+  sourceNodeId: idSchema.optional(),
   subjectId: subjectIdField,
 });
 

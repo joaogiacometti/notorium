@@ -71,6 +71,7 @@ interface UseMindmapCanvasActionsParams {
   removeSubtrees: (startIds: string[]) => void;
   deleteSelected: () => void;
   splitIntoMindmap: (nodeId: string) => Promise<void>;
+  generateFlashcardsFromNode?: (nodeId: string) => Promise<void>;
   deleteCrossEdge: (edgeId: string) => void;
   addChild: (parentId: string, side: MindmapSide) => void;
   getAllowedChildSides: (nodeId: string) => readonly MindmapSide[];
@@ -99,6 +100,7 @@ export function useMindmapCanvasActions({
   removeSubtrees,
   deleteSelected,
   splitIntoMindmap,
+  generateFlashcardsFromNode,
   deleteCrossEdge,
   addChild,
   getAllowedChildSides,
@@ -154,6 +156,7 @@ export function useMindmapCanvasActions({
       deleteCrossEdge,
       deleteSelected,
       splitIntoMindmap,
+      generateFlashcardsFromNode,
       updateEdge: (edgeId, patch) =>
         setEdges((current) => patchEdgeDirection(current, edgeId, patch)),
       setEdgeCurveOffset: (edgeId, offset) =>
@@ -178,6 +181,7 @@ export function useMindmapCanvasActions({
       removeSubtrees,
       deleteSelected,
       splitIntoMindmap,
+      generateFlashcardsFromNode,
       deleteCrossEdge,
       selectionTargetIds,
       pendingEditNodeId,

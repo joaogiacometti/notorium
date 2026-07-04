@@ -94,6 +94,9 @@ export function MindmapDetail({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
+  const [generateSourceNodeId, setGenerateSourceNodeId] = useState<
+    string | null
+  >(null);
   const [isSaving, setIsSaving] = useState(false);
   const hasSubjects = subjects ? subjects.length > 0 : true;
   const lastSavedRef = useRef(
@@ -119,7 +122,7 @@ export function MindmapDetail({
     async (nextTitle: string, nextGraph: MindmapGraph) => {
       const snapshot = JSON.stringify({ title: nextTitle, data: nextGraph });
       if (snapshot === lastSavedRef.current || nextTitle.trim().length === 0) {
-        return;
+        return snapshot === lastSavedRef.current;
       }
 
       const saveSequence = saveSequenceRef.current + 1;
@@ -135,21 +138,23 @@ export function MindmapDetail({
 
         // A newer save superseded this one; let it own the saving state.
         if (saveSequence !== saveSequenceRef.current) {
-          return;
+          return false;
         }
 
         if (!result.success) {
           toast.error(t(result.errorCode, result.errorParams));
-          return;
+          return false;
         }
 
         lastSavedRef.current = snapshot;
+        return true;
       } catch {
         // A rejected action (network/serialization failure) must not leave the
         // editor stuck in the saving state, which would warn on every unload.
         if (saveSequence === saveSequenceRef.current) {
           toast.error("Couldn't save the mindmap");
         }
+        return false;
       } finally {
         if (saveSequence === saveSequenceRef.current) {
           setIsSaving(false);
@@ -177,6 +182,18 @@ export function MindmapDetail({
       return true;
     },
     [mindmap.id, router, save, title],
+  );
+
+  const onGenerateFlashcardsFromNode = useCallback(
+    async (nodeId: string, nextGraph: MindmapGraph) => {
+      const saved = await save(title, nextGraph);
+      if (!saved) {
+        return;
+      }
+      setGenerateSourceNodeId(nodeId);
+      setGenerateOpen(true);
+    },
+    [save, title],
   );
 
   useEffect(() => {
@@ -268,7 +285,10 @@ export function MindmapDetail({
                   {aiEnabled ? (
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() => setGenerateOpen(true)}
+                      onClick={() => {
+                        setGenerateSourceNodeId(null);
+                        setGenerateOpen(true);
+                      }}
                       disabled={!hasSubjects}
                       title={
                         hasSubjects
@@ -316,6 +336,11 @@ export function MindmapDetail({
                 onTitleChange={setTitle}
                 onGraphChange={setGraph}
                 onSplitIntoMindmap={onSplitIntoMindmap}
+                onGenerateFlashcardsFromNode={
+                  aiEnabled && hasSubjects
+                    ? onGenerateFlashcardsFromNode
+                    : undefined
+                }
                 exportRef={exportPngRef}
                 shortcutsEnabled={shortcutsEnabled}
               />
@@ -350,6 +375,7 @@ export function MindmapDetail({
           <GenerateMindmapFlashcardsDialog
             subjects={subjects}
             mindmapId={mindmap.id}
+            sourceNodeId={generateSourceNodeId}
             open={generateOpen}
             onOpenChange={setGenerateOpen}
           />

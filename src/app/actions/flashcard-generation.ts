@@ -160,6 +160,7 @@ export async function generateFlashcardsFromMindmap(
       const source = buildMindmapFlashcardSourceWithImages({
         title: existingMindmap.title,
         data: existingMindmap.data,
+        sourceNodeId: parsedData.sourceNodeId,
       });
       const result = await generateFlashcardsForUserService({
         userId,

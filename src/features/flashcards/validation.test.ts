@@ -200,6 +200,16 @@ describe("generateMindmapFlashcardsSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts an optional source node id", () => {
+    const result = generateMindmapFlashcardsSchema.safeParse({
+      mindmapId: "mindmap-123",
+      sourceNodeId: "node-123",
+      subjectId: "deck-123",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects missing mindmap id", () => {
     const result = generateMindmapFlashcardsSchema.safeParse({
       subjectId: "deck-123",

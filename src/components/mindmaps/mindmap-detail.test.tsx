@@ -35,12 +35,17 @@ let graphSeq = 0;
 vi.mock("@/components/mindmaps/lazy-mindmap-canvas", () => ({
   LazyMindmapCanvas: ({
     onGraphChange,
+    onGenerateFlashcardsFromNode,
   }: {
     onGraphChange: (graph: { nodes: unknown[]; edges: unknown[] }) => void;
+    onGenerateFlashcardsFromNode?: (
+      nodeId: string,
+      graph: { nodes: unknown[]; edges: unknown[] },
+    ) => void;
   }) => {
-    const pushEdit = () => {
+    const editedGraph = () => {
       graphSeq += 1;
-      onGraphChange({
+      return {
         nodes: [
           {
             id: `n-${graphSeq}`,
@@ -49,12 +54,23 @@ vi.mock("@/components/mindmaps/lazy-mindmap-canvas", () => ({
           },
         ],
         edges: [],
-      });
+      };
+    };
+    const pushEdit = () => {
+      onGraphChange(editedGraph());
     };
     return (
-      <button type="button" onClick={pushEdit}>
-        edit-graph
-      </button>
+      <>
+        <button type="button" onClick={pushEdit}>
+          edit-graph
+        </button>
+        <button
+          type="button"
+          onClick={() => onGenerateFlashcardsFromNode?.("n-1", editedGraph())}
+        >
+          generate-node
+        </button>
+      </>
     );
   },
 }));
@@ -269,5 +285,20 @@ describe("MindmapDetail generate flashcards action", () => {
     expect(
       container.querySelector('[data-testid="generate-mindmap-dialog"]'),
     ).not.toBeNull();
+  });
+
+  it("does not open node generation when the autosave flush fails", async () => {
+    editMindmapMock.mockRejectedValueOnce(new Error("network down"));
+    act(() => renderDetail(root));
+
+    await act(async () => {
+      findButton(container, "generate-node")?.click();
+      await Promise.resolve();
+    });
+
+    expect(
+      container.querySelector('[data-testid="generate-mindmap-dialog"]'),
+    ).toBeNull();
+    expect(toastErrorMock).toHaveBeenCalledWith("Couldn't save the mindmap");
   });
 });

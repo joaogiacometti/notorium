@@ -13,6 +13,7 @@ import {
   Italic,
   Loader2,
   Scissors,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -127,6 +128,7 @@ export function MindmapNodeComponent({
   );
   const [editing, setEditing] = useState(false);
   const [splitting, setSplitting] = useState(false);
+  const [openingGeneration, setOpeningGeneration] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const colorVar = data.color ? `var(--${data.color})` : undefined;
   // Transient flag set by the canvas while a node is dragged over this one, so
@@ -272,6 +274,24 @@ export function MindmapNodeComponent({
             imageUrl={data.imageUrl}
             onClick={() => fileInputRef.current?.click()}
           />
+          {!isMultiSelect && actions.generateFlashcardsFromNode ? (
+            <MindmapToolbarButton
+              label="Generate flashcards from branch"
+              disabled={openingGeneration}
+              onClick={() => {
+                setOpeningGeneration(true);
+                void actions.generateFlashcardsFromNode?.(id).finally(() => {
+                  setOpeningGeneration(false);
+                });
+              }}
+            >
+              {openingGeneration ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Sparkles className="size-4" />
+              )}
+            </MindmapToolbarButton>
+          ) : null}
           {!isMultiSelect ? (
             <MindmapToolbarButton
               label="Break into new mindmap"
@@ -444,7 +464,7 @@ function NodeLabel({
       }}
       aria-label="Node label"
       className={cn(
-        "nodrag block w-full resize-none overflow-hidden break-words bg-transparent outline-none [overflow-wrap:anywhere]",
+        "nodrag block w-full resize-none overflow-hidden bg-transparent outline-none wrap-anywhere",
         bold && "font-bold",
         italic && "italic",
       )}

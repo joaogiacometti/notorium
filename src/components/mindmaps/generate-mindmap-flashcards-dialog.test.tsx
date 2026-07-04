@@ -76,6 +76,18 @@ describe("GenerateMindmapFlashcardsDialog", () => {
   let root: Root;
   let onOpenChange: ReturnType<typeof vi.fn<(open: boolean) => void>>;
 
+  function renderDialog(sourceNodeId?: string) {
+    root.render(
+      <GenerateMindmapFlashcardsDialog
+        subjects={[deck]}
+        mindmapId="mindmap-1"
+        sourceNodeId={sourceNodeId}
+        open
+        onOpenChange={onOpenChange}
+      />,
+    );
+  }
+
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     generateMock.mockReset();
@@ -87,14 +99,7 @@ describe("GenerateMindmapFlashcardsDialog", () => {
     document.body.appendChild(container);
     act(() => {
       root = createRoot(container);
-      root.render(
-        <GenerateMindmapFlashcardsDialog
-          subjects={[deck]}
-          mindmapId="mindmap-1"
-          open
-          onOpenChange={onOpenChange}
-        />,
-      );
+      renderDialog();
     });
   });
 
@@ -121,6 +126,26 @@ describe("GenerateMindmapFlashcardsDialog", () => {
     expect(toastErrorMock).toHaveBeenCalledWith(
       "Could not extract flashcards from this mindmap. Try adding more detail.",
     );
+  });
+
+  it("passes the selected source node when generating from a branch", async () => {
+    generateMock.mockResolvedValue({ success: true, cards: [] });
+
+    await act(async () => {
+      renderDialog("node-1");
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      findButton(document.body, "Generate Flashcards")?.click();
+      await Promise.resolve();
+    });
+
+    expect(generateMock).toHaveBeenCalledWith({
+      mindmapId: "mindmap-1",
+      sourceNodeId: "node-1",
+      subjectId: "deck-1",
+    });
   });
 
   it("creates the generated cards and closes after review", async () => {

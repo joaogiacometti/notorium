@@ -28,6 +28,8 @@ export interface MindmapActions {
   deleteSelected: () => void;
   /** Move one node's subtree into a new mindmap. */
   splitIntoMindmap: (nodeId: string) => Promise<void>;
+  /** Generate flashcards from one node and its descendants, when AI is enabled. */
+  generateFlashcardsFromNode?: (nodeId: string) => Promise<void>;
   updateEdge: (
     edgeId: string,
     patch: { label?: string; direction?: MindmapEdgeDirection },
