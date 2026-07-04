@@ -23,6 +23,7 @@ import {
   type RefObject,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -136,6 +137,7 @@ function MindmapCanvasInner({
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [mode, setMode] = useState<MindmapMode>("hand");
   const [spaceHeld, setSpaceHeld] = useState(false);
+  const backgroundId = `mindmap-background-${useId().replaceAll(":", "")}`;
   const syncedRootLabelRef = useRef(title);
   const previousTitleRef = useRef(title);
   const canvasWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -432,7 +434,7 @@ function MindmapCanvasInner({
           <Panel position="top-left">
             <MindmapModeToolbar mode={mode} onModeChange={setMode} />
           </Panel>
-          <Background />
+          <Background id={backgroundId} />
           <Controls />
         </ReactFlow>
       </div>
