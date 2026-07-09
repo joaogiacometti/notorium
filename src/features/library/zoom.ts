@@ -9,6 +9,7 @@
 export const ZOOM_MODES = ["automatic", "fit-page", "fit-width"] as const;
 
 export type ZoomModeValue = (typeof ZOOM_MODES)[number];
+export type StoredZoomLevel = ZoomModeValue | number;
 
 // Matches the zoom plugin's default min/max scale (0.25x–10x) so a stale or
 // hand-crafted value can never persist an out-of-range numeric zoom.
@@ -44,4 +45,20 @@ export function isValidStoredZoom(value: string): boolean {
     return true;
   }
   return isInRangeScale(Number(value));
+}
+
+/**
+ * Converts a persisted zoom string into the value expected by the reader zoom
+ * plugin, returning null for invalid stored data.
+ *
+ * @example
+ * parseStoredZoomLevel("fit-width"); // "fit-width"
+ * parseStoredZoomLevel("1.5"); // 1.5
+ */
+export function parseStoredZoomLevel(value: string): StoredZoomLevel | null {
+  const trimmedValue = value.trim();
+  if (!isValidStoredZoom(trimmedValue)) {
+    return null;
+  }
+  return isZoomMode(trimmedValue) ? trimmedValue : Number(trimmedValue);
 }

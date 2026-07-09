@@ -3,6 +3,7 @@ import {
   isValidStoredZoom,
   MAX_ZOOM_SCALE,
   MIN_ZOOM_SCALE,
+  parseStoredZoomLevel,
   ZOOM_MODES,
 } from "@/features/library/zoom";
 
@@ -28,5 +29,19 @@ describe("isValidStoredZoom", () => {
     expect(isValidStoredZoom("")).toBe(false);
     expect(isValidStoredZoom("huge")).toBe(false);
     expect(isValidStoredZoom("fit-everything")).toBe(false);
+  });
+});
+
+describe("parseStoredZoomLevel", () => {
+  it("returns known zoom modes unchanged", () => {
+    expect(parseStoredZoomLevel("fit-width")).toBe("fit-width");
+  });
+
+  it("returns numeric zooms as numbers", () => {
+    expect(parseStoredZoomLevel("1.5")).toBe(1.5);
+  });
+
+  it("returns null for invalid zoom values", () => {
+    expect(parseStoredZoomLevel("fit-everything")).toBeNull();
   });
 });

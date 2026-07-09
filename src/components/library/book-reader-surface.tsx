@@ -17,7 +17,7 @@ import { SpreadPluginPackage } from "@embedpdf/plugin-spread/react";
 import { ThumbnailPluginPackage } from "@embedpdf/plugin-thumbnail/react";
 import { TilingPluginPackage } from "@embedpdf/plugin-tiling/react";
 import { ViewportPluginPackage } from "@embedpdf/plugin-viewport/react";
-import { ZoomMode } from "@embedpdf/plugin-zoom";
+import { type ZoomLevel, ZoomMode } from "@embedpdf/plugin-zoom";
 import { ZoomPluginPackage } from "@embedpdf/plugin-zoom/react";
 import { useMemo } from "react";
 import {
@@ -29,6 +29,8 @@ import {
 import { ReaderFullscreenContext } from "@/components/library/book-reader-fullscreen";
 import { ReaderLayout } from "@/components/library/book-reader-layout";
 import { BookReaderLoadingFrame } from "@/components/library/book-reader-loading-frame";
+import { detectReaderDevice } from "@/components/library/reader-device";
+import { parseStoredZoomLevel } from "@/features/library/zoom";
 import type { BookAnnotationDto } from "@/features/library-annotations/types";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 import type { SubjectOption } from "@/lib/server/api-contracts";
@@ -86,7 +88,10 @@ function ReaderEngine({
 
   // Memoized so the plugin registrations keep a stable identity across renders;
   // a new array would re-initialize the whole viewer (correctness, not perf).
-  const plugins = useMemo(() => buildReaderPlugins(fileUrl), [fileUrl]);
+  const plugins = useMemo(
+    () => buildReaderPlugins(fileUrl, initialZoomMobile, initialZoomDesktop),
+    [fileUrl, initialZoomMobile, initialZoomDesktop],
+  );
 
   if (error) {
     return <BookReaderLoadingFrame message="This book could not be loaded." />;
@@ -139,7 +144,16 @@ function ReaderEngine({
 // be edited and highlights deleted. The built-in "highlight" tool is overridden
 // to tag created highlights with our category and to paint them in the reader's
 // highlighter color.
-function buildReaderPlugins(fileUrl: string) {
+function buildReaderPlugins(
+  fileUrl: string,
+  initialZoomMobile: string | null,
+  initialZoomDesktop: string | null,
+) {
+  const deviceZoom =
+    detectReaderDevice() === "mobile" ? initialZoomMobile : initialZoomDesktop;
+  const parsedZoom = deviceZoom ? parseStoredZoomLevel(deviceZoom) : null;
+  const defaultZoomLevel = (parsedZoom ?? ZoomMode.FitPage) as ZoomLevel;
+
   return [
     createPluginRegistration(DocumentManagerPluginPackage, {
       initialDocuments: [{ url: fileUrl }],
@@ -184,7 +198,7 @@ function buildReaderPlugins(fileUrl: string) {
     // FitPage so a book opens showing the whole page; FitWidth stretched small
     // page sizes to the viewport width, opening at an oversized zoom (~450%).
     createPluginRegistration(ZoomPluginPackage, {
-      defaultZoomLevel: ZoomMode.FitPage,
+      defaultZoomLevel,
     }),
     createPluginRegistration(SpreadPluginPackage),
     // "instant" so re-opening the Pages sidebar snaps to the current page.

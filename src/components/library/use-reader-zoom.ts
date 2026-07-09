@@ -7,9 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { updateBookZoom } from "@/app/actions/library";
 import { detectReaderDevice } from "@/components/library/reader-device";
 import {
-  isValidStoredZoom,
+  parseStoredZoomLevel,
   type ReaderDevice,
-  ZOOM_MODES,
 } from "@/features/library/zoom";
 
 // How long after the zoom stops changing before we persist it. Long enough that
@@ -32,22 +31,11 @@ function serializeZoomLevel(level: ZoomLevel): string {
   return typeof level === "number" ? String(level) : level;
 }
 
-// Turns a stored string back into a plugin ZoomLevel. Mode strings equal the
-// `ZoomMode` enum values, so a known mode passes through; anything else is a
-// numeric scale.
-function parseStoredZoom(value: string): ZoomLevel {
-  if ((ZOOM_MODES as readonly string[]).includes(value)) {
-    return value as ZoomMode;
-  }
-  return Number(value);
-}
-
 /**
- * Restores the reader's saved zoom for the current device class once the
- * document is laid out, then persists zoom changes for that device. Debounces
- * saves, dedupes redundant writes, and flushes on tab-hide/unmount so a settling
- * pinch is not lost. Mobile and desktop zoom are stored independently, so the
- * same book keeps separate zooms per device.
+ * Persists zoom changes for the current device class. The initial zoom is
+ * supplied to EmbedPDF's ZoomPluginPackage as `defaultZoomLevel` when the reader
+ * is created, so this hook only starts saving after that configured default is
+ * visible in plugin state.
  *
  * @example
  * useReaderZoom({ documentId, bookId, initialZoomMobile, initialZoomDesktop });
@@ -63,20 +51,23 @@ export function useReaderZoom({
   const deviceRef = useRef<ReaderDevice>(detectReaderDevice());
   const initialZoom =
     deviceRef.current === "mobile" ? initialZoomMobile : initialZoomDesktop;
-  const hasRestoredRef = useRef(false);
+  const initialZoomLevel = initialZoom
+    ? parseStoredZoomLevel(initialZoom)
+    : null;
+  const expectedInitialZoom =
+    initialZoomLevel === null
+      ? DEFAULT_ZOOM_STRING
+      : serializeZoomLevel(initialZoomLevel as ZoomLevel);
+  const savesEnabledRef = useRef(false);
   const [layoutReady, setLayoutReady] = useState(false);
-  const lastSavedRef = useRef(
-    initialZoom && isValidStoredZoom(initialZoom)
-      ? initialZoom
-      : DEFAULT_ZOOM_STRING,
-  );
+  const lastSavedRef = useRef(expectedInitialZoom);
   const latestZoomRef = useRef(lastSavedRef.current);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   latestZoomRef.current = serializeZoomLevel(state.zoomLevel);
 
-  // Mark the scroller's initial layout ready; the apply effect below waits on
-  // this so the saved zoom lands on top of the plugin's auto-fit, not racing it.
+  // Mark the scroller's initial layout ready before enabling saves, so the
+  // plugin's configured default zoom does not get mistaken for a user change.
   useEffect(() => {
     if (!scrollCapability || layoutReady) return;
     const unsubscribe = scrollCapability.onLayoutReady((event) => {
@@ -86,37 +77,22 @@ export function useReaderZoom({
     return unsubscribe;
   }, [scrollCapability, documentId, layoutReady]);
 
-  // Apply the saved zoom once both the layout is ready and the zoom capability
-  // is available, then enable saves. Seeding lastSaved with the restored value
-  // (above) dedupes the change this triggers. Depends on `zoom` so a capability
-  // that lags the layout event is not missed.
-  //
-  // requestZoom re-anchors scroll to the viewport center using the viewport's
-  // reported scroll metrics, which still reflect the top of the document at
-  // this point: the page restore's scrollToPage only schedules a rAF, and the
-  // resulting DOM scroll event has not reported back into viewportMetrics yet.
-  // Left alone, requestZoom would scroll back to page 1 and clobber the page
-  // restore (the "changed zoom and page" bug). Capture the page the scroll
-  // plugin already recorded via startPageChange, then re-scroll to it after the
-  // zoom's own scroll so the saved page lands on top at the new scale.
+  // Wait until useZoom reports the default we gave EmbedPDF at registration.
+  // That keeps the hook from persisting its temporary initial "automatic" state.
   useEffect(() => {
-    if (hasRestoredRef.current || !layoutReady || !zoom || !scrollCapability) {
+    if (savesEnabledRef.current || !layoutReady || !zoom) {
       return;
     }
-    hasRestoredRef.current = true;
-    if (initialZoom && isValidStoredZoom(initialZoom)) {
-      const scrollScope = scrollCapability.forDocument(documentId);
-      const page = scrollScope.getCurrentPage();
-      zoom.requestZoom(parseStoredZoom(initialZoom));
-      if (page > 1) {
-        scrollScope.scrollToPage({ pageNumber: page, behavior: "instant" });
-      }
+    const zoomValue = serializeZoomLevel(state.zoomLevel);
+    if (zoomValue !== lastSavedRef.current) {
+      return;
     }
-  }, [layoutReady, zoom, initialZoom, scrollCapability, documentId]);
+    savesEnabledRef.current = true;
+  }, [layoutReady, zoom, state.zoomLevel]);
 
   // Debounce-persist the current zoom after restore, skipping redundant writes.
   useEffect(() => {
-    if (!hasRestoredRef.current) return;
+    if (!savesEnabledRef.current) return;
     const zoomValue = serializeZoomLevel(state.zoomLevel);
     if (zoomValue === lastSavedRef.current) return;
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -137,7 +113,7 @@ export function useReaderZoom({
   useEffect(() => {
     function flush() {
       const zoomValue = latestZoomRef.current;
-      if (!hasRestoredRef.current || zoomValue === lastSavedRef.current) {
+      if (!savesEnabledRef.current || zoomValue === lastSavedRef.current) {
         return;
       }
       lastSavedRef.current = zoomValue;
