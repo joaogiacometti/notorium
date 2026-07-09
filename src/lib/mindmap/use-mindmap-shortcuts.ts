@@ -84,9 +84,9 @@ function handleMindmapKeyDown(
   event: KeyboardEvent,
   actions: UseMindmapShortcutsParams,
 ) {
+  if (isEditableTarget(event.target)) return;
   if (handleHistoryKey(event, actions.undo, actions.redo)) return;
   if (handleCopyKey(event, actions.copySelected)) return;
-  if (isEditableTarget(event.target)) return;
   const action = resolveMindmapKey(event);
   if (!action) return;
   runMindmapKeyAction(event, action, actions);

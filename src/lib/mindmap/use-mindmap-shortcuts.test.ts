@@ -23,6 +23,12 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
+type MindmapShortcutHarnessProps = Readonly<{
+  enabled: boolean;
+  onMode: () => void;
+  onUndo?: () => void;
+}>;
+
 describe("resolveMindmapKey", () => {
   it("maps V to select and H to hand", () => {
     expect(
@@ -103,10 +109,8 @@ describe("isEditableTarget", () => {
 function MindmapShortcutHarness({
   enabled,
   onMode,
-}: Readonly<{
-  enabled: boolean;
-  onMode: () => void;
-}>) {
+  onUndo = () => {},
+}: MindmapShortcutHarnessProps) {
   useMindmapShortcuts({
     enabled,
     setMode: onMode,
@@ -115,33 +119,92 @@ function MindmapShortcutHarness({
     addChildToSelected: () => {},
     addSiblingToSelected: () => {},
     copySelected: () => false,
-    undo: () => {},
+    undo: onUndo,
     redo: () => {},
   });
-  return null;
+  return createElement("textarea", { "aria-label": "Node label" });
+}
+
+async function renderShortcutHarness(props: MindmapShortcutHarnessProps) {
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  document.body.appendChild(container);
+  (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+  await act(async () => {
+    root.render(createElement(MindmapShortcutHarness, props));
+  });
+  return { container, root };
+}
+
+async function cleanupShortcutHarness(
+  rendered: Awaited<ReturnType<typeof renderShortcutHarness>>,
+) {
+  await act(async () => rendered.root.unmount());
+  rendered.container.remove();
+  (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
 }
 
 describe("useMindmapShortcuts", () => {
   it("does not handle keys while disabled", async () => {
-    const container = document.createElement("div");
-    const root = createRoot(container);
     const onMode = vi.fn();
-    document.body.appendChild(container);
-    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+    const rendered = await renderShortcutHarness({
+      enabled: false,
+      onMode,
+    });
 
     try {
-      await act(async () => {
-        root.render(
-          createElement(MindmapShortcutHarness, { enabled: false, onMode }),
-        );
-      });
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "v" }));
       expect(onMode).not.toHaveBeenCalled();
     } finally {
-      await act(async () => root.unmount());
-      container.remove();
-      (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT =
-        false;
+      await cleanupShortcutHarness(rendered);
+    }
+  });
+
+  it("lets editable fields handle their own undo", async () => {
+    const onUndo = vi.fn();
+    const rendered = await renderShortcutHarness({
+      enabled: true,
+      onMode: () => {},
+      onUndo,
+    });
+
+    try {
+      const textarea = rendered.container.querySelector("textarea");
+      const event = new KeyboardEvent("keydown", {
+        key: "z",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      textarea?.dispatchEvent(event);
+
+      expect(onUndo).not.toHaveBeenCalled();
+      expect(event.defaultPrevented).toBe(false);
+    } finally {
+      await cleanupShortcutHarness(rendered);
+    }
+  });
+
+  it("handles undo from the canvas", async () => {
+    const onUndo = vi.fn();
+    const rendered = await renderShortcutHarness({
+      enabled: true,
+      onMode: () => {},
+      onUndo,
+    });
+
+    try {
+      const event = new KeyboardEvent("keydown", {
+        key: "z",
+        ctrlKey: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(event);
+
+      expect(onUndo).toHaveBeenCalledOnce();
+      expect(event.defaultPrevented).toBe(true);
+    } finally {
+      await cleanupShortcutHarness(rendered);
     }
   });
 });
