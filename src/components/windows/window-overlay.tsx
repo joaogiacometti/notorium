@@ -29,9 +29,8 @@ interface WindowOverlayProps {
  * Renders every open window into a body portal. Only the active window is
  * visible; the rest stay mounted but hidden so their editor state survives
  * minimize/restore. The portal wrapper ignores pointer events so the page
- * behind (e.g. the PDF reader) stays interactive around the panel; Esc
- * minimizes the active window. Each window can be dragged and resized so the
- * user can park it aside and keep reading the page underneath.
+ * behind stays interactive around the panel; Esc minimizes the active window.
+ * Each window can be dragged and resized so the user can park it aside.
  */
 export function WindowOverlay({
   aiEnabled,

@@ -23,10 +23,10 @@ export function getActiveSubjectId(pathname: string): string | undefined {
 
 /**
  * Subject id whose document rows must be revealed because a document under it is
- * open. Matches `/subjects/[id]/documents/(notes|mindmaps|books)/[docId]`, so the
+ * open. Matches `/subjects/[id]/documents/(notes|mindmaps)/[docId]`, so the
  * tree can expand that subject and load its documents on first paint.
  *
- * @example getActiveDocumentSubjectId("/subjects/s1/documents/books/b1") // "s1"
+ * @example getActiveDocumentSubjectId("/subjects/s1/documents/notes/n1") // "s1"
  */
 export function getActiveDocumentSubjectId(
   pathname: string,
@@ -35,11 +35,7 @@ export function getActiveDocumentSubjectId(
   if (segments[0] !== "subjects" || segments[2] !== "documents") {
     return undefined;
   }
-  if (
-    segments[3] !== "notes" &&
-    segments[3] !== "mindmaps" &&
-    segments[3] !== "books"
-  ) {
+  if (segments[3] !== "notes" && segments[3] !== "mindmaps") {
     return undefined;
   }
   return segments[1];

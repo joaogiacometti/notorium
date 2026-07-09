@@ -12,7 +12,6 @@ vi.mock("@/db/schema", () => ({
   flashcard: "flashcard_table",
   mindmap: "mindmap_table",
   assessmentAttachment: "assessment_attachment_table",
-  libraryBook: "library_book_table",
 }));
 
 vi.mock("@/features/mindmaps/utils", () => ({
@@ -44,8 +43,6 @@ describe("collectAllReferencedPathnames", () => {
           return Promise.resolve([{ data: "mindmap-a" }, { data: null }]);
         case "assessment_attachment_table":
           return Promise.resolve([{ blobPathname: "assess-a" }]);
-        case "library_book_table":
-          return Promise.resolve([{ blobPathname: "library-a" }]);
         default:
           return Promise.resolve([]);
       }
@@ -66,7 +63,6 @@ describe("collectAllReferencedPathnames", () => {
         "notorium/flashcards/u/occ.png",
         "mindmap-a",
         "assess-a",
-        "library-a",
       ]),
     );
   });

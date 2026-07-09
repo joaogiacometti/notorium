@@ -20,10 +20,7 @@ export default function HomeLoading() {
               <CardSkeleton lines={4} />
             </div>
             <ReviewActivityCardSkeleton />
-            <div className="grid gap-3 lg:grid-cols-2">
-              <CardSkeleton lines={4} />
-              <CardSkeleton lines={4} />
-            </div>
+            <CardSkeleton lines={4} />
           </div>
         </AppPageContainer>
       </main>

@@ -1,6 +1,6 @@
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
-export type DocumentKind = "note" | "mindmap" | "book";
+export type DocumentKind = "note" | "mindmap";
 
 /** Payload a feature move mutation receives: the document id and destination. */
 export interface MoveDocumentMutationInput {
@@ -17,8 +17,8 @@ export type MoveDocumentResult =
   | ActionErrorResult;
 
 /**
- * A subject document is a note, a mindmap, or a book, surfaced together in the
- * subject "Documents" area. `kind` drives the sidebar icon and the detail route.
+ * A subject document is a note or mindmap surfaced in the subject "Documents"
+ * area. `kind` drives the sidebar icon and the detail route.
  */
 export interface DocumentListItem {
   id: string;
@@ -26,6 +26,4 @@ export interface DocumentListItem {
   updatedAt: Date;
   kind: DocumentKind;
   subjectId: string;
-  /** Books only: the author, threaded so the tree edit dialog can preload it. */
-  author?: string | null;
 }

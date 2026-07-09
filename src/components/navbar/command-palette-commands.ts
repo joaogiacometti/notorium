@@ -26,7 +26,6 @@ export type ContextFreeDialog =
   | "subject"
   | "flashcard"
   | "assessment"
-  | "book"
   | "note"
   | "mindmap";
 
@@ -75,14 +74,6 @@ export const paletteCommands: PaletteCommand[] = [
     action: { kind: "create", dialog: "assessment" },
   },
   {
-    id: "create-book",
-    label: "Add Book",
-    group: "Create",
-    keywords: ["new", "add", "create", "book", "pdf", "library"],
-    icon: BookOpen,
-    action: { kind: "create", dialog: "book" },
-  },
-  {
     id: "create-note",
     label: "Create Note",
     group: "Create",
@@ -102,7 +93,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "window-mindmap",
     label: "New Mindmap in Window",
     group: "Windows",
-    keywords: ["window", "overlay", "mindmap", "multitask", "reader", "float"],
+    keywords: ["window", "overlay", "mindmap", "multitask", "float"],
     icon: Network,
     action: { kind: "open-window-create", create: "mindmap" },
   },
@@ -110,7 +101,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "window-note",
     label: "New Note in Window",
     group: "Windows",
-    keywords: ["window", "overlay", "note", "multitask", "reader", "float"],
+    keywords: ["window", "overlay", "note", "multitask", "float"],
     icon: FileText,
     action: { kind: "open-window-create", create: "note" },
   },
@@ -118,14 +109,7 @@ export const paletteCommands: PaletteCommand[] = [
     id: "window-flashcard",
     label: "New Flashcard in Window",
     group: "Windows",
-    keywords: [
-      "window",
-      "overlay",
-      "flashcard",
-      "multitask",
-      "reader",
-      "float",
-    ],
+    keywords: ["window", "overlay", "flashcard", "multitask", "float"],
     icon: Layers,
     action: { kind: "open-window-create", create: "flashcard" },
   },

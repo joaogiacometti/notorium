@@ -44,9 +44,6 @@ export const user = pgTable("user", {
   notificationDaysBefore: integer("notification_days_before")
     .notNull()
     .default(1),
-  readerColorInverted: boolean("reader_color_inverted")
-    .notNull()
-    .default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -365,96 +362,6 @@ export const assessmentAttachment = pgTable(
   ],
 );
 
-export const libraryBook = pgTable(
-  "library_book",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    // Migration A (additive): books are moving from the standalone /library into
-    // the shared subject tree. subjectId is nullable until the backfill
-    // (scripts/backfill-books-to-subjects.ts) repoints every legacy row into the
-    // user's default "Library" subject. Migration B makes this notNull.
-    subjectId: text("subject_id").references((): AnyPgColumn => subject.id, {
-      onDelete: "cascade",
-    }),
-    title: text("title").notNull(),
-    author: text("author"),
-    fileName: text("file_name").notNull(),
-    blobPathname: text("blob_pathname").notNull().unique(),
-    sizeBytes: integer("size_bytes").notNull(),
-    // Captured from the PDF on first successful render; null until then.
-    totalPages: integer("total_pages"),
-    // The reading position the user left off at. Defaults to the first page.
-    currentPage: integer("current_page").notNull().default(1),
-    // The reader zoom level the user left off at, persisted per device class so
-    // a phone and a laptop keep independent zooms for the same book. Stored as a
-    // serialized ZoomLevel (a "fit-page"/"fit-width"/"automatic" mode string or a
-    // numeric scale as text); null means use the reader default (fit page).
-    zoomMobile: text("zoom_mobile"),
-    zoomDesktop: text("zoom_desktop"),
-    lastReadAt: timestamp("last_read_at"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    index("library_book_userId_idx").on(table.userId),
-    index("library_book_userId_updatedAt_idx").on(
-      table.userId,
-      table.updatedAt,
-    ),
-    index("library_book_userId_subjectId_idx").on(
-      table.userId,
-      table.subjectId,
-    ),
-  ],
-);
-
-// One row per user-authored highlight in a book. The full EmbedPDF annotation
-// object (geometry, color, quads, and the note text in its `contents` field) is
-// stored as JSON so it round-trips back into the reader with no mapping. The PDF
-// blob itself is never modified; the reader re-imports these rows on open.
-export const libraryAnnotation = pgTable(
-  "library_annotation",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    bookId: text("book_id")
-      .notNull()
-      .references(() => libraryBook.id, { onDelete: "cascade" }),
-    // The annotation id EmbedPDF assigns in the reader. Stable across a reading
-    // session, so it is the upsert key that ties an edit back to its row.
-    annotationUid: text("annotation_uid").notNull(),
-    pageIndex: integer("page_index").notNull(),
-    // The serialized PdfAnnotationObject; `Date` fields are stored as ISO
-    // strings and revived on load by the mappers.
-    data: jsonb("data").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    unique("library_annotation_book_uid_key").on(
-      table.bookId,
-      table.annotationUid,
-    ),
-    index("library_annotation_userId_idx").on(table.userId),
-    index("library_annotation_bookId_idx").on(table.bookId),
-  ],
-);
-
 export const notificationLog = pgTable(
   "notification_log",
   {
@@ -688,7 +595,6 @@ export const userRelations = relations(user, ({ many }) => ({
   flashcardReviewLogs: many(flashcardReviewLog),
   decks: many(deck),
   notificationLogs: many(notificationLog),
-  libraryBooks: many(libraryBook),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -721,34 +627,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   attendanceMisses: many(attendanceMiss),
   assessments: many(assessment),
   flashcards: many(flashcard),
-  books: many(libraryBook),
 }));
-
-export const libraryBookRelations = relations(libraryBook, ({ one, many }) => ({
-  user: one(user, {
-    fields: [libraryBook.userId],
-    references: [user.id],
-  }),
-  subject: one(subject, {
-    fields: [libraryBook.subjectId],
-    references: [subject.id],
-  }),
-  annotations: many(libraryAnnotation),
-}));
-
-export const libraryAnnotationRelations = relations(
-  libraryAnnotation,
-  ({ one }) => ({
-    user: one(user, {
-      fields: [libraryAnnotation.userId],
-      references: [user.id],
-    }),
-    book: one(libraryBook, {
-      fields: [libraryAnnotation.bookId],
-      references: [libraryBook.id],
-    }),
-  }),
-);
 
 export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
   subject: one(subject, {

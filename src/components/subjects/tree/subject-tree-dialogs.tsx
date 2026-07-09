@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { LazyCreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
 import { RecordMissDialog } from "@/components/attendance/record-miss-dialog";
 import { LazyCreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
-import { AddBookDialog } from "@/components/library/add-book-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
@@ -33,9 +32,6 @@ interface SubjectTreeDialogsProps {
   createMindmapSubjectId: string | null;
   onCreateMindmapSubjectIdChange: (id: string | null) => void;
   onMindmapCreated: (mindmapId: string) => void;
-  createBookSubjectId: string | null;
-  onCreateBookSubjectIdChange: (id: string | null) => void;
-  onBookUploaded: (book: { id: string; subjectId: string }) => void;
   createFlashcardSubjectId: string | null;
   onCreateFlashcardSubjectIdChange: (id: string | null) => void;
   createAssessmentSubjectId: string | null;
@@ -49,7 +45,7 @@ interface SubjectTreeDialogsProps {
 
 /**
  * Renders every dialog the subject tree can open (create/edit/delete subject,
- * create note/mindmap/book/flashcard/assessment, record miss) plus the shared
+ * create note/mindmap/flashcard/assessment, record miss) plus the shared
  * document kebab dialog host. Split out of `subject-tree-sidebar.tsx` to keep
  * that file focused on tree state and within the file-size guard.
  */
@@ -70,9 +66,6 @@ export function SubjectTreeDialogs({
   createMindmapSubjectId,
   onCreateMindmapSubjectIdChange,
   onMindmapCreated,
-  createBookSubjectId,
-  onCreateBookSubjectIdChange,
-  onBookUploaded,
   createFlashcardSubjectId,
   onCreateFlashcardSubjectIdChange,
   createAssessmentSubjectId,
@@ -154,20 +147,6 @@ export function SubjectTreeDialogs({
           onSuccess={(mindmapId) => {
             onMindmapCreated(mindmapId);
           }}
-        />
-      ) : null}
-
-      {createBookSubjectId ? (
-        <AddBookDialog
-          trigger={null}
-          subjectId={createBookSubjectId}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              onCreateBookSubjectIdChange(null);
-            }
-          }}
-          onUploaded={onBookUploaded}
         />
       ) : null}
 

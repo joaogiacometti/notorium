@@ -106,10 +106,10 @@ function defaultGeometry(openCount: number): WindowGeometry {
 
 /**
  * Holds the floating window stack for the app shell. Opening a window only
- * changes React state (never the route), so an immersive page such as the book
- * reader stays mounted behind the overlay. One window is visible at a time
- * (`activeWindowId`); the rest live minimized in the dock. Inactive windows stay
- * mounted but hidden so their editor state and unsaved input survive restore.
+ * changes React state (never the route). One window is visible at a time
+ * (`activeWindowId`); the rest live minimized in the dock. Inactive windows
+ * stay mounted but hidden so their editor state and unsaved input survive
+ * restore.
  *
  * @example
  * const { openWindow } = useWindowManager();

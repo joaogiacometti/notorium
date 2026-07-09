@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, libraryBook, mindmap, note, subject } from "@/db/schema";
+import { flashcard, mindmap, note, subject } from "@/db/schema";
 import { findMindmapNodeLabelMatch } from "@/features/mindmaps/utils";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
@@ -24,8 +24,8 @@ export async function getSearchDataForUser(
       ),
   );
 
-  const [allSubjects, allNotes, allFlashcards, allMindmaps, allBooks] =
-    await Promise.all([
+  const [allSubjects, allNotes, allFlashcards, allMindmaps] = await Promise.all(
+    [
       getDb()
         .select({
           id: subject.id,
@@ -111,26 +111,8 @@ export async function getSearchDataForUser(
         )
         .orderBy(desc(mindmap.updatedAt))
         .limit(LIMITS.searchResultsLimit),
-      getDb()
-        .select({
-          id: libraryBook.id,
-          title: libraryBook.title,
-          author: libraryBook.author,
-          subjectId: libraryBook.subjectId,
-        })
-        .from(libraryBook)
-        .where(
-          and(
-            eq(libraryBook.userId, userId),
-            or(
-              ilike(libraryBook.title, searchPattern),
-              ilike(libraryBook.author, searchPattern),
-            ),
-          ),
-        )
-        .orderBy(desc(libraryBook.updatedAt))
-        .limit(LIMITS.searchResultsLimit),
-    ]);
+    ],
+  );
 
   return {
     subjects: allSubjects,
@@ -149,7 +131,6 @@ export async function getSearchDataForUser(
         ? undefined
         : findMindmapNodeLabelMatch(data, searchQuery),
     })),
-    books: allBooks,
   };
 }
 
@@ -167,8 +148,8 @@ export async function getRecentSearchDataForUser(
       ),
   );
 
-  const [allSubjects, allNotes, allFlashcards, allMindmaps, allBooks] =
-    await Promise.all([
+  const [allSubjects, allNotes, allFlashcards, allMindmaps] = await Promise.all(
+    [
       getDb()
         .select({
           id: subject.id,
@@ -223,18 +204,8 @@ export async function getRecentSearchDataForUser(
         .where(and(eq(mindmap.userId, userId), ...subjectFilters))
         .orderBy(desc(mindmap.updatedAt))
         .limit(LIMITS.recentItemsLimit),
-      getDb()
-        .select({
-          id: libraryBook.id,
-          title: libraryBook.title,
-          author: libraryBook.author,
-          subjectId: libraryBook.subjectId,
-        })
-        .from(libraryBook)
-        .where(eq(libraryBook.userId, userId))
-        .orderBy(desc(libraryBook.updatedAt))
-        .limit(LIMITS.recentItemsLimit),
-    ]);
+    ],
+  );
 
   return {
     subjects: allSubjects,
@@ -247,6 +218,5 @@ export async function getRecentSearchDataForUser(
           : undefined) ?? flashcard.subjectName,
     })),
     mindmaps: allMindmaps,
-    books: allBooks,
   };
 }

@@ -114,10 +114,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} attachments per assessment.`,
   "limits.attachmentSizeLimit": (params) =>
     `File size limit exceeded: maximum ${params?.max} bytes.`,
-  "limits.bookLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} books.`,
-  "limits.bookSizeLimit": (params) =>
-    `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.assessmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} assessments per subject.`,
   "limits.flashcardLimit": (params) =>
@@ -139,20 +135,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "subjects.cannotMoveIntoSelf": "A subject cannot be moved into itself.",
   "subjects.wouldCreateCycle":
     "This move would create a circular subject hierarchy.",
-  "library.invalidData": "Invalid book data.",
-  "library.notFound": "Book not found.",
-  "library.uploadFailed": "Failed to upload book.",
-  "library.deleteFailed": "Failed to delete book.",
-  "library.mimeTypeNotAllowed": "Only PDF files are supported.",
-  "library.annotationLimit":
-    "This book has reached the maximum of {max} highlights.",
-  "library.notConfigured":
-    "No media storage is configured. Contact your administrator.",
-  "library.ai.invalidData": "Invalid input for asking AI about the selection.",
-  "library.ai.notConfigured":
-    "AI features are not configured for this instance.",
-  "library.ai.unavailable": "AI is temporarily unavailable. Try again later.",
-  "limits.aiAskPerDay": "Daily limit reached for asking AI.",
 };
 
 export function t(key: string, values?: ActionErrorParams): string {

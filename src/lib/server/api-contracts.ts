@@ -6,7 +6,6 @@ import type {
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
-  libraryBook,
   mindmap,
   note,
   subject,
@@ -33,7 +32,6 @@ export type AssessmentEntity = InferSelectModel<typeof assessment>;
 export type AssessmentAttachmentEntity = InferSelectModel<
   typeof assessmentAttachment
 >;
-export type LibraryBookEntity = InferSelectModel<typeof libraryBook>;
 export interface AssessmentDetailEntity {
   assessment: AssessmentEntity;
   subject: Pick<SubjectEntity, "id" | "name">;
@@ -136,7 +134,6 @@ export interface AccountSettings {
   workflowsEnabled: boolean;
   notificationsEnabled: boolean;
   notificationDaysBefore: number;
-  readerColorInverted: boolean;
   fsrsOptimization: FlashcardOptimizationSettings;
 }
 
@@ -188,17 +185,11 @@ export type SearchMindmapResult = Pick<
   matchedNodeLabel?: string;
 };
 
-export type SearchBookResult = Pick<
-  LibraryBookEntity,
-  "id" | "title" | "author" | "subjectId"
->;
-
 export type SearchData = {
   subjects: SearchSubjectResult[];
   notes: SearchNoteResult[];
   flashcards: SearchFlashcardResult[];
   mindmaps: SearchMindmapResult[];
-  books: SearchBookResult[];
 };
 
 export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "kind">;

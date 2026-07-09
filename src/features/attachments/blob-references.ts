@@ -1,13 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/db/index";
-import {
-  assessmentAttachment,
-  flashcard,
-  libraryBook,
-  mindmap,
-  note,
-} from "@/db/schema";
+import { assessmentAttachment, flashcard, mindmap, note } from "@/db/schema";
 import { getMindmapImagePathnames } from "@/features/mindmaps/utils";
 import { getInternalAttachmentPathnames } from "@/lib/editor/rich-text";
 
@@ -55,20 +49,12 @@ async function collectAssessmentPathnames(): Promise<string[]> {
   return rows.map((row) => row.blobPathname);
 }
 
-async function collectLibraryPathnames(): Promise<string[]> {
-  const rows = await getDb()
-    .select({ blobPathname: libraryBook.blobPathname })
-    .from(libraryBook);
-
-  return rows.map((row) => row.blobPathname);
-}
-
 /**
  * Collect every blob pathname referenced by live database rows across all
- * features that store media (notes, flashcards, mindmaps, assessments,
- * library). The orphan GC sweep treats any stored blob absent from this set as
- * unreferenced. Returning a complete set is safety-critical: a missing
- * reference type would cause the sweep to delete in-use blobs.
+ * features that store media (notes, flashcards, mindmaps, assessments). The
+ * orphan GC sweep treats any stored blob absent from this set as unreferenced.
+ * Returning a complete set is safety-critical: a missing reference type would
+ * cause the sweep to delete in-use blobs.
  *
  * @example
  * const referenced = await collectAllReferencedPathnames();
@@ -80,7 +66,6 @@ export async function collectAllReferencedPathnames(): Promise<Set<string>> {
     collectFlashcardPathnames(),
     collectMindmapPathnames(),
     collectAssessmentPathnames(),
-    collectLibraryPathnames(),
   ]);
 
   return new Set(groups.flat());

@@ -16,7 +16,6 @@ const USER_BLOB_CONTEXTS = [
   "flashcards",
   "assessments",
   "mindmaps",
-  "library",
 ] as const;
 
 // Blobs younger than this are never collected. An upload that has not yet
@@ -183,9 +182,9 @@ async function listUserBlobPathnames(
 }
 
 /**
- * Delete every blob owned by a user across all contexts (including library).
- * Used on account deletion, where the whole account is gone so no reference
- * check is needed; the per-user path prefix already guarantees ownership.
+ * Delete every blob owned by a user across all media contexts. Used on account
+ * deletion, where the whole account is gone so no reference check is needed;
+ * the per-user path prefix already guarantees ownership.
  * Best-effort: storage failures are swallowed so account deletion still
  * succeeds, and the orphan sweep remains the backstop.
  *

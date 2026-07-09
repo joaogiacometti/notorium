@@ -1,9 +1,6 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
-import { updateReaderColorMode } from "@/app/actions/account";
 import {
   SettingsRow,
   SettingsSection,
@@ -14,46 +11,22 @@ import {
   themeLabelByKey,
 } from "@/components/navbar/theme-options";
 import { useThemeControl } from "@/components/navbar/use-theme-control";
-import { Switch } from "@/components/ui/switch";
 import { type AppTheme, themeOptions } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-interface AppearanceCardProps {
-  readerColorInverted?: boolean;
-}
-
 /**
- * Appearance settings: app theme selection and PDF reader color inversion.
- * Theme is persisted through `useThemeControl`; reader inversion is persisted
- * via its own server action. The check icon's space is always reserved so
- * selecting a theme never reflows the row height.
+ * Appearance settings: app theme selection. Theme is persisted through
+ * `useThemeControl`. The check icon's space is always reserved so selecting a
+ * theme never reflows the row height.
  */
-export function AppearanceCard({
-  readerColorInverted = false,
-}: Readonly<AppearanceCardProps>) {
+export function AppearanceCard() {
   const { currentTheme, resolvedTheme, mounted, setAppTheme } =
     useThemeControl(true);
-  const queryClient = useQueryClient();
-  const [inverted, setInverted] = useState(readerColorInverted);
   const resolvedThemeLabel =
     mounted && resolvedTheme === "dark" ? "dark" : "light";
 
-  useEffect(() => {
-    setInverted(readerColorInverted);
-  }, [readerColorInverted]);
-
   function handleThemeChange(nextTheme: AppTheme) {
     void setAppTheme(nextTheme);
-  }
-
-  async function handleInvertChange(nextInverted: boolean) {
-    setInverted(nextInverted);
-    const result = await updateReaderColorMode({ inverted: nextInverted });
-    if (!result.success) {
-      setInverted(!nextInverted);
-      return;
-    }
-    await queryClient.invalidateQueries({ queryKey: ["account-settings"] });
   }
 
   return (
@@ -101,18 +74,6 @@ export function AppearanceCard({
           })}
         </div>
       </SettingsRow>
-      <SettingsRow
-        label="Dark PDF reader"
-        description="Invert the colors of PDF pages in the book reader."
-        keywords="pdf reader dark mode invert colors library"
-        action={
-          <Switch
-            checked={inverted}
-            onCheckedChange={handleInvertChange}
-            aria-label="Dark PDF reader"
-          />
-        }
-      />
     </SettingsSection>
   );
 }

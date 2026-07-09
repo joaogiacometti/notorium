@@ -89,7 +89,7 @@ describe("sweepOrphanBlobs", () => {
   it("deletes orphaned blobs and reports counts", async () => {
     listFileEntriesMock.mockResolvedValue([
       entry("notorium/notes/u/keep.png", 10 * DAY),
-      entry("notorium/library/u/orphan.pdf", 10 * DAY),
+      entry("notorium/mindmaps/u/orphan.png", 10 * DAY),
     ]);
     collectAllReferencedPathnamesMock.mockResolvedValue(
       new Set(["notorium/notes/u/keep.png"]),
@@ -99,7 +99,7 @@ describe("sweepOrphanBlobs", () => {
     const report = await sweepOrphanBlobs({ minAgeMs: DAY });
 
     expect(deleteFilesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/library/u/orphan.pdf"],
+      pathnames: ["notorium/mindmaps/u/orphan.png"],
     });
     expect(report).toMatchObject({
       scanned: 2,
@@ -132,7 +132,7 @@ describe("sweepOrphanBlobs", () => {
 
   it("does not delete when dryRun is set", async () => {
     listFileEntriesMock.mockResolvedValue([
-      entry("notorium/library/u/orphan.pdf", 10 * DAY),
+      entry("notorium/mindmaps/u/orphan.png", 10 * DAY),
     ]);
     collectAllReferencedPathnamesMock.mockResolvedValue(new Set<string>());
 
@@ -156,13 +156,8 @@ describe("purgeUserBlobs", () => {
     });
   });
 
-  it("lists every context prefix including library and deletes the union", async () => {
-    listFilePathnamesMock.mockImplementation(
-      ({ prefix }: { prefix: string }) =>
-        prefix.includes("/library/")
-          ? Promise.resolve(["notorium/library/u/book.pdf"])
-          : Promise.resolve([]),
-    );
+  it("lists every context prefix and deletes the union", async () => {
+    listFilePathnamesMock.mockResolvedValue([]);
     listFilePathnamesMock.mockImplementationOnce(() =>
       Promise.resolve(["notorium/notes/u/a.png"]),
     );
@@ -173,10 +168,15 @@ describe("purgeUserBlobs", () => {
     const prefixes = listFilePathnamesMock.mock.calls.map(
       (call) => call[0].prefix,
     );
-    expect(prefixes).toContain("notorium/library/u/");
+    expect(prefixes).toEqual([
+      "notorium/notes/u/",
+      "notorium/flashcards/u/",
+      "notorium/assessments/u/",
+      "notorium/mindmaps/u/",
+    ]);
     expect(deleteFilesMock).toHaveBeenCalledTimes(1);
     expect(deleteFilesMock.mock.calls[0][0].pathnames).toContain(
-      "notorium/library/u/book.pdf",
+      "notorium/notes/u/a.png",
     );
   });
 

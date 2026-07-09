@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BookOpen,
   CalendarX,
   ClipboardList,
   Files,
@@ -44,7 +43,6 @@ interface SubjectActionsMenuProps {
   onRecordMiss: (subjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreateMindmap: (subjectId: string) => void;
-  onCreateBook: (subjectId: string) => void;
   onCreateFlashcard: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
@@ -62,7 +60,6 @@ export function SubjectActionsMenu({
   onRecordMiss,
   onCreateNote,
   onCreateMindmap,
-  onCreateBook,
   onCreateFlashcard,
   onEdit,
   onDelete,
@@ -126,12 +123,6 @@ export function SubjectActionsMenu({
             >
               <Workflow className="size-4" />
               Mindmap
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => openDialog(() => onCreateBook(node.id))}
-            >
-              <BookOpen className="size-4" />
-              Book
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>

@@ -221,7 +221,7 @@ function AllSettings({
         email={settings.email}
         createdAt={settings.createdAt}
       />
-      <AppearanceCard readerColorInverted={settings.readerColorInverted} />
+      <AppearanceCard />
       {emailEnabled ? (
         <NotificationPreferencesCard
           initialEnabled={settings.notificationsEnabled}
@@ -249,9 +249,7 @@ function SettingsSectionContent({
   isLoading,
 }: Readonly<SettingsSectionContentProps>) {
   if (activeSection === "appearance") {
-    return (
-      <AppearanceCard readerColorInverted={settings?.readerColorInverted} />
-    );
+    return <AppearanceCard />;
   }
 
   if (!settings) {

@@ -1,5 +1,4 @@
 import type { DocumentListItem } from "@/features/documents/types";
-import { getBooksBySubjectForUser } from "@/features/library/queries";
 import {
   getMindmapsBySubjectForUser,
   getRecentMindmapsForUser,
@@ -10,9 +9,8 @@ import {
 } from "@/features/notes/queries";
 
 /**
- * Merges a subject's notes, mindmaps, and books into one list ordered by
- * recency, used by the unified documents sidebar and the subject documents
- * preview.
+ * Merges a subject's notes and mindmaps into one list ordered by recency, used
+ * by the unified documents sidebar and the subject documents preview.
  *
  * @example
  * const documents = await getSubjectDocumentsForUser(userId, subjectId);
@@ -21,10 +19,9 @@ export async function getSubjectDocumentsForUser(
   userId: string,
   subjectId: string,
 ): Promise<DocumentListItem[]> {
-  const [notes, mindmaps, books] = await Promise.all([
+  const [notes, mindmaps] = await Promise.all([
     getNotesBySubjectForUser(userId, subjectId),
     getMindmapsBySubjectForUser(userId, subjectId),
-    getBooksBySubjectForUser(userId, subjectId),
   ]);
 
   const items: DocumentListItem[] = [
@@ -41,14 +38,6 @@ export async function getSubjectDocumentsForUser(
       updatedAt: mindmap.updatedAt,
       kind: "mindmap" as const,
       subjectId,
-    })),
-    ...books.map((book) => ({
-      id: book.id,
-      title: book.title,
-      updatedAt: book.updatedAt,
-      kind: "book" as const,
-      subjectId,
-      author: book.author,
     })),
   ];
 

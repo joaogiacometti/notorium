@@ -24,10 +24,7 @@ import {
 } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
 import { getSubjectDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
-import {
-  getBookDetailHref,
-  getDocumentDetailHref,
-} from "@/lib/navigation/detail-page-back-link";
+import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type {
   SubjectOption,
   SubjectTreeNode,
@@ -72,9 +69,6 @@ export function SubjectTreeSidebar({
   const [createMindmapSubjectId, setCreateMindmapSubjectId] = useState<
     string | null
   >(null);
-  const [createBookSubjectId, setCreateBookSubjectId] = useState<string | null>(
-    null,
-  );
   const [createFlashcardSubjectId, setCreateFlashcardSubjectId] = useState<
     string | null
   >(null);
@@ -349,10 +343,6 @@ export function SubjectTreeSidebar({
     refreshTree();
   }
 
-  function openCreateBook(subjectId: string) {
-    setCreateBookSubjectId(subjectId);
-  }
-
   function openCreateFlashcard(subjectId: string) {
     setCreateFlashcardSubjectId(subjectId);
   }
@@ -363,14 +353,6 @@ export function SubjectTreeSidebar({
 
   function openRecordMiss(subjectId: string) {
     setRecordMissSubjectId(subjectId);
-  }
-
-  function handleBookUploaded(book: { id: string; subjectId: string }) {
-    setCreateBookSubjectId(null);
-    setExpandedIds((current) => new Set(current).add(book.subjectId));
-    void loadDocuments(book.subjectId);
-    router.push(getBookDetailHref(book.subjectId, book.id));
-    refreshTree();
   }
 
   function handleSubjectCreated() {
@@ -445,7 +427,6 @@ export function SubjectTreeSidebar({
                 onRecordMiss={openRecordMiss}
                 onCreateNote={openCreateNote}
                 onCreateMindmap={openCreateMindmap}
-                onCreateBook={openCreateBook}
                 onCreateFlashcard={openCreateFlashcard}
                 onEdit={setEditTarget}
                 onDelete={setDeleteTarget}
@@ -477,9 +458,6 @@ export function SubjectTreeSidebar({
         createMindmapSubjectId={createMindmapSubjectId}
         onCreateMindmapSubjectIdChange={setCreateMindmapSubjectId}
         onMindmapCreated={handleMindmapCreated}
-        createBookSubjectId={createBookSubjectId}
-        onCreateBookSubjectIdChange={setCreateBookSubjectId}
-        onBookUploaded={handleBookUploaded}
         createFlashcardSubjectId={createFlashcardSubjectId}
         onCreateFlashcardSubjectIdChange={setCreateFlashcardSubjectId}
         createAssessmentSubjectId={createAssessmentSubjectId}

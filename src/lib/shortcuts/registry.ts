@@ -3,7 +3,6 @@ export enum ShortcutCategory {
   NotesEditor = "notes_editor",
   Mindmap = "mindmap",
   FlashcardReview = "flashcard_review",
-  Reader = "reader",
 }
 
 /**
@@ -37,7 +36,6 @@ export const shortcutCategorySections: ShortcutCategorySection[] = [
   { category: ShortcutCategory.NotesEditor, label: "Notes editor" },
   { category: ShortcutCategory.Mindmap, label: "Mindmap" },
   { category: ShortcutCategory.FlashcardReview, label: "Flashcard review" },
-  { category: ShortcutCategory.Reader, label: "Library reader" },
 ];
 
 export const shortcutRegistry: Shortcut[] = [
@@ -272,84 +270,6 @@ export const shortcutRegistry: Shortcut[] = [
     description: "Exit focus / exam mode",
     category: ShortcutCategory.FlashcardReview,
   },
-  {
-    id: "reader-select-tool",
-    kind: "keys",
-    keys: ["v"],
-    description: "Select text tool",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-pan-tool",
-    kind: "keys",
-    keys: ["h"],
-    description: "Hand (pan) tool",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-copy-selection",
-    kind: "keys",
-    keys: ["cmd+c", "ctrl+c"],
-    description: "Copy selected text",
-    category: ShortcutCategory.Reader,
-    universal: true,
-  },
-  {
-    id: "reader-toggle-sidebar",
-    kind: "keys",
-    keys: ["cmd+b", "ctrl+b"],
-    description: "Toggle sidebar",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-search",
-    kind: "keys",
-    keys: ["cmd+f", "ctrl+f"],
-    description: "Search in book",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-zoom-in",
-    kind: "keys",
-    keys: ["cmd+=", "ctrl+="],
-    description: "Zoom in",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-zoom-out",
-    kind: "keys",
-    keys: ["cmd+-", "ctrl+-"],
-    description: "Zoom out",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-fit-width",
-    kind: "keys",
-    keys: ["cmd+0", "ctrl+0"],
-    description: "Fit width",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-toggle-fullscreen",
-    kind: "keys",
-    keys: ["f"],
-    description: "Toggle fullscreen",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-toggle-spread",
-    kind: "keys",
-    keys: ["d"],
-    description: "Toggle two-page spread",
-    category: ShortcutCategory.Reader,
-  },
-  {
-    id: "reader-highlight-tool",
-    kind: "keys",
-    keys: ["y"],
-    description: "Toggle highlight tool",
-    category: ShortcutCategory.Reader,
-  },
 ];
 
 export function getShortcutsByCategory(category: ShortcutCategory): Shortcut[] {
@@ -375,9 +295,6 @@ export function getActiveShortcutCategories(
   }
   if (pathname.startsWith("/flashcards")) {
     active.push(ShortcutCategory.FlashcardReview);
-  }
-  if (pathname.includes("/documents/books/")) {
-    active.push(ShortcutCategory.Reader);
   }
   return active;
 }

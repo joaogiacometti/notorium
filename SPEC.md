@@ -9,7 +9,7 @@
 
 ## Product Goal
 
-Notorium helps students organize academic work in one place by combining subjects, notes, mindmaps, flashcards, a PDF library, attendance tracking, assessments, and fast personal search.
+Notorium helps students organize academic work in one place by combining subjects, notes, mindmaps, flashcards, attendance tracking, assessments, and fast personal search.
 
 ## Target Users
 
@@ -135,7 +135,7 @@ Students who want a private, lightweight study management workspace.
 - There is no in-page flashcard tree. The flashcards page is two global surfaces — review everything and manage all flashcards — with a subject filter dropdown that scopes the current view via the `?subjectId` URL param.
 - The global subject sidebar shows a per-subject "due" indicator counting cards due now in that subject and its descendants; clicking the indicator opens the full-screen review session directly, scoped to that subject.
 - Each subject's sidebar kebab menu has a "Review flashcards" entry that opens the full-screen review session directly (scoped to that subject and its descendants, when cards are due; otherwise it lands on the review hub), and a "Manage flashcards" entry that opens the manage view pre-filtered to that subject. Both review entry points request the focus session via a `focus=1` URL flag the review view honors on load.
-- Flashcard creation from the manage toolbar is available before a subject exists because the create form can create one inline. Document/book generate actions stay unavailable until the user has at least one subject and show a hover/focus hint telling the user to create a subject first.
+- Flashcard creation from the manage toolbar is available before a subject exists because the create form can create one inline. Document generate actions stay unavailable until the user has at least one subject and show a hover/focus hint telling the user to create a subject first.
 - When creating, editing, moving, or generating a flashcard, the user chooses one of their subjects. The new-flashcard subject picker lets the user create a new root general subject from the filtered list when their search does not exactly match an existing subject path, and `::` path searches show existing path patterns segment-by-segment so users can autocomplete nested subjects.
 - Deleting a subject deletes its descendant subjects and all flashcards inside that subtree (alongside its notes, mindmaps, and assessments).
 
@@ -232,31 +232,9 @@ Students who want a private, lightweight study management workspace.
   - weighted average if at least one valid weight exists
   - simple average otherwise
 
-### Library
-
-- A top-level Library section, scoped per user, for uploading PDF books and reading them in the app.
-- Add a book by uploading a PDF and providing a title and optional author; the title pre-fills from the file name.
-- Only PDF files are accepted, capped at the configured maximum book size, with a per-user daily upload limit.
-- Books are private: a user only sees and can open their own books, and the book file is served through an ownership-checked route.
-- The library lists books in a paginated table showing title, author, saved reading progress (`Page X of Y` once the page count is known), and when the book was last read; clicking a row opens the book.
-- The table can be filtered with a search box that matches book title or author.
-- Each row has an actions menu to edit the book's title and author or delete the book; rows can be multi-selected to delete several books at once.
-- Opening a book renders the PDF in a scrollable in-app reader with zoom, single/two-page spread, fullscreen controls, and in-document text search. `Ctrl`/`Cmd+F` opens the reader search input, highlights matches in the PDF, and provides previous/next navigation with a match count. A Select/Move toggle in the toolbar switches the drag behavior between selecting text and dragging to scroll the page; it defaults to Move on touch devices and Select on desktop, and either can be overridden (on desktop `V` selects and `H` switches to the hand/pan tool). Selecting text shows a floating toolbar next to where the pointer finished selecting; its Copy action copies the selected text to the clipboard and clears the selection, working on both desktop and touch; scrolling dismisses it, and on desktop `Ctrl`/`Cmd+C` also copies the active selection. When AI is configured, the toolbar also offers Ask AI and Flashcards actions for the selected passage. Ask AI opens a chat dialog where the user asks questions about the passage and can ask follow-ups in the same thread; the passage stays pinned as context, and the AI may reason from passage concepts when the user's question uses related terminology that is not present verbatim in the selection. Flashcards opens the flashcard generation dialog seeded with the passage, where the user picks a subject, then reviews and selects which generated cards to create (disabled until a subject exists). Pinch zooms on touch and ctrl/cmd+wheel zooms on desktop. A book opens fit to the whole page.
-- The reader respects the user's "Dark PDF reader" setting from the Appearance section of account settings. When enabled, it applies a CSS filter to the rendered PDF pages so white backgrounds become dark and text becomes light (similar to Zotero's invert-colors mode); text selection and link annotations stay un-inverted.
-- The reader has a left sidebar (desktop only) with a Pages/Content/Highlights switch: "Pages" shows a virtualized rail of page thumbnails that jump the book instantly when clicked, "Content" shows the PDF's table of contents (its embedded outline), and "Highlights" shows the user's highlights in the current book. Outline entries and internal PDF links jump instantly to their destination and record back-history; an entry without a target is inert. Highlight entries jump instantly to the highlighted location and select the highlight so its note panel can be edited or deleted. Books with no embedded outline or no highlights show empty-state messages.
-- The reader tracks the page currently in view and saves it automatically as the user scrolls, so reopening the book returns to the last page read.
-- Saving is debounced while scrolling, deduplicated so unchanged pages are not re-saved, and flushed immediately when the tab is hidden or the reader is closed so a mid-scroll exit is not lost.
-- The reader restores to the saved page on open before enabling further saves, and the saved page is clamped to the book's page count.
-- The reader also remembers the zoom level per book, stored separately for touch ("mobile") and pointer ("desktop") devices so a phone and a laptop keep independent zooms for the same book. The saved zoom is used as the reader's initial zoom on open (falling back to the default fit-to-page when none is stored), and changes are persisted with the same debounce, dedupe, and flush-on-hide/close behavior as the reading position.
-- The reader's canvas tools include a Highlighter alongside Select/Move. With the Highlighter active, selecting text creates a highlight over it; the newly created highlight stays unselected so repeated highlighting is quick, and clicking a highlight opens its note panel.
-- Selecting a highlight opens a panel to write or edit a note attached to it (kept with the highlight, capped at the configured note length) and to delete the highlight. Only the user's own highlights are editable; the PDF's existing annotations stay read-only and links stay clickable.
-- Highlights and their notes are saved per book as they are created, edited, and deleted, scoped to the owning user, and are restored into the reader when the book is reopened. Each book is capped at the configured maximum number of highlights.
-- Deleting a book removes the stored file, the saved reading position, and all of the book's highlights, and cannot be undone.
-
 ### Global Search
 
-- Search subjects, notes, flashcards, mindmaps, and library books by text with case-insensitive matching. Only academic subjects appear as subject results, since general subjects have no page to open; their notes and mindmaps stay searchable.
-- Library books match on title and author, and book results navigate to the book reader.
+- Search subjects, notes, flashcards, and mindmaps by text with case-insensitive matching. Only academic subjects appear as subject results, since general subjects have no page to open; their notes and mindmaps stay searchable.
 - Flashcard search results navigate to the flashcard detail page.
 - Flashcard search results display subject paths using `::` notation.
 - Search is user-scoped and accessible from the left menu (and the `Cmd/Ctrl+K` shortcut).
@@ -269,16 +247,16 @@ Students who want a private, lightweight study management workspace.
 
 - Pressing `Ctrl`/`Cmd+P` opens a command palette for running actions and navigating, separate from Global Search (`Ctrl`/`Cmd+K`). The browser print shortcut is suppressed while the palette is available.
 - Commands are searchable by name and keyword and grouped as Create, Windows, Go to, and Settings.
-- Create commands open the existing create dialogs: Subject, Flashcard, Assessment, Book, Note, and Mindmap.
-- Creating a Book, Note, or Mindmap requires a subject: the create dialog preselects the current subject on subject pages, otherwise the user chooses a subject in the dialog. The subject picker can create a new root general subject inline. Created books, notes, and mindmaps navigate to their detail page.
+- Create commands open the existing create dialogs: Subject, Flashcard, Assessment, Note, and Mindmap.
+- Creating a Note or Mindmap requires a subject: the create dialog preselects the current subject on subject pages, otherwise the user chooses a subject in the dialog. The subject picker can create a new root general subject inline. Created notes and mindmaps navigate to their detail page.
 - Async picker steps show a loading state while their subject, document, or flashcard results are still loading; empty-state messages render only after loading completes with no matching results.
-- Go to commands navigate to Flashcards, Planning, and Library.
+- Go to commands navigate to Flashcards and Planning.
 - Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.
 - The palette hotkey is suspended while another dialog is open.
 
 ### Floating Windows
 
-- The palette's Windows commands let a user open a Mindmap editor, Note editor, Flashcard create form, or existing Flashcard edit form as a floating window layered over the current page, without navigating away. This is the way to keep reading a PDF in the Library reader while editing a mindmap or capturing/editing flashcards.
+- The palette's Windows commands let a user open a Mindmap editor, Note editor, Flashcard create form, or existing Flashcard edit form as a floating window layered over the current page, without navigating away.
 - "New Mindmap/Note in Window" reuses the same subject + title create dialog as the normal create commands, but opens the new document in a window instead of navigating. "New Flashcard in Window" opens the create form directly. "Open Document in Window" lists existing notes and mindmaps to open one by id. "Edit Flashcard in Window" opens a flashcard picker; typing filters cards by front, back, or subject, and selecting a card opens the existing edit form in a floating window.
 - Only one window is visible at a time; the rest are minimized to a bottom dock (taskbar). Clicking a dock chip restores that window and minimizes whichever was visible, so the user alternates a window with the page behind it. `Esc` minimizes the active window. The dock chip shows each window's icon and live title and can close the window.
 - Keyboard shortcuts follow the focused surface: when a floating window has focus, page-level shortcuts behind it are suspended; clicking the page behind a still-visible window returns shortcut ownership to the page, and minimized windows never keep editor shortcuts active.
@@ -320,14 +298,13 @@ Students who want a private, lightweight study management workspace.
 ### UI/UX Baseline
 
 - Responsive layout for desktop and mobile.
-- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards, Library), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments (up to three), a review-activity heatmap with study streaks, recently edited documents (notes and mindmaps across all subjects), and recently opened library books (each linking to its reader). Subjects are managed in the sidebar tree, not on the dashboard. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
+- The left menu holds the account menu, Search, the global section links (Home, Planning, Flashcards), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: flashcards due for review, the soonest upcoming assessments (up to three), a review-activity heatmap with study streaks, and recently edited documents (notes and mindmaps across all subjects). Subjects are managed in the sidebar tree, not on the dashboard. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
 - Every page shows a sticky top bar with a breadcrumb trail (e.g. `Subject / Documents / Note`) that indicates the current location and replaces per-page "Back to …" links. Intermediate crumbs link to ancestors; the current page is the unlinked final crumb.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.
 - Dialog mutation feedback follows a two-mode rule: **close on success** for straightforward create/edit dialogs (user sees the result appear in the list); **button saved state** (1200 ms "Saved ✓" transition on the submit button) for dialogs that stay open as a progress checkpoint, where the user continues working after saving (e.g. create flashcard, edit flashcard). Inline auto-save surfaces compact saving, saved, and error status near the edited content.
 - Action confirmation dialogs use one shared layout and footer pattern. Reversible or non-destructive confirmations use the primary confirm button; irreversible delete/remove/discard confirmations use destructive styling.
 - Theme toggle with `light`, `dark`, `halloween`, `catppuccin-mocha`, and `system`; authenticated users choose it from the Appearance card in account settings, and signed-out users access it from a floating top-right control.
-- A "Dark PDF reader" toggle in the Appearance card inverts the colors of PDF pages in the library reader and persists the choice to the user record.
 - Installed PWA launch uses the static dark theme background before app code loads; browser and installed PWA chrome follows the active theme after the app loads, including `halloween` and `catppuccin-mocha`.
 - Custom not-found page.
 
@@ -339,13 +316,11 @@ Students who want a private, lightweight study management workspace.
 - A mindmap can have a maximum of 200 nodes.
 - A user can create a maximum of 50 assessments per subject.
 - A user can create a maximum of 2000 flashcards per subject.
-- A user can upload a maximum of 100 library books, each up to 20 MB, with at most 50 book uploads per UTC day.
 
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.
-- A user can only access or mutate their own subjects, notes, mindmaps, flashcards, attendance records, assessments, and library books.
-- Library book files are served only through an ownership-checked route; a user cannot read another user's book or saved page.
+- A user can only access or mutate their own subjects, notes, mindmaps, flashcards, attendance records, and assessments.
 - Account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
@@ -370,11 +345,6 @@ Students who want a private, lightweight study management workspace.
   - `id`, `missDate`, `subjectId`, timestamps, `userId`
 - `assessment`
   - `id`, `title`, `description`, `type`, `status`, `dueDate`, `score`, `weight`, `subjectId`, timestamps, `userId`
-- `library_book`
-  - `id`, `title`, `author`, `fileName`, `blobPathname`, `sizeBytes`, `totalPages`, `currentPage`, `zoomMobile`, `zoomDesktop`, `lastReadAt`, timestamps, `userId`
-- `library_annotation`
-  - `id`, `bookId`, `annotationUid`, `pageIndex`, `data` (JSON highlight object whose `contents` field holds the note), timestamps, `userId`
-
 ## Out of Scope
 
 - Real-time collaboration and sharing.

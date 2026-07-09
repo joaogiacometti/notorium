@@ -111,17 +111,12 @@ export function getMindmapDetailHref(subjectId: string, mindmapId: string) {
   return `/subjects/${subjectId}/documents/mindmaps/${mindmapId}`;
 }
 
-export function getBookDetailHref(subjectId: string, bookId: string) {
-  return `/subjects/${subjectId}/documents/books/${bookId}`;
-}
-
 export function getDocumentDetailHref(item: {
-  kind: "note" | "mindmap" | "book";
+  kind: "note" | "mindmap";
   subjectId: string;
   id: string;
 }) {
   if (item.kind === "note") return getNoteDetailHref(item.subjectId, item.id);
-  if (item.kind === "book") return getBookDetailHref(item.subjectId, item.id);
   return getMindmapDetailHref(item.subjectId, item.id);
 }
 

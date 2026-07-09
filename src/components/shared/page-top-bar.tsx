@@ -5,7 +5,6 @@ import {
   Home,
   Layers,
   Layers3,
-  Library,
   type LucideIcon,
   Shield,
 } from "lucide-react";
@@ -24,7 +23,6 @@ export type BreadcrumbIcon =
   | "home"
   | "layers"
   | "layers-3"
-  | "library"
   | "shield";
 
 const breadcrumbIconMap: Record<BreadcrumbIcon, LucideIcon> = {
@@ -33,7 +31,6 @@ const breadcrumbIconMap: Record<BreadcrumbIcon, LucideIcon> = {
   home: Home,
   layers: Layers,
   "layers-3": Layers3,
-  library: Library,
   shield: Shield,
 };
 

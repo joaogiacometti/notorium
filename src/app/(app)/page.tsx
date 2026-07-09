@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { FlashcardsDueCard } from "@/components/home/flashcards-due-card";
 import { HomeGreeting } from "@/components/home/home-greeting";
-import { RecentBooksCard } from "@/components/home/recent-books-card";
 import { RecentDocumentsCard } from "@/components/home/recent-documents-card";
 import {
   ReviewActivityCard,
@@ -15,7 +14,6 @@ import {
   getFlashcardReviewActivityForUser,
   getFlashcardReviewSummaryForUser,
 } from "@/features/flashcard-review/queries";
-import { getRecentBooksForUser } from "@/features/library/queries";
 import { requireSession } from "@/lib/auth/auth";
 
 export default async function HomePage() {
@@ -24,13 +22,11 @@ export default async function HomePage() {
   const now = new Date();
 
   const reviewActivityPromise = getFlashcardReviewActivityForUser(userId, now);
-  const [summary, upcomingAssessments, recentDocuments, recentBooks] =
-    await Promise.all([
-      getFlashcardReviewSummaryForUser(userId, now),
-      getUpcomingAssessmentsForUser(userId, 3),
-      getRecentDocumentsForUser(userId, 6),
-      getRecentBooksForUser(userId, 6),
-    ]);
+  const [summary, upcomingAssessments, recentDocuments] = await Promise.all([
+    getFlashcardReviewSummaryForUser(userId, now),
+    getUpcomingAssessmentsForUser(userId, 3),
+    getRecentDocumentsForUser(userId, 6),
+  ]);
 
   const name = session.user.name?.trim() || session.user.email || "there";
 
@@ -48,10 +44,7 @@ export default async function HomePage() {
         <Suspense fallback={<ReviewActivityCardSkeleton />}>
           <ReviewActivityPanel reviewActivityPromise={reviewActivityPromise} />
         </Suspense>
-        <div className="grid gap-3 lg:grid-cols-2">
-          <RecentDocumentsCard documents={recentDocuments} />
-          <RecentBooksCard books={recentBooks} />
-        </div>
+        <RecentDocumentsCard documents={recentDocuments} />
       </div>
     </FeaturePageShell>
   );

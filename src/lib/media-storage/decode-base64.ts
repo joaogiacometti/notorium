@@ -20,12 +20,12 @@ function normalizeBase64Payload(value: string): string | null {
 /**
  * Decodes a base64 payload (optionally a `data:` URL) into raw bytes, returning
  * null when the input is empty or not syntactically valid base64. Shared by the
- * attachment and library upload mutations so both reject malformed payloads
- * identically before they reach storage.
+ * attachment upload mutations so malformed payloads are rejected before they
+ * reach storage.
  *
  * @example
  * const bytes = decodeBase64File(dataBase64);
- * if (!bytes) return actionError("library.invalidData");
+ * if (!bytes) return actionError("attachments.invalidData");
  */
 export function decodeBase64File(value: string): Uint8Array | null {
   const payload = normalizeBase64Payload(value);

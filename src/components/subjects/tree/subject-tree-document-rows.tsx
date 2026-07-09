@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileText, Loader2, Workflow } from "lucide-react";
+import { FileText, Loader2, Workflow } from "lucide-react";
 import Link from "next/link";
 import {
   type DocumentRowActionHandlers,
@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 const DOCUMENT_ROW_ICONS = {
   note: FileText,
   mindmap: Workflow,
-  book: BookOpen,
 } as const;
 
 interface DocumentRowsProps {

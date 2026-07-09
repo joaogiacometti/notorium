@@ -24,17 +24,9 @@ import {
 } from "@/features/notifications/validation";
 import {
   updateNotificationPreferencesForUser,
-  updateReaderColorModeForUser,
   updateUserAccessStatusForUser,
 } from "@/features/user/mutations";
-import {
-  getNotificationPreferences,
-  getReaderColorMode,
-} from "@/features/user/queries";
-import {
-  type UpdateReaderColorModeForm,
-  updateReaderColorModeSchema,
-} from "@/features/user/validation";
+import { getNotificationPreferences } from "@/features/user/queries";
 import { isAdminUser } from "@/lib/auth/access-control";
 import {
   getAuth,
@@ -68,12 +60,10 @@ import { areWorkflowsEnabled } from "@/lib/workflows/config";
 export async function getAccountSettings(): Promise<AccountSettings> {
   const session = await requireSession();
   const emailEnabled = isEmailDeliveryEnabled();
-  const [notificationPrefs, fsrsOptimization, readerColorInverted] =
-    await Promise.all([
-      emailEnabled ? getNotificationPreferences(session.user.id) : null,
-      getFsrsOptimizationSettings(session.user.id),
-      getReaderColorMode(session.user.id),
-    ]);
+  const [notificationPrefs, fsrsOptimization] = await Promise.all([
+    emailEnabled ? getNotificationPreferences(session.user.id) : null,
+    getFsrsOptimizationSettings(session.user.id),
+  ]);
 
   return {
     name: session.user.name,
@@ -83,7 +73,6 @@ export async function getAccountSettings(): Promise<AccountSettings> {
     workflowsEnabled: areWorkflowsEnabled(),
     notificationsEnabled: notificationPrefs?.notificationsEnabled ?? false,
     notificationDaysBefore: notificationPrefs?.notificationDaysBefore ?? 1,
-    readerColorInverted,
     fsrsOptimization,
   };
 }
@@ -127,24 +116,6 @@ export async function updateNotificationPreferences(
         return await updateNotificationPreferencesForUser(userId, parsedData);
       } catch {
         return actionError("account.notifications.updateFailed");
-      }
-    },
-  );
-}
-
-export async function updateReaderColorMode(
-  data: UpdateReaderColorModeForm,
-): Promise<MutationResult> {
-  return runValidatedUserAction(
-    updateReaderColorModeSchema,
-    data,
-    "account.readerColorMode.invalidData",
-    async (userId, parsedData) => {
-      try {
-        await updateReaderColorModeForUser(userId, parsedData.inverted);
-        return { success: true };
-      } catch {
-        return actionError("account.readerColorMode.updateFailed");
       }
     },
   );

@@ -43,7 +43,6 @@ interface SubjectTreeNodeItemProps {
   onRecordMiss: (subjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreateMindmap: (subjectId: string) => void;
-  onCreateBook: (subjectId: string) => void;
   onCreateFlashcard: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
@@ -73,7 +72,6 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     onRecordMiss,
     onCreateNote,
     onCreateMindmap,
-    onCreateBook,
     onCreateFlashcard,
     onEdit,
     onDelete,
@@ -128,7 +126,6 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
           onRecordMiss={onRecordMiss}
           onCreateNote={onCreateNote}
           onCreateMindmap={onCreateMindmap}
-          onCreateBook={onCreateBook}
           onCreateFlashcard={onCreateFlashcard}
           onEdit={onEdit}
           onDelete={onDelete}

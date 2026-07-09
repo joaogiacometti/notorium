@@ -67,13 +67,3 @@ export async function updateNotificationPreferencesForUser(
 
   return { success: true };
 }
-
-export async function updateReaderColorModeForUser(
-  userId: string,
-  inverted: boolean,
-): Promise<void> {
-  await getDb()
-    .update(user)
-    .set({ readerColorInverted: inverted })
-    .where(eq(user.id, userId));
-}

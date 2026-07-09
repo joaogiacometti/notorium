@@ -259,7 +259,7 @@ export async function getReviewableFlashcardForUser(
     return null;
   }
 
-  // One card only needs its own subject path, not the whole library's path map.
+  // One card only needs its own subject path, not the whole subject path map.
   const subjectPath = rows[0].flashcard.subjectId
     ? await getSubjectPathForUser(userId, rows[0].flashcard.subjectId)
     : "";

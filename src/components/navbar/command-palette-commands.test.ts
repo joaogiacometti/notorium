@@ -50,14 +50,6 @@ describe("paletteCommands", () => {
     );
   });
 
-  it("offers a create command for books", () => {
-    const command = paletteCommands.find(
-      (currentCommand) => currentCommand.id === "create-book",
-    );
-
-    expect(command?.action).toEqual({ kind: "create", dialog: "book" });
-  });
-
   it("orders the Windows group right after Create", () => {
     expect(paletteGroupOrder.indexOf("Windows")).toBe(
       paletteGroupOrder.indexOf("Create") + 1,

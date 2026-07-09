@@ -310,7 +310,7 @@ export async function getFlashcardDetailByIdForUser(
   }
 
   // Resolve only this card's subject path (one ancestor-chain walk) rather than
-  // materializing the whole library's path map just to read a single entry.
+  // materializing the whole subject path map just to read a single entry.
   const subjectPath = result.flashcard.subjectId
     ? await getSubjectPathForUser(userId, result.flashcard.subjectId)
     : "";

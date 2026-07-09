@@ -67,7 +67,6 @@ export function DocumentRowMenu({
     pendingActionRef.current = action;
   }
 
-  // Books carry no kind-specific actions; only the shared Edit/Delete apply.
   let kindItems: React.ReactNode = null;
   if (item.kind === "note") {
     kindItems = (

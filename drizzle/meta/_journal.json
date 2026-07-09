@@ -407,6 +407,13 @@
       "when": 1782051777962,
       "tag": "0057_same_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1783608655237,
+      "tag": "0058_shiny_proteus",
+      "breakpoints": true
     }
   ]
 }

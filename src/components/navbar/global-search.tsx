@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BookMarked, BookOpen, FileText, Layers, Network } from "lucide-react";
+import { BookOpen, FileText, Layers, Network } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { getRecentSearchData, getSearchData } from "@/app/actions/search";
@@ -18,7 +18,6 @@ import {
 import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import {
-  getBookDetailHref,
   getFlashcardDetailHref,
   getMindmapDetailHref,
   getNoteDetailHref,
@@ -123,13 +122,11 @@ export function GlobalSearch({
   const notes = currentData?.notes ?? [];
   const flashcards = currentData?.flashcards ?? [];
   const mindmaps = currentData?.mindmaps ?? [];
-  const books = currentData?.books ?? [];
   const hasData =
     subjects.length > 0 ||
     notes.length > 0 ||
     flashcards.length > 0 ||
-    mindmaps.length > 0 ||
-    books.length > 0;
+    mindmaps.length > 0;
   const flashcardsView =
     pathname === "/flashcards"
       ? (searchParams.get("view") ?? undefined)
@@ -144,13 +141,13 @@ export function GlobalSearch({
       open={open}
       onOpenChange={handleOpenChange}
       title="Global Search"
-      description="Search across all your subjects, notes, flashcards, mindmaps, and books"
+      description="Search across all your subjects, notes, flashcards, and mindmaps"
       commandProps={{ shouldFilter: false }}
     >
       <CommandInput
         value={query}
         onValueChange={setQuery}
-        placeholder="Search subjects, notes, flashcards, mindmaps, and books..."
+        placeholder="Search subjects, notes, flashcards, and mindmaps..."
       />
       <CommandList>
         {isResultsPending && <SearchSkeleton />}
@@ -159,7 +156,7 @@ export function GlobalSearch({
         )}
         {!isResultsPending && isAuthenticated && !hasData && (
           <CommandEmpty>
-            No subjects, notes, flashcards, mindmaps, or books yet.
+            No subjects, notes, flashcards, or mindmaps yet.
           </CommandEmpty>
         )}
 
@@ -319,41 +316,6 @@ export function GlobalSearch({
                     )}
                   </span>
                 )}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-
-        {books.length > 0 && (
-          <CommandGroup heading={showingRecents ? "Recent Books" : "Books"}>
-            {books.map((book) => (
-              <CommandItem
-                key={book.id}
-                value={book.id}
-                onSelect={() =>
-                  book.subjectId
-                    ? handleSelect(getBookDetailHref(book.subjectId, book.id))
-                    : undefined
-                }
-                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-              >
-                <div className="flex w-full min-w-0 items-center gap-2">
-                  <BookMarked className="!size-4 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate">
-                    {renderSearchHighlightedText(book.title, highlightQuery)}
-                  </span>
-                  {book.author && (
-                    <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                      <span className="shrink-0">by</span>
-                      <span className="block min-w-0 flex-1 truncate">
-                        {renderSearchHighlightedText(
-                          book.author,
-                          highlightQuery,
-                        )}
-                      </span>
-                    </span>
-                  )}
-                </div>
               </CommandItem>
             ))}
           </CommandGroup>

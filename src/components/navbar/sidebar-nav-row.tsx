@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Shared row styling for the left menu so links and the search button stay
- * visually consistent (Home, Planning/Flashcards/Library, Search).
+ * visually consistent (Home, Planning/Flashcards, Search).
  */
 export function sidebarRowClassName(active: boolean): string {
   return cn(

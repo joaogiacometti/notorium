@@ -104,13 +104,6 @@ describe("resolvePlatformShortcutKeys", () => {
 });
 
 describe("shortcutRegistry", () => {
-  it("flags universal OS shortcuts so the help dialog can hide them", () => {
-    const copy = shortcutRegistry.find(
-      (shortcut) => shortcut.id === "reader-copy-selection",
-    );
-    expect(copy?.universal).toBe(true);
-  });
-
   it("has at least one shortcut in every displayed category", () => {
     for (const section of shortcutCategorySections) {
       expect(getShortcutsByCategory(section.category).length).toBeGreaterThan(
@@ -166,62 +159,6 @@ describe("shortcutRegistry", () => {
     });
   });
 
-  it("lists the reader copy shortcut under Reader", () => {
-    const shortcut = getShortcutsByCategory(ShortcutCategory.Reader).find(
-      (item) => item.id === "reader-copy-selection",
-    );
-    expect(shortcut).toMatchObject({
-      kind: "keys",
-      keys: ["cmd+c", "ctrl+c"],
-      description: "Copy selected text",
-    });
-  });
-
-  it("lists the reader select (v), pan (h), and sidebar (b) shortcuts", () => {
-    const reader = getShortcutsByCategory(ShortcutCategory.Reader);
-    expect(
-      reader.find((item) => item.id === "reader-select-tool"),
-    ).toMatchObject({ keys: ["v"], description: "Select text tool" });
-    expect(reader.find((item) => item.id === "reader-pan-tool")).toMatchObject({
-      keys: ["h"],
-      description: "Hand (pan) tool",
-    });
-    expect(
-      reader.find((item) => item.id === "reader-toggle-sidebar"),
-    ).toMatchObject({
-      keys: ["cmd+b", "ctrl+b"],
-      description: "Toggle sidebar",
-    });
-    expect(reader.find((item) => item.id === "reader-search")).toMatchObject({
-      keys: ["cmd+f", "ctrl+f"],
-      description: "Search in book",
-    });
-  });
-
-  it("lists reader zoom, fullscreen, and spread shortcuts", () => {
-    const reader = getShortcutsByCategory(ShortcutCategory.Reader);
-    expect(reader.find((item) => item.id === "reader-zoom-in")).toMatchObject({
-      keys: ["cmd+=", "ctrl+="],
-      description: "Zoom in",
-    });
-    expect(reader.find((item) => item.id === "reader-zoom-out")).toMatchObject({
-      keys: ["cmd+-", "ctrl+-"],
-      description: "Zoom out",
-    });
-    expect(reader.find((item) => item.id === "reader-fit-width")).toMatchObject(
-      { keys: ["cmd+0", "ctrl+0"], description: "Fit width" },
-    );
-    expect(
-      reader.find((item) => item.id === "reader-toggle-fullscreen"),
-    ).toMatchObject({ keys: ["f"], description: "Toggle fullscreen" });
-    expect(
-      reader.find((item) => item.id === "reader-toggle-spread"),
-    ).toMatchObject({ keys: ["d"], description: "Toggle two-page spread" });
-    expect(
-      reader.find((item) => item.id === "reader-highlight-tool"),
-    ).toMatchObject({ keys: ["y"], description: "Toggle highlight tool" });
-  });
-
   it("lists the mindmap Tab add-child shortcut", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
       (item) => item.id === "mindmap-add-child",
@@ -265,10 +202,7 @@ describe("getActiveShortcutCategories", () => {
     ]);
   });
 
-  it("marks the reader active on a book page but not the subject dashboard", () => {
-    expect(
-      getActiveShortcutCategories("/subjects/s1/documents/books/book-1"),
-    ).toEqual([ShortcutCategory.Global, ShortcutCategory.Reader]);
+  it("does not mark document categories active on the subject dashboard", () => {
     expect(getActiveShortcutCategories("/subjects/s1")).toEqual([
       ShortcutCategory.Global,
     ]);
