@@ -29,6 +29,7 @@ import {
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { LIMITS } from "@/lib/config/limits";
 import { isMediaStorageConfigured } from "@/lib/media-storage/provider";
+import { getBookDetailHref } from "@/lib/navigation/detail-page-back-link";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MutationResult } from "@/lib/server/api-contracts";
 
@@ -85,18 +86,27 @@ export async function uploadBook(
 
 /**
  * Persists the page the reader is currently on. Intentionally does not call
- * `revalidatePath`: it fires repeatedly as the user scrolls, the client already
- * holds the live page, and the library list re-reads on next navigation.
+ * revalidates only this book route so returning through client navigation does
+ * not reopen a stale cached reader payload.
  */
 export async function updateReadingPage(
   data: UpdateReadingPageForm,
 ): Promise<MutationResult> {
-  return runValidatedUserAction(
+  const result = await runValidatedUserAction(
     updateReadingPageSchema,
     data,
     "library.invalidData",
     async (userId, parsedData) => updateReadingPageForUser(userId, parsedData),
   );
+
+  if (result.success) {
+    if (result.subjectId) {
+      revalidatePath(getBookDetailHref(result.subjectId, data.bookId));
+    }
+    return { success: true };
+  }
+
+  return result;
 }
 
 /**

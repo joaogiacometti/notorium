@@ -237,6 +237,7 @@ describe("updateReadingPageForUser", () => {
   it("clamps the page to the known total before saving", async () => {
     getBookByIdForUserMock.mockResolvedValueOnce({
       id: "book-1",
+      subjectId: "subject-1",
       totalPages: 100,
     });
     const { updateReadingPageForUser } = await import(
@@ -248,7 +249,7 @@ describe("updateReadingPageForUser", () => {
       page: 500,
     });
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, subjectId: "subject-1" });
     expect(updateSetMock).toHaveBeenCalledWith(
       expect.objectContaining({ currentPage: 100, totalPages: 100 }),
     );
@@ -257,6 +258,7 @@ describe("updateReadingPageForUser", () => {
   it("captures totalPages from the payload when not yet stored", async () => {
     getBookByIdForUserMock.mockResolvedValueOnce({
       id: "book-1",
+      subjectId: "subject-1",
       totalPages: null,
     });
     const { updateReadingPageForUser } = await import(

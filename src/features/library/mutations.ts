@@ -32,6 +32,10 @@ export type CreateBookResult =
   | { success: true; book: LibraryBookEntity }
   | ActionErrorResult;
 
+export type UpdateReadingPageResult =
+  | { success: true; subjectId: string | null }
+  | ActionErrorResult;
+
 function validateBookUpload(
   data: CreateBookForm,
   userId: string,
@@ -167,7 +171,7 @@ function clampPage(page: number, totalPages: number | null): number {
 export async function updateReadingPageForUser(
   userId: string,
   data: UpdateReadingPageForm,
-): Promise<{ success: true } | ActionErrorResult> {
+): Promise<UpdateReadingPageResult> {
   const existing = await getBookByIdForUser(userId, data.bookId);
 
   if (!existing) {
@@ -184,7 +188,7 @@ export async function updateReadingPageForUser(
       and(eq(libraryBook.id, data.bookId), eq(libraryBook.userId, userId)),
     );
 
-  return { success: true };
+  return { success: true, subjectId: existing.subjectId };
 }
 
 // Persists the reader zoom for one device class without touching the other, so

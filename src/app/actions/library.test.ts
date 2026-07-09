@@ -173,8 +173,11 @@ describe("library actions", () => {
     expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
-  it("updateReadingPage never revalidates, even on success", async () => {
-    updateReadingPageForUserMock.mockResolvedValue({ success: true });
+  it("updateReadingPage revalidates the book route on success", async () => {
+    updateReadingPageForUserMock.mockResolvedValue({
+      success: true,
+      subjectId: "subject-1",
+    });
     const { updateReadingPage } = await import("@/app/actions/library");
 
     const result = await updateReadingPage({ bookId: "book-1", page: 42 });
@@ -184,6 +187,21 @@ describe("library actions", () => {
       bookId: "book-1",
       page: 42,
     });
+    expect(revalidatePathMock).toHaveBeenCalledWith(
+      "/subjects/subject-1/documents/books/book-1",
+    );
+  });
+
+  it("updateReadingPage skips revalidation when a legacy book has no subject", async () => {
+    updateReadingPageForUserMock.mockResolvedValue({
+      success: true,
+      subjectId: null,
+    });
+    const { updateReadingPage } = await import("@/app/actions/library");
+
+    const result = await updateReadingPage({ bookId: "book-1", page: 42 });
+
+    expect(result).toEqual({ success: true });
     expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
