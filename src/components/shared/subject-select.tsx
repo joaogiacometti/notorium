@@ -48,6 +48,21 @@ function getSubjectLabel(subject: SubjectEntity | SubjectOption): string {
   return "path" in subject ? subject.path : subject.name;
 }
 
+function subjectLabelMatchesQuery(label: string, query: string): boolean {
+  const normalizedLabel = label.toLowerCase();
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery.includes("::")) {
+    return normalizedLabel.includes(normalizedQuery);
+  }
+
+  const labelSegments = normalizedLabel.split("::");
+  const querySegments = normalizedQuery.split("::");
+  return querySegments.every(
+    (segment, index) =>
+      segment.length === 0 || labelSegments[index]?.includes(segment),
+  );
+}
+
 function filterSubjects(
   subjects: Array<SubjectEntity | SubjectOption>,
   query: string,
@@ -55,7 +70,7 @@ function filterSubjects(
   const normalized = query.trim().toLowerCase();
   if (normalized.length === 0) return subjects;
   return subjects.filter((subject) =>
-    getSubjectLabel(subject).toLowerCase().includes(normalized),
+    subjectLabelMatchesQuery(getSubjectLabel(subject), normalized),
   );
 }
 

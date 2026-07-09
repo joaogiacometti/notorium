@@ -30,6 +30,15 @@ describe("createSubjectSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a :: path when each segment is valid", () => {
+    const result = createSubjectSchema.safeParse({
+      name: `${"a".repeat(LIMITS.subjectNameMax)}::Child`,
+      kind: "general",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects an unknown kind", () => {
     const result = createSubjectSchema.safeParse({
       name: "Mathematics",
@@ -66,6 +75,15 @@ describe("createSubjectSchema", () => {
   it("rejects name longer than max characters", () => {
     const result = createSubjectSchema.safeParse({
       name: "a".repeat(LIMITS.subjectNameMax + 1),
+      kind: "academic",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty :: path segments", () => {
+    const result = createSubjectSchema.safeParse({
+      name: "Math::::Integrals",
       kind: "academic",
     });
 

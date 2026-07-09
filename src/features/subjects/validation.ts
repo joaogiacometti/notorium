@@ -13,10 +13,26 @@ const subjectNameSchema = z
     validationMessage("Validation.subjects.nameMaxLength"),
   );
 
+const createSubjectNameSchema = z
+  .string()
+  .trim()
+  .min(1, validationMessage("Validation.subjects.nameRequired"))
+  .refine(
+    (value) => value.split("::").every((segment) => segment.trim().length > 0),
+    validationMessage("Validation.subjects.nameRequired"),
+  )
+  .refine(
+    (value) =>
+      value
+        .split("::")
+        .every((segment) => segment.trim().length <= LIMITS.subjectNameMax),
+    validationMessage("Validation.subjects.nameMaxLength"),
+  );
+
 const subjectKindSchema = z.enum(subjectKindValues);
 
 export const createSubjectSchema = z.object({
-  name: subjectNameSchema,
+  name: createSubjectNameSchema,
   kind: subjectKindSchema,
   parentSubjectId: z.string().min(1).optional(),
 });

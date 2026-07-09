@@ -25,6 +25,7 @@ const isNotNullMock = vi.fn((column) => ({ column, operator: "isNotNull" }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const countTotalSubjectsForUserMock = vi.fn();
 const countChildSubjectsForUserMock = vi.fn();
+const getAllSubjectsWithPathsForUserMock = vi.fn();
 const getSubjectRecordForUserMock = vi.fn();
 const getSubjectRecordsForUserMock = vi.fn();
 const getSubjectTreeRecordForUserMock = vi.fn();
@@ -65,6 +66,7 @@ vi.mock("@/features/attachments/cleanup", () => ({
 vi.mock("@/features/subjects/queries", () => ({
   countTotalSubjectsForUser: countTotalSubjectsForUserMock,
   countChildSubjectsForUser: countChildSubjectsForUserMock,
+  getAllSubjectsWithPathsForUser: getAllSubjectsWithPathsForUserMock,
   getSubjectRecordForUser: getSubjectRecordForUserMock,
   getSubjectRecordsForUser: getSubjectRecordsForUserMock,
   getSubjectTreeRecordForUser: getSubjectTreeRecordForUserMock,
@@ -149,6 +151,137 @@ describe("createSubjectForUser", () => {
       kind: "general",
       parentSubjectId: "parent-1",
     });
+  });
+
+  it("creates a child subject from a :: path", async () => {
+    getAllSubjectsWithPathsForUserMock.mockResolvedValueOnce([
+      { id: "parent-1", path: "Root" },
+    ]);
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "parent-1",
+      parentSubjectId: null,
+      name: "Root",
+    });
+    getSubjectDepthForUserMock.mockResolvedValueOnce(1);
+    insertReturningMock.mockResolvedValueOnce([{ id: "child-1" }]);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Root:: Chapter 1 ",
+      kind: "academic",
+    });
+
+    expect(result).toEqual({ success: true, subjectId: "child-1" });
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      name: "Chapter 1",
+      kind: "general",
+      parentSubjectId: "parent-1",
+    });
+  });
+
+  it("creates every subject from a missing :: path", async () => {
+    getAllSubjectsWithPathsForUserMock.mockResolvedValueOnce([]);
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    insertReturningMock
+      .mockResolvedValueOnce([{ id: "math-1" }])
+      .mockResolvedValueOnce([{ id: "calculus-1" }])
+      .mockResolvedValueOnce([{ id: "integrals-1" }]);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Math::Calculus::Integrals",
+      kind: "academic",
+    });
+
+    expect(result).toEqual({ success: true, subjectId: "integrals-1" });
+    expect(insertValuesMock).toHaveBeenNthCalledWith(1, {
+      userId: "user-1",
+      name: "Math",
+      kind: "academic",
+      parentSubjectId: null,
+    });
+    expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
+      userId: "user-1",
+      name: "Calculus",
+      kind: "general",
+      parentSubjectId: "math-1",
+    });
+    expect(insertValuesMock).toHaveBeenNthCalledWith(3, {
+      userId: "user-1",
+      name: "Integrals",
+      kind: "general",
+      parentSubjectId: "calculus-1",
+    });
+  });
+
+  it("creates only missing subjects from a partially existing :: path", async () => {
+    getAllSubjectsWithPathsForUserMock.mockResolvedValueOnce([
+      { id: "math-1", path: "Math" },
+    ]);
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "math-1",
+      parentSubjectId: null,
+      name: "Math",
+    });
+    getSubjectDepthForUserMock.mockResolvedValueOnce(1);
+    insertReturningMock
+      .mockResolvedValueOnce([{ id: "calculus-1" }])
+      .mockResolvedValueOnce([{ id: "integrals-1" }]);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Math::Calculus::Integrals",
+      kind: "academic",
+    });
+
+    expect(result).toEqual({ success: true, subjectId: "integrals-1" });
+    expect(insertValuesMock).toHaveBeenNthCalledWith(1, {
+      userId: "user-1",
+      name: "Calculus",
+      kind: "general",
+      parentSubjectId: "math-1",
+    });
+    expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
+      userId: "user-1",
+      name: "Integrals",
+      kind: "general",
+      parentSubjectId: "calculus-1",
+    });
+  });
+
+  it("returns duplicateName when the full :: path exists", async () => {
+    getAllSubjectsWithPathsForUserMock.mockResolvedValueOnce([
+      { id: "integrals-1", path: "Math::Calculus::Integrals" },
+    ]);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Math::Calculus::Integrals",
+      kind: "academic",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.duplicateName",
+    });
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   it("rejects nesting past the depth cap", async () => {

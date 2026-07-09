@@ -8,6 +8,7 @@ import {
 import {
   countChildSubjectsForUser,
   countTotalSubjectsForUser,
+  getAllSubjectsWithPathsForUser,
   getSubjectDepthForUser,
   getSubjectRecordForUser,
   getSubjectRecordsForUser,
@@ -39,6 +40,11 @@ export type SubjectMutationResult =
     }
   | ActionErrorResult;
 
+type SubjectCreateData = Pick<
+  CreateSubjectForm,
+  "name" | "kind" | "parentSubjectId"
+>;
+
 function getSubjectMutationValues(
   values: Pick<CreateSubjectForm, "name" | "kind">,
 ) {
@@ -46,6 +52,81 @@ function getSubjectMutationValues(
     name: values.name.trim(),
     kind: values.kind,
   };
+}
+
+function getSubjectPathSegments(name: string): string[] {
+  return name.split("::").map((segment) => segment.trim());
+}
+
+function findLongestExistingPathPrefix(
+  pathSegments: string[],
+  subjects: Awaited<ReturnType<typeof getAllSubjectsWithPathsForUser>>,
+) {
+  for (let index = pathSegments.length; index > 0; index -= 1) {
+    const path = pathSegments.slice(0, index).join("::");
+    const matchingSubject = subjects.find(
+      (subjectOption) => subjectOption.path === path,
+    );
+    if (matchingSubject) return { matchingSubject, segmentCount: index };
+  }
+
+  return null;
+}
+
+async function validateExistingParentForPath(
+  userId: string,
+  parentSubjectId: string,
+  missingSubjectCount: number,
+): Promise<ActionErrorResult | null> {
+  const [parent, parentDepth, childCount] = await Promise.all([
+    getSubjectTreeRecordForUser(userId, parentSubjectId),
+    getSubjectDepthForUser(userId, parentSubjectId),
+    countChildSubjectsForUser(userId, parentSubjectId),
+  ]);
+
+  if (!parent) return actionError("subjects.notFound");
+  if (childCount >= LIMITS.maxChildSubjectsPerSubject) {
+    return actionError("limits.childSubjectLimit", {
+      errorParams: { max: LIMITS.maxChildSubjectsPerSubject },
+    });
+  }
+  if (
+    parentDepth !== null &&
+    parentDepth + missingSubjectCount > LIMITS.maxSubjectNestingDepth
+  ) {
+    return actionError("limits.subjectNestingDepthLimit", {
+      errorParams: { max: LIMITS.maxSubjectNestingDepth },
+    });
+  }
+
+  return null;
+}
+
+async function validateSubjectPathCreate(
+  userId: string,
+  parentSubjectId: string | undefined,
+  missingSubjectCount: number,
+): Promise<ActionErrorResult | null> {
+  const totalCount = await countTotalSubjectsForUser(userId);
+  if (totalCount + missingSubjectCount > LIMITS.maxSubjects) {
+    return actionError("limits.subjectLimit", {
+      errorParams: { max: LIMITS.maxSubjects },
+    });
+  }
+  if (parentSubjectId) {
+    return validateExistingParentForPath(
+      userId,
+      parentSubjectId,
+      missingSubjectCount,
+    );
+  }
+  if (missingSubjectCount > LIMITS.maxSubjectNestingDepth) {
+    return actionError("limits.subjectNestingDepthLimit", {
+      errorParams: { max: LIMITS.maxSubjectNestingDepth },
+    });
+  }
+
+  return null;
 }
 
 /**
@@ -82,10 +163,95 @@ async function validateSubjectNesting(
   return null;
 }
 
+async function insertSubjectForUser(
+  userId: string,
+  data: SubjectCreateData,
+): Promise<SubjectMutationResult> {
+  try {
+    const inserted = await getDb()
+      .insert(subject)
+      .values({
+        ...getSubjectMutationValues(data),
+        parentSubjectId: data.parentSubjectId ?? null,
+        // Subfolders are pure containers; only roots can be academic (locked).
+        kind: data.parentSubjectId ? "general" : data.kind,
+        userId,
+      })
+      .returning({ id: subject.id });
+
+    return { success: true, subjectId: inserted[0]?.id };
+  } catch (error) {
+    if (isUniqueViolationError(error)) {
+      return actionError("subjects.duplicateName");
+    }
+    throw error;
+  }
+}
+
+async function createSubjectPathForUser(
+  userId: string,
+  data: CreateSubjectForm,
+  pathSegments: string[],
+): Promise<SubjectMutationResult> {
+  const existingPrefix = findLongestExistingPathPrefix(
+    pathSegments,
+    await getAllSubjectsWithPathsForUser(userId),
+  );
+  if (existingPrefix?.segmentCount === pathSegments.length) {
+    return actionError("subjects.duplicateName");
+  }
+
+  const missingSegments = pathSegments.slice(existingPrefix?.segmentCount ?? 0);
+  const parentSubjectId = existingPrefix?.matchingSubject.id;
+  const validationError = await validateSubjectPathCreate(
+    userId,
+    parentSubjectId,
+    missingSegments.length,
+  );
+  if (validationError) return validationError;
+
+  return insertSubjectPathSegments(
+    userId,
+    data.kind,
+    parentSubjectId,
+    missingSegments,
+  );
+}
+
+async function insertSubjectPathSegments(
+  userId: string,
+  rootKind: CreateSubjectForm["kind"],
+  parentSubjectId: string | undefined,
+  pathSegments: string[],
+): Promise<SubjectMutationResult> {
+  let nextParentSubjectId = parentSubjectId;
+  let result: SubjectMutationResult = actionError("subjects.invalidData");
+
+  for (const [index, segment] of pathSegments.entries()) {
+    result = await insertSubjectForUser(userId, {
+      name: segment,
+      kind: index === 0 && !nextParentSubjectId ? rootKind : "general",
+      parentSubjectId: nextParentSubjectId,
+    });
+    if (!result.success) return result;
+    nextParentSubjectId = result.subjectId;
+  }
+
+  return result;
+}
+
 export async function createSubjectForUser(
   userId: string,
   data: CreateSubjectForm,
 ): Promise<SubjectMutationResult> {
+  const pathSegments = getSubjectPathSegments(data.name);
+  if (pathSegments.some((segment) => segment.length === 0)) {
+    return actionError("subjects.invalidData");
+  }
+  if (pathSegments.length > 1) {
+    return createSubjectPathForUser(userId, data, pathSegments);
+  }
+
   const [totalCount, childCount] = await Promise.all([
     countTotalSubjectsForUser(userId),
     data.parentSubjectId
@@ -110,25 +276,7 @@ export async function createSubjectForUser(
     }
   }
 
-  try {
-    const inserted = await getDb()
-      .insert(subject)
-      .values({
-        ...getSubjectMutationValues(data),
-        parentSubjectId: data.parentSubjectId ?? null,
-        // Subfolders are pure containers; only roots can be academic (locked).
-        kind: data.parentSubjectId ? "general" : data.kind,
-        userId,
-      })
-      .returning({ id: subject.id });
-
-    return { success: true, subjectId: inserted[0]?.id };
-  } catch (error) {
-    if (isUniqueViolationError(error)) {
-      return actionError("subjects.duplicateName");
-    }
-    throw error;
-  }
+  return insertSubjectForUser(userId, data);
 }
 
 export async function editSubjectForUser(
