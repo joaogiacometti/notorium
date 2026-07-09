@@ -36,6 +36,11 @@ function insertImage(editor: Editor, src: string) {
   editor.chain().focus().setImage({ src }).run();
 }
 
+function consumePasteEvent(event: ClipboardEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 export function handleEditorPaste({
   editor,
   event,
@@ -51,6 +56,7 @@ export function handleEditorPaste({
 }) {
   const imageFile = getPastedImageFile(event);
   if (imageFile) {
+    consumePasteEvent(event);
     if (isImageUploadPending()) {
       return true;
     }
@@ -62,6 +68,7 @@ export function handleEditorPaste({
   const src = event.clipboardData?.getData("text/plain")?.trim() ?? "";
   const directImageUrl = resolveEmbeddableImageUrl(src);
   if (directImageUrl) {
+    consumePasteEvent(event);
     insertImage(editor, directImageUrl);
     return true;
   }

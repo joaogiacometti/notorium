@@ -40,6 +40,8 @@ function createEditor(): Editor {
 
 function createClipboardEvent(file?: File) {
   return {
+    preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
     clipboardData: {
       items: file
         ? [
@@ -185,10 +187,11 @@ describe("uploadPastedImage", () => {
       start: vi.fn(),
       finish: vi.fn(),
     };
+    const event = createClipboardEvent(createFile("second.png", 12));
 
     const handled = handleEditorPaste({
       editor: createEditor(),
-      event: createClipboardEvent(createFile("second.png", 12)),
+      event,
       imageUploadContext: "notes",
       isImageUploadPending: () => true,
       tracker,
@@ -198,6 +201,27 @@ describe("uploadPastedImage", () => {
     expect(uploadAttachmentImageMock).not.toHaveBeenCalled();
     expect(tracker.start).not.toHaveBeenCalled();
     expect(tracker.finish).not.toHaveBeenCalled();
+    expect(event.preventDefault).toHaveBeenCalledTimes(1);
+    expect(event.stopPropagation).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops a handled image paste from reaching window listeners", () => {
+    uploadAttachmentImageMock.mockResolvedValue({
+      success: true,
+      url: "/api/attachments/blob?pathname=image.png",
+    });
+    const event = createClipboardEvent(createFile("image.png", 12));
+
+    const handled = handleEditorPaste({
+      editor: createEditor(),
+      event,
+      imageUploadContext: "flashcards",
+      isImageUploadPending: () => false,
+    });
+
+    expect(handled).toBe(true);
+    expect(event.preventDefault).toHaveBeenCalledTimes(1);
+    expect(event.stopPropagation).toHaveBeenCalledTimes(1);
   });
 });
 
