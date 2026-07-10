@@ -20,12 +20,16 @@ const getOcclusionSiblingsForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 const deleteImagesMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
+const transactionMock = vi.fn(async (run: (tx: unknown) => Promise<unknown>) =>
+  run({ insert: insertMock, update: updateMock, delete: deleteMock }),
+);
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
     insert: insertMock,
     update: updateMock,
     delete: deleteMock,
+    transaction: transactionMock,
   }),
 }));
 
@@ -208,6 +212,7 @@ describe("editOcclusionNoteForUser", () => {
     expect(updateMock).toHaveBeenCalledTimes(1); // mask-1 kept
     expect(insertMock).toHaveBeenCalledTimes(1); // mask-2 added
     expect(deleteMock).toHaveBeenCalledTimes(1); // mask-old removed
+    expect(transactionMock).toHaveBeenCalledTimes(1);
     // Image unchanged, so no blob deletion.
     expect(deleteImagesMock).not.toHaveBeenCalled();
   });
@@ -241,6 +246,9 @@ describe("editOcclusionNoteForUser", () => {
     );
 
     expect(deleteImagesMock).toHaveBeenCalledWith({ pathnames: [imageA] });
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(insertMock).toHaveBeenCalledTimes(2);
+    expect(deleteMock).toHaveBeenCalledTimes(1);
   });
 });
 

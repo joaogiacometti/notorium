@@ -183,44 +183,45 @@ async function syncSiblings(
   const byMaskId = new Map(
     siblings.map((card) => [card.occlusionMaskId, card]),
   );
-  const db = getDb();
-
-  for (const [index, region] of regions.entries()) {
-    const existing = byMaskId.get(region.id);
-    const insert = buildOcclusionInsert(
-      userId,
-      data,
-      occlusionNoteId,
-      regions,
-      index,
-    );
-    if (existing) {
-      // Keep this mask's FSRS state; refresh geometry, shared image and regions.
-      await db
-        .update(flashcardTable)
-        .set({
-          subjectId: insert.subjectId,
-          occlusionImagePathname: insert.occlusionImagePathname,
-          occlusionRegions: insert.occlusionRegions,
-          front: insert.front,
-          frontNormalized: insert.frontNormalized,
-          back: insert.back,
-        })
-        .where(eq(flashcardTable.id, existing.id));
-    } else {
-      await db.insert(flashcardTable).values(insert);
-    }
-  }
-
   const keptMaskIds = new Set(regions.map((region) => region.id));
   const removedIds = siblings
     .filter((card) => !keptMaskIds.has(card.occlusionMaskId ?? ""))
     .map((card) => card.id);
-  if (removedIds.length > 0) {
-    await db
-      .delete(flashcardTable)
-      .where(inArray(flashcardTable.id, removedIds));
-  }
+
+  await getDb().transaction(async (tx) => {
+    for (const [index, region] of regions.entries()) {
+      const existing = byMaskId.get(region.id);
+      const insert = buildOcclusionInsert(
+        userId,
+        data,
+        occlusionNoteId,
+        regions,
+        index,
+      );
+      if (existing) {
+        // Keep this mask's FSRS state; refresh geometry, shared image and regions.
+        await tx
+          .update(flashcardTable)
+          .set({
+            subjectId: insert.subjectId,
+            occlusionImagePathname: insert.occlusionImagePathname,
+            occlusionRegions: insert.occlusionRegions,
+            front: insert.front,
+            frontNormalized: insert.frontNormalized,
+            back: insert.back,
+          })
+          .where(eq(flashcardTable.id, existing.id));
+      } else {
+        await tx.insert(flashcardTable).values(insert);
+      }
+    }
+
+    if (removedIds.length > 0) {
+      await tx
+        .delete(flashcardTable)
+        .where(inArray(flashcardTable.id, removedIds));
+    }
+  });
 }
 
 /**
@@ -241,7 +242,15 @@ export async function editOcclusionNoteForUser(
     return actionError("subjects.notFound");
   }
 
-  const regions = sanitizeRegions(data.occlusionRegions);
+  const sanitizedRegions = sanitizeRegions(data.occlusionRegions);
+  const imageChanged =
+    existingFlashcard.occlusionImagePathname !== data.occlusionImagePathname;
+  const regions = imageChanged
+    ? sanitizedRegions.map((region) => ({
+        ...region,
+        id: crypto.randomUUID(),
+      }))
+    : sanitizedRegions;
   if (regions.length === 0) {
     return actionError("flashcards.invalidData");
   }
@@ -255,7 +264,9 @@ export async function editOcclusionNoteForUser(
   const subjectChanged = existingFlashcard.subjectId !== data.subjectId;
   const additionalCards = subjectChanged
     ? regions.length
-    : regions.filter((region) => !existingMaskIds.has(region.id)).length;
+    : imageChanged
+      ? Math.max(0, regions.length - siblings.length)
+      : regions.filter((region) => !existingMaskIds.has(region.id)).length;
   const overCapacity = await assertSubjectCapacity(
     userId,
     data.subjectId,
@@ -275,7 +286,7 @@ export async function editOcclusionNoteForUser(
   }
 
   const previousImage = existingFlashcard.occlusionImagePathname;
-  if (previousImage && previousImage !== data.occlusionImagePathname) {
+  if (previousImage && imageChanged) {
     await cleanupOcclusionImagesForUser(userId, [previousImage]);
   }
 

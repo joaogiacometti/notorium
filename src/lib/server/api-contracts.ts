@@ -286,7 +286,15 @@ export type DeleteFlashcardResult =
   | {
       success: true;
       id: string;
+      deletedIds: string[];
       subjectId: string | null;
+    }
+  | ActionErrorResult;
+export type SplitFlashcardResult =
+  | {
+      success: true;
+      createdCount: number;
+      deletedIds: string[];
     }
   | ActionErrorResult;
 export type BulkDeleteFlashcardsResult =

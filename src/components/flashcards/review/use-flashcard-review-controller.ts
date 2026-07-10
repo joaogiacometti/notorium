@@ -205,30 +205,44 @@ export function useFlashcardReviewController({
     resetFocusViewState();
   }
 
-  async function handleFlashcardDeleted(deletedId: string) {
+  async function handleFlashcardDeleted(
+    deletedId: string,
+    deletedIds: string[] = [deletedId],
+  ) {
     if (isExamMode) {
-      examController.removeExamCard(deletedId);
+      for (const id of deletedIds) {
+        examController.removeExamCard(id);
+      }
       return;
     }
 
-    const nextState = {
-      ...reviewStateRef.current,
-      cards: reviewStateRef.current.cards.filter(
-        (card) => card.id !== deletedId,
-      ),
-      summary: {
-        ...reviewStateRef.current.summary,
-        dueCount: Math.max(0, reviewStateRef.current.summary.dueCount - 1),
-        totalCount: Math.max(0, reviewStateRef.current.summary.totalCount - 1),
-      },
-    };
-
-    commitReviewState(nextState);
-    resetFocusViewState();
-
-    if (shouldRefillFlashcardReviewState(nextState)) {
-      void refillReviewState();
+    try {
+      const nextState = await getFlashcardReviewState({
+        subjectId: selectedSubjectId,
+        limit: reviewBatchLimit,
+      });
+      commitReviewState(nextState);
+    } catch {
+      const deletedIdSet = new Set(deletedIds);
+      commitReviewState({
+        ...reviewStateRef.current,
+        cards: reviewStateRef.current.cards.filter(
+          (card) => !deletedIdSet.has(card.id),
+        ),
+        summary: {
+          dueCount: Math.max(
+            0,
+            reviewStateRef.current.summary.dueCount - deletedIds.length,
+          ),
+          totalCount: Math.max(
+            0,
+            reviewStateRef.current.summary.totalCount - deletedIds.length,
+          ),
+        },
+      });
+      toast.error("Review counts could not be refreshed.");
     }
+    resetFocusViewState();
   }
 
   function handleFlashcardReset(updatedFlashcard: FlashcardReviewEntity) {

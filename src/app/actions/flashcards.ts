@@ -21,6 +21,7 @@ import {
   getFlashcardsManagePageForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
+import { splitFlashcardForUser } from "@/features/flashcards/split-mutation";
 import {
   type BulkDeleteFlashcardsForm,
   type BulkMoveFlashcardsForm,
@@ -44,6 +45,8 @@ import {
   getFlashcardIdsForSubjectSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
+  type SplitFlashcardForm,
+  splitFlashcardSchema,
   type ValidateFlashcardsForm,
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
@@ -61,6 +64,7 @@ import type {
   FlashcardManagePage,
   GenerateFlashcardBackResult,
   ResetFlashcardResult,
+  SplitFlashcardResult,
 } from "@/lib/server/api-contracts";
 import {
   type ActionErrorResult,
@@ -149,6 +153,7 @@ export async function deleteFlashcard(
       return {
         success: true as const,
         id: parsedData.id,
+        deletedIds: mutationResult.deletedIds,
         subjectId: mutationResult.subjectId,
       };
     },
@@ -228,6 +233,21 @@ export async function resetFlashcard(
     revalidatePath("/flashcards");
   }
 
+  return result;
+}
+
+export async function splitFlashcard(
+  data: SplitFlashcardForm,
+): Promise<SplitFlashcardResult> {
+  const result = await runValidatedUserAction(
+    splitFlashcardSchema,
+    data,
+    "flashcards.invalidData",
+    splitFlashcardForUser,
+  );
+  if (result.success) {
+    revalidatePath("/flashcards");
+  }
   return result;
 }
 

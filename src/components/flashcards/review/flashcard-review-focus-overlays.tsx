@@ -29,7 +29,7 @@ interface FlashcardReviewFocusOverlaysProps {
   onDeleteOpenChange: (open: boolean) => void;
   onResetOpenChange: (open: boolean) => void;
   onUpdated: (card: ReviewCard) => void | Promise<void>;
-  onDeleted: (deletedId: string) => void | Promise<void>;
+  onDeleted: (deletedId: string, deletedIds: string[]) => void | Promise<void>;
   onReset: (updated: FlashcardReviewEntity) => void;
   examSessionComplete: boolean;
   examResultsData: ExamResultsData | null;

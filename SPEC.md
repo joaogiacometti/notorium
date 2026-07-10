@@ -109,6 +109,7 @@ Students who want a private, lightweight study management workspace.
 - Deleting any image occlusion card deletes the whole note, all its sibling cards, and the shared source image.
 - A flashcard's type is fixed after creation and cannot be switched between basic, cloze, and image occlusion on edit.
 - Flashcard create and edit support AI generation of the back when the back is empty.
+- Basic flashcards can be split into multiple AI-proposed cards after preview; accepting a split atomically creates every replacement and removes the source, while any validation, duplicate, or capacity failure keeps the source unchanged.
 - Flashcards can also be generated from a note or mindmap, via their detail-page header menu or sidebar/documents-list row menu, when AI is configured.
 - Generated AI flashcards use concise retrieval-cue fronts and minimal, directly testable answer bullets.
 - AI generation may emit LaTeX math (`$...$` inline, `$$...$$` block), which is converted to rendered math nodes.
@@ -146,7 +147,8 @@ Students who want a private, lightweight study management workspace.
 - Review answers are `Again`, `Hard`, `Good`, and `Easy`.
 - Review uses a memory-state scheduler with learning and relearning stages.
 - A 20-minute learn-ahead window is applied to `learning` and `relearning` cards only: a card whose `dueAt` is within the next 20 minutes is treated as due and kept in the current session. This matches Anki's `collapseTime` behavior and prevents short-interval cards (e.g. `Again → 1m`) from vanishing mid-session.
-- Review logs are stored per user.
+- Review logs are stored per user and retained when a flashcard or subject is
+  deleted, so historical activity and FSRS optimization input do not change.
 - Review parameters support per-user tuning.
 - Users can manually optimize FSRS parameters from the account settings dialog using their review history.
 - Users can reset FSRS optimization from the account settings dialog to restore default scheduler tuning without deleting review history or flashcard progress.
@@ -336,7 +338,7 @@ Students who want a private, lightweight study management workspace.
 - `flashcard_scheduler_settings`
   - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, `automaticOptimizationEnabled`, optimization timestamps
 - `flashcard_review_log`
-  - `id`, `flashcardId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps
+  - `id`, historical `flashcardId`, historical `subjectId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`
 - `mindmap`

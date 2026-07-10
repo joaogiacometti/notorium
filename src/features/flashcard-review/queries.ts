@@ -5,6 +5,7 @@ import {
   eq,
   gte,
   inArray,
+  isNull,
   lte,
   or,
   type SQL,
@@ -155,19 +156,16 @@ export async function getFlashcardReviewActivityForUser(
   now: Date,
   options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
 ): Promise<FlashcardReviewActivity> {
-  const reviewFilters: SQL<unknown>[] = [
-    eq(flashcardReviewLog.userId, userId),
-    eq(flashcard.userId, userId),
-  ];
+  const reviewFilters: SQL<unknown>[] = [eq(flashcardReviewLog.userId, userId)];
 
   if (options.subjectIds && options.subjectIds.length > 0) {
-    reviewFilters.push(inArray(flashcard.subjectId, options.subjectIds));
+    reviewFilters.push(buildReviewSubjectFilter(options.subjectIds));
   } else if (options.subjectId) {
     const descendantSubjectIds = await getDescendantSubjectIds(
       userId,
       options.subjectId,
     );
-    reviewFilters.push(inArray(flashcard.subjectId, descendantSubjectIds));
+    reviewFilters.push(buildReviewSubjectFilter(descendantSubjectIds));
   }
 
   const heatmapStart = new Date(now);
@@ -180,8 +178,13 @@ export async function getFlashcardReviewActivityForUser(
       count: count(),
     })
     .from(flashcardReviewLog)
-    .innerJoin(flashcard, eq(flashcardReviewLog.flashcardId, flashcard.id))
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .leftJoin(
+      flashcard,
+      and(
+        eq(flashcardReviewLog.flashcardId, flashcard.id),
+        eq(flashcard.userId, userId),
+      ),
+    )
     .where(
       and(...reviewFilters, gte(flashcardReviewLog.reviewedAt, heatmapStart)),
     )
@@ -205,6 +208,16 @@ export async function getFlashcardReviewActivityForUser(
     heatmap,
     streak: computeReviewStreaks(heatmap),
   };
+}
+
+function buildReviewSubjectFilter(subjectIds: string[]): SQL<unknown> {
+  return or(
+    inArray(flashcardReviewLog.subjectId, subjectIds),
+    and(
+      isNull(flashcardReviewLog.subjectId),
+      inArray(flashcard.subjectId, subjectIds),
+    ),
+  ) as SQL<unknown>;
 }
 
 export async function getFlashcardReviewStateForUser(

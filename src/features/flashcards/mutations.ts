@@ -15,11 +15,11 @@ import {
 } from "@/features/flashcards/occlusion-mutations";
 import {
   countFlashcardsBySubjectForUser,
-  expandOcclusionSiblingIds,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
+import { expandOcclusionSiblingIds } from "@/features/flashcards/sibling-queries";
 import type {
   CreateFlashcardForm,
   DeleteFlashcardForm,
@@ -45,6 +45,7 @@ export type DeleteFlashcardMutationResult =
   | {
       success: true;
       id: string;
+      deletedIds: string[];
       subjectId: string | null;
     }
   | ActionErrorResult;
@@ -379,6 +380,7 @@ export async function deleteFlashcardForUser(
     return {
       success: true,
       id: data.id,
+      deletedIds: removed.map((card) => card.id),
       subjectId: existingFlashcard.subjectId,
     };
   }
@@ -389,10 +391,14 @@ export async function deleteFlashcardForUser(
     existingFlashcard.type === "occlusion" &&
     existingFlashcard.occlusionNoteId
   ) {
-    await deleteOcclusionNoteForUser(userId, existingFlashcard.occlusionNoteId);
+    const removed = await deleteOcclusionNoteForUser(
+      userId,
+      existingFlashcard.occlusionNoteId,
+    );
     return {
       success: true,
       id: data.id,
+      deletedIds: removed.map((card) => card.id),
       subjectId: existingFlashcard.subjectId,
     };
   }
@@ -407,7 +413,12 @@ export async function deleteFlashcardForUser(
     [],
   );
 
-  return { success: true, id: data.id, subjectId: existingFlashcard.subjectId };
+  return {
+    success: true,
+    id: data.id,
+    deletedIds: [data.id],
+    subjectId: existingFlashcard.subjectId,
+  };
 }
 
 export {

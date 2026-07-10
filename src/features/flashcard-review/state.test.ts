@@ -207,7 +207,7 @@ describe("applyReviewedFlashcardToState", () => {
 });
 
 describe("mergeFlashcardReviewStates", () => {
-  it("appends unique refill cards and recalculates dueCount based on merged cards", () => {
+  it("appends unique refill cards without losing the server's total due count", () => {
     const now = new Date("2026-03-07T12:00:00.000Z");
     const current = makeState(
       [
@@ -239,7 +239,7 @@ describe("mergeFlashcardReviewStates", () => {
     expect(nextState.summary.totalCount).toBe(8);
   });
 
-  it("prevents race condition by recalculating dueCount when server returns empty cards but non-zero summary", () => {
+  it("preserves a non-zero server due count when a page is temporarily empty", () => {
     const now = new Date("2026-03-07T12:00:00.000Z");
     const current = makeState([], 0);
     const incoming = {
@@ -254,7 +254,7 @@ describe("mergeFlashcardReviewStates", () => {
     const nextState = mergeFlashcardReviewStates(current, incoming, now);
 
     expect(nextState.cards).toEqual([]);
-    expect(nextState.summary.dueCount).toBe(0);
+    expect(nextState.summary.dueCount).toBe(5);
     expect(nextState.summary.totalCount).toBe(10);
   });
 
@@ -280,7 +280,7 @@ describe("mergeFlashcardReviewStates", () => {
       "card-1",
       "card-2",
     ]);
-    expect(nextState.summary.dueCount).toBe(1);
+    expect(nextState.summary.dueCount).toBe(2);
   });
 
   it("correctly counts only due cards when some cards are not yet due", () => {
@@ -308,8 +308,31 @@ describe("mergeFlashcardReviewStates", () => {
       "card-2",
       "card-3",
     ]);
-    expect(nextState.summary.dueCount).toBe(2);
+    expect(nextState.summary.dueCount).toBe(3);
     expect(nextState.summary.totalCount).toBe(5);
+  });
+
+  it("keeps hidden due cards discoverable after merging a limited refill page", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const current = makeState(
+      [makeCard("card-1", new Date("2026-03-07T11:00:00.000Z"))],
+      51,
+    );
+    const incoming = makeState(
+      Array.from({ length: 50 }, (_, index) =>
+        makeCard(
+          `card-${index + 1}`,
+          new Date(`2026-03-07T11:${String(index).padStart(2, "0")}:00.000Z`),
+        ),
+      ),
+      51,
+    );
+
+    const nextState = mergeFlashcardReviewStates(current, incoming, now);
+
+    expect(nextState.cards).toHaveLength(50);
+    expect(nextState.summary.dueCount).toBe(51);
+    expect(shouldRefillFlashcardReviewState(nextState, 50)).toBe(true);
   });
 });
 

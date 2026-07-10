@@ -62,12 +62,14 @@ export function mergeFlashcardReviewStates(
   now: Date,
 ): FlashcardReviewState {
   if (current.cards.length === 0) {
-    const actualDueCount = countDueCards(incoming.cards, now);
     return {
       ...incoming,
       summary: {
         ...incoming.summary,
-        dueCount: actualDueCount,
+        dueCount: Math.max(
+          incoming.summary.dueCount,
+          countDueCards(incoming.cards, now),
+        ),
       },
     };
   }
@@ -90,7 +92,7 @@ export function mergeFlashcardReviewStates(
     cards,
     summary: {
       ...incoming.summary,
-      dueCount: actualDueCount,
+      dueCount: Math.max(incoming.summary.dueCount, actualDueCount),
     },
     scheduler: incoming.scheduler,
   };

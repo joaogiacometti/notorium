@@ -33,6 +33,9 @@ const getFlashcardRecordsForUserMock = vi.fn();
 const expandOcclusionSiblingIdsMock = vi.fn(
   (_userId: string, ids: string[]) => ids,
 );
+const expandFlashcardNoteSiblingIdsMock = vi.fn(
+  (_userId: string, ids: string[]) => ids,
+);
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 const hasDuplicateFlashcardFrontForUserMock = vi.fn();
 const generateFlashcardBackForUserMock = vi.fn();
@@ -78,11 +81,15 @@ vi.mock("@/features/flashcards/fsrs", () => ({
 
 vi.mock("@/features/flashcards/queries", () => ({
   countFlashcardsBySubjectForUser: countFlashcardsBySubjectForUserMock,
-  expandOcclusionSiblingIds: expandOcclusionSiblingIdsMock,
   getFlashcardByIdForUser: getFlashcardByIdForUserMock,
   getFlashcardRecordForUser: getFlashcardRecordForUserMock,
   getFlashcardRecordsForUser: getFlashcardRecordsForUserMock,
   hasDuplicateFlashcardFrontForUser: hasDuplicateFlashcardFrontForUserMock,
+}));
+
+vi.mock("@/features/flashcards/sibling-queries", () => ({
+  expandFlashcardNoteSiblingIds: expandFlashcardNoteSiblingIdsMock,
+  expandOcclusionSiblingIds: expandOcclusionSiblingIdsMock,
 }));
 
 describe("createFlashcardForUser", () => {
@@ -278,6 +285,10 @@ describe("bulkDeleteFlashcardsForUser", () => {
       subjectIds: ["deck-1", "deck-2"],
     });
     expect(deleteMock).toHaveBeenCalledTimes(1);
+    expect(expandFlashcardNoteSiblingIdsMock).toHaveBeenCalledWith("user-1", [
+      "flashcard-1",
+      "flashcard-2",
+    ]);
   });
 });
 
@@ -312,6 +323,10 @@ describe("bulkMoveFlashcardsForUser", () => {
       subjectId: "deck-3",
       previousSubjectIds: ["deck-1", "deck-2"],
     });
+    expect(expandFlashcardNoteSiblingIdsMock).toHaveBeenCalledWith("user-1", [
+      "flashcard-1",
+      "flashcard-2",
+    ]);
   });
 });
 

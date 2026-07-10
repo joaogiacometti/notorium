@@ -260,4 +260,93 @@ describe("reviewFlashcardForUser", () => {
       errorMessage: undefined,
     });
   });
+
+  it("logs the actual time when reviewing a learning card ahead of schedule", async () => {
+    const now = new Date("2026-03-13T23:55:00.000Z");
+    const dueAt = new Date("2026-03-14T00:05:00.000Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    getReviewableFlashcardForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      subjectName: "Biology",
+      state: "learning",
+      dueAt,
+      reviewCount: 1,
+    });
+    scheduleFlashcardReviewMock.mockReturnValueOnce({
+      state: "review",
+      dueAt: new Date("2026-03-15T00:05:00.000Z"),
+      reviewCount: 2,
+      updatedAt: dueAt,
+      daysElapsed: 0,
+    });
+    transactionMock.mockImplementationOnce(async (callback) =>
+      callback({ update: updateMock, insert: insertMock }),
+    );
+    returningMock.mockResolvedValueOnce([
+      { id: "flashcard-1", subjectId: "subject-1", reviewCount: 2 },
+    ]);
+
+    const { reviewFlashcardForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+    const result = await reviewFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      grade: "good",
+    });
+
+    expect(result.success).toBe(true);
+    expect(scheduleFlashcardReviewMock).toHaveBeenCalledWith(
+      expect.objectContaining({ now: dueAt }),
+    );
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewedAt: now,
+        subjectId: "subject-1",
+      }),
+    );
+    vi.useRealTimers();
+  });
+
+  it("does not log a review when another request already advanced the card", async () => {
+    const now = new Date("2026-03-13T12:00:00.000Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    getReviewableFlashcardForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      state: "new",
+      dueAt: new Date("2026-03-13T11:00:00.000Z"),
+      reviewCount: 0,
+    });
+    scheduleFlashcardReviewMock.mockReturnValueOnce({
+      state: "learning",
+      dueAt: new Date("2026-03-13T12:01:00.000Z"),
+      reviewCount: 1,
+      updatedAt: now,
+      daysElapsed: 0,
+    });
+    transactionMock.mockImplementationOnce(async (callback) =>
+      callback({ update: updateMock, insert: insertMock }),
+    );
+    returningMock.mockResolvedValueOnce([]);
+
+    const { reviewFlashcardForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+    const result = await reviewFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      grade: "good",
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "flashcards.review.unavailable",
+      }),
+    );
+    expect(insertMock).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
 });

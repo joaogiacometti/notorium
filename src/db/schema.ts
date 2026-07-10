@@ -522,9 +522,10 @@ export const flashcardReviewLog = pgTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    flashcardId: text("flashcard_id")
-      .notNull()
-      .references(() => flashcard.id, { onDelete: "cascade" }),
+    // Historical identifier, intentionally not a foreign key: deleting a card
+    // must not erase review activity or optimization input.
+    flashcardId: text("flashcard_id").notNull(),
+    subjectId: text("subject_id"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -541,6 +542,7 @@ export const flashcardReviewLog = pgTable(
   (table) => [
     index("flashcard_review_log_flashcardId_idx").on(table.flashcardId),
     index("flashcard_review_log_userId_idx").on(table.userId),
+    index("flashcard_review_log_subjectId_idx").on(table.subjectId),
     index("flashcard_review_log_userId_reviewedAt_idx").on(
       table.userId,
       table.reviewedAt,

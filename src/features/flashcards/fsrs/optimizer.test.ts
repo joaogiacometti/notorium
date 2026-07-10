@@ -36,6 +36,7 @@ function makeLog(
   return {
     id,
     flashcardId,
+    subjectId: "subject-1",
     userId: "user-1",
     clientReviewId: null,
     rating,

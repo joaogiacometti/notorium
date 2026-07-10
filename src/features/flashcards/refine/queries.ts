@@ -117,7 +117,9 @@ export async function getRefineGroupsForUser(
              d.name AS "subjectName", f.review_count AS "reviewCount",
              f.lapse_count AS "lapseCount", r.recent_ratings AS "recentRatings"
       FROM recent r
-      INNER JOIN flashcard f ON f.id = r.flashcard_id AND f.user_id = ${userId}
+      INNER JOIN flashcard f ON f.id = r.flashcard_id
+        AND f.user_id = ${userId}
+        AND f.type = 'basic'
       INNER JOIN subject d ON d.id = f.subject_id
       ORDER BY f.last_reviewed_at DESC NULLS LAST
     `,
@@ -146,6 +148,7 @@ export async function findSimilarFlashcardsForUser(
       FROM flashcard f
       INNER JOIN subject d ON d.id = f.subject_id
       WHERE f.user_id = ${userId}
+        AND f.type = 'basic'
         AND f.id != ${source.id}
         AND (
           similarity(f.front, ${frontText}) > ${REFINE_FRONT_SIMILARITY_THRESHOLD}

@@ -28,7 +28,6 @@ import type {
   FlashcardEntity,
   FlashcardManagePage,
 } from "@/lib/server/api-contracts";
-import { uniqueItems } from "@/lib/utils";
 
 async function getSubjectPathMapForUser(
   userId: string,
@@ -246,51 +245,6 @@ export async function getOcclusionSiblingsForUser(
     .orderBy(flashcard.id);
 
   return results.map((row) => row.flashcard);
-}
-
-/**
- * Expands a set of flashcard ids so that any occlusion card pulls in all of its
- * note's sibling masks. Lets note-level bulk actions (move, reset, delete) act
- * on the whole image even when only its representative row was selected.
- *
- * @example
- * const ids = await expandOcclusionSiblingIds(userId, [representativeMaskId]);
- */
-export async function expandOcclusionSiblingIds(
-  userId: string,
-  ids: string[],
-): Promise<string[]> {
-  if (ids.length === 0) {
-    return [];
-  }
-  const rows = await getDb()
-    .select({ occlusionNoteId: flashcard.occlusionNoteId })
-    .from(flashcard)
-    .where(
-      and(
-        inArray(flashcard.id, ids),
-        eq(flashcard.userId, userId),
-        eq(flashcard.type, "occlusion"),
-      ),
-    );
-  const noteIds = uniqueItems(
-    rows
-      .map((row) => row.occlusionNoteId)
-      .filter((noteId): noteId is string => noteId !== null),
-  );
-  if (noteIds.length === 0) {
-    return ids;
-  }
-  const siblings = await getDb()
-    .select({ id: flashcard.id })
-    .from(flashcard)
-    .where(
-      and(
-        inArray(flashcard.occlusionNoteId, noteIds),
-        eq(flashcard.userId, userId),
-      ),
-    );
-  return uniqueItems([...ids, ...siblings.map((row) => row.id)]);
 }
 
 export async function getFlashcardDetailByIdForUser(

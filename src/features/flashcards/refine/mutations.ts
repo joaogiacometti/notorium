@@ -111,6 +111,10 @@ export async function applyFlashcardMergeForUser(
     return actionError("flashcards.notFound");
   }
 
+  if (sourceCards.some((card) => card.type !== "basic")) {
+    return actionError("flashcards.invalidData");
+  }
+
   const primaryCard = sourceCards.find(
     (card) => card.id === data.primaryFlashcardId,
   );

@@ -5,11 +5,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { generateFlashcards } from "@/app/actions/flashcard-generation";
-import {
-  createFlashcard,
-  deleteFlashcard,
-  editFlashcard,
-} from "@/app/actions/flashcards";
+import { editFlashcard, splitFlashcard } from "@/app/actions/flashcards";
 import { getSubjectOptions } from "@/app/actions/subjects";
 import { getEditFlashcardFormValues } from "@/components/flashcards/dialogs/edit-flashcard-form-values";
 import { EditFlashcardSplitForm } from "@/components/flashcards/dialogs/edit-flashcard-split-form";
@@ -36,6 +32,7 @@ import type {
   FlashcardEntity,
   SubjectOption,
 } from "@/lib/server/api-contracts";
+import { t } from "@/lib/server/server-action-errors";
 import { cn } from "@/lib/utils";
 
 type EditMode = "edit" | "split";
@@ -66,7 +63,7 @@ interface EditFlashcardDialogProps {
   onOpenChange: (open: boolean) => void;
   aiEnabled: boolean;
   onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
-  onDeleted?: (deletedId: string) => void | Promise<void>;
+  onDeleted?: (deletedId: string, deletedIds: string[]) => void | Promise<void>;
   className?: string;
   overlayClassName?: string;
   noDialog?: boolean;
@@ -250,42 +247,24 @@ export function EditFlashcardDialog({
 
   async function handleCreateCards(cards: GeneratedCard[]): Promise<number> {
     setIsCreating(true);
-
-    let createdCount = 0;
-    let hitLimit = false;
-
-    for (const card of cards) {
-      const result = await createFlashcard({
-        type: "basic",
-        subjectId: splitSubjectId ?? "",
-        front: card.front,
-        back: card.back,
-      });
-
-      if (result.success) {
-        createdCount++;
-      } else if (result.errorCode === "limits.flashcardLimit") {
-        hitLimit = true;
-        break;
-      }
-    }
-
+    const result = await splitFlashcard({
+      id: flashcard.id,
+      subjectId: splitSubjectId ?? "",
+      cards,
+    });
     setIsCreating(false);
 
-    if (createdCount > 0) {
-      toast.success(
-        `Created ${createdCount} split flashcard${createdCount === 1 ? "" : "s"}`,
-      );
-      await deleteFlashcard({ id: flashcard.id });
-      onOpenChange(false);
-      onDeleted?.(flashcard.id);
-    } else if (hitLimit) {
-      toast.error("Flashcard limit reached. Could not split.");
-    } else {
-      toast.error("Failed to split flashcard. Some may have duplicate fronts.");
+    if (!result.success) {
+      toast.error(t(result.errorCode, result.errorParams));
+      return 0;
     }
 
-    return createdCount;
+    toast.success(
+      `Created ${result.createdCount} split flashcard${result.createdCount === 1 ? "" : "s"}`,
+    );
+    onOpenChange(false);
+    await onDeleted?.(flashcard.id, result.deletedIds);
+    return result.createdCount;
   }
 
   function handleModeSwitch(newMode: EditMode) {

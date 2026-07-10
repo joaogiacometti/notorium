@@ -6,10 +6,13 @@ import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import { cleanupOcclusionImagesForUser } from "@/features/flashcards/occlusion-mutations";
 import {
   countFlashcardsBySubjectForUser,
-  expandOcclusionSiblingIds,
   getFlashcardByIdForUser,
   getFlashcardRecordsForUser,
 } from "@/features/flashcards/queries";
+import {
+  expandFlashcardNoteSiblingIds,
+  expandOcclusionSiblingIds,
+} from "@/features/flashcards/sibling-queries";
 import type {
   BulkDeleteFlashcardsForm,
   BulkMoveFlashcardsForm,
@@ -37,8 +40,7 @@ export async function bulkDeleteFlashcardsForUser(
     return actionError("flashcards.notFound");
   }
 
-  // Deleting an occlusion card removes its whole note, so pull in every sibling.
-  const expandedIds = await expandOcclusionSiblingIds(userId, data.ids);
+  const expandedIds = await expandFlashcardNoteSiblingIds(userId, data.ids);
   const expandedFlashcards =
     expandedIds.length === data.ids.length
       ? existingFlashcards
@@ -90,8 +92,7 @@ export async function bulkMoveFlashcardsForUser(
     return actionError("subjects.notFound");
   }
 
-  // Moving an occlusion card moves its whole note so siblings stay together.
-  const expandedIds = await expandOcclusionSiblingIds(userId, data.ids);
+  const expandedIds = await expandFlashcardNoteSiblingIds(userId, data.ids);
   const expandedFlashcards =
     expandedIds.length === data.ids.length
       ? existingFlashcards

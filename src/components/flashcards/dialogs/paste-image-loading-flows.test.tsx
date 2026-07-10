@@ -31,6 +31,7 @@ vi.mock("@/app/actions/flashcards", () => ({
   createFlashcard: vi.fn(),
   deleteFlashcard: vi.fn(),
   editFlashcard: vi.fn(),
+  splitFlashcard: vi.fn(),
 }));
 
 vi.mock("@/app/actions/flashcard-generation", () => ({

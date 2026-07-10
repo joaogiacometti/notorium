@@ -83,7 +83,12 @@ export const occlusionImagePathnameSchema = z
 export const occlusionRegionsSchema = z
   .array(occlusionRegionSchema)
   .min(1, validationMessage("Validation.flashcards.occlusionRegionsRequired"))
-  .max(LIMITS.maxOcclusionRegionsPerNote);
+  .max(LIMITS.maxOcclusionRegionsPerNote)
+  .refine(
+    (regions) =>
+      new Set(regions.map((region) => region.id)).size === regions.length,
+    validationMessage("Validation.flashcards.occlusionRegionsRequired"),
+  );
 
 // Attachment-bearing rich-text fields differ by card type: basic cards carry
 // front + back, cloze notes carry the source + optional extra.
@@ -178,6 +183,17 @@ export const editFlashcardSchema = withFlashcardAttachmentLimit(
 );
 
 export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
+
+export const splitFlashcardSchema = z.object({
+  id: idSchema,
+  subjectId: subjectIdField,
+  cards: z
+    .array(z.object({ front: flashcardFrontSchema, back: flashcardBackSchema }))
+    .min(1)
+    .max(LIMITS.flashcardBatchSize),
+});
+
+export type SplitFlashcardForm = z.infer<typeof splitFlashcardSchema>;
 
 // Flat shape the create/edit dialog forms bind to. React Hook Form works poorly
 // with discriminated unions, so the form holds every field and validates the

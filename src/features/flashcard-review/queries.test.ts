@@ -59,6 +59,7 @@ vi.mock("@/db/schema", () => ({
     flashcardId: "flashcard_review_log_flashcard_id_column",
     rating: "flashcard_review_log_rating_column",
     reviewedAt: "flashcard_review_log_reviewed_at_column",
+    subjectId: "flashcard_review_log_subject_id_column",
   },
   subject: {
     id: "subject_id_column",
@@ -75,12 +76,10 @@ vi.mock("@/features/flashcards/fsrs/settings", () => ({
 function mockReviewTrendOnce(value: unknown) {
   selectMock.mockImplementationOnce(() => ({
     from: () => ({
-      innerJoin: () => ({
-        innerJoin: () => ({
-          where: () => ({
-            groupBy: () => ({
-              orderBy: vi.fn().mockResolvedValue(value),
-            }),
+      leftJoin: () => ({
+        where: () => ({
+          groupBy: () => ({
+            orderBy: vi.fn().mockResolvedValue(value),
           }),
         }),
       }),

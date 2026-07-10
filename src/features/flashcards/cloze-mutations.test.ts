@@ -18,12 +18,16 @@ const getSubjectRecordForUserMock = vi.fn();
 const countFlashcardsBySubjectForUserMock = vi.fn();
 const getClozeSiblingsForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
+const transactionMock = vi.fn(async (run: (tx: unknown) => Promise<unknown>) =>
+  run({ insert: insertMock, update: updateMock, delete: deleteMock }),
+);
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
     insert: insertMock,
     update: updateMock,
     delete: deleteMock,
+    transaction: transactionMock,
   }),
 }));
 
@@ -201,6 +205,7 @@ describe("editClozeNoteForUser", () => {
     // c1 updated in place, c2 inserted as a new sibling.
     expect(updateMock).toHaveBeenCalledTimes(1);
     expect(insertMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock).toHaveBeenCalledTimes(1);
     if (result.success) {
       expect(result.previousSubjectId).toBe("deck-1");
     }

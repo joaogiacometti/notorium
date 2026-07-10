@@ -166,35 +166,36 @@ async function syncSiblings(
 ): Promise<void> {
   const ordinals = parseClozeOrdinals(data.clozeSource);
   const byOrdinal = new Map(siblings.map((card) => [card.clozeOrdinal, card]));
-  const db = getDb();
-
-  for (const ordinal of ordinals) {
-    const content = buildSiblingContent(data.clozeSource, ordinal, data.back);
-    const existing = byOrdinal.get(ordinal);
-    if (existing) {
-      await db
-        .update(flashcardTable)
-        .set({
-          subjectId: data.subjectId,
-          clozeSource: data.clozeSource,
-          ...content,
-        })
-        .where(eq(flashcardTable.id, existing.id));
-    } else {
-      await db
-        .insert(flashcardTable)
-        .values(buildSiblingInsert(userId, data, clozeNoteId, ordinal));
-    }
-  }
-
   const removedIds = siblings
     .filter((card) => !ordinals.includes(card.clozeOrdinal ?? -1))
     .map((card) => card.id);
-  if (removedIds.length > 0) {
-    await db
-      .delete(flashcardTable)
-      .where(inArray(flashcardTable.id, removedIds));
-  }
+
+  await getDb().transaction(async (tx) => {
+    for (const ordinal of ordinals) {
+      const content = buildSiblingContent(data.clozeSource, ordinal, data.back);
+      const existing = byOrdinal.get(ordinal);
+      if (existing) {
+        await tx
+          .update(flashcardTable)
+          .set({
+            subjectId: data.subjectId,
+            clozeSource: data.clozeSource,
+            ...content,
+          })
+          .where(eq(flashcardTable.id, existing.id));
+      } else {
+        await tx
+          .insert(flashcardTable)
+          .values(buildSiblingInsert(userId, data, clozeNoteId, ordinal));
+      }
+    }
+
+    if (removedIds.length > 0) {
+      await tx
+        .delete(flashcardTable)
+        .where(inArray(flashcardTable.id, removedIds));
+    }
+  });
 }
 
 /**

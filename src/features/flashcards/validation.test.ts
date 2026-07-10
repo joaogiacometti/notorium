@@ -12,6 +12,7 @@ import {
   generateMindmapFlashcardsSchema,
   generateNoteFlashcardsSchema,
   resetFlashcardSchema,
+  splitFlashcardSchema,
 } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -65,6 +66,20 @@ describe("createFlashcardSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects duplicate image-occlusion mask ids", () => {
+    const result = createFlashcardSchema.safeParse({
+      type: "occlusion",
+      subjectId: "deck-1",
+      occlusionImagePathname: "notorium/flashcards/user-1/image.png",
+      occlusionRegions: [
+        { id: "mask-1", x: 0, y: 0, width: 0.2, height: 0.2 },
+        { id: "mask-1", x: 0.3, y: 0.3, width: 0.2, height: 0.2 },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("editFlashcardSchema", () => {
@@ -87,6 +102,25 @@ describe("editFlashcardSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("splitFlashcardSchema", () => {
+  it("requires at least one complete replacement card", () => {
+    expect(
+      splitFlashcardSchema.safeParse({
+        id: "flashcard-1",
+        subjectId: "deck-1",
+        cards: [{ front: richFront, back: richBack }],
+      }).success,
+    ).toBe(true);
+    expect(
+      splitFlashcardSchema.safeParse({
+        id: "flashcard-1",
+        subjectId: "deck-1",
+        cards: [],
+      }).success,
+    ).toBe(false);
   });
 });
 

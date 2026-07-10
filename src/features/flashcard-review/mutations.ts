@@ -101,7 +101,11 @@ async function applyFlashcardReviewForUser(
         .update(flashcard)
         .set(getFlashcardReviewUpdateValues(nextState))
         .where(
-          and(eq(flashcard.id, existingCard.id), eq(flashcard.userId, userId)),
+          and(
+            eq(flashcard.id, existingCard.id),
+            eq(flashcard.userId, userId),
+            eq(flashcard.reviewCount, existingCard.reviewCount),
+          ),
         )
         .returning({
           id: flashcard.id,
@@ -125,16 +129,24 @@ async function applyFlashcardReviewForUser(
           subjectId: flashcard.subjectId,
         });
 
+      const updatedCard = updatedCards[0];
+      if (!updatedCard) {
+        throw new Error(
+          `Flashcard review conflict for ${existingCard.id}; expected reviewCount ${existingCard.reviewCount}`,
+        );
+      }
+
       await tx.insert(flashcardReviewLog).values({
         flashcardId: existingCard.id,
+        subjectId: existingCard.subjectId,
         userId,
         clientReviewId: data.clientReviewId,
         rating: data.grade,
-        reviewedAt: effectiveNow,
+        reviewedAt,
         daysElapsed: nextState.daysElapsed,
       });
 
-      return updatedCards[0];
+      return updatedCard;
     });
   } catch {
     return actionError("flashcards.review.unavailable");
