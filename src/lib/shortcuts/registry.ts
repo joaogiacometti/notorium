@@ -145,6 +145,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Mindmap,
   },
   {
+    id: "mindmap-search",
+    kind: "keys",
+    keys: ["cmd+f", "ctrl+f"],
+    description: "Search nodes",
+    category: ShortcutCategory.Mindmap,
+  },
+  {
     id: "mindmap-temp-pan",
     kind: "keys",
     keys: ["space"],

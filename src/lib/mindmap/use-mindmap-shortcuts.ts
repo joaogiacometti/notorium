@@ -15,6 +15,7 @@ interface UseMindmapShortcutsParams {
   copySelected: () => boolean;
   undo: () => void;
   redo: () => void;
+  focusSearch: () => void;
 }
 
 type MindmapKeyAction =
@@ -23,13 +24,14 @@ type MindmapKeyAction =
   | { kind: "delete" }
   | { kind: "add-child" }
   | { kind: "add-sibling" }
+  | { kind: "search" }
   | null;
 
 /**
  * Wires the mindmap canvas keyboard shortcuts in one module-owned place.
  *
  * @example
- * useMindmapShortcuts({ setMode, setSpaceHeld, deleteSelected, addChildToSelected, addSiblingToSelected, copySelected, undo, redo });
+ * useMindmapShortcuts({ setMode, setSpaceHeld, deleteSelected, addChildToSelected, addSiblingToSelected, copySelected, undo, redo, focusSearch });
  */
 export function useMindmapShortcuts({
   enabled = true,
@@ -41,6 +43,7 @@ export function useMindmapShortcuts({
   copySelected,
   undo,
   redo,
+  focusSearch,
 }: UseMindmapShortcutsParams): void {
   useEffect(() => {
     if (!enabled) return;
@@ -54,6 +57,7 @@ export function useMindmapShortcuts({
         copySelected,
         undo,
         redo,
+        focusSearch,
       });
     };
     const onKeyUp = (event: KeyboardEvent) => {
@@ -77,6 +81,7 @@ export function useMindmapShortcuts({
     copySelected,
     undo,
     redo,
+    focusSearch,
   ]);
 }
 
@@ -94,8 +99,16 @@ function handleMindmapKeyDown(
 
 /** Map a keydown to its canvas action; exported for unit tests. */
 export function resolveMindmapKey(event: KeyboardEvent): MindmapKeyAction {
-  if (event.ctrlKey || event.metaKey || event.altKey) return null;
   const key = event.key.toLowerCase();
+  if (
+    key === "f" &&
+    (event.ctrlKey || event.metaKey) &&
+    !event.shiftKey &&
+    !event.altKey
+  ) {
+    return { kind: "search" };
+  }
+  if (event.ctrlKey || event.metaKey || event.altKey) return null;
   if (key === "v") return { kind: "mode", mode: "select" };
   if (key === "h") return { kind: "mode", mode: "hand" };
   if (event.key === " " || key === "spacebar") return { kind: "space" };
@@ -164,6 +177,11 @@ function runMindmapKeyAction(
   if (action.kind === "space") {
     event.preventDefault();
     actions.setSpaceHeld(true);
+    return;
+  }
+  if (action.kind === "search") {
+    event.preventDefault();
+    actions.focusSearch();
     return;
   }
   event.preventDefault();

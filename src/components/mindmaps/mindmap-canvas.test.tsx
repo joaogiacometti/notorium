@@ -26,6 +26,8 @@ vi.mock("@xyflow/react", () => ({
     getEdges: () => [],
     getIntersectingNodes: () => [],
     screenToFlowPosition: (point: { x: number; y: number }) => point,
+    fitView: vi.fn(),
+    setNodes: vi.fn(),
   }),
 }));
 
@@ -47,6 +49,9 @@ vi.mock("@/components/mindmaps/mindmap-image-node", () => ({
 }));
 vi.mock("@/components/mindmaps/mindmap-mode-toolbar", () => ({
   MindmapModeToolbar: () => null,
+}));
+vi.mock("@/components/mindmaps/mindmap-canvas-toolbar", () => ({
+  MindmapCanvasToolbar: () => null,
 }));
 vi.mock("@/components/mindmaps/mindmap-node", () => ({
   MindmapNodeComponent: () => null,

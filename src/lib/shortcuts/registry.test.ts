@@ -170,6 +170,17 @@ describe("shortcutRegistry", () => {
     });
     expect(shortcut ? displayShortcutKeys(shortcut) : []).toEqual(["Tab"]);
   });
+
+  it("lists the mindmap search shortcut", () => {
+    const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
+      (item) => item.id === "mindmap-search",
+    );
+    expect(shortcut).toMatchObject({
+      kind: "keys",
+      keys: ["cmd+f", "ctrl+f"],
+      description: "Search nodes",
+    });
+  });
 });
 
 describe("getActiveShortcutCategories", () => {

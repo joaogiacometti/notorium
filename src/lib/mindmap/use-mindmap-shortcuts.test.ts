@@ -27,6 +27,7 @@ type MindmapShortcutHarnessProps = Readonly<{
   enabled: boolean;
   onMode: () => void;
   onUndo?: () => void;
+  onSearch?: () => void;
 }>;
 
 describe("resolveMindmapKey", () => {
@@ -37,6 +38,19 @@ describe("resolveMindmapKey", () => {
     expect(
       resolveMindmapKey(new KeyboardEvent("keydown", { key: "H" })),
     ).toEqual({ kind: "mode", mode: "hand" });
+  });
+
+  it("maps Cmd/Ctrl+F to node search", () => {
+    expect(
+      resolveMindmapKey(
+        new KeyboardEvent("keydown", { key: "f", ctrlKey: true }),
+      ),
+    ).toEqual({ kind: "search" });
+    expect(
+      resolveMindmapKey(
+        new KeyboardEvent("keydown", { key: "F", metaKey: true }),
+      ),
+    ).toEqual({ kind: "search" });
   });
 
   it("maps canvas action keys", () => {
@@ -110,6 +124,7 @@ function MindmapShortcutHarness({
   enabled,
   onMode,
   onUndo = () => {},
+  onSearch = () => {},
 }: MindmapShortcutHarnessProps) {
   useMindmapShortcuts({
     enabled,
@@ -121,6 +136,7 @@ function MindmapShortcutHarness({
     copySelected: () => false,
     undo: onUndo,
     redo: () => {},
+    focusSearch: onSearch,
   });
   return createElement("textarea", { "aria-label": "Node label" });
 }
@@ -202,6 +218,29 @@ describe("useMindmapShortcuts", () => {
       window.dispatchEvent(event);
 
       expect(onUndo).toHaveBeenCalledOnce();
+      expect(event.defaultPrevented).toBe(true);
+    } finally {
+      await cleanupShortcutHarness(rendered);
+    }
+  });
+
+  it("focuses search and prevents the browser find dialog", async () => {
+    const onSearch = vi.fn();
+    const rendered = await renderShortcutHarness({
+      enabled: true,
+      onMode: () => {},
+      onSearch,
+    });
+
+    try {
+      const event = new KeyboardEvent("keydown", {
+        key: "f",
+        ctrlKey: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(event);
+
+      expect(onSearch).toHaveBeenCalledOnce();
       expect(event.defaultPrevented).toBe(true);
     } finally {
       await cleanupShortcutHarness(rendered);
