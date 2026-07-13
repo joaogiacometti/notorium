@@ -1,6 +1,9 @@
 "use server";
 
-import { reviewFlashcardForUser } from "@/features/flashcard-review/mutations";
+import {
+  reviewFlashcardForUser,
+  undoFlashcardReviewForUser,
+} from "@/features/flashcard-review/mutations";
 import {
   type GetDueFlashcardsOptions,
   getAllFlashcardsForExam,
@@ -9,6 +12,8 @@ import {
 import {
   type ReviewFlashcardForm,
   reviewFlashcardSchema,
+  type UndoFlashcardReviewForm,
+  undoFlashcardReviewSchema,
 } from "@/features/flashcard-review/validation";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
@@ -17,6 +22,7 @@ import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
   ReviewFlashcardResult,
+  UndoFlashcardReviewResult,
 } from "@/lib/server/api-contracts";
 
 export async function getFlashcardReviewState(
@@ -34,6 +40,18 @@ export async function reviewFlashcard(
     data,
     "flashcards.review.invalidData",
     async (userId, parsedData) => reviewFlashcardForUser(userId, parsedData),
+  );
+}
+
+export async function undoFlashcardReview(
+  data: UndoFlashcardReviewForm,
+): Promise<UndoFlashcardReviewResult> {
+  return runValidatedUserAction(
+    undoFlashcardReviewSchema,
+    data,
+    "flashcards.review.invalidData",
+    async (userId, parsedData) =>
+      undoFlashcardReviewForUser(userId, parsedData),
   );
 }
 

@@ -86,6 +86,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "flashcards.review.notDue": "This flashcard is not due yet.",
   "flashcards.review.unavailable":
     "Review submission is temporarily unavailable. Try again in a moment.",
+  "flashcards.review.undoUnavailable": "This review can no longer be undone.",
   "flashcards.fsrsOptimization.locked":
     "FSRS optimization is already running. Try again in a moment.",
   "flashcards.fsrsOptimization.notEnoughHistory":

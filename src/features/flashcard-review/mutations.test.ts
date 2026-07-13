@@ -14,9 +14,17 @@ const insertValuesMock = vi.fn();
 const insertMock = vi.fn(() => ({
   values: insertValuesMock,
 }));
+const deleteWhereMock = vi.fn();
+const deleteMock = vi.fn(() => ({
+  where: deleteWhereMock,
+}));
 const limitMock = vi.fn();
+const selectOrderByMock = vi.fn(() => ({
+  limit: limitMock,
+}));
 const selectWhereMock = vi.fn(() => ({
   limit: limitMock,
+  orderBy: selectOrderByMock,
 }));
 const selectMock = vi.fn(() => ({
   from: () => ({
@@ -39,6 +47,7 @@ vi.mock("@/db/index", () => ({
 
 vi.mock("drizzle-orm", () => ({
   and: andMock,
+  desc: vi.fn((column) => ({ column, direction: "desc" })),
   eq: eqMock,
 }));
 
@@ -59,11 +68,21 @@ vi.mock("@/db/schema", () => ({
     lastReviewedAt: "flashcard_last_reviewed_at_column",
     reviewCount: "flashcard_review_count_column",
     lapseCount: "flashcard_lapse_count_column",
+    clozeSource: "flashcard_cloze_source_column",
+    occlusionImagePathname: "flashcard_occlusion_image_pathname_column",
+    occlusionRegions: "flashcard_occlusion_regions_column",
+    occlusionMaskId: "flashcard_occlusion_mask_id_column",
   },
   flashcardReviewLog: {
     id: "flashcard_review_log_id_column",
+    flashcardId: "flashcard_review_log_flashcard_id_column",
     userId: "flashcard_review_log_user_id_column",
     clientReviewId: "flashcard_review_log_client_review_id_column",
+    reviewedAt: "flashcard_review_log_reviewed_at_column",
+    createdAt: "flashcard_review_log_created_at_column",
+    reviewCountAfter: "flashcard_review_log_review_count_after_column",
+    previousSchedulingState:
+      "flashcard_review_log_previous_scheduling_state_column",
   },
 }));
 
@@ -187,6 +206,7 @@ describe("reviewFlashcardForUser", () => {
     expect(result).toEqual({
       success: true,
       reviewedCardId: "flashcard-1",
+      reviewLogId: expect.any(String),
       flashcard: expect.objectContaining({
         id: "flashcard-1",
         reviewCount: 11,
@@ -354,5 +374,81 @@ describe("reviewFlashcardForUser", () => {
     );
     expect(insertMock).not.toHaveBeenCalled();
     vi.useRealTimers();
+  });
+
+  it("restores the previous scheduling state and removes the latest review log", async () => {
+    const reviewedAt = new Date("2026-03-13T12:00:00.000Z");
+    const currentCard = {
+      id: "flashcard-1",
+      subjectId: "subject-1",
+      subjectName: "Biology",
+      subjectPath: "Biology::Cells",
+      state: "review" as const,
+      dueAt: new Date("2026-03-20T12:00:00.000Z"),
+      reviewCount: 11,
+      lastReviewedAt: reviewedAt,
+    };
+    getReviewableFlashcardForUserMock.mockResolvedValueOnce(currentCard);
+    limitMock.mockResolvedValueOnce([
+      {
+        id: "review-log-1",
+        reviewedAt,
+        reviewCountAfter: 11,
+        previousSchedulingState: {
+          state: "review",
+          dueAt: "2026-03-13T11:00:00.000Z",
+          stability: "10.0000",
+          difficulty: "5.0000",
+          ease: 250,
+          intervalDays: 10,
+          learningStep: 0,
+          lastReviewedAt: "2026-03-03T12:00:00.000Z",
+          reviewCount: 10,
+          lapseCount: 0,
+        },
+      },
+    ]);
+    returningMock.mockResolvedValueOnce([
+      {
+        id: "flashcard-1",
+        subjectId: "subject-1",
+        state: "review",
+        dueAt: new Date("2026-03-13T11:00:00.000Z"),
+        reviewCount: 10,
+        lastReviewedAt: new Date("2026-03-03T12:00:00.000Z"),
+      },
+    ]);
+    transactionMock.mockImplementationOnce(async (callback) =>
+      callback({
+        select: selectMock,
+        update: updateMock,
+        delete: deleteMock,
+      }),
+    );
+
+    const { undoFlashcardReviewForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+    const result = await undoFlashcardReviewForUser("user-1", {
+      id: "flashcard-1",
+      reviewLogId: "review-log-1",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      flashcard: expect.objectContaining({
+        id: "flashcard-1",
+        reviewCount: 10,
+        subjectName: "Biology",
+        subjectPath: "Biology::Cells",
+      }),
+    });
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dueAt: new Date("2026-03-13T11:00:00.000Z"),
+        reviewCount: 10,
+      }),
+    );
+    expect(deleteMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -30,6 +30,7 @@ const baseHandlers = {
   onEditFlashcard: vi.fn(),
   onResetFlashcard: vi.fn(),
   onDeleteFlashcard: vi.fn(),
+  onUndoReview: vi.fn(),
 };
 
 function makeCard(): FlashcardReviewEntity {
@@ -96,7 +97,7 @@ describe("FocusModeOverlay", () => {
     const headerButtons = container.querySelectorAll("button");
 
     expect(headerButtons[0]?.getAttribute("aria-label")).toBe(
-      "Open flashcard actions",
+      "Open review actions",
     );
     expect(headerButtons[1]?.getAttribute("aria-label")).toBe(
       "Exit Focus Mode",
@@ -115,12 +116,31 @@ describe("FocusModeOverlay", () => {
     expect(baseHandlers.onDeleteFlashcard).toHaveBeenCalledOnce();
   });
 
+  it("offers the latest review undo from the card actions menu", async () => {
+    await renderFocusModeOverlay({ canUndoReview: true });
+
+    await clickMenuItem("Undo last review");
+
+    expect(baseHandlers.onUndoReview).toHaveBeenCalledOnce();
+  });
+
+  it("keeps undo available after the last due card is graded", async () => {
+    await renderFocusModeOverlay({
+      currentCard: null,
+      canUndoReview: true,
+    });
+
+    await clickMenuItem("Undo last review");
+
+    expect(baseHandlers.onUndoReview).toHaveBeenCalledOnce();
+  });
+
   it("keeps the card actions menu disabled while review actions are pending", async () => {
     await renderFocusModeOverlay({ isPending: true });
 
     const headerButtons = container.querySelectorAll("button");
     const actionsButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Open flashcard actions"]',
+      'button[aria-label="Open review actions"]',
     );
 
     expect(actionsButton).toBeTruthy();
@@ -147,7 +167,7 @@ describe("FocusModeOverlay", () => {
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>(
-          'button[aria-label="Open flashcard actions"]',
+          'button[aria-label="Open review actions"]',
         )
         ?.dispatchEvent(
           new PointerEvent("pointerdown", {
@@ -183,6 +203,7 @@ describe("FocusModeOverlay", () => {
           progress={0}
           revealed={false}
           isPending={false}
+          canUndoReview={false}
           pendingGrade={null}
           previewLabels={null}
           {...baseHandlers}
