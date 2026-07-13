@@ -14,17 +14,20 @@ import { useEffect, useRef, useState } from "react";
 import {
   type LinkDialogState,
   LinkEditDialog,
+  prepareLinkDialogState,
 } from "@/components/shared/link-edit-dialog";
 import {
   type MathDialogState,
   MathEditDialog,
 } from "@/components/shared/math-edit-dialog";
+import { TiptapFormattingToolbar } from "@/components/shared/tiptap-formatting-toolbar";
 import {
   createImageUrlPasteExtension,
   type EditorImageUploadContext,
   type EditorImageUploadTracker,
   isExternalEditorValueChange,
   shouldApplyNormalizedEditorValue,
+  uploadPastedImage,
 } from "@/components/shared/tiptap-helpers";
 import { TiptapTableControls } from "@/components/shared/tiptap-table-controls";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
@@ -70,6 +73,7 @@ export function TiptapEditor({
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null);
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
   const editorRef = useRef<Editor | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const lastEmittedValueRef = useRef(value);
   const latestValueRef = useRef(value);
   onCtrlEnterRef.current = onCtrlEnter;
@@ -168,33 +172,9 @@ export function TiptapEditor({
         ) {
           const ed = editorRef.current;
           if (!ed) return false;
-
-          const linkActive = ed.isActive("link");
-          const canExtendLink = !linkActive && ed.can().extendMarkRange("link");
-
-          if (linkActive || canExtendLink) {
-            if (canExtendLink) {
-              ed.chain().focus().extendMarkRange("link").run();
-            }
-            const href = (ed.getAttributes("link").href as string) ?? "";
-            event.preventDefault();
-            event.stopPropagation();
-            setLinkDialog({ mode: "edit", href });
-            return true;
-          }
-
-          const { from, to, empty } = ed.state.selection;
-          if (!empty) {
-            const selectedText = ed.state.doc.textBetween(from, to, " ");
-            event.preventDefault();
-            event.stopPropagation();
-            setLinkDialog({ mode: "create", selectedText });
-            return true;
-          }
-
           event.preventDefault();
           event.stopPropagation();
-          setLinkDialog({ mode: "create", selectedText: "" });
+          setLinkDialog(prepareLinkDialogState(ed));
           return true;
         }
 
@@ -283,6 +263,33 @@ export function TiptapEditor({
           <span>Uploading image...</span>
         </div>
       ) : null}
+      {editor ? (
+        <TiptapFormattingToolbar
+          editor={editor}
+          imageUploadPending={isImageUploadPending}
+          onEditLink={() => setLinkDialog(prepareLinkDialogState(editor))}
+          onSelectImage={() => imageInputRef.current?.click()}
+        />
+      ) : null}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        aria-label="Choose editor image"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          event.currentTarget.value = "";
+          if (editor && file) {
+            void uploadPastedImage(
+              editor,
+              file,
+              imageUploadContext,
+              imageUploadTracker,
+            );
+          }
+        }}
+      />
       {editor ? <TiptapTableControls editor={editor} /> : null}
       <EditorContent
         editor={editor}

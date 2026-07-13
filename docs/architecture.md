@@ -54,7 +54,7 @@ Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* serv
 
 Cross-cutting services live behind project-owned helpers in `src/lib/`, including Better Auth, AI providers, email, media storage, and rate limiting.
 
-The rich-text editor and read-only renderer (`src/components/shared/tiptap-editor.tsx` and `tiptap-renderer.tsx`) share their Tiptap extension sets through `src/lib/editor/build*Extensions()` helpers (tables, math). Both surfaces must register the same extensions: Tiptap drops unknown nodes when parsing stored HTML, so math or tables present only in the editor would vanish in the renderer. Math nodes (KaTeX) serialize their LaTeX into a `data-latex` attribute, which `src/lib/editor/rich-text.ts` surfaces as text so equations stay searchable and within length limits.
+The rich-text editor and read-only renderer (`src/components/shared/tiptap-editor.tsx` and `tiptap-renderer.tsx`) share their Tiptap extension sets through `src/lib/editor/build*Extensions()` helpers (tables, math). The editor exposes those commands through `tiptap-formatting-toolbar.tsx` and reuses the existing link dialog and private attachment upload path. Both surfaces must register the same extensions: Tiptap drops unknown nodes when parsing stored HTML, so math or tables present only in the editor would vanish in the renderer. Math nodes (KaTeX) serialize their LaTeX into a `data-latex` attribute, which `src/lib/editor/rich-text.ts` surfaces as text so equations stay searchable and within length limits.
 
 ## Enforced Boundaries
 
