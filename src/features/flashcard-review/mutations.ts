@@ -14,6 +14,7 @@ import { actionError } from "@/lib/server/server-action-errors";
 
 function getFlashcardReviewUpdateValues(
   nextState: ReturnType<typeof scheduleFlashcardReview>,
+  reviewedAt: Date,
 ) {
   return {
     state: nextState.state,
@@ -23,10 +24,10 @@ function getFlashcardReviewUpdateValues(
     ease: nextState.ease,
     intervalDays: nextState.intervalDays,
     learningStep: nextState.learningStep,
-    lastReviewedAt: nextState.lastReviewedAt,
+    lastReviewedAt: reviewedAt,
     reviewCount: nextState.reviewCount,
     lapseCount: nextState.lapseCount,
-    updatedAt: nextState.updatedAt,
+    updatedAt: reviewedAt,
   };
 }
 
@@ -99,7 +100,7 @@ async function applyFlashcardReviewForUser(
     updatedCard = await getDb().transaction(async (tx) => {
       const updatedCards = await tx
         .update(flashcard)
-        .set(getFlashcardReviewUpdateValues(nextState))
+        .set(getFlashcardReviewUpdateValues(nextState, reviewedAt))
         .where(
           and(
             eq(flashcard.id, existingCard.id),

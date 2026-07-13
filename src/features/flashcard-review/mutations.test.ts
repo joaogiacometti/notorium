@@ -300,6 +300,12 @@ describe("reviewFlashcardForUser", () => {
     expect(scheduleFlashcardReviewMock).toHaveBeenCalledWith(
       expect.objectContaining({ now: dueAt }),
     );
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lastReviewedAt: now,
+        updatedAt: now,
+      }),
+    );
     expect(insertValuesMock).toHaveBeenCalledWith(
       expect.objectContaining({
         reviewedAt: now,
