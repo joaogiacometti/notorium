@@ -140,11 +140,12 @@ describe("FocusModeOverlay", () => {
 
     const headerButtons = container.querySelectorAll("button");
     const actionsButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Open review actions"]',
+      'button[aria-label="Review action in progress"]',
     );
 
     expect(actionsButton).toBeTruthy();
     expect(actionsButton?.disabled).toBe(true);
+    expect(actionsButton?.getAttribute("aria-busy")).toBe("true");
     expect(headerButtons[0]).toBe(actionsButton);
     expect(headerButtons[1]?.getAttribute("aria-label")).toBe(
       "Exit Focus Mode",

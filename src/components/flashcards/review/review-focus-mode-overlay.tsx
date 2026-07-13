@@ -2,6 +2,7 @@
 
 import {
   GraduationCap,
+  Loader2,
   MoreVertical,
   Pencil,
   RotateCcw,
@@ -212,7 +213,7 @@ function FocusModeCardActions({
   onDeleteFlashcard,
 }: Readonly<FocusModeCardActionsProps>) {
   if (isPending) {
-    return <FocusModeCardActionsButton disabled />;
+    return <FocusModeCardActionsPendingButton />;
   }
 
   return (
@@ -267,18 +268,17 @@ function FocusModeCardActions({
   );
 }
 
-function FocusModeCardActionsButton({
-  disabled = false,
-}: Readonly<{ disabled?: boolean }>) {
+function FocusModeCardActionsPendingButton() {
   return (
     <Button
       variant="ghost"
       size="icon"
       className="size-10"
-      aria-label="Open review actions"
-      disabled={disabled}
+      aria-label="Review action in progress"
+      aria-busy="true"
+      disabled
     >
-      <MoreVertical className="size-5" />
+      <Loader2 className="size-5 animate-spin" />
     </Button>
   );
 }

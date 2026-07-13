@@ -151,7 +151,8 @@ Students who want a private, lightweight study management workspace.
   deleted, so historical activity and FSRS optimization input do not change.
 - After grading a regular review card, users can undo that latest grade from the
   review session's kebab menu; undo restores the card's prior scheduling state
-  and removes that review from activity and optimization history.
+  and removes that review from activity and optimization history. The review
+  actions trigger shows a disabled loading spinner while undo is in progress.
 - Review parameters support per-user tuning.
 - Users can manually optimize FSRS parameters from the account settings dialog using their review history.
 - Users can reset FSRS optimization from the account settings dialog to restore default scheduler tuning without deleting review history or flashcard progress.
