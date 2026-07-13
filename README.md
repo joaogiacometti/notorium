@@ -7,7 +7,7 @@ It is built for a single trusted group: the first account becomes an admin, and 
 ## Features
 
 - **Subjects** — a nestable tree of academic or general subjects, navigated from a persistent sidebar with drag-and-drop reorganization.
-- **Notes** — rich-text notes with tables, syntax-highlighted code, and searchable LaTeX math (KaTeX), edited inline with autosave.
+- **Notes** — rich-text notes with a compact formatting toolbar, tables, syntax-highlighted code, image uploads, and searchable LaTeX math (KaTeX), edited inline with autosave.
 - **Mindmaps** — branch-ordered React Flow canvases scoped to a subject, exportable as PNG.
 - **Flashcards** — basic, cloze, and image-occlusion cards organized by subject, reviewed with an FSRS spaced-repetition scheduler. Focus Mode and Exam Mode tune the review session.
 - **Attendance & Assessments** — per-subject absence tracking and an assessment planner with a calendar/planning view and optional email reminders.

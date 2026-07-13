@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type LinkDialogState,
   LinkEditDialog,
+  prepareLinkDialogState,
 } from "@/components/shared/link-edit-dialog";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -134,6 +135,37 @@ function createContainer() {
   document.body.appendChild(container);
   return container;
 }
+
+describe("prepareLinkDialogState", () => {
+  it("opens edit mode for the active link", () => {
+    const editor = {
+      isActive: () => true,
+      can: () => ({ extendMarkRange: () => false }),
+      getAttributes: () => ({ href: "https://example.com" }),
+    } as unknown as Editor;
+
+    expect(prepareLinkDialogState(editor)).toEqual({
+      mode: "edit",
+      href: "https://example.com",
+    });
+  });
+
+  it("includes selected text when creating a link", () => {
+    const editor = {
+      isActive: () => false,
+      can: () => ({ extendMarkRange: () => false }),
+      state: {
+        selection: { from: 2, to: 8, empty: false },
+        doc: { textBetween: () => "chosen" },
+      },
+    } as unknown as Editor;
+
+    expect(prepareLinkDialogState(editor)).toEqual({
+      mode: "create",
+      selectedText: "chosen",
+    });
+  });
+});
 
 describe("handleSave URL validation", () => {
   let container: HTMLDivElement;

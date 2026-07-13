@@ -17,6 +17,31 @@ export type LinkDialogState =
   | { mode: "create"; selectedText: string }
   | { mode: "edit"; href: string };
 
+/**
+ * Preserves the current selection and builds the state needed by the link dialog.
+ * @example setLinkDialog(prepareLinkDialogState(editor))
+ */
+export function prepareLinkDialogState(editor: Editor): LinkDialogState {
+  const linkActive = editor.isActive("link");
+  const canExtendLink = !linkActive && editor.can().extendMarkRange("link");
+
+  if (linkActive || canExtendLink) {
+    if (canExtendLink) {
+      editor.chain().focus().extendMarkRange("link").run();
+    }
+    return {
+      mode: "edit",
+      href: (editor.getAttributes("link").href as string) ?? "",
+    };
+  }
+
+  const { from, to, empty } = editor.state.selection;
+  return {
+    mode: "create",
+    selectedText: empty ? "" : editor.state.doc.textBetween(from, to, " "),
+  };
+}
+
 interface LinkEditDialogProps {
   editor: Editor | null;
   state: LinkDialogState | null;
