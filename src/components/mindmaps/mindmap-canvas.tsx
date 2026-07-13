@@ -30,6 +30,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { MindmapActionsProvider } from "@/components/mindmaps/mindmap-actions-context";
+import { MindmapCanvasToolbar } from "@/components/mindmaps/mindmap-canvas-toolbar";
 import { MindmapEdge } from "@/components/mindmaps/mindmap-edge";
 import { MindmapImageNode } from "@/components/mindmaps/mindmap-image-node";
 import { MindmapModeToolbar } from "@/components/mindmaps/mindmap-mode-toolbar";
@@ -141,6 +142,7 @@ function MindmapCanvasInner({
   const syncedRootLabelRef = useRef(title);
   const previousTitleRef = useRef(title);
   const canvasWrapperRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const persistedGraph = useMemo(() => toGraph(nodes, edges), [nodes, edges]);
   const persistedGraphRef = useRef(persistedGraph);
   // Only re-serialize when the graph itself changes, not on every unrelated
@@ -158,7 +160,7 @@ function MindmapCanvasInner({
   // Holding Space temporarily pans regardless of the chosen tool.
   const effectiveMode: MindmapMode = spaceHeld ? "hand" : mode;
 
-  const { takeSnapshot, undo, redo } = useMindmapHistory({
+  const { takeSnapshot, undo, redo, canUndo, canRedo } = useMindmapHistory({
     nodes,
     edges,
     setNodes: (next) => setNodes(next),
@@ -347,6 +349,10 @@ function MindmapCanvasInner({
     setPendingEditNodeId,
   });
 
+  const selectedBranchCount = nodes.filter(
+    (node) => node.selected && node.data.kind !== "image",
+  ).length;
+
   useMindmapShortcuts({
     enabled: shortcutsEnabled,
     setMode,
@@ -357,6 +363,7 @@ function MindmapCanvasInner({
     copySelected,
     undo,
     redo,
+    focusSearch: () => searchInputRef.current?.focus(),
   });
 
   const actions = useMindmapCanvasActions({
@@ -433,6 +440,18 @@ function MindmapCanvasInner({
         >
           <Panel position="top-left">
             <MindmapModeToolbar mode={mode} onModeChange={setMode} />
+          </Panel>
+          <Panel position="top-center">
+            <MindmapCanvasToolbar
+              nodes={nodes}
+              searchInputRef={searchInputRef}
+              canAddChild={selectedBranchCount === 1}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onAddChild={addChildToSelected}
+              onUndo={undo}
+              onRedo={redo}
+            />
           </Panel>
           <Background id={backgroundId} />
           <Controls />
