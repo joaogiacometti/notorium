@@ -260,6 +260,13 @@ export type ReviewFlashcardResult =
   | {
       success: true;
       reviewedCardId: string;
+      reviewLogId: string;
+      flashcard: FlashcardReviewEntity;
+    }
+  | ActionErrorResult;
+export type UndoFlashcardReviewResult =
+  | {
+      success: true;
       flashcard: FlashcardReviewEntity;
     }
   | ActionErrorResult;

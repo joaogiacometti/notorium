@@ -6,6 +6,7 @@ import {
   Pencil,
   RotateCcw,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import { ReviewGradeButtons } from "@/components/flashcards/review/review-grade-buttons";
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
@@ -15,6 +16,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
@@ -39,6 +41,8 @@ interface FocusModeOverlayProps {
   previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
+  canUndoReview: boolean;
+  onUndoReview: () => void;
   onExitFocusMode: () => void;
   onEditFlashcard: () => void;
   onResetFlashcard: () => void;
@@ -56,7 +60,14 @@ interface FocusModeOverlayProps {
  */
 export function FocusModeOverlay(props: Readonly<FocusModeOverlayProps>) {
   if (!props.currentCard) {
-    return <ReviewSessionEmptyState onExit={props.onExitFocusMode} />;
+    return (
+      <ReviewSessionEmptyState
+        isPending={props.isPending}
+        canUndoReview={props.canUndoReview}
+        onUndoReview={props.onUndoReview}
+        onExit={props.onExitFocusMode}
+      />
+    );
   }
 
   if (props.isExamMode) {
@@ -87,6 +98,8 @@ function DueReviewFocusModeOverlay({
   onEditFlashcard,
   onResetFlashcard,
   onDeleteFlashcard,
+  canUndoReview,
+  onUndoReview,
 }: Readonly<SessionOverlayProps>) {
   const footer = getSessionFooter({
     revealed,
@@ -106,6 +119,8 @@ function DueReviewFocusModeOverlay({
       actions={
         <FocusModeCardActions
           isPending={isPending}
+          canUndoReview={canUndoReview}
+          onUndoReview={onUndoReview}
           onEditFlashcard={onEditFlashcard}
           onResetFlashcard={onResetFlashcard}
           onDeleteFlashcard={onDeleteFlashcard}
@@ -136,6 +151,7 @@ function ExamFocusModeOverlay({
   onEditFlashcard,
   onResetFlashcard,
   onDeleteFlashcard,
+  onUndoReview,
   examCurrentIndex = 0,
   examTotalCards = 0,
 }: Readonly<SessionOverlayProps>) {
@@ -158,6 +174,8 @@ function ExamFocusModeOverlay({
       actions={
         <FocusModeCardActions
           isPending={isPending}
+          canUndoReview={false}
+          onUndoReview={onUndoReview}
           onEditFlashcard={onEditFlashcard}
           onResetFlashcard={onResetFlashcard}
           onDeleteFlashcard={onDeleteFlashcard}
@@ -176,13 +194,19 @@ function ExamFocusModeOverlay({
 
 interface FocusModeCardActionsProps {
   isPending: boolean;
-  onEditFlashcard: () => void;
-  onResetFlashcard: () => void;
-  onDeleteFlashcard: () => void;
+  canUndoReview: boolean;
+  cardActions?: boolean;
+  onUndoReview: () => void;
+  onEditFlashcard?: () => void;
+  onResetFlashcard?: () => void;
+  onDeleteFlashcard?: () => void;
 }
 
 function FocusModeCardActions({
   isPending,
+  canUndoReview,
+  cardActions = true,
+  onUndoReview,
   onEditFlashcard,
   onResetFlashcard,
   onDeleteFlashcard,
@@ -198,27 +222,46 @@ function FocusModeCardActions({
           variant="ghost"
           size="icon"
           className="size-10"
-          aria-label="Open flashcard actions"
+          aria-label="Open review actions"
         >
           <MoreVertical className="size-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="z-120">
-        <DropdownMenuItem onClick={onEditFlashcard} className="cursor-pointer">
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onResetFlashcard} className="cursor-pointer">
-          <RotateCcw className="size-4" />
-          Reset
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={onDeleteFlashcard}
-          className="cursor-pointer text-destructive focus:text-destructive"
-        >
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canUndoReview ? (
+          <>
+            <DropdownMenuItem onClick={onUndoReview} className="cursor-pointer">
+              <Undo2 className="size-4" />
+              Undo last review
+            </DropdownMenuItem>
+            {cardActions ? <DropdownMenuSeparator /> : null}
+          </>
+        ) : null}
+        {cardActions ? (
+          <>
+            <DropdownMenuItem
+              onClick={onEditFlashcard}
+              className="cursor-pointer"
+            >
+              <Pencil className="size-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onResetFlashcard}
+              className="cursor-pointer"
+            >
+              <RotateCcw className="size-4" />
+              Reset
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onDeleteFlashcard}
+              className="cursor-pointer text-destructive focus:text-destructive"
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </DropdownMenuItem>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -232,7 +275,7 @@ function FocusModeCardActionsButton({
       variant="ghost"
       size="icon"
       className="size-10"
-      aria-label="Open flashcard actions"
+      aria-label="Open review actions"
       disabled={disabled}
     >
       <MoreVertical className="size-5" />
@@ -284,9 +327,31 @@ function getSessionFooter({
   );
 }
 
-function ReviewSessionEmptyState({ onExit }: Readonly<{ onExit: () => void }>) {
+interface ReviewSessionEmptyStateProps {
+  isPending: boolean;
+  canUndoReview: boolean;
+  onUndoReview: () => void;
+  onExit: () => void;
+}
+
+function ReviewSessionEmptyState({
+  isPending,
+  canUndoReview,
+  onUndoReview,
+  onExit,
+}: Readonly<ReviewSessionEmptyStateProps>) {
   return (
     <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
+      {canUndoReview ? (
+        <div className="absolute top-3 right-4">
+          <FocusModeCardActions
+            isPending={isPending}
+            canUndoReview
+            cardActions={false}
+            onUndoReview={onUndoReview}
+          />
+        </div>
+      ) : null}
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <h1 className="mb-2 text-2xl font-semibold tracking-tight">
           All caught up

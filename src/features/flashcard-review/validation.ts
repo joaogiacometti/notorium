@@ -10,3 +10,10 @@ export const reviewFlashcardSchema = z.object({
 });
 
 export type ReviewFlashcardForm = z.infer<typeof reviewFlashcardSchema>;
+
+export const undoFlashcardReviewSchema = z.object({
+  id: z.string().min(1),
+  reviewLogId: z.string().min(1),
+});
+
+export type UndoFlashcardReviewForm = z.infer<typeof undoFlashcardReviewSchema>;

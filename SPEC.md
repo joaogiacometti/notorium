@@ -149,6 +149,9 @@ Students who want a private, lightweight study management workspace.
 - A 20-minute learn-ahead window is applied to `learning` and `relearning` cards only: a card whose `dueAt` is within the next 20 minutes is treated as due and kept in the current session. This matches Anki's `collapseTime` behavior and prevents short-interval cards (e.g. `Again → 1m`) from vanishing mid-session.
 - Review logs are stored per user and retained when a flashcard or subject is
   deleted, so historical activity and FSRS optimization input do not change.
+- After grading a regular review card, users can undo that latest grade from the
+  review session's kebab menu; undo restores the card's prior scheduling state
+  and removes that review from activity and optimization history.
 - Review parameters support per-user tuning.
 - Users can manually optimize FSRS parameters from the account settings dialog using their review history.
 - Users can reset FSRS optimization from the account settings dialog to restore default scheduler tuning without deleting review history or flashcard progress.

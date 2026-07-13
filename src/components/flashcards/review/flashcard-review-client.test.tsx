@@ -5,6 +5,7 @@ import {
   getExamFlashcards,
   getFlashcardReviewState,
   reviewFlashcard,
+  undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
 import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
@@ -21,6 +22,7 @@ vi.mock("@/app/actions/flashcard-review", () => ({
   getExamFlashcards: vi.fn(),
   getFlashcardReviewState: vi.fn(),
   reviewFlashcard: vi.fn(),
+  undoFlashcardReview: vi.fn(),
 }));
 
 vi.mock("@/components/flashcards/dialogs/delete-flashcard-dialog", () => ({
@@ -43,16 +45,30 @@ vi.mock("@/components/flashcards/review/exam-results-screen", () => ({
 
 vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
   FocusModeOverlay: ({
+    currentCard,
     isExamMode,
+    canUndoReview,
     onGrade,
+    onUndoReview,
   }: {
+    currentCard?: { id: string } | null;
     isExamMode?: boolean;
+    canUndoReview: boolean;
     onGrade: (grade: "good") => void;
+    onUndoReview: () => void;
   }) => (
-    <div data-testid={isExamMode ? "exam-focus-mode" : "review-focus-mode"}>
+    <div
+      data-current-card-id={currentCard?.id}
+      data-testid={isExamMode ? "exam-focus-mode" : "review-focus-mode"}
+    >
       <button type="button" onClick={() => onGrade("good")}>
         Grade good
       </button>
+      {canUndoReview ? (
+        <button type="button" onClick={onUndoReview}>
+          Undo last review
+        </button>
+      ) : null}
     </div>
   ),
 }));
@@ -64,12 +80,14 @@ vi.mock("@/components/shortcuts/shortcuts-suspension-context", () => ({
 vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 
 const getFlashcardReviewStateMock = vi.mocked(getFlashcardReviewState);
 const getExamFlashcardsMock = vi.mocked(getExamFlashcards);
 const reviewFlashcardMock = vi.mocked(reviewFlashcard);
+const undoFlashcardReviewMock = vi.mocked(undoFlashcardReview);
 
 const scheduler = {
   desiredRetention: 0.9,
@@ -264,7 +282,12 @@ describe("FlashcardReviewClient", () => {
     reviewFlashcardMock.mockResolvedValue({
       success: true,
       reviewedCardId: "card-1",
+      reviewLogId: "review-log-1",
       flashcard: { ...card, reviewCount: 1 },
+    });
+    undoFlashcardReviewMock.mockResolvedValue({
+      success: true,
+      flashcard: card,
     });
 
     await renderReviewClient(makeReviewState(1, [card]));
@@ -286,6 +309,82 @@ describe("FlashcardReviewClient", () => {
       grade: "good",
       clientReviewId: expect.any(String),
     });
+  });
+
+  it("refreshes the active subject after undo and ignores an older refill", async () => {
+    const reviewedCard = {
+      ...makeCard("card-1"),
+      state: "review" as const,
+      dueAt: new Date("2026-04-07T11:00:00.000Z"),
+      reviewCount: 1,
+    };
+    const chemistryCard = {
+      ...makeCard("card-2"),
+      subjectId: "deck-2",
+      subjectName: "Chemistry",
+      subjectPath: "Chemistry",
+    };
+    const staleRefill = createDeferred<FlashcardReviewState>();
+    getFlashcardReviewStateMock
+      .mockReturnValueOnce(staleRefill.promise)
+      .mockResolvedValueOnce(makeReviewState(1, [chemistryCard]));
+    reviewFlashcardMock.mockResolvedValue({
+      success: true,
+      reviewedCardId: "card-1",
+      reviewLogId: "review-log-1",
+      flashcard: reviewedCard,
+    });
+    undoFlashcardReviewMock.mockResolvedValue({
+      success: true,
+      flashcard: makeCard("card-1"),
+    });
+
+    await renderReviewClient(
+      makeReviewState(2, [makeCard("card-1")]),
+      "deck-1",
+    );
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="flashcard-review-start-button"]',
+        )
+        ?.click();
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>("button")?.click();
+    });
+
+    await renderReviewClient(makeReviewState(1, [chemistryCard]), "deck-2");
+
+    await act(async () => {
+      Array.from(container.querySelectorAll("button"))
+        .find((button) => button.textContent === "Undo last review")
+        ?.click();
+    });
+
+    await vi.waitFor(() => {
+      expect(getFlashcardReviewStateMock).toHaveBeenLastCalledWith({
+        subjectId: "deck-2",
+        limit: 50,
+      });
+      expect(
+        container.querySelector('[data-current-card-id="card-2"]'),
+      ).toBeTruthy();
+    });
+
+    await act(async () => {
+      staleRefill.resolve(makeReviewState(1, [makeCard("stale-card")]));
+      await staleRefill.promise;
+    });
+
+    expect(
+      container.querySelector('[data-current-card-id="card-2"]'),
+    ).toBeTruthy();
+    expect(
+      container.querySelector('[data-current-card-id="stale-card"]'),
+    ).toBeFalsy();
   });
 
   it("opens reset confirmation on uppercase R in focus mode", async () => {
@@ -336,12 +435,16 @@ describe("FlashcardReviewClient", () => {
     ).toBeTruthy();
   });
 
-  async function renderReviewClient(initialState: FlashcardReviewState) {
+  async function renderReviewClient(
+    initialState: FlashcardReviewState,
+    subjectId?: string,
+  ) {
     await act(async () => {
       root.render(
         <FlashcardReviewClient
           initialState={initialState}
           subjects={[]}
+          subjectId={subjectId}
           aiEnabled={false}
         />,
       );

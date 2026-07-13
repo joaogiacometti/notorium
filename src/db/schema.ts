@@ -23,6 +23,7 @@ import {
   subjectKindEnum,
   userAccessStatusEnum,
 } from "@/db/schema-enums";
+import type { FlashcardReviewSchedulingSnapshot } from "@/features/flashcard-review/types";
 import type { OcclusionRegion } from "@/features/flashcards/occlusion";
 
 export * from "@/db/schema-enums";
@@ -530,6 +531,10 @@ export const flashcardReviewLog = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     clientReviewId: text("client_review_id"),
+    reviewCountAfter: integer("review_count_after"),
+    previousSchedulingState: jsonb(
+      "previous_scheduling_state",
+    ).$type<FlashcardReviewSchedulingSnapshot>(),
     rating: flashcardReviewRatingEnum("rating").notNull(),
     reviewedAt: timestamp("reviewed_at").notNull(),
     daysElapsed: integer("days_elapsed").notNull().default(0),
@@ -545,6 +550,11 @@ export const flashcardReviewLog = pgTable(
     index("flashcard_review_log_subjectId_idx").on(table.subjectId),
     index("flashcard_review_log_userId_reviewedAt_idx").on(
       table.userId,
+      table.reviewedAt,
+    ),
+    index("flashcard_review_log_userId_flashcardId_reviewedAt_idx").on(
+      table.userId,
+      table.flashcardId,
       table.reviewedAt,
     ),
     uniqueIndex("flashcard_review_log_userId_clientReviewId_unique")

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import {
   getFlashcardReviewState,
   reviewFlashcard,
+  undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
 import { useFlashcardExamController } from "@/components/flashcards/review/use-flashcard-exam-controller";
 import {
@@ -34,6 +35,11 @@ interface UseFlashcardReviewControllerParams {
   isFocusMode: boolean;
   resetFocusViewState: () => void;
   setFocusMode: (isFocusMode: boolean) => void;
+}
+
+interface UndoableReview {
+  cardId: string;
+  reviewLogId: string;
 }
 
 /**
@@ -61,13 +67,20 @@ export function useFlashcardReviewController({
   const reviewStateRef = useRef(initialState);
   const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
   const [isActionPending, startActionTransition] = useTransition();
-  const isPending = isActionPending;
+  const [isUndoPending, setIsUndoPending] = useState(false);
+  const isPending = isActionPending || isUndoPending;
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
   const isRefreshingOnReturnRef = useRef(false);
+  const undoingReviewIdRef = useRef<string | null>(null);
+  const [undoableReview, setUndoableReview] = useState<UndoableReview | null>(
+    null,
+  );
   const [selectedSubjectId, setSelectedSubjectId] = useState(subjectId);
+  const selectedSubjectIdRef = useRef(subjectId);
 
   useEffect(() => {
+    selectedSubjectIdRef.current = subjectId;
     setSelectedSubjectId(subjectId);
   }, [subjectId]);
 
@@ -96,6 +109,18 @@ export function useFlashcardReviewController({
     if (currentCardId !== nextCardId) {
       resetFocusViewState();
     }
+  }
+
+  async function getActiveReviewState(): Promise<FlashcardReviewState> {
+    const requestedSubjectId = selectedSubjectIdRef.current;
+    const nextState = await getFlashcardReviewState({
+      subjectId: requestedSubjectId,
+      limit: reviewBatchLimit,
+    });
+
+    return requestedSubjectId === selectedSubjectIdRef.current
+      ? nextState
+      : getActiveReviewState();
   }
 
   async function refillReviewState(retryCount = 0) {
@@ -290,6 +315,10 @@ export function useFlashcardReviewController({
 
         commitReviewState(nextState);
         resetFocusViewState();
+        setUndoableReview({
+          cardId: result.reviewedCardId,
+          reviewLogId: result.reviewLogId,
+        });
 
         if (shouldRefillFlashcardReviewState(nextState)) {
           void refillReviewState();
@@ -300,6 +329,44 @@ export function useFlashcardReviewController({
     });
   }
 
+  async function handleUndoReview() {
+    if (!undoableReview) {
+      return;
+    }
+
+    const { cardId, reviewLogId } = undoableReview;
+    if (undoingReviewIdRef.current === reviewLogId) {
+      return;
+    }
+
+    undoingReviewIdRef.current = reviewLogId;
+    setIsUndoPending(true);
+
+    try {
+      const result = await undoFlashcardReview({
+        id: cardId,
+        reviewLogId,
+      });
+
+      if (!result.success) {
+        setUndoableReview(null);
+        toast.error(t(result.errorCode, result.errorParams));
+        return;
+      }
+
+      refillRequestIdRef.current += 1;
+      const nextState = await getActiveReviewState();
+      commitReviewState(nextState);
+      resetFocusViewState();
+      setUndoableReview(null);
+    } catch {
+      toast.error("Could not undo the review. Please try again.");
+    } finally {
+      undoingReviewIdRef.current = null;
+      setIsUndoPending(false);
+    }
+  }
+
   return {
     reviewState,
     selectedSubjectId,
@@ -308,7 +375,9 @@ export function useFlashcardReviewController({
     currentCard,
     isPending,
     pendingGrade,
+    canUndoReview: undoableReview !== null,
     handleGrade,
+    handleUndoReview,
     handleFlashcardUpdated,
     handleFlashcardDeleted,
     handleFlashcardReset,
