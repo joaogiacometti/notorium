@@ -58,10 +58,10 @@ export async function openSubjectSidebarActions(
   page: Page,
   subjectName: string,
 ) {
-  const subjectLink = getSubjectSidebarLink(page, subjectName);
-  await expect(subjectLink).toBeVisible();
-
-  const row = subjectLink.locator("xpath=ancestor::div[1]");
+  const row = page.locator(
+    `nav[aria-label="Subjects"] [data-subject-name=${JSON.stringify(subjectName)}]`,
+  );
+  await expect(row).toBeVisible();
   await row.hover();
 
   const actionsButton = row.getByRole("button", {

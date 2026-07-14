@@ -2,6 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fromMock = vi.fn();
 const selectMock = vi.fn(() => ({ from: fromMock }));
+const getDescendantSubjectIdsMock = vi
+  .fn()
+  .mockResolvedValue(["subj", "child"]);
+const inArrayMock = vi.fn((column: unknown, values: unknown) => ({
+  column,
+  values,
+}));
+const deleteFilesMock = vi.fn();
+const getMediaStorageProviderMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({ select: selectMock }),
@@ -10,7 +19,7 @@ vi.mock("@/db/index", () => ({
 vi.mock("drizzle-orm", () => ({
   and: (...conditions: unknown[]) => conditions,
   eq: (column: unknown, value: unknown) => ({ column, value }),
-  inArray: (column: unknown, values: unknown) => ({ column, values }),
+  inArray: inArrayMock,
 }));
 
 vi.mock("@/db/schema", () => ({
@@ -26,7 +35,7 @@ vi.mock("@/features/attachments/pathname", () => ({
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getDescendantSubjectIds: vi.fn().mockResolvedValue([]),
+  getDescendantSubjectIds: getDescendantSubjectIdsMock,
 }));
 
 vi.mock("@/features/mindmaps/utils", () => ({
@@ -38,7 +47,7 @@ vi.mock("@/lib/editor/rich-text", () => ({
 }));
 
 vi.mock("@/lib/media-storage/provider", () => ({
-  getMediaStorageProvider: vi.fn(),
+  getMediaStorageProvider: getMediaStorageProviderMock,
 }));
 
 describe("getSubjectAttachmentPathnamesForUser", () => {
@@ -80,5 +89,22 @@ describe("getSubjectAttachmentPathnamesForUser", () => {
       "notorium/mindmaps/u/node.png",
       "notorium/assessments/u/a.pdf",
     ]);
+    expect(inArrayMock).toHaveBeenCalledTimes(4);
+    expect(inArrayMock).toHaveBeenCalledWith(undefined, ["subj", "child"]);
+  });
+
+  it("deduplicates owned pathnames before deleting provider files", async () => {
+    getMediaStorageProviderMock.mockResolvedValueOnce({
+      deleteFiles: deleteFilesMock,
+    });
+    const { cleanupAttachmentPathnames } = await import(
+      "@/features/attachments/cleanup"
+    );
+
+    await cleanupAttachmentPathnames("u", ["image-1", "image-1", "image-2"]);
+
+    expect(deleteFilesMock).toHaveBeenCalledWith({
+      pathnames: ["image-1", "image-2"],
+    });
   });
 });

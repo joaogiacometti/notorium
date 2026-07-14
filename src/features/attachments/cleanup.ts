@@ -32,7 +32,9 @@ export async function cleanupAttachmentPathnames(
   userId: string,
   pathnames: string[],
 ): Promise<void> {
-  const ownedPathnames = getOwnedAttachmentPathnames(pathnames, userId);
+  const ownedPathnames = Array.from(
+    new Set(getOwnedAttachmentPathnames(pathnames, userId)),
+  );
 
   if (ownedPathnames.length === 0) {
     return;
@@ -50,9 +52,9 @@ export async function cleanupAttachmentPathnames(
 }
 
 /**
- * Collects every attachment pathname owned by a subject: notes, mindmaps,
- * assessment attachments on the subject itself, plus flashcard images across
- * the subject and its descendants (cards now live on subjects, not decks).
+ * Collects every attachment pathname owned by a subject subtree across notes,
+ * mindmaps, assessments, and flashcards so cascade deletion can clean storage
+ * immediately instead of waiting for the orphan sweep.
  *
  * @example
  * const pathnames = await getSubjectAttachmentPathnamesForUser(userId, subjectId);
@@ -62,15 +64,29 @@ export async function getSubjectAttachmentPathnamesForUser(
   subjectId: string,
 ): Promise<string[]> {
   const descendantSubjectIds = await getDescendantSubjectIds(userId, subjectId);
+  if (descendantSubjectIds.length === 0) {
+    return [];
+  }
+
   const [notes, mindmaps, attachments, flashcards] = await Promise.all([
     getDb()
       .select({ content: note.content })
       .from(note)
-      .where(and(eq(note.userId, userId), eq(note.subjectId, subjectId))),
+      .where(
+        and(
+          eq(note.userId, userId),
+          inArray(note.subjectId, descendantSubjectIds),
+        ),
+      ),
     getDb()
       .select({ data: mindmap.data })
       .from(mindmap)
-      .where(and(eq(mindmap.userId, userId), eq(mindmap.subjectId, subjectId))),
+      .where(
+        and(
+          eq(mindmap.userId, userId),
+          inArray(mindmap.subjectId, descendantSubjectIds),
+        ),
+      ),
     getDb()
       .select({ blobPathname: assessmentAttachment.blobPathname })
       .from(assessmentAttachment)
@@ -79,29 +95,32 @@ export async function getSubjectAttachmentPathnamesForUser(
         eq(assessmentAttachment.assessmentId, assessment.id),
       )
       .where(
-        and(eq(assessment.userId, userId), eq(assessment.subjectId, subjectId)),
+        and(
+          eq(assessment.userId, userId),
+          inArray(assessment.subjectId, descendantSubjectIds),
+        ),
       ),
-    descendantSubjectIds.length > 0
-      ? getDb()
-          .select({ front: flashcard.front, back: flashcard.back })
-          .from(flashcard)
-          .where(
-            and(
-              eq(flashcard.userId, userId),
-              inArray(flashcard.subjectId, descendantSubjectIds),
-            ),
-          )
-      : Promise.resolve([]),
+    getDb()
+      .select({ front: flashcard.front, back: flashcard.back })
+      .from(flashcard)
+      .where(
+        and(
+          eq(flashcard.userId, userId),
+          inArray(flashcard.subjectId, descendantSubjectIds),
+        ),
+      ),
   ]);
 
-  return [
-    ...notes.flatMap((item) =>
-      getInternalAttachmentPathnames(item.content ?? ""),
-    ),
-    ...mindmaps.flatMap((item) => getMindmapImagePathnames(item.data)),
-    ...attachments.map((item) => item.blobPathname),
-    ...flashcards.flatMap((item) =>
-      getInternalAttachmentPathnames(`${item.front}${item.back}`),
-    ),
-  ];
+  return Array.from(
+    new Set([
+      ...notes.flatMap((item) =>
+        getInternalAttachmentPathnames(item.content ?? ""),
+      ),
+      ...mindmaps.flatMap((item) => getMindmapImagePathnames(item.data)),
+      ...attachments.map((item) => item.blobPathname),
+      ...flashcards.flatMap((item) =>
+        getInternalAttachmentPathnames(`${item.front}${item.back}`),
+      ),
+    ]),
+  );
 }

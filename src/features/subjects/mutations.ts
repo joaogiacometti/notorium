@@ -5,16 +5,21 @@ import {
   cleanupAttachmentPathnames,
   getSubjectAttachmentPathnamesForUser,
 } from "@/features/attachments/cleanup";
+import { createSubjectPathForUser } from "@/features/subjects/path-mutations";
 import {
   countChildSubjectsForUser,
   countTotalSubjectsForUser,
-  getAllSubjectsWithPathsForUser,
   getSubjectDepthForUser,
   getSubjectRecordForUser,
   getSubjectRecordsForUser,
+  getSubjectSubtreeHeightForUser,
   getSubjectTreeRecordForUser,
   isSubjectAncestorOf,
 } from "@/features/subjects/queries";
+import {
+  insertSubjectRow,
+  resolveSubjectUniqueError,
+} from "@/features/subjects/subject-write";
 import type {
   BulkDeleteSubjectsForm,
   CreateSubjectForm,
@@ -23,7 +28,6 @@ import type {
   MoveSubjectForm,
 } from "@/features/subjects/validation";
 import { LIMITS } from "@/lib/config/limits";
-import { isUniqueViolationError } from "@/lib/db/errors";
 import type {
   BulkSubjectMutationResult,
   MoveSubjectResult,
@@ -40,11 +44,6 @@ export type SubjectMutationResult =
     }
   | ActionErrorResult;
 
-type SubjectCreateData = Pick<
-  CreateSubjectForm,
-  "name" | "kind" | "parentSubjectId"
->;
-
 function getSubjectMutationValues(
   values: Pick<CreateSubjectForm, "name" | "kind">,
 ) {
@@ -58,77 +57,6 @@ function getSubjectPathSegments(name: string): string[] {
   return name.split("::").map((segment) => segment.trim());
 }
 
-function findLongestExistingPathPrefix(
-  pathSegments: string[],
-  subjects: Awaited<ReturnType<typeof getAllSubjectsWithPathsForUser>>,
-) {
-  for (let index = pathSegments.length; index > 0; index -= 1) {
-    const path = pathSegments.slice(0, index).join("::");
-    const matchingSubject = subjects.find(
-      (subjectOption) => subjectOption.path === path,
-    );
-    if (matchingSubject) return { matchingSubject, segmentCount: index };
-  }
-
-  return null;
-}
-
-async function validateExistingParentForPath(
-  userId: string,
-  parentSubjectId: string,
-  missingSubjectCount: number,
-): Promise<ActionErrorResult | null> {
-  const [parent, parentDepth, childCount] = await Promise.all([
-    getSubjectTreeRecordForUser(userId, parentSubjectId),
-    getSubjectDepthForUser(userId, parentSubjectId),
-    countChildSubjectsForUser(userId, parentSubjectId),
-  ]);
-
-  if (!parent) return actionError("subjects.notFound");
-  if (childCount >= LIMITS.maxChildSubjectsPerSubject) {
-    return actionError("limits.childSubjectLimit", {
-      errorParams: { max: LIMITS.maxChildSubjectsPerSubject },
-    });
-  }
-  if (
-    parentDepth !== null &&
-    parentDepth + missingSubjectCount > LIMITS.maxSubjectNestingDepth
-  ) {
-    return actionError("limits.subjectNestingDepthLimit", {
-      errorParams: { max: LIMITS.maxSubjectNestingDepth },
-    });
-  }
-
-  return null;
-}
-
-async function validateSubjectPathCreate(
-  userId: string,
-  parentSubjectId: string | undefined,
-  missingSubjectCount: number,
-): Promise<ActionErrorResult | null> {
-  const totalCount = await countTotalSubjectsForUser(userId);
-  if (totalCount + missingSubjectCount > LIMITS.maxSubjects) {
-    return actionError("limits.subjectLimit", {
-      errorParams: { max: LIMITS.maxSubjects },
-    });
-  }
-  if (parentSubjectId) {
-    return validateExistingParentForPath(
-      userId,
-      parentSubjectId,
-      missingSubjectCount,
-    );
-  }
-  if (missingSubjectCount > LIMITS.maxSubjectNestingDepth) {
-    return actionError("limits.subjectNestingDepthLimit", {
-      errorParams: { max: LIMITS.maxSubjectNestingDepth },
-    });
-  }
-
-  return null;
-}
-
 /**
  * Validates that a subject can be nested under `parentSubjectId`: the parent
  * exists, has room for another child, and is not already at the depth cap.
@@ -138,6 +66,7 @@ async function validateSubjectNesting(
   userId: string,
   parentSubjectId: string,
   childCount: number,
+  nestedDepth = 1,
 ): Promise<ActionErrorResult | null> {
   const [parent, parentDepth] = await Promise.all([
     getSubjectTreeRecordForUser(userId, parentSubjectId),
@@ -154,7 +83,10 @@ async function validateSubjectNesting(
     });
   }
 
-  if (parentDepth !== null && parentDepth >= LIMITS.maxSubjectNestingDepth) {
+  if (
+    parentDepth !== null &&
+    parentDepth + nestedDepth > LIMITS.maxSubjectNestingDepth
+  ) {
     return actionError("limits.subjectNestingDepthLimit", {
       errorParams: { max: LIMITS.maxSubjectNestingDepth },
     });
@@ -165,79 +97,19 @@ async function validateSubjectNesting(
 
 async function insertSubjectForUser(
   userId: string,
-  data: SubjectCreateData,
+  data: CreateSubjectForm,
 ): Promise<SubjectMutationResult> {
   try {
-    const inserted = await getDb()
-      .insert(subject)
-      .values({
-        ...getSubjectMutationValues(data),
-        parentSubjectId: data.parentSubjectId ?? null,
-        // Subfolders are pure containers; only roots can be academic (locked).
-        kind: data.parentSubjectId ? "general" : data.kind,
-        userId,
-      })
-      .returning({ id: subject.id });
-
-    return { success: true, subjectId: inserted[0]?.id };
+    const subjectId = await insertSubjectRow(getDb(), userId, {
+      ...data,
+      kind: data.parentSubjectId ? "general" : data.kind,
+    });
+    return { success: true, subjectId };
   } catch (error) {
-    if (isUniqueViolationError(error)) {
-      return actionError("subjects.duplicateName");
-    }
+    const insertError = resolveSubjectUniqueError(error);
+    if (insertError) return insertError;
     throw error;
   }
-}
-
-async function createSubjectPathForUser(
-  userId: string,
-  data: CreateSubjectForm,
-  pathSegments: string[],
-): Promise<SubjectMutationResult> {
-  const existingPrefix = findLongestExistingPathPrefix(
-    pathSegments,
-    await getAllSubjectsWithPathsForUser(userId),
-  );
-  if (existingPrefix?.segmentCount === pathSegments.length) {
-    return actionError("subjects.duplicateName");
-  }
-
-  const missingSegments = pathSegments.slice(existingPrefix?.segmentCount ?? 0);
-  const parentSubjectId = existingPrefix?.matchingSubject.id;
-  const validationError = await validateSubjectPathCreate(
-    userId,
-    parentSubjectId,
-    missingSegments.length,
-  );
-  if (validationError) return validationError;
-
-  return insertSubjectPathSegments(
-    userId,
-    data.kind,
-    parentSubjectId,
-    missingSegments,
-  );
-}
-
-async function insertSubjectPathSegments(
-  userId: string,
-  rootKind: CreateSubjectForm["kind"],
-  parentSubjectId: string | undefined,
-  pathSegments: string[],
-): Promise<SubjectMutationResult> {
-  let nextParentSubjectId = parentSubjectId;
-  let result: SubjectMutationResult = actionError("subjects.invalidData");
-
-  for (const [index, segment] of pathSegments.entries()) {
-    result = await insertSubjectForUser(userId, {
-      name: segment,
-      kind: index === 0 && !nextParentSubjectId ? rootKind : "general",
-      parentSubjectId: nextParentSubjectId,
-    });
-    if (!result.success) return result;
-    nextParentSubjectId = result.subjectId;
-  }
-
-  return result;
 }
 
 export async function createSubjectForUser(
@@ -295,9 +167,8 @@ export async function editSubjectForUser(
       .set(getSubjectMutationValues(data))
       .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
   } catch (error) {
-    if (isUniqueViolationError(error)) {
-      return actionError("subjects.duplicateName");
-    }
+    const insertError = resolveSubjectUniqueError(error);
+    if (insertError) return insertError;
     throw error;
   }
 
@@ -359,14 +230,15 @@ export async function moveSubjectForUser(
       return cycleError;
     }
 
-    const childCount = await countChildSubjectsForUser(
-      userId,
-      newParentSubjectId,
-    );
+    const [childCount, subtreeHeight] = await Promise.all([
+      countChildSubjectsForUser(userId, newParentSubjectId),
+      getSubjectSubtreeHeightForUser(userId, data.id),
+    ]);
     const nestingError = await validateSubjectNesting(
       userId,
       newParentSubjectId,
       childCount,
+      subtreeHeight,
     );
     if (nestingError) {
       return nestingError;
@@ -379,9 +251,8 @@ export async function moveSubjectForUser(
       .set({ parentSubjectId: newParentSubjectId })
       .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
   } catch (error) {
-    if (isUniqueViolationError(error)) {
-      return actionError("subjects.duplicateName");
-    }
+    const insertError = resolveSubjectUniqueError(error);
+    if (insertError) return insertError;
     throw error;
   }
 

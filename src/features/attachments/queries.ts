@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment, assessmentAttachment, subject } from "@/db/schema";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
+import { getOwnedAcademicSubjectFilters } from "@/features/subjects/query-helpers";
 import type { AssessmentAttachmentEntity } from "@/lib/server/api-contracts";
 
 export async function countAssessmentAttachmentsForUser(
@@ -25,7 +25,7 @@ export async function getAssessmentAttachmentsForUser(
       and(
         eq(assessmentAttachment.userId, userId),
         eq(assessmentAttachment.assessmentId, assessmentId),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .orderBy(assessmentAttachment.createdAt)
@@ -49,7 +49,7 @@ export async function getAssessmentAttachmentsForAssessments(
       and(
         eq(assessmentAttachment.userId, userId),
         inArray(assessmentAttachment.assessmentId, assessmentIds),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .then((rows) => rows.map((row) => row.attachment));
@@ -68,7 +68,7 @@ export async function getAssessmentAttachmentForUser(
       and(
         eq(assessmentAttachment.id, attachmentId),
         eq(assessmentAttachment.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .limit(1);

@@ -108,7 +108,7 @@ describe("DeleteSubjectDialog", () => {
     );
 
     expect(description?.textContent).toBe(
-      "Are you sure you want to delete test? This action cannot be undone. All associated notes will also be deleted.",
+      "Are you sure you want to delete test? This action cannot be undone. Nested subjects and all associated notes, mindmaps, flashcards, attendance records, assessments, and attachments will also be deleted.",
     );
     expect(description?.className).not.toContain("space-y-1");
     expect(subjectName?.className).toContain("inline");

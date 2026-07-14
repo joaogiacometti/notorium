@@ -14,7 +14,7 @@ import { getDb } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { PlanningAssessmentsQueryInput } from "@/features/assessments/validation";
 import { getAssessmentAttachmentsForUser } from "@/features/attachments/queries";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
+import { getOwnedAcademicSubjectFilters } from "@/features/subjects/query-helpers";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
   AssessmentDetailEntity,
@@ -43,7 +43,7 @@ export async function getUpcomingAssessmentsForUser(
       and(
         eq(assessment.userId, userId),
         gte(assessment.dueDate, getTodayIso()),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .orderBy(asc(assessment.dueDate))
@@ -63,7 +63,7 @@ export async function getAssessmentsBySubjectForUser(
       and(
         eq(assessment.subjectId, subjectId),
         eq(assessment.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .orderBy(desc(assessment.updatedAt))
@@ -77,8 +77,13 @@ export async function countAssessmentsBySubjectForUser(
   const result = await getDb()
     .select({ total: count() })
     .from(assessment)
+    .innerJoin(subject, eq(assessment.subjectId, subject.id))
     .where(
-      and(eq(assessment.subjectId, subjectId), eq(assessment.userId, userId)),
+      and(
+        eq(assessment.subjectId, subjectId),
+        eq(assessment.userId, userId),
+        ...getOwnedAcademicSubjectFilters(userId),
+      ),
     );
 
   return result[0]?.total ?? 0;
@@ -96,7 +101,7 @@ export async function getAssessmentRecordForUser(
       and(
         eq(assessment.id, assessmentId),
         eq(assessment.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .limit(1);
@@ -120,7 +125,7 @@ export async function getAssessmentRecordsForUser(
       and(
         inArray(assessment.id, assessmentIds),
         eq(assessment.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     );
 }
@@ -143,7 +148,7 @@ export async function getAssessmentDetailForUser(
       and(
         eq(assessment.id, assessmentId),
         eq(assessment.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .limit(1);
@@ -212,7 +217,7 @@ function getPlanningAssessmentFilters(
 ): SQL<unknown>[] {
   const filters: SQL<unknown>[] = [
     eq(assessment.userId, userId),
-    ...getOwnedActiveSubjectFilters(userId),
+    ...getOwnedAcademicSubjectFilters(userId),
   ];
   const normalizedSearch = search?.trim() ?? "";
   const todayIso = getTodayIso();
@@ -304,7 +309,7 @@ export async function getPlanningAssessmentsPageForUser(
             and(
               eq(assessment.userId, userId),
               eq(assessment.subjectId, input.subjectId),
-              ...getOwnedActiveSubjectFilters(userId),
+              ...getOwnedAcademicSubjectFilters(userId),
             ),
           )
       : Promise.resolve([]),
@@ -321,7 +326,7 @@ export async function getPlanningAssessmentsPageForUser(
       .where(
         and(
           eq(assessment.userId, userId),
-          ...getOwnedActiveSubjectFilters(userId),
+          ...getOwnedAcademicSubjectFilters(userId),
         ),
       )
       .limit(1);

@@ -1,14 +1,14 @@
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { attendanceMiss, subject } from "@/db/schema";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
+import { getOwnedAcademicSubjectFilters } from "@/features/subjects/query-helpers";
 import type { AttendanceMissEntity } from "@/lib/server/api-contracts";
 
 export async function getMissesBySubjectForUser(
   userId: string,
   subjectId: string,
 ): Promise<AttendanceMissEntity[]> {
-  const subjectFilters = getOwnedActiveSubjectFilters(userId);
+  const subjectFilters = getOwnedAcademicSubjectFilters(userId);
 
   return getDb()
     .select({ attendanceMiss })
@@ -29,7 +29,7 @@ export async function getMissRecordForUser(
   userId: string,
   missId: string,
 ): Promise<Pick<AttendanceMissEntity, "id" | "subjectId"> | null> {
-  const subjectFilters = getOwnedActiveSubjectFilters(userId);
+  const subjectFilters = getOwnedAcademicSubjectFilters(userId);
 
   const results = await getDb()
     .select({ id: attendanceMiss.id, subjectId: attendanceMiss.subjectId })
@@ -55,11 +55,13 @@ export async function hasMissOnDateForUser(
   const results = await getDb()
     .select({ id: attendanceMiss.id })
     .from(attendanceMiss)
+    .innerJoin(subject, eq(attendanceMiss.subjectId, subject.id))
     .where(
       and(
         eq(attendanceMiss.subjectId, subjectId),
         eq(attendanceMiss.missDate, missDate),
         eq(attendanceMiss.userId, userId),
+        ...getOwnedAcademicSubjectFilters(userId),
       ),
     )
     .limit(1);

@@ -51,7 +51,7 @@ vi.mock("@/db/schema", () => ({
     id: "subject_id_column",
     userId: "subject_user_id_column",
     name: "subject_name_column",
-    archivedAt: "subject_archived_at_column",
+    kind: "subject_kind_column",
   },
 }));
 
@@ -71,7 +71,7 @@ describe("getAssessmentDetailForUser", () => {
     getAssessmentAttachmentsForUserMock.mockResolvedValue([]);
   });
 
-  it("returns the assessment detail for an owned active subject", async () => {
+  it("returns assessment detail only through an owned academic subject", async () => {
     limitMock.mockResolvedValueOnce([
       {
         assessment: {
@@ -103,6 +103,7 @@ describe("getAssessmentDetailForUser", () => {
     expect(eqMock).toHaveBeenCalledWith("assessment_id_column", "assessment-1");
     expect(eqMock).toHaveBeenCalledWith("assessment_user_id_column", "user-1");
     expect(eqMock).toHaveBeenCalledWith("subject_user_id_column", "user-1");
+    expect(eqMock).toHaveBeenCalledWith("subject_kind_column", "academic");
   });
 
   it("returns null when the assessment is missing or inaccessible", async () => {
@@ -111,6 +112,23 @@ describe("getAssessmentDetailForUser", () => {
     const result = await getAssessmentDetailForUser("user-1", "assessment-1");
 
     expect(result).toBeNull();
+  });
+});
+
+describe("countAssessmentsBySubjectForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("counts records only while their owned subject is academic", async () => {
+    whereMock.mockResolvedValueOnce([{ total: 2 }] as never);
+    const { countAssessmentsBySubjectForUser } = await import("./queries");
+
+    await expect(
+      countAssessmentsBySubjectForUser("user-1", "subject-1"),
+    ).resolves.toBe(2);
+    expect(eqMock).toHaveBeenCalledWith("subject_user_id_column", "user-1");
+    expect(eqMock).toHaveBeenCalledWith("subject_kind_column", "academic");
   });
 });
 

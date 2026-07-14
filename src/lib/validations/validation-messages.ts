@@ -85,6 +85,8 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.search.queryMaxLength":
     "Search query must be at most 200 characters.",
   "Validation.subjects.nameMaxLength": "Name must be at most 100 characters.",
+  "Validation.subjects.nameReservedDelimiter":
+    "Name cannot contain the reserved path delimiter (::).",
   "Validation.subjects.nameRequired": "Name is required.",
   "Validation.theme.invalid": "Invalid theme.",
 };
