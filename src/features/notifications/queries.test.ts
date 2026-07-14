@@ -60,7 +60,8 @@ vi.mock("@/db/schema", () => ({
   subject: {
     id: "subject_id_column",
     name: "subject_name_column",
-    archivedAt: "subject_archived_at_column",
+    userId: "subject_user_id_column",
+    kind: "subject_kind_column",
   },
   user: {
     id: "user_id_column",
@@ -92,6 +93,11 @@ describe("getUsersWithUpcomingAssessments", () => {
       "user_notifications_enabled_column",
       true,
     );
+    expect(eqMock).toHaveBeenCalledWith(
+      "subject_user_id_column",
+      "user_id_column",
+    );
+    expect(eqMock).toHaveBeenCalledWith("subject_kind_column", "academic");
   });
 
   it("groups matching rows by user", async () => {

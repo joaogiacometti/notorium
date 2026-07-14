@@ -7,6 +7,7 @@ import {
   createSubject,
 } from "./support/db";
 import { breadcrumbCurrent } from "./support/page-chrome";
+import { openSubjectSidebarActions } from "./support/subjects";
 
 function getUniqueSubjectName(testTitle: string) {
   return getPrefixedValue("assessment-subject", testTitle);
@@ -70,6 +71,60 @@ async function selectDialogOption(
   await expect(options.first()).toBeVisible();
   await options.first().click();
 }
+
+async function changeSubjectKind(
+  page: Page,
+  subjectName: string,
+  kind: "Academic" | "General",
+) {
+  await openSubjectSidebarActions(page, subjectName);
+  await page.getByRole("menuitem", { name: "Edit" }).click();
+  const editDialog = page.getByRole("dialog", { name: "Edit Subject" });
+  await editDialog
+    .locator("#form-edit-subject-kind")
+    .getByRole("button")
+    .filter({ hasText: kind })
+    .click();
+  await editDialog.getByRole("button", { name: "Save Changes" }).click();
+  await expect(editDialog).toHaveCount(0);
+}
+
+test("hides academic records while a subject is general and restores them", async ({
+  page,
+  e2eUser,
+}) => {
+  const subjectName = getUniqueSubjectName("kind-visibility");
+  const assessmentTitle = getUniqueAssessmentTitle("kind-visibility");
+  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+
+  try {
+    const createdSubject = await createSubject(e2eUser.userId, subjectName);
+    await createAssessment(e2eUser.userId, createdSubject.id, assessmentTitle);
+    await openPlanningAssessments(page);
+    const detailLink = page.getByRole("link", {
+      name: `Open details for ${assessmentTitle}`,
+      exact: true,
+    });
+    const detailHref = await detailLink.getAttribute("href");
+    expect(detailHref).toBeTruthy();
+
+    await changeSubjectKind(page, subjectName, "General");
+    await openPlanningAssessments(page);
+    await expect(detailLink).toHaveCount(0);
+    await page.goto(detailHref ?? "/");
+    await expect(breadcrumbCurrent(page, "Planning")).toBeVisible();
+
+    await changeSubjectKind(page, subjectName, "Academic");
+    await openPlanningAssessments(page);
+    await expect(detailLink).toBeVisible();
+    await page.goto(detailHref ?? "/");
+    await expect(
+      page.getByRole("heading", { name: assessmentTitle }),
+    ).toBeVisible();
+  } finally {
+    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  }
+});
 
 test("can create and open an assessment from planning", async ({
   page,

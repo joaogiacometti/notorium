@@ -13,6 +13,7 @@ import type {
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
+export type SubjectAncestor = Pick<SubjectEntity, "id" | "name" | "kind">;
 export interface SubjectOption extends SubjectEntity {
   path: string;
 }

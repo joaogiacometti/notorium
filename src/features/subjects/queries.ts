@@ -2,6 +2,7 @@ import { and, count, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, mindmap, note, subject } from "@/db/schema";
 import type {
+  SubjectAncestor,
   SubjectEntity,
   SubjectListItem,
   SubjectOption,
@@ -191,40 +192,47 @@ export async function getDescendantSubjectIds(
   );
 }
 
+/**
+ * Returns the owned ancestor chain in deterministic root-first order.
+ *
+ * @example await getSubjectAncestors(userId, subjectId);
+ */
 export async function getSubjectAncestors(
   userId: string,
   subjectId: string,
-): Promise<SubjectEntity[]> {
+): Promise<SubjectAncestor[]> {
   const rows = await getDb().execute(
     sql`
       WITH RECURSIVE ancestors AS (
-        SELECT s.*
+        SELECT s.id, s.name, s.kind, s.parent_subject_id, 0 AS depth
         FROM subject s
         WHERE s.id = ${subjectId} AND s.user_id = ${userId}
         UNION ALL
-        SELECT s.*
+        SELECT s.id, s.name, s.kind, s.parent_subject_id, a.depth + 1
         FROM subject s
         INNER JOIN ancestors a ON s.id = a.parent_subject_id
         WHERE s.user_id = ${userId}
       )
-      SELECT * FROM ancestors
+      SELECT id, name, kind, depth FROM ancestors
       WHERE id != ${subjectId}
-      ORDER BY (
-        SELECT count(*) FROM (
-          WITH RECURSIVE depth AS (
-            SELECT id, parent_subject_id, 0 AS lvl
-            FROM subject WHERE id = ${subjectId}
-            UNION ALL
-            SELECT s.id, s.parent_subject_id, depth.lvl + 1
-            FROM subject s INNER JOIN depth ON s.id = depth.parent_subject_id
-          )
-          SELECT * FROM depth
-        ) sub WHERE sub.id = ancestors.id
-      ) DESC
+      ORDER BY depth DESC
     `,
   );
 
-  return (rows as unknown as { rows: SubjectEntity[] }).rows;
+  const ancestorRows = (
+    rows as unknown as {
+      rows: Array<{
+        id: string;
+        name: string;
+        kind: SubjectEntity["kind"];
+        depth: number;
+      }>;
+    }
+  ).rows;
+
+  return ancestorRows
+    .sort((left, right) => right.depth - left.depth)
+    .map(({ id, name, kind }) => ({ id, name, kind }));
 }
 
 export async function getSubjectPathForUser(
@@ -276,6 +284,37 @@ export async function getSubjectDepthForUser(
   const result = (rows as unknown as { rows: Array<{ depth: number | null }> })
     .rows[0];
   return result?.depth ?? null;
+}
+
+/**
+ * Returns the number of levels occupied by a subject and its deepest
+ * descendant. A leaf has height 1. Used to keep subtree moves within the cap.
+ *
+ * @example await getSubjectSubtreeHeightForUser(userId, subjectId); // 1
+ */
+export async function getSubjectSubtreeHeightForUser(
+  userId: string,
+  subjectId: string,
+): Promise<number> {
+  const rows = await getDb().execute(
+    sql`
+      WITH RECURSIVE descendants AS (
+        SELECT id, 1 AS depth
+        FROM subject
+        WHERE id = ${subjectId} AND user_id = ${userId}
+        UNION ALL
+        SELECT s.id, d.depth + 1
+        FROM subject s
+        INNER JOIN descendants d ON s.parent_subject_id = d.id
+        WHERE s.user_id = ${userId}
+      )
+      SELECT MAX(depth) AS height FROM descendants
+    `,
+  );
+
+  const result = (rows as unknown as { rows: Array<{ height: number | null }> })
+    .rows[0];
+  return result?.height ?? 1;
 }
 
 export async function getAllSubjectsWithPathsForUser(

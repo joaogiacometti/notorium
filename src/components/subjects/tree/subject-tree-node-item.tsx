@@ -94,6 +94,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
   return (
     <div>
       <div
+        data-subject-name={node.name}
         className={cn(
           "group flex items-center gap-1 rounded-md pr-1 transition-colors",
           isSelected

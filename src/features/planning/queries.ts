@@ -1,7 +1,7 @@
 import { and, eq, gte, lte } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { assessment, attendanceMiss, subject } from "@/db/schema";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
+import { getOwnedAcademicSubjectFilters } from "@/features/subjects/query-helpers";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
@@ -17,7 +17,7 @@ export async function getPlanningCalendarDataForUser(
   rangeStart: string,
   rangeEnd: string,
 ): Promise<PlanningCalendarData> {
-  const subjectFilters = getOwnedActiveSubjectFilters(userId);
+  const subjectFilters = getOwnedAcademicSubjectFilters(userId);
 
   const [assessmentRows, missRows] = await Promise.all([
     getDb()

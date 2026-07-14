@@ -5,12 +5,13 @@ import { isAcademicSubject } from "@/features/subjects/constants";
 import type {
   AssessmentEntity,
   AttendanceMissEntity,
+  SubjectAncestor,
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 
 interface SubjectDetailProps {
   subject: SubjectEntity;
-  ancestors: SubjectEntity[];
+  ancestors: SubjectAncestor[];
   misses: AttendanceMissEntity[];
   assessments: AssessmentEntity[];
 }
@@ -48,7 +49,7 @@ export function SubjectDetail({
  */
 function buildSubjectBreadcrumb(
   subject: SubjectEntity,
-  ancestors: SubjectEntity[],
+  ancestors: SubjectAncestor[],
 ): BreadcrumbItem[] {
   const ancestorCrumbs: BreadcrumbItem[] = ancestors.map((ancestor, index) => ({
     label: ancestor.name,

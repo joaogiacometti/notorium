@@ -38,12 +38,12 @@ Students who want a private, lightweight study management workspace.
 - Subjects table shows subject title, notes count, and compact row actions. It does not show status, created, or updated columns. General subjects show a "General" tag next to their title.
 - Subject fields: name and kind.
 - Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects is rejected with a duplicate-name error. Uniqueness is case-sensitive.
-- Creating a subject with `Parent::Child` uses the existing `Parent` path as the parent and stores `Child` as the new subject name. If any path segment does not exist, it is created automatically in order.
+- Creating a subject with `Parent::Child` uses the existing `Parent` path as the parent and stores `Child` as the new subject name. If any path segment does not exist, it is created automatically in order. When creation starts from a selected parent, the path is resolved relative to that parent. All missing segments are inserted atomically: intermediate segments are general containers and the requested leaf keeps the chosen kind. The `::` delimiter is reserved for path creation and cannot be stored in a renamed subject.
 - Each subject has a kind, chosen at creation and editable later: `academic` or `general`.
   - Academic subjects expose attendance and assessment tracking. Their detail page is the dashboard for both, and is the only thing the sidebar tree can't surface, so clicking an academic subject in the sidebar opens it. In the sidebar tree a graduation-cap icon marks academic subjects and their label underlines on hover to signal it is a link.
   - General subjects hold only documents (notes and mindmaps), with no attendance or assessment features, so non-academic users are not forced into study-tracking tools. They have no dashboard, so they are pure containers managed entirely in the sidebar tree: a folder icon marks them and their label is inert (expand via the chevron), shows no navigation cursor, and does not underline on hover. Visiting a general subject's URL directly redirects home.
 - New subjects default to `academic`. Existing subjects are `academic`.
-- Switching a subject from academic to general hides its attendance and assessment features without deleting the underlying records; switching back reveals them again.
+- Switching a subject from academic to general hides its attendance and assessment features without deleting the underlying records; switching back reveals them again. Hidden academic records are excluded from the subject dashboard, Home, Planning list/calendar, assessment detail routes, and assessment reminder emails while the subject is general.
 
 ### Documents
 

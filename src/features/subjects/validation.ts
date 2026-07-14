@@ -11,6 +11,10 @@ const subjectNameSchema = z
   .max(
     LIMITS.subjectNameMax,
     validationMessage("Validation.subjects.nameMaxLength"),
+  )
+  .refine(
+    (value) => !value.includes("::"),
+    validationMessage("Validation.subjects.nameReservedDelimiter"),
   );
 
 const createSubjectNameSchema = z

@@ -123,6 +123,16 @@ describe("editSubjectSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects the reserved path delimiter in an edited name", () => {
+    const result = editSubjectSchema.safeParse({
+      id: "subject-1",
+      name: "Math::Calculus",
+      kind: "academic",
+    });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("deleteSubjectSchema", () => {

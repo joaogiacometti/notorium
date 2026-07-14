@@ -18,6 +18,12 @@ const deleteWhereMock = vi.fn();
 const deleteMock = vi.fn(() => ({
   where: deleteWhereMock,
 }));
+type TransactionCallback = (transaction: {
+  insert: typeof insertMock;
+}) => Promise<unknown>;
+const transactionMock = vi.fn((callback: TransactionCallback) =>
+  callback({ insert: insertMock }),
+);
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
@@ -30,6 +36,7 @@ const getSubjectRecordForUserMock = vi.fn();
 const getSubjectRecordsForUserMock = vi.fn();
 const getSubjectTreeRecordForUserMock = vi.fn();
 const getSubjectDepthForUserMock = vi.fn();
+const getSubjectSubtreeHeightForUserMock = vi.fn();
 const isSubjectAncestorOfMock = vi.fn();
 const getSubjectAttachmentPathnamesForUserMock = vi.fn();
 const cleanupAttachmentPathnamesMock = vi.fn();
@@ -39,6 +46,7 @@ vi.mock("@/db/index", () => ({
     insert: insertMock,
     update: updateMock,
     delete: deleteMock,
+    transaction: transactionMock,
   }),
 }));
 
@@ -71,12 +79,15 @@ vi.mock("@/features/subjects/queries", () => ({
   getSubjectRecordsForUser: getSubjectRecordsForUserMock,
   getSubjectTreeRecordForUser: getSubjectTreeRecordForUserMock,
   getSubjectDepthForUser: getSubjectDepthForUserMock,
+  getSubjectSubtreeHeightForUser: getSubjectSubtreeHeightForUserMock,
   isSubjectAncestorOf: isSubjectAncestorOfMock,
 }));
 
 describe("createSubjectForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    insertReturningMock.mockReset();
+    getSubjectSubtreeHeightForUserMock.mockResolvedValue(1);
   });
 
   it("returns the subject limit error when total owned subjects reaches the max", async () => {
@@ -153,6 +164,48 @@ describe("createSubjectForUser", () => {
     });
   });
 
+  it("creates a nested path relative to an explicitly selected parent", async () => {
+    getAllSubjectsWithPathsForUserMock.mockResolvedValueOnce([
+      { id: "school-1", path: "School" },
+      { id: "term-root", path: "Term" },
+    ]);
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
+      id: "school-1",
+      parentSubjectId: null,
+      name: "School",
+    });
+    getSubjectDepthForUserMock.mockResolvedValueOnce(1);
+    insertReturningMock
+      .mockResolvedValueOnce([{ id: "term-1" }])
+      .mockResolvedValueOnce([{ id: "week-1" }]);
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Term::Week 1",
+      kind: "academic",
+      parentSubjectId: "school-1",
+    });
+
+    expect(result).toEqual({ success: true, subjectId: "week-1" });
+    expect(insertValuesMock).toHaveBeenNthCalledWith(1, {
+      userId: "user-1",
+      name: "Term",
+      kind: "general",
+      parentSubjectId: "school-1",
+    });
+    expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
+      userId: "user-1",
+      name: "Week 1",
+      kind: "academic",
+      parentSubjectId: "term-1",
+    });
+  });
+
   it("creates a child subject from a :: path", async () => {
     getAllSubjectsWithPathsForUserMock.mockResolvedValueOnce([
       { id: "parent-1", path: "Root" },
@@ -180,9 +233,10 @@ describe("createSubjectForUser", () => {
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
       name: "Chapter 1",
-      kind: "general",
+      kind: "academic",
       parentSubjectId: "parent-1",
     });
+    expect(transactionMock).toHaveBeenCalledOnce();
   });
 
   it("creates every subject from a missing :: path", async () => {
@@ -206,7 +260,7 @@ describe("createSubjectForUser", () => {
     expect(insertValuesMock).toHaveBeenNthCalledWith(1, {
       userId: "user-1",
       name: "Math",
-      kind: "academic",
+      kind: "general",
       parentSubjectId: null,
     });
     expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
@@ -218,9 +272,33 @@ describe("createSubjectForUser", () => {
     expect(insertValuesMock).toHaveBeenNthCalledWith(3, {
       userId: "user-1",
       name: "Integrals",
-      kind: "general",
+      kind: "academic",
       parentSubjectId: "calculus-1",
     });
+  });
+
+  it("maps a path-segment collision from the atomic transaction", async () => {
+    getAllSubjectsWithPathsForUserMock.mockResolvedValueOnce([]);
+    countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
+    insertReturningMock
+      .mockResolvedValueOnce([{ id: "math-1" }])
+      .mockRejectedValueOnce({ code: "23505" });
+
+    const { createSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await createSubjectForUser("user-1", {
+      name: "Math::Calculus",
+      kind: "academic",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "subjects.duplicateName",
+    });
+    expect(transactionMock).toHaveBeenCalledOnce();
+    expect(insertMock).toHaveBeenCalledTimes(2);
   });
 
   it("creates only missing subjects from a partially existing :: path", async () => {
@@ -258,7 +336,7 @@ describe("createSubjectForUser", () => {
     expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
       userId: "user-1",
       name: "Integrals",
-      kind: "general",
+      kind: "academic",
       parentSubjectId: "calculus-1",
     });
   });
@@ -460,6 +538,7 @@ describe("deleteSubjectForUser", () => {
 describe("moveSubjectForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getSubjectSubtreeHeightForUserMock.mockResolvedValue(1);
   });
 
   it("returns notFound when the subject is inaccessible", async () => {
@@ -588,6 +667,41 @@ describe("moveSubjectForUser", () => {
     expect(updateSetMock).toHaveBeenCalledWith({
       parentSubjectId: "parent-2",
     });
+  });
+
+  it("rejects a move when the subtree would exceed the depth cap", async () => {
+    const { LIMITS } = await import("@/lib/config/limits");
+    getSubjectTreeRecordForUserMock
+      .mockResolvedValueOnce({
+        id: "subject-1",
+        parentSubjectId: null,
+        name: "Subtree",
+      })
+      .mockResolvedValueOnce({
+        id: "parent-2",
+        parentSubjectId: null,
+        name: "Parent 2",
+      });
+    isSubjectAncestorOfMock.mockResolvedValueOnce(false);
+    countChildSubjectsForUserMock.mockResolvedValueOnce(0);
+    getSubjectDepthForUserMock.mockResolvedValueOnce(2);
+    getSubjectSubtreeHeightForUserMock.mockResolvedValueOnce(3);
+
+    const { moveSubjectForUser } = await import(
+      "@/features/subjects/mutations"
+    );
+
+    const result = await moveSubjectForUser("user-1", {
+      id: "subject-1",
+      parentSubjectId: "parent-2",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "limits.subjectNestingDepthLimit",
+      errorParams: { max: LIMITS.maxSubjectNestingDepth },
+    });
+    expect(updateMock).not.toHaveBeenCalled();
   });
 
   it("moves a subject to the root", async () => {

@@ -47,6 +47,8 @@ export async function getUsersWithUpcomingAssessments(
       and(
         eq(user.accessStatus, "approved"),
         eq(user.notificationsEnabled, true),
+        eq(subject.userId, user.id),
+        eq(subject.kind, "academic"),
         eq(assessment.status, "pending"),
         isNotNull(assessment.dueDate),
         gte(assessment.dueDate, todayIso),
