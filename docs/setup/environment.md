@@ -73,7 +73,8 @@ These values are useful for local tooling and deployment workflows, but they are
 | `REDIS_PORT` | Compose files |
 | `APP_PORT` | `compose.yml` port mapping |
 | `PLAYWRIGHT_BASE_URL` | Playwright E2E support code and CI |
-| `NOTORIUM_APP_URL` | GitHub Actions reminder workflow secret |
+| `NOTORIUM_APP_URL` | GitHub Actions scheduled workflow secret |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Lets scheduled workflows reach endpoints protected by Vercel security |
 
 ## Test Environment
 

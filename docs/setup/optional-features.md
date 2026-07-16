@@ -77,6 +77,7 @@ The repository includes `.github/workflows/assessment-reminders.yml` for a daily
 | --- | --- |
 | `NOTORIUM_APP_URL` | Deployed app base URL |
 | `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
 
 The workflow skips itself when either secret is missing.
 
@@ -98,6 +99,7 @@ The repository includes `.github/workflows/fsrs-optimization.yml` for a monthly 
 | --- | --- |
 | `NOTORIUM_APP_URL` | Deployed app base URL |
 | `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
 
 The workflow skips itself when either secret is missing.
 
@@ -131,6 +133,7 @@ The repository includes `.github/workflows/blob-gc.yml` for a weekly GitHub Acti
 | --- | --- |
 | `NOTORIUM_APP_URL` | Deployed app base URL |
 | `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
 
 The workflow skips itself when either secret is missing.
 
