@@ -23,6 +23,7 @@ jobs:
         env:
           NOTORIUM_APP_URL: ${{ secrets.NOTORIUM_APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           if [ -z "$NOTORIUM_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
             echo "Skipping blob sweep because required secrets are not configured."
@@ -33,4 +34,5 @@ jobs:
             --max-time 300 \
             -X GET \
             -H "Authorization: Bearer $CRON_SECRET" \
+            -H "x-vercel-protection-bypass: $VERCEL_AUTOMATION_BYPASS_SECRET" \
             "${NOTORIUM_APP_URL%/}/api/cron/blob-gc"
