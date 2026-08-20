@@ -19,7 +19,10 @@ See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 ## Prerequisites
 
 - Bun
+- Node.js 24 (required by Vitest)
 - Docker with Docker Compose
+
+The Nix development shell provides both Bun and Node.js 24.
 
 ## Quick Start
 

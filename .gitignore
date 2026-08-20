@@ -52,3 +52,6 @@ next-env.d.ts
 # AI
 docs/superpowers
 .codex
+
+# Direnv
+.direnv
