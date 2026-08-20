@@ -1,21 +1,17 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { normalizeDatabaseConnectionString } from "@/db/connection-string";
 import { getServerEnv } from "@/env";
 
 function createPool() {
   const { DATABASE_URL } = getServerEnv();
-  const databaseUrl = new URL(DATABASE_URL);
-  const isLocalDatabase =
-    databaseUrl.hostname === "localhost" ||
-    databaseUrl.hostname === "127.0.0.1";
 
   return new Pool({
-    connectionString: DATABASE_URL,
+    connectionString: normalizeDatabaseConnectionString(DATABASE_URL),
     max: 5,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
     keepAlive: true,
-    ssl: isLocalDatabase ? undefined : { rejectUnauthorized: false },
   });
 }
 

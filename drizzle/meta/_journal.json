@@ -428,6 +428,13 @@
       "when": 1783905750457,
       "tag": "0060_rainy_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1787312180990,
+      "tag": "0061_rich_dragon_man",
+      "breakpoints": true
     }
   ]
 }

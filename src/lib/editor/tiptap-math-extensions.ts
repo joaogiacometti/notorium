@@ -54,7 +54,7 @@ const ConventionalInlineMath = InlineMath.extend({
           state.tr.replaceWith(
             range.from,
             range.to,
-            this.type.create({ latex }),
+            state.schema.node(this.name, { latex }),
           );
         },
       }),

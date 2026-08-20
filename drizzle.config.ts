@@ -1,4 +1,5 @@
 import { defineConfig } from "drizzle-kit";
+import { normalizeDatabaseConnectionString } from "./src/db/connection-string";
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is required for drizzle-kit commands");
@@ -9,6 +10,6 @@ export default defineConfig({
   schema: "./src/db/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: normalizeDatabaseConnectionString(process.env.DATABASE_URL),
   },
 });

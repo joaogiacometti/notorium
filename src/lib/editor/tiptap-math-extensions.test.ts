@@ -35,7 +35,7 @@ describe("buildMathExtensions", () => {
 
   it("keeps a single-dollar inline input rule but no block input rule", () => {
     const [inline, block] = buildMathExtensions();
-    // The handler closures reference `this.type` only when an input rule fires,
+    // The handler closures reference the extension only when an input rule fires,
     // so calling addInputRules with no context here is safe.
     const inlineRules = inline.config.addInputRules?.call(undefined as never);
     const blockRules = block.config.addInputRules?.call(undefined as never);
