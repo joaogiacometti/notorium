@@ -1,13 +1,12 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { normalizeDatabaseConnectionString } from "@/db/connection-string";
 import { getServerEnv } from "@/env";
 
 function createPool() {
   const { DATABASE_URL } = getServerEnv();
 
   return new Pool({
-    connectionString: normalizeDatabaseConnectionString(DATABASE_URL),
+    connectionString: DATABASE_URL,
     max: 5,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,

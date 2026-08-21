@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
   FlashcardReviewState,
@@ -39,7 +38,6 @@ interface FocusModeOverlayProps {
   revealed: boolean;
   isPending: boolean;
   pendingGrade: ReviewGrade | null;
-  previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
   canUndoReview: boolean;
@@ -57,7 +55,7 @@ interface FocusModeOverlayProps {
  * Routes the focus overlay to the due-review or exam session presentation.
  *
  * @example
- * <FocusModeOverlay currentCard={card} reviewState={state} subjects={subjects} progress={0} revealed={false} isPending={false} pendingGrade={null} previewLabels={null} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
+ * <FocusModeOverlay currentCard={card} reviewState={state} subjects={subjects} progress={0} revealed={false} isPending={false} pendingGrade={null} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
  */
 export function FocusModeOverlay(props: Readonly<FocusModeOverlayProps>) {
   if (!props.currentCard) {
@@ -92,7 +90,6 @@ function DueReviewFocusModeOverlay({
   revealed,
   isPending,
   pendingGrade,
-  previewLabels,
   onReveal,
   onGrade,
   onExitFocusMode,
@@ -106,7 +103,6 @@ function DueReviewFocusModeOverlay({
     revealed,
     isPending,
     pendingGrade,
-    previewLabels,
     onReveal,
     onGrade,
   });
@@ -145,7 +141,6 @@ function ExamFocusModeOverlay({
   revealed,
   isPending,
   pendingGrade,
-  previewLabels,
   onReveal,
   onGrade,
   onExitFocusMode,
@@ -160,7 +155,6 @@ function ExamFocusModeOverlay({
     revealed,
     isPending,
     pendingGrade,
-    previewLabels,
     onReveal,
     onGrade,
   });
@@ -287,7 +281,6 @@ interface SessionFooterParams {
   revealed: boolean;
   isPending: boolean;
   pendingGrade: ReviewGrade | null;
-  previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
 }
@@ -296,7 +289,6 @@ function getSessionFooter({
   revealed,
   isPending,
   pendingGrade,
-  previewLabels,
   onReveal,
   onGrade,
 }: Readonly<SessionFooterParams>) {
@@ -318,7 +310,6 @@ function getSessionFooter({
       <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
         <ReviewGradeButtons
           pendingGrade={pendingGrade}
-          previewLabels={previewLabels}
           isPending={isPending}
           onGrade={onGrade}
         />

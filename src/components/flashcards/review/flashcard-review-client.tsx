@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlashcardReviewFocusOverlays } from "@/components/flashcards/review/flashcard-review-focus-overlays";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
@@ -8,7 +8,6 @@ import { useFlashcardReviewController } from "@/components/flashcards/review/use
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import { useOptionalWindowManager } from "@/components/windows/window-manager-context";
-import { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import { useFlashcardReviewShortcuts } from "@/features/flashcard-review/shortcuts";
 import type {
   FlashcardReviewState,
@@ -104,17 +103,6 @@ export function FlashcardReviewClient({
       ? (reviewState.summary.totalCount - reviewState.summary.dueCount) /
         reviewState.summary.totalCount
       : 0;
-  const previewLabels = useMemo(
-    () =>
-      currentCard
-        ? getFlashcardReviewPreviewLabels({
-            card: currentCard,
-            scheduler: reviewState.scheduler,
-          })
-        : null,
-    [currentCard, reviewState.scheduler],
-  );
-
   useFlashcardReviewShortcuts({
     shortcutsEnabled: embedded || focusedWindowId === null,
     shortcutsSuspended,
@@ -172,7 +160,6 @@ export function FlashcardReviewClient({
           revealed={revealed}
           isPending={isPending}
           pendingGrade={pendingGrade}
-          previewLabels={previewLabels}
           onReveal={() => setRevealed(true)}
           onGrade={handleGrade}
           canUndoReview={canUndoReview && !isExamMode}

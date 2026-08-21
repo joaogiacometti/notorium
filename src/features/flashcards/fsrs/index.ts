@@ -25,15 +25,12 @@ export {
 } from "@/features/flashcards/fsrs/normalization";
 export {
   getInitialFlashcardSchedulingState,
-  previewFlashcardReview,
   scheduleFlashcardReview,
 } from "@/features/flashcards/fsrs/scheduler";
 export {
-  type FlashcardReviewPreview,
   type FsrsSchedulerValidationInput,
   gradeLabels,
   type ParsedFsrsWeightsResult,
-  type PreviewFlashcardReviewInput,
   type ReviewGrade,
   reviewGradeValues,
   type ScheduleFlashcardReviewInput,

@@ -18,9 +18,6 @@ import {
   normalizeNonNegativeInteger,
 } from "@/features/flashcards/fsrs/normalization";
 import type {
-  FlashcardReviewPreview,
-  PreviewFlashcardReviewInput,
-  ReviewGrade,
   ScheduleFlashcardReviewInput,
   SchedulerOutput,
 } from "@/features/flashcards/fsrs/types";
@@ -117,37 +114,4 @@ export function scheduleFlashcardReview({
     updatedAt: now,
     daysElapsed,
   };
-}
-
-export function previewFlashcardReview({
-  card,
-  now = new Date(),
-  desiredRetention = getDefaultFsrsDesiredRetention(),
-  weights = getDefaultFsrsWeights(),
-  enableFuzz = true,
-}: PreviewFlashcardReviewInput): Record<ReviewGrade, FlashcardReviewPreview> {
-  return {
-    again: buildPreviewForGrade("again"),
-    hard: buildPreviewForGrade("hard"),
-    good: buildPreviewForGrade("good"),
-    easy: buildPreviewForGrade("easy"),
-  };
-
-  function buildPreviewForGrade(grade: ReviewGrade): FlashcardReviewPreview {
-    const nextState = scheduleFlashcardReview({
-      card,
-      grade,
-      now,
-      desiredRetention,
-      weights,
-      enableFuzz,
-    });
-
-    return {
-      grade,
-      nextState: nextState.state,
-      nextDueAt: nextState.dueAt,
-      intervalDays: nextState.intervalDays,
-    };
-  }
 }

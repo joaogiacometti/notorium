@@ -10,13 +10,6 @@ export const gradeLabels: Record<ReviewGrade, string> = {
   easy: "Easy",
 };
 
-export interface FlashcardReviewPreview {
-  grade: ReviewGrade;
-  nextState: FlashcardEntity["state"];
-  nextDueAt: Date;
-  intervalDays: number;
-}
-
 export interface ScheduleFlashcardReviewInput {
   card: Pick<
     FlashcardEntity,
@@ -36,9 +29,6 @@ export interface ScheduleFlashcardReviewInput {
   weights?: number[];
   enableFuzz?: boolean;
 }
-
-export interface PreviewFlashcardReviewInput
-  extends Omit<ScheduleFlashcardReviewInput, "grade"> {}
 
 export interface SchedulerOutput {
   state: FlashcardEntity["state"];

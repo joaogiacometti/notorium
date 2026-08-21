@@ -8,12 +8,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { getFlashcardReviewPreviewLabels } from "@/features/flashcard-review/preview";
 import { gradeLabels, type ReviewGrade } from "@/features/flashcards/fsrs";
 
 interface ReviewGradeButtonsProps {
   pendingGrade: ReviewGrade | null;
-  previewLabels: ReturnType<typeof getFlashcardReviewPreviewLabels> | null;
   isPending: boolean;
   onGrade: (grade: ReviewGrade) => void;
 }
@@ -40,7 +38,6 @@ const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
 };
 export function ReviewGradeButtons({
   pendingGrade,
-  previewLabels,
   isPending,
   onGrade,
 }: Readonly<ReviewGradeButtonsProps>) {
@@ -69,11 +66,6 @@ export function ReviewGradeButtons({
                 )}
                 <span className="truncate">{gradeLabels[grade]}</span>
               </span>
-              {previewLabels ? (
-                <span className="max-w-full truncate text-[9px] leading-tight font-medium opacity-80 sm:text-pretty sm:whitespace-normal sm:wrap-break-word sm:text-[11px]">
-                  {previewLabels[grade].durationText}
-                </span>
-              ) : null}
             </span>
           </Button>
         );

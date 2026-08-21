@@ -164,6 +164,25 @@ describe("FocusModeOverlay", () => {
     expect(document.body.querySelector('[role="menuitem"]')).toBeNull();
   });
 
+  it("does not show scheduling outcomes before the user grades the card", async () => {
+    await renderFocusModeOverlay({
+      revealed: true,
+    });
+
+    const gradeButtons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        "button[aria-keyshortcuts]",
+      ),
+    );
+
+    expect(gradeButtons.map((button) => button.textContent)).toEqual([
+      "Again",
+      "Hard",
+      "Good",
+      "Easy",
+    ]);
+  });
+
   async function clickMenuItem(label: string) {
     await act(async () => {
       container
@@ -206,7 +225,6 @@ describe("FocusModeOverlay", () => {
           isPending={false}
           canUndoReview={false}
           pendingGrade={null}
-          previewLabels={null}
           {...baseHandlers}
           {...overrides}
         />,
