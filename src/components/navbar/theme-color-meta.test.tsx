@@ -59,7 +59,12 @@ describe("ThemeColorMeta", () => {
       root.render(<ThemeColorMeta />);
     });
 
-    for (const theme of ["dark", "halloween", "catppuccin-mocha"] as const) {
+    for (const theme of [
+      "dark",
+      "halloween",
+      "catppuccin-mocha",
+      "gruvbox",
+    ] as const) {
       themeState.theme = theme;
       themeState.resolvedTheme = theme;
 

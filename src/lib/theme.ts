@@ -4,6 +4,7 @@ export const validThemes = [
   "dark",
   "halloween",
   "catppuccin-mocha",
+  "gruvbox",
 ] as const;
 
 export const themeStorageKey = "theme";
@@ -13,7 +14,13 @@ export type ResolvedAppTheme = Exclude<AppTheme, "system">;
 
 export type ThemeOption = {
   id: AppTheme;
-  labelKey: "system" | "light" | "dark" | "halloween" | "catppuccin_mocha";
+  labelKey:
+    | "system"
+    | "light"
+    | "dark"
+    | "halloween"
+    | "catppuccin_mocha"
+    | "gruvbox";
 };
 
 export const themeOptions: ThemeOption[] = [
@@ -22,6 +29,7 @@ export const themeOptions: ThemeOption[] = [
   { id: "dark", labelKey: "dark" },
   { id: "halloween", labelKey: "halloween" },
   { id: "catppuccin-mocha", labelKey: "catppuccin_mocha" },
+  { id: "gruvbox", labelKey: "gruvbox" },
 ];
 
 export const themeChromeColorById: Record<ResolvedAppTheme, string> = {
@@ -29,6 +37,7 @@ export const themeChromeColorById: Record<ResolvedAppTheme, string> = {
   dark: "#09090b",
   halloween: "#1a1028",
   "catppuccin-mocha": "#1e1e2e",
+  gruvbox: "#282828",
 };
 
 export const defaultThemeChromeColor = themeChromeColorById.dark;

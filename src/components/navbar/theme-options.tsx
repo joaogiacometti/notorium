@@ -16,6 +16,7 @@ export const themeLabelByKey: Record<
   dark: "Dark",
   halloween: "Halloween",
   catppuccin_mocha: "Catppuccin mocha",
+  gruvbox: "Gruvbox",
 };
 
 export const themeDescriptionById: Record<AppTheme, string> = {
@@ -24,6 +25,7 @@ export const themeDescriptionById: Record<AppTheme, string> = {
   dark: "Classic low-light contrast",
   halloween: "Warm seasonal orange accents",
   "catppuccin-mocha": "Soft and cozy dark palette",
+  gruvbox: "Retro warm dark palette",
 };
 
 const themePreviewPaletteById: Record<
@@ -53,6 +55,12 @@ const themePreviewPaletteById: Record<
     muted: "#313244",
     card: "#313244",
     primary: "#cba6f7",
+  },
+  gruvbox: {
+    background: "#282828",
+    muted: "#3c3836",
+    card: "#3c3836",
+    primary: "#b8bb26",
   },
 };
 

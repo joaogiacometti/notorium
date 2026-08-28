@@ -63,7 +63,12 @@
 @import "shadcn/tailwind.css";
 @import "katex/dist/katex.min.css";
 
-@custom-variant dark (&:is(.dark *, .halloween *, .catppuccin-mocha *));
+@custom-variant dark (&:is(
+    .dark *,
+    .halloween *,
+    .catppuccin-mocha *,
+    .gruvbox *
+  ));
 
 @layer components {
   .row-action-trigger {
@@ -266,7 +271,8 @@
 
 .dark,
 .halloween,
-.catppuccin-mocha {
+.catppuccin-mocha,
+.gruvbox {
   color-scheme: dark;
 }
 
@@ -478,6 +484,73 @@
   --intent-homework-bg: hsl(115 54% 76% / 0.1);
   --intent-homework-text: hsl(115 54% 82%);
   --intent-homework-fill: hsl(115 54% 76%);
+}
+
+.gruvbox {
+  --background: #282828;
+  --foreground: #ebdbb2;
+  --card: #32302f;
+  --card-foreground: #ebdbb2;
+  --popover: #32302f;
+  --popover-foreground: #ebdbb2;
+  --primary: #b8bb26;
+  --primary-foreground: #282828;
+  --secondary: #3c3836;
+  --secondary-foreground: #ebdbb2;
+  --muted: #3c3836;
+  --muted-foreground: #bdae93;
+  --accent: #504945;
+  --accent-foreground: #fbf1c7;
+  --destructive: #fb4934;
+  --border: #665c54;
+  --input: #504945;
+  --ring: #98971a;
+  --chart-1: #b8bb26;
+  --chart-2: #fabd2f;
+  --chart-3: #83a598;
+  --chart-4: #d3869b;
+  --chart-5: #fe8019;
+  --syntax-comment: #928374;
+  --syntax-keyword: #fb4934;
+  --syntax-string: #b8bb26;
+  --syntax-type: #fabd2f;
+  --syntax-function: #b8bb26;
+  --sidebar: #1d2021;
+  --sidebar-foreground: #ebdbb2;
+  --sidebar-primary: #b8bb26;
+  --sidebar-primary-foreground: #282828;
+  --sidebar-accent: #3c3836;
+  --sidebar-accent-foreground: #fbf1c7;
+  --sidebar-border: #504945;
+  --sidebar-ring: #98971a;
+  --intent-success-border: rgb(184 187 38 / 35%);
+  --intent-success-bg: rgb(184 187 38 / 10%);
+  --intent-success-text: #b8bb26;
+  --intent-success-fill: #98971a;
+  --intent-warning-border: rgb(250 189 47 / 35%);
+  --intent-warning-bg: rgb(250 189 47 / 10%);
+  --intent-warning-text: #fabd2f;
+  --intent-warning-fill: #d79921;
+  --intent-danger-border: rgb(251 73 52 / 35%);
+  --intent-danger-bg: rgb(251 73 52 / 10%);
+  --intent-danger-text: #fb4934;
+  --intent-danger-fill: #cc241d;
+  --intent-info-border: rgb(131 165 152 / 35%);
+  --intent-info-bg: rgb(131 165 152 / 10%);
+  --intent-info-text: #83a598;
+  --intent-info-fill: #458588;
+  --intent-assignment-border: rgb(131 165 152 / 35%);
+  --intent-assignment-bg: rgb(131 165 152 / 10%);
+  --intent-assignment-text: #83a598;
+  --intent-assignment-fill: #458588;
+  --intent-project-border: rgb(211 134 155 / 35%);
+  --intent-project-bg: rgb(211 134 155 / 10%);
+  --intent-project-text: #d3869b;
+  --intent-project-fill: #b16286;
+  --intent-homework-border: rgb(184 187 38 / 35%);
+  --intent-homework-bg: rgb(184 187 38 / 10%);
+  --intent-homework-text: #b8bb26;
+  --intent-homework-fill: #98971a;
 }
 
 @layer base {
