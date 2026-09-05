@@ -1,4 +1,5 @@
 import { act } from "react";
+import { createPortal } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlanningAssessmentsManagerTable } from "@/components/planning/planning-assessments-manager-table";
@@ -34,9 +35,17 @@ vi.mock("next/link", () => ({
 
 vi.mock("@/components/assessments/assessments-table-row-actions", () => ({
   AssessmentsTableRowActions: () => (
-    <button type="button" aria-label="Open assessment actions">
-      ...
-    </button>
+    <>
+      <button type="button" aria-label="Open assessment actions">
+        ...
+      </button>
+      {createPortal(
+        <div role="option" aria-selected={false} tabIndex={-1}>
+          Completed
+        </div>,
+        document.body,
+      )}
+    </>
   ),
 }));
 
@@ -114,6 +123,13 @@ describe("PlanningAssessmentsManagerTable", () => {
       "/assessments/assessment-1?from=planning-assessments&subjectId=subject-1",
     );
     expect(rowLink).toBeNull();
+
+    await act(async () => {
+      document.body
+        .querySelector('[role="option"]')
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(pushMock).not.toHaveBeenCalled();
 
     await act(async () => {
       row?.dispatchEvent(new MouseEvent("click", { bubbles: true }));

@@ -168,6 +168,62 @@ test("can create and open an assessment from planning", async ({
   }
 });
 
+test("changing status from the planning row keeps the edit dialog open", async ({
+  page,
+  e2eUser,
+}) => {
+  const subjectName = getUniqueSubjectName("edit-row-status");
+  const assessmentTitle = getUniqueAssessmentTitle("edit-row-status");
+  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+
+  try {
+    const subject = await createSubject(e2eUser.userId, subjectName);
+    await createAssessment(e2eUser.userId, subject.id, assessmentTitle);
+    await createAssessment(
+      e2eUser.userId,
+      subject.id,
+      `${assessmentTitle}-other`,
+    );
+    await openPlanningAssessments(page, subject.id);
+    const planningUrl = page.url();
+    const row = page.getByRole("row").filter({
+      has: page.getByRole("link", {
+        name: `Open details for ${assessmentTitle}`,
+        exact: true,
+      }),
+    });
+    await row.hover();
+    await row
+      .getByRole("button", { name: "Open actions", exact: true })
+      .click();
+    await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
+    const editDialog = page.getByRole("dialog", { name: "Edit Assessment" });
+    await expect(editDialog).toBeVisible();
+
+    for (const status of ["Completed", "Pending", "Completed"]) {
+      await selectDialogOption(
+        page,
+        editDialog,
+        "#form-edit-assessment-status",
+        status,
+      );
+      await expect(editDialog).toBeVisible();
+      await expect(page).toHaveURL(planningUrl);
+      await expect(
+        editDialog.locator("#form-edit-assessment-status"),
+      ).toHaveText(status);
+    }
+
+    await editDialog.getByRole("button", { name: "Save Changes" }).click();
+    await expect(editDialog).toHaveCount(0);
+    await expect(page).toHaveURL(planningUrl);
+    await page.goto(`${planningUrl}&status=all`);
+    await expect(row).toContainText("Completed");
+  } finally {
+    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  }
+});
+
 test("can edit an assessment from detail page", async ({ page, e2eUser }) => {
   const user = e2eUser;
   const subjectName = getUniqueSubjectName("edit");

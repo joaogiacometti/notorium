@@ -2,6 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditAssessmentDialog } from "@/components/assessments/edit-assessment-dialog";
+import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -69,5 +70,58 @@ describe("assessment dialogs", () => {
     expect(document.body.textContent).toContain("Edit Assessment");
     expect(document.body.textContent).not.toContain("Attachments");
     expect(document.body.textContent).not.toContain("Add Files");
+  });
+
+  it("blocks background row navigation after changing status in the real dialog", async () => {
+    const onRowClick = vi.fn();
+    await act(async () => {
+      root.render(
+        <>
+          <ManagerDataTable
+            data={[createAssessmentEntity({ id: "other-assessment" })]}
+            columns={[{ accessorKey: "title", header: "Title" }]}
+            getRowId={(assessment) => assessment.id}
+            onRowClick={onRowClick}
+            onPageIndexChange={() => {}}
+            pageIndex={0}
+            pageLabel={(current, total) => `Page ${current} of ${total}`}
+            prevLabel="Previous"
+            nextLabel="Next"
+            emptyLabel="No assessments"
+          />
+          <EditAssessmentDialog
+            assessment={createAssessmentEntity()}
+            open
+            onOpenChange={() => {}}
+          />
+        </>,
+      );
+    });
+    const statusTrigger = document.querySelector(
+      "#form-edit-assessment-status",
+    );
+    await act(async () => {
+      statusTrigger?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+      );
+    });
+    const completedOption = document.querySelector(
+      '[role="option"]:last-child',
+    );
+    expect(completedOption?.textContent).toBe("Completed");
+    await act(async () => {
+      completedOption?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    });
+    expect(statusTrigger?.textContent).toBe("Completed");
+    // A click retargeted to another row must remain blocked behind the modal.
+    await act(async () => {
+      container
+        .querySelector("tbody td")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(onRowClick).not.toHaveBeenCalled();
+    expect(editAssessmentMock).not.toHaveBeenCalled();
   });
 });

@@ -22,8 +22,8 @@ const interactiveSelectors = [
 ].join(", ");
 
 /**
- * True when a row click originated on an interactive descendant (link, button,
- * checkbox, etc.) so row-level navigation should defer to that control.
+ * Ignore interactive controls, portaled content, and background rows disabled
+ * by a modal so editing a row never triggers row-level navigation.
  *
  * @example
  *   shouldIgnoreRowClick(event.target, event.currentTarget)
@@ -32,17 +32,23 @@ export function shouldIgnoreRowClick(
   target: EventTarget | null,
   currentTarget: EventTarget | null,
 ): boolean {
-  if (!(target instanceof HTMLElement)) {
+  if (!(target instanceof Element)) {
     return false;
+  }
+
+  // Block background clicks while a modal is open as well as React portal
+  // events, which bubble through the component tree outside the row's DOM.
+  if (
+    currentTarget instanceof Element &&
+    (currentTarget.closest('[aria-hidden="true"], [inert]') ||
+      !currentTarget.contains(target))
+  ) {
+    return true;
   }
 
   const interactiveAncestor = target.closest(interactiveSelectors);
 
-  return Boolean(
-    interactiveAncestor &&
-      interactiveAncestor instanceof HTMLElement &&
-      interactiveAncestor !== currentTarget,
-  );
+  return Boolean(interactiveAncestor && interactiveAncestor !== currentTarget);
 }
 
 function SelectColumnHeader<TRow>({
