@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { FlashcardReviewFocusOverlays } from "@/components/flashcards/review/flashcard-review-focus-overlays";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
+import { ReviewScrollBoundary } from "@/components/flashcards/review/review-scroll-boundary";
 import { useFlashcardReviewController } from "@/components/flashcards/review/use-flashcard-review-controller";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
@@ -151,7 +152,7 @@ export function FlashcardReviewClient({
 
   if (isFocusMode) {
     return (
-      <>
+      <ReviewScrollBoundary>
         <FocusModeOverlay
           currentCard={currentCard}
           reviewState={reviewState}
@@ -201,7 +202,7 @@ export function FlashcardReviewClient({
           onShowExitConfirmationChange={examController.setShowExitConfirmation}
           onConfirmExitExam={handleConfirmExitExam}
         />
-      </>
+      </ReviewScrollBoundary>
     );
   }
 

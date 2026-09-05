@@ -98,6 +98,10 @@ Immersive fullscreen (note/mindmap zen mode) is a CSS overlay
 overlay band so menus, dialogs, windows, and toasts stay layered above it
 without portal retargeting. Keep it below `40`.
 
+Full-screen review surfaces use `ReviewScrollBoundary` for portal placement and
+background scroll isolation, including nested dialogs. Keep card scrolling inside
+the session's `min-h-0 flex-1 overflow-y-auto` region.
+
 ## Transitions
 
 Prefer the narrowest transition: `transition-colors` for hover/focus,

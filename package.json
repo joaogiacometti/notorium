@@ -67,6 +67,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.71.2",
     "react-rnd": "^10.5.3",
+    "react-remove-scroll": "2.7.2",
     "redis": "^5.11.0",
     "server-only": "^0.0.1",
     "sharp": "^0.35.3",

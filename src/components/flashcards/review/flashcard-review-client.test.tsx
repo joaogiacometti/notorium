@@ -244,7 +244,7 @@ describe("FlashcardReviewClient", () => {
     await act(async () => {});
 
     expect(
-      container.querySelector('[data-testid="exam-focus-mode"]'),
+      document.body.querySelector('[data-testid="exam-focus-mode"]'),
     ).toBeTruthy();
 
     await act(async () => {
@@ -266,7 +266,7 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(
-      container.querySelector('[data-testid="review-focus-mode"]'),
+      document.body.querySelector('[data-testid="review-focus-mode"]'),
     ).toBeTruthy();
 
     await act(async () => {
@@ -301,7 +301,7 @@ describe("FlashcardReviewClient", () => {
     });
 
     await act(async () => {
-      container.querySelector<HTMLButtonElement>("button")?.click();
+      document.body.querySelector<HTMLButtonElement>("button")?.click();
     });
 
     expect(reviewFlashcardMock).toHaveBeenCalledWith({
@@ -353,13 +353,13 @@ describe("FlashcardReviewClient", () => {
     });
 
     await act(async () => {
-      container.querySelector<HTMLButtonElement>("button")?.click();
+      document.body.querySelector<HTMLButtonElement>("button")?.click();
     });
 
     await renderReviewClient(makeReviewState(1, [chemistryCard]), "deck-2");
 
     await act(async () => {
-      Array.from(container.querySelectorAll("button"))
+      Array.from(document.body.querySelectorAll("button"))
         .find((button) => button.textContent === "Undo last review")
         ?.click();
     });
@@ -370,7 +370,7 @@ describe("FlashcardReviewClient", () => {
         limit: 50,
       });
       expect(
-        container.querySelector('[data-current-card-id="card-2"]'),
+        document.body.querySelector('[data-current-card-id="card-2"]'),
       ).toBeTruthy();
     });
 
@@ -380,10 +380,10 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(
-      container.querySelector('[data-current-card-id="card-2"]'),
+      document.body.querySelector('[data-current-card-id="card-2"]'),
     ).toBeTruthy();
     expect(
-      container.querySelector('[data-current-card-id="stale-card"]'),
+      document.body.querySelector('[data-current-card-id="stale-card"]'),
     ).toBeFalsy();
   });
 
@@ -403,7 +403,7 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(
-      container.querySelector('[data-testid="reset-flashcard-dialog"]'),
+      document.body.querySelector('[data-testid="reset-flashcard-dialog"]'),
     ).toBeTruthy();
   });
 
@@ -423,7 +423,7 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(
-      container.querySelector('[data-testid="edit-flashcard-dialog"]'),
+      document.body.querySelector('[data-testid="edit-flashcard-dialog"]'),
     ).toBeTruthy();
 
     await act(async () => {
@@ -431,7 +431,7 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(
-      container.querySelector('[data-testid="review-focus-mode"]'),
+      document.body.querySelector('[data-testid="review-focus-mode"]'),
     ).toBeTruthy();
   });
 
