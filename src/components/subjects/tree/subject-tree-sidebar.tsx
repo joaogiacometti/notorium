@@ -100,6 +100,7 @@ export function SubjectTreeSidebar({
 
   const {
     draggedSubjectId,
+    isRootDropZoneVisible,
     draggedDocument,
     dropTargetId,
     pendingMoveId,
@@ -396,7 +397,7 @@ export function SubjectTreeSidebar({
           aria-label="Subjects"
           className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-1 pb-4"
         >
-          {draggedSubjectId ? (
+          {isRootDropZoneVisible ? (
             <SubjectTreeRootDropZone
               isActive={dropTargetId === SUBJECT_TREE_ROOT_ID}
               onDragTarget={() => handleDragTarget(SUBJECT_TREE_ROOT_ID)}

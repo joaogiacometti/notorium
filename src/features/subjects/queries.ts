@@ -1,6 +1,7 @@
 import { and, count, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, mindmap, note, subject } from "@/db/schema";
+import type { SubjectKind } from "@/features/subjects/constants";
 import type {
   SubjectAncestor,
   SubjectEntity,
@@ -153,12 +154,14 @@ export async function getSubjectTreeRecordForUser(
   id: string;
   parentSubjectId: string | null;
   name: string;
+  kind: SubjectKind;
 } | null> {
   const results = await getDb()
     .select({
       id: subject.id,
       parentSubjectId: subject.parentSubjectId,
       name: subject.name,
+      kind: subject.kind,
     })
     .from(subject)
     .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)))

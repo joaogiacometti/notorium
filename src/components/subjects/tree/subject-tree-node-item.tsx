@@ -184,10 +184,19 @@ function SubjectNodeLabel({
   onDropTarget,
   onDragEnd,
 }: Readonly<SubjectNodeLabelProps>) {
+  const isAcademic = isAcademicSubject(node.kind);
+
+  // Academic subjects cannot be moved (see moveSubjectForUser), so they are
+  // drop targets only. `draggable={false}` also stops the browser's native
+  // link drag on their anchor.
   const dragProps = {
-    draggable: true,
+    draggable: !isAcademic,
     onDragStart: (event: DragEvent<HTMLElement>) => {
       event.stopPropagation();
+      if (isAcademic) {
+        event.preventDefault();
+        return;
+      }
       onDragStart(node.id);
     },
     onDragOver: (event: DragEvent<HTMLElement>) => {
@@ -202,8 +211,6 @@ function SubjectNodeLabel({
     className:
       "flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm focus-visible:outline-none",
   };
-
-  const isAcademic = isAcademicSubject(node.kind);
 
   // A leading icon makes the kind legible at a glance: a graduation cap marks
   // academic subjects, which open their own dashboard page, while a folder

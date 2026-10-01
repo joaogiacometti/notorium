@@ -134,6 +134,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "subjects.notFound": "Subject not found.",
   "subjects.duplicateName": "A subject with this name already exists.",
   "subjects.cannotMoveIntoSelf": "A subject cannot be moved into itself.",
+  "subjects.academicNotMovable": "Academic subjects cannot be moved.",
   "subjects.wouldCreateCycle":
     "This move would create a circular subject hierarchy.",
 };

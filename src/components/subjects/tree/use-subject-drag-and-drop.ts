@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { moveDocument } from "@/app/actions/documents";
 import { moveSubject } from "@/app/actions/subjects";
 import type { DocumentKind } from "@/features/documents/types";
+import { isAcademicSubject } from "@/features/subjects/constants";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import {
@@ -29,6 +30,25 @@ interface UseSubjectDragAndDropParams {
     proposedParentSubjectId: string | null,
   ) => void;
   onDocumentMoved: (document: DraggedDocument, newSubjectId: string) => void;
+}
+
+/**
+ * Runs `commit` on the next task instead of inside `dragstart`. Chromium
+ * aborts a native drag (firing `dragend` at once) when the DOM around the
+ * source shifts during `dragstart`; committing drag state there inserts the
+ * root drop zone above the tree and pushes the dragged row down, so subject
+ * drags never started. Deferring lets the browser lock in the drag first.
+ *
+ * @example
+ * deferPastDragStart(() => setDraggedSubjectId(id));
+ */
+export function deferPastDragStart(
+  commit: () => void,
+  schedule: (callback: () => void) => void = (callback) => {
+    window.setTimeout(callback, 0);
+  },
+): void {
+  schedule(commit);
 }
 
 // The synthetic root maps to "no parent"; every other target reparents under it.
@@ -66,7 +86,7 @@ export function useSubjectDragAndDrop({
 
   function canDropSubject(sourceSubjectId: string, targetId: string): boolean {
     const sourceNode = findSubjectTreeNode(localTree, sourceSubjectId);
-    if (!sourceNode) {
+    if (!sourceNode || isAcademicSubject(sourceNode.kind)) {
       return false;
     }
 
@@ -128,9 +148,15 @@ export function useSubjectDragAndDrop({
     draggedSubjectIdRef.current = subjectId;
     draggedDocumentRef.current = null;
     dropTargetIdRef.current = null;
-    setDraggedSubjectId(subjectId);
-    setDraggedDocument(null);
-    setDropTargetId(null);
+    deferPastDragStart(() => {
+      // The drag may already have ended (e.g. an instant drop or cancel).
+      if (draggedSubjectIdRef.current !== subjectId) {
+        return;
+      }
+      setDraggedSubjectId(subjectId);
+      setDraggedDocument(null);
+      setDropTargetId(null);
+    });
   }
 
   function handleDocumentDragStart(document: DraggedDocument) {
@@ -227,8 +253,15 @@ export function useSubjectDragAndDrop({
     setPendingMoveId(null);
   }
 
+  // Only offer "Move to top level" when it is a real destination: a nested,
+  // movable subject is being dragged (root subjects are already top level).
+  const isRootDropZoneVisible =
+    draggedSubjectId !== null &&
+    canDropSubject(draggedSubjectId, SUBJECT_TREE_ROOT_ID);
+
   return {
     draggedSubjectId,
+    isRootDropZoneVisible,
     draggedDocument,
     dropTargetId,
     pendingMoveId,

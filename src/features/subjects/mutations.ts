@@ -5,6 +5,7 @@ import {
   cleanupAttachmentPathnames,
   getSubjectAttachmentPathnamesForUser,
 } from "@/features/attachments/cleanup";
+import { isAcademicSubject } from "@/features/subjects/constants";
 import { createSubjectPathForUser } from "@/features/subjects/path-mutations";
 import {
   countChildSubjectsForUser,
@@ -207,6 +208,12 @@ export async function moveSubjectForUser(
 
   if (!existing) {
     return actionError("subjects.notFound");
+  }
+
+  // Academic subjects anchor attendance and assessments, so they stay where
+  // they were created; only general (container) subjects can be reorganized.
+  if (isAcademicSubject(existing.kind)) {
+    return actionError("subjects.academicNotMovable");
   }
 
   const newParentSubjectId = data.parentSubjectId ?? null;
