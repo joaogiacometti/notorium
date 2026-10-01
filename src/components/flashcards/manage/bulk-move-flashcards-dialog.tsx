@@ -1,13 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { bulkMoveFlashcards } from "@/app/actions/flashcards";
-import { getSubjectOptions } from "@/app/actions/subjects";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectSelect } from "@/components/shared/subject-select";
+import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +22,6 @@ import {
   type BulkMoveFlashcardsForm,
   bulkMoveFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface BulkMoveFlashcardsDialogProps {
@@ -39,7 +38,6 @@ export function BulkMoveFlashcardsDialog({
   onOpenChange,
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
   const [isPending, startTransition] = useTransition();
-  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const form = useForm<BulkMoveFlashcardsForm>({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
     defaultValues: {
@@ -47,16 +45,20 @@ export function BulkMoveFlashcardsDialog({
       subjectId: "",
     },
   });
+  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+    open,
+    loadSubjectsOnOpen: true,
+    onSubjectCreated: (createdSubjectId) =>
+      form.setValue("subjectId", createdSubjectId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      }),
+  });
 
   useEffect(() => {
-    if (!open) {
-      return;
+    if (open) {
+      form.reset({ ids, subjectId: "" });
     }
-
-    form.reset({ ids, subjectId: "" });
-    void getSubjectOptions().then((fetchedSubjects) =>
-      setSubjects(fetchedSubjects),
-    );
   }, [form, open, ids]);
 
   function handleOpenChange(nextOpen: boolean) {
@@ -107,6 +109,7 @@ export function BulkMoveFlashcardsDialog({
                   id="bulk-move-flashcards-subject"
                   error={fieldState.error?.message as string}
                   ariaInvalid={fieldState.invalid}
+                  onCreateSubject={handleCreateSubject}
                 />
               )}
             />

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,15 +9,20 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-const { bulkMoveFlashcardsMock, getDecksMock, toastErrorMock } = vi.hoisted(
-  () => ({
-    bulkMoveFlashcardsMock: vi.fn(),
-    getDecksMock: vi.fn(),
-    toastErrorMock: vi.fn(),
-  }),
-);
+const {
+  bulkMoveFlashcardsMock,
+  createSubjectMock,
+  getDecksMock,
+  toastErrorMock,
+} = vi.hoisted(() => ({
+  bulkMoveFlashcardsMock: vi.fn(),
+  createSubjectMock: vi.fn(),
+  getDecksMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+}));
 
 vi.mock("@/app/actions/subjects", () => ({
+  createSubject: createSubjectMock,
   getSubjectOptions: getDecksMock,
 }));
 
@@ -57,6 +63,35 @@ const subjects: SubjectOption[] = [
   },
 ];
 
+const createdSubject: SubjectOption = {
+  ...subjects[0],
+  id: "deck-3",
+  parentSubjectId: null,
+  name: "Chemistry",
+  path: "Chemistry",
+};
+
+function setInputValue(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set;
+  valueSetter?.call(input, value);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function getSearchInput(): HTMLInputElement {
+  const input = document.body.querySelector(
+    'input[placeholder="Search subjects by path"]',
+  );
+
+  if (!(input instanceof HTMLInputElement)) {
+    throw new TypeError("Expected subject search input");
+  }
+
+  return input;
+}
+
 function getCombobox(): HTMLButtonElement {
   const combobox = document.body.querySelector(
     'button[aria-haspopup="listbox"]',
@@ -78,12 +113,27 @@ function getCommandItems(): HTMLElement[] {
 describe("BulkMoveFlashcardsDialog", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let queryClient: QueryClient;
+
+  function renderDialog(ids: string[], onMoved = vi.fn()) {
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <BulkMoveFlashcardsDialog
+          ids={ids}
+          open
+          onMoved={onMoved}
+          onOpenChange={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+  }
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    queryClient = new QueryClient();
     getDecksMock.mockResolvedValue(subjects);
     bulkMoveFlashcardsMock.mockResolvedValue({
       success: true,
@@ -101,19 +151,10 @@ describe("BulkMoveFlashcardsDialog", () => {
   });
 
   it("does not refetch decks or reset the selected subject on rerender with the same ids", async () => {
-    const onMoved = vi.fn();
-    const onOpenChange = vi.fn();
     const ids = ["flashcard-1"];
 
     await act(async () => {
-      root.render(
-        <BulkMoveFlashcardsDialog
-          ids={ids}
-          open
-          onMoved={onMoved}
-          onOpenChange={onOpenChange}
-        />,
-      );
+      renderDialog(ids);
     });
 
     await act(async () => {});
@@ -137,19 +178,52 @@ describe("BulkMoveFlashcardsDialog", () => {
     expect(getCombobox().textContent).toContain("Languages::Spanish::Verbs");
 
     await act(async () => {
-      root.render(
-        <BulkMoveFlashcardsDialog
-          ids={ids}
-          open
-          onMoved={onMoved}
-          onOpenChange={onOpenChange}
-        />,
-      );
+      renderDialog(ids);
     });
 
     await act(async () => {});
 
     expect(getDecksMock).toHaveBeenCalledTimes(1);
     expect(getCombobox().textContent).toContain("Languages::Spanish::Verbs");
+  });
+
+  it("creates a missing subject inline, selects it, and moves into it", async () => {
+    createSubjectMock.mockResolvedValue({ success: true, subjectId: "deck-3" });
+
+    await act(async () => {
+      renderDialog(["flashcard-1"]);
+    });
+    await act(async () => {
+      getCombobox().click();
+    });
+    await act(async () => {
+      setInputValue(getSearchInput(), "Chemistry");
+    });
+
+    getDecksMock.mockResolvedValue([...subjects, createdSubject]);
+    const createOption = getCommandItems().find(
+      (item) => item.textContent === "Create Chemistry",
+    );
+    expect(createOption).toBeTruthy();
+
+    await act(async () => {
+      createOption?.click();
+    });
+
+    expect(createSubjectMock).toHaveBeenCalledWith({
+      name: "Chemistry",
+      kind: "general",
+    });
+    expect(getCombobox().textContent).toContain("Chemistry");
+
+    const form = document.body.querySelector("form");
+    await act(async () => {
+      form?.requestSubmit();
+    });
+
+    expect(bulkMoveFlashcardsMock).toHaveBeenCalledWith({
+      ids: ["flashcard-1"],
+      subjectId: "deck-3",
+    });
   });
 });
