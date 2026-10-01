@@ -45,8 +45,9 @@ async function openFlashcardsReviewPage(page: Page, subjectId?: string) {
 }
 
 function getFocusModeSubjectLabel(page: Page, subjectName: string) {
+  // Focus mode is portaled to <body> by ReviewScrollBoundary (19e3ceb), outside <main>.
   return page
-    .locator("main p")
+    .locator("p")
     .filter({ hasText: new RegExp(`^${escapeRegex(subjectName)}$`) })
     .last();
 }
