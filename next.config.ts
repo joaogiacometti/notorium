@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // AGENTS.md is hand-maintained; stop `next dev` from appending its own rules block.
+  agentRules: false,
   turbopack: {
     root: __dirname,
   },
