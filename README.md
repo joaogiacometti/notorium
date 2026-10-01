@@ -22,7 +22,9 @@ See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 - Node.js 24 (required by Vitest)
 - Docker with Docker Compose
 
-The Nix development shell provides both Bun and Node.js 24.
+The Nix development shell provides both Bun and Node.js 24, and points Biome at
+its statically linked musl binary so `bun run lint` and the Lefthook hooks run on
+NixOS (run `bun install` first).
 
 ## Quick Start
 
