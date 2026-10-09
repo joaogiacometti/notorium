@@ -98,3 +98,6 @@ bun run test:e2e:infra:down
 ```
 
 This stack starts isolated PostgreSQL and Redis containers and runs a migration container against the test database.
+
+Outside the Nix development shell, install the Playwright browser once with
+`bunx playwright install chromium`. The Nix shell already provides it.

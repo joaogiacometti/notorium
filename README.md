@@ -24,7 +24,13 @@ See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 
 The Nix development shell provides both Bun and Node.js 24, and points Biome at
 its statically linked musl binary so `bun run lint` and the Lefthook hooks run on
-NixOS (run `bun install` first).
+NixOS (run `bun install` first). It also supplies Playwright's browsers from
+nixpkgs, so skip `playwright install` there. `@playwright/test` is pinned to the
+exact nixpkgs `playwright-driver` version; after `nix flake update`, re-pin it:
+
+```bash
+bun add -d -E @playwright/test@$(nix eval --raw --inputs-from . nixpkgs#playwright-driver.version)
+```
 
 ## Quick Start
 
