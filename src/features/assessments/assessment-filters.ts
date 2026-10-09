@@ -15,6 +15,7 @@ export type TypeFilter =
   | "project"
   | "presentation"
   | "homework"
+  | "study"
   | "other";
 export type DueDateFilter =
   | "all"

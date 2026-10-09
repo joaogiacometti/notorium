@@ -7,6 +7,7 @@ import {
   eq,
   gte,
   inArray,
+  isNull,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -82,6 +83,8 @@ export async function countAssessmentsBySubjectForUser(
       and(
         eq(assessment.subjectId, subjectId),
         eq(assessment.userId, userId),
+        // Generated study tasks don't consume the manual assessment limit.
+        isNull(assessment.studyWeek),
         ...getOwnedAcademicSubjectFilters(userId),
       ),
     );

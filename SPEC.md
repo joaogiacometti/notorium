@@ -239,6 +239,17 @@ Students who want a private, lightweight study management workspace.
   - weighted average if at least one valid weight exists
   - simple average otherwise
 
+### Study schedule
+
+- An academic subject can set a weekly class day plus a term start and end date from its dashboard.
+- Saving the schedule creates one assessment of type `study` per class week, titled "Study week N content". Each is due the day before the next class, so it shows as overdue if the week was not studied in time.
+- Saving again syncs the generated tasks in place instead of recreating them, so reminders already sent are not repeated. Untouched pending tasks move to the new week dates; weeks past the new term end are deleted; missing weeks are created.
+- Completed tasks and tasks the user edited (renamed, rescheduled, given a description or attachments) are never deleted by a save. They stay linked to their week while that week's dates are unchanged; if the week moves, they become standalone study tasks and a fresh task is created for the new week.
+- Removing the schedule deletes its untouched pending tasks and keeps completed or edited ones as standalone study tasks.
+- Changing a study task to another type unlinks it from the schedule: later saves ignore it, and it counts toward the assessment limit.
+- A schedule spans at most 30 class weeks; the end date must be on or after the start date and include at least one class day.
+- Study tasks appear in Planning, Home, the calendar, and reminder emails like any assessment, can be completed in bulk, and are excluded from the subject average. They do not count toward the 50-assessments-per-subject limit.
+
 ### Global Search
 
 - Search subjects, notes, flashcards, and mindmaps by text with case-insensitive matching. Only academic subjects appear as subject results, since general subjects have no page to open; their notes and mindmaps stay searchable.

@@ -17,6 +17,7 @@ function makeAssessment(
     dueDate: null,
     score: null,
     weight: null,
+    studyWeek: null,
     subjectId: "s1",
     userId: "u1",
     createdAt: new Date("2026-01-01"),
@@ -117,5 +118,14 @@ describe("getAssessmentAverage", () => {
     ];
 
     expect(getAssessmentAverage(items)).toBe(70);
+  });
+
+  it("ignores generated study tasks", () => {
+    const items = [
+      makeAssessment({ status: "completed", score: "80" }),
+      makeAssessment({ type: "study", status: "completed", score: "0" }),
+    ];
+
+    expect(getAssessmentAverage(items)).toBe(80);
   });
 });

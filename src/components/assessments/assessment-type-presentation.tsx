@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
+  BookOpen,
   ClipboardList,
   Ellipsis,
   GraduationCap,
@@ -9,6 +10,7 @@ import {
   Presentation,
   Rocket,
 } from "lucide-react";
+import { ASSESSMENT_TYPE_LABELS } from "@/features/assessments/constants";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +61,13 @@ export const assessmentTypeStyles: Record<AssessmentType, AssessmentTypeStyle> =
       border: "border-[color:var(--intent-homework-border)]",
       iconColor: "text-[color:var(--intent-homework-fill)]",
     },
+    study: {
+      icon: BookOpen,
+      text: "text-[color:var(--intent-study-text)]",
+      bg: "bg-[color:var(--intent-study-bg)]",
+      border: "border-[color:var(--intent-study-border)]",
+      iconColor: "text-[color:var(--intent-study-fill)]",
+    },
     other: {
       icon: Ellipsis,
       text: "text-[color:var(--intent-other-text)]",
@@ -67,15 +76,6 @@ export const assessmentTypeStyles: Record<AssessmentType, AssessmentTypeStyle> =
       iconColor: "text-[color:var(--intent-other-fill)]",
     },
   };
-
-const TYPE_LABELS: Record<AssessmentType, string> = {
-  exam: "Exam",
-  assignment: "Assignment",
-  project: "Project",
-  presentation: "Presentation",
-  homework: "Homework",
-  other: "Other",
-};
 
 interface AssessmentTypeBadgeProps {
   type: AssessmentType;
@@ -100,7 +100,7 @@ export function AssessmentTypeBadge({
       )}
     >
       <TypeIcon className="size-3" />
-      {TYPE_LABELS[type]}
+      {ASSESSMENT_TYPE_LABELS[type]}
     </span>
   );
 }

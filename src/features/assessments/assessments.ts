@@ -1,15 +1,6 @@
 import { getTodayIso } from "@/lib/dates/format";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
 
-export const assessmentTypeLabels: Record<AssessmentEntity["type"], string> = {
-  exam: "Exam",
-  assignment: "Assignment",
-  project: "Project",
-  presentation: "Presentation",
-  homework: "Homework",
-  other: "Other",
-};
-
 export { getTodayIso };
 
 export function isAssessmentOverdue(
@@ -26,8 +17,12 @@ export function isAssessmentOverdue(
 export function getAssessmentAverage(
   assessments: AssessmentEntity[],
 ): number | null {
+  // Study tasks are generated reminders, not graded work.
   const completedWithScore = assessments.filter(
-    (item) => item.status === "completed" && item.score !== null,
+    (item) =>
+      item.type !== "study" &&
+      item.status === "completed" &&
+      item.score !== null,
   );
 
   if (completedWithScore.length === 0) {

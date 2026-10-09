@@ -49,6 +49,8 @@ export const LIMITS = {
   attendanceTotalClassesMax: 365,
   attendanceMaxMissesMax: 365,
 
+  studyScheduleMaxWeeks: 30,
+
   accountNameMax: 100,
 
   authEmailMax: 254,

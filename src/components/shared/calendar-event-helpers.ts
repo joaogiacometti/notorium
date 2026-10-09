@@ -1,4 +1,4 @@
-import { assessmentTypeLabels } from "@/features/assessments/assessments";
+import { ASSESSMENT_TYPE_LABELS } from "@/features/assessments/constants";
 import type { CalendarEvent } from "@/lib/dates/calendar";
 import { getStatusToneClasses, type StatusTone } from "@/lib/ui/status-tones";
 
@@ -53,8 +53,8 @@ function getAssessmentTypeLabel(event: CalendarEvent): string | null {
   }
 
   return (
-    assessmentTypeLabels[
-      event.meta.type as keyof typeof assessmentTypeLabels
+    ASSESSMENT_TYPE_LABELS[
+      event.meta.type as keyof typeof ASSESSMENT_TYPE_LABELS
     ] ?? event.meta.type
   );
 }

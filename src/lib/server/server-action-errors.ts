@@ -54,6 +54,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attendance.invalidMissData": "Invalid miss data.",
   "attendance.missAlreadyRecorded": "A miss is already recorded for this date.",
   "attendance.missNotFound": "Miss record not found.",
+  "studySchedule.invalid": "Invalid study schedule.",
   "attachments.invalidData": "Invalid attachment data.",
   "attachments.notFound": "Attachment not found.",
   "attachments.uploadFailed": "Failed to upload attachment.",

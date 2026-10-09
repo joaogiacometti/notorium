@@ -1,10 +1,10 @@
-import { assessmentTypeLabels } from "@/features/assessments/assessments";
+import { ASSESSMENT_TYPE_LABELS } from "@/features/assessments/constants";
 
 export interface AssessmentReminderItem {
   title: string;
   subjectName: string;
   dueDate: string;
-  type: keyof typeof assessmentTypeLabels;
+  type: keyof typeof ASSESSMENT_TYPE_LABELS;
 }
 
 export interface AssessmentReminderData {
@@ -56,7 +56,7 @@ export function renderAssessmentReminderEmail({
       <tr>
         <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;">
           <strong style="color:#111827;">${escapeHtml(a.title)}</strong>
-          <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:9999px;font-size:11px;background:#f3f4f6;color:#6b7280;">${assessmentTypeLabels[a.type]}</span>
+          <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:9999px;font-size:11px;background:#f3f4f6;color:#6b7280;">${ASSESSMENT_TYPE_LABELS[a.type]}</span>
         </td>
         <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;color:#374151;">${escapeHtml(a.subjectName)}</td>
         <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;color:#374151;white-space:nowrap;">${formatDueDate(a.dueDate)}</td>

@@ -435,6 +435,13 @@
       "when": 1787312180990,
       "tag": "0061_rich_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1791511484035,
+      "tag": "0062_clean_dark_beast",
+      "breakpoints": true
     }
   ]
 }

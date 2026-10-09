@@ -39,6 +39,14 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.attendance.totalClasses.max": "Cannot exceed 365 classes.",
   "Validation.attendance.totalClasses.min": "Must have at least 1 class.",
   "Validation.attendance.totalClasses.integer": "Must be a whole number.",
+  "Validation.studySchedule.weekday.invalid": "Choose a weekday.",
+  "Validation.studySchedule.dateRequired": "Date is required.",
+  "Validation.studySchedule.endBeforeStart":
+    "End date must be on or after the start date.",
+  "Validation.studySchedule.noClassDay":
+    "No class day falls inside this date range.",
+  "Validation.studySchedule.tooManyWeeks":
+    "A schedule can span at most 30 class weeks.",
   "Validation.auth.confirmPasswordRequired": "Please confirm your password.",
   "Validation.auth.emailInvalid": "Invalid email address.",
   "Validation.auth.emailMaxLength": "Email must be at most 254 characters.",

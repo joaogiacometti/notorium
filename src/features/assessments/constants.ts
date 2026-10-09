@@ -7,6 +7,7 @@ export const assessmentTypeValues = [
   "project",
   "presentation",
   "homework",
+  "study",
   "other",
 ] as const;
 
@@ -65,19 +66,24 @@ export const ASSESSMENT_STATUS_LABEL = {
   pending: "Pending",
 } as const;
 
+export const ASSESSMENT_TYPE_LABELS: Record<AssessmentType, string> = {
+  exam: "Exam",
+  assignment: "Assignment",
+  project: "Project",
+  presentation: "Presentation",
+  homework: "Homework",
+  study: "Study",
+  other: "Other",
+};
+
+/**
+ * Display label for a type value of unknown provenance (filters, URL params);
+ * unknown values fall back to "Other".
+ *
+ * @example getAssessmentTypeLabel("exam"); // "Exam"
+ */
 export function getAssessmentTypeLabel(value: string): string {
-  switch (value) {
-    case "exam":
-      return "Exam";
-    case "assignment":
-      return "Assignment";
-    case "project":
-      return "Project";
-    case "presentation":
-      return "Presentation";
-    case "homework":
-      return "Homework";
-    default:
-      return "Other";
-  }
+  return Object.hasOwn(ASSESSMENT_TYPE_LABELS, value)
+    ? ASSESSMENT_TYPE_LABELS[value as AssessmentType]
+    : ASSESSMENT_TYPE_LABELS.other;
 }

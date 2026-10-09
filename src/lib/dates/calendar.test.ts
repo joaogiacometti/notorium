@@ -26,6 +26,7 @@ function makeAssessment(
     dueDate: "2026-03-15",
     score: null,
     weight: null,
+    studyWeek: null,
     subjectId: "s1",
     userId: "u1",
     createdAt: new Date("2026-01-01"),

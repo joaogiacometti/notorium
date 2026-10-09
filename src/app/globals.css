@@ -255,6 +255,10 @@
   --intent-homework-bg: oklch(0.62 0.13 164 / 10%);
   --intent-homework-text: oklch(0.43 0.11 164);
   --intent-homework-fill: oklch(0.56 0.13 164);
+  --intent-study-border: oklch(0.62 0.13 230 / 32%);
+  --intent-study-bg: oklch(0.62 0.13 230 / 10%);
+  --intent-study-text: oklch(0.43 0.11 230);
+  --intent-study-fill: oklch(0.56 0.13 230);
   --intent-other-border: color-mix(
     in oklab,
     var(--muted-foreground) 28%,
@@ -345,6 +349,10 @@
   --intent-homework-bg: oklch(0.74 0.12 164 / 12%);
   --intent-homework-text: oklch(0.82 0.08 164);
   --intent-homework-fill: oklch(0.74 0.11 164);
+  --intent-study-border: oklch(0.74 0.12 230 / 35%);
+  --intent-study-bg: oklch(0.74 0.12 230 / 12%);
+  --intent-study-text: oklch(0.82 0.08 230);
+  --intent-study-fill: oklch(0.74 0.11 230);
 }
 
 .halloween {
@@ -416,6 +424,10 @@
   --intent-homework-bg: oklch(0.78 0.1 92 / 12%);
   --intent-homework-text: oklch(0.9 0.06 95);
   --intent-homework-fill: oklch(0.82 0.09 93);
+  --intent-study-border: oklch(0.82 0.09 215 / 35%);
+  --intent-study-bg: oklch(0.82 0.09 215 / 12%);
+  --intent-study-text: oklch(0.9 0.06 215);
+  --intent-study-fill: oklch(0.82 0.09 215);
 }
 
 .catppuccin-mocha {
@@ -484,6 +496,10 @@
   --intent-homework-bg: hsl(115 54% 76% / 0.1);
   --intent-homework-text: hsl(115 54% 82%);
   --intent-homework-fill: hsl(115 54% 76%);
+  --intent-study-border: hsl(200 54% 76% / 0.35);
+  --intent-study-bg: hsl(200 54% 76% / 0.1);
+  --intent-study-text: hsl(200 54% 82%);
+  --intent-study-fill: hsl(200 54% 76%);
 }
 
 .gruvbox {
@@ -551,6 +567,10 @@
   --intent-homework-bg: rgb(184 187 38 / 10%);
   --intent-homework-text: #b8bb26;
   --intent-homework-fill: #98971a;
+  --intent-study-border: rgb(142 192 124 / 35%);
+  --intent-study-bg: rgb(142 192 124 / 10%);
+  --intent-study-text: #8ec07c;
+  --intent-study-fill: #689d6a;
 }
 
 @layer base {

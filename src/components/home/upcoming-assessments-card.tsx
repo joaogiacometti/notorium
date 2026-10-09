@@ -3,7 +3,7 @@ import Link from "next/link";
 import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { assessmentTypeLabels } from "@/features/assessments/assessments";
+import { ASSESSMENT_TYPE_LABELS } from "@/features/assessments/constants";
 import { formatDateShort, getTodayIso } from "@/lib/dates/format";
 import { getAssessmentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { AssessmentEntity } from "@/lib/server/api-contracts";
@@ -68,7 +68,7 @@ function AssessmentRow({ assessment, todayIso }: Readonly<AssessmentRowProps>) {
         {assessment.title}
       </span>
       <span className="shrink-0 text-xs">
-        {assessmentTypeLabels[assessment.type]}
+        {ASSESSMENT_TYPE_LABELS[assessment.type]}
       </span>
       <StatusToneBadge tone={due.tone} className="shrink-0 whitespace-nowrap">
         {due.label}

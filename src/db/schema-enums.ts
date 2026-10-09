@@ -20,6 +20,7 @@ export const assessmentTypeEnum = pgEnum("assessment_type", [
   "project",
   "presentation",
   "homework",
+  "study",
   "other",
 ]);
 

@@ -143,6 +143,9 @@ export const subject = pgTable(
     kind: subjectKindEnum("kind").notNull().default("academic"),
     totalClasses: integer("total_classes"),
     maxMisses: integer("max_misses"),
+    studyWeekday: integer("study_weekday"),
+    studyTermStart: date("study_term_start", { mode: "string" }),
+    studyTermEnd: date("study_term_end", { mode: "string" }),
 
     userId: text("user_id")
       .notNull()
@@ -309,6 +312,7 @@ export const assessment = pgTable(
     dueDate: date("due_date", { mode: "string" }),
     score: numeric("score", { precision: 5, scale: 2 }),
     weight: numeric("weight", { precision: 5, scale: 2 }),
+    studyWeek: integer("study_week"),
     subjectId: text("subject_id")
       .notNull()
       .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
@@ -322,6 +326,10 @@ export const assessment = pgTable(
       .notNull(),
   },
   (table) => [
+    uniqueIndex("assessment_subjectId_studyWeek_unique").on(
+      table.subjectId,
+      table.studyWeek,
+    ),
     index("assessment_subjectId_idx").on(table.subjectId),
     index("assessment_userId_idx").on(table.userId),
     index("assessment_userId_dueDate_idx").on(table.userId, table.dueDate),
