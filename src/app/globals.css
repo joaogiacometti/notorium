@@ -585,6 +585,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Browsers default fieldset to min-inline-size: min-content, so a Field
+     holding a wide scroller (editor toolbar, truncated select label) refused
+     to shrink and pushed dialogs past the viewport on mobile. */
+  fieldset {
+    min-inline-size: 0;
+  }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   a[href],
