@@ -52,20 +52,14 @@ jobs:
       - name: Start infrastructure
         run: docker compose -f compose.test.yml --env-file .env.test up -d --wait
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
+          node-version: 24
+          cache: npm
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Generate E2E secrets
         run: |
@@ -75,19 +69,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install Playwright Chromium
-        run: bunx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Build application
-        run: bun --env-file=.env.test run build
+        run: npm run test:e2e:build
 
       - name: Run migrations
-        run: bun --env-file=.env.test run db:migrate
+        run: npm run test:e2e:migrate
 
       - name: Start application
-        run: nohup bun --env-file=.env.test run start -- --port 3001 > app.log 2>&1 &
+        run: nohup npm run test:e2e:start -- --port 3001 > app.log 2>&1 &
 
       - name: Wait for application to be ready
         run: |
@@ -105,7 +99,7 @@ jobs:
           exit 1
 
       - name: Run E2E tests
-        run: bun run test:e2e
+        run: npm run test:e2e
 
       - name: Debug app log on failure
         if: failure()

@@ -23,32 +23,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
+          node-version: 24
+          cache: npm
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Lint (Biome)
-        run: bun run lint
+        run: npm run lint
 
       - name: Type check (TypeScript)
-        run: bun run typecheck
+        run: npm run typecheck
 
       - name: Tests (Vitest)
-        run: bun run test
+        run: npm run test
 
       - name: File-size guard
-        run: bun run check:size
+        run: npm run check:size
 
       - name: Dead-code guard (Knip)
-        run: bun run check:deadcode
+        run: npm run check:deadcode

@@ -1,8 +1,8 @@
 # Docker Guide
 
-Notorium ships with three Compose entrypoints.
+Notorium ships with two Compose entrypoints. Both only provide local PostgreSQL and Redis; the app itself runs with npm and is not shipped as a Docker image.
 
-Audience: developers and self-hosters using Docker or Docker Compose.
+Audience: developers using Docker Compose for local infrastructure.
 
 Related docs: [Docs Index](../README.md), [Environment Guide](./environment.md), [Optional Features](./optional-features.md), [README](../../README.md)
 
@@ -10,14 +10,12 @@ Related docs: [Docs Index](../README.md), [Environment Guide](./environment.md),
 
 | File | Purpose |
 | --- | --- |
-| `compose.dev.yml` | Local PostgreSQL and Redis for Bun-based development |
-| `compose.yml` | Full prod-like stack with migrations and built app |
+| `compose.dev.yml` | Local PostgreSQL and Redis for npm-based development |
 | `compose.test.yml` | Isolated PostgreSQL and Redis for E2E tests |
-| `Dockerfile` | Multi-stage build for app image and migration image |
 
 ## Default Development Infrastructure
 
-Use `compose.dev.yml` when running the app directly with Bun.
+Use `compose.dev.yml` when running the app directly with npm.
 
 Start:
 
@@ -33,8 +31,8 @@ This starts:
 Then run:
 
 ```bash
-bun run db:migrate
-bun dev
+npm run db:migrate
+npm run dev
 ```
 
 Stop:
@@ -43,44 +41,6 @@ Stop:
 docker compose -f compose.dev.yml down
 ```
 
-## Full Stack Compose
-
-Use `compose.yml` when you want the containerized app path.
-
-Start:
-
-```bash
-docker compose up --build -d
-```
-
-This stack runs:
-
-- `postgres`
-- `redis`
-- `migrate` as a one-shot `bun run db:migrate`
-- `app` using the built standalone Next.js output
-
-Important behavior:
-
-- the app container runs as a non-root user
-- PostgreSQL and Redis are bound to `127.0.0.1`
-- the app reads runtime env such as `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `RATE_LIMIT_BACKEND`, and `REDIS_URL`
-- the migration container uses the internal Compose PostgreSQL hostname
-
-Stop:
-
-```bash
-docker compose down
-```
-
-Remove volumes too:
-
-```bash
-docker compose down -v
-```
-
-Optional integrations such as email, scheduled reminders, AI, attachments, and Upstash are documented in [Optional Features](./optional-features.md).
-
 ## Test Compose
 
 Use `compose.test.yml` only for Playwright E2E infrastructure.
@@ -88,16 +48,19 @@ Use `compose.test.yml` only for Playwright E2E infrastructure.
 Start:
 
 ```bash
-bun run test:e2e:infra:up
+npm run test:e2e:infra:up
 ```
 
 Stop:
 
 ```bash
-bun run test:e2e:infra:down
+npm run test:e2e:infra:down
 ```
 
-This stack starts isolated PostgreSQL and Redis containers and runs a migration container against the test database.
+This stack starts isolated PostgreSQL and Redis containers. Apply migrations to the test database with:
 
-Outside the Nix development shell, install the Playwright browser once with
-`bunx playwright install chromium`. The Nix shell already provides it.
+```bash
+npm run test:e2e:migrate
+```
+
+Install the Playwright browser once with `npx playwright install chromium`.

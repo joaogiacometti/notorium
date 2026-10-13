@@ -4,8 +4,8 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 
 ## Project Facts
 
-- Stack: Next.js App Router, React, TypeScript, Drizzle ORM, Better Auth, Zod, React Hook Form, shadcn/ui, Tailwind CSS 4, Biome, Bun, PostgreSQL, Redis.
-- Use Bun. Do not use npm.
+- Stack: Next.js App Router, React, TypeScript, Drizzle ORM, Better Auth, Zod, React Hook Form, shadcn/ui, Tailwind CSS 4, Biome, npm, PostgreSQL, Redis.
+- Use npm.
 - Format and lint with Biome.
 - `SPEC.md` is the product behavior source of truth.
 - `README.md` owns quick setup and basic runtime commands.
@@ -17,7 +17,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 ## Code Style
 
 - Functions: 4-20 lines. Split if longer.
-- Files: under 500 lines. Split by responsibility. Enforced by `bun run check:size` (see Automated Guards).
+- Files: under 500 lines. Split by responsibility. Enforced by `npm run check:size` (see Automated Guards).
 - One thing per function, one responsibility per module.
 - Names: specific and unique. Avoid `data`, `handler`, `Manager`, and other vague names.
 - Prefer names that return fewer than 5 grep hits in the codebase.
@@ -37,7 +37,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 
 ## Tests
 
-- Tests run with one command: `bun run test`.
+- Tests run with one command: `npm run test`.
 - Every new function gets a test.
 - Bug fixes get a regression test.
 - Prefer TDD for bug fixes and behavior changes: write or update the failing test first, then implement the smallest fix.
@@ -125,7 +125,7 @@ Only add optional files when they are needed.
 - Preserve backward compatibility unless the user explicitly approves a breaking change.
 - Keep migrations safe to run in production.
 - Never manually edit `drizzle/*.sql` or `drizzle/meta/*`.
-- For schema changes, tell the user to run `bun run db:generate` and `bun run db:migrate`.
+- For schema changes, tell the user to run `npm run db:generate` and `npm run db:migrate`.
 
 ## Validation
 
@@ -204,10 +204,10 @@ className =
 
 These run in CI (`.github/workflows/checks.yml`) and locally. Do not weaken a guard to make a build pass; fix the code.
 
-- `bun run lint` (Biome) also enforces architecture boundaries via `noRestrictedImports` overrides in `biome.json`: Server Actions cannot import `@/db/index`; components cannot import `@/features/*/mutations`.
-- `bun run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries. `src/db/schema.ts` is intentionally exempt via `SIZE_GUARD_EXEMPT`: keep the Drizzle schema as one file and let it grow — do not split it or try to "fix" its size.
-- `bun run check:deadcode` (Knip, config in `knip.json`) fails on unused files, unused dependencies, and undeclared/unresolved imports — the high-confidence signals. When you delete a feature, remove its now-orphaned files and deps in the same change instead of leaving them. Unused *exports* and *types* are reported as non-blocking warnings (they have real false positives: the `src/components/ui/**` shadcn API surface, the `fsrs` barrel re-exports, and type-only exports), so don't chase them blindly, but do clean up ones you know are genuinely dead. Fix findings by removing the dead code, not by widening the `ignore`/`ignoreDependencies` lists — only add an ignore for a verified false positive, with the reason in your change summary.
-Lefthook (`lefthook.yml`) runs these locally before they reach CI: pre-commit formats and lints staged files with Biome; pre-push runs typecheck, tests, the file-size guard, and the dead-code guard. Hooks install automatically on `bun install` because `lefthook` is listed in `trustedDependencies`, so Bun runs its postinstall (which safely skips in CI and when git is absent); run `bunx lefthook install` manually if needed.
+- `npm run lint` (Biome) also enforces architecture boundaries via `noRestrictedImports` overrides in `biome.json`: Server Actions cannot import `@/db/index`; components cannot import `@/features/*/mutations`.
+- `npm run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries. `src/db/schema.ts` is intentionally exempt via `SIZE_GUARD_EXEMPT`: keep the Drizzle schema as one file and let it grow — do not split it or try to "fix" its size.
+- `npm run check:deadcode` (Knip, config in `knip.json`) fails on unused files, unused dependencies, and undeclared/unresolved imports — the high-confidence signals. When you delete a feature, remove its now-orphaned files and deps in the same change instead of leaving them. Unused *exports* and *types* are reported as non-blocking warnings (they have real false positives: the `src/components/ui/**` shadcn API surface, the `fsrs` barrel re-exports, and type-only exports), so don't chase them blindly, but do clean up ones you know are genuinely dead. Fix findings by removing the dead code, not by widening the `ignore`/`ignoreDependencies` lists — only add an ignore for a verified false positive, with the reason in your change summary.
+Lefthook (`lefthook.yml`) runs these locally before they reach CI: pre-commit formats and lints staged files with Biome; pre-push runs typecheck, tests, the file-size guard, and the dead-code guard. Hooks install automatically on `npm install` because `lefthook` is approved in `allowScripts`, so npm runs its postinstall (which safely skips in CI and when git is absent); run `npx lefthook install` manually if needed.
 
 ## Definition of Done
 

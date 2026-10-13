@@ -18,26 +18,15 @@ See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 
 ## Prerequisites
 
-- Bun
-- Node.js 24 (required by Vitest)
+- Node.js 24 with npm
 - Docker with Docker Compose
-
-The Nix development shell provides both Bun and Node.js 24, and points Biome at
-its statically linked musl binary so `bun run lint` and the Lefthook hooks run on
-NixOS (run `bun install` first). It also supplies Playwright's browsers from
-nixpkgs, so skip `playwright install` there. `@playwright/test` is pinned to the
-exact nixpkgs `playwright-driver` version; after `nix flake update`, re-pin it:
-
-```bash
-bun add -d -E @playwright/test@$(nix eval --raw --inputs-from . nixpkgs#playwright-driver.version)
-```
 
 ## Quick Start
 
 1. Install dependencies:
 
 ```bash
-bun install
+npm install
 ```
 
 2. Create your local environment file:
@@ -63,13 +52,13 @@ docker compose -f compose.dev.yml up -d
 5. Run database migrations:
 
 ```bash
-bun run db:migrate
+npm run db:migrate
 ```
 
 6. Start the app:
 
 ```bash
-bun dev
+npm run dev
 ```
 
 Open `http://localhost:3000`.
@@ -82,14 +71,14 @@ The first account created on a new instance becomes an approved admin automatica
 
 | Command | Description |
 | --- | --- |
-| `bun dev` | Start the Next.js development server |
-| `bun run db:migrate` | Apply Drizzle migrations |
-| `bun run test` | Run the Vitest suite |
-| `bun run test:coverage` | Run tests and enforce coverage thresholds |
-| `bun run lint` | Run Biome checks, including architecture boundaries |
-| `bun run check:size` | Fail on source files over 500 lines |
+| `npm run dev` | Start the Next.js development server |
+| `npm run db:migrate` | Apply Drizzle migrations |
+| `npm run test` | Run the Vitest suite |
+| `npm run test:coverage` | Run tests and enforce coverage thresholds |
+| `npm run lint` | Run Biome checks, including architecture boundaries |
+| `npm run check:size` | Fail on source files over 500 lines |
 
-Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automatically on `bun install` and run these guards before each commit and push.
+Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automatically on `npm install` and run these guards before each commit and push.
 
 ## More Docs
 

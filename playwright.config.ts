@@ -22,7 +22,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "bun --env-file=.env.test run build && bun --env-file=.env.test run start -- --hostname 127.0.0.1 --port 3001",
+      "npm run test:e2e:build && npm run test:e2e:start -- --hostname 127.0.0.1 --port 3001",
     env: {
       NOTORIUM_AI_FIXTURE_MODE: "playwright",
       NOTORIUM_EMAIL_FIXTURE_MODE: "playwright",

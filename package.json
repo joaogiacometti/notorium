@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check",
     "format": "biome format --write",
-    "check:size": "bun scripts/check-file-size.ts",
+    "check:size": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-file-size.ts",
     "check:deadcode": "DATABASE_URL=postgres://stub knip",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -20,10 +20,12 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e:infra:up": "docker compose -f compose.test.yml --env-file .env.test up -d",
     "test:e2e:infra:down": "docker compose -f compose.test.yml --env-file .env.test down -v",
-    "test:e2e:migrate": "bun --env-file=.env.test run db:migrate",
-    "test:e2e": "bun --env-file=.env.test run playwright test",
-    "test:e2e:ui": "bun --env-file=.env.test run playwright test --ui",
-    "test:e2e:headed": "bun --env-file=.env.test run playwright test --headed"
+    "test:e2e:migrate": "dotenv -e .env.test -- drizzle-kit migrate",
+    "test:e2e:build": "dotenv -e .env.test -- next build",
+    "test:e2e:start": "dotenv -e .env.test -- next start",
+    "test:e2e": "dotenv -e .env.test -- playwright test",
+    "test:e2e:ui": "dotenv -e .env.test -- playwright test --ui",
+    "test:e2e:headed": "dotenv -e .env.test -- playwright test --headed"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -66,8 +68,8 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.71.2",
-    "react-rnd": "^10.5.3",
     "react-remove-scroll": "2.7.2",
+    "react-rnd": "^10.5.3",
     "redis": "^5.11.0",
     "server-only": "^0.0.1",
     "sharp": "^0.35.3",
@@ -76,9 +78,6 @@
     "ts-fsrs": "^5.2.3",
     "zod": "^4.3.6"
   },
-  "trustedDependencies": [
-    "lefthook"
-  ],
   "devDependencies": {
     "@biomejs/biome": "2.4.4",
     "@playwright/test": "1.61.1",
@@ -90,6 +89,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitest/coverage-v8": "^4.1.11",
     "babel-plugin-react-compiler": "1.0.0",
+    "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.9",
     "happy-dom": "^20.11.6",
     "jsdom": "^30.0.1",
@@ -116,5 +116,10 @@
   "bugs": {
     "url": "https://github.com/joaogiacometti/notorium/issues"
   },
-  "homepage": "https://github.com/joaogiacometti/notorium#readme"
+  "homepage": "https://github.com/joaogiacometti/notorium#readme",
+  "allowScripts": {
+    "lefthook": true,
+    "esbuild": false,
+    "msw": false
+  }
 }

@@ -6,7 +6,7 @@
     "*.css": "tailwindcss"
   },
   "files.exclude": {
-    "bun.lock": true,
+    "package-lock.json": true,
     "tsconfig.tsbuildinfo": true,
     "next-env.d.ts": true,
     "components.json": true

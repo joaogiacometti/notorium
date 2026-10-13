@@ -9,7 +9,7 @@
  * Run AFTER Migration A (adds nullable flashcard.subjectId) and BEFORE
  * Migration B (makes it notNull, drops deckId + the deck table):
  *
- *   bun --env-file=.env run scripts/backfill-decks-to-subjects.ts
+ *   npx tsx --env-file=.env scripts/backfill-decks-to-subjects.ts
  *
  * Safe to re-run: the whole job runs in one transaction and exits early when
  * no flashcard still needs a subject, so a clean DB is a no-op.

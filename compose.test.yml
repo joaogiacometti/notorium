@@ -31,17 +31,5 @@ services:
       timeout: 5s
       retries: 10
 
-  migrate:
-    build:
-      context: .
-      target: migrator
-    depends_on:
-      postgres-test:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-test:5432/${POSTGRES_DB}
-    command: ["bun", "run", "db:migrate"]
-    restart: "no"
-
 volumes:
   postgres_test_data:

@@ -14,7 +14,7 @@ Use this index to find the narrowest source of truth before reading broader docs
 
 - [setup/environment.md](./setup/environment.md): required env, rate limiting backends, Compose helper variables, and test env
 - [setup/optional-features.md](./setup/optional-features.md): plugin-like features for AI, attachments, email, scheduled reminders, and Upstash
-- [setup/docker.md](./setup/docker.md): Compose files, container workflows, and stack behavior
+- [setup/docker.md](./setup/docker.md): Compose files for local development and E2E test infrastructure
 
 ## Architecture Guides
 

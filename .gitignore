@@ -36,7 +36,6 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-!.envrc
 !.env.example
 !.env.test.example
 
@@ -53,8 +52,5 @@ next-env.d.ts
 # AI
 docs/superpowers
 .codex
-
-# Direnv
-.direnv
 
 .serena

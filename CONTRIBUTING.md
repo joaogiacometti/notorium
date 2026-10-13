@@ -5,7 +5,7 @@ This document covers contributor workflow. Setup and environment instructions li
 ## Development Flow
 
 1. Sync your branch from the latest default branch state.
-2. Install dependencies with `bun install`.
+2. Install dependencies with `npm install`.
 3. Follow the local development setup in `README.md`.
 4. Keep changes focused.
 5. Update the owning doc when required:
@@ -16,7 +16,7 @@ This document covers contributor workflow. Setup and environment instructions li
 
 ## Working Agreement
 
-- Use Bun, not npm.
+- Use npm.
 - Follow `AGENTS.md` for code structure, validation, auth, and testing expectations.
 - Keep docs aligned with the live code and scripts.
 - Avoid duplicated guidance across Markdown files.
@@ -25,11 +25,11 @@ This document covers contributor workflow. Setup and environment instructions li
 
 Run the checks that make sense for your change:
 
-- `bun run typecheck`
-- `bun run lint`
-- `bun run test`
-- `bun run build`
-- `bun run test:e2e` for critical workflow changes
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- `npm run test:e2e` for critical workflow changes
 
 If your change affects setup, Docker, env variables, or operational flows, update the related docs in the same PR.
 

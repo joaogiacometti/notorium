@@ -2,13 +2,13 @@
  * File-size guard. Enforces the "files under 500 lines" rule from CLAUDE.md so
  * large modules can't creep in unnoticed as the codebase grows.
  *
- * Run with `bun run check:size`. Exits non-zero (failing CI) when a source file
+ * Run with `npm run check:size`. Exits non-zero (failing CI) when a source file
  * exceeds its limit. New oversized files are blocked outright; the handful of
  * pre-existing offenders are grandfathered via KNOWN_OVERSIZED and may only
  * shrink, never grow.
  *
  * @example
- *   bun run check:size
+ *   npm run check:size
  *   // -> "src/components/foo.tsx: 540 lines (limit 500)" then exit 1
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";

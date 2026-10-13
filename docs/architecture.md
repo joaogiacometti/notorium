@@ -66,4 +66,4 @@ Two boundaries above are machine-checked, not just convention (see the Automated
 - Server Actions (`src/app/actions/*`) cannot import `@/db/index`; they go through `src/features/*`. Enforced by a `noRestrictedImports` override in `biome.json`.
 - Components (`src/components/*`) cannot import `@/features/*/mutations`; writes flow through Server Actions. Enforced by the same rule. Server Components reading from `queries.ts` live under `src/app/*`, so they are unaffected.
 
-A separate guard, `bun run check:size`, keeps files under 500 lines.
+A separate guard, `npm run check:size`, keeps files under 500 lines.

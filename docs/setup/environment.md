@@ -14,8 +14,8 @@ The basic workflow only needs PostgreSQL, Redis, and Better Auth configuration.
 2. Set `BETTER_AUTH_SECRET` to a random value of at least 32 characters
 3. Keep `RATE_LIMIT_BACKEND=redis`
 4. Start local services with `docker compose -f compose.dev.yml up -d`
-5. Run `bun run db:migrate`
-6. Run `bun dev`
+5. Run `npm run db:migrate`
+6. Run `npm run dev`
 
 Recommended local defaults:
 
@@ -66,12 +66,11 @@ These values are useful for local tooling and deployment workflows, but they are
 
 | Variable | Used by |
 | --- | --- |
-| `POSTGRES_USER` | `compose.yml`, `compose.dev.yml`, `compose.test.yml` |
+| `POSTGRES_USER` | `compose.dev.yml`, `compose.test.yml` |
 | `POSTGRES_PASSWORD` | Compose files |
 | `POSTGRES_DB` | Compose files |
 | `POSTGRES_PORT` | Compose files |
 | `REDIS_PORT` | Compose files |
-| `APP_PORT` | `compose.yml` port mapping |
 | `PLAYWRIGHT_BASE_URL` | Playwright E2E support code and CI |
 | `NOTORIUM_APP_URL` | GitHub Actions scheduled workflow secret |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Lets scheduled workflows reach endpoints protected by Vercel security |
