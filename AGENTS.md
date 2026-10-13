@@ -4,9 +4,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 
 ## Project Facts
 
-- Stack: Next.js App Router, React, TypeScript, Drizzle ORM, Better Auth, Zod, React Hook Form, shadcn/ui, Tailwind CSS 4, Biome, npm, PostgreSQL, Redis.
 - Use npm.
-- Format and lint with Biome.
 - `SPEC.md` is the product behavior source of truth.
 - `README.md` owns quick setup and basic runtime commands.
 - `docs/architecture.md` owns high-level architecture, source layout, and boundary guidance.
@@ -37,7 +35,6 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 
 ## Tests
 
-- Tests run with one command: `npm run test`.
 - Every new function gets a test.
 - Bug fixes get a regression test.
 - Prefer TDD for bug fixes and behavior changes: write or update the failing test first, then implement the smallest fix.
@@ -58,9 +55,6 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 
 ## Structure
 
-- Follow Next.js App Router conventions.
-- Prefer small focused modules over god files.
-- Use predictable paths.
 - Feature folders live in `src/features/[feature-name]/`.
 - Components live in `src/components/[feature-name]/` or `src/components/shared/`.
 - shadcn primitives live in `src/components/ui/`; do not edit them manually.
@@ -160,7 +154,6 @@ Only add optional files when they are needed.
 ## Styling
 
 - `docs/ui-conventions.md` is the design-system source of truth: pick the matching role (page frame, surface tier, typography, dashed-border role, z-index layer, transition) instead of inventing a one-off class string. Update it when a convention changes.
-- Use Tailwind CSS 4.
 - Use `cn()` from `src/lib/utils.ts` for conditional classes.
 - Never use hardcoded Tailwind color classes.
 - All UI colors must use CSS variables so user themes work.
@@ -178,10 +171,6 @@ className =
 
 - Use Biome. Do not discuss formatting style beyond the formatter.
 - Keep files kebab-case.
-- Functions use camelCase.
-- Components and types use PascalCase.
-- True constants use UPPER_SNAKE_CASE.
-- Config objects use camelCase.
 - Use `@/` alias imports.
 
 ## Logging
@@ -205,10 +194,8 @@ className =
 
 These run in CI (`.github/workflows/checks.yml`) and locally. Do not weaken a guard to make a build pass; fix the code.
 
-- `npm run lint` (Biome) also enforces architecture boundaries via `noRestrictedImports` overrides in `biome.json`: Server Actions cannot import `@/db/index`; components cannot import `@/features/*/mutations`.
 - `npm run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries. `src/db/schema.ts` is intentionally exempt via `SIZE_GUARD_EXEMPT`: keep the Drizzle schema as one file and let it grow — do not split it or try to "fix" its size.
 - `npm run check:deadcode` (Knip, config in `knip.json`) fails on unused files, unused dependencies, and undeclared/unresolved imports — the high-confidence signals. When you delete a feature, remove its now-orphaned files and deps in the same change instead of leaving them. Unused *exports* and *types* are reported as non-blocking warnings (they have real false positives: the `src/components/ui/**` shadcn API surface, the `fsrs` barrel re-exports, and type-only exports), so don't chase them blindly, but do clean up ones you know are genuinely dead. Fix findings by removing the dead code, not by widening the `ignore`/`ignoreDependencies` lists — only add an ignore for a verified false positive, with the reason in your change summary.
-Lefthook (`lefthook.yml`) runs these locally before they reach CI: pre-commit formats and lints staged files with Biome; pre-push runs typecheck, tests, the file-size guard, and the dead-code guard. Hooks install automatically on `npm install` because `lefthook` is approved in `allowScripts`, so npm runs its postinstall (which safely skips in CI and when git is absent); run `npx lefthook install` manually if needed.
 
 ## Definition of Done
 

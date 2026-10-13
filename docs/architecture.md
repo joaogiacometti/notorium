@@ -61,7 +61,7 @@ The rich-text editor and read-only renderer (`src/components/shared/tiptap-edito
 
 ## Enforced Boundaries
 
-Two boundaries above are machine-checked, not just convention (see the Automated Guards section in [AGENTS.md](../AGENTS.md)):
+Two boundaries above are machine-checked, not just convention (see the Next.js Boundaries section in [AGENTS.md](../AGENTS.md)):
 
 - Server Actions (`src/app/actions/*`) cannot import `@/db/index`; they go through `src/features/*`. Enforced by a `noRestrictedImports` override in `biome.json`.
 - Components (`src/components/*`) cannot import `@/features/*/mutations`; writes flow through Server Actions. Enforced by the same rule. Server Components reading from `queries.ts` live under `src/app/*`, so they are unaffected.
