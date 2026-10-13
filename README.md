@@ -63,6 +63,20 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+`compose.dev.yml` only provides PostgreSQL (`127.0.0.1:${POSTGRES_PORT:-5432}`) and Redis (`127.0.0.1:${REDIS_PORT:-6379}`); the app itself runs with npm. Stop them with `docker compose -f compose.dev.yml down`.
+
+## E2E Tests
+
+Playwright runs against an isolated PostgreSQL and Redis stack from `compose.test.yml`.
+
+```bash
+npx playwright install chromium   # once
+npm run test:e2e:infra:up
+npm run test:e2e:migrate
+npm run test:e2e
+npm run test:e2e:infra:down
+```
+
 ## First Admin
 
 The first account created on a new instance becomes an approved admin automatically. Later accounts start as pending and require admin approval.
@@ -82,12 +96,10 @@ Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automat
 
 ## More Docs
 
-- [Docs Index](./docs/README.md): setup, configuration, Docker, optional features, and operations
+- [Docs Index](./docs/README.md): setup, configuration, optional features, and operations
 - [Architecture](./docs/architecture.md): source layout, data flow, and ownership boundaries
 - [SPEC.md](./SPEC.md): product behavior and acceptance criteria
 - [AGENTS.md](./AGENTS.md): engineering rules, architecture guidance, and testing expectations
-- [CONTRIBUTING.md](./CONTRIBUTING.md): contributor workflow
-- [SECURITY.md](./SECURITY.md): vulnerability reporting
 
 ## License
 

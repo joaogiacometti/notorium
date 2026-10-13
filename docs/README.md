@@ -4,17 +4,14 @@ Use this index to find the narrowest source of truth before reading broader docs
 
 ## Canonical Root Docs
 
-- [README.md](../README.md): project overview, feature summary, and quick local setup
+- [README.md](../README.md): project overview, feature summary, and quick local setup, and Compose/E2E infrastructure
 - [SPEC.md](../SPEC.md): product behavior, UX rules, and acceptance criteria
 - [AGENTS.md](../AGENTS.md): engineering rules, architecture guidance, and testing expectations
-- [CONTRIBUTING.md](../CONTRIBUTING.md): contributor workflow and PR expectations
-- [SECURITY.md](../SECURITY.md): vulnerability reporting and security policy
 
 ## Setup Guides
 
 - [setup/environment.md](./setup/environment.md): required env, rate limiting backends, Compose helper variables, and test env
 - [setup/optional-features.md](./setup/optional-features.md): plugin-like features for AI, attachments, email, scheduled reminders, and Upstash
-- [setup/docker.md](./setup/docker.md): Compose files for local development and E2E test infrastructure
 
 ## Architecture Guides
 

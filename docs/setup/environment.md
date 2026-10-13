@@ -4,7 +4,7 @@
 
 Audience: developers, deployers, and agents configuring the app.
 
-Related docs: [Docs Index](../README.md), [Optional Features](./optional-features.md), [Docker Guide](./docker.md), [README](../../README.md)
+Related docs: [Docs Index](../README.md), [Optional Features](./optional-features.md), [README](../../README.md)
 
 ## Basic Local Workflow
 

@@ -4,7 +4,7 @@ Notorium can run with only the required environment from [Environment Guide](./e
 
 Audience: deployers and maintainers enabling integrations beyond the basic local workflow.
 
-Related docs: [Docs Index](../README.md), [Environment Guide](./environment.md), [Docker Guide](./docker.md), [README](../../README.md)
+Related docs: [Docs Index](../README.md), [Environment Guide](./environment.md), [README](../../README.md)
 
 ## AI
 
