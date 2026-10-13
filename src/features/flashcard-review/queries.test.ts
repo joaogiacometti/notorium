@@ -40,10 +40,6 @@ vi.mock("@/features/subjects/queries", () => ({
 }));
 
 vi.mock("@/db/schema", () => ({
-  deck: {
-    id: "deck_id_column",
-    name: "deck_name_column",
-  },
   flashcard: {
     id: "flashcard_id_column",
     userId: "flashcard_user_id_column",

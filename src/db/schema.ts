@@ -267,38 +267,6 @@ export const mindmap = pgTable(
   ],
 );
 
-export const deck = pgTable(
-  "deck",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    name: text("name").notNull(),
-    parentDeckId: text("parent_deck_id").references(
-      (): AnyPgColumn => deck.id,
-      { onDelete: "cascade" },
-    ),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    uniqueIndex("deck_userId_parentDeckId_name_unique").on(
-      table.userId,
-      sql`coalesce(${table.parentDeckId}, '__root_deck__')`,
-      table.name,
-    ),
-    index("deck_userId_idx").on(table.userId),
-    index("deck_parentDeckId_idx").on(table.parentDeckId),
-    index("deck_userId_parentDeckId_idx").on(table.userId, table.parentDeckId),
-  ],
-);
-
 export const assessment = pgTable(
   "assessment",
   {
@@ -442,18 +410,9 @@ export const flashcard = pgTable(
     lastReviewedAt: timestamp("last_reviewed_at"),
     reviewCount: integer("review_count").notNull().default(0),
     lapseCount: integer("lapse_count").notNull().default(0),
-    // Migration A (additive): flashcards are moving from decks to subjects.
-    // deckId is now nullable and vestigial — new cards are created against a
-    // subject. Migration B drops deckId + the deck table once the backfill
-    // (scripts/backfill-decks-to-subjects.ts) has repointed every legacy row.
-    deckId: text("deck_id").references((): AnyPgColumn => deck.id, {
-      onDelete: "cascade",
-    }),
-    // Nullable until the backfill repoints every row; Migration B makes this
-    // notNull.
-    subjectId: text("subject_id").references((): AnyPgColumn => subject.id, {
-      onDelete: "cascade",
-    }),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -468,7 +427,6 @@ export const flashcard = pgTable(
       table.userId,
       table.frontNormalized,
     ),
-    index("flashcard_deckId_idx").on(table.deckId),
     index("flashcard_subjectId_idx").on(table.subjectId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_clozeNoteId_idx").on(table.clozeNoteId),
@@ -476,11 +434,6 @@ export const flashcard = pgTable(
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),
-    index("flashcard_userId_deckId_updatedAt_idx").on(
-      table.userId,
-      table.deckId,
-      table.updatedAt,
-    ),
     index("flashcard_userId_subjectId_updatedAt_idx").on(
       table.userId,
       table.subjectId,
@@ -620,7 +573,6 @@ export const userRelations = relations(user, ({ many }) => ({
   assessmentAttachments: many(assessmentAttachment),
   flashcards: many(flashcard),
   flashcardReviewLogs: many(flashcardReviewLog),
-  decks: many(deck),
   notificationLogs: many(notificationLog),
 }));
 
@@ -716,25 +668,7 @@ export const assessmentAttachmentRelations = relations(
   }),
 );
 
-export const deckRelations = relations(deck, ({ one, many }) => ({
-  parentDeck: one(deck, {
-    fields: [deck.parentDeckId],
-    references: [deck.id],
-    relationName: "deckHierarchy",
-  }),
-  childDecks: many(deck, { relationName: "deckHierarchy" }),
-  user: one(user, {
-    fields: [deck.userId],
-    references: [user.id],
-  }),
-  flashcards: many(flashcard),
-}));
-
 export const flashcardRelations = relations(flashcard, ({ one }) => ({
-  deck: one(deck, {
-    fields: [flashcard.deckId],
-    references: [deck.id],
-  }),
   subject: one(subject, {
     fields: [flashcard.subjectId],
     references: [subject.id],

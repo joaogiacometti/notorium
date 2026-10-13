@@ -6,7 +6,6 @@ import {
   account,
   assessment,
   attendanceMiss,
-  deck,
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
@@ -79,7 +78,7 @@ export interface E2EFsrsSettingsSnapshot {
 }
 
 export interface E2EFsrsReviewSeed {
-  deckId: string;
+  subjectId: string;
   flashcardIds: string[];
 }
 
@@ -406,62 +405,18 @@ export async function createSubject(userId: string, name: string) {
   return newSubject;
 }
 
-export async function clearUserFlashcardsByDeck(
+async function createFlashcard(
   userId: string,
-  deckId: string,
-) {
-  await getDb()
-    .delete(flashcard)
-    .where(and(eq(flashcard.userId, userId), eq(flashcard.deckId, deckId)));
-}
-
-export async function clearUserFlashcardsByFrontText(
-  userId: string,
-  deckId: string,
-  frontTexts: string[],
-) {
-  if (frontTexts.length === 0) {
-    return;
-  }
-
-  await getDb()
-    .delete(flashcard)
-    .where(
-      and(
-        eq(flashcard.userId, userId),
-        eq(flashcard.deckId, deckId),
-        inArray(flashcard.front, frontTexts),
-      ),
-    );
-}
-
-export async function clearUserDecksByNames(userId: string, names: string[]) {
-  if (names.length === 0) {
-    return;
-  }
-
-  await getDb()
-    .delete(deck)
-    .where(and(eq(deck.userId, userId), inArray(deck.name, names)));
-}
-
-export async function createFlashcard(
-  userId: string,
-  deckIdOrSubjectId: string,
+  subjectId: string,
   front: string,
   back: string,
   dueAt: Date = new Date(Date.now() - 60_000),
 ) {
-  const resolvedDeckId = await resolveDeckIdForFlashcard(
-    userId,
-    deckIdOrSubjectId,
-  );
-
   const [newFlashcard] = await getDb()
     .insert(flashcard)
     .values({
       userId,
-      deckId: resolvedDeckId,
+      subjectId,
       front,
       frontNormalized: normalizeRichTextForUniqueness(front),
       back,
@@ -470,103 +425,6 @@ export async function createFlashcard(
     .returning({ id: flashcard.id });
 
   return newFlashcard;
-}
-
-export async function createFlashcardForDeck(
-  userId: string,
-  deckId: string,
-  front: string,
-  back: string,
-  dueAt?: Date,
-) {
-  return createFlashcardInDeck(userId, deckId, front, back, dueAt);
-}
-
-export async function createFlashcardInDeck(
-  userId: string,
-  deckId: string,
-  front: string,
-  back: string,
-  dueAt?: Date,
-): Promise<{ id: string }> {
-  const resolvedDueAt =
-    dueAt instanceof Date ? dueAt : new Date(Date.now() - 86_400_000);
-
-  const [newFlashcard] = await getDb()
-    .insert(flashcard)
-    .values({
-      userId,
-      deckId,
-      front,
-      frontNormalized: normalizeRichTextForUniqueness(front),
-      back,
-      dueAt: resolvedDueAt,
-    })
-    .returning({ id: flashcard.id });
-
-  return newFlashcard;
-}
-
-export async function createDeck(
-  userId: string,
-  name: string,
-  description?: string | null,
-  parentDeckId?: string | null,
-): Promise<{ id: string; name: string }>;
-export async function createDeck(
-  userId: string,
-  subjectId: string,
-  name: string,
-  description?: string | null,
-): Promise<{ id: string; name: string }>;
-export async function createDeck(
-  userId: string,
-  firstArg: string,
-  secondArg?: string | null,
-  thirdArg?: string | null,
-) {
-  const usesLegacySubjectSignature =
-    secondArg !== undefined && (await subjectExistsForUser(userId, firstArg));
-  const name = usesLegacySubjectSignature ? secondArg : firstArg;
-  const parentDeckId = usesLegacySubjectSignature ? null : thirdArg;
-
-  if (!name) {
-    throw new Error("Deck name is required.");
-  }
-
-  const [newDeck] = await getDb()
-    .insert(deck)
-    .values({
-      userId,
-      name,
-      parentDeckId: parentDeckId ?? null,
-    })
-    .returning({ id: deck.id, name: deck.name });
-
-  return newDeck;
-}
-
-export async function ensureDeckForUser(
-  userId: string,
-  name: string = "Default",
-) {
-  const [existingDeck] = await getDb()
-    .select({ id: deck.id, name: deck.name })
-    .from(deck)
-    .where(and(eq(deck.userId, userId), eq(deck.name, name)))
-    .limit(1);
-
-  if (existingDeck) return existingDeck;
-
-  const [newDeck] = await getDb()
-    .insert(deck)
-    .values({
-      userId,
-      name,
-    })
-    .returning({ id: deck.id, name: deck.name });
-
-  return newDeck;
 }
 
 export async function seedFsrsSchedulerSettings(
@@ -634,15 +492,15 @@ export async function createFsrsOptimizationReviewHistory(
   name: string,
   reviewCount: number,
 ): Promise<E2EFsrsReviewSeed> {
-  const createdDeck = await createDeck(userId, name);
+  const createdSubject = await createSubject(userId, name);
   const flashcardCount = Math.max(1, Math.ceil(reviewCount / 4));
   const createdFlashcards: { id: string }[] = [];
 
   for (let index = 0; index < flashcardCount; index++) {
     createdFlashcards.push(
-      await createFlashcardInDeck(
+      await createFlashcard(
         userId,
-        createdDeck.id,
+        createdSubject.id,
         `${name} front ${index}`,
         `${name} back ${index}`,
       ),
@@ -657,7 +515,7 @@ export async function createFsrsOptimizationReviewHistory(
   );
 
   return {
-    deckId: createdDeck.id,
+    subjectId: createdSubject.id,
     flashcardIds: createdFlashcards.map(
       (createdFlashcard) => createdFlashcard.id,
     ),
@@ -743,32 +601,4 @@ function getFsrsSeedFlashcardId(flashcardIds: string[], index: number): string {
   }
 
   return flashcardId;
-}
-
-async function resolveDeckIdForFlashcard(
-  userId: string,
-  deckIdOrSubjectId: string,
-) {
-  const [existingDeck] = await getDb()
-    .select({ id: deck.id })
-    .from(deck)
-    .where(and(eq(deck.id, deckIdOrSubjectId), eq(deck.userId, userId)))
-    .limit(1);
-
-  if (existingDeck) {
-    return existingDeck.id;
-  }
-
-  const ensuredDeck = await ensureDeckForUser(userId);
-  return ensuredDeck.id;
-}
-
-async function subjectExistsForUser(userId: string, subjectId: string) {
-  const [existingSubject] = await getDb()
-    .select({ id: subject.id })
-    .from(subject)
-    .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)))
-    .limit(1);
-
-  return Boolean(existingSubject);
 }

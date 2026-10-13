@@ -4,7 +4,7 @@ import { expect, test } from "./support/authenticated-test";
 import { runWithCleanup } from "./support/cleanup";
 import { getPrefixedValue } from "./support/data";
 import {
-  clearUserDecksByNames,
+  clearUserSubjectsByNames,
   createFsrsOptimizationReviewHistory,
   readFsrsSchedulerSettings,
   resetFsrsSchedulerSettings,
@@ -14,8 +14,8 @@ import {
 const optimizationReviewCount = 64;
 const optimizationTimeoutMs = 35_000;
 
-function getUniqueDeckName(testTitle: string) {
-  return getPrefixedValue("account-fsrs-deck", testTitle);
+function getUniqueSubjectName(testTitle: string) {
+  return getPrefixedValue("account-fsrs-subject", testTitle);
 }
 
 async function openAccountPage(page: Page) {
@@ -34,14 +34,16 @@ test("can manually optimize flashcard scheduling", async ({
   e2eUser,
 }) => {
   await runWithCleanup(async (registerCleanup) => {
-    const deckName = getUniqueDeckName("manual-optimize");
+    const subjectName = getUniqueSubjectName("manual-optimize");
     await seedFsrsSchedulerSettings(e2eUser.userId);
     await createFsrsOptimizationReviewHistory(
       e2eUser.userId,
-      deckName,
+      subjectName,
       optimizationReviewCount,
     );
-    registerCleanup(() => clearUserDecksByNames(e2eUser.userId, [deckName]));
+    registerCleanup(() =>
+      clearUserSubjectsByNames(e2eUser.userId, [subjectName]),
+    );
     registerCleanup(() => resetFsrsSchedulerSettings(e2eUser.userId));
 
     await openAccountPage(page);
@@ -72,14 +74,16 @@ test("can reset flashcard optimization without deleting review history", async (
   e2eUser,
 }) => {
   await runWithCleanup(async (registerCleanup) => {
-    const deckName = getUniqueDeckName("reset-optimization");
+    const subjectName = getUniqueSubjectName("reset-optimization");
     await seedFsrsSchedulerSettings(e2eUser.userId, { optimized: true });
     await createFsrsOptimizationReviewHistory(
       e2eUser.userId,
-      deckName,
+      subjectName,
       optimizationReviewCount,
     );
-    registerCleanup(() => clearUserDecksByNames(e2eUser.userId, [deckName]));
+    registerCleanup(() =>
+      clearUserSubjectsByNames(e2eUser.userId, [subjectName]),
+    );
     registerCleanup(() => resetFsrsSchedulerSettings(e2eUser.userId));
 
     await openAccountPage(page);
