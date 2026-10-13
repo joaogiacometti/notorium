@@ -3,8 +3,28 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: "happy-dom",
-    include: ["src/**/*.test.{ts,tsx}"],
+    setupFiles: ["./src/test/jsdom-gap-fakes.ts"],
+    // Only tests that need a DOM pay for jsdom: component tests get it by
+    // extension, and a DOM-dependent `.test.ts` opts in with a
+    // `// @vitest-environment jsdom` docblock.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          environment: "jsdom",
+          include: ["src/**/*.test.tsx"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "node",
+          environment: "node",
+          include: ["src/**/*.test.ts"],
+        },
+      },
+    ],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],

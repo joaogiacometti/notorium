@@ -5,6 +5,7 @@ import {
   type ReviewGrade,
   reviewGradeValues,
 } from "@/features/flashcards/fsrs";
+import { isEditableTarget } from "@/lib/shortcuts/registry";
 
 export type FlashcardReviewShortcutAction =
   | {
@@ -122,24 +123,6 @@ export function getFlashcardReviewShortcutAction({
   return grade ? { type: "grade", grade } : null;
 }
 
-export function isEditableFlashcardReviewKeyboardTarget(
-  target: EventTarget | null,
-): boolean {
-  let element: Element | null = null;
-
-  if (target instanceof Element) {
-    element = target;
-  } else if (target instanceof Node) {
-    element = target.parentElement;
-  }
-
-  if (!element) {
-    return false;
-  }
-
-  return element.closest("input, textarea, select, [contenteditable]") !== null;
-}
-
 function handleFlashcardReviewKeyDown(
   event: KeyboardEvent,
   options: UseFlashcardReviewShortcutsOptions,
@@ -154,7 +137,7 @@ function handleFlashcardReviewKeyDown(
     hasCurrentCard: options.hasCurrentCard,
     isPending: options.isPending,
     isDialogOpen: options.isDialogOpen,
-    isEditableTarget: isEditableFlashcardReviewKeyboardTarget(event.target),
+    isEditableTarget: isEditableTarget(event.target),
     hasModifierKey: event.altKey || event.ctrlKey || event.metaKey,
     isRepeat: event.repeat,
   });

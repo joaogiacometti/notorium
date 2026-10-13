@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LogoutButton } from "@/components/navbar/logout-button";
 import { themeStorageKey } from "@/lib/theme";
+import { stubWindowLocationAssign } from "@/test/fake-window-location";
 
 const { logoutActionMock } = vi.hoisted(() => ({
   logoutActionMock: vi.fn(),
@@ -59,11 +60,12 @@ describe("LogoutButton", () => {
       },
       configurable: true,
     });
-    vi.spyOn(globalThis.location, "assign").mockImplementation(() => {});
+    stubWindowLocationAssign();
     logoutActionMock.mockResolvedValue({ success: true });
   });
 
   afterEach(async () => {
+    vi.unstubAllGlobals();
     await act(async () => {
       root.unmount();
     });

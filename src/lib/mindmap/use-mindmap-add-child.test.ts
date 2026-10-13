@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import type { Node } from "@xyflow/react";
 import { act, createElement, useEffect } from "react";
 import { createRoot } from "react-dom/client";

@@ -113,7 +113,7 @@ describe("PlanningAssessmentsTable", () => {
     });
   }
 
-  it("disables both add actions and shows a tooltip when no subjects exist", async () => {
+  it("blocks both add actions and shows a tooltip when no subjects exist", async () => {
     await renderTable([]);
 
     const addButtons = Array.from(container.querySelectorAll("button")).filter(
@@ -127,12 +127,21 @@ describe("PlanningAssessmentsTable", () => {
     );
 
     expect(addButtons).toHaveLength(2);
-    expect(addButtons.every((button) => button.disabled)).toBe(true);
+    expect(
+      addButtons.every(
+        (button) => button.getAttribute("aria-disabled") === "true",
+      ),
+    ).toBe(true);
     expect(toolbarTrigger).toBeTruthy();
     expect(emptyStateTrigger).toBeTruthy();
 
     await act(async () => {
-      toolbarTrigger?.focus();
+      toolbarTrigger?.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      );
       vi.runAllTimers();
     });
 
@@ -141,7 +150,12 @@ describe("PlanningAssessmentsTable", () => {
     );
 
     await act(async () => {
-      emptyStateTrigger?.focus();
+      emptyStateTrigger?.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      );
       vi.runAllTimers();
     });
 
@@ -158,6 +172,24 @@ describe("PlanningAssessmentsTable", () => {
     ).toBeNull();
   });
 
+  it("shows the missing-subject tooltip on keyboard focus", async () => {
+    await renderTable([]);
+
+    const toolbarTrigger = container.querySelector<HTMLElement>(
+      '[data-testid="planning-add-assessment-disabled-trigger"]',
+    );
+
+    await act(async () => {
+      toolbarTrigger?.focus();
+      vi.runAllTimers();
+    });
+
+    expect(document.activeElement).toBe(toolbarTrigger);
+    expect(document.body.textContent).toContain(
+      "Create a subject first to add assessments.",
+    );
+  });
+
   it("keeps add actions enabled when subjects exist", async () => {
     await renderTable([createSubject()]);
 
@@ -166,7 +198,9 @@ describe("PlanningAssessmentsTable", () => {
     );
 
     expect(addButtons).toHaveLength(2);
-    expect(addButtons.every((button) => !button.disabled)).toBe(true);
+    expect(
+      addButtons.some((button) => button.hasAttribute("aria-disabled")),
+    ).toBe(false);
 
     await act(async () => {
       addButtons[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));

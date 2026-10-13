@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { isEditableTarget } from "@/lib/shortcuts/registry";
 
 /** The two interaction tools: marquee select vs. drag-to-pan. */
 export type MindmapMode = "select" | "hand";
@@ -126,16 +127,6 @@ export function isMindmapCopyChord(event: KeyboardEvent): boolean {
     return false;
   }
   return event.ctrlKey || event.metaKey;
-}
-
-/** True when the event originated in a text field or editable node label. */
-export function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return (
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.isContentEditable
-  );
 }
 
 function handleHistoryKey(

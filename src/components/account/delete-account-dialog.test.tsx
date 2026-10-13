@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
 import { themeStorageKey } from "@/lib/theme";
+import { stubWindowLocationAssign } from "@/test/fake-window-location";
 
 const { deleteAccountMock, toastErrorMock } = vi.hoisted(() => ({
   deleteAccountMock: vi.fn(),
@@ -90,12 +91,13 @@ describe("DeleteAccountDialog", () => {
       },
       configurable: true,
     });
-    vi.spyOn(window.location, "assign").mockImplementation(() => {});
+    stubWindowLocationAssign();
     deleteAccountMock.mockReset();
     toastErrorMock.mockReset();
   });
 
   afterEach(async () => {
+    vi.unstubAllGlobals();
     await act(async () => {
       root.unmount();
     });

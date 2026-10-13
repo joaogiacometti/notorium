@@ -41,6 +41,7 @@ import type {
   SubjectEntity,
 } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
 
 interface PlanningAssessmentsTableProps {
   initialSubjectId?: string;
@@ -246,35 +247,46 @@ export function PlanningAssessmentsTable({
 
   function renderAddAssessmentButton({
     className,
-    wrapperClassName,
     testId,
   }: Readonly<{
     className: string;
-    wrapperClassName?: string;
     testId: string;
   }>) {
-    const button = (
-      <Button
-        type="button"
-        onClick={() => setCreateOpen(true)}
-        disabled={!hasSubjects}
-        className={className}
-      >
+    const addAssessmentLabel = (
+      <>
         <Plus className="size-4" />
         Add Assessment
-      </Button>
+      </>
     );
 
     if (hasSubjects) {
-      return button;
+      return (
+        <Button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className={className}
+        >
+          {addAssessmentLabel}
+        </Button>
+      );
     }
 
+    // aria-disabled instead of disabled: a disabled button cannot take focus,
+    // which would hide the explanatory tooltip from keyboard users.
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className={wrapperClassName} data-testid={testId}>
-            {button}
-          </span>
+          <Button
+            type="button"
+            aria-disabled="true"
+            data-testid={testId}
+            className={cn(
+              className,
+              "cursor-not-allowed opacity-50 hover:bg-primary",
+            )}
+          >
+            {addAssessmentLabel}
+          </Button>
         </TooltipTrigger>
         <TooltipContent className="max-w-none whitespace-nowrap">
           {missingSubjectTooltipMessage}
@@ -305,7 +317,6 @@ export function PlanningAssessmentsTable({
                 {renderAddAssessmentButton({
                   className:
                     "h-10 w-full shrink-0 gap-2 rounded-lg px-4 shadow-sm sm:w-auto",
-                  wrapperClassName: "inline-flex w-full sm:w-auto",
                   testId: "planning-add-assessment-disabled-trigger",
                 })}
               </div>
@@ -411,7 +422,6 @@ export function PlanningAssessmentsTable({
               <div className="flex justify-center">
                 {renderAddAssessmentButton({
                   className: "gap-1.5",
-                  wrapperClassName: "inline-flex",
                   testId: "planning-empty-add-assessment-disabled-trigger",
                 })}
               </div>

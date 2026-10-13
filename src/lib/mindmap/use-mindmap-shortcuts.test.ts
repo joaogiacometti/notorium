@@ -1,8 +1,9 @@
+// @vitest-environment jsdom
+
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import {
-  isEditableTarget,
   isMindmapCopyChord,
   resolveMindmapKey,
   useMindmapShortcuts,
@@ -102,21 +103,6 @@ describe("isMindmapCopyChord", () => {
     expect(
       isMindmapCopyChord(copyEvent({ ctrlKey: true, shiftKey: true })),
     ).toBe(false);
-  });
-});
-
-describe("isEditableTarget", () => {
-  it("treats inputs, textareas, and contenteditable as editable", () => {
-    expect(isEditableTarget(document.createElement("input"))).toBe(true);
-    expect(isEditableTarget(document.createElement("textarea"))).toBe(true);
-    const editable = document.createElement("div");
-    editable.contentEditable = "true";
-    expect(isEditableTarget(editable)).toBe(true);
-  });
-
-  it("treats plain elements and null as not editable", () => {
-    expect(isEditableTarget(document.createElement("div"))).toBe(false);
-    expect(isEditableTarget(null)).toBe(false);
   });
 });
 

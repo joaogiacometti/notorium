@@ -1,9 +1,12 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it } from "vitest";
 import {
   displayShortcutKeys,
   formatShortcutKeys,
   getActiveShortcutCategories,
   getShortcutsByCategory,
+  isEditableTarget,
   resolvePlatformShortcutKeys,
   type Shortcut,
   ShortcutCategory,
@@ -217,5 +220,34 @@ describe("getActiveShortcutCategories", () => {
     expect(getActiveShortcutCategories("/subjects/s1")).toEqual([
       ShortcutCategory.Global,
     ]);
+  });
+});
+
+describe("isEditableTarget", () => {
+  it("treats form controls and contenteditable hosts as editable", () => {
+    const editingHost = document.createElement("div");
+    editingHost.setAttribute("contenteditable", "true");
+
+    expect(isEditableTarget(document.createElement("input"))).toBe(true);
+    expect(isEditableTarget(document.createElement("textarea"))).toBe(true);
+    expect(isEditableTarget(document.createElement("select"))).toBe(true);
+    expect(isEditableTarget(editingHost)).toBe(true);
+  });
+
+  it("treats elements and text nodes inside an editing host as editable", () => {
+    const editingHost = document.createElement("div");
+    editingHost.setAttribute("contenteditable", "true");
+    const nestedSpan = document.createElement("span");
+    const nestedText = document.createTextNode("label");
+    nestedSpan.append(nestedText);
+    editingHost.append(nestedSpan);
+
+    expect(isEditableTarget(nestedSpan)).toBe(true);
+    expect(isEditableTarget(nestedText)).toBe(true);
+  });
+
+  it("treats plain elements and null as not editable", () => {
+    expect(isEditableTarget(document.createElement("div"))).toBe(false);
+    expect(isEditableTarget(null)).toBe(false);
   });
 });

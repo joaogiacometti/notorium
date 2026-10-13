@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  getFlashcardReviewShortcutAction,
-  isEditableFlashcardReviewKeyboardTarget,
-} from "@/features/flashcard-review/shortcuts";
+import { getFlashcardReviewShortcutAction } from "@/features/flashcard-review/shortcuts";
 
 const defaultInput = {
   key: "Enter",
@@ -244,32 +241,5 @@ describe("getFlashcardReviewShortcutAction", () => {
         key: "a",
       }),
     ).toBeNull();
-  });
-});
-
-describe("isEditableFlashcardReviewKeyboardTarget", () => {
-  it("detects form controls and contenteditable elements", () => {
-    const input = document.createElement("input");
-    const contentEditable = document.createElement("div");
-    contentEditable.setAttribute("contenteditable", "true");
-
-    expect(isEditableFlashcardReviewKeyboardTarget(input)).toBe(true);
-    expect(isEditableFlashcardReviewKeyboardTarget(contentEditable)).toBe(true);
-  });
-
-  it("detects nested elements inside an editable container", () => {
-    const editor = document.createElement("div");
-    editor.setAttribute("contenteditable", "true");
-    const child = document.createElement("span");
-    editor.append(child);
-
-    expect(isEditableFlashcardReviewKeyboardTarget(child)).toBe(true);
-  });
-
-  it("ignores non-editable targets", () => {
-    const button = document.createElement("button");
-
-    expect(isEditableFlashcardReviewKeyboardTarget(button)).toBe(false);
-    expect(isEditableFlashcardReviewKeyboardTarget(null)).toBe(false);
   });
 });

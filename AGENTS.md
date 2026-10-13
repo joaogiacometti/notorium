@@ -46,6 +46,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - Tests must be F.I.R.S.T: fast, independent, repeatable, self-validating, timely.
 - Good tests verify observable behavior, stable contracts, or deterministic transformations. Bad tests mirror implementation text, CSS class strings, prompt wording, or call order unless that exact detail is the public contract.
 - Keep Vitest tests next to source with `.test.ts` or `.test.tsx`.
+- `.test.tsx` runs in jsdom; `.test.ts` runs in plain Node. Start a `.test.ts` that needs a DOM with `// @vitest-environment jsdom`. jsdom is the only DOM library; do not add another.
 - Add Playwright coverage only for critical user workflows: navigation, auth/permissions, writes, persistence, destructive actions, or cross-page flow integrity.
 - Do not add Playwright tests for presentation-only changes unless explicitly requested.
 

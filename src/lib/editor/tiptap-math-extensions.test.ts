@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { describe, expect, it } from "vitest";

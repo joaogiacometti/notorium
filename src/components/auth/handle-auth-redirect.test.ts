@@ -1,9 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// @vitest-environment jsdom
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handleAuthRedirect } from "@/components/auth/handle-auth-redirect";
+import { stubWindowLocationAssign } from "@/test/fake-window-location";
 
 describe("handle-auth-redirect", () => {
   beforeEach(() => {
-    vi.spyOn(window.location, "assign").mockImplementation(() => {});
+    stubWindowLocationAssign();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("navigates for authenticated redirects", () => {
