@@ -1,12 +1,12 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
 import { BookOpenText } from "lucide-react";
 import { ImproveCardDialog } from "@/components/flashcards/manage/improve-card-dialog";
 import { MergePreviewDialog } from "@/components/flashcards/manage/merge-preview-dialog";
 import { useRefineCardActions } from "@/components/flashcards/manage/use-refine-card-actions";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
+import type { ManagerColumnDef } from "@/components/shared/manager-table-features";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
@@ -99,7 +99,7 @@ function getColumns(
   improvingCardId: string | null,
   onProposeMerge: (card: RefineCardSummary) => void,
   onImproveCard: (card: RefineCardSummary) => void,
-): ColumnDef<RefineResultRow>[] {
+): ManagerColumnDef<RefineResultRow>[] {
   return [
     {
       accessorKey: "front",
@@ -175,7 +175,6 @@ function getColumns(
             onAction={onImproveCard}
           />
         ),
-      enableHiding: false,
     },
   ];
 }

@@ -54,16 +54,16 @@ describe("shouldIgnoreRowClick", () => {
     expect(shouldIgnoreRowClick(null, null)).toBe(false);
   });
 
-  it.each([
-    "aria-hidden",
-    "inert",
-  ])("ignores a background row click while its table is %s", (attribute) => {
-    const background = document.createElement("div");
-    background.setAttribute(attribute, "true");
-    const row = buildRow("<td>Another assessment</td>");
-    background.appendChild(row);
-    expect(shouldIgnoreRowClick(row.querySelector("td"), row)).toBe(true);
-    background.removeAttribute(attribute);
-    expect(shouldIgnoreRowClick(row.querySelector("td"), row)).toBe(false);
-  });
+  it.each(["aria-hidden", "inert"])(
+    "ignores a background row click while its table is %s",
+    (attribute) => {
+      const background = document.createElement("div");
+      background.setAttribute(attribute, "true");
+      const row = buildRow("<td>Another assessment</td>");
+      background.appendChild(row);
+      expect(shouldIgnoreRowClick(row.querySelector("td"), row)).toBe(true);
+      background.removeAttribute(attribute);
+      expect(shouldIgnoreRowClick(row.querySelector("td"), row)).toBe(false);
+    },
+  );
 });

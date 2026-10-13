@@ -1,9 +1,9 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import type { KeyboardEvent } from "react";
+import type { ManagerColumnDef } from "@/components/shared/manager-table-features";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { SubjectText } from "@/components/shared/subject-text";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
@@ -109,7 +109,10 @@ export function getSubjectColumns({
   onDeleted,
   onEdit,
   hasSelection,
-}: Omit<SubjectsTableActionsProps, "subject">): ColumnDef<SubjectListItem>[] {
+}: Omit<
+  SubjectsTableActionsProps,
+  "subject"
+>): ManagerColumnDef<SubjectListItem>[] {
   return [
     {
       id: "subject",
@@ -140,7 +143,6 @@ export function getSubjectColumns({
           />
         </div>
       ),
-      enableHiding: false,
     },
   ];
 }

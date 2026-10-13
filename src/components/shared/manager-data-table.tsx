@@ -1,20 +1,22 @@
 "use client";
 
 import {
-  type ColumnDef,
   flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
   type PaginationState,
-  type Row,
+  type RowData,
   type RowSelectionState,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import {
   getSelectColumn,
   shouldIgnoreRowClick,
 } from "@/components/shared/manager-data-table-helpers";
+import {
+  type ManagerColumnDef,
+  type ManagerTableRow,
+  managerTableFeatures,
+} from "@/components/shared/manager-table-features";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,9 +37,9 @@ import {
 import { useSmoothedLoadingState } from "@/lib/react/use-smoothed-loading-state";
 import { cn } from "@/lib/utils";
 
-interface ManagerDataTableProps<TRow> {
+interface ManagerDataTableProps<TRow extends RowData> {
   data: TRow[];
-  columns: ColumnDef<TRow>[];
+  columns: ManagerColumnDef<TRow>[];
   emptyLabel: string;
   getRowId: (row: TRow) => string;
   getRowAriaLabel?: (row: TRow) => string;
@@ -48,7 +50,6 @@ interface ManagerDataTableProps<TRow> {
   pageIndex: number;
   pageLabel: (current: number, total: number) => string;
   prevLabel: string;
-  columnResizeMode?: "onChange" | "onEnd";
   controlsClassName?: string;
   exposeRowNavigationRole?: boolean;
   footerClassName?: string;
@@ -74,7 +75,7 @@ interface ManagerDataTableProps<TRow> {
   wrapperClassName?: string;
 }
 
-export function ManagerDataTable<TRow>({
+export function ManagerDataTable<TRow extends RowData>({
   data,
   columns,
   emptyLabel,
@@ -88,7 +89,6 @@ export function ManagerDataTable<TRow>({
   pageIndex,
   pageLabel,
   prevLabel,
-  columnResizeMode,
   controlsClassName,
   exposeRowNavigationRole = true,
   footerClassName,
@@ -124,13 +124,12 @@ export function ManagerDataTable<TRow>({
     (selectedRowIds ?? []).map((rowId) => [rowId, true]),
   ) as RowSelectionState;
 
-  const table = useReactTable({
+  const table = useTable({
+    features: managerTableFeatures,
     data,
     columns: onSelectedRowIdsChange
       ? [getSelectColumn<TRow>(selectionAriaLabel), ...columns]
       : columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: (updater) => {
       const nextPagination =
         typeof updater === "function" ? updater(pagination) : updater;
@@ -157,7 +156,6 @@ export function ManagerDataTable<TRow>({
     },
     manualPagination: typeof pageCount === "number",
     pageCount,
-    columnResizeMode,
   });
 
   const totalPageCount = Math.max(table.getPageCount(), 1);
@@ -187,7 +185,7 @@ export function ManagerDataTable<TRow>({
     table.toggleAllPageRowsSelected(!table.getIsAllPageRowsSelected());
   }
 
-  function handleSelectRowClick(row: Row<TRow>) {
+  function handleSelectRowClick(row: ManagerTableRow<TRow>) {
     row.toggleSelected(!row.getIsSelected());
   }
 
@@ -320,7 +318,7 @@ export function ManagerDataTable<TRow>({
                           : undefined
                       }
                     >
-                      {row.getVisibleCells().map((cell) => (
+                      {row.getAllCells().map((cell) => (
                         <TableCell
                           key={cell.id}
                           className={cn(

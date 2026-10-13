@@ -1,10 +1,10 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
+import type { ManagerColumnDef } from "@/components/shared/manager-table-features";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { PAGE_SIZE_OPTIONS } from "@/lib/pagination/page-size";
@@ -91,7 +91,7 @@ function getColumns(
   onDeleteRequested: (flashcard: FlashcardTarget) => void,
   onResetRequested: (flashcard: FlashcardTarget) => void,
   hasSelection: boolean,
-): ColumnDef<FlashcardManageItem>[] {
+): ManagerColumnDef<FlashcardManageItem>[] {
   return [
     {
       accessorKey: "front",
@@ -142,7 +142,6 @@ function getColumns(
           />
         </div>
       ),
-      enableHiding: false,
     },
   ];
 }
@@ -211,7 +210,6 @@ export function FlashcardsManagerTable({
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
       tableClassName="w-full min-w-[22rem] sm:min-w-[27rem] lg:min-w-[20rem]"
-      columnResizeMode="onEnd"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
         cn("px-3 py-3 align-middle", getColumnClassName(columnId))

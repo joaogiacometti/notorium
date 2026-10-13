@@ -3,7 +3,7 @@ import type { ResolvedAiSettings } from "@/lib/ai/config";
 import { AiConfigurationError } from "@/lib/ai/errors";
 
 export function getAiModel(settings: ResolvedAiSettings | null) {
-  if (!settings || settings.provider !== "openrouter") {
+  if (settings?.provider !== "openrouter") {
     return null;
   }
 

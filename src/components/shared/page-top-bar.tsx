@@ -70,7 +70,7 @@ export function PageTopBar({ breadcrumb, actions }: Readonly<PageTopBarProps>) {
         className="flex min-w-0 flex-1 items-center gap-1 pl-1 text-sm"
       >
         {breadcrumb.map((item, index) => (
-          <Fragment key={`${item.label}-${index}`}>
+          <Fragment key={`${item.href ?? ""}:${item.label}`}>
             {index > 0 ? (
               <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
             ) : null}

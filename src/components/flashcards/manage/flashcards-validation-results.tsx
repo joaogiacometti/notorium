@@ -1,10 +1,10 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
 import { BookOpenText } from "lucide-react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import { ValidationIssueTooltip } from "@/components/flashcards/manage/validation-issue-tooltip";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
+import type { ManagerColumnDef } from "@/components/shared/manager-table-features";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -91,7 +91,7 @@ function getColumnClassName(columnId: string) {
 function getColumns(
   onEdit: (flashcardId: string) => void,
   onDelete: (flashcard: { id: string; front: string }) => void,
-): ColumnDef<ValidationResultRow>[] {
+): ManagerColumnDef<ValidationResultRow>[] {
   return [
     {
       accessorKey: "front",
@@ -161,7 +161,6 @@ function getColumns(
           />
         </div>
       ),
-      enableHiding: false,
     },
   ];
 }

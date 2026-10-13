@@ -1,8 +1,8 @@
-import type { ColumnDef } from "@tanstack/react-table";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
+import type { ManagerColumnDef } from "@/components/shared/manager-table-features";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -13,7 +13,7 @@ interface TestRow {
   label: string;
 }
 
-const columns: ColumnDef<TestRow>[] = [
+const columns: ManagerColumnDef<TestRow>[] = [
   {
     accessorKey: "label",
     header: "Label",

@@ -1,10 +1,11 @@
 "use client";
 
+import type { RowData } from "@tanstack/react-table";
 import type {
-  ColumnDef,
-  Row,
-  Table as TanstackTable,
-} from "@tanstack/react-table";
+  ManagerColumnDef,
+  ManagerTableInstance,
+  ManagerTableRow,
+} from "@/components/shared/manager-table-features";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const interactiveSelectors = [
@@ -51,10 +52,13 @@ export function shouldIgnoreRowClick(
   return Boolean(interactiveAncestor && interactiveAncestor !== currentTarget);
 }
 
-function SelectColumnHeader<TRow>({
+function SelectColumnHeader<TRow extends RowData>({
   table,
   selectionAriaLabel,
-}: Readonly<{ table: TanstackTable<TRow>; selectionAriaLabel: string }>) {
+}: Readonly<{
+  table: ManagerTableInstance<TRow>;
+  selectionAriaLabel: string;
+}>) {
   let checked: boolean | "indeterminate" = false;
   if (table.getIsAllPageRowsSelected()) checked = true;
   else if (table.getIsSomePageRowsSelected()) checked = "indeterminate";
@@ -73,10 +77,10 @@ function SelectColumnHeader<TRow>({
   );
 }
 
-function SelectColumnCell<TRow>({
+function SelectColumnCell<TRow extends RowData>({
   row,
   selectionAriaLabel,
-}: Readonly<{ row: Row<TRow>; selectionAriaLabel: string }>) {
+}: Readonly<{ row: ManagerTableRow<TRow>; selectionAriaLabel: string }>) {
   return (
     <div className="flex h-full w-full items-center justify-center">
       <Checkbox
@@ -89,9 +93,9 @@ function SelectColumnCell<TRow>({
   );
 }
 
-export function getSelectColumn<TRow>(
+export function getSelectColumn<TRow extends RowData>(
   selectionAriaLabel: string,
-): ColumnDef<TRow> {
+): ManagerColumnDef<TRow> {
   return {
     id: "select",
     size: 36,
@@ -107,6 +111,5 @@ export function getSelectColumn<TRow>(
         selectionAriaLabel={selectionAriaLabel}
       />
     ),
-    enableHiding: false,
   };
 }

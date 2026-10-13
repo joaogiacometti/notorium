@@ -292,7 +292,6 @@ export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {
               onSelectedRowIdsChange={setSelectedSubjectIds}
               selectionAriaLabel="Select subject"
               tableClassName="w-full min-w-0 sm:min-w-[28rem] lg:min-w-[20rem]"
-              columnResizeMode="onEnd"
               scrollAreaClassName="min-w-0 overflow-x-auto overflow-y-auto"
               getHeaderCellClassName={getColumnClassName}
               getBodyCellClassName={getColumnClassName}

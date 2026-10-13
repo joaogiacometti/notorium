@@ -2,21 +2,17 @@ import { describe, expect, it } from "vitest";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
 
 describe("tiptapLowlight", () => {
-  it.each([
-    "java",
-    "Java",
-    "csharp",
-    "cs",
-    "c#",
-    "C#",
-  ])("highlights %s code blocks", (language) => {
-    const highlighted = tiptapLowlight.highlight(
-      language,
-      'public class Demo { static void Main() { string name = "Notorium"; } }',
-    );
+  it.each(["java", "Java", "csharp", "cs", "c#", "C#"])(
+    "highlights %s code blocks",
+    (language) => {
+      const highlighted = tiptapLowlight.highlight(
+        language,
+        'public class Demo { static void Main() { string name = "Notorium"; } }',
+      );
 
-    expect(highlighted.children.length).toBeGreaterThan(1);
-  });
+      expect(highlighted.children.length).toBeGreaterThan(1);
+    },
+  );
 
   it.each([
     "bash",

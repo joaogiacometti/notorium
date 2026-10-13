@@ -2,7 +2,6 @@
   "$schema": "./node_modules/knip/schema.json",
   "entry": ["scripts/*.ts"],
   "ignore": ["src/components/ui/**", "src/test/server-only.ts", "public/sw.js"],
-  "ignoreDependencies": ["@types/katex"],
   "ignoreExportsUsedInFile": true,
   "rules": {
     "files": "error",

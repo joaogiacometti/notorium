@@ -65,7 +65,7 @@ async function validateSplitContext(
     getFlashcardByIdForUser(userId, data.id),
     getSubjectRecordForUser(userId, data.subjectId),
   ]);
-  if (!card || card.type !== "basic") {
+  if (card?.type !== "basic") {
     return { error: actionError("flashcards.notFound") };
   }
   if (!subject) {

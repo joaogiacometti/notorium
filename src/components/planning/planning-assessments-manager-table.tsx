@@ -1,12 +1,12 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { AssessmentTypeBadge } from "@/components/assessments/assessment-type-presentation";
 import { AssessmentsTableRowActions } from "@/components/assessments/assessments-table-row-actions";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
+import type { ManagerColumnDef } from "@/components/shared/manager-table-features";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { SubjectBadge } from "@/components/shared/subject-badge";
 import { TableHeaderLabel } from "@/components/shared/table-header-label";
@@ -110,8 +110,8 @@ function getColumns(
   isLoading: boolean,
   hasSelection: boolean,
   selectedSubjectId?: string,
-): ColumnDef<AssessmentEntity>[] {
-  const columns: ColumnDef<AssessmentEntity>[] = [
+): ManagerColumnDef<AssessmentEntity>[] {
+  const columns: ManagerColumnDef<AssessmentEntity>[] = [
     {
       accessorKey: "title",
       header: () => <TableHeaderLabel>Title</TableHeaderLabel>,
@@ -208,7 +208,6 @@ function getColumns(
           )}
         </div>
       ),
-      enableHiding: false,
     },
   ];
 

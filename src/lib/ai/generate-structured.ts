@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import type { z } from "zod";
 import type { ResolvedAiSettings } from "@/lib/ai/config";
 import { getAiModelOrThrow } from "@/lib/ai/provider";
@@ -20,14 +20,14 @@ export async function generateStructuredOutput<TSchema extends z.ZodType>({
 }: GenerateStructuredOutputOptions<TSchema>): Promise<z.infer<TSchema>> {
   const model = getAiModelOrThrow(settings);
 
-  const { object } = await generateObject({
+  const { output } = await generateText({
     model,
-    schema,
-    system,
+    output: Output.object({ schema }),
+    instructions: system,
     prompt,
     temperature: 0.3,
     maxOutputTokens,
   });
 
-  return object as z.infer<TSchema>;
+  return output as z.infer<TSchema>;
 }
