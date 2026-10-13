@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
@@ -20,6 +20,52 @@ const columns: ManagerColumnDef<TestRow>[] = [
     cell: ({ row }) => row.original.label,
   },
 ];
+
+const selectionRows: TestRow[] = [
+  { id: "row-1", label: "Alpha" },
+  { id: "row-2", label: "Beta" },
+  { id: "row-3", label: "Gamma" },
+];
+
+/** Owns the selection the way a manager page does, so clicks round-trip. */
+function SelectionHarness({ rows }: Readonly<{ rows: TestRow[] }>) {
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+
+  return (
+    <ManagerDataTable
+      data={rows}
+      columns={columns}
+      emptyLabel="No rows"
+      getRowId={(row) => row.id}
+      nextLabel="Next"
+      onPageIndexChange={() => {}}
+      onSelectedRowIdsChange={setSelectedRowIds}
+      pageIndex={0}
+      pageLabel={(current, total) => `Page ${current} of ${total}`}
+      prevLabel="Previous"
+      selectedRowIds={selectedRowIds}
+      selectionAriaLabel="Select row"
+    />
+  );
+}
+
+function readCheckboxStates(scope: ParentNode, slot: string): string[] {
+  return Array.from(
+    scope.querySelectorAll(`[data-slot="${slot}"] [role="checkbox"]`),
+  ).map((checkbox) => checkbox.getAttribute("aria-checked") ?? "missing");
+}
+
+async function clickSelectCell(scope: ParentNode, slot: string, index: number) {
+  const selectCell = scope.querySelectorAll(
+    `[data-slot="${slot}"] [data-no-row-click]`,
+  )[index];
+
+  await act(async () => {
+    selectCell?.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    );
+  });
+}
 
 describe("ManagerDataTable", () => {
   let container: HTMLDivElement;
@@ -213,5 +259,77 @@ describe("ManagerDataTable", () => {
 
     expect(container.textContent).toContain("Rows");
     expect(pageSizeTrigger?.textContent).toContain("25");
+  });
+
+  // Regression: after the TanStack Table 9 upgrade the checkboxes read
+  // selection through stable row/table objects, so React Compiler kept the
+  // first render and only the selection count moved.
+  it("checks every selected row, not only the first one clicked", async () => {
+    await act(async () => {
+      root.render(<SelectionHarness rows={selectionRows} />);
+    });
+
+    await clickSelectCell(container, "table-body", 0);
+    await clickSelectCell(container, "table-body", 1);
+    await clickSelectCell(container, "table-body", 2);
+
+    expect(readCheckboxStates(container, "table-body")).toEqual([
+      "true",
+      "true",
+      "true",
+    ]);
+
+    await clickSelectCell(container, "table-body", 1);
+
+    expect(readCheckboxStates(container, "table-body")).toEqual([
+      "true",
+      "false",
+      "true",
+    ]);
+  });
+
+  it("moves the header checkbox through mixed, checked, and unchecked", async () => {
+    await act(async () => {
+      root.render(<SelectionHarness rows={selectionRows} />);
+    });
+
+    await clickSelectCell(container, "table-body", 0);
+    expect(readCheckboxStates(container, "table-header")).toEqual(["mixed"]);
+
+    await clickSelectCell(container, "table-header", 0);
+    expect(readCheckboxStates(container, "table-header")).toEqual(["true"]);
+    expect(readCheckboxStates(container, "table-body")).toEqual([
+      "true",
+      "true",
+      "true",
+    ]);
+
+    await clickSelectCell(container, "table-header", 0);
+    expect(readCheckboxStates(container, "table-header")).toEqual(["false"]);
+    expect(readCheckboxStates(container, "table-body")).toEqual([
+      "false",
+      "false",
+      "false",
+    ]);
+  });
+
+  it("recomputes the header checkbox when the page rows change", async () => {
+    await act(async () => {
+      root.render(<SelectionHarness rows={selectionRows.slice(0, 1)} />);
+    });
+
+    await clickSelectCell(container, "table-body", 0);
+    expect(readCheckboxStates(container, "table-header")).toEqual(["true"]);
+
+    await act(async () => {
+      root.render(<SelectionHarness rows={selectionRows} />);
+    });
+
+    expect(readCheckboxStates(container, "table-header")).toEqual(["mixed"]);
+    expect(readCheckboxStates(container, "table-body")).toEqual([
+      "true",
+      "false",
+      "false",
+    ]);
   });
 });

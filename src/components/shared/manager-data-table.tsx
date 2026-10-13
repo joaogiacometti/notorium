@@ -10,6 +10,8 @@ import {
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import {
   getSelectColumn,
+  readSelectAllCheckedState,
+  SelectAllCheckbox,
   shouldIgnoreRowClick,
 } from "@/components/shared/manager-data-table-helpers";
 import {
@@ -159,6 +161,9 @@ export function ManagerDataTable<TRow extends RowData>({
   });
 
   const totalPageCount = Math.max(table.getPageCount(), 1);
+  // Read here, not inside the header checkbox: this component re-renders on
+  // every table state and data change, the only place both are visible.
+  const selectAllChecked = readSelectAllCheckedState(table);
   const shouldRenderLoadingSkeleton = Boolean(
     showLoadingSkeleton && loadingSkeleton,
   );
@@ -246,12 +251,20 @@ export function ManagerDataTable<TRow extends RowData>({
                             : undefined
                         }
                       >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                        {header.column.id === "select" ? (
+                          <SelectAllCheckbox
+                            checked={selectAllChecked}
+                            onCheckedChange={(checked) =>
+                              table.toggleAllPageRowsSelected(checked)
+                            }
+                            selectionAriaLabel={selectionAriaLabel}
+                          />
+                        ) : (
+                          flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )
+                        )}
                       </TableHead>
                     ))}
                   </TableRow>

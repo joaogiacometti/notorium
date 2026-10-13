@@ -1,4 +1,6 @@
 import path from "node:path";
+import babel from "@rolldown/plugin-babel";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -10,6 +12,10 @@ export default defineConfig({
     projects: [
       {
         extends: true,
+        // Component tests compile with React Compiler like the Next.js build
+        // (`reactCompiler: true`), so memoization bugs that only exist in
+        // compiled output fail here instead of in production.
+        plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
         test: {
           name: "dom",
           environment: "jsdom",

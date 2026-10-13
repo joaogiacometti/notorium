@@ -43,7 +43,8 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - Tests must be F.I.R.S.T: fast, independent, repeatable, self-validating, timely.
 - Good tests verify observable behavior, stable contracts, or deterministic transformations. Bad tests mirror implementation text, CSS class strings, prompt wording, or call order unless that exact detail is the public contract.
 - Keep Vitest tests next to source with `.test.ts` or `.test.tsx`.
-- `.test.tsx` runs in jsdom; `.test.ts` runs in plain Node. Start a `.test.ts` that needs a DOM with `// @vitest-environment jsdom`. jsdom is the only DOM library; do not add another.
+- `.test.tsx` runs in jsdom and is compiled with React Compiler, like the Next.js build; `.test.ts` runs in plain Node, uncompiled. Put tests of client component behavior in `.test.tsx` so compiler-only memoization bugs fail there.
+- Start a `.test.ts` that needs a DOM with `// @vitest-environment jsdom`. jsdom is the only DOM library; do not add another.
 - Add Playwright coverage only for critical user workflows: navigation, auth/permissions, writes, persistence, destructive actions, or cross-page flow integrity.
 - Do not add Playwright tests for presentation-only changes unless explicitly requested.
 
@@ -135,6 +136,7 @@ Only add optional files when they are needed.
 - Treat React Compiler as enabled.
 - Do not use `useCallback`, `useMemo`, or `memo` by default.
 - Use manual memoization only when required for correctness and state the reason in the change summary.
+- TanStack Table hands cells and headers stable `row`/`table` objects. Never read table state through their methods in a child component: wrap the read in `Subscribe`, or compute it in the `useTable` owner and pass it down as a prop.
 - Avoid unnecessary client components.
 - Avoid over-fetching. Select only required fields.
 - Prefer server-side data composition over client aggregation.

@@ -1,6 +1,6 @@
 "use client";
 
-import type { RowData } from "@tanstack/react-table";
+import { type RowData, Subscribe } from "@tanstack/react-table";
 import type {
   ManagerColumnDef,
   ManagerTableInstance,
@@ -52,24 +52,55 @@ export function shouldIgnoreRowClick(
   return Boolean(interactiveAncestor && interactiveAncestor !== currentTarget);
 }
 
-function SelectColumnHeader<TRow extends RowData>({
-  table,
-  selectionAriaLabel,
-}: Readonly<{
-  table: ManagerTableInstance<TRow>;
-  selectionAriaLabel: string;
-}>) {
-  let checked: boolean | "indeterminate" = false;
-  if (table.getIsAllPageRowsSelected()) checked = true;
-  else if (table.getIsSomePageRowsSelected()) checked = "indeterminate";
+type SelectAllCheckedState = boolean | "indeterminate";
 
+/**
+ * Header checkbox state for the rows on the current page. Call it from the
+ * component that owns `useTable`, so it re-reads on every table state or data
+ * change.
+ *
+ * @example
+ *   const selectAllChecked = readSelectAllCheckedState(table);
+ */
+export function readSelectAllCheckedState<TRow extends RowData>(
+  table: Pick<
+    ManagerTableInstance<TRow>,
+    "getIsAllPageRowsSelected" | "getIsSomePageRowsSelected"
+  >,
+): SelectAllCheckedState {
+  if (table.getIsAllPageRowsSelected()) return true;
+  if (table.getIsSomePageRowsSelected()) return "indeterminate";
+  return false;
+}
+
+interface SelectAllCheckboxProps {
+  checked: SelectAllCheckedState;
+  onCheckedChange: (checked: boolean) => void;
+  selectionAriaLabel: string;
+}
+
+/**
+ * Header checkbox of the select column. It takes `checked` as a prop instead
+ * of reading the table: which rows are on the page depends on `data`, which is
+ * not table state, so no TanStack `Subscribe` source can report it.
+ *
+ * @example
+ *   <SelectAllCheckbox
+ *     checked={readSelectAllCheckedState(table)}
+ *     onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked)}
+ *     selectionAriaLabel="Select row"
+ *   />
+ */
+export function SelectAllCheckbox({
+  checked,
+  onCheckedChange,
+  selectionAriaLabel,
+}: Readonly<SelectAllCheckboxProps>) {
   return (
     <div className="flex h-full w-full items-center justify-center">
       <Checkbox
         checked={checked}
-        onCheckedChange={(checked) =>
-          table.toggleAllPageRowsSelected(Boolean(checked))
-        }
+        onCheckedChange={(nextChecked) => onCheckedChange(Boolean(nextChecked))}
         aria-label={selectionAriaLabel}
         className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
       />
@@ -77,18 +108,32 @@ function SelectColumnHeader<TRow extends RowData>({
   );
 }
 
+// `row` is a stable object, so React Compiler memoizes a render that only
+// reads selection through `row.getIsSelected()` and the checkbox freezes on
+// its first value. TanStack Table 9 requires the state read to sit inside a
+// `Subscribe` boundary in the component that hides it (regression from the
+// v9 upgrade in 282d5b8).
 function SelectColumnCell<TRow extends RowData>({
   row,
   selectionAriaLabel,
 }: Readonly<{ row: ManagerTableRow<TRow>; selectionAriaLabel: string }>) {
   return (
     <div className="flex h-full w-full items-center justify-center">
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(checked) => row.toggleSelected(Boolean(checked))}
-        aria-label={selectionAriaLabel}
-        className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
-      />
+      <Subscribe
+        source={row.table.atoms.rowSelection}
+        selector={(rowSelection) => Boolean(rowSelection[row.id])}
+      >
+        {(checked) => (
+          <Checkbox
+            checked={checked}
+            onCheckedChange={(nextChecked) =>
+              row.toggleSelected(Boolean(nextChecked))
+            }
+            aria-label={selectionAriaLabel}
+            className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+          />
+        )}
+      </Subscribe>
     </div>
   );
 }
@@ -99,12 +144,6 @@ export function getSelectColumn<TRow extends RowData>(
   return {
     id: "select",
     size: 36,
-    header: ({ table }) => (
-      <SelectColumnHeader<TRow>
-        table={table}
-        selectionAriaLabel={selectionAriaLabel}
-      />
-    ),
     cell: ({ row }) => (
       <SelectColumnCell<TRow>
         row={row}
