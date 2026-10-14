@@ -14,7 +14,6 @@ import {
 import {
   getAllSubjectsWithPathsForUser,
   getSubjectListItemsForUser,
-  getSubjectsForUser,
 } from "@/features/subjects/queries";
 import {
   type BulkDeleteSubjectsForm,
@@ -34,15 +33,9 @@ import type {
   BulkSubjectMutationResult,
   MoveSubjectResult,
   MutationResult,
-  SubjectEntity,
   SubjectListItem,
   SubjectOption,
 } from "@/lib/server/api-contracts";
-
-export async function getSubjects(): Promise<SubjectEntity[]> {
-  const userId = await getAuthenticatedUserId();
-  return getSubjectsForUser(userId);
-}
 
 /**
  * Subjects with full `path` labels, for the flashcard subject pickers (create,

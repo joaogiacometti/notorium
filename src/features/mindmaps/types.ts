@@ -1,6 +1,5 @@
 import type { z } from "zod";
 import type {
-  mindmapEdgeSchema,
   mindmapGraphSchema,
   mindmapNodeSchema,
 } from "@/features/mindmaps/validation";
@@ -12,7 +11,6 @@ import type {
  * the post-MVP image phase; the MVP only sets `label`.
  */
 export type MindmapNode = z.infer<typeof mindmapNodeSchema>;
-export type MindmapEdge = z.infer<typeof mindmapEdgeSchema>;
 export type MindmapGraph = z.infer<typeof mindmapGraphSchema>;
 
 export const EMPTY_MINDMAP_GRAPH: MindmapGraph = { nodes: [], edges: [] };

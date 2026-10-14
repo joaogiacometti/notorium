@@ -10,16 +10,6 @@ import type {
   SubjectTreeNode,
 } from "@/lib/server/api-contracts";
 
-export async function getSubjectsForUser(
-  userId: string,
-): Promise<SubjectEntity[]> {
-  return getDb()
-    .select()
-    .from(subject)
-    .where(eq(subject.userId, userId))
-    .orderBy(desc(subject.updatedAt));
-}
-
 export async function getAcademicSubjectsForUser(
   userId: string,
 ): Promise<SubjectEntity[]> {

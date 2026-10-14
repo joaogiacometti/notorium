@@ -33,7 +33,6 @@ vi.mock("@/features/documents/queries", () => ({
 vi.mock("@/features/subjects/queries", () => ({
   getSubjectByIdForUser: vi.fn(),
   getAllSubjectsForUser: vi.fn(),
-  getSubjectsForUser: vi.fn(),
 }));
 
 describe("subject bulk actions", () => {

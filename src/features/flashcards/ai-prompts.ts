@@ -33,10 +33,6 @@ export const flashcardValidationIssueTypeEnum = z.enum([
   "duplicate",
 ]);
 
-export type FlashcardValidationIssueType = z.infer<
-  typeof flashcardValidationIssueTypeEnum
->;
-
 const flashcardValidationIssueSchema = z.object({
   flashcardId: z.string(),
   issueType: flashcardValidationIssueTypeEnum,
@@ -51,10 +47,6 @@ const flashcardValidationIssueSchema = z.object({
 export const flashcardValidationOutputSchema = z.object({
   issues: z.array(flashcardValidationIssueSchema),
 });
-
-export type FlashcardValidationIssue = z.infer<
-  typeof flashcardValidationIssueSchema
->;
 
 export type FlashcardValidationOutput = z.infer<
   typeof flashcardValidationOutputSchema
@@ -349,10 +341,6 @@ export const flashcardMergeSynthesisOutputSchema = z.object({
   sourceFlashcardIds: z.array(z.string()),
   rationale: z.string().trim().min(1).max(AI_LIMITS.maxMergeRationaleLength),
 });
-
-export type FlashcardMergeSynthesisOutput = z.infer<
-  typeof flashcardMergeSynthesisOutputSchema
->;
 
 export interface FlashcardForMergeSynthesis {
   id: string;

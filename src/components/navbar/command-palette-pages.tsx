@@ -134,59 +134,6 @@ function PaletteCommandItem({
   );
 }
 
-interface SubjectPickerPageProps {
-  search: string;
-  onSearchChange: (value: string) => void;
-  subjects: { id: string; name: string }[];
-  isLoading: boolean;
-  onPick: (subjectId: string) => void;
-}
-
-/**
- * Renders the subject picker used before subject-scoped create dialogs.
- *
- * @example
- * <SubjectPickerPage search="" onSearchChange={setSearch} subjects={subjects} isLoading={false} onPick={setSubjectId} />
- */
-export function SubjectPickerPage({
-  search,
-  onSearchChange,
-  subjects,
-  isLoading,
-  onPick,
-}: Readonly<SubjectPickerPageProps>) {
-  const showLoadingSkeleton = useSmoothedLoadingState(isLoading, {
-    delayMs: PALETTE_LOADING_DELAY_MS,
-    minimumVisibleMs: PALETTE_LOADING_MINIMUM_VISIBLE_MS,
-  });
-
-  return (
-    <>
-      <PaletteSearchInput
-        placeholder="Select a subject..."
-        value={search}
-        onValueChange={onSearchChange}
-      />
-      <CommandList>
-        {showLoadingSkeleton && PALETTE_LOADING_SKELETON}
-        {!isLoading && <CommandEmpty>No subjects found.</CommandEmpty>}
-        <CommandGroup heading="Select a subject">
-          {subjects.map((subject) => (
-            <CommandItem
-              key={subject.id}
-              value={subject.name}
-              onSelect={() => onPick(subject.id)}
-              className="cursor-pointer"
-            >
-              {subject.name}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </>
-  );
-}
-
 interface DocumentPickerPageProps {
   search: string;
   onSearchChange: (value: string) => void;
