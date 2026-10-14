@@ -5,6 +5,8 @@ const baseURL =
   process.env.BETTER_AUTH_URL ??
   "http://127.0.0.1:3001";
 const emailFixtureInboxPath = "test-results/email-fixture-inbox.jsonl";
+const bootstrapSpecs = /signup-bootstrap\.spec\.ts/;
+const publicSpecs = /(login|password-reset)\.spec\.ts/;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -39,14 +41,14 @@ export default defineConfig({
   projects: [
     {
       name: "bootstrap",
-      testMatch: /signup-bootstrap\.spec\.ts/,
+      testMatch: bootstrapSpecs,
       use: {
         ...devices["Desktop Chrome"],
       },
     },
     {
       name: "public",
-      testMatch: /(login|password-reset)\.spec\.ts/,
+      testMatch: publicSpecs,
       dependencies: ["bootstrap"],
       use: {
         ...devices["Desktop Chrome"],
@@ -54,8 +56,9 @@ export default defineConfig({
     },
     {
       name: "authenticated",
-      testMatch:
-        /(subjects|attendance|notes|assessments|flashcards|account)\.spec\.ts/,
+      // Every other spec runs signed in. An allow-list here silently skipped
+      // newly added specs (command-palette.spec.ts never ran).
+      testIgnore: [bootstrapSpecs, publicSpecs],
       dependencies: ["bootstrap"],
       use: {
         ...devices["Desktop Chrome"],
