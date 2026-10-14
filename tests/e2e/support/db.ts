@@ -232,35 +232,6 @@ export async function clearUserAttendanceMissesBySubject(
     );
 }
 
-export async function clearUserNotesBySubject(
-  userId: string,
-  subjectId: string,
-) {
-  await getDb()
-    .delete(note)
-    .where(and(eq(note.userId, userId), eq(note.subjectId, subjectId)));
-}
-
-export async function clearUserNotesByTitles(
-  userId: string,
-  subjectId: string,
-  titles: string[],
-) {
-  if (titles.length === 0) {
-    return;
-  }
-
-  await getDb()
-    .delete(note)
-    .where(
-      and(
-        eq(note.userId, userId),
-        eq(note.subjectId, subjectId),
-        inArray(note.title, titles),
-      ),
-    );
-}
-
 export async function createNote(
   userId: string,
   subjectId: string,
@@ -308,37 +279,6 @@ export async function createAttendanceMiss(
     .returning({ id: attendanceMiss.id });
 
   return newAttendanceMiss;
-}
-
-export async function clearUserAssessmentsBySubject(
-  userId: string,
-  subjectId: string,
-) {
-  await getDb()
-    .delete(assessment)
-    .where(
-      and(eq(assessment.userId, userId), eq(assessment.subjectId, subjectId)),
-    );
-}
-
-export async function clearUserAssessmentsByTitles(
-  userId: string,
-  subjectId: string,
-  titles: string[],
-) {
-  if (titles.length === 0) {
-    return;
-  }
-
-  await getDb()
-    .delete(assessment)
-    .where(
-      and(
-        eq(assessment.userId, userId),
-        eq(assessment.subjectId, subjectId),
-        inArray(assessment.title, titles),
-      ),
-    );
 }
 
 export async function createAssessment(
