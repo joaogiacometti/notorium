@@ -340,7 +340,7 @@ Students who want a private, lightweight study management workspace.
 - `subject`
   - `id`, `name`, `parentSubjectId`, `kind` (`academic` | `general`), `totalClasses`, `maxMisses`, timestamps, `userId`
 - `flashcard`
-  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `ease`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`
+  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
   - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, `automaticOptimizationEnabled`, optimization timestamps
 - `flashcard_review_log`

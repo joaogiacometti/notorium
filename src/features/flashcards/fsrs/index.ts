@@ -1,6 +1,5 @@
 export {
   defaultDifficultyValue,
-  defaultEaseValue,
   defaultSchedulerParameters,
   defaultStabilityValue,
   fsrsWeightCount,

@@ -2,7 +2,6 @@ import { createEmptyCard, fsrs, generatorParameters } from "ts-fsrs";
 
 import {
   defaultDifficultyValue,
-  defaultEaseValue,
   defaultSchedulerParameters,
   defaultStabilityValue,
 } from "@/features/flashcards/fsrs/constants";
@@ -58,7 +57,6 @@ export function getInitialFlashcardSchedulingState(now: Date = new Date()) {
     dueAt: card.due,
     stability: formatFsrsNumber(card.stability),
     difficulty: formatFsrsNumber(card.difficulty),
-    ease: defaultEaseValue,
     intervalDays: card.scheduled_days,
     learningStep: card.learning_steps,
     lastReviewedAt: card.last_review ?? null,
@@ -105,7 +103,6 @@ export function scheduleFlashcardReview({
     dueAt,
     stability: formatFsrsNumber(stability),
     difficulty: formatFsrsNumber(difficulty),
-    ease: defaultEaseValue,
     intervalDays,
     learningStep,
     lastReviewedAt,

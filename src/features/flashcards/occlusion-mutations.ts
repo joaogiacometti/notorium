@@ -67,7 +67,6 @@ function buildOcclusionInsert(
     dueAt: scheduling.dueAt,
     stability: scheduling.stability,
     difficulty: scheduling.difficulty,
-    ease: scheduling.ease,
     intervalDays: scheduling.intervalDays,
     learningStep: scheduling.learningStep,
     lastReviewedAt: scheduling.lastReviewedAt,

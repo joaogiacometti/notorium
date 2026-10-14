@@ -161,7 +161,6 @@ export async function bulkResetFlashcardsForUser(
       dueAt: schedulingState.dueAt,
       stability: schedulingState.stability,
       difficulty: schedulingState.difficulty,
-      ease: schedulingState.ease,
       intervalDays: schedulingState.intervalDays,
       learningStep: schedulingState.learningStep,
       lastReviewedAt: schedulingState.lastReviewedAt,

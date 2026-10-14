@@ -8,6 +8,13 @@ const updateSetMock = vi.fn(() => ({
 const updateMock = vi.fn(() => ({
   set: updateSetMock,
 }));
+const insertReturningMock = vi.fn();
+const insertValuesMock = vi.fn(() => ({
+  returning: insertReturningMock,
+}));
+const insertMock = vi.fn(() => ({
+  values: insertValuesMock,
+}));
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const andMock = vi.fn((...conditions) => conditions);
 const countMock = vi.fn(() => "count_column");
@@ -23,6 +30,7 @@ vi.mock("@/db/index", () => ({
   getDb: () => ({
     select: selectMock,
     update: updateMock,
+    insert: insertMock,
   }),
 }));
 
@@ -36,9 +44,6 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("@/db/schema", () => ({
-  flashcard: {
-    userId: "flashcard_user_id_column",
-  },
   flashcardReviewLog: {
     userId: "flashcard_review_log_user_id_column",
     reviewedAt: "flashcard_review_log_reviewed_at_column",
@@ -126,6 +131,35 @@ describe("ensureFsrsSettings", () => {
         lastOptimizedAt: null,
       }),
     );
+  });
+
+  it("creates default settings without touching existing flashcard progress", async () => {
+    mockSelectLimitOnce([]);
+    insertReturningMock.mockResolvedValueOnce([
+      {
+        id: "settings-1",
+        userId: "user-1",
+        desiredRetention: "0.900",
+        weights: null,
+        optimizedReviewCount: 0,
+      },
+    ]);
+
+    const { ensureFsrsSettings } = await import(
+      "@/features/flashcards/fsrs/settings"
+    );
+    const { getDefaultFsrsDesiredRetention, getDefaultFsrsWeights } =
+      await import("@/features/flashcards/fsrs");
+
+    const result = await ensureFsrsSettings("user-1");
+
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
+      weights: JSON.stringify(getDefaultFsrsWeights()),
+    });
+    expect(result.weights).toEqual(getDefaultFsrsWeights());
+    expect(updateMock).not.toHaveBeenCalled();
   });
 });
 

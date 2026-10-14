@@ -252,7 +252,6 @@ export async function getReviewableFlashcardForUser(
   dueAt: Date;
   stability: string | null;
   difficulty: string | null;
-  ease: number;
   intervalDays: number;
   learningStep: number | null;
   lastReviewedAt: Date | null;

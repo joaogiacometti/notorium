@@ -38,7 +38,6 @@ function makeCard(
     dueAt,
     stability: null,
     difficulty: null,
-    ease: 250,
     intervalDays: 0,
     learningStep: null,
     lastReviewedAt: null,

@@ -26,7 +26,6 @@ function getFlashcardReviewUpdateValues(
     dueAt: nextState.dueAt,
     stability: nextState.stability,
     difficulty: nextState.difficulty,
-    ease: nextState.ease,
     intervalDays: nextState.intervalDays,
     learningStep: nextState.learningStep,
     lastReviewedAt: reviewedAt,
@@ -49,7 +48,6 @@ const flashcardReviewSelection = {
   dueAt: flashcard.dueAt,
   stability: flashcard.stability,
   difficulty: flashcard.difficulty,
-  ease: flashcard.ease,
   intervalDays: flashcard.intervalDays,
   learningStep: flashcard.learningStep,
   lastReviewedAt: flashcard.lastReviewedAt,
@@ -65,7 +63,6 @@ function getPreviousSchedulingState(
     | "dueAt"
     | "stability"
     | "difficulty"
-    | "ease"
     | "intervalDays"
     | "learningStep"
     | "lastReviewedAt"
@@ -78,7 +75,6 @@ function getPreviousSchedulingState(
     dueAt: card.dueAt.toISOString(),
     stability: card.stability,
     difficulty: card.difficulty,
-    ease: card.ease,
     intervalDays: card.intervalDays,
     learningStep: card.learningStep,
     lastReviewedAt: card.lastReviewedAt?.toISOString() ?? null,
@@ -96,7 +92,6 @@ function restoreSchedulingState(
     dueAt: new Date(snapshot.dueAt),
     stability: snapshot.stability,
     difficulty: snapshot.difficulty,
-    ease: snapshot.ease,
     intervalDays: snapshot.intervalDays,
     learningStep: snapshot.learningStep,
     lastReviewedAt: snapshot.lastReviewedAt

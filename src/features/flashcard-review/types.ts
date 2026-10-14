@@ -9,7 +9,6 @@ export interface FlashcardReviewSchedulingSnapshot {
   dueAt: string;
   stability: string | null;
   difficulty: string | null;
-  ease: number;
   intervalDays: number;
   learningStep: number | null;
   lastReviewedAt: string | null;

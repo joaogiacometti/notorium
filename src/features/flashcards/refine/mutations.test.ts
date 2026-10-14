@@ -98,7 +98,6 @@ describe("applyFlashcardMergeForUser", () => {
       dueAt: new Date("2026-06-10T10:00:00.000Z"),
       stability: null,
       difficulty: null,
-      ease: 250,
       intervalDays: 0,
       learningStep: null,
       lastReviewedAt: null,

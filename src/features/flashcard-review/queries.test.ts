@@ -204,7 +204,6 @@ describe("getFlashcardReviewStateForUser", () => {
                       back: "Back",
                       state: "new",
                       createdAt: new Date("2026-04-12T13:00:00.000Z"),
-                      ease: 250,
                       intervalDays: 0,
                       learningStep: null,
                       lastReviewedAt: null,

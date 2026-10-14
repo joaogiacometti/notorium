@@ -35,7 +35,6 @@ export interface SchedulerOutput {
   dueAt: Date;
   stability: string;
   difficulty: string;
-  ease: number;
   intervalDays: number;
   learningStep: number | null;
   lastReviewedAt: Date;

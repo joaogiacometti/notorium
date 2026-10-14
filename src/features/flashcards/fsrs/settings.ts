@@ -1,14 +1,9 @@
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import {
-  flashcard,
-  flashcardReviewLog,
-  flashcardSchedulerSettings,
-} from "@/db/schema";
+import { flashcardReviewLog, flashcardSchedulerSettings } from "@/db/schema";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
-  getInitialFlashcardSchedulingState,
   isFsrsDesiredRetentionValid,
   isFsrsSchedulerSettingsValid,
   normalizeFsrsDesiredRetention,
@@ -133,42 +128,20 @@ async function resetInvalidFsrsSettings(
 }
 
 async function createDefaultSettings(userId: string) {
-  const now = new Date();
-  const resetState = getInitialFlashcardSchedulingState(now);
-  return getDb().transaction(async (tx) => {
-    const [created] = await tx
-      .insert(flashcardSchedulerSettings)
-      .values({
-        userId,
-        desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
-        weights: serializeFsrsWeights(getDefaultFsrsWeights()),
-        legacySchedulerMigratedAt: now,
-      })
-      .returning();
+  const [created] = await getDb()
+    .insert(flashcardSchedulerSettings)
+    .values({
+      userId,
+      desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
+      weights: serializeFsrsWeights(getDefaultFsrsWeights()),
+    })
+    .returning();
 
-    if (!created) {
-      throw new Error("Failed to create flashcard scheduler settings");
-    }
+  if (!created) {
+    throw new Error("Failed to create flashcard scheduler settings");
+  }
 
-    await tx
-      .update(flashcard)
-      .set({
-        state: resetState.state,
-        dueAt: resetState.dueAt,
-        stability: resetState.stability,
-        difficulty: resetState.difficulty,
-        ease: resetState.ease,
-        intervalDays: resetState.intervalDays,
-        learningStep: resetState.learningStep,
-        lastReviewedAt: resetState.lastReviewedAt,
-        reviewCount: resetState.reviewCount,
-        lapseCount: resetState.lapseCount,
-        updatedAt: now,
-      })
-      .where(eq(flashcard.userId, userId));
-
-    return created;
-  });
+  return created;
 }
 
 export async function ensureFsrsSettings(

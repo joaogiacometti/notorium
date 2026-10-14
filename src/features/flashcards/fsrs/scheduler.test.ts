@@ -17,7 +17,6 @@ type SchedulerCard = Pick<
   | "dueAt"
   | "stability"
   | "difficulty"
-  | "ease"
   | "intervalDays"
   | "learningStep"
   | "lastReviewedAt"
@@ -31,7 +30,6 @@ function makeCard(overrides: Partial<SchedulerCard> = {}): SchedulerCard {
     dueAt: now,
     stability: null,
     difficulty: null,
-    ease: 250,
     intervalDays: 0,
     learningStep: 0,
     lastReviewedAt: null,
@@ -50,7 +48,6 @@ describe("getInitialFlashcardSchedulingState", () => {
       dueAt: now,
       stability: "0.0000",
       difficulty: "0.0000",
-      ease: 250,
       intervalDays: 0,
       learningStep: 0,
       lastReviewedAt: null,

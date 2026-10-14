@@ -396,7 +396,6 @@ export const flashcard = pgTable(
     dueAt: timestamp("due_at").defaultNow().notNull(),
     stability: numeric("stability", { precision: 10, scale: 4 }),
     difficulty: numeric("difficulty", { precision: 10, scale: 4 }),
-    ease: integer("ease").notNull().default(250),
     intervalDays: integer("interval_days").notNull().default(0),
     learningStep: integer("learning_step"),
     lastReviewedAt: timestamp("last_reviewed_at"),
@@ -465,7 +464,6 @@ export const flashcardSchedulerSettings = pgTable(
     automaticOptimizationEnabled: boolean("automatic_optimization_enabled")
       .notNull()
       .default(false),
-    legacySchedulerMigratedAt: timestamp("legacy_scheduler_migrated_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

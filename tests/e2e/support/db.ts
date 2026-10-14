@@ -390,7 +390,6 @@ export async function seedFsrsSchedulerSettings(
       lastOptimizedAt: options?.optimized ? now : null,
       automaticOptimizationEnabled:
         options?.automaticOptimizationEnabled ?? false,
-      legacySchedulerMigratedAt: now,
     })
     .onConflictDoUpdate({
       target: flashcardSchedulerSettings.userId,
