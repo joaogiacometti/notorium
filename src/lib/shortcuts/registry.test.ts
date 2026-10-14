@@ -151,17 +151,6 @@ describe("shortcutRegistry", () => {
     });
   });
 
-  it("lists the minimize-window shortcut under Global", () => {
-    const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
-      (item) => item.id === "global-minimize-window",
-    );
-    expect(shortcut).toMatchObject({
-      kind: "keys",
-      keys: ["escape"],
-      description: "Minimize the active floating window",
-    });
-  });
-
   it("lists the mindmap Tab add-child shortcut", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
       (item) => item.id === "mindmap-add-child",

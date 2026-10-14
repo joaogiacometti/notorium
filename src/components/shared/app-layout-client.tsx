@@ -11,9 +11,6 @@ import { MobileSidebarSheet } from "@/components/shared/mobile-sidebar-sheet";
 import { SidebarCollapseProvider } from "@/components/shared/sidebar-collapse-context";
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { useSidebarCollapsed } from "@/components/shared/use-sidebar-collapsed";
-import { WindowDock } from "@/components/windows/window-dock";
-import { WindowManagerProvider } from "@/components/windows/window-manager-context";
-import { WindowOverlay } from "@/components/windows/window-overlay";
 import type {
   SubjectOption,
   SubjectTreeNode,
@@ -161,23 +158,17 @@ export function AppLayoutClient({
   );
 
   return (
-    <WindowManagerProvider>
-      <div className="min-h-svh bg-background">
-        {userId && <CommandPalette userId={userId} aiEnabled={aiEnabled} />}
-        {userId && (
-          <GlobalSearch
-            userId={userId}
-            open={searchOpen}
-            onOpenChange={setSearchOpen}
-          />
-        )}
-        {showSidebar ? (
-          <MobileSidebarSheet>{sidebar}</MobileSidebarSheet>
-        ) : null}
-        {mainRow}
-        <WindowOverlay aiEnabled={aiEnabled} subjects={subjects} />
-        <WindowDock />
-      </div>
-    </WindowManagerProvider>
+    <div className="min-h-svh bg-background">
+      {userId && <CommandPalette userId={userId} aiEnabled={aiEnabled} />}
+      {userId && (
+        <GlobalSearch
+          userId={userId}
+          open={searchOpen}
+          onOpenChange={setSearchOpen}
+        />
+      )}
+      {showSidebar ? <MobileSidebarSheet>{sidebar}</MobileSidebarSheet> : null}
+      {mainRow}
+    </div>
   );
 }

@@ -27,7 +27,6 @@ import {
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import type {
   FlashcardEntity,
   SubjectOption,
@@ -66,8 +65,6 @@ interface EditFlashcardDialogProps {
   onDeleted?: (deletedId: string, deletedIds: string[]) => void | Promise<void>;
   className?: string;
   overlayClassName?: string;
-  noDialog?: boolean;
-  registerCloseRequest?: (request: () => void) => () => void;
 }
 
 export function EditFlashcardDialog({
@@ -79,8 +76,6 @@ export function EditFlashcardDialog({
   onDeleted,
   className,
   overlayClassName,
-  noDialog = false,
-  registerCloseRequest,
 }: Readonly<EditFlashcardDialogProps>) {
   const [mode, setMode] = useState<EditMode>("edit");
   const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(
@@ -191,10 +186,6 @@ export function EditFlashcardDialog({
     }
     dialog.handleOpenChange(false);
   }
-
-  useWindowCloseGuard(registerCloseRequest, () => {
-    handleDialogOpenChange(false);
-  });
 
   async function handleDiscardOnClose() {
     await cleanupDiscardedEditorAttachments(
@@ -414,40 +405,29 @@ export function EditFlashcardDialog({
     );
   }
 
-  const editSurface = noDialog ? (
-    <div className="flex h-full min-h-0 flex-col [&>form]:min-h-0 [&>form]:flex-1">
-      <div className="shrink-0 px-4 pt-4 pb-1 sm:px-6">
-        <h2 className="font-semibold text-base">Edit Flashcard</h2>
-      </div>
-      {renderContent()}
-    </div>
-  ) : (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent
-        className={cn(
-          "flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl",
-          className,
-        )}
-        overlayClassName={overlayClassName}
-        // Occlusion edit would auto-focus the help button while controls load,
-        // flashing its tooltip open. Basic/cloze keep editor focus.
-        onOpenAutoFocus={
-          flashcard.type === "occlusion"
-            ? (event) => event.preventDefault()
-            : undefined
-        }
-      >
-        <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
-          <DialogTitle>Edit Flashcard</DialogTitle>
-        </DialogHeader>
-        {renderContent()}
-      </DialogContent>
-    </Dialog>
-  );
-
   return (
     <>
-      {editSurface}
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+        <DialogContent
+          className={cn(
+            "flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl",
+            className,
+          )}
+          overlayClassName={overlayClassName}
+          // Occlusion edit would auto-focus the help button while controls load,
+          // flashing its tooltip open. Basic/cloze keep editor focus.
+          onOpenAutoFocus={
+            flashcard.type === "occlusion"
+              ? (event) => event.preventDefault()
+              : undefined
+          }
+        >
+          <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
+            <DialogTitle>Edit Flashcard</DialogTitle>
+          </DialogHeader>
+          {renderContent()}
+        </DialogContent>
+      </Dialog>
       <UnsavedChangesDialog
         open={dialog.discardDialogOpen}
         onOpenChange={dialog.setDiscardDialogOpen}

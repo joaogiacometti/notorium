@@ -3,8 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { getOpenableDocuments } from "@/app/actions/documents";
-import { getFlashcardsManagePage } from "@/app/actions/flashcards";
 import { getSubjectOptions } from "@/app/actions/subjects";
 import { useOpenAccountSettings } from "@/components/account/account-settings-provider";
 import {
@@ -15,25 +13,18 @@ import {
   type ActiveCreateDialog,
   CommandPaletteDialogs,
 } from "@/components/navbar/command-palette-dialogs";
-import {
-  DocumentPickerPage,
-  FlashcardPickerPage,
-  RootPage,
-} from "@/components/navbar/command-palette-pages";
+import { RootPage } from "@/components/navbar/command-palette-pages";
 import { useThemeControl } from "@/components/navbar/use-theme-control";
 import {
   useOpenShortcutsHelp,
   useShortcutsDialogOpen,
 } from "@/components/shortcuts/shortcuts-suspension-context";
 import { CommandDialog } from "@/components/ui/command";
-import { useWindowManager } from "@/components/windows/window-manager-context";
 
 interface CommandPaletteProps {
   userId: string;
   aiEnabled: boolean;
 }
-
-type PalettePage = "root" | "open-doc" | "edit-flashcard";
 
 export function CommandPalette({
   userId,
@@ -43,21 +34,16 @@ export function CommandPalette({
   const openShortcutsHelp = useOpenShortcutsHelp();
   const openAccountSettings = useOpenAccountSettings();
   const { setAppTheme } = useThemeControl();
-  const { openWindow } = useWindowManager();
   const router = useRouter();
   const pathname = usePathname();
   const [, startNavTransition] = useTransition();
 
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState<PalettePage>("root");
   const [search, setSearch] = useState("");
   const [activeDialog, setActiveDialog] = useState<ActiveCreateDialog | null>(
     null,
   );
   const [subjectId, setSubjectId] = useState<string | null>(null);
-  // When true, a successful note/mindmap create opens a window instead of
-  // navigating to its page.
-  const [createInWindow, setCreateInWindow] = useState(false);
 
   const { data: subjects = [] } = useQuery({
     queryKey: ["command-palette-subjects", userId],
@@ -65,34 +51,6 @@ export function CommandPalette({
     enabled: (open || activeDialog !== null) && userId.length > 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
-  });
-
-  const { data: documents = [], isPending: isDocumentsPending } = useQuery({
-    queryKey: ["command-palette-documents", userId],
-    queryFn: () => getOpenableDocuments(),
-    enabled: open && page === "open-doc" && userId.length > 0,
-    staleTime: 1000 * 60,
-    gcTime: 1000 * 60 * 5,
-  });
-
-  const { data: flashcards = [], isPending: isFlashcardsPending } = useQuery({
-    queryKey: ["command-palette-flashcards", userId, search],
-    queryFn: async () => {
-      const result = await getFlashcardsManagePage({
-        pageIndex: 0,
-        pageSize: 25,
-        search,
-      });
-
-      if ("errorCode" in result) {
-        return [];
-      }
-
-      return result.items;
-    },
-    enabled: open && page === "edit-flashcard" && userId.length > 0,
-    staleTime: 1000 * 20,
-    gcTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
@@ -111,18 +69,12 @@ export function CommandPalette({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [shortcutsSuspended, activeDialog]);
 
-  // cmdk keeps the search text in the shared Command context, so the value must
-  // be reset whenever the active page changes; otherwise the text typed to find
-  // a command leaks into the subject picker and filters out every subject.
-  function goToPage(nextPage: PalettePage) {
-    setPage(nextPage);
-    setSearch("");
-  }
-
+  // cmdk keeps the search text in the shared Command context, so clear it on
+  // close; otherwise the next open starts pre-filtered by the old query.
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
     if (!nextOpen) {
-      goToPage("root");
+      setSearch("");
     }
   }
 
@@ -131,34 +83,13 @@ export function CommandPalette({
     startNavTransition(() => router.push(href));
   }
 
-  function openDocumentWindow(kind: "mindmap" | "note", docId: string) {
-    setCreateInWindow(false);
-    closeActiveDialog();
-    openWindow({ kind, docId });
-  }
-
   function runAction(action: PaletteAction) {
     if (action.kind === "navigate") {
       navigate(action.href);
     } else if (action.kind === "create") {
-      setCreateInWindow(false);
       setSubjectId(parseSubjectIdFromPath(pathname));
       setActiveDialog(action.dialog);
       handleOpenChange(false);
-    } else if (action.kind === "open-window-create") {
-      if (action.create === "flashcard") {
-        handleOpenChange(false);
-        openWindow({ kind: "flashcard" });
-      } else {
-        setCreateInWindow(true);
-        setSubjectId(parseSubjectIdFromPath(pathname));
-        setActiveDialog(action.create);
-        handleOpenChange(false);
-      }
-    } else if (action.kind === "open-window-existing") {
-      goToPage("open-doc");
-    } else if (action.kind === "open-window-flashcard-edit") {
-      goToPage("edit-flashcard");
     } else if (action.kind === "theme") {
       void setAppTheme(action.theme);
       handleOpenChange(false);
@@ -174,7 +105,6 @@ export function CommandPalette({
   function closeActiveDialog() {
     setActiveDialog(null);
     setSubjectId(null);
-    setCreateInWindow(false);
   }
 
   return (
@@ -185,39 +115,11 @@ export function CommandPalette({
         title="Command Palette"
         description="Run a command or jump to a section"
       >
-        {page === "root" ? (
-          <RootPage
-            search={search}
-            onSearchChange={setSearch}
-            onRun={runAction}
-          />
-        ) : page === "open-doc" ? (
-          <DocumentPickerPage
-            search={search}
-            onSearchChange={setSearch}
-            documents={documents}
-            isLoading={isDocumentsPending}
-            onPick={(kind, docId) => {
-              handleOpenChange(false);
-              openWindow({ kind, docId });
-            }}
-          />
-        ) : (
-          <FlashcardPickerPage
-            search={search}
-            onSearchChange={setSearch}
-            flashcards={flashcards}
-            isLoading={isFlashcardsPending}
-            onPick={(flashcard) => {
-              handleOpenChange(false);
-              openWindow({
-                kind: "flashcard",
-                docId: flashcard.id,
-                title: flashcard.frontTitle ?? flashcard.frontExcerpt,
-              });
-            }}
-          />
-        )}
+        <RootPage
+          search={search}
+          onSearchChange={setSearch}
+          onRun={runAction}
+        />
       </CommandDialog>
       <CommandPaletteDialogs
         activeDialog={activeDialog}
@@ -226,8 +128,6 @@ export function CommandPalette({
         aiEnabled={aiEnabled}
         onClose={closeActiveDialog}
         onNavigate={navigate}
-        createInWindow={createInWindow}
-        onOpenDocumentWindow={openDocumentWindow}
       />
     </>
   );

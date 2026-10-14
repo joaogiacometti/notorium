@@ -35,11 +35,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useOptionalWindowManager } from "@/components/windows/window-manager-context";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { ensureRootNode, parseMindmapGraph } from "@/features/mindmaps/utils";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { MindmapEntity, SubjectOption } from "@/lib/server/api-contracts";
@@ -57,14 +55,6 @@ interface MindmapDetailProps {
    * no page). Drives the breadcrumb link and post-delete navigation.
    */
   subjectHref: string | null;
-  /** When hosted in a floating window: drop the page top bar and fill height. */
-  embedded?: boolean;
-  /** True only for the focused floating window instance. */
-  focusedInWindow?: boolean;
-  /** Called instead of navigating after delete when embedded in a window. */
-  onClosed?: () => void;
-  /** When embedded: flush a pending autosave before the window closes. */
-  registerCloseRequest?: (request: () => void) => () => void;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -75,13 +65,8 @@ export function MindmapDetail({
   mindmap,
   subjectName,
   subjectHref,
-  embedded = false,
-  focusedInWindow = false,
-  onClosed,
-  registerCloseRequest,
 }: Readonly<MindmapDetailProps>) {
   const router = useRouter();
-  const focusedWindowId = useOptionalWindowManager()?.focusedWindowId ?? null;
   const [, startNavTransition] = useTransition();
   const initialGraph = useRef(
     ensureRootNode(parseMindmapGraph(mindmap.data), mindmap.title),
@@ -113,9 +98,6 @@ export function MindmapDetail({
     [title, graph],
   );
   const isDirty = currentSnapshot !== lastSavedRef.current;
-  const shortcutsEnabled = embedded
-    ? focusedInWindow
-    : focusedWindowId === null;
   useBeforeUnload(isDirty || isSaving);
 
   const save = useCallback(
@@ -200,18 +182,9 @@ export function MindmapDetail({
     void save(debouncedTitle, debouncedGraph);
   }, [debouncedTitle, debouncedGraph, save]);
 
-  // Mindmaps autosave, so closing the window flushes any pending edit then
-  // closes rather than prompting to discard.
-  useWindowCloseGuard(registerCloseRequest, async () => {
-    if (isDirty) {
-      await save(title, graph);
-    }
-    onClosed?.();
-  });
-
   return (
     <>
-      {isZenMode || embedded ? null : (
+      {isZenMode ? null : (
         <PageTopBar
           breadcrumb={[
             {
@@ -229,21 +202,19 @@ export function MindmapDetail({
           "lg:flex lg:flex-col lg:overflow-hidden",
           isZenMode
             ? "fixed inset-0 z-35 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
-            : embedded
-              ? "flex h-full min-h-0 max-w-none flex-col overflow-hidden p-3"
-              : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
+            : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
         )}
       >
         <div
           className={cn(
             "flex flex-col gap-6 lg:min-h-0 lg:flex-1",
-            isZenMode || embedded ? "min-h-0 flex-1" : null,
+            isZenMode ? "min-h-0 flex-1" : null,
           )}
         >
           <div
             className={cn(
               "min-w-0",
-              isZenMode || embedded
+              isZenMode
                 ? "flex min-h-0 flex-1 flex-col"
                 : "lg:flex lg:min-h-0 lg:flex-col lg:flex-1",
             )}
@@ -325,9 +296,7 @@ export function MindmapDetail({
             <div
               className={cn(
                 "flex-1 overflow-hidden rounded-lg border border-border",
-                isZenMode || embedded
-                  ? "h-auto min-h-0"
-                  : "h-[60svh] lg:h-auto lg:min-h-0",
+                isZenMode ? "h-auto min-h-0" : "h-[60svh] lg:h-auto lg:min-h-0",
               )}
             >
               <LazyMindmapCanvas
@@ -342,7 +311,6 @@ export function MindmapDetail({
                     : undefined
                 }
                 exportRef={exportPngRef}
-                shortcutsEnabled={shortcutsEnabled}
               />
             </div>
           </div>
@@ -355,10 +323,6 @@ export function MindmapDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
-            if (embedded) {
-              onClosed?.();
-              return;
-            }
             startNavTransition(() => router.push(subjectHref ?? "/"));
           }}
         />

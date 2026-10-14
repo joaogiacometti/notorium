@@ -12,7 +12,7 @@ It is built for a single trusted group: the first account becomes an admin, and 
 - **Flashcards** — basic, cloze, and image-occlusion cards organized by subject, reviewed with an FSRS spaced-repetition scheduler. Focus Mode and Exam Mode tune the review session.
 - **Attendance & Assessments** — per-subject absence tracking and an assessment planner with a calendar/planning view and optional email reminders.
 - **AI assistance (optional)** — generate flashcards from notes or mindmaps, refine and de-duplicate flashcards.
-- **Search, command palette, and floating windows** — case-insensitive search across all content (`Cmd/Ctrl+K`), an action palette (`Cmd/Ctrl+P`), and draggable editor windows that layer over the page.
+- **Search and command palette** — case-insensitive search across all content (`Cmd/Ctrl+K`) and an action palette (`Cmd/Ctrl+P`).
 
 See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 

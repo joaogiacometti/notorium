@@ -68,13 +68,6 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Global,
   },
   {
-    id: "global-minimize-window",
-    kind: "keys",
-    keys: ["escape"],
-    description: "Minimize the active floating window",
-    category: ShortcutCategory.Global,
-  },
-  {
     id: "editor-slash-table",
     kind: "typed",
     keys: ["/table"],

@@ -22,9 +22,6 @@ interface CommandPaletteDialogsProps {
   aiEnabled: boolean;
   onClose: () => void;
   onNavigate: (href: string) => void;
-  /** When true, a created note/mindmap opens in a window instead of navigating. */
-  createInWindow: boolean;
-  onOpenDocumentWindow: (kind: "mindmap" | "note", docId: string) => void;
 }
 
 /**
@@ -38,8 +35,6 @@ export function CommandPaletteDialogs({
   aiEnabled,
   onClose,
   onNavigate,
-  createInWindow,
-  onOpenDocumentWindow,
 }: Readonly<CommandPaletteDialogsProps>) {
   function handleOpenChange(open: boolean) {
     if (!open) {
@@ -71,9 +66,7 @@ export function CommandPaletteDialogs({
         open={activeDialog === "note"}
         onOpenChange={handleOpenChange}
         onSuccess={(noteId, createdSubjectId) =>
-          createInWindow
-            ? onOpenDocumentWindow("note", noteId)
-            : onNavigate(getNoteDetailHref(createdSubjectId, noteId))
+          onNavigate(getNoteDetailHref(createdSubjectId, noteId))
         }
       />
       <CreateMindmapDialog
@@ -82,9 +75,7 @@ export function CommandPaletteDialogs({
         open={activeDialog === "mindmap"}
         onOpenChange={handleOpenChange}
         onSuccess={(mindmapId, createdSubjectId) =>
-          createInWindow
-            ? onOpenDocumentWindow("mindmap", mindmapId)
-            : onNavigate(getMindmapDetailHref(createdSubjectId, mindmapId))
+          onNavigate(getMindmapDetailHref(createdSubjectId, mindmapId))
         }
       />
     </>

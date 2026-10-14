@@ -7,7 +7,6 @@ import {
   Keyboard,
   LaptopMinimal,
   Layers,
-  LayoutGrid,
   type LucideIcon,
   Moon,
   Network,
@@ -16,10 +15,7 @@ import {
 } from "lucide-react";
 import type { AppTheme } from "@/lib/theme";
 
-export type PaletteGroup = "Create" | "Windows" | "Go to" | "Settings";
-
-/** Editor kinds that can be created or opened inside a floating window. */
-export type WindowCreateKind = "mindmap" | "note" | "flashcard";
+export type PaletteGroup = "Create" | "Go to" | "Settings";
 
 /** Dialogs that open straight from the palette. */
 export type ContextFreeDialog =
@@ -32,9 +28,6 @@ export type ContextFreeDialog =
 export type PaletteAction =
   | { kind: "navigate"; href: string }
   | { kind: "create"; dialog: ContextFreeDialog }
-  | { kind: "open-window-create"; create: WindowCreateKind }
-  | { kind: "open-window-existing" }
-  | { kind: "open-window-flashcard-edit" }
   | { kind: "theme"; theme: AppTheme }
   | { kind: "open-settings" }
   | { kind: "shortcuts-help" };
@@ -88,54 +81,6 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["new", "add", "create", "mindmap", "map", "diagram"],
     icon: Network,
     action: { kind: "create", dialog: "mindmap" },
-  },
-  {
-    id: "window-mindmap",
-    label: "New Mindmap in Window",
-    group: "Windows",
-    keywords: ["window", "overlay", "mindmap", "multitask", "float"],
-    icon: Network,
-    action: { kind: "open-window-create", create: "mindmap" },
-  },
-  {
-    id: "window-note",
-    label: "New Note in Window",
-    group: "Windows",
-    keywords: ["window", "overlay", "note", "multitask", "float"],
-    icon: FileText,
-    action: { kind: "open-window-create", create: "note" },
-  },
-  {
-    id: "window-flashcard",
-    label: "New Flashcard in Window",
-    group: "Windows",
-    keywords: ["window", "overlay", "flashcard", "multitask", "float"],
-    icon: Layers,
-    action: { kind: "open-window-create", create: "flashcard" },
-  },
-  {
-    id: "window-open-document",
-    label: "Open Document in Window",
-    group: "Windows",
-    keywords: ["window", "overlay", "open", "note", "mindmap", "existing"],
-    icon: LayoutGrid,
-    action: { kind: "open-window-existing" },
-  },
-  {
-    id: "window-edit-flashcard",
-    label: "Edit Flashcard in Window",
-    group: "Windows",
-    keywords: [
-      "window",
-      "overlay",
-      "open",
-      "edit",
-      "flashcard",
-      "card",
-      "existing",
-    ],
-    icon: Layers,
-    action: { kind: "open-window-flashcard-edit" },
   },
   {
     id: "goto-home",
@@ -206,7 +151,6 @@ export const paletteCommands: PaletteCommand[] = [
 /** Group order for rendering the palette. */
 export const paletteGroupOrder: PaletteGroup[] = [
   "Create",
-  "Windows",
   "Go to",
   "Settings",
 ];

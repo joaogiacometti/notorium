@@ -34,7 +34,7 @@ graph nodes, segmented toggles, drop zones), not for standard actions.
   narrow per content via `maxWidth` (`3xl` flashcard/admin, `4xl` assessment,
   `5xl` subject). Width is the only thing a detail page tunes — structure is fixed.
 - **Document workspaces** (documents list, note, mindmap) stay
-  full-width (`max-w-7xl`) and own their layout for zen/embedded modes.
+  full-width (`max-w-7xl`) and own their layout for zen mode.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
   `PageTopBar` (`PageTopBarSkeleton`).
 
@@ -87,16 +87,14 @@ Bare-number Tailwind v4 values (no `z-[n]` brackets). Layers, low → high:
 | Sticky table/section headers | `10` |
 | Sticky page top bar | `30` |
 | Immersive fullscreen surface (note/mindmap zen) | `35` |
-| Floating window overlay | `40` |
-| Window dock | `45` |
 | Dialogs | `50` |
 | Full-screen review surfaces | `110` |
 | Dialogs above review surfaces | `120` |
 
 Immersive fullscreen (note/mindmap zen mode) is a CSS overlay
 (`fixed inset-0 z-35`), **not** the browser Fullscreen API. It sits below the
-overlay band so menus, dialogs, windows, and toasts stay layered above it
-without portal retargeting. Keep it below `40`.
+overlay band so menus, dialogs, and toasts stay layered above it
+without portal retargeting. Keep it below `50`.
 
 Full-screen review surfaces use `ReviewScrollBoundary` for portal placement and
 background scroll isolation, including nested dialogs. Keep card scrolling inside

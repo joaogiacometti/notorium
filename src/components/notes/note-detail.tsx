@@ -36,7 +36,6 @@ import {
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import { useWindowCloseGuard } from "@/lib/editor/use-window-close-guard";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
@@ -54,12 +53,6 @@ interface NoteDetailProps {
    * no page). Drives the breadcrumb link and post-delete navigation.
    */
   subjectHref: string | null;
-  /** When hosted in a floating window: drop the page top bar and fill height. */
-  embedded?: boolean;
-  /** Called instead of navigating after delete when embedded in a window. */
-  onClosed?: () => void;
-  /** When embedded: flush a pending autosave before the window closes. */
-  registerCloseRequest?: (request: () => void) => () => void;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -82,9 +75,6 @@ export function NoteDetail({
   note,
   subjectName,
   subjectHref,
-  embedded = false,
-  onClosed,
-  registerCloseRequest,
 }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -227,15 +217,6 @@ export function NoteDetail({
   };
   useEffect(() => () => flushPendingSaveRef.current(), []);
 
-  // Notes autosave, so closing the window flushes any pending edit then closes
-  // rather than prompting to discard.
-  useWindowCloseGuard(registerCloseRequest, async () => {
-    if (hasDirtyValues) {
-      await saveNoteValues(form.getValues());
-    }
-    onClosed?.();
-  });
-
   async function copyNoteContent(format: NoteCopyFormat) {
     try {
       await copyNoteContentToClipboard(form.getValues("content") ?? "", format);
@@ -247,7 +228,7 @@ export function NoteDetail({
 
   return (
     <>
-      {!isZenMode && !embedded ? (
+      {!isZenMode ? (
         <PageTopBar
           breadcrumb={[
             {
@@ -265,21 +246,19 @@ export function NoteDetail({
           "lg:flex lg:flex-col lg:overflow-hidden",
           isZenMode
             ? "fixed inset-0 z-35 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
-            : embedded
-              ? "flex h-full min-h-0 max-w-none flex-col overflow-hidden p-3"
-              : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
+            : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
         )}
       >
         <div
           className={cn(
             "flex flex-col gap-6 lg:min-h-0 lg:flex-1",
-            isZenMode || embedded ? "min-h-0 flex-1" : null,
+            isZenMode ? "min-h-0 flex-1" : null,
           )}
         >
           <form
             className={cn(
               "min-w-0 space-y-4",
-              isZenMode || embedded
+              isZenMode
                 ? "flex min-h-0 flex-1 flex-col"
                 : "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:space-y-4",
             )}
@@ -390,7 +369,7 @@ export function NoteDetail({
                 <div
                   className={cn(
                     "min-h-0 w-full min-w-0 overflow-hidden",
-                    isZenMode || embedded ? "flex flex-1" : "lg:flex lg:flex-1",
+                    isZenMode ? "flex flex-1" : "lg:flex lg:flex-1",
                   )}
                 >
                   <TiptapEditor
@@ -402,13 +381,13 @@ export function NoteDetail({
                     imageUploadContext="notes"
                     className={cn(
                       "w-full min-w-0 overflow-hidden",
-                      isZenMode || embedded
+                      isZenMode
                         ? "flex min-h-0 flex-1 flex-col"
                         : "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col",
                     )}
                     contentClassName={cn(
                       "w-full min-w-0 overflow-x-hidden",
-                      isZenMode || embedded
+                      isZenMode
                         ? "min-h-0 max-h-none flex-1 overflow-y-auto"
                         : "min-h-[60svh] lg:min-h-0 lg:max-h-none lg:flex-1 lg:overflow-y-auto",
                     )}
@@ -430,10 +409,6 @@ export function NoteDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
-            if (embedded) {
-              onClosed?.();
-              return;
-            }
             startNavTransition(() => router.push(subjectHref ?? "/"));
           }}
         />
