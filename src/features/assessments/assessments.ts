@@ -17,7 +17,7 @@ export function isAssessmentOverdue(
 export function getAssessmentAverage(
   assessments: AssessmentEntity[],
 ): number | null {
-  // Study tasks are generated reminders, not graded work.
+  // Study tasks are self-study reminders, not graded work.
   const completedWithScore = assessments.filter(
     (item) =>
       item.type !== "study" &&

@@ -1,5 +1,4 @@
 import { AttendanceSummary } from "@/components/attendance/attendance-summary";
-import { StudyScheduleSummary } from "@/components/study-schedule/study-schedule-summary";
 import { SubjectAssessmentsSummary } from "@/components/subjects/subject-assessments-summary";
 import { Separator } from "@/components/ui/separator";
 import { isAcademicSubject } from "@/features/subjects/constants";
@@ -44,13 +43,6 @@ export function SubjectDetailContent({
         totalClasses={subject.totalClasses}
         maxMisses={subject.maxMisses}
         misses={misses}
-      />
-      <Separator className="my-8" />
-      <StudyScheduleSummary
-        subjectId={subject.id}
-        weekday={subject.studyWeekday}
-        termStart={subject.studyTermStart}
-        termEnd={subject.studyTermEnd}
       />
       <Separator className="my-8" />
       <SubjectAssessmentsSummary

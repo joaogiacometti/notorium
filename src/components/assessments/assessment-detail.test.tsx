@@ -59,7 +59,6 @@ function createAssessmentEntity(): AssessmentEntity {
     dueDate: futureDueDateIso(),
     score: null,
     weight: null,
-    studyWeek: null,
     subjectId: "subject-1",
     userId: "user-1",
     createdAt: new Date("2026-04-20T10:00:00.000Z"),

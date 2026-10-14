@@ -9,8 +9,6 @@ export default function SubjectDetailLoading() {
       <AppPageContainer maxWidth="5xl">
         <SummarySectionSkeleton actionCount={1} />
         <Skeleton className="my-8 h-px w-full" />
-        <SummarySectionSkeleton actionCount={1} />
-        <Skeleton className="my-8 h-px w-full" />
         <SummarySectionSkeleton actionCount={2} />
       </AppPageContainer>
     </main>

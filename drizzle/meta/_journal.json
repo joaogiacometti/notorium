@@ -449,6 +449,13 @@
       "when": 1791906542867,
       "tag": "0063_secret_doctor_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1792003111509,
+      "tag": "0064_open_arclight",
+      "breakpoints": true
     }
   ]
 }

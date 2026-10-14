@@ -109,14 +109,6 @@ export async function createAssessmentForUser(
   };
 }
 
-// A retyped study task stops being a generated week, so schedule syncs never
-// touch it again and it counts toward the per-subject assessment limit.
-function studyWeekForType(type: CreateAssessmentForm["type"]): {
-  studyWeek?: null;
-} {
-  return type === "study" ? {} : { studyWeek: null };
-}
-
 export async function editAssessmentForUser(
   userId: string,
   data: EditAssessmentForm,
@@ -129,10 +121,7 @@ export async function editAssessmentForUser(
 
   const [updatedAssessment] = await getDb()
     .update(assessment)
-    .set({
-      ...getAssessmentMutationValues(data),
-      ...studyWeekForType(data.type),
-    })
+    .set(getAssessmentMutationValues(data))
     .where(and(eq(assessment.id, data.id), eq(assessment.userId, userId)))
     .returning();
 
