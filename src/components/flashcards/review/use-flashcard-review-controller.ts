@@ -24,6 +24,7 @@ import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
+  ReviewFlashcardResult,
 } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -295,6 +296,9 @@ export function useFlashcardReviewController({
 
     setPendingGrade(grade);
     startActionTransition(async () => {
+      // A throw escaping a useTransition action is rethrown to the nearest error
+      // boundary, which would replace the review session with the error page on
+      // a network blip. Catch it so the card stays put for a retry.
       try {
         const result = await reviewFlashcard({
           id: currentCard.id,
@@ -302,31 +306,39 @@ export function useFlashcardReviewController({
           clientReviewId: crypto.randomUUID(),
         });
 
-        if (!result.success) {
-          toast.error(t(result.errorCode, result.errorParams));
-          return;
-        }
-
-        const nextState = applyReviewedFlashcardToState(
-          reviewStateRef.current,
-          result.reviewedCardId,
-          result.flashcard,
-        );
-
-        commitReviewState(nextState);
-        resetFocusViewState();
-        setUndoableReview({
-          cardId: result.reviewedCardId,
-          reviewLogId: result.reviewLogId,
-        });
-
-        if (shouldRefillFlashcardReviewState(nextState)) {
-          void refillReviewState();
-        }
+        // State updates after an await must be wrapped again to stay part of
+        // the Transition (React async-context limitation, see useTransition docs).
+        startActionTransition(() => applyGradeResult(result));
+      } catch {
+        toast.error("Could not save the review. Please try again.");
       } finally {
-        setPendingGrade(null);
+        startActionTransition(() => setPendingGrade(null));
       }
     });
+  }
+
+  function applyGradeResult(result: ReviewFlashcardResult) {
+    if (!result.success) {
+      toast.error(t(result.errorCode, result.errorParams));
+      return;
+    }
+
+    const nextState = applyReviewedFlashcardToState(
+      reviewStateRef.current,
+      result.reviewedCardId,
+      result.flashcard,
+    );
+
+    commitReviewState(nextState);
+    resetFocusViewState();
+    setUndoableReview({
+      cardId: result.reviewedCardId,
+      reviewLogId: result.reviewLogId,
+    });
+
+    if (shouldRefillFlashcardReviewState(nextState)) {
+      void refillReviewState();
+    }
   }
 
   async function handleUndoReview() {

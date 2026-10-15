@@ -1,5 +1,6 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getExamFlashcards,
@@ -308,6 +309,32 @@ describe("FlashcardReviewClient", () => {
       grade: "good",
       clientReviewId: expect.any(String),
     });
+  });
+
+  it("keeps the review session and shows a toast when grading throws", async () => {
+    const card = makeCard("card-1");
+    reviewFlashcardMock.mockRejectedValue(new Error("network down"));
+
+    await renderReviewClient(makeReviewState(1, [card]));
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="flashcard-review-start-button"]',
+        )
+        ?.click();
+    });
+
+    await act(async () => {
+      document.body.querySelector<HTMLButtonElement>("button")?.click();
+    });
+
+    expect(toast.error).toHaveBeenCalledWith(
+      "Could not save the review. Please try again.",
+    );
+    expect(
+      document.body.querySelector('[data-current-card-id="card-1"]'),
+    ).toBeTruthy();
   });
 
   it("refreshes the active subject after undo and ignores an older refill", async () => {
