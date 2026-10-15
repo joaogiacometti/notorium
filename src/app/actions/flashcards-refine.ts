@@ -63,6 +63,7 @@ export async function proposeFlashcardMerge(
   data: ProposeFlashcardMergeForm,
 ): Promise<ProposeFlashcardMergeResult> {
   return runValidatedUserAction(
+    "flashcards-refine.proposeFlashcardMerge",
     proposeFlashcardMergeSchema,
     data,
     "flashcards.merge.invalidData",
@@ -126,6 +127,7 @@ export async function applyFlashcardMerge(
   data: ApplyFlashcardMergeForm,
 ): Promise<ApplyFlashcardMergeResult> {
   const result = await runValidatedUserAction(
+    "flashcards-refine.applyFlashcardMerge",
     applyFlashcardMergeSchema,
     data,
     "flashcards.merge.invalidData",

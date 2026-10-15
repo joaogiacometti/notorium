@@ -24,6 +24,7 @@ export async function updateAttendanceSettings(
   data: AttendanceSettingsForm,
 ): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "attendance.updateAttendanceSettings",
     attendanceSettingsSchema,
     data,
     "attendance.invalidSettings",
@@ -42,6 +43,7 @@ export async function removeAttendanceSettings(
   data: RemoveAttendanceSettingsForm,
 ): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "attendance.removeAttendanceSettings",
     removeAttendanceSettingsSchema,
     data,
     "attendance.invalidSettings",
@@ -60,6 +62,7 @@ export async function recordMiss(
   data: RecordMissForm,
 ): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "attendance.recordMiss",
     recordMissSchema,
     data,
     "attendance.invalidMissData",
@@ -77,6 +80,7 @@ export async function deleteMiss(
   data: DeleteMissForm,
 ): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "attendance.deleteMiss",
     deleteMissSchema,
     data,
     "ServerErrors.common.invalidRequest",

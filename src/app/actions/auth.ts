@@ -47,6 +47,7 @@ export const loginAction = async (
   data: LoginForm,
 ): Promise<AuthRedirectResult> => {
   return runValidatedAction(
+    "auth.loginAction",
     loginSchema,
     data,
     "auth.invalidInput",
@@ -86,6 +87,7 @@ export const signUpAction = async (
   data: SignupForm,
 ): Promise<AuthRedirectResult> => {
   return runValidatedAction(
+    "auth.signUpAction",
     signupSchema,
     data,
     "auth.invalidInput",
@@ -135,6 +137,7 @@ export const requestPasswordResetAction = async (
   data: RequestPasswordResetForm,
 ): Promise<MutationResult> => {
   return runValidatedAction(
+    "auth.requestPasswordResetAction",
     requestPasswordResetSchema,
     data,
     "auth.invalidInput",
@@ -180,6 +183,7 @@ export const resetPasswordAction = async (
   data: ResetPasswordForm,
 ): Promise<MutationResult> => {
   return runValidatedAction(
+    "auth.resetPasswordAction",
     resetPasswordSchema,
     data,
     "auth.invalidInput",

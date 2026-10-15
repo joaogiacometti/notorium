@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { reviewGradeValues } from "@/features/flashcards/fsrs";
+import { LIMITS } from "@/lib/config/limits";
+import { idSchema } from "@/lib/validations/schemas";
 
 export const reviewGradeSchema = z.enum(reviewGradeValues);
 
@@ -17,3 +19,17 @@ export const undoFlashcardReviewSchema = z.object({
 });
 
 export type UndoFlashcardReviewForm = z.infer<typeof undoFlashcardReviewSchema>;
+
+export const flashcardExamScopeSchema = z.object({
+  subjectId: idSchema.optional(),
+});
+
+export type FlashcardExamScopeInput = z.infer<typeof flashcardExamScopeSchema>;
+
+export const flashcardReviewStateQuerySchema = flashcardExamScopeSchema.extend({
+  limit: z.number().int().positive().max(LIMITS.reviewDueLimitMax).optional(),
+});
+
+export type FlashcardReviewStateQueryInput = z.infer<
+  typeof flashcardReviewStateQuerySchema
+>;

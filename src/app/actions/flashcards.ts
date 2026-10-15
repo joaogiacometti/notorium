@@ -75,6 +75,7 @@ export async function createFlashcard(
   data: CreateFlashcardInput,
 ): Promise<CreateFlashcardResult> {
   const result = await runValidatedUserAction(
+    "flashcards.createFlashcard",
     createFlashcardInputSchema,
     data,
     "flashcards.invalidData",
@@ -92,6 +93,7 @@ export async function checkFlashcardDuplicate(
   data: CheckFlashcardDuplicateForm,
 ): Promise<CheckFlashcardDuplicateResult> {
   return runValidatedUserAction(
+    "flashcards.checkFlashcardDuplicate",
     checkFlashcardDuplicateSchema,
     data,
     "flashcards.invalidData",
@@ -111,6 +113,7 @@ export async function editFlashcard(
   data: EditFlashcardForm,
 ): Promise<EditFlashcardResult> {
   const result = await runValidatedUserAction(
+    "flashcards.editFlashcard",
     editFlashcardSchema,
     data,
     "flashcards.invalidData",
@@ -128,6 +131,7 @@ export async function generateFlashcardBack(
   data: GenerateFlashcardBackForm,
 ): Promise<GenerateFlashcardBackResult> {
   return runValidatedUserAction(
+    "flashcards.generateFlashcardBack",
     generateFlashcardBackSchema,
     data,
     "flashcards.ai.invalidData",
@@ -140,6 +144,7 @@ export async function deleteFlashcard(
   data: DeleteFlashcardForm,
 ): Promise<DeleteFlashcardResult> {
   const result = await runValidatedUserAction(
+    "flashcards.deleteFlashcard",
     deleteFlashcardSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -170,6 +175,7 @@ export async function bulkDeleteFlashcards(
   data: BulkDeleteFlashcardsForm,
 ): Promise<BulkDeleteFlashcardsResult> {
   const result = await runValidatedUserAction(
+    "flashcards.bulkDeleteFlashcards",
     bulkDeleteFlashcardsSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -188,6 +194,7 @@ export async function bulkMoveFlashcards(
   data: BulkMoveFlashcardsForm,
 ): Promise<BulkMoveFlashcardsResult> {
   const result = await runValidatedUserAction(
+    "flashcards.bulkMoveFlashcards",
     bulkMoveFlashcardsSchema,
     data,
     "flashcards.invalidData",
@@ -205,6 +212,7 @@ export async function bulkResetFlashcards(
   data: BulkResetFlashcardsForm,
 ): Promise<BulkResetFlashcardsResult> {
   const result = await runValidatedUserAction(
+    "flashcards.bulkResetFlashcards",
     bulkResetFlashcardsSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -223,6 +231,7 @@ export async function resetFlashcard(
   data: ResetFlashcardForm,
 ): Promise<ResetFlashcardResult> {
   const result = await runValidatedUserAction(
+    "flashcards.resetFlashcard",
     resetFlashcardSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -240,6 +249,7 @@ export async function splitFlashcard(
   data: SplitFlashcardForm,
 ): Promise<SplitFlashcardResult> {
   const result = await runValidatedUserAction(
+    "flashcards.splitFlashcard",
     splitFlashcardSchema,
     data,
     "flashcards.invalidData",
@@ -255,6 +265,7 @@ export async function getFlashcardsManagePage(
   data: FlashcardsManageQueryInput,
 ): Promise<FlashcardManagePage | ActionErrorResult> {
   return runValidatedUserAction(
+    "flashcards.getFlashcardsManagePage",
     flashcardsManageQuerySchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -267,6 +278,7 @@ export async function getFlashcardForManage(
   data: DeleteFlashcardForm,
 ): Promise<{ flashcard: FlashcardEntity } | ActionErrorResult> {
   return runValidatedUserAction(
+    "flashcards.getFlashcardForManage",
     deleteFlashcardSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -286,6 +298,7 @@ export async function getFlashcardIdsForSubject(
   data: GetFlashcardIdsForSubjectForm,
 ): Promise<{ success: true; flashcardIds: string[] } | ActionErrorResult> {
   return runValidatedUserAction(
+    "flashcards.getFlashcardIdsForSubject",
     getFlashcardIdsForSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -320,6 +333,7 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
   | ActionErrorResult
 > {
   return runValidatedUserAction(
+    "flashcards.validateFlashcards",
     validateFlashcardsSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -381,6 +395,7 @@ export async function getAllFlashcardIds(): Promise<
   { success: true; flashcardIds: string[] } | ActionErrorResult
 > {
   return runValidatedUserAction(
+    "flashcards.getAllFlashcardIds",
     z.object({}),
     {},
     "ServerErrors.common.invalidRequest",

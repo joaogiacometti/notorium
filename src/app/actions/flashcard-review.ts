@@ -5,11 +5,14 @@ import {
   undoFlashcardReviewForUser,
 } from "@/features/flashcard-review/mutations";
 import {
-  type GetDueFlashcardsOptions,
   getAllFlashcardsForExam,
   getFlashcardReviewStateForUser,
 } from "@/features/flashcard-review/queries";
 import {
+  type FlashcardExamScopeInput,
+  type FlashcardReviewStateQueryInput,
+  flashcardExamScopeSchema,
+  flashcardReviewStateQuerySchema,
   type ReviewFlashcardForm,
   reviewFlashcardSchema,
   type UndoFlashcardReviewForm,
@@ -26,16 +29,18 @@ import type {
 } from "@/lib/server/api-contracts";
 
 export async function getFlashcardReviewState(
-  options: GetDueFlashcardsOptions = {},
+  options: FlashcardReviewStateQueryInput = {},
 ): Promise<FlashcardReviewState> {
+  const scope = flashcardReviewStateQuerySchema.parse(options);
   const userId = await getAuthenticatedUserId();
-  return getFlashcardReviewStateForUser(userId, options);
+  return getFlashcardReviewStateForUser(userId, scope);
 }
 
 export async function reviewFlashcard(
   data: ReviewFlashcardForm,
 ): Promise<ReviewFlashcardResult> {
   return runValidatedUserAction(
+    "flashcard-review.reviewFlashcard",
     reviewFlashcardSchema,
     data,
     "flashcards.review.invalidData",
@@ -47,6 +52,7 @@ export async function undoFlashcardReview(
   data: UndoFlashcardReviewForm,
 ): Promise<UndoFlashcardReviewResult> {
   return runValidatedUserAction(
+    "flashcard-review.undoFlashcardReview",
     undoFlashcardReviewSchema,
     data,
     "flashcards.review.invalidData",
@@ -56,9 +62,10 @@ export async function undoFlashcardReview(
 }
 
 export async function getExamFlashcards(
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
+  options: FlashcardExamScopeInput = {},
 ): Promise<FlashcardReviewEntity[]> {
+  const scope = flashcardExamScopeSchema.parse(options);
   const userId = await getAuthenticatedUserId();
   await ensureFsrsSettings(userId);
-  return getAllFlashcardsForExam(userId, options);
+  return getAllFlashcardsForExam(userId, scope);
 }

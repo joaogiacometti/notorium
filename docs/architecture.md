@@ -32,6 +32,7 @@ Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* serv
 ## Ownership Boundaries
 
 - `src/app/` owns framework routing, layouts, pages, API routes, and thin Server Actions.
+- Mutation Server Actions run through `src/lib/server/action-runner.ts` (`runValidatedAction` / `runValidatedUserAction`): Zod-validated input, typed `{ success: true, ... } | ActionErrorResult` results for expected failures, and `runCatchingActionFailure` (`src/lib/server/action-failure.ts`) turning unexpected throws into `common.generic`. Each call passes a `<file>.<actionName>` log scope (for example `notes.editNote`) as its first argument. Failures are logged as `server_action_failed` with only that scope, error class, and driver code (never the message, which can carry SQL params); Next.js `redirect`/`notFound` are rethrown. Read actions stay plain: they `.parse()` client input with Zod and return data directly, so invalid input and unexpected failures throw (production Next.js redacts the message) and callers handle them via `try`/`catch` or React Query.
 - `src/components/` owns reusable and feature UI; shadcn primitives stay in `src/components/ui/`.
 - `src/features/` owns product read/write logic, validation, mapping, constants, and feature-local types.
 - Dense algorithms may live in feature subfolders, such as `src/features/flashcards/fsrs/`.

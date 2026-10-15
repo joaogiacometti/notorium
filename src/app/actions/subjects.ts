@@ -36,6 +36,7 @@ import type {
   SubjectListItem,
   SubjectOption,
 } from "@/lib/server/api-contracts";
+import { idSchema } from "@/lib/validations/schemas";
 
 /**
  * Subjects with full `path` labels, for the flashcard subject pickers (create,
@@ -58,14 +59,16 @@ export async function getSubjectListItems(): Promise<SubjectListItem[]> {
 export async function getSubjectDocuments(
   subjectId: string,
 ): Promise<DocumentListItem[]> {
+  const parsedSubjectId = idSchema.parse(subjectId);
   const userId = await getAuthenticatedUserId();
-  return getSubjectDocumentsForUser(userId, subjectId);
+  return getSubjectDocumentsForUser(userId, parsedSubjectId);
 }
 
 export async function createSubject(
   data: CreateSubjectForm,
 ): Promise<SubjectMutationResult> {
   const result = await runValidatedUserAction(
+    "subjects.createSubject",
     createSubjectSchema,
     data,
     "subjects.invalidData",
@@ -83,6 +86,7 @@ export async function moveSubject(
   data: MoveSubjectForm,
 ): Promise<MoveSubjectResult> {
   const result = await runValidatedUserAction(
+    "subjects.moveSubject",
     moveSubjectSchema,
     data,
     "subjects.invalidData",
@@ -100,6 +104,7 @@ export async function editSubject(
   data: EditSubjectForm,
 ): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "subjects.editSubject",
     editSubjectSchema,
     data,
     "subjects.invalidData",
@@ -118,6 +123,7 @@ export async function deleteSubject(
   data: DeleteSubjectForm,
 ): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "subjects.deleteSubject",
     deleteSubjectSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -135,6 +141,7 @@ export async function bulkDeleteSubjects(
   data: BulkDeleteSubjectsForm,
 ): Promise<BulkSubjectMutationResult> {
   const result = await runValidatedUserAction(
+    "subjects.bulkDeleteSubjects",
     bulkDeleteSubjectsSchema,
     data,
     "ServerErrors.common.invalidRequest",

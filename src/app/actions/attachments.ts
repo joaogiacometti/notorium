@@ -25,6 +25,7 @@ export async function deleteEditorImages(
   data: DeleteEditorImagesForm,
 ): Promise<{ success: true } | ActionErrorResult> {
   return runValidatedUserAction(
+    "attachments.deleteEditorImages",
     deleteEditorImagesSchema,
     data,
     "attachments.invalidData",
@@ -36,6 +37,7 @@ export async function uploadAssessmentAttachment(
   data: UploadAssessmentAttachmentForm,
 ): Promise<UploadAssessmentAttachmentResult> {
   return runValidatedUserAction(
+    "attachments.uploadAssessmentAttachment",
     uploadAssessmentAttachmentSchema,
     data,
     "attachments.invalidData",
@@ -48,6 +50,7 @@ export async function deleteAssessmentAttachment(
   data: DeleteAssessmentAttachmentForm,
 ): Promise<{ success: true } | ActionErrorResult> {
   return runValidatedUserAction(
+    "attachments.deleteAssessmentAttachment",
     deleteAssessmentAttachmentSchema,
     data,
     "attachments.invalidData",

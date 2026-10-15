@@ -10,6 +10,7 @@ export async function updateUserTheme(
   data: UpdateUserThemeForm,
 ): Promise<MutationResult> {
   return runValidatedUserAction(
+    "theme.updateUserTheme",
     updateUserThemeSchema,
     data,
     "theme.invalidData",

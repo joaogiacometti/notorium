@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { z } from "zod";
 
 const SIDEBAR_COLLAPSED_COOKIE = "notorium:sidebar-collapsed";
 const COOKIE_MAX_AGE_SECONDS = 365 * 24 * 60 * 60; // 1 year
@@ -14,8 +15,9 @@ const COOKIE_MAX_AGE_SECONDS = 365 * 24 * 60 * 60; // 1 year
  * await setSidebarCollapsed(true);
  */
 export async function setSidebarCollapsed(collapsed: boolean): Promise<void> {
+  const isCollapsed = z.boolean().parse(collapsed);
   const cookieStore = await cookies();
-  cookieStore.set(SIDEBAR_COLLAPSED_COOKIE, String(collapsed), {
+  cookieStore.set(SIDEBAR_COLLAPSED_COOKIE, String(isCollapsed), {
     path: "/",
     maxAge: COOKIE_MAX_AGE_SECONDS,
     sameSite: "lax",

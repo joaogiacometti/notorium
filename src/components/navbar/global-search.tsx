@@ -147,6 +147,7 @@ export function GlobalSearch({
       <CommandInput
         value={query}
         onValueChange={setQuery}
+        maxLength={LIMITS.searchQueryMax}
         placeholder="Search subjects, notes, flashcards, and mindmaps..."
       />
       <CommandList>

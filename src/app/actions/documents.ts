@@ -21,6 +21,7 @@ export async function moveDocument(
   data: MoveDocumentForm,
 ): Promise<MoveDocumentResult> {
   const result = await runValidatedUserAction(
+    "documents.moveDocument",
     moveDocumentSchema,
     data,
     "documents.invalidData",

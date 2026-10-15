@@ -81,6 +81,7 @@ export async function updateAccount(
   data: UpdateAccountForm,
 ): Promise<MutationResult> {
   return runValidatedAction(
+    "account.updateAccount",
     updateAccountSchema,
     data,
     "account.invalidData",
@@ -108,6 +109,7 @@ export async function updateNotificationPreferences(
   data: UpdateNotificationPreferencesForm,
 ): Promise<MutationResult> {
   return runValidatedUserAction(
+    "account.updateNotificationPreferences",
     updateNotificationPreferencesSchema,
     data,
     "account.notifications.invalidData",
@@ -135,6 +137,7 @@ export async function updateFsrsOptimizationPreferences(
   data: UpdateFsrsOptimizationPreferencesForm,
 ): Promise<MutationResult> {
   return runValidatedUserAction(
+    "account.updateFsrsOptimizationPreferences",
     updateFsrsOptimizationPreferencesSchema,
     data,
     "flashcards.fsrsOptimization.invalidData",
@@ -187,6 +190,7 @@ export async function updateUserAccessStatus(
   }
 
   return runValidatedAction(
+    "account.updateUserAccessStatus",
     updateUserAccessSchema,
     data,
     "ServerErrors.common.invalidRequest",

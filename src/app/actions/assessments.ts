@@ -38,6 +38,7 @@ export async function getPlanningAssessmentsPage(
   data: PlanningAssessmentsQueryInput,
 ): Promise<PlanningAssessmentsPage | ActionErrorResult> {
   return runValidatedUserAction(
+    "assessments.getPlanningAssessmentsPage",
     planningAssessmentsQuerySchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -50,6 +51,7 @@ export async function createAssessment(
   data: CreateAssessmentForm,
 ): Promise<CreateAssessmentResult> {
   const result = await runValidatedUserAction(
+    "assessments.createAssessment",
     createAssessmentSchema,
     data,
     "assessments.invalidData",
@@ -67,6 +69,7 @@ export async function editAssessment(
   data: EditAssessmentForm,
 ): Promise<EditAssessmentResult> {
   const result = await runValidatedUserAction(
+    "assessments.editAssessment",
     editAssessmentSchema,
     data,
     "assessments.invalidData",
@@ -84,6 +87,7 @@ export async function deleteAssessment(
   data: DeleteAssessmentForm,
 ): Promise<DeleteAssessmentResult> {
   const result = await runValidatedUserAction(
+    "assessments.deleteAssessment",
     deleteAssessmentSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -101,6 +105,7 @@ export async function bulkDeleteAssessments(
   data: BulkDeleteAssessmentsForm,
 ): Promise<BulkDeleteAssessmentsResult> {
   const result = await runValidatedUserAction(
+    "assessments.bulkDeleteAssessments",
     bulkDeleteAssessmentsSchema,
     data,
     "ServerErrors.common.invalidRequest",
@@ -123,6 +128,7 @@ export async function bulkUpdateAssessmentStatus(
   data: BulkUpdateAssessmentStatusForm,
 ): Promise<BulkUpdateAssessmentStatusResult> {
   const result = await runValidatedUserAction(
+    "assessments.bulkUpdateAssessmentStatus",
     bulkUpdateAssessmentStatusSchema,
     data,
     "assessments.invalidData",

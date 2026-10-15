@@ -26,6 +26,7 @@ import {
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MindmapEntity } from "@/lib/server/api-contracts";
+import { idSchema } from "@/lib/validations/schemas";
 
 function revalidateSubject(subjectId: string) {
   revalidatePath(`/subjects/${subjectId}`);
@@ -34,14 +35,16 @@ function revalidateSubject(subjectId: string) {
 export async function getMindmapById(
   id: string,
 ): Promise<MindmapEntity | null> {
+  const mindmapId = idSchema.parse(id);
   const userId = await getAuthenticatedUserId();
-  return getMindmapByIdForUser(userId, id);
+  return getMindmapByIdForUser(userId, mindmapId);
 }
 
 export async function createMindmap(
   data: CreateMindmapForm,
 ): Promise<CreateMindmapMutationResult> {
   const result = await runValidatedUserAction(
+    "mindmaps.createMindmap",
     createMindmapSchema,
     data,
     "mindmaps.invalidData",
@@ -59,6 +62,7 @@ export async function editMindmap(
   data: EditMindmapForm,
 ): Promise<MindmapMutationResult> {
   const result = await runValidatedUserAction(
+    "mindmaps.editMindmap",
     editMindmapSchema,
     data,
     "mindmaps.invalidData",
@@ -79,6 +83,7 @@ export async function splitMindmap(
   data: SplitMindmapForm,
 ): Promise<CreateMindmapMutationResult> {
   const result = await runValidatedUserAction(
+    "mindmaps.splitMindmap",
     splitMindmapSchema,
     data,
     "mindmaps.invalidData",
@@ -99,6 +104,7 @@ export async function editMindmapTitle(
   data: EditMindmapTitleForm,
 ): Promise<MindmapMutationResult> {
   const result = await runValidatedUserAction(
+    "mindmaps.editMindmapTitle",
     editMindmapTitleSchema,
     data,
     "mindmaps.invalidData",
@@ -119,6 +125,7 @@ export async function deleteMindmap(
   data: DeleteMindmapForm,
 ): Promise<MindmapMutationResult> {
   const result = await runValidatedUserAction(
+    "mindmaps.deleteMindmap",
     deleteMindmapSchema,
     data,
     "mindmaps.invalidData",

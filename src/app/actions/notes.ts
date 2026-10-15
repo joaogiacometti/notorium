@@ -19,16 +19,19 @@ import {
 import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MutationResult, NoteEntity } from "@/lib/server/api-contracts";
+import { idSchema } from "@/lib/validations/schemas";
 
 export async function getNoteById(id: string): Promise<NoteEntity | null> {
+  const noteId = idSchema.parse(id);
   const userId = await getAuthenticatedUserId();
-  return getNoteByIdForUser(userId, id);
+  return getNoteByIdForUser(userId, noteId);
 }
 
 export async function createNote(
   data: CreateNoteForm,
 ): Promise<CreateNoteMutationResult> {
   const result = await runValidatedUserAction(
+    "notes.createNote",
     createNoteSchema,
     data,
     "notes.invalidData",
@@ -44,6 +47,7 @@ export async function createNote(
 
 export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "notes.editNote",
     editNoteSchema,
     data,
     "notes.invalidData",
@@ -62,6 +66,7 @@ export async function deleteNote(
   data: DeleteNoteForm,
 ): Promise<MutationResult> {
   const result = await runValidatedUserAction(
+    "notes.deleteNote",
     deleteNoteSchema,
     data,
     "notes.invalidData",

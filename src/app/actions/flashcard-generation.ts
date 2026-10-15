@@ -37,6 +37,7 @@ export async function generateFlashcards(
   | ActionErrorResult
 > {
   return runValidatedUserAction(
+    "flashcard-generation.generateFlashcards",
     generateFlashcardsSchema,
     data,
     "flashcards.ai.invalidData",
@@ -79,6 +80,7 @@ export async function generateFlashcardsFromNote(
   | ActionErrorResult
 > {
   return runValidatedUserAction(
+    "flashcard-generation.generateFlashcardsFromNote",
     generateNoteFlashcardsSchema,
     data,
     "flashcards.ai.invalidData",
@@ -129,6 +131,7 @@ export async function generateFlashcardsFromMindmap(
   | ActionErrorResult
 > {
   return runValidatedUserAction(
+    "flashcard-generation.generateFlashcardsFromMindmap",
     generateMindmapFlashcardsSchema,
     data,
     "flashcards.ai.invalidData",
