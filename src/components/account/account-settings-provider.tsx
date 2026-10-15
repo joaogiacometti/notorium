@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -81,6 +82,8 @@ function useDeepLinkedSettings(
   openSettings: OpenAccountSettings,
   userId: string,
 ) {
+  const router = useRouter();
+
   useEffect(() => {
     if (userId.length === 0) {
       return;
@@ -93,7 +96,12 @@ function useDeepLinkedSettings(
     openSettings(resolveSettingsSection(requested));
     params.delete("settings");
     const query = params.toString();
-    const next = query.length > 0 ? `?${query}` : window.location.pathname;
-    window.history.replaceState(null, "", next);
-  }, [openSettings, userId]);
+    const pathname = window.location.pathname;
+    // Strip through the router, not window.history: this effect runs before the
+    // Next.js router patches history, so a raw replaceState left the router on
+    // the old URL and the next Server Action response restored `?settings=`.
+    router.replace(query.length > 0 ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  }, [openSettings, router, userId]);
 }

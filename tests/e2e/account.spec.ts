@@ -111,3 +111,30 @@ test("can reset flashcard optimization without deleting review history", async (
     expect(settings.reviewCount).toBe(optimizationReviewCount);
   });
 });
+
+// Regression: the `?settings=` param used to come back after any Server Action
+// (the router kept the pre-strip URL), so a reload reopened the dialog.
+test("settings deep link does not reopen after a server action and reload", async ({
+  page,
+  e2eUser,
+}) => {
+  await page.goto("/?settings=account");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText(e2eUser.email);
+  await expect(page).toHaveURL((url) => !url.searchParams.has("settings"));
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Collapse sidebar" }).click();
+  await expect(
+    page.getByRole("button", { name: "Expand sidebar" }),
+  ).toBeVisible();
+  await expect(page).toHaveURL((url) => !url.searchParams.has("settings"));
+
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Expand sidebar" }),
+  ).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole("button", { name: "Expand sidebar" }).click();
+});
