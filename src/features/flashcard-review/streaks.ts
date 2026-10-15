@@ -1,6 +1,6 @@
 import type {
-  FlashcardStatisticsStreak,
-  FlashcardStatisticsTrendPoint,
+  ReviewActivityPoint,
+  ReviewActivityStreak,
 } from "@/lib/server/api-contracts";
 
 /**
@@ -19,8 +19,8 @@ import type {
  * ]); // { current: 2, longest: 2 }
  */
 export function computeReviewStreaks(
-  points: FlashcardStatisticsTrendPoint[],
-): FlashcardStatisticsStreak {
+  points: ReviewActivityPoint[],
+): ReviewActivityStreak {
   let longest = 0;
   let run = 0;
 
@@ -34,7 +34,7 @@ export function computeReviewStreaks(
   return { current: computeCurrentStreak(points), longest };
 }
 
-function computeCurrentStreak(points: FlashcardStatisticsTrendPoint[]): number {
+function computeCurrentStreak(points: ReviewActivityPoint[]): number {
   let current = 0;
 
   for (let index = points.length - 1; index >= 0; index--) {

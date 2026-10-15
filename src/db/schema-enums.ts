@@ -3,7 +3,8 @@ import { pgEnum } from "drizzle-orm/pg-core";
 /**
  * Postgres enum types shared across the Drizzle schema. Extracted from
  * `schema.ts` so table definitions and their value domains stay separately
- * focused. Re-exported from `schema.ts` for backward-compatible imports.
+ * focused. Re-exported from `schema.ts` because drizzle-kit reads only that
+ * file (`drizzle.config.ts`) and must see every enum to generate migrations.
  */
 
 export const userAccessStatusEnum = pgEnum("user_access_status", [

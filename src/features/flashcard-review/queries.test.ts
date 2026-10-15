@@ -72,11 +72,9 @@ vi.mock("@/features/flashcards/fsrs/settings", () => ({
 function mockReviewTrendOnce(value: unknown) {
   selectMock.mockImplementationOnce(() => ({
     from: () => ({
-      leftJoin: () => ({
-        where: () => ({
-          groupBy: () => ({
-            orderBy: vi.fn().mockResolvedValue(value),
-          }),
+      where: () => ({
+        groupBy: () => ({
+          orderBy: vi.fn().mockResolvedValue(value),
         }),
       }),
     }),
@@ -96,7 +94,7 @@ describe("getFlashcardReviewActivityForUser", () => {
     });
   });
 
-  it("returns the trailing-year heatmap and streaks for the scope", async () => {
+  it("returns the trailing-year heatmap and streaks for the user", async () => {
     mockReviewTrendOnce([
       { date: "2026-04-08", count: 3 },
       { date: "2026-04-10", count: 5 },
@@ -107,19 +105,8 @@ describe("getFlashcardReviewActivityForUser", () => {
     const result = await getFlashcardReviewActivityForUser(
       "user-1",
       new Date("2026-04-12T15:00:00.000Z"),
-      {
-        subjectId: "deck-1",
-      },
     );
 
-    expect(getDescendantSubjectIdsMock).toHaveBeenCalledWith(
-      "user-1",
-      "deck-1",
-    );
-    expect(inArrayMock).toHaveBeenCalledWith("flashcard_subject_id_column", [
-      "deck-1",
-      "deck-1-child",
-    ]);
     expect(eqMock).toHaveBeenCalledWith(
       "flashcard_review_log_user_id_column",
       "user-1",

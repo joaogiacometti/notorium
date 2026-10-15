@@ -2,6 +2,7 @@ import {
   defaultSchedulerParameters,
   fsrsWeightCount,
 } from "@/features/flashcards/fsrs/constants";
+import type { ParsedFsrsWeightsResult } from "@/features/flashcards/fsrs/types";
 
 export function getDefaultFsrsWeights(): number[] {
   return [...defaultSchedulerParameters.w];
@@ -51,10 +52,9 @@ export function serializeFsrsWeights(weights: number[]): string {
   return JSON.stringify(weights);
 }
 
-export function parseFsrsWeightsWithValidity(value: string): {
-  weights: number[];
-  isValid: boolean;
-} {
+export function parseFsrsWeightsWithValidity(
+  value: string,
+): ParsedFsrsWeightsResult {
   let parsed: unknown;
 
   try {

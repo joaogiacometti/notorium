@@ -137,12 +137,12 @@ export interface AccountSettings {
   fsrsOptimization: FlashcardOptimizationSettings;
 }
 
-export interface FlashcardStatisticsTrendPoint {
+export interface ReviewActivityPoint {
   date: string;
   count: number;
 }
 
-export interface FlashcardStatisticsStreak {
+export interface ReviewActivityStreak {
   current: number;
   longest: number;
 }
@@ -152,8 +152,8 @@ export interface FlashcardStatisticsStreak {
  * Powers the "Review activity" heatmap on the home dashboard.
  */
 export interface FlashcardReviewActivity {
-  heatmap: FlashcardStatisticsTrendPoint[];
-  streak: FlashcardStatisticsStreak;
+  heatmap: ReviewActivityPoint[];
+  streak: ReviewActivityStreak;
 }
 
 export type SearchSubjectResult = Pick<SubjectEntity, "id" | "name">;

@@ -3,16 +3,16 @@ import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
-  FlashcardStatisticsStreak,
-  FlashcardStatisticsTrendPoint,
+  ReviewActivityPoint,
+  ReviewActivityStreak,
 } from "@/lib/server/api-contracts";
 
 interface ReviewActivityCardProps {
-  heatmap: FlashcardStatisticsTrendPoint[];
-  streak: FlashcardStatisticsStreak;
+  heatmap: ReviewActivityPoint[];
+  streak: ReviewActivityStreak;
 }
 
-type HeatmapCell = FlashcardStatisticsTrendPoint | null;
+type HeatmapCell = ReviewActivityPoint | null;
 
 // Opacity of the --chart-2 hue per intensity level (index 0 is the empty cell).
 const levelOpacity = [0, 30, 50, 70, 100];
@@ -32,7 +32,7 @@ function cellBackground(level: number): string {
   return `color-mix(in oklab, var(--chart-2) ${levelOpacity[level]}%, transparent)`;
 }
 
-function formatCellLabel(point: FlashcardStatisticsTrendPoint): string {
+function formatCellLabel(point: ReviewActivityPoint): string {
   const label = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -42,7 +42,7 @@ function formatCellLabel(point: FlashcardStatisticsTrendPoint): string {
   return `${point.count} ${noun} on ${label}`;
 }
 
-function buildWeeks(heatmap: FlashcardStatisticsTrendPoint[]): HeatmapCell[][] {
+function buildWeeks(heatmap: ReviewActivityPoint[]): HeatmapCell[][] {
   if (heatmap.length === 0) {
     return [];
   }

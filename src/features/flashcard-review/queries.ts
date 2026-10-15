@@ -5,7 +5,6 @@ import {
   eq,
   gte,
   inArray,
-  isNull,
   lte,
   or,
   type SQL,
@@ -30,7 +29,7 @@ import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
   FlashcardReviewSummary,
-  FlashcardStatisticsTrendPoint,
+  ReviewActivityPoint,
 } from "@/lib/server/api-contracts";
 
 export interface GetDueFlashcardsOptions {
@@ -147,27 +146,17 @@ export async function getFlashcardReviewSummaryForUser(
 }
 
 /**
- * Daily review counts for the trailing year plus current/longest streaks,
- * scoped to the user (or a subject subtree). Feeds the home "Review activity"
- * heatmap. Kept lean — only the heatmap aggregation, no card/rating breakdowns.
+ * Daily review counts for the trailing year plus current/longest streaks
+ * across all of the user's reviews. Feeds the home "Review activity" heatmap.
+ * Kept lean — only the heatmap aggregation, no card/rating breakdowns.
+ *
+ * @example
+ * const activity = await getFlashcardReviewActivityForUser(userId, new Date());
  */
 export async function getFlashcardReviewActivityForUser(
   userId: string,
   now: Date,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
 ): Promise<FlashcardReviewActivity> {
-  const reviewFilters: SQL<unknown>[] = [eq(flashcardReviewLog.userId, userId)];
-
-  if (options.subjectIds && options.subjectIds.length > 0) {
-    reviewFilters.push(buildReviewSubjectFilter(options.subjectIds));
-  } else if (options.subjectId) {
-    const descendantSubjectIds = await getDescendantSubjectIds(
-      userId,
-      options.subjectId,
-    );
-    reviewFilters.push(buildReviewSubjectFilter(descendantSubjectIds));
-  }
-
   const heatmapStart = new Date(now);
   heatmapStart.setHours(0, 0, 0, 0);
   heatmapStart.setDate(heatmapStart.getDate() - (heatmapDays - 1));
@@ -178,22 +167,18 @@ export async function getFlashcardReviewActivityForUser(
       count: count(),
     })
     .from(flashcardReviewLog)
-    .leftJoin(
-      flashcard,
-      and(
-        eq(flashcardReviewLog.flashcardId, flashcard.id),
-        eq(flashcard.userId, userId),
-      ),
-    )
     .where(
-      and(...reviewFilters, gte(flashcardReviewLog.reviewedAt, heatmapStart)),
+      and(
+        eq(flashcardReviewLog.userId, userId),
+        gte(flashcardReviewLog.reviewedAt, heatmapStart),
+      ),
     )
     .groupBy(sql`date_trunc('day', ${flashcardReviewLog.reviewedAt})`)
     .orderBy(sql`date_trunc('day', ${flashcardReviewLog.reviewedAt})`);
 
   const countByDate = new Map(heatmapRows.map((row) => [row.date, row.count]));
 
-  const heatmap: FlashcardStatisticsTrendPoint[] = Array.from(
+  const heatmap: ReviewActivityPoint[] = Array.from(
     { length: heatmapDays },
     (_, index) => {
       const date = new Date(heatmapStart);
@@ -208,16 +193,6 @@ export async function getFlashcardReviewActivityForUser(
     heatmap,
     streak: computeReviewStreaks(heatmap),
   };
-}
-
-function buildReviewSubjectFilter(subjectIds: string[]): SQL<unknown> {
-  return or(
-    inArray(flashcardReviewLog.subjectId, subjectIds),
-    and(
-      isNull(flashcardReviewLog.subjectId),
-      inArray(flashcard.subjectId, subjectIds),
-    ),
-  ) as SQL<unknown>;
 }
 
 export async function getFlashcardReviewStateForUser(

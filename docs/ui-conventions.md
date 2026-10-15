@@ -33,8 +33,7 @@ graph nodes, segmented toggles, drop zones), not for standard actions.
   breadcrumb over a centered `AppPageContainer`). Default width `max-w-5xl`;
   narrow per content via `maxWidth` (`3xl` flashcard/admin, `4xl` assessment,
   `5xl` subject). Width is the only thing a detail page tunes — structure is fixed.
-- **Document workspaces** (documents list, note, mindmap) stay
-  full-width (`max-w-7xl`) and own their layout for zen mode.
+- **Document workspaces** (note, mindmap) stay full-width (`max-w-7xl`) and own their layout for zen mode.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
   `PageTopBar` (`PageTopBarSkeleton`).
 

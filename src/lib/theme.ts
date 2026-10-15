@@ -41,7 +41,6 @@ export const themeChromeColorById: Record<ResolvedAppTheme, string> = {
 };
 
 export const defaultThemeChromeColor = themeChromeColorById.dark;
-export const pwaLaunchBackgroundColor = defaultThemeChromeColor;
 
 export const appThemes: Set<AppTheme> = new Set(validThemes);
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
-import type { FlashcardStatisticsTrendPoint } from "@/lib/server/api-contracts";
+import type { ReviewActivityPoint } from "@/lib/server/api-contracts";
 
-function points(...counts: number[]): FlashcardStatisticsTrendPoint[] {
+function points(...counts: number[]): ReviewActivityPoint[] {
   return counts.map((count, index) => ({
     date: `2026-06-${String(index + 1).padStart(2, "0")}`,
     count,
