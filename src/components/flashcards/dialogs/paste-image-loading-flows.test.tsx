@@ -23,8 +23,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@/app/actions/subjects", () => ({
-  getSubjectOptions: vi.fn().mockResolvedValue([]),
+vi.mock("@/lib/read-api/subjects", () => ({
+  fetchSubjectOptions: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({

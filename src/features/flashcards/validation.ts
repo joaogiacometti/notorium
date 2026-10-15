@@ -447,13 +447,9 @@ export const validateFlashcardsSchema = z.object({
 
 export type ValidateFlashcardsForm = z.infer<typeof validateFlashcardsSchema>;
 
-export const getFlashcardIdsForSubjectSchema = z.object({
-  subjectId: z.string().min(1),
+export const flashcardIdsQuerySchema = z.object({
+  subjectId: idSchema.optional(),
 });
-
-export type GetFlashcardIdsForSubjectForm = z.infer<
-  typeof getFlashcardIdsForSubjectSchema
->;
 
 export const generateFlashcardsSchema = z.object({
   subjectId: subjectIdField,

@@ -24,15 +24,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({
-  getFlashcardForManage: vi.fn(),
-  getFlashcardsManagePage: vi
-    .fn()
-    .mockResolvedValue({ items: [], total: 0, subjectCardCount: null }),
   validateFlashcards: vi.fn(),
 }));
 
-vi.mock("@/app/actions/flashcards-refine", () => ({
-  getRefineFlashcardGroups: getRefineFlashcardGroupsMock,
+vi.mock("@/lib/read-api/flashcards", () => ({
+  fetchFlashcardForManage: vi.fn(),
+  fetchFlashcardsManagePage: vi
+    .fn()
+    .mockResolvedValue({ items: [], total: 0, subjectCardCount: null }),
+  fetchRefineFlashcardGroups: getRefineFlashcardGroupsMock,
 }));
 
 vi.mock("sonner", () => ({

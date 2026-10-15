@@ -3,13 +3,15 @@ import { createRoot, type Root } from "react-dom/client";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getExamFlashcards,
-  getFlashcardReviewState,
   reviewFlashcard,
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
 import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
+import {
+  fetchExamFlashcards,
+  fetchFlashcardReviewState,
+} from "@/lib/read-api/flashcards";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -20,10 +22,13 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 vi.mock("@/app/actions/flashcard-review", () => ({
-  getExamFlashcards: vi.fn(),
-  getFlashcardReviewState: vi.fn(),
   reviewFlashcard: vi.fn(),
   undoFlashcardReview: vi.fn(),
+}));
+
+vi.mock("@/lib/read-api/flashcards", () => ({
+  fetchExamFlashcards: vi.fn(),
+  fetchFlashcardReviewState: vi.fn(),
 }));
 
 vi.mock("@/components/flashcards/dialogs/delete-flashcard-dialog", () => ({
@@ -85,8 +90,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const getFlashcardReviewStateMock = vi.mocked(getFlashcardReviewState);
-const getExamFlashcardsMock = vi.mocked(getExamFlashcards);
+const getFlashcardReviewStateMock = vi.mocked(fetchFlashcardReviewState);
+const getExamFlashcardsMock = vi.mocked(fetchExamFlashcards);
 const reviewFlashcardMock = vi.mocked(reviewFlashcard);
 const undoFlashcardReviewMock = vi.mocked(undoFlashcardReview);
 

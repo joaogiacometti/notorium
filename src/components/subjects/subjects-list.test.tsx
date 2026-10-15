@@ -39,7 +39,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/app/actions/subjects", () => ({
   bulkDeleteSubjects: vi.fn(),
-  getSubjectListItems: (...args: unknown[]) => getAllSubjectsMock(...args),
+}));
+
+vi.mock("@/lib/read-api/subjects", () => ({
+  fetchSubjectListItems: (...args: unknown[]) => getAllSubjectsMock(...args),
 }));
 
 vi.mock("@/components/subjects/bulk-delete-subjects-dialog", () => ({

@@ -8,6 +8,7 @@ import {
 } from "@/components/documents/document-row-menu";
 import { INDENT_REM } from "@/components/subjects/tree/subject-tree-constants";
 import type { DraggedDocument } from "@/components/subjects/tree/use-subject-drag-and-drop";
+import { Button } from "@/components/ui/button";
 import type { DocumentListItem } from "@/features/documents/types";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,7 @@ const DOCUMENT_ROW_ICONS = {
 } as const;
 
 interface DocumentRowsProps {
-  documents: DocumentListItem[] | "loading" | undefined;
+  documents: DocumentListItem[] | "loading" | "error" | undefined;
   depth: number;
   activeHref: string;
   documentActions: DocumentRowActionHandlers;
@@ -26,6 +27,7 @@ interface DocumentRowsProps {
   pendingMoveId: string | null;
   onDocumentDragStart: (document: DraggedDocument) => void;
   onDragEnd: () => void;
+  onRetry: () => void;
 }
 
 /**
@@ -42,7 +44,23 @@ export function DocumentRows({
   pendingMoveId,
   onDocumentDragStart,
   onDragEnd,
+  onRetry,
 }: Readonly<DocumentRowsProps>) {
+  if (documents === "error") {
+    return (
+      <div
+        role="alert"
+        className="flex items-center gap-2 py-1.5 text-xs text-muted-foreground"
+        style={{ paddingLeft: `${depth * INDENT_REM + 1.5}rem` }}
+      >
+        Couldn't load documents.
+        <Button type="button" variant="link" size="xs" onClick={onRetry}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   if (documents === "loading") {
     return (
       <div

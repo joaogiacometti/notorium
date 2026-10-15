@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { getMindmapById } from "@/app/actions/mindmaps";
 import { LazyMindmapCanvas } from "@/components/mindmaps/lazy-mindmap-canvas";
 import type { MindmapExporter } from "@/components/mindmaps/mindmap-canvas";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { ensureRootNode, parseMindmapGraph } from "@/features/mindmaps/utils";
+import { fetchMindmapById } from "@/lib/read-api/documents";
 
 interface OffscreenMindmapPngExportProps {
   mindmapId: string;
@@ -40,7 +40,7 @@ export function OffscreenMindmapPngExport({
 
   useEffect(() => {
     let cancelled = false;
-    void getMindmapById(mindmapId).then((mindmap) => {
+    void fetchMindmapById(mindmapId).then((mindmap) => {
       if (cancelled) {
         return;
       }

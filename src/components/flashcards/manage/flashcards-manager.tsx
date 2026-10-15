@@ -3,7 +3,6 @@
 import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useTransition } from "react";
-import { getFlashcardForManage } from "@/app/actions/flashcards";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
 import { LazyCreateFlashcardDialog as CreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/dialogs/lazy-edit-flashcard-dialog";
@@ -21,6 +20,7 @@ import { ValidateFlashcardsDialog } from "@/components/flashcards/manage/validat
 import { Card } from "@/components/ui/card";
 import { LIMITS } from "@/lib/config/limits";
 import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
+import { fetchFlashcardForManage } from "@/lib/read-api/flashcards";
 import type { FlashcardManagePage } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
@@ -224,9 +224,7 @@ export function FlashcardsManager({
             cacheUpdatedFlashcard(updatedFlashcard);
             refreshManagePage();
             if (validationMode && editingFlashcardId) {
-              const result = await getFlashcardForManage({
-                id: editingFlashcardId,
-              });
+              const result = await fetchFlashcardForManage(editingFlashcardId);
               if (result && !("errorCode" in result)) {
                 const existingCard = validationFlashcards.find(
                   (c) => c.id === editingFlashcardId,

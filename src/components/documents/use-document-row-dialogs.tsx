@@ -3,7 +3,6 @@
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
-import { getNoteById } from "@/app/actions/notes";
 import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
@@ -18,13 +17,14 @@ import {
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
 import { getDocumentDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
+import { fetchNoteById } from "@/lib/read-api/documents";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
 // Copies a note that is not open in the editor: its content is not in client
 // state, so the last saved version is fetched before writing to the clipboard.
 async function copySavedNoteContent(noteId: string, format: NoteCopyFormat) {
   try {
-    const note = await getNoteById(noteId);
+    const note = await fetchNoteById(noteId);
     if (!note) {
       throw new Error(`Note ${noteId} not found`);
     }

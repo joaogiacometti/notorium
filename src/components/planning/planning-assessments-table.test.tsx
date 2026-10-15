@@ -24,8 +24,8 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/planning",
 }));
 
-vi.mock("@/app/actions/assessments", () => ({
-  getPlanningAssessmentsPage: (...args: unknown[]) =>
+vi.mock("@/lib/read-api/planning", () => ({
+  fetchPlanningAssessmentsPage: (...args: unknown[]) =>
     getPlanningAssessmentsPageMock(...args),
 }));
 

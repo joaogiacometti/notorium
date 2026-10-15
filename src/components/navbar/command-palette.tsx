@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { getSubjectOptions } from "@/app/actions/subjects";
 import { useOpenAccountSettings } from "@/components/account/account-settings-provider";
 import {
   type PaletteAction,
@@ -20,6 +19,7 @@ import {
   useShortcutsDialogOpen,
 } from "@/components/shortcuts/shortcuts-suspension-context";
 import { CommandDialog } from "@/components/ui/command";
+import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 
 interface CommandPaletteProps {
   userId: string;
@@ -47,7 +47,7 @@ export function CommandPalette({
 
   const { data: subjects = [] } = useQuery({
     queryKey: ["command-palette-subjects", userId],
-    queryFn: () => getSubjectOptions(),
+    queryFn: () => fetchSubjectOptions(),
     enabled: (open || activeDialog !== null) && userId.length > 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,

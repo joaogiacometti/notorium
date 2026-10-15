@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { generateFlashcards } from "@/app/actions/flashcard-generation";
 import { editFlashcard, splitFlashcard } from "@/app/actions/flashcards";
-import { getSubjectOptions } from "@/app/actions/subjects";
 import { getEditFlashcardFormValues } from "@/components/flashcards/dialogs/edit-flashcard-form-values";
 import { EditFlashcardSplitForm } from "@/components/flashcards/dialogs/edit-flashcard-split-form";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
@@ -27,6 +26,7 @@ import {
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import type {
   FlashcardEntity,
   SubjectOption,
@@ -113,7 +113,7 @@ export function EditFlashcardDialog({
 
   useEffect(() => {
     if (open) {
-      void getSubjectOptions().then((fetchedSubjects) => {
+      void fetchSubjectOptions().then((fetchedSubjects) => {
         setSubjects(fetchedSubjects);
         setSplitSubjects(fetchedSubjects);
       });

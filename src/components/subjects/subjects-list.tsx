@@ -3,7 +3,6 @@
 import { BookOpen, Lock, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getSubjectListItems } from "@/app/actions/subjects";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ManagerDataTable } from "@/components/shared/manager-data-table";
 import { BulkDeleteSubjectsDialog } from "@/components/subjects/bulk-delete-subjects-dialog";
@@ -38,6 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 import { LIMITS } from "@/lib/config/limits";
 import { PAGE_SIZE_OPTIONS } from "@/lib/pagination/page-size";
+import { fetchSubjectListItems } from "@/lib/read-api/subjects";
 import type {
   SubjectEditDto,
   SubjectListItem,
@@ -108,7 +108,7 @@ export function SubjectsList({ subjects }: Readonly<SubjectsListProps>) {
   }, [visibleSubjects]);
 
   async function refreshSubjectsList() {
-    const latestSubjects = await getSubjectListItems();
+    const latestSubjects = await fetchSubjectListItems();
     setSubjectItems(latestSubjects);
   }
 

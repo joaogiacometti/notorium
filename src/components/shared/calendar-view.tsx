@@ -12,7 +12,6 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getCalendarEvents } from "@/app/actions/calendar";
 import { DayDetail, EventDot } from "@/components/shared/calendar-day-detail";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +23,7 @@ import {
   resolveCalendarDate,
 } from "@/lib/dates/calendar";
 import { formatIsoDate } from "@/lib/dates/format";
+import { fetchCalendarEvents } from "@/lib/read-api/planning";
 import { cn } from "@/lib/utils";
 
 const emptyEvents: CalendarEvent[] = [];
@@ -130,7 +130,7 @@ export function CalendarView({
     requestIdRef.current = requestId;
     setIsLoadingEvents(true);
 
-    void getCalendarEvents(rangeStartIso, rangeEndIso)
+    void fetchCalendarEvents(rangeStartIso, rangeEndIso)
       .then((data) => {
         if (requestIdRef.current !== requestId) {
           return;

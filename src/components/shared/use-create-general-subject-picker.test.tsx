@@ -12,7 +12,10 @@ vi.mock("server-only", () => ({}));
 
 vi.mock("@/app/actions/subjects", () => ({
   createSubject: (...args: unknown[]) => createSubjectMock(...args),
-  getSubjectOptions: (...args: unknown[]) => getSubjectOptionsMock(...args),
+}));
+
+vi.mock("@/lib/read-api/subjects", () => ({
+  fetchSubjectOptions: (...args: unknown[]) => getSubjectOptionsMock(...args),
 }));
 
 vi.mock("sonner", () => ({

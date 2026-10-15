@@ -7,7 +7,6 @@ import {
   deleteNoteForUser,
   editNoteForUser,
 } from "@/features/notes/mutations";
-import { getNoteByIdForUser } from "@/features/notes/queries";
 import {
   type CreateNoteForm,
   createNoteSchema,
@@ -16,16 +15,8 @@ import {
   type EditNoteForm,
   editNoteSchema,
 } from "@/features/notes/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
-import type { MutationResult, NoteEntity } from "@/lib/server/api-contracts";
-import { idSchema } from "@/lib/validations/schemas";
-
-export async function getNoteById(id: string): Promise<NoteEntity | null> {
-  const noteId = idSchema.parse(id);
-  const userId = await getAuthenticatedUserId();
-  return getNoteByIdForUser(userId, noteId);
-}
+import type { MutationResult } from "@/lib/server/api-contracts";
 
 export async function createNote(
   data: CreateNoteForm,

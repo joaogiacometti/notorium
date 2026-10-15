@@ -12,6 +12,10 @@ export interface SubjectDeleteTarget {
 
 /**
  * Lazily-loaded documents keyed by subject id. A subject maps to `"loading"`
- * while its notes/mindmaps are being fetched, then to the resolved list.
+ * while its notes/mindmaps are being fetched, then to the resolved list, or to
+ * `"error"` when the fetch failed (the row then offers a retry).
  */
-export type SubjectDocumentsState = Map<string, DocumentListItem[] | "loading">;
+export type SubjectDocumentsState = Map<
+  string,
+  DocumentListItem[] | "loading" | "error"
+>;

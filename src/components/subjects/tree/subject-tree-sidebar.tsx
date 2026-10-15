@@ -3,8 +3,11 @@
 import { Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { getSubjectDocuments } from "@/app/actions/subjects";
 import { useDocumentRowDialogs } from "@/components/documents/use-document-row-dialogs";
+import {
+  loadSubjectDocuments,
+  shouldLoadSubjectDocuments,
+} from "@/components/subjects/tree/load-subject-documents";
 import {
   getActiveDocumentSubjectId,
   getActiveSubjectId,
@@ -54,6 +57,7 @@ export function SubjectTreeSidebar({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [documentsBySubject, setDocumentsBySubject] =
     useState<SubjectDocumentsState>(() => new Map());
+  const documentRequestIdsRef = useRef<Map<string, number>>(new Map());
   const previousDocumentSubjectIdRef = useRef<string | undefined>(undefined);
   const [createParentId, setCreateParentId] = useState<string | undefined>(
     undefined,
@@ -173,14 +177,10 @@ export function SubjectTreeSidebar({
         return;
       }
       setExpandedIds((current) => new Set(current).add(subjectId));
-      setDocumentsBySubject((current) =>
-        new Map(current).set(subjectId, "loading"),
+      void loadSubjectDocuments(
+        { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
+        subjectId,
       );
-      void getSubjectDocuments(subjectId).then((documents) => {
-        setDocumentsBySubject((current) =>
-          new Map(current).set(subjectId, documents),
-        );
-      });
       startTransition(() => {
         router.refresh();
       });
@@ -232,17 +232,13 @@ export function SubjectTreeSidebar({
     if (!node || node.documentCount === 0) {
       return;
     }
-    // Inlined rather than calling loadDocuments so the effect depends only on
-    // stable values (the setter and the server action), not a render-local fn.
-    const subjectId = activeDocumentSubjectId;
-    setDocumentsBySubject((current) =>
-      new Map(current).set(subjectId, "loading"),
+    // Calls the module-level loader rather than loadDocuments so the effect
+    // depends only on stable values (the setter and the ref), not a
+    // render-local fn.
+    void loadSubjectDocuments(
+      { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
+      activeDocumentSubjectId,
     );
-    void getSubjectDocuments(subjectId).then((documents) => {
-      setDocumentsBySubject((current) =>
-        new Map(current).set(subjectId, documents),
-      );
-    });
   }, [localTree, activeDocumentSubjectId, documentsBySubject]);
 
   useEffect(() => {
@@ -258,15 +254,10 @@ export function SubjectTreeSidebar({
       return;
     }
 
-    const subjectId = activeSubjectId;
-    setDocumentsBySubject((current) =>
-      new Map(current).set(subjectId, "loading"),
+    void loadSubjectDocuments(
+      { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
+      activeSubjectId,
     );
-    void getSubjectDocuments(subjectId).then((documents) => {
-      setDocumentsBySubject((current) =>
-        new Map(current).set(subjectId, documents),
-      );
-    });
   }, [activeSubjectId, activeDocumentSubjectId, documentsBySubject]);
 
   function refreshTree() {
@@ -275,13 +266,10 @@ export function SubjectTreeSidebar({
     });
   }
 
-  async function loadDocuments(subjectId: string) {
-    setDocumentsBySubject((current) =>
-      new Map(current).set(subjectId, "loading"),
-    );
-    const documents = await getSubjectDocuments(subjectId);
-    setDocumentsBySubject((current) =>
-      new Map(current).set(subjectId, documents),
+  function loadDocuments(subjectId: string): Promise<void> {
+    return loadSubjectDocuments(
+      { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
+      subjectId,
     );
   }
 
@@ -297,7 +285,10 @@ export function SubjectTreeSidebar({
       return next;
     });
 
-    if (!willExpand || documentsBySubject.has(subjectId)) {
+    if (
+      !willExpand ||
+      !shouldLoadSubjectDocuments(documentsBySubject, subjectId)
+    ) {
       return;
     }
     const node = findSubjectTreeNode(localTree, subjectId);
@@ -423,6 +414,7 @@ export function SubjectTreeSidebar({
                 dropTargetId={dropTargetId}
                 pendingMoveId={pendingMoveId}
                 onToggle={handleToggle}
+                onRetryDocuments={(subjectId) => void loadDocuments(subjectId)}
                 onCreateChild={openCreateChild}
                 onCreateAssessment={openCreateAssessment}
                 onRecordMiss={openRecordMiss}

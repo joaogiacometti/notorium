@@ -79,9 +79,10 @@ Only add optional files when they are needed.
 
 - Use Server Components by default.
 - Add `"use client"` only when browser state, effects, or event handlers are required.
-- Server Actions in `src/app/actions/` are the only client-callable server boundary.
-- Client Components call server code only through Server Actions.
-- Server Components read from `src/features/*` directly.
+- Client-callable server boundaries: Server Actions in `src/app/actions/` for writes, GET Route Handlers in `src/app/api/` for reads. Server Actions run one at a time per client and are POST-only, so never add a read Server Action.
+- Client Components write through Server Actions and read through the typed fetchers in `src/lib/read-api/*` (usually as a React Query `queryFn`). Never `fetch` an `/api` read route directly from a component.
+- Build read routes with `runUserReadRoute` from `src/lib/server/read-route.ts`: approved session, Zod-validated input, `userId`-scoped feature query, `private, no-store` JSON with `Date`s preserved. Keep them thin like Server Actions.
+- Server Components read from `src/features/*` directly; prefer passing server-loaded data as props over adding a client read.
 - Do not call Server Actions from Server Components.
 - Keep Server Actions thin: authenticate, validate, delegate, revalidate, return typed result.
 - `src/app/actions/*` must not import `@/db/index` directly unless the exception is documented. Lint-enforced; document a genuine exception with a `biome-ignore` comment and reason.
@@ -97,6 +98,7 @@ Only add optional files when they are needed.
 ## Results and Errors
 
 - Server Actions must return typed results, never throw to the client.
+- Read routes answer data with 200, or an `ActionErrorResult` body with 400 (invalid input), 401 (no approved session), 404 (missing record), or 500 (unexpected, logged as `read_route_failed`).
 - Use this result shape: `{ success: true, data } | { success: false, error: string }`.
 - Validate inputs with Zod before DB access.
 - Return validation error results on invalid input.

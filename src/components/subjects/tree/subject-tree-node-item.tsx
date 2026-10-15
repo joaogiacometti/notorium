@@ -38,6 +38,7 @@ interface SubjectTreeNodeItemProps {
   dropTargetId: string | null;
   pendingMoveId: string | null;
   onToggle: (subjectId: string) => void;
+  onRetryDocuments: (subjectId: string) => void;
   onCreateChild: (parentSubjectId: string) => void;
   onCreateAssessment: (subjectId: string) => void;
   onRecordMiss: (subjectId: string) => void;
@@ -67,6 +68,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     dropTargetId,
     pendingMoveId,
     onToggle,
+    onRetryDocuments,
     onCreateChild,
     onCreateAssessment,
     onRecordMiss,
@@ -152,6 +154,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
             pendingMoveId={pendingMoveId}
             onDocumentDragStart={onDocumentDragStart}
             onDragEnd={onDragEnd}
+            onRetry={() => onRetryDocuments(node.id)}
           />
         </div>
       ) : null}

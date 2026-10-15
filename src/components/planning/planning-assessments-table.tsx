@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, Lock, Plus, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { getPlanningAssessmentsPage } from "@/app/actions/assessments";
 import { BulkDeleteAssessmentsDialog } from "@/components/assessments/bulk-delete-assessments-dialog";
 import { BulkUpdateAssessmentStatusDialog } from "@/components/assessments/bulk-update-assessment-status-dialog";
 import { LazyCreateAssessmentDialog as CreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
@@ -36,6 +35,7 @@ import {
   resolvePlanningAssessmentTypeFilter,
 } from "@/features/assessments/assessment-filters";
 import { LIMITS } from "@/lib/config/limits";
+import { fetchPlanningAssessmentsPage } from "@/lib/read-api/planning";
 import type {
   PlanningAssessmentsPage,
   SubjectEntity,
@@ -157,7 +157,7 @@ export function PlanningAssessmentsTable({
       sortBy,
     ],
     queryFn: async () => {
-      const result = await getPlanningAssessmentsPage({
+      const result = await fetchPlanningAssessmentsPage({
         pageIndex,
         pageSize,
         search: resolvedSearchQuery,

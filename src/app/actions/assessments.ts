@@ -8,7 +8,6 @@ import {
   deleteAssessmentForUser,
   editAssessmentForUser,
 } from "@/features/assessments/mutations";
-import { getPlanningAssessmentsPageForUser } from "@/features/assessments/queries";
 import {
   type BulkDeleteAssessmentsForm,
   type BulkUpdateAssessmentStatusForm,
@@ -20,8 +19,6 @@ import {
   deleteAssessmentSchema,
   type EditAssessmentForm,
   editAssessmentSchema,
-  type PlanningAssessmentsQueryInput,
-  planningAssessmentsQuerySchema,
 } from "@/features/assessments/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
@@ -30,22 +27,7 @@ import type {
   CreateAssessmentResult,
   DeleteAssessmentResult,
   EditAssessmentResult,
-  PlanningAssessmentsPage,
 } from "@/lib/server/api-contracts";
-import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-
-export async function getPlanningAssessmentsPage(
-  data: PlanningAssessmentsQueryInput,
-): Promise<PlanningAssessmentsPage | ActionErrorResult> {
-  return runValidatedUserAction(
-    "assessments.getPlanningAssessmentsPage",
-    planningAssessmentsQuerySchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) =>
-      getPlanningAssessmentsPageForUser(userId, parsedData),
-  );
-}
 
 export async function createAssessment(
   data: CreateAssessmentForm,

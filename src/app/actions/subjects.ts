@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSubjectDocumentsForUser } from "@/features/documents/queries";
-import type { DocumentListItem } from "@/features/documents/types";
 import {
   bulkDeleteSubjectsForUser,
   createSubjectForUser,
@@ -11,10 +9,6 @@ import {
   moveSubjectForUser,
   type SubjectMutationResult,
 } from "@/features/subjects/mutations";
-import {
-  getAllSubjectsWithPathsForUser,
-  getSubjectListItemsForUser,
-} from "@/features/subjects/queries";
 import {
   type BulkDeleteSubjectsForm,
   bulkDeleteSubjectsSchema,
@@ -27,42 +21,12 @@ import {
   type MoveSubjectForm,
   moveSubjectSchema,
 } from "@/features/subjects/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkSubjectMutationResult,
   MoveSubjectResult,
   MutationResult,
-  SubjectListItem,
-  SubjectOption,
 } from "@/lib/server/api-contracts";
-import { idSchema } from "@/lib/validations/schemas";
-
-/**
- * Subjects with full `path` labels, for the flashcard subject pickers (create,
- * edit, move). Mirrors the old `getDecks` action.
- */
-export async function getSubjectOptions(): Promise<SubjectOption[]> {
-  const userId = await getAuthenticatedUserId();
-  return getAllSubjectsWithPathsForUser(userId);
-}
-
-export async function getSubjectListItems(): Promise<SubjectListItem[]> {
-  const userId = await getAuthenticatedUserId();
-  return getSubjectListItemsForUser(userId);
-}
-
-/**
- * Lazily loads one subject's notes + mindmaps for the tree sidebar, fetched the
- * first time a subject node is expanded. Ownership is enforced by `userId`.
- */
-export async function getSubjectDocuments(
-  subjectId: string,
-): Promise<DocumentListItem[]> {
-  const parsedSubjectId = idSchema.parse(subjectId);
-  const userId = await getAuthenticatedUserId();
-  return getSubjectDocumentsForUser(userId, parsedSubjectId);
-}
 
 export async function createSubject(
   data: CreateSubjectForm,

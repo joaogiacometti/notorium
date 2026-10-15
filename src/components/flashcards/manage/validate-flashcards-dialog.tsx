@@ -3,11 +3,7 @@
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  getAllFlashcardIds,
-  getFlashcardIdsForSubject,
-  validateFlashcards,
-} from "@/app/actions/flashcards";
+import { validateFlashcards } from "@/app/actions/flashcards";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
 import { LIMITS } from "@/lib/config/limits";
+import { fetchFlashcardIds } from "@/lib/read-api/flashcards";
 import type {
   FlashcardValidationIssue,
   FlashcardValidationItem,
@@ -51,9 +48,7 @@ export function ValidateFlashcardsDialog({
       let flashcardIds: string[];
 
       if (currentSubjectId) {
-        const idsResult = await getFlashcardIdsForSubject({
-          subjectId: currentSubjectId,
-        });
+        const idsResult = await fetchFlashcardIds(currentSubjectId);
 
         if ("errorCode" in idsResult) {
           toast.error(t(idsResult.errorCode, idsResult.errorParams));
@@ -63,7 +58,7 @@ export function ValidateFlashcardsDialog({
 
         flashcardIds = idsResult.flashcardIds;
       } else {
-        const idsResult = await getAllFlashcardIds();
+        const idsResult = await fetchFlashcardIds();
 
         if ("errorCode" in idsResult) {
           toast.error(t(idsResult.errorCode, idsResult.errorParams));

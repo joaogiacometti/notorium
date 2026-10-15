@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { generateFlashcardsFromMindmap } from "@/app/actions/flashcard-generation";
 import { createFlashcard } from "@/app/actions/flashcards";
-import { getSubjectOptions } from "@/app/actions/subjects";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
+import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import type {
   FlashcardEntity,
   SubjectOption,
@@ -77,7 +77,7 @@ export function GenerateMindmapFlashcardsDialog({
     if (!open || loadedSubjects) return;
 
     setIsLoadingSubjects(true);
-    getSubjectOptions()
+    fetchSubjectOptions()
       .then((nextSubjects) => {
         setLoadedSubjects(nextSubjects);
         setSelectedSubjectId(

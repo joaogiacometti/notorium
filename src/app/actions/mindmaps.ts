@@ -10,7 +10,6 @@ import {
   type MindmapMutationResult,
   splitMindmapForUser,
 } from "@/features/mindmaps/mutations";
-import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
 import {
   type CreateMindmapForm,
   createMindmapSchema,
@@ -23,21 +22,10 @@ import {
   type SplitMindmapForm,
   splitMindmapSchema,
 } from "@/features/mindmaps/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
-import type { MindmapEntity } from "@/lib/server/api-contracts";
-import { idSchema } from "@/lib/validations/schemas";
 
 function revalidateSubject(subjectId: string) {
   revalidatePath(`/subjects/${subjectId}`);
-}
-
-export async function getMindmapById(
-  id: string,
-): Promise<MindmapEntity | null> {
-  const mindmapId = idSchema.parse(id);
-  const userId = await getAuthenticatedUserId();
-  return getMindmapByIdForUser(userId, mindmapId);
 }
 
 export async function createMindmap(

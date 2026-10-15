@@ -23,7 +23,10 @@ const {
 
 vi.mock("@/app/actions/subjects", () => ({
   createSubject: createSubjectMock,
-  getSubjectOptions: getDecksMock,
+}));
+
+vi.mock("@/lib/read-api/subjects", () => ({
+  fetchSubjectOptions: getDecksMock,
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({

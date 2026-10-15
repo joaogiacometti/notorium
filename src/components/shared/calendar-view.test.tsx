@@ -26,8 +26,8 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/app/actions/calendar", () => ({
-  getCalendarEvents: getCalendarEventsMock,
+vi.mock("@/lib/read-api/planning", () => ({
+  fetchCalendarEvents: getCalendarEventsMock,
 }));
 
 function getButtonByText(container: HTMLElement, text: string) {

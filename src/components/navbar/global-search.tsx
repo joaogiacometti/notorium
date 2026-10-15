@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileText, Layers, Network } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { getRecentSearchData, getSearchData } from "@/app/actions/search";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import {
@@ -23,6 +22,7 @@ import {
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
+import { fetchRecentSearchData, fetchSearchData } from "@/lib/read-api/search";
 import {
   buildSearchMatchSnippet,
   renderSearchHighlightedText,
@@ -59,7 +59,7 @@ export function GlobalSearch({
 
   const { data, isPending } = useQuery({
     queryKey: ["search-data", userId, debouncedQuery],
-    queryFn: () => getSearchData(debouncedQuery),
+    queryFn: () => fetchSearchData(debouncedQuery),
     enabled:
       open &&
       userId.length > 0 &&
@@ -69,7 +69,7 @@ export function GlobalSearch({
   });
   const recentQuery = useQuery({
     queryKey: ["search-data", "recent", userId],
-    queryFn: () => getRecentSearchData(),
+    queryFn: () => fetchRecentSearchData(),
     enabled:
       open &&
       userId.length > 0 &&

@@ -16,8 +16,8 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: routerReplaceMock }),
 }));
 
-vi.mock("@/app/actions/account", () => ({
-  getAccountSettings: vi.fn(),
+vi.mock("@/lib/read-api/account", () => ({
+  fetchAccountSettings: vi.fn(),
 }));
 
 vi.mock("@/components/account/settings-dialog", () => ({

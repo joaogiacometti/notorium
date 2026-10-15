@@ -4,16 +4,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  getFlashcardForManage,
-  getFlashcardsManagePage,
-  validateFlashcards,
-} from "@/app/actions/flashcards";
-import { getRefineFlashcardGroups } from "@/app/actions/flashcards-refine";
+import { validateFlashcards } from "@/app/actions/flashcards";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import type { RefineGroups } from "@/features/flashcards/refine/types";
 import { LIMITS } from "@/lib/config/limits";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
+import {
+  fetchFlashcardForManage,
+  fetchFlashcardsManagePage,
+  fetchRefineFlashcardGroups,
+} from "@/lib/read-api/flashcards";
 import type {
   FlashcardEntity,
   FlashcardManagePage,
@@ -168,7 +168,7 @@ export function useFlashcardsManagerController({
       resolvedSearchQuery,
     ],
     queryFn: async () => {
-      const result = await getFlashcardsManagePage({
+      const result = await fetchFlashcardsManagePage({
         pageIndex,
         pageSize: pageSizeState,
         subjectId: selectedSubjectId,
@@ -199,7 +199,7 @@ export function useFlashcardsManagerController({
         return null;
       }
 
-      const result = await getFlashcardForManage({ id: editingFlashcardId });
+      const result = await fetchFlashcardForManage(editingFlashcardId);
       if ("errorCode" in result) {
         return null;
       }
@@ -261,7 +261,7 @@ export function useFlashcardsManagerController({
     setIsLoadingRefineGroups(true);
 
     try {
-      const result = await getRefineFlashcardGroups();
+      const result = await fetchRefineFlashcardGroups();
 
       if (!result.success) {
         toast.error(resolveActionErrorMessage(result));

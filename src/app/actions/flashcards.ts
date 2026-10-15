@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { validateFlashcardsForUser } from "@/features/flashcards/ai-service";
 import {
   bulkDeleteFlashcardsForUser,
@@ -14,11 +13,7 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
-  getAllFlashcardIdsForSubject,
-  getAllFlashcardIdsForUser,
-  getFlashcardByIdForUser,
   getFlashcardsByIdsForValidation,
-  getFlashcardsManagePageForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
 import { splitFlashcardForUser } from "@/features/flashcards/split-mutation";
@@ -37,12 +32,8 @@ import {
   deleteFlashcardSchema,
   type EditFlashcardForm,
   editFlashcardSchema,
-  type FlashcardsManageQueryInput,
-  flashcardsManageQuerySchema,
   type GenerateFlashcardBackForm,
-  type GetFlashcardIdsForSubjectForm,
   generateFlashcardBackSchema,
-  getFlashcardIdsForSubjectSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type SplitFlashcardForm,
@@ -60,8 +51,6 @@ import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
-  FlashcardEntity,
-  FlashcardManagePage,
   GenerateFlashcardBackResult,
   ResetFlashcardResult,
   SplitFlashcardResult,
@@ -261,58 +250,6 @@ export async function splitFlashcard(
   return result;
 }
 
-export async function getFlashcardsManagePage(
-  data: FlashcardsManageQueryInput,
-): Promise<FlashcardManagePage | ActionErrorResult> {
-  return runValidatedUserAction(
-    "flashcards.getFlashcardsManagePage",
-    flashcardsManageQuerySchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) =>
-      getFlashcardsManagePageForUser(userId, parsedData),
-  );
-}
-
-export async function getFlashcardForManage(
-  data: DeleteFlashcardForm,
-): Promise<{ flashcard: FlashcardEntity } | ActionErrorResult> {
-  return runValidatedUserAction(
-    "flashcards.getFlashcardForManage",
-    deleteFlashcardSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const flashcard = await getFlashcardByIdForUser(userId, parsedData.id);
-
-      if (!flashcard) {
-        return actionError("flashcards.notFound");
-      }
-
-      return { flashcard };
-    },
-  );
-}
-
-export async function getFlashcardIdsForSubject(
-  data: GetFlashcardIdsForSubjectForm,
-): Promise<{ success: true; flashcardIds: string[] } | ActionErrorResult> {
-  return runValidatedUserAction(
-    "flashcards.getFlashcardIdsForSubject",
-    getFlashcardIdsForSubjectSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const flashcardIds = await getAllFlashcardIdsForSubject(
-        userId,
-        parsedData.subjectId,
-      );
-
-      return { success: true, flashcardIds };
-    },
-  );
-}
-
 export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
   | {
       success: true;
@@ -387,21 +324,6 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
           subjectId: card.subjectId,
         })),
       };
-    },
-  );
-}
-
-export async function getAllFlashcardIds(): Promise<
-  { success: true; flashcardIds: string[] } | ActionErrorResult
-> {
-  return runValidatedUserAction(
-    "flashcards.getAllFlashcardIds",
-    z.object({}),
-    {},
-    "ServerErrors.common.invalidRequest",
-    async (userId) => {
-      const flashcardIds = await getAllFlashcardIdsForUser(userId);
-      return { success: true, flashcardIds };
     },
   );
 }

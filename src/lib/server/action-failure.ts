@@ -22,17 +22,28 @@ export async function runCatchingActionFailure<TResult>(
     return await run();
   } catch (error) {
     unstable_rethrow(error);
-    logActionFailure(logScope, error);
+    logServerFailure("server_action_failed", logScope, error);
     return actionError("common.generic");
   }
 }
 
-// Logs only the error class and driver code: Drizzle query errors embed the
-// SQL params in `message`, which can carry private user content.
-function logActionFailure(logScope: string, error: unknown): void {
+/**
+ * Log an unexpected server-boundary failure (Server Action or read route) as
+ * structured JSON. Logs only the error class and driver code: Drizzle query
+ * errors embed the SQL params in `message`, which can carry private user
+ * content.
+ *
+ * @example
+ * logServerFailure("read_route_failed", "subjects.documents", error);
+ */
+export function logServerFailure(
+  event: "server_action_failed" | "read_route_failed",
+  logScope: string,
+  error: unknown,
+): void {
   console.error(
     JSON.stringify({
-      event: "server_action_failed",
+      event,
       scope: logScope,
       errorName: error instanceof Error ? error.name : typeof error,
       errorCode: getDriverErrorCode(error),

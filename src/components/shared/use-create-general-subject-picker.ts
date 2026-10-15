@@ -3,7 +3,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { createSubject, getSubjectOptions } from "@/app/actions/subjects";
+import { createSubject } from "@/app/actions/subjects";
+import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -35,7 +36,7 @@ export function useCreateGeneralSubjectPicker({
 
   useEffect(() => {
     if (open && loadSubjectsOnOpen) {
-      void getSubjectOptions().then(setSubjects);
+      void fetchSubjectOptions().then(setSubjects);
     }
   }, [loadSubjectsOnOpen, open]);
 
@@ -46,7 +47,7 @@ export function useCreateGeneralSubjectPicker({
       return false;
     }
 
-    setSubjects(await getSubjectOptions());
+    setSubjects(await fetchSubjectOptions());
     await queryClient.invalidateQueries({
       queryKey: ["command-palette-subjects"],
     });

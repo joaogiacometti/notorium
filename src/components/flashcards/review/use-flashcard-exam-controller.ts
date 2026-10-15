@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { getExamFlashcards } from "@/app/actions/flashcard-review";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
+import { fetchExamFlashcards } from "@/lib/read-api/flashcards";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -79,7 +79,7 @@ export function useFlashcardExamController({
     examCardsRequestIdRef.current = requestId;
 
     setIsLoadingExamCards(true);
-    const request = getExamFlashcards({ subjectId: selectedSubjectId })
+    const request = fetchExamFlashcards({ subjectId: selectedSubjectId })
       .then((cards) => {
         if (examCardsRequestIdRef.current === requestId) {
           setExamCards(cards);

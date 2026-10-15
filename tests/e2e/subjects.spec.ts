@@ -5,10 +5,12 @@ import { getPrefixedValue } from "./support/data";
 import {
   clearUserSubjects,
   clearUserSubjectsByNames,
+  createNote,
   createSubject,
 } from "./support/db";
 import { breadcrumbCurrent } from "./support/page-chrome";
 import {
+  expandSubjectSidebarRow,
   getSubjectSidebarLink,
   openSubjectSidebarActions,
 } from "./support/subjects";
@@ -167,5 +169,38 @@ test("can delete multiple subjects from the sidebar", async ({
     for (const name of names) {
       await expect(getSubjectSidebarLink(page, name)).toHaveCount(0);
     }
+  });
+});
+
+test("offers a retry when a subject's documents fail to load", async ({
+  page,
+  e2eUser,
+}) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const user = e2eUser;
+    const subjectName = getUniqueSubjectName("documents-retry");
+    const noteTitle = `${subjectName} note`;
+    registerCleanup(() => clearUserSubjectsByNames(user.userId, [subjectName]));
+    const subject = await createSubject(user.userId, subjectName);
+    await createNote(user.userId, subject.id, noteTitle, "<p>Body</p>");
+
+    await waitForAppShell(page);
+    // Fail only the first documents read; the retry goes through.
+    let failedOnce = false;
+    await page.route("**/api/subjects/*/documents", (route) => {
+      if (failedOnce) {
+        return route.continue();
+      }
+      failedOnce = true;
+      return route.abort();
+    });
+
+    await expandSubjectSidebarRow(page, subjectName);
+    const tree = page.locator('nav[aria-label="Subjects"]');
+    await expect(tree.getByText("Couldn't load documents.")).toBeVisible();
+    await expect(tree.getByText("Loading…")).toHaveCount(0);
+
+    await tree.getByRole("button", { name: "Retry", exact: true }).click();
+    await expect(tree.getByRole("link", { name: noteTitle })).toBeVisible();
   });
 });

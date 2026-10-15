@@ -4,12 +4,8 @@ import { revalidatePath } from "next/cache";
 import { synthesizeRefineProposalForUser } from "@/features/flashcards/ai-service";
 import { getFlashcardDetailByIdForUser } from "@/features/flashcards/queries";
 import { applyRefineProposalForUser } from "@/features/flashcards/refine/mutations";
-import {
-  findSimilarFlashcardsForUser,
-  getRefineGroupsForUser,
-} from "@/features/flashcards/refine/queries";
+import { findSimilarFlashcardsForUser } from "@/features/flashcards/refine/queries";
 import type {
-  RefineGroups,
   RefineMergeCandidate,
   RefineMergeProposal,
 } from "@/features/flashcards/refine/types";
@@ -19,30 +15,12 @@ import {
   type ProposeFlashcardMergeForm,
   proposeFlashcardMergeSchema,
 } from "@/features/flashcards/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/auth";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 import {
   type ActionErrorResult,
   actionError,
 } from "@/lib/server/server-action-errors";
-
-export type GetRefineFlashcardGroupsResult =
-  | { success: true; groups: RefineGroups }
-  | ActionErrorResult;
-
-/**
- * Load the manage refine mode groups (mastered and struggling cards) for
- * the authenticated user.
- *
- * Example: const result = await getRefineFlashcardGroups();
- */
-export async function getRefineFlashcardGroups(): Promise<GetRefineFlashcardGroupsResult> {
-  const userId = await getAuthenticatedUserId();
-  const groups = await getRefineGroupsForUser(userId);
-
-  return { success: true, groups };
-}
 
 export type ProposeFlashcardMergeResult =
   | {

@@ -9,12 +9,12 @@ import {
   useEffect,
   useState,
 } from "react";
-import { getAccountSettings } from "@/app/actions/account";
 import { SettingsDialog } from "@/components/account/settings-dialog";
 import {
   resolveSettingsSection,
   type SettingsSectionId,
 } from "@/components/account/settings-sections";
+import { fetchAccountSettings } from "@/lib/read-api/account";
 
 type OpenAccountSettings = (section?: SettingsSectionId) => void;
 
@@ -52,7 +52,7 @@ export function AccountSettingsProvider({
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["account-settings", userId],
-    queryFn: () => getAccountSettings(),
+    queryFn: () => fetchAccountSettings(),
     enabled: open && userId.length > 0,
     staleTime: 1000 * 30,
   });

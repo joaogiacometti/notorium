@@ -9,7 +9,6 @@ import {
 } from "react";
 import { toast } from "sonner";
 import {
-  getFlashcardReviewState,
   reviewFlashcard,
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
@@ -21,6 +20,7 @@ import {
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
+import { fetchFlashcardReviewState } from "@/lib/read-api/flashcards";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -114,7 +114,7 @@ export function useFlashcardReviewController({
 
   async function getActiveReviewState(): Promise<FlashcardReviewState> {
     const requestedSubjectId = selectedSubjectIdRef.current;
-    const nextState = await getFlashcardReviewState({
+    const nextState = await fetchFlashcardReviewState({
       subjectId: requestedSubjectId,
       limit: reviewBatchLimit,
     });
@@ -134,7 +134,7 @@ export function useFlashcardReviewController({
       const requestId = refillRequestIdRef.current + 1;
       refillRequestIdRef.current = requestId;
 
-      const nextState = await getFlashcardReviewState({
+      const nextState = await fetchFlashcardReviewState({
         subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
       });
@@ -173,7 +173,7 @@ export function useFlashcardReviewController({
 
     isRefreshingOnReturnRef.current = true;
     try {
-      const nextState = await getFlashcardReviewState({
+      const nextState = await fetchFlashcardReviewState({
         subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
       });
@@ -215,7 +215,7 @@ export function useFlashcardReviewController({
     }
 
     if (subjectId && updatedFlashcard.subjectId !== subjectId) {
-      const nextState = await getFlashcardReviewState({
+      const nextState = await fetchFlashcardReviewState({
         subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
       });
@@ -243,7 +243,7 @@ export function useFlashcardReviewController({
     }
 
     try {
-      const nextState = await getFlashcardReviewState({
+      const nextState = await fetchFlashcardReviewState({
         subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
       });
