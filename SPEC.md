@@ -34,8 +34,7 @@ Students who want a private, lightweight study management workspace.
 ### Subjects
 
 - Create, read, update, and hard-delete subjects.
-- Subjects list as a table with search, sorting, page size controls, row selection, and bulk delete.
-- Subjects table shows subject title, notes count, and compact row actions. It does not show status, created, or updated columns. General subjects show a "General" tag next to their title.
+- Subjects are listed and managed only in the sidebar subject tree; there is no separate subjects table page. Subjects are deleted one at a time from the tree's row menu.
 - Subject fields: name and kind.
 - Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects is rejected with a duplicate-name error. Uniqueness is case-sensitive.
 - Creating a subject with `Parent::Child` uses the existing `Parent` path as the parent and stores `Child` as the new subject name. If any path segment does not exist, it is created automatically in order. When creation starts from a selected parent, the path is resolved relative to that parent. All missing segments are inserted atomically: intermediate segments are general containers and the requested leaf keeps the chosen kind. The `::` delimiter is reserved for path creation and cannot be stored in a renamed subject.
@@ -226,7 +225,7 @@ Students who want a private, lightweight study management workspace.
 
 - Available only for academic subjects; the planning page and assessment subject pickers list academic subjects only.
 - Create, read, update, and delete assessments per subject.
-- Assessments have a dedicated global planning page for full management and calendar-based timeline viewing.
+- Assessments have a dedicated global planning page for full management and calendar-based timeline viewing. If a calendar month fails to load, the grid stops loading, shows no events for that month (never the previous month's), and an error toast asks the user to try again.
 - The planning assessments table supports bulk selection with bulk mark pending, bulk mark completed, and bulk delete actions.
 - The planning assessments table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
 - Subject detail pages show a minimal assessment summary with the subject average when available and a link to the planning page filtered to that subject.

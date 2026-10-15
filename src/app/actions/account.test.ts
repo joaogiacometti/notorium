@@ -14,7 +14,7 @@ vi.mock("@/features/account/mutations", () => ({
   deleteAccountForUser: vi.fn(),
 }));
 
-vi.mock("@/features/flashcards/fsrs/settings", () => ({
+vi.mock("@/features/flashcards/fsrs/settings-mutations", () => ({
   optimizeFsrsParametersForUser: vi.fn(),
   resetFsrsOptimizationForUser: resetFsrsOptimizationForUserMock,
   updateFsrsOptimizationPreferences: vi.fn(),

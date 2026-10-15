@@ -3,7 +3,11 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFlashcardsManagerController } from "@/components/flashcards/manage/use-flashcards-manager-controller";
-import type { FlashcardManagePage } from "@/lib/server/api-contracts";
+import { fetchFlashcardForManage } from "@/lib/read-api/flashcards";
+import type {
+  FlashcardEntity,
+  FlashcardManagePage,
+} from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -130,6 +134,20 @@ describe("useFlashcardsManagerController refine mode", () => {
     expect(toastMock.error).toHaveBeenCalledOnce();
   });
 
+  it("stays out of refine mode and toasts when the request itself fails", async () => {
+    getRefineFlashcardGroupsMock.mockRejectedValue(new TypeError("offline"));
+
+    await renderController();
+
+    await act(async () => {
+      await controller.startRefineMode();
+    });
+
+    expect(controller.refineMode).toBe(false);
+    expect(controller.isLoadingRefineGroups).toBe(false);
+    expect(toastMock.error).toHaveBeenCalledOnce();
+  });
+
   it("clears refine state on exit", async () => {
     getRefineFlashcardGroupsMock.mockResolvedValue({
       success: true,
@@ -170,5 +188,83 @@ describe("useFlashcardsManagerController refine mode", () => {
 
     expect(controller.refineMode).toBe(false);
     expect(controller.validationMode).toBe(true);
+  });
+});
+
+describe("useFlashcardsManagerController validation refresh", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+  let controller: ManagerController;
+  const validationCard = {
+    id: "card-1",
+    front: "Old front",
+    subjectName: "Biology",
+    subjectPath: "Science::Biology",
+    subjectId: "subject-1",
+  };
+
+  async function renderWithValidationCard() {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={new QueryClient()}>
+          <ControllerHarness
+            onController={(nextController) => {
+              controller = nextController;
+            }}
+          />
+        </QueryClientProvider>,
+      );
+    });
+    await act(async () => {
+      controller.handleValidationStarted([], [validationCard]);
+    });
+  }
+
+  beforeEach(() => {
+    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
+    vi.clearAllMocks();
+  });
+
+  it("updates the edited card's row from the saved flashcard", async () => {
+    vi.mocked(fetchFlashcardForManage).mockResolvedValueOnce({
+      flashcard: {
+        id: "card-1",
+        front: "New front",
+        subjectId: "subject-2",
+      } as FlashcardEntity,
+    });
+    await renderWithValidationCard();
+
+    await act(async () => {
+      await controller.refreshValidationFlashcard("card-1");
+    });
+
+    expect(controller.validationFlashcards).toEqual([
+      { ...validationCard, front: "New front", subjectId: "subject-2" },
+    ]);
+  });
+
+  it("keeps the existing row when the refresh request fails", async () => {
+    vi.mocked(fetchFlashcardForManage).mockRejectedValueOnce(
+      new TypeError("offline"),
+    );
+    await renderWithValidationCard();
+
+    await act(async () => {
+      await controller.refreshValidationFlashcard("card-1");
+    });
+
+    expect(controller.validationFlashcards).toEqual([validationCard]);
   });
 });

@@ -76,6 +76,43 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "src/app/(app)/**",
+        "src/features/**/queries.ts",
+        "src/features/**/*-queries.ts",
+        "src/app/api/**",
+        "!src/app/api/attachments/image/**",
+        "!src/app/api/auth/**",
+        "!src/app/api/cron/**",
+        "!src/app/api/flashcards/fsrs/**",
+        "!src/app/api/notifications/**",
+        "!**/*.test.ts",
+        "!**/*.test.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/features/**/mutations",
+                      "@/features/**/*-mutations",
+                      "@/features/**/*-mutation",
+                      "@/features/subjects/subject-write"
+                    ],
+                    "message": "Read-only code (Server Components, feature queries, GET read routes) must not import write modules. Use a read function from a queries module instead (for example readFsrsSettings, not ensureFsrsSettings)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

@@ -11,6 +11,7 @@ import { EditFlashcardSplitForm } from "@/components/flashcards/dialogs/edit-fla
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
+import { loadSubjectOptions } from "@/components/shared/load-subject-options";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import {
   Dialog,
@@ -26,7 +27,6 @@ import {
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import type {
   FlashcardEntity,
   SubjectOption,
@@ -113,7 +113,10 @@ export function EditFlashcardDialog({
 
   useEffect(() => {
     if (open) {
-      void fetchSubjectOptions().then((fetchedSubjects) => {
+      void loadSubjectOptions().then((fetchedSubjects) => {
+        if (!fetchedSubjects) {
+          return;
+        }
         setSubjects(fetchedSubjects);
         setSplitSubjects(fetchedSubjects);
       });

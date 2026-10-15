@@ -20,7 +20,6 @@ import { ValidateFlashcardsDialog } from "@/components/flashcards/manage/validat
 import { Card } from "@/components/ui/card";
 import { LIMITS } from "@/lib/config/limits";
 import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
-import { fetchFlashcardForManage } from "@/lib/read-api/flashcards";
 import type { FlashcardManagePage } from "@/lib/server/api-contracts";
 import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
@@ -87,7 +86,7 @@ export function FlashcardsManager({
     isValidatingAgain,
     exitValidation,
     removeValidationFlashcard,
-    updateValidationFlashcard,
+    refreshValidationFlashcard,
     checkValidationEmpty,
     refineMode,
     refineGroups,
@@ -224,22 +223,7 @@ export function FlashcardsManager({
             cacheUpdatedFlashcard(updatedFlashcard);
             refreshManagePage();
             if (validationMode && editingFlashcardId) {
-              const result = await fetchFlashcardForManage(editingFlashcardId);
-              if (result && !("errorCode" in result)) {
-                const existingCard = validationFlashcards.find(
-                  (c) => c.id === editingFlashcardId,
-                );
-                updateValidationFlashcard({
-                  id: result.flashcard.id,
-                  front: result.flashcard.front,
-                  subjectName: existingCard?.subjectName ?? "",
-                  subjectPath:
-                    existingCard?.subjectPath ??
-                    existingCard?.subjectName ??
-                    "",
-                  subjectId: result.flashcard.subjectId ?? "",
-                });
-              }
+              await refreshValidationFlashcard(editingFlashcardId);
             }
           }}
           onDeleted={(deletedId) => {

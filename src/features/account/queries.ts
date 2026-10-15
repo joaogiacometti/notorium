@@ -1,4 +1,4 @@
-import { getFsrsOptimizationSettings } from "@/features/flashcards/fsrs/settings";
+import { getFsrsOptimizationSettings } from "@/features/flashcards/fsrs/settings-queries";
 import { getNotificationPreferences } from "@/features/user/queries";
 import { isEmailDeliveryEnabled } from "@/lib/email/config";
 import type { AccountSettings } from "@/lib/server/api-contracts";

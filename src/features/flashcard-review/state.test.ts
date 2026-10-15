@@ -6,6 +6,7 @@ import {
 import {
   applyReviewedFlashcardToState,
   mergeFlashcardReviewStates,
+  removeFlashcardsFromReviewState,
   replaceFlashcardInReviewState,
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
@@ -449,5 +450,22 @@ describe("shouldRefillFlashcardReviewState", () => {
         ),
       ),
     ).toBe(false);
+  });
+});
+
+describe("removeFlashcardsFromReviewState", () => {
+  it("drops the cards and lowers both counts without going negative", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const state: FlashcardReviewState = {
+      cards: [makeCard("a", now), makeCard("b", now), makeCard("c", now)],
+      summary: { dueCount: 1, totalCount: 5 },
+      scheduler,
+    };
+
+    const next = removeFlashcardsFromReviewState(state, ["a", "c"]);
+
+    expect(next.cards.map((card) => card.id)).toEqual(["b"]);
+    expect(next.summary).toEqual({ dueCount: 0, totalCount: 3 });
+    expect(next.scheduler).toBe(scheduler);
   });
 });

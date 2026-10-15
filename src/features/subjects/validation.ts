@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { subjectKindValues } from "@/features/subjects/constants";
 import { LIMITS } from "@/lib/config/limits";
-import { bulkIdsSchema } from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 const subjectNameSchema = z
@@ -63,9 +62,3 @@ export const deleteSubjectSchema = z.object({
 });
 
 export type DeleteSubjectForm = z.infer<typeof deleteSubjectSchema>;
-
-export const bulkDeleteSubjectsSchema = z.object({
-  ids: bulkIdsSchema,
-});
-
-export type BulkDeleteSubjectsForm = z.infer<typeof bulkDeleteSubjectsSchema>;

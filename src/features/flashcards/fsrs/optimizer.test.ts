@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  optimizeFsrsParameters,
-  shouldOptimizeFsrsParameters,
-} from "@/features/flashcards/fsrs/optimizer";
+import { optimizeFsrsParameters } from "@/features/flashcards/fsrs/optimizer";
 import type { FlashcardReviewLogEntity } from "@/lib/server/api-contracts";
 
 // Mock the WASM binding so tests verify data-preparation logic, not the
@@ -48,15 +45,6 @@ function makeLog(
     updatedAt: reviewedAt,
   };
 }
-
-describe("shouldOptimizeFsrsParameters", () => {
-  it("waits until enough review history exists", () => {
-    expect(shouldOptimizeFsrsParameters(63, 0)).toBe(false);
-    expect(shouldOptimizeFsrsParameters(64, 0)).toBe(true);
-    expect(shouldOptimizeFsrsParameters(95, 64)).toBe(false);
-    expect(shouldOptimizeFsrsParameters(96, 64)).toBe(true);
-  });
-});
 
 describe("optimizeFsrsParameters", () => {
   beforeEach(() => {

@@ -16,6 +16,7 @@ import { useFlashcardExamController } from "@/components/flashcards/review/use-f
 import {
   applyReviewedFlashcardToState,
   mergeFlashcardReviewStates,
+  removeFlashcardsFromReviewState,
   replaceFlashcardInReviewState,
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
@@ -150,6 +151,12 @@ export function useFlashcardReviewController({
           new Date(),
         ),
       );
+    } catch {
+      // The finally block retries while the queue still needs cards; only
+      // report once the last retry has failed.
+      if (retryCount >= 3) {
+        toast.error("Could not load more cards. Please try again.");
+      }
     } finally {
       isRefillingRef.current = false;
       if (
@@ -215,10 +222,16 @@ export function useFlashcardReviewController({
     }
 
     if (subjectId && updatedFlashcard.subjectId !== subjectId) {
+      // The card moved out of this session's scope; if the scope cannot be
+      // re-read, drop it locally instead of leaving it as the current card.
       const nextState = await fetchFlashcardReviewState({
         subjectId: selectedSubjectId,
         limit: reviewBatchLimit,
-      });
+      }).catch(() =>
+        removeFlashcardsFromReviewState(reviewStateRef.current, [
+          updatedFlashcard.id,
+        ]),
+      );
 
       commitReviewState(nextState);
       resetFocusViewState();
@@ -249,23 +262,9 @@ export function useFlashcardReviewController({
       });
       commitReviewState(nextState);
     } catch {
-      const deletedIdSet = new Set(deletedIds);
-      commitReviewState({
-        ...reviewStateRef.current,
-        cards: reviewStateRef.current.cards.filter(
-          (card) => !deletedIdSet.has(card.id),
-        ),
-        summary: {
-          dueCount: Math.max(
-            0,
-            reviewStateRef.current.summary.dueCount - deletedIds.length,
-          ),
-          totalCount: Math.max(
-            0,
-            reviewStateRef.current.summary.totalCount - deletedIds.length,
-          ),
-        },
-      });
+      commitReviewState(
+        removeFlashcardsFromReviewState(reviewStateRef.current, deletedIds),
+      );
       toast.error("Review counts could not be refreshed.");
     }
     resetFocusViewState();

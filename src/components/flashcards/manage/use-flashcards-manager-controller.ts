@@ -20,7 +20,10 @@ import type {
   FlashcardValidationIssue,
   FlashcardValidationItem,
 } from "@/lib/server/api-contracts";
-import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import {
+  actionError,
+  resolveActionErrorMessage,
+} from "@/lib/server/server-action-errors";
 
 const flashcardManagerSearchDebounceMs = 200;
 
@@ -270,6 +273,9 @@ export function useFlashcardsManagerController({
 
       setRefineGroups(result.groups);
       return true;
+    } catch {
+      toast.error(resolveActionErrorMessage(actionError("common.generic")));
+      return false;
     } finally {
       setIsLoadingRefineGroups(false);
     }
@@ -336,15 +342,26 @@ export function useFlashcardsManagerController({
     );
   }
 
-  function updateValidationFlashcard(updated: {
-    id: string;
-    front: string;
-    subjectName: string;
-    subjectPath?: string;
-    subjectId: string;
-  }) {
+  // The edit itself already saved; if this refresh fails the row just keeps
+  // its previous preview text rather than surfacing a second error.
+  async function refreshValidationFlashcard(flashcardId: string) {
+    const result = await fetchFlashcardForManage(flashcardId).catch(() => null);
+    if (!result || "errorCode" in result) {
+      return;
+    }
+
+    const { flashcard } = result;
     setValidationFlashcards((prev) =>
-      prev.map((card) => (card.id === updated.id ? updated : card)),
+      prev.map((card) =>
+        card.id === flashcard.id
+          ? {
+              ...card,
+              front: flashcard.front,
+              subjectPath: card.subjectPath ?? card.subjectName,
+              subjectId: flashcard.subjectId ?? "",
+            }
+          : card,
+      ),
     );
   }
 
@@ -408,7 +425,7 @@ export function useFlashcardsManagerController({
     setValidateAgainDialogOpen,
     handleConfirmValidateAgain,
     removeValidationFlashcard,
-    updateValidationFlashcard,
+    refreshValidationFlashcard,
     checkValidationEmpty,
     refineMode,
     refineGroups,

@@ -33,7 +33,6 @@ const countTotalSubjectsForUserMock = vi.fn();
 const countChildSubjectsForUserMock = vi.fn();
 const getAllSubjectsWithPathsForUserMock = vi.fn();
 const getSubjectRecordForUserMock = vi.fn();
-const getSubjectRecordsForUserMock = vi.fn();
 const getSubjectTreeRecordForUserMock = vi.fn();
 const getSubjectDepthForUserMock = vi.fn();
 const getSubjectSubtreeHeightForUserMock = vi.fn();
@@ -76,7 +75,6 @@ vi.mock("@/features/subjects/queries", () => ({
   countChildSubjectsForUser: countChildSubjectsForUserMock,
   getAllSubjectsWithPathsForUser: getAllSubjectsWithPathsForUserMock,
   getSubjectRecordForUser: getSubjectRecordForUserMock,
-  getSubjectRecordsForUser: getSubjectRecordsForUserMock,
   getSubjectTreeRecordForUser: getSubjectTreeRecordForUserMock,
   getSubjectDepthForUser: getSubjectDepthForUserMock,
   getSubjectSubtreeHeightForUser: getSubjectSubtreeHeightForUserMock,

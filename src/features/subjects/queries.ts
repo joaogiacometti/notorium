@@ -1,13 +1,11 @@
-import { and, count, desc, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, mindmap, note, subject } from "@/db/schema";
+import { subject } from "@/db/schema";
 import type { SubjectKind } from "@/features/subjects/constants";
 import type {
   SubjectAncestor,
   SubjectEntity,
-  SubjectListItem,
   SubjectOption,
-  SubjectTreeNode,
 } from "@/lib/server/api-contracts";
 
 export async function getAcademicSubjectsForUser(
@@ -65,38 +63,6 @@ export async function getSubjectRecordForUser(
   return results[0] ?? null;
 }
 
-export async function getAllSubjectsForUser(
-  userId: string,
-): Promise<SubjectEntity[]> {
-  return getDb()
-    .select()
-    .from(subject)
-    .where(eq(subject.userId, userId))
-    .orderBy(desc(subject.updatedAt));
-}
-
-export async function getSubjectListItemsForUser(
-  userId: string,
-): Promise<SubjectListItem[]> {
-  const subjects = await getAllSubjectsForUser(userId);
-
-  if (subjects.length === 0) {
-    return [];
-  }
-
-  const noteCounts = await getDb()
-    .select({ subjectId: note.subjectId, count: count() })
-    .from(note)
-    .where(eq(note.userId, userId))
-    .groupBy(note.subjectId)
-    .then((rows) => new Map(rows.map((row) => [row.subjectId, row.count])));
-
-  return subjects.map((currentSubject) => ({
-    ...currentSubject,
-    notesCount: noteCounts.get(currentSubject.id) ?? 0,
-  }));
-}
-
 export async function countTotalSubjectsForUser(
   userId: string,
 ): Promise<number> {
@@ -123,18 +89,6 @@ export async function countChildSubjectsForUser(
     );
 
   return result[0]?.total ?? 0;
-}
-
-export async function getSubjectRecordsForUser(
-  userId: string,
-  subjectIds: string[],
-): Promise<Array<{ id: string }>> {
-  if (subjectIds.length === 0) return [];
-
-  return getDb()
-    .select({ id: subject.id })
-    .from(subject)
-    .where(and(inArray(subject.id, subjectIds), eq(subject.userId, userId)));
 }
 
 export async function getSubjectTreeRecordForUser(
@@ -310,30 +264,56 @@ export async function getSubjectSubtreeHeightForUser(
   return result?.height ?? 1;
 }
 
+/**
+ * Every subject reachable from a root, with its `::`-joined `path`, ordered by
+ * path. The recursive CTE only computes ids and paths; the rows themselves
+ * come from Drizzle so they keep the camelCase `SubjectEntity` shape and real
+ * `Date`s (raw `execute` rows are snake_case with string timestamps).
+ *
+ * @example
+ * const options = await getAllSubjectsWithPathsForUser(userId);
+ * options[0]?.path; // "Math::Calculus"
+ */
 export async function getAllSubjectsWithPathsForUser(
   userId: string,
 ): Promise<SubjectOption[]> {
-  const rows = await getDb().execute(
+  const [pathRows, subjects] = await Promise.all([
+    getSubjectPathRowsForUser(userId),
+    getDb().select().from(subject).where(eq(subject.userId, userId)),
+  ]);
+  const subjectsById = new Map(subjects.map((row) => [row.id, row]));
+
+  return pathRows.flatMap(({ id, path }) => {
+    const row = subjectsById.get(id);
+    return row ? [{ ...row, path }] : [];
+  });
+}
+
+async function getSubjectPathRowsForUser(
+  userId: string,
+): Promise<Array<{ id: string; path: string }>> {
+  const result = await getDb().execute(
     sql`
       WITH RECURSIVE subject_paths AS (
         SELECT
-          s.*,
+          s.id,
           s.name::text AS path
         FROM subject s
         WHERE s.user_id = ${userId} AND s.parent_subject_id IS NULL
         UNION ALL
         SELECT
-          s.*,
+          s.id,
           (sp.path || '::' || s.name)::text AS path
         FROM subject s
         INNER JOIN subject_paths sp ON s.parent_subject_id = sp.id
         WHERE s.user_id = ${userId}
       )
-      SELECT * FROM subject_paths ORDER BY path
+      SELECT id, path FROM subject_paths ORDER BY path
     `,
   );
 
-  return (rows as unknown as { rows: SubjectOption[] }).rows;
+  return (result as unknown as { rows: Array<{ id: string; path: string }> })
+    .rows;
 }
 
 export async function isSubjectAncestorOf(
@@ -358,128 +338,4 @@ export async function isSubjectAncestorOf(
   );
 
   return (rows as unknown as { rows: unknown[] }).rows.length > 0;
-}
-
-export async function getSubjectTreeForUser(
-  userId: string,
-): Promise<SubjectTreeNode[]> {
-  const allSubjects = await getDb()
-    .select()
-    .from(subject)
-    .where(eq(subject.userId, userId))
-    .orderBy(subject.name);
-
-  const [documentCounts, dueFlashcardCounts] = await Promise.all([
-    getDocumentCountsBySubject(userId),
-    getDueFlashcardCountsBySubject(userId, new Date()),
-  ]);
-
-  const nodeMap = new Map<string, SubjectTreeNode>();
-
-  for (const s of allSubjects) {
-    nodeMap.set(s.id, {
-      ...s,
-      documentCount: documentCounts.get(s.id) ?? 0,
-      dueFlashcardCount: dueFlashcardCounts.get(s.id) ?? 0,
-      children: [],
-      path: "",
-    });
-  }
-
-  function buildPath(nodeId: string): string {
-    const node = nodeMap.get(nodeId);
-    if (!node) {
-      return "";
-    }
-    if (!node.parentSubjectId) {
-      return node.name;
-    }
-    const parentPath = buildPath(node.parentSubjectId);
-    return parentPath ? `${parentPath}::${node.name}` : node.name;
-  }
-
-  const roots: SubjectTreeNode[] = [];
-
-  for (const node of nodeMap.values()) {
-    node.path = buildPath(node.id);
-    if (node.parentSubjectId) {
-      const parent = nodeMap.get(node.parentSubjectId);
-      if (parent) {
-        parent.children.push(node);
-      }
-    } else {
-      roots.push(node);
-    }
-  }
-
-  // Roll up document and due-card counts so a collapsed parent reflects its
-  // whole subtree (e.g. the sidebar review badge counts descendant cards too).
-  function applySubtreeCounts(node: SubjectTreeNode): {
-    documents: number;
-    due: number;
-  } {
-    for (const childNode of node.children) {
-      const childTotals = applySubtreeCounts(childNode);
-      node.documentCount += childTotals.documents;
-      node.dueFlashcardCount += childTotals.due;
-    }
-    return { documents: node.documentCount, due: node.dueFlashcardCount };
-  }
-
-  for (const rootNode of roots) {
-    applySubtreeCounts(rootNode);
-  }
-
-  return roots;
-}
-
-/**
- * Direct (non-rolled-up) note + mindmap counts keyed by subject id. Used
- * to seed {@link getSubjectTreeForUser} before subtree counts are accumulated.
- */
-async function getDocumentCountsBySubject(
-  userId: string,
-): Promise<Map<string, number>> {
-  const [noteCounts, mindmapCounts] = await Promise.all([
-    getDb()
-      .select({ subjectId: note.subjectId, count: count() })
-      .from(note)
-      .where(eq(note.userId, userId))
-      .groupBy(note.subjectId),
-    getDb()
-      .select({ subjectId: mindmap.subjectId, count: count() })
-      .from(mindmap)
-      .where(eq(mindmap.userId, userId))
-      .groupBy(mindmap.subjectId),
-  ]);
-
-  const counts = new Map<string, number>();
-  for (const row of [...noteCounts, ...mindmapCounts]) {
-    counts.set(row.subjectId, (counts.get(row.subjectId) ?? 0) + row.count);
-  }
-  return counts;
-}
-
-/**
- * Direct (non-rolled-up) count of cards due at `now` keyed by subject id. Seeds
- * the sidebar review indicator in {@link getSubjectTreeForUser}; subtree totals
- * are accumulated there. Cards with a null subject (mid-migration) are skipped.
- */
-async function getDueFlashcardCountsBySubject(
-  userId: string,
-  now: Date,
-): Promise<Map<string, number>> {
-  const rows = await getDb()
-    .select({ subjectId: flashcard.subjectId, count: count() })
-    .from(flashcard)
-    .where(and(eq(flashcard.userId, userId), lte(flashcard.dueAt, now)))
-    .groupBy(flashcard.subjectId);
-
-  const counts = new Map<string, number>();
-  for (const row of rows) {
-    if (row.subjectId) {
-      counts.set(row.subjectId, row.count);
-    }
-  }
-  return counts;
 }

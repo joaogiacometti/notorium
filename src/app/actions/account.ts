@@ -12,7 +12,7 @@ import {
   optimizeFsrsParametersForUser,
   resetFsrsOptimizationForUser,
   updateFsrsOptimizationPreferences as updateFsrsOptimizationPreferencesForUser,
-} from "@/features/flashcards/fsrs/settings";
+} from "@/features/flashcards/fsrs/settings-mutations";
 import {
   type UpdateFsrsOptimizationPreferencesForm,
   updateFsrsOptimizationPreferencesSchema,

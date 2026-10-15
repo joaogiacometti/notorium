@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { generateFlashcardsFromNote } from "@/app/actions/flashcard-generation";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
+import { loadSubjectOptions } from "@/components/shared/load-subject-options";
 import { SubjectSelect } from "@/components/shared/subject-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
-import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import type {
   FlashcardEntity,
   SubjectOption,
@@ -75,16 +75,13 @@ export function GenerateNoteFlashcardsDialog({
     if (!open || loadedSubjects) return;
 
     setIsLoadingSubjects(true);
-    fetchSubjectOptions()
+    void loadSubjectOptions()
       .then((nextSubjects) => {
-        setLoadedSubjects(nextSubjects);
+        // A failed load settles on an empty list so the dialog stops retrying.
+        setLoadedSubjects(nextSubjects ?? []);
         setSelectedSubjectId(
-          (current) => current ?? nextSubjects[0]?.id ?? null,
+          (current) => current ?? nextSubjects?.[0]?.id ?? null,
         );
-      })
-      .catch(() => {
-        setLoadedSubjects([]);
-        toast.error("Could not load subjects.");
       })
       .finally(() => setIsLoadingSubjects(false));
   }, [loadedSubjects, open]);

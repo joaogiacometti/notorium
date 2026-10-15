@@ -9,7 +9,7 @@ import type {
   UndoFlashcardReviewForm,
 } from "@/features/flashcard-review/validation";
 import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
-import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
+import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings-mutations";
 import type {
   FlashcardReviewEntity,
   ReviewFlashcardResult,

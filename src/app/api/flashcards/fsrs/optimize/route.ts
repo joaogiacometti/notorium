@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerEnv } from "@/env";
-import { optimizeAutomaticFsrsParameters } from "@/features/flashcards/fsrs/settings";
+import { optimizeAutomaticFsrsParameters } from "@/features/flashcards/fsrs/settings-mutations";
 
 export const dynamic = "force-dynamic";
 

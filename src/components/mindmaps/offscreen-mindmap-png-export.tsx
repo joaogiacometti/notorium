@@ -40,20 +40,24 @@ export function OffscreenMindmapPngExport({
 
   useEffect(() => {
     let cancelled = false;
-    void fetchMindmapById(mindmapId).then((mindmap) => {
-      if (cancelled) {
-        return;
-      }
-      if (!mindmap) {
-        toast.error("Couldn't load the mindmap to export");
-        onDone();
-        return;
-      }
-      setLoaded({
-        title: mindmap.title,
-        graph: ensureRootNode(parseMindmapGraph(mindmap.data), mindmap.title),
+    // A failed fetch resolves to null too, so the export always ends instead
+    // of leaving this offscreen host mounted forever.
+    void fetchMindmapById(mindmapId)
+      .catch(() => null)
+      .then((mindmap) => {
+        if (cancelled) {
+          return;
+        }
+        if (!mindmap) {
+          toast.error("Couldn't load the mindmap to export");
+          onDone();
+          return;
+        }
+        setLoaded({
+          title: mindmap.title,
+          graph: ensureRootNode(parseMindmapGraph(mindmap.data), mindmap.title),
+        });
       });
-    });
     return () => {
       cancelled = true;
     };

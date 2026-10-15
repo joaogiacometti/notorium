@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createSubject } from "@/app/actions/subjects";
-import { fetchSubjectOptions } from "@/lib/read-api/subjects";
+import { loadSubjectOptions } from "@/components/shared/load-subject-options";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -36,7 +36,11 @@ export function useCreateGeneralSubjectPicker({
 
   useEffect(() => {
     if (open && loadSubjectsOnOpen) {
-      void fetchSubjectOptions().then(setSubjects);
+      void loadSubjectOptions().then((loaded) => {
+        if (loaded) {
+          setSubjects(loaded);
+        }
+      });
     }
   }, [loadSubjectsOnOpen, open]);
 
@@ -47,7 +51,11 @@ export function useCreateGeneralSubjectPicker({
       return false;
     }
 
-    setSubjects(await fetchSubjectOptions());
+    // The subject exists even if the list refresh fails; still select it.
+    const refreshed = await loadSubjectOptions();
+    if (refreshed) {
+      setSubjects(refreshed);
+    }
     await queryClient.invalidateQueries({
       queryKey: ["command-palette-subjects"],
     });

@@ -13,7 +13,7 @@ const orMock = vi.fn((...conditions) => conditions);
 const sqlMock = vi.fn((strings, ...values) => ({ strings, values }));
 const getDescendantSubjectIdsMock = vi.fn();
 const getAllSubjectsWithPathsForUserMock = vi.fn();
-const ensureFsrsSettingsMock = vi.fn();
+const readFsrsSettingsMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -65,8 +65,8 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/flashcards/fsrs/settings", () => ({
-  ensureFsrsSettings: ensureFsrsSettingsMock,
+vi.mock("@/features/flashcards/fsrs/settings-queries", () => ({
+  readFsrsSettings: readFsrsSettingsMock,
 }));
 
 function mockReviewTrendOnce(value: unknown) {
@@ -88,7 +88,7 @@ describe("getFlashcardReviewActivityForUser", () => {
     selectMock.mockReset();
     getDescendantSubjectIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
     getAllSubjectsWithPathsForUserMock.mockResolvedValue([]);
-    ensureFsrsSettingsMock.mockResolvedValue({
+    readFsrsSettingsMock.mockResolvedValue({
       desiredRetention: "0.9",
       weights: [],
     });
@@ -160,7 +160,7 @@ describe("getFlashcardReviewStateForUser", () => {
       { id: "deck-1", path: "Deck 1" },
       { id: "deck-1-child", path: "Deck 1::Child" },
     ]);
-    ensureFsrsSettingsMock.mockResolvedValue({
+    readFsrsSettingsMock.mockResolvedValue({
       desiredRetention: "0.9",
       weights: [["w", 1]],
     });

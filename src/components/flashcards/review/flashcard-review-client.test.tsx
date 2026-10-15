@@ -41,8 +41,25 @@ vi.mock("@/components/flashcards/dialogs/reset-flashcard-dialog", () => ({
 }));
 
 vi.mock("@/components/flashcards/dialogs/lazy-edit-flashcard-dialog", () => ({
-  LazyEditFlashcardDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="edit-flashcard-dialog" /> : null,
+  LazyEditFlashcardDialog: ({
+    open,
+    flashcard,
+    onUpdated,
+  }: {
+    open: boolean;
+    flashcard: { id: string; subjectId: string | null };
+    onUpdated?: (card: { id: string; subjectId: string }) => void;
+  }) =>
+    open ? (
+      <div data-testid="edit-flashcard-dialog">
+        <button
+          type="button"
+          onClick={() => onUpdated?.({ ...flashcard, subjectId: "deck-9" })}
+        >
+          Save moved card
+        </button>
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/flashcards/review/exam-results-screen", () => ({
@@ -56,12 +73,14 @@ vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
     canUndoReview,
     onGrade,
     onUndoReview,
+    onEditFlashcard,
   }: {
     currentCard?: { id: string } | null;
     isExamMode?: boolean;
     canUndoReview: boolean;
     onGrade: (grade: "good") => void;
     onUndoReview: () => void;
+    onEditFlashcard: () => void;
   }) => (
     <div
       data-current-card-id={currentCard?.id}
@@ -69,6 +88,9 @@ vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
     >
       <button type="button" onClick={() => onGrade("good")}>
         Grade good
+      </button>
+      <button type="button" onClick={onEditFlashcard}>
+        Edit card
       </button>
       {canUndoReview ? (
         <button type="button" onClick={onUndoReview}>
@@ -464,6 +486,75 @@ describe("FlashcardReviewClient", () => {
     expect(
       document.body.querySelector('[data-testid="review-focus-mode"]'),
     ).toBeTruthy();
+  });
+
+  function clickButton(label: string) {
+    Array.from(document.body.querySelectorAll("button"))
+      .find((button) => button.textContent === label)
+      ?.click();
+  }
+
+  async function startReview() {
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="flashcard-review-start-button"]',
+        )
+        ?.click();
+    });
+  }
+
+  it("reports once when refilling the review queue keeps failing", async () => {
+    getFlashcardReviewStateMock.mockRejectedValue(new TypeError("offline"));
+    reviewFlashcardMock.mockResolvedValue({
+      success: true,
+      reviewedCardId: "card-1",
+      reviewLogId: "review-log-1",
+      flashcard: {
+        ...makeCard("card-1"),
+        state: "review",
+        dueAt: new Date("2099-01-01T00:00:00.000Z"),
+      },
+    });
+    await renderReviewClient(
+      makeReviewState(3, [makeCard("card-1")]),
+      "deck-1",
+    );
+    await startReview();
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    await vi.waitFor(() => {
+      expect(getFlashcardReviewStateMock).toHaveBeenCalledTimes(4);
+      expect(toast.error).toHaveBeenCalledWith(
+        "Could not load more cards. Please try again.",
+      );
+    });
+    expect(toast.error).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops a card moved out of scope when the refresh after editing fails", async () => {
+    getFlashcardReviewStateMock.mockRejectedValue(new TypeError("offline"));
+    await renderReviewClient(
+      makeReviewState(2, [makeCard("card-1"), makeCard("card-2")]),
+      "deck-1",
+    );
+    await startReview();
+
+    await act(async () => {
+      clickButton("Edit card");
+    });
+    await act(async () => {
+      clickButton("Save moved card");
+    });
+
+    await vi.waitFor(() => {
+      expect(
+        document.body.querySelector('[data-current-card-id="card-2"]'),
+      ).toBeTruthy();
+    });
   });
 
   async function renderReviewClient(

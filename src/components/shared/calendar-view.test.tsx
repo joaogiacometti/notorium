@@ -6,8 +6,13 @@ import { CalendarView } from "@/components/shared/calendar-view";
 import type { PlanningCalendarData } from "@/features/planning/queries";
 import type { CalendarEvent } from "@/lib/dates/calendar";
 
-const { getCalendarEventsMock } = vi.hoisted(() => ({
+const { getCalendarEventsMock, toastErrorMock } = vi.hoisted(() => ({
   getCalendarEventsMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: toastErrorMock },
 }));
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -161,6 +166,35 @@ describe("CalendarView", () => {
     expect(
       container.querySelector('[data-testid="calendar-grid-loading"]'),
     ).toBe(null);
+  });
+
+  it("stops loading and reports the failure when a month cannot load", async () => {
+    getCalendarEventsMock.mockRejectedValue(new Error("network down"));
+
+    await act(async () => {
+      root.render(
+        <CalendarView
+          initialAnchorIso="2026-04-17"
+          initialSelectedDateIso="2026-04-17"
+          initialEvents={[]}
+        />,
+      );
+    });
+
+    await act(async () => {
+      getMonthNavigationButtons(container)[1]?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    });
+    await flushPromises();
+
+    expect(container.textContent).toContain("May 2026");
+    expect(
+      container.querySelector('[data-testid="calendar-grid-loading"]'),
+    ).toBe(null);
+    expect(toastErrorMock).toHaveBeenCalledWith(
+      "Could not load calendar events. Please try again.",
+    );
   });
 
   it("keeps the latest month visible when requests resolve out of order", async () => {

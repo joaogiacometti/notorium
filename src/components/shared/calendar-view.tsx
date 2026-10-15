@@ -12,6 +12,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { DayDetail, EventDot } from "@/components/shared/calendar-day-detail";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,6 +138,16 @@ export function CalendarView({
         }
 
         setEvents(buildCalendarEvents(data));
+      })
+      .catch(() => {
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+
+        // Drop the previous month's events so they never render under the
+        // new month's dates.
+        setEvents([]);
+        toast.error("Could not load calendar events. Please try again.");
       })
       .finally(() => {
         if (requestIdRef.current === requestId) {

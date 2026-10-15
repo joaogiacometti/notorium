@@ -17,7 +17,6 @@ const queries = vi.hoisted(() => ({
   getNoteByIdForUser: vi.fn(),
   getSearchDataForUser: vi.fn(),
   getRecentSearchDataForUser: vi.fn(),
-  getSubjectListItemsForUser: vi.fn(),
   getAllSubjectsWithPathsForUser: vi.fn(),
   getSubjectDocumentsForUser: vi.fn(),
 }));
@@ -38,7 +37,7 @@ vi.mock("@/features/planning/queries", () => queries);
 vi.mock("@/features/flashcards/queries", () => queries);
 vi.mock("@/features/flashcards/refine/queries", () => queries);
 vi.mock("@/features/flashcard-review/queries", () => queries);
-vi.mock("@/features/flashcards/fsrs/settings", () => queries);
+vi.mock("@/features/flashcards/fsrs/settings-mutations", () => queries);
 vi.mock("@/features/mindmaps/queries", () => queries);
 vi.mock("@/features/notes/queries", () => queries);
 vi.mock("@/features/search/queries", () => queries);
@@ -207,13 +206,13 @@ describe("read route handlers", () => {
     );
   });
 
-  it("exam cards ensures scheduler settings before reading", async () => {
+  it("exam cards reads without writing scheduler settings", async () => {
     await callRoute(
       import("@/app/api/flashcards/exam-cards/route"),
       "/api/flashcards/exam-cards?subjectId=s1",
     );
 
-    expect(queries.ensureFsrsSettings).toHaveBeenCalledWith("user-1");
+    expect(queries.ensureFsrsSettings).not.toHaveBeenCalled();
     expect(queries.getAllFlashcardsForExam).toHaveBeenCalledWith("user-1", {
       subjectId: "s1",
     });
@@ -270,19 +269,17 @@ describe("read route handlers", () => {
     );
   });
 
-  it("recent search, subject list, and subject options read for the user", async () => {
+  it("recent search and subject options read for the user", async () => {
     await callRoute(
       import("@/app/api/search/recent/route"),
       "/api/search/recent",
     );
-    await callRoute(import("@/app/api/subjects/route"), "/api/subjects");
     await callRoute(
       import("@/app/api/subjects/options/route"),
       "/api/subjects/options",
     );
 
     expect(queries.getRecentSearchDataForUser).toHaveBeenCalledWith("user-1");
-    expect(queries.getSubjectListItemsForUser).toHaveBeenCalledWith("user-1");
     expect(queries.getAllSubjectsWithPathsForUser).toHaveBeenCalledWith(
       "user-1",
     );

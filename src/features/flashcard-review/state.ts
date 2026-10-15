@@ -130,3 +130,26 @@ export function shouldRefillFlashcardReviewState(
     state.cards.length <= threshold
   );
 }
+
+/**
+ * Remove cards from the local review state and lower the due/total counts,
+ * for when the server state cannot be re-read (e.g. after a delete or a move
+ * out of scope while offline).
+ *
+ * @example
+ * commitReviewState(removeFlashcardsFromReviewState(state, [deletedId]));
+ */
+export function removeFlashcardsFromReviewState(
+  state: FlashcardReviewState,
+  removedIds: string[],
+): FlashcardReviewState {
+  const removedIdSet = new Set(removedIds);
+  return {
+    ...state,
+    cards: state.cards.filter((card) => !removedIdSet.has(card.id)),
+    summary: {
+      dueCount: Math.max(0, state.summary.dueCount - removedIds.length),
+      totalCount: Math.max(0, state.summary.totalCount - removedIds.length),
+    },
+  };
+}

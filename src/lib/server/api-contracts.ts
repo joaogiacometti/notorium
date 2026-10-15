@@ -158,10 +158,6 @@ export interface FlashcardReviewActivity {
 
 export type SearchSubjectResult = Pick<SubjectEntity, "id" | "name">;
 
-export interface SubjectListItem extends SubjectEntity {
-  notesCount: number;
-}
-
 export type SearchNoteResult = Pick<
   NoteEntity,
   "id" | "title" | "content" | "subjectId"
@@ -240,12 +236,6 @@ export type BulkUpdateAssessmentStatusResult =
       ids: string[];
       status: AssessmentEntity["status"];
       subjectIds: string[];
-    }
-  | ActionErrorResult;
-export type BulkSubjectMutationResult =
-  | {
-      success: true;
-      ids: string[];
     }
   | ActionErrorResult;
 export type MoveSubjectResult =

@@ -81,7 +81,9 @@ Only add optional files when they are needed.
 - Add `"use client"` only when browser state, effects, or event handlers are required.
 - Client-callable server boundaries: Server Actions in `src/app/actions/` for writes, GET Route Handlers in `src/app/api/` for reads. Server Actions run one at a time per client and are POST-only, so never add a read Server Action.
 - Client Components write through Server Actions and read through the typed fetchers in `src/lib/read-api/*` (usually as a React Query `queryFn`). Never `fetch` an `/api` read route directly from a component.
-- Build read routes with `runUserReadRoute` from `src/lib/server/read-route.ts`: approved session, Zod-validated input, `userId`-scoped feature query, `private, no-store` JSON with `Date`s preserved. Keep them thin like Server Actions.
+- Build read routes with `runUserReadRoute` from `src/lib/server/read-route.ts`: approved session, Zod-validated input, `userId`-scoped feature query, `private, no-store` JSON with `Date`s preserved. Keep them thin like Server Actions, and never write from them: call read-only feature functions (for example `readFsrsSettings`, not `ensureFsrsSettings`).
+- Server Components (`src/app/(app)/**`), feature query modules (`queries.ts`, `*-queries.ts`), and every `src/app/api/` route must not import write modules (`mutations`, `*-mutations`, `*-mutation`, `subject-write`). Lint-enforced; a new write endpoint needs an explicit exclusion in `biome.json`. Keep a feature's reads and writes in separate modules so the boundary stays importable.
+- Every client read handles failure: React Query `queryFn`s surface it through query state; imperative calls catch, keep or clear stale UI deliberately, and tell the user (toast or inline retry). Never leave a `fetch*` promise without a rejection path.
 - Server Components read from `src/features/*` directly; prefer passing server-loaded data as props over adding a client read.
 - Do not call Server Actions from Server Components.
 - Keep Server Actions thin: authenticate, validate, delegate, revalidate, return typed result.

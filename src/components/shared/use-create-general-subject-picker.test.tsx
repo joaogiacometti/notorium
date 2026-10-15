@@ -7,6 +7,7 @@ import type { SubjectOption } from "@/lib/server/api-contracts";
 
 const createSubjectMock = vi.fn();
 const getSubjectOptionsMock = vi.fn();
+const { toastErrorMock } = vi.hoisted(() => ({ toastErrorMock: vi.fn() }));
 
 vi.mock("server-only", () => ({}));
 
@@ -19,7 +20,7 @@ vi.mock("@/lib/read-api/subjects", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { error: vi.fn() },
+  toast: { error: toastErrorMock },
 }));
 
 vi.mock("@/lib/server/server-action-errors", () => ({
@@ -135,5 +136,62 @@ describe("useCreateGeneralSubjectPicker", () => {
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ["command-palette-subjects"],
     });
+  });
+
+  it("keeps the initial subjects and reports a failed load on open", async () => {
+    getSubjectOptionsMock.mockRejectedValueOnce(new Error("network down"));
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <Probe
+            initialSubjects={
+              [
+                {
+                  id: "subject-1",
+                  name: "Math",
+                  path: "Math",
+                  kind: "general",
+                },
+              ] as SubjectOption[]
+            }
+            loadSubjectsOnOpen
+            queryClient={queryClient}
+          />
+        </QueryClientProvider>,
+      );
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(
+      container.querySelector('[data-testid="subjects"]')?.textContent,
+    ).toBe("Math");
+    expect(toastErrorMock).toHaveBeenCalledWith("Could not load subjects.");
+  });
+
+  it("still selects the created subject when the list refresh fails", async () => {
+    getSubjectOptionsMock.mockRejectedValueOnce(new Error("network down"));
+    createSubjectMock.mockResolvedValue({
+      success: true,
+      subjectId: "subject-2",
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <Probe queryClient={queryClient} />
+        </QueryClientProvider>,
+      );
+    });
+    await act(async () => {
+      container.querySelector("button")?.click();
+    });
+
+    expect(
+      container.querySelector('[data-testid="selected"]')?.textContent,
+    ).toBe("subject-2");
+    expect(toastErrorMock).toHaveBeenCalledWith("Could not load subjects.");
   });
 });

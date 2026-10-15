@@ -33,7 +33,6 @@ const countTotalSubjectsForUserMock = vi.fn();
 const countChildSubjectsForUserMock = vi.fn();
 const getAllSubjectsWithPathsForUserMock = vi.fn();
 const getSubjectRecordForUserMock = vi.fn();
-const getSubjectRecordsForUserMock = vi.fn();
 const getSubjectTreeRecordForUserMock = vi.fn();
 const getSubjectDepthForUserMock = vi.fn();
 const getSubjectSubtreeHeightForUserMock = vi.fn();
@@ -76,7 +75,6 @@ vi.mock("@/features/subjects/queries", () => ({
   countChildSubjectsForUser: countChildSubjectsForUserMock,
   getAllSubjectsWithPathsForUser: getAllSubjectsWithPathsForUserMock,
   getSubjectRecordForUser: getSubjectRecordForUserMock,
-  getSubjectRecordsForUser: getSubjectRecordsForUserMock,
   getSubjectTreeRecordForUser: getSubjectTreeRecordForUserMock,
   getSubjectDepthForUser: getSubjectDepthForUserMock,
   getSubjectSubtreeHeightForUser: getSubjectSubtreeHeightForUserMock,
@@ -530,62 +528,6 @@ describe("deleteSubjectForUser", () => {
       errorCode: "subjects.notFound",
       errorParams: undefined,
       errorMessage: undefined,
-    });
-    expect(deleteMock).not.toHaveBeenCalled();
-  });
-});
-
-describe("bulkDeleteSubjectsForUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("deletes owned subjects and returns deleted ids", async () => {
-    getSubjectRecordsForUserMock.mockResolvedValueOnce([
-      { id: "subject-1" },
-      { id: "subject-2" },
-    ]);
-    getSubjectAttachmentPathnamesForUserMock
-      .mockResolvedValueOnce(["attachment-1"])
-      .mockResolvedValueOnce(["attachment-2"]);
-    deleteWhereMock.mockResolvedValueOnce([]);
-    cleanupAttachmentPathnamesMock.mockResolvedValueOnce(undefined);
-
-    const { bulkDeleteSubjectsForUser } = await import(
-      "@/features/subjects/mutations"
-    );
-
-    const result = await bulkDeleteSubjectsForUser("user-1", {
-      ids: ["subject-1", "subject-2"],
-    });
-
-    expect(result).toEqual({
-      success: true,
-      ids: ["subject-1", "subject-2"],
-    });
-    expect(deleteMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "subject_id_column" }),
-    );
-    expect(cleanupAttachmentPathnamesMock).toHaveBeenCalledWith("user-1", [
-      "attachment-1",
-      "attachment-2",
-    ]);
-  });
-
-  it("rejects inaccessible subjects", async () => {
-    getSubjectRecordsForUserMock.mockResolvedValueOnce([{ id: "subject-1" }]);
-
-    const { bulkDeleteSubjectsForUser } = await import(
-      "@/features/subjects/mutations"
-    );
-
-    const result = await bulkDeleteSubjectsForUser("user-1", {
-      ids: ["subject-1", "subject-2"],
-    });
-
-    expect(result).toMatchObject({
-      success: false,
-      errorCode: "subjects.notFound",
     });
     expect(deleteMock).not.toHaveBeenCalled();
   });

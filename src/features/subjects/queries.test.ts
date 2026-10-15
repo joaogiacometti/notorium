@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const executeMock = vi.fn();
+const selectWhereMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
-  getDb: () => ({ execute: executeMock }),
+  getDb: () => ({
+    execute: executeMock,
+    select: () => ({ from: () => ({ where: selectWhereMock }) }),
+  }),
 }));
 
 describe("getSubjectAncestors", () => {
@@ -45,5 +49,50 @@ describe("getSubjectSubtreeHeightForUser", () => {
     await expect(
       getSubjectSubtreeHeightForUser("user-1", "subject-1"),
     ).resolves.toBe(3);
+  });
+});
+
+describe("getAllSubjectsWithPathsForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // The recursive CTE returned raw snake_case rows (`user_id`, string
+  // `created_at`) cast to the camelCase SubjectOption contract.
+  it("returns typed camelCase subjects ordered by path", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00.000Z");
+    const root = {
+      id: "root",
+      userId: "user-1",
+      name: "Math",
+      kind: "general",
+      parentSubjectId: null,
+      totalClasses: null,
+      maxMisses: null,
+      createdAt,
+      updatedAt: createdAt,
+    };
+    const child = {
+      ...root,
+      id: "child",
+      name: "Calc",
+      parentSubjectId: "root",
+    };
+    executeMock.mockResolvedValueOnce({
+      rows: [
+        { id: "root", path: "Math" },
+        { id: "child", path: "Math::Calc" },
+      ],
+    });
+    selectWhereMock.mockResolvedValueOnce([child, root]);
+
+    const { getAllSubjectsWithPathsForUser } = await import(
+      "@/features/subjects/queries"
+    );
+
+    await expect(getAllSubjectsWithPathsForUser("user-1")).resolves.toEqual([
+      { ...root, path: "Math" },
+      { ...child, path: "Math::Calc" },
+    ]);
   });
 });

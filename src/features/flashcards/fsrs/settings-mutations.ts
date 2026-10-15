@@ -1,44 +1,36 @@
-import { and, count, eq, isNull, lt, or } from "drizzle-orm";
+// Write side of the FSRS scheduler settings: first-use creation, invalid-value
+// repair, optimization, and preference updates. Only Server Actions, mutation
+// modules, and the cron route may import this (lint-enforced).
+import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcardReviewLog, flashcardSchedulerSettings } from "@/db/schema";
+import { flashcardSchedulerSettings } from "@/db/schema";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
-  isFsrsDesiredRetentionValid,
   isFsrsSchedulerSettingsValid,
-  normalizeFsrsDesiredRetention,
-  parseFsrsWeightsWithValidity,
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
 import {
   minimumOptimizationReviewCount,
   optimizeFsrsParameters,
-  shouldOptimizeFsrsParameters,
 } from "@/features/flashcards/fsrs/optimizer";
+import {
+  type FsrsSettings,
+  getFlashcardReviewLogCount,
+  getFlashcardReviewLogsForOptimization,
+  normalizeSettings,
+  selectFsrsSettingsRow,
+} from "@/features/flashcards/fsrs/settings-queries";
 import {
   releaseUserExpiringLock,
   tryAcquireUserExpiringLock,
 } from "@/lib/rate-limit/user-rate-limit";
-import type {
-  FlashcardOptimizationSettings,
-  FlashcardReviewLogEntity,
-  FlashcardSchedulerSettingsEntity,
-} from "@/lib/server/api-contracts";
+import type { FlashcardSchedulerSettingsEntity } from "@/lib/server/api-contracts";
 import { actionError } from "@/lib/server/server-action-errors";
 
 const fsrsOptimizationLockPrefix = "lock:fsrs-optimize";
 const fsrsOptimizationLockTtlSeconds = 45;
 const automaticOptimizationIntervalDays = 30;
-
-interface FsrsSettings {
-  row: FlashcardSchedulerSettingsEntity;
-  desiredRetention: number;
-  weights: number[];
-  optimizedReviewCount: number;
-  lastOptimizedAt: Date | null;
-  automaticOptimizationEnabled: boolean;
-  shouldResetPersistedValues: boolean;
-}
 
 export interface FsrsOptimizationSuccess {
   success: true;
@@ -54,57 +46,6 @@ export interface AutomaticFsrsOptimizationSummary {
   attempted: number;
   optimized: number;
   skipped: number;
-}
-
-function parseDesiredRetention(value: string | number): number {
-  if (typeof value === "number") {
-    return value;
-  }
-
-  return Number.parseFloat(value);
-}
-
-function normalizeSettings(
-  row: FlashcardSchedulerSettingsEntity,
-): FsrsSettings {
-  const parsedDesiredRetention = parseDesiredRetention(row.desiredRetention);
-  const parsedWeights = parseFsrsWeightsWithValidity(row.weights);
-  const normalizedDesiredRetention = normalizeFsrsDesiredRetention(
-    row.desiredRetention,
-  );
-  const isPersistedDesiredRetentionValid = isFsrsDesiredRetentionValid(
-    parsedDesiredRetention,
-  );
-  const isSchedulerSettingsValid = isFsrsSchedulerSettingsValid({
-    desiredRetention: normalizedDesiredRetention,
-    weights: parsedWeights.weights,
-  });
-  const shouldResetPersistedValues =
-    !isPersistedDesiredRetentionValid ||
-    !parsedWeights.isValid ||
-    !isSchedulerSettingsValid;
-
-  if (shouldResetPersistedValues) {
-    return {
-      row,
-      desiredRetention: getDefaultFsrsDesiredRetention(),
-      weights: getDefaultFsrsWeights(),
-      optimizedReviewCount: 0,
-      lastOptimizedAt: null,
-      automaticOptimizationEnabled: row.automaticOptimizationEnabled ?? false,
-      shouldResetPersistedValues,
-    };
-  }
-
-  return {
-    row,
-    desiredRetention: normalizedDesiredRetention,
-    weights: parsedWeights.weights,
-    optimizedReviewCount: row.optimizedReviewCount,
-    lastOptimizedAt: row.lastOptimizedAt,
-    automaticOptimizationEnabled: row.automaticOptimizationEnabled ?? false,
-    shouldResetPersistedValues,
-  };
 }
 
 async function resetInvalidFsrsSettings(
@@ -127,7 +68,11 @@ async function resetInvalidFsrsSettings(
     );
 }
 
-async function createDefaultSettings(userId: string) {
+// Parallel first-use requests race on the unique userId, so the insert yields
+// to a concurrent winner and reuses its row instead of failing with 23505.
+async function createDefaultSettings(
+  userId: string,
+): Promise<FlashcardSchedulerSettingsEntity> {
   const [created] = await getDb()
     .insert(flashcardSchedulerSettings)
     .values({
@@ -135,23 +80,31 @@ async function createDefaultSettings(userId: string) {
       desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
       weights: serializeFsrsWeights(getDefaultFsrsWeights()),
     })
+    .onConflictDoNothing({ target: flashcardSchedulerSettings.userId })
     .returning();
 
-  if (!created) {
-    throw new Error("Failed to create flashcard scheduler settings");
+  const settings = created ?? (await selectFsrsSettingsRow(userId));
+  if (!settings) {
+    throw new Error(
+      `Failed to create flashcard scheduler settings for user ${userId}: insert conflicted but no row exists`,
+    );
   }
 
-  return created;
+  return settings;
 }
 
+/**
+ * Load the user's scheduler settings for a write, creating the row on first
+ * use and persisting defaults over invalid stored values. Mutations only;
+ * reads use `readFsrsSettings`.
+ *
+ * @example
+ * const settings = await ensureFsrsSettings(userId);
+ */
 export async function ensureFsrsSettings(
   userId: string,
 ): Promise<FsrsSettings> {
-  const [existing] = await getDb()
-    .select()
-    .from(flashcardSchedulerSettings)
-    .where(eq(flashcardSchedulerSettings.userId, userId))
-    .limit(1);
+  const existing = await selectFsrsSettingsRow(userId);
 
   if (existing) {
     const normalized = normalizeSettings(existing);
@@ -166,63 +119,13 @@ export async function ensureFsrsSettings(
   return normalizeSettings(await createDefaultSettings(userId));
 }
 
-export async function getFlashcardReviewLogCount(
-  userId: string,
-): Promise<number> {
-  const result = await getDb()
-    .select({ total: count() })
-    .from(flashcardReviewLog)
-    .where(eq(flashcardReviewLog.userId, userId));
-
-  return result[0]?.total ?? 0;
-}
-
-export async function getFsrsOptimizationSettings(
-  userId: string,
-): Promise<FlashcardOptimizationSettings> {
-  const [settings, reviewCount] = await Promise.all([
-    ensureFsrsSettings(userId),
-    getFlashcardReviewLogCount(userId),
-  ]);
-
-  return {
-    automaticOptimizationEnabled: settings.automaticOptimizationEnabled,
-    lastOptimizedAt: settings.lastOptimizedAt?.toISOString() ?? null,
-    optimizedReviewCount: settings.optimizedReviewCount,
-    reviewCount,
-  };
-}
-
-export async function getFlashcardReviewLogsForOptimization(
-  userId: string,
-): Promise<FlashcardReviewLogEntity[]> {
-  return getDb()
-    .select()
-    .from(flashcardReviewLog)
-    .where(eq(flashcardReviewLog.userId, userId))
-    .orderBy(flashcardReviewLog.reviewedAt);
-}
-
-export async function maybeOptimizeFsrsParameters(
-  userId: string,
-): Promise<void> {
-  const [settings, reviewCount] = await Promise.all([
-    ensureFsrsSettings(userId),
-    getFlashcardReviewLogCount(userId),
-  ]);
-
-  if (
-    !shouldOptimizeFsrsParameters(reviewCount, settings.optimizedReviewCount)
-  ) {
-    return;
-  }
-
-  const result = await runFsrsOptimization(userId, settings, reviewCount);
-  if (!result.success) {
-    return;
-  }
-}
-
+/**
+ * Run the FSRS optimizer on the user's full review history and store the new
+ * weights. Requires the minimum history and the per-user lock.
+ *
+ * @example
+ * const result = await optimizeFsrsParametersForUser(userId);
+ */
 export async function optimizeFsrsParametersForUser(
   userId: string,
 ): Promise<FsrsOptimizationResult> {
@@ -259,18 +162,12 @@ async function runFsrsOptimization(
   try {
     weights = await optimizeFsrsParameters(logs);
   } catch {
-    await releaseUserExpiringLock({
-      prefix: fsrsOptimizationLockPrefix,
-      userId,
-    });
+    await releaseOptimizationLock(userId);
     return actionError("flashcards.fsrsOptimization.unavailable");
   }
 
   if (!weights) {
-    await releaseUserExpiringLock({
-      prefix: fsrsOptimizationLockPrefix,
-      userId,
-    });
+    await releaseOptimizationLock(userId);
     return actionError("flashcards.fsrsOptimization.notEnoughHistory");
   }
 
@@ -280,6 +177,9 @@ async function runFsrsOptimization(
       weights,
     })
   ) {
+    // Every expected failure releases the lock so the user can retry right
+    // away; this path used to hold it until the TTL expired.
+    await releaseOptimizationLock(userId);
     return actionError("flashcards.fsrsOptimization.invalidResult");
   }
 
@@ -305,6 +205,12 @@ async function runFsrsOptimization(
   };
 }
 
+/**
+ * Turn the monthly automatic optimization on or off for the user.
+ *
+ * @example
+ * await updateFsrsOptimizationPreferences(userId, true);
+ */
 export async function updateFsrsOptimizationPreferences(
   userId: string,
   automaticOptimizationEnabled: boolean,
@@ -350,12 +256,28 @@ export async function resetFsrsOptimizationForUser(
     );
 }
 
+// Successful runs leave the lock to expire via its TTL; failures release it
+// early.
+async function releaseOptimizationLock(userId: string): Promise<void> {
+  await releaseUserExpiringLock({
+    prefix: fsrsOptimizationLockPrefix,
+    userId,
+  });
+}
+
 function getAutomaticOptimizationCutoff(now: Date): Date {
   return new Date(
     now.getTime() - automaticOptimizationIntervalDays * 24 * 60 * 60 * 1000,
   );
 }
 
+/**
+ * Cron entry point: optimize every opted-in user whose weights are older than
+ * the automatic interval, one user at a time.
+ *
+ * @example
+ * const summary = await optimizeAutomaticFsrsParameters();
+ */
 export async function optimizeAutomaticFsrsParameters(
   now = new Date(),
 ): Promise<AutomaticFsrsOptimizationSummary> {

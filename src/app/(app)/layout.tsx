@@ -2,10 +2,8 @@ import { cookies } from "next/headers";
 import { AccountSettingsProvider } from "@/components/account/account-settings-provider";
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
-import {
-  getAllSubjectsWithPathsForUser,
-  getSubjectTreeForUser,
-} from "@/features/subjects/queries";
+import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
+import { getSubjectTreeForUser } from "@/features/subjects/tree-queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
 

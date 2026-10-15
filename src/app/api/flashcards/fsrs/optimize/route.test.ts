@@ -7,7 +7,7 @@ vi.mock("@/env", () => ({
   getServerEnv: getServerEnvMock,
 }));
 
-vi.mock("@/features/flashcards/fsrs/settings", () => ({
+vi.mock("@/features/flashcards/fsrs/settings-mutations", () => ({
   optimizeAutomaticFsrsParameters: optimizeAutomaticFsrsParametersMock,
 }));
 

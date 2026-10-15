@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  bulkDeleteSubjectsSchema,
   createSubjectSchema,
   deleteSubjectSchema,
   editSubjectSchema,
@@ -152,17 +151,5 @@ describe("deleteSubjectSchema", () => {
     const result = deleteSubjectSchema.safeParse({ id: "subject-1" });
 
     expect(result.success).toBe(true);
-  });
-});
-
-describe("bulk delete subject schema", () => {
-  it("rejects empty ids", () => {
-    expect(bulkDeleteSubjectsSchema.safeParse({ ids: [] }).success).toBe(false);
-  });
-
-  it("accepts non-empty ids", () => {
-    const input = { ids: ["subject-1"] };
-
-    expect(bulkDeleteSubjectsSchema.safeParse(input).success).toBe(true);
   });
 });

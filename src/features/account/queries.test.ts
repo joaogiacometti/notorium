@@ -12,7 +12,7 @@ const {
   areWorkflowsEnabledMock: vi.fn(),
 }));
 
-vi.mock("@/features/flashcards/fsrs/settings", () => ({
+vi.mock("@/features/flashcards/fsrs/settings-queries", () => ({
   getFsrsOptimizationSettings: getFsrsOptimizationSettingsMock,
 }));
 

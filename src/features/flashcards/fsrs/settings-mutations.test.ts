@@ -9,8 +9,12 @@ const updateMock = vi.fn(() => ({
   set: updateSetMock,
 }));
 const insertReturningMock = vi.fn();
+const insertOnConflictDoNothingMock = vi.fn(() => ({
+  returning: insertReturningMock,
+}));
 const insertValuesMock = vi.fn(() => ({
   returning: insertReturningMock,
+  onConflictDoNothing: insertOnConflictDoNothingMock,
 }));
 const insertMock = vi.fn(() => ({
   values: insertValuesMock,
@@ -22,7 +26,6 @@ const isNullMock = vi.fn((column) => ({ isNull: column }));
 const ltMock = vi.fn((column, value) => ({ column, value }));
 const orMock = vi.fn((...conditions) => conditions);
 const optimizeFsrsParametersMock = vi.fn();
-const shouldOptimizeFsrsParametersMock = vi.fn();
 const tryAcquireUserExpiringLockMock = vi.fn();
 const releaseUserExpiringLockMock = vi.fn().mockResolvedValue(undefined);
 
@@ -60,7 +63,6 @@ vi.mock("@/db/schema", () => ({
 vi.mock("@/features/flashcards/fsrs/optimizer", () => ({
   minimumOptimizationReviewCount: 64,
   optimizeFsrsParameters: optimizeFsrsParametersMock,
-  shouldOptimizeFsrsParameters: shouldOptimizeFsrsParametersMock,
 }));
 
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
@@ -114,7 +116,7 @@ describe("ensureFsrsSettings", () => {
     ]);
 
     const { ensureFsrsSettings } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
     const { getDefaultFsrsDesiredRetention, getDefaultFsrsWeights } =
       await import("@/features/flashcards/fsrs");
@@ -146,7 +148,7 @@ describe("ensureFsrsSettings", () => {
     ]);
 
     const { ensureFsrsSettings } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
     const { getDefaultFsrsDesiredRetention, getDefaultFsrsWeights } =
       await import("@/features/flashcards/fsrs");
@@ -163,39 +165,41 @@ describe("ensureFsrsSettings", () => {
   });
 });
 
-describe("getFlashcardReviewLogsForOptimization", () => {
+describe("ensureFsrsSettings concurrent first use", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
   });
 
-  it("loads the full user review history without applying a limit", async () => {
-    const orderBy = vi.fn().mockResolvedValue([]);
-    selectMock.mockImplementationOnce(() => ({
-      from: () => ({
-        where: () => ({
-          orderBy,
-        }),
-      }),
-    }));
+  // Parallel read routes made two first-use calls race on the unique userId;
+  // the loser used to throw a 23505 and answer 500.
+  it("re-reads the row a concurrent request inserted instead of throwing", async () => {
+    mockSelectLimitOnce([]);
+    insertReturningMock.mockResolvedValueOnce([]);
+    mockSelectLimitOnce([
+      {
+        id: "settings-from-other-request",
+        userId: "user-1",
+        desiredRetention: "0.900",
+        weights: null,
+        optimizedReviewCount: 0,
+      },
+    ]);
 
-    const { getFlashcardReviewLogsForOptimization } = await import(
-      "@/features/flashcards/fsrs/settings"
+    const { ensureFsrsSettings } = await import(
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
-    await getFlashcardReviewLogsForOptimization("user-1");
+    const result = await ensureFsrsSettings("user-1");
 
-    expect(eqMock).toHaveBeenCalledWith(
-      "flashcard_review_log_user_id_column",
-      "user-1",
-    );
-    expect(orderBy).toHaveBeenCalledWith(
-      "flashcard_review_log_reviewed_at_column",
-    );
+    expect(insertOnConflictDoNothingMock).toHaveBeenCalledWith({
+      target: "flashcard_scheduler_settings_user_id_column",
+    });
+    expect(result.row.id).toBe("settings-from-other-request");
   });
 });
 
-describe("maybeOptimizeFsrsParameters", () => {
+describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -212,14 +216,13 @@ describe("maybeOptimizeFsrsParameters", () => {
       },
     ]);
     mockSelectWhereOnce([{ total: 96 }]);
-    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(true);
     tryAcquireUserExpiringLockMock.mockResolvedValueOnce(false);
 
-    const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs/settings"
+    const { optimizeFsrsParametersForUser } = await import(
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
-    await maybeOptimizeFsrsParameters("user-1");
+    await optimizeFsrsParametersForUser("user-1");
 
     expect(optimizeFsrsParametersMock).not.toHaveBeenCalled();
     expect(updateMock).not.toHaveBeenCalled();
@@ -249,15 +252,14 @@ describe("maybeOptimizeFsrsParameters", () => {
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
-    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(true);
     tryAcquireUserExpiringLockMock.mockResolvedValueOnce(true);
     optimizeFsrsParametersMock.mockResolvedValueOnce(optimizedWeights);
 
-    const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs/settings"
+    const { optimizeFsrsParametersForUser } = await import(
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
-    await maybeOptimizeFsrsParameters("user-1");
+    await optimizeFsrsParametersForUser("user-1");
 
     expect(optimizeFsrsParametersMock).toHaveBeenCalled();
     expect(updateSetMock).toHaveBeenCalledWith(
@@ -268,28 +270,6 @@ describe("maybeOptimizeFsrsParameters", () => {
       }),
     );
     expect(updateWhereMock).toHaveBeenCalled();
-  });
-
-  it("uses reset optimizedReviewCount immediately after invalid settings are normalized", async () => {
-    mockSelectLimitOnce([
-      {
-        id: "settings-1",
-        userId: "user-1",
-        desiredRetention: "Infinity",
-        weights: "{bad json",
-        optimizedReviewCount: 128,
-      },
-    ]);
-    mockSelectWhereOnce([{ total: 96 }]);
-    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(false);
-
-    const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs/settings"
-    );
-
-    await maybeOptimizeFsrsParameters("user-1");
-
-    expect(shouldOptimizeFsrsParametersMock).toHaveBeenCalledWith(96, 0);
   });
 
   it("skips optimizer results that fail scheduler validation", async () => {
@@ -311,18 +291,25 @@ describe("maybeOptimizeFsrsParameters", () => {
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
-    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(true);
     tryAcquireUserExpiringLockMock.mockResolvedValueOnce(true);
     optimizeFsrsParametersMock.mockResolvedValueOnce([1, 2, 3]);
 
-    const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs/settings"
+    const { optimizeFsrsParametersForUser } = await import(
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
-    await maybeOptimizeFsrsParameters("user-1");
+    const result = await optimizeFsrsParametersForUser("user-1");
 
     expect(optimizeFsrsParametersMock).toHaveBeenCalled();
     expect(updateSetMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      errorCode: "flashcards.fsrsOptimization.invalidResult",
+    });
+    // Failure paths release the lock so the user can retry immediately.
+    expect(releaseUserExpiringLockMock).toHaveBeenCalledWith({
+      prefix: "lock:fsrs-optimize",
+      userId: "user-1",
+    });
   });
 
   it("skips structurally valid optimizer results that are behaviorally unstable", async () => {
@@ -350,18 +337,20 @@ describe("maybeOptimizeFsrsParameters", () => {
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
-    shouldOptimizeFsrsParametersMock.mockReturnValueOnce(true);
     tryAcquireUserExpiringLockMock.mockResolvedValueOnce(true);
     optimizeFsrsParametersMock.mockResolvedValueOnce(unstableWeights);
 
-    const { maybeOptimizeFsrsParameters } = await import(
-      "@/features/flashcards/fsrs/settings"
+    const { optimizeFsrsParametersForUser } = await import(
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
-    await maybeOptimizeFsrsParameters("user-1");
+    const result = await optimizeFsrsParametersForUser("user-1");
 
     expect(optimizeFsrsParametersMock).toHaveBeenCalled();
     expect(updateSetMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      errorCode: "flashcards.fsrsOptimization.invalidResult",
+    });
   });
 });
 
@@ -401,7 +390,7 @@ describe("optimizeFsrsParametersForUser", () => {
     optimizeFsrsParametersMock.mockResolvedValueOnce(optimizedWeights);
 
     const { optimizeFsrsParametersForUser } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
     const result = await optimizeFsrsParametersForUser("user-1");
@@ -411,7 +400,6 @@ describe("optimizeFsrsParametersForUser", () => {
       optimizedReviewCount: 97,
       lastOptimizedAt: expect.any(Date),
     });
-    expect(shouldOptimizeFsrsParametersMock).not.toHaveBeenCalled();
     expect(updateSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
         weights: JSON.stringify(optimizedWeights),
@@ -438,7 +426,7 @@ describe("optimizeFsrsParametersForUser", () => {
     mockSelectWhereOnce([{ total: 12 }]);
 
     const { optimizeFsrsParametersForUser } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
     const result = await optimizeFsrsParametersForUser("user-1");
@@ -484,7 +472,7 @@ describe("optimizeFsrsParametersForUser", () => {
     );
 
     const { optimizeFsrsParametersForUser } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
     const result = await optimizeFsrsParametersForUser("user-1");
@@ -523,7 +511,7 @@ describe("updateFsrsOptimizationPreferences", () => {
     ]);
 
     const { updateFsrsOptimizationPreferences } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
     await updateFsrsOptimizationPreferences("user-1", true);
@@ -561,7 +549,7 @@ describe("resetFsrsOptimizationForUser", () => {
     ]);
 
     const { resetFsrsOptimizationForUser } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
     await resetFsrsOptimizationForUser("user-1");
@@ -621,7 +609,7 @@ describe("optimizeAutomaticFsrsParameters", () => {
     optimizeFsrsParametersMock.mockResolvedValueOnce(optimizedWeights);
 
     const { optimizeAutomaticFsrsParameters } = await import(
-      "@/features/flashcards/fsrs/settings"
+      "@/features/flashcards/fsrs/settings-mutations"
     );
 
     const result = await optimizeAutomaticFsrsParameters(

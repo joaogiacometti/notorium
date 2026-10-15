@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/flashcards/dialogs/edit-flashcard-dialog";
 import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
+import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -279,6 +281,25 @@ describe("paste-image loading flows", () => {
         root.render(<div />);
       });
     }
+  });
+
+  it("reports a failed subject load instead of leaving it unhandled", async () => {
+    vi.mocked(fetchSubjectOptions).mockRejectedValueOnce(
+      new Error("network down"),
+    );
+
+    await act(async () => {
+      root.render(
+        <EditFlashcardDialog
+          open
+          onOpenChange={() => {}}
+          flashcard={flashcard}
+          aiEnabled
+        />,
+      );
+    });
+
+    expect(toast.error).toHaveBeenCalledWith("Could not load subjects.");
   });
 
   it("renders edit discard confirmation outside the embedded form", async () => {

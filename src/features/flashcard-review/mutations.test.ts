@@ -93,7 +93,7 @@ vi.mock("@/features/flashcards/fsrs", () => ({
   scheduleFlashcardReview: scheduleFlashcardReviewMock,
 }));
 
-vi.mock("@/features/flashcards/fsrs/settings", () => ({
+vi.mock("@/features/flashcards/fsrs/settings-mutations", () => ({
   ensureFsrsSettings: ensureFsrsSettingsMock,
 }));
 

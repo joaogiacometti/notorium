@@ -17,7 +17,7 @@ import {
   LEARN_AHEAD_WINDOW_MS,
 } from "@/features/flashcard-review/constants";
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
-import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings";
+import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
 import {
   getAllSubjectsWithPathsForUser,
   getDescendantSubjectIds,
@@ -199,7 +199,7 @@ export async function getFlashcardReviewStateForUser(
   userId: string,
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewState> {
-  const settings = await ensureFsrsSettings(userId);
+  const settings = await readFsrsSettings(userId);
   const now = new Date();
   const [cards, summary] = await Promise.all([
     getDueFlashcardsForUser(userId, now, options),

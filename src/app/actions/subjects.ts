@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  bulkDeleteSubjectsForUser,
   createSubjectForUser,
   deleteSubjectForUser,
   editSubjectForUser,
@@ -10,8 +9,6 @@ import {
   type SubjectMutationResult,
 } from "@/features/subjects/mutations";
 import {
-  type BulkDeleteSubjectsForm,
-  bulkDeleteSubjectsSchema,
   type CreateSubjectForm,
   createSubjectSchema,
   type DeleteSubjectForm,
@@ -23,7 +20,6 @@ import {
 } from "@/features/subjects/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
-  BulkSubjectMutationResult,
   MoveSubjectResult,
   MutationResult,
 } from "@/lib/server/api-contracts";
@@ -92,24 +88,6 @@ export async function deleteSubject(
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => deleteSubjectForUser(userId, parsedData),
-  );
-
-  if (result.success) {
-    revalidatePath("/", "layout");
-  }
-
-  return result;
-}
-
-export async function bulkDeleteSubjects(
-  data: BulkDeleteSubjectsForm,
-): Promise<BulkSubjectMutationResult> {
-  const result = await runValidatedUserAction(
-    "subjects.bulkDeleteSubjects",
-    bulkDeleteSubjectsSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => bulkDeleteSubjectsForUser(userId, parsedData),
   );
 
   if (result.success) {

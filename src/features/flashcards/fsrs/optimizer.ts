@@ -1,7 +1,6 @@
 import type { FlashcardReviewLogEntity } from "@/lib/server/api-contracts";
 
 export const minimumOptimizationReviewCount = 64;
-const optimizationReviewBatchSize = 32;
 
 type FsrsBindingReviewConstructor = new (
   rating: number,
@@ -111,16 +110,6 @@ async function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
   }
 
   return trainingSet;
-}
-
-export function shouldOptimizeFsrsParameters(
-  reviewCount: number,
-  optimizedReviewCount: number,
-): boolean {
-  return (
-    reviewCount >= minimumOptimizationReviewCount &&
-    reviewCount - optimizedReviewCount >= optimizationReviewBatchSize
-  );
 }
 
 export async function optimizeFsrsParameters(
