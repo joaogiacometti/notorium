@@ -70,6 +70,7 @@ vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
   FocusModeOverlay: ({
     currentCard,
     isExamMode,
+    isLoadingMoreCards,
     canUndoReview,
     onGrade,
     onUndoReview,
@@ -77,6 +78,7 @@ vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
   }: {
     currentCard?: { id: string } | null;
     isExamMode?: boolean;
+    isLoadingMoreCards?: boolean;
     canUndoReview: boolean;
     onGrade: (grade: "good") => void;
     onUndoReview: () => void;
@@ -84,6 +86,7 @@ vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
   }) => (
     <div
       data-current-card-id={currentCard?.id}
+      data-loading-more-cards={isLoadingMoreCards ? "true" : "false"}
       data-testid={isExamMode ? "exam-focus-mode" : "review-focus-mode"}
     >
       <button type="button" onClick={() => onGrade("good")}>
@@ -554,6 +557,212 @@ describe("FlashcardReviewClient", () => {
       expect(
         document.body.querySelector('[data-current-card-id="card-2"]'),
       ).toBeTruthy();
+    });
+  });
+
+  function makeReviewCard(id: string): FlashcardReviewEntity {
+    return {
+      ...makeCard(id),
+      state: "review",
+      stability: "10.0000",
+      difficulty: "5.0000",
+      intervalDays: 10,
+      lastReviewedAt: new Date("2026-02-25T11:00:00.000Z"),
+      reviewCount: 3,
+    };
+  }
+
+  function currentCardId(): string | undefined {
+    return (
+      document.body
+        .querySelector("[data-current-card-id]")
+        ?.getAttribute("data-current-card-id") ?? undefined
+    );
+  }
+
+  it("shows the next card before the grade is saved and offers undo once it is", async () => {
+    const save = createDeferred<Awaited<ReturnType<typeof reviewFlashcard>>>();
+    reviewFlashcardMock.mockReturnValue(save.promise);
+    await renderReviewClient(
+      makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
+    );
+    await startReview();
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    expect(currentCardId()).toBe("card-2");
+    expect(document.body.textContent).not.toContain("Undo last review");
+
+    await act(async () => {
+      save.resolve({
+        success: true,
+        reviewedCardId: "card-1",
+        reviewLogId: "review-log-1",
+        flashcard: {
+          ...makeReviewCard("card-1"),
+          dueAt: new Date("2099-01-01T00:00:00.000Z"),
+          reviewCount: 4,
+        },
+      });
+      await save.promise;
+    });
+
+    expect(currentCardId()).toBe("card-2");
+    expect(document.body.textContent).toContain("Undo last review");
+  });
+
+  it("puts the card back in front with a toast when the grade save fails", async () => {
+    reviewFlashcardMock.mockResolvedValue({
+      success: false,
+      errorCode: "flashcards.review.unavailable",
+    });
+    await renderReviewClient(
+      makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
+    );
+    await startReview();
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    await vi.waitFor(() => {
+      expect(currentCardId()).toBe("card-1");
+    });
+    expect(toast.error).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not bring back a graded card from a refill fetched before its save landed", async () => {
+    const save = createDeferred<Awaited<ReturnType<typeof reviewFlashcard>>>();
+    reviewFlashcardMock.mockReturnValue(save.promise);
+    getFlashcardReviewStateMock.mockResolvedValue(
+      makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
+    );
+    await renderReviewClient(makeReviewState(2, [makeReviewCard("card-1")]));
+    await startReview();
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    await vi.waitFor(() => {
+      expect(getFlashcardReviewStateMock).toHaveBeenCalledTimes(1);
+      expect(currentCardId()).toBe("card-2");
+    });
+  });
+
+  function isLoadingMoreCards(): boolean {
+    return (
+      document.body
+        .querySelector("[data-loading-more-cards]")
+        ?.getAttribute("data-loading-more-cards") === "true"
+    );
+  }
+
+  function dispatchBeforeUnload(): Event {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event;
+  }
+
+  it("asks before leaving the page while a grade is still saving", async () => {
+    const save = createDeferred<Awaited<ReturnType<typeof reviewFlashcard>>>();
+    reviewFlashcardMock.mockReturnValue(save.promise);
+    await renderReviewClient(
+      makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
+    );
+    await startReview();
+
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(false);
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(true);
+
+    await act(async () => {
+      save.resolve({
+        success: true,
+        reviewedCardId: "card-1",
+        reviewLogId: "review-log-1",
+        flashcard: makeReviewCard("card-1"),
+      });
+      await save.promise;
+    });
+
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(false);
+  });
+
+  it("shows a loading state instead of caught up while more due cards are loading", async () => {
+    const refill = createDeferred<FlashcardReviewState>();
+    reviewFlashcardMock.mockResolvedValue({
+      success: true,
+      reviewedCardId: "card-1",
+      reviewLogId: "review-log-1",
+      flashcard: {
+        ...makeReviewCard("card-1"),
+        dueAt: new Date("2099-01-01T00:00:00.000Z"),
+      },
+    });
+    getFlashcardReviewStateMock.mockReturnValue(refill.promise);
+    await renderReviewClient(makeReviewState(2, [makeReviewCard("card-1")]));
+    await startReview();
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    expect(currentCardId()).toBeUndefined();
+    expect(isLoadingMoreCards()).toBe(true);
+
+    await act(async () => {
+      refill.resolve(makeReviewState(1, [makeReviewCard("card-2")]));
+      await refill.promise;
+    });
+
+    expect(currentCardId()).toBe("card-2");
+    expect(isLoadingMoreCards()).toBe(false);
+  });
+
+  it("loads the remaining due cards once queued grades finish saving", async () => {
+    const save = createDeferred<Awaited<ReturnType<typeof reviewFlashcard>>>();
+    reviewFlashcardMock.mockReturnValue(save.promise);
+    // Before the save lands the server still lists card-1 first; afterwards
+    // the batch moves on to card-2.
+    let saveLanded = false;
+    getFlashcardReviewStateMock.mockImplementation(async () =>
+      saveLanded
+        ? makeReviewState(1, [makeReviewCard("card-2")])
+        : makeReviewState(2, [makeReviewCard("card-1")]),
+    );
+    await renderReviewClient(makeReviewState(2, [makeReviewCard("card-1")]));
+    await startReview();
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    expect(currentCardId()).toBeUndefined();
+    expect(isLoadingMoreCards()).toBe(true);
+
+    await act(async () => {
+      saveLanded = true;
+      save.resolve({
+        success: true,
+        reviewedCardId: "card-1",
+        reviewLogId: "review-log-1",
+        flashcard: {
+          ...makeReviewCard("card-1"),
+          dueAt: new Date("2099-01-01T00:00:00.000Z"),
+        },
+      });
+      await save.promise;
+    });
+
+    await vi.waitFor(() => {
+      expect(currentCardId()).toBe("card-2");
     });
   });
 

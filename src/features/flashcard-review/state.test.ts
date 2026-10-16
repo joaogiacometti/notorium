@@ -5,9 +5,13 @@ import {
 } from "@/features/flashcard-review/constants";
 import {
   applyReviewedFlashcardToState,
+  excludeFlashcardsFromFetchedState,
+  gradeFlashcardLocally,
   mergeFlashcardReviewStates,
   removeFlashcardsFromReviewState,
   replaceFlashcardInReviewState,
+  restoreFlashcardToFront,
+  scheduleGradeAt,
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
@@ -467,5 +471,109 @@ describe("removeFlashcardsFromReviewState", () => {
     expect(next.cards.map((card) => card.id)).toEqual(["b"]);
     expect(next.summary).toEqual({ dueCount: 0, totalCount: 3 });
     expect(next.scheduler).toBe(scheduler);
+  });
+});
+
+describe("scheduleGradeAt", () => {
+  it("schedules a learn-ahead review from the card's due time", () => {
+    const dueAt = new Date("2026-03-07T12:10:00.000Z");
+    const card = makeCard("a", dueAt, {
+      state: "learning",
+      stability: "0.2120",
+      difficulty: "6.4133",
+      learningStep: 1,
+      lastReviewedAt: new Date("2026-03-07T12:00:00.000Z"),
+      reviewCount: 1,
+    });
+
+    const early = scheduleGradeAt({
+      card,
+      grade: "good",
+      scheduler,
+      reviewedAt: new Date("2026-03-07T12:02:00.000Z"),
+    });
+    const onTime = scheduleGradeAt({
+      card,
+      grade: "good",
+      scheduler,
+      reviewedAt: dueAt,
+    });
+
+    expect(early.dueAt).toEqual(onTime.dueAt);
+  });
+});
+
+describe("gradeFlashcardLocally", () => {
+  it("returns the card with its next schedule and the actual review time", () => {
+    const reviewedAt = new Date("2026-03-07T12:00:00.000Z");
+    const card = makeCard("a", new Date("2026-03-07T11:00:00.000Z"), {
+      subjectName: "Biology",
+      subjectPath: "Science::Biology",
+    });
+
+    const graded = gradeFlashcardLocally(card, "good", scheduler, reviewedAt);
+    const expected = scheduleGradeAt({
+      card,
+      grade: "good",
+      scheduler,
+      reviewedAt,
+    });
+
+    expect(graded).toMatchObject({
+      id: "a",
+      front: card.front,
+      subjectPath: "Science::Biology",
+      state: expected.state,
+      dueAt: expected.dueAt,
+      reviewCount: 1,
+      lastReviewedAt: reviewedAt,
+    });
+  });
+});
+
+describe("restoreFlashcardToFront", () => {
+  const now = new Date("2026-03-07T12:00:00.000Z");
+
+  it("puts a removed card back first and restores the due count", () => {
+    const original = makeCard("a", now);
+    const state = makeState([makeCard("b", now)], 1);
+
+    const next = restoreFlashcardToFront(state, original);
+
+    expect(next.cards.map((card) => card.id)).toEqual(["a", "b"]);
+    expect(next.cards[0]).toBe(original);
+    expect(next.summary.dueCount).toBe(2);
+  });
+
+  it("replaces a requeued copy without counting it twice", () => {
+    const original = makeCard("a", now);
+    const requeued = makeCard("a", new Date("2026-03-07T12:10:00.000Z"), {
+      state: "learning",
+    });
+    const state = makeState([makeCard("b", now), requeued], 2);
+
+    const next = restoreFlashcardToFront(state, original);
+
+    expect(next.cards).toEqual([original, makeCard("b", now)]);
+    expect(next.summary.dueCount).toBe(2);
+  });
+});
+
+describe("excludeFlashcardsFromFetchedState", () => {
+  it("drops excluded cards and lowers only the due count", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const state: FlashcardReviewState = {
+      cards: [makeCard("a", now), makeCard("b", now)],
+      summary: { dueCount: 2, totalCount: 9 },
+      scheduler,
+    };
+
+    const next = excludeFlashcardsFromFetchedState(
+      state,
+      new Set(["a", "missing"]),
+    );
+
+    expect(next.cards.map((card) => card.id)).toEqual(["b"]);
+    expect(next.summary).toEqual({ dueCount: 1, totalCount: 9 });
   });
 });

@@ -37,10 +37,10 @@ interface FocusModeOverlayProps {
   progress: number;
   revealed: boolean;
   isPending: boolean;
-  pendingGrade: ReviewGrade | null;
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
   canUndoReview: boolean;
+  isLoadingMoreCards?: boolean;
   onUndoReview: () => void;
   onExitFocusMode: () => void;
   onEditFlashcard: () => void;
@@ -55,12 +55,13 @@ interface FocusModeOverlayProps {
  * Routes the focus overlay to the due-review or exam session presentation.
  *
  * @example
- * <FocusModeOverlay currentCard={card} reviewState={state} subjects={subjects} progress={0} revealed={false} isPending={false} pendingGrade={null} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
+ * <FocusModeOverlay currentCard={card} reviewState={state} subjects={subjects} progress={0} revealed={false} isPending={false} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
  */
 export function FocusModeOverlay(props: Readonly<FocusModeOverlayProps>) {
   if (!props.currentCard) {
     return (
       <ReviewSessionEmptyState
+        isLoadingMoreCards={props.isLoadingMoreCards ?? false}
         isPending={props.isPending}
         canUndoReview={props.canUndoReview}
         onUndoReview={props.onUndoReview}
@@ -89,7 +90,6 @@ function DueReviewFocusModeOverlay({
   progress,
   revealed,
   isPending,
-  pendingGrade,
   onReveal,
   onGrade,
   onExitFocusMode,
@@ -102,7 +102,6 @@ function DueReviewFocusModeOverlay({
   const footer = getSessionFooter({
     revealed,
     isPending,
-    pendingGrade,
     onReveal,
     onGrade,
   });
@@ -140,7 +139,6 @@ function ExamFocusModeOverlay({
   progress,
   revealed,
   isPending,
-  pendingGrade,
   onReveal,
   onGrade,
   onExitFocusMode,
@@ -154,7 +152,6 @@ function ExamFocusModeOverlay({
   const footer = getSessionFooter({
     revealed,
     isPending,
-    pendingGrade,
     onReveal,
     onGrade,
   });
@@ -280,7 +277,6 @@ function FocusModeCardActionsPendingButton() {
 interface SessionFooterParams {
   revealed: boolean;
   isPending: boolean;
-  pendingGrade: ReviewGrade | null;
   onReveal: () => void;
   onGrade: (grade: ReviewGrade) => void;
 }
@@ -288,7 +284,6 @@ interface SessionFooterParams {
 function getSessionFooter({
   revealed,
   isPending,
-  pendingGrade,
   onReveal,
   onGrade,
 }: Readonly<SessionFooterParams>) {
@@ -308,17 +303,14 @@ function getSessionFooter({
   return (
     <div className="w-full">
       <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
-        <ReviewGradeButtons
-          pendingGrade={pendingGrade}
-          isPending={isPending}
-          onGrade={onGrade}
-        />
+        <ReviewGradeButtons isPending={isPending} onGrade={onGrade} />
       </div>
     </div>
   );
 }
 
 interface ReviewSessionEmptyStateProps {
+  isLoadingMoreCards: boolean;
   isPending: boolean;
   canUndoReview: boolean;
   onUndoReview: () => void;
@@ -326,6 +318,7 @@ interface ReviewSessionEmptyStateProps {
 }
 
 function ReviewSessionEmptyState({
+  isLoadingMoreCards,
   isPending,
   canUndoReview,
   onUndoReview,
@@ -343,15 +336,27 @@ function ReviewSessionEmptyState({
           />
         </div>
       ) : null}
-      <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-        <h1 className="mb-2 text-2xl font-semibold tracking-tight">
-          All caught up
-        </h1>
-        <p className="mb-8 max-w-sm text-muted-foreground">
-          No due flashcards in this scope right now.
-        </p>
-        <Button onClick={onExit}>Exit focus mode</Button>
-      </div>
+      {isLoadingMoreCards ? (
+        <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+          <Loader2 className="mb-3 size-6 animate-spin text-muted-foreground" />
+          <p className="mb-8 max-w-sm text-muted-foreground">
+            Loading more cards…
+          </p>
+          <Button variant="outline" onClick={onExit}>
+            Exit focus mode
+          </Button>
+        </div>
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight">
+            All caught up
+          </h1>
+          <p className="mb-8 max-w-sm text-muted-foreground">
+            No due flashcards in this scope right now.
+          </p>
+          <Button onClick={onExit}>Exit focus mode</Button>
+        </div>
+      )}
     </div>
   );
 }

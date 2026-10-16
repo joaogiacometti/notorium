@@ -134,6 +134,24 @@ describe("FocusModeOverlay", () => {
     expect(baseHandlers.onUndoReview).toHaveBeenCalledOnce();
   });
 
+  it("shows loading instead of caught up while more due cards are loading", async () => {
+    await renderFocusModeOverlay({
+      currentCard: null,
+      isLoadingMoreCards: true,
+    });
+
+    expect(document.body.textContent).toContain("Loading more cards");
+    expect(document.body.textContent).not.toContain("All caught up");
+
+    await act(async () => {
+      Array.from(document.body.querySelectorAll("button"))
+        .find((button) => button.textContent === "Exit focus mode")
+        ?.click();
+    });
+
+    expect(baseHandlers.onExitFocusMode).toHaveBeenCalledOnce();
+  });
+
   it("keeps the card actions menu disabled while review actions are pending", async () => {
     await renderFocusModeOverlay({ isPending: true });
 
@@ -223,7 +241,6 @@ describe("FocusModeOverlay", () => {
           revealed={false}
           isPending={false}
           canUndoReview={false}
-          pendingGrade={null}
           {...baseHandlers}
           {...overrides}
         />,

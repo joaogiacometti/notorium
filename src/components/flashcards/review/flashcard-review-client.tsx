@@ -64,8 +64,8 @@ export function FlashcardReviewClient({
     isExamMode,
     currentCard,
     isPending,
-    pendingGrade,
     canUndoReview,
+    isLoadingMoreCards,
     handleGrade,
     handleUndoReview,
     handleFlashcardUpdated,
@@ -157,10 +157,10 @@ export function FlashcardReviewClient({
           progress={progress}
           revealed={revealed}
           isPending={isPending}
-          pendingGrade={pendingGrade}
           onReveal={() => setRevealed(true)}
           onGrade={handleGrade}
           canUndoReview={canUndoReview && !isExamMode}
+          isLoadingMoreCards={isLoadingMoreCards}
           onUndoReview={handleUndoReview}
           onExitFocusMode={
             isExamMode ? handleExitExamMode : () => setIsFocusMode(false)

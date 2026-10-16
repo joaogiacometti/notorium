@@ -10,9 +10,13 @@ const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const lteMock = vi.fn((column, value) => ({ column, operator: "lte", value }));
 const orMock = vi.fn((...conditions) => conditions);
-const sqlMock = vi.fn((strings, ...values) => ({ strings, values }));
+const sqlMock = vi.fn((strings, ...values) => ({
+  strings,
+  values,
+  mapWith: () => ({ strings, values }),
+}));
 const getDescendantSubjectIdsMock = vi.fn();
-const getAllSubjectsWithPathsForUserMock = vi.fn();
+const getSubjectPathRowsForUserMock = vi.fn();
 const readFsrsSettingsMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
@@ -35,7 +39,7 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getAllSubjectsWithPathsForUser: getAllSubjectsWithPathsForUserMock,
+  getSubjectPathRowsForUser: getSubjectPathRowsForUserMock,
   getDescendantSubjectIds: getDescendantSubjectIdsMock,
 }));
 
@@ -87,7 +91,7 @@ describe("getFlashcardReviewActivityForUser", () => {
     vi.clearAllMocks();
     selectMock.mockReset();
     getDescendantSubjectIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
-    getAllSubjectsWithPathsForUserMock.mockResolvedValue([]);
+    getSubjectPathRowsForUserMock.mockResolvedValue([]);
     readFsrsSettingsMock.mockResolvedValue({
       desiredRetention: "0.9",
       weights: [],
@@ -156,7 +160,7 @@ describe("getFlashcardReviewStateForUser", () => {
     vi.clearAllMocks();
     selectMock.mockReset();
     getDescendantSubjectIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
-    getAllSubjectsWithPathsForUserMock.mockResolvedValue([
+    getSubjectPathRowsForUserMock.mockResolvedValue([
       { id: "deck-1", path: "Deck 1" },
       { id: "deck-1-child", path: "Deck 1::Child" },
     ]);
@@ -171,7 +175,7 @@ describe("getFlashcardReviewStateForUser", () => {
       if ("total" in selection) {
         return {
           from: () => ({
-            where: vi.fn().mockResolvedValue([{ total: 1 }]),
+            where: vi.fn().mockResolvedValue([{ total: 3, due: 1 }]),
           }),
         };
       }
@@ -220,8 +224,9 @@ describe("getFlashcardReviewStateForUser", () => {
 
     expect(result.summary).toEqual({
       dueCount: 1,
-      totalCount: 1,
+      totalCount: 3,
     });
+    expect(selectMock).toHaveBeenCalledTimes(2);
     expect(result.cards).toHaveLength(1);
     expect(result.cards[0]).toMatchObject({
       id: "flashcard-1",
@@ -242,5 +247,36 @@ describe("getFlashcardReviewStateForUser", () => {
       "deck-1",
       "deck-1-child",
     ]);
+    expect(getDescendantSubjectIdsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("bounds the due filter by the learn-ahead cutoff so the dueAt index range applies", async () => {
+    const now = new Date("2026-04-12T14:00:00.000Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    selectMock.mockImplementation(() => ({
+      from: () => ({
+        where: vi.fn().mockResolvedValue([{ total: 0, due: 0 }]),
+        innerJoin: () => ({
+          where: () => ({
+            orderBy: () => ({ limit: vi.fn().mockResolvedValue([]) }),
+          }),
+        }),
+      }),
+    }));
+
+    const { getFlashcardReviewStateForUser } = await import("./queries");
+    await getFlashcardReviewStateForUser("user-1");
+
+    expect(lteMock).toHaveBeenCalledWith(
+      "flashcard_due_at_column",
+      new Date("2026-04-12T14:20:00.000Z"),
+    );
+    expect(lteMock).toHaveBeenCalledWith("flashcard_due_at_column", now);
+    expect(inArrayMock).toHaveBeenCalledWith("flashcard_state_column", [
+      "learning",
+      "relearning",
+    ]);
+    vi.useRealTimers();
   });
 });

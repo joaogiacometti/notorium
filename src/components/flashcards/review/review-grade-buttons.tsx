@@ -1,17 +1,10 @@
 "use client";
 
-import {
-  CheckCircle2,
-  CircleAlert,
-  Gauge,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
+import { CheckCircle2, CircleAlert, Gauge, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { gradeLabels, type ReviewGrade } from "@/features/flashcards/fsrs";
 
 interface ReviewGradeButtonsProps {
-  pendingGrade: ReviewGrade | null;
   isPending: boolean;
   onGrade: (grade: ReviewGrade) => void;
 }
@@ -37,7 +30,6 @@ const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
   easy: Sparkles,
 };
 export function ReviewGradeButtons({
-  pendingGrade,
   isPending,
   onGrade,
 }: Readonly<ReviewGradeButtonsProps>) {
@@ -45,8 +37,6 @@ export function ReviewGradeButtons({
     <>
       {reviewGrades.map((grade) => {
         const Icon = gradeIcons[grade];
-        const isActivePendingGrade = pendingGrade === grade;
-
         return (
           <Button
             key={grade}
@@ -59,11 +49,7 @@ export function ReviewGradeButtons({
           >
             <span className="flex min-w-0 flex-col items-center justify-center text-center sm:gap-1">
               <span className="flex min-w-0 items-center gap-1.5">
-                {isActivePendingGrade ? (
-                  <Loader2 className="size-3.5 animate-spin sm:size-4" />
-                ) : (
-                  <Icon className="hidden size-4 sm:inline-flex" />
-                )}
+                <Icon className="hidden size-4 sm:inline-flex" />
                 <span className="truncate">{gradeLabels[grade]}</span>
               </span>
             </span>

@@ -145,14 +145,15 @@ Students who want a private, lightweight study management workspace.
 - Global review page with a spaced repetition queue.
 - Review view is a landing hub with `Start review` and `Start exam` action cards.
 - Review answers are `Again`, `Hard`, `Good`, and `Easy`.
+- Grading advances to the next card immediately while the grade saves in the background; if a save fails, the card returns to the front of the queue with an error toast so it can be graded again. While grades are still saving, leaving or reloading the page asks for confirmation first. When the queue runs empty while more cards are due and still loading, the session shows a loading state instead of "All caught up".
 - Review uses a memory-state scheduler with learning and relearning stages.
 - A 20-minute learn-ahead window is applied to `learning` and `relearning` cards only: a card whose `dueAt` is within the next 20 minutes is treated as due and kept in the current session. This matches Anki's `collapseTime` behavior and prevents short-interval cards (e.g. `Again → 1m`) from vanishing mid-session.
 - Review logs are stored per user and retained when a flashcard or subject is
   deleted, so historical activity and FSRS optimization input do not change.
 - After grading a regular review card, users can undo that latest grade from the
   review session's kebab menu; undo restores the card's prior scheduling state
-  and removes that review from activity and optimization history. The review
-  actions trigger shows a disabled loading spinner while undo is in progress.
+  and removes that review from activity and optimization history. Undo is
+  offered once every pending grade has saved. The review actions trigger shows a disabled loading spinner while undo is in progress.
 - Review parameters support per-user tuning.
 - Users can manually optimize FSRS parameters from the account settings dialog using their review history.
 - Users can reset FSRS optimization from the account settings dialog to restore default scheduler tuning without deleting review history or flashcard progress.

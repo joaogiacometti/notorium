@@ -108,6 +108,32 @@ describe("reviewFlashcardForUser", () => {
     limitMock.mockResolvedValue([]);
   });
 
+  it("does not apply a review whose clientReviewId was already logged", async () => {
+    limitMock.mockResolvedValueOnce([{ id: "review-log-1" }]);
+    getReviewableFlashcardForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      state: "review",
+      dueAt: new Date(Date.now() - 60_000),
+    });
+
+    const { reviewFlashcardForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+    const result = await reviewFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      grade: "good",
+      clientReviewId: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "flashcards.review.notFound",
+      }),
+    );
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
   it("rejects reviews for cards that are not due yet", async () => {
     getReviewableFlashcardForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
@@ -208,8 +234,6 @@ describe("reviewFlashcardForUser", () => {
         id: "flashcard-1",
         reviewCount: 11,
         intervalDays: 7,
-        subjectName: "Biology",
-        subjectPath: "Biology::Cells",
       }),
     });
     expect(setMock).toHaveBeenCalledWith(
@@ -374,17 +398,6 @@ describe("reviewFlashcardForUser", () => {
 
   it("restores the previous scheduling state and removes the latest review log", async () => {
     const reviewedAt = new Date("2026-03-13T12:00:00.000Z");
-    const currentCard = {
-      id: "flashcard-1",
-      subjectId: "subject-1",
-      subjectName: "Biology",
-      subjectPath: "Biology::Cells",
-      state: "review" as const,
-      dueAt: new Date("2026-03-20T12:00:00.000Z"),
-      reviewCount: 11,
-      lastReviewedAt: reviewedAt,
-    };
-    getReviewableFlashcardForUserMock.mockResolvedValueOnce(currentCard);
     limitMock.mockResolvedValueOnce([
       {
         id: "review-log-1",
@@ -434,8 +447,6 @@ describe("reviewFlashcardForUser", () => {
       flashcard: expect.objectContaining({
         id: "flashcard-1",
         reviewCount: 10,
-        subjectName: "Biology",
-        subjectPath: "Biology::Cells",
       }),
     });
     expect(setMock).toHaveBeenCalledWith(

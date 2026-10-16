@@ -19,9 +19,8 @@ import {
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
 import {
-  getAllSubjectsWithPathsForUser,
   getDescendantSubjectIds,
-  getSubjectPathForUser,
+  getSubjectPathRowsForUser,
 } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -31,6 +30,21 @@ import type {
   FlashcardReviewSummary,
   ReviewActivityPoint,
 } from "@/lib/server/api-contracts";
+
+type ReviewableFlashcard = Pick<
+  FlashcardReviewEntity,
+  | "id"
+  | "subjectId"
+  | "state"
+  | "dueAt"
+  | "stability"
+  | "difficulty"
+  | "intervalDays"
+  | "learningStep"
+  | "lastReviewedAt"
+  | "reviewCount"
+  | "lapseCount"
+>;
 
 export interface GetDueFlashcardsOptions {
   subjectId?: string;
@@ -43,10 +57,24 @@ const heatmapDays = 365;
 async function getSubjectPathMapForUser(
   userId: string,
 ): Promise<Map<string, string>> {
-  const subjects = await getAllSubjectsWithPathsForUser(userId);
-  return new Map(
-    subjects.map((currentSubject) => [currentSubject.id, currentSubject.path]),
-  );
+  const pathRows = await getSubjectPathRowsForUser(userId);
+  return new Map(pathRows.map((row) => [row.id, row.path]));
+}
+
+type ReviewEntityRow = {
+  flashcard: typeof flashcard.$inferSelect;
+  subjectName: string;
+};
+
+function toReviewEntity(
+  row: ReviewEntityRow,
+  subjectPathMap: Map<string, string>,
+): FlashcardReviewEntity {
+  return {
+    ...row.flashcard,
+    subjectName: row.subjectName,
+    subjectPath: subjectPathMap.get(row.flashcard.subjectId) ?? row.subjectName,
+  };
 }
 
 async function getScopedFilters(
@@ -68,81 +96,69 @@ async function getScopedFilters(
   return filters;
 }
 
+// The outer `dueAt <= cutoff` bound is implied by both branches; stating it
+// lets Postgres range-scan the (userId, dueAt) index instead of the OR.
 function buildDueAtFilter(now: Date): SQL<unknown> {
   const aheadCutoff = new Date(now.getTime() + LEARN_AHEAD_WINDOW_MS);
-  return or(
-    lte(flashcard.dueAt, now),
-    and(
-      inArray(flashcard.state, LEARN_AHEAD_STATES),
-      lte(flashcard.dueAt, aheadCutoff),
-    ),
+  return and(
+    lte(flashcard.dueAt, aheadCutoff),
+    or(lte(flashcard.dueAt, now), inArray(flashcard.state, LEARN_AHEAD_STATES)),
   ) as SQL<unknown>;
 }
 
-async function getDueFilters(
-  userId: string,
-  now: Date,
-  options: GetDueFlashcardsOptions,
-): Promise<SQL<unknown>[]> {
-  return [...(await getScopedFilters(userId, options)), buildDueAtFilter(now)];
+function resolveDueLimit(limit: number | undefined): number {
+  return limit && limit > 0
+    ? Math.min(limit, LIMITS.reviewDueLimitMax)
+    : LIMITS.reviewDueLimitDefault;
 }
 
-export async function getDueFlashcardsForUser(
-  userId: string,
+async function selectDueFlashcards(
+  scopeFilters: SQL<unknown>[],
+  subjectPathMap: Map<string, string>,
   now: Date,
-  options: GetDueFlashcardsOptions = {},
+  limit: number,
 ): Promise<FlashcardReviewEntity[]> {
-  const limit =
-    options.limit && options.limit > 0
-      ? Math.min(options.limit, LIMITS.reviewDueLimitMax)
-      : LIMITS.reviewDueLimitDefault;
-
-  const [filters, subjectPathMap] = await Promise.all([
-    getDueFilters(userId, now, options),
-    getSubjectPathMapForUser(userId),
-  ]);
-
-  return getDb()
+  const rows = await getDb()
     .select({ flashcard, subjectName: subject.name })
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-    .where(and(...filters))
+    .where(and(...scopeFilters, buildDueAtFilter(now)))
     .orderBy(asc(flashcard.dueAt), asc(flashcard.createdAt))
-    .limit(limit)
-    .then((rows) =>
-      rows.map((row) => ({
-        ...row.flashcard,
-        subjectName: row.subjectName,
-        subjectPath:
-          (row.flashcard.subjectId
-            ? subjectPathMap.get(row.flashcard.subjectId)
-            : undefined) ?? row.subjectName,
-      })),
-    );
+    .limit(limit);
+
+  return rows.map((row) => toReviewEntity(row, subjectPathMap));
 }
 
+async function countScopedFlashcards(
+  scopeFilters: SQL<unknown>[],
+  now: Date,
+): Promise<FlashcardReviewSummary> {
+  const rows = await getDb()
+    .select({
+      total: count(),
+      due: sql<number>`count(*) filter (where ${buildDueAtFilter(now)})`.mapWith(
+        Number,
+      ),
+    })
+    .from(flashcard)
+    .where(and(...scopeFilters));
+
+  return { dueCount: rows[0]?.due ?? 0, totalCount: rows[0]?.total ?? 0 };
+}
+
+/**
+ * Due and total card counts for the user, optionally scoped to a subject
+ * subtree. Feeds the home dashboard and the review hub badges.
+ *
+ * @example
+ * const { dueCount } = await getFlashcardReviewSummaryForUser(userId, new Date());
+ */
 export async function getFlashcardReviewSummaryForUser(
   userId: string,
   now: Date,
   options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
 ): Promise<FlashcardReviewSummary> {
-  const baseFilters = await getScopedFilters(userId, options);
-
-  const [dueResult, totalResult] = await Promise.all([
-    getDb()
-      .select({ total: count() })
-      .from(flashcard)
-      .where(and(...baseFilters, buildDueAtFilter(now))),
-    getDb()
-      .select({ total: count() })
-      .from(flashcard)
-      .where(and(...baseFilters)),
-  ]);
-
-  return {
-    dueCount: dueResult[0]?.total ?? 0,
-    totalCount: totalResult[0]?.total ?? 0,
-  };
+  return countScopedFlashcards(await getScopedFilters(userId, options), now);
 }
 
 /**
@@ -195,15 +211,31 @@ export async function getFlashcardReviewActivityForUser(
   };
 }
 
+/**
+ * The due-card batch, counts, and scheduler settings for a review session.
+ * Scope filters are resolved once and shared by the card and count queries.
+ *
+ * @example
+ * const state = await getFlashcardReviewStateForUser(userId, { limit: 50 });
+ */
 export async function getFlashcardReviewStateForUser(
   userId: string,
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewState> {
-  const settings = await readFsrsSettings(userId);
   const now = new Date();
+  const [settings, scopeFilters, subjectPathMap] = await Promise.all([
+    readFsrsSettings(userId),
+    getScopedFilters(userId, options),
+    getSubjectPathMapForUser(userId),
+  ]);
   const [cards, summary] = await Promise.all([
-    getDueFlashcardsForUser(userId, now, options),
-    getFlashcardReviewSummaryForUser(userId, now, options),
+    selectDueFlashcards(
+      scopeFilters,
+      subjectPathMap,
+      now,
+      resolveDueLimit(options.limit),
+    ),
+    countScopedFlashcards(scopeFilters, now),
   ]);
 
   return {
@@ -216,46 +248,37 @@ export async function getFlashcardReviewStateForUser(
   };
 }
 
+/**
+ * Load only the columns a grade needs: ownership, subject, and scheduling
+ * state. The client already holds the card's subject name and path, so no
+ * subject join or path lookup runs on the grading hot path.
+ *
+ * @example
+ * const card = await getReviewableFlashcardForUser(userId, flashcardId);
+ */
 export async function getReviewableFlashcardForUser(
   userId: string,
   flashcardId: string,
-): Promise<{
-  id: string;
-  subjectId: string | null;
-  userId: string;
-  state: FlashcardReviewEntity["state"];
-  dueAt: Date;
-  stability: string | null;
-  difficulty: string | null;
-  intervalDays: number;
-  learningStep: number | null;
-  lastReviewedAt: Date | null;
-  reviewCount: number;
-  lapseCount: number;
-  subjectName: string;
-  subjectPath?: string;
-} | null> {
+): Promise<ReviewableFlashcard | null> {
   const rows = await getDb()
-    .select({ flashcard, subjectName: subject.name })
+    .select({
+      id: flashcard.id,
+      subjectId: flashcard.subjectId,
+      state: flashcard.state,
+      dueAt: flashcard.dueAt,
+      stability: flashcard.stability,
+      difficulty: flashcard.difficulty,
+      intervalDays: flashcard.intervalDays,
+      learningStep: flashcard.learningStep,
+      lastReviewedAt: flashcard.lastReviewedAt,
+      reviewCount: flashcard.reviewCount,
+      lapseCount: flashcard.lapseCount,
+    })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))
     .limit(1);
 
-  if (!rows[0]) {
-    return null;
-  }
-
-  // One card only needs its own subject path, not the whole subject path map.
-  const subjectPath = rows[0].flashcard.subjectId
-    ? await getSubjectPathForUser(userId, rows[0].flashcard.subjectId)
-    : "";
-
-  return {
-    ...rows[0].flashcard,
-    subjectName: rows[0].subjectName,
-    subjectPath: subjectPath || rows[0].subjectName,
-  };
+  return rows[0] ?? null;
 }
 
 export async function getAllFlashcardsForExam(
@@ -273,14 +296,5 @@ export async function getAllFlashcardsForExam(
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(and(...filters))
     .orderBy(asc(flashcard.createdAt))
-    .then((rows) =>
-      rows.map((row) => ({
-        ...row.flashcard,
-        subjectName: row.subjectName,
-        subjectPath:
-          (row.flashcard.subjectId
-            ? subjectPathMap.get(row.flashcard.subjectId)
-            : undefined) ?? row.subjectName,
-      })),
-    );
+    .then((rows) => rows.map((row) => toReviewEntity(row, subjectPathMap)));
 }

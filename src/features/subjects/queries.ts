@@ -289,7 +289,14 @@ export async function getAllSubjectsWithPathsForUser(
   });
 }
 
-async function getSubjectPathRowsForUser(
+/**
+ * Id and `::`-joined path of every subject reachable from a root, from one
+ * recursive query. Use it when only paths are needed, not full subject rows.
+ *
+ * @example
+ * const pathById = new Map((await getSubjectPathRowsForUser(userId)).map((row) => [row.id, row.path]));
+ */
+export async function getSubjectPathRowsForUser(
   userId: string,
 ): Promise<Array<{ id: string; path: string }>> {
   const result = await getDb().execute(

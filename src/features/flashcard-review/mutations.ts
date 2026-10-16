@@ -3,12 +3,13 @@ import { getDb } from "@/db/index";
 import { flashcard, flashcardReviewLog } from "@/db/schema";
 import { isCardDueWithLearnAhead } from "@/features/flashcard-review/constants";
 import { getReviewableFlashcardForUser } from "@/features/flashcard-review/queries";
+import { scheduleGradeAt } from "@/features/flashcard-review/state";
 import type { FlashcardReviewSchedulingSnapshot } from "@/features/flashcard-review/types";
 import type {
   ReviewFlashcardForm,
   UndoFlashcardReviewForm,
 } from "@/features/flashcard-review/validation";
-import { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
+import type { scheduleFlashcardReview } from "@/features/flashcards/fsrs";
 import { ensureFsrsSettings } from "@/features/flashcards/fsrs/settings-mutations";
 import type {
   FlashcardReviewEntity,
@@ -126,17 +127,16 @@ async function applyFlashcardReviewForUser(
   data: ReviewFlashcardForm,
   reviewedAt: Date,
 ): Promise<ReviewFlashcardResult> {
-  if (
-    data.clientReviewId &&
-    (await hasAppliedClientReviewId(userId, data.clientReviewId))
-  ) {
-    return actionError("flashcards.review.notFound");
-  }
+  // Independent reads: run them together so a grade waits on one round-trip.
+  const [alreadyApplied, settings, existingCard] = await Promise.all([
+    data.clientReviewId
+      ? hasAppliedClientReviewId(userId, data.clientReviewId)
+      : false,
+    ensureFsrsSettings(userId),
+    getReviewableFlashcardForUser(userId, data.id),
+  ]);
 
-  const settings = await ensureFsrsSettings(userId);
-  const existingCard = await getReviewableFlashcardForUser(userId, data.id);
-
-  if (!existingCard) {
+  if (alreadyApplied || !existingCard) {
     return actionError("flashcards.review.notFound");
   }
 
@@ -144,26 +144,11 @@ async function applyFlashcardReviewForUser(
     return actionError("flashcards.review.notDue");
   }
 
-  const effectiveNow = new Date(
-    Math.max(reviewedAt.getTime(), existingCard.dueAt.getTime()),
-  );
-
-  const nextState = scheduleFlashcardReview({
-    card: {
-      state: existingCard.state,
-      dueAt: existingCard.dueAt,
-      stability: existingCard.stability,
-      difficulty: existingCard.difficulty,
-      intervalDays: existingCard.intervalDays,
-      learningStep: existingCard.learningStep,
-      lastReviewedAt: existingCard.lastReviewedAt,
-      reviewCount: existingCard.reviewCount,
-      lapseCount: existingCard.lapseCount,
-    },
+  const nextState = scheduleGradeAt({
+    card: existingCard,
     grade: data.grade,
-    now: effectiveNow,
-    desiredRetention: settings.desiredRetention,
-    weights: settings.weights,
+    scheduler: settings,
+    reviewedAt,
   });
 
   const reviewLogId = crypto.randomUUID();
@@ -217,11 +202,7 @@ async function applyFlashcardReviewForUser(
     success: true,
     reviewedCardId: existingCard.id,
     reviewLogId,
-    flashcard: {
-      ...updatedCard,
-      subjectName: existingCard.subjectName,
-      subjectPath: existingCard.subjectPath,
-    },
+    flashcard: updatedCard,
   };
 }
 
@@ -262,11 +243,6 @@ export async function undoFlashcardReviewForUser(
   userId: string,
   data: UndoFlashcardReviewForm,
 ): Promise<UndoFlashcardReviewResult> {
-  const currentCard = await getReviewableFlashcardForUser(userId, data.id);
-  if (!currentCard) {
-    return actionError("flashcards.review.undoUnavailable");
-  }
-
   const restoredAt = new Date();
 
   try {
@@ -318,14 +294,7 @@ export async function undoFlashcardReviewForUser(
       return actionError("flashcards.review.undoUnavailable");
     }
 
-    return {
-      success: true,
-      flashcard: {
-        ...restoredCard,
-        subjectName: currentCard.subjectName,
-        subjectPath: currentCard.subjectPath,
-      },
-    };
+    return { success: true, flashcard: restoredCard };
   } catch {
     return actionError("flashcards.review.undoUnavailable");
   }

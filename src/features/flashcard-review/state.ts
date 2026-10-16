@@ -1,6 +1,11 @@
 import { isCardDueWithLearnAhead } from "@/features/flashcard-review/constants";
+import {
+  type ReviewGrade,
+  scheduleFlashcardReview,
+} from "@/features/flashcards/fsrs";
 import type {
   FlashcardReviewEntity,
+  FlashcardReviewSchedulerSettings,
   FlashcardReviewState,
 } from "@/lib/server/api-contracts";
 
@@ -150,6 +155,110 @@ export function removeFlashcardsFromReviewState(
     summary: {
       dueCount: Math.max(0, state.summary.dueCount - removedIds.length),
       totalCount: Math.max(0, state.summary.totalCount - removedIds.length),
+    },
+  };
+}
+
+/**
+ * Schedule a grade the way the server persists it. A learning card graded
+ * inside its learn-ahead window is scheduled from its due time, so reviewing
+ * early never shortens the next interval. Shared by the server mutation and
+ * the client's optimistic grade so both compute the same next state.
+ *
+ * @example
+ * const next = scheduleGradeAt({ card, grade: "good", scheduler, reviewedAt: new Date() });
+ */
+export function scheduleGradeAt({
+  card,
+  grade,
+  scheduler,
+  reviewedAt,
+}: {
+  card: Parameters<typeof scheduleFlashcardReview>[0]["card"];
+  grade: ReviewGrade;
+  scheduler: FlashcardReviewSchedulerSettings;
+  reviewedAt: Date;
+}): ReturnType<typeof scheduleFlashcardReview> {
+  return scheduleFlashcardReview({
+    card,
+    grade,
+    now: new Date(Math.max(reviewedAt.getTime(), card.dueAt.getTime())),
+    desiredRetention: scheduler.desiredRetention,
+    weights: scheduler.weights,
+  });
+}
+
+/**
+ * The card as it will look after the server applies the grade, so the review
+ * queue can advance before the save round-trip finishes.
+ *
+ * @example
+ * const graded = gradeFlashcardLocally(card, "again", state.scheduler, new Date());
+ */
+export function gradeFlashcardLocally(
+  card: FlashcardReviewEntity,
+  grade: ReviewGrade,
+  scheduler: FlashcardReviewSchedulerSettings,
+  reviewedAt: Date,
+): FlashcardReviewEntity {
+  const next = scheduleGradeAt({ card, grade, scheduler, reviewedAt });
+  return {
+    ...card,
+    state: next.state,
+    dueAt: next.dueAt,
+    stability: next.stability,
+    difficulty: next.difficulty,
+    intervalDays: next.intervalDays,
+    learningStep: next.learningStep,
+    lastReviewedAt: reviewedAt,
+    reviewCount: next.reviewCount,
+    lapseCount: next.lapseCount,
+  };
+}
+
+/**
+ * Put a card whose grade failed to save back at the front of the queue in its
+ * pre-grade form, restoring the due count when the optimistic grade had
+ * removed it from the queue.
+ *
+ * @example
+ * commitReviewState(restoreFlashcardToFront(state, cardBeforeGrade));
+ */
+export function restoreFlashcardToFront(
+  state: FlashcardReviewState,
+  card: FlashcardReviewEntity,
+): FlashcardReviewState {
+  const wasQueued = state.cards.some((queued) => queued.id === card.id);
+  return {
+    ...state,
+    cards: [card, ...state.cards.filter((queued) => queued.id !== card.id)],
+    summary: {
+      ...state.summary,
+      dueCount: state.summary.dueCount + (wasQueued ? 0 : 1),
+    },
+  };
+}
+
+/**
+ * Drop cards from a fetched state whose grade had not been saved when the
+ * fetch was answered: the server still reports them as due, and keeping them
+ * would show an already-graded card again.
+ *
+ * @example
+ * const fresh = excludeFlashcardsFromFetchedState(fetched, new Set([gradedId]));
+ */
+export function excludeFlashcardsFromFetchedState(
+  state: FlashcardReviewState,
+  excludedIds: ReadonlySet<string>,
+): FlashcardReviewState {
+  const cards = state.cards.filter((card) => !excludedIds.has(card.id));
+  const removedCount = state.cards.length - cards.length;
+  return {
+    ...state,
+    cards,
+    summary: {
+      ...state.summary,
+      dueCount: Math.max(0, state.summary.dueCount - removedCount),
     },
   };
 }

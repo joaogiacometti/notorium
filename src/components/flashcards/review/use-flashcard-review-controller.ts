@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   reviewFlashcard,
@@ -15,9 +9,12 @@ import {
 import { useFlashcardExamController } from "@/components/flashcards/review/use-flashcard-exam-controller";
 import {
   applyReviewedFlashcardToState,
+  excludeFlashcardsFromFetchedState,
+  gradeFlashcardLocally,
   mergeFlashcardReviewStates,
   removeFlashcardsFromReviewState,
   replaceFlashcardInReviewState,
+  restoreFlashcardToFront,
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
@@ -46,9 +43,10 @@ interface UndoableReview {
 
 /**
  * Owns the non-exam review state machine: the working card batch, optimistic
- * apply on edit/delete/reset, server grading, background refill, and the
- * refresh-on-return effect. Composes the exam controller so the page client
- * only wires focus-mode UI and keyboard handling around a single controller.
+ * apply on edit/delete/reset, optimistic grading with background saves,
+ * background refill, and the refresh-on-return effect. Composes the exam
+ * controller so the page client only wires focus-mode UI and keyboard
+ * handling around a single controller.
  *
  * @example
  * const controller = useFlashcardReviewController({
@@ -67,12 +65,18 @@ export function useFlashcardReviewController({
 }: UseFlashcardReviewControllerParams) {
   const [reviewState, setReviewState] = useState(initialState);
   const reviewStateRef = useRef(initialState);
-  const [pendingGrade, setPendingGrade] = useState<ReviewGrade | null>(null);
-  const [isActionPending, startActionTransition] = useTransition();
   const [isUndoPending, setIsUndoPending] = useState(false);
-  const isPending = isActionPending || isUndoPending;
+  const isPending = isUndoPending;
+  // Grades save in the background. In-flight saves are keyed by
+  // clientReviewId; every graded card id is logged in order so a fetch can
+  // tell which grades it may not reflect yet.
+  const pendingSaveCardIdsRef = useRef(new Map<string, string>());
+  const [pendingSaveCount, setPendingSaveCount] = useState(0);
+  const gradedCardIdsRef = useRef<string[]>([]);
+  const latestReviewIdByCardRef = useRef(new Map<string, string>());
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
+  const [isRefilling, setIsRefilling] = useState(false);
   const isRefreshingOnReturnRef = useRef(false);
   const undoingReviewIdRef = useRef<string | null>(null);
   const [undoableReview, setUndoableReview] = useState<UndoableReview | null>(
@@ -85,6 +89,22 @@ export function useFlashcardReviewController({
     selectedSubjectIdRef.current = subjectId;
     setSelectedSubjectId(subjectId);
   }, [subjectId]);
+
+  // Leaving the page cancels queued Server Action calls, so unsaved grades
+  // would be lost silently; ask the browser to confirm first.
+  useEffect(() => {
+    if (pendingSaveCount === 0) {
+      return;
+    }
+
+    function confirmLeaveWithUnsavedGrades(event: BeforeUnloadEvent) {
+      event.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", confirmLeaveWithUnsavedGrades);
+    return () =>
+      window.removeEventListener("beforeunload", confirmLeaveWithUnsavedGrades);
+  }, [pendingSaveCount]);
 
   const examController = useFlashcardExamController({
     selectedSubjectId,
@@ -113,12 +133,29 @@ export function useFlashcardReviewController({
     }
   }
 
-  async function getActiveReviewState(): Promise<FlashcardReviewState> {
-    const requestedSubjectId = selectedSubjectIdRef.current;
-    const nextState = await fetchFlashcardReviewState({
+  // Single entry point for review-state reads. Cards graded after the read
+  // started, or still saving when it started, may come back as due; drop them.
+  async function fetchReviewStateWithoutUnsavedGrades(
+    requestedSubjectId: string | undefined,
+  ): Promise<FlashcardReviewState> {
+    const gradedCountAtStart = gradedCardIdsRef.current.length;
+    const savingIdsAtStart = [...pendingSaveCardIdsRef.current.values()];
+    const fetchedState = await fetchFlashcardReviewState({
       subjectId: requestedSubjectId,
       limit: reviewBatchLimit,
     });
+    const unsavedIds = new Set([
+      ...savingIdsAtStart,
+      ...gradedCardIdsRef.current.slice(gradedCountAtStart),
+    ]);
+
+    return excludeFlashcardsFromFetchedState(fetchedState, unsavedIds);
+  }
+
+  async function getActiveReviewState(): Promise<FlashcardReviewState> {
+    const requestedSubjectId = selectedSubjectIdRef.current;
+    const nextState =
+      await fetchReviewStateWithoutUnsavedGrades(requestedSubjectId);
 
     return requestedSubjectId === selectedSubjectIdRef.current
       ? nextState
@@ -130,15 +167,14 @@ export function useFlashcardReviewController({
       return;
     }
     isRefillingRef.current = true;
+    setIsRefilling(true);
 
     try {
       const requestId = refillRequestIdRef.current + 1;
       refillRequestIdRef.current = requestId;
 
-      const nextState = await fetchFlashcardReviewState({
-        subjectId: selectedSubjectId,
-        limit: reviewBatchLimit,
-      });
+      const nextState =
+        await fetchReviewStateWithoutUnsavedGrades(selectedSubjectId);
 
       if (refillRequestIdRef.current !== requestId) {
         return;
@@ -159,6 +195,7 @@ export function useFlashcardReviewController({
       }
     } finally {
       isRefillingRef.current = false;
+      setIsRefilling(false);
       if (
         shouldRefillFlashcardReviewState(reviewStateRef.current) &&
         retryCount < 3
@@ -173,6 +210,7 @@ export function useFlashcardReviewController({
       isFocusMode ||
       isExamMode ||
       isPending ||
+      pendingSaveCardIdsRef.current.size > 0 ||
       isRefreshingOnReturnRef.current
     ) {
       return;
@@ -180,10 +218,8 @@ export function useFlashcardReviewController({
 
     isRefreshingOnReturnRef.current = true;
     try {
-      const nextState = await fetchFlashcardReviewState({
-        subjectId: selectedSubjectId,
-        limit: reviewBatchLimit,
-      });
+      const nextState =
+        await fetchReviewStateWithoutUnsavedGrades(selectedSubjectId);
 
       commitReturnedReviewState(nextState);
     } catch {
@@ -224,10 +260,9 @@ export function useFlashcardReviewController({
     if (subjectId && updatedFlashcard.subjectId !== subjectId) {
       // The card moved out of this session's scope; if the scope cannot be
       // re-read, drop it locally instead of leaving it as the current card.
-      const nextState = await fetchFlashcardReviewState({
-        subjectId: selectedSubjectId,
-        limit: reviewBatchLimit,
-      }).catch(() =>
+      const nextState = await fetchReviewStateWithoutUnsavedGrades(
+        selectedSubjectId,
+      ).catch(() =>
         removeFlashcardsFromReviewState(reviewStateRef.current, [
           updatedFlashcard.id,
         ]),
@@ -256,10 +291,8 @@ export function useFlashcardReviewController({
     }
 
     try {
-      const nextState = await fetchFlashcardReviewState({
-        subjectId: selectedSubjectId,
-        limit: reviewBatchLimit,
-      });
+      const nextState =
+        await fetchReviewStateWithoutUnsavedGrades(selectedSubjectId);
       commitReviewState(nextState);
     } catch {
       commitReviewState(
@@ -293,51 +326,107 @@ export function useFlashcardReviewController({
       return;
     }
 
-    setPendingGrade(grade);
-    startActionTransition(async () => {
-      // A throw escaping a useTransition action is rethrown to the nearest error
-      // boundary, which would replace the review session with the error page on
-      // a network blip. Catch it so the card stays put for a retry.
-      try {
-        const result = await reviewFlashcard({
-          id: currentCard.id,
-          grade,
-          clientReviewId: crypto.randomUUID(),
-        });
-
-        // State updates after an await must be wrapped again to stay part of
-        // the Transition (React async-context limitation, see useTransition docs).
-        startActionTransition(() => applyGradeResult(result));
-      } catch {
-        toast.error("Could not save the review. Please try again.");
-      } finally {
-        startActionTransition(() => setPendingGrade(null));
-      }
-    });
-  }
-
-  function applyGradeResult(result: ReviewFlashcardResult) {
-    if (!result.success) {
-      toast.error(t(result.errorCode, result.errorParams));
-      return;
-    }
-
+    // Advance immediately from the locally scheduled card; the server result
+    // replaces it once the background save lands.
+    const reviewedAt = new Date();
     const nextState = applyReviewedFlashcardToState(
       reviewStateRef.current,
-      result.reviewedCardId,
-      result.flashcard,
+      currentCard.id,
+      gradeFlashcardLocally(
+        currentCard,
+        grade,
+        reviewStateRef.current.scheduler,
+        reviewedAt,
+      ),
+      reviewedAt,
     );
 
     commitReviewState(nextState);
     resetFocusViewState();
-    setUndoableReview({
-      cardId: result.reviewedCardId,
-      reviewLogId: result.reviewLogId,
-    });
+    void saveGrade(currentCard, grade);
 
     if (shouldRefillFlashcardReviewState(nextState)) {
       void refillReviewState();
     }
+  }
+
+  async function saveGrade(
+    gradedCard: FlashcardReviewEntity,
+    grade: ReviewGrade,
+  ) {
+    const clientReviewId = crypto.randomUUID();
+    trackPendingSave(gradedCard.id, clientReviewId);
+
+    // Server Actions run one at a time per client, so background saves still
+    // reach the server in grading order.
+    try {
+      const result = await reviewFlashcard({
+        id: gradedCard.id,
+        grade,
+        clientReviewId,
+      });
+      applySavedGrade(gradedCard, clientReviewId, result);
+    } catch {
+      applySavedGrade(gradedCard, clientReviewId, null);
+    } finally {
+      pendingSaveCardIdsRef.current.delete(clientReviewId);
+      setPendingSaveCount((count) => count - 1);
+      refillAfterSavesLand();
+    }
+  }
+
+  // A refill fetched while grades were still saving drops those cards, so the
+  // batch can come back without new ones. Once every save has landed the
+  // server's batch is current; fetch again if the queue still runs short.
+  function refillAfterSavesLand() {
+    if (
+      pendingSaveCardIdsRef.current.size === 0 &&
+      shouldRefillFlashcardReviewState(reviewStateRef.current)
+    ) {
+      void refillReviewState();
+    }
+  }
+
+  function trackPendingSave(cardId: string, clientReviewId: string) {
+    pendingSaveCardIdsRef.current.set(clientReviewId, cardId);
+    gradedCardIdsRef.current.push(cardId);
+    latestReviewIdByCardRef.current.set(cardId, clientReviewId);
+    setPendingSaveCount((count) => count + 1);
+  }
+
+  function applySavedGrade(
+    gradedCard: FlashcardReviewEntity,
+    clientReviewId: string,
+    result: ReviewFlashcardResult | null,
+  ) {
+    // A later grade of the same card supersedes this one's outcome.
+    if (latestReviewIdByCardRef.current.get(gradedCard.id) !== clientReviewId) {
+      return;
+    }
+
+    if (!result?.success) {
+      toast.error(
+        result
+          ? t(result.errorCode, result.errorParams)
+          : "Could not save the review. Please try again.",
+      );
+      commitReturnedReviewState(
+        restoreFlashcardToFront(reviewStateRef.current, gradedCard),
+      );
+      return;
+    }
+
+    commitReviewState(
+      replaceFlashcardInReviewState(reviewStateRef.current, {
+        ...result.flashcard,
+        subjectName: gradedCard.subjectName,
+        subjectPath: gradedCard.subjectPath,
+      }),
+    );
+    setUndoableReview({
+      cardId: result.reviewedCardId,
+      reviewLogId: result.reviewLogId,
+    });
   }
 
   async function handleUndoReview() {
@@ -385,8 +474,14 @@ export function useFlashcardReviewController({
     isExamMode,
     currentCard,
     isPending,
-    pendingGrade,
-    canUndoReview: undoableReview !== null,
+    canUndoReview: undoableReview !== null && pendingSaveCount === 0,
+    // More cards are due than are queued and a refill or save is still in
+    // flight, so an empty queue does not mean the session is done.
+    isLoadingMoreCards:
+      !isExamMode &&
+      reviewState.cards.length === 0 &&
+      reviewState.summary.dueCount > 0 &&
+      (isRefilling || pendingSaveCount > 0),
     handleGrade,
     handleUndoReview,
     handleFlashcardUpdated,
