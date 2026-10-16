@@ -126,6 +126,8 @@ Only add optional files when they are needed.
 - Keep migrations safe to run in production.
 - Never manually edit `drizzle/*.sql` or `drizzle/meta/*`.
 - For schema changes, tell the user to run `npm run db:generate` and `npm run db:migrate`.
+- Pushing to `main` migrates production automatically: `.github/workflows/migrate.yml` runs `npm run db:migrate` whenever `src/db/schema.ts` or `drizzle/**` changes.
+- Before committing or pushing a schema change, stop and ask the user how to handle the migration: whether to generate it and include it in the same commit, and whether existing rows need cleanup (deleted or backfilled) in production first. Never push a schema change without that decision, even when asked to "commit and push".
 
 ## Validation
 
@@ -194,6 +196,7 @@ className =
 - Keep the subject imperative, descriptive, and under 72 characters when practical.
 - Add a body when the reason is not obvious. Explain what changed and why; do not restate the diff.
 - Stage only files that belong to the requested change. Do not include unrelated worktree changes.
+- A commit that touches `src/db/schema.ts` or `drizzle/**` needs the migration decision from the Database section before it is committed or pushed.
 - Before reporting success, confirm the commit hash and a clean `git status --short`.
 
 ## Automated Guards
