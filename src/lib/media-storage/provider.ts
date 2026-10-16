@@ -3,11 +3,7 @@ import "server-only";
 import { getServerEnv } from "@/env";
 import { createVercelBlobMediaStorageProvider } from "@/lib/media-storage/vercel-blob-provider";
 
-export type MediaStorageUploadContext =
-  | "notes"
-  | "flashcards"
-  | "assessments"
-  | "mindmaps";
+export type MediaStorageUploadContext = "notes" | "flashcards" | "mindmaps";
 
 export interface UploadImageInput {
   userId: string;
@@ -49,15 +45,11 @@ export interface ReadImageResult {
 }
 
 export interface MediaStorageProvider {
-  uploadFile(input: UploadImageInput): Promise<UploadImageResult>;
-  readFile(input: ReadImageInput): Promise<ReadImageResult | null>;
-  deleteFiles(input: DeleteImagesInput): Promise<void>;
-  listFilePathnames(input: ListImagesInput): Promise<string[]>;
-  listFileEntries(input: ListImagesInput): Promise<StoredBlobEntry[]>;
   uploadImage(input: UploadImageInput): Promise<UploadImageResult>;
   readImage(input: ReadImageInput): Promise<ReadImageResult | null>;
   deleteImages(input: DeleteImagesInput): Promise<void>;
   listImagePathnames(input: ListImagesInput): Promise<string[]>;
+  listImageEntries(input: ListImagesInput): Promise<StoredBlobEntry[]>;
 }
 
 /**

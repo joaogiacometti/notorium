@@ -11,12 +11,7 @@ import {
 const BLOB_ROOT_PREFIX = "notorium/";
 
 /** Blob contexts owned by a single user, used when purging an account. */
-const USER_BLOB_CONTEXTS = [
-  "notes",
-  "flashcards",
-  "assessments",
-  "mindmaps",
-] as const;
+const USER_BLOB_CONTEXTS = ["notes", "flashcards", "mindmaps"] as const;
 
 // Blobs younger than this are never collected. An upload that has not yet
 // committed its database reference would otherwise look like an orphan; the
@@ -134,7 +129,7 @@ export async function sweepOrphanBlobs(
     options.maxDeleteFraction ?? DEFAULT_MAX_DELETE_FRACTION;
 
   const [entries, referenced] = await Promise.all([
-    provider.listFileEntries({ prefix: BLOB_ROOT_PREFIX }),
+    provider.listImageEntries({ prefix: BLOB_ROOT_PREFIX }),
     collectAllReferencedPathnames(),
   ]);
 
@@ -152,7 +147,7 @@ export async function sweepOrphanBlobs(
   );
 
   if (orphans.length > 0 && !dryRun && !aborted) {
-    await provider.deleteFiles({ pathnames: orphans });
+    await provider.deleteImages({ pathnames: orphans });
   }
 
   return {
@@ -172,7 +167,7 @@ async function listUserBlobPathnames(
 ): Promise<string[]> {
   const lists = await Promise.all(
     USER_BLOB_CONTEXTS.map((context) =>
-      provider.listFilePathnames({
+      provider.listImagePathnames({
         prefix: `${BLOB_ROOT_PREFIX}${context}/${userId}/`,
       }),
     ),
@@ -203,6 +198,6 @@ export async function purgeUserBlobs(userId: string): Promise<void> {
     if (pathnames.length === 0) {
       return;
     }
-    await provider.deleteFiles({ pathnames });
+    await provider.deleteImages({ pathnames });
   } catch {}
 }

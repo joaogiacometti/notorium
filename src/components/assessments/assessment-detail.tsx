@@ -3,7 +3,6 @@
 import { Clock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
-import { AssessmentAttachmentsSection } from "@/components/assessments/assessment-attachments-section";
 import { DeleteAssessmentDialog } from "@/components/assessments/delete-assessment-dialog";
 import { LazyEditAssessmentDialog as EditAssessmentDialog } from "@/components/assessments/lazy-edit-assessment-dialog";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
@@ -28,7 +27,6 @@ import { getScoreTone, getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 
 interface AssessmentDetailProps {
-  attachmentsEnabled: boolean;
   breadcrumb: BreadcrumbItem[];
   /** Where to navigate after the assessment is deleted. */
   returnHref: string;
@@ -163,7 +161,6 @@ function AssessmentDescriptionSection({
 }
 
 export function AssessmentDetail({
-  attachmentsEnabled,
   breadcrumb,
   returnHref,
   detail,
@@ -287,13 +284,6 @@ export function AssessmentDetail({
             setEditOpen(true);
           }}
         />
-
-        {attachmentsEnabled && (
-          <AssessmentAttachmentsSection
-            assessmentId={currentAssessment.id}
-            initialAttachments={detail.attachments}
-          />
-        )}
       </div>
 
       <EditAssessmentDialog

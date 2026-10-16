@@ -48,15 +48,6 @@ export default function AssessmentDetailLoading() {
             <Skeleton className="mb-3 h-4 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>
-
-          {/* Attachments */}
-          <div className="rounded-xl border border-border/70 bg-card/85 p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-20" />
-            </div>
-            <Skeleton className="h-20 w-full rounded-lg" />
-          </div>
         </div>
       </AppPageContainer>
     </main>

@@ -1,7 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import type {
   assessment,
-  assessmentAttachment,
   attendanceMiss,
   flashcard,
   flashcardReviewLog,
@@ -30,13 +29,9 @@ export type MindmapEntity = InferSelectModel<typeof mindmap>;
 export type MindmapListItem = Pick<MindmapEntity, "id" | "title" | "updatedAt">;
 export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
 export type AssessmentEntity = InferSelectModel<typeof assessment>;
-export type AssessmentAttachmentEntity = InferSelectModel<
-  typeof assessmentAttachment
->;
 export interface AssessmentDetailEntity {
   assessment: AssessmentEntity;
   subject: Pick<SubjectEntity, "id" | "name">;
-  attachments: AssessmentAttachmentEntity[];
 }
 export interface PlanningAssessmentsPage {
   items: AssessmentEntity[];

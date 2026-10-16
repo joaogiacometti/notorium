@@ -13,7 +13,6 @@ import {
 import { getDb } from "@/db/index";
 import { assessment, subject } from "@/db/schema";
 import type { PlanningAssessmentsQueryInput } from "@/features/assessments/validation";
-import { getAssessmentAttachmentsForUser } from "@/features/attachments/queries";
 import { getOwnedAcademicSubjectFilters } from "@/features/subjects/query-helpers";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
@@ -153,17 +152,7 @@ export async function getAssessmentDetailForUser(
     )
     .limit(1);
 
-  const detail = results[0];
-  if (!detail) {
-    return null;
-  }
-
-  const attachments = await getAssessmentAttachmentsForUser(
-    userId,
-    assessmentId,
-  );
-
-  return { ...detail, attachments };
+  return results[0] ?? null;
 }
 
 function getPlanningAssessmentOrderBy(

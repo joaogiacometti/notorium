@@ -68,14 +68,14 @@ describe("exceedsOrphanSafetyLimit", () => {
 });
 
 describe("sweepOrphanBlobs", () => {
-  const deleteFilesMock = vi.fn();
-  const listFileEntriesMock = vi.fn();
+  const deleteImagesMock = vi.fn();
+  const listImageEntriesMock = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     getMediaStorageProviderMock.mockResolvedValue({
-      deleteFiles: deleteFilesMock,
-      listFileEntries: listFileEntriesMock,
+      deleteImages: deleteImagesMock,
+      listImageEntries: listImageEntriesMock,
     });
   });
 
@@ -87,7 +87,7 @@ describe("sweepOrphanBlobs", () => {
   });
 
   it("deletes orphaned blobs and reports counts", async () => {
-    listFileEntriesMock.mockResolvedValue([
+    listImageEntriesMock.mockResolvedValue([
       entry("notorium/notes/u/keep.png", 10 * DAY),
       entry("notorium/mindmaps/u/orphan.png", 10 * DAY),
     ]);
@@ -98,7 +98,7 @@ describe("sweepOrphanBlobs", () => {
     const { sweepOrphanBlobs } = await import("@/features/attachments/blob-gc");
     const report = await sweepOrphanBlobs({ minAgeMs: DAY });
 
-    expect(deleteFilesMock).toHaveBeenCalledWith({
+    expect(deleteImagesMock).toHaveBeenCalledWith({
       pathnames: ["notorium/mindmaps/u/orphan.png"],
     });
     expect(report).toMatchObject({
@@ -114,7 +114,7 @@ describe("sweepOrphanBlobs", () => {
     const entries = Array.from({ length: 25 }, (_, index) =>
       entry(`notorium/notes/u/orphan-${index}.png`, 10 * DAY),
     );
-    listFileEntriesMock.mockResolvedValue(entries);
+    listImageEntriesMock.mockResolvedValue(entries);
     // Only two of twenty-five are referenced: ~92% orphans, well past the brake.
     collectAllReferencedPathnamesMock.mockResolvedValue(
       new Set([
@@ -126,12 +126,12 @@ describe("sweepOrphanBlobs", () => {
     const { sweepOrphanBlobs } = await import("@/features/attachments/blob-gc");
     const report = await sweepOrphanBlobs({ minAgeMs: DAY });
 
-    expect(deleteFilesMock).not.toHaveBeenCalled();
+    expect(deleteImagesMock).not.toHaveBeenCalled();
     expect(report).toMatchObject({ aborted: true, deleted: 0, orphaned: 23 });
   });
 
   it("does not delete when dryRun is set", async () => {
-    listFileEntriesMock.mockResolvedValue([
+    listImageEntriesMock.mockResolvedValue([
       entry("notorium/mindmaps/u/orphan.png", 10 * DAY),
     ]);
     collectAllReferencedPathnamesMock.mockResolvedValue(new Set<string>());
@@ -139,50 +139,49 @@ describe("sweepOrphanBlobs", () => {
     const { sweepOrphanBlobs } = await import("@/features/attachments/blob-gc");
     const report = await sweepOrphanBlobs({ minAgeMs: DAY, dryRun: true });
 
-    expect(deleteFilesMock).not.toHaveBeenCalled();
+    expect(deleteImagesMock).not.toHaveBeenCalled();
     expect(report).toMatchObject({ orphaned: 1, deleted: 0, dryRun: true });
   });
 });
 
 describe("purgeUserBlobs", () => {
-  const deleteFilesMock = vi.fn();
-  const listFilePathnamesMock = vi.fn();
+  const deleteImagesMock = vi.fn();
+  const listImagePathnamesMock = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     getMediaStorageProviderMock.mockResolvedValue({
-      deleteFiles: deleteFilesMock,
-      listFilePathnames: listFilePathnamesMock,
+      deleteImages: deleteImagesMock,
+      listImagePathnames: listImagePathnamesMock,
     });
   });
 
   it("lists every context prefix and deletes the union", async () => {
-    listFilePathnamesMock.mockResolvedValue([]);
-    listFilePathnamesMock.mockImplementationOnce(() =>
+    listImagePathnamesMock.mockResolvedValue([]);
+    listImagePathnamesMock.mockImplementationOnce(() =>
       Promise.resolve(["notorium/notes/u/a.png"]),
     );
 
     const { purgeUserBlobs } = await import("@/features/attachments/blob-gc");
     await purgeUserBlobs("u");
 
-    const prefixes = listFilePathnamesMock.mock.calls.map(
+    const prefixes = listImagePathnamesMock.mock.calls.map(
       (call) => call[0].prefix,
     );
     expect(prefixes).toEqual([
       "notorium/notes/u/",
       "notorium/flashcards/u/",
-      "notorium/assessments/u/",
       "notorium/mindmaps/u/",
     ]);
-    expect(deleteFilesMock).toHaveBeenCalledTimes(1);
-    expect(deleteFilesMock.mock.calls[0][0].pathnames).toContain(
+    expect(deleteImagesMock).toHaveBeenCalledTimes(1);
+    expect(deleteImagesMock.mock.calls[0][0].pathnames).toContain(
       "notorium/notes/u/a.png",
     );
   });
 
   it("swallows storage failures so account deletion still succeeds", async () => {
-    listFilePathnamesMock.mockResolvedValue(["notorium/notes/u/a.png"]);
-    deleteFilesMock.mockRejectedValue(new Error("boom"));
+    listImagePathnamesMock.mockResolvedValue(["notorium/notes/u/a.png"]);
+    deleteImagesMock.mockRejectedValue(new Error("boom"));
 
     const { purgeUserBlobs } = await import("@/features/attachments/blob-gc");
 
@@ -195,6 +194,6 @@ describe("purgeUserBlobs", () => {
     const { purgeUserBlobs } = await import("@/features/attachments/blob-gc");
     await purgeUserBlobs("u");
 
-    expect(listFilePathnamesMock).not.toHaveBeenCalled();
+    expect(listImagePathnamesMock).not.toHaveBeenCalled();
   });
 });

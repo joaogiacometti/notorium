@@ -11,7 +11,6 @@ vi.mock("@/db/schema", () => ({
   note: "note_table",
   flashcard: "flashcard_table",
   mindmap: "mindmap_table",
-  assessmentAttachment: "assessment_attachment_table",
 }));
 
 vi.mock("@/features/mindmaps/utils", () => ({
@@ -37,8 +36,6 @@ describe("collectAllReferencedPathnames", () => {
           ]);
         case "mindmap_table":
           return Promise.resolve([{ data: "mindmap-a" }, { data: null }]);
-        case "assessment_attachment_table":
-          return Promise.resolve([{ blobPathname: "assess-a" }]);
         default:
           return Promise.resolve([]);
       }
@@ -53,7 +50,7 @@ describe("collectAllReferencedPathnames", () => {
     const referenced = await collectAllReferencedPathnames();
 
     expect(referenced).toEqual(
-      new Set(["note-a", "front-aback-a", "mindmap-a", "assess-a"]),
+      new Set(["note-a", "front-aback-a", "mindmap-a"]),
     );
   });
 });

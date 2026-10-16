@@ -89,17 +89,17 @@ describe("optimizeImageForStorage", () => {
     expect(metadata.height).toBeLessThanOrEqual(2048);
   });
 
-  it("returns non-image uploads unchanged", async () => {
-    const bytes = new Uint8Array(Buffer.from("%PDF-1.7 fake"));
+  it("returns unsupported mime types unchanged", async () => {
+    const bytes = new Uint8Array(Buffer.from("plain text"));
 
     const result = await optimizeImageForStorage({
       bytes,
-      mimeType: "application/pdf",
-      fileName: "rubric.pdf",
+      mimeType: "text/plain",
+      fileName: "notes.txt",
     });
 
-    expect(result.mimeType).toBe("application/pdf");
-    expect(result.fileName).toBe("rubric.pdf");
+    expect(result.mimeType).toBe("text/plain");
+    expect(result.fileName).toBe("notes.txt");
     expect(result.bytes).toBe(bytes);
   });
 

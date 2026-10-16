@@ -40,7 +40,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     return env.BLOB_READ_WRITE_TOKEN;
   }
 
-  async function uploadFile(
+  async function uploadImage(
     input: UploadImageInput,
   ): Promise<UploadImageResult> {
     const result = await put(buildPath(input), Buffer.from(input.bytes), {
@@ -56,7 +56,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     };
   }
 
-  async function readFile(
+  async function readImage(
     input: ReadImageInput,
   ): Promise<ReadImageResult | null> {
     const result = await get(input.pathname, {
@@ -78,7 +78,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     };
   }
 
-  async function deleteFiles(input: DeleteImagesInput): Promise<void> {
+  async function deleteImages(input: DeleteImagesInput): Promise<void> {
     if (input.pathnames.length === 0) {
       return;
     }
@@ -88,7 +88,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     });
   }
 
-  async function listFilePathnames(input: ListImagesInput): Promise<string[]> {
+  async function listImagePathnames(input: ListImagesInput): Promise<string[]> {
     const pathnames: string[] = [];
     let cursor: string | undefined;
 
@@ -106,7 +106,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     return pathnames;
   }
 
-  async function listFileEntries(
+  async function listImageEntries(
     input: ListImagesInput,
   ): Promise<StoredBlobEntry[]> {
     const entries: StoredBlobEntry[] = [];
@@ -129,22 +129,10 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
   }
 
   return {
-    uploadFile,
-    readFile,
-    deleteFiles,
-    listFilePathnames,
-    listFileEntries,
-    async uploadImage(input: UploadImageInput): Promise<UploadImageResult> {
-      return uploadFile(input);
-    },
-    async readImage(input: ReadImageInput): Promise<ReadImageResult | null> {
-      return readFile(input);
-    },
-    async deleteImages(input: DeleteImagesInput): Promise<void> {
-      return deleteFiles(input);
-    },
-    async listImagePathnames(input: ListImagesInput): Promise<string[]> {
-      return listFilePathnames(input);
-    },
+    uploadImage,
+    readImage,
+    deleteImages,
+    listImagePathnames,
+    listImageEntries,
   };
 }

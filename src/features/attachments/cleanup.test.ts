@@ -9,7 +9,7 @@ const inArrayMock = vi.fn((column: unknown, values: unknown) => ({
   column,
   values,
 }));
-const deleteFilesMock = vi.fn();
+const deleteImagesMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
@@ -23,8 +23,6 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("@/db/schema", () => ({
-  assessment: "assessment_table",
-  assessmentAttachment: "assessment_attachment_table",
   flashcard: "flashcard_table",
   mindmap: "mindmap_table",
   note: "note_table",
@@ -62,15 +60,6 @@ describe("getSubjectAttachmentPathnamesForUser", () => {
           return where([{ content: "note-image" }]);
         case "mindmap_table":
           return where([{ data: "notorium/mindmaps/u/node.png" }]);
-        case "assessment_attachment_table":
-          return {
-            innerJoin: () => ({
-              where: () =>
-                Promise.resolve([
-                  { blobPathname: "notorium/assessments/u/a.pdf" },
-                ]),
-            }),
-          };
         default:
           return where([]);
       }
@@ -84,18 +73,14 @@ describe("getSubjectAttachmentPathnamesForUser", () => {
 
     const pathnames = await getSubjectAttachmentPathnamesForUser("u", "subj");
 
-    expect(pathnames).toEqual([
-      "note-image",
-      "notorium/mindmaps/u/node.png",
-      "notorium/assessments/u/a.pdf",
-    ]);
-    expect(inArrayMock).toHaveBeenCalledTimes(4);
+    expect(pathnames).toEqual(["note-image", "notorium/mindmaps/u/node.png"]);
+    expect(inArrayMock).toHaveBeenCalledTimes(3);
     expect(inArrayMock).toHaveBeenCalledWith(undefined, ["subj", "child"]);
   });
 
   it("deduplicates owned pathnames before deleting provider files", async () => {
     getMediaStorageProviderMock.mockResolvedValueOnce({
-      deleteFiles: deleteFilesMock,
+      deleteImages: deleteImagesMock,
     });
     const { cleanupAttachmentPathnames } = await import(
       "@/features/attachments/cleanup"
@@ -103,7 +88,7 @@ describe("getSubjectAttachmentPathnamesForUser", () => {
 
     await cleanupAttachmentPathnames("u", ["image-1", "image-1", "image-2"]);
 
-    expect(deleteFilesMock).toHaveBeenCalledWith({
+    expect(deleteImagesMock).toHaveBeenCalledWith({
       pathnames: ["image-1", "image-2"],
     });
   });

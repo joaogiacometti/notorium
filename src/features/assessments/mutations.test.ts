@@ -22,8 +22,6 @@ const getAssessmentRecordForUserMock = vi.fn();
 const getAssessmentRecordsForUserMock = vi.fn();
 const countAssessmentsBySubjectForUserMock = vi.fn();
 const getActiveAcademicSubjectRecordForUserMock = vi.fn();
-const getAssessmentAttachmentsForAssessmentsMock = vi.fn();
-const cleanupAttachmentPathnamesMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -45,15 +43,6 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/attachments/queries", () => ({
-  getAssessmentAttachmentsForAssessments:
-    getAssessmentAttachmentsForAssessmentsMock,
-}));
-
-vi.mock("@/features/attachments/cleanup", () => ({
-  cleanupAttachmentPathnames: cleanupAttachmentPathnamesMock,
-}));
-
 vi.mock("@/features/assessments/queries", () => ({
   countAssessmentsBySubjectForUser: countAssessmentsBySubjectForUserMock,
   getAssessmentRecordForUser: getAssessmentRecordForUserMock,
@@ -68,8 +57,6 @@ vi.mock("@/features/subjects/queries", () => ({
 describe("bulkDeleteAssessmentsForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getAssessmentAttachmentsForAssessmentsMock.mockResolvedValue([]);
-    cleanupAttachmentPathnamesMock.mockResolvedValue(undefined);
   });
 
   it("deletes owned assessments and returns affected ids and subject ids", async () => {
@@ -123,8 +110,6 @@ describe("bulkDeleteAssessmentsForUser", () => {
 describe("bulkUpdateAssessmentStatusForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getAssessmentAttachmentsForAssessmentsMock.mockResolvedValue([]);
-    cleanupAttachmentPathnamesMock.mockResolvedValue(undefined);
   });
 
   it("updates the status for all owned selected assessments", async () => {

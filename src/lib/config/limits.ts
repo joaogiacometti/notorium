@@ -12,7 +12,6 @@ export const LIMITS = {
   mindmapDataMaxBytes: 200000,
   maxAttachmentsPerNote: 20,
   maxAttachmentsPerFlashcard: 10,
-  maxAttachmentsPerAssessment: 10,
   maxAssessmentsPerSubject: 50,
   maxFlashcardsPerSubject: 2000,
 
@@ -24,7 +23,6 @@ export const LIMITS = {
   // 4.5 MB, so the accepted size stays safely below that (with multipart
   // overhead headroom). Server-side optimization shrinks most uploads further.
   attachmentMaxBytes: 4194304,
-  assessmentAttachmentMaxBytes: 10485760,
   attachmentSignedReadTtlSeconds: 300,
   attachmentUploadRateLimitPrefix: "ratelimit:attachments:upload",
   attachmentUploadRateLimitPerDay: 200,

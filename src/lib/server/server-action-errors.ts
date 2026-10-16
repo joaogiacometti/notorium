@@ -55,10 +55,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attendance.missAlreadyRecorded": "A miss is already recorded for this date.",
   "attendance.missNotFound": "Miss record not found.",
   "attachments.invalidData": "Invalid attachment data.",
-  "attachments.notFound": "Attachment not found.",
   "attachments.uploadFailed": "Failed to upload attachment.",
   "attachments.deleteFailed": "Failed to delete attachment.",
-  "attachments.readFailed": "Failed to load attachment.",
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
   "attachments.notConfigured":
     "No media storage is configured. Contact your administrator.",
@@ -111,8 +109,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} mindmaps per subject.`,
   "limits.attachmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} attachments per item.`,
-  "limits.assessmentAttachmentLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} attachments per assessment.`,
   "limits.attachmentSizeLimit": (params) =>
     `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.assessmentLimit": (params) =>

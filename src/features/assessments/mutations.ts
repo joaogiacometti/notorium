@@ -13,8 +13,6 @@ import type {
   DeleteAssessmentForm,
   EditAssessmentForm,
 } from "@/features/assessments/validation";
-import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
-import { getAssessmentAttachmentsForAssessments } from "@/features/attachments/queries";
 import { getAcademicSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -142,15 +140,9 @@ export async function deleteAssessmentForUser(
     return actionError("assessments.notFound");
   }
 
-  const attachmentPathnames = (
-    await getAssessmentAttachmentsForAssessments(userId, [data.id])
-  ).map((attachment) => attachment.blobPathname);
-
   await getDb()
     .delete(assessment)
     .where(and(eq(assessment.id, data.id), eq(assessment.userId, userId)));
-
-  await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return {
     success: true,
@@ -172,17 +164,11 @@ export async function bulkDeleteAssessmentsForUser(
     return actionError("assessments.notFound");
   }
 
-  const attachmentPathnames = (
-    await getAssessmentAttachmentsForAssessments(userId, data.ids)
-  ).map((attachment) => attachment.blobPathname);
-
   await getDb()
     .delete(assessment)
     .where(
       and(inArray(assessment.id, data.ids), eq(assessment.userId, userId)),
     );
-
-  await cleanupAttachmentPathnames(userId, attachmentPathnames);
 
   return {
     success: true,

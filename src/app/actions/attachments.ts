@@ -1,18 +1,9 @@
 "use server";
 
+import { deleteEditorImagesForUser } from "@/features/attachments/mutations";
 import {
-  deleteAssessmentAttachmentForUser,
-  deleteEditorImagesForUser,
-  type UploadAssessmentAttachmentResult,
-  uploadAssessmentAttachmentForUser,
-} from "@/features/attachments/mutations";
-import {
-  type DeleteAssessmentAttachmentForm,
   type DeleteEditorImagesForm,
-  deleteAssessmentAttachmentSchema,
   deleteEditorImagesSchema,
-  type UploadAssessmentAttachmentForm,
-  uploadAssessmentAttachmentSchema,
 } from "@/features/attachments/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
@@ -30,31 +21,5 @@ export async function deleteEditorImages(
     data,
     "attachments.invalidData",
     async (userId, parsedData) => deleteEditorImagesForUser(userId, parsedData),
-  );
-}
-
-export async function uploadAssessmentAttachment(
-  data: UploadAssessmentAttachmentForm,
-): Promise<UploadAssessmentAttachmentResult> {
-  return runValidatedUserAction(
-    "attachments.uploadAssessmentAttachment",
-    uploadAssessmentAttachmentSchema,
-    data,
-    "attachments.invalidData",
-    async (userId, parsedData) =>
-      uploadAssessmentAttachmentForUser(userId, parsedData),
-  );
-}
-
-export async function deleteAssessmentAttachment(
-  data: DeleteAssessmentAttachmentForm,
-): Promise<{ success: true } | ActionErrorResult> {
-  return runValidatedUserAction(
-    "attachments.deleteAssessmentAttachment",
-    deleteAssessmentAttachmentSchema,
-    data,
-    "attachments.invalidData",
-    async (userId, parsedData) =>
-      deleteAssessmentAttachmentForUser(userId, parsedData),
   );
 }

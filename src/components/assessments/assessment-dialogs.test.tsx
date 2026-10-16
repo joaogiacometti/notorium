@@ -68,8 +68,6 @@ describe("assessment dialogs", () => {
     });
 
     expect(document.body.textContent).toContain("Edit Assessment");
-    expect(document.body.textContent).not.toContain("Attachments");
-    expect(document.body.textContent).not.toContain("Add Files");
   });
 
   it("blocks background row navigation after changing status in the real dialog", async () => {

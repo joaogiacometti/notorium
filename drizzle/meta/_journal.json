@@ -470,6 +470,13 @@
       "when": 1792154642786,
       "tag": "0066_parched_vengeance",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1792155257374,
+      "tag": "0067_curious_nicolaos",
+      "breakpoints": true
     }
   ]
 }

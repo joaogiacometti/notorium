@@ -69,7 +69,7 @@ Students who want a private, lightweight study management workspace.
   - pasted image uploads stored in private blob storage
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
-- Uploaded images (note, flashcard, mindmap, and assessment image attachments) are automatically optimized to WebP on upload, with a maximum dimension cap, to reduce stored size and bandwidth without a visible quality loss. The original is kept only if optimization would not make the file smaller. Non-image uploads such as PDFs are stored as-is.
+- Uploaded images (note, flashcard, and mindmap images) are automatically optimized to WebP on upload, with a maximum dimension cap, to reduce stored size and bandwidth without a visible quality loss. The original is kept only if optimization would not make the file smaller.
 - When AI is configured, users can generate flashcards from a note into a selected subject.
 - Generated note flashcards are reviewed before creation.
 
@@ -222,8 +222,6 @@ Students who want a private, lightweight study management workspace.
 - Subject detail pages show a minimal assessment summary with the subject average when available and a link to the planning page filtered to that subject.
 - The planning assessments view always shows a combined grade/weight column, and enters a subject-focused mode when exactly one subject is selected to additionally show the final grade summary for that subject.
 - Assessment fields: title, optional description, type, status, due date, optional score, and optional weight.
-- Assessment create and edit support separate study-file attachments stored in private blob storage.
-- Assessment attachments are download-only and limited to supported study file types.
 - Pending, overdue, and completed states are shown in the UI.
 - Subject average from completed assessments with score:
   - weighted average if at least one valid weight exists

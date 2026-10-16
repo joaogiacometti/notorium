@@ -1,32 +1,11 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import {
-  assessment,
-  assessmentAttachment,
-  flashcard,
-  mindmap,
-  note,
-} from "@/db/schema";
+import { flashcard, mindmap, note } from "@/db/schema";
 import { getOwnedAttachmentPathnames } from "@/features/attachments/pathname";
 import { getMindmapImagePathnames } from "@/features/mindmaps/utils";
 import { getDescendantSubjectIds } from "@/features/subjects/queries";
 import { getInternalAttachmentPathnames } from "@/lib/editor/rich-text";
-import {
-  getMediaStorageProvider,
-  type MediaStorageProvider,
-} from "@/lib/media-storage/provider";
-
-async function deleteProviderPathnames(
-  provider: MediaStorageProvider,
-  pathnames: string[],
-) {
-  if ("deleteFiles" in provider && typeof provider.deleteFiles === "function") {
-    await provider.deleteFiles({ pathnames });
-    return;
-  }
-
-  await provider.deleteImages({ pathnames });
-}
+import { getMediaStorageProvider } from "@/lib/media-storage/provider";
 
 export async function cleanupAttachmentPathnames(
   userId: string,
@@ -47,13 +26,13 @@ export async function cleanupAttachmentPathnames(
   }
 
   try {
-    await deleteProviderPathnames(provider, ownedPathnames);
+    await provider.deleteImages({ pathnames: ownedPathnames });
   } catch {}
 }
 
 /**
  * Collects every attachment pathname owned by a subject subtree across notes,
- * mindmaps, assessments, and flashcards so cascade deletion can clean storage
+ * mindmaps, and flashcards so cascade deletion can clean storage
  * immediately instead of waiting for the orphan sweep.
  *
  * @example
@@ -68,7 +47,7 @@ export async function getSubjectAttachmentPathnamesForUser(
     return [];
   }
 
-  const [notes, mindmaps, attachments, flashcards] = await Promise.all([
+  const [notes, mindmaps, flashcards] = await Promise.all([
     getDb()
       .select({ content: note.content })
       .from(note)
@@ -88,19 +67,6 @@ export async function getSubjectAttachmentPathnamesForUser(
         ),
       ),
     getDb()
-      .select({ blobPathname: assessmentAttachment.blobPathname })
-      .from(assessmentAttachment)
-      .innerJoin(
-        assessment,
-        eq(assessmentAttachment.assessmentId, assessment.id),
-      )
-      .where(
-        and(
-          eq(assessment.userId, userId),
-          inArray(assessment.subjectId, descendantSubjectIds),
-        ),
-      ),
-    getDb()
       .select({ front: flashcard.front, back: flashcard.back })
       .from(flashcard)
       .where(
@@ -117,7 +83,6 @@ export async function getSubjectAttachmentPathnamesForUser(
         getInternalAttachmentPathnames(item.content ?? ""),
       ),
       ...mindmaps.flatMap((item) => getMindmapImagePathnames(item.data)),
-      ...attachments.map((item) => item.blobPathname),
       ...flashcards.flatMap((item) =>
         getInternalAttachmentPathnames(`${item.front}${item.back}`),
       ),
