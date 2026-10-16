@@ -96,19 +96,9 @@ Students who want a private, lightweight study management workspace.
 - Create, read, update, and delete flashcards within subjects.
 - The flashcards manage table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
 - Flashcard manage search ranks front matches before back matches, subject-name matches, and recency tie-breakers.
-- Flashcards are one of three types, chosen at creation: basic (front and back rich text), cloze, or image occlusion.
-- Basic flashcard fields: front and back rich text.
-- Cloze flashcards are authored as a single rich-text source containing one or more deletion markers of the form `{{c1::answer}}`, with an optional hint as `{{c1::answer::hint}}`.
-- Each distinct cloze number (`c1`, `c2`, …) becomes its own independently scheduled card (Anki-style siblings): its front hides that deletion (showing the hint when given) while revealing the others, and its back highlights the revealed answer.
-- Editing a cloze card edits its source: kept deletions keep their review progress, added deletions become new cards, and removed deletions are deleted.
-- Deleting any cloze card deletes the whole note and all its sibling cards.
-- Image occlusion flashcards are authored from a single uploaded image (stored in private blob storage) with one or more rectangular mask regions drawn over it, each with an optional label.
-- Each mask region becomes its own independently scheduled card (Anki-style siblings): during review every region stays covered ("hide all, guess one"), the tested region is highlighted as the prompt, and the answer side uncovers only that region.
-- Editing an image occlusion card edits its image and masks: kept masks keep their review progress, added masks become new cards, and removed masks are deleted; replacing the source image cleans up the previous one and clears all existing masks, since they no longer align to the new image.
-- Deleting any image occlusion card deletes the whole note, all its sibling cards, and the shared source image.
-- A flashcard's type is fixed after creation and cannot be switched between basic, cloze, and image occlusion on edit.
+- Flashcard fields: front and back rich text.
 - Flashcard create and edit support AI generation of the back when the back is empty.
-- Basic flashcards can be split into multiple AI-proposed cards after preview; accepting a split atomically creates every replacement and removes the source, while any validation, duplicate, or capacity failure keeps the source unchanged.
+- Flashcards can be split into multiple AI-proposed cards after preview; accepting a split atomically creates every replacement and removes the source, while any validation, duplicate, or capacity failure keeps the source unchanged.
 - Flashcards can also be generated from a note or mindmap, via their detail-page header menu or sidebar/documents-list row menu, when AI is configured.
 - Generated AI flashcards use concise retrieval-cue fronts and minimal, directly testable answer bullets.
 - AI generation may emit LaTeX math (`$...$` inline, `$$...$$` block), which is converted to rendered math nodes.

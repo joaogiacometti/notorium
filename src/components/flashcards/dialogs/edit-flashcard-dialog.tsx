@@ -23,7 +23,6 @@ import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
-  toEditFlashcardPayload,
 } from "@/features/flashcards/validation";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
@@ -47,22 +46,12 @@ interface GeneratedCard {
 }
 
 interface EditFlashcardDialogProps {
-  flashcard: Pick<
-    FlashcardEntity,
-    | "id"
-    | "subjectId"
-    | "front"
-    | "back"
-    | "type"
-    | "clozeSource"
-    | "occlusionImagePathname"
-    | "occlusionRegions"
-  >;
+  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   aiEnabled: boolean;
   onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
-  onDeleted?: (deletedId: string, deletedIds: string[]) => void | Promise<void>;
+  onDeleted?: (deletedId: string) => void | Promise<void>;
   className?: string;
   overlayClassName?: string;
 }
@@ -99,11 +88,6 @@ export function EditFlashcardDialog({
   const isSplitDirty =
     splitFront !== flashcard.front || splitBack !== flashcard.back;
 
-  // Split generates basic cards from front/back text. Cloze and occlusion cards
-  // have no authored front/back (they derive it), so splitting does not apply.
-  const canSplit = flashcard.type === "basic";
-  const splitEnabled = aiEnabled && canSplit;
-
   const incomingValues = getEditFlashcardFormValues(flashcard);
 
   const form = useForm<FlashcardFormValues>({
@@ -139,10 +123,7 @@ export function EditFlashcardDialog({
     },
     values: incomingValues,
     form,
-    onSubmitAction: (values) =>
-      editFlashcard(
-        toEditFlashcardPayload(values as FlashcardFormValues & { id: string }),
-      ),
+    onSubmitAction: (values) => editFlashcard({ ...values, id: flashcard.id }),
     onSuccess: handleFlashcardUpdated,
     getSuccessValues: (submittedValues) => submittedValues,
     closeOnSuccess: false,
@@ -257,7 +238,7 @@ export function EditFlashcardDialog({
       `Created ${result.createdCount} split flashcard${result.createdCount === 1 ? "" : "s"}`,
     );
     onOpenChange(false);
-    await onDeleted?.(flashcard.id, result.deletedIds);
+    await onDeleted?.(flashcard.id);
     return result.createdCount;
   }
 
@@ -351,7 +332,7 @@ export function EditFlashcardDialog({
           }}
           noDialog
           typeToggle={
-            splitEnabled
+            aiEnabled
               ? {
                   mode: "edit",
                   onModeChange: (m) => handleModeSwitch(m as EditMode),
@@ -376,7 +357,7 @@ export function EditFlashcardDialog({
             onBack={handleBackToInput}
             isCreating={isCreating}
             typeToggle={
-              splitEnabled
+              aiEnabled
                 ? {
                     mode: "split",
                     onModeChange: (m) => handleModeSwitch(m as EditMode),
@@ -417,13 +398,6 @@ export function EditFlashcardDialog({
             className,
           )}
           overlayClassName={overlayClassName}
-          // Occlusion edit would auto-focus the help button while controls load,
-          // flashing its tooltip open. Basic/cloze keep editor focus.
-          onOpenAutoFocus={
-            flashcard.type === "occlusion"
-              ? (event) => event.preventDefault()
-              : undefined
-          }
         >
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Edit Flashcard</DialogTitle>

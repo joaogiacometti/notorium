@@ -17,7 +17,7 @@ import {
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
-// Image uploads (editor images, occlusion source images) intentionally have no
+// Image uploads (editor and mindmap images) intentionally have no
 // Server Action: they transfer raw bytes through the POST /api/attachments/image
 // route handler instead, because Server Actions cap request bodies at 1 MB.
 

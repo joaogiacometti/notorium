@@ -67,10 +67,6 @@ vi.mock("@/db/schema", () => ({
     lastReviewedAt: "flashcard_last_reviewed_at_column",
     reviewCount: "flashcard_review_count_column",
     lapseCount: "flashcard_lapse_count_column",
-    clozeSource: "flashcard_cloze_source_column",
-    occlusionImagePathname: "flashcard_occlusion_image_pathname_column",
-    occlusionRegions: "flashcard_occlusion_regions_column",
-    occlusionMaskId: "flashcard_occlusion_mask_id_column",
   },
   flashcardReviewLog: {
     id: "flashcard_review_log_id_column",

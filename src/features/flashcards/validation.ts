@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { hasClozeMarkers } from "@/features/flashcards/cloze";
 import { LIMITS } from "@/lib/config/limits";
 import {
   countInternalAttachmentImages,
@@ -35,86 +34,18 @@ export const flashcardBackSchema = z
     validationMessage("Validation.flashcards.backMaxLength"),
   );
 
-// Cloze source: the authored `{{cN::answer}}` rich text. Markers are plain text
-// inside the editor HTML, so length and marker checks run on the raw value.
-export const flashcardClozeSourceSchema = z
-  .string()
-  .refine(
-    (value) => hasRichTextContent(value),
-    validationMessage("Validation.flashcards.clozeTextRequired"),
-  )
-  .refine(
-    (value) => richTextToPlainText(value).length <= LIMITS.flashcardFrontMax,
-    validationMessage("Validation.flashcards.clozeMaxLength"),
-  )
-  .refine(
-    (value) => hasClozeMarkers(value),
-    validationMessage("Validation.flashcards.clozeMarkersRequired"),
-  );
-
-// Optional extra/context shown beneath every cloze sibling's answer.
-export const flashcardClozeExtraSchema = z
-  .string()
-  .refine(
-    (value) => richTextToPlainText(value).length <= LIMITS.flashcardBackMax,
-    validationMessage("Validation.flashcards.backMaxLength"),
-  )
-  .default("");
-
 const subjectIdField = z
   .string()
   .min(1, validationMessage("Validation.flashcards.subjectRequired"));
 
-// A single rectangular mask, coordinates normalized to 0..1 of the image box.
-export const occlusionRegionSchema = z.object({
-  id: z.string().min(1),
-  x: z.number().min(0).max(1),
-  y: z.number().min(0).max(1),
-  width: z.number().gt(0).max(1),
-  height: z.number().gt(0).max(1),
-  label: z.string().max(LIMITS.occlusionLabelMax).optional(),
-});
-
-export const occlusionImagePathnameSchema = z
-  .string()
-  .min(1, validationMessage("Validation.flashcards.occlusionImageRequired"))
-  .max(512);
-
-export const occlusionRegionsSchema = z
-  .array(occlusionRegionSchema)
-  .min(1, validationMessage("Validation.flashcards.occlusionRegionsRequired"))
-  .max(LIMITS.maxOcclusionRegionsPerNote)
-  .refine(
-    (regions) =>
-      new Set(regions.map((region) => region.id)).size === regions.length,
-    validationMessage("Validation.flashcards.occlusionRegionsRequired"),
-  );
-
-// Attachment-bearing rich-text fields differ by card type: basic cards carry
-// front + back, cloze notes carry the source + optional extra.
-function flashcardAttachmentFields(value: unknown): string[] {
-  if (typeof value !== "object" || value === null) {
-    return [];
-  }
-  const record = value as Record<string, unknown>;
-  const fields =
-    record.type === "cloze"
-      ? [record.clozeSource, record.back]
-      : [record.front, record.back];
-  return fields.filter((field): field is string => typeof field === "string");
-}
-
-function withFlashcardAttachmentLimit<TSchema extends z.ZodTypeAny>(
-  schema: TSchema,
-) {
+function withFlashcardAttachmentLimit<
+  TSchema extends z.ZodType<{ front: string; back: string }>,
+>(schema: TSchema) {
   return schema.refine(
-    (value) => {
-      const total = flashcardAttachmentFields(value).reduce(
-        (sum, field) => sum + countInternalAttachmentImages(field),
-        0,
-      );
-      return total <= LIMITS.maxAttachmentsPerFlashcard;
-    },
+    (value) =>
+      countInternalAttachmentImages(value.front) +
+        countInternalAttachmentImages(value.back) <=
+      LIMITS.maxAttachmentsPerFlashcard,
     {
       path: ["back"],
       message: validationMessage("Validation.flashcards.attachmentLimit", {
@@ -124,62 +55,20 @@ function withFlashcardAttachmentLimit<TSchema extends z.ZodTypeAny>(
   );
 }
 
-// Requests without an explicit `type` predate cloze support; treat them as basic
-// so existing callers and stored payloads keep validating unchanged.
-function withDefaultBasicType(value: unknown): unknown {
-  if (typeof value === "object" && value !== null && !("type" in value)) {
-    return { ...(value as Record<string, unknown>), type: "basic" };
-  }
-  return value;
-}
-
-const basicCreateObject = z.object({
-  type: z.literal("basic"),
+const createFlashcardObject = z.object({
   subjectId: subjectIdField,
   front: flashcardFrontSchema,
   back: flashcardBackSchema,
 });
 
-const clozeCreateObject = z.object({
-  type: z.literal("cloze"),
-  subjectId: subjectIdField,
-  clozeSource: flashcardClozeSourceSchema,
-  back: flashcardClozeExtraSchema,
-});
-
-const occlusionCreateObject = z.object({
-  type: z.literal("occlusion"),
-  subjectId: subjectIdField,
-  occlusionImagePathname: occlusionImagePathnameSchema,
-  occlusionRegions: occlusionRegionsSchema,
-});
-
 export const createFlashcardSchema = withFlashcardAttachmentLimit(
-  z.preprocess(
-    withDefaultBasicType,
-    z.discriminatedUnion("type", [
-      basicCreateObject,
-      clozeCreateObject,
-      occlusionCreateObject,
-    ]),
-  ),
+  createFlashcardObject,
 );
 
 export type CreateFlashcardForm = z.infer<typeof createFlashcardSchema>;
 
-const basicEditObject = basicCreateObject.extend({ id: idSchema });
-const clozeEditObject = clozeCreateObject.extend({ id: idSchema });
-const occlusionEditObject = occlusionCreateObject.extend({ id: idSchema });
-
 export const editFlashcardSchema = withFlashcardAttachmentLimit(
-  z.preprocess(
-    withDefaultBasicType,
-    z.discriminatedUnion("type", [
-      basicEditObject,
-      clozeEditObject,
-      occlusionEditObject,
-    ]),
-  ),
+  createFlashcardObject.extend({ id: idSchema }),
 );
 
 export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
@@ -195,152 +84,13 @@ export const splitFlashcardSchema = z.object({
 
 export type SplitFlashcardForm = z.infer<typeof splitFlashcardSchema>;
 
-// Flat shape the create/edit dialog forms bind to. React Hook Form works poorly
-// with discriminated unions, so the form holds every field and validates the
-// active card type, then maps to the server union at submit time.
-export const flashcardFormSchema = z
-  .object({
-    type: z.enum(["basic", "cloze", "occlusion"]),
-    id: z.string().optional(),
-    subjectId: subjectIdField,
-    front: z.string(),
-    back: z.string(),
-    clozeSource: z.string(),
-    occlusionImagePathname: z.string(),
-    occlusionRegions: z.array(occlusionRegionSchema),
-  })
-  .superRefine((value, ctx) => {
-    if (value.type === "occlusion") {
-      addFieldIssues(
-        ctx,
-        "occlusionImagePathname",
-        occlusionImagePathnameSchema,
-        value.occlusionImagePathname,
-      );
-      addFieldIssues(
-        ctx,
-        "occlusionRegions",
-        occlusionRegionsSchema,
-        value.occlusionRegions,
-      );
-      return;
-    }
-    if (value.type === "cloze") {
-      addFieldIssues(
-        ctx,
-        "clozeSource",
-        flashcardClozeSourceSchema,
-        value.clozeSource,
-      );
-      addFieldIssues(ctx, "back", flashcardClozeExtraSchema, value.back);
-    } else {
-      addFieldIssues(ctx, "front", flashcardFrontSchema, value.front);
-      addFieldIssues(ctx, "back", flashcardBackSchema, value.back);
-    }
-    const fields =
-      value.type === "cloze"
-        ? [value.clozeSource, value.back]
-        : [value.front, value.back];
-    const attachments = fields.reduce(
-      (sum, field) => sum + countInternalAttachmentImages(field),
-      0,
-    );
-    if (attachments > LIMITS.maxAttachmentsPerFlashcard) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["back"],
-        message: validationMessage("Validation.flashcards.attachmentLimit", {
-          max: LIMITS.maxAttachmentsPerFlashcard,
-        }),
-      });
-    }
-  });
+// Shape the create/edit dialog forms bind to: the create payload plus the id
+// the edit dialog carries.
+export const flashcardFormSchema = withFlashcardAttachmentLimit(
+  createFlashcardObject.extend({ id: z.string().optional() }),
+);
 
 export type FlashcardFormValues = z.infer<typeof flashcardFormSchema>;
-
-function addFieldIssues(
-  ctx: z.RefinementCtx,
-  path: string,
-  schema: z.ZodTypeAny,
-  value: unknown,
-): void {
-  const result = schema.safeParse(value);
-  if (result.success) {
-    return;
-  }
-  for (const issue of result.error.issues) {
-    ctx.addIssue({ ...issue, path: [path] });
-  }
-}
-
-/**
- * Maps flat form values to the server create payload, dropping inactive fields.
- *
- * @example
- * toCreateFlashcardPayload({ type: "cloze", subjectId, clozeSource, back, front: "" });
- */
-export function toCreateFlashcardPayload(
-  values: FlashcardFormValues,
-): CreateFlashcardForm {
-  if (values.type === "occlusion") {
-    return {
-      type: "occlusion",
-      subjectId: values.subjectId,
-      occlusionImagePathname: values.occlusionImagePathname,
-      occlusionRegions: values.occlusionRegions,
-    };
-  }
-  if (values.type === "cloze") {
-    return {
-      type: "cloze",
-      subjectId: values.subjectId,
-      clozeSource: values.clozeSource,
-      back: values.back,
-    };
-  }
-  return {
-    type: "basic",
-    subjectId: values.subjectId,
-    front: values.front,
-    back: values.back,
-  };
-}
-
-/**
- * Maps flat form values (with an id) to the server edit payload.
- *
- * @example
- * toEditFlashcardPayload({ id, type: "basic", subjectId, front, back, clozeSource: "" });
- */
-export function toEditFlashcardPayload(
-  values: FlashcardFormValues & { id: string },
-): EditFlashcardForm {
-  if (values.type === "occlusion") {
-    return {
-      id: values.id,
-      type: "occlusion",
-      subjectId: values.subjectId,
-      occlusionImagePathname: values.occlusionImagePathname,
-      occlusionRegions: values.occlusionRegions,
-    };
-  }
-  if (values.type === "cloze") {
-    return {
-      id: values.id,
-      type: "cloze",
-      subjectId: values.subjectId,
-      clozeSource: values.clozeSource,
-      back: values.back,
-    };
-  }
-  return {
-    id: values.id,
-    type: "basic",
-    subjectId: values.subjectId,
-    front: values.front,
-    back: values.back,
-  };
-}
 
 export const generateFlashcardBackSchema = z.object({
   subjectId: subjectIdField,

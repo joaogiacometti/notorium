@@ -141,14 +141,6 @@ const flashcard = {
   front: "<p>Front</p>",
   frontNormalized: "front",
   back: "<p>Back</p>",
-  type: "basic" as const,
-  clozeNoteId: null,
-  clozeOrdinal: null,
-  clozeSource: null,
-  occlusionNoteId: null,
-  occlusionImagePathname: null,
-  occlusionRegions: null,
-  occlusionMaskId: null,
   state: "new",
   dueAt: new Date("2026-04-13T00:00:00.000Z"),
   stability: null,
@@ -247,40 +239,6 @@ describe("paste-image loading flows", () => {
 
     expect(button.disabled).toBe(true);
     expect(button.textContent).toContain("Uploading image...");
-  });
-
-  it("does not enable split mode for occlusion and cloze cards", async () => {
-    for (const type of ["occlusion", "cloze"] as const) {
-      await act(async () => {
-        root.render(
-          <EditFlashcardDialog
-            open
-            onOpenChange={() => {}}
-            flashcard={{ ...flashcard, type }}
-            aiEnabled
-          />,
-        );
-      });
-
-      await act(async () => {
-        (
-          document.body.querySelector(
-            '[data-testid="toggle-mode"]',
-          ) as HTMLButtonElement
-        ).click();
-      });
-
-      // The split toggle is gated off for derived-content cards, so clicking it
-      // is inert: the Split form never replaces the edit form.
-      const splitButton = Array.from(
-        document.body.querySelectorAll("button"),
-      ).find((item) => item.textContent?.includes("Split Flashcard"));
-      expect(splitButton).toBeUndefined();
-
-      await act(async () => {
-        root.render(<div />);
-      });
-    }
   });
 
   it("reports a failed subject load instead of leaving it unhandled", async () => {

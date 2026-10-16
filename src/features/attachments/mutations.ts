@@ -53,9 +53,8 @@ export interface UploadAttachmentImageInput {
 /**
  * Validates, rate-limits, optimizes, and stores an attachment image's raw bytes,
  * returning both its authenticated read URL and the stored blob pathname. Shared
- * by the note/flashcard/mindmap editor-image upload and the occlusion
- * source-image upload, which reach it through the POST /api/attachments/image
- * route handler rather than a Server Action — Server Actions cap request bodies
+ * by the note/flashcard/mindmap editor-image uploads, which reach it through the
+ * POST /api/attachments/image route handler rather than a Server Action — Server Actions cap request bodies
  * at 1 MB, which even a single phone photo exceeds once transferred.
  *
  * @example

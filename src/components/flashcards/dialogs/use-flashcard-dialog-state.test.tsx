@@ -159,13 +159,9 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            type: "basic",
             subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           }}
         />,
       );
@@ -178,13 +174,9 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            type: "basic",
             subjectId: "deck-2",
             front: "<p>Front B</p>",
             back: "<p>Back B</p>",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           }}
         />,
       );
@@ -203,13 +195,9 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            type: "basic",
             subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           }}
           onSubmitAction={onSubmitAction}
           getSuccessValues={(currentValues) => currentValues}
@@ -227,13 +215,9 @@ describe("useFlashcardDialogState", () => {
     await flushTimers();
 
     expect(onSubmitAction).toHaveBeenCalledWith({
-      type: "basic",
       subjectId: "deck-1",
       front: "<p>Front A</p>",
       back: "<p>Back A</p>",
-      clozeSource: "",
-      occlusionImagePathname: "",
-      occlusionRegions: [],
     });
     expect(checkFlashcardDuplicateMock).toHaveBeenCalledTimes(2);
     expect(checkFlashcardDuplicateMock).toHaveBeenLastCalledWith({
@@ -248,22 +232,14 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            type: "basic",
             subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           }}
           getSuccessValues={(currentValues, options) => ({
-            type: "basic",
             subjectId: currentValues.subjectId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           })}
         />,
       );
@@ -285,22 +261,14 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            type: "basic",
             subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           }}
           getSuccessValues={(currentValues, options) => ({
-            type: "basic",
             subjectId: currentValues.subjectId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           })}
         />,
       );
@@ -326,22 +294,14 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            type: "basic",
             subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           }}
           getSuccessValues={(currentValues, options) => ({
-            type: "basic",
             subjectId: currentValues.subjectId,
             front: options.keepFrontAfterSubmit ? currentValues.front : "",
             back: options.keepBackAfterSubmit ? currentValues.back : "",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           })}
         />,
       );
@@ -370,13 +330,9 @@ describe("useFlashcardDialogState", () => {
     function ProposalHarness() {
       const form = useForm<FlashcardFormValues>({
         defaultValues: {
-          type: "basic",
           subjectId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
-          clozeSource: "",
-          occlusionImagePathname: "",
-          occlusionRegions: [],
         },
       });
       const dialog = useFlashcardDialogState({
@@ -385,13 +341,9 @@ describe("useFlashcardDialogState", () => {
         aiEnabled: true,
         onOpenChange: () => {},
         values: {
-          type: "basic",
           subjectId: "deck-1",
           front: "<p>Front A</p>",
           back: "<p>Back A</p>",
-          clozeSource: "",
-          occlusionImagePathname: "",
-          occlusionRegions: [],
         },
         form,
         onSubmitAction: async () => ({ success: true }),
@@ -433,13 +385,9 @@ describe("useFlashcardDialogState", () => {
           open
           onOpenChange={onOpenChange}
           values={{
-            type: "basic",
             subjectId: "deck-1",
             front: "<p>Front A</p>",
             back: "<p>Back A</p>",
-            clozeSource: "",
-            occlusionImagePathname: "",
-            occlusionRegions: [],
           }}
           onSubmitAction={onSubmitAction}
           getSuccessValues={(currentValues) => currentValues}

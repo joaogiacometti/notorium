@@ -19,7 +19,7 @@ export const LIMITS = {
   noteTitleMax: 200,
   noteContentMax: 100000,
   noteContentPreviewLength: 100,
-  // 4 MB. Editor/occlusion images upload as multipart bytes to the
+  // 4 MB. Editor images upload as multipart bytes to the
   // /api/attachments/image route handler; Vercel caps function request bodies at
   // 4.5 MB, so the accepted size stays safely below that (with multipart
   // overhead headroom). Server-side optimization shrinks most uploads further.
@@ -36,8 +36,6 @@ export const LIMITS = {
   flashcardBatchSize: 500,
   flashcardAiFrontMax: 500,
   flashcardAiBackMax: 1200,
-  maxOcclusionRegionsPerNote: 50,
-  occlusionLabelMax: 200,
 
   subjectNameMax: 100,
 

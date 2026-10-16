@@ -37,11 +37,9 @@ function Harness({
 }>) {
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
-      type: "basic",
       subjectId: "",
       front: "",
       back: "",
-      clozeSource: "",
     },
   });
 

@@ -73,22 +73,6 @@ export function getFlashcardsManageOrderBy(
   ];
 }
 
-// Keep one representative row per occlusion note (its lowest mask id) so the
-// manage list shows one entry per image instead of one per mask. Non-occlusion
-// cards are always kept.
-const occlusionRepresentativeFilter = sql`(
-  ${flashcard.type} <> 'occlusion'
-  or ${flashcard.id} = (
-    select min(sub.id) from flashcard as sub
-    where sub.occlusion_note_id = ${flashcard.occlusionNoteId}
-  )
-)`;
-
-const occlusionMaskCount = sql<number>`(
-  select count(*)::int from flashcard as cnt
-  where cnt.occlusion_note_id = ${flashcard.occlusionNoteId}
-)`;
-
 export async function getFlashcardsManagePageForUser(
   userId: string,
   {
@@ -102,10 +86,7 @@ export async function getFlashcardsManagePageForUser(
   const normalizedSearch = search?.trim() ?? "";
   const searchPattern = buildContainsSearchPattern(normalizedSearch);
   const offset = pageIndex * pageSize;
-  const filters: SQL<unknown>[] = [
-    eq(flashcard.userId, userId),
-    occlusionRepresentativeFilter,
-  ];
+  const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
   const scopedSubjectIds = await resolveScopedSubjectIds(
     userId,
     subjectId,
@@ -136,9 +117,6 @@ export async function getFlashcardsManagePageForUser(
           subjectId: flashcard.subjectId,
           updatedAt: flashcard.updatedAt,
           front: flashcard.front,
-          type: flashcard.type,
-          occlusionImagePathname: flashcard.occlusionImagePathname,
-          maskCount: occlusionMaskCount,
           subjectName: subject.name,
         })
         .from(flashcard)
@@ -174,10 +152,6 @@ export async function getFlashcardsManagePageForUser(
       front: row.front,
       frontExcerpt: getRichTextExcerpt(row.front, 45),
       frontTitle: richTextToPlainText(row.front) || null,
-      type: row.type,
-      occlusionImagePathname:
-        row.type === "occlusion" ? row.occlusionImagePathname : null,
-      maskCount: row.type === "occlusion" ? row.maskCount : null,
       subjectName: row.subjectName,
       subjectPath:
         (row.subjectId ? subjectPathMap.get(row.subjectId) : undefined) ??
@@ -199,52 +173,6 @@ export async function getFlashcardByIdForUser(
     .limit(1);
 
   return results[0]?.flashcard ?? null;
-}
-
-/**
- * Loads every sibling card of a cloze note, ordered by deletion ordinal.
- *
- * @example
- * const siblings = await getClozeSiblingsForUser(userId, "note-123");
- */
-export async function getClozeSiblingsForUser(
-  userId: string,
-  clozeNoteId: string,
-): Promise<FlashcardEntity[]> {
-  const results = await getDb()
-    .select({ flashcard })
-    .from(flashcard)
-    .where(
-      and(eq(flashcard.clozeNoteId, clozeNoteId), eq(flashcard.userId, userId)),
-    )
-    .orderBy(flashcard.clozeOrdinal);
-
-  return results.map((row) => row.flashcard);
-}
-
-/**
- * Loads every sibling card of an image occlusion note, ordered by id for a
- * stable representative pick.
- *
- * @example
- * const siblings = await getOcclusionSiblingsForUser(userId, "note-123");
- */
-export async function getOcclusionSiblingsForUser(
-  userId: string,
-  occlusionNoteId: string,
-): Promise<FlashcardEntity[]> {
-  const results = await getDb()
-    .select({ flashcard })
-    .from(flashcard)
-    .where(
-      and(
-        eq(flashcard.occlusionNoteId, occlusionNoteId),
-        eq(flashcard.userId, userId),
-      ),
-    )
-    .orderBy(flashcard.id);
-
-  return results.map((row) => row.flashcard);
 }
 
 export async function getFlashcardDetailByIdForUser(

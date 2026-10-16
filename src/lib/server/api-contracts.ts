@@ -52,16 +52,13 @@ export type FlashcardDetailEntity = FlashcardEntity & {
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "subjectId" | "updatedAt" | "type"
+  "id" | "subjectId" | "updatedAt"
 > & {
   front: string;
   frontExcerpt: string;
   frontTitle: string | null;
   subjectName: string;
   subjectPath: string;
-  // Occlusion notes collapse their per-mask sibling rows into one list row.
-  occlusionImagePathname: string | null;
-  maskCount: number | null;
 };
 export interface FlashcardManagePage {
   items: FlashcardManageItem[];
@@ -79,11 +76,6 @@ export type FlashcardReviewEntity = Pick<
   | "id"
   | "front"
   | "back"
-  | "type"
-  | "clozeSource"
-  | "occlusionImagePathname"
-  | "occlusionRegions"
-  | "occlusionMaskId"
   | "subjectId"
   | "state"
   | "dueAt"
@@ -283,7 +275,6 @@ export type DeleteFlashcardResult =
   | {
       success: true;
       id: string;
-      deletedIds: string[];
       subjectId: string | null;
     }
   | ActionErrorResult;
@@ -291,7 +282,6 @@ export type SplitFlashcardResult =
   | {
       success: true;
       createdCount: number;
-      deletedIds: string[];
     }
   | ActionErrorResult;
 export type BulkDeleteFlashcardsResult =

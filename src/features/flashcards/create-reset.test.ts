@@ -3,13 +3,9 @@ import { getCreateFlashcardResetValues } from "@/features/flashcards/create-rese
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
 
 const values: FlashcardFormValues = {
-  type: "basic",
   subjectId: "deck-1",
   front: "<p>Front</p>",
   back: "<p>Back</p>",
-  clozeSource: "",
-  occlusionImagePathname: "",
-  occlusionRegions: [],
 };
 
 describe("getCreateFlashcardResetValues", () => {
@@ -20,13 +16,9 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
-      type: "basic",
       subjectId: "deck-1",
       front: "",
       back: "",
-      clozeSource: "",
-      occlusionImagePathname: "",
-      occlusionRegions: [],
     });
   });
 
@@ -37,13 +29,9 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
-      type: "basic",
       subjectId: "deck-1",
       front: "<p>Front</p>",
       back: "",
-      clozeSource: "",
-      occlusionImagePathname: "",
-      occlusionRegions: [],
     });
   });
 
@@ -54,13 +42,9 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: true,
       }),
     ).toEqual({
-      type: "basic",
       subjectId: "deck-1",
       front: "",
       back: "<p>Back</p>",
-      clozeSource: "",
-      occlusionImagePathname: "",
-      occlusionRegions: [],
     });
   });
 });

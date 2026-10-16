@@ -59,7 +59,6 @@ vi.mock("@/lib/db/errors", () => ({
 
 const primaryCard = {
   id: "flashcard-1",
-  type: "basic" as const,
   subjectId: "deck-1",
   front: "<p>Primary front</p>",
   back: "<p>Primary back</p>",
@@ -67,7 +66,6 @@ const primaryCard = {
 
 const sourceCard = {
   id: "flashcard-2",
-  type: "basic" as const,
   subjectId: "deck-1",
   front: "<p>Source front</p>",
   back: "<p>Source back</p>",
@@ -121,27 +119,6 @@ describe("applyFlashcardMergeForUser", () => {
       errorParams: undefined,
       errorMessage: undefined,
     });
-    expect(transactionMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects merging cloze or occlusion siblings", async () => {
-    selectWhereMock.mockResolvedValueOnce([
-      primaryCard,
-      { ...sourceCard, type: "cloze" },
-    ]);
-
-    const { applyFlashcardMergeForUser } = await import(
-      "@/features/flashcards/refine/mutations"
-    );
-
-    const result = await applyFlashcardMergeForUser("user-1", mergeForm);
-
-    expect(result).toEqual(
-      expect.objectContaining({
-        success: false,
-        errorCode: "flashcards.invalidData",
-      }),
-    );
     expect(transactionMock).not.toHaveBeenCalled();
   });
 

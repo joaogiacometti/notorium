@@ -41,8 +41,8 @@ export function isSupportedAssessmentAttachmentMimeType(
   return supportedAssessmentMimeTypeSet.has(value.trim().toLowerCase());
 }
 
-// Attachment image uploads (editor images and occlusion source images) are sent
-// as raw multipart bytes through the POST /api/attachments/image route handler,
+// Attachment image uploads (editor and mindmap images) are sent as raw
+// multipart bytes through the POST /api/attachments/image route handler,
 // not a Server Action, so there is no base64 upload schema here — only the
 // shared context whitelist the route validates the form field against.
 export const UPLOAD_IMAGE_CONTEXTS = [

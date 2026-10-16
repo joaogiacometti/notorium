@@ -65,7 +65,7 @@ async function validateSplitContext(
     getFlashcardByIdForUser(userId, data.id),
     getSubjectRecordForUser(userId, data.subjectId),
   ]);
-  if (card?.type !== "basic") {
+  if (!card) {
     return { error: actionError("flashcards.notFound") };
   }
   if (!subject) {
@@ -135,6 +135,5 @@ export async function splitFlashcardForUser(
   return {
     success: true,
     createdCount: data.cards.length,
-    deletedIds: [data.id],
   };
 }

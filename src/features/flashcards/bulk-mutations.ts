@@ -3,16 +3,11 @@ import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
-import { cleanupOcclusionImagesForUser } from "@/features/flashcards/occlusion-mutations";
 import {
   countFlashcardsBySubjectForUser,
   getFlashcardByIdForUser,
   getFlashcardRecordsForUser,
 } from "@/features/flashcards/queries";
-import {
-  expandFlashcardNoteSiblingIds,
-  expandOcclusionSiblingIds,
-} from "@/features/flashcards/sibling-queries";
 import type {
   BulkDeleteFlashcardsForm,
   BulkMoveFlashcardsForm,
@@ -40,29 +35,16 @@ export async function bulkDeleteFlashcardsForUser(
     return actionError("flashcards.notFound");
   }
 
-  const expandedIds = await expandFlashcardNoteSiblingIds(userId, data.ids);
-  const expandedFlashcards =
-    expandedIds.length === data.ids.length
-      ? existingFlashcards
-      : await Promise.all(
-          expandedIds.map((id) => getFlashcardByIdForUser(userId, id)),
-        );
-  const ownedFlashcards = expandedFlashcards.filter((item) => item !== null);
+  const ownedFlashcards = existingFlashcards.filter((item) => item !== null);
 
   await getDb()
     .delete(flashcard)
-    .where(
-      and(inArray(flashcard.id, expandedIds), eq(flashcard.userId, userId)),
-    );
+    .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
   await cleanupAttachmentsAfterMutation(
     userId,
     ownedFlashcards.flatMap((flashcard) => [flashcard.front, flashcard.back]),
     [],
-  );
-  await cleanupOcclusionImagesForUser(
-    userId,
-    ownedFlashcards.map((flashcard) => flashcard.occlusionImagePathname),
   );
 
   return {
@@ -92,13 +74,7 @@ export async function bulkMoveFlashcardsForUser(
     return actionError("subjects.notFound");
   }
 
-  const expandedIds = await expandFlashcardNoteSiblingIds(userId, data.ids);
-  const expandedFlashcards =
-    expandedIds.length === data.ids.length
-      ? existingFlashcards
-      : await getFlashcardRecordsForUser(userId, expandedIds);
-
-  const movingToNewSubject = expandedFlashcards.filter(
+  const movingToNewSubject = existingFlashcards.filter(
     (fc) => fc.subjectId !== data.subjectId,
   ).length;
 
@@ -118,16 +94,14 @@ export async function bulkMoveFlashcardsForUser(
   await getDb()
     .update(flashcard)
     .set({ subjectId: data.subjectId })
-    .where(
-      and(inArray(flashcard.id, expandedIds), eq(flashcard.userId, userId)),
-    );
+    .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
   return {
     success: true,
     ids: data.ids,
     subjectId: data.subjectId,
     previousSubjectIds: uniqueItems(
-      expandedFlashcards
+      existingFlashcards
         .map((fc) => fc.subjectId)
         .filter((id): id is string => id !== null),
     ),
@@ -143,13 +117,6 @@ export async function bulkResetFlashcardsForUser(
   if (existingFlashcards.length !== data.ids.length) {
     return actionError("flashcards.notFound");
   }
-
-  // Resetting an occlusion card resets its whole note's masks together.
-  const expandedIds = await expandOcclusionSiblingIds(userId, data.ids);
-  const expandedFlashcards =
-    expandedIds.length === data.ids.length
-      ? existingFlashcards
-      : await getFlashcardRecordsForUser(userId, expandedIds);
 
   const now = new Date();
   const schedulingState = getInitialFlashcardSchedulingState(now);
@@ -168,15 +135,13 @@ export async function bulkResetFlashcardsForUser(
       lapseCount: schedulingState.lapseCount,
       updatedAt: now,
     })
-    .where(
-      and(inArray(flashcard.id, expandedIds), eq(flashcard.userId, userId)),
-    );
+    .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
   return {
     success: true,
     ids: data.ids,
     subjectIds: uniqueItems(
-      expandedFlashcards
+      existingFlashcards
         .map((fc) => fc.subjectId)
         .filter((id): id is string => id !== null),
     ),

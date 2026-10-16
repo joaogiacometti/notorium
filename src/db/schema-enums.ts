@@ -37,12 +37,6 @@ export const flashcardStateEnum = pgEnum("flashcard_state", [
   "relearning",
 ]);
 
-export const flashcardTypeEnum = pgEnum("flashcard_type", [
-  "basic",
-  "cloze",
-  "occlusion",
-]);
-
 export const flashcardReviewRatingEnum = pgEnum("flashcard_review_rating", [
   "again",
   "hard",

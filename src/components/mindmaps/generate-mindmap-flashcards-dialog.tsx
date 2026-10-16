@@ -122,7 +122,6 @@ export function GenerateMindmapFlashcardsDialog({
 
     for (const card of cards) {
       const result = await createFlashcard({
-        type: "basic",
         subjectId: selectedSubjectId ?? "",
         front: card.front,
         back: card.back,

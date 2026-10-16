@@ -18,13 +18,11 @@ import {
   assessmentTypeEnum,
   flashcardReviewRatingEnum,
   flashcardStateEnum,
-  flashcardTypeEnum,
   notificationStatusEnum,
   subjectKindEnum,
   userAccessStatusEnum,
 } from "@/db/schema-enums";
 import type { FlashcardReviewSchedulingSnapshot } from "@/features/flashcard-review/types";
-import type { OcclusionRegion } from "@/features/flashcards/occlusion";
 
 export * from "@/db/schema-enums";
 
@@ -378,20 +376,6 @@ export const flashcard = pgTable(
     front: text("front").notNull(),
     frontNormalized: text("front_normalized").notNull(),
     back: text("back").notNull(),
-    type: flashcardTypeEnum("type").notNull().default("basic"),
-    // Cloze siblings share one clozeNoteId. clozeOrdinal is the deletion this
-    // card tests; clozeSource holds the authored `{{cN::answer}}` rich text so
-    // edits can re-render every sibling. All three are null for basic cards.
-    clozeNoteId: text("cloze_note_id"),
-    clozeOrdinal: integer("cloze_ordinal"),
-    clozeSource: text("cloze_source"),
-    // Image occlusion siblings share one occlusionNoteId and the same source
-    // image and region list; occlusionMaskId is the region this card tests.
-    // All four are null for basic and cloze cards.
-    occlusionNoteId: text("occlusion_note_id"),
-    occlusionImagePathname: text("occlusion_image_pathname"),
-    occlusionRegions: jsonb("occlusion_regions").$type<OcclusionRegion[]>(),
-    occlusionMaskId: text("occlusion_mask_id"),
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
     stability: numeric("stability", { precision: 10, scale: 4 }),
@@ -420,8 +404,6 @@ export const flashcard = pgTable(
     ),
     index("flashcard_subjectId_idx").on(table.subjectId),
     index("flashcard_userId_idx").on(table.userId),
-    index("flashcard_clozeNoteId_idx").on(table.clozeNoteId),
-    index("flashcard_occlusionNoteId_idx").on(table.occlusionNoteId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),

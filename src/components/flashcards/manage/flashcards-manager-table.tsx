@@ -54,23 +54,6 @@ function getFlashcardFrontPreview(value: string) {
 }
 
 function FlashcardFrontCell({ item }: Readonly<{ item: FlashcardManageItem }>) {
-  if (item.type === "occlusion" && item.occlusionImagePathname) {
-    const count = item.maskCount ?? 0;
-    return (
-      <div className="flex min-w-0 items-center gap-2 py-1">
-        {/* biome-ignore lint/performance/noImgElement: blob route is auth-gated and not a Next static asset. */}
-        <img
-          src={`/api/attachments/blob?pathname=${encodeURIComponent(item.occlusionImagePathname)}`}
-          alt=""
-          className="size-9 shrink-0 rounded border border-border object-cover"
-        />
-        <span className="truncate text-sm font-semibold leading-6 text-foreground/95">
-          Image occlusion · {count} mask{count === 1 ? "" : "s"}
-        </span>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-w-0 items-center py-1">
       <div className="min-w-0 flex-1 overflow-hidden">

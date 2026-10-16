@@ -10,9 +10,6 @@ import {
 } from "react-hook-form";
 import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
 import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
-import { FlashcardCardTypeField } from "@/components/flashcards/dialogs/flashcard-card-type-field";
-import { FlashcardClozeFields } from "@/components/flashcards/dialogs/flashcard-cloze-fields";
-import { OcclusionFields } from "@/components/flashcards/occlusion/occlusion-fields";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectSelect } from "@/components/shared/subject-select";
@@ -152,13 +149,6 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
     name: "back" as FieldPath<TValues>,
   }) as string | undefined;
 
-  const cardType = useWatch({
-    control: form.control,
-    name: "type" as FieldPath<TValues>,
-  }) as "basic" | "cloze" | "occlusion" | undefined;
-  const isCloze = cardType === "cloze";
-  const isOcclusion = cardType === "occlusion";
-
   const hasBack = hasRichTextContent(watchedBack ?? "");
   const generateLabel = hasBack ? "Improve with AI" : "Generate with AI";
   const generatingLabel = hasBack ? "Improving..." : "Generating...";
@@ -194,212 +184,179 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
               )}
             />
           ) : null}
-          <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-            {typeToggle ? (
-              <CreateModeToggle
-                mode={typeToggle.mode}
-                onModeChange={typeToggle.onModeChange}
-                disabled={typeToggle.disabled}
-                options={typeToggle.options}
-                label="Mode"
-              />
-            ) : null}
-            <FlashcardCardTypeField
-              form={form}
-              formId={formId}
-              disabled={mode === "edit"}
+          {typeToggle ? (
+            <CreateModeToggle
+              mode={typeToggle.mode}
+              onModeChange={typeToggle.onModeChange}
+              disabled={typeToggle.disabled}
+              options={typeToggle.options}
+              label="Mode"
             />
-          </div>
-          {isOcclusion ? (
-            <OcclusionFields
-              form={form}
-              formId={formId}
-              onImageUploadPendingChange={handleImageUploadPendingChange}
-            />
-          ) : isCloze ? (
-            <FlashcardClozeFields
-              form={form}
-              formId={formId}
-              editorResetVersion={editorResetVersion}
-              onCtrlEnter={handleCtrlEnter}
-              onImageUploadPendingChange={handleImageUploadPendingChange}
-            />
-          ) : (
-            <>
-              <Controller
-                name={"front" as FieldPath<TValues>}
-                control={form.control}
-                render={({ field, fieldState }) => {
-                  const frontInvalid =
-                    fieldState.invalid || duplicateFront.isDuplicate;
-                  let frontFeedback: React.ReactNode = null;
+          ) : null}
+          <Controller
+            name={"front" as FieldPath<TValues>}
+            control={form.control}
+            render={({ field, fieldState }) => {
+              const frontInvalid =
+                fieldState.invalid || duplicateFront.isDuplicate;
+              let frontFeedback: React.ReactNode = null;
 
-                  if (fieldState.invalid) {
-                    frontFeedback = <FieldError errors={[fieldState.error]} />;
-                  } else if (duplicateFront.isDuplicate) {
-                    frontFeedback = (
-                      <p className="text-destructive text-sm">
-                        {duplicateFront.message}
-                      </p>
-                    );
-                  }
+              if (fieldState.invalid) {
+                frontFeedback = <FieldError errors={[fieldState.error]} />;
+              } else if (duplicateFront.isDuplicate) {
+                frontFeedback = (
+                  <p className="text-destructive text-sm">
+                    {duplicateFront.message}
+                  </p>
+                );
+              }
 
-                  return (
-                    <Field data-invalid={frontInvalid}>
-                      <div className="flex h-9 items-center justify-between gap-3">
-                        <FieldLabel htmlFor={`${formId}-front`}>
-                          Front
-                        </FieldLabel>
-                        <div className="flex items-center gap-1">
-                          {mode === "create" && createOptions ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={
-                                keepFrontAfterSubmit
-                                  ? "Clear front after submit"
-                                  : "Keep front after submit"
-                              }
-                              title={
-                                keepFrontAfterSubmit
-                                  ? "Clear front after submit"
-                                  : "Keep front after submit"
-                              }
-                              aria-pressed={keepFrontAfterSubmit}
-                              onClick={() =>
-                                createOptions.onKeepFrontAfterSubmitChange(
-                                  !keepFrontAfterSubmit,
-                                )
-                              }
-                              disabled={isSubmitting}
-                            >
-                              {keepFrontAfterSubmit ? (
-                                <Pin className="size-3.5" />
-                              ) : (
-                                <PinOff className="size-3.5" />
-                              )}
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                      <TiptapEditor
-                        key={`${formId}-front-${editorResetVersion ?? 0}`}
-                        value={(field.value ?? "") as string}
-                        onChange={field.onChange}
-                        placeholder="e.g. What is photosynthesis?"
-                        id={`${formId}-front`}
-                        aria-invalid={frontInvalid}
-                        contentClassName="min-h-11 max-h-[40svh]"
-                        imageUploadContext="flashcards"
-                        onCtrlEnter={handleCtrlEnter}
-                        onImageUploadPendingChange={
-                          handleImageUploadPendingChange
-                        }
-                      />
-                      {frontFeedback}
-                    </Field>
-                  );
-                }}
-              />
-              <Controller
-                name={"back" as FieldPath<TValues>}
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <FieldLabel htmlFor={`${formId}-back`}>Back</FieldLabel>
-                        <div className="flex items-center gap-1">
-                          {aiEnabled ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="xs"
-                              className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                              onClick={() => void aiBack.onGenerate()}
-                              disabled={!aiBack.canUse}
-                            >
-                              {aiBack.isGenerating ? (
-                                <Loader2 className="size-4 animate-spin" />
-                              ) : (
-                                <Sparkles className="size-3.5" />
-                              )}
-                              {aiBack.isGenerating
-                                ? generatingLabel
-                                : generateLabel}
-                            </Button>
-                          ) : null}
-                          {mode === "create" && createOptions ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={
-                                keepBackAfterSubmit
-                                  ? "Clear back after submit"
-                                  : "Keep back after submit"
-                              }
-                              title={
-                                keepBackAfterSubmit
-                                  ? "Clear back after submit"
-                                  : "Keep back after submit"
-                              }
-                              aria-pressed={keepBackAfterSubmit}
-                              onClick={() =>
-                                createOptions.onKeepBackAfterSubmitChange(
-                                  !keepBackAfterSubmit,
-                                )
-                              }
-                              disabled={isSubmitting}
-                            >
-                              {keepBackAfterSubmit ? (
-                                <Pin className="size-3.5" />
-                              ) : (
-                                <PinOff className="size-3.5" />
-                              )}
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
+              return (
+                <Field data-invalid={frontInvalid}>
+                  <div className="flex h-9 items-center justify-between gap-3">
+                    <FieldLabel htmlFor={`${formId}-front`}>Front</FieldLabel>
+                    <div className="flex items-center gap-1">
+                      {mode === "create" && createOptions ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={
+                            keepFrontAfterSubmit
+                              ? "Clear front after submit"
+                              : "Keep front after submit"
+                          }
+                          title={
+                            keepFrontAfterSubmit
+                              ? "Clear front after submit"
+                              : "Keep front after submit"
+                          }
+                          aria-pressed={keepFrontAfterSubmit}
+                          onClick={() =>
+                            createOptions.onKeepFrontAfterSubmitChange(
+                              !keepFrontAfterSubmit,
+                            )
+                          }
+                          disabled={isSubmitting}
+                        >
+                          {keepFrontAfterSubmit ? (
+                            <Pin className="size-3.5" />
+                          ) : (
+                            <PinOff className="size-3.5" />
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
-                    {aiEnabled &&
-                    aiBack.proposedValue &&
-                    aiBack.previousValue ? (
-                      <FlashcardBackDiff
-                        previousBack={aiBack.previousValue}
-                        proposedBack={aiBack.proposedValue}
-                        originalLabel="Original"
-                        proposedLabel="Proposed"
-                        acceptLabel="Accept"
-                        rejectLabel="Reject"
-                        onAccept={aiBack.onAccept}
-                        onReject={aiBack.onReject}
-                      />
-                    ) : (
-                      <TiptapEditor
-                        key={`${formId}-back-${editorResetVersion ?? 0}`}
-                        value={(field.value ?? "") as string}
-                        onChange={field.onChange}
-                        placeholder="e.g. Process plants use to convert light into energy."
-                        id={`${formId}-back`}
-                        aria-invalid={fieldState.invalid}
-                        contentClassName="min-h-24 max-h-[10lh]"
-                        imageUploadContext="flashcards"
-                        onCtrlEnter={handleCtrlEnter}
-                        onImageUploadPendingChange={
-                          handleImageUploadPendingChange
-                        }
-                      />
-                    )}
-                    {fieldState.invalid ? (
-                      <FieldError errors={[fieldState.error]} />
-                    ) : null}
-                  </Field>
+                  </div>
+                  <TiptapEditor
+                    key={`${formId}-front-${editorResetVersion ?? 0}`}
+                    value={(field.value ?? "") as string}
+                    onChange={field.onChange}
+                    placeholder="e.g. What is photosynthesis?"
+                    id={`${formId}-front`}
+                    aria-invalid={frontInvalid}
+                    contentClassName="min-h-11 max-h-[40svh]"
+                    imageUploadContext="flashcards"
+                    onCtrlEnter={handleCtrlEnter}
+                    onImageUploadPendingChange={handleImageUploadPendingChange}
+                  />
+                  {frontFeedback}
+                </Field>
+              );
+            }}
+          />
+          <Controller
+            name={"back" as FieldPath<TValues>}
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <FieldLabel htmlFor={`${formId}-back`}>Back</FieldLabel>
+                    <div className="flex items-center gap-1">
+                      {aiEnabled ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
+                          onClick={() => void aiBack.onGenerate()}
+                          disabled={!aiBack.canUse}
+                        >
+                          {aiBack.isGenerating ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="size-3.5" />
+                          )}
+                          {aiBack.isGenerating
+                            ? generatingLabel
+                            : generateLabel}
+                        </Button>
+                      ) : null}
+                      {mode === "create" && createOptions ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={
+                            keepBackAfterSubmit
+                              ? "Clear back after submit"
+                              : "Keep back after submit"
+                          }
+                          title={
+                            keepBackAfterSubmit
+                              ? "Clear back after submit"
+                              : "Keep back after submit"
+                          }
+                          aria-pressed={keepBackAfterSubmit}
+                          onClick={() =>
+                            createOptions.onKeepBackAfterSubmitChange(
+                              !keepBackAfterSubmit,
+                            )
+                          }
+                          disabled={isSubmitting}
+                        >
+                          {keepBackAfterSubmit ? (
+                            <Pin className="size-3.5" />
+                          ) : (
+                            <PinOff className="size-3.5" />
+                          )}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+                {aiEnabled && aiBack.proposedValue && aiBack.previousValue ? (
+                  <FlashcardBackDiff
+                    previousBack={aiBack.previousValue}
+                    proposedBack={aiBack.proposedValue}
+                    originalLabel="Original"
+                    proposedLabel="Proposed"
+                    acceptLabel="Accept"
+                    rejectLabel="Reject"
+                    onAccept={aiBack.onAccept}
+                    onReject={aiBack.onReject}
+                  />
+                ) : (
+                  <TiptapEditor
+                    key={`${formId}-back-${editorResetVersion ?? 0}`}
+                    value={(field.value ?? "") as string}
+                    onChange={field.onChange}
+                    placeholder="e.g. Process plants use to convert light into energy."
+                    id={`${formId}-back`}
+                    aria-invalid={fieldState.invalid}
+                    contentClassName="min-h-24 max-h-[10lh]"
+                    imageUploadContext="flashcards"
+                    onCtrlEnter={handleCtrlEnter}
+                    onImageUploadPendingChange={handleImageUploadPendingChange}
+                  />
                 )}
-              />
-            </>
-          )}
+                {fieldState.invalid ? (
+                  <FieldError errors={[fieldState.error]} />
+                ) : null}
+              </Field>
+            )}
+          />
         </FieldGroup>
       </div>
       <div className="shrink-0 border-t px-4 py-4 sm:px-6">

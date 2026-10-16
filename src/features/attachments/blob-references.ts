@@ -18,7 +18,6 @@ async function collectFlashcardPathnames(): Promise<string[]> {
     .select({
       front: flashcard.front,
       back: flashcard.back,
-      occlusionImagePathname: flashcard.occlusionImagePathname,
     })
     .from(flashcard);
 
@@ -27,9 +26,6 @@ async function collectFlashcardPathnames(): Promise<string[]> {
     pathnames.push(
       ...getInternalAttachmentPathnames(`${row.front}${row.back}`),
     );
-    if (row.occlusionImagePathname) {
-      pathnames.push(row.occlusionImagePathname);
-    }
   }
 
   return pathnames;

@@ -1,25 +1,14 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
-import {
-  createClozeNoteForUser,
-  deleteClozeNoteForUser,
-  editClozeNoteForUser,
-} from "@/features/flashcards/cloze-mutations";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
-import {
-  createOcclusionNoteForUser,
-  deleteOcclusionNoteForUser,
-  editOcclusionNoteForUser,
-} from "@/features/flashcards/occlusion-mutations";
 import {
   countFlashcardsBySubjectForUser,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
-import { expandOcclusionSiblingIds } from "@/features/flashcards/sibling-queries";
 import type {
   CreateFlashcardForm,
   DeleteFlashcardForm,
@@ -45,16 +34,13 @@ export type DeleteFlashcardMutationResult =
   | {
       success: true;
       id: string;
-      deletedIds: string[];
       subjectId: string | null;
     }
   | ActionErrorResult;
 
-type BasicFlashcardInput = { subjectId: string; front: string; back: string };
-
 async function validateCreateFlashcardInput(
   userId: string,
-  data: BasicFlashcardInput,
+  data: CreateFlashcardForm,
 ): Promise<
   { error: ActionErrorResult } | { subjectId: string; frontNormalized: string }
 > {
@@ -88,7 +74,7 @@ async function validateCreateFlashcardInput(
 async function createFlashcardRecord(
   userId: string,
   subjectId: string,
-  data: BasicFlashcardInput,
+  data: CreateFlashcardForm,
   frontNormalized: string,
 ) {
   const schedulingState = getInitialFlashcardSchedulingState();
@@ -120,22 +106,6 @@ export async function createFlashcardForUser(
   userId: string,
   data: CreateFlashcardForm,
 ): Promise<CreateFlashcardResult> {
-  if (data.type === "occlusion") {
-    return createOcclusionNoteForUser(userId, {
-      subjectId: data.subjectId,
-      occlusionImagePathname: data.occlusionImagePathname,
-      occlusionRegions: data.occlusionRegions,
-    });
-  }
-
-  if (data.type === "cloze") {
-    return createClozeNoteForUser(userId, {
-      subjectId: data.subjectId,
-      clozeSource: data.clozeSource,
-      back: data.back,
-    });
-  }
-
   const validation = await validateCreateFlashcardInput(userId, data);
 
   if ("error" in validation) {
@@ -168,16 +138,9 @@ type ValidateEditFlashcardResult =
       existingFlashcard: FlashcardEntity | null;
     };
 
-type BasicEditInput = {
-  id: string;
-  subjectId: string;
-  front: string;
-  back: string;
-};
-
 async function validateEditFlashcardInput(
   userId: string,
-  data: BasicEditInput,
+  data: EditFlashcardForm,
   existingFlashcard: FlashcardEntity,
 ): Promise<ValidateEditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
@@ -225,7 +188,7 @@ async function validateEditFlashcardInput(
 
 async function performFlashcardUpdate(
   userId: string,
-  data: BasicEditInput,
+  data: EditFlashcardForm,
   frontNormalized: string,
 ) {
   try {
@@ -262,53 +225,12 @@ export async function editFlashcardForUser(
     return actionError("flashcards.notFound");
   }
 
-  // Card type is fixed at creation. Mismatched edits would require a lossy
-  // delete-and-recreate, so they are rejected; the edit dialog locks the type.
-  if (data.type === "occlusion") {
-    if (existingFlashcard.type !== "occlusion") {
-      return actionError("flashcards.invalidData");
-    }
-    return editOcclusionNoteForUser(
-      userId,
-      {
-        id: data.id,
-        subjectId: data.subjectId,
-        occlusionImagePathname: data.occlusionImagePathname,
-        occlusionRegions: data.occlusionRegions,
-      },
-      existingFlashcard,
-    );
-  }
-
-  if (data.type === "cloze") {
-    if (existingFlashcard.type !== "cloze") {
-      return actionError("flashcards.invalidData");
-    }
-    return editClozeNoteForUser(
-      userId,
-      {
-        id: data.id,
-        subjectId: data.subjectId,
-        clozeSource: data.clozeSource,
-        back: data.back,
-      },
-      existingFlashcard,
-    );
-  }
-
-  if (
-    existingFlashcard.type === "cloze" ||
-    existingFlashcard.type === "occlusion"
-  ) {
-    return actionError("flashcards.invalidData");
-  }
-
-  return editBasicFlashcard(userId, data, existingFlashcard);
+  return updateFlashcardContent(userId, data, existingFlashcard);
 }
 
-async function editBasicFlashcard(
+async function updateFlashcardContent(
   userId: string,
-  data: BasicEditInput,
+  data: EditFlashcardForm,
   existingFlashcard: FlashcardEntity,
 ): Promise<EditFlashcardResult> {
   const validation = await validateEditFlashcardInput(
@@ -365,43 +287,6 @@ export async function deleteFlashcardForUser(
     return actionError("flashcards.notFound");
   }
 
-  // Deleting any cloze sibling removes the whole note and all its siblings.
-  if (existingFlashcard.type === "cloze" && existingFlashcard.clozeNoteId) {
-    const removed = await deleteClozeNoteForUser(
-      userId,
-      existingFlashcard.clozeNoteId,
-    );
-    await cleanupAttachmentsAfterMutation(
-      userId,
-      removed.flatMap((card) => [card.front, card.back]),
-      [],
-    );
-    return {
-      success: true,
-      id: data.id,
-      deletedIds: removed.map((card) => card.id),
-      subjectId: existingFlashcard.subjectId,
-    };
-  }
-
-  // Deleting any occlusion sibling removes the whole note, its siblings, and the
-  // shared source image (handled inside deleteOcclusionNoteForUser).
-  if (
-    existingFlashcard.type === "occlusion" &&
-    existingFlashcard.occlusionNoteId
-  ) {
-    const removed = await deleteOcclusionNoteForUser(
-      userId,
-      existingFlashcard.occlusionNoteId,
-    );
-    return {
-      success: true,
-      id: data.id,
-      deletedIds: removed.map((card) => card.id),
-      subjectId: existingFlashcard.subjectId,
-    };
-  }
-
   await getDb()
     .delete(flashcard)
     .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)));
@@ -415,7 +300,6 @@ export async function deleteFlashcardForUser(
   return {
     success: true,
     id: data.id,
-    deletedIds: [data.id],
     subjectId: existingFlashcard.subjectId,
   };
 }
@@ -439,9 +323,6 @@ export async function resetFlashcardForUser(
   const now = new Date();
   const schedulingState = getInitialFlashcardSchedulingState(now);
 
-  // Resetting an occlusion card resets its whole note's masks together.
-  const ids = await expandOcclusionSiblingIds(userId, [data.id]);
-
   const updated = await getDb()
     .update(flashcard)
     .set({
@@ -456,10 +337,8 @@ export async function resetFlashcardForUser(
       lapseCount: schedulingState.lapseCount,
       updatedAt: now,
     })
-    .where(and(inArray(flashcard.id, ids), eq(flashcard.userId, userId)))
+    .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)))
     .returning();
 
-  const representative =
-    updated.find((card) => card.id === data.id) ?? updated[0];
-  return { success: true, flashcard: representative };
+  return { success: true, flashcard: updated[0] };
 }

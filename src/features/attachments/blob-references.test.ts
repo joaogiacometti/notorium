@@ -32,12 +32,8 @@ describe("collectAllReferencedPathnames", () => {
           return Promise.resolve([{ content: "note-a" }, { content: null }]);
         case "flashcard_table":
           return Promise.resolve([
-            { front: "front-a", back: "back-a", occlusionImagePathname: null },
-            {
-              front: "",
-              back: "",
-              occlusionImagePathname: "notorium/flashcards/u/occ.png",
-            },
+            { front: "front-a", back: "back-a" },
+            { front: "", back: "" },
           ]);
         case "mindmap_table":
           return Promise.resolve([{ data: "mindmap-a" }, { data: null }]);
@@ -57,13 +53,7 @@ describe("collectAllReferencedPathnames", () => {
     const referenced = await collectAllReferencedPathnames();
 
     expect(referenced).toEqual(
-      new Set([
-        "note-a",
-        "front-aback-a",
-        "notorium/flashcards/u/occ.png",
-        "mindmap-a",
-        "assess-a",
-      ]),
+      new Set(["note-a", "front-aback-a", "mindmap-a", "assess-a"]),
     );
   });
 });

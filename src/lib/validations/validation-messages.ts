@@ -58,14 +58,6 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.flashcards.frontMaxLength":
     "Front must be at most 1,000 characters.",
   "Validation.flashcards.frontRequired": "Front is required.",
-  "Validation.flashcards.clozeTextRequired": "Cloze text is required.",
-  "Validation.flashcards.clozeMarkersRequired":
-    "Add at least one cloze deletion, e.g. {{c1::answer}}.",
-  "Validation.flashcards.clozeMaxLength":
-    "Cloze text must be at most 1,000 characters.",
-  "Validation.flashcards.occlusionImageRequired": "Upload an image to occlude.",
-  "Validation.flashcards.occlusionRegionsRequired":
-    "Draw at least one mask over the image.",
   "Validation.flashcards.subjectRequired": "Subject is required.",
   "Validation.flashcards.textMaxLength":
     "Text must be 10,000 characters or less.",

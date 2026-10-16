@@ -12,7 +12,7 @@ interface DeleteFlashcardDialogProps {
   flashcardFront: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDeleted?: (id: string, deletedIds: string[]) => void | Promise<void>;
+  onDeleted?: (id: string) => void | Promise<void>;
   className?: string;
   overlayClassName?: string;
 }
@@ -33,7 +33,7 @@ export function DeleteFlashcardDialog({
     startTransition(async () => {
       const result = await deleteFlashcard({ id: flashcardId });
       if (result.success) {
-        await onDeleted?.(result.id, result.deletedIds);
+        await onDeleted?.(result.id);
         onOpenChange(false);
       } else {
         toast.error(t(result.errorCode, result.errorParams));

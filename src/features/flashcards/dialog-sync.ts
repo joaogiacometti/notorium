@@ -18,8 +18,7 @@ export function haveFlashcardDialogValuesChanged<
     previousValues.id !== nextValues.id ||
     previousValues.subjectId !== nextValues.subjectId ||
     previousValues.front !== nextValues.front ||
-    previousValues.back !== nextValues.back ||
-    previousValues.clozeSource !== nextValues.clozeSource
+    previousValues.back !== nextValues.back
   );
 }
 

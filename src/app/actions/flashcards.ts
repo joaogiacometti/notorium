@@ -147,7 +147,6 @@ export async function deleteFlashcard(
       return {
         success: true as const,
         id: parsedData.id,
-        deletedIds: mutationResult.deletedIds,
         subjectId: mutationResult.subjectId,
       };
     },

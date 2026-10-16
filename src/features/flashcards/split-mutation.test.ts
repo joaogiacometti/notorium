@@ -48,7 +48,6 @@ describe("splitFlashcardForUser", () => {
     vi.clearAllMocks();
     getFlashcardByIdForUserMock.mockResolvedValue({
       id: "original",
-      type: "basic",
       subjectId: "subject-1",
       front: "<p>Original</p>",
       back: "<p>Answer</p>",
@@ -77,7 +76,6 @@ describe("splitFlashcardForUser", () => {
     expect(result).toEqual({
       success: true,
       createdCount: 2,
-      deletedIds: ["original"],
     });
     expect(transactionMock).toHaveBeenCalledTimes(1);
     expect(insertValuesMock).toHaveBeenCalledWith([

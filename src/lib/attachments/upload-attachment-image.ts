@@ -18,7 +18,7 @@ export type UploadAttachmentImageResponse =
  *
  * @example
  * const result = await uploadAttachmentImage(file, "flashcards");
- * if (result.success) form.setValue("occlusionImagePathname", result.pathname);
+ * if (result.success) insertImage(result.url);
  */
 export async function uploadAttachmentImage(
   file: File,

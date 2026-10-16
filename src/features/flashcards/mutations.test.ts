@@ -30,12 +30,6 @@ const getSubjectRecordForUserMock = vi.fn();
 const getFlashcardByIdForUserMock = vi.fn();
 const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
-const expandOcclusionSiblingIdsMock = vi.fn(
-  (_userId: string, ids: string[]) => ids,
-);
-const expandFlashcardNoteSiblingIdsMock = vi.fn(
-  (_userId: string, ids: string[]) => ids,
-);
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 const hasDuplicateFlashcardFrontForUserMock = vi.fn();
 const generateFlashcardBackForUserMock = vi.fn();
@@ -87,11 +81,6 @@ vi.mock("@/features/flashcards/queries", () => ({
   hasDuplicateFlashcardFrontForUser: hasDuplicateFlashcardFrontForUserMock,
 }));
 
-vi.mock("@/features/flashcards/sibling-queries", () => ({
-  expandFlashcardNoteSiblingIds: expandFlashcardNoteSiblingIdsMock,
-  expandOcclusionSiblingIds: expandOcclusionSiblingIdsMock,
-}));
-
 describe("createFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -123,7 +112,6 @@ describe("createFlashcardForUser", () => {
     );
 
     const result = await createFlashcardForUser("user-1", {
-      type: "basic",
       subjectId: "deck-1",
       front: "<p>Same Front</p>",
       back: "<p>Back</p>",
@@ -154,7 +142,6 @@ describe("createFlashcardForUser", () => {
     );
 
     const result = await createFlashcardForUser("user-1", {
-      type: "basic",
       subjectId: "deck-1",
       front: "<p>Front</p>",
       back: "<p>Back</p>",
@@ -223,7 +210,6 @@ describe("editFlashcardForUser", () => {
 
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
-      type: "basic",
       subjectId: "deck-2",
       front: "<p>Updated front</p>",
       back: "<p>Updated back</p>",
@@ -283,10 +269,6 @@ describe("bulkDeleteFlashcardsForUser", () => {
       subjectIds: ["deck-1", "deck-2"],
     });
     expect(deleteMock).toHaveBeenCalledTimes(1);
-    expect(expandFlashcardNoteSiblingIdsMock).toHaveBeenCalledWith("user-1", [
-      "flashcard-1",
-      "flashcard-2",
-    ]);
   });
 });
 
@@ -321,10 +303,6 @@ describe("bulkMoveFlashcardsForUser", () => {
       subjectId: "deck-3",
       previousSubjectIds: ["deck-1", "deck-2"],
     });
-    expect(expandFlashcardNoteSiblingIdsMock).toHaveBeenCalledWith("user-1", [
-      "flashcard-1",
-      "flashcard-2",
-    ]);
   });
 });
 

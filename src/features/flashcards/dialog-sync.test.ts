@@ -9,13 +9,9 @@ function values(
   overrides: Partial<FlashcardFormValues> = {},
 ): FlashcardFormValues {
   return {
-    type: "basic",
     subjectId: "deck-1",
     front: "",
     back: "",
-    clozeSource: "",
-    occlusionImagePathname: "",
-    occlusionRegions: [],
     ...overrides,
   };
 }
@@ -48,13 +44,6 @@ describe("haveFlashcardDialogValuesChanged", () => {
       haveFlashcardDialogValuesChanged(
         createValues,
         values({ back: "<p>Back</p>" }),
-      ),
-    ).toBe(true);
-
-    expect(
-      haveFlashcardDialogValuesChanged(
-        createValues,
-        values({ clozeSource: "<p>{{c1::x}}</p>" }),
       ),
     ).toBe(true);
   });

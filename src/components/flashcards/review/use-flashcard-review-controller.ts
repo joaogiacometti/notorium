@@ -279,14 +279,9 @@ export function useFlashcardReviewController({
     resetFocusViewState();
   }
 
-  async function handleFlashcardDeleted(
-    deletedId: string,
-    deletedIds: string[] = [deletedId],
-  ) {
+  async function handleFlashcardDeleted(deletedId: string) {
     if (isExamMode) {
-      for (const id of deletedIds) {
-        examController.removeExamCard(id);
-      }
+      examController.removeExamCard(deletedId);
       return;
     }
 
@@ -296,7 +291,7 @@ export function useFlashcardReviewController({
       commitReviewState(nextState);
     } catch {
       commitReviewState(
-        removeFlashcardsFromReviewState(reviewStateRef.current, deletedIds),
+        removeFlashcardsFromReviewState(reviewStateRef.current, [deletedId]),
       );
       toast.error("Review counts could not be refreshed.");
     }

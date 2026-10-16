@@ -195,12 +195,8 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       savedTimerRef.current = null;
     }
     await cleanupDiscardedEditorAttachments(
-      [currentValues.front, currentValues.back, currentValues.clozeSource],
-      [
-        savedValuesRef.current.front,
-        savedValuesRef.current.back,
-        savedValuesRef.current.clozeSource,
-      ],
+      [currentValues.front, currentValues.back],
+      [savedValuesRef.current.front, savedValuesRef.current.back],
     );
     form.reset(savedValuesRef.current);
     setPreviousBack(null);
@@ -229,25 +225,12 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
 
     const hasFrontContent = hasRichTextContent(currentValues.front);
     const hasBackContent = hasRichTextContent(currentValues.back);
-    const hasClozeContent = hasRichTextContent(currentValues.clozeSource);
-    const hasOcclusionContent =
-      Boolean(currentValues.occlusionImagePathname) ||
-      (currentValues.occlusionRegions?.length ?? 0) > 0;
-    const hasContent =
-      hasFrontContent ||
-      hasBackContent ||
-      hasClozeContent ||
-      hasOcclusionContent;
+    const hasContent = hasFrontContent || hasBackContent;
     const savedValues = savedValuesRef.current;
     const hasUnsavedChanges =
       mode === "edit"
         ? currentValues.front !== savedValues.front ||
           currentValues.back !== savedValues.back ||
-          currentValues.clozeSource !== savedValues.clozeSource ||
-          currentValues.occlusionImagePathname !==
-            savedValues.occlusionImagePathname ||
-          JSON.stringify(currentValues.occlusionRegions) !==
-            JSON.stringify(savedValues.occlusionRegions) ||
           currentValues.subjectId !== savedValues.subjectId
         : hasContent;
 
@@ -257,12 +240,8 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
 
     await cleanupDiscardedEditorAttachments(
-      [currentValues.front, currentValues.back, currentValues.clozeSource],
-      [
-        savedValuesRef.current.front,
-        savedValuesRef.current.back,
-        savedValuesRef.current.clozeSource,
-      ],
+      [currentValues.front, currentValues.back],
+      [savedValuesRef.current.front, savedValuesRef.current.back],
     );
     form.reset(savedValuesRef.current);
     setPreviousBack(null);

@@ -9,7 +9,6 @@ import { getCreateFlashcardResetValues } from "@/features/flashcards/create-rese
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
-  toCreateFlashcardPayload,
 } from "@/features/flashcards/validation";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
@@ -18,13 +17,9 @@ export function getCreateFlashcardFormValues(
   subjectId?: string | null,
 ): FlashcardFormValues {
   return {
-    type: "basic",
     subjectId: subjectId ?? "",
     front: "",
     back: "",
-    clozeSource: "",
-    occlusionImagePathname: "",
-    occlusionRegions: [],
   };
 }
 
@@ -73,8 +68,7 @@ export function useCreateFlashcardForm({
     onOpenChange,
     values: getCreateFlashcardFormValues(subjectId),
     form,
-    onSubmitAction: (values) =>
-      createFlashcard(toCreateFlashcardPayload(values)),
+    onSubmitAction: (values) => createFlashcard(values),
     onSuccess: (flashcard) => {
       if (flashcard) {
         onCreated?.(flashcard);

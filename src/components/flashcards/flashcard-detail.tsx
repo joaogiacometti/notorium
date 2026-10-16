@@ -26,7 +26,6 @@ import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-fl
 import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
-import { OcclusionCardFace } from "@/components/flashcards/occlusion/occlusion-card-face";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
@@ -43,7 +42,6 @@ import {
   type FlashcardFormValues,
   flashcardFormSchema,
   hasRichTextContent,
-  toEditFlashcardPayload,
 } from "@/features/flashcards/validation";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
@@ -61,28 +59,12 @@ interface FlashcardDetailProps {
 
 const AUTOSAVE_DELAY_MS = 800;
 
-function getFlashcardEditType(
-  type: FlashcardDetailEntity["type"],
-): FlashcardFormValues["type"] {
-  if (type === "cloze") {
-    return "cloze";
-  }
-  if (type === "occlusion") {
-    return "occlusion";
-  }
-  return "basic";
-}
-
 function getEditValues(flashcard: FlashcardDetailEntity): FlashcardFormValues {
   return {
     id: flashcard.id,
-    type: getFlashcardEditType(flashcard.type),
     subjectId: flashcard.subjectId ?? "",
     front: flashcard.front,
     back: flashcard.back,
-    clozeSource: flashcard.clozeSource ?? "",
-    occlusionImagePathname: flashcard.occlusionImagePathname ?? "",
-    occlusionRegions: flashcard.occlusionRegions ?? [],
   };
 }
 
@@ -147,12 +129,6 @@ export function FlashcardDetail({
 
   const saveFlashcardValues = useCallback(
     async (values: FlashcardFormValues) => {
-      // Cloze and occlusion notes are edited through the create/edit dialog
-      // where the source is authored; front/back autosave does not apply.
-      if (flashcard.type === "cloze" || flashcard.type === "occlusion") {
-        return false;
-      }
-
       const isValid = await form.trigger();
       if (!isValid) {
         return false;
@@ -162,9 +138,7 @@ export function FlashcardDetail({
       saveSequenceRef.current = saveSequence;
       setIsSaving(true);
 
-      const result = await editFlashcard(
-        toEditFlashcardPayload(values as FlashcardFormValues & { id: string }),
-      );
+      const result = await editFlashcard({ ...values, id: flashcard.id });
 
       if (saveSequence !== saveSequenceRef.current) {
         return result.success;
@@ -185,7 +159,7 @@ export function FlashcardDetail({
 
       return true;
     },
-    [form, queryClient, flashcard.type],
+    [form, queryClient, flashcard.id],
   );
 
   async function handleGenerateAiBack() {
@@ -224,13 +198,9 @@ export function FlashcardDetail({
   useEffect(() => {
     const nextValues: FlashcardFormValues = {
       id: flashcard.id,
-      type: getFlashcardEditType(flashcard.type),
       subjectId: flashcard.subjectId ?? "",
       front: debouncedValues.front,
       back: debouncedValues.back,
-      clozeSource: flashcard.clozeSource ?? "",
-      occlusionImagePathname: flashcard.occlusionImagePathname ?? "",
-      occlusionRegions: flashcard.occlusionRegions ?? [],
     };
 
     if (isSameFlashcardEdit(nextValues, lastSavedValuesRef.current)) {
@@ -246,10 +216,6 @@ export function FlashcardDetail({
     debouncedValues,
     flashcard.id,
     flashcard.subjectId,
-    flashcard.type,
-    flashcard.clozeSource,
-    flashcard.occlusionImagePathname,
-    flashcard.occlusionRegions,
     isImageUploading,
     saveFlashcardValues,
   ]);
@@ -310,108 +276,93 @@ export function FlashcardDetail({
         </div>
       </div>
 
-      {flashcard.type === "occlusion" && flashcard.occlusionImagePathname ? (
-        <div className="flex flex-col items-center gap-3">
-          <OcclusionCardFace
-            imagePathname={flashcard.occlusionImagePathname}
-            regions={flashcard.occlusionRegions ?? []}
-            testedMaskId={flashcard.occlusionMaskId}
-            revealed
-          />
-          <p className="text-sm text-muted-foreground">
-            Edit the image and masks from the flashcards list. This page is
-            read-only for image occlusion cards.
-          </p>
-        </div>
-      ) : (
-        <form className="space-y-4">
-          <Controller
-            name="front"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <div className="min-w-0 space-y-2">
+      <form className="space-y-4">
+        <Controller
+          name="front"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <div className="min-w-0 space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Front
+              </h2>
+              <TiptapEditor
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Front of the flashcard..."
+                id="form-edit-flashcard-front"
+                aria-invalid={fieldState.invalid}
+                imageUploadContext="flashcards"
+                contentClassName="min-h-40"
+                onImageUploadPendingChange={setIsFrontImageUploading}
+              />
+              {fieldState.invalid ? (
+                <FieldError className="mt-2" errors={[fieldState.error]} />
+              ) : null}
+            </div>
+          )}
+        />
+
+        <Controller
+          name="back"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <div className="min-w-0 space-y-2">
+              <div className="flex items-center justify-between gap-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Front
+                  Back
                 </h2>
+                {aiEnabled ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
+                    onClick={() => void handleGenerateAiBack()}
+                    disabled={
+                      !hasRichTextContent(watchedFront) ||
+                      isGeneratingAiBack ||
+                      !!aiProposedBack
+                    }
+                  >
+                    {isGeneratingAiBack ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3.5" />
+                    )}
+                    {aiBackLabel}
+                  </Button>
+                ) : null}
+              </div>
+              {aiProposedBack && aiPreviousBack !== null ? (
+                <FlashcardBackDiff
+                  previousBack={aiPreviousBack}
+                  proposedBack={aiProposedBack}
+                  originalLabel="Original"
+                  proposedLabel="Proposed"
+                  acceptLabel="Accept"
+                  rejectLabel="Reject"
+                  onAccept={handleAiAccept}
+                  onReject={handleAiReject}
+                />
+              ) : (
                 <TiptapEditor
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder="Front of the flashcard..."
-                  id="form-edit-flashcard-front"
+                  placeholder="Back of the flashcard..."
+                  id="form-edit-flashcard-back"
                   aria-invalid={fieldState.invalid}
                   imageUploadContext="flashcards"
                   contentClassName="min-h-40"
-                  onImageUploadPendingChange={setIsFrontImageUploading}
+                  onImageUploadPendingChange={setIsBackImageUploading}
                 />
-                {fieldState.invalid ? (
-                  <FieldError className="mt-2" errors={[fieldState.error]} />
-                ) : null}
-              </div>
-            )}
-          />
-
-          <Controller
-            name="back"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <div className="min-w-0 space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Back
-                  </h2>
-                  {aiEnabled ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                      onClick={() => void handleGenerateAiBack()}
-                      disabled={
-                        !hasRichTextContent(watchedFront) ||
-                        isGeneratingAiBack ||
-                        !!aiProposedBack
-                      }
-                    >
-                      {isGeneratingAiBack ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="size-3.5" />
-                      )}
-                      {aiBackLabel}
-                    </Button>
-                  ) : null}
-                </div>
-                {aiProposedBack && aiPreviousBack !== null ? (
-                  <FlashcardBackDiff
-                    previousBack={aiPreviousBack}
-                    proposedBack={aiProposedBack}
-                    originalLabel="Original"
-                    proposedLabel="Proposed"
-                    acceptLabel="Accept"
-                    rejectLabel="Reject"
-                    onAccept={handleAiAccept}
-                    onReject={handleAiReject}
-                  />
-                ) : (
-                  <TiptapEditor
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder="Back of the flashcard..."
-                    id="form-edit-flashcard-back"
-                    aria-invalid={fieldState.invalid}
-                    imageUploadContext="flashcards"
-                    contentClassName="min-h-40"
-                    onImageUploadPendingChange={setIsBackImageUploading}
-                  />
-                )}
-                {fieldState.invalid ? (
-                  <FieldError className="mt-2" errors={[fieldState.error]} />
-                ) : null}
-              </div>
-            )}
-          />
-        </form>
-      )}
+              )}
+              {fieldState.invalid ? (
+                <FieldError className="mt-2" errors={[fieldState.error]} />
+              ) : null}
+            </div>
+          )}
+        />
+      </form>
 
       <ResetFlashcardDialog
         flashcardId={flashcard.id}

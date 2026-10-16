@@ -32,7 +32,6 @@ export function ImproveCardDialog({
   async function handleAccept() {
     const result = await editFlashcard({
       id: card.id,
-      type: "basic",
       subjectId: card.subjectId ?? "",
       front: card.front,
       back: proposedBack,
