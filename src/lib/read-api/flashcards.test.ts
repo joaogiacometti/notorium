@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  fetchFlashcardContents,
   fetchFlashcardForManage,
   fetchFlashcardIds,
   fetchRefineFlashcardGroups,
@@ -57,5 +58,44 @@ describe("flashcard read-api fetchers", () => {
     await expect(fetchRefineFlashcardGroups()).resolves.toEqual({
       errorCode: "common.generic",
     });
+  });
+
+  it("loads copy contents in URL-sized chunks and in the requested order", async () => {
+    const ids = Array.from({ length: 150 }, (_, index) => `c${index}`);
+    const toItem = (id: string) => ({
+      id,
+      front: id,
+      back: "",
+      subjectPath: "",
+    });
+    const server = new FakeReadApiFetch()
+      .install()
+      .replyJson(200, ids.slice(0, 100).reverse().map(toItem))
+      .replyJson(200, ids.slice(101).map(toItem));
+
+    const contents = await fetchFlashcardContents(ids);
+
+    expect(server.requestedUrls).toHaveLength(2);
+    expect(
+      new URL(server.requestedUrls[0], "https://app.test").searchParams.getAll(
+        "ids",
+      ),
+    ).toEqual(ids.slice(0, 100));
+    expect(
+      new URL(server.requestedUrls[1], "https://app.test").searchParams.getAll(
+        "ids",
+      ),
+    ).toEqual(ids.slice(100));
+    expect(contents.map((item) => item.id)).toEqual(
+      ids.filter((id) => id !== "c100"),
+    );
+  });
+
+  it("rejects the copy load when any chunk fails", async () => {
+    new FakeReadApiFetch()
+      .install()
+      .replyJson(500, { errorCode: "common.generic" });
+
+    await expect(fetchFlashcardContents(["c1"])).rejects.toThrow("status 500");
   });
 });

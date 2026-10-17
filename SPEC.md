@@ -114,6 +114,7 @@ Students who want a private, lightweight study management workspace.
 - Flashcards have a global top-level page with review and management views.
 - The default flashcards page opens in the review view, with management available as an alternate global view.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
+- Flashcards can be copied as Markdown for pasting into an AI chat or sharing with others. A single card copies from the manage table row menu, the validation results row menu, the detail-page header menu (with the content currently in its editors), or the review/exam session card actions menu; the manage toolbar's `Copy` action copies every selected row at once, in table order. Each card copies its subject path, front, and back; several cards get numbered `## Card N` headings separated by `---`. Rich text becomes Markdown (bold, italics, strikethrough, inline code, links, lists, task lists, code blocks, tables, and LaTeX math as `$...$`/`$$...$$`). Uploaded images are private to their owner, so they copy as `[Image]` placeholders; public image URLs copy as Markdown images. A toast confirms how many cards were copied or reports the failure, including when the cards no longer exist. The toolbar `Copy` action stays disabled with a spinner until every copy in progress finishes.
 - Flashcard review remains available in the global flashcards page.
 - Full-screen flashcard review and exam sessions lock background page scrolling until exit, including the caught-up state. Review content scrolls within the session only when it exceeds the available screen space.
 - When AI env vars are configured, the manage toolbar shows a sparkles `AI` dropdown with `Validate cards` and `Refine cards` entries; without AI the dropdown is hidden.
@@ -191,7 +192,7 @@ Students who want a private, lightweight study management workspace.
 - Due-card review sessions are focus-only and start from the `Start review` action card on the review hub.
 - Hides the left menu and all non-essential UI elements.
 - Shows progress bar, card content, and rating buttons only.
-- Shows a card actions menu for edit, reset review progress, and delete.
+- Shows a card actions menu for copy, edit, reset review progress, and delete.
 - Keyboard shortcuts:
   - `Escape` exits Focus Mode.
 - Completion screen provides an exit action back to the review hub.

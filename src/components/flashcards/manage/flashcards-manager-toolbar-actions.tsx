@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowRightLeft, RotateCcw, RotateCw, Trash2, X } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Copy,
+  Loader2,
+  RotateCcw,
+  RotateCw,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +24,8 @@ interface ToolbarActionBarProps {
   isValidatingAgain: boolean;
   isLoadingRefineGroups: boolean;
   actionBarVisibilityClasses: string;
+  isCopyingSelection: boolean;
+  onCopySelection: () => void;
   onOpenValidateAgainDialog: () => void;
   onExitValidation: () => void;
   onRefreshRefine: () => void;
@@ -39,6 +49,8 @@ interface RefineActionButtonsProps {
 }
 
 interface SelectionActionButtonsProps {
+  isCopyingSelection: boolean;
+  onCopySelection: () => void;
   onOpenBulkMoveDialog: () => void;
   onOpenBulkDeleteDialog: () => void;
   onOpenBulkResetDialog: () => void;
@@ -129,6 +141,8 @@ function RefineActionButtons({
 }
 
 function SelectionActionButtons({
+  isCopyingSelection,
+  onCopySelection,
   onOpenBulkMoveDialog,
   onOpenBulkDeleteDialog,
   onOpenBulkResetDialog,
@@ -136,6 +150,19 @@ function SelectionActionButtons({
 }: Readonly<SelectionActionButtonsProps>): JSX.Element {
   return (
     <>
+      <ToolbarIconActionButton
+        ariaLabel={isCopyingSelection ? "Copying..." : "Copy"}
+        onClick={onCopySelection}
+        disabled={isCopyingSelection}
+        className="rounded-md text-muted-foreground hover:text-foreground"
+        icon={
+          isCopyingSelection ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Copy className="size-4" />
+          )
+        }
+      />
       <ToolbarIconActionButton
         ariaLabel="Move"
         onClick={onOpenBulkMoveDialog}
@@ -178,6 +205,8 @@ export function ToolbarActionBar({
   isValidatingAgain,
   isLoadingRefineGroups,
   actionBarVisibilityClasses,
+  isCopyingSelection,
+  onCopySelection,
   onOpenValidateAgainDialog,
   onExitValidation,
   onRefreshRefine,
@@ -210,6 +239,8 @@ export function ToolbarActionBar({
 
     return (
       <SelectionActionButtons
+        isCopyingSelection={isCopyingSelection}
+        onCopySelection={onCopySelection}
         onOpenBulkMoveDialog={onOpenBulkMoveDialog}
         onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
         onOpenBulkResetDialog={onOpenBulkResetDialog}

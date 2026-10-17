@@ -14,9 +14,9 @@ import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import {
-  getAllSubjectsWithPathsForUser,
   getDescendantSubjectIds,
   getSubjectPathForUser,
+  getSubjectPathRowsForUser,
 } from "@/features/subjects/queries";
 import {
   getRichTextExcerpt,
@@ -24,18 +24,19 @@ import {
 } from "@/lib/editor/rich-text";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
+  FlashcardContentItem,
   FlashcardDetailEntity,
   FlashcardEntity,
   FlashcardManagePage,
 } from "@/lib/server/api-contracts";
 
+// Paths only: copy loads cards in several parallel chunks and each one builds
+// this map, so skip fetching full subject rows that no caller reads.
 async function getSubjectPathMapForUser(
   userId: string,
 ): Promise<Map<string, string>> {
-  const subjects = await getAllSubjectsWithPathsForUser(userId);
-  return new Map(
-    subjects.map((currentSubject) => [currentSubject.id, currentSubject.path]),
-  );
+  const pathRows = await getSubjectPathRowsForUser(userId);
+  return new Map(pathRows.map((row) => [row.id, row.path]));
 }
 
 async function resolveScopedSubjectIds(
@@ -270,19 +271,17 @@ export async function hasDuplicateFlashcardFrontForUser(
   return result.length > 0;
 }
 
-export async function getFlashcardsByIdsForValidation(
+/**
+ * Loads the full content and subject path of the given owned flashcards. Ids
+ * the user does not own are skipped; rows come back in no particular order.
+ *
+ * @example
+ * const cards = await getFlashcardContentsForUser(userId, ["card-1", "card-2"]);
+ */
+export async function getFlashcardContentsForUser(
   userId: string,
   flashcardIds: string[],
-): Promise<
-  Array<{
-    id: string;
-    front: string;
-    back: string;
-    subjectName: string;
-    subjectPath?: string;
-    subjectId: string | null;
-  }>
-> {
+): Promise<FlashcardContentItem[]> {
   if (flashcardIds.length === 0) {
     return [];
   }
@@ -306,9 +305,7 @@ export async function getFlashcardsByIdsForValidation(
 
   return results.map((result) => ({
     ...result,
-    subjectPath:
-      (result.subjectId ? subjectPathMap.get(result.subjectId) : undefined) ??
-      result.subjectName,
+    subjectPath: subjectPathMap.get(result.subjectId) ?? result.subjectName,
   }));
 }
 

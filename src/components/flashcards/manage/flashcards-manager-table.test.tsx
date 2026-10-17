@@ -59,6 +59,7 @@ describe("FlashcardsManagerTable", () => {
           pageSize={25}
           isLoading={false}
           onEditRequested={() => {}}
+          onCopyRequested={() => {}}
           onMoveRequested={() => {}}
           onPageIndexChange={() => {}}
           onPageSizeChange={() => {}}

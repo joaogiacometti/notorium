@@ -55,6 +55,14 @@ export type FlashcardManageItem = Pick<
   subjectName: string;
   subjectPath: string;
 };
+/** A card's full content plus its subject, as AI validation and copy read it. */
+export type FlashcardContentItem = Pick<
+  FlashcardEntity,
+  "id" | "front" | "back" | "subjectId"
+> & {
+  subjectName: string;
+  subjectPath: string;
+};
 export interface FlashcardManagePage {
   items: FlashcardManageItem[];
   total: number;

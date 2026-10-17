@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@joplin/turndown-plugin-gfm": "^1.0.68",
     "@open-spaced-repetition/binding": "^0.5.0",
     "@openrouter/ai-sdk-provider": "^3.1.0",
     "@tanstack/react-query": "^5.104.2",
@@ -75,6 +76,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.7.0",
     "ts-fsrs": "^5.4.2",
+    "turndown": "^7.2.4",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -87,6 +89,7 @@
     "@types/pg": "^8.18.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/turndown": "^5.0.6",
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^5.0.4",
     "babel-plugin-react-compiler": "1.0.0",

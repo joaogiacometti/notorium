@@ -1,6 +1,7 @@
 "use client";
 
 import DOMPurify from "dompurify";
+import { canWriteClipboardItems } from "@/lib/clipboard/clipboard-writer";
 
 export type NoteCopyFormat = "plain" | "rich";
 
@@ -17,7 +18,7 @@ export async function copyNoteContentToClipboard(
   const sanitizedHtml = sanitizeRichHtmlForClipboard(html);
   const plainText = getPlainTextFromHtml(sanitizedHtml);
 
-  if (format === "plain" || !canCopyRichText()) {
+  if (format === "plain" || !canWriteClipboardItems()) {
     await navigator.clipboard.writeText(plainText);
     return;
   }
@@ -28,13 +29,6 @@ export async function copyNoteContentToClipboard(
       "text/plain": new Blob([plainText], { type: "text/plain" }),
     }),
   ]);
-}
-
-function canCopyRichText() {
-  return (
-    typeof ClipboardItem !== "undefined" &&
-    typeof navigator.clipboard?.write === "function"
-  );
 }
 
 function sanitizeRichHtmlForClipboard(html: string): string {

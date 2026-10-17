@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Copy,
   GraduationCap,
   Loader2,
   MoreVertical,
@@ -12,6 +13,7 @@ import {
 import { ReviewGradeButtons } from "@/components/flashcards/review/review-grade-buttons";
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
 import { ReviewSessionShell } from "@/components/flashcards/review/review-session-shell";
+import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -117,6 +119,7 @@ function DueReviewFocusModeOverlay({
           isPending={isPending}
           canUndoReview={canUndoReview}
           onUndoReview={onUndoReview}
+          onCopyFlashcard={() => copyReviewCard(currentCard, subjects)}
           onEditFlashcard={onEditFlashcard}
           onResetFlashcard={onResetFlashcard}
           onDeleteFlashcard={onDeleteFlashcard}
@@ -168,6 +171,7 @@ function ExamFocusModeOverlay({
           isPending={isPending}
           canUndoReview={false}
           onUndoReview={onUndoReview}
+          onCopyFlashcard={() => copyReviewCard(currentCard, subjects)}
           onEditFlashcard={onEditFlashcard}
           onResetFlashcard={onResetFlashcard}
           onDeleteFlashcard={onDeleteFlashcard}
@@ -189,6 +193,7 @@ interface FocusModeCardActionsProps {
   canUndoReview: boolean;
   cardActions?: boolean;
   onUndoReview: () => void;
+  onCopyFlashcard?: () => void;
   onEditFlashcard?: () => void;
   onResetFlashcard?: () => void;
   onDeleteFlashcard?: () => void;
@@ -199,6 +204,7 @@ function FocusModeCardActions({
   canUndoReview,
   cardActions = true,
   onUndoReview,
+  onCopyFlashcard,
   onEditFlashcard,
   onResetFlashcard,
   onDeleteFlashcard,
@@ -231,6 +237,13 @@ function FocusModeCardActions({
         ) : null}
         {cardActions ? (
           <>
+            <DropdownMenuItem
+              onClick={onCopyFlashcard}
+              className="cursor-pointer"
+            >
+              <Copy className="size-4" />
+              Copy
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onEditFlashcard}
               className="cursor-pointer"
@@ -368,6 +381,19 @@ function ExamBadge() {
       <span>Exam</span>
     </div>
   );
+}
+
+function copyReviewCard(
+  currentCard: ReviewCard,
+  subjects: Array<SubjectEntity | SubjectOption>,
+): void {
+  void copyFlashcardsWithToast([
+    {
+      front: currentCard.front,
+      back: currentCard.back,
+      subjectPath: getSubjectLabel(currentCard, subjects),
+    },
+  ]);
 }
 
 function getSubjectLabel(

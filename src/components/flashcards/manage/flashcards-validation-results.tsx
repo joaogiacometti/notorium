@@ -23,6 +23,7 @@ interface FlashcardsValidationResultsProps {
   issues: FlashcardValidationIssue[];
   flashcards: FlashcardValidationItem[];
   onEdit: (flashcardId: string) => void;
+  onCopy: (flashcardId: string) => void;
   onDelete: (flashcard: { id: string; front: string }) => void;
 }
 
@@ -90,6 +91,7 @@ function getColumnClassName(columnId: string) {
 
 function getColumns(
   onEdit: (flashcardId: string) => void,
+  onCopy: (flashcardId: string) => void,
   onDelete: (flashcard: { id: string; front: string }) => void,
 ): ManagerColumnDef<ValidationResultRow>[] {
   return [
@@ -150,6 +152,7 @@ function getColumns(
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
             onEditRequested={() => onEdit(row.original.id)}
+            onCopyRequested={() => onCopy(row.original.id)}
             onMoveRequested={() => {}}
             onResetRequested={() => {}}
             onDeleteRequested={() =>
@@ -169,6 +172,7 @@ export function FlashcardsValidationResults({
   issues,
   flashcards,
   onEdit,
+  onCopy,
   onDelete,
 }: Readonly<FlashcardsValidationResultsProps>) {
   const flashcardsMap = new Map(flashcards.map((card) => [card.id, card]));
@@ -192,7 +196,7 @@ export function FlashcardsValidationResults({
     <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
       <ManagerDataTable
         data={tableData}
-        columns={getColumns(onEdit, onDelete)}
+        columns={getColumns(onEdit, onCopy, onDelete)}
         pageIndex={0}
         pageCount={1}
         pageSize={tableData.length}

@@ -14,6 +14,7 @@ import { FlashcardsValidationResults } from "@/components/flashcards/manage/flas
 import { LazyBulkDeleteFlashcardsDialog as BulkDeleteFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-delete-flashcards-dialog";
 import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-move-flashcards-dialog";
 import { LazyBulkResetFlashcardsDialog as BulkResetFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-reset-flashcards-dialog";
+import { useFlashcardCopy } from "@/components/flashcards/manage/use-flashcard-copy";
 import { useFlashcardsManagerController } from "@/components/flashcards/manage/use-flashcards-manager-controller";
 import { ValidateAgainDialog } from "@/components/flashcards/manage/validate-again-dialog";
 import { ValidateFlashcardsDialog } from "@/components/flashcards/manage/validate-flashcards-dialog";
@@ -41,6 +42,8 @@ export function FlashcardsManager({
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
   const [, startNavTransition] = useTransition();
+  const { isCopying, copyFlashcardsById, copySelectedFlashcards } =
+    useFlashcardCopy();
   const {
     bulkDeleteOpen,
     bulkMoveOpen,
@@ -114,6 +117,7 @@ export function FlashcardsManager({
           issues={validationIssues}
           flashcards={validationFlashcards}
           onEdit={setEditingFlashcardId}
+          onCopy={(flashcardId) => void copyFlashcardsById([flashcardId])}
           onDelete={setDeleteTarget}
         />
       );
@@ -141,6 +145,9 @@ export function FlashcardsManager({
           pageSize={pageSize}
           isLoading={isManageScopeLoading}
           onEditRequested={setEditingFlashcardId}
+          onCopyRequested={(flashcardId) =>
+            void copyFlashcardsById([flashcardId])
+          }
           onMoveRequested={setMoveTarget}
           onPageIndexChange={setPageIndex}
           onPageSizeChange={setPageSize}
@@ -179,6 +186,10 @@ export function FlashcardsManager({
         refineStrugglingCount={refineGroups.struggling.length}
         isLoadingRefineGroups={isLoadingRefineGroups}
         aiEnabled={aiEnabled}
+        isCopyingSelection={isCopying}
+        onCopySelection={() =>
+          void copySelectedFlashcards(flashcards, selectedFlashcardIds)
+        }
         onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
         onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}

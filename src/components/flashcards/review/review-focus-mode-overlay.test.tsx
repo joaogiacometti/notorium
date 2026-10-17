@@ -3,10 +3,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
 import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
+import { formatFlashcardsAsMarkdown } from "@/lib/clipboard/flashcard-content";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
 } from "@/lib/server/api-contracts";
+import { FakeClipboard } from "@/test/fake-clipboard";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -67,6 +69,7 @@ function makeReviewState(card: FlashcardReviewEntity): FlashcardReviewState {
 describe("FocusModeOverlay", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let clipboard: FakeClipboard | null = null;
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
@@ -81,6 +84,8 @@ describe("FocusModeOverlay", () => {
     });
     container.remove();
     document.body.replaceChildren();
+    clipboard?.uninstall();
+    clipboard = null;
     vi.clearAllMocks();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
   });
@@ -108,6 +113,19 @@ describe("FocusModeOverlay", () => {
     expect(baseHandlers.onEditFlashcard).toHaveBeenCalledOnce();
     expect(baseHandlers.onResetFlashcard).toHaveBeenCalledOnce();
     expect(baseHandlers.onDeleteFlashcard).toHaveBeenCalledOnce();
+  });
+
+  it("copies the current card as Markdown from the card actions menu", async () => {
+    clipboard = new FakeClipboard().install();
+    await renderFocusModeOverlay();
+
+    await clickMenuItem("Copy");
+
+    expect(clipboard?.lastText()).toBe(
+      formatFlashcardsAsMarkdown([
+        { front: "<p>Front</p>", back: "<p>Back</p>", subjectPath: "Biology" },
+      ]),
+    );
   });
 
   it("offers the latest review undo from the card actions menu", async () => {

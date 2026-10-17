@@ -27,6 +27,8 @@ interface FlashcardsManagerToolbarProps {
   refineStrugglingCount: number;
   isLoadingRefineGroups: boolean;
   aiEnabled: boolean;
+  isCopyingSelection: boolean;
+  onCopySelection: () => void;
   onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
   onOpenValidateAgainDialog: () => void;
@@ -164,6 +166,8 @@ export function FlashcardsManagerToolbar({
   refineStrugglingCount,
   isLoadingRefineGroups,
   aiEnabled,
+  isCopyingSelection,
+  onCopySelection,
   onOpenValidateDialog,
   onOpenCreateDialog,
   onOpenValidateAgainDialog,
@@ -251,6 +255,8 @@ export function FlashcardsManagerToolbar({
                 actionBarVisibilityClasses={
                   viewModel.actionBarVisibilityClasses
                 }
+                isCopyingSelection={isCopyingSelection}
+                onCopySelection={onCopySelection}
                 onOpenValidateAgainDialog={onOpenValidateAgainDialog}
                 onExitValidation={onExitValidation}
                 onRefreshRefine={onRefreshRefine}

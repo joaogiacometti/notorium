@@ -201,6 +201,10 @@ export const flashcardIdsQuerySchema = z.object({
   subjectId: idSchema.optional(),
 });
 
+export const flashcardContentsQuerySchema = z.object({
+  ids: z.array(idSchema).min(1).max(LIMITS.flashcardContentsReadMax),
+});
+
 export const generateFlashcardsSchema = z.object({
   subjectId: subjectIdField,
   text: z

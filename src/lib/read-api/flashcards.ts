@@ -4,11 +4,13 @@ import type {
 } from "@/features/flashcard-review/validation";
 import type { RefineGroups } from "@/features/flashcards/refine/types";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
+import { LIMITS } from "@/lib/config/limits";
 import {
   fetchReadApi,
   fetchReadApiResult,
 } from "@/lib/read-api/read-api-client";
 import type {
+  FlashcardContentItem,
   FlashcardEntity,
   FlashcardManagePage,
   FlashcardReviewEntity,
@@ -73,6 +75,30 @@ export async function fetchFlashcardIds(
 }
 
 /**
+ * Load the full content of the given flashcards for copying, in the order of
+ * `flashcardIds`. Ids go out in chunks so a 500-card selection stays within URL
+ * length limits; cards deleted in the meantime are skipped. Any failed chunk
+ * rejects the whole load.
+ *
+ * @example
+ * const cards = await fetchFlashcardContents(selectedFlashcardIds);
+ */
+export async function fetchFlashcardContents(
+  flashcardIds: readonly string[],
+): Promise<FlashcardContentItem[]> {
+  const chunks = chunkFlashcardIds(flashcardIds);
+  const chunkResults = await Promise.all(
+    chunks.map((ids) =>
+      fetchReadApi<FlashcardContentItem[]>("/api/flashcards/contents", { ids }),
+    ),
+  );
+  const contentsById = new Map(
+    chunkResults.flat().map((item) => [item.id, item]),
+  );
+  return flashcardIds.flatMap((id) => contentsById.get(id) ?? []);
+}
+
+/**
  * Load the mastered and struggling groups for the manage refine mode.
  *
  * @example
@@ -113,4 +139,13 @@ export function fetchExamFlashcards(
     "/api/flashcards/exam-cards",
     query,
   );
+}
+
+function chunkFlashcardIds(flashcardIds: readonly string[]): string[][] {
+  const chunkSize = LIMITS.flashcardContentsReadMax;
+  const chunks: string[][] = [];
+  for (let start = 0; start < flashcardIds.length; start += chunkSize) {
+    chunks.push(flashcardIds.slice(start, start + chunkSize));
+  }
+  return chunks;
 }

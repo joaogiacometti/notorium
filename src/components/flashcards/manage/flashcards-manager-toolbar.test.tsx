@@ -43,6 +43,8 @@ const baseProps = {
   refineStrugglingCount: 0,
   isLoadingRefineGroups: false,
   aiEnabled: false,
+  isCopyingSelection: false,
+  onCopySelection: vi.fn(),
   onOpenValidateDialog: vi.fn(),
   onOpenCreateDialog: vi.fn(),
   onOpenValidateAgainDialog: vi.fn(),
@@ -158,6 +160,40 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     expect(document.body.textContent).toContain("Clear selection");
+  });
+
+  it("copies the selection and disables the copy action while copying", async () => {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar
+          {...baseProps}
+          selectedFlashcardIds={["flashcard-1"]}
+        />,
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('button[aria-label="Copy"]')
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(baseProps.onCopySelection).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar
+          {...baseProps}
+          selectedFlashcardIds={["flashcard-1"]}
+          isCopyingSelection
+        />,
+      );
+    });
+
+    const copyingButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Copying..."]',
+    );
+    expect(copyingButton?.disabled).toBe(true);
   });
 
   it("shows hover and focus tooltips for validation toolbar actions", async () => {

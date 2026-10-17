@@ -9,6 +9,7 @@ const queries = vi.hoisted(() => ({
   getFlashcardByIdForUser: vi.fn(),
   getAllFlashcardIdsForSubject: vi.fn(),
   getAllFlashcardIdsForUser: vi.fn(),
+  getFlashcardContentsForUser: vi.fn(),
   getRefineGroupsForUser: vi.fn(),
   getFlashcardReviewStateForUser: vi.fn(),
   getAllFlashcardsForExam: vi.fn(),
@@ -176,6 +177,25 @@ describe("read route handlers", () => {
       "s1",
     );
     expect(queries.getAllFlashcardIdsForUser).toHaveBeenCalledWith("user-1");
+  });
+
+  it("flashcard contents collects repeated ids and caps them per request", async () => {
+    const route = import("@/app/api/flashcards/contents/route");
+    const tooMany = Array.from({ length: 101 }, (_, index) => `ids=c${index}`);
+    const bad = await callRoute(
+      route,
+      `/api/flashcards/contents?${tooMany.join("&")}`,
+    );
+    const empty = await callRoute(route, "/api/flashcards/contents");
+    await callRoute(route, "/api/flashcards/contents?ids=c1&ids=c2");
+
+    expect(bad.status).toBe(400);
+    expect(empty.status).toBe(400);
+    expect(queries.getFlashcardContentsForUser).toHaveBeenCalledTimes(1);
+    expect(queries.getFlashcardContentsForUser).toHaveBeenCalledWith("user-1", [
+      "c1",
+      "c2",
+    ]);
   });
 
   it("refine groups reads for the session user", async () => {

@@ -13,7 +13,7 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
-  getFlashcardsByIdsForValidation,
+  getFlashcardContentsForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
 import { splitFlashcardForUser } from "@/features/flashcards/split-mutation";
@@ -274,7 +274,7 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
     data,
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) => {
-      const flashcards = await getFlashcardsByIdsForValidation(
+      const flashcards = await getFlashcardContentsForUser(
         userId,
         parsedData.flashcardIds,
       );

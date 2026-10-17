@@ -19,6 +19,7 @@ interface FlashcardsManagerTableProps {
   pageSize: number;
   isLoading: boolean;
   onEditRequested: (flashcardId: string) => void;
+  onCopyRequested: (flashcardId: string) => void;
   onMoveRequested: (flashcard: FlashcardTarget) => void;
   onPageIndexChange: (pageIndex: number) => void;
   onPageSizeChange: (pageSize: number) => void;
@@ -26,6 +27,14 @@ interface FlashcardsManagerTableProps {
   onResetRequested: (flashcard: FlashcardTarget) => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
   onRowClick?: (flashcard: FlashcardManageItem) => void;
+}
+
+interface FlashcardRowActionHandlers {
+  onEditRequested: (flashcardId: string) => void;
+  onCopyRequested: (flashcardId: string) => void;
+  onMoveRequested: (flashcard: FlashcardTarget) => void;
+  onDeleteRequested: (flashcard: FlashcardTarget) => void;
+  onResetRequested: (flashcard: FlashcardTarget) => void;
 }
 
 const flashcardFrontPreviewMaxLength = 28;
@@ -69,10 +78,13 @@ function FlashcardFrontCell({ item }: Readonly<{ item: FlashcardManageItem }>) {
 }
 
 function getColumns(
-  onEditRequested: (flashcardId: string) => void,
-  onMoveRequested: (flashcard: FlashcardTarget) => void,
-  onDeleteRequested: (flashcard: FlashcardTarget) => void,
-  onResetRequested: (flashcard: FlashcardTarget) => void,
+  {
+    onEditRequested,
+    onCopyRequested,
+    onMoveRequested,
+    onDeleteRequested,
+    onResetRequested,
+  }: FlashcardRowActionHandlers,
   hasSelection: boolean,
 ): ManagerColumnDef<FlashcardManageItem>[] {
   return [
@@ -103,6 +115,7 @@ function getColumns(
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
             onEditRequested={() => onEditRequested(row.original.id)}
+            onCopyRequested={() => onCopyRequested(row.original.id)}
             onMoveRequested={() =>
               onMoveRequested({
                 id: row.original.id,
@@ -137,6 +150,7 @@ export function FlashcardsManagerTable({
   pageSize,
   isLoading,
   onEditRequested,
+  onCopyRequested,
   onMoveRequested,
   onPageIndexChange,
   onPageSizeChange,
@@ -149,14 +163,18 @@ export function FlashcardsManagerTable({
   const columns = useMemo(
     () =>
       getColumns(
-        onEditRequested,
-        onMoveRequested,
-        onDeleteRequested,
-        onResetRequested,
+        {
+          onEditRequested,
+          onCopyRequested,
+          onMoveRequested,
+          onDeleteRequested,
+          onResetRequested,
+        },
         hasSelection,
       ),
     [
       hasSelection,
+      onCopyRequested,
       onDeleteRequested,
       onEditRequested,
       onMoveRequested,

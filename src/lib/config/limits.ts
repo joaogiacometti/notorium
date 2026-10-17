@@ -32,6 +32,10 @@ export const LIMITS = {
   flashcardAiMaxInput: 10000,
   flashcardAiMaxOutput: 50,
   flashcardBatchSize: 500,
+  // Ids per GET /api/flashcards/contents request. 100 UUIDs keep the query
+  // string near 4 KB, well under proxy URL limits; the client splits larger
+  // copy selections into several requests.
+  flashcardContentsReadMax: 100,
   flashcardAiFrontMax: 500,
   flashcardAiBackMax: 1200,
 

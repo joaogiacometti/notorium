@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
+  Copy,
   Loader2,
   MoreVertical,
   RotateCcw,
@@ -26,6 +27,7 @@ import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-fl
 import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
+import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
@@ -249,6 +251,21 @@ export function FlashcardDetail({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() =>
+                  void copyFlashcardsWithToast([
+                    {
+                      front: watchedFront,
+                      back: watchedBack,
+                      subjectPath: flashcard.subjectPath,
+                    },
+                  ])
+                }
+              >
+                <Copy className="size-4" />
+                Copy
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => setResetOpen(true)}

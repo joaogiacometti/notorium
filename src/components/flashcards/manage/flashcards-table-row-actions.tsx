@@ -2,6 +2,7 @@
 
 import {
   ArrowRightLeft,
+  Copy,
   MoreVertical,
   Pencil,
   RotateCcw,
@@ -19,6 +20,7 @@ import {
 
 interface FlashcardsTableRowActionsProps {
   onEditRequested: () => void;
+  onCopyRequested: () => void;
   onMoveRequested: () => void;
   onResetRequested: () => void;
   onDeleteRequested: () => void;
@@ -27,6 +29,7 @@ interface FlashcardsTableRowActionsProps {
 
 export function FlashcardsTableRowActions({
   onEditRequested,
+  onCopyRequested,
   onMoveRequested,
   onResetRequested,
   onDeleteRequested,
@@ -48,6 +51,10 @@ export function FlashcardsTableRowActions({
         <DropdownMenuItem onClick={onEditRequested} className="cursor-pointer">
           <Pencil className="size-4" />
           Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onCopyRequested} className="cursor-pointer">
+          <Copy className="size-4" />
+          Copy
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onMoveRequested}>
           <ArrowRightLeft className="size-4" />
