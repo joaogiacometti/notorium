@@ -98,7 +98,6 @@ Students who want a private, lightweight study management workspace.
 - Flashcard manage search ranks front matches before back matches, subject-name matches, and recency tie-breakers.
 - Flashcard fields: front and back rich text.
 - Flashcard create and edit support AI generation of the back when the back is empty.
-- Flashcards can be split into multiple AI-proposed cards after preview; accepting a split atomically creates every replacement and removes the source, while any validation, duplicate, or capacity failure keeps the source unchanged.
 - Flashcards can also be generated from a note or mindmap, via their detail-page header menu or sidebar/documents-list row menu, when AI is configured.
 - Generated AI flashcards use concise retrieval-cue fronts and minimal, directly testable answer bullets.
 - AI generation may emit LaTeX math (`$...$` inline, `$$...$$` block), which is converted to rendered math nodes.

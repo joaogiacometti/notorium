@@ -59,9 +59,6 @@ const VALIDATION_MESSAGES: Record<string, string> = {
     "Front must be at most 1,000 characters.",
   "Validation.flashcards.frontRequired": "Front is required.",
   "Validation.flashcards.subjectRequired": "Subject is required.",
-  "Validation.flashcards.textMaxLength":
-    "Text must be 10,000 characters or less.",
-  "Validation.flashcards.textRequired": "Text is required.",
   "Validation.notes.contentMaxLength":
     "Content must be at most 100,000 characters.",
   "Validation.notes.attachmentLimit":

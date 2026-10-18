@@ -71,7 +71,6 @@ export function FlashcardReviewFocusOverlays({
             onOpenChange={onEditOpenChange}
             aiEnabled={aiEnabled}
             onUpdated={onUpdated}
-            onDeleted={onDeleted}
             className="z-120"
             overlayClassName="z-120"
           />

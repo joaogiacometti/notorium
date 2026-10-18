@@ -16,7 +16,6 @@ import {
   getFlashcardContentsForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
-import { splitFlashcardForUser } from "@/features/flashcards/split-mutation";
 import {
   type BulkDeleteFlashcardsForm,
   type BulkMoveFlashcardsForm,
@@ -36,8 +35,6 @@ import {
   generateFlashcardBackSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
-  type SplitFlashcardForm,
-  splitFlashcardSchema,
   type ValidateFlashcardsForm,
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
@@ -53,7 +50,6 @@ import type {
   EditFlashcardResult,
   GenerateFlashcardBackResult,
   ResetFlashcardResult,
-  SplitFlashcardResult,
 } from "@/lib/server/api-contracts";
 import {
   type ActionErrorResult,
@@ -230,22 +226,6 @@ export async function resetFlashcard(
     revalidatePath("/flashcards");
   }
 
-  return result;
-}
-
-export async function splitFlashcard(
-  data: SplitFlashcardForm,
-): Promise<SplitFlashcardResult> {
-  const result = await runValidatedUserAction(
-    "flashcards.splitFlashcard",
-    splitFlashcardSchema,
-    data,
-    "flashcards.invalidData",
-    splitFlashcardForUser,
-  );
-  if (result.success) {
-    revalidatePath("/flashcards");
-  }
   return result;
 }
 

@@ -33,19 +33,6 @@ vi.mock("@/app/actions/flashcards", () => ({
   createFlashcard: vi.fn(),
   deleteFlashcard: vi.fn(),
   editFlashcard: vi.fn(),
-  splitFlashcard: vi.fn(),
-}));
-
-vi.mock("@/app/actions/flashcard-generation", () => ({
-  generateFlashcards: vi.fn(),
-}));
-
-vi.mock("@/features/attachments/client-cleanup", () => ({
-  cleanupDiscardedEditorAttachments: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock("@/lib/editor/use-before-unload", () => ({
-  useBeforeUnload: vi.fn(),
 }));
 
 vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
@@ -80,23 +67,7 @@ vi.mock("@/components/flashcards/dialogs/use-flashcard-dialog-state", () => ({
 }));
 
 vi.mock("@/components/flashcards/dialogs/flashcard-dialog-form", () => ({
-  FlashcardDialogForm: ({
-    mode,
-    typeToggle,
-  }: {
-    mode: "create" | "edit";
-    typeToggle?: { onModeChange: (mode: string) => void };
-  }) => (
-    <button
-      type="button"
-      data-testid="toggle-mode"
-      onClick={() =>
-        typeToggle?.onModeChange(mode === "create" ? "ai" : "split")
-      }
-    >
-      Toggle
-    </button>
-  ),
+  FlashcardDialogForm: () => null,
 }));
 
 function GenerateFlashcardsReviewHarness() {
@@ -207,38 +178,6 @@ describe("paste-image loading flows", () => {
     });
 
     expect(document.body.textContent).toContain("Discard changes?");
-  });
-
-  it("disables split action in edit dialog while either split editor uploads an image", async () => {
-    await act(async () => {
-      root.render(
-        <EditFlashcardDialog
-          open
-          onOpenChange={() => {}}
-          flashcard={flashcard}
-          aiEnabled
-        />,
-      );
-    });
-
-    await act(async () => {
-      (
-        document.body.querySelector(
-          '[data-testid="toggle-mode"]',
-        ) as HTMLButtonElement
-      ).click();
-    });
-
-    const button = Array.from(document.body.querySelectorAll("button")).find(
-      (item) => item.textContent?.includes("Split Flashcard"),
-    ) as HTMLButtonElement;
-
-    await act(async () => {
-      editorCallbacks.get("split-front")?.(true);
-    });
-
-    expect(button.disabled).toBe(true);
-    expect(button.textContent).toContain("Uploading image...");
   });
 
   it("reports a failed subject load instead of leaving it unhandled", async () => {

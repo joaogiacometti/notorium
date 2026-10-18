@@ -73,17 +73,6 @@ export const editFlashcardSchema = withFlashcardAttachmentLimit(
 
 export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
 
-export const splitFlashcardSchema = z.object({
-  id: idSchema,
-  subjectId: subjectIdField,
-  cards: z
-    .array(z.object({ front: flashcardFrontSchema, back: flashcardBackSchema }))
-    .min(1)
-    .max(LIMITS.flashcardBatchSize),
-});
-
-export type SplitFlashcardForm = z.infer<typeof splitFlashcardSchema>;
-
 // Shape the create/edit dialog forms bind to: the create payload plus the id
 // the edit dialog carries.
 export const flashcardFormSchema = withFlashcardAttachmentLimit(
@@ -204,19 +193,6 @@ export const flashcardIdsQuerySchema = z.object({
 export const flashcardContentsQuerySchema = z.object({
   ids: z.array(idSchema).min(1).max(LIMITS.flashcardContentsReadMax),
 });
-
-export const generateFlashcardsSchema = z.object({
-  subjectId: subjectIdField,
-  text: z
-    .string()
-    .min(1, validationMessage("Validation.flashcards.textRequired"))
-    .max(
-      LIMITS.flashcardAiMaxInput,
-      validationMessage("Validation.flashcards.textMaxLength"),
-    ),
-});
-
-export type GenerateFlashcardsForm = z.infer<typeof generateFlashcardsSchema>;
 
 export const generateNoteFlashcardsSchema = z.object({
   noteId: idSchema,

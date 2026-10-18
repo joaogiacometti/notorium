@@ -8,11 +8,9 @@ import {
   editFlashcardSchema,
   flashcardsManageQuerySchema,
   generateFlashcardBackSchema,
-  generateFlashcardsSchema,
   generateMindmapFlashcardsSchema,
   generateNoteFlashcardsSchema,
   resetFlashcardSchema,
-  splitFlashcardSchema,
 } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -91,25 +89,6 @@ describe("editFlashcardSchema", () => {
   });
 });
 
-describe("splitFlashcardSchema", () => {
-  it("requires at least one complete replacement card", () => {
-    expect(
-      splitFlashcardSchema.safeParse({
-        id: "flashcard-1",
-        subjectId: "deck-1",
-        cards: [{ front: richFront, back: richBack }],
-      }).success,
-    ).toBe(true);
-    expect(
-      splitFlashcardSchema.safeParse({
-        id: "flashcard-1",
-        subjectId: "deck-1",
-        cards: [],
-      }).success,
-    ).toBe(false);
-  });
-});
-
 describe("generateFlashcardBackSchema", () => {
   it("accepts valid input", () => {
     const result = generateFlashcardBackSchema.safeParse({
@@ -178,35 +157,6 @@ describe("flashcardsManageQuerySchema", () => {
     });
 
     expect(result.success).toBe(true);
-  });
-});
-
-describe("generateFlashcardsSchema", () => {
-  it("accepts valid deck and text", () => {
-    const result = generateFlashcardsSchema.safeParse({
-      subjectId: "deck-123",
-      text: "Some text to generate flashcards from.",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects empty subjectId", () => {
-    const result = generateFlashcardsSchema.safeParse({
-      subjectId: "",
-      text: "Some text",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects text longer than max characters", () => {
-    const result = generateFlashcardsSchema.safeParse({
-      subjectId: "deck-123",
-      text: "a".repeat(LIMITS.flashcardAiMaxInput + 1),
-    });
-
-    expect(result.success).toBe(false);
   });
 });
 

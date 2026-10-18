@@ -237,14 +237,6 @@ export function FlashcardsManager({
               await refreshValidationFlashcard(editingFlashcardId);
             }
           }}
-          onDeleted={(deletedId) => {
-            setEditingFlashcardId(null);
-            refreshManagePage();
-            if (validationMode) {
-              removeValidationFlashcard(deletedId);
-              checkValidationEmpty();
-            }
-          }}
         />
       )}
       <BulkDeleteFlashcardsDialog

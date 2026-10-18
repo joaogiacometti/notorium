@@ -8,7 +8,6 @@ import {
   type UseFormReturn,
   useWatch,
 } from "react-hook-form";
-import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
 import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
@@ -83,12 +82,6 @@ interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   aiEnabled: boolean;
   duplicateFront: FlashcardDialogDuplicateConfig;
   noDialog?: boolean;
-  typeToggle?: {
-    mode: string;
-    onModeChange: (mode: string) => void;
-    disabled?: boolean;
-    options?: Array<{ value: string; label: string }>;
-  };
 }
 
 type FlashcardDialogFormProps<TValues extends FlashcardFormValues> =
@@ -120,7 +113,6 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   duplicateFront,
   createOptions,
   noDialog,
-  typeToggle,
 }: Readonly<FlashcardDialogFormProps<TValues>>) {
   const [pendingImageUploads, setPendingImageUploads] = useState(0);
 
@@ -182,15 +174,6 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   }
                 />
               )}
-            />
-          ) : null}
-          {typeToggle ? (
-            <CreateModeToggle
-              mode={typeToggle.mode}
-              onModeChange={typeToggle.onModeChange}
-              disabled={typeToggle.disabled}
-              options={typeToggle.options}
-              label="Mode"
             />
           ) : null}
           <Controller

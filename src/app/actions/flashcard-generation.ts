@@ -5,10 +5,8 @@ import { buildMindmapFlashcardSourceWithImages } from "@/features/flashcards/min
 import { buildNoteFlashcardSource } from "@/features/flashcards/note-source";
 import { countFlashcardsBySubjectForUser } from "@/features/flashcards/queries";
 import {
-  type GenerateFlashcardsForm,
   type GenerateMindmapFlashcardsForm,
   type GenerateNoteFlashcardsForm,
-  generateFlashcardsSchema,
   generateMindmapFlashcardsSchema,
   generateNoteFlashcardsSchema,
 } from "@/features/flashcards/validation";
@@ -28,49 +26,6 @@ function restoreUsedMindmapImages(value: string, images: string[]): string {
     result = result.replaceAll(`{{IMAGE_${index}}}`, image);
   });
   return result;
-}
-
-export async function generateFlashcards(
-  data: GenerateFlashcardsForm,
-): Promise<
-  | { success: true; cards: Array<{ front: string; back: string }> }
-  | ActionErrorResult
-> {
-  return runValidatedUserAction(
-    "flashcard-generation.generateFlashcards",
-    generateFlashcardsSchema,
-    data,
-    "flashcards.ai.invalidData",
-    async (userId, parsedData) => {
-      const existingSubject = await getSubjectRecordForUser(
-        userId,
-        parsedData.subjectId,
-      );
-
-      if (!existingSubject) {
-        return actionError("subjects.notFound");
-      }
-
-      const currentCount = await countFlashcardsBySubjectForUser(
-        userId,
-        parsedData.subjectId,
-      );
-
-      if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
-        return actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
-        });
-      }
-
-      const result = await generateFlashcardsForUserService({
-        userId,
-        subjectName: existingSubject.name,
-        text: parsedData.text,
-      });
-
-      return result;
-    },
-  );
 }
 
 export async function generateFlashcardsFromNote(

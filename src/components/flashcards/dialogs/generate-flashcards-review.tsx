@@ -2,7 +2,6 @@
 
 import { ArrowLeft, Pencil } from "lucide-react";
 import { useState } from "react";
-import { CreateModeToggle } from "@/components/flashcards/dialogs/create-mode-toggle";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
 import { Button } from "@/components/ui/button";
@@ -22,12 +21,6 @@ interface GenerateFlashcardsReviewProps {
   onCardsChange?: (cards: Array<{ front: string; back: string }>) => void;
   onBack?: () => void;
   isCreating: boolean;
-  typeToggle?: {
-    mode: string;
-    onModeChange: (mode: string) => void;
-    disabled?: boolean;
-    options?: Array<{ value: string; label: string }>;
-  };
 }
 
 function mapGeneratedCards(cards: Array<{ front: string; back: string }>) {
@@ -49,7 +42,6 @@ export function GenerateFlashcardsReview({
   onCardsChange,
   onBack,
   isCreating,
-  typeToggle,
 }: Readonly<GenerateFlashcardsReviewProps>) {
   const [cards, setCards] = useState<GeneratedCard[]>(() =>
     mapGeneratedCards(initialCards),
@@ -126,15 +118,6 @@ export function GenerateFlashcardsReview({
 
   return (
     <div className="flex flex-col gap-4">
-      {typeToggle ? (
-        <CreateModeToggle
-          mode={typeToggle.mode}
-          onModeChange={typeToggle.onModeChange}
-          disabled={typeToggle.disabled}
-          options={typeToggle.options}
-          label="Mode"
-        />
-      ) : null}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {onBack ? (
