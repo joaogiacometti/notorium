@@ -88,6 +88,7 @@ Only add optional files when they are needed.
 - Server Components read from `src/features/*` directly; prefer passing server-loaded data as props over adding a client read.
 - Do not call Server Actions from Server Components.
 - Keep Server Actions thin: authenticate, validate, delegate, revalidate, return typed result.
+- Revalidate only through `src/lib/server/revalidate-views.ts`. Any write that changes subjects, document counts, or flashcards calls `revalidateAppShell()` so the sidebar stays in sync; review grades and undo instead refresh once the session settles (`use-app-shell-refresh-after-review.ts`). Lint-enforced.
 - `src/app/actions/*` must not import `@/db/index` directly unless the exception is documented. Lint-enforced; document a genuine exception with a `biome-ignore` comment and reason.
 - `src/components/*` must not import `@/features/*/mutations`. Writes go through Server Actions. Lint-enforced.
 - Keep read logic in `src/features/*/queries.ts`.

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   type CreateNoteMutationResult,
   createNoteForUser,
@@ -17,6 +16,10 @@ import {
 } from "@/features/notes/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MutationResult } from "@/lib/server/api-contracts";
+import {
+  revalidateAppShell,
+  revalidateDocumentPage,
+} from "@/lib/server/revalidate-views";
 
 export async function createNote(
   data: CreateNoteForm,
@@ -30,7 +33,7 @@ export async function createNote(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidateAppShell();
   }
 
   return result;
@@ -46,8 +49,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
-    revalidatePath(`/subjects/${result.subjectId}/documents/notes/${data.id}`);
+    revalidateDocumentPage("notes", result.subjectId, data.id);
   }
 
   return result;
@@ -65,7 +67,7 @@ export async function deleteNote(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidateAppShell();
   }
 
   return result;

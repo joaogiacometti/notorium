@@ -31,6 +31,14 @@ vi.mock("@/app/actions/flashcard-review", () => ({
   undoFlashcardReview: vi.fn(),
 }));
 
+// The controller refreshes the app shell through the App Router after review
+// writes settle; these tests only need a mounted router stand-in.
+const appRouterStandIn = vi.hoisted(() => ({ refresh: () => {} }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => appRouterStandIn,
+}));
+
 vi.mock("@/lib/read-api/flashcards", () => ({
   fetchExamFlashcards: vi.fn(),
   fetchFlashcardReviewState: vi.fn(),
@@ -431,6 +439,29 @@ describe("FlashcardReviewClient", () => {
     expect(
       document.body.querySelector('[data-testid="review-focus-mode"]'),
     ).toBeTruthy();
+  });
+
+  // Regression: the hub trailed the refreshed sidebar (17 vs 18) until reload.
+  it("re-reads hub due counts from the server after leaving focus mode", async () => {
+    const card = makeCard("card-1");
+    reviewFlashcardMock.mockResolvedValue({
+      success: true,
+      reviewedCardId: "card-1",
+      reviewLogId: "review-log-1",
+      flashcard: { ...card, reviewCount: 1 },
+    });
+    getFlashcardReviewStateMock.mockResolvedValue(
+      makeReviewState(5, [makeCard("card-2")]),
+    );
+    await renderReviewClient(makeReviewState(2, [card, makeCard("card-3")]));
+    await startReview();
+
+    await act(async () => clickButton("Grade good"));
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+
+    expect(container.textContent).toContain("5 due");
   });
 
   function clickButton(label: string) {

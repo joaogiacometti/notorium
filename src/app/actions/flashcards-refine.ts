@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { synthesizeRefineProposalForUser } from "@/features/flashcards/ai-service";
 import { getFlashcardDetailByIdForUser } from "@/features/flashcards/queries";
 import { applyRefineProposalForUser } from "@/features/flashcards/refine/mutations";
@@ -17,6 +16,7 @@ import {
 } from "@/features/flashcards/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
+import { revalidateAppShell } from "@/lib/server/revalidate-views";
 import {
   type ActionErrorResult,
   actionError,
@@ -114,7 +114,7 @@ export async function applyFlashcardMerge(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;

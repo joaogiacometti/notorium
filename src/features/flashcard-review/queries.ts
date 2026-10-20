@@ -1,21 +1,7 @@
-import {
-  and,
-  asc,
-  count,
-  eq,
-  gte,
-  inArray,
-  lte,
-  or,
-  type SQL,
-  sql,
-} from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, flashcardReviewLog, subject } from "@/db/schema";
-import {
-  LEARN_AHEAD_STATES,
-  LEARN_AHEAD_WINDOW_MS,
-} from "@/features/flashcard-review/constants";
+import { buildDueAtFilter } from "@/features/flashcard-review/due-filter";
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
 import {
@@ -94,16 +80,6 @@ async function getScopedFilters(
   }
 
   return filters;
-}
-
-// The outer `dueAt <= cutoff` bound is implied by both branches; stating it
-// lets Postgres range-scan the (userId, dueAt) index instead of the OR.
-function buildDueAtFilter(now: Date): SQL<unknown> {
-  const aheadCutoff = new Date(now.getTime() + LEARN_AHEAD_WINDOW_MS);
-  return and(
-    lte(flashcard.dueAt, aheadCutoff),
-    or(lte(flashcard.dueAt, now), inArray(flashcard.state, LEARN_AHEAD_STATES)),
-  ) as SQL<unknown>;
 }
 
 function resolveDueLimit(limit: number | undefined): number {

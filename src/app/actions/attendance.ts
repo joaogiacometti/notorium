@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   deleteMissForUser,
   recordMissForUser,
@@ -19,6 +18,7 @@ import {
 } from "@/features/attendance/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type { MutationResult } from "@/lib/server/api-contracts";
+import { revalidateSubjectPages } from "@/lib/server/revalidate-views";
 
 export async function updateAttendanceSettings(
   data: AttendanceSettingsForm,
@@ -33,7 +33,7 @@ export async function updateAttendanceSettings(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidateSubjectPages([result.subjectId]);
   }
 
   return result;
@@ -52,7 +52,7 @@ export async function removeAttendanceSettings(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidateSubjectPages([result.subjectId]);
   }
 
   return result;
@@ -70,7 +70,7 @@ export async function recordMiss(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidateSubjectPages([result.subjectId]);
   }
 
   return result;
@@ -88,7 +88,7 @@ export async function deleteMiss(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidateSubjectPages([result.subjectId]);
   }
 
   return result;

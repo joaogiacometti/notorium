@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   createSubjectForUser,
   deleteSubjectForUser,
@@ -23,6 +22,7 @@ import type {
   MoveSubjectResult,
   MutationResult,
 } from "@/lib/server/api-contracts";
+import { revalidateAppShell } from "@/lib/server/revalidate-views";
 
 export async function createSubject(
   data: CreateSubjectForm,
@@ -36,7 +36,7 @@ export async function createSubject(
   );
 
   if (result.success) {
-    revalidatePath("/", "layout");
+    revalidateAppShell();
   }
 
   return result;
@@ -54,7 +54,7 @@ export async function moveSubject(
   );
 
   if (result.success) {
-    revalidatePath("/", "layout");
+    revalidateAppShell();
   }
 
   return result;
@@ -72,8 +72,7 @@ export async function editSubject(
   );
 
   if (result.success) {
-    revalidatePath("/", "layout");
-    revalidatePath(`/subjects/${data.id}`);
+    revalidateAppShell();
   }
 
   return result;
@@ -91,7 +90,7 @@ export async function deleteSubject(
   );
 
   if (result.success) {
-    revalidatePath("/", "layout");
+    revalidateAppShell();
   }
 
   return result;

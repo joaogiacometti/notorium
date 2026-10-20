@@ -16,6 +16,9 @@ import type {
   UndoFlashcardReviewResult,
 } from "@/lib/server/api-contracts";
 
+// Grades and undo deliberately skip `revalidateAppShell`; the review client
+// refreshes the sidebar once the session settles. See
+// `use-app-shell-refresh-after-review.ts`.
 export async function reviewFlashcard(
   data: ReviewFlashcardForm,
 ): Promise<ReviewFlashcardResult> {

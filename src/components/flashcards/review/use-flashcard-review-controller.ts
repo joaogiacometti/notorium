@@ -6,6 +6,7 @@ import {
   reviewFlashcard,
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
+import { useAppShellRefreshAfterReview } from "@/components/flashcards/review/use-app-shell-refresh-after-review";
 import { useFlashcardExamController } from "@/components/flashcards/review/use-flashcard-exam-controller";
 import {
   applyReviewedFlashcardToState,
@@ -205,7 +206,11 @@ export function useFlashcardReviewController({
     }
   }
 
-  const refreshReviewStateOnReturn = useEffectEvent(async () => {
+  // Re-reads the hub's due counts from the server when no review write is in
+  // flight. Local grading only adjusts counts for graded cards, so cards that
+  // became due meanwhile (e.g. an `Again` card entering learn-ahead) would
+  // leave the hub behind the sidebar until a reload.
+  async function resyncIdleReviewState() {
     if (
       isFocusMode ||
       isExamMode ||
@@ -227,7 +232,15 @@ export function useFlashcardReviewController({
     } finally {
       isRefreshingOnReturnRef.current = false;
     }
-  });
+  }
+
+  const refreshReviewStateOnReturn = useEffectEvent(resyncIdleReviewState);
+
+  useAppShellRefreshAfterReview(
+    isFocusMode,
+    pendingSaveCount + (isUndoPending ? 1 : 0),
+    resyncIdleReviewState,
+  );
 
   useEffect(() => {
     function handleVisibilityChange() {

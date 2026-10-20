@@ -1,6 +1,7 @@
-import { and, count, eq, lte } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, mindmap, note, subject } from "@/db/schema";
+import { buildDueAtFilter } from "@/features/flashcard-review/due-filter";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 
 /**
@@ -114,7 +115,8 @@ async function getDocumentCountsBySubject(
 /**
  * Direct (non-rolled-up) count of cards due at `now` keyed by subject id. Seeds
  * the sidebar review indicator in {@link getSubjectTreeForUser}; subtree totals
- * are accumulated there. Cards with a null subject (mid-migration) are skipped.
+ * are accumulated there. Uses the review queue's due rule so the badge matches
+ * what a review session shows. Cards with a null subject (mid-migration) are skipped.
  */
 async function getDueFlashcardCountsBySubject(
   userId: string,
@@ -123,7 +125,7 @@ async function getDueFlashcardCountsBySubject(
   const rows = await getDb()
     .select({ subjectId: flashcard.subjectId, count: count() })
     .from(flashcard)
-    .where(and(eq(flashcard.userId, userId), lte(flashcard.dueAt, now)))
+    .where(and(eq(flashcard.userId, userId), buildDueAtFilter(now)))
     .groupBy(flashcard.subjectId);
 
   const counts = new Map<string, number>();

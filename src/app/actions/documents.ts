@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { MoveDocumentResult } from "@/features/documents/types";
 import {
   type MoveDocumentForm,
@@ -9,6 +8,7 @@ import {
 import { moveMindmapForUser } from "@/features/mindmaps/mutations";
 import { moveNoteForUser } from "@/features/notes/mutations";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
+import { revalidateAppShell } from "@/lib/server/revalidate-views";
 
 /**
  * Moves a note or mindmap to another subject (tree drag-and-drop). Dispatches
@@ -34,9 +34,7 @@ export async function moveDocument(
   );
 
   if (result.success) {
-    revalidatePath("/", "layout");
-    revalidatePath(`/subjects/${result.subjectId}`);
-    revalidatePath(`/subjects/${result.previousSubjectId}`);
+    revalidateAppShell();
   }
 
   return result;

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   bulkDeleteAssessmentsForUser,
   bulkUpdateAssessmentStatusForUser,
@@ -28,6 +27,7 @@ import type {
   DeleteAssessmentResult,
   EditAssessmentResult,
 } from "@/lib/server/api-contracts";
+import { revalidateAssessmentViews } from "@/lib/server/revalidate-views";
 
 export async function createAssessment(
   data: CreateAssessmentForm,
@@ -41,7 +41,7 @@ export async function createAssessment(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.assessment.subjectId}`);
+    revalidateAssessmentViews([result.assessment.subjectId]);
   }
 
   return result;
@@ -59,7 +59,7 @@ export async function editAssessment(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.assessment.subjectId}`);
+    revalidateAssessmentViews([result.assessment.subjectId]);
   }
 
   return result;
@@ -77,7 +77,7 @@ export async function deleteAssessment(
   );
 
   if (result.success) {
-    revalidatePath(`/subjects/${result.subjectId}`);
+    revalidateAssessmentViews([result.subjectId]);
   }
 
   return result;
@@ -96,11 +96,7 @@ export async function bulkDeleteAssessments(
   );
 
   if (result.success) {
-    revalidatePath("/planning");
-
-    for (const subjectId of result.subjectIds) {
-      revalidatePath(`/subjects/${subjectId}`);
-    }
+    revalidateAssessmentViews(result.subjectIds);
   }
 
   return result;
@@ -119,11 +115,7 @@ export async function bulkUpdateAssessmentStatus(
   );
 
   if (result.success) {
-    revalidatePath("/planning");
-
-    for (const subjectId of result.subjectIds) {
-      revalidatePath(`/subjects/${subjectId}`);
-    }
+    revalidateAssessmentViews(result.subjectIds);
   }
 
   return result;

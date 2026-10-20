@@ -49,7 +49,11 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "@/db/index": "Server Actions must not import @/db/index directly; read/write through src/features/*. If an exception is unavoidable, document it with a biome-ignore comment and the reason."
+                  "@/db/index": "Server Actions must not import @/db/index directly; read/write through src/features/*. If an exception is unavoidable, document it with a biome-ignore comment and the reason.",
+                  "next/cache": {
+                    "message": "Revalidate through src/lib/server/revalidate-views.ts so each write refreshes every view that shows its data (including the sidebar app shell).",
+                    "importNames": ["revalidatePath", "revalidateTag"]
+                  }
                 }
               }
             }

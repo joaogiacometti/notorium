@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { validateFlashcardsForUser } from "@/features/flashcards/ai-service";
 import {
   bulkDeleteFlashcardsForUser,
@@ -51,6 +50,7 @@ import type {
   GenerateFlashcardBackResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
+import { revalidateAppShell } from "@/lib/server/revalidate-views";
 import {
   type ActionErrorResult,
   actionError,
@@ -68,7 +68,7 @@ export async function createFlashcard(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;
@@ -106,7 +106,7 @@ export async function editFlashcard(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;
@@ -149,7 +149,7 @@ export async function deleteFlashcard(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;
@@ -168,7 +168,7 @@ export async function bulkDeleteFlashcards(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;
@@ -186,7 +186,7 @@ export async function bulkMoveFlashcards(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;
@@ -205,7 +205,7 @@ export async function bulkResetFlashcards(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;
@@ -223,7 +223,7 @@ export async function resetFlashcard(
   );
 
   if (result.success) {
-    revalidatePath("/flashcards");
+    revalidateAppShell();
   }
 
   return result;

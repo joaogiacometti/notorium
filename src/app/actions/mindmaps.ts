@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   type CreateMindmapMutationResult,
   createMindmapForUser,
@@ -23,10 +22,10 @@ import {
   splitMindmapSchema,
 } from "@/features/mindmaps/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
-
-function revalidateSubject(subjectId: string) {
-  revalidatePath(`/subjects/${subjectId}`);
-}
+import {
+  revalidateAppShell,
+  revalidateDocumentPage,
+} from "@/lib/server/revalidate-views";
 
 export async function createMindmap(
   data: CreateMindmapForm,
@@ -40,7 +39,7 @@ export async function createMindmap(
   );
 
   if (result.success) {
-    revalidateSubject(result.subjectId);
+    revalidateAppShell();
   }
 
   return result;
@@ -58,10 +57,7 @@ export async function editMindmap(
   );
 
   if (result.success) {
-    revalidateSubject(result.subjectId);
-    revalidatePath(
-      `/subjects/${result.subjectId}/documents/mindmaps/${data.id}`,
-    );
+    revalidateDocumentPage("mindmaps", result.subjectId, data.id);
   }
 
   return result;
@@ -79,10 +75,7 @@ export async function splitMindmap(
   );
 
   if (result.success) {
-    revalidateSubject(result.subjectId);
-    revalidatePath(
-      `/subjects/${result.subjectId}/documents/mindmaps/${data.id}`,
-    );
+    revalidateAppShell();
   }
 
   return result;
@@ -100,10 +93,7 @@ export async function editMindmapTitle(
   );
 
   if (result.success) {
-    revalidateSubject(result.subjectId);
-    revalidatePath(
-      `/subjects/${result.subjectId}/documents/mindmaps/${data.id}`,
-    );
+    revalidateDocumentPage("mindmaps", result.subjectId, data.id);
   }
 
   return result;
@@ -121,7 +111,7 @@ export async function deleteMindmap(
   );
 
   if (result.success) {
-    revalidateSubject(result.subjectId);
+    revalidateAppShell();
   }
 
   return result;
