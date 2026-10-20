@@ -316,6 +316,7 @@ export function MindmapDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
+            notifySubjectDocumentsChanged(mindmap.subjectId);
             startNavTransition(() => router.push("/"));
           }}
         />

@@ -41,6 +41,7 @@ import { useZenMode } from "@/lib/editor/use-zen-mode";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { NoteEntity, SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
+import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
@@ -402,6 +403,7 @@ export function NoteDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
+            notifySubjectDocumentsChanged(note.subjectId);
             startNavTransition(() => router.push("/"));
           }}
         />

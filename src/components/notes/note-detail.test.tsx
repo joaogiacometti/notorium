@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteDetail } from "@/components/notes/note-detail";
 import type { NoteEntity, SubjectOption } from "@/lib/server/api-contracts";
+import { SUBJECT_DOCUMENTS_CHANGED_EVENT } from "@/lib/trees/subject-documents-events";
 
 const {
   copyNoteContentMock,
@@ -44,14 +45,19 @@ vi.mock("@/components/notes/delete-note-dialog", () => ({
     noteId,
     noteTitle,
     open,
+    onSuccess,
   }: {
     noteId: string;
     noteTitle: string;
     open: boolean;
+    onSuccess?: () => void;
   }) =>
     open ? (
       <div data-note-id={noteId} data-testid="delete-note-dialog">
         {noteTitle}
+        <button type="button" onClick={onSuccess}>
+          Confirm mocked delete
+        </button>
       </div>
     ) : null,
 }));
@@ -427,6 +433,30 @@ describe("NoteDetail", () => {
     expect(
       container.querySelector('[data-testid="delete-note-dialog"]'),
     ).toBeTruthy();
+  });
+
+  it("tells the sidebar to reload the subject's documents after delete", async () => {
+    const listener = vi.fn();
+    window.addEventListener(SUBJECT_DOCUMENTS_CHANGED_EVENT, listener);
+    await act(async () => {
+      renderNoteDetail(root);
+    });
+    const deleteButtons = Array.from(
+      container.querySelectorAll("button"),
+    ).filter((button) => button.textContent?.includes("Delete"));
+    await act(async () => {
+      deleteButtons.at(-1)?.click();
+    });
+
+    await act(async () => {
+      findButton(container, "Confirm mocked delete")?.click();
+    });
+
+    window.removeEventListener(SUBJECT_DOCUMENTS_CHANGED_EVENT, listener);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({
+      subjectId: note.subjectId,
+    });
   });
 
   it("enters zen mode, hiding the breadcrumb bar", async () => {
