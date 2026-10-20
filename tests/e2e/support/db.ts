@@ -4,8 +4,6 @@ import { and, count, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import {
   account,
-  assessment,
-  attendanceMiss,
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
@@ -218,20 +216,6 @@ export async function clearUserSessions(userId: string) {
   await getDb().delete(session).where(eq(session.userId, userId));
 }
 
-export async function clearUserAttendanceMissesBySubject(
-  userId: string,
-  subjectId: string,
-) {
-  await getDb()
-    .delete(attendanceMiss)
-    .where(
-      and(
-        eq(attendanceMiss.userId, userId),
-        eq(attendanceMiss.subjectId, subjectId),
-      ),
-    );
-}
-
 export async function createNote(
   userId: string,
   subjectId: string,
@@ -262,75 +246,6 @@ export async function getNoteById(userId: string, noteId: string) {
     .limit(1);
 
   return existingNote ?? null;
-}
-
-export async function createAttendanceMiss(
-  userId: string,
-  subjectId: string,
-  missDate: string,
-) {
-  const [newAttendanceMiss] = await getDb()
-    .insert(attendanceMiss)
-    .values({
-      userId,
-      subjectId,
-      missDate,
-    })
-    .returning({ id: attendanceMiss.id });
-
-  return newAttendanceMiss;
-}
-
-export async function createAssessment(
-  userId: string,
-  subjectId: string,
-  title: string,
-  options?: {
-    description?: string | null;
-    type?:
-      | "exam"
-      | "assignment"
-      | "project"
-      | "presentation"
-      | "homework"
-      | "other";
-    status?: "pending" | "completed";
-    dueDate?: string | null;
-    score?: string | null;
-    weight?: string | null;
-  },
-) {
-  const [newAssessment] = await getDb()
-    .insert(assessment)
-    .values({
-      userId,
-      subjectId,
-      title,
-      description: options?.description ?? null,
-      type: options?.type ?? "other",
-      status: options?.status ?? "pending",
-      dueDate: options?.dueDate ?? null,
-      score: options?.score ?? null,
-      weight: options?.weight ?? null,
-    })
-    .returning({ id: assessment.id });
-
-  return newAssessment;
-}
-
-export async function updateSubjectAttendanceSettings(
-  userId: string,
-  subjectId: string,
-  totalClasses: number,
-  maxMisses: number,
-) {
-  await getDb()
-    .update(subject)
-    .set({
-      totalClasses,
-      maxMisses,
-    })
-    .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)));
 }
 
 export async function createSubject(userId: string, name: string) {

@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  getAssessmentDetailHref,
   getFlashcardDetailHref,
   getFlashcardsHref,
   getNoteDetailHref,
-  getPlanningAssessmentsHref,
-  resolveAssessmentDetailBackLink,
   resolveDetailPageReturnContext,
   resolveFlashcardDetailBackLink,
 } from "@/lib/navigation/detail-page-back-link";
@@ -58,17 +55,6 @@ describe("detail href builders", () => {
       "/subjects/subject-1/documents/notes/note-1",
     );
   });
-
-  it("builds an assessment detail href with planning context", () => {
-    expect(
-      getAssessmentDetailHref("assessment-1", {
-        from: "planning-assessments",
-        subjectId: "subject-1",
-      }),
-    ).toBe(
-      "/assessments/assessment-1?from=planning-assessments&subjectId=subject-1",
-    );
-  });
 });
 
 describe("resolveFlashcardDetailBackLink", () => {
@@ -98,37 +84,6 @@ describe("resolveFlashcardDetailBackLink", () => {
     expect(resolveFlashcardDetailBackLink({})).toEqual({
       href: "/flashcards",
       label: "flashcards",
-    });
-  });
-});
-
-describe("resolveAssessmentDetailBackLink", () => {
-  it("returns the planning destination when opened from planning", () => {
-    expect(
-      resolveAssessmentDetailBackLink(
-        {
-          from: "planning-assessments",
-          subjectId: "subject-1",
-        },
-        "subject-2",
-      ),
-    ).toEqual({
-      href: getPlanningAssessmentsHref("subject-1"),
-      label: "planning",
-    });
-  });
-
-  it("falls back to the owning subject for unsupported context", () => {
-    expect(
-      resolveAssessmentDetailBackLink(
-        {
-          from: "invalid",
-        },
-        "subject-2",
-      ),
-    ).toEqual({
-      href: "/subjects/subject-2",
-      label: "subject",
     });
   });
 });

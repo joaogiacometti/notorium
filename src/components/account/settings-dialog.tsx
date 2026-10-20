@@ -6,7 +6,6 @@ import { AccountProfileCard } from "@/components/account/account-profile-card";
 import { AppearanceCard } from "@/components/account/appearance-card";
 import { DangerZoneCard } from "@/components/account/danger-zone-card";
 import { FlashcardOptimizationCard } from "@/components/account/flashcard-optimization-card";
-import { NotificationPreferencesCard } from "@/components/account/notification-preferences-card";
 import { SettingsSearchProvider } from "@/components/account/settings-section";
 import {
   type SettingsSection,
@@ -51,16 +50,6 @@ export function SettingsDialog({
 }: Readonly<SettingsDialogProps>) {
   const [query, setQuery] = useState("");
   const searching = query.trim().length > 0;
-  const emailEnabled = settings?.emailEnabled ?? false;
-  const visibleSections = settingsSections.filter(
-    (section) => section.id !== "notifications" || !settings || emailEnabled,
-  );
-  // A deep link can request notifications before we know email is off; once
-  // loaded, fall back to Account so we never render a hidden section.
-  const effectiveSection =
-    settings && !visibleSections.some((section) => section.id === activeSection)
-      ? "account"
-      : activeSection;
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
@@ -78,16 +67,15 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="flex h-[80vh] max-h-[40rem] w-full max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl sm:flex-row">
         <SettingsSidebar
-          sections={visibleSections}
-          activeSection={effectiveSection}
+          sections={settingsSections}
+          activeSection={activeSection}
           onSelectSection={handleSelectSection}
           query={query}
           onQueryChange={setQuery}
         />
         <div className="min-w-0 flex-1 overflow-y-auto p-5 sm:p-6">
           <DialogDescription className="sr-only">
-            Manage your account, appearance, notifications, and flashcard
-            settings.
+            Manage your account, appearance, and flashcard settings.
           </DialogDescription>
           <SettingsSearchProvider query={query}>
             {searching ? (
@@ -95,11 +83,10 @@ export function SettingsDialog({
                 query={query}
                 settings={settings}
                 isLoading={isLoading}
-                emailEnabled={emailEnabled}
               />
             ) : (
               <SettingsSectionContent
-                activeSection={effectiveSection}
+                activeSection={activeSection}
                 settings={settings}
                 isLoading={isLoading}
               />
@@ -183,14 +170,12 @@ interface SearchResultsProps {
   query: string;
   settings: AccountSettings | undefined;
   isLoading: boolean;
-  emailEnabled: boolean;
 }
 
 function SearchResults({
   query,
   settings,
   isLoading,
-  emailEnabled,
 }: Readonly<SearchResultsProps>) {
   return (
     <div>
@@ -198,7 +183,7 @@ function SearchResults({
         {`"${query.trim()}"`}
       </h2>
       {settings ? (
-        <AllSettings settings={settings} emailEnabled={emailEnabled} />
+        <AllSettings settings={settings} />
       ) : (
         <SettingsLoadingState isLoading={isLoading} />
       )}
@@ -210,10 +195,7 @@ function SearchResults({
  * Every section rendered at once so each row can self-filter against the active
  * search query. Section titles hide themselves while searching.
  */
-function AllSettings({
-  settings,
-  emailEnabled,
-}: Readonly<{ settings: AccountSettings; emailEnabled: boolean }>) {
+function AllSettings({ settings }: Readonly<{ settings: AccountSettings }>) {
   return (
     <>
       <AccountProfileCard
@@ -222,12 +204,6 @@ function AllSettings({
         createdAt={settings.createdAt}
       />
       <AppearanceCard />
-      {emailEnabled ? (
-        <NotificationPreferencesCard
-          initialEnabled={settings.notificationsEnabled}
-          initialDaysBefore={settings.notificationDaysBefore}
-        />
-      ) : null}
       <FlashcardOptimizationCard
         settings={settings.fsrsOptimization}
         workflowsEnabled={settings.workflowsEnabled}
@@ -263,15 +239,6 @@ function LoadedSection({
   activeSection,
   settings,
 }: Readonly<{ activeSection: SettingsSectionId; settings: AccountSettings }>) {
-  if (activeSection === "notifications") {
-    return (
-      <NotificationPreferencesCard
-        initialEnabled={settings.notificationsEnabled}
-        initialDaysBefore={settings.notificationDaysBefore}
-      />
-    );
-  }
-
   if (activeSection === "flashcards") {
     return (
       <FlashcardOptimizationCard

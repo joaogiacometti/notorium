@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Home, Layers, Search } from "lucide-react";
+import { Home, Layers, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -33,7 +33,6 @@ interface AppLayoutClientProps {
 const collapsedLinks = [
   // Home matches `/` exactly so it doesn't stay active on every nested route.
   { href: "/", label: "Home", icon: Home, exact: true },
-  { href: "/planning", label: "Planning", icon: CalendarDays },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
 ] as const;
 

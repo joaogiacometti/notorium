@@ -11,7 +11,7 @@ Use this index to find the narrowest source of truth before reading broader docs
 ## Setup Guides
 
 - [setup/environment.md](./setup/environment.md): required env, rate limiting backends, Compose helper variables, and test env
-- [setup/optional-features.md](./setup/optional-features.md): plugin-like features for AI, attachments, email, scheduled reminders, and Upstash
+- [setup/optional-features.md](./setup/optional-features.md): plugin-like features for AI, attachments, email, scheduled jobs, and Upstash
 
 ## Architecture Guides
 

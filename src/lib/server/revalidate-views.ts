@@ -18,33 +18,7 @@ export function revalidateAppShell(): void {
 }
 
 /**
- * Refreshes subject detail pages for writes that the sidebar does not show
- * (assessments, attendance, document content).
- *
- * @example
- * revalidateSubjectPages(result.subjectIds);
- */
-export function revalidateSubjectPages(subjectIds: readonly string[]): void {
-  for (const subjectId of subjectIds) {
-    revalidatePath(`/subjects/${subjectId}`);
-  }
-}
-
-/**
- * Refreshes the views that list assessments: `/planning` and each affected
- * subject page.
- *
- * @example
- * revalidateAssessmentViews([result.assessment.subjectId]);
- */
-export function revalidateAssessmentViews(subjectIds: readonly string[]): void {
-  revalidatePath("/planning");
-  revalidateSubjectPages(subjectIds);
-}
-
-/**
- * Refreshes one note or mindmap page plus its subject page after a content or
- * title edit.
+ * Refreshes one note or mindmap page after a content or title edit.
  *
  * @example
  * revalidateDocumentPage("notes", result.subjectId, data.id);
@@ -54,6 +28,5 @@ export function revalidateDocumentPage(
   subjectId: string,
   documentId: string,
 ): void {
-  revalidateSubjectPages([subjectId]);
   revalidatePath(`/subjects/${subjectId}/documents/${kind}/${documentId}`);
 }

@@ -106,30 +106,6 @@ describe("moveSubjectForUser", () => {
     expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("rejects moving an academic subject", async () => {
-    getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-1",
-      parentSubjectId: null,
-      name: "Calculus",
-      kind: "academic",
-    });
-
-    const { moveSubjectForUser } = await import(
-      "@/features/subjects/mutations"
-    );
-
-    const result = await moveSubjectForUser("user-1", {
-      id: "subject-1",
-      parentSubjectId: "parent-1",
-    });
-
-    expect(result).toMatchObject({
-      success: false,
-      errorCode: "subjects.academicNotMovable",
-    });
-    expect(updateMock).not.toHaveBeenCalled();
-  });
-
   it("no-ops when the parent is unchanged", async () => {
     getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
       id: "subject-1",

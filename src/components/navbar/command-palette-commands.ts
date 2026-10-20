@@ -1,7 +1,5 @@
 import {
   BookOpen,
-  CalendarDays,
-  ClipboardList,
   FileText,
   Home,
   Keyboard,
@@ -18,12 +16,7 @@ import type { AppTheme } from "@/lib/theme";
 export type PaletteGroup = "Create" | "Go to" | "Settings";
 
 /** Dialogs that open straight from the palette. */
-export type ContextFreeDialog =
-  | "subject"
-  | "flashcard"
-  | "assessment"
-  | "note"
-  | "mindmap";
+export type ContextFreeDialog = "subject" | "flashcard" | "note" | "mindmap";
 
 export type PaletteAction =
   | { kind: "navigate"; href: string }
@@ -59,14 +52,6 @@ export const paletteCommands: PaletteCommand[] = [
     action: { kind: "create", dialog: "flashcard" },
   },
   {
-    id: "create-assessment",
-    label: "Create Assessment",
-    group: "Create",
-    keywords: ["new", "add", "create", "assessment", "exam", "test", "quiz"],
-    icon: ClipboardList,
-    action: { kind: "create", dialog: "assessment" },
-  },
-  {
     id: "create-note",
     label: "Create Note",
     group: "Create",
@@ -97,14 +82,6 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["flashcards", "review", "cards", "subjects"],
     icon: Layers,
     action: { kind: "navigate", href: "/flashcards" },
-  },
-  {
-    id: "goto-planning",
-    label: "Go to Planning",
-    group: "Go to",
-    keywords: ["planning", "calendar", "assessments", "schedule"],
-    icon: CalendarDays,
-    action: { kind: "navigate", href: "/planning" },
   },
   {
     id: "open-settings",

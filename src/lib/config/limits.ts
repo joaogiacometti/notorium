@@ -12,7 +12,6 @@ export const LIMITS = {
   mindmapDataMaxBytes: 200000,
   maxAttachmentsPerNote: 20,
   maxAttachmentsPerFlashcard: 10,
-  maxAssessmentsPerSubject: 50,
   maxFlashcardsPerSubject: 2000,
 
   noteTitleMax: 200,
@@ -40,14 +39,6 @@ export const LIMITS = {
   flashcardAiBackMax: 1200,
 
   subjectNameMax: 100,
-
-  assessmentTitleMax: 100,
-  assessmentDescriptionMax: 1000,
-  assessmentScoreMax: 100,
-  assessmentWeightMax: 100,
-
-  attendanceTotalClassesMax: 365,
-  attendanceMaxMissesMax: 365,
 
   accountNameMax: 100,
 

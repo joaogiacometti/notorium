@@ -135,9 +135,6 @@ const deck: SubjectOption = {
   id: "deck-1",
   userId: "user-1",
   parentSubjectId: null,
-  kind: "general",
-  totalClasses: null,
-  maxMisses: null,
   name: "Biology",
   path: "Biology",
   createdAt: new Date("2026-04-20T10:00:00.000Z"),
@@ -159,7 +156,6 @@ function renderNoteDetail(
         subjects={[deck]}
         note={note}
         subjectName="Subject 1"
-        subjectHref="/subjects/subject-1"
         {...props}
       />
     </QueryClientProvider>,

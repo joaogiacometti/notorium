@@ -2,7 +2,6 @@ import { relations, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
-  date,
   index,
   integer,
   jsonb,
@@ -14,12 +13,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import {
-  assessmentStatusEnum,
-  assessmentTypeEnum,
   flashcardReviewRatingEnum,
   flashcardStateEnum,
-  notificationStatusEnum,
-  subjectKindEnum,
   userAccessStatusEnum,
 } from "@/db/schema-enums";
 import type { FlashcardReviewSchedulingSnapshot } from "@/features/flashcard-review/types";
@@ -37,12 +32,6 @@ export const user = pgTable("user", {
     .default("pending"),
   isAdmin: boolean("is_admin").notNull().default(false),
   preferredTheme: text("preferred_theme").default("system").notNull(),
-  notificationsEnabled: boolean("notifications_enabled")
-    .notNull()
-    .default(false),
-  notificationDaysBefore: integer("notification_days_before")
-    .notNull()
-    .default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -138,10 +127,6 @@ export const subject = pgTable(
       (): AnyPgColumn => subject.id,
       { onDelete: "cascade" },
     ),
-    kind: subjectKindEnum("kind").notNull().default("academic"),
-    totalClasses: integer("total_classes"),
-    maxMisses: integer("max_misses"),
-
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -160,40 +145,6 @@ export const subject = pgTable(
     index("subject_parentSubjectId_idx").on(table.parentSubjectId),
     index("subject_userId_idx").on(table.userId),
     index("subject_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
-  ],
-);
-
-export const attendanceMiss = pgTable(
-  "attendance_miss",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    missDate: date("miss_date", { mode: "string" }).notNull(),
-    subjectId: text("subject_id")
-      .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    index("attendance_miss_subjectId_idx").on(table.subjectId),
-    index("attendance_miss_userId_idx").on(table.userId),
-    index("attendance_miss_userId_missDate_idx").on(
-      table.userId,
-      table.missDate,
-    ),
-    unique("attendance_miss_unique").on(
-      table.subjectId,
-      table.missDate,
-      table.userId,
-    ),
   ],
 );
 
@@ -259,79 +210,6 @@ export const mindmap = pgTable(
       "gin",
       table.title.op("gin_trgm_ops"),
     ),
-  ],
-);
-
-export const assessment = pgTable(
-  "assessment",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    title: text("title").notNull(),
-    description: text("description"),
-    type: assessmentTypeEnum("type").notNull().default("other"),
-    status: assessmentStatusEnum("status").notNull().default("pending"),
-    dueDate: date("due_date", { mode: "string" }),
-    score: numeric("score", { precision: 5, scale: 2 }),
-    weight: numeric("weight", { precision: 5, scale: 2 }),
-    subjectId: text("subject_id")
-      .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    index("assessment_subjectId_idx").on(table.subjectId),
-    index("assessment_userId_idx").on(table.userId),
-    index("assessment_userId_dueDate_idx").on(table.userId, table.dueDate),
-    index("assessment_status_idx").on(table.status),
-    index("assessment_dueDate_idx").on(table.dueDate),
-    index("assessment_title_trgm_idx").using(
-      "gin",
-      table.title.op("gin_trgm_ops"),
-    ),
-    index("assessment_description_trgm_idx").using(
-      "gin",
-      sql`coalesce(${table.description}, '') gin_trgm_ops`,
-    ),
-  ],
-);
-
-export const notificationLog = pgTable(
-  "notification_log",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    assessmentId: text("assessment_id")
-      .notNull()
-      .references((): AnyPgColumn => assessment.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    notificationDate: date("notification_date", { mode: "string" }).notNull(),
-    status: notificationStatusEnum("status").notNull().default("claimed"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    unique("notification_log_assessmentId_userId_date_unique").on(
-      table.assessmentId,
-      table.userId,
-      table.notificationDate,
-    ),
-    index("notification_log_userId_idx").on(table.userId),
-    index("notification_log_assessmentId_idx").on(table.assessmentId),
   ],
 );
 
@@ -508,11 +386,8 @@ export const userRelations = relations(user, ({ many }) => ({
   subjects: many(subject),
   notes: many(note),
   mindmaps: many(mindmap),
-  attendanceMisses: many(attendanceMiss),
-  assessments: many(assessment),
   flashcards: many(flashcard),
   flashcardReviewLogs: many(flashcardReviewLog),
-  notificationLogs: many(notificationLog),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -542,20 +417,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
   }),
   notes: many(note),
   mindmaps: many(mindmap),
-  attendanceMisses: many(attendanceMiss),
-  assessments: many(assessment),
   flashcards: many(flashcard),
-}));
-
-export const attendanceMissRelations = relations(attendanceMiss, ({ one }) => ({
-  subject: one(subject, {
-    fields: [attendanceMiss.subjectId],
-    references: [subject.id],
-  }),
-  user: one(user, {
-    fields: [attendanceMiss.userId],
-    references: [user.id],
-  }),
 }));
 
 export const noteRelations = relations(note, ({ one }) => ({
@@ -578,18 +440,6 @@ export const mindmapRelations = relations(mindmap, ({ one }) => ({
     fields: [mindmap.userId],
     references: [user.id],
   }),
-}));
-
-export const assessmentRelations = relations(assessment, ({ one, many }) => ({
-  subject: one(subject, {
-    fields: [assessment.subjectId],
-    references: [subject.id],
-  }),
-  user: one(user, {
-    fields: [assessment.userId],
-    references: [user.id],
-  }),
-  notificationLogs: many(notificationLog),
 }));
 
 export const flashcardRelations = relations(flashcard, ({ one }) => ({
@@ -636,20 +486,6 @@ export const flashcardMergeLogRelations = relations(
     }),
     user: one(user, {
       fields: [flashcardMergeLog.userId],
-      references: [user.id],
-    }),
-  }),
-);
-
-export const notificationLogRelations = relations(
-  notificationLog,
-  ({ one }) => ({
-    assessment: one(assessment, {
-      fields: [notificationLog.assessmentId],
-      references: [assessment.id],
-    }),
-    user: one(user, {
-      fields: [notificationLog.userId],
       references: [user.id],
     }),
   }),

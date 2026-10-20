@@ -23,7 +23,7 @@ async function searchForQuery(
 ): Promise<SearchData> {
   const parsed = searchQuerySchema.safeParse(rawQuery);
   if (!parsed.success || parsed.data.length < LIMITS.searchQueryMin) {
-    return { subjects: [], notes: [], flashcards: [], mindmaps: [] };
+    return { notes: [], flashcards: [], mindmaps: [] };
   }
 
   return getSearchDataForUser(userId, parsed.data);

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Home, Layers, Search } from "lucide-react";
+import { Home, Layers, Search } from "lucide-react";
 import {
   SidebarNavLink,
   sidebarRowClassName,
@@ -9,7 +9,6 @@ import {
 const sections = [
   // Home matches `/` exactly so it doesn't stay active on every nested route.
   { href: "/", label: "Home", icon: Home, exact: true },
-  { href: "/planning", label: "Planning", icon: CalendarDays },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
 ] as const;
 

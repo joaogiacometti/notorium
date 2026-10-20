@@ -13,23 +13,6 @@ export const userAccessStatusEnum = pgEnum("user_access_status", [
   "blocked",
 ]);
 
-export const subjectKindEnum = pgEnum("subject_kind", ["academic", "general"]);
-
-export const assessmentTypeEnum = pgEnum("assessment_type", [
-  "exam",
-  "assignment",
-  "project",
-  "presentation",
-  "homework",
-  "study",
-  "other",
-]);
-
-export const assessmentStatusEnum = pgEnum("assessment_status", [
-  "pending",
-  "completed",
-]);
-
 export const flashcardStateEnum = pgEnum("flashcard_state", [
   "new",
   "learning",
@@ -42,10 +25,4 @@ export const flashcardReviewRatingEnum = pgEnum("flashcard_review_rating", [
   "hard",
   "good",
   "easy",
-]);
-
-export const notificationStatusEnum = pgEnum("notification_status", [
-  "claimed",
-  "sent",
-  "failed",
 ]);

@@ -44,7 +44,7 @@ describe("parseSubjectIdFromPath", () => {
   });
 
   it("returns null off subject routes", () => {
+    expect(parseSubjectIdFromPath("/")).toBeNull();
     expect(parseSubjectIdFromPath("/flashcards")).toBeNull();
-    expect(parseSubjectIdFromPath("/planning")).toBeNull();
   });
 });

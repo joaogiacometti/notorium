@@ -50,11 +50,6 @@ interface MindmapDetailProps {
   subjects?: SubjectOption[];
   mindmap: MindmapEntity;
   subjectName: string;
-  /**
-   * The subject's detail-page href, or `null` for general subjects (which have
-   * no page). Drives the breadcrumb link and post-delete navigation.
-   */
-  subjectHref: string | null;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -64,7 +59,6 @@ export function MindmapDetail({
   subjects,
   mindmap,
   subjectName,
-  subjectHref,
 }: Readonly<MindmapDetailProps>) {
   const router = useRouter();
   const [, startNavTransition] = useTransition();
@@ -189,7 +183,6 @@ export function MindmapDetail({
           breadcrumb={[
             {
               label: subjectName,
-              href: subjectHref ?? undefined,
               icon: "book-open",
             },
             { label: title || mindmap.title || "Untitled" },
@@ -323,7 +316,7 @@ export function MindmapDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
-            startNavTransition(() => router.push(subjectHref ?? "/"));
+            startNavTransition(() => router.push("/"));
           }}
         />
         <EditMindmapTitleDialog

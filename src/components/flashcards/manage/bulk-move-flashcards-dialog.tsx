@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { bulkMoveFlashcards } from "@/app/actions/flashcards";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectSelect } from "@/components/shared/subject-select";
-import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
+import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,7 +45,7 @@ export function BulkMoveFlashcardsDialog({
       subjectId: "",
     },
   });
-  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     open,
     loadSubjectsOnOpen: true,
     onSubjectCreated: (createdSubjectId) =>

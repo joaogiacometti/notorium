@@ -23,7 +23,7 @@ export function DangerZoneCard() {
       <SettingsSection title="Danger Zone">
         <SettingsRow
           label="Delete account"
-          description="Permanently removes your subjects, notes, assessments, and attendance records. This cannot be undone."
+          description="Permanently removes your subjects, notes, mindmaps, and flashcards. This cannot be undone."
           keywords="remove danger erase"
           action={
             <Button

@@ -15,10 +15,7 @@ export default function HomeLoading() {
               <Skeleton className="h-7 w-56" />
               <Skeleton className="h-4 w-72" />
             </div>
-            <div className="grid gap-3 lg:grid-cols-2">
-              <CardSkeleton lines={2} />
-              <CardSkeleton lines={4} />
-            </div>
+            <CardSkeleton lines={2} />
             <ReviewActivityCardSkeleton />
             <CardSkeleton lines={4} />
           </div>

@@ -10,7 +10,7 @@ import {
 } from "./support/db";
 import {
   expandSubjectSidebarRow,
-  openSubjectDetailByName,
+  openSubjectInSidebar,
   openSubjectSidebarActions,
 } from "./support/subjects";
 
@@ -86,8 +86,8 @@ test("can create and open a note", async ({ page, e2eUser }) => {
   await clearUserSubjectsByNames(user.userId, [subjectName]);
 
   try {
-    const createdSubject = await createSubject(user.userId, subjectName);
-    await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await createSubject(user.userId, subjectName);
+    await openSubjectInSidebar(page, subjectName);
 
     await clickSubjectNewNote(page, subjectName);
     await createNoteFromDialog(page, noteTitle);
@@ -121,7 +121,7 @@ test("can edit a note", async ({ page, e2eUser }) => {
       "Initial",
     );
 
-    await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await openSubjectInSidebar(page, subjectName);
     await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, initialTitle);
 
@@ -169,7 +169,7 @@ test("can create a title-only note from detail sidebar", async ({
 
     await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
 
-    await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await openSubjectInSidebar(page, subjectName);
     await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, initialTitle);
     await createSidebarNote(page, subjectName, newTitle);
@@ -198,7 +198,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
       "Delete from detail page",
     );
 
-    await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await openSubjectInSidebar(page, subjectName);
     await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, noteTitle);
 
@@ -208,10 +208,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
 
     await expect(deleteDialog).toHaveCount(0);
-    await expect(page).toHaveURL(/\/subjects\/.+/);
-    await expect(
-      page.getByRole("heading", { name: "Attendance", exact: true }),
-    ).toBeVisible();
+    await expect(page.getByTestId("home-greeting")).toBeVisible();
     await expect(
       page.getByRole("link", { name: noteTitle, exact: true }),
     ).toHaveCount(0);
@@ -240,7 +237,7 @@ test("can generate flashcards from a note with AI", async ({
       "Active recall and spaced repetition are core study practices.",
     );
 
-    await openSubjectDetailByName(page, subjectName, createdSubject.id);
+    await openSubjectInSidebar(page, subjectName);
     await expandSubjectSidebarRow(page, subjectName);
     await openNoteDetailByTitle(page, noteTitle);
 

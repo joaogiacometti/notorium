@@ -21,7 +21,7 @@ function getUniqueSubjectName(testTitle: string) {
 async function openAccountPage(page: Page) {
   // Account settings live in a dialog; the `?settings=` deep link opens it
   // directly to the Flashcards section from any app page.
-  await page.goto("/planning?settings=flashcards");
+  await page.goto("/flashcards?settings=flashcards");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(

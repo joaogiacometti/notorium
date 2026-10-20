@@ -3,8 +3,6 @@ import { decodeReadPayload } from "@/lib/read-api/read-payload";
 
 const queries = vi.hoisted(() => ({
   getAccountSettingsForUser: vi.fn(),
-  getPlanningAssessmentsPageForUser: vi.fn(),
-  getPlanningCalendarDataForUser: vi.fn(),
   getFlashcardsManagePageForUser: vi.fn(),
   getFlashcardByIdForUser: vi.fn(),
   getAllFlashcardIdsForSubject: vi.fn(),
@@ -33,8 +31,6 @@ vi.mock("@/lib/auth/auth", () => ({
   getOptionalSession: async () => ({ user: sessionUser }),
 }));
 vi.mock("@/features/account/queries", () => queries);
-vi.mock("@/features/assessments/queries", () => queries);
-vi.mock("@/features/planning/queries", () => queries);
 vi.mock("@/features/flashcards/queries", () => queries);
 vi.mock("@/features/flashcards/refine/queries", () => queries);
 vi.mock("@/features/flashcard-review/queries", () => queries);
@@ -71,9 +67,6 @@ async function callRoute(
   };
 }
 
-const planningQuery =
-  "pageIndex=1&pageSize=25&statusFilter=all&typeFilter=all&sortBy=dueDateAsc";
-
 describe("read route handlers", () => {
   beforeEach(() => {
     for (const mock of Object.values(queries)) {
@@ -91,51 +84,6 @@ describe("read route handlers", () => {
 
     expect(result).toEqual({ status: 200, body: { name: "Ada" } });
     expect(queries.getAccountSettingsForUser).toHaveBeenCalledWith(sessionUser);
-  });
-
-  it("planning page coerces numeric query params", async () => {
-    await callRoute(
-      import("@/app/api/assessments/planning-page/route"),
-      `/api/assessments/planning-page?${planningQuery}`,
-    );
-
-    expect(queries.getPlanningAssessmentsPageForUser).toHaveBeenCalledWith(
-      "user-1",
-      expect.objectContaining({
-        pageIndex: 1,
-        pageSize: 25,
-        sortBy: "dueDateAsc",
-      }),
-    );
-  });
-
-  it("planning page rejects an unknown sort", async () => {
-    const result = await callRoute(
-      import("@/app/api/assessments/planning-page/route"),
-      `/api/assessments/planning-page?${planningQuery.replace("dueDateAsc", "nope")}`,
-    );
-
-    expect(result.status).toBe(400);
-    expect(queries.getPlanningAssessmentsPageForUser).not.toHaveBeenCalled();
-  });
-
-  it("calendar events validates the range before querying", async () => {
-    const bad = await callRoute(
-      import("@/app/api/calendar/events/route"),
-      "/api/calendar/events?rangeStart=not-a-date&rangeEnd=2026-10-31",
-    );
-    await callRoute(
-      import("@/app/api/calendar/events/route"),
-      "/api/calendar/events?rangeStart=2026-09-28&rangeEnd=2026-11-08",
-    );
-
-    expect(bad.status).toBe(400);
-    expect(queries.getPlanningCalendarDataForUser).toHaveBeenCalledTimes(1);
-    expect(queries.getPlanningCalendarDataForUser).toHaveBeenCalledWith(
-      "user-1",
-      "2026-09-28",
-      "2026-11-08",
-    );
   });
 
   it("manage page collects repeated subjectIds", async () => {
@@ -277,7 +225,6 @@ describe("read route handlers", () => {
     await callRoute(route, "/api/search?q=%20mitosis%20");
 
     expect(short.body).toEqual({
-      subjects: [],
       notes: [],
       flashcards: [],
       mindmaps: [],

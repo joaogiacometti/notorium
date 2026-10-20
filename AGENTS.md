@@ -97,7 +97,6 @@ Only add optional files when they are needed.
 - Read and write cookies only through Next.js: `cookies()` from `next/headers` on the server, and a Server Action for client-initiated writes. Never touch `document.cookie` directly.
 - Every `page.tsx` needs a matching `loading.tsx` that mirrors the page layout.
 - When changing a page or detail header, check its matching `loading.tsx` in the same change. Loading screens should stay simple, but must not miss major layout regions or primary action slots that would cause obvious shift or broken expectations.
-- `/planning` is the canonical planning route. Do not add aliases like `/assessments` or `/calendar`.
 
 ## Results and Errors
 
@@ -171,12 +170,12 @@ Only add optional files when they are needed.
 
 ```tsx
 className =
-  "bg-(--status-danger-fill) text-(--assessment-exam-text) border-(--status-warning-border)";
+  "bg-(--intent-danger-fill) text-(--intent-danger-text) border-(--intent-warning-border)";
 ```
 
 - For SVGs, use `stroke="currentColor"` and a theme variable text class.
 - Use semantic variables from `src/app/globals.css`: `--primary`, `--secondary`, `--accent`, `--destructive`, `--muted`, `--background`, `--foreground`, `--border`.
-- Use status variables for assessment, danger, warning, success, and chart colors.
+- Use intent variables (`--intent-*`) for danger, warning, success, and info colors, and `--chart-*` for charts.
 
 ## Formatting
 

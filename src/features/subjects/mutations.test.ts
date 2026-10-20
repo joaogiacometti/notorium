@@ -98,7 +98,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "History",
-      kind: "academic",
     });
 
     expect(result).toEqual({
@@ -120,19 +119,17 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "  History  ",
-      kind: "general",
     });
 
     expect(result).toEqual({ success: true, subjectId: "subject-1" });
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
       name: "History",
-      kind: "general",
       parentSubjectId: null,
     });
   });
 
-  it("nests under a parent and forces general kind for subfolders", async () => {
+  it("nests a subfolder under its parent", async () => {
     countTotalSubjectsForUserMock.mockResolvedValueOnce(3);
     countChildSubjectsForUserMock.mockResolvedValueOnce(0);
     getSubjectTreeRecordForUserMock.mockResolvedValueOnce({
@@ -149,7 +146,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Chapter 1",
-      kind: "academic",
       parentSubjectId: "parent-1",
     });
 
@@ -157,7 +153,6 @@ describe("createSubjectForUser", () => {
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
       name: "Chapter 1",
-      kind: "general",
       parentSubjectId: "parent-1",
     });
   });
@@ -185,7 +180,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Term::Week 1",
-      kind: "academic",
       parentSubjectId: "school-1",
     });
 
@@ -193,13 +187,11 @@ describe("createSubjectForUser", () => {
     expect(insertValuesMock).toHaveBeenNthCalledWith(1, {
       userId: "user-1",
       name: "Term",
-      kind: "general",
       parentSubjectId: "school-1",
     });
     expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
       userId: "user-1",
       name: "Week 1",
-      kind: "academic",
       parentSubjectId: "term-1",
     });
   });
@@ -224,14 +216,12 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Root:: Chapter 1 ",
-      kind: "academic",
     });
 
     expect(result).toEqual({ success: true, subjectId: "child-1" });
     expect(insertValuesMock).toHaveBeenCalledWith({
       userId: "user-1",
       name: "Chapter 1",
-      kind: "academic",
       parentSubjectId: "parent-1",
     });
     expect(transactionMock).toHaveBeenCalledOnce();
@@ -251,26 +241,22 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Math::Calculus::Integrals",
-      kind: "academic",
     });
 
     expect(result).toEqual({ success: true, subjectId: "integrals-1" });
     expect(insertValuesMock).toHaveBeenNthCalledWith(1, {
       userId: "user-1",
       name: "Math",
-      kind: "general",
       parentSubjectId: null,
     });
     expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
       userId: "user-1",
       name: "Calculus",
-      kind: "general",
       parentSubjectId: "math-1",
     });
     expect(insertValuesMock).toHaveBeenNthCalledWith(3, {
       userId: "user-1",
       name: "Integrals",
-      kind: "academic",
       parentSubjectId: "calculus-1",
     });
   });
@@ -288,7 +274,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Math::Calculus",
-      kind: "academic",
     });
 
     expect(result).toMatchObject({
@@ -321,20 +306,17 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Math::Calculus::Integrals",
-      kind: "academic",
     });
 
     expect(result).toEqual({ success: true, subjectId: "integrals-1" });
     expect(insertValuesMock).toHaveBeenNthCalledWith(1, {
       userId: "user-1",
       name: "Calculus",
-      kind: "general",
       parentSubjectId: "math-1",
     });
     expect(insertValuesMock).toHaveBeenNthCalledWith(2, {
       userId: "user-1",
       name: "Integrals",
-      kind: "academic",
       parentSubjectId: "calculus-1",
     });
   });
@@ -350,7 +332,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Math::Calculus::Integrals",
-      kind: "academic",
     });
 
     expect(result).toMatchObject({
@@ -379,7 +360,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Too deep",
-      kind: "general",
       parentSubjectId: "parent-1",
     });
 
@@ -409,7 +389,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "One too many",
-      kind: "general",
       parentSubjectId: "parent-1",
     });
 
@@ -432,7 +411,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "Orphan",
-      kind: "general",
       parentSubjectId: "missing",
     });
 
@@ -453,7 +431,6 @@ describe("createSubjectForUser", () => {
 
     const result = await createSubjectForUser("user-1", {
       name: "History",
-      kind: "academic",
     });
 
     expect(result).toEqual({
@@ -474,7 +451,7 @@ describe("createSubjectForUser", () => {
     );
 
     await expect(
-      createSubjectForUser("user-1", { name: "History", kind: "academic" }),
+      createSubjectForUser("user-1", { name: "History" }),
     ).rejects.toThrow(unexpected);
   });
 });
@@ -497,7 +474,6 @@ describe("editSubjectForUser", () => {
     const result = await editSubjectForUser("user-1", {
       id: "subject-1",
       name: "History",
-      kind: "academic",
     });
 
     expect(result).toEqual({

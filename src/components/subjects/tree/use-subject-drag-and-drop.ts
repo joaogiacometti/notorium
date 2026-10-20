@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { moveDocument } from "@/app/actions/documents";
 import { moveSubject } from "@/app/actions/subjects";
 import type { DocumentKind } from "@/features/documents/types";
-import { isAcademicSubject } from "@/features/subjects/constants";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import {
@@ -86,7 +85,7 @@ export function useSubjectDragAndDrop({
 
   function canDropSubject(sourceSubjectId: string, targetId: string): boolean {
     const sourceNode = findSubjectTreeNode(localTree, sourceSubjectId);
-    if (!sourceNode || isAcademicSubject(sourceNode.kind)) {
+    if (!sourceNode) {
       return false;
     }
 

@@ -33,10 +33,7 @@ function makeSubject(id: string, name: string, parentSubjectId: string | null) {
     id,
     userId: "user-1",
     name,
-    kind: "general",
     parentSubjectId,
-    totalClasses: null,
-    maxMisses: null,
     createdAt,
     updatedAt: createdAt,
   };

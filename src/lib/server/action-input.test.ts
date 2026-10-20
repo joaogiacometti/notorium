@@ -9,7 +9,7 @@ describe("parseActionInput", () => {
         title: z.string().min(1),
       }),
       { title: "Midterm" },
-      "assessments.invalidData",
+      "subjects.invalidData",
     );
 
     expect(result).toEqual({
@@ -26,14 +26,14 @@ describe("parseActionInput", () => {
         title: z.string().min(1),
       }),
       { title: "" },
-      "assessments.invalidData",
+      "subjects.invalidData",
     );
 
     expect(result).toEqual({
       success: false,
       error: {
         success: false,
-        errorCode: "assessments.invalidData",
+        errorCode: "subjects.invalidData",
         errorParams: undefined,
         errorMessage: undefined,
       },

@@ -76,12 +76,6 @@ export function SubjectTreeSidebar({
   const [createFlashcardSubjectId, setCreateFlashcardSubjectId] = useState<
     string | null
   >(null);
-  const [createAssessmentSubjectId, setCreateAssessmentSubjectId] = useState<
-    string | null
-  >(null);
-  const [recordMissSubjectId, setRecordMissSubjectId] = useState<string | null>(
-    null,
-  );
 
   // Document kebab actions (edit/delete/generate/copy/export) reuse the shared
   // dialog host; reload the affected subject's documents so the tree reflects
@@ -339,14 +333,6 @@ export function SubjectTreeSidebar({
     setCreateFlashcardSubjectId(subjectId);
   }
 
-  function openCreateAssessment(subjectId: string) {
-    setCreateAssessmentSubjectId(subjectId);
-  }
-
-  function openRecordMiss(subjectId: string) {
-    setRecordMissSubjectId(subjectId);
-  }
-
   function handleSubjectCreated() {
     if (createParentId) {
       setExpandedIds((current) => new Set(current).add(createParentId));
@@ -416,8 +402,6 @@ export function SubjectTreeSidebar({
                 onToggle={handleToggle}
                 onRetryDocuments={(subjectId) => void loadDocuments(subjectId)}
                 onCreateChild={openCreateChild}
-                onCreateAssessment={openCreateAssessment}
-                onRecordMiss={openRecordMiss}
                 onCreateNote={openCreateNote}
                 onCreateMindmap={openCreateMindmap}
                 onCreateFlashcard={openCreateFlashcard}
@@ -453,10 +437,6 @@ export function SubjectTreeSidebar({
         onMindmapCreated={handleMindmapCreated}
         createFlashcardSubjectId={createFlashcardSubjectId}
         onCreateFlashcardSubjectIdChange={setCreateFlashcardSubjectId}
-        createAssessmentSubjectId={createAssessmentSubjectId}
-        onCreateAssessmentSubjectIdChange={setCreateAssessmentSubjectId}
-        recordMissSubjectId={recordMissSubjectId}
-        onRecordMissSubjectIdChange={setRecordMissSubjectId}
         onRefreshTree={refreshTree}
         onSubjectDeleted={handleSubjectDeleted}
       />

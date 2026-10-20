@@ -21,7 +21,6 @@ vi.mock("@/features/flashcards/fsrs/settings-mutations", () => ({
 }));
 
 vi.mock("@/features/user/mutations", () => ({
-  updateNotificationPreferences: vi.fn(),
   updateUserAccessStatusForUser: vi.fn(),
 }));
 

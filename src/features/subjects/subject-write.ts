@@ -1,6 +1,5 @@
 import type { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
-import type { SubjectKind } from "@/features/subjects/constants";
 import { isUniqueViolationError } from "@/lib/db/errors";
 import {
   type ActionErrorResult,
@@ -11,14 +10,13 @@ type SubjectInsertExecutor = Pick<ReturnType<typeof getDb>, "insert">;
 
 export interface SubjectInsertData {
   name: string;
-  kind: SubjectKind;
   parentSubjectId?: string;
 }
 
 /**
  * Inserts one owned subject and returns its required identifier.
  *
- * @example await insertSubjectRow(db, userId, { name: "Math", kind: "academic" });
+ * @example await insertSubjectRow(db, userId, { name: "Math" });
  */
 export async function insertSubjectRow(
   executor: SubjectInsertExecutor,
@@ -29,7 +27,6 @@ export async function insertSubjectRow(
     .insert(subject)
     .values({
       name: input.name.trim(),
-      kind: input.kind,
       parentSubjectId: input.parentSubjectId ?? null,
       userId,
     })

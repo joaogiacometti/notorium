@@ -21,7 +21,7 @@ interface DetailPageLayoutProps {
 /**
  * Canonical wrapper for card/detail pages: a sticky {@link PageTopBar}
  * breadcrumb above an {@link AppPageContainer}-centered body. Extracting this
- * keeps every detail surface (assessment, subject, flashcard, admin) structured
+ * keeps every detail surface (flashcard, admin) structured
  * the same way instead of each repeating the `PageTopBar + AppPageContainer`
  * fragment.
  *

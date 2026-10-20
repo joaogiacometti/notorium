@@ -6,9 +6,7 @@ import {
   ReviewActivityCard,
   ReviewActivityCardSkeleton,
 } from "@/components/home/review-activity-card";
-import { UpcomingAssessmentsCard } from "@/components/home/upcoming-assessments-card";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
-import { getUpcomingAssessmentsForUser } from "@/features/assessments/queries";
 import { getRecentDocumentsForUser } from "@/features/documents/queries";
 import {
   getFlashcardReviewActivityForUser,
@@ -22,9 +20,8 @@ export default async function HomePage() {
   const now = new Date();
 
   const reviewActivityPromise = getFlashcardReviewActivityForUser(userId, now);
-  const [summary, upcomingAssessments, recentDocuments] = await Promise.all([
+  const [summary, recentDocuments] = await Promise.all([
     getFlashcardReviewSummaryForUser(userId, now),
-    getUpcomingAssessmentsForUser(userId, 3),
     getRecentDocumentsForUser(userId, 6),
   ]);
 
@@ -37,10 +34,7 @@ export default async function HomePage() {
         className="space-y-4 lg:h-full lg:overflow-y-auto lg:pr-1"
       >
         <HomeGreeting name={name} />
-        <div className="grid gap-3 lg:grid-cols-2">
-          <FlashcardsDueCard summary={summary} />
-          <UpcomingAssessmentsCard assessments={upcomingAssessments} />
-        </div>
+        <FlashcardsDueCard summary={summary} />
         <Suspense fallback={<ReviewActivityCardSkeleton />}>
           <ReviewActivityPanel reviewActivityPromise={reviewActivityPromise} />
         </Suspense>

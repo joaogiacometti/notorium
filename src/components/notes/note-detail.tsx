@@ -48,11 +48,6 @@ interface NoteDetailProps {
   subjects?: SubjectOption[];
   note: NoteEntity;
   subjectName: string;
-  /**
-   * The subject's detail-page href, or `null` for general subjects (which have
-   * no page). Drives the breadcrumb link and post-delete navigation.
-   */
-  subjectHref: string | null;
 }
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -74,7 +69,6 @@ export function NoteDetail({
   subjects,
   note,
   subjectName,
-  subjectHref,
 }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -233,7 +227,6 @@ export function NoteDetail({
           breadcrumb={[
             {
               label: subjectName,
-              href: subjectHref ?? undefined,
               icon: "book-open",
             },
             { label: watchedTitle || note.title || "Untitled" },
@@ -409,7 +402,7 @@ export function NoteDetail({
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
-            startNavTransition(() => router.push(subjectHref ?? "/"));
+            startNavTransition(() => router.push("/"));
           }}
         />
         {aiEnabled ? (

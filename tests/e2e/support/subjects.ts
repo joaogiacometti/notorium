@@ -1,42 +1,29 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "./authenticated-test";
-import { breadcrumbCurrent } from "./page-chrome";
 
 /**
- * Opens a subject's detail page by navigating directly to `/subjects/{id}`.
- * After the layout refactor the standalone `/subjects` listing page was removed
- * and subjects live in the left-menu tree, so tests create the subject via the
- * DB fixture and open it by its known id. Asserts the breadcrumb top bar shows
- * the subject name so callers can rely on the page being ready.
+ * Opens Home and waits for a subject's row in the left-menu tree. Subjects are
+ * folders with no page of their own, so tests reach their documents through
+ * the tree.
  */
-export async function openSubjectDetailByName(
-  page: Page,
-  subjectName: string,
-  subjectId: string,
-) {
-  await page.goto(`/subjects/${subjectId}`);
+export async function openSubjectInSidebar(page: Page, subjectName: string) {
+  await page.goto("/");
 
-  await expect(breadcrumbCurrent(page, subjectName)).toBeVisible();
+  await expect(getSubjectSidebarRow(page, subjectName)).toBeVisible();
 }
 
-/** Locates a subject link inside the left-menu subject tree by its name. */
-export function getSubjectSidebarLink(
-  page: Page,
-  subjectName: string,
-): Locator {
-  return page
-    .locator('nav[aria-label="Subjects"]')
-    .getByRole("link")
-    .filter({ hasText: subjectName })
-    .first();
+/** Locates a subject row inside the left-menu subject tree by its name. */
+export function getSubjectSidebarRow(page: Page, subjectName: string): Locator {
+  return page.locator(
+    `nav[aria-label="Subjects"] [data-subject-name=${JSON.stringify(subjectName)}]`,
+  );
 }
 
 /** Expands a subject row in the left-menu tree so its documents are loaded. */
 export async function expandSubjectSidebarRow(page: Page, subjectName: string) {
-  const subjectLink = getSubjectSidebarLink(page, subjectName);
-  await expect(subjectLink).toBeVisible();
+  const row = getSubjectSidebarRow(page, subjectName);
+  await expect(row).toBeVisible();
 
-  const row = subjectLink.locator("xpath=ancestor::div[1]");
   const expandButton = row.getByRole("button", {
     name: "Expand subject",
     exact: true,
@@ -58,9 +45,7 @@ export async function openSubjectSidebarActions(
   page: Page,
   subjectName: string,
 ) {
-  const row = page.locator(
-    `nav[aria-label="Subjects"] [data-subject-name=${JSON.stringify(subjectName)}]`,
-  );
+  const row = getSubjectSidebarRow(page, subjectName);
   await expect(row).toBeVisible();
   await row.hover();
 

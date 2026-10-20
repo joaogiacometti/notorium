@@ -44,16 +44,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "account.invalidData": "Invalid account data.",
   "account.updateFailed": "Failed to update account.",
   "account.deleteFailed": "Failed to delete account.",
-  "account.notifications.invalidData": "Invalid notification settings.",
-  "account.notifications.updateFailed":
-    "Failed to update notification settings.",
-  "assessments.invalidData": "Invalid assessment data.",
-  "assessments.notFound": "Assessment not found.",
-  "attendance.invalidSettings": "Invalid attendance settings.",
-  "attendance.maxMissesExceeded": "Max misses cannot exceed total classes.",
-  "attendance.invalidMissData": "Invalid miss data.",
-  "attendance.missAlreadyRecorded": "A miss is already recorded for this date.",
-  "attendance.missNotFound": "Miss record not found.",
   "attachments.invalidData": "Invalid attachment data.",
   "attachments.uploadFailed": "Failed to upload attachment.",
   "attachments.deleteFailed": "Failed to delete attachment.",
@@ -111,8 +101,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} attachments per item.`,
   "limits.attachmentSizeLimit": (params) =>
     `File size limit exceeded: maximum ${params?.max} bytes.`,
-  "limits.assessmentLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} assessments per subject.`,
   "limits.flashcardLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
   "limits.aiBackGenerationPerDay":
@@ -130,7 +118,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "subjects.notFound": "Subject not found.",
   "subjects.duplicateName": "A subject with this name already exists.",
   "subjects.cannotMoveIntoSelf": "A subject cannot be moved into itself.",
-  "subjects.academicNotMovable": "Academic subjects cannot be moved.",
   "subjects.wouldCreateCycle":
     "This move would create a circular subject hierarchy.",
 };

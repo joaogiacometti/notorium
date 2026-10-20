@@ -31,8 +31,7 @@ graph nodes, segmented toggles, drop zones), not for standard actions.
 
 - **Card/detail pages** compose `DetailPageLayout` (sticky `PageTopBar`
   breadcrumb over a centered `AppPageContainer`). Default width `max-w-5xl`;
-  narrow per content via `maxWidth` (`3xl` flashcard/admin, `4xl` assessment,
-  `5xl` subject). Width is the only thing a detail page tunes — structure is fixed.
+  narrow per content via `maxWidth` (`3xl` flashcard/admin). Width is the only thing a detail page tunes — structure is fixed.
 - **Document workspaces** (note, mindmap) stay full-width (`max-w-7xl`) and own their layout for zen mode.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
   `PageTopBar` (`PageTopBarSkeleton`).
@@ -48,7 +47,7 @@ Two intentional tiers — do not blur them:
   domain icon, a `text-base` title, and an optional right-aligned action.
 - **Flat panel** — `rounded-xl border border-border/70 bg-card/85`. For content
   panels, tables, and detail sections. This is the app-wide panel surface
-  (flashcards, planning, calendar, subjects, assessments).
+  (flashcards, subjects).
 
 ## Typography roles
 

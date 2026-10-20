@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { createNote } from "@/app/actions/notes";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { SubjectSelect } from "@/components/shared/subject-select";
-import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
+import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -56,7 +56,7 @@ export function CreateNoteTitleDialog({
     resolver: zodResolver(createNoteSchema),
     defaultValues: { subjectId: subjectId ?? "", title: "", content: "" },
   });
-  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     initialSubjects,
     onSubjectCreated: (createdSubjectId) =>
       form.setValue("subjectId", createdSubjectId, {

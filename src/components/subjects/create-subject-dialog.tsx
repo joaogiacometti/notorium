@@ -2,7 +2,6 @@
 
 import { createSubject } from "@/app/actions/subjects";
 import { SubjectDialogForm } from "@/components/subjects/subject-dialog-form";
-import { DEFAULT_SUBJECT_KIND } from "@/features/subjects/constants";
 import type { CreateSubjectForm } from "@/features/subjects/validation";
 
 interface CreateSubjectDialogProps {
@@ -14,12 +13,7 @@ interface CreateSubjectDialogProps {
   onCreated?: () => void;
 }
 
-function getCreateSubjectFormValues(isSubfolder: boolean): CreateSubjectForm {
-  return {
-    name: "",
-    kind: isSubfolder ? "general" : DEFAULT_SUBJECT_KIND,
-  };
-}
+const EMPTY_CREATE_SUBJECT_VALUES: CreateSubjectForm = { name: "" };
 
 export function CreateSubjectDialog({
   trigger,
@@ -36,9 +30,8 @@ export function CreateSubjectDialog({
       open={open}
       onOpenChange={onOpenChange}
       trigger={trigger}
-      hideKind={isSubfolder}
       title={isSubfolder ? "Create Subfolder" : undefined}
-      values={getCreateSubjectFormValues(isSubfolder)}
+      values={EMPTY_CREATE_SUBJECT_VALUES}
       onSubmitAction={(values) =>
         createSubject({
           ...(values as CreateSubjectForm),

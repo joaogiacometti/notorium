@@ -1,12 +1,10 @@
 "use client";
 
-import { CreateAssessmentDialog } from "@/components/assessments/create-assessment-dialog";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import type { ContextFreeDialog } from "@/components/navbar/command-palette-commands";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
-import { isAcademicSubject } from "@/features/subjects/constants";
 import {
   getMindmapDetailHref,
   getNoteDetailHref,
@@ -54,11 +52,6 @@ export function CommandPaletteDialogs({
         onOpenChange={handleOpenChange}
         subjectId={subjectId ?? undefined}
         aiEnabled={aiEnabled}
-      />
-      <CreateAssessmentDialog
-        subjects={subjects.filter((subject) => isAcademicSubject(subject.kind))}
-        open={activeDialog === "assessment"}
-        onOpenChange={handleOpenChange}
       />
       <CreateNoteTitleDialog
         subjectId={subjectId ?? undefined}

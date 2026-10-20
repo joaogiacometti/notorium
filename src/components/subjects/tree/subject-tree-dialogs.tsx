@@ -1,8 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { LazyCreateAssessmentDialog } from "@/components/assessments/lazy-create-assessment-dialog";
-import { RecordMissDialog } from "@/components/attendance/record-miss-dialog";
 import { LazyCreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
 import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
@@ -34,10 +32,6 @@ interface SubjectTreeDialogsProps {
   onMindmapCreated: (mindmapId: string) => void;
   createFlashcardSubjectId: string | null;
   onCreateFlashcardSubjectIdChange: (id: string | null) => void;
-  createAssessmentSubjectId: string | null;
-  onCreateAssessmentSubjectIdChange: (id: string | null) => void;
-  recordMissSubjectId: string | null;
-  onRecordMissSubjectIdChange: (id: string | null) => void;
   /** Re-fetch tree counts after a mutating dialog completes. */
   onRefreshTree: () => void;
   onSubjectDeleted: (subjectId: string) => void;
@@ -45,7 +39,7 @@ interface SubjectTreeDialogsProps {
 
 /**
  * Renders every dialog the subject tree can open (create/edit/delete subject,
- * create note/mindmap/flashcard/assessment, record miss) plus the shared
+ * create note/mindmap/flashcard) plus the shared
  * document kebab dialog host. Split out of `subject-tree-sidebar.tsx` to keep
  * that file focused on tree state and within the file-size guard.
  */
@@ -68,10 +62,6 @@ export function SubjectTreeDialogs({
   onMindmapCreated,
   createFlashcardSubjectId,
   onCreateFlashcardSubjectIdChange,
-  createAssessmentSubjectId,
-  onCreateAssessmentSubjectIdChange,
-  recordMissSubjectId,
-  onRecordMissSubjectIdChange,
   onRefreshTree,
   onSubjectDeleted,
 }: Readonly<SubjectTreeDialogsProps>) {
@@ -160,32 +150,6 @@ export function SubjectTreeDialogs({
         }}
         aiEnabled={aiEnabled}
       />
-
-      <LazyCreateAssessmentDialog
-        subjectId={createAssessmentSubjectId ?? undefined}
-        open={createAssessmentSubjectId !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            onCreateAssessmentSubjectIdChange(null);
-          }
-        }}
-        onCreated={() => {
-          onCreateAssessmentSubjectIdChange(null);
-          onRefreshTree();
-        }}
-      />
-
-      {recordMissSubjectId ? (
-        <RecordMissDialog
-          subjectId={recordMissSubjectId}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              onRecordMissSubjectIdChange(null);
-            }
-          }}
-        />
-      ) : null}
     </>
   );
 }

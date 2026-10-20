@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Shared row styling for the left menu so links and the search button stay
- * visually consistent (Home, Planning/Flashcards, Search).
+ * visually consistent (Home, Flashcards, Search).
  */
 export function sidebarRowClassName(active: boolean): string {
   return cn(
@@ -30,7 +30,7 @@ interface SidebarNavLinkProps {
  * Active-aware navigation link for the left menu.
  *
  * @example
- * <SidebarNavLink href="/planning" label="Planning" icon={CalendarDays} />
+ * <SidebarNavLink href="/flashcards" label="Flashcards" icon={Layers} />
  */
 export function SidebarNavLink({
   href,

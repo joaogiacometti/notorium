@@ -8,7 +8,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/planning",
+  usePathname: () => "/flashcards",
 }));
 
 vi.mock("next/link", () => ({

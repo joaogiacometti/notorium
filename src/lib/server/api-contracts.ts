@@ -1,7 +1,5 @@
 import type { InferSelectModel } from "drizzle-orm";
 import type {
-  assessment,
-  attendanceMiss,
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
@@ -12,7 +10,7 @@ import type {
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
-export type SubjectAncestor = Pick<SubjectEntity, "id" | "name" | "kind">;
+export type SubjectAncestor = Pick<SubjectEntity, "id" | "name">;
 export interface SubjectOption extends SubjectEntity {
   path: string;
 }
@@ -27,19 +25,6 @@ export interface SubjectTreeNode extends SubjectEntity {
 export type NoteEntity = InferSelectModel<typeof note>;
 export type MindmapEntity = InferSelectModel<typeof mindmap>;
 export type MindmapListItem = Pick<MindmapEntity, "id" | "title" | "updatedAt">;
-export type AttendanceMissEntity = InferSelectModel<typeof attendanceMiss>;
-export type AssessmentEntity = InferSelectModel<typeof assessment>;
-export interface AssessmentDetailEntity {
-  assessment: AssessmentEntity;
-  subject: Pick<SubjectEntity, "id" | "name">;
-}
-export interface PlanningAssessmentsPage {
-  items: AssessmentEntity[];
-  total: number;
-  hasAnyAssessments: boolean;
-  subjectAssessmentCount: number | null;
-  subjectFinalGrade: number | null;
-}
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 export type FlashcardDetailEntity = FlashcardEntity & {
   subjectName: string;
@@ -125,10 +110,7 @@ export interface AccountSettings {
   name: string;
   email: string;
   createdAt: string;
-  emailEnabled: boolean;
   workflowsEnabled: boolean;
-  notificationsEnabled: boolean;
-  notificationDaysBefore: number;
   fsrsOptimization: FlashcardOptimizationSettings;
 }
 
@@ -150,8 +132,6 @@ export interface FlashcardReviewActivity {
   heatmap: ReviewActivityPoint[];
   streak: ReviewActivityStreak;
 }
-
-export type SearchSubjectResult = Pick<SubjectEntity, "id" | "name">;
 
 export type SearchNoteResult = Pick<
   NoteEntity,
@@ -177,13 +157,12 @@ export type SearchMindmapResult = Pick<
 };
 
 export type SearchData = {
-  subjects: SearchSubjectResult[];
   notes: SearchNoteResult[];
   flashcards: SearchFlashcardResult[];
   mindmaps: SearchMindmapResult[];
 };
 
-export type SubjectEditDto = Pick<SubjectEntity, "id" | "name" | "kind">;
+export type SubjectEditDto = Pick<SubjectEntity, "id" | "name">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
 export type FlashcardOptimizationResult =
@@ -200,39 +179,6 @@ export type AuthRedirectSuccessResult = {
   };
 };
 export type AuthRedirectResult = AuthRedirectSuccessResult | ActionErrorResult;
-export type CreateAssessmentResult =
-  | {
-      success: true;
-      assessment: AssessmentEntity;
-    }
-  | ActionErrorResult;
-export type EditAssessmentResult =
-  | {
-      success: true;
-      assessment: AssessmentEntity;
-    }
-  | ActionErrorResult;
-export type DeleteAssessmentResult =
-  | {
-      success: true;
-      id: string;
-    }
-  | ActionErrorResult;
-export type BulkDeleteAssessmentsResult =
-  | {
-      success: true;
-      ids: string[];
-      subjectIds: string[];
-    }
-  | ActionErrorResult;
-export type BulkUpdateAssessmentStatusResult =
-  | {
-      success: true;
-      ids: string[];
-      status: AssessmentEntity["status"];
-      subjectIds: string[];
-    }
-  | ActionErrorResult;
 export type MoveSubjectResult =
   | {
       success: true;

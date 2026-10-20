@@ -8,10 +8,9 @@ import {
   createNote,
   createSubject,
 } from "./support/db";
-import { breadcrumbCurrent } from "./support/page-chrome";
 import {
   expandSubjectSidebarRow,
-  getSubjectSidebarLink,
+  getSubjectSidebarRow,
   openSubjectSidebarActions,
 } from "./support/subjects";
 
@@ -57,11 +56,7 @@ test("can create a subject", async ({ page, e2eUser }) => {
     await createDialog.getByRole("button", { name: "Create Subject" }).click();
 
     // Verify the subject appears in the sidebar tree.
-    await expect(getSubjectSidebarLink(page, initialSubjectName)).toBeVisible();
-
-    // Navigate to its detail page.
-    await getSubjectSidebarLink(page, initialSubjectName).click();
-    await expect(breadcrumbCurrent(page, initialSubjectName)).toBeVisible();
+    await expect(getSubjectSidebarRow(page, initialSubjectName)).toBeVisible();
   });
 });
 
@@ -90,11 +85,7 @@ test("can edit a subject", async ({ page, e2eUser }) => {
 
     // Reload for a deterministic tree, then verify the rename is reflected.
     await reloadAppShell(page);
-    await expect(getSubjectSidebarLink(page, updatedSubjectName)).toBeVisible();
-
-    // Navigate to the renamed subject's detail page.
-    await getSubjectSidebarLink(page, updatedSubjectName).click();
-    await expect(breadcrumbCurrent(page, updatedSubjectName)).toBeVisible();
+    await expect(getSubjectSidebarRow(page, updatedSubjectName)).toBeVisible();
   });
 });
 
@@ -124,9 +115,7 @@ test("can delete a subject", async ({ page, e2eUser }) => {
 
     // Reload for a deterministic tree; the subject should be gone.
     await reloadAppShell(page);
-    await expect(getSubjectSidebarLink(page, initialSubjectName)).toHaveCount(
-      0,
-    );
+    await expect(getSubjectSidebarRow(page, initialSubjectName)).toHaveCount(0);
   });
 });
 
@@ -167,7 +156,7 @@ test("can delete multiple subjects from the sidebar", async ({
     // Reload for a deterministic tree; both subjects should be gone.
     await reloadAppShell(page);
     for (const name of names) {
-      await expect(getSubjectSidebarLink(page, name)).toHaveCount(0);
+      await expect(getSubjectSidebarRow(page, name)).toHaveCount(0);
     }
   });
 });

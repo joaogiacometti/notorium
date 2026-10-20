@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  CalendarX,
-  ClipboardList,
   Files,
   FileText,
   FolderPlus,
@@ -32,15 +30,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isAcademicSubject } from "@/features/subjects/constants";
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 
 interface SubjectActionsMenuProps {
   node: SubjectTreeNode;
   onCreateChild: (parentSubjectId: string) => void;
-  onCreateAssessment: (subjectId: string) => void;
-  onRecordMiss: (subjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreateMindmap: (subjectId: string) => void;
   onCreateFlashcard: (subjectId: string) => void;
@@ -50,14 +45,11 @@ interface SubjectActionsMenuProps {
 
 /**
  * The per-subject kebab menu in the tree row. Create actions are grouped by kind
- * — Document, Flashcards, and (for academic subjects) Academics — alongside
- * Subfolder, edit, and delete.
+ * — Document and Flashcards — alongside Subfolder, edit, and delete.
  */
 export function SubjectActionsMenu({
   node,
   onCreateChild,
-  onCreateAssessment,
-  onRecordMiss,
   onCreateNote,
   onCreateMindmap,
   onCreateFlashcard,
@@ -158,35 +150,10 @@ export function SubjectActionsMenu({
           </DropdownMenuSubContent>
         </DropdownMenuSub>
 
-        {isAcademicSubject(node.kind) && (
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <GraduationCap className="size-4" />
-              Academics
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuItem
-                onClick={() => openDialog(() => onCreateAssessment(node.id))}
-              >
-                <ClipboardList className="size-4" />
-                Assessment
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => openDialog(() => onRecordMiss(node.id))}
-              >
-                <CalendarX className="size-4" />
-                Miss
-              </DropdownMenuItem>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-        )}
-
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() =>
-            openDialog(() =>
-              onEdit({ id: node.id, name: node.name, kind: node.kind }),
-            )
+            openDialog(() => onEdit({ id: node.id, name: node.name }))
           }
         >
           <Pencil className="size-4" />

@@ -8,7 +8,7 @@ import { loadSubjectOptions } from "@/components/shared/load-subject-options";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
-interface UseCreateGeneralSubjectPickerOptions {
+interface UseCreateInlineSubjectPickerOptions {
   initialSubjects?: SubjectOption[];
   open?: boolean;
   loadSubjectsOnOpen?: boolean;
@@ -16,17 +16,17 @@ interface UseCreateGeneralSubjectPickerOptions {
 }
 
 /**
- * Keeps a subject picker in sync while allowing inline general-subject creation.
+ * Keeps a subject picker in sync while allowing inline subject creation.
  *
  * @example
- * const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({ initialSubjects, onSubjectCreated: setSubjectId });
+ * const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({ initialSubjects, onSubjectCreated: setSubjectId });
  */
-export function useCreateGeneralSubjectPicker({
+export function useCreateInlineSubjectPicker({
   initialSubjects,
   open = false,
   loadSubjectsOnOpen = false,
   onSubjectCreated,
-}: Readonly<UseCreateGeneralSubjectPickerOptions>) {
+}: Readonly<UseCreateInlineSubjectPickerOptions>) {
   const queryClient = useQueryClient();
   const [subjects, setSubjects] = useState(initialSubjects ?? []);
 
@@ -45,7 +45,7 @@ export function useCreateGeneralSubjectPicker({
   }, [loadSubjectsOnOpen, open]);
 
   async function handleCreateSubject(name: string): Promise<boolean> {
-    const result = await createSubject({ name, kind: "general" });
+    const result = await createSubject({ name });
     if (!result.success) {
       toast.error(t(result.errorCode, result.errorParams));
       return false;

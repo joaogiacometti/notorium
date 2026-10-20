@@ -71,7 +71,7 @@ describe("AccountSettingsProvider deep link", () => {
     window.history.replaceState(
       null,
       "",
-      "/planning?settings=flashcards&view=calendar",
+      "/flashcards?settings=flashcards&view=manage",
     );
 
     await renderProvider();
@@ -79,13 +79,13 @@ describe("AccountSettingsProvider deep link", () => {
     expect(
       container.querySelector('[data-testid="settings-dialog"]')?.textContent,
     ).toBe("flashcards");
-    expect(routerReplaceMock).toHaveBeenCalledWith("/planning?view=calendar", {
+    expect(routerReplaceMock).toHaveBeenCalledWith("/flashcards?view=manage", {
       scroll: false,
     });
   });
 
   it("leaves the URL alone when no deep link is present", async () => {
-    window.history.replaceState(null, "", "/planning");
+    window.history.replaceState(null, "", "/flashcards");
 
     await renderProvider();
 

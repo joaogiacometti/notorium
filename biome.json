@@ -91,7 +91,6 @@
         "!src/app/api/auth/**",
         "!src/app/api/cron/**",
         "!src/app/api/flashcards/fsrs/**",
-        "!src/app/api/notifications/**",
         "!**/*.test.ts",
         "!**/*.test.tsx"
       ],

@@ -25,8 +25,6 @@ vi.mock("@/db/schema", () => ({
   user: {
     id: "user_id_column",
     preferredTheme: "user_preferred_theme_column",
-    notificationsEnabled: "user_notifications_enabled_column",
-    notificationDaysBefore: "user_notification_days_before_column",
   },
 }));
 

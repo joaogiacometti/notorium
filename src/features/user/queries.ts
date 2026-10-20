@@ -12,22 +12,3 @@ export async function getUserPreferredTheme(userId: string): Promise<AppTheme> {
 
   return isAppTheme(result?.preferredTheme) ? result.preferredTheme : "system";
 }
-
-export async function getNotificationPreferences(userId: string): Promise<{
-  notificationsEnabled: boolean;
-  notificationDaysBefore: number;
-}> {
-  const [result] = await getDb()
-    .select({
-      notificationsEnabled: user.notificationsEnabled,
-      notificationDaysBefore: user.notificationDaysBefore,
-    })
-    .from(user)
-    .where(eq(user.id, userId))
-    .limit(1);
-
-  return {
-    notificationsEnabled: result?.notificationsEnabled ?? false,
-    notificationDaysBefore: result?.notificationDaysBefore ?? 1,
-  };
-}

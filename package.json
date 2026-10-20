@@ -1,7 +1,7 @@
 {
   "name": "notorium",
   "version": "0.1.0",
-  "description": "A study management app for students with subjects, notes, mindmaps, flashcards, attendance, and assessments",
+  "description": "A learning app for making and reviewing notes, mindmaps, and flashcards with AI help",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",

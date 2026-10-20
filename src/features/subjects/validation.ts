@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { subjectKindValues } from "@/features/subjects/constants";
 import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
@@ -32,11 +31,8 @@ const createSubjectNameSchema = z
     validationMessage("Validation.subjects.nameMaxLength"),
   );
 
-const subjectKindSchema = z.enum(subjectKindValues);
-
 export const createSubjectSchema = z.object({
   name: createSubjectNameSchema,
-  kind: subjectKindSchema,
   parentSubjectId: z.string().min(1).optional(),
 });
 
@@ -52,7 +48,6 @@ export type MoveSubjectForm = z.infer<typeof moveSubjectSchema>;
 export const editSubjectSchema = z.object({
   id: z.string().min(1),
   name: subjectNameSchema,
-  kind: subjectKindSchema,
 });
 
 export type EditSubjectForm = z.infer<typeof editSubjectSchema>;

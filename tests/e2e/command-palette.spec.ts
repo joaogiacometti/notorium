@@ -9,13 +9,13 @@ async function openCommandPalette(page: Page) {
 }
 
 test("opens with Ctrl/Cmd+P and navigates to a section", async ({ page }) => {
-  await page.goto("/flashcards");
+  await page.goto("/");
 
   await openCommandPalette(page);
-  await page.getByPlaceholder("Type a command or search...").fill("planning");
-  await page.getByRole("option", { name: "Go to Planning" }).click();
+  await page.getByPlaceholder("Type a command or search...").fill("flashcards");
+  await page.getByRole("option", { name: "Go to Flashcards" }).click();
 
-  await page.waitForURL("**/planning");
+  await page.waitForURL("**/flashcards");
 });
 
 test("runs the create subject command from the palette", async ({ page }) => {

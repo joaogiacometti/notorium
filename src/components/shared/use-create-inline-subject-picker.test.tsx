@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
+import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
 const createSubjectMock = vi.fn();
@@ -43,7 +43,7 @@ function Probe({
   queryClient,
 }: Readonly<ProbeProps>) {
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
-  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     initialSubjects,
     open: true,
     loadSubjectsOnOpen,
@@ -68,7 +68,7 @@ function Probe({
   );
 }
 
-describe("useCreateGeneralSubjectPicker", () => {
+describe("useCreateInlineSubjectPicker", () => {
   let container: HTMLDivElement;
   let root: Root;
   let queryClient: QueryClient;
@@ -90,13 +90,11 @@ describe("useCreateGeneralSubjectPicker", () => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
   });
 
-  it("loads, creates, refreshes, and selects a general subject", async () => {
+  it("loads, creates, refreshes, and selects a new subject", async () => {
     getSubjectOptionsMock
+      .mockResolvedValueOnce([{ id: "subject-1", name: "Math", path: "Math" }])
       .mockResolvedValueOnce([
-        { id: "subject-1", name: "Math", path: "Math", kind: "general" },
-      ])
-      .mockResolvedValueOnce([
-        { id: "subject-2", name: "Biology", path: "Biology", kind: "general" },
+        { id: "subject-2", name: "Biology", path: "Biology" },
       ]);
     createSubjectMock.mockResolvedValue({
       success: true,
@@ -125,7 +123,6 @@ describe("useCreateGeneralSubjectPicker", () => {
 
     expect(createSubjectMock).toHaveBeenCalledWith({
       name: "Biology",
-      kind: "general",
     });
     expect(
       container.querySelector('[data-testid="subjects"]')?.textContent,
@@ -151,7 +148,6 @@ describe("useCreateGeneralSubjectPicker", () => {
                   id: "subject-1",
                   name: "Math",
                   path: "Math",
-                  kind: "general",
                 },
               ] as SubjectOption[]
             }

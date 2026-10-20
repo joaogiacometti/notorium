@@ -5,7 +5,6 @@ import {
   cleanupAttachmentPathnames,
   getSubjectAttachmentPathnamesForUser,
 } from "@/features/attachments/cleanup";
-import { isAcademicSubject } from "@/features/subjects/constants";
 import { createSubjectPathForUser } from "@/features/subjects/path-mutations";
 import {
   countChildSubjectsForUser,
@@ -40,12 +39,9 @@ export type SubjectMutationResult =
     }
   | ActionErrorResult;
 
-function getSubjectMutationValues(
-  values: Pick<CreateSubjectForm, "name" | "kind">,
-) {
+function getSubjectMutationValues(values: Pick<CreateSubjectForm, "name">) {
   return {
     name: values.name.trim(),
-    kind: values.kind,
   };
 }
 
@@ -96,10 +92,7 @@ async function insertSubjectForUser(
   data: CreateSubjectForm,
 ): Promise<SubjectMutationResult> {
   try {
-    const subjectId = await insertSubjectRow(getDb(), userId, {
-      ...data,
-      kind: data.parentSubjectId ? "general" : data.kind,
-    });
+    const subjectId = await insertSubjectRow(getDb(), userId, data);
     return { success: true, subjectId };
   } catch (error) {
     const insertError = resolveSubjectUniqueError(error);
@@ -203,12 +196,6 @@ export async function moveSubjectForUser(
 
   if (!existing) {
     return actionError("subjects.notFound");
-  }
-
-  // Academic subjects anchor attendance and assessments, so they stay where
-  // they were created; only general (container) subjects can be reorganized.
-  if (isAcademicSubject(existing.kind)) {
-    return actionError("subjects.academicNotMovable");
   }
 
   const newParentSubjectId = data.parentSubjectId ?? null;

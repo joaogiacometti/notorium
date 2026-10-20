@@ -89,7 +89,7 @@ describe("server env", () => {
     expect(env.BLOB_READ_WRITE_TOKEN).toBe("token-value");
   });
 
-  it("allows missing cron and email notification env vars", async () => {
+  it("allows missing cron and email env vars", async () => {
     setRequiredServerEnv();
 
     const { getServerEnv } = await import("@/env");

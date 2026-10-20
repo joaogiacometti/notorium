@@ -44,9 +44,6 @@ const subjects: SubjectOption[] = [
     id: "deck-1",
     userId: "user-1",
     parentSubjectId: null,
-    kind: "general",
-    totalClasses: null,
-    maxMisses: null,
     name: "Spanish",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -56,9 +53,6 @@ const subjects: SubjectOption[] = [
     id: "deck-2",
     userId: "user-1",
     parentSubjectId: "deck-1",
-    kind: "general",
-    totalClasses: null,
-    maxMisses: null,
     name: "Verbs",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -215,7 +209,6 @@ describe("BulkMoveFlashcardsDialog", () => {
 
     expect(createSubjectMock).toHaveBeenCalledWith({
       name: "Chemistry",
-      kind: "general",
     });
     expect(getCombobox().textContent).toContain("Chemistry");
 

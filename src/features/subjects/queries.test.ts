@@ -18,8 +18,8 @@ describe("getSubjectAncestors", () => {
   it("returns root-first breadcrumb records without raw query metadata", async () => {
     executeMock.mockResolvedValueOnce({
       rows: [
-        { id: "parent", name: "Calculus", kind: "general", depth: 1 },
-        { id: "root", name: "Math", kind: "academic", depth: 2 },
+        { id: "parent", name: "Calculus", depth: 1 },
+        { id: "root", name: "Math", depth: 2 },
       ],
     });
 
@@ -28,8 +28,8 @@ describe("getSubjectAncestors", () => {
     const ancestors = await getSubjectAncestors("user-1", "subject-1");
 
     expect(ancestors).toEqual([
-      { id: "root", name: "Math", kind: "academic" },
-      { id: "parent", name: "Calculus", kind: "general" },
+      { id: "root", name: "Math" },
+      { id: "parent", name: "Calculus" },
     ]);
   });
 });
@@ -65,10 +65,7 @@ describe("getAllSubjectsWithPathsForUser", () => {
       id: "root",
       userId: "user-1",
       name: "Math",
-      kind: "general",
       parentSubjectId: null,
-      totalClasses: null,
-      maxMisses: null,
       createdAt,
       updatedAt: createdAt,
     };

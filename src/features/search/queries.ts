@@ -24,98 +24,77 @@ export async function getSearchDataForUser(
       ),
   );
 
-  const [allSubjects, allNotes, allFlashcards, allMindmaps] = await Promise.all(
-    [
-      getDb()
-        .select({
-          id: subject.id,
-          name: subject.name,
-        })
-        .from(subject)
-        .where(
-          and(
-            eq(subject.userId, userId),
-            ...subjectFilters,
-            // General subjects have no page, so they are never search targets;
-            // their notes and mindmaps remain searchable below.
-            eq(subject.kind, "academic"),
+  const [allNotes, allFlashcards, allMindmaps] = await Promise.all([
+    getDb()
+      .select({
+        id: note.id,
+        title: note.title,
+        content: sql<string>`coalesce(${note.content}, '')`,
+        subjectId: note.subjectId,
+        subjectName: subject.name,
+      })
+      .from(note)
+      .innerJoin(subject, eq(note.subjectId, subject.id))
+      .where(
+        and(
+          eq(note.userId, userId),
+          ...subjectFilters,
+          or(
+            ilike(note.title, searchPattern),
+            ilike(note.content, searchPattern),
             ilike(subject.name, searchPattern),
           ),
-        )
-        .orderBy(desc(subject.updatedAt))
-        .limit(LIMITS.searchResultsLimit),
-      getDb()
-        .select({
-          id: note.id,
-          title: note.title,
-          content: sql<string>`coalesce(${note.content}, '')`,
-          subjectId: note.subjectId,
-          subjectName: subject.name,
-        })
-        .from(note)
-        .innerJoin(subject, eq(note.subjectId, subject.id))
-        .where(
-          and(
-            eq(note.userId, userId),
-            ...subjectFilters,
-            or(
-              ilike(note.title, searchPattern),
-              ilike(note.content, searchPattern),
-              ilike(subject.name, searchPattern),
-            ),
+        ),
+      )
+      .orderBy(desc(note.updatedAt))
+      .limit(LIMITS.searchResultsLimit),
+    getDb()
+      .select({
+        id: flashcard.id,
+        front: flashcard.front,
+        back: flashcard.back,
+        subjectId: flashcard.subjectId,
+        subjectName: subject.name,
+      })
+      .from(flashcard)
+      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .where(
+        and(
+          eq(flashcard.userId, userId),
+          or(
+            ilike(flashcard.front, searchPattern),
+            ilike(flashcard.back, searchPattern),
           ),
-        )
-        .orderBy(desc(note.updatedAt))
-        .limit(LIMITS.searchResultsLimit),
-      getDb()
-        .select({
-          id: flashcard.id,
-          front: flashcard.front,
-          back: flashcard.back,
-          subjectId: flashcard.subjectId,
-          subjectName: subject.name,
-        })
-        .from(flashcard)
-        .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-        .where(
-          and(
-            eq(flashcard.userId, userId),
-            or(
-              ilike(flashcard.front, searchPattern),
-              ilike(flashcard.back, searchPattern),
-            ),
+        ),
+      )
+      .orderBy(desc(flashcard.updatedAt))
+      .limit(LIMITS.searchResultsLimit),
+    getDb()
+      .select({
+        id: mindmap.id,
+        title: mindmap.title,
+        subjectId: mindmap.subjectId,
+        subjectName: subject.name,
+        data: mindmap.data,
+      })
+      .from(mindmap)
+      .innerJoin(subject, eq(mindmap.subjectId, subject.id))
+      .where(
+        and(
+          eq(mindmap.userId, userId),
+          ...subjectFilters,
+          or(
+            ilike(mindmap.title, searchPattern),
+            ilike(mindmap.data, searchPattern),
+            ilike(subject.name, searchPattern),
           ),
-        )
-        .orderBy(desc(flashcard.updatedAt))
-        .limit(LIMITS.searchResultsLimit),
-      getDb()
-        .select({
-          id: mindmap.id,
-          title: mindmap.title,
-          subjectId: mindmap.subjectId,
-          subjectName: subject.name,
-          data: mindmap.data,
-        })
-        .from(mindmap)
-        .innerJoin(subject, eq(mindmap.subjectId, subject.id))
-        .where(
-          and(
-            eq(mindmap.userId, userId),
-            ...subjectFilters,
-            or(
-              ilike(mindmap.title, searchPattern),
-              ilike(mindmap.data, searchPattern),
-              ilike(subject.name, searchPattern),
-            ),
-          ),
-        )
-        .orderBy(desc(mindmap.updatedAt))
-        .limit(LIMITS.searchResultsLimit),
-    ],
-  );
+        ),
+      )
+      .orderBy(desc(mindmap.updatedAt))
+      .limit(LIMITS.searchResultsLimit),
+  ]);
 
   return {
-    subjects: allSubjects,
     notes: allNotes,
     flashcards: allFlashcards.map((flashcard) => ({
       ...flashcard,
@@ -148,67 +127,48 @@ export async function getRecentSearchDataForUser(
       ),
   );
 
-  const [allSubjects, allNotes, allFlashcards, allMindmaps] = await Promise.all(
-    [
-      getDb()
-        .select({
-          id: subject.id,
-          name: subject.name,
-        })
-        .from(subject)
-        .where(
-          and(
-            eq(subject.userId, userId),
-            ...subjectFilters,
-            // General subjects have no page, so they are never search targets.
-            eq(subject.kind, "academic"),
-          ),
-        )
-        .orderBy(desc(subject.updatedAt))
-        .limit(LIMITS.recentItemsLimit),
-      getDb()
-        .select({
-          id: note.id,
-          title: note.title,
-          content: sql<string>`left(coalesce(${note.content}, ''), ${LIMITS.contentPreviewTruncate})`,
-          subjectId: note.subjectId,
-          subjectName: subject.name,
-        })
-        .from(note)
-        .innerJoin(subject, eq(note.subjectId, subject.id))
-        .where(and(eq(note.userId, userId), ...subjectFilters))
-        .orderBy(desc(note.updatedAt))
-        .limit(LIMITS.recentItemsLimit),
-      getDb()
-        .select({
-          id: flashcard.id,
-          front: flashcard.front,
-          back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
-          subjectId: flashcard.subjectId,
-          subjectName: subject.name,
-        })
-        .from(flashcard)
-        .innerJoin(subject, eq(flashcard.subjectId, subject.id))
-        .where(eq(flashcard.userId, userId))
-        .orderBy(desc(flashcard.updatedAt))
-        .limit(LIMITS.recentItemsLimit),
-      getDb()
-        .select({
-          id: mindmap.id,
-          title: mindmap.title,
-          subjectId: mindmap.subjectId,
-          subjectName: subject.name,
-        })
-        .from(mindmap)
-        .innerJoin(subject, eq(mindmap.subjectId, subject.id))
-        .where(and(eq(mindmap.userId, userId), ...subjectFilters))
-        .orderBy(desc(mindmap.updatedAt))
-        .limit(LIMITS.recentItemsLimit),
-    ],
-  );
+  const [allNotes, allFlashcards, allMindmaps] = await Promise.all([
+    getDb()
+      .select({
+        id: note.id,
+        title: note.title,
+        content: sql<string>`left(coalesce(${note.content}, ''), ${LIMITS.contentPreviewTruncate})`,
+        subjectId: note.subjectId,
+        subjectName: subject.name,
+      })
+      .from(note)
+      .innerJoin(subject, eq(note.subjectId, subject.id))
+      .where(and(eq(note.userId, userId), ...subjectFilters))
+      .orderBy(desc(note.updatedAt))
+      .limit(LIMITS.recentItemsLimit),
+    getDb()
+      .select({
+        id: flashcard.id,
+        front: flashcard.front,
+        back: sql<string>`left(${flashcard.back}, ${LIMITS.contentPreviewTruncate})`,
+        subjectId: flashcard.subjectId,
+        subjectName: subject.name,
+      })
+      .from(flashcard)
+      .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+      .where(eq(flashcard.userId, userId))
+      .orderBy(desc(flashcard.updatedAt))
+      .limit(LIMITS.recentItemsLimit),
+    getDb()
+      .select({
+        id: mindmap.id,
+        title: mindmap.title,
+        subjectId: mindmap.subjectId,
+        subjectName: subject.name,
+      })
+      .from(mindmap)
+      .innerJoin(subject, eq(mindmap.subjectId, subject.id))
+      .where(and(eq(mindmap.userId, userId), ...subjectFilters))
+      .orderBy(desc(mindmap.updatedAt))
+      .limit(LIMITS.recentItemsLimit),
+  ]);
 
   return {
-    subjects: allSubjects,
     notes: allNotes,
     flashcards: allFlashcards.map((flashcard) => ({
       ...flashcard,

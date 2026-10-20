@@ -1,6 +1,5 @@
 import {
   BookOpen,
-  CalendarDays,
   ChevronRight,
   Home,
   Layers,
@@ -19,7 +18,6 @@ import { cn } from "@/lib/utils";
  */
 export type BreadcrumbIcon =
   | "book-open"
-  | "calendar-days"
   | "home"
   | "layers"
   | "layers-3"
@@ -27,7 +25,6 @@ export type BreadcrumbIcon =
 
 const breadcrumbIconMap: Record<BreadcrumbIcon, LucideIcon> = {
   "book-open": BookOpen,
-  "calendar-days": CalendarDays,
   home: Home,
   layers: Layers,
   "layers-3": Layers3,

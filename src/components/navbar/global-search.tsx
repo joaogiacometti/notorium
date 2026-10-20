@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, FileText, Layers, Network } from "lucide-react";
+import { FileText, Layers, Network } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
@@ -118,15 +118,11 @@ export function GlobalSearch({
   const showingRecents = isAuthenticated && !canSearch;
   const currentData = canSearch ? data : recentQuery.data;
   const isResultsPending = canSearch ? isPending : recentQuery.isPending;
-  const subjects = currentData?.subjects ?? [];
   const notes = currentData?.notes ?? [];
   const flashcards = currentData?.flashcards ?? [];
   const mindmaps = currentData?.mindmaps ?? [];
   const hasData =
-    subjects.length > 0 ||
-    notes.length > 0 ||
-    flashcards.length > 0 ||
-    mindmaps.length > 0;
+    notes.length > 0 || flashcards.length > 0 || mindmaps.length > 0;
   const flashcardsView =
     pathname === "/flashcards"
       ? (searchParams.get("view") ?? undefined)
@@ -141,14 +137,14 @@ export function GlobalSearch({
       open={open}
       onOpenChange={handleOpenChange}
       title="Global Search"
-      description="Search across all your subjects, notes, flashcards, and mindmaps"
+      description="Search across all your notes, flashcards, and mindmaps"
       commandProps={{ shouldFilter: false }}
     >
       <CommandInput
         value={query}
         onValueChange={setQuery}
         maxLength={LIMITS.searchQueryMax}
-        placeholder="Search subjects, notes, flashcards, and mindmaps..."
+        placeholder="Search notes, flashcards, and mindmaps..."
       />
       <CommandList>
         {isResultsPending && <SearchSkeleton />}
@@ -156,31 +152,7 @@ export function GlobalSearch({
           <CommandEmpty>Sign in to search.</CommandEmpty>
         )}
         {!isResultsPending && isAuthenticated && !hasData && (
-          <CommandEmpty>
-            No subjects, notes, flashcards, or mindmaps yet.
-          </CommandEmpty>
-        )}
-
-        {subjects.length > 0 && (
-          <CommandGroup
-            heading={showingRecents ? `Recent Subjects` : "Subjects"}
-          >
-            {subjects.map((subj) => (
-              <CommandItem
-                key={subj.id}
-                value={subj.id}
-                onSelect={() => handleSelect(`/subjects/${subj.id}`)}
-                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-              >
-                <div className="flex w-full min-w-0 items-center gap-2">
-                  <BookOpen className="!size-4 text-muted-foreground" />
-                  <span className="block min-w-0 flex-1 truncate">
-                    {renderSearchHighlightedText(subj.name, highlightQuery)}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          <CommandEmpty>No notes, flashcards, or mindmaps yet.</CommandEmpty>
         )}
 
         {notes.length > 0 && (

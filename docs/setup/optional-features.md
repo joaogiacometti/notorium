@@ -44,42 +44,7 @@ Set both variables:
 
 If either variable is missing, email-dependent UI stays hidden or disabled.
 
-Email sending enables password reset and assessment reminders. Password reset is limited to approved users and at most 3 reset emails per approved user per UTC day.
-
-## Scheduled Assessment Reminders
-
-Scheduled reminders require email sending plus a cron trigger secret.
-
-Set app runtime variables:
-
-| Variable | Purpose |
-| --- | --- |
-| `RESEND_API_KEY` | Enables Resend email delivery |
-| `RESEND_FROM_EMAIL` | Sender used for reminder emails |
-| `CRON_SECRET` | Random secret of at least 32 characters |
-
-Generate a secret with:
-
-```bash
-openssl rand -hex 32
-```
-
-The reminder endpoint is:
-
-```text
-GET /api/notifications/assessments
-Authorization: Bearer <CRON_SECRET>
-```
-
-The repository includes `.github/workflows/assessment-reminders.yml` for a daily GitHub Actions trigger. Configure these repository secrets in your fork or deployment repository:
-
-| Secret | Purpose |
-| --- | --- |
-| `NOTORIUM_APP_URL` | Deployed app base URL |
-| `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
-| `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
-
-The workflow skips itself when either secret is missing.
+Email sending enables password reset. Password reset is limited to approved users and at most 3 reset emails per approved user per UTC day.
 
 ## FSRS Optimization Workflow
 

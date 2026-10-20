@@ -22,13 +22,6 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  DEFAULT_SUBJECT_KIND,
-  getSubjectKindDescription,
-  getSubjectKindLabel,
-  type SubjectKind,
-  subjectKindValues,
-} from "@/features/subjects/constants";
-import {
   type CreateSubjectForm,
   createSubjectSchema,
   type EditSubjectForm,
@@ -36,42 +29,8 @@ import {
 } from "@/features/subjects/validation";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { t } from "@/lib/server/server-action-errors";
-import { cn } from "@/lib/utils";
 
 type SubjectFormValues = CreateSubjectForm | EditSubjectForm;
-
-interface SubjectKindOptionProps {
-  kind: SubjectKind;
-  selected: boolean;
-  onSelect: (kind: SubjectKind) => void;
-}
-
-function SubjectKindOption({
-  kind,
-  selected,
-  onSelect,
-}: Readonly<SubjectKindOptionProps>) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={() => onSelect(kind)}
-      className={cn(
-        "flex flex-col gap-0.5 rounded-lg border p-3 text-left transition-colors",
-        selected
-          ? "border-primary bg-primary/5"
-          : "border-border hover:border-primary/50",
-      )}
-    >
-      <span className="text-sm font-medium text-foreground">
-        {getSubjectKindLabel(kind)}
-      </span>
-      <span className="text-xs text-muted-foreground">
-        {getSubjectKindDescription(kind)}
-      </span>
-    </button>
-  );
-}
 
 interface SubjectDialogFormProps {
   mode: "create" | "edit";
@@ -79,8 +38,6 @@ interface SubjectDialogFormProps {
   onOpenChange: (open: boolean) => void;
   trigger?: React.ReactNode;
   values: SubjectFormValues;
-  /** Hides the academic/general selector; used for subfolders (always general). */
-  hideKind?: boolean;
   /** Overrides the dialog heading, e.g. "Create Subfolder". */
   title?: string;
   onSubmitAction: (
@@ -107,7 +64,6 @@ export function SubjectDialogForm({
   onOpenChange,
   trigger,
   values,
-  hideKind = false,
   title,
   onSubmitAction,
   onSuccess,
@@ -131,9 +87,7 @@ export function SubjectDialogForm({
       const result = await onSubmitAction(data);
       if (result.success) {
         await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-        form.reset(
-          mode === "create" ? { name: "", kind: DEFAULT_SUBJECT_KIND } : data,
-        );
+        form.reset(mode === "create" ? { name: "" } : data);
         onOpenChange(false);
         onSuccess?.(data);
         return;
@@ -178,30 +132,6 @@ export function SubjectDialogForm({
                 </Field>
               )}
             />
-            {hideKind ? null : (
-              <Controller
-                name="kind"
-                control={form.control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor={`${formId}-kind`}>Type</FieldLabel>
-                    <div
-                      id={`${formId}-kind`}
-                      className="grid grid-cols-2 gap-2"
-                    >
-                      {subjectKindValues.map((kind) => (
-                        <SubjectKindOption
-                          key={kind}
-                          kind={kind}
-                          selected={field.value === kind}
-                          onSelect={field.onChange}
-                        />
-                      ))}
-                    </div>
-                  </Field>
-                )}
-              />
-            )}
             <Button
               type="submit"
               form={formId}

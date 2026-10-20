@@ -30,25 +30,12 @@ describe("revalidate-views", () => {
     expect(revalidationLog.calls).toEqual([["/", "layout"]]);
   });
 
-  it("refreshes planning and each affected subject for assessment writes", async () => {
-    const { revalidateAssessmentViews } = await import("./revalidate-views");
-
-    revalidateAssessmentViews(["math", "history"]);
-
-    expect(revalidationLog.calls).toEqual([
-      ["/planning", undefined],
-      ["/subjects/math", undefined],
-      ["/subjects/history", undefined],
-    ]);
-  });
-
-  it("refreshes a document page together with its subject page", async () => {
+  it("refreshes a document page", async () => {
     const { revalidateDocumentPage } = await import("./revalidate-views");
 
     revalidateDocumentPage("mindmaps", "math", "map-1");
 
     expect(revalidationLog.calls).toEqual([
-      ["/subjects/math", undefined],
       ["/subjects/math/documents/mindmaps/map-1", undefined],
     ]);
   });

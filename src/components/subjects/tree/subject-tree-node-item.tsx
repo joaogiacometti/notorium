@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ChevronDown,
-  ChevronRight,
-  Folder,
-  GraduationCap,
-  Loader2,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, Loader2 } from "lucide-react";
 import Link from "next/link";
 import type { DragEvent } from "react";
 import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
@@ -20,7 +14,6 @@ import type {
 } from "@/components/subjects/tree/subject-tree-types";
 import type { DraggedDocument } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
-import { isAcademicSubject } from "@/features/subjects/constants";
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
@@ -40,8 +33,6 @@ interface SubjectTreeNodeItemProps {
   onToggle: (subjectId: string) => void;
   onRetryDocuments: (subjectId: string) => void;
   onCreateChild: (parentSubjectId: string) => void;
-  onCreateAssessment: (subjectId: string) => void;
-  onRecordMiss: (subjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreateMindmap: (subjectId: string) => void;
   onCreateFlashcard: (subjectId: string) => void;
@@ -70,8 +61,6 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     onToggle,
     onRetryDocuments,
     onCreateChild,
-    onCreateAssessment,
-    onRecordMiss,
     onCreateNote,
     onCreateMindmap,
     onCreateFlashcard,
@@ -115,7 +104,6 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
         <SubjectNodeLabel
           node={node}
           isMoving={isMoving}
-          isSelected={isSelected}
           onDragStart={onDragStart}
           onDragTarget={onDragTarget}
           onDropTarget={onDropTarget}
@@ -125,8 +113,6 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
         <SubjectActionsMenu
           node={node}
           onCreateChild={onCreateChild}
-          onCreateAssessment={onCreateAssessment}
-          onRecordMiss={onRecordMiss}
           onCreateNote={onCreateNote}
           onCreateMindmap={onCreateMindmap}
           onCreateFlashcard={onCreateFlashcard}
@@ -165,7 +151,6 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
 interface SubjectNodeLabelProps {
   node: SubjectTreeNode;
   isMoving: boolean;
-  isSelected: boolean;
   onDragStart: (subjectId: string) => void;
   onDragTarget: (targetId: string) => void;
   onDropTarget: (targetId: string) => void;
@@ -173,33 +158,22 @@ interface SubjectNodeLabelProps {
 }
 
 /**
- * The subject label inside a tree row. Academic subjects link to their
- * attendance/assessments page; general subjects have no dedicated page (the
- * sidebar fully manages their contents), so their label is inert text and the
- * chevron is the only expand control.
+ * The subject label inside a tree row. Subjects have no page (the sidebar fully
+ * manages their contents), so the label is inert text and the chevron is the
+ * only expand control.
  */
 function SubjectNodeLabel({
   node,
   isMoving,
-  isSelected,
   onDragStart,
   onDragTarget,
   onDropTarget,
   onDragEnd,
 }: Readonly<SubjectNodeLabelProps>) {
-  const isAcademic = isAcademicSubject(node.kind);
-
-  // Academic subjects cannot be moved (see moveSubjectForUser), so they are
-  // drop targets only. `draggable={false}` also stops the browser's native
-  // link drag on their anchor.
   const dragProps = {
-    draggable: !isAcademic,
+    draggable: true,
     onDragStart: (event: DragEvent<HTMLElement>) => {
       event.stopPropagation();
-      if (isAcademic) {
-        event.preventDefault();
-        return;
-      }
       onDragStart(node.id);
     },
     onDragOver: (event: DragEvent<HTMLElement>) => {
@@ -211,61 +185,27 @@ function SubjectNodeLabel({
       onDropTarget(node.id);
     },
     onDragEnd,
-    className:
-      "flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm focus-visible:outline-none",
   };
 
-  // A leading icon makes the kind legible at a glance: a graduation cap marks
-  // academic subjects, which open their own dashboard page, while a folder
-  // marks general subjects, which are pure containers with nowhere to navigate.
-  const KindIcon = isAcademic ? GraduationCap : Folder;
-
-  const content = (
-    <>
+  return (
+    <span
+      {...dragProps}
+      className="flex min-w-0 flex-1 cursor-default items-center gap-2 py-1.5 text-left text-sm focus-visible:outline-none"
+    >
       {isMoving ? (
         <Loader2
           className="size-3.5 shrink-0 animate-spin text-muted-foreground"
           aria-hidden
         />
       ) : (
-        <KindIcon
+        <Folder
           className="size-3.5 shrink-0 text-muted-foreground"
           aria-hidden
         />
       )}
-      <span
-        className={cn(
-          "min-w-0 truncate font-medium",
-          // Reinforce the link affordance on hover for academic subjects only.
-          isAcademic && "group-hover:underline group-hover:underline-offset-2",
-        )}
-        title={node.path}
-      >
+      <span className="min-w-0 truncate font-medium" title={node.path}>
         {node.name}
       </span>
-    </>
-  );
-
-  // Academic subjects own a page (attendance/assessments), so their label is a
-  // navigable link. General subjects have no page — they are pure containers
-  // managed in this tree — so their label is inert text (expand via the
-  // chevron) and never shows the pointer cursor that would imply navigation.
-  if (isAcademic) {
-    return (
-      <Link
-        href={`/subjects/${node.id}`}
-        aria-current={isSelected ? "page" : undefined}
-        {...dragProps}
-        className={cn(dragProps.className, "cursor-pointer")}
-      >
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <span {...dragProps} className={cn(dragProps.className, "cursor-default")}>
-      {content}
     </span>
   );
 }

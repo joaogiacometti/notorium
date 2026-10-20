@@ -17,14 +17,7 @@ import {
   type UpdateFsrsOptimizationPreferencesForm,
   updateFsrsOptimizationPreferencesSchema,
 } from "@/features/flashcards/fsrs/validation";
-import {
-  type UpdateNotificationPreferencesForm,
-  updateNotificationPreferencesSchema,
-} from "@/features/notifications/validation";
-import {
-  updateNotificationPreferencesForUser,
-  updateUserAccessStatusForUser,
-} from "@/features/user/mutations";
+import { updateUserAccessStatusForUser } from "@/features/user/mutations";
 import { isAdminUser } from "@/lib/auth/access-control";
 import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import {
@@ -65,24 +58,6 @@ export async function updateAccount(
       }
 
       return { success: true };
-    },
-  );
-}
-
-export async function updateNotificationPreferences(
-  data: UpdateNotificationPreferencesForm,
-): Promise<MutationResult> {
-  return runValidatedUserAction(
-    "account.updateNotificationPreferences",
-    updateNotificationPreferencesSchema,
-    data,
-    "account.notifications.invalidData",
-    async (userId, parsedData) => {
-      try {
-        return await updateNotificationPreferencesForUser(userId, parsedData);
-      } catch {
-        return actionError("account.notifications.updateFailed");
-      }
     },
   );
 }

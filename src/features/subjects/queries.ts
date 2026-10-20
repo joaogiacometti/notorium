@@ -1,41 +1,11 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
-import type { SubjectKind } from "@/features/subjects/constants";
 import type {
   SubjectAncestor,
   SubjectEntity,
   SubjectOption,
 } from "@/lib/server/api-contracts";
-
-export async function getAcademicSubjectsForUser(
-  userId: string,
-): Promise<SubjectEntity[]> {
-  return getDb()
-    .select()
-    .from(subject)
-    .where(and(eq(subject.userId, userId), eq(subject.kind, "academic")))
-    .orderBy(desc(subject.updatedAt));
-}
-
-export async function getAcademicSubjectRecordForUser(
-  userId: string,
-  subjectId: string,
-): Promise<{ id: string } | null> {
-  const results = await getDb()
-    .select({ id: subject.id })
-    .from(subject)
-    .where(
-      and(
-        eq(subject.id, subjectId),
-        eq(subject.userId, userId),
-        eq(subject.kind, "academic"),
-      ),
-    )
-    .limit(1);
-
-  return results[0] ?? null;
-}
 
 export async function getSubjectByIdForUser(
   userId: string,
@@ -98,14 +68,12 @@ export async function getSubjectTreeRecordForUser(
   id: string;
   parentSubjectId: string | null;
   name: string;
-  kind: SubjectKind;
 } | null> {
   const results = await getDb()
     .select({
       id: subject.id,
       parentSubjectId: subject.parentSubjectId,
       name: subject.name,
-      kind: subject.kind,
     })
     .from(subject)
     .where(and(eq(subject.id, subjectId), eq(subject.userId, userId)))
@@ -151,16 +119,16 @@ export async function getSubjectAncestors(
   const rows = await getDb().execute(
     sql`
       WITH RECURSIVE ancestors AS (
-        SELECT s.id, s.name, s.kind, s.parent_subject_id, 0 AS depth
+        SELECT s.id, s.name, s.parent_subject_id, 0 AS depth
         FROM subject s
         WHERE s.id = ${subjectId} AND s.user_id = ${userId}
         UNION ALL
-        SELECT s.id, s.name, s.kind, s.parent_subject_id, a.depth + 1
+        SELECT s.id, s.name, s.parent_subject_id, a.depth + 1
         FROM subject s
         INNER JOIN ancestors a ON s.id = a.parent_subject_id
         WHERE s.user_id = ${userId}
       )
-      SELECT id, name, kind, depth FROM ancestors
+      SELECT id, name, depth FROM ancestors
       WHERE id != ${subjectId}
       ORDER BY depth DESC
     `,
@@ -171,7 +139,6 @@ export async function getSubjectAncestors(
       rows: Array<{
         id: string;
         name: string;
-        kind: SubjectEntity["kind"];
         depth: number;
       }>;
     }
@@ -179,7 +146,7 @@ export async function getSubjectAncestors(
 
   return ancestorRows
     .sort((left, right) => right.depth - left.depth)
-    .map(({ id, name, kind }) => ({ id, name, kind }));
+    .map(({ id, name }) => ({ id, name }));
 }
 
 export async function getSubjectPathForUser(

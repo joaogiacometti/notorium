@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
-import { useCreateGeneralSubjectPicker } from "@/components/shared/use-create-general-subject-picker";
+import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import {
   type FlashcardFormValues,
@@ -51,7 +51,7 @@ export function useCreateFlashcardForm({
     resolver: zodResolver(flashcardFormSchema),
     defaultValues: getCreateFlashcardFormValues(subjectId),
   });
-  const { subjects, handleCreateSubject } = useCreateGeneralSubjectPicker({
+  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     open,
     loadSubjectsOnOpen: true,
     onSubjectCreated: (createdSubjectId) =>

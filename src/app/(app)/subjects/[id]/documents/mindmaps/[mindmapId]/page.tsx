@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { MindmapDetail } from "@/components/mindmaps/mindmap-detail";
 import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
-import { getSubjectPageHref } from "@/features/subjects/constants";
 import { getSubjectByIdForUser } from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
@@ -36,7 +35,6 @@ export default async function MindmapPage({
         aiEnabled={isAiEnabled()}
         mindmap={mindmap}
         subjectName={subject?.name ?? ""}
-        subjectHref={subject ? getSubjectPageHref(subject) : null}
       />
     </main>
   );

@@ -35,8 +35,8 @@ interface SettingsSectionProps {
  * matching rows from every section read as one flat list.
  *
  * @example
- * <SettingsSection title="Notifications">
- *   <SettingsRow label="Email reminders" action={<Switch />} />
+ * <SettingsSection title="Appearance">
+ *   <SettingsRow label="Theme" action={<ThemeSelect />} />
  * </SettingsSection>
  */
 export function SettingsSection({

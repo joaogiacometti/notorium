@@ -101,10 +101,9 @@ async function insertPathSegments(
   return getDb().transaction(async (transaction) => {
     let nextParentSubjectId = parentSubjectId;
 
-    for (const [index, segment] of pathSegments.entries()) {
+    for (const segment of pathSegments) {
       nextParentSubjectId = await insertSubjectRow(transaction, userId, {
         name: segment,
-        kind: index === pathSegments.length - 1 ? data.kind : "general",
         parentSubjectId: nextParentSubjectId,
       });
     }
@@ -127,7 +126,7 @@ function getSelectedParent(data: CreateSubjectForm, subjects: SubjectOptions) {
 
 /**
  * Creates a multi-segment subject path atomically, relative to an optional
- * selected parent. Intermediate segments are general; the leaf keeps its kind.
+ * selected parent.
  *
  * @example await createSubjectPathForUser(userId, data, ["Math", "Calculus"]);
  */

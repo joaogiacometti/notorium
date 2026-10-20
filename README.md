@@ -1,16 +1,15 @@
 # Notorium
 
-Notorium is a private, self-hosted study workspace for students. It organizes everything around **subjects** — academic ones track attendance and assessments, while every subject holds documents (rich-text notes and mindmaps) and flashcards. Spaced-repetition review, optional AI assistance, and fast personal search tie it together.
+Notorium is a private, self-hosted learning workspace. It focuses on producing, reviewing, and asking about study material with AI, not on school management. Everything lives in **subjects**, folders that hold documents (rich-text notes and mindmaps) and flashcards. Spaced-repetition review, optional AI assistance, and fast personal search tie it together.
 
 It is built for a single trusted group: the first account becomes an admin, and everyone else needs approval before they can sign in.
 
 ## Features
 
-- **Subjects** — a nestable tree of academic or general subjects, navigated from a persistent sidebar with drag-and-drop reorganization.
+- **Subjects** — a nestable folder tree, navigated from a persistent sidebar with drag-and-drop reorganization.
 - **Notes** — rich-text notes with a compact formatting toolbar, tables, syntax-highlighted code, image uploads, and searchable LaTeX math (KaTeX), edited inline with autosave.
 - **Mindmaps** — branch-ordered React Flow canvases scoped to a subject, exportable as PNG.
 - **Flashcards** — front/back cards organized by subject, reviewed with an FSRS spaced-repetition scheduler. Focus Mode and Exam Mode tune the review session.
-- **Attendance & Assessments** — per-subject absence tracking and an assessment planner with a calendar/planning view and optional email reminders.
 - **AI assistance (optional)** — generate flashcards from notes or mindmaps, refine and de-duplicate flashcards.
 - **Search and command palette** — case-insensitive search across all content (`Cmd/Ctrl+K`) and an action palette (`Cmd/Ctrl+P`).
 
