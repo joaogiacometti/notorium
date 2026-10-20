@@ -31,4 +31,20 @@ describe("TiptapRenderer", () => {
     expect(container.textContent).toBe("Rich");
     act(() => root.unmount());
   });
+
+  it("does not add an empty paragraph after a closing list or code block", async () => {
+    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <TiptapRenderer content="<ul><li><p>Item</p></li></ul><pre><code>x</code></pre>" />,
+      );
+    });
+
+    const prose = container.querySelector(".ProseMirror");
+    expect(prose?.lastElementChild?.tagName).toBe("PRE");
+    act(() => root.unmount());
+  });
 });

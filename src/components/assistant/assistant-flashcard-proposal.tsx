@@ -19,7 +19,11 @@ import type {
   ProposedFlashcard,
 } from "@/features/assistant/tools";
 import type { AssistantFlashcardProposalPart } from "@/features/assistant/types";
-import { findProposedSubjectId } from "@/features/assistant/utils";
+import {
+  composeProposedFlashcardBack,
+  findProposedSubjectId,
+  formatFlashcardExample,
+} from "@/features/assistant/utils";
 import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
 import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
@@ -150,7 +154,6 @@ function PendingFlashcardProposal({
 
   return (
     <div className="space-y-3 rounded-lg border border-border/70 bg-background p-3 text-sm">
-      <FlashcardProposalPreview input={input} />
       <SubjectSelect
         value={subject.id}
         onChange={subject.choose}
@@ -160,6 +163,7 @@ function PendingFlashcardProposal({
         error={subject.loadFailed ? "Could not load subjects." : undefined}
         disabled={isCreating}
       />
+      <FlashcardProposalPreview input={input} />
       <div className="flex flex-wrap justify-end gap-2">
         <Button
           type="button"
@@ -230,6 +234,14 @@ function FlashcardProposalPreview({
           <AssistantRichReply text={input.back} />
         </dd>
       </div>
+      {input.example ? (
+        <div>
+          <dt className="text-xs font-medium text-muted-foreground">Example</dt>
+          <dd>
+            <AssistantRichReply text={formatFlashcardExample(input.example)} />
+          </dd>
+        </div>
+      ) : null}
     </dl>
   );
 }
@@ -295,6 +307,6 @@ function useProposedSubject(proposedPath: string | undefined) {
 function toRichFlashcard(input: ProposedFlashcard) {
   return {
     front: plainTextToRichText(input.front),
-    back: plainTextToRichText(input.back),
+    back: plainTextToRichText(composeProposedFlashcardBack(input)),
   };
 }

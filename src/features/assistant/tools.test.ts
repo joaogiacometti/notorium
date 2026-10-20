@@ -47,4 +47,28 @@ describe("flashcardProposalInputSchema", () => {
       flashcardProposalInputSchema.safeParse({ cards: [longBack] }).success,
     ).toBe(false);
   });
+
+  it("accepts a code example kept apart from the back", () => {
+    const example = { language: "prolog", code: "p(1).\n\n?- p(X)." };
+
+    const parsed = flashcardProposalInputSchema.parse({
+      cards: [{ ...atpCard, example }],
+    });
+
+    expect(parsed.cards[0]?.example).toEqual(example);
+  });
+
+  it("rejects a card whose back and example together exceed the back limit", () => {
+    const half = Math.ceil(LIMITS.flashcardBackMax / 2) + 1;
+    const card = {
+      front: "Long card",
+      back: "a".repeat(half),
+      example: { language: "text", code: "b".repeat(half) },
+    };
+
+    const result = flashcardProposalInputSchema.safeParse({ cards: [card] });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["cards", 0, "example"]);
+  });
 });

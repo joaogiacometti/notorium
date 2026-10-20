@@ -34,6 +34,9 @@ export function TiptapRenderer({
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         codeBlock: false,
+        // The trailing empty paragraph only gives editors a place to type
+        // after a list or code block; read-only, it renders as a blank gap.
+        trailingNode: false,
       }),
       CodeBlockLowlight.configure({
         defaultLanguage: "plaintext",

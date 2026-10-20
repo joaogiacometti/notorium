@@ -223,6 +223,18 @@ describe("AssistantFlashcardProposal", () => {
     ]);
   });
 
+  it("shows a code example apart and appends it to the created back", async () => {
+    const example = { language: "prolog", code: "p(1).\n\n?- p(X)." };
+    await renderPendingProposal("Biology", [{ ...atpCard, example }]);
+
+    expect(container.textContent).toContain("Example");
+    await click("Create");
+
+    expect(fakes.actions?.created[0]?.back).toBe(
+      '<p>Energy carrier.</p><pre><code class="language-prolog">p(1).\n\n?- p(X).</code></pre>',
+    );
+  });
+
   it("keeps Create disabled until a subject is known", async () => {
     await renderPendingProposal("Chemistry");
 

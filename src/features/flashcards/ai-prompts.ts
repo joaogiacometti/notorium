@@ -7,6 +7,23 @@ import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 const LANGUAGE_RULE =
   "Output language: English only. Regardless of the source material or card language, all generated text must be in English.";
 
+/**
+ * How a generated card is shaped: a terse cue on the front, one sentence or
+ * 1 to 3 bullets on the back. Shared by "Generate with AI" and the study
+ * assistant's `proposeFlashcards` tool so both produce the same cards.
+ *
+ * @example
+ * const prompt = `Rules:\n${FLASHCARD_CARD_SHAPE_RULES}`;
+ */
+export const FLASHCARD_CARD_SHAPE_RULES = `- Fronts must be short, direct questions that name what to recall, not bare topic names.
+- Use fronts like "What is a functional dependency?", "What does the program counter hold?", or "What is the difference between TCP and UDP?".
+- Ask one thing per front. Avoid compound questions ("What is X and how does it work?") and open-ended prompts such as "Explain..." or "Describe...".
+- Each card must test one atomic fact, definition, process step, contrast, or relationship.
+- Backs must be one atomic sentence or 1 to 3 bullet points.
+- In bullet mode, every line must start with "- ".
+- In bullet mode, each bullet must contain one precise, directly testable point.
+- Do not repeat, restate, or paraphrase the front in the back.`;
+
 export const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(LIMITS.flashcardAiBackMax),
 });
@@ -193,14 +210,7 @@ You are creating study flashcards from source material.
 Extract key concepts and create atomic retrieval-practice flashcard pairs.
 
 Rules:
-- Fronts must be concise retrieval cues, usually noun phrases, not full questions.
-- Use fronts like "Functional dependency", "CPU role", or "TCP vs UDP".
-- Avoid "What is...", "Explain...", or other verbose question wrappers unless needed for clarity.
-- Each card must test one atomic fact, definition, process step, contrast, or relationship.
-- Backs must be one atomic sentence or 1 to 3 bullet points.
-- In bullet mode, every line must start with "- ".
-- In bullet mode, each bullet must contain one precise, directly testable point.
-- Do not repeat, restate, or paraphrase the front in the back.
+${FLASHCARD_CARD_SHAPE_RULES}
 - Do not include extra context, examples, caveats, or details beyond the source material.
 - Avoid trivial or obvious information.
 - If the source material includes an explicit code example that explains the concept, preserve the smallest useful snippet in the back as a fenced code block instead of summarizing it away.
@@ -209,22 +219,22 @@ Rules:
 - ${MATH_RULE}
 
 Good patterns:
-Front: Functional dependency
+Front: What is a functional dependency?
 Back:
 - Relation where X determines Y
 - For every specific X, Y is fixed
 
-Front: Program counter
+Front: What does the program counter hold?
 Back:
 - Memory address of the next instruction to execute
 - Updated after each instruction cycle
 
-Front: DNS acronym
+Front: What does DNS stand for?
 Back:
 Domain Name System.
 
 Bad patterns:
-Front: What is a functional dependency?
+Front: Functional dependency
 Back:
 A relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
 
@@ -244,11 +254,11 @@ You are a flashcard quality validator. Analyze flashcards for three types of iss
 3. **Duplicate**: Two cards test exactly the same knowledge — both the question and the answer are effectively equivalent.
 
 FRONT STYLE AWARENESS
-Fronts are intentionally written as terse noun-phrase cues, not full sentences. This is correct style — do not flag it as confusing.
-- "Functional dependency" is correct. Do not require "What is a functional dependency?".
-- "DNS acronym" is correct. Do not flag as vague.
+Fronts are written either as short direct questions or, on older cards, as terse noun-phrase cues. Both are correct style — do not flag either as confusing.
+- "What is a functional dependency?" and "Functional dependency" are both correct.
+- "What does DNS stand for?" and "DNS acronym" are both correct. Do not flag as vague.
 - "Mitochondria role" is correct. Do not flag as incomplete.
-- "TCP vs UDP" is correct. Do not flag as ambiguous.
+- "What is the difference between TCP and UDP?" and "TCP vs UDP" are both correct. Do not flag as ambiguous.
 Only flag a front as confusing if the cue is so unclear that a student genuinely cannot know what to recall.
 
 BACK STYLE AWARENESS
@@ -293,9 +303,9 @@ card deepens mastery beyond isolated recall.
 - Use it when candidates are related-but-distinct concepts: two metrics that reference
   each other, definition vs. example, terms from the same taxonomy.
 - Example: primary "Story points" + candidate "Velocity" -> new card
-  Front: "Velocity in terms of story points"
+  Front: "How is velocity measured in story points?"
   Back: "- Total story points delivered per sprint"
-- The new card must still be atomic: one retrieval cue, one coherent recall target
+- The new card must still be atomic: one question, one coherent recall target
   about the RELATIONSHIP itself. Do not restate the originals' answers side by side.
 - Prefer the single strongest relationship over involving many candidates.
 
@@ -314,7 +324,7 @@ OUTPUT RULES
 - sourceFlashcardIds: the candidate IDs involved (excluding the primary card).
   Required non-empty for relate and merge; must be empty for decline.
 - front and back: the new or merged card. Omit both for decline.
-- The front must be one concise retrieval cue.
+- The front must be one short, direct question.
 - The back must be 1 to 5 lines; in list mode every line starts with "- ".
 - Each line must be one precise, directly testable point.
 - Do not invent facts not present in the input cards.

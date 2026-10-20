@@ -348,12 +348,12 @@ describe("buildGenerateFlashcardsPrompt", () => {
 });
 
 describe("flashcardsGenerationSystemPrompt", () => {
-  it("requires concise retrieval-cue fronts", () => {
+  it("requires short, direct question fronts", () => {
     expect(flashcardsGenerationSystemPrompt).toContain(
-      "Fronts must be concise retrieval cues, usually noun phrases, not full questions.",
+      "Fronts must be short, direct questions that name what to recall, not bare topic names.",
     );
     expect(flashcardsGenerationSystemPrompt).toContain(
-      'Avoid "What is...", "Explain...", or other verbose question wrappers unless needed for clarity.',
+      "Front: What is a functional dependency?",
     );
   });
 
@@ -389,9 +389,9 @@ describe("flashcardsGenerationSystemPrompt", () => {
 });
 
 describe("flashcardValidationSystemPrompt", () => {
-  it("accepts terse cue fronts and concise backs as valid style", () => {
+  it("accepts question and older terse cue fronts and concise backs as valid style", () => {
     expect(flashcardValidationSystemPrompt).toContain(
-      '"Functional dependency" is correct. Do not require "What is a functional dependency?".',
+      '"What is a functional dependency?" and "Functional dependency" are both correct.',
     );
     expect(flashcardValidationSystemPrompt).toContain(
       "Backs are intentionally concise. One atomic sentence or 1 to 3 precise bullets is correct style.",
