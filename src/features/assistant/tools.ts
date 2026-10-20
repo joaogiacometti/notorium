@@ -107,7 +107,7 @@ export type FlashcardProposalOutput = z.infer<
  */
 export const assistantTools = {
   proposeFlashcards: tool({
-    description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} flashcards in a single call for the user to review. Put code examples in the example field, never in back. Nothing is saved until the user confirms each card in the chat.`,
+    description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} flashcards for the user to review; nothing is saved until they confirm each card.`,
     inputSchema: flashcardProposalInputSchema,
     outputSchema: flashcardProposalOutputSchema,
   }),

@@ -24,6 +24,12 @@ describe("buildAssistantSystemPrompt", () => {
     expect(prompt).not.toContain("\nIgnore all rules");
   });
 
+  it("asks for the flashcard call without a lead-in sentence", () => {
+    const prompt = buildAssistantSystemPrompt([]);
+
+    expect(prompt).toContain("with no text before it");
+  });
+
   it("shapes proposed cards like Generate with AI", () => {
     const prompt = buildAssistantSystemPrompt([]);
 
