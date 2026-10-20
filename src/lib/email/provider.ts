@@ -20,10 +20,7 @@ async function sendFixtureEmail(
   options: SendEmailOptions,
   inboxPath = defaultFixtureInboxPath,
 ): Promise<SendEmailResult> {
-  // Test-only inbox: without the ignore, Turbopack traces the whole project
-  // into the server bundle because the path is dynamic.
-  const resolvedInboxPath = path.resolve(/* turbopackIgnore: true */ inboxPath);
-  await mkdir(path.dirname(resolvedInboxPath), { recursive: true });
+  await mkdir(path.dirname(inboxPath), { recursive: true });
 
   const id = `fixture-email-${randomUUID()}`;
   const payload = {
@@ -32,7 +29,7 @@ async function sendFixtureEmail(
     ...options,
   };
 
-  await appendFile(resolvedInboxPath, `${JSON.stringify(payload)}\n`, "utf8");
+  await appendFile(inboxPath, `${JSON.stringify(payload)}\n`, "utf8");
   return { success: true, id };
 }
 
