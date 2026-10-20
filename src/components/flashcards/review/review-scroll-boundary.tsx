@@ -15,7 +15,7 @@ interface ReviewScrollBoundaryProps {
 export function ReviewScrollBoundary({ children }: ReviewScrollBoundaryProps) {
   return (
     <Portal.Root asChild>
-      <RemoveScroll allowPinchZoom className="fixed inset-0 z-110">
+      <RemoveScroll allowPinchZoom className="fixed inset-0 z-overlay">
         {children}
       </RemoveScroll>
     </Portal.Root>

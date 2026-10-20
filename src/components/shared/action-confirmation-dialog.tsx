@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
 type ConfirmVariant = "default" | "destructive";
 
@@ -26,12 +25,10 @@ interface ActionConfirmationDialogProps {
   isPending: boolean;
   onConfirm: () => void;
   cancelLabel?: string;
-  className?: string;
   confirmDisabled?: boolean;
   confirmIcon?: ReactNode;
   confirmTestId?: string;
   cancelTestId?: string;
-  overlayClassName?: string;
   preventEscapeClose?: boolean;
   showCloseButton?: boolean;
 }
@@ -80,8 +77,6 @@ function ActionConfirmationContent({
   onOpenChange,
   title,
   description,
-  className,
-  overlayClassName,
   preventEscapeClose = false,
   showCloseButton = true,
   ...footerProps
@@ -93,8 +88,7 @@ function ActionConfirmationContent({
 >) {
   return (
     <DialogContent
-      className={cn("sm:max-w-md", className)}
-      overlayClassName={overlayClassName}
+      className="sm:max-w-md"
       showCloseButton={showCloseButton}
       onEscapeKeyDown={preventEscapeClose ? preventEscape : undefined}
     >

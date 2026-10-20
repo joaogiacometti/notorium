@@ -77,23 +77,51 @@ Two intentional tiers — do not blur them:
 - Status colors flow through `getStatusToneClasses(tone)` / `StatusToneBadge`
   (`src/lib/ui/status-tones.ts`), never bespoke per-status hex/utility maps.
 
-## Z-index ladder
+## Z-index layers
 
-Bare-number Tailwind v4 values (no `z-[n]` brackets). Layers, low → high:
+Stacking uses four named layers, defined once as `--z-index-*` theme tokens in
+`src/app/globals.css`. Use the named utility; numeric (`z-10`, `z-120`) and
+arbitrary (`z-[60]`, `z-(--x)`) z-index classes are rejected outside
+`src/components/ui/` by `src/app/z-index-layers.test.ts`.
 
-| Layer | `z-` |
-| --- | --- |
-| Sticky table/section headers | `10` |
-| Sticky page top bar | `30` |
-| Immersive fullscreen surface (note/mindmap zen) | `35` |
-| Dialogs | `50` |
-| Full-screen review surfaces | `110` |
-| Dialogs above review surfaces | `120` |
+| Utility | Value | Use for |
+| --- | --- | --- |
+| `z-raised` | 10 | In-flow content lifted over its siblings: sticky table headers, editor handles |
+| `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header |
+| `z-immersive` | 35 | Note/mindmap zen mode (`fixed inset-0`) |
+| `z-overlay` | 50 | Everything that floats or blocks the page: dialogs, sheets, menus, popovers, selects, tooltips, and full-screen review surfaces |
 
-Immersive fullscreen (note/mindmap zen mode) is a CSS overlay
-(`fixed inset-0 z-35`), **not** the browser Fullscreen API. It sits below the
-overlay band so menus, dialogs, and toasts stay layered above it
-without portal retargeting. Keep it below `50`.
+Toasts (Sonner) manage their own z-index above all layers.
+
+### The overlay rule: one layer, ordered by opening
+
+Overlay surfaces never compete on z-index. They all sit on `z-overlay` (the
+`z-50` that shadcn primitives hardcode), and Radix portals append each surface
+to the end of `<body>` when it opens, so **whichever opened last paints on
+top**. This is what lets the command palette (`Ctrl+P`), shortcuts help (`?`),
+create dialogs, and review edit/delete/reset dialogs all appear over a review
+session without per-dialog configuration.
+
+Rules that keep it working:
+
+- Never give a dialog, menu, or full-screen surface a higher z-index to "win".
+  If something renders behind an overlay, it is opening in the wrong order or
+  outside a portal; fix that instead. Do not add `className`/`overlayClassName`
+  props to dialogs just to change their layer.
+- Full-screen surfaces that sit above the app shell (review sessions) render
+  through a portal (`ReviewScrollBoundary`) on `z-overlay`, so they share the
+  dialog ordering.
+- A surface opened *from* a dialog closes that dialog first; the dialog would
+  otherwise sit underneath the newer surface.
+- Keep `z-immersive` below `z-overlay` so menus, dialogs, and toasts stay above
+  zen mode without portal retargeting. Zen mode is a CSS overlay, **not** the
+  browser Fullscreen API.
+- Third-party internals (for example React Flow's edge-label layer) may set a
+  raw `z-index` in `globals.css` scoped to that library's container; that
+  stacking stays local to the library's own stacking context.
+- A new layer needs a real new tier of UI, a token in `globals.css`, a row in
+  this table, and an entry in `src/app/z-index-layers.test.ts`. It is never the fix
+  for one component rendering behind another.
 
 Full-screen review surfaces use `ReviewScrollBoundary` for portal placement and
 background scroll isolation, including nested dialogs. Keep card scrolling inside

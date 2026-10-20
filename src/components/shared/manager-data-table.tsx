@@ -228,8 +228,8 @@ export function ManagerDataTable<TRow extends RowData>({
                         key={header.id}
                         className={cn(
                           header.column.id === "select"
-                            ? "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-2"
-                            : "sticky top-0 z-10 h-12 border-b border-border/60 bg-muted/30 px-3",
+                            ? "sticky top-0 z-raised h-12 border-b border-border/60 bg-muted/30 px-2"
+                            : "sticky top-0 z-raised h-12 border-b border-border/60 bg-muted/30 px-3",
                           header.column.id === "select"
                             ? selectionColumnClassName
                             : null,

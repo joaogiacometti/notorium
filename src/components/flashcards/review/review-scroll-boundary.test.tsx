@@ -52,6 +52,47 @@ describe("ReviewScrollBoundary", () => {
     expect(document.body.style.overflow).toBe("auto");
   });
 
+  // Regression: app-level dialogs (Ctrl+P palette, "?" help) opened behind the
+  // review surface. Overlays share one z-index layer and stack by DOM order, so
+  // a dialog opened mid-session must land after the session's portal.
+  it("places app-level dialogs opened mid-session after the session", async () => {
+    await renderSessionBesideAppDialog(false);
+    await renderSessionBesideAppDialog(true);
+
+    const session = getByText("Review content");
+    const appDialog = document.querySelector('[role="dialog"]');
+    expect(appDialog).not.toBeNull();
+    expect(
+      session.compareDocumentPosition(appDialog as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  async function renderSessionBesideAppDialog(appDialogOpen: boolean) {
+    await act(async () => {
+      root.render(
+        <>
+          <Dialog open={appDialogOpen}>
+            <DialogContent aria-describedby={undefined}>
+              <DialogTitle>Command palette</DialogTitle>
+            </DialogContent>
+          </Dialog>
+          <ReviewScrollBoundary>
+            <div>Review content</div>
+          </ReviewScrollBoundary>
+        </>,
+      );
+    });
+  }
+
+  function getByText(text: string): HTMLElement {
+    const match = Array.from(document.querySelectorAll("div")).find(
+      (element) => element.textContent === text,
+    );
+    if (!match) throw new Error(`No element with text "${text}"`);
+    return match;
+  }
+
   async function renderSession(dialogOpen: boolean): Promise<void> {
     await act(async () => {
       root.render(

@@ -14,8 +14,6 @@ interface ResetFlashcardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onReset?: (flashcard: FlashcardEntity) => void;
-  className?: string;
-  overlayClassName?: string;
 }
 
 export function ResetFlashcardDialog({
@@ -24,8 +22,6 @@ export function ResetFlashcardDialog({
   open,
   onOpenChange,
   onReset,
-  className,
-  overlayClassName,
 }: Readonly<ResetFlashcardDialogProps>) {
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
@@ -62,8 +58,6 @@ export function ResetFlashcardDialog({
       confirmVariant="default"
       isPending={isPending}
       onConfirm={handleReset}
-      className={className}
-      overlayClassName={overlayClassName}
     />
   );
 }

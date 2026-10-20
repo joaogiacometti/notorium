@@ -245,7 +245,7 @@ export function NoteDetail({
         className={cn(
           "lg:flex lg:flex-col lg:overflow-hidden",
           isZenMode
-            ? "fixed inset-0 z-35 flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
+            ? "fixed inset-0 z-immersive flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
             : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
         )}
       >

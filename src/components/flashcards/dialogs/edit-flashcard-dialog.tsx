@@ -23,7 +23,6 @@ import type {
   FlashcardEntity,
   SubjectOption,
 } from "@/lib/server/api-contracts";
-import { cn } from "@/lib/utils";
 
 interface EditFlashcardDialogProps {
   flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">;
@@ -31,8 +30,6 @@ interface EditFlashcardDialogProps {
   onOpenChange: (open: boolean) => void;
   aiEnabled: boolean;
   onUpdated?: (flashcard: FlashcardEntity) => void | Promise<void>;
-  className?: string;
-  overlayClassName?: string;
 }
 
 export function EditFlashcardDialog({
@@ -41,8 +38,6 @@ export function EditFlashcardDialog({
   onOpenChange,
   aiEnabled,
   onUpdated,
-  className,
-  overlayClassName,
 }: Readonly<EditFlashcardDialogProps>) {
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
 
@@ -88,13 +83,7 @@ export function EditFlashcardDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
-        <DialogContent
-          className={cn(
-            "flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl",
-            className,
-          )}
-          overlayClassName={overlayClassName}
-        >
+        <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Edit Flashcard</DialogTitle>
           </DialogHeader>
@@ -136,8 +125,6 @@ export function EditFlashcardDialog({
         open={dialog.discardDialogOpen}
         onOpenChange={dialog.setDiscardDialogOpen}
         onDiscard={dialog.handleDiscardChanges}
-        className={className}
-        overlayClassName={overlayClassName}
       />
     </>
   );

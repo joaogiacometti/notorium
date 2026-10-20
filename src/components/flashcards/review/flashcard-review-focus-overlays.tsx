@@ -71,8 +71,6 @@ export function FlashcardReviewFocusOverlays({
             onOpenChange={onEditOpenChange}
             aiEnabled={aiEnabled}
             onUpdated={onUpdated}
-            className="z-120"
-            overlayClassName="z-120"
           />
           <DeleteFlashcardDialog
             flashcardId={currentCard.id}
@@ -80,8 +78,6 @@ export function FlashcardReviewFocusOverlays({
             open={deleteOpen}
             onOpenChange={onDeleteOpenChange}
             onDeleted={onDeleted}
-            className="z-120"
-            overlayClassName="z-120"
           />
           <ResetFlashcardDialog
             flashcardId={currentCard.id}
@@ -89,8 +85,6 @@ export function FlashcardReviewFocusOverlays({
             open={resetOpen}
             onOpenChange={onResetOpenChange}
             onReset={onReset}
-            className="z-120"
-            overlayClassName="z-120"
           />
         </>
       ) : null}

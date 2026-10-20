@@ -30,8 +30,6 @@ export function ExamExitConfirmationDialog({
       confirmVariant="destructive"
       isPending={false}
       onConfirm={onConfirm}
-      className="z-120"
-      overlayClassName="z-120"
       preventEscapeClose
     />
   );

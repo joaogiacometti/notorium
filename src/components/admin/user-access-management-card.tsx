@@ -164,16 +164,16 @@ export function UserAccessManagementCard({
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="sticky top-0 z-10 bg-card sm:w-[38%]">
+                    <TableHead className="sticky top-0 z-raised bg-card sm:w-[38%]">
                       Name
                     </TableHead>
-                    <TableHead className="sticky top-0 z-10 hidden bg-card sm:table-cell sm:w-[38%]">
+                    <TableHead className="sticky top-0 z-raised hidden bg-card sm:table-cell sm:w-[38%]">
                       Email
                     </TableHead>
-                    <TableHead className="sticky top-0 z-10 bg-card sm:w-[16%]">
+                    <TableHead className="sticky top-0 z-raised bg-card sm:w-[16%]">
                       Status
                     </TableHead>
-                    <TableHead className="sticky top-0 z-10 bg-card text-right sm:w-[8%]">
+                    <TableHead className="sticky top-0 z-raised bg-card text-right sm:w-[8%]">
                       Actions
                     </TableHead>
                   </TableRow>

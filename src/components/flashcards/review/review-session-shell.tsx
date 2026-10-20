@@ -32,7 +32,7 @@ export function ReviewSessionShell({
   footer,
 }: Readonly<ReviewSessionShellProps>) {
   return (
-    <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
+    <div className="fixed inset-0 z-overlay flex flex-col overflow-hidden bg-background">
       <progress
         className="h-1.5 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
         value={Math.round(progress * 100)}

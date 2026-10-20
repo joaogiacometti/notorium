@@ -162,6 +162,7 @@ Only add optional files when they are needed.
 ## Styling
 
 - `docs/ui-conventions.md` is the design-system source of truth: pick the matching role (page frame, surface tier, typography, dashed-border role, z-index layer, transition) instead of inventing a one-off class string. Update it when a convention changes.
+- Stack with the named z-index layers only (`z-raised`, `z-chrome`, `z-immersive`, `z-overlay`); numeric/arbitrary `z-*` classes fail `src/app/z-index-layers.test.ts`. Every dialog, menu, and full-screen surface uses `z-overlay` and stacks by opening order. If something renders behind an overlay, fix the open order or portal; never raise its z-index or add `className`/`overlayClassName` props to change its layer. See "Z-index layers" in `docs/ui-conventions.md`.
 - Use `cn()` from `src/lib/utils.ts` for conditional classes.
 - Never use hardcoded Tailwind color classes.
 - All UI colors must use CSS variables so user themes work.

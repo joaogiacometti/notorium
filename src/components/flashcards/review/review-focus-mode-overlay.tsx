@@ -225,7 +225,7 @@ function FocusModeCardActions({
           <MoreVertical className="size-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="z-120">
+      <DropdownMenuContent align="end">
         {canUndoReview ? (
           <>
             <DropdownMenuItem onClick={onUndoReview} className="cursor-pointer">
@@ -338,7 +338,7 @@ function ReviewSessionEmptyState({
   onExit,
 }: Readonly<ReviewSessionEmptyStateProps>) {
   return (
-    <div className="fixed inset-0 z-110 flex flex-col overflow-hidden bg-background">
+    <div className="fixed inset-0 z-overlay flex flex-col overflow-hidden bg-background">
       {canUndoReview ? (
         <div className="absolute top-3 right-4">
           <FocusModeCardActions
