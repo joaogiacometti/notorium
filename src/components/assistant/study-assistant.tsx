@@ -2,7 +2,7 @@
 
 import { Sparkles, X } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AssistantPanelFrame } from "@/components/assistant/assistant-panel-frame";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ const AssistantPanel = dynamic(
 export function StudyAssistant() {
   const [open, setOpen] = useState(false);
   const [opened, setOpened] = useState(false);
+  const launcherRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => preloadWhenIdle(loadAssistantPanel), []);
 
@@ -38,14 +39,21 @@ export function StudyAssistant() {
     setOpen(!open);
   }
 
+  // Focus would otherwise stay on a button inside the now-hidden panel.
+  function minimize() {
+    setOpen(false);
+    launcherRef.current?.focus();
+  }
+
   return (
     <div className="fixed right-4 bottom-4 z-chrome flex flex-col items-end gap-3 print:hidden">
       {opened ? (
         <div id="study-assistant-panel" className={cn(!open && "hidden")}>
-          <AssistantPanel />
+          <AssistantPanel onMinimize={minimize} />
         </div>
       ) : null}
       <Button
+        ref={launcherRef}
         type="button"
         variant="outline"
         size="icon"

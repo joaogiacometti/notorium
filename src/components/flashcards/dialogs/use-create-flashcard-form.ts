@@ -12,14 +12,27 @@ import {
 } from "@/features/flashcards/validation";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
-/** Empty create-flashcard form values, optionally pre-selecting a subject. */
+/** Rich-text front and back that prefill a new card, such as an AI proposal. */
+export interface CreateFlashcardInitialCard {
+  front: string;
+  back: string;
+}
+
+/**
+ * Create-flashcard form values, optionally pre-selecting a subject and
+ * prefilling the card.
+ *
+ * @example
+ * getCreateFlashcardFormValues("subject-1", { front: "<p>Q</p>", back: "<p>A</p>" });
+ */
 export function getCreateFlashcardFormValues(
   subjectId?: string | null,
+  initialCard?: CreateFlashcardInitialCard,
 ): FlashcardFormValues {
   return {
     subjectId: subjectId ?? "",
-    front: "",
-    back: "",
+    front: initialCard?.front ?? "",
+    back: initialCard?.back ?? "",
   };
 }
 
@@ -29,6 +42,7 @@ interface UseCreateFlashcardFormOptions {
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
   subjectId?: string;
+  initialCard?: CreateFlashcardInitialCard;
 }
 
 /**
@@ -46,10 +60,11 @@ export function useCreateFlashcardForm({
   onOpenChange,
   onCreated,
   subjectId,
+  initialCard,
 }: Readonly<UseCreateFlashcardFormOptions>) {
   const form = useForm<FlashcardFormValues>({
     resolver: zodResolver(flashcardFormSchema),
-    defaultValues: getCreateFlashcardFormValues(subjectId),
+    defaultValues: getCreateFlashcardFormValues(subjectId, initialCard),
   });
   const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     open,
@@ -66,7 +81,7 @@ export function useCreateFlashcardForm({
     open,
     aiEnabled,
     onOpenChange,
-    values: getCreateFlashcardFormValues(subjectId),
+    values: getCreateFlashcardFormValues(subjectId, initialCard),
     form,
     onSubmitAction: (values) => createFlashcard(values),
     onSuccess: (flashcard) => {

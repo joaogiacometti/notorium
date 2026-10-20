@@ -2,22 +2,29 @@
 
 import type { ChatStatus } from "ai";
 import { useEffect, useRef } from "react";
+import { AssistantFlashcardProposal } from "@/components/assistant/assistant-flashcard-proposal";
 import {
   AssistantPlainReply,
   AssistantRichReply,
   preloadAssistantRichReply,
 } from "@/components/assistant/assistant-rich-reply";
-import type { AssistantUIMessage } from "@/features/assistant/types";
+import type { FlashcardProposalControls } from "@/components/assistant/use-flashcard-proposal-outcomes";
+import type {
+  AssistantFlashcardProposalPart,
+  AssistantUIMessage,
+} from "@/features/assistant/types";
 import { cn } from "@/lib/utils";
 
 interface AssistantMessageListProps {
   messages: AssistantUIMessage[];
   status: ChatStatus;
+  proposals: FlashcardProposalControls;
 }
 
 export function AssistantMessageList({
   messages,
   status,
+  proposals,
 }: Readonly<AssistantMessageListProps>) {
   const endRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages.at(-1);
@@ -27,7 +34,8 @@ export function AssistantMessageList({
     status === "submitted" ||
     (status === "streaming" &&
       lastMessage?.role === "assistant" &&
-      readMessageText(lastMessage) === "");
+      !hasVisibleContent(lastMessage));
+  const busy = status === "submitted" || status === "streaming";
 
   // Runs after every render: each streamed chunk re-renders the list, and the
   // view should follow the reply as it grows.
@@ -51,12 +59,23 @@ export function AssistantMessageList({
       className="flex-1 space-y-3 overflow-y-auto px-4 py-3"
       aria-live="polite"
     >
-      {messages.filter(hasText).map((message) => (
-        <AssistantMessageBubble
-          key={message.id}
-          message={message}
-          streaming={status === "streaming" && message === lastMessage}
-        />
+      {messages.filter(hasVisibleContent).map((message) => (
+        <div key={message.id} className="space-y-2">
+          {readMessageText(message) === "" ? null : (
+            <AssistantMessageBubble
+              message={message}
+              streaming={status === "streaming" && message === lastMessage}
+            />
+          )}
+          {readFlashcardProposals(message).map((proposal) => (
+            <AssistantFlashcardProposal
+              key={proposal.toolCallId}
+              proposal={proposal}
+              disabled={busy}
+              controls={proposals}
+            />
+          ))}
+        </div>
       ))}
       {awaitingFirstToken ? (
         <p className="text-xs text-muted-foreground">Thinking…</p>
@@ -94,8 +113,20 @@ function AssistantMessageBubble({
 }
 
 // Replies stopped before their first token have nothing to show.
-function hasText(message: AssistantUIMessage): boolean {
-  return readMessageText(message) !== "";
+function hasVisibleContent(message: AssistantUIMessage): boolean {
+  return (
+    readMessageText(message) !== "" ||
+    readFlashcardProposals(message).length > 0
+  );
+}
+
+function readFlashcardProposals(
+  message: AssistantUIMessage,
+): AssistantFlashcardProposalPart[] {
+  return message.parts.filter(
+    (part): part is AssistantFlashcardProposalPart =>
+      part.type === "tool-proposeFlashcards",
+  );
 }
 
 function readMessageText(message: AssistantUIMessage): string {

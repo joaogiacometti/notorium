@@ -1,6 +1,10 @@
+import { tool } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import {
   createFakeStreamingModel,
+  createFakeToolCallModel,
+  readStreamedChunks,
   readStreamedText,
 } from "@/test/fake-streaming-model";
 
@@ -71,5 +75,39 @@ describe("streamChatResponse", () => {
       "assistant",
       "user",
     ]);
+  });
+
+  it("streams a call of a client-answered tool without executing it", async () => {
+    const model = createFakeToolCallModel("proposeCard", { front: "ATP?" });
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const { streamChatResponse } = await import("@/lib/ai/stream-chat");
+
+    const response = await streamChatResponse({
+      settings,
+      logScope: "test.chat",
+      instructions: "Be a tutor.",
+      messages: [
+        { id: "m1", role: "user", parts: [{ type: "text", text: "Card" }] },
+      ],
+      maxOutputTokens: 100,
+      tools: {
+        proposeCard: tool({ inputSchema: z.object({ front: z.string() }) }),
+      },
+    });
+    const chunks = readStreamedChunks(await response.text());
+
+    expect(model.doStreamCalls[0]?.tools?.map((t) => t.name)).toEqual([
+      "proposeCard",
+    ]);
+    expect(chunks).toContainEqual(
+      expect.objectContaining({
+        type: "tool-input-available",
+        toolName: "proposeCard",
+        input: { front: "ATP?" },
+      }),
+    );
+    expect(chunks.some((chunk) => chunk.type === "tool-output-available")).toBe(
+      false,
+    );
   });
 });

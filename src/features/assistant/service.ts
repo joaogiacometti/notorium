@@ -1,7 +1,9 @@
 import "server-only";
 
-import { assistantSystemPrompt } from "@/features/assistant/prompts";
+import { buildAssistantSystemPrompt } from "@/features/assistant/prompts";
+import { assistantTools } from "@/features/assistant/tools";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
+import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { streamChatResponse } from "@/lib/ai/stream-chat";
 import { acquireUserAiSettings } from "@/lib/ai/user-ai-access";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
@@ -10,6 +12,8 @@ interface StreamAssistantReplyForUserInput {
   userId: string;
   messages: AssistantChatRequest["messages"];
   abortSignal?: AbortSignal;
+  /** Injected by tests; defaults to the user's subject paths from the DB. */
+  loadSubjectPaths?: (userId: string) => Promise<string[]>;
 }
 
 type StreamAssistantReplyForUserResult =
@@ -21,7 +25,8 @@ type StreamAssistantReplyForUserResult =
 
 /**
  * Stream one study-assistant reply for a user's chat, spending one unit of the
- * user's daily assistant limit. Provider failures throw before the stream
+ * user's daily assistant limit. The reply may propose flashcards in the user's
+ * subjects; it reads subjects but writes nothing. Provider failures throw before the stream
  * starts; the route maps them to `assistant.unavailable`.
  *
  * @example
@@ -32,6 +37,7 @@ export async function streamAssistantReplyForUser({
   userId,
   messages,
   abortSignal,
+  loadSubjectPaths = readSubjectPathsForUser,
 }: StreamAssistantReplyForUserInput): Promise<StreamAssistantReplyForUserResult> {
   const access = await acquireUserAiSettings(userId, {
     prefix: LIMITS.aiAssistantRateLimitPrefix,
@@ -52,11 +58,17 @@ export async function streamAssistantReplyForUser({
   const response = await streamChatResponse({
     settings: access.settings,
     logScope: "assistant.chat",
-    instructions: assistantSystemPrompt,
+    instructions: buildAssistantSystemPrompt(await loadSubjectPaths(userId)),
     messages,
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
+    tools: assistantTools,
     abortSignal,
   });
 
   return { success: true, response };
+}
+
+async function readSubjectPathsForUser(userId: string): Promise<string[]> {
+  const subjects = await getAllSubjectsWithPathsForUser(userId);
+  return subjects.map((subject) => subject.path);
 }

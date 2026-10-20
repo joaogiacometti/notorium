@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  flashcardProposalInputSchema,
+  flashcardProposalOutputSchema,
+} from "@/features/assistant/tools";
 import { LIMITS } from "@/lib/config/limits";
 
 const userTextPartSchema = z.object({
@@ -15,6 +19,49 @@ const replyTextPartSchema = z.object({
 // content, so it is accepted and dropped before the history reaches the model.
 const stepStartPartSchema = z.object({ type: z.literal("step-start") });
 
+// A proposal the user handled (created, dismissed, or skipped cards) goes back
+// to the model with its outcomes, so later turns know what happened to it.
+const answeredProposalPartSchema = z
+  .object({
+    type: z.literal("tool-proposeFlashcards"),
+    toolCallId: z.string().min(1).max(100),
+    state: z.literal("output-available"),
+    input: flashcardProposalInputSchema,
+    output: flashcardProposalOutputSchema,
+  })
+  .refine((part) => part.output.outcomes.length === part.input.cards.length, {
+    message: "A proposal needs one outcome per proposed card",
+  });
+
+// A proposal still waiting for the user, cut off mid-stream, or rejected by
+// the SDK for invalid model input (`output-error`) has no usable output; a
+// tool call without a result is rejected by providers, so it is accepted and
+// dropped like `step-start` instead of failing every later request.
+const unansweredProposalPartSchema = z.object({
+  type: z.literal("tool-proposeFlashcards"),
+  state: z.enum(["input-streaming", "input-available", "output-error"]),
+});
+
+const replyPartSchema = z.union([
+  replyTextPartSchema,
+  stepStartPartSchema,
+  answeredProposalPartSchema,
+  unansweredProposalPartSchema,
+]);
+
+type ReplyPart = z.infer<typeof replyPartSchema>;
+
+function isModelVisiblePart(
+  part: ReplyPart,
+): part is
+  | z.infer<typeof replyTextPartSchema>
+  | z.infer<typeof answeredProposalPartSchema> {
+  return (
+    part.type === "text" ||
+    ("state" in part && part.state === "output-available")
+  );
+}
+
 const userMessageSchema = z.object({
   id: z.string().min(1).max(100),
   role: z.literal("user"),
@@ -24,18 +71,20 @@ const userMessageSchema = z.object({
 const replyMessageSchema = z.object({
   id: z.string().min(1).max(100),
   role: z.literal("assistant"),
+  // Room for text, step markers, and a few flashcard proposals.
   parts: z
-    .array(z.union([replyTextPartSchema, stepStartPartSchema]))
-    .max(10)
-    .transform((parts) => parts.filter((part) => part.type === "text")),
+    .array(replyPartSchema)
+    .max(16)
+    .transform((parts) => parts.filter(isModelVisiblePart)),
 });
 
 type ChatMessage =
   | z.infer<typeof userMessageSchema>
   | z.infer<typeof replyMessageSchema>;
 
-// A reply stopped before its first token keeps no text; an empty assistant
-// turn is rejected by some providers, so it is dropped instead.
+// A reply stopped before its first token keeps no text, and one holding only
+// pending proposals keeps nothing; an empty assistant turn is rejected by some
+// providers, so it is dropped instead.
 function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
   return messages.filter(
     (message) => message.role === "user" || message.parts.length > 0,
@@ -44,8 +93,9 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
 
 /**
  * Request body of `POST /api/assistant/chat`: the whole non-persistent chat,
- * oldest first, ending with the user's new message. Only user and assistant
- * text is accepted, so a client cannot inject system messages or other parts.
+ * oldest first, ending with the user's new message. Only user text, assistant
+ * text, and answered flashcard proposals are accepted, so a client cannot
+ * inject system messages or other parts.
  *
  * @example
  * assistantChatRequestSchema.safeParse({

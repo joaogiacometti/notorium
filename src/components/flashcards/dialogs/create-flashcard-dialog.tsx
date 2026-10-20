@@ -1,7 +1,10 @@
 "use client";
 
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
-import { useCreateFlashcardForm } from "@/components/flashcards/dialogs/use-create-flashcard-form";
+import {
+  type CreateFlashcardInitialCard,
+  useCreateFlashcardForm,
+} from "@/components/flashcards/dialogs/use-create-flashcard-form";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import {
   Dialog,
@@ -19,6 +22,8 @@ interface CreateFlashcardDialogProps {
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
   aiEnabled: boolean;
+  /** Prefills front and back each time the dialog opens. */
+  initialCard?: CreateFlashcardInitialCard;
 }
 
 export function CreateFlashcardDialog({
@@ -28,6 +33,7 @@ export function CreateFlashcardDialog({
   onOpenChange,
   onCreated,
   aiEnabled,
+  initialCard,
 }: Readonly<CreateFlashcardDialogProps>) {
   const { subjects, form, dialog, handleCreateSubject } =
     useCreateFlashcardForm({
@@ -36,6 +42,7 @@ export function CreateFlashcardDialog({
       onOpenChange,
       onCreated,
       subjectId,
+      initialCard,
     });
 
   return (

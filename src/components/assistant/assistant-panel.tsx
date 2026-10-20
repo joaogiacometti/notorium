@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import type { ChatTransport } from "ai";
-import { RotateCcw, SquarePen } from "lucide-react";
+import { Minus, RotateCcw, SquarePen } from "lucide-react";
 import {
   createAssistantChatTransport,
   readAssistantErrorMessage,
@@ -10,6 +10,7 @@ import {
 import { AssistantComposer } from "@/components/assistant/assistant-composer";
 import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
 import { AssistantPanelFrame } from "@/components/assistant/assistant-panel-frame";
+import { useFlashcardProposalOutcomes } from "@/components/assistant/use-flashcard-proposal-outcomes";
 import { Button } from "@/components/ui/button";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 
@@ -19,44 +20,78 @@ const defaultAssistantTransport = createAssistantChatTransport();
 interface AssistantPanelProps {
   /** Injected by tests; defaults to the `/api/assistant/chat` transport. */
   transport?: ChatTransport<AssistantUIMessage>;
+  /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
+  onMinimize: () => void;
 }
 
 /**
  * Chat panel of the study assistant. Holds the in-memory conversation; it is
- * never saved, and "New chat" clears it. The floating launcher opens and
- * closes it.
+ * never saved, and "New chat" clears it. Minimize (or the floating launcher)
+ * hides the panel without clearing it. Flashcard outcomes are recorded on
+ * their tool call without sending a turn, so they reach the model with the
+ * user's next message instead of spending an assistant reply.
  *
  * @example
- * <AssistantPanel />
+ * <AssistantPanel onMinimize={() => setOpen(false)} />
  */
 export function AssistantPanel({
   transport = defaultAssistantTransport,
+  onMinimize,
 }: Readonly<AssistantPanelProps>) {
   const chat = useChat<AssistantUIMessage>({ transport });
   const busy = chat.status === "submitted" || chat.status === "streaming";
+  const proposals = useFlashcardProposalOutcomes(chat);
 
   function startNewChat() {
     chat.stop();
     chat.clearError();
     chat.setMessages([]);
+    proposals.reset();
+  }
+
+  // Open cards are settled first so the model hears they were skipped.
+  async function sendText(text: string) {
+    await proposals.skipOpenCards();
+    await chat.sendMessage({ text });
+  }
+
+  async function retryLastMessage() {
+    await proposals.skipOpenCards();
+    await chat.regenerate();
   }
 
   return (
     <AssistantPanelFrame
       actions={
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={startNewChat}
-          disabled={chat.messages.length === 0}
-          aria-label="New chat"
-        >
-          <SquarePen className="size-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onMinimize}
+            aria-label="Minimize study assistant"
+            aria-controls="study-assistant-panel"
+          >
+            <Minus className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={startNewChat}
+            disabled={chat.messages.length === 0}
+            aria-label="New chat"
+          >
+            <SquarePen className="size-4" />
+          </Button>
+        </div>
       }
     >
-      <AssistantMessageList messages={chat.messages} status={chat.status} />
+      <AssistantMessageList
+        messages={chat.messages}
+        status={chat.status}
+        proposals={proposals}
+      />
       {chat.error ? (
         <div
           role="alert"
@@ -67,7 +102,7 @@ export function AssistantPanel({
             type="button"
             variant="outline"
             size="xs"
-            onClick={() => void chat.regenerate()}
+            onClick={() => void retryLastMessage()}
           >
             <RotateCcw />
             Retry
@@ -76,7 +111,7 @@ export function AssistantPanel({
       ) : null}
       <AssistantComposer
         busy={busy}
-        onSend={(text) => void chat.sendMessage({ text })}
+        onSend={(text) => void sendText(text)}
         onStop={() => void chat.stop()}
       />
     </AssistantPanelFrame>

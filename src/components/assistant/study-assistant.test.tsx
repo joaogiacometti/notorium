@@ -1,10 +1,13 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ChatTransport, UIMessageChunk } from "ai";
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { StudyAssistant } from "@/components/assistant/study-assistant";
+import type { ProposedFlashcard } from "@/features/assistant/tools";
 import type { AssistantUIMessage } from "@/features/assistant/types";
+import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
 
 // Stands in for the Tiptap editor, which needs a real layout engine. While
 // `ready` is false it behaves like an editor that has not been created yet.
@@ -33,17 +36,26 @@ type SendMessagesOptions = Parameters<
   ChatTransport<AssistantUIMessage>["sendMessages"]
 >[0];
 
+type FakeReply =
+  | { text: string }
+  | { errorBody: unknown }
+  | { proposal: ProposedFlashcard[] };
+
 /**
  * In-memory chat backend: answers each request with the next queued reply,
- * or rejects with the queued route error body.
+ * a flashcard proposal, or rejects with the queued route error body.
  */
 class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
   readonly requests: SendMessagesOptions[] = [];
-  private readonly replies: Array<{ text: string } | { errorBody: unknown }> =
-    [];
+  private readonly replies: FakeReply[] = [];
 
   replyWith(text: string): this {
     this.replies.push({ text });
+    return this;
+  }
+
+  proposeWith(proposal: ProposedFlashcard[]): this {
+    this.replies.push({ proposal });
     return this;
   }
 
@@ -60,7 +72,10 @@ class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
     if ("errorBody" in reply) {
       throw new Error(JSON.stringify(reply.errorBody));
     }
-    return streamOfText(reply.text);
+    if ("proposal" in reply) {
+      return streamOfChunks(proposalChunks(reply.proposal));
+    }
+    return streamOfChunks(textChunks(reply.text));
   }
 
   async reconnectToStream(): Promise<ReadableStream<UIMessageChunk> | null> {
@@ -68,14 +83,32 @@ class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
   }
 }
 
-function streamOfText(text: string): ReadableStream<UIMessageChunk> {
-  const chunks: UIMessageChunk[] = [
+function textChunks(text: string): UIMessageChunk[] {
+  return [
     { type: "start" },
     { type: "text-start", id: "t1" },
     { type: "text-delta", id: "t1", delta: text },
     { type: "text-end", id: "t1" },
     { type: "finish" },
   ];
+}
+
+function proposalChunks(proposal: ProposedFlashcard[]): UIMessageChunk[] {
+  return [
+    { type: "start" },
+    {
+      type: "tool-input-available",
+      toolCallId: "call-1",
+      toolName: "proposeFlashcards",
+      input: { cards: proposal },
+    },
+    { type: "finish" },
+  ];
+}
+
+function streamOfChunks(
+  chunks: UIMessageChunk[],
+): ReadableStream<UIMessageChunk> {
   return new ReadableStream({
     start(controller) {
       for (const chunk of chunks) controller.enqueue(chunk);
@@ -99,11 +132,16 @@ describe("study assistant", () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    vi.unstubAllGlobals();
   });
 
   async function renderPanel(transport: FakeAssistantChatTransport) {
     await act(async () => {
-      root.render(<AssistantPanel transport={transport} />);
+      root.render(
+        <QueryClientProvider client={new QueryClient()}>
+          <AssistantPanel transport={transport} onMinimize={() => {}} />
+        </QueryClientProvider>,
+      );
     });
   }
 
@@ -165,6 +203,56 @@ describe("study assistant", () => {
     expect(container.textContent).not.toContain("Thinking…");
   });
 
+  it("shows a proposed flashcard and sends its outcome with the next turn", async () => {
+    new FakeReadApiFetch()
+      .install()
+      .replyJson(200, [{ id: "bio", name: "Biology", path: "Biology" }]);
+    const transport = new FakeAssistantChatTransport()
+      .proposeWith([{ front: "What is ATP?", back: "Energy carrier." }])
+      .replyWith("Done.");
+    await renderPanel(transport);
+
+    await sendMessage("Make a card about ATP");
+    expect(container.textContent).toContain("Energy carrier.");
+    await act(async () => {
+      [...container.querySelectorAll("button")]
+        .find((button) => button.textContent?.includes("Discard"))
+        ?.click();
+    });
+    await sendMessage("Thanks");
+
+    expect(container.textContent).toContain("Discarded:What is ATP?");
+    expect(transport.requests[1]?.messages[1]?.parts).toContainEqual(
+      expect.objectContaining({
+        type: "tool-proposeFlashcards",
+        state: "output-available",
+        output: { outcomes: ["dismissed"] },
+      }),
+    );
+  });
+
+  it("tells the assistant about cards left open when the next message is sent", async () => {
+    new FakeReadApiFetch()
+      .install()
+      .replyJson(200, [{ id: "bio", name: "Biology", path: "Biology" }]);
+    const transport = new FakeAssistantChatTransport()
+      .proposeWith([{ front: "What is ATP?", back: "Energy carrier." }])
+      .replyWith("Sure.");
+    await renderPanel(transport);
+
+    await sendMessage("Make a card about ATP");
+    await sendMessage("Use a formula instead");
+
+    expect(container.textContent).toContain("Skipped:What is ATP?");
+    expect(transport.requests[1]?.messages[1]?.parts).toContainEqual(
+      expect.objectContaining({
+        type: "tool-proposeFlashcards",
+        state: "output-available",
+        output: { outcomes: ["skipped"] },
+      }),
+    );
+  });
+
   it("clears the conversation on New chat", async () => {
     await renderPanel(new FakeAssistantChatTransport().replyWith("Hello."));
     await sendMessage("Hi");
@@ -196,6 +284,54 @@ describe("study assistant", () => {
     expect(transport.requests).toHaveLength(2);
     expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(container.textContent).toContain("Back again.");
+  });
+
+  async function openStudyAssistant() {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={new QueryClient()}>
+          <StudyAssistant />
+        </QueryClientProvider>,
+      );
+    });
+    act(() => {
+      getByLabel<HTMLButtonElement>("Open study assistant").click();
+    });
+    await vi.waitFor(() => {
+      expect(container.querySelector('[aria-label="New chat"]')).not.toBeNull();
+    });
+  }
+
+  it("minimizes from the panel header and returns focus to the launcher", async () => {
+    await openStudyAssistant();
+
+    await act(async () => {
+      getByLabel<HTMLButtonElement>("Minimize study assistant").click();
+    });
+
+    const panel = container.querySelector("#study-assistant-panel");
+    const launcher = getByLabel<HTMLButtonElement>("Open study assistant");
+    expect(panel?.classList.contains("hidden")).toBe(true);
+    expect(document.activeElement).toBe(launcher);
+  });
+
+  it("keeps the conversation after minimizing and reopening", async () => {
+    await openStudyAssistant();
+    // The launcher mounts the real transport; a failing route still leaves the
+    // sent message in the chat, which is all this test needs.
+    vi.stubGlobal("fetch", async () => new Response("", { status: 500 }));
+    await sendMessage("What is ATP?");
+
+    await act(async () => {
+      getByLabel<HTMLButtonElement>("Minimize study assistant").click();
+    });
+    await act(async () => {
+      getByLabel<HTMLButtonElement>("Open study assistant").click();
+    });
+
+    const panel = container.querySelector("#study-assistant-panel");
+    expect(panel?.classList.contains("hidden")).toBe(false);
+    expect(panel?.textContent).toContain("What is ATP?");
   });
 
   it("opens the panel from the floating button and keeps it when closed", async () => {

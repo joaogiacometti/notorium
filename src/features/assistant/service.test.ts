@@ -6,6 +6,18 @@ import {
   readStreamedText,
 } from "@/test/fake-streaming-model";
 
+/** Subject store standing in for the DB; records whose subjects were read. */
+class FakeSubjectPathStore {
+  readonly requestedUserIds: string[] = [];
+
+  constructor(private readonly paths: string[]) {}
+
+  load = async (userId: string): Promise<string[]> => {
+    this.requestedUserIds.push(userId);
+    return this.paths;
+  };
+}
+
 const resolveRequiredAiSettingsMock = vi.fn();
 const getAiModelOrThrowMock = vi.fn();
 const limiter = vi.hoisted(() => ({
@@ -55,6 +67,7 @@ describe("streamAssistantReplyForUser", () => {
     const result = await streamAssistantReplyForUser({
       userId: "user-1",
       messages,
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
     });
 
     expect(result.success).toBe(true);
@@ -108,5 +121,28 @@ describe("streamAssistantReplyForUser", () => {
       errorCode: "limits.aiAssistantPerDay",
     });
     expect(getAiModelOrThrowMock).not.toHaveBeenCalled();
+  });
+
+  it("offers the flashcard tool and the user's subject paths", async () => {
+    const model = createFakeStreamingModel("Here is a card.");
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const subjects = new FakeSubjectPathStore(["Biology::Cells"]);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+      loadSubjectPaths: subjects.load,
+    });
+    if (result.success) await result.response.text();
+
+    const call = model.doStreamCalls[0];
+    expect(subjects.requestedUserIds).toEqual(["user-1"]);
+    expect(call?.tools?.map((tool) => tool.name)).toEqual([
+      "proposeFlashcards",
+    ]);
+    expect(JSON.stringify(call?.prompt[0])).toContain("Biology::Cells");
   });
 });

@@ -108,4 +108,114 @@ describe("assistantChatRequestSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  describe("flashcard proposals", () => {
+    function proposalPart(state: string, extra: Record<string, unknown> = {}) {
+      return {
+        type: "tool-proposeFlashcards",
+        toolCallId: "call-1",
+        state,
+        input: { cards: [{ front: "What is ATP?", back: "Energy carrier." }] },
+        ...extra,
+      };
+    }
+
+    function chatWithReplyParts(parts: unknown[]) {
+      return {
+        messages: [
+          userMessage("m1", "Make a card about ATP"),
+          { id: "m2", role: "assistant", parts },
+          userMessage("m3", "Thanks"),
+        ],
+      };
+    }
+
+    it("keeps answered proposals with their outcome", () => {
+      const parsed = assistantChatRequestSchema.parse(
+        chatWithReplyParts([
+          { type: "text", text: "Here is a card." },
+          proposalPart("output-available", {
+            output: { outcomes: ["created"] },
+          }),
+        ]),
+      );
+
+      expect(parsed.messages[1]?.parts).toEqual([
+        { type: "text", text: "Here is a card." },
+        {
+          type: "tool-proposeFlashcards",
+          toolCallId: "call-1",
+          state: "output-available",
+          input: {
+            cards: [{ front: "What is ATP?", back: "Energy carrier." }],
+          },
+          output: { outcomes: ["created"] },
+        },
+      ]);
+    });
+
+    it("drops pending proposals and replies left empty by them", () => {
+      const parsed = assistantChatRequestSchema.parse(
+        chatWithReplyParts([proposalPart("input-available")]),
+      );
+
+      expect(parsed.messages.map((message) => message.id)).toEqual([
+        "m1",
+        "m3",
+      ]);
+    });
+
+    it("drops proposals the SDK rejected for invalid model input", () => {
+      const parsed = assistantChatRequestSchema.parse(
+        chatWithReplyParts([
+          { type: "text", text: "Here are your cards." },
+          proposalPart("output-error", { errorText: "Invalid input" }),
+        ]),
+      );
+
+      expect(parsed.messages[1]?.parts).toEqual([
+        { type: "text", text: "Here are your cards." },
+      ]);
+    });
+
+    it("rejects an answered proposal with an unknown outcome", () => {
+      const result = assistantChatRequestSchema.safeParse(
+        chatWithReplyParts([
+          proposalPart("output-available", { output: { outcomes: ["saved"] } }),
+        ]),
+      );
+
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects outcomes that do not match the proposed cards", () => {
+      const result = assistantChatRequestSchema.safeParse(
+        chatWithReplyParts([
+          proposalPart("output-available", {
+            output: { outcomes: ["created", "created"] },
+          }),
+        ]),
+      );
+
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects proposal parts on user messages", () => {
+      const result = assistantChatRequestSchema.safeParse({
+        messages: [
+          {
+            id: "m1",
+            role: "user",
+            parts: [
+              proposalPart("output-available", {
+                output: { outcomes: ["created"] },
+              }),
+            ],
+          },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    });
+  });
 });
