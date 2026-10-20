@@ -5,6 +5,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 ## Project Facts
 
 - Use npm.
+- On NixOS, run npm, tests, and git hooks inside the `flake.nix` dev shell (`nix develop -c <cmd>`, or direnv via `.envrc`). It supplies Node 24, a Nix-built Biome (`BIOME_BINARY`), and Playwright browsers; the npm-downloaded binaries do not run on NixOS.
 - `SPEC.md` is the product behavior source of truth.
 - `README.md` owns quick setup and basic runtime commands.
 - `docs/architecture.md` owns high-level architecture, source layout, and boundary guidance.

@@ -21,6 +21,8 @@ See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 - Node.js 24 with npm
 - Docker with Docker Compose
 
+On NixOS, `nix develop` (or `direnv allow`, which loads it automatically via `.envrc`) provides Node.js 24 and a Nix-built Biome from `flake.nix`. It also points Playwright at Nix-built browsers, so skip `npx playwright install`. Docker still comes from your system config.
+
 ## Quick Start
 
 1. Install dependencies:
@@ -70,7 +72,7 @@ Open `http://localhost:3000`.
 Playwright runs against an isolated PostgreSQL and Redis stack from `compose.test.yml`.
 
 ```bash
-npx playwright install chromium   # once
+npx playwright install chromium   # once; not needed in the Nix shell
 npm run test:e2e:infra:up
 npm run test:e2e:migrate
 npm run test:e2e
@@ -90,7 +92,9 @@ The first account created on a new instance becomes an approved admin automatica
 | `npm run test` | Run the Vitest suite |
 | `npm run test:coverage` | Run tests and enforce coverage thresholds |
 | `npm run lint` | Run Biome checks, including architecture boundaries |
+| `npm run typecheck` | Type-check with `tsc` |
 | `npm run check:size` | Fail on source files over 500 lines |
+| `npm run check:deadcode` | Fail on unused files and dependencies (Knip) |
 
 Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automatically on `npm install` and run these guards before each commit and push.
 

@@ -1,6 +1,6 @@
 # Local git hooks. Mirror the CI guards (.github/workflows/checks.yml) so
 # failures surface before a push instead of in CI. See AGENTS.md
-# "Automated Guards". Run `npx lefthook install` after cloning.
+# "Automated Guards". `npm install` installs the hooks.
 
 # Fast checks on the files being committed.
 pre-commit:
