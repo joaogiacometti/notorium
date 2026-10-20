@@ -4,6 +4,7 @@ import { Home, Layers, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { StudyAssistant } from "@/components/assistant/study-assistant";
 import { AppSidebar } from "@/components/navbar/app-sidebar";
 import { CommandPalette } from "@/components/navbar/command-palette";
 import { GlobalSearch } from "@/components/navbar/global-search";
@@ -168,6 +169,7 @@ export function AppLayoutClient({
       )}
       {showSidebar ? <MobileSidebarSheet>{sidebar}</MobileSidebarSheet> : null}
       {mainRow}
+      {userId && aiEnabled ? <StudyAssistant /> : null}
     </div>
   );
 }

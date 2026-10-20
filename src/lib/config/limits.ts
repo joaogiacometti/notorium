@@ -73,6 +73,15 @@ export const LIMITS = {
   aiFlashcardGenerationRateLimitPerDay: 250,
   aiValidationRateLimitPerDay: 200,
   aiMergeSynthesisRateLimitPerDay: 100,
+  aiAssistantRateLimitPrefix: "ratelimit:ai:assistant",
+  aiAssistantRateLimitPerDay: 300,
+  // The whole chat is resent each turn (it is not persisted), so these caps
+  // bound the prompt size of every assistant request.
+  assistantMaxMessages: 20,
+  assistantMessageMaxChars: 4000,
+  // Far above what `AI_LIMITS.assistantMaxOutputTokens` can produce at any
+  // tokenizer ratio: a reply over it would make every later turn fail.
+  assistantReplyMaxChars: 16000,
   trustedProxyCount: 0,
   ipAddressMaxLength: 64,
 } as const;
@@ -85,4 +94,5 @@ export const AI_LIMITS = {
   maxValidationExplanationLength: 300,
   maxMergeSynthesisTokens: 800,
   maxMergeRationaleLength: 300,
+  assistantMaxOutputTokens: 1200,
 } as const;

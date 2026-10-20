@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { plainTextToRichText } from "@/features/flashcards/ai-utils";
+import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
 
 describe("plainTextToRichText math conversion", () => {
   it("converts inline $...$ into an inline math node", () => {

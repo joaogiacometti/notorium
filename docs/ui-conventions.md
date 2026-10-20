@@ -86,7 +86,7 @@ arbitrary (`z-[60]`, `z-(--x)`) z-index classes are rejected outside
 | Utility | Value | Use for |
 | --- | --- | --- |
 | `z-raised` | 10 | In-flow content lifted over its siblings: sticky table headers, editor handles |
-| `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header |
+| `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header, the floating study assistant button and panel |
 | `z-immersive` | 35 | Note/mindmap zen mode (`fixed inset-0`) |
 | `z-overlay` | 50 | Everything that floats or blocks the page: dialogs, sheets, menus, popovers, selects, tooltips, and full-screen review surfaces |
 

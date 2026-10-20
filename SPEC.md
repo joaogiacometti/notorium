@@ -212,6 +212,16 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Search result text matching the query is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
 - Empty queries show unfiltered data without highlighting.
 
+### Study Assistant
+
+- When AI env vars are configured, every authenticated page shows a round assistant button in the bottom-right corner; without AI the button is hidden. Clicking it expands a chat panel above it, and clicking it again collapses the panel.
+- The assistant answers study questions: explaining concepts, worked examples and practice problems, checking reasoning, summarizing pasted material, quizzing, and study-technique advice. It replies in the user's language, with lists, code blocks, and LaTeX math rendered once a reply finishes streaming.
+- Off-topic requests, attempts to override its instructions, and harmful requests are refused with a fixed reply. The scope is enforced by the system prompt; there is no separate classifier.
+- Replies stream in and can be stopped. `Enter` sends and `Shift+Enter` inserts a newline.
+- Chats are not persisted: collapsing the panel keeps the conversation, a reload or "New chat" clears it.
+- A message holds at most 4000 characters, and only the newest 20 messages are sent as context. Each sent message counts against a per-user daily limit (300). Failures, including the daily limit, show inline with a Retry action.
+- The assistant has no access to the user's notes, mindmaps, or flashcards and cannot change them.
+
 ### Command Palette
 
 - Pressing `Ctrl`/`Cmd+P` opens a command palette for running actions and navigating, separate from Global Search (`Ctrl`/`Cmd+K`). The browser print shortcut is suppressed while the palette is available.
@@ -260,6 +270,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - A user can create a maximum of 100 mindmaps per subject.
 - A mindmap can have a maximum of 200 nodes.
 - A user can create a maximum of 2000 flashcards per subject.
+- A user can send a maximum of 300 study assistant messages per day.
 
 ## Data Ownership and Security Rules
 

@@ -28,6 +28,7 @@
     "test:e2e:headed": "dotenv -e .env.test -- playwright test --headed"
   },
   "dependencies": {
+    "@ai-sdk/react": "4.0.141",
     "@hookform/resolvers": "^5.2.2",
     "@joplin/turndown-plugin-gfm": "^1.0.68",
     "@open-spaced-repetition/binding": "^0.5.0",

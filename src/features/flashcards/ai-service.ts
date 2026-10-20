@@ -9,11 +9,24 @@ import {
   synthesizeRefineProposalWithAi,
   validateFlashcardsWithAi,
 } from "@/features/flashcards/ai";
-import { resolveRequiredAiSettings } from "@/lib/ai/config";
-import { AiConfigurationError } from "@/lib/ai/errors";
+import { runUserAiTask } from "@/lib/ai/user-ai-access";
 import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainTextWithImagePlaceholders } from "@/lib/editor/rich-text";
-import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
+
+const BACK_GENERATION_DAILY_LIMIT = {
+  prefix: LIMITS.aiBackGenerationRateLimitPrefix,
+  limit: LIMITS.aiBackGenerationRateLimitPerDay,
+};
+
+const FLASHCARD_AI_ERROR_CODES = {
+  notConfigured: "flashcards.ai.notConfigured",
+  unavailable: "flashcards.ai.unavailable",
+} as const;
+
+const BACK_GENERATION_ERROR_CODES = {
+  ...FLASHCARD_AI_ERROR_CODES,
+  limited: "limits.aiBackGenerationPerDay",
+} as const;
 
 interface GenerateFlashcardBackForUserInput {
   userId: string;
@@ -36,45 +49,19 @@ export async function generateFlashcardBackForUser({
   subjectName,
   front,
 }: GenerateFlashcardBackForUserInput): Promise<GenerateFlashcardBackForUserResult> {
-  try {
-    const settings = resolveRequiredAiSettings();
-    const limitResult = await consumeUserDailyRateLimit({
-      prefix: LIMITS.aiBackGenerationRateLimitPrefix,
-      userId,
-      limit: LIMITS.aiBackGenerationRateLimitPerDay,
-      errorCode: "limits.aiBackGenerationPerDay",
-    });
-
-    if (limitResult.limited) {
-      return {
-        success: false,
-        errorCode: "limits.aiBackGenerationPerDay",
-      };
-    }
-
-    const back = await generateFlashcardBackContent({
-      settings,
-      subjectName,
-      front,
-    });
-
-    return {
-      success: true,
-      back,
-    };
-  } catch (error) {
-    if (error instanceof AiConfigurationError) {
-      return {
-        success: false,
-        errorCode: "flashcards.ai.notConfigured",
-      };
-    }
-
-    return {
-      success: false,
-      errorCode: "flashcards.ai.unavailable",
-    };
-  }
+  return runUserAiTask({
+    userId,
+    dailyLimit: BACK_GENERATION_DAILY_LIMIT,
+    errorCodes: BACK_GENERATION_ERROR_CODES,
+    run: async (settings) => ({
+      success: true as const,
+      back: await generateFlashcardBackContent({
+        settings,
+        subjectName,
+        front,
+      }),
+    }),
+  });
 }
 
 interface ImproveFlashcardBackForUserInput {
@@ -84,15 +71,7 @@ interface ImproveFlashcardBackForUserInput {
   currentBack: string;
 }
 
-type ImproveFlashcardBackForUserResult =
-  | { success: true; back: string }
-  | {
-      success: false;
-      errorCode:
-        | "flashcards.ai.notConfigured"
-        | "flashcards.ai.unavailable"
-        | "limits.aiBackGenerationPerDay";
-    };
+type ImproveFlashcardBackForUserResult = GenerateFlashcardBackForUserResult;
 
 export async function improveFlashcardBackForUser({
   userId,
@@ -100,46 +79,20 @@ export async function improveFlashcardBackForUser({
   front,
   currentBack,
 }: ImproveFlashcardBackForUserInput): Promise<ImproveFlashcardBackForUserResult> {
-  try {
-    const settings = resolveRequiredAiSettings();
-    const limitResult = await consumeUserDailyRateLimit({
-      prefix: LIMITS.aiBackGenerationRateLimitPrefix,
-      userId,
-      limit: LIMITS.aiBackGenerationRateLimitPerDay,
-      errorCode: "limits.aiBackGenerationPerDay",
-    });
-
-    if (limitResult.limited) {
-      return {
-        success: false,
-        errorCode: "limits.aiBackGenerationPerDay",
-      };
-    }
-
-    const back = await improveFlashcardBackContent({
-      settings,
-      subjectName,
-      front,
-      currentBack,
-    });
-
-    return {
-      success: true,
-      back,
-    };
-  } catch (error) {
-    if (error instanceof AiConfigurationError) {
-      return {
-        success: false,
-        errorCode: "flashcards.ai.notConfigured",
-      };
-    }
-
-    return {
-      success: false,
-      errorCode: "flashcards.ai.unavailable",
-    };
-  }
+  return runUserAiTask({
+    userId,
+    dailyLimit: BACK_GENERATION_DAILY_LIMIT,
+    errorCodes: BACK_GENERATION_ERROR_CODES,
+    run: async (settings) => ({
+      success: true as const,
+      back: await improveFlashcardBackContent({
+        settings,
+        subjectName,
+        front,
+        currentBack,
+      }),
+    }),
+  });
 }
 
 interface GenerateFlashcardsForUserInput {
@@ -166,53 +119,31 @@ export async function generateFlashcardsForUser({
   noteTitle,
   text,
 }: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
-  try {
-    const settings = resolveRequiredAiSettings();
-    const limitResult = await consumeUserDailyRateLimit({
+  return runUserAiTask({
+    userId,
+    dailyLimit: {
       prefix: LIMITS.aiFlashcardGenerationRateLimitPrefix,
-      userId,
       limit: LIMITS.aiFlashcardGenerationRateLimitPerDay,
-      errorCode: "limits.aiFlashcardGenerationPerDay",
-    });
+    },
+    errorCodes: {
+      ...FLASHCARD_AI_ERROR_CODES,
+      limited: "limits.aiFlashcardGenerationPerDay",
+    },
+    run: async (settings): Promise<GenerateFlashcardsForUserResult> => {
+      const cards = await generateFlashcardsFromText({
+        settings,
+        subjectName,
+        noteTitle,
+        text,
+      });
 
-    if (limitResult.limited) {
-      return {
-        success: false,
-        errorCode: "limits.aiFlashcardGenerationPerDay",
-      };
-    }
+      if (cards.length === 0) {
+        return { success: false, errorCode: "flashcards.ai.emptyGeneration" };
+      }
 
-    const cards = await generateFlashcardsFromText({
-      settings,
-      subjectName,
-      noteTitle,
-      text,
-    });
-
-    if (cards.length === 0) {
-      return {
-        success: false,
-        errorCode: "flashcards.ai.emptyGeneration",
-      };
-    }
-
-    return {
-      success: true,
-      cards,
-    };
-  } catch (error) {
-    if (error instanceof AiConfigurationError) {
-      return {
-        success: false,
-        errorCode: "flashcards.ai.notConfigured",
-      };
-    }
-
-    return {
-      success: false,
-      errorCode: "flashcards.ai.unavailable",
-    };
-  }
+      return { success: true, cards };
+    },
+  });
 }
 
 interface SynthesizeRefineProposalForUserInput {
@@ -251,59 +182,30 @@ export async function synthesizeRefineProposalForUser({
     };
   }
 
-  try {
-    const settings = resolveRequiredAiSettings();
-    const limitResult = await consumeUserDailyRateLimit({
+  return runUserAiTask({
+    userId,
+    dailyLimit: {
       prefix: LIMITS.aiMergeSynthesisRateLimitPrefix,
-      userId,
       limit: LIMITS.aiMergeSynthesisRateLimitPerDay,
-      errorCode: "limits.aiMergeSynthesisPerDay",
-    });
+    },
+    errorCodes: {
+      ...FLASHCARD_AI_ERROR_CODES,
+      limited: "limits.aiMergeSynthesisPerDay",
+    },
+    run: async (settings): Promise<SynthesizeRefineProposalForUserResult> => {
+      const synthesis = await synthesizeRefineProposalWithAi({
+        settings,
+        primary: toPlainAiCard(primary),
+        candidates: candidates.map(toPlainAiCard),
+      });
 
-    if (limitResult.limited) {
-      return {
-        success: false,
-        errorCode: "limits.aiMergeSynthesisPerDay",
-      };
-    }
+      if (!synthesis) {
+        return { success: false, errorCode: "flashcards.merge.declined" };
+      }
 
-    const toPlainCard = (card: FlashcardForMergeSynthesis) => ({
-      id: card.id,
-      front: richTextToPlainTextWithImagePlaceholders(card.front),
-      back: richTextToPlainTextWithImagePlaceholders(card.back),
-      subjectName: card.subjectName,
-    });
-
-    const synthesis = await synthesizeRefineProposalWithAi({
-      settings,
-      primary: toPlainCard(primary),
-      candidates: candidates.map(toPlainCard),
-    });
-
-    if (!synthesis) {
-      return {
-        success: false,
-        errorCode: "flashcards.merge.declined",
-      };
-    }
-
-    return {
-      success: true,
-      synthesis,
-    };
-  } catch (error) {
-    if (error instanceof AiConfigurationError) {
-      return {
-        success: false,
-        errorCode: "flashcards.ai.notConfigured",
-      };
-    }
-
-    return {
-      success: false,
-      errorCode: "flashcards.ai.unavailable",
-    };
-  }
+      return { success: true, synthesis };
+    },
+  });
 }
 
 interface ValidateFlashcardsForUserInput {
@@ -333,66 +235,54 @@ export async function validateFlashcardsForUser({
     };
   }
 
-  try {
-    const settings = resolveRequiredAiSettings();
-    const limitResult = await consumeUserDailyRateLimit({
+  return runUserAiTask({
+    userId,
+    dailyLimit: {
       prefix: LIMITS.aiValidationRateLimitPrefix,
-      userId,
       limit: LIMITS.aiValidationRateLimitPerDay,
-      errorCode: "limits.aiValidationPerDay",
-    });
+    },
+    errorCodes: {
+      notConfigured: "flashcards.validation.notConfigured",
+      unavailable: "flashcards.validation.unavailable",
+      limited: "limits.aiValidationPerDay",
+    },
+    run: async (settings) => {
+      const validation = await validateFlashcardsWithAi({
+        settings,
+        flashcards: flashcards.map(toPlainAiCard),
+      });
 
-    if (limitResult.limited) {
       return {
-        success: false,
-        errorCode: "limits.aiValidationPerDay",
+        success: true as const,
+        validation: { issues: keepKnownCardIssues(validation, flashcards) },
       };
-    }
+    },
+  });
+}
 
-    const flashcardsForValidation = flashcards.map((card) => ({
-      id: card.id,
-      front: richTextToPlainTextWithImagePlaceholders(card.front),
-      back: richTextToPlainTextWithImagePlaceholders(card.back),
-      subjectName: card.subjectName,
-    }));
+// Merge and validation cards share one shape; the model reads plain text.
+function toPlainAiCard(card: FlashcardForValidation): FlashcardForValidation {
+  return {
+    id: card.id,
+    front: richTextToPlainTextWithImagePlaceholders(card.front),
+    back: richTextToPlainTextWithImagePlaceholders(card.back),
+    subjectName: card.subjectName,
+  };
+}
 
-    const validation = await validateFlashcardsWithAi({
-      settings,
-      flashcards: flashcardsForValidation,
-    });
+// The model may cite ids it was never sent; drop those issues and dangling
+// related-card links so the UI only links real rows.
+function keepKnownCardIssues(
+  validation: FlashcardValidationOutput,
+  flashcards: FlashcardForValidation[],
+): FlashcardValidationOutput["issues"] {
+  const validIds = new Set(flashcards.map((card) => card.id));
 
-    const validIds = new Set(flashcards.map((card) => card.id));
-
-    const validIssues = validation.issues
-      .map((issue) => {
-        if (!validIds.has(issue.flashcardId)) {
-          return null;
-        }
-        if (
-          issue.relatedFlashcardId &&
-          !validIds.has(issue.relatedFlashcardId)
-        ) {
-          return { ...issue, relatedFlashcardId: undefined };
-        }
-        return issue;
-      })
-      .filter((issue): issue is NonNullable<typeof issue> => issue !== null);
-
-    return {
-      success: true,
-      validation: { issues: validIssues },
-    };
-  } catch (error) {
-    if (error instanceof AiConfigurationError) {
-      return {
-        success: false,
-        errorCode: "flashcards.validation.notConfigured",
-      };
-    }
-
-    return {
-      success: false,
-      errorCode: "flashcards.validation.unavailable",
-    };
-  }
+  return validation.issues
+    .filter((issue) => validIds.has(issue.flashcardId))
+    .map((issue) =>
+      issue.relatedFlashcardId && !validIds.has(issue.relatedFlashcardId)
+        ? { ...issue, relatedFlashcardId: undefined }
+        : issue,
+    );
 }

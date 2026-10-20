@@ -1,15 +1,11 @@
 import { z } from "zod";
-import {
-  normalizeGeneratedBack,
-  plainTextToRichText,
-} from "@/features/flashcards/ai-utils";
+import { normalizeGeneratedBack } from "@/features/flashcards/ai-utils";
+import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
+import { MATH_RULE } from "@/lib/ai/prompt-rules";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 
 const LANGUAGE_RULE =
   "Output language: English only. Regardless of the source material or card language, all generated text must be in English.";
-
-const MATH_RULE =
-  "Math notation: write mathematical expressions as LaTeX — $...$ for inline math (e.g. $E = mc^2$) and $$...$$ for a standalone block equation. Do not use \\( \\), \\[ \\], Unicode math symbols, or add new images. This LaTeX is the only exception to the plain-text rule.";
 
 export const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(LIMITS.flashcardAiBackMax),

@@ -19,14 +19,14 @@ import {
   generatedFlashcardsSchema,
   normalizeGeneratedCards,
 } from "@/features/flashcards/ai-prompts";
-import {
-  normalizeGeneratedBack,
-  normalizeLine,
-  plainTextToRichText,
-} from "@/features/flashcards/ai-utils";
+import { normalizeGeneratedBack } from "@/features/flashcards/ai-utils";
 import { flashcardBackSchema } from "@/features/flashcards/validation";
 import type { ResolvedAiSettings } from "@/lib/ai/config";
 import { generateStructuredOutput } from "@/lib/ai/generate-structured";
+import {
+  normalizeLine,
+  plainTextToRichText,
+} from "@/lib/ai/plain-text-rich-text";
 import { AI_LIMITS } from "@/lib/config/limits";
 import {
   replaceImagesWithPlaceholders,

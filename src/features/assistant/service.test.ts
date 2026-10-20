@@ -1,0 +1,112 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AiConfigurationError } from "@/lib/ai/errors";
+import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
+import {
+  createFakeStreamingModel,
+  readStreamedText,
+} from "@/test/fake-streaming-model";
+
+const resolveRequiredAiSettingsMock = vi.fn();
+const getAiModelOrThrowMock = vi.fn();
+const limiter = vi.hoisted(() => ({
+  current: null as FakeDailyRateLimiter | null,
+}));
+
+vi.mock("@/lib/ai/config", () => ({
+  resolveRequiredAiSettings: resolveRequiredAiSettingsMock,
+}));
+
+vi.mock("@/lib/ai/provider", () => ({
+  getAiModelOrThrow: getAiModelOrThrowMock,
+}));
+
+vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
+  consumeUserDailyRateLimit: (
+    options: Parameters<FakeDailyRateLimiter["consume"]>[0],
+  ) => limiter.current?.consume(options),
+}));
+
+const messages = [
+  {
+    id: "m1",
+    role: "user" as const,
+    parts: [{ type: "text" as const, text: "What is ATP?" }],
+  },
+];
+
+describe("streamAssistantReplyForUser", () => {
+  beforeEach(() => {
+    limiter.current = new FakeDailyRateLimiter();
+    resolveRequiredAiSettingsMock.mockReset().mockReturnValue({
+      provider: "openrouter",
+      model: "test/model",
+      apiKey: "sk-or-v1-test",
+    });
+  });
+
+  it("streams the reply under the assistant daily limit", async () => {
+    getAiModelOrThrowMock.mockReturnValue(
+      createFakeStreamingModel("ATP stores energy."),
+    );
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(readStreamedText(await result.response.text())).toBe(
+      "ATP stores energy.",
+    );
+    expect(limiter.current?.calls[0]?.prefix).toBe("ratelimit:ai:assistant");
+  });
+
+  it("returns notConfigured when AI is not set up", async () => {
+    resolveRequiredAiSettingsMock.mockImplementation(() => {
+      throw new AiConfigurationError();
+    });
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "assistant.notConfigured",
+    });
+  });
+
+  it("returns the daily limit error without calling the model", async () => {
+    vi.spyOn(
+      limiter.current as FakeDailyRateLimiter,
+      "consume",
+    ).mockResolvedValue({
+      limited: true,
+      errorCode: "limits.aiAssistantPerDay",
+      remaining: 0,
+      resetAt: "2026-01-02T00:00:00.000Z",
+    });
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errorCode: "limits.aiAssistantPerDay",
+    });
+    expect(getAiModelOrThrowMock).not.toHaveBeenCalled();
+  });
+});

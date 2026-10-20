@@ -22,6 +22,26 @@ export function actionError(
   };
 }
 
+/**
+ * Narrow an untrusted response body to an `ActionErrorResult`, falling back to
+ * `common.generic` when it is not one (an HTML error page, a network proxy).
+ *
+ * @example
+ * toActionErrorResult(await response.json()); // { success: false, errorCode: ... }
+ */
+export function toActionErrorResult(body: unknown): ActionErrorResult {
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "errorCode" in body &&
+    typeof body.errorCode === "string"
+  ) {
+    return body as ActionErrorResult;
+  }
+
+  return actionError("common.generic");
+}
+
 type ErrorMessageEntry = string | ((params?: ActionErrorParams) => string);
 
 const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
@@ -50,6 +70,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
   "attachments.notConfigured":
     "No media storage is configured. Contact your administrator.",
+  "assistant.invalidData": "Invalid study assistant message.",
+  "assistant.notConfigured":
+    "The study assistant is not configured for this instance.",
+  "assistant.unavailable": "The study assistant is temporarily unavailable.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
   "flashcards.duplicateFront": "A flashcard with this front already exists.",
@@ -109,6 +133,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "Daily limit reached for AI flashcard generation.",
   "limits.aiValidationPerDay": "Daily limit reached for AI validation.",
   "limits.aiMergeSynthesisPerDay": "Daily limit reached for AI card merging.",
+  "limits.aiAssistantPerDay": "Daily limit reached for the study assistant.",
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
   "mindmaps.invalidData": "Invalid mindmap data.",

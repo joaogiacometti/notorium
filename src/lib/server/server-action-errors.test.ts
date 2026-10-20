@@ -3,6 +3,7 @@ import {
   actionError,
   resolveActionErrorMessage,
   t,
+  toActionErrorResult,
 } from "@/lib/server/server-action-errors";
 
 describe("t", () => {
@@ -36,5 +37,22 @@ describe("resolveActionErrorMessage", () => {
     );
 
     expect(result).toBe("Custom message");
+  });
+});
+
+describe("toActionErrorResult", () => {
+  it("keeps a body that carries an error code", () => {
+    const body = { success: false, errorCode: "auth.forbidden" };
+
+    expect(toActionErrorResult(body)).toBe(body);
+  });
+
+  it("falls back to the generic error for other bodies", () => {
+    expect(toActionErrorResult("<html>")).toMatchObject({
+      errorCode: "common.generic",
+    });
+    expect(toActionErrorResult({ errorCode: 42 })).toMatchObject({
+      errorCode: "common.generic",
+    });
   });
 });

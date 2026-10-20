@@ -16,9 +16,10 @@ const {
   normalizeGeneratedCards,
 } = await import("@/features/flashcards/ai-prompts");
 
-const { normalizeGeneratedBack, plainTextToRichText } = await import(
+const { normalizeGeneratedBack } = await import(
   "@/features/flashcards/ai-utils"
 );
+const { plainTextToRichText } = await import("@/lib/ai/plain-text-rich-text");
 
 describe("buildGenerateFlashcardBackPrompt", () => {
   it("includes subject and plain front content", () => {

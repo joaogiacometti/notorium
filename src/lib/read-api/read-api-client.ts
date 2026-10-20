@@ -1,7 +1,7 @@
 import { decodeReadPayload } from "@/lib/read-api/read-payload";
 import {
   type ActionErrorResult,
-  actionError,
+  toActionErrorResult,
 } from "@/lib/server/server-action-errors";
 
 type ReadApiQueryValue = string | number | readonly string[] | undefined;
@@ -117,7 +117,7 @@ async function sendReadApiRequest(url: string): Promise<ReadApiResponse> {
     window.location.assign("/login");
   }
 
-  const error = toActionError(await readErrorBody(response));
+  const error = toActionErrorResult(await readErrorBody(response));
   return { ok: false, status: response.status, error };
 }
 
@@ -134,19 +134,6 @@ async function readErrorBody(response: Response): Promise<unknown> {
   } catch {
     return null;
   }
-}
-
-function toActionError(body: unknown): ActionErrorResult {
-  if (
-    typeof body === "object" &&
-    body !== null &&
-    "errorCode" in body &&
-    typeof body.errorCode === "string"
-  ) {
-    return body as ActionErrorResult;
-  }
-
-  return actionError("common.generic");
 }
 
 function appendQueryValue(

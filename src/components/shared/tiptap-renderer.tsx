@@ -7,7 +7,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
@@ -18,11 +18,14 @@ import { cn } from "@/lib/utils";
 interface TiptapRendererProps {
   content: string;
   className?: string;
+  /** Shown until the editor exists; it is created after the first render. */
+  fallback?: ReactNode;
 }
 
 export function TiptapRenderer({
   content,
   className,
+  fallback,
 }: Readonly<TiptapRendererProps>) {
   const [resolvedContent, setResolvedContent] = useState(content);
 
@@ -76,6 +79,8 @@ export function TiptapRenderer({
       editor.commands.setContent(resolvedContent || "", { emitUpdate: false });
     }
   }, [editor, resolvedContent]);
+
+  if (!editor && fallback !== undefined) return fallback;
 
   return (
     <div className={cn("tiptap-content", className)}>
