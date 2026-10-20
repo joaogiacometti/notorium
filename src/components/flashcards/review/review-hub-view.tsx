@@ -40,7 +40,7 @@ export function ReviewHubView({
           title="Review"
           badgeText={dueBadgeText}
           badgeTone={hasDueCards ? "primary" : "muted"}
-          description="Go through cards that are due based on your spaced repetition schedule."
+          description="Review cards that are due on your spaced repetition schedule."
           bullets={[
             "Updates scheduling",
             "Uses memory ratings",
@@ -131,7 +131,9 @@ function ActionCardFooter({
   action,
 }: Readonly<{ bullets: string[]; action: () => ReactNode }>) {
   return (
-    <div className="mt-4 hidden flex-col gap-1 lg:flex">
+    // mt-auto pins the footer to the card bottom so both start buttons align
+    // even when the descriptions wrap to different line counts.
+    <div className="mt-auto hidden flex-col gap-1 pt-4 lg:flex">
       <ul className="grid gap-2 pb-4 text-sm text-muted-foreground">
         {bullets.map((bullet) => (
           <li key={bullet} className="flex items-center gap-2">
