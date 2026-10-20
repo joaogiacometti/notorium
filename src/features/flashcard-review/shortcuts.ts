@@ -21,6 +21,9 @@ export type FlashcardReviewShortcutAction =
       type: "reset";
     }
   | {
+      type: "undo";
+    }
+  | {
       type: "grade";
       grade: ReviewGrade;
     };
@@ -29,6 +32,7 @@ interface GetFlashcardReviewShortcutActionInput {
   key: string;
   revealed: boolean;
   hasCurrentCard: boolean;
+  canUndoReview: boolean;
   isPending: boolean;
   isDialogOpen: boolean;
   isEditableTarget: boolean;
@@ -42,12 +46,14 @@ interface UseFlashcardReviewShortcutsOptions {
   isExamMode: boolean;
   revealed: boolean;
   hasCurrentCard: boolean;
+  canUndoReview: boolean;
   isPending: boolean;
   isDialogOpen: boolean;
   onReveal: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onReset: () => void;
+  onUndo: () => void;
   onGrade: (grade: ReviewGrade) => void;
   onExitExamMode: () => void;
   onExitFocusMode: () => void;
@@ -61,7 +67,7 @@ const gradeKeyMap: Record<string, ReviewGrade> = Object.fromEntries(
  * Wires flashcard review keyboard shortcuts for the focus/exam view.
  *
  * @example
- * useFlashcardReviewShortcuts({ shortcutsSuspended, isFocusMode, isExamMode, revealed, hasCurrentCard, isPending, isDialogOpen, onReveal, onEdit, onDelete, onReset, onGrade, onExitExamMode, onExitFocusMode });
+ * useFlashcardReviewShortcuts({ shortcutsSuspended, isFocusMode, isExamMode, revealed, hasCurrentCard, canUndoReview, isPending, isDialogOpen, onReveal, onEdit, onDelete, onReset, onUndo, onGrade, onExitExamMode, onExitFocusMode });
  */
 export function useFlashcardReviewShortcuts(
   options: UseFlashcardReviewShortcutsOptions,
@@ -80,20 +86,27 @@ export function getFlashcardReviewShortcutAction({
   key,
   revealed,
   hasCurrentCard,
+  canUndoReview,
   isPending,
   isDialogOpen,
   isEditableTarget,
   hasModifierKey,
   isRepeat,
 }: GetFlashcardReviewShortcutActionInput): FlashcardReviewShortcutAction | null {
-  if (
-    !hasCurrentCard ||
-    isPending ||
-    isDialogOpen ||
-    isEditableTarget ||
-    hasModifierKey ||
-    isRepeat
-  ) {
+  if (isPending || isDialogOpen || isEditableTarget || hasModifierKey) {
+    return null;
+  }
+
+  if (isRepeat) {
+    return null;
+  }
+
+  // Undo stays available after the last card is graded, when no card is shown.
+  if (key.toLowerCase() === "u") {
+    return canUndoReview ? { type: "undo" } : null;
+  }
+
+  if (!hasCurrentCard) {
     return null;
   }
 
@@ -133,6 +146,7 @@ function handleFlashcardReviewKeyDown(
     key: event.key,
     revealed: options.revealed,
     hasCurrentCard: options.hasCurrentCard,
+    canUndoReview: options.canUndoReview,
     isPending: options.isPending,
     isDialogOpen: options.isDialogOpen,
     isEditableTarget: isEditableTarget(event.target),
@@ -164,5 +178,6 @@ function runFlashcardReviewShortcutAction(
   else if (action.type === "edit") options.onEdit();
   else if (action.type === "delete") options.onDelete();
   else if (action.type === "reset") options.onReset();
+  else if (action.type === "undo") options.onUndo();
   else options.onGrade(action.grade);
 }

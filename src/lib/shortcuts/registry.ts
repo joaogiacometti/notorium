@@ -264,6 +264,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.FlashcardReview,
   },
   {
+    id: "flashcard-undo",
+    kind: "keys",
+    keys: ["u"],
+    description: "Undo last review",
+    category: ShortcutCategory.FlashcardReview,
+  },
+  {
     id: "flashcard-exit-focus",
     kind: "keys",
     keys: ["escape"],

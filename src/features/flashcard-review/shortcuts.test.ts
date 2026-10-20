@@ -5,6 +5,7 @@ const defaultInput = {
   key: "Enter",
   revealed: false,
   hasCurrentCard: true,
+  canUndoReview: true,
   isPending: false,
   isDialogOpen: false,
   isEditableTarget: false,
@@ -105,6 +106,26 @@ describe("getFlashcardReviewShortcutAction", () => {
         revealed: true,
       }),
     ).toEqual({ type: "reset" });
+  });
+
+  it("undoes the last review on u, even with no current card", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "u",
+        hasCurrentCard: false,
+      }),
+    ).toEqual({ type: "undo" });
+  });
+
+  it("ignores u when there is nothing to undo", () => {
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "u",
+        canUndoReview: false,
+      }),
+    ).toBeNull();
   });
 
   it("maps 1 through 4 to the expected grades when revealed", () => {

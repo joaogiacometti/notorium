@@ -7,7 +7,12 @@ import {
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
 import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
-import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
+import {
+  createDeferred,
+  makeCard,
+  makeReviewState,
+  setDocumentVisibility,
+} from "@/components/flashcards/review/flashcard-review-client-test-support";
 import {
   fetchExamFlashcards,
   fetchFlashcardReviewState,
@@ -119,64 +124,6 @@ const getFlashcardReviewStateMock = vi.mocked(fetchFlashcardReviewState);
 const getExamFlashcardsMock = vi.mocked(fetchExamFlashcards);
 const reviewFlashcardMock = vi.mocked(reviewFlashcard);
 const undoFlashcardReviewMock = vi.mocked(undoFlashcardReview);
-
-const scheduler = {
-  desiredRetention: 0.9,
-  weights: getDefaultFsrsWeights(),
-};
-
-function makeCard(id: string): FlashcardReviewEntity {
-  return {
-    id,
-    front: `<p>${id} front</p>`,
-    back: `<p>${id} back</p>`,
-    state: "new",
-    dueAt: new Date("2026-03-07T11:00:00.000Z"),
-    stability: null,
-    difficulty: null,
-    intervalDays: 0,
-    learningStep: null,
-    lastReviewedAt: null,
-    reviewCount: 0,
-    lapseCount: 0,
-    subjectId: "deck-1",
-    subjectName: "Biology",
-    subjectPath: "Biology",
-  };
-}
-
-function makeReviewState(
-  dueCount: number,
-  cards: FlashcardReviewEntity[] = [],
-): FlashcardReviewState {
-  return {
-    cards,
-    summary: {
-      dueCount,
-      totalCount: Math.max(dueCount, cards.length),
-    },
-    scheduler,
-  };
-}
-
-function createDeferred<T>() {
-  let resolvePromise: (value: T) => void = () => {};
-  const promise = new Promise<T>((resolve) => {
-    resolvePromise = resolve;
-  });
-
-  return {
-    promise,
-    resolve: resolvePromise,
-  };
-}
-
-function setDocumentVisibility(value: DocumentVisibilityState) {
-  Object.defineProperty(document, "visibilityState", {
-    configurable: true,
-    value,
-  });
-}
 
 describe("FlashcardReviewClient", () => {
   let container: HTMLDivElement;
@@ -606,6 +553,47 @@ describe("FlashcardReviewClient", () => {
 
     expect(currentCardId()).toBe("card-2");
     expect(document.body.textContent).toContain("Undo last review");
+  });
+
+  it("undoes the last review on u once the grade is saved", async () => {
+    reviewFlashcardMock.mockResolvedValue({
+      success: true,
+      reviewedCardId: "card-1",
+      reviewLogId: "review-log-1",
+      flashcard: {
+        ...makeReviewCard("card-1"),
+        dueAt: new Date("2099-01-01T00:00:00.000Z"),
+        reviewCount: 4,
+      },
+    });
+    undoFlashcardReviewMock.mockResolvedValue({
+      success: true,
+      flashcard: makeReviewCard("card-1"),
+    });
+    await renderReviewClient(
+      makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
+    );
+    await startReview();
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "u" }));
+    });
+    expect(undoFlashcardReviewMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+    await vi.waitFor(() => {
+      expect(document.body.textContent).toContain("Undo last review");
+    });
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "u" }));
+    });
+
+    expect(undoFlashcardReviewMock).toHaveBeenCalledWith({
+      id: "card-1",
+      reviewLogId: "review-log-1",
+    });
   });
 
   it("puts the card back in front with a toast when the grade save fails", async () => {

@@ -153,6 +153,7 @@ Students who want a private, lightweight study management workspace.
   - `Enter` or `Space` grades `Good` after the back is shown.
   - `e` opens edit flashcard.
   - `d` opens delete flashcard confirmation.
+  - `u` undoes the last review while an undo is available (not in exam mode).
   - `r` opens reset review progress confirmation for the current card.
   - `1` grades `Again` after reveal.
   - `2` grades `Hard` after reveal.
