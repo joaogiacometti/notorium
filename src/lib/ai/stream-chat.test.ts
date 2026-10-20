@@ -18,6 +18,7 @@ const settings = {
   provider: "openrouter" as const,
   model: "test/model",
   apiKey: "sk-or-v1-test",
+  assistantReasoningEffort: "none" as const,
 };
 
 describe("streamChatResponse", () => {
@@ -109,5 +110,48 @@ describe("streamChatResponse", () => {
     expect(chunks.some((chunk) => chunk.type === "tool-output-available")).toBe(
       false,
     );
+  });
+
+  it("sends the session id and reasoning effort to OpenRouter", async () => {
+    const model = createFakeStreamingModel("Yes.");
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const { streamChatResponse } = await import("@/lib/ai/stream-chat");
+
+    const response = await streamChatResponse({
+      settings,
+      logScope: "test.chat",
+      instructions: "Be a tutor.",
+      messages: [
+        { id: "m1", role: "user", parts: [{ type: "text", text: "Hi" }] },
+      ],
+      maxOutputTokens: 100,
+      sessionId: "chat-1",
+      reasoningEffort: "none",
+    });
+    await response.text();
+
+    expect(model.doStreamCalls[0]?.providerOptions?.openrouter).toEqual({
+      session_id: "chat-1",
+      reasoning: { effort: "none" },
+    });
+  });
+
+  it("leaves routing and reasoning to OpenRouter defaults when unset", async () => {
+    const model = createFakeStreamingModel("Yes.");
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const { streamChatResponse } = await import("@/lib/ai/stream-chat");
+
+    const response = await streamChatResponse({
+      settings,
+      logScope: "test.chat",
+      instructions: "Be a tutor.",
+      messages: [
+        { id: "m1", role: "user", parts: [{ type: "text", text: "Hi" }] },
+      ],
+      maxOutputTokens: 100,
+    });
+    await response.text();
+
+    expect(model.doStreamCalls[0]?.providerOptions?.openrouter).toEqual({});
   });
 });

@@ -53,6 +53,7 @@ Optional feature variables are not required for this workflow. Leave them commen
 | --- | --- |
 | `OPENROUTER_API_KEY` | Enables instance-level AI features when paired with `OPENROUTER_MODEL` |
 | `OPENROUTER_MODEL` | Selects the OpenRouter model for AI features |
+| `OPENROUTER_ASSISTANT_REASONING_EFFORT` | Thinking level for study assistant replies (`none`, `minimal`, `low`, `medium`, `high`); defaults to `none` |
 | `BLOB_READ_WRITE_TOKEN` | Enables attachment uploads |
 | `RESEND_API_KEY` | Enables email delivery when paired with `RESEND_FROM_EMAIL` |
 | `RESEND_FROM_EMAIL` | Sender address for password reset emails |

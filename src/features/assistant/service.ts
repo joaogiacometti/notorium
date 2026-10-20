@@ -11,6 +11,8 @@ import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 interface StreamAssistantReplyForUserInput {
   userId: string;
   messages: AssistantChatRequest["messages"];
+  /** `useChat` id; keeps the chat's turns on one provider's prompt cache. */
+  chatId?: string;
   abortSignal?: AbortSignal;
   /** Injected by tests; defaults to the user's subject paths from the DB. */
   loadSubjectPaths?: (userId: string) => Promise<string[]>;
@@ -36,6 +38,7 @@ type StreamAssistantReplyForUserResult =
 export async function streamAssistantReplyForUser({
   userId,
   messages,
+  chatId,
   abortSignal,
   loadSubjectPaths = readSubjectPathsForUser,
 }: StreamAssistantReplyForUserInput): Promise<StreamAssistantReplyForUserResult> {
@@ -63,6 +66,8 @@ export async function streamAssistantReplyForUser({
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: assistantTools,
     abortSignal,
+    sessionId: chatId,
+    reasoningEffort: access.settings.assistantReasoningEffort,
   });
 
   return { success: true, response };

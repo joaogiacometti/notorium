@@ -1,10 +1,11 @@
 import {
   convertToModelMessages,
+  type JSONValue,
   streamText,
   type ToolSet,
   type UIMessage,
 } from "ai";
-import type { ResolvedAiSettings } from "@/lib/ai/config";
+import type { AiReasoningEffort, ResolvedAiSettings } from "@/lib/ai/config";
 import { getAiModelOrThrow } from "@/lib/ai/provider";
 import { logServerFailure } from "@/lib/server/action-failure";
 
@@ -18,6 +19,13 @@ interface StreamChatResponseOptions {
   /** Tools without `execute` end the reply; the client answers them. */
   tools?: ToolSet;
   abortSignal?: AbortSignal;
+  /**
+   * Stable id of the conversation, sent as OpenRouter's `session_id` so every
+   * turn routes to the provider that already holds the cached prompt prefix.
+   */
+  sessionId?: string;
+  /** Thinking level; unset keeps the model's default. */
+  reasoningEffort?: AiReasoningEffort;
 }
 
 /**
@@ -35,6 +43,7 @@ interface StreamChatResponseOptions {
  *   instructions: buildAssistantSystemPrompt(subjectPaths),
  *   messages,
  *   maxOutputTokens: 1200,
+ *   sessionId: chatId,
  * });
  */
 export async function streamChatResponse({
@@ -45,6 +54,8 @@ export async function streamChatResponse({
   maxOutputTokens,
   tools,
   abortSignal,
+  sessionId,
+  reasoningEffort,
 }: StreamChatResponseOptions): Promise<Response> {
   const result = streamText({
     model: getAiModelOrThrow(settings),
@@ -53,6 +64,9 @@ export async function streamChatResponse({
     maxOutputTokens,
     tools,
     abortSignal,
+    providerOptions: {
+      openrouter: buildOpenRouterChatOptions(sessionId, reasoningEffort),
+    },
     onError: ({ error }) => logServerFailure("ai_chat_failed", logScope, error),
   });
 
@@ -62,4 +76,15 @@ export async function streamChatResponse({
     sendReasoning: false,
     headers: { "Cache-Control": "private, no-store" },
   });
+}
+
+// Spread into the OpenRouter request body as-is, so keys use its snake_case.
+function buildOpenRouterChatOptions(
+  sessionId: string | undefined,
+  reasoningEffort: AiReasoningEffort | undefined,
+): Record<string, JSONValue> {
+  return {
+    ...(sessionId ? { session_id: sessionId } : {}),
+    ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),
+  };
 }

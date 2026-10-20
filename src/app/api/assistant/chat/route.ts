@@ -31,6 +31,7 @@ export async function POST(request: Request): Promise<Response> {
     const result = await streamAssistantReplyForUser({
       userId: session.user.id,
       messages: parsed.data.messages,
+      chatId: parsed.data.chatId,
       abortSignal: request.signal,
     });
 

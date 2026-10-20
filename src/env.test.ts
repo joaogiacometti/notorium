@@ -6,6 +6,7 @@ const SERVER_ENV_KEYS = [
   "REDIS_URL",
   "OPENROUTER_API_KEY",
   "OPENROUTER_MODEL",
+  "OPENROUTER_ASSISTANT_REASONING_EFFORT",
   "NOTORIUM_AI_FIXTURE_MODE",
   "NOTORIUM_EMAIL_FIXTURE_MODE",
   "NOTORIUM_EMAIL_FIXTURE_INBOX_PATH",
@@ -108,6 +109,27 @@ describe("server env", () => {
 
     expect(env.OPENROUTER_API_KEY).toBeUndefined();
     expect(env.OPENROUTER_MODEL).toBeUndefined();
+    expect(env.OPENROUTER_ASSISTANT_REASONING_EFFORT).toBeUndefined();
+  });
+
+  it("parses the assistant reasoning effort when set", async () => {
+    setRequiredServerEnv();
+    process.env.OPENROUTER_ASSISTANT_REASONING_EFFORT = "none";
+
+    const { getServerEnv } = await import("@/env");
+
+    expect(getServerEnv().OPENROUTER_ASSISTANT_REASONING_EFFORT).toBe("none");
+  });
+
+  it("rejects an unknown assistant reasoning effort", async () => {
+    setRequiredServerEnv();
+    process.env.OPENROUTER_ASSISTANT_REASONING_EFFORT = "turbo";
+
+    const { getServerEnv } = await import("@/env");
+
+    expect(() => getServerEnv()).toThrowError(
+      "OPENROUTER_ASSISTANT_REASONING_EFFORT",
+    );
   });
 
   it("parses Playwright AI fixture mode when set", async () => {

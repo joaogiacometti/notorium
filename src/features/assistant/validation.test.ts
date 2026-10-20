@@ -31,6 +31,31 @@ describe("assistantChatRequestSchema", () => {
     });
   });
 
+  it("accepts the chat id and keeps a chat without one", () => {
+    const messages = [userMessage("m1", "What is ATP?")];
+
+    expect(
+      assistantChatRequestSchema.parse({ chatId: "chat-1", messages }).chatId,
+    ).toBe("chat-1");
+    expect(
+      assistantChatRequestSchema.parse({ messages }).chatId,
+    ).toBeUndefined();
+  });
+
+  it("rejects an empty or oversized chat id", () => {
+    const messages = [userMessage("m1", "What is ATP?")];
+
+    expect(
+      assistantChatRequestSchema.safeParse({ chatId: "", messages }).success,
+    ).toBe(false);
+    expect(
+      assistantChatRequestSchema.safeParse({
+        chatId: "x".repeat(101),
+        messages,
+      }).success,
+    ).toBe(false);
+  });
+
   it("drops replies that were stopped before any text", () => {
     const parsed = assistantChatRequestSchema.parse({
       messages: [

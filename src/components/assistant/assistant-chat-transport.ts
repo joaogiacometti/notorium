@@ -12,7 +12,8 @@ const ASSISTANT_CHAT_API = "/api/assistant/chat";
  * Transport for the study assistant's `useChat`. The chat is not persisted,
  * so every turn resends the history; only the newest messages are sent so a
  * long chat stays under the route's `assistantMaxMessages` cap, starting at a
- * user message because some providers reject a leading assistant turn.
+ * user message because some providers reject a leading assistant turn. The
+ * chat id goes along so the route can keep every turn on one prompt cache.
  *
  * @example
  * const chat = useChat({ transport: createAssistantChatTransport() });
@@ -20,8 +21,8 @@ const ASSISTANT_CHAT_API = "/api/assistant/chat";
 export function createAssistantChatTransport(): ChatTransport<AssistantUIMessage> {
   return new DefaultChatTransport<AssistantUIMessage>({
     api: ASSISTANT_CHAT_API,
-    prepareSendMessagesRequest: ({ messages }) => ({
-      body: { messages: keepRecentChat(messages) },
+    prepareSendMessagesRequest: ({ id, messages }) => ({
+      body: { chatId: id, messages: keepRecentChat(messages) },
     }),
   });
 }

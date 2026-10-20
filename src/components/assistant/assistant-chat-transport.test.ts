@@ -21,6 +21,11 @@ class RecordingChatFetch {
   }
 }
 
+interface SentChatBody {
+  chatId: string;
+  messages: AssistantUIMessage[];
+}
+
 function textMessage(index: number): AssistantUIMessage {
   return {
     id: `m${index}`,
@@ -34,7 +39,7 @@ describe("createAssistantChatTransport", () => {
     vi.unstubAllGlobals();
   });
 
-  async function sendChat(messageCount: number): Promise<AssistantUIMessage[]> {
+  async function sendChat(messageCount: number): Promise<SentChatBody> {
     const recorder = new RecordingChatFetch().install();
     const messages = Array.from({ length: messageCount }, (_, index) =>
       textMessage(index),
@@ -48,11 +53,17 @@ describe("createAssistantChatTransport", () => {
       abortSignal: undefined,
     });
 
-    return (recorder.bodies[0] as { messages: AssistantUIMessage[] }).messages;
+    return recorder.bodies[0] as SentChatBody;
   }
 
+  it("sends the chat id so the route can reuse the prompt cache", async () => {
+    const body = await sendChat(1);
+
+    expect(body.chatId).toBe("chat-1");
+  });
+
   it("sends only the newest messages allowed by the route", async () => {
-    const sent = await sendChat(LIMITS.assistantMaxMessages + 4);
+    const { messages: sent } = await sendChat(LIMITS.assistantMaxMessages + 4);
 
     expect(sent).toHaveLength(LIMITS.assistantMaxMessages);
     expect(sent.at(-1)?.id).toBe(`m${LIMITS.assistantMaxMessages + 3}`);
@@ -60,7 +71,7 @@ describe("createAssistantChatTransport", () => {
 
   it("starts the trimmed history at a user message", async () => {
     // Trimming 25 alternating messages to 20 would start on a reply.
-    const sent = await sendChat(LIMITS.assistantMaxMessages + 5);
+    const { messages: sent } = await sendChat(LIMITS.assistantMaxMessages + 5);
 
     expect(sent[0]?.role).toBe("user");
     expect(sent).toHaveLength(LIMITS.assistantMaxMessages - 1);

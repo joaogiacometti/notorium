@@ -78,6 +78,14 @@ describe("POST /api/assistant/chat", () => {
     );
   });
 
+  it("forwards the chat id to the assistant", async () => {
+    await postChat({ ...validBody, chatId: "chat-1" });
+
+    expect(streamAssistantReplyForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: "chat-1" }),
+    );
+  });
+
   it("answers 429 when the daily limit is reached", async () => {
     streamAssistantReplyForUserMock.mockResolvedValueOnce({
       success: false,

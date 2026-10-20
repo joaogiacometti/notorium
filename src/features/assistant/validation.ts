@@ -92,17 +92,20 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
 }
 
 /**
- * Request body of `POST /api/assistant/chat`: the whole non-persistent chat,
- * oldest first, ending with the user's new message. Only user text, assistant
- * text, and answered flashcard proposals are accepted, so a client cannot
- * inject system messages or other parts.
+ * Request body of `POST /api/assistant/chat`: the `useChat` id and the whole
+ * non-persistent chat, oldest first, ending with the user's new message. The
+ * id is optional so a tab loaded before it was sent keeps working. Only user
+ * text, assistant text, and answered flashcard proposals are accepted, so a
+ * client cannot inject system messages or other parts.
  *
  * @example
  * assistantChatRequestSchema.safeParse({
+ *   chatId: "chat-1",
  *   messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: "What is ATP?" }] }],
  * });
  */
 export const assistantChatRequestSchema = z.object({
+  chatId: z.string().min(1).max(100).optional(),
   messages: z
     .array(
       z.discriminatedUnion("role", [userMessageSchema, replyMessageSchema]),

@@ -145,4 +145,31 @@ describe("streamAssistantReplyForUser", () => {
     ]);
     expect(JSON.stringify(call?.prompt[0])).toContain("Biology::Cells");
   });
+
+  it("routes by chat id with the configured reasoning effort", async () => {
+    resolveRequiredAiSettingsMock.mockReturnValue({
+      provider: "openrouter",
+      model: "test/model",
+      apiKey: "sk-or-v1-test",
+      assistantReasoningEffort: "none",
+    });
+    const model = createFakeStreamingModel("ATP stores energy.");
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+      chatId: "chat-1",
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (result.success) await result.response.text();
+
+    expect(model.doStreamCalls[0]?.providerOptions?.openrouter).toEqual({
+      session_id: "chat-1",
+      reasoning: { effort: "none" },
+    });
+  });
 });
