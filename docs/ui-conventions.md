@@ -133,3 +133,8 @@ Prefer the narrowest transition: `transition-colors` for hover/focus,
 `transition-opacity`/`transition-transform` for motion. `transition-all` is only
 acceptable for width-animated progress bars and inside shadcn primitives (which
 are not hand-edited).
+
+Enter animations use `tw-animate-css` (`animate-in fade-in …`) behind the
+`motion-safe:` variant so reduced-motion users get instant changes. Keep them
+at 200ms or less where users act repeatedly: review sessions fade each new card
+in (keyed by card id) and fade/slide the revealed answer in.

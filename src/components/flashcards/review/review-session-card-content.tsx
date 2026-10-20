@@ -14,6 +14,12 @@ interface ReviewSessionCardContentProps {
 const reviewRichTextClassName =
   "flashcard-review-tiptap-content min-w-0 max-w-full wrap-break-word hyphens-auto";
 
+// Kept short so rapid keyboard grading never waits on the animation.
+const cardEnterClassName =
+  "motion-safe:animate-in motion-safe:fade-in motion-safe:duration-150";
+const answerEnterClassName =
+  "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200";
+
 /**
  * Renders the active flashcard content for review and exam sessions.
  *
@@ -25,8 +31,10 @@ export function ReviewSessionCardContent({
   subjectLabel,
   revealed,
 }: Readonly<ReviewSessionCardContentProps>) {
+  // Keying by card id remounts the wrapper so the enter animation replays on
+  // every new card instead of the content swapping in place.
   return (
-    <>
+    <div key={card.id} className={cardEnterClassName}>
       {subjectLabel ? (
         <p className="mb-3 truncate text-xs font-semibold tracking-wider text-primary/80 uppercase">
           {subjectLabel}
@@ -36,11 +44,13 @@ export function ReviewSessionCardContent({
         <div className="flex flex-col">
           <CardFace title="Front" content={card.front} tone="front" />
           {revealed ? (
-            <CardFace title="Answer" content={card.back} tone="back" />
+            <div className={answerEnterClassName}>
+              <CardFace title="Answer" content={card.back} tone="back" />
+            </div>
           ) : null}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
