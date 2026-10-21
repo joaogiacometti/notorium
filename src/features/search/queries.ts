@@ -1,10 +1,12 @@
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, mindmap, note, subject } from "@/db/schema";
 import { findMindmapNodeLabelMatch } from "@/features/mindmaps/utils";
+import { foldedContains } from "@/features/search/match-sql";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { LIMITS } from "@/lib/config/limits";
+import { includesFoldedText } from "@/lib/search/fold";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type { SearchData } from "@/lib/server/api-contracts";
 
@@ -40,9 +42,9 @@ export async function getSearchDataForUser(
           eq(note.userId, userId),
           ...subjectFilters,
           or(
-            ilike(note.title, searchPattern),
-            ilike(note.content, searchPattern),
-            ilike(subject.name, searchPattern),
+            foldedContains(note.title, searchPattern),
+            foldedContains(note.content, searchPattern),
+            foldedContains(subject.name, searchPattern),
           ),
         ),
       )
@@ -62,8 +64,8 @@ export async function getSearchDataForUser(
         and(
           eq(flashcard.userId, userId),
           or(
-            ilike(flashcard.front, searchPattern),
-            ilike(flashcard.back, searchPattern),
+            foldedContains(flashcard.front, searchPattern),
+            foldedContains(flashcard.back, searchPattern),
           ),
         ),
       )
@@ -84,9 +86,9 @@ export async function getSearchDataForUser(
           eq(mindmap.userId, userId),
           ...subjectFilters,
           or(
-            ilike(mindmap.title, searchPattern),
-            ilike(mindmap.data, searchPattern),
-            ilike(subject.name, searchPattern),
+            foldedContains(mindmap.title, searchPattern),
+            foldedContains(mindmap.data, searchPattern),
+            foldedContains(subject.name, searchPattern),
           ),
         ),
       )
@@ -106,7 +108,7 @@ export async function getSearchDataForUser(
     mindmaps: allMindmaps.map(({ data, title, ...rest }) => ({
       ...rest,
       title,
-      matchedNodeLabel: title.toLowerCase().includes(searchQuery.toLowerCase())
+      matchedNodeLabel: includesFoldedText(title, searchQuery)
         ? undefined
         : findMindmapNodeLabelMatch(data, searchQuery),
     })),

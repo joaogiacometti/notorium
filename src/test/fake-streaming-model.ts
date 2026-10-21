@@ -19,16 +19,7 @@ type FakeStreamPart =
 export function createFakeStreamingModel(
   replyText: string,
 ): MockLanguageModelV4 {
-  const half = Math.ceil(replyText.length / 2);
-  const parts: FakeStreamPart[] = [
-    { type: "text-start", id: "text-1" },
-    { type: "text-delta", id: "text-1", delta: replyText.slice(0, half) },
-    { type: "text-delta", id: "text-1", delta: replyText.slice(half) },
-    { type: "text-end", id: "text-1" },
-    finishPart("stop"),
-  ];
-
-  return createMockStreamingModel(parts);
+  return createMockStreamingModel(textReplyParts(replyText));
 }
 
 /**
@@ -42,7 +33,57 @@ export function createFakeToolCallModel(
   toolName: string,
   input: Record<string, unknown>,
 ): MockLanguageModelV4 {
-  return createMockStreamingModel([
+  return createMockStreamingModel(toolCallParts(toolName, input));
+}
+
+/**
+ * A provider-free language model that calls `toolName` with `input` on its
+ * first step and answers `replyText` on the next, as a model would after an
+ * executed tool returns.
+ *
+ * @example
+ * const model = createFakeToolThenTextModel("searchLibrary", { terms: ["ATP"] }, "Yes.");
+ */
+export function createFakeToolThenTextModel(
+  toolName: string,
+  input: Record<string, unknown>,
+  replyText: string,
+): MockLanguageModelV4 {
+  return createMockStreamingModel(
+    toolCallParts(toolName, input),
+    textReplyParts(replyText),
+  );
+}
+
+// One stream per model call, in order; later calls repeat the last one.
+function createMockStreamingModel(
+  ...steps: FakeStreamPart[][]
+): MockLanguageModelV4 {
+  let call = 0;
+  return new MockLanguageModelV4({
+    doStream: async () => {
+      const parts = steps[Math.min(call++, steps.length - 1)] ?? [];
+      return { stream: convertArrayToReadableStream(parts) };
+    },
+  });
+}
+
+function textReplyParts(replyText: string): FakeStreamPart[] {
+  const half = Math.ceil(replyText.length / 2);
+  return [
+    { type: "text-start", id: "text-1" },
+    { type: "text-delta", id: "text-1", delta: replyText.slice(0, half) },
+    { type: "text-delta", id: "text-1", delta: replyText.slice(half) },
+    { type: "text-end", id: "text-1" },
+    finishPart("stop"),
+  ];
+}
+
+function toolCallParts(
+  toolName: string,
+  input: Record<string, unknown>,
+): FakeStreamPart[] {
+  return [
     {
       type: "tool-call",
       toolCallId: "call-1",
@@ -50,15 +91,7 @@ export function createFakeToolCallModel(
       input: JSON.stringify(input),
     },
     finishPart("tool-calls"),
-  ]);
-}
-
-function createMockStreamingModel(
-  parts: FakeStreamPart[],
-): MockLanguageModelV4 {
-  return new MockLanguageModelV4({
-    doStream: async () => ({ stream: convertArrayToReadableStream(parts) }),
-  });
+  ];
 }
 
 function finishPart(reason: "stop" | "tool-calls"): FakeStreamPart {

@@ -261,7 +261,7 @@ export async function getAllSubjectsWithPathsForUser(
  * recursive query. Use it when only paths are needed, not full subject rows.
  *
  * @example
- * const pathById = new Map((await getSubjectPathRowsForUser(userId)).map((row) => [row.id, row.path]));
+ * const rows = await getSubjectPathRowsForUser(userId);
  */
 export async function getSubjectPathRowsForUser(
   userId: string,
@@ -288,6 +288,21 @@ export async function getSubjectPathRowsForUser(
 
   return (result as unknown as { rows: Array<{ id: string; path: string }> })
     .rows;
+}
+
+/**
+ * The user's subject paths keyed by subject id, from the paths-only query.
+ * Paths only: flashcard copy loads cards in several parallel chunks and each
+ * one builds this map, so it skips full subject rows that no caller reads.
+ *
+ * @example
+ * const path = (await getSubjectPathMapForUser(userId)).get(subjectId);
+ */
+export async function getSubjectPathMapForUser(
+  userId: string,
+): Promise<Map<string, string>> {
+  const pathRows = await getSubjectPathRowsForUser(userId);
+  return new Map(pathRows.map((row) => [row.id, row.path]));
 }
 
 export async function isSubjectAncestorOf(

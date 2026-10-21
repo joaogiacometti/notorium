@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { foldSearchText } from "@/lib/search/fold";
 
 export interface SearchHighlightSegment {
   text: string;
@@ -8,7 +9,7 @@ export interface SearchHighlightSegment {
 
 const SEARCH_SNIPPET_ELLIPSIS = "...";
 
-/** Splits text into literal display segments for case-insensitive highlighting. */
+/** Splits text into literal display segments for case- and accent-insensitive highlighting. */
 export function splitSearchHighlightSegments(
   value: string,
   query: string,
@@ -48,9 +49,14 @@ export function buildSearchMatchSnippet(
   maxLength: number,
 ): string {
   const normalizedQuery = query.trim();
-  const matchIndex = value.toLowerCase().indexOf(normalizedQuery.toLowerCase());
+  if (normalizedQuery.length === 0) {
+    return truncateSearchSnippetEnd(value, maxLength);
+  }
 
-  if (normalizedQuery.length === 0 || matchIndex === -1) {
+  const matchIndex = foldSearchText(value).indexOf(
+    foldSearchText(normalizedQuery),
+  );
+  if (matchIndex === -1) {
     return truncateSearchSnippetEnd(value, maxLength);
   }
 
@@ -61,16 +67,17 @@ function collectSearchHighlightSegments(
   value: string,
   query: string,
 ): SearchHighlightSegment[] {
-  const lowerValue = value.toLowerCase();
-  const lowerQuery = query.toLowerCase();
+  // Folding keeps lengths, so folded indexes slice the original text.
+  const foldedValue = foldSearchText(value);
+  const foldedQuery = foldSearchText(query);
   const segments: SearchHighlightSegment[] = [];
   let cursor = 0;
-  let matchIndex = lowerValue.indexOf(lowerQuery);
+  let matchIndex = foldedValue.indexOf(foldedQuery);
 
   while (matchIndex !== -1) {
     pushSearchSegments(segments, value, cursor, matchIndex, query.length);
     cursor = matchIndex + query.length;
-    matchIndex = lowerValue.indexOf(lowerQuery, cursor);
+    matchIndex = foldedValue.indexOf(foldedQuery, cursor);
   }
 
   pushTrailingSearchSegment(segments, value, cursor);

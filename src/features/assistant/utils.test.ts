@@ -3,8 +3,10 @@ import {
   composeProposedFlashcardBack,
   findProposedSubjectId,
   formatFlashcardExample,
+  getLibraryHitHref,
   isAssistantReplyInFlight,
   readFlashcardProposalParts,
+  readLibrarySearchParts,
 } from "@/features/assistant/utils";
 
 const subjects = [
@@ -82,5 +84,46 @@ describe("readFlashcardProposalParts", () => {
         parts: [{ type: "text", text: "Here you go." }, proposal],
       }),
     ).toEqual([proposal]);
+  });
+});
+
+describe("readLibrarySearchParts", () => {
+  it("keeps only library search calls", () => {
+    const search = {
+      type: "tool-searchLibrary" as const,
+      toolCallId: "call-1",
+      state: "input-available" as const,
+      input: { terms: ["mitosis"] },
+    };
+
+    expect(
+      readLibrarySearchParts({
+        id: "m1",
+        role: "assistant",
+        parts: [{ type: "text", text: "Checking." }, search],
+      }),
+    ).toEqual([search]);
+  });
+});
+
+describe("getLibraryHitHref", () => {
+  const hit = {
+    id: "item-1",
+    subjectId: "subject-1",
+    title: "Mitosis",
+    subjectPath: "Biology",
+    snippet: "",
+  };
+
+  it("links each kind to its detail page", () => {
+    expect(getLibraryHitHref({ ...hit, kind: "note" })).toBe(
+      "/subjects/subject-1/documents/notes/item-1",
+    );
+    expect(getLibraryHitHref({ ...hit, kind: "mindmap" })).toBe(
+      "/subjects/subject-1/documents/mindmaps/item-1",
+    );
+    expect(getLibraryHitHref({ ...hit, kind: "flashcard" })).toBe(
+      "/flashcards/item-1",
+    );
   });
 });

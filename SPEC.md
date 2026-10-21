@@ -90,7 +90,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 - Create, read, update, and delete flashcards within subjects.
 - The flashcards manage table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
-- Flashcard manage search ranks front matches before back matches, subject-name matches, and recency tie-breakers.
+- Flashcard manage search ignores case and accents, and ranks front matches before back matches, subject-name matches, and recency tie-breakers.
 - Flashcard fields: front and back rich text.
 - Flashcard create/edit dialogs and inline detail editors use the study assistant for conversational improvements and filling an empty back; there are no separate Generate/Improve with AI buttons in these editors.
 - Flashcards can also be generated from a note or mindmap, via their detail-page header menu or sidebar/documents-list row menu, when AI is configured.
@@ -193,13 +193,13 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 ### Global Search
 
-- Search notes, flashcards, and mindmaps by text with case-insensitive matching. Subjects have no page, so they are not search results; notes and mindmaps also match on their subject's name.
+- Search notes, flashcards, and mindmaps by text with case- and accent-insensitive matching ("funcao" finds "Função"). Subjects have no page, so they are not search results; notes and mindmaps also match on their subject's name.
 - Flashcard search results navigate to the flashcard detail page.
 - Flashcard search results display subject paths using `::` notation.
 - Search is user-scoped and accessible from the left menu (and the `Cmd/Ctrl+K` shortcut).
 - Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
-- Search result text matching the query is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
+- Search result text matching the query (ignoring case and accents) is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
 - Empty queries show unfiltered data without highlighting.
 
 ### Study Assistant
@@ -216,7 +216,8 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Suggestions never overwrite newer typing or cross draft sessions: closing, switching, resetting after creation/saving, or editing during a reply invalidates stale suggestions. Follow-up requests skip unresolved suggestions and use the latest draft. A blocked or oversized send preserves pending suggestions. When a reply proposes multiple edits, each later proposal supersedes the previous one, recording unresolved fields as skipped. Outcomes reach the assistant on the next message without spending another AI request. Chat never saves edits itself.
 - Review and exam messages include the current card front and subject; the answer is included only after reveal. Card changes, undo, and exit refresh or clear that context. Without an active editor, editing requests direct the user to open Edit first.
 - Open notes and mindmaps provide their current unsaved title, subject, and content. Notes preserve text structure and math; mindmaps provide root-first node labels and relationships without canvas metadata or image URLs. Document excerpts are capped at 12,000 characters and identified as partial when truncated. A visible indicator names the active context. The assistant remains accessible in note and mindmap zen mode. Editor overlays restore underlying context on close; navigation clears old registrations.
-- Context is captured only when sending or retrying a message, using already loaded content without background AI calls or additional database reads. The assistant has no access to other documents or hidden card answers and changes nothing without the user's click. Existing conversation history remains across navigation.
+- Context is captured only when sending or retrying a message, using already loaded content without background AI calls or additional database reads. Beyond library search (below), the assistant has no access to other documents or hidden card answers and changes nothing without the user's click. Existing conversation history remains across navigation.
+- Asked whether the user has material on something ("do I have a flashcard on mitosis?", "which note talks about the Calvin cycle?"), the assistant searches the user's own notes, flashcards, and mindmaps once per reply. It sends 1 to 4 short terms (the topic plus synonyms or translations it picks); matching ignores case and accents and tolerates small typos in titles and flashcard fronts, but does not match by meaning. The search returns at most 4 items per kind with short excerpts (titles and excerpts up to 120 characters; card backs can appear in excerpts), never whole documents, and the chat lists each match as a link to its note, flashcard, or mindmap. On mobile, opening a link minimizes the chat. The assistant answers briefly from the excerpts and does not repeat the links. A search runs inside the same message and daily limit; a failed search shows "Library search failed." and the assistant answers without it.
 
 ### Command Palette
 

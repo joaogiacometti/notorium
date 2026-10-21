@@ -3,6 +3,7 @@
 import type { ChatStatus } from "ai";
 import { useEffect, useRef } from "react";
 import { AssistantFlashcardProposal } from "@/components/assistant/assistant-flashcard-proposal";
+import { AssistantLibraryResults } from "@/components/assistant/assistant-library-results";
 import {
   AssistantPlainReply,
   AssistantRichReply,
@@ -13,6 +14,7 @@ import type { AssistantUIMessage } from "@/features/assistant/types";
 import {
   isAssistantReplyInFlight,
   readFlashcardProposalParts,
+  readLibrarySearchParts,
 } from "@/features/assistant/utils";
 import { cn } from "@/lib/utils";
 
@@ -20,12 +22,14 @@ interface AssistantMessageListProps {
   messages: AssistantUIMessage[];
   status: ChatStatus;
   proposals: FlashcardProposalControls;
+  onOpenLibraryHit?: () => void;
 }
 
 export function AssistantMessageList({
   messages,
   status,
   proposals,
+  onOpenLibraryHit,
 }: Readonly<AssistantMessageListProps>) {
   const endRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages.at(-1);
@@ -68,6 +72,13 @@ export function AssistantMessageList({
               streaming={status === "streaming" && message === lastMessage}
             />
           )}
+          {readLibrarySearchParts(message).map((search) => (
+            <AssistantLibraryResults
+              key={search.toolCallId}
+              search={search}
+              onOpenHit={onOpenLibraryHit}
+            />
+          ))}
           {readFlashcardProposalParts(message).map((proposal) => (
             <AssistantFlashcardProposal
               key={proposal.toolCallId}
@@ -117,12 +128,15 @@ function AssistantMessageBubble({
 function hasVisibleContent(message: AssistantUIMessage): boolean {
   return (
     readMessageText(message) !== "" ||
-    readFlashcardProposalParts(message).length > 0
+    readFlashcardProposalParts(message).length > 0 ||
+    readLibrarySearchParts(message).length > 0
   );
 }
 
+// A reply that searched first may hold text from both steps; a blank line
+// keeps the two from running together.
 function readMessageText(message: AssistantUIMessage): string {
   return message.parts
-    .map((part) => (part.type === "text" ? part.text : ""))
-    .join("");
+    .flatMap((part) => (part.type === "text" && part.text ? [part.text] : []))
+    .join("\n\n");
 }

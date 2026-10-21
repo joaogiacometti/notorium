@@ -1,5 +1,6 @@
 import {
   convertToModelMessages,
+  isStepCount,
   streamText,
   type ToolSet,
   type UIMessage,
@@ -17,6 +18,12 @@ interface StreamChatResponseOptions {
   maxOutputTokens: number;
   /** Tools without `execute` end the reply; the client answers them. */
   tools?: ToolSet;
+  /**
+   * Model calls allowed per reply (default 1). Above 1, results of tools with
+   * `execute` go back to the model so it can answer from them; each extra
+   * step resends the whole prompt (mostly from the prompt cache).
+   */
+  maxModelSteps?: number;
   abortSignal?: AbortSignal;
   /**
    * Stable id of the conversation, sent as OpenRouter's `session_id` so every
@@ -50,6 +57,7 @@ export async function streamChatResponse({
   messages,
   maxOutputTokens,
   tools,
+  maxModelSteps = 1,
   abortSignal,
   sessionId,
 }: StreamChatResponseOptions): Promise<Response> {
@@ -59,6 +67,7 @@ export async function streamChatResponse({
     messages: await convertToModelMessages(messages, { tools }),
     maxOutputTokens,
     tools,
+    stopWhen: isStepCount(maxModelSteps),
     abortSignal,
     // Spread into the OpenRouter request body as-is, hence the snake_case.
     providerOptions: sessionId

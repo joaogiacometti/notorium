@@ -1,12 +1,31 @@
 import "server-only";
 
+import type {
+  LibrarySearchInput,
+  LibrarySearchOutput,
+} from "@/features/assistant/library-search-contract";
 import { buildAssistantSystemPrompt } from "@/features/assistant/prompts";
-import { assistantTools } from "@/features/assistant/tools";
+import {
+  buildAssistantTools,
+  type LibrarySearchFunction,
+} from "@/features/assistant/tools";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
+import { searchLibraryForUser } from "@/features/search/library-queries";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { streamChatResponse } from "@/lib/ai/stream-chat";
 import { acquireUserAiSettings } from "@/lib/ai/user-ai-access";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
+import { logServerFailure } from "@/lib/server/action-failure";
+
+type UserLibrarySearch = (
+  userId: string,
+  input: LibrarySearchInput,
+) => Promise<LibrarySearchOutput>;
+
+// One step to search, one to answer from the results. The answer step keeps
+// the same tools: changing the list would miss the prompt cache, so a second
+// search (the prompt forbids it) just ends the reply on its links.
+const ASSISTANT_MAX_MODEL_STEPS = 2;
 
 interface StreamAssistantReplyForUserInput {
   userId: string;
@@ -18,6 +37,8 @@ interface StreamAssistantReplyForUserInput {
   abortSignal?: AbortSignal;
   /** Injected by tests; defaults to the user's subject paths from the DB. */
   loadSubjectPaths?: (userId: string) => Promise<string[]>;
+  /** Injected by tests; defaults to the DB-backed library search. */
+  searchLibrary?: UserLibrarySearch;
 }
 
 type StreamAssistantReplyForUserResult =
@@ -30,7 +51,7 @@ type StreamAssistantReplyForUserResult =
 /**
  * Stream one study-assistant reply for a user's chat, spending one unit of the
  * user's daily assistant limit. The reply may propose flashcards in the user's
- * subjects; it reads subjects but writes nothing. Provider failures throw before the stream
+ * subjects or search their library; it reads but writes nothing. Provider failures throw before the stream
  * starts; the route maps them to `assistant.unavailable`.
  *
  * @example
@@ -45,6 +66,7 @@ export async function streamAssistantReplyForUser({
   context,
   abortSignal,
   loadSubjectPaths = readSubjectPathsForUser,
+  searchLibrary = searchLibraryForUser,
 }: StreamAssistantReplyForUserInput): Promise<StreamAssistantReplyForUserResult> {
   const access = await acquireUserAiSettings(userId, {
     prefix: LIMITS.aiAssistantRateLimitPrefix,
@@ -68,12 +90,29 @@ export async function streamAssistantReplyForUser({
     instructions: buildAssistantSystemPrompt(await loadSubjectPaths(userId)),
     messages: includeCurrentStudyContext(messages, draft, context),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
-    tools: assistantTools,
+    tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId)),
+    maxModelSteps: ASSISTANT_MAX_MODEL_STEPS,
     abortSignal,
     sessionId: chatId,
   });
 
   return { success: true, response };
+}
+
+// A failed search becomes the tool's error text, which the model and client
+// see, so it carries a fixed message instead of the driver error.
+function bindLibrarySearchToUser(
+  search: UserLibrarySearch,
+  userId: string,
+): LibrarySearchFunction {
+  return async (input) => {
+    try {
+      return await search(userId, input);
+    } catch (error) {
+      logServerFailure("ai_chat_failed", "assistant.searchLibrary", error);
+      throw new Error("Library search is unavailable right now.");
+    }
+  };
 }
 
 async function readSubjectPathsForUser(userId: string): Promise<string[]> {

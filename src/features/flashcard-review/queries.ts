@@ -6,7 +6,7 @@ import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
 import {
   getDescendantSubjectIds,
-  getSubjectPathRowsForUser,
+  getSubjectPathMapForUser,
 } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
@@ -39,13 +39,6 @@ export interface GetDueFlashcardsOptions {
 }
 
 const heatmapDays = 365;
-
-async function getSubjectPathMapForUser(
-  userId: string,
-): Promise<Map<string, string>> {
-  const pathRows = await getSubjectPathRowsForUser(userId);
-  return new Map(pathRows.map((row) => [row.id, row.path]));
-}
 
 type ReviewEntityRow = {
   flashcard: typeof flashcard.$inferSelect;

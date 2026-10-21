@@ -26,6 +26,15 @@ describe("splitSearchHighlightSegments", () => {
     ]);
   });
 
+  it("highlights accented text for an unaccented query", () => {
+    expect(
+      splitSearchHighlightSegments("Revolução Francesa", "revolucao"),
+    ).toEqual([
+      { text: "Revolução", highlighted: true, offset: 0 },
+      { text: " Francesa", highlighted: false, offset: 9 },
+    ]);
+  });
+
   it("does not highlight without a text query", () => {
     expect(splitSearchHighlightSegments("Recent note", " ")).toEqual([
       { text: "Recent note", highlighted: false, offset: 0 },
@@ -42,6 +51,16 @@ describe("buildSearchMatchSnippet", () => {
         24,
       ),
     ).toBe("...a delta epsilon zeta eta...");
+  });
+
+  it("centers an accented match for an unaccented query", () => {
+    expect(
+      buildSearchMatchSnippet(
+        "Alpha beta gamma função delta epsilon",
+        "funcao",
+        12,
+      ),
+    ).toBe("...ma função de...");
   });
 
   it("truncates from the end when the query is absent", () => {

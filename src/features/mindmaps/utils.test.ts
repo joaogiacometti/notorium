@@ -153,6 +153,29 @@ describe("findMindmapNodeLabelMatch", () => {
     );
   });
 
+  it("matches accented labels for an unaccented query", () => {
+    const data = graphWithLabels("Root", "Revolução Francesa");
+    expect(findMindmapNodeLabelMatch(data, "revolucao")).toBe(
+      "Revolução Francesa",
+    );
+  });
+
+  it("skips the root node and matches any of several queries", () => {
+    const data = JSON.stringify({
+      nodes: [
+        {
+          id: "r",
+          position: { x: 0, y: 0 },
+          data: { label: "Old Mitose", kind: "root" },
+        },
+        { id: "a", position: { x: 0, y: 0 }, data: { label: "Meiose" } },
+      ],
+      edges: [],
+    });
+    expect(findMindmapNodeLabelMatch(data, "mitose")).toBeUndefined();
+    expect(findMindmapNodeLabelMatch(data, "mitose", "meiose")).toBe("Meiose");
+  });
+
   it("returns the first match when multiple nodes match", () => {
     const data = graphWithLabels("Bounded Context A", "Bounded Context B");
     expect(findMindmapNodeLabelMatch(data, "bounded")).toBe(

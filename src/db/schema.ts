@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import type { AnyPgColumn, IndexBuilder } from "drizzle-orm/pg-core";
 import {
   boolean,
   index,
@@ -20,6 +20,16 @@ import {
 import type { FlashcardReviewSchedulingSnapshot } from "@/features/flashcard-review/types";
 
 export * from "@/db/schema-enums";
+
+// Accent- and case-insensitive search index. `immutable_unaccent` comes from
+// drizzle/0070_unaccent_search.sql; queries must wrap the column the same way
+// (`foldedContains` in src/features/search/match-sql.ts) or the planner skips it.
+function unaccentTrigramIndex(name: string, column: AnyPgColumn): IndexBuilder {
+  return index(name).using(
+    "gin",
+    sql`immutable_unaccent(${column}) gin_trgm_ops`,
+  );
+}
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -144,7 +154,7 @@ export const subject = pgTable(
     ),
     index("subject_parentSubjectId_idx").on(table.parentSubjectId),
     index("subject_userId_idx").on(table.userId),
-    index("subject_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
+    unaccentTrigramIndex("subject_name_unaccent_trgm_idx", table.name),
   ],
 );
 
@@ -172,11 +182,8 @@ export const note = pgTable(
     index("note_subjectId_idx").on(table.subjectId),
     index("note_userId_idx").on(table.userId),
     index("note_userId_updatedAt_idx").on(table.userId, table.updatedAt),
-    index("note_title_trgm_idx").using("gin", table.title.op("gin_trgm_ops")),
-    index("note_content_trgm_idx").using(
-      "gin",
-      sql`coalesce(${table.content}, '') gin_trgm_ops`,
-    ),
+    unaccentTrigramIndex("note_title_unaccent_trgm_idx", table.title),
+    unaccentTrigramIndex("note_content_unaccent_trgm_idx", table.content),
   ],
 );
 
@@ -206,10 +213,7 @@ export const mindmap = pgTable(
     index("mindmap_subjectId_idx").on(table.subjectId),
     index("mindmap_userId_idx").on(table.userId),
     index("mindmap_userId_updatedAt_idx").on(table.userId, table.updatedAt),
-    index("mindmap_title_trgm_idx").using(
-      "gin",
-      table.title.op("gin_trgm_ops"),
-    ),
+    unaccentTrigramIndex("mindmap_title_unaccent_trgm_idx", table.title),
   ],
 );
 
@@ -258,14 +262,8 @@ export const flashcard = pgTable(
       table.subjectId,
       table.updatedAt,
     ),
-    index("flashcard_front_trgm_idx").using(
-      "gin",
-      table.front.op("gin_trgm_ops"),
-    ),
-    index("flashcard_back_trgm_idx").using(
-      "gin",
-      table.back.op("gin_trgm_ops"),
-    ),
+    unaccentTrigramIndex("flashcard_front_unaccent_trgm_idx", table.front),
+    unaccentTrigramIndex("flashcard_back_unaccent_trgm_idx", table.back),
   ],
 );
 

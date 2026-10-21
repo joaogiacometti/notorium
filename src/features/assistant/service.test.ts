@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  LibrarySearchInput,
+  LibrarySearchOutput,
+} from "@/features/assistant/library-search-contract";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 import {
   createFakeStreamingModel,
+  createFakeToolThenTextModel,
   readStreamedText,
 } from "@/test/fake-streaming-model";
 
@@ -14,6 +19,24 @@ class FakeSubjectPathStore {
   load = async (userId: string): Promise<string[]> => {
     this.requestedUserIds.push(userId);
     return this.paths;
+  };
+}
+
+/** Library search standing in for the DB; records each user's search. */
+class FakeLibrarySearch {
+  readonly calls: Array<{ userId: string; input: LibrarySearchInput }> = [];
+
+  constructor(
+    private readonly output: LibrarySearchOutput | Error = { hits: [] },
+  ) {}
+
+  search = async (
+    userId: string,
+    input: LibrarySearchInput,
+  ): Promise<LibrarySearchOutput> => {
+    this.calls.push({ userId, input });
+    if (this.output instanceof Error) throw this.output;
+    return this.output;
   };
 }
 
@@ -140,8 +163,87 @@ describe("streamAssistantReplyForUser", () => {
     expect(call?.tools?.map((tool) => tool.name)).toEqual([
       "proposeFlashcardEdits",
       "proposeFlashcards",
+      "searchLibrary",
     ]);
     expect(JSON.stringify(call?.prompt[0])).toContain("Biology::Cells");
+  });
+
+  it("searches the user's library, then answers from the hits", async () => {
+    const model = createFakeToolThenTextModel(
+      "searchLibrary",
+      { terms: ["mitose", "mitosis"] },
+      "Yes, one flashcard.",
+    );
+    getAiModelMock.mockReturnValue(model);
+    const library = new FakeLibrarySearch({
+      hits: [
+        {
+          kind: "flashcard",
+          id: "card-1",
+          subjectId: "subject-1",
+          title: "What is mitosis?",
+          subjectPath: "Biology",
+          snippet: "Cell division.",
+        },
+      ],
+    });
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      searchLibrary: library.search,
+    });
+    if (!result.success) throw new Error("Expected a streamed reply");
+    const body = await result.response.text();
+
+    const answerCall = model.doStreamCalls[1];
+    expect(library.calls).toEqual([
+      { userId: "user-1", input: { terms: ["mitose", "mitosis"] } },
+    ]);
+    expect(readStreamedText(body)).toBe("Yes, one flashcard.");
+    expect(JSON.stringify(answerCall?.prompt)).toContain("What is mitosis?");
+    expect(JSON.stringify(answerCall?.prompt)).not.toContain("card-1");
+    // Same tools on both steps, so the answer step hits the prompt cache.
+    expect(answerCall?.tools).toEqual(model.doStreamCalls[0]?.tools);
+    expect(model.doStreamCalls).toHaveLength(2);
+  });
+
+  it("hides a failed search's internal error from the model", async () => {
+    const model = createFakeToolThenTextModel(
+      "searchLibrary",
+      { terms: ["mitose"] },
+      "The search failed.",
+    );
+    getAiModelMock.mockReturnValue(model);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const library = new FakeLibrarySearch(
+      new Error('relation "secret_table_x" does not exist'),
+    );
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      searchLibrary: library.search,
+    });
+    if (!result.success) throw new Error("Expected a streamed reply");
+    const body = await result.response.text();
+
+    const answerPrompt = JSON.stringify(model.doStreamCalls[1]?.prompt);
+    expect(answerPrompt).toContain("Library search is unavailable right now.");
+    expect(answerPrompt).not.toContain("secret_table_x");
+    expect(body).not.toContain("secret_table_x");
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"scope":"assistant.searchLibrary"'),
+    );
+    errorSpy.mockRestore();
   });
 
   it("places study context before the question without adding it to system instructions", async () => {

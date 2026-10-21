@@ -39,7 +39,11 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("@/features/subjects/queries", () => ({
-  getSubjectPathRowsForUser: getSubjectPathRowsForUserMock,
+  getSubjectPathMapForUser: async (userId: string) => {
+    const rows: Array<{ id: string; path: string }> =
+      await getSubjectPathRowsForUserMock(userId);
+    return new Map(rows.map((row) => [row.id, row.path]));
+  },
   getDescendantSubjectIds: getDescendantSubjectIdsMock,
 }));
 

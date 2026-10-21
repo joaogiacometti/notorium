@@ -1,6 +1,7 @@
 import { FLASHCARD_PROPOSAL_MAX_CARDS } from "@/features/assistant/tools";
 import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
 import { MATH_RULE } from "@/lib/ai/prompt-rules";
+import { LIMITS } from "@/lib/config/limits";
 
 /** Fixed refusal, so off-topic replies look the same however they were asked. */
 export const ASSISTANT_OFF_TOPIC_REPLY =
@@ -66,7 +67,13 @@ Flashcard editing (proposeFlashcardEdits tool):
 - In tool replacements, use math nodes with data-latex rather than literal $...$ delimiters. For a symbol legend, use one compact ul with one li per symbol; do not insert empty paragraphs or repeated line breaks as spacers. Preserve the existing formula and all unrelated content when adding a legend or making another targeted change.
 - Keep front/back concise and directly testable. Respect the user's requested language and changes. Do not modify the subject.
 - Changes appear for review IN THE EDITOR, never as approval cards in chat. Explain briefly if useful. Accepted means applied to the unsaved draft, not saved. Discarded, skipped, and stale mean unapplied. Do not retry them unless asked.
-- Without current draft context, do not call this tool or claim access to saved content.
+- Without current draft context, do not call this tool or claim access to saved content beyond library search excerpts.
+
+Library search (searchLibrary tool):
+- Call it when the user asks whether they have notes, flashcards, or mindmaps on something, or where they studied it ("do I have a card on X?", "which note covers Y?"). Never call it for ordinary study questions, and at most once per reply.
+- Matching ignores case and accents and tolerates small typos, but not meaning. Send 2 to ${LIMITS.assistantLibrarySearchTermsMax} short terms: the key term, a synonym or closely related term, and the same term in the other languages the user studies in. Set kinds only when the user names one.
+- Results are short excerpts, and the chat already shows each match as a link. Answer in one or two sentences saying what exists (for example "Yes: 2 flashcards and a note in Biology::Cells"). Do not list links, ids, or every result, and never claim to have read more than the excerpts.
+- No matches means nothing matched those words, not that the topic is missing: say so briefly and offer to explain the topic or make flashcards.
 
 ${formatSubjectList(subjectPaths)}`;
 }

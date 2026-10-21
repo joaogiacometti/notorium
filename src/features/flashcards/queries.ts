@@ -3,7 +3,6 @@ import {
   count,
   desc,
   eq,
-  ilike,
   inArray,
   ne,
   or,
@@ -13,10 +12,11 @@ import {
 import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
+import { foldedContains } from "@/features/search/match-sql";
 import {
   getDescendantSubjectIds,
   getSubjectPathForUser,
-  getSubjectPathRowsForUser,
+  getSubjectPathMapForUser,
 } from "@/features/subjects/queries";
 import {
   getRichTextExcerpt,
@@ -29,15 +29,6 @@ import type {
   FlashcardEntity,
   FlashcardManagePage,
 } from "@/lib/server/api-contracts";
-
-// Paths only: copy loads cards in several parallel chunks and each one builds
-// this map, so skip fetching full subject rows that no caller reads.
-async function getSubjectPathMapForUser(
-  userId: string,
-): Promise<Map<string, string>> {
-  const pathRows = await getSubjectPathRowsForUser(userId);
-  return new Map(pathRows.map((row) => [row.id, row.path]));
-}
 
 async function resolveScopedSubjectIds(
   userId: string,
@@ -65,9 +56,9 @@ export function getFlashcardsManageOrderBy(
 
   return [
     sql<number>`case
-      when ${flashcard.front} ilike ${searchPattern} then 0
-      when ${flashcard.back} ilike ${searchPattern} then 1
-      when ${subject.name} ilike ${searchPattern} then 2
+      when ${foldedContains(flashcard.front, searchPattern)} then 0
+      when ${foldedContains(flashcard.back, searchPattern)} then 1
+      when ${foldedContains(subject.name, searchPattern)} then 2
       else 3
     end`,
     desc(flashcard.updatedAt),
@@ -103,9 +94,9 @@ export async function getFlashcardsManagePageForUser(
       ? [
           ...filters,
           or(
-            ilike(flashcard.front, searchPattern),
-            ilike(flashcard.back, searchPattern),
-            ilike(subject.name, searchPattern),
+            foldedContains(flashcard.front, searchPattern),
+            foldedContains(flashcard.back, searchPattern),
+            foldedContains(subject.name, searchPattern),
           ),
         ]
       : filters;

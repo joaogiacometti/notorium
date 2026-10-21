@@ -108,6 +108,7 @@ function AssistantConversationPanel({
         messages={chat.messages}
         status={chat.status}
         proposals={proposals}
+        onOpenLibraryHit={() => minimizeOnCompactLayout(onMinimize)}
       />
       {chat.error ? (
         <div
@@ -136,4 +137,10 @@ function AssistantConversationPanel({
       />
     </AssistantPanelFrame>
   );
+}
+
+// Below `lg` the chat covers the page, so an opened search result would load
+// hidden behind it; wider layouts keep the chat beside the page.
+function minimizeOnCompactLayout(onMinimize: () => void): void {
+  if (!window.matchMedia("(min-width: 64rem)").matches) onMinimize();
 }

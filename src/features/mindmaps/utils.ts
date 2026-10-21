@@ -3,6 +3,7 @@ import {
   type MindmapGraph,
 } from "@/features/mindmaps/types";
 import { mindmapGraphSchema } from "@/features/mindmaps/validation";
+import { foldSearchText } from "@/lib/search/fold";
 
 /**
  * Safely parse a persisted mindmap `data` column into a graph. Returns an empty
@@ -116,20 +117,24 @@ export function getMindmapImagePathnames(data: string | null): string[] {
 }
 
 /**
- * Find the first node label in a mindmap that contains `query` (case-insensitive).
- * Returns undefined if nothing matches or the graph is empty.
+ * Find the first non-root node label in a mindmap that contains any of
+ * `queries`, ignoring case and accents like global search. The root is
+ * skipped: it shows the title, which callers match on their own, and its
+ * stored label can be stale. Returns undefined if nothing matches.
  *
  * @example
  * findMindmapNodeLabelMatch(mindmap.data, "separate ways"); // "Separate Ways"
  */
 export function findMindmapNodeLabelMatch(
   data: string | null,
-  query: string,
+  ...queries: string[]
 ): string | undefined {
-  const lower = query.toLowerCase();
-  return parseMindmapGraph(data).nodes.find((node) =>
-    node.data.label.toLowerCase().includes(lower),
-  )?.data.label;
+  const foldedQueries = queries.map(foldSearchText);
+  return parseMindmapGraph(data).nodes.find((node) => {
+    if (node.data.kind === "root") return false;
+    const label = foldSearchText(node.data.label);
+    return foldedQueries.some((query) => label.includes(query));
+  })?.data.label;
 }
 
 /** Pathnames present in `previousData` but no longer referenced by `nextData`. */

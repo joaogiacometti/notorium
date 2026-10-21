@@ -1,14 +1,20 @@
 import type { ChatStatus } from "ai";
 import type { FlashcardDraft } from "@/features/assistant/edit-contract";
+import type { LibraryHit } from "@/features/assistant/library-search-contract";
 import type {
   FlashcardExample,
   ProposedFlashcard,
 } from "@/features/assistant/tools";
 import type {
   AssistantFlashcardProposalPart,
+  AssistantLibrarySearchPart,
   AssistantUIMessage,
 } from "@/features/assistant/types";
 import { replaceImagesWithPlaceholders } from "@/lib/editor/rich-text";
+import {
+  getDocumentDetailHref,
+  getFlashcardDetailHref,
+} from "@/lib/navigation/detail-page-back-link";
 
 interface SubjectPathOption {
   id: string;
@@ -109,4 +115,29 @@ export function readFlashcardProposalParts(
     (part): part is AssistantFlashcardProposalPart =>
       part.type === "tool-proposeFlashcards",
   );
+}
+
+/** The `searchLibrary` calls in one chat message, in order.
+ * @example readLibrarySearchParts(message).length;
+ */
+export function readLibrarySearchParts(
+  message: AssistantUIMessage,
+): AssistantLibrarySearchPart[] {
+  return message.parts.filter(
+    (part): part is AssistantLibrarySearchPart =>
+      part.type === "tool-searchLibrary",
+  );
+}
+
+/**
+ * Detail page of a library search hit, built from its ids rather than a URL
+ * the model or client could have written.
+ *
+ * @example
+ * getLibraryHitHref({ kind: "note", id: "n1", subjectId: "s1", ... }); // "/subjects/s1/documents/notes/n1"
+ */
+export function getLibraryHitHref(hit: LibraryHit): string {
+  return hit.kind === "flashcard"
+    ? getFlashcardDetailHref(hit.id)
+    : getDocumentDetailHref({ ...hit, kind: hit.kind });
 }

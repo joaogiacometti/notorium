@@ -4,6 +4,13 @@ import {
   flashcardEditsInputSchema,
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
+import {
+  formatLibraryHitsForModel,
+  type LibrarySearchInput,
+  type LibrarySearchOutput,
+  librarySearchInputSchema,
+  librarySearchOutputSchema,
+} from "@/features/assistant/library-search-contract";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
 /** Most cards one proposal may hold; keeps a single turn reviewable. */
@@ -96,27 +103,48 @@ export type FlashcardProposalOutput = z.infer<
   typeof flashcardProposalOutputSchema
 >;
 
+/** Runs one `searchLibrary` call for the current user; injected by the service. */
+export type LibrarySearchFunction = (
+  input: LibrarySearchInput,
+) => Promise<LibrarySearchOutput>;
+
 /**
- * Study assistant tools. `proposeFlashcards` has no `execute`: the call ends
- * the reply and the chat shows the cards for the user to create, edit, or
- * discard, so nothing is written without the user's click and the route stays
- * write-free.
+ * Study assistant tools. The proposal tools have no `execute`: the call ends
+ * the reply and the chat shows the cards or edits for the user to accept, so
+ * nothing is written without the user's click and the route stays write-free.
+ * `searchLibrary` is the one tool run on the server: it only reads, through
+ * the injected user-bound search.
  *
  * @example
- * streamChatResponse({ ...options, tools: assistantTools });
+ * streamChatResponse({ ...options, tools: buildAssistantTools(search) });
  */
-export const assistantTools = {
-  proposeFlashcardEdits: tool({
-    description:
-      "Suggest front/back replacements ONLY when the current user message explicitly requests changes to the flashcard draft. Never use this tool to answer questions, explain concepts, or give examples in chat, even when a draft is present. The user reviews changes in the editor; nothing is saved.",
-    inputSchema: flashcardEditsInputSchema,
-    outputSchema: flashcardEditsOutputSchema,
-  }),
-  proposeFlashcards: tool({
-    description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} flashcards for the user to review; nothing is saved until they confirm each card.`,
-    inputSchema: flashcardProposalInputSchema,
-    outputSchema: flashcardProposalOutputSchema,
-  }),
-};
+export function buildAssistantTools(searchLibrary: LibrarySearchFunction) {
+  return {
+    proposeFlashcardEdits: tool({
+      description:
+        "Suggest front/back replacements ONLY when the current user message explicitly requests changes to the flashcard draft. Never use this tool to answer questions, explain concepts, or give examples in chat, even when a draft is present. The user reviews changes in the editor; nothing is saved.",
+      inputSchema: flashcardEditsInputSchema,
+      outputSchema: flashcardEditsOutputSchema,
+    }),
+    proposeFlashcards: tool({
+      description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} flashcards for the user to review; nothing is saved until they confirm each card.`,
+      inputSchema: flashcardProposalInputSchema,
+      outputSchema: flashcardProposalOutputSchema,
+    }),
+    searchLibrary: tool({
+      description:
+        "Search the user's own notes, flashcards, and mindmaps by keyword. Use ONLY when the user asks whether they have material on something or where they wrote about it. Returns a few short excerpts, which the chat shows as links.",
+      inputSchema: librarySearchInputSchema,
+      outputSchema: librarySearchOutputSchema,
+      execute: (input) => searchLibrary(input),
+      toModelOutput: ({ output }) => ({
+        type: "text",
+        value: formatLibraryHitsForModel(output),
+      }),
+    }),
+  };
+}
 
-export type AssistantTools = InferUITools<typeof assistantTools>;
+export type AssistantTools = InferUITools<
+  ReturnType<typeof buildAssistantTools>
+>;

@@ -77,6 +77,12 @@ export const LIMITS = {
   // Far above what `AI_LIMITS.assistantMaxOutputTokens` can produce at any
   // tokenizer ratio: a reply over it would make every later turn fail.
   assistantReplyMaxChars: 16000,
+  // Library search answers "do I have anything on X?" with a few excerpts,
+  // never whole documents, so a search adds little to the prompt.
+  assistantLibrarySearchTermsMax: 4,
+  assistantLibrarySearchTermMaxChars: 60,
+  assistantLibraryHitsPerKind: 4,
+  assistantLibraryExcerptMaxChars: 120,
   trustedProxyCount: 0,
   ipAddressMaxLength: 64,
 } as const;

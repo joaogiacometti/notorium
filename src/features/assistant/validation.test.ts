@@ -15,7 +15,7 @@ function replyMessage(id: string, text: string) {
 }
 
 describe("assistantChatRequestSchema", () => {
-  it("accepts a chat and keeps only text parts of replies", () => {
+  it("accepts a chat and keeps reply text with its step markers", () => {
     const parsed = assistantChatRequestSchema.parse({
       messages: [
         userMessage("m1", "What is ATP?"),
@@ -27,7 +27,10 @@ describe("assistantChatRequestSchema", () => {
     expect(parsed.messages[1]).toEqual({
       id: "m2",
       role: "assistant",
-      parts: [{ type: "text", text: "The cell's energy carrier." }],
+      parts: [
+        { type: "step-start" },
+        { type: "text", text: "The cell's energy carrier." },
+      ],
     });
   });
 
@@ -239,6 +242,93 @@ describe("assistantChatRequestSchema", () => {
           },
         ],
       });
+
+      expect(result.success).toBe(false);
+    });
+  });
+  describe("library searches", () => {
+    const hit = {
+      kind: "flashcard",
+      id: "card-1",
+      subjectId: "subject-1",
+      title: "What is mitosis?",
+      subjectPath: "Biology",
+      snippet: "Cell division.",
+    };
+
+    function searchPart(state: string, extra: Record<string, unknown> = {}) {
+      return {
+        type: "tool-searchLibrary",
+        toolCallId: "call-1",
+        state,
+        input: { terms: ["mitose", "mitosis"] },
+        ...extra,
+      };
+    }
+
+    function chatWithReplyParts(parts: unknown[]) {
+      return {
+        messages: [
+          userMessage("m1", "Do I have a card on mitosis?"),
+          { id: "m2", role: "assistant", parts },
+          userMessage("m3", "Open the first one"),
+        ],
+      };
+    }
+
+    it("keeps a finished search between the steps it separates", () => {
+      const parsed = assistantChatRequestSchema.parse(
+        chatWithReplyParts([
+          { type: "step-start" },
+          searchPart("output-available", { output: { hits: [hit] } }),
+          { type: "step-start" },
+          { type: "text", text: "Yes, one flashcard." },
+        ]),
+      );
+
+      expect(parsed.messages[1]?.parts.map((part) => part.type)).toEqual([
+        "step-start",
+        "tool-searchLibrary",
+        "step-start",
+        "text",
+      ]);
+    });
+
+    it("drops pending and failed searches", () => {
+      const parsed = assistantChatRequestSchema.parse(
+        chatWithReplyParts([
+          { type: "step-start" },
+          searchPart("output-error", { errorText: "Unavailable" }),
+          { type: "step-start" },
+          { type: "text", text: "The search failed." },
+        ]),
+      );
+      const pending = assistantChatRequestSchema.parse(
+        chatWithReplyParts([
+          { type: "step-start" },
+          searchPart("input-available"),
+        ]),
+      );
+
+      expect(parsed.messages[1]?.parts.map((part) => part.type)).toEqual([
+        "step-start",
+        "step-start",
+        "text",
+      ]);
+      expect(pending.messages.map((message) => message.id)).toEqual([
+        "m1",
+        "m3",
+      ]);
+    });
+
+    it("rejects a search result with an unknown kind", () => {
+      const result = assistantChatRequestSchema.safeParse(
+        chatWithReplyParts([
+          searchPart("output-available", {
+            output: { hits: [{ ...hit, kind: "subject" }] },
+          }),
+        ]),
+      );
 
       expect(result.success).toBe(false);
     });

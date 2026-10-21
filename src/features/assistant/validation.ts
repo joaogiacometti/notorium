@@ -4,6 +4,10 @@ import {
   flashcardEditsInputSchema,
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
+import {
+  librarySearchInputSchema,
+  librarySearchOutputSchema,
+} from "@/features/assistant/library-search-contract";
 import { studyContextSchema } from "@/features/assistant/study-context";
 import {
   flashcardProposalInputSchema,
@@ -21,75 +25,87 @@ const replyTextPartSchema = z.object({
   text: z.string().max(LIMITS.assistantReplyMaxChars),
 });
 
-// `useChat` stores a `step-start` marker in every streamed reply; it carries no
-// content, so it is accepted and dropped before the history reaches the model.
+// `useChat` stores a `step-start` marker before each model step of a reply.
+// It is kept: the history conversion splits a reply into steps at these
+// markers, and without them a search result would follow the answer it fed.
 const stepStartPartSchema = z.object({ type: z.literal("step-start") });
 
-// A proposal the user handled (created, dismissed, or skipped cards) goes back
-// to the model with its outcomes, so later turns know what happened to it.
-const answeredProposalPartSchema = z
-  .object({
-    type: z.literal("tool-proposeFlashcards"),
+// An answered tool call goes back to the model with its result: a handled
+// proposal (created, dismissed, or skipped cards) so later turns know what
+// happened to it, and a finished library search so follow-up questions
+// ("open the second one") know what was found.
+function answeredToolPartSchema<
+  TType extends string,
+  TInput extends z.ZodType,
+  TOutput extends z.ZodType,
+>(type: TType, input: TInput, output: TOutput) {
+  return z.object({
+    type: z.literal(type),
     toolCallId: z.string().min(1).max(100),
     state: z.literal("output-available"),
-    input: flashcardProposalInputSchema,
-    output: flashcardProposalOutputSchema,
-  })
-  .refine((part) => part.output.outcomes.length === part.input.cards.length, {
-    message: "A proposal needs one outcome per proposed card",
+    input,
+    output,
   });
+}
 
-// A proposal still waiting for the user, cut off mid-stream, or rejected by
-// the SDK for invalid model input (`output-error`) has no usable output; a
-// tool call without a result is rejected by providers, so it is accepted and
-// dropped like `step-start` instead of failing every later request.
-const unansweredProposalPartSchema = z.object({
-  type: z.literal("tool-proposeFlashcards"),
-  state: z.enum(["input-streaming", "input-available", "output-error"]),
+const answeredProposalPartSchema = answeredToolPartSchema(
+  "tool-proposeFlashcards",
+  flashcardProposalInputSchema,
+  flashcardProposalOutputSchema,
+).refine((part) => part.output.outcomes.length === part.input.cards.length, {
+  message: "A proposal needs one outcome per proposed card",
 });
 
-const answeredEditsPartSchema = z
-  .object({
-    type: z.literal("tool-proposeFlashcardEdits"),
-    toolCallId: z.string().min(1).max(100),
-    state: z.literal("output-available"),
-    input: flashcardEditsInputSchema,
-    output: flashcardEditsOutputSchema,
-  })
-  .refine(
-    (part) =>
-      (["front", "back"] as const).every(
-        (field) =>
-          (part.input[field] === undefined) ===
-          (part.output[field] === undefined),
-      ),
-    { message: "Expected one outcome per proposed field" },
-  );
+const answeredEditsPartSchema = answeredToolPartSchema(
+  "tool-proposeFlashcardEdits",
+  flashcardEditsInputSchema,
+  flashcardEditsOutputSchema,
+).refine(
+  (part) =>
+    (["front", "back"] as const).every(
+      (field) =>
+        (part.input[field] === undefined) ===
+        (part.output[field] === undefined),
+    ),
+  { message: "Expected one outcome per proposed field" },
+);
 
-const unansweredEditsPartSchema = z.object({
-  type: z.literal("tool-proposeFlashcardEdits"),
+const answeredLibrarySearchPartSchema = answeredToolPartSchema(
+  "tool-searchLibrary",
+  librarySearchInputSchema,
+  librarySearchOutputSchema,
+);
+
+// A tool call still waiting for the user, cut off mid-stream, or failed or
+// rejected by the SDK for invalid model input (`output-error`) has no usable
+// output; a tool call without a result is rejected by providers, so it is
+// accepted and dropped instead of failing every later request.
+const unansweredToolPartSchema = z.object({
+  type: z.enum([
+    "tool-proposeFlashcards",
+    "tool-proposeFlashcardEdits",
+    "tool-searchLibrary",
+  ]),
   state: z.enum(["input-streaming", "input-available", "output-error"]),
 });
 
 const replyPartSchema = z.union([
-  answeredEditsPartSchema,
-  unansweredEditsPartSchema,
   replyTextPartSchema,
   stepStartPartSchema,
   answeredProposalPartSchema,
-  unansweredProposalPartSchema,
+  answeredEditsPartSchema,
+  answeredLibrarySearchPartSchema,
+  unansweredToolPartSchema,
 ]);
 
 type ReplyPart = z.infer<typeof replyPartSchema>;
 
 function isModelVisiblePart(
   part: ReplyPart,
-): part is
-  | z.infer<typeof replyTextPartSchema>
-  | z.infer<typeof answeredProposalPartSchema>
-  | z.infer<typeof answeredEditsPartSchema> {
+): part is Exclude<ReplyPart, z.infer<typeof unansweredToolPartSchema>> {
   return (
     part.type === "text" ||
+    part.type === "step-start" ||
     ("state" in part && part.state === "output-available")
   );
 }
@@ -103,7 +119,7 @@ const userMessageSchema = z.object({
 const replyMessageSchema = z.object({
   id: z.string().min(1).max(100),
   role: z.literal("assistant"),
-  // Room for text, step markers, and a few flashcard proposals.
+  // Room for text, step markers, a search, and a few flashcard proposals.
   parts: z
     .array(replyPartSchema)
     .max(16)
@@ -114,12 +130,14 @@ type ChatMessage =
   | z.infer<typeof userMessageSchema>
   | z.infer<typeof replyMessageSchema>;
 
-// A reply stopped before its first token keeps no text, and one holding only
-// pending proposals keeps nothing; an empty assistant turn is rejected by some
-// providers, so it is dropped instead.
+// A reply stopped before its first token keeps only step markers, and one
+// holding only pending proposals keeps nothing; an empty assistant turn is
+// rejected by some providers, so it is dropped instead.
 function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
   return messages.filter(
-    (message) => message.role === "user" || message.parts.length > 0,
+    (message) =>
+      message.role === "user" ||
+      message.parts.some((part) => part.type !== "step-start"),
   );
 }
 
@@ -127,8 +145,8 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
  * Request body of `POST /api/assistant/chat`: the `useChat` id and the whole
  * non-persistent chat, oldest first, ending with the user's new message. The
  * id is optional so a tab loaded before it was sent keeps working. Only user
- * text, assistant text, and answered flashcard proposals are accepted, so a
- * client cannot inject system messages or other parts.
+ * text, assistant text, answered flashcard proposals, and library searches
+ * are accepted, so a client cannot inject system messages or other parts.
  *
  * @example
  * assistantChatRequestSchema.safeParse({
