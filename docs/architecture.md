@@ -12,6 +12,7 @@ Related docs: [Docs Index](./README.md), [UI Conventions](./ui-conventions.md), 
 src/
 |-- app/                 Next.js App Router pages, layouts, API routes, and Server Actions
 |   |-- (app)/           Authenticated pages
+|   |-- (auth)/          Signed-out pages (login, signup, password reset) sharing one centered layout
 |   |-- actions/         Client-callable write boundary (Server Actions)
 |   `-- api/             Client-callable read boundary (GET route handlers), uploads, AI chat stream, cron
 |-- components/          Feature UI, shared UI, the left menu (components/navbar), auth forms, and shadcn primitives
