@@ -1,13 +1,15 @@
 import { z } from "zod";
-import { LIMITS } from "@/lib/config/limits";
+import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 
-// HTML needs room for tables, math attributes, and attachment references.
-const DRAFT_HTML_MAX = 100_000;
+/** Raw size cap for a card side sent to the assistant; the visible-text limit
+ * is checked separately. HTML needs room for tables, math attributes, and
+ * attachment references. */
+export const ASSISTANT_CARD_SIDE_MAX_CHARS = 100_000;
 const draftHtml = (limit: number) =>
   z
     .string()
-    .max(DRAFT_HTML_MAX)
+    .max(ASSISTANT_CARD_SIDE_MAX_CHARS)
     .refine(
       (value) => richTextToPlainText(value).length <= limit,
       `Expected rich text with at most ${limit} visible characters`,
@@ -21,7 +23,7 @@ export const flashcardDraftSchema = z.object({
   revision: z.number().int().nonnegative(),
   front: draftHtml(LIMITS.flashcardFrontMax),
   back: draftHtml(LIMITS.flashcardBackMax),
-  subjectPath: z.string().max(2000).optional(),
+  subjectPath: z.string().max(SUBJECT_PATH_MAX_CHARS).optional(),
 });
 
 /** Model replacements use supported editor HTML, with images represented by placeholders.

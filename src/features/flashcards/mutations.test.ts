@@ -32,7 +32,6 @@ const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
 const hasDuplicateFlashcardFrontForUserMock = vi.fn();
-const generateFlashcardBackForUserMock = vi.fn();
 const improveFlashcardBackForUserMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
@@ -65,7 +64,6 @@ vi.mock("@/features/subjects/queries", () => ({
 }));
 
 vi.mock("@/features/flashcards/ai-service", () => ({
-  generateFlashcardBackForUser: generateFlashcardBackForUserMock,
   improveFlashcardBackForUser: improveFlashcardBackForUserMock,
 }));
 
@@ -306,7 +304,7 @@ describe("bulkMoveFlashcardsForUser", () => {
   });
 });
 
-describe("generateFlashcardBackForUserInput", () => {
+describe("improveFlashcardBackForUserInput", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSubjectRecordForUserMock.mockResolvedValue({
@@ -315,42 +313,45 @@ describe("generateFlashcardBackForUserInput", () => {
     });
   });
 
-  it("calls generate when currentBack is absent", async () => {
-    generateFlashcardBackForUserMock.mockResolvedValueOnce({
+  it("improves the back with the subject name as context", async () => {
+    improveFlashcardBackForUserMock.mockResolvedValueOnce({
       success: true,
-      back: "<p>Generated back</p>",
+      back: "<p>Improved back</p>",
     });
 
-    const { generateFlashcardBackForUserInput } = await import(
+    const { improveFlashcardBackForUserInput } = await import(
       "@/features/flashcards/mutations"
     );
 
-    const result = await generateFlashcardBackForUserInput("user-1", {
+    const result = await improveFlashcardBackForUserInput("user-1", {
       subjectId: "deck-1",
       front: "<p>What is ATP?</p>",
+      currentBack: "<p>Energy</p>",
     });
 
     expect(result).toEqual({
       success: true,
-      back: "<p>Generated back</p>",
+      back: "<p>Improved back</p>",
     });
-    expect(generateFlashcardBackForUserMock).toHaveBeenCalledWith({
+    expect(improveFlashcardBackForUserMock).toHaveBeenCalledWith({
       userId: "user-1",
       subjectName: "Metabolism",
       front: "<p>What is ATP?</p>",
+      currentBack: "<p>Energy</p>",
     });
   });
 
   it("returns notFound when the deck does not exist", async () => {
     getSubjectRecordForUserMock.mockResolvedValueOnce(null);
 
-    const { generateFlashcardBackForUserInput } = await import(
+    const { improveFlashcardBackForUserInput } = await import(
       "@/features/flashcards/mutations"
     );
 
-    const result = await generateFlashcardBackForUserInput("user-1", {
+    const result = await improveFlashcardBackForUserInput("user-1", {
       subjectId: "deck-1",
       front: "<p>What is ATP?</p>",
+      currentBack: "<p>Energy</p>",
     });
 
     expect(result).toEqual({

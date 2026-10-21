@@ -7,6 +7,7 @@ import type {
   AssistantFlashcardProposalPart,
   AssistantUIMessage,
 } from "@/features/assistant/types";
+import { readFlashcardProposalParts } from "@/features/assistant/utils";
 
 type ProposalChat = Pick<
   UseChatHelpers<AssistantUIMessage>,
@@ -119,12 +120,7 @@ export function useFlashcardProposalOutcomes(
 function readProposalParts(
   messages: AssistantUIMessage[],
 ): AssistantFlashcardProposalPart[] {
-  return messages.flatMap((message) =>
-    message.parts.filter(
-      (part): part is AssistantFlashcardProposalPart =>
-        part.type === "tool-proposeFlashcards",
-    ),
-  );
+  return messages.flatMap(readFlashcardProposalParts);
 }
 
 function recordedOutcome(

@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AiConfigurationError } from "@/lib/ai/errors";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 
-const resolveRequiredAiSettingsMock = vi.fn();
+const resolveAiSettingsMock = vi.fn();
 const limiter = vi.hoisted(() => ({
   current: null as FakeDailyRateLimiter | null,
 }));
 
 vi.mock("@/lib/ai/config", () => ({
-  resolveRequiredAiSettings: resolveRequiredAiSettingsMock,
+  resolveAiSettings: resolveAiSettingsMock,
 }));
 
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
@@ -18,12 +17,13 @@ vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
 }));
 
 const settings = {
-  provider: "openrouter" as const,
   model: "test/model",
   apiKey: "sk-or-v1-test",
+  reasoningEffort: "none" as const,
 };
 
 const dailyLimit = { prefix: "ratelimit:test", limit: 1 };
+const logScope = "test.task";
 
 const errorCodes = {
   notConfigured: "test.notConfigured",
@@ -34,7 +34,8 @@ const errorCodes = {
 describe("user AI access", () => {
   beforeEach(() => {
     limiter.current = new FakeDailyRateLimiter();
-    resolveRequiredAiSettingsMock.mockReset().mockReturnValue(settings);
+    resolveAiSettingsMock.mockReset().mockReturnValue(settings);
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   it("grants the settings and spends one unit of the daily limit", async () => {
@@ -52,9 +53,7 @@ describe("user AI access", () => {
   });
 
   it("denies an unconfigured instance without spending quota", async () => {
-    resolveRequiredAiSettingsMock.mockImplementation(() => {
-      throw new AiConfigurationError();
-    });
+    resolveAiSettingsMock.mockReturnValue(null);
     const { acquireUserAiSettings } = await import("@/lib/ai/user-ai-access");
 
     const access = await acquireUserAiSettings("user-1", {
@@ -71,6 +70,7 @@ describe("user AI access", () => {
 
     const result = await runUserAiTask({
       userId: "user-1",
+      logScope,
       dailyLimit,
       errorCodes,
       run: async (granted) => ({ success: true, model: granted.model }),
@@ -83,9 +83,16 @@ describe("user AI access", () => {
     const { runUserAiTask } = await import("@/lib/ai/user-ai-access");
     const run = vi.fn(async () => ({ success: true }));
 
-    await runUserAiTask({ userId: "user-1", dailyLimit, errorCodes, run });
+    await runUserAiTask({
+      userId: "user-1",
+      logScope,
+      dailyLimit,
+      errorCodes,
+      run,
+    });
     const second = await runUserAiTask({
       userId: "user-1",
+      logScope,
       dailyLimit,
       errorCodes,
       run,
@@ -100,6 +107,7 @@ describe("user AI access", () => {
 
     const providerFailure = await runUserAiTask({
       userId: "user-1",
+      logScope,
       dailyLimit,
       errorCodes,
       run: async () => {
@@ -109,6 +117,7 @@ describe("user AI access", () => {
     limiter.current?.failWith(new Error("redis down"));
     const limiterFailure = await runUserAiTask({
       userId: "user-2",
+      logScope,
       dailyLimit,
       errorCodes,
       run: async () => ({ success: true }),
@@ -124,18 +133,24 @@ describe("user AI access", () => {
     });
   });
 
-  it("maps a configuration error thrown by the task to notConfigured", async () => {
+  it("logs a task failure without its message", async () => {
     const { runUserAiTask } = await import("@/lib/ai/user-ai-access");
 
-    const result = await runUserAiTask({
+    await runUserAiTask({
       userId: "user-1",
+      logScope,
       dailyLimit,
       errorCodes,
       run: async () => {
-        throw new AiConfigurationError();
+        throw new Error("provider said something private");
       },
     });
 
-    expect(result).toEqual({ success: false, errorCode: "test.notConfigured" });
+    const logged = vi.mocked(console.error).mock.calls[0]?.[0];
+    expect(JSON.parse(String(logged))).toMatchObject({
+      event: "ai_task_failed",
+      scope: "test.task",
+    });
+    expect(String(logged)).not.toContain("private");
   });
 });

@@ -8,7 +8,7 @@ import {
   createFlashcardForUser,
   deleteFlashcardForUser,
   editFlashcardForUser,
-  generateFlashcardBackForUserInput,
+  improveFlashcardBackForUserInput,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
@@ -30,14 +30,17 @@ import {
   deleteFlashcardSchema,
   type EditFlashcardForm,
   editFlashcardSchema,
-  type GenerateFlashcardBackForm,
-  generateFlashcardBackSchema,
+  type ImproveFlashcardBackForm,
+  improveFlashcardBackSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type ValidateFlashcardsForm,
   validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
+import {
+  normalizeRichTextForUniqueness,
+  richTextToPlainText,
+} from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkDeleteFlashcardsResult,
@@ -47,7 +50,7 @@ import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
-  GenerateFlashcardBackResult,
+  ImproveFlashcardBackResult,
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
 import { revalidateAppShell } from "@/lib/server/revalidate-views";
@@ -112,16 +115,16 @@ export async function editFlashcard(
   return result;
 }
 
-export async function generateFlashcardBack(
-  data: GenerateFlashcardBackForm,
-): Promise<GenerateFlashcardBackResult> {
+export async function improveFlashcardBack(
+  data: ImproveFlashcardBackForm,
+): Promise<ImproveFlashcardBackResult> {
   return runValidatedUserAction(
-    "flashcards.generateFlashcardBack",
-    generateFlashcardBackSchema,
+    "flashcards.improveFlashcardBack",
+    improveFlashcardBackSchema,
     data,
     "flashcards.ai.invalidData",
     (userId, parsedData) =>
-      generateFlashcardBackForUserInput(userId, parsedData),
+      improveFlashcardBackForUserInput(userId, parsedData),
   );
 }
 
@@ -258,44 +261,28 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
         userId,
         parsedData.flashcardIds,
       );
-
-      if (flashcards.length === 0) {
-        return actionError("flashcards.validation.noCards");
-      }
-
-      const result = await validateFlashcardsForUser({
-        userId,
-        flashcards,
-      });
+      const result = await validateFlashcardsForUser({ userId, flashcards });
 
       if (!result.success) {
         return actionError(result.errorCode);
       }
 
-      const flashcardsMap = new Map(flashcards.map((card) => [card.id, card]));
-
-      const richTextToPlainText = (await import("@/lib/editor/rich-text"))
-        .richTextToPlainText;
+      const frontsById = new Map(
+        flashcards.map((card) => [card.id, card.front]),
+      );
 
       return {
         success: true,
-        issues: result.validation.issues.map((issue) => {
-          let explanation = issue.explanation;
-          if (issue.relatedFlashcardId) {
-            const relatedCard = flashcardsMap.get(issue.relatedFlashcardId);
-            if (relatedCard) {
-              const frontText = richTextToPlainText(relatedCard.front);
-              const frontPreview = frontText.substring(0, 50);
-              explanation = `${explanation} Similar to: "${frontPreview}${frontText.length > 50 ? "..." : ""}"`;
-            }
-          }
-          return {
-            id: issue.flashcardId,
-            issueType: issue.issueType,
-            explanation,
-            relatedFlashcardId: issue.relatedFlashcardId,
-          };
-        }),
+        issues: result.validation.issues.map((issue) => ({
+          id: issue.flashcardId,
+          issueType: issue.issueType,
+          explanation: withRelatedCardPreview(
+            issue.explanation,
+            issue.relatedFlashcardId &&
+              frontsById.get(issue.relatedFlashcardId),
+          ),
+          relatedFlashcardId: issue.relatedFlashcardId,
+        })),
         flashcards: flashcards.map((card) => ({
           id: card.id,
           front: card.front,
@@ -305,4 +292,21 @@ export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
       };
     },
   );
+}
+
+const RELATED_FRONT_PREVIEW_CHARS = 50;
+
+// Duplicate explanations name the other card so the user can find it.
+function withRelatedCardPreview(
+  explanation: string,
+  relatedFront: string | undefined,
+): string {
+  if (!relatedFront) {
+    return explanation;
+  }
+
+  const frontText = richTextToPlainText(relatedFront);
+  const preview = frontText.slice(0, RELATED_FRONT_PREVIEW_CHARS);
+  const ellipsis = frontText.length > RELATED_FRONT_PREVIEW_CHARS ? "..." : "";
+  return `${explanation} Similar to: "${preview}${ellipsis}"`;
 }

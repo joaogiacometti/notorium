@@ -16,17 +16,17 @@ describe("resolveAiSettings", () => {
     serverEnv.current = { ...openRouterEnv };
   });
 
-  it("turns assistant thinking off by default", async () => {
+  it("turns thinking off by default", async () => {
     const { resolveAiSettings } = await import("@/lib/ai/config");
 
-    expect(resolveAiSettings()?.assistantReasoningEffort).toBe("none");
+    expect(resolveAiSettings()?.reasoningEffort).toBe("none");
   });
 
-  it("uses the configured assistant reasoning effort", async () => {
-    serverEnv.current.OPENROUTER_ASSISTANT_REASONING_EFFORT = "low";
+  it("uses the configured reasoning effort", async () => {
+    serverEnv.current.OPENROUTER_REASONING_EFFORT = "low";
     const { resolveAiSettings } = await import("@/lib/ai/config");
 
-    expect(resolveAiSettings()?.assistantReasoningEffort).toBe("low");
+    expect(resolveAiSettings()?.reasoningEffort).toBe("low");
   });
 
   it("returns null when the model is missing", async () => {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { generateFlashcardBack } from "@/app/actions/flashcards";
+import { improveFlashcardBack } from "@/app/actions/flashcards";
 import { proposeFlashcardMerge } from "@/app/actions/flashcards-refine";
 import type {
   RefineCardSummary,
@@ -42,7 +42,7 @@ export function useRefineCardActions() {
     setImprovingCardId(card.id);
 
     try {
-      const result = await generateFlashcardBack({
+      const result = await improveFlashcardBack({
         subjectId: card.subjectId ?? "",
         front: card.front,
         currentBack: card.back,

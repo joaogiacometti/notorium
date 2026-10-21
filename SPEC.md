@@ -96,6 +96,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Flashcards can also be generated from a note or mindmap, via their detail-page header menu or sidebar/documents-list row menu, when AI is configured.
 - Generated AI flashcards use concise retrieval-cue fronts and minimal, directly testable answer bullets.
 - AI generation may emit LaTeX math (`$...$` inline, `$$...$$` block), which is converted to rendered math nodes.
+- AI output follows the user's language: generated, improved, and refined cards and validation notes use the language of the source material or cards; nothing is translated to English.
 - AI flashcard generation is optional and configured globally at the instance level with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`.
 - AI flashcard controls are hidden when AI env vars are not configured.
 - AI generation and validation are limited per approved user per day.
@@ -277,6 +278,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - A mindmap can have a maximum of 200 nodes.
 - A user can create a maximum of 2000 flashcards per subject.
 - A user can send a maximum of 300 study assistant messages per day.
+- A user can make at most 250 AI flashcard generations, 500 AI back improvements, 200 AI validations, and 100 AI refine proposals per day.
 
 ## Data Ownership and Security Rules
 

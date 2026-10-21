@@ -214,7 +214,7 @@ export type EditFlashcardResult =
       previousSubjectId: string | null;
     }
   | ActionErrorResult;
-export type GenerateFlashcardBackResult =
+export type ImproveFlashcardBackResult =
   | {
       success: true;
       back: string;

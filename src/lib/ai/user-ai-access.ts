@@ -1,11 +1,8 @@
 import "server-only";
 
-import {
-  type ResolvedAiSettings,
-  resolveRequiredAiSettings,
-} from "@/lib/ai/config";
-import { AiConfigurationError } from "@/lib/ai/errors";
+import { type ResolvedAiSettings, resolveAiSettings } from "@/lib/ai/config";
 import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
+import { logServerFailure } from "@/lib/server/action-failure";
 
 interface UserAiDailyLimit {
   prefix: string;
@@ -25,6 +22,8 @@ interface UserAiTaskErrorCodes<TErrorCode extends string> {
 
 interface RunUserAiTaskOptions<TResult, TErrorCode extends string> {
   userId: string;
+  /** `<feature>.<task>` scope written to `ai_task_failed` logs. */
+  logScope: string;
   dailyLimit: Omit<UserAiDailyLimit, "errorCode">;
   errorCodes: UserAiTaskErrorCodes<TErrorCode>;
   run: (settings: ResolvedAiSettings) => Promise<TResult>;
@@ -52,7 +51,7 @@ export async function acquireUserAiSettings(
   userId: string,
   dailyLimit: UserAiDailyLimit,
 ): Promise<UserAiAccess> {
-  const settings = resolveSettingsOrNull();
+  const settings = resolveAiSettings();
   if (!settings) {
     return { granted: false, reason: "notConfigured" };
   }
@@ -74,11 +73,13 @@ export async function acquireUserAiSettings(
 /**
  * Run a rate-limited, non-streaming AI task and fold every failure into a
  * typed `{ success: false, errorCode }` result: unconfigured AI, an exhausted
- * daily limit, or any provider/limiter throw (`unavailable`).
+ * daily limit, or any provider/limiter throw (`unavailable`, logged as
+ * `ai_task_failed`).
  *
  * @example
  * return runUserAiTask({
  *   userId,
+ *   logScope: "flashcards.improveBack",
  *   dailyLimit: { prefix: "ratelimit:ai:back", limit: 500 },
  *   errorCodes: {
  *     notConfigured: "flashcards.ai.notConfigured",
@@ -90,6 +91,7 @@ export async function acquireUserAiSettings(
  */
 export async function runUserAiTask<TResult, TErrorCode extends string>({
   userId,
+  logScope,
   dailyLimit,
   errorCodes,
   run,
@@ -107,19 +109,7 @@ export async function runUserAiTask<TResult, TErrorCode extends string>({
 
     return await run(access.settings);
   } catch (error) {
-    const reason =
-      error instanceof AiConfigurationError ? "notConfigured" : "unavailable";
-    return { success: false, errorCode: errorCodes[reason] };
-  }
-}
-
-function resolveSettingsOrNull(): ResolvedAiSettings | null {
-  try {
-    return resolveRequiredAiSettings();
-  } catch (error) {
-    if (error instanceof AiConfigurationError) {
-      return null;
-    }
-    throw error;
+    logServerFailure("ai_task_failed", logScope, error);
+    return { success: false, errorCode: errorCodes.unavailable };
   }
 }

@@ -7,9 +7,9 @@ import {
   deleteFlashcardSchema,
   editFlashcardSchema,
   flashcardsManageQuerySchema,
-  generateFlashcardBackSchema,
   generateMindmapFlashcardsSchema,
   generateNoteFlashcardsSchema,
+  improveFlashcardBackSchema,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
@@ -89,18 +89,18 @@ describe("editFlashcardSchema", () => {
   });
 });
 
-describe("generateFlashcardBackSchema", () => {
-  it("accepts valid input", () => {
-    const result = generateFlashcardBackSchema.safeParse({
+describe("improveFlashcardBackSchema", () => {
+  it("requires the current back", () => {
+    const result = improveFlashcardBackSchema.safeParse({
       subjectId: "deck-1",
       front: "<p>What is ATP?</p>",
     });
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
-  it("accepts optional currentBack", () => {
-    const result = generateFlashcardBackSchema.safeParse({
+  it("accepts the front and current back", () => {
+    const result = improveFlashcardBackSchema.safeParse({
       subjectId: "deck-1",
       front: "<p>What is ATP?</p>",
       currentBack: "<p>Energy molecule</p>",

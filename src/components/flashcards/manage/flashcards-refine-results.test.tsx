@@ -12,7 +12,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 const proposeFlashcardMergeMock = vi.hoisted(() => vi.fn());
-const generateFlashcardBackMock = vi.hoisted(() => vi.fn());
+const improveFlashcardBackMock = vi.hoisted(() => vi.fn());
 const toastMock = vi.hoisted(() => ({
   info: vi.fn(),
   error: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock("@/app/actions/flashcards-refine", () => ({
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({
-  generateFlashcardBack: generateFlashcardBackMock,
+  improveFlashcardBack: improveFlashcardBackMock,
   editFlashcard: vi.fn(),
 }));
 
@@ -191,7 +191,7 @@ describe("FlashcardsRefineResults", () => {
   });
 
   it("opens the improve dialog after generating a new back", async () => {
-    generateFlashcardBackMock.mockResolvedValue({
+    improveFlashcardBackMock.mockResolvedValue({
       success: true,
       back: "Improved back",
     });
@@ -208,7 +208,7 @@ describe("FlashcardsRefineResults", () => {
       );
     });
 
-    expect(generateFlashcardBackMock).toHaveBeenCalledWith({
+    expect(improveFlashcardBackMock).toHaveBeenCalledWith({
       subjectId: "deck-1",
       front: "Struggling front",
       currentBack: "A balanced tree.",

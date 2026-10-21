@@ -4,11 +4,7 @@ import {
   flashcardEditsInputSchema,
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
-import { LIMITS } from "@/lib/config/limits";
-
-// Subject paths join up to `maxSubjectNestingDepth` names with "::".
-const SUBJECT_PATH_MAX_CHARS =
-  LIMITS.maxSubjectNestingDepth * (LIMITS.subjectNameMax + 2);
+import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
 /** Most cards one proposal may hold; keeps a single turn reviewable. */
 export const FLASHCARD_PROPOSAL_MAX_CARDS = 5;

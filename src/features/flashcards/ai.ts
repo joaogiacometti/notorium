@@ -1,15 +1,12 @@
 import { getServerEnv } from "@/env";
 import {
-  buildGenerateFlashcardBackPrompt,
   buildGenerateFlashcardsPrompt,
   buildImproveFlashcardBackPrompt,
   buildMergeSynthesisPrompt,
   buildValidateFlashcardsPrompt,
-  type FlashcardForMergeSynthesis,
-  type FlashcardForValidation,
+  type FlashcardForAi,
   type FlashcardValidationOutput,
   flashcardBackImproveSystemPrompt,
-  flashcardBackSystemPrompt,
   flashcardMergeSynthesisOutputSchema,
   flashcardMergeSynthesisSystemPrompt,
   flashcardsGenerationSystemPrompt,
@@ -17,9 +14,11 @@ import {
   flashcardValidationSystemPrompt,
   generatedFlashcardBackSchema,
   generatedFlashcardsSchema,
-  normalizeGeneratedCards,
 } from "@/features/flashcards/ai-prompts";
-import { normalizeGeneratedBack } from "@/features/flashcards/ai-utils";
+import {
+  normalizeGeneratedBack,
+  normalizeGeneratedCards,
+} from "@/features/flashcards/ai-utils";
 import { flashcardBackSchema } from "@/features/flashcards/validation";
 import type { ResolvedAiSettings } from "@/lib/ai/config";
 import { generateStructuredOutput } from "@/lib/ai/generate-structured";
@@ -33,9 +32,6 @@ import {
   restoreImagePlaceholders,
   richTextToPlainText,
 } from "@/lib/editor/rich-text";
-
-export const PLAYWRIGHT_GENERATED_BACK =
-  "Playwright fixture back: photosynthesis converts light energy into stored chemical energy.";
 
 export const PLAYWRIGHT_GENERATED_CARDS = [
   {
@@ -52,34 +48,14 @@ function isPlaywrightAiFixtureMode() {
   return getServerEnv().NOTORIUM_AI_FIXTURE_MODE === "playwright";
 }
 
-export async function generateFlashcardBackContent(input: {
-  settings: ResolvedAiSettings;
-  subjectName?: string;
-  front: string;
-}): Promise<string> {
-  if (isPlaywrightAiFixtureMode()) {
-    return plainTextToRichText(PLAYWRIGHT_GENERATED_BACK);
-  }
-
-  const frontText = normalizeLine(richTextToPlainText(input.front));
-
-  const output = await generateStructuredOutput({
-    settings: input.settings,
-    schema: generatedFlashcardBackSchema,
-    system: flashcardBackSystemPrompt,
-    prompt: buildGenerateFlashcardBackPrompt({
-      subjectName: input.subjectName,
-      front: frontText,
-    }),
-    maxOutputTokens: AI_LIMITS.maxBackTokens,
-  });
-
-  const back = plainTextToRichText(normalizeGeneratedBack(output.backText));
+// A generated back as rich text that fits a stored flashcard back.
+function toGeneratedBackHtml(backText: string): string {
+  const back = plainTextToRichText(normalizeGeneratedBack(backText));
   const parsedBack = flashcardBackSchema.safeParse(back);
 
   if (!parsedBack.success) {
     throw new Error(
-      `Invalid flashcard back generated: ${parsedBack.error.message}`,
+      `Invalid generated flashcard back (expected rich text within the back limit): ${parsedBack.error.message}`,
     );
   }
 
@@ -112,16 +88,7 @@ export async function improveFlashcardBackContent(input: {
     maxOutputTokens: AI_LIMITS.improveMaxTokens,
   });
 
-  const back = plainTextToRichText(normalizeGeneratedBack(output.backText));
-  const parsedBack = flashcardBackSchema.safeParse(back);
-
-  if (!parsedBack.success) {
-    throw new Error(
-      `Invalid flashcard back generated: ${parsedBack.error.message}`,
-    );
-  }
-
-  return restoreImagePlaceholders(parsedBack.data, images);
+  return restoreImagePlaceholders(toGeneratedBackHtml(output.backText), images);
 }
 
 export async function generateFlashcardsFromText(input: {
@@ -146,18 +113,12 @@ export async function generateFlashcardsFromText(input: {
     maxOutputTokens: AI_LIMITS.maxGenerationTokens,
   });
 
-  const cards = normalizeGeneratedCards(output);
-
-  if (!cards) {
-    throw new Error("Generated flashcards failed validation");
-  }
-
-  return cards;
+  return normalizeGeneratedCards(output);
 }
 
 export async function validateFlashcardsWithAi(input: {
   settings: ResolvedAiSettings;
-  flashcards: FlashcardForValidation[];
+  flashcards: FlashcardForAi[];
 }): Promise<FlashcardValidationOutput> {
   if (isPlaywrightAiFixtureMode()) {
     const issueCard = input.flashcards.find((card) =>
@@ -177,15 +138,13 @@ export async function validateFlashcardsWithAi(input: {
     };
   }
 
-  const output = await generateStructuredOutput({
+  return generateStructuredOutput({
     settings: input.settings,
     schema: flashcardValidationOutputSchema,
     system: flashcardValidationSystemPrompt,
     prompt: buildValidateFlashcardsPrompt(input.flashcards),
     maxOutputTokens: AI_LIMITS.maxValidationTokens,
   });
-
-  return output;
 }
 
 export const PLAYWRIGHT_REFINE_PROPOSAL = {
@@ -212,8 +171,8 @@ export interface RefineProposalSynthesis {
  */
 export async function synthesizeRefineProposalWithAi(input: {
   settings: ResolvedAiSettings;
-  primary: FlashcardForMergeSynthesis;
-  candidates: FlashcardForMergeSynthesis[];
+  primary: FlashcardForAi;
+  candidates: FlashcardForAi[];
 }): Promise<RefineProposalSynthesis | null> {
   if (isPlaywrightAiFixtureMode()) {
     return {
@@ -250,26 +209,16 @@ export async function synthesizeRefineProposalWithAi(input: {
     );
   }
 
-  const back = plainTextToRichText(normalizeGeneratedBack(output.back));
-  const parsedBack = flashcardBackSchema.safeParse(back);
-
-  if (!parsedBack.success) {
-    throw new Error(
-      `Invalid refine proposal back generated: ${parsedBack.error.message}`,
-    );
-  }
-
   return {
     action: output.action,
     front: plainTextToRichText(normalizeLine(output.front)),
-    back: parsedBack.data,
+    back: toGeneratedBackHtml(output.back),
     sourceFlashcardIds,
     rationale: output.rationale,
   };
 }
 
 export type {
-  FlashcardForMergeSynthesis,
-  FlashcardForValidation,
+  FlashcardForAi,
   FlashcardValidationOutput,
 } from "@/features/flashcards/ai-prompts";

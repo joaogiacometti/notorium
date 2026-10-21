@@ -1,11 +1,9 @@
 import { z } from "zod";
-import { normalizeGeneratedBack } from "@/features/flashcards/ai-utils";
-import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
 import { MATH_RULE } from "@/lib/ai/prompt-rules";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
 
 const LANGUAGE_RULE =
-  "Output language: English only. Regardless of the source material or card language, all generated text must be in English.";
+  "Output language: write in the language of the source material or flashcards you are given. Do not translate.";
 
 /**
  * How a generated card is shaped: a terse cue on the front, one sentence or
@@ -64,91 +62,6 @@ export const flashcardValidationOutputSchema = z.object({
 export type FlashcardValidationOutput = z.infer<
   typeof flashcardValidationOutputSchema
 >;
-
-export const flashcardBackSystemPrompt = `${LANGUAGE_RULE}
-
-Write only the back of the flashcard.
-Be assertive, precise, and minimal.
-Write for retrieval practice: short cue on the front, compact recall target on the back.
-Do not repeat, restate, or paraphrase the front.
-Do not use labels such as Front or Back.
-Output must be plain text only.
-If the answer is a single atomic fact, output one concise sentence only.
-Otherwise output a list with 1 to 3 lines.
-In list mode, every line must start with "- ".
-In list mode, each line must contain one precise, directly testable point.
-In list mode, do not write any text before or after the list.
-In list mode, do not use inline separators like " - " inside a line.
-In list mode, do not use numbering.
-Do not add filler, disclaimers, study tips, examples, caveats, or long explanations.
-Do not start with generic definition wrappers such as "An approach where...", "A method that...", or "It is...".
-Do not use labels or wrappers such as "Back:", "Answer:", "Summary:", "Definition:", or "Key points:".
-Do not use bullets starting with "Example:", "E.g.", or "Ex.".
-Keep the answer narrow and atomic.
-If the front is broad, ambiguous, or asks for too much, answer only the most central directly testable fact — the one a student would most likely be tested on.
-Do not invent extra context beyond what is needed to answer the front.
-Prefer concrete wording over general wording.
-Do not use markdown fences.
-${MATH_RULE}
-
-Good retrieval patterns:
-Front: DNS acronym
-Back:
-Domain Name System.
-
-Front: Functional dependency
-Back:
-- Relation where X determines Y
-- For every specific X, Y is fixed
-
-Front: CPU role
-Back:
-- Executes program instructions
-- Performs arithmetic and logic operations
-- Coordinates data flow between components
-
-Front: Program counter
-Back:
-- Memory address of the next instruction to execute
-- Updated after each instruction cycle
-
-Front: Program execution stages
-Back:
-- Write program
-- Compile or assemble to machine code
-- Load into memory
-
-Subject context is allowed only as background context.
-Use the subject only as background context. Answer only what the front asks.
-
-Bad patterns:
-Front: What does DNS stand for?
-Back:
-- Domain Name System
-- Resolves IP addresses
-- Has recursive and authoritative servers
-
-Front: Functional dependency
-Back:
-A relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
-
-Front: Tabela CAN
-Back: Mapeia identificadores para prioridades. - Define o acesso ao barramento. - Gerencia a arbitragem.
-
-Front: Explain how a CPU works.
-Back: Large paragraph covering many concepts.
-
-Front: What is RAM?
-Back: An architecture approach where a system temporarily stores data used by running programs.
-
-Front: What is RAM?
-Back:
-Back: Temporarily stores data and instructions for the currently running program.
-
-Front: What does DNS stand for?
-Back:
-Answer: Domain Name System.
-`;
 
 export const flashcardBackImproveSystemPrompt = `${LANGUAGE_RULE}
 
@@ -282,7 +195,7 @@ Flag only when the card is genuinely hard to study — not just because it is co
 
 GENERAL RULES
 - Only report actual issues. Empty output is valid if all cards are good.
-- Keep explanations under ${AI_LIMITS.maxValidationExplanationLength} characters, in English, specific and actionable.
+- Keep explanations under ${AI_LIMITS.maxValidationExplanationLength} characters, specific and actionable.
 - [Image] in a card means it contains an image. This is valid content — do not flag as empty or confusing.
 - Use the subject as background context to assess correctness.
 - Use exact flashcard IDs from the input. If the input shows "Card 1 (ID: abc123)", use flashcardId: "abc123".
@@ -348,7 +261,8 @@ export const flashcardMergeSynthesisOutputSchema = z.object({
   rationale: z.string().trim().min(1).max(AI_LIMITS.maxMergeRationaleLength),
 });
 
-export interface FlashcardForMergeSynthesis {
+/** A card as the model reads it: plain text with image placeholders. */
+export interface FlashcardForAi {
   id: string;
   front: string;
   back: string;
@@ -356,10 +270,10 @@ export interface FlashcardForMergeSynthesis {
 }
 
 export function buildMergeSynthesisPrompt(input: {
-  primary: FlashcardForMergeSynthesis;
-  candidates: FlashcardForMergeSynthesis[];
+  primary: FlashcardForAi;
+  candidates: FlashcardForAi[];
 }): string {
-  const formatCard = (card: FlashcardForMergeSynthesis, label: string) =>
+  const formatCard = (card: FlashcardForAi, label: string) =>
     `${label} (ID: ${card.id})
 Subject: ${card.subjectName}
 Front: ${card.front}
@@ -374,20 +288,6 @@ Back: ${card.back}`;
     ),
     "",
     "Choose one action: create a new relationship card (relate), combine true duplicates (merge), or decline.",
-  ].join("\n");
-}
-
-export function buildGenerateFlashcardBackPrompt(input: {
-  subjectName?: string;
-  front: string;
-}): string {
-  return [
-    ...(input.subjectName ? [`Subject context: ${input.subjectName}`] : []),
-    "Task: Write the back of a study flashcard for the front below.",
-    input.subjectName
-      ? "Use the subject only as background context. Answer only what the front asks."
-      : "Answer only what the front asks.",
-    `Front: ${input.front}`,
   ].join("\n");
 }
 
@@ -421,15 +321,8 @@ export function buildGenerateFlashcardsPrompt(input: {
   ].join("\n");
 }
 
-export interface FlashcardForValidation {
-  id: string;
-  front: string;
-  back: string;
-  subjectName: string;
-}
-
 export function buildValidateFlashcardsPrompt(
-  flashcards: FlashcardForValidation[],
+  flashcards: FlashcardForAi[],
 ): string {
   const cards = flashcards
     .map(
@@ -442,41 +335,4 @@ Back: ${card.back}`,
     .join("\n\n");
 
   return `Analyze the following flashcards and report any issues:\n\n${cards}`;
-}
-
-export function normalizeGeneratedCards(
-  output: z.infer<typeof generatedFlashcardsSchema>,
-): Array<{ front: string; back: string }> | null {
-  const cards: Array<{ front: string; back: string }> = [];
-
-  for (const card of output.cards) {
-    const front = card.front.trim();
-    const back = card.back.trim();
-
-    if (front.length === 0 || back.length === 0) {
-      continue;
-    }
-
-    const normalizedBack = normalizeGeneratedBack(back);
-    const normalizedBackLines = normalizedBack.split("\n");
-    const hasBulletLines = normalizedBackLines.some((line) =>
-      /^[-*]\s+/.test(line.trim()),
-    );
-    const firstLine = normalizedBackLines[0]?.trim() ?? "";
-    const backWithConsistentBullets =
-      hasBulletLines && firstLine.length > 0 && !/^[-*]\s+/.test(firstLine)
-        ? `- ${firstLine}\n${normalizedBackLines.slice(1).join("\n")}`
-        : normalizedBack;
-
-    cards.push({
-      front: plainTextToRichText(front),
-      back: plainTextToRichText(backWithConsistentBullets),
-    });
-  }
-
-  if (cards.length > LIMITS.flashcardAiMaxOutput) {
-    return null;
-  }
-
-  return cards;
 }

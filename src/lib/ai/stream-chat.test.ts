@@ -8,17 +8,16 @@ import {
   readStreamedText,
 } from "@/test/fake-streaming-model";
 
-const getAiModelOrThrowMock = vi.fn();
+const getAiModelMock = vi.fn();
 
 vi.mock("@/lib/ai/provider", () => ({
-  getAiModelOrThrow: getAiModelOrThrowMock,
+  getAiModel: getAiModelMock,
 }));
 
 const settings = {
-  provider: "openrouter" as const,
   model: "test/model",
   apiKey: "sk-or-v1-test",
-  assistantReasoningEffort: "none" as const,
+  reasoningEffort: "none" as const,
 };
 
 describe("streamChatResponse", () => {
@@ -28,7 +27,7 @@ describe("streamChatResponse", () => {
 
   it("streams the model reply as a private UI message stream", async () => {
     const model = createFakeStreamingModel("ATP stores energy.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamChatResponse } = await import("@/lib/ai/stream-chat");
 
     const response = await streamChatResponse({
@@ -48,7 +47,7 @@ describe("streamChatResponse", () => {
 
   it("sends the instructions and chat history to the model", async () => {
     const model = createFakeStreamingModel("Yes.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamChatResponse } = await import("@/lib/ai/stream-chat");
 
     const response = await streamChatResponse({
@@ -80,7 +79,7 @@ describe("streamChatResponse", () => {
 
   it("streams a call of a client-answered tool without executing it", async () => {
     const model = createFakeToolCallModel("proposeCard", { front: "ATP?" });
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamChatResponse } = await import("@/lib/ai/stream-chat");
 
     const response = await streamChatResponse({
@@ -112,9 +111,9 @@ describe("streamChatResponse", () => {
     );
   });
 
-  it("sends the session id and reasoning effort to OpenRouter", async () => {
+  it("sends the session id to OpenRouter", async () => {
     const model = createFakeStreamingModel("Yes.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamChatResponse } = await import("@/lib/ai/stream-chat");
 
     const response = await streamChatResponse({
@@ -126,19 +125,17 @@ describe("streamChatResponse", () => {
       ],
       maxOutputTokens: 100,
       sessionId: "chat-1",
-      reasoningEffort: "none",
     });
     await response.text();
 
     expect(model.doStreamCalls[0]?.providerOptions?.openrouter).toEqual({
       session_id: "chat-1",
-      reasoning: { effort: "none" },
     });
   });
 
-  it("leaves routing and reasoning to OpenRouter defaults when unset", async () => {
+  it("leaves routing to OpenRouter when no session id is given", async () => {
     const model = createFakeStreamingModel("Yes.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamChatResponse } = await import("@/lib/ai/stream-chat");
 
     const response = await streamChatResponse({
@@ -152,6 +149,6 @@ describe("streamChatResponse", () => {
     });
     await response.text();
 
-    expect(model.doStreamCalls[0]?.providerOptions?.openrouter).toEqual({});
+    expect(model.doStreamCalls[0]?.providerOptions?.openrouter).toBeUndefined();
   });
 });

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AiConfigurationError } from "@/lib/ai/errors";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 import {
   createFakeStreamingModel,
@@ -18,18 +17,18 @@ class FakeSubjectPathStore {
   };
 }
 
-const resolveRequiredAiSettingsMock = vi.fn();
-const getAiModelOrThrowMock = vi.fn();
+const resolveAiSettingsMock = vi.fn();
+const getAiModelMock = vi.fn();
 const limiter = vi.hoisted(() => ({
   current: null as FakeDailyRateLimiter | null,
 }));
 
 vi.mock("@/lib/ai/config", () => ({
-  resolveRequiredAiSettings: resolveRequiredAiSettingsMock,
+  resolveAiSettings: resolveAiSettingsMock,
 }));
 
 vi.mock("@/lib/ai/provider", () => ({
-  getAiModelOrThrow: getAiModelOrThrowMock,
+  getAiModel: getAiModelMock,
 }));
 
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
@@ -49,15 +48,15 @@ const messages = [
 describe("streamAssistantReplyForUser", () => {
   beforeEach(() => {
     limiter.current = new FakeDailyRateLimiter();
-    resolveRequiredAiSettingsMock.mockReset().mockReturnValue({
-      provider: "openrouter",
+    resolveAiSettingsMock.mockReset().mockReturnValue({
       model: "test/model",
       apiKey: "sk-or-v1-test",
+      reasoningEffort: "none",
     });
   });
 
   it("streams the reply under the assistant daily limit", async () => {
-    getAiModelOrThrowMock.mockReturnValue(
+    getAiModelMock.mockReturnValue(
       createFakeStreamingModel("ATP stores energy."),
     );
     const { streamAssistantReplyForUser } = await import(
@@ -79,9 +78,7 @@ describe("streamAssistantReplyForUser", () => {
   });
 
   it("returns notConfigured when AI is not set up", async () => {
-    resolveRequiredAiSettingsMock.mockImplementation(() => {
-      throw new AiConfigurationError();
-    });
+    resolveAiSettingsMock.mockReturnValue(null);
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
@@ -120,12 +117,12 @@ describe("streamAssistantReplyForUser", () => {
       success: false,
       errorCode: "limits.aiAssistantPerDay",
     });
-    expect(getAiModelOrThrowMock).not.toHaveBeenCalled();
+    expect(getAiModelMock).not.toHaveBeenCalled();
   });
 
   it("offers the flashcard tool and the user's subject paths", async () => {
     const model = createFakeStreamingModel("Here is a card.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const subjects = new FakeSubjectPathStore(["Biology::Cells"]);
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
@@ -149,7 +146,7 @@ describe("streamAssistantReplyForUser", () => {
 
   it("places study context before the question without adding it to system instructions", async () => {
     const model = createFakeStreamingModel("A hint.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
@@ -175,7 +172,7 @@ describe("streamAssistantReplyForUser", () => {
 
   it("appends draft context after history without changing system instructions", async () => {
     const model = createFakeStreamingModel("Review changes in the editor.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
@@ -202,7 +199,7 @@ describe("streamAssistantReplyForUser", () => {
     const model = createFakeStreamingModel(
       "Alpha squared means alpha multiplied by itself.",
     );
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
@@ -233,15 +230,9 @@ describe("streamAssistantReplyForUser", () => {
     );
   });
 
-  it("routes by chat id with the configured reasoning effort", async () => {
-    resolveRequiredAiSettingsMock.mockReturnValue({
-      provider: "openrouter",
-      model: "test/model",
-      apiKey: "sk-or-v1-test",
-      assistantReasoningEffort: "none",
-    });
+  it("routes by chat id", async () => {
     const model = createFakeStreamingModel("ATP stores energy.");
-    getAiModelOrThrowMock.mockReturnValue(model);
+    getAiModelMock.mockReturnValue(model);
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
@@ -256,7 +247,6 @@ describe("streamAssistantReplyForUser", () => {
 
     expect(model.doStreamCalls[0]?.providerOptions?.openrouter).toEqual({
       session_id: "chat-1",
-      reasoning: { effort: "none" },
     });
   });
 });

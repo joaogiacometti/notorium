@@ -28,8 +28,8 @@ export async function runCatchingActionFailure<TResult>(
 }
 
 /**
- * Log an unexpected server-boundary failure (Server Action, read route, or AI
- * chat stream) as structured JSON. Logs only the error class and driver code:
+ * Log an unexpected server-boundary failure (Server Action, read route, AI
+ * chat stream, or AI task) as structured JSON. Logs only the error class and driver code:
  * Drizzle query errors embed the SQL params in `message`, which can carry
  * private user content.
  *
@@ -37,7 +37,11 @@ export async function runCatchingActionFailure<TResult>(
  * logServerFailure("read_route_failed", "subjects.documents", error);
  */
 export function logServerFailure(
-  event: "server_action_failed" | "read_route_failed" | "ai_chat_failed",
+  event:
+    | "server_action_failed"
+    | "read_route_failed"
+    | "ai_chat_failed"
+    | "ai_task_failed",
   logScope: string,
   error: unknown,
 ): void {

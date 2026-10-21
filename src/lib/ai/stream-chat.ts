@@ -1,12 +1,11 @@
 import {
   convertToModelMessages,
-  type JSONValue,
   streamText,
   type ToolSet,
   type UIMessage,
 } from "ai";
-import type { AiReasoningEffort, ResolvedAiSettings } from "@/lib/ai/config";
-import { getAiModelOrThrow } from "@/lib/ai/provider";
+import type { ResolvedAiSettings } from "@/lib/ai/config";
+import { getAiModel } from "@/lib/ai/provider";
 import { logServerFailure } from "@/lib/server/action-failure";
 
 interface StreamChatResponseOptions {
@@ -24,8 +23,6 @@ interface StreamChatResponseOptions {
    * turn routes to the provider that already holds the cached prompt prefix.
    */
   sessionId?: string;
-  /** Thinking level; unset keeps the model's default. */
-  reasoningEffort?: AiReasoningEffort;
 }
 
 /**
@@ -55,18 +52,18 @@ export async function streamChatResponse({
   tools,
   abortSignal,
   sessionId,
-  reasoningEffort,
 }: StreamChatResponseOptions): Promise<Response> {
   const result = streamText({
-    model: getAiModelOrThrow(settings),
+    model: getAiModel(settings),
     instructions,
     messages: await convertToModelMessages(messages, { tools }),
     maxOutputTokens,
     tools,
     abortSignal,
-    providerOptions: {
-      openrouter: buildOpenRouterChatOptions(sessionId, reasoningEffort),
-    },
+    // Spread into the OpenRouter request body as-is, hence the snake_case.
+    providerOptions: sessionId
+      ? { openrouter: { session_id: sessionId } }
+      : undefined,
     onError: ({ error }) => logServerFailure("ai_chat_failed", logScope, error),
   });
 
@@ -76,15 +73,4 @@ export async function streamChatResponse({
     sendReasoning: false,
     headers: { "Cache-Control": "private, no-store" },
   });
-}
-
-// Spread into the OpenRouter request body as-is, so keys use its snake_case.
-function buildOpenRouterChatOptions(
-  sessionId: string | undefined,
-  reasoningEffort: AiReasoningEffort | undefined,
-): Record<string, JSONValue> {
-  return {
-    ...(sessionId ? { session_id: sessionId } : {}),
-    ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),
-  };
 }

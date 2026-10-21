@@ -275,7 +275,7 @@ async function updateFlashcardContent(
   };
 }
 
-export { generateFlashcardBackForUserInput } from "@/features/flashcards/back-generation";
+export { improveFlashcardBackForUserInput } from "@/features/flashcards/back-improvement";
 
 export async function deleteFlashcardForUser(
   userId: string,

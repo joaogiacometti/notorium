@@ -192,3 +192,20 @@ export function buildMindmapFlashcardSourceWithImages({
     images,
   };
 }
+
+/**
+ * Put back the mindmap images a generated card cites by placeholder. Unlike
+ * `restoreImagePlaceholders`, images the card does not cite are left out.
+ *
+ * @example
+ * restoreUsedMindmapImages("<p>{{IMAGE_0}}</p>", ['<img src="/a.png">']);
+ */
+export function restoreUsedMindmapImages(
+  value: string,
+  images: string[],
+): string {
+  return images.reduce(
+    (result, image, index) => result.replaceAll(`{{IMAGE_${index}}}`, image),
+    value,
+  );
+}

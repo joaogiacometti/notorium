@@ -11,6 +11,7 @@ import {
 } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
 import { describeStudyContext } from "@/features/assistant/study-context";
+import { isAssistantReplyInFlight } from "@/features/assistant/utils";
 
 interface AssistantPanelProps {
   /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
@@ -45,7 +46,7 @@ function AssistantConversationPanel({
   onMinimize,
 }: Readonly<AssistantConversationPanelProps>) {
   const { chat, proposals } = workspace;
-  const busy = chat.status === "submitted" || chat.status === "streaming";
+  const busy = isAssistantReplyInFlight(chat.status);
   return (
     <AssistantPanelFrame
       embedded={embedded}

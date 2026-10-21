@@ -81,14 +81,14 @@ export const flashcardFormSchema = withFlashcardAttachmentLimit(
 
 export type FlashcardFormValues = z.infer<typeof flashcardFormSchema>;
 
-export const generateFlashcardBackSchema = z.object({
+export const improveFlashcardBackSchema = z.object({
   subjectId: subjectIdField,
   front: flashcardFrontSchema,
-  currentBack: flashcardBackSchema.optional(),
+  currentBack: flashcardBackSchema,
 });
 
-export type GenerateFlashcardBackForm = z.infer<
-  typeof generateFlashcardBackSchema
+export type ImproveFlashcardBackForm = z.infer<
+  typeof improveFlashcardBackSchema
 >;
 
 export const checkFlashcardDuplicateSchema = z.object({

@@ -3,6 +3,7 @@ import { LIMITS } from "@/lib/config/limits";
 import {
   buildMindmapFlashcardSource,
   buildMindmapFlashcardSourceWithImages,
+  restoreUsedMindmapImages,
 } from "./mindmap-source";
 
 function makeGraph(
@@ -201,5 +202,15 @@ describe("buildMindmapFlashcardSource", () => {
 
     expect(result.length).toBeLessThanOrEqual(LIMITS.flashcardAiMaxInput);
     expect(result).toContain("Title: Long");
+  });
+});
+
+describe("restoreUsedMindmapImages", () => {
+  it("restores cited placeholders and leaves uncited images out", () => {
+    const images = ['<img src="/a.png">', '<img src="/b.png">'];
+
+    expect(
+      restoreUsedMindmapImages("<p>{{IMAGE_1}} and {{IMAGE_1}}</p>", images),
+    ).toBe('<p><img src="/b.png"> and <img src="/b.png"></p>');
   });
 });

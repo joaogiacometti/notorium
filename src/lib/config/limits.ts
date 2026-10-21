@@ -86,8 +86,11 @@ export const LIMITS = {
   ipAddressMaxLength: 64,
 } as const;
 
+// A subject path joins up to `maxSubjectNestingDepth` names with "::".
+export const SUBJECT_PATH_MAX_CHARS =
+  LIMITS.maxSubjectNestingDepth * (LIMITS.subjectNameMax + 2);
+
 export const AI_LIMITS = {
-  maxBackTokens: 100,
   improveMaxTokens: 300,
   maxGenerationTokens: 4000,
   maxValidationTokens: 500,

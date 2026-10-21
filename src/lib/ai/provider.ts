@@ -1,25 +1,17 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { ResolvedAiSettings } from "@/lib/ai/config";
-import { AiConfigurationError } from "@/lib/ai/errors";
 
-export function getAiModel(settings: ResolvedAiSettings | null) {
-  if (settings?.provider !== "openrouter") {
-    return null;
-  }
+/**
+ * The configured OpenRouter model, with the instance thinking level applied
+ * to every call made through it.
+ *
+ * @example
+ * await generateText({ model: getAiModel(settings), prompt: "Hi" });
+ */
+export function getAiModel(settings: ResolvedAiSettings) {
+  const openRouterProvider = createOpenRouter({ apiKey: settings.apiKey });
 
-  const openRouterProvider = createOpenRouter({
-    apiKey: settings.apiKey,
+  return openRouterProvider(settings.model, {
+    reasoning: { effort: settings.reasoningEffort },
   });
-
-  return openRouterProvider(settings.model);
-}
-
-export function getAiModelOrThrow(settings: ResolvedAiSettings) {
-  const model = getAiModel(settings);
-
-  if (!model) {
-    throw new AiConfigurationError();
-  }
-
-  return model;
 }

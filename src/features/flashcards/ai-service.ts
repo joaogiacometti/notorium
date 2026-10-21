@@ -1,8 +1,6 @@
 import {
-  type FlashcardForMergeSynthesis,
-  type FlashcardForValidation,
+  type FlashcardForAi,
   type FlashcardValidationOutput,
-  generateFlashcardBackContent,
   generateFlashcardsFromText,
   improveFlashcardBackContent,
   type RefineProposalSynthesis,
@@ -13,28 +11,19 @@ import { runUserAiTask } from "@/lib/ai/user-ai-access";
 import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainTextWithImagePlaceholders } from "@/lib/editor/rich-text";
 
-const BACK_GENERATION_DAILY_LIMIT = {
-  prefix: LIMITS.aiBackGenerationRateLimitPrefix,
-  limit: LIMITS.aiBackGenerationRateLimitPerDay,
-};
-
 const FLASHCARD_AI_ERROR_CODES = {
   notConfigured: "flashcards.ai.notConfigured",
   unavailable: "flashcards.ai.unavailable",
 } as const;
 
-const BACK_GENERATION_ERROR_CODES = {
-  ...FLASHCARD_AI_ERROR_CODES,
-  limited: "limits.aiBackGenerationPerDay",
-} as const;
-
-interface GenerateFlashcardBackForUserInput {
+interface ImproveFlashcardBackForUserInput {
   userId: string;
   subjectName?: string;
   front: string;
+  currentBack: string;
 }
 
-type GenerateFlashcardBackForUserResult =
+type ImproveFlashcardBackForUserResult =
   | { success: true; back: string }
   | {
       success: false;
@@ -44,35 +33,6 @@ type GenerateFlashcardBackForUserResult =
         | "limits.aiBackGenerationPerDay";
     };
 
-export async function generateFlashcardBackForUser({
-  userId,
-  subjectName,
-  front,
-}: GenerateFlashcardBackForUserInput): Promise<GenerateFlashcardBackForUserResult> {
-  return runUserAiTask({
-    userId,
-    dailyLimit: BACK_GENERATION_DAILY_LIMIT,
-    errorCodes: BACK_GENERATION_ERROR_CODES,
-    run: async (settings) => ({
-      success: true as const,
-      back: await generateFlashcardBackContent({
-        settings,
-        subjectName,
-        front,
-      }),
-    }),
-  });
-}
-
-interface ImproveFlashcardBackForUserInput {
-  userId: string;
-  subjectName?: string;
-  front: string;
-  currentBack: string;
-}
-
-type ImproveFlashcardBackForUserResult = GenerateFlashcardBackForUserResult;
-
 export async function improveFlashcardBackForUser({
   userId,
   subjectName,
@@ -81,8 +41,15 @@ export async function improveFlashcardBackForUser({
 }: ImproveFlashcardBackForUserInput): Promise<ImproveFlashcardBackForUserResult> {
   return runUserAiTask({
     userId,
-    dailyLimit: BACK_GENERATION_DAILY_LIMIT,
-    errorCodes: BACK_GENERATION_ERROR_CODES,
+    logScope: "flashcards.improveBack",
+    dailyLimit: {
+      prefix: LIMITS.aiBackGenerationRateLimitPrefix,
+      limit: LIMITS.aiBackGenerationRateLimitPerDay,
+    },
+    errorCodes: {
+      ...FLASHCARD_AI_ERROR_CODES,
+      limited: "limits.aiBackGenerationPerDay",
+    },
     run: async (settings) => ({
       success: true as const,
       back: await improveFlashcardBackContent({
@@ -121,6 +88,7 @@ export async function generateFlashcardsForUser({
 }: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
   return runUserAiTask({
     userId,
+    logScope: "flashcards.generateCards",
     dailyLimit: {
       prefix: LIMITS.aiFlashcardGenerationRateLimitPrefix,
       limit: LIMITS.aiFlashcardGenerationRateLimitPerDay,
@@ -148,8 +116,8 @@ export async function generateFlashcardsForUser({
 
 interface SynthesizeRefineProposalForUserInput {
   userId: string;
-  primary: FlashcardForMergeSynthesis;
-  candidates: FlashcardForMergeSynthesis[];
+  primary: FlashcardForAi;
+  candidates: FlashcardForAi[];
 }
 
 type SynthesizeRefineProposalForUserResult =
@@ -184,6 +152,7 @@ export async function synthesizeRefineProposalForUser({
 
   return runUserAiTask({
     userId,
+    logScope: "flashcards.synthesizeRefine",
     dailyLimit: {
       prefix: LIMITS.aiMergeSynthesisRateLimitPrefix,
       limit: LIMITS.aiMergeSynthesisRateLimitPerDay,
@@ -210,7 +179,7 @@ export async function synthesizeRefineProposalForUser({
 
 interface ValidateFlashcardsForUserInput {
   userId: string;
-  flashcards: FlashcardForValidation[];
+  flashcards: FlashcardForAi[];
 }
 
 type ValidateFlashcardsForUserResult =
@@ -237,6 +206,7 @@ export async function validateFlashcardsForUser({
 
   return runUserAiTask({
     userId,
+    logScope: "flashcards.validateCards",
     dailyLimit: {
       prefix: LIMITS.aiValidationRateLimitPrefix,
       limit: LIMITS.aiValidationRateLimitPerDay,
@@ -260,8 +230,8 @@ export async function validateFlashcardsForUser({
   });
 }
 
-// Merge and validation cards share one shape; the model reads plain text.
-function toPlainAiCard(card: FlashcardForValidation): FlashcardForValidation {
+// The model reads plain text; images stay as placeholders.
+function toPlainAiCard(card: FlashcardForAi): FlashcardForAi {
   return {
     id: card.id,
     front: richTextToPlainTextWithImagePlaceholders(card.front),
@@ -274,7 +244,7 @@ function toPlainAiCard(card: FlashcardForValidation): FlashcardForValidation {
 // related-card links so the UI only links real rows.
 function keepKnownCardIssues(
   validation: FlashcardValidationOutput,
-  flashcards: FlashcardForValidation[],
+  flashcards: FlashcardForAi[],
 ): FlashcardValidationOutput["issues"] {
   const validIds = new Set(flashcards.map((card) => card.id));
 

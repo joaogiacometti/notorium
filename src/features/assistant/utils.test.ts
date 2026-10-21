@@ -3,6 +3,8 @@ import {
   composeProposedFlashcardBack,
   findProposedSubjectId,
   formatFlashcardExample,
+  isAssistantReplyInFlight,
+  readFlashcardProposalParts,
 } from "@/features/assistant/utils";
 
 const subjects = [
@@ -52,5 +54,33 @@ describe("composeProposedFlashcardBack", () => {
     expect(composeProposedFlashcardBack({ ...card, example })).toBe(
       "- Keeps duplicates\n\n```prolog\n?- findall(X, p(X), L).\n```",
     );
+  });
+});
+
+describe("isAssistantReplyInFlight", () => {
+  it("is true only while a reply is requested or streaming", () => {
+    expect(isAssistantReplyInFlight("submitted")).toBe(true);
+    expect(isAssistantReplyInFlight("streaming")).toBe(true);
+    expect(isAssistantReplyInFlight("ready")).toBe(false);
+    expect(isAssistantReplyInFlight("error")).toBe(false);
+  });
+});
+
+describe("readFlashcardProposalParts", () => {
+  it("keeps only flashcard proposal calls", () => {
+    const proposal = {
+      type: "tool-proposeFlashcards" as const,
+      toolCallId: "call-1",
+      state: "input-available" as const,
+      input: { cards: [{ front: "What is ATP?", back: "Energy carrier" }] },
+    };
+
+    expect(
+      readFlashcardProposalParts({
+        id: "m1",
+        role: "assistant",
+        parts: [{ type: "text", text: "Here you go." }, proposal],
+      }),
+    ).toEqual([proposal]);
   });
 });

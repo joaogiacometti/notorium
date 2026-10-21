@@ -71,7 +71,6 @@ export async function streamAssistantReplyForUser({
     tools: assistantTools,
     abortSignal,
     sessionId: chatId,
-    reasoningEffort: access.settings.assistantReasoningEffort,
   });
 
   return { success: true, response };

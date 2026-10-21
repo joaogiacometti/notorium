@@ -14,7 +14,7 @@ type FakeStreamPart =
  *
  * @example
  * const model = createFakeStreamingModel("ATP stores energy.");
- * vi.mocked(getAiModelOrThrow).mockReturnValue(model);
+ * vi.mocked(getAiModel).mockReturnValue(model);
  */
 export function createFakeStreamingModel(
   replyText: string,

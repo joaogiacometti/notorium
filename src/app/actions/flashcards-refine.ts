@@ -56,11 +56,6 @@ export async function proposeFlashcardMerge(
       }
 
       const candidates = await findSimilarFlashcardsForUser(userId, primary);
-
-      if (candidates.length === 0) {
-        return actionError("flashcards.merge.noCandidates");
-      }
-
       const synthesis = await synthesizeRefineProposalForUser({
         userId,
         primary: {
@@ -76,14 +71,11 @@ export async function proposeFlashcardMerge(
         return actionError(synthesis.errorCode);
       }
 
+      // The synthesis keeps only ids from `candidates`, at least one of them.
       const selectedIds = new Set(synthesis.synthesis.sourceFlashcardIds);
       const sources = candidates.filter((candidate) =>
         selectedIds.has(candidate.id),
       );
-
-      if (sources.length === 0) {
-        return actionError("flashcards.merge.noCandidates");
-      }
 
       return { success: true, proposal: synthesis.synthesis, sources };
     },

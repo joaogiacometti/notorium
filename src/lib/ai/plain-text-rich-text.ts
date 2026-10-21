@@ -23,7 +23,8 @@ export function normalizeLine(value: string) {
 type MathSegment = { token: string; type: "inline" | "block"; latex: string };
 
 // `$$...$$` (block) is tried before `$...$` (inline) via alternation order.
-const MATH_MARKER_RE = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+// Exported so other AI output cleanup recognizes exactly the same math.
+export const MATH_MARKER_RE = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
 // Bare numbers/currency such as `$100$` are not math.
 const CURRENCY_LIKE_RE = /^[\d.,\s]+$/;
 

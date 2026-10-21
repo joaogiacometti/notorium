@@ -1,8 +1,13 @@
+import type { ChatStatus } from "ai";
 import type { FlashcardDraft } from "@/features/assistant/edit-contract";
 import type {
   FlashcardExample,
   ProposedFlashcard,
 } from "@/features/assistant/tools";
+import type {
+  AssistantFlashcardProposalPart,
+  AssistantUIMessage,
+} from "@/features/assistant/types";
 import { replaceImagesWithPlaceholders } from "@/lib/editor/rich-text";
 
 interface SubjectPathOption {
@@ -85,4 +90,23 @@ export function prepareDraftForAssistant(
     front: replaceImagesWithPlaceholders(draft.front).text,
     back: replaceImagesWithPlaceholders(draft.back).text,
   };
+}
+
+/** True while a reply is requested or streaming; sends and tool outputs wait.
+ * @example isAssistantReplyInFlight(chat.status);
+ */
+export function isAssistantReplyInFlight(status: ChatStatus): boolean {
+  return status === "submitted" || status === "streaming";
+}
+
+/** The `proposeFlashcards` calls in one chat message, in order.
+ * @example readFlashcardProposalParts(message).length;
+ */
+export function readFlashcardProposalParts(
+  message: AssistantUIMessage,
+): AssistantFlashcardProposalPart[] {
+  return message.parts.filter(
+    (part): part is AssistantFlashcardProposalPart =>
+      part.type === "tool-proposeFlashcards",
+  );
 }

@@ -9,10 +9,11 @@ import {
   preloadAssistantRichReply,
 } from "@/components/assistant/assistant-rich-reply";
 import type { FlashcardProposalControls } from "@/components/assistant/use-flashcard-proposal-outcomes";
-import type {
-  AssistantFlashcardProposalPart,
-  AssistantUIMessage,
-} from "@/features/assistant/types";
+import type { AssistantUIMessage } from "@/features/assistant/types";
+import {
+  isAssistantReplyInFlight,
+  readFlashcardProposalParts,
+} from "@/features/assistant/utils";
 import { cn } from "@/lib/utils";
 
 interface AssistantMessageListProps {
@@ -35,7 +36,7 @@ export function AssistantMessageList({
     (status === "streaming" &&
       lastMessage?.role === "assistant" &&
       !hasVisibleContent(lastMessage));
-  const busy = status === "submitted" || status === "streaming";
+  const busy = isAssistantReplyInFlight(status);
 
   // Runs after every render: each streamed chunk re-renders the list, and the
   // view should follow the reply as it grows.
@@ -67,7 +68,7 @@ export function AssistantMessageList({
               streaming={status === "streaming" && message === lastMessage}
             />
           )}
-          {readFlashcardProposals(message).map((proposal) => (
+          {readFlashcardProposalParts(message).map((proposal) => (
             <AssistantFlashcardProposal
               key={proposal.toolCallId}
               proposal={proposal}
@@ -116,16 +117,7 @@ function AssistantMessageBubble({
 function hasVisibleContent(message: AssistantUIMessage): boolean {
   return (
     readMessageText(message) !== "" ||
-    readFlashcardProposals(message).length > 0
-  );
-}
-
-function readFlashcardProposals(
-  message: AssistantUIMessage,
-): AssistantFlashcardProposalPart[] {
-  return message.parts.filter(
-    (part): part is AssistantFlashcardProposalPart =>
-      part.type === "tool-proposeFlashcards",
+    readFlashcardProposalParts(message).length > 0
   );
 }
 

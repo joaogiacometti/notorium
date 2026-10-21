@@ -22,7 +22,10 @@ import {
   studyContextSchema,
 } from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
-import { prepareDraftForAssistant } from "@/features/assistant/utils";
+import {
+  isAssistantReplyInFlight,
+  prepareDraftForAssistant,
+} from "@/features/assistant/utils";
 
 const sharedTransport = createAssistantChatTransport();
 const EDIT_FIELDS = ["front", "back"] as const;
@@ -112,6 +115,15 @@ export function AssistantWorkspaceProvider({
     });
   }
 
+  function reject(toolCallId: string, errorText: string) {
+    void chat.addToolOutput({
+      tool: "proposeFlashcardEdits",
+      toolCallId,
+      state: "output-error",
+      errorText,
+    });
+  }
+
   async function settlePending() {
     const current = pendingRef.current;
     if (!current) return;
@@ -177,8 +189,7 @@ export function AssistantWorkspaceProvider({
   }
 
   async function send(text?: string): Promise<boolean> {
-    if (chat.status === "submitted" || chat.status === "streaming")
-      return false;
+    if (isAssistantReplyInFlight(chat.status)) return false;
     if (editorRef.current && !editorRef.current.available()) {
       setNotice("Wait for saving or image uploads to finish, then try again.");
       return false;
@@ -236,12 +247,7 @@ export function AssistantWorkspaceProvider({
     const active = editorRef.current;
     const snapshot = active?.snapshot();
     if (!parsed.success) {
-      void chat.addToolOutput({
-        tool: "proposeFlashcardEdits",
-        toolCallId,
-        state: "output-error",
-        errorText: "Expected valid flashcard field replacements",
-      });
+      reject(toolCallId, "Expected valid flashcard field replacements");
       return;
     }
     const proposal = parsed.data;
@@ -288,7 +294,7 @@ export function AssistantWorkspaceProvider({
   }
 
   useEffect(() => {
-    if (chat.status === "submitted" || chat.status === "streaming") return;
+    if (isAssistantReplyInFlight(chat.status)) return;
     for (const message of chat.messages) {
       for (const part of message.parts) {
         if (
@@ -299,12 +305,7 @@ export function AssistantWorkspaceProvider({
           continue;
         handled.current.add(part.toolCallId);
         void receive(part.toolCallId, part.input).catch(() => {
-          void chat.addToolOutput({
-            tool: "proposeFlashcardEdits",
-            toolCallId: part.toolCallId,
-            state: "output-error",
-            errorText: "Expected supported flashcard rich text",
-          });
+          reject(part.toolCallId, "Expected supported flashcard rich text");
           setNotice("These changes could not be prepared. Ask again to retry.");
         });
       }

@@ -3,47 +3,20 @@ import { describe, expect, it } from "vitest";
 process.env.SKIP_ENV_VALIDATION = "1";
 
 const {
-  buildGenerateFlashcardBackPrompt,
   buildGenerateFlashcardsPrompt,
   buildImproveFlashcardBackPrompt,
-  flashcardBackSystemPrompt,
   flashcardBackImproveSystemPrompt,
   flashcardsGenerationSystemPrompt,
   flashcardValidationSystemPrompt,
   buildMergeSynthesisPrompt,
   flashcardMergeSynthesisOutputSchema,
   flashcardMergeSynthesisSystemPrompt,
-  normalizeGeneratedCards,
 } = await import("@/features/flashcards/ai-prompts");
 
-const { normalizeGeneratedBack } = await import(
+const { normalizeGeneratedBack, normalizeGeneratedCards } = await import(
   "@/features/flashcards/ai-utils"
 );
 const { plainTextToRichText } = await import("@/lib/ai/plain-text-rich-text");
-
-describe("buildGenerateFlashcardBackPrompt", () => {
-  it("includes subject and plain front content", () => {
-    const result = buildGenerateFlashcardBackPrompt({
-      subjectName: "Biology",
-      front: "What is photosynthesis?",
-    });
-
-    expect(result).toContain("Subject context: Biology");
-    expect(result).toContain(
-      "Use the subject only as background context. Answer only what the front asks.",
-    );
-    expect(result).toContain("Front: What is photosynthesis?");
-  });
-
-  it("includes subject context when provided", () => {
-    const result = buildGenerateFlashcardBackPrompt({
-      subjectName: "Metabolism",
-      front: "What is ATP?",
-    });
-
-    expect(result).toContain("Subject context: Metabolism");
-  });
-});
 
 describe("buildMergeSynthesisPrompt", () => {
   it("labels the primary card and each candidate with its id", () => {
@@ -130,69 +103,6 @@ describe("flashcardMergeSynthesisOutputSchema", () => {
   });
 });
 
-describe("flashcardBackSystemPrompt", () => {
-  it("requires concise answers without repeating the front", () => {
-    expect(flashcardBackSystemPrompt).toContain(
-      "Do not repeat, restate, or paraphrase the front.",
-    );
-    expect(flashcardBackSystemPrompt).toContain(
-      "If the answer is a single atomic fact, output one concise sentence only.",
-    );
-    expect(flashcardBackSystemPrompt).toContain(
-      "Otherwise output a list with 1 to 3 lines.",
-    );
-  });
-
-  it("enforces strict list formatting", () => {
-    expect(flashcardBackSystemPrompt).toContain(
-      'In list mode, every line must start with "- ".',
-    );
-    expect(flashcardBackSystemPrompt).toContain(
-      'In list mode, do not use inline separators like " - " inside a line.',
-    );
-    expect(flashcardBackSystemPrompt).toContain(
-      "In list mode, do not use numbering.",
-    );
-  });
-
-  it("forbids example bullets and extra details", () => {
-    expect(flashcardBackSystemPrompt).toContain(
-      "Do not add filler, disclaimers, study tips, examples, caveats, or long explanations.",
-    );
-    expect(flashcardBackSystemPrompt).toContain(
-      'Do not use bullets starting with "Example:", "E.g.", or "Ex.".',
-    );
-  });
-
-  it("bans generic definition wrappers", () => {
-    expect(flashcardBackSystemPrompt).toContain(
-      'Do not start with generic definition wrappers such as "An approach where...", "A method that...", or "It is...".',
-    );
-  });
-
-  it("includes compact good examples and bad versus good guidance", () => {
-    expect(flashcardBackSystemPrompt).toContain("Front: DNS acronym");
-    expect(flashcardBackSystemPrompt).toContain("Front: Functional dependency");
-    expect(flashcardBackSystemPrompt).toContain("Front: CPU role");
-    expect(flashcardBackSystemPrompt).toContain("Front: Program counter");
-    expect(flashcardBackSystemPrompt).toContain("Bad patterns:");
-    expect(flashcardBackSystemPrompt).toContain("Front: Tabela CAN");
-    expect(flashcardBackSystemPrompt).toContain(
-      "Front: Explain how a CPU works.",
-    );
-    expect(flashcardBackSystemPrompt).toContain("Front: What is RAM?");
-  });
-
-  it("keeps subject context secondary", () => {
-    expect(flashcardBackSystemPrompt).toContain(
-      "Subject context is allowed only as background context.",
-    );
-    expect(flashcardBackSystemPrompt).toContain(
-      "Use the subject only as background context. Answer only what the front asks.",
-    );
-  });
-});
-
 describe("normalizeGeneratedBack", () => {
   it("removes leading answer labels", () => {
     expect(normalizeGeneratedBack("Back: Machine code.")).toBe("Machine code.");
@@ -232,6 +142,16 @@ describe("normalizeGeneratedBack", () => {
       ),
     ).toBe(
       "- Suitable for simple business logic\n- Requires rollback actions\n- Should be avoided on core subdomains\n- May lead to code duplication\n\n```sql\nUPDATE users SET visits = visits + 1\n```",
+    );
+  });
+
+  it("keeps minus signs inside math and code intact", () => {
+    expect(
+      normalizeGeneratedBack(
+        "- Difference: $a - b$ - Block: $$x - y$$ - Code: `i - 1`\n\n```python\nprint(2 - 1)\n```",
+      ),
+    ).toBe(
+      "- Difference: $a - b$\n- Block: $$x - y$$\n- Code: `i - 1`\n\n```python\nprint(2 - 1)\n```",
     );
   });
 });

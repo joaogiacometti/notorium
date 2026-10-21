@@ -1,16 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AiConfigurationError } from "@/lib/ai/errors";
 
-const resolveRequiredAiSettingsMock = vi.fn();
+const resolveAiSettingsMock = vi.fn();
 const consumeUserDailyRateLimitMock = vi.fn();
-const generateFlashcardBackContentMock = vi.fn();
 const improveFlashcardBackContentMock = vi.fn();
 const generateFlashcardsFromTextMock = vi.fn();
 const validateFlashcardsWithAiMock = vi.fn();
 const synthesizeRefineProposalWithAiMock = vi.fn();
 
 vi.mock("@/lib/ai/config", () => ({
-  resolveRequiredAiSettings: resolveRequiredAiSettingsMock,
+  resolveAiSettings: resolveAiSettingsMock,
 }));
 
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
@@ -18,21 +16,29 @@ vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
 }));
 
 vi.mock("@/features/flashcards/ai", () => ({
-  generateFlashcardBackContent: generateFlashcardBackContentMock,
   improveFlashcardBackContent: improveFlashcardBackContentMock,
   generateFlashcardsFromText: generateFlashcardsFromTextMock,
   validateFlashcardsWithAi: validateFlashcardsWithAiMock,
   synthesizeRefineProposalWithAi: synthesizeRefineProposalWithAiMock,
 }));
 
+const settings = {
+  model: "openai/gpt-4.1-mini",
+  apiKey: "sk-or-v1-test",
+  reasoningEffort: "none" as const,
+};
+
+const improveInput = {
+  userId: "user-1",
+  front: "<p>What is ATP?</p>",
+  currentBack: "<p>Energy</p>",
+};
+
 describe("flashcards ai service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    resolveRequiredAiSettingsMock.mockReturnValue({
-      provider: "openrouter",
-      model: "openai/gpt-4.1-mini",
-      apiKey: "sk-or-v1-test",
-    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    resolveAiSettingsMock.mockReturnValue(settings);
     consumeUserDailyRateLimitMock.mockResolvedValue({
       limited: false,
       remaining: 100,
@@ -41,24 +47,19 @@ describe("flashcards ai service", () => {
   });
 
   it("returns notConfigured when AI env settings are missing", async () => {
-    resolveRequiredAiSettingsMock.mockImplementationOnce(() => {
-      throw new AiConfigurationError();
-    });
+    resolveAiSettingsMock.mockReturnValueOnce(null);
 
-    const { generateFlashcardBackForUser } = await import(
+    const { improveFlashcardBackForUser } = await import(
       "@/features/flashcards/ai-service"
     );
 
-    const result = await generateFlashcardBackForUser({
-      userId: "user-1",
-      front: "<p>What is ATP?</p>",
-    });
+    const result = await improveFlashcardBackForUser(improveInput);
 
     expect(result).toEqual({
       success: false,
       errorCode: "flashcards.ai.notConfigured",
     });
-    expect(generateFlashcardBackContentMock).not.toHaveBeenCalled();
+    expect(improveFlashcardBackContentMock).not.toHaveBeenCalled();
   });
 
   it("returns AI back-generation limit error before provider call", async () => {
@@ -69,32 +70,28 @@ describe("flashcards ai service", () => {
       errorCode: "limits.aiBackGenerationPerDay",
     });
 
-    const { generateFlashcardBackForUser } = await import(
+    const { improveFlashcardBackForUser } = await import(
       "@/features/flashcards/ai-service"
     );
 
-    const result = await generateFlashcardBackForUser({
-      userId: "user-1",
-      front: "<p>What is ATP?</p>",
-    });
+    const result = await improveFlashcardBackForUser(improveInput);
 
     expect(result).toEqual({
       success: false,
       errorCode: "limits.aiBackGenerationPerDay",
     });
-    expect(generateFlashcardBackContentMock).not.toHaveBeenCalled();
+    expect(improveFlashcardBackContentMock).not.toHaveBeenCalled();
   });
 
-  it("generates back content with global AI settings", async () => {
-    generateFlashcardBackContentMock.mockResolvedValueOnce("<p>Energy.</p>");
+  it("improves back content with global AI settings", async () => {
+    improveFlashcardBackContentMock.mockResolvedValueOnce("<p>Energy.</p>");
 
-    const { generateFlashcardBackForUser } = await import(
+    const { improveFlashcardBackForUser } = await import(
       "@/features/flashcards/ai-service"
     );
 
-    const result = await generateFlashcardBackForUser({
-      userId: "user-1",
-      front: "<p>What is ATP?</p>",
+    const result = await improveFlashcardBackForUser({
+      ...improveInput,
       subjectName: "Biology",
     });
 
@@ -102,14 +99,11 @@ describe("flashcards ai service", () => {
       success: true,
       back: "<p>Energy.</p>",
     });
-    expect(generateFlashcardBackContentMock).toHaveBeenCalledWith({
-      settings: {
-        provider: "openrouter",
-        model: "openai/gpt-4.1-mini",
-        apiKey: "sk-or-v1-test",
-      },
+    expect(improveFlashcardBackContentMock).toHaveBeenCalledWith({
+      settings,
       subjectName: "Biology",
       front: "<p>What is ATP?</p>",
+      currentBack: "<p>Energy</p>",
     });
   });
 
@@ -158,11 +152,7 @@ describe("flashcards ai service", () => {
       cards: [{ front: "Front", back: "Back" }],
     });
     expect(generateFlashcardsFromTextMock).toHaveBeenCalledWith({
-      settings: {
-        provider: "openrouter",
-        model: "openai/gpt-4.1-mini",
-        apiKey: "sk-or-v1-test",
-      },
+      settings,
       subjectName: "Biology",
       noteTitle: "Photosynthesis lecture",
       text: "Chloroplasts contain chlorophyll.",
@@ -333,11 +323,7 @@ describe("flashcards ai service", () => {
       },
     });
     expect(synthesizeRefineProposalWithAiMock).toHaveBeenCalledWith({
-      settings: {
-        provider: "openrouter",
-        model: "openai/gpt-4.1-mini",
-        apiKey: "sk-or-v1-test",
-      },
+      settings,
       primary: {
         id: "f1",
         front: "Front",
