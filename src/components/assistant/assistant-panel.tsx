@@ -10,6 +10,7 @@ import {
   useAssistantWorkspace,
 } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
+import { describeStudyContext } from "@/features/assistant/study-context";
 
 interface AssistantPanelProps {
   /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
@@ -76,6 +77,11 @@ function AssistantConversationPanel({
       {workspace.editor ? (
         <p className="border-b px-4 py-2 text-xs text-muted-foreground">
           Using current flashcard draft
+        </p>
+      ) : null}
+      {!workspace.editor && workspace.context ? (
+        <p className="border-b px-4 py-2 text-xs text-muted-foreground">
+          {describeStudyContext(workspace.context)}
         </p>
       ) : null}
       {workspace.notice ? (

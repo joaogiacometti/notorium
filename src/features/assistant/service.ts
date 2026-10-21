@@ -14,6 +14,7 @@ interface StreamAssistantReplyForUserInput {
   /** `useChat` id; keeps the chat's turns on one provider's prompt cache. */
   chatId?: string;
   draft?: AssistantChatRequest["draft"];
+  context?: AssistantChatRequest["context"];
   abortSignal?: AbortSignal;
   /** Injected by tests; defaults to the user's subject paths from the DB. */
   loadSubjectPaths?: (userId: string) => Promise<string[]>;
@@ -41,6 +42,7 @@ export async function streamAssistantReplyForUser({
   messages,
   chatId,
   draft,
+  context,
   abortSignal,
   loadSubjectPaths = readSubjectPathsForUser,
 }: StreamAssistantReplyForUserInput): Promise<StreamAssistantReplyForUserResult> {
@@ -64,7 +66,7 @@ export async function streamAssistantReplyForUser({
     settings: access.settings,
     logScope: "assistant.chat",
     instructions: buildAssistantSystemPrompt(await loadSubjectPaths(userId)),
-    messages: includeCurrentDraft(messages, draft),
+    messages: includeCurrentStudyContext(messages, draft, context),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: assistantTools,
     abortSignal,
@@ -80,17 +82,18 @@ async function readSubjectPathsForUser(userId: string): Promise<string[]> {
   return subjects.map((subject) => subject.path);
 }
 
-function includeCurrentDraft(
+function includeCurrentStudyContext(
   messages: AssistantChatRequest["messages"],
   draft: AssistantChatRequest["draft"],
+  studyContext?: AssistantChatRequest["context"],
 ): AssistantChatRequest["messages"] {
-  if (!draft) return messages;
+  if (!draft && !studyContext) return messages;
   return messages.map((message, index) => {
     if (index !== messages.length - 1 || message.role !== "user")
       return message;
     const context = {
       type: "text" as const,
-      text: `Current flashcard draft (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(draft)}`,
+      text: `${draft ? "Current flashcard draft" : "Current study context"} (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(draft ?? studyContext)}`,
     };
     return { ...message, parts: [context, ...message.parts] };
   });

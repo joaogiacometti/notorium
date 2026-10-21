@@ -17,6 +17,10 @@ import {
   flashcardDraftSchema,
   flashcardEditsInputSchema,
 } from "@/features/assistant/edit-contract";
+import {
+  type StudyContext,
+  studyContextSchema,
+} from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import { prepareDraftForAssistant } from "@/features/assistant/utils";
 
@@ -35,6 +39,21 @@ export function AssistantWorkspaceProvider({
   children,
   transport = sharedTransport,
 }: Readonly<AssistantWorkspaceProviderProps>) {
+  const contexts = useRef<Array<() => StudyContext | null>>([]);
+  const [context, setContext] = useState<StudyContext | null>(null);
+  const contextCallbacks = useRef({
+    refreshContext: () => setContext(contexts.current.at(-1)?.() ?? null),
+    registerContext: (snapshot: () => StudyContext | null) => {
+      contexts.current.push(snapshot);
+      setContext(snapshot());
+      return () => {
+        contexts.current = contexts.current.filter(
+          (entry) => entry !== snapshot,
+        );
+        setContext(contexts.current.at(-1)?.() ?? null);
+      };
+    },
+  }).current;
   const chat = useChat<AssistantUIMessage>({ transport });
   const [composerDraft, setComposerDraft] = useState("");
   const [open, setOpen] = useState(false);
@@ -166,8 +185,17 @@ export function AssistantWorkspaceProvider({
     }
     try {
       const draft = editorRef.current?.snapshot();
+      const studyContext = draft
+        ? undefined
+        : (contexts.current.at(-1)?.() ?? undefined);
       if (draft && !flashcardDraftSchema.safeParse(draft).success) {
         setNotice("This draft is too large to send. Shorten it and try again.");
+        return false;
+      }
+      if (studyContext && !studyContextSchema.safeParse(studyContext).success) {
+        setNotice(
+          "This study content could not be included. Check its title and size, then try again.",
+        );
         return false;
       }
       await settlePending();
@@ -175,7 +203,9 @@ export function AssistantWorkspaceProvider({
       requestRef.current = draft ?? null;
       setNotice(null);
       const options = {
-        body: draft ? { draft: prepareDraftForAssistant(draft) } : {},
+        body: draft
+          ? { draft: prepareDraftForAssistant(draft) }
+          : { context: studyContext },
       };
       const sending =
         text !== undefined
@@ -306,6 +336,8 @@ export function AssistantWorkspaceProvider({
         composerDraft,
         setComposerDraft,
         proposals,
+        context,
+        ...contextCallbacks,
         editor,
         register,
         pending,

@@ -18,6 +18,13 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { editMindmap, splitMindmap } from "@/app/actions/mindmaps";
+import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
+import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
+import {
+  buildDocumentContext,
+  describeMindmapGraph,
+} from "@/components/assistant/study-context-content";
+import { useStudyContext } from "@/components/assistant/use-study-context";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
@@ -68,8 +75,17 @@ export function MindmapDetail({
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const exportPngRef = useRef<MindmapExporter | null>(null);
   const { isZenMode, toggleZenMode } = useZenMode();
+  const assistantWorkspace = useAssistantWorkspace();
   const [title, setTitle] = useState(mindmap.title);
   const [graph, setGraph] = useState<MindmapGraph>(initialGraph);
+  useStudyContext(
+    buildDocumentContext(
+      "mindmap",
+      title,
+      subjectName,
+      describeMindmapGraph(graph),
+    ),
+  );
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
@@ -193,11 +209,13 @@ export function MindmapDetail({
         maxWidth="7xl"
         className={cn(
           "lg:flex lg:flex-col lg:overflow-hidden",
+          isZenMode && assistantWorkspace?.open && "lg:pr-96",
           isZenMode
             ? "fixed inset-0 z-immersive flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
             : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
         )}
       >
+        {isZenMode ? <AssistantSurfaceHost /> : null}
         <div
           className={cn(
             "flex flex-col gap-6 lg:min-h-0 lg:flex-1",

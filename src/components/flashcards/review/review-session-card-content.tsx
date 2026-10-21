@@ -1,5 +1,7 @@
 "use client";
 
+import { buildReviewContext } from "@/components/assistant/study-context-content";
+import { useStudyContext } from "@/components/assistant/use-study-context";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import type { FlashcardReviewState } from "@/lib/server/api-contracts";
 
@@ -9,6 +11,7 @@ interface ReviewSessionCardContentProps {
   card: ReviewCard;
   subjectLabel: string;
   revealed: boolean;
+  mode?: "review" | "exam";
 }
 
 const reviewRichTextClassName =
@@ -30,7 +33,9 @@ export function ReviewSessionCardContent({
   card,
   subjectLabel,
   revealed,
+  mode = "review",
 }: Readonly<ReviewSessionCardContentProps>) {
+  useStudyContext(buildReviewContext(card, subjectLabel, revealed, mode));
   // Keying by card id remounts the wrapper so the enter animation replays on
   // every new card instead of the content swapping in place.
   return (

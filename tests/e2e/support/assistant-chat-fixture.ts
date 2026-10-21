@@ -1,11 +1,15 @@
 import type { Page, Route } from "@playwright/test";
 import type { UIMessageChunk } from "ai";
-import { assistantChatRequestSchema } from "@/features/assistant/validation";
+import {
+  type AssistantChatRequest,
+  assistantChatRequestSchema,
+} from "@/features/assistant/validation";
 
 /** Provider-free chat response that proposes edits against the exact submitted draft.
  * @example await new AssistantChatFixture().install(page);
  */
 export class AssistantChatFixture {
+  readonly requests: AssistantChatRequest[] = [];
   async install(page: Page): Promise<void> {
     await page.route("**/api/assistant/chat", (route) => this.respond(route));
   }
@@ -14,6 +18,7 @@ export class AssistantChatFixture {
     const request = assistantChatRequestSchema.parse(
       route.request().postDataJSON(),
     );
+    this.requests.push(request);
     const draft = request.draft;
     const chunks: UIMessageChunk[] = draft
       ? [

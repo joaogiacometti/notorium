@@ -4,6 +4,7 @@ import {
   flashcardEditsInputSchema,
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
+import { studyContextSchema } from "@/features/assistant/study-context";
 import {
   flashcardProposalInputSchema,
   flashcardProposalOutputSchema,
@@ -135,19 +136,24 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
  *   messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: "What is ATP?" }] }],
  * });
  */
-export const assistantChatRequestSchema = z.object({
-  draft: flashcardDraftSchema.optional(),
-  chatId: z.string().min(1).max(100).optional(),
-  messages: z
-    .array(
-      z.discriminatedUnion("role", [userMessageSchema, replyMessageSchema]),
-    )
-    .min(1)
-    .max(LIMITS.assistantMaxMessages)
-    .refine((messages) => messages.at(-1)?.role === "user", {
-      message: "The last chat message must come from the user",
-    })
-    .transform(dropEmptyReplies),
-});
+export const assistantChatRequestSchema = z
+  .object({
+    draft: flashcardDraftSchema.optional(),
+    context: studyContextSchema.optional(),
+    chatId: z.string().min(1).max(100).optional(),
+    messages: z
+      .array(
+        z.discriminatedUnion("role", [userMessageSchema, replyMessageSchema]),
+      )
+      .min(1)
+      .max(LIMITS.assistantMaxMessages)
+      .refine((messages) => messages.at(-1)?.role === "user", {
+        message: "The last chat message must come from the user",
+      })
+      .transform(dropEmptyReplies),
+  })
+  .refine((request) => !(request.draft && request.context), {
+    message: "Expected either draft or study context, not both",
+  });
 
 export type AssistantChatRequest = z.infer<typeof assistantChatRequestSchema>;

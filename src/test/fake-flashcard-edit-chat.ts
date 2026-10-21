@@ -28,8 +28,23 @@ export class FakeFlashcardEditChat
   ): Promise<ReadableStream<UIMessageChunk>> {
     this.requests.push(request);
     const { draft } = z
-      .object({ draft: flashcardDraftSchema })
+      .object({ draft: flashcardDraftSchema.optional() })
       .parse(request.body);
+    if (!draft)
+      return new ReadableStream({
+        start(controller) {
+          controller.enqueue({ type: "start" });
+          controller.enqueue({ type: "text-start", id: "text" });
+          controller.enqueue({
+            type: "text-delta",
+            id: "text",
+            delta: "A study answer.",
+          });
+          controller.enqueue({ type: "text-end", id: "text" });
+          controller.enqueue({ type: "finish" });
+          controller.close();
+        },
+      });
     const input = {
       sessionId: draft.sessionId,
       revision: draft.revision,

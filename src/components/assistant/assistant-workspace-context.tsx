@@ -8,6 +8,7 @@ import type {
   FlashcardEditField,
   FlashcardEditsOutput,
 } from "@/features/assistant/edit-contract";
+import type { StudyContext } from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 
 export interface ActiveFlashcardEditor {
@@ -42,6 +43,9 @@ export interface AssistantWorkspace {
     fallback: HTMLElement,
   ) => () => void;
   proposals: FlashcardProposalControls;
+  context: StudyContext | null;
+  registerContext: (snapshot: () => StudyContext | null) => () => void;
+  refreshContext: () => void;
   editor: ActiveFlashcardEditor | null;
   register: (editor: ActiveFlashcardEditor) => () => void;
   pending: PendingFlashcardEdits | null;

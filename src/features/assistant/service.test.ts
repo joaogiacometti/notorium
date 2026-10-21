@@ -147,6 +147,32 @@ describe("streamAssistantReplyForUser", () => {
     expect(JSON.stringify(call?.prompt[0])).toContain("Biology::Cells");
   });
 
+  it("places study context before the question without adding it to system instructions", async () => {
+    const model = createFakeStreamingModel("A hint.");
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+      context: {
+        kind: "review",
+        mode: "exam",
+        front: "Current visible question",
+      },
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (result.success) await result.response.text();
+    const prompt = model.doStreamCalls[0].prompt;
+    expect(JSON.stringify(prompt[0])).not.toContain("Current visible question");
+    const latest = JSON.stringify(prompt.at(-1));
+    expect(latest.indexOf("Current visible question")).toBeLessThan(
+      latest.indexOf("What is ATP?"),
+    );
+    expect(latest).not.toContain('"back"');
+  });
+
   it("appends draft context after history without changing system instructions", async () => {
     const model = createFakeStreamingModel("Review changes in the editor.");
     getAiModelOrThrowMock.mockReturnValue(model);

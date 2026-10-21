@@ -14,6 +14,10 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editNote } from "@/app/actions/notes";
+import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
+import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
+import { buildDocumentContext } from "@/components/assistant/study-context-content";
+import { useStudyContext } from "@/components/assistant/use-study-context";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
@@ -75,6 +79,7 @@ export function NoteDetail({
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
   const { isZenMode, toggleZenMode } = useZenMode();
+  const assistantWorkspace = useAssistantWorkspace();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -89,6 +94,9 @@ export function NoteDetail({
   });
   const watchedTitle = form.watch("title");
   const watchedContent = form.watch("content") ?? "";
+  useStudyContext(
+    buildDocumentContext("note", watchedTitle, subjectName, watchedContent),
+  );
   const debouncedTitle = useDebouncedValue(watchedTitle, AUTOSAVE_DELAY_MS);
   const debouncedContent = useDebouncedValue(watchedContent, AUTOSAVE_DELAY_MS);
 
@@ -238,11 +246,13 @@ export function NoteDetail({
         maxWidth="7xl"
         className={cn(
           "lg:flex lg:flex-col lg:overflow-hidden",
+          isZenMode && assistantWorkspace?.open && "lg:pr-96",
           isZenMode
             ? "fixed inset-0 z-immersive flex h-svh max-w-none flex-col overflow-hidden bg-background py-4"
             : "lg:h-[calc(100svh-3.5rem)] lg:pb-6",
         )}
       >
+        {isZenMode ? <AssistantSurfaceHost /> : null}
         <div
           className={cn(
             "flex flex-col gap-6 lg:min-h-0 lg:flex-1",

@@ -5,12 +5,19 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { useActiveFlashcardEditor } from "@/components/assistant/use-active-flashcard-editor";
+import { useStudyContext } from "@/components/assistant/use-study-context";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import { FakeFlashcardEditChat } from "@/test/fake-flashcard-edit-chat";
 import "@/components/assistant/flashcard-draft-content";
 
 function DraftHarness() {
   const workspace = useAssistantWorkspace();
+  useStudyContext({
+    kind: "note",
+    title: "Underlying note",
+    content: "Background",
+    partial: false,
+  });
   const [open, setOpen] = useState(true);
   const [generation, setGeneration] = useState(0);
   const form = useForm<FlashcardFormValues>({
@@ -133,6 +140,7 @@ describe("shared assistant flashcard editing", () => {
         back: "<p>Original back</p>",
       },
     });
+    expect(transport.requests[0].body).not.toHaveProperty("context");
     expect(read("pending")).toContain("Better front");
     expect(read("values")).toContain("Original front");
     expect(read("dirty")).toBe("false");

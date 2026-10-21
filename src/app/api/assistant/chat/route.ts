@@ -33,6 +33,7 @@ export async function POST(request: Request): Promise<Response> {
       messages: parsed.data.messages,
       chatId: parsed.data.chatId,
       draft: parsed.data.draft,
+      context: parsed.data.context,
       abortSignal: request.signal,
     });
 

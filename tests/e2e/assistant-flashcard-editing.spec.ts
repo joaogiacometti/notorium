@@ -24,7 +24,8 @@ test("improves an unsaved card and keeps one conversation across review and edit
   const subjectName = getPrefixedValue("assistant-edit", "draft");
   const front = getPrefixedValue("assistant-card", "draft");
   const subject = await createSubject(e2eUser.userId, subjectName);
-  await new AssistantChatFixture().install(page);
+  const assistant = new AssistantChatFixture();
+  await assistant.install(page);
   try {
     await page.goto(`/flashcards?view=manage&subjectId=${subject.id}`);
     await page.getByRole("button", { name: "Open study assistant" }).click();
@@ -68,6 +69,39 @@ test("improves an unsaved card and keeps one conversation across review and edit
     await expect(
       page.getByText("I can help you study.", { exact: true }),
     ).toBeVisible();
+    await expect(
+      page.getByText("Using current review card · front only", { exact: true }),
+    ).toBeVisible();
+    await askAssistant(page, "Give me a hint");
+    await expect
+      .poll(() => assistant.requests.at(-1)?.context)
+      .toMatchObject({ kind: "review", front });
+    expect(assistant.requests.at(-1)?.context).not.toHaveProperty("back");
+    await expect(page.getByRole("button", { name: "Stop answer" })).toHaveCount(
+      0,
+    );
+    await page.getByRole("button", { name: "Open review actions" }).click();
+    await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
+    await expect(
+      page.getByText("Using current flashcard draft", { exact: true }),
+    ).toBeVisible();
+    await askAssistant(page, "Improve this flashcard");
+    const editDialog = page.getByRole("dialog", { name: "Edit Flashcard" });
+    await expect(
+      editDialog.getByRole("button", { name: "Discard back" }),
+    ).toBeVisible();
+    await editDialog.getByRole("button", { name: "Discard back" }).click();
+    await page.getByRole("button", { name: "Close flashcard editor" }).click();
+    await expect(
+      page.getByText("Using current review card · front only", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Show answer", exact: true })
+      .click();
+    await askAssistant(page, "Explain the answer");
+    await expect
+      .poll(() => assistant.requests.at(-1)?.context)
+      .toMatchObject({ kind: "review", back: "A concise improved answer." });
     await page
       .getByRole("textbox", { name: "Message the study assistant" })
       .fill("e 1");

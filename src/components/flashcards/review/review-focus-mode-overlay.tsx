@@ -180,6 +180,7 @@ function ExamFocusModeOverlay({
       footer={footer}
     >
       <ReviewSessionCardContent
+        mode="exam"
         card={currentCard}
         subjectLabel={getSubjectLabel(currentCard, subjects)}
         revealed={revealed}
