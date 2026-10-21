@@ -5,7 +5,6 @@ import {
   ImageDown,
   MoreVertical,
   Pencil,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import type React from "react";
@@ -27,21 +26,12 @@ export interface DocumentRowActionHandlers {
   onDeleteRequested?: (item: DocumentListItem) => void;
   /** Notes only: copy the note's content in the given clipboard format. */
   onCopyRequested?: (item: DocumentListItem, format: NoteCopyFormat) => void;
-  /** Notes and mindmaps: open the AI flashcard generation dialog. */
-  onGenerateRequested?: (item: DocumentListItem) => void;
-  /** When set, the generate item renders disabled with this as its tooltip. */
-  generateDisabledReason?: string;
   /** Mindmaps only: download the mindmap as a PNG. */
   onExportRequested?: (item: DocumentListItem) => void;
 }
 
 interface DocumentRowMenuProps extends DocumentRowActionHandlers {
   item: DocumentListItem;
-}
-
-interface DocumentRowKindItemsProps extends DocumentRowMenuProps {
-  /** Marks the next close as a dialog open so the menu releases focus to it. */
-  onOpenDialog: (action: () => void) => void;
 }
 
 /**
@@ -56,7 +46,7 @@ export function DocumentRowMenu({
   item,
   ...handlers
 }: Readonly<DocumentRowMenuProps>) {
-  // Edit/Delete/Generate open dialogs. Defer the dialog open until the menu has
+  // Edit/Delete open dialogs. Defer the dialog open until the menu has
   // fully closed: while the dropdown plays its close animation it still traps
   // focus, so opening the dialog now would let that trap steal focus back from
   // the dialog's autofocused field. Running the action in onCloseAutoFocus (and
@@ -69,17 +59,9 @@ export function DocumentRowMenu({
 
   let kindItems: React.ReactNode = null;
   if (item.kind === "note") {
-    kindItems = (
-      <NoteRowMenuItems item={item} onOpenDialog={openDialog} {...handlers} />
-    );
+    kindItems = <NoteRowMenuItems item={item} {...handlers} />;
   } else if (item.kind === "mindmap") {
-    kindItems = (
-      <MindmapRowMenuItems
-        item={item}
-        onOpenDialog={openDialog}
-        {...handlers}
-      />
-    );
+    kindItems = <MindmapRowMenuItems item={item} {...handlers} />;
   }
 
   return (
@@ -132,80 +114,49 @@ export function DocumentRowMenu({
 
 function NoteRowMenuItems({
   item,
-  onGenerateRequested,
-  generateDisabledReason,
   onCopyRequested,
-  onOpenDialog,
-}: Readonly<DocumentRowKindItemsProps>) {
+}: Readonly<DocumentRowMenuProps>) {
+  if (!onCopyRequested) {
+    return null;
+  }
   return (
     <>
-      {onGenerateRequested ? (
-        <DropdownMenuItem
-          className="cursor-pointer"
-          disabled={!!generateDisabledReason}
-          title={generateDisabledReason}
-          onClick={() => onOpenDialog(() => onGenerateRequested(item))}
-        >
-          <Sparkles className="size-4" />
-          Generate flashcards
-        </DropdownMenuItem>
-      ) : null}
-      {onCopyRequested ? (
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => onCopyRequested(item, "rich")}
-          >
-            <Clipboard className="size-4" />
-            Copy as rich text
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => onCopyRequested(item, "plain")}
-          >
-            <Clipboard className="size-4" />
-            Copy as plain text
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-        </>
-      ) : null}
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        className="cursor-pointer"
+        onClick={() => onCopyRequested(item, "rich")}
+      >
+        <Clipboard className="size-4" />
+        Copy as rich text
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        className="cursor-pointer"
+        onClick={() => onCopyRequested(item, "plain")}
+      >
+        <Clipboard className="size-4" />
+        Copy as plain text
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
     </>
   );
 }
 
 function MindmapRowMenuItems({
   item,
-  onGenerateRequested,
-  generateDisabledReason,
   onExportRequested,
-  onOpenDialog,
-}: Readonly<DocumentRowKindItemsProps>) {
-  if (!onGenerateRequested && !onExportRequested) {
+}: Readonly<DocumentRowMenuProps>) {
+  if (!onExportRequested) {
     return null;
   }
   return (
     <>
-      {onGenerateRequested ? (
-        <DropdownMenuItem
-          className="cursor-pointer"
-          disabled={!!generateDisabledReason}
-          title={generateDisabledReason}
-          onClick={() => onOpenDialog(() => onGenerateRequested(item))}
-        >
-          <Sparkles className="size-4" />
-          Generate flashcards
-        </DropdownMenuItem>
-      ) : null}
-      {onExportRequested ? (
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={() => onExportRequested(item)}
-        >
-          <ImageDown className="size-4" />
-          Export as PNG
-        </DropdownMenuItem>
-      ) : null}
+      <DropdownMenuItem
+        className="cursor-pointer"
+        onClick={() => onExportRequested(item)}
+      >
+        <ImageDown className="size-4" />
+        Export as PNG
+      </DropdownMenuItem>
       <DropdownMenuSeparator />
     </>
   );

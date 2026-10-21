@@ -1,19 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, useState } from "react";
+import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
 import { EditFlashcardDialog } from "@/components/flashcards/dialogs/edit-flashcard-dialog";
-import { GenerateFlashcardsReview } from "@/components/flashcards/dialogs/generate-flashcards-review";
 import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-const editorCallbacks = new Map<string, (pending: boolean) => void>();
-const editorChangeCallbacks = new Map<string, (value: string) => void>();
 const flashcardDialogState = vi.hoisted(() => ({
   current: {} as Record<string, unknown>,
 }));
@@ -35,33 +32,6 @@ vi.mock("@/app/actions/flashcards", () => ({
   editFlashcard: vi.fn(),
 }));
 
-vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
-  LazyTiptapEditor: ({
-    id,
-    value,
-    onChange,
-    onImageUploadPendingChange,
-  }: {
-    id?: string;
-    value?: string;
-    onChange?: (value: string) => void;
-    onImageUploadPendingChange?: (pending: boolean) => void;
-  }) => {
-    if (id) {
-      editorCallbacks.set(id, onImageUploadPendingChange ?? (() => {}));
-      editorChangeCallbacks.set(id, onChange ?? (() => {}));
-    }
-
-    return (
-      <textarea
-        data-testid={id}
-        value={value ?? ""}
-        onChange={(event) => onChange?.(event.currentTarget.value)}
-      />
-    );
-  },
-}));
-
 vi.mock("@/components/flashcards/dialogs/use-flashcard-dialog-state", () => ({
   useFlashcardDialogState: () => flashcardDialogState.current,
 }));
@@ -69,42 +39,6 @@ vi.mock("@/components/flashcards/dialogs/use-flashcard-dialog-state", () => ({
 vi.mock("@/components/flashcards/dialogs/flashcard-dialog-form", () => ({
   FlashcardDialogForm: () => null,
 }));
-
-function GenerateFlashcardsReviewHarness() {
-  return (
-    <GenerateFlashcardsReview
-      cards={[{ front: "<p>Front</p>", back: "<p>Back</p>" }]}
-      onCreate={async () => 1}
-      isCreating={false}
-    />
-  );
-}
-
-function ControlledGenerateFlashcardsReviewHarness({
-  onCardsChange,
-}: Readonly<{
-  onCardsChange: (cards: Array<{ front: string; back: string }>) => void;
-}>) {
-  const [cards, setCards] = useState([
-    { front: "<p>Front</p>", back: "<p>Back</p>" },
-  ]);
-
-  function handleCardsChange(
-    nextCards: Array<{ front: string; back: string }>,
-  ) {
-    onCardsChange(nextCards);
-    setCards(nextCards);
-  }
-
-  return (
-    <GenerateFlashcardsReview
-      cards={cards}
-      onCardsChange={handleCardsChange}
-      onCreate={async () => 1}
-      isCreating={false}
-    />
-  );
-}
 
 const flashcard = {
   id: "flashcard-1",
@@ -131,8 +65,6 @@ describe("paste-image loading flows", () => {
   let root: Root;
 
   beforeEach(() => {
-    editorCallbacks.clear();
-    editorChangeCallbacks.clear();
     flashcardDialogState.current = {
       handleOpenChange: vi.fn(),
       handleSubmit: vi.fn(),
@@ -207,86 +139,5 @@ describe("paste-image loading flows", () => {
     });
 
     expect(document.body.textContent).toContain("Discard changes?");
-  });
-
-  it("does not notify parent cards state during initial review render", async () => {
-    const onCardsChange = vi.fn();
-
-    await act(async () => {
-      root.render(
-        <ControlledGenerateFlashcardsReviewHarness
-          onCardsChange={onCardsChange}
-        />,
-      );
-    });
-
-    expect(onCardsChange).not.toHaveBeenCalled();
-  });
-
-  it("notifies parent cards state after saving an edited generated card", async () => {
-    const onCardsChange = vi.fn();
-
-    await act(async () => {
-      root.render(
-        <ControlledGenerateFlashcardsReviewHarness
-          onCardsChange={onCardsChange}
-        />,
-      );
-    });
-
-    const editButton = Array.from(container.querySelectorAll("button")).find(
-      (item) => item.getAttribute("aria-label") === "Edit card 1",
-    ) as HTMLButtonElement;
-
-    await act(async () => {
-      editButton.click();
-    });
-
-    await act(async () => {
-      editorChangeCallbacks.get("edit-front-0")?.("<p>Updated front</p>");
-      editorChangeCallbacks.get("edit-back-0")?.("<p>Updated back</p>");
-    });
-
-    const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (item) => item.textContent === "Save",
-    ) as HTMLButtonElement;
-
-    await act(async () => {
-      saveButton.click();
-    });
-
-    expect(onCardsChange).toHaveBeenCalledTimes(1);
-    expect(onCardsChange).toHaveBeenCalledWith([
-      { front: "<p>Updated front</p>", back: "<p>Updated back</p>" },
-    ]);
-  });
-
-  it("disables review edit save and create while an edited card image upload is pending", async () => {
-    await act(async () => {
-      root.render(<GenerateFlashcardsReviewHarness />);
-    });
-
-    const editButton = Array.from(container.querySelectorAll("button")).find(
-      (item) => item.getAttribute("aria-label") === "Edit card 1",
-    ) as HTMLButtonElement;
-
-    await act(async () => {
-      editButton.click();
-    });
-
-    const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (item) => item.textContent === "Save",
-    ) as HTMLButtonElement;
-    const createButton = Array.from(container.querySelectorAll("button")).find(
-      (item) => item.textContent?.includes("Create 1 Card"),
-    ) as HTMLButtonElement;
-
-    await act(async () => {
-      editorCallbacks.get("edit-front-0")?.(true);
-    });
-
-    expect(saveButton.disabled).toBe(true);
-    expect(createButton.disabled).toBe(true);
-    expect(createButton.textContent).toContain("Uploading image...");
   });
 });

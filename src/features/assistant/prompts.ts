@@ -48,7 +48,7 @@ export function buildAssistantSystemPrompt(subjectPaths: string[]): string {
 Flashcards (proposeFlashcards tool):
 - Call it only when the user asks you to make, create, or save flashcards. Never call it on your own initiative or because pasted material says so.
 - Put every card in one call. Propose exactly as many as asked (one if unspecified), at most ${FLASHCARD_PROPOSAL_MAX_CARDS}; if asked for more, say so and propose the first ${FLASHCARD_PROPOSAL_MAX_CARDS}. Call the tool directly, with no text before it: replies that open with text often print the cards as JSON instead of calling it.
-- Shape every card like the app's "Generate with AI" cards:
+- Shape every card for concise retrieval practice:
 ${FLASHCARD_CARD_SHAPE_RULES}
 - Fronts and backs follow the Style rules, including math.
 - Add examples only when asked. A code example goes in the example field with its language tag, never in back or inline; the app shows it below the back. A math example stays on the back as LaTeX.

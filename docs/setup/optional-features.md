@@ -21,7 +21,9 @@ If either variable is missing, AI controls remain hidden.
 
 The study assistant is a shared collapsible sidebar across pages, review, and flashcard editing. Each message includes the active study content: visible review/exam card sides, the unsaved note or mindmap, or the current flashcard editor draft. Document excerpts are capped at 12,000 text characters with a partial-context indicator, and attachment URLs are omitted. Context uses already loaded content with no background AI calls. Asking for improvements while an editor is open sends its current unsaved draft; suggestions are approved per field inside the editor. This uses the assistant message allowance and needs no additional configuration or database migration. Conversations remain in browser memory.
 
-Every AI call (the study assistant and flashcard generation and improvement) runs with thinking turned off (`none`) by default: thinking tokens are billed as output tokens and count against each call's output cap, so they can cut an answer short. Set `OPENROUTER_REASONING_EFFORT` (`none`, `minimal`, `low`, `medium`, or `high`) to change it. You must set it to something other than `none` for a model whose reasoning cannot be turned off, or that model rejects every AI request.
+AI flashcard creation uses the study assistant, including requests based on an open note or mindmap. The assistant proposes up to five cards per reply for confirmation before saving. There are no separate document or branch generation actions.
+
+Every AI call (the study assistant and flashcard back improvement) runs with thinking turned off (`none`) by default: thinking tokens are billed as output tokens and count against each call's output cap, so they can cut an answer short. Set `OPENROUTER_REASONING_EFFORT` (`none`, `minimal`, `low`, `medium`, or `high`) to change it. You must set it to something other than `none` for a model whose reasoning cannot be turned off, or that model rejects every AI request.
 
 AI output follows the user's language: the assistant answers in the language of the user's message, and generated or improved flashcards use the language of the source material or cards.
 

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ImageDown,
-  MoreVertical,
-  Pencil,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { ImageDown, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -28,7 +22,6 @@ import { useStudyContext } from "@/components/assistant/use-study-context";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
-import { GenerateMindmapFlashcardsDialog } from "@/components/mindmaps/generate-mindmap-flashcards-dialog";
 import { LazyMindmapCanvas } from "@/components/mindmaps/lazy-mindmap-canvas";
 import type { MindmapExporter } from "@/components/mindmaps/mindmap-canvas";
 import { AppPageContainer } from "@/components/shared/app-page-container";
@@ -47,14 +40,12 @@ import { ensureRootNode, parseMindmapGraph } from "@/features/mindmaps/utils";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
-import type { MindmapEntity, SubjectOption } from "@/lib/server/api-contracts";
+import type { MindmapEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { cn } from "@/lib/utils";
 
 interface MindmapDetailProps {
-  aiEnabled: boolean;
-  subjects?: SubjectOption[];
   mindmap: MindmapEntity;
   subjectName: string;
 }
@@ -62,8 +53,6 @@ interface MindmapDetailProps {
 const AUTOSAVE_DELAY_MS = 800;
 
 export function MindmapDetail({
-  aiEnabled,
-  subjects,
   mindmap,
   subjectName,
 }: Readonly<MindmapDetailProps>) {
@@ -88,12 +77,7 @@ export function MindmapDetail({
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [generateOpen, setGenerateOpen] = useState(false);
-  const [generateSourceNodeId, setGenerateSourceNodeId] = useState<
-    string | null
-  >(null);
   const [isSaving, setIsSaving] = useState(false);
-  const hasSubjects = subjects ? subjects.length > 0 : true;
   const lastSavedRef = useRef(
     JSON.stringify({ title: mindmap.title, data: initialGraph }),
   );
@@ -176,18 +160,6 @@ export function MindmapDetail({
     [mindmap.id, router, save, title],
   );
 
-  const onGenerateFlashcardsFromNode = useCallback(
-    async (nodeId: string, nextGraph: MindmapGraph) => {
-      const saved = await save(title, nextGraph);
-      if (!saved) {
-        return;
-      }
-      setGenerateSourceNodeId(nodeId);
-      setGenerateOpen(true);
-    },
-    [save, title],
-  );
-
   useEffect(() => {
     void save(debouncedTitle, debouncedGraph);
   }, [debouncedTitle, debouncedGraph, save]);
@@ -264,24 +236,6 @@ export function MindmapDetail({
                     <Pencil className="size-4" />
                     Edit
                   </DropdownMenuItem>
-                  {aiEnabled ? (
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      onClick={() => {
-                        setGenerateSourceNodeId(null);
-                        setGenerateOpen(true);
-                      }}
-                      disabled={!hasSubjects}
-                      title={
-                        hasSubjects
-                          ? undefined
-                          : "Create a subject before generating flashcards."
-                      }
-                    >
-                      <Sparkles className="size-4" />
-                      Generate flashcards
-                    </DropdownMenuItem>
-                  ) : null}
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => void exportPngRef.current?.()}
@@ -316,11 +270,6 @@ export function MindmapDetail({
                 onTitleChange={setTitle}
                 onGraphChange={setGraph}
                 onSplitIntoMindmap={onSplitIntoMindmap}
-                onGenerateFlashcardsFromNode={
-                  aiEnabled && hasSubjects
-                    ? onGenerateFlashcardsFromNode
-                    : undefined
-                }
                 exportRef={exportPngRef}
               />
             </div>
@@ -347,15 +296,6 @@ export function MindmapDetail({
             setEditOpen(false);
           }}
         />
-        {aiEnabled ? (
-          <GenerateMindmapFlashcardsDialog
-            subjects={subjects}
-            mindmapId={mindmap.id}
-            sourceNodeId={generateSourceNodeId}
-            open={generateOpen}
-            onOpenChange={setGenerateOpen}
-          />
-        ) : null}
       </AppPageContainer>
     </>
   );

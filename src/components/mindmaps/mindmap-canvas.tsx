@@ -72,10 +72,6 @@ interface MindmapCanvasProps {
     nodeId: string,
     graph: MindmapGraph,
   ) => Promise<boolean>;
-  onGenerateFlashcardsFromNode?: (
-    nodeId: string,
-    graph: MindmapGraph,
-  ) => Promise<void>;
   exportRef?: RefObject<MindmapExporter | null>;
   shortcutsEnabled?: boolean;
   /** Fires once, after every node has a measured size. The offscreen PNG
@@ -108,7 +104,6 @@ function MindmapCanvasInner({
   onTitleChange,
   onGraphChange,
   onSplitIntoMindmap,
-  onGenerateFlashcardsFromNode,
   exportRef,
   shortcutsEnabled = true,
   onNodesMeasured,
@@ -315,16 +310,6 @@ function MindmapCanvasInner({
     [getNode, getNodes, getEdges, onSplitIntoMindmap, removeSubtrees],
   );
 
-  const generateFlashcardsFromNode = useCallback(
-    async (nodeId: string) => {
-      await onGenerateFlashcardsFromNode?.(
-        nodeId,
-        toGraph(getNodes(), getEdges()),
-      );
-    },
-    [getNodes, getEdges, onGenerateFlashcardsFromNode],
-  );
-
   useMindmapPngExport({
     nodes,
     getNodes,
@@ -376,7 +361,6 @@ function MindmapCanvasInner({
     deleteSelected,
     deleteCrossEdge,
     splitIntoMindmap,
-    generateFlashcardsFromNode,
     addChild,
     getAllowedChildSides,
     pendingEditNodeId,

@@ -6,11 +6,9 @@ import { toast } from "sonner";
 import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
-import { GenerateMindmapFlashcardsDialog } from "@/components/mindmaps/generate-mindmap-flashcards-dialog";
 import { OffscreenMindmapPngExport } from "@/components/mindmaps/offscreen-mindmap-png-export";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
-import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
 import type { DocumentListItem } from "@/features/documents/types";
 import {
   copyNoteContentToClipboard,
@@ -18,7 +16,6 @@ import {
 } from "@/lib/clipboard/note-content";
 import { getDocumentDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
 import { fetchNoteById } from "@/lib/read-api/documents";
-import type { SubjectOption } from "@/lib/server/api-contracts";
 
 // Copies a note that is not open in the editor: its content is not in client
 // state, so the last saved version is fetched before writing to the clipboard.
@@ -36,8 +33,6 @@ async function copySavedNoteContent(noteId: string, format: NoteCopyFormat) {
 }
 
 interface UseDocumentRowDialogsArgs {
-  aiEnabled: boolean;
-  subjects: SubjectOption[];
   /** Called after an edit or delete succeeds, before `router.refresh()`, so a
    * caller with its own client-side document state can reload that subject. */
   onChanged?: (item: DocumentListItem) => void;
@@ -49,27 +44,22 @@ interface DocumentRowDialogs {
 }
 
 /**
- * Owns the per-document action dialogs (edit/delete/generate/export) plus the
+ * Owns the per-document action dialogs (edit/delete/export) plus the
  * note copy action, and returns the row-menu handlers wired to them. Shared by
  * the documents list sidebar and the subject tree so both expose identical
  * document actions on their kebab menus.
  *
  * @example
- * const { handlers, dialogs } = useDocumentRowDialogs({ aiEnabled, subjects });
+ * const { handlers, dialogs } = useDocumentRowDialogs({ onChanged });
  * return (<><DocumentRowMenu item={doc} {...handlers} />{dialogs}</>);
  */
 export function useDocumentRowDialogs({
-  aiEnabled,
-  subjects,
   onChanged,
 }: Readonly<UseDocumentRowDialogsArgs>): DocumentRowDialogs {
   const router = useRouter();
   const pathname = usePathname();
   const [editTarget, setEditTarget] = useState<DocumentListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentListItem | null>(
-    null,
-  );
-  const [generateTarget, setGenerateTarget] = useState<DocumentListItem | null>(
     null,
   );
   const [exportTargetId, setExportTargetId] = useState<string | null>(null);
@@ -93,13 +83,6 @@ export function useDocumentRowDialogs({
     onDeleteRequested: (item) => setDeleteTarget(item),
     onCopyRequested: (item, format) =>
       void copySavedNoteContent(item.id, format),
-    onGenerateRequested: aiEnabled
-      ? (item) => setGenerateTarget(item)
-      : undefined,
-    generateDisabledReason:
-      subjects.length > 0
-        ? undefined
-        : "Create a subject before generating flashcards.",
     onExportRequested: (item) => setExportTargetId(item.id),
   };
 
@@ -160,26 +143,6 @@ export function useDocumentRowDialogs({
             const target = deleteTarget;
             setDeleteTarget(null);
             handleDeleted(target);
-          }}
-        />
-      ) : null}
-      {generateTarget?.kind === "note" ? (
-        <GenerateNoteFlashcardsDialog
-          subjects={subjects}
-          noteId={generateTarget.id}
-          open
-          onOpenChange={(open) => {
-            if (!open) setGenerateTarget(null);
-          }}
-        />
-      ) : null}
-      {generateTarget?.kind === "mindmap" ? (
-        <GenerateMindmapFlashcardsDialog
-          subjects={subjects}
-          mindmapId={generateTarget.id}
-          open
-          onOpenChange={(open) => {
-            if (!open) setGenerateTarget(null);
           }}
         />
       ) : null}

@@ -1,7 +1,4 @@
-import {
-  generateFlashcardsFromText,
-  improveFlashcardBackContent,
-} from "@/features/flashcards/ai";
+import { improveFlashcardBackContent } from "@/features/flashcards/ai";
 import { runUserAiTask } from "@/lib/ai/user-ai-access";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -53,57 +50,5 @@ export async function improveFlashcardBackForUser({
         currentBack,
       }),
     }),
-  });
-}
-
-interface GenerateFlashcardsForUserInput {
-  userId: string;
-  subjectName?: string;
-  noteTitle?: string;
-  text: string;
-}
-
-type GenerateFlashcardsForUserResult =
-  | { success: true; cards: Array<{ front: string; back: string }> }
-  | {
-      success: false;
-      errorCode:
-        | "flashcards.ai.notConfigured"
-        | "flashcards.ai.unavailable"
-        | "flashcards.ai.emptyGeneration"
-        | "limits.aiFlashcardGenerationPerDay";
-    };
-
-export async function generateFlashcardsForUser({
-  userId,
-  subjectName,
-  noteTitle,
-  text,
-}: GenerateFlashcardsForUserInput): Promise<GenerateFlashcardsForUserResult> {
-  return runUserAiTask({
-    userId,
-    logScope: "flashcards.generateCards",
-    dailyLimit: {
-      prefix: LIMITS.aiFlashcardGenerationRateLimitPrefix,
-      limit: LIMITS.aiFlashcardGenerationRateLimitPerDay,
-    },
-    errorCodes: {
-      ...FLASHCARD_AI_ERROR_CODES,
-      limited: "limits.aiFlashcardGenerationPerDay",
-    },
-    run: async (settings): Promise<GenerateFlashcardsForUserResult> => {
-      const cards = await generateFlashcardsFromText({
-        settings,
-        subjectName,
-        noteTitle,
-        text,
-      });
-
-      if (cards.length === 0) {
-        return { success: false, errorCode: "flashcards.ai.emptyGeneration" };
-      }
-
-      return { success: true, cards };
-    },
   });
 }

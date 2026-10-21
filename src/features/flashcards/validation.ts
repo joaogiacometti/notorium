@@ -155,22 +155,3 @@ export type FlashcardsManageQueryInput = z.infer<
 export const flashcardContentsQuerySchema = z.object({
   ids: z.array(idSchema).min(1).max(LIMITS.flashcardContentsReadMax),
 });
-
-export const generateNoteFlashcardsSchema = z.object({
-  noteId: idSchema,
-  subjectId: subjectIdField,
-});
-
-export type GenerateNoteFlashcardsForm = z.infer<
-  typeof generateNoteFlashcardsSchema
->;
-
-export const generateMindmapFlashcardsSchema = z.object({
-  mindmapId: idSchema,
-  sourceNodeId: idSchema.optional(),
-  subjectId: subjectIdField,
-});
-
-export type GenerateMindmapFlashcardsForm = z.infer<
-  typeof generateMindmapFlashcardsSchema
->;

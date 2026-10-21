@@ -7,7 +7,6 @@ import {
   Italic,
   Loader2,
   Scissors,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import { type CSSProperties, useState } from "react";
@@ -27,7 +26,7 @@ interface MindmapNodeToolbarProps {
 }
 
 /** Floating toolbar for a selected branch node: text style, color, image,
- * generation, split, and delete actions. */
+ * split and delete actions. */
 export function MindmapNodeToolbar({
   nodeId,
   data,
@@ -38,7 +37,6 @@ export function MindmapNodeToolbar({
 }: Readonly<MindmapNodeToolbarProps>) {
   const actions = useMindmapActions();
   const [splitting, setSplitting] = useState(false);
-  const [openingGeneration, setOpeningGeneration] = useState(false);
 
   return (
     <NodeToolbar isVisible={isVisible} position={Position.Top}>
@@ -80,24 +78,6 @@ export function MindmapNodeToolbar({
           imageUrl={data.imageUrl}
           onClick={onImageClick}
         />
-        {!isMultiSelect && actions.generateFlashcardsFromNode ? (
-          <MindmapToolbarButton
-            label="Generate flashcards from branch"
-            disabled={openingGeneration}
-            onClick={() => {
-              setOpeningGeneration(true);
-              void actions.generateFlashcardsFromNode?.(nodeId).finally(() => {
-                setOpeningGeneration(false);
-              });
-            }}
-          >
-            {openingGeneration ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Sparkles className="size-4" />
-            )}
-          </MindmapToolbarButton>
-        ) : null}
         {!isMultiSelect ? (
           <MindmapToolbarButton
             label="Break into new mindmap"

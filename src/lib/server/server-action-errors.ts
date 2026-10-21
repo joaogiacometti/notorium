@@ -82,8 +82,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "AI flashcard generation is not configured for this instance.",
   "flashcards.ai.unavailable":
     "AI flashcard generation is temporarily unavailable.",
-  "flashcards.ai.emptyGeneration":
-    "Could not extract flashcards from this text. Try adding more content.",
   "flashcards.review.invalidData": "Invalid review input.",
   "flashcards.review.notFound": "Flashcard not found for review.",
   "flashcards.review.notDue": "This flashcard is not due yet.",
@@ -120,8 +118,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
   "limits.aiBackGenerationPerDay":
     "Daily limit reached for AI back generation.",
-  "limits.aiFlashcardGenerationPerDay":
-    "Daily limit reached for AI flashcard generation.",
   "limits.aiAssistantPerDay": "Daily limit reached for the study assistant.",
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",

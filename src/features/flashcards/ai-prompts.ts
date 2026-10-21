@@ -7,8 +7,8 @@ const LANGUAGE_RULE =
 
 /**
  * How a generated card is shaped: a terse cue on the front, one sentence or
- * 1 to 3 bullets on the back. Shared by "Generate with AI" and the study
- * assistant's `proposeFlashcards` tool so both produce the same cards.
+ * 1 to 3 bullets on the back. Used by the study assistant's
+ * `proposeFlashcards` tool.
  *
  * @example
  * const prompt = `Rules:\n${FLASHCARD_CARD_SHAPE_RULES}`;
@@ -24,18 +24,6 @@ export const FLASHCARD_CARD_SHAPE_RULES = `- Fronts must be short, direct questi
 
 export const generatedFlashcardBackSchema = z.object({
   backText: z.string().trim().min(1).max(LIMITS.flashcardAiBackMax),
-});
-
-export const generatedFlashcardsSchema = z.object({
-  cards: z
-    .array(
-      z.object({
-        front: z.string().min(1).max(LIMITS.flashcardAiFrontMax),
-        back: z.string().min(1).max(LIMITS.flashcardAiBackMax),
-      }),
-    )
-    .min(1)
-    .max(LIMITS.flashcardAiMaxOutput),
 });
 
 export const flashcardBackImproveSystemPrompt = `${LANGUAGE_RULE}
@@ -91,48 +79,6 @@ Current back: Attribute X determines Y.
 Improved: A functional dependency is a relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
 `;
 
-export const flashcardsGenerationSystemPrompt = `${LANGUAGE_RULE}
-
-You are creating study flashcards from source material.
-
-Extract key concepts and create atomic retrieval-practice flashcard pairs.
-
-Rules:
-${FLASHCARD_CARD_SHAPE_RULES}
-- Do not include extra context, examples, caveats, or details beyond the source material.
-- Avoid trivial or obvious information.
-- If the source material includes an explicit code example that explains the concept, preserve the smallest useful snippet in the back as a fenced code block instead of summarizing it away.
-- If source material contains image placeholders like {{IMAGE_0}}, include the exact placeholder in the back of any card that depends on that image.
-- Output as many cards as the material warrants, but prefer fewer high-value cards over many weak cards.
-- ${MATH_RULE}
-
-Good patterns:
-Front: What is a functional dependency?
-Back:
-- Relation where X determines Y
-- For every specific X, Y is fixed
-
-Front: What does the program counter hold?
-Back:
-- Memory address of the next instruction to execute
-- Updated after each instruction cycle
-
-Front: What does DNS stand for?
-Back:
-Domain Name System.
-
-Bad patterns:
-Front: Functional dependency
-Back:
-A relationship where attribute X determines Y, meaning for every specific value of X, the value of Y is fixed.
-
-Front: Explain how the program counter works in a CPU.
-Back:
-- The program counter is an important CPU register used during instruction execution.
-- It has many roles in processor control flow and program sequencing.
-
-Output format: JSON object with a "cards" array containing { front, back } objects.`;
-
 export function buildImproveFlashcardBackPrompt(input: {
   subjectName?: string;
   front: string;
@@ -144,21 +90,5 @@ export function buildImproveFlashcardBackPrompt(input: {
     `Current back: ${input.currentBack}`,
     "",
     `Important: The back may contain image placeholders like {{IMAGE_0}}, {{IMAGE_1}}, etc. Treat these as opaque tokens that MUST appear in your output exactly as-is. Do not remove, rename, or modify them.`,
-  ].join("\n");
-}
-
-export function buildGenerateFlashcardsPrompt(input: {
-  subjectName?: string;
-  noteTitle?: string;
-  text: string;
-}): string {
-  return [
-    ...(input.subjectName ? [`Subject: ${input.subjectName}`] : []),
-    ...(input.noteTitle ? [`Note title: ${input.noteTitle}`] : []),
-    "",
-    "Source material:",
-    input.text,
-    "",
-    "Create flashcards from this material.",
   ].join("\n");
 }

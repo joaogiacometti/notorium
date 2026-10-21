@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const resolveAiSettingsMock = vi.fn();
 const consumeUserDailyRateLimitMock = vi.fn();
 const improveFlashcardBackContentMock = vi.fn();
-const generateFlashcardsFromTextMock = vi.fn();
 
 vi.mock("@/lib/ai/config", () => ({
   resolveAiSettings: resolveAiSettingsMock,
@@ -15,7 +14,6 @@ vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
 
 vi.mock("@/features/flashcards/ai", () => ({
   improveFlashcardBackContent: improveFlashcardBackContentMock,
-  generateFlashcardsFromText: generateFlashcardsFromTextMock,
 }));
 
 const settings = {
@@ -100,58 +98,6 @@ describe("flashcards ai service", () => {
       subjectName: "Biology",
       front: "<p>What is ATP?</p>",
       currentBack: "<p>Energy</p>",
-    });
-  });
-
-  it("returns generation limit error for multi-card generation", async () => {
-    consumeUserDailyRateLimitMock.mockResolvedValueOnce({
-      limited: true,
-      remaining: 0,
-      resetAt: "2026-05-01T00:00:00.000Z",
-      errorCode: "limits.aiFlashcardGenerationPerDay",
-    });
-
-    const { generateFlashcardsForUser } = await import(
-      "@/features/flashcards/ai-service"
-    );
-
-    const result = await generateFlashcardsForUser({
-      userId: "user-1",
-      text: "sample",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "limits.aiFlashcardGenerationPerDay",
-    });
-    expect(generateFlashcardsFromTextMock).not.toHaveBeenCalled();
-  });
-
-  it("passes note context into multi-card generation", async () => {
-    generateFlashcardsFromTextMock.mockResolvedValueOnce([
-      { front: "Front", back: "Back" },
-    ]);
-
-    const { generateFlashcardsForUser } = await import(
-      "@/features/flashcards/ai-service"
-    );
-
-    const result = await generateFlashcardsForUser({
-      userId: "user-1",
-      subjectName: "Biology",
-      noteTitle: "Photosynthesis lecture",
-      text: "Chloroplasts contain chlorophyll.",
-    });
-
-    expect(result).toEqual({
-      success: true,
-      cards: [{ front: "Front", back: "Back" }],
-    });
-    expect(generateFlashcardsFromTextMock).toHaveBeenCalledWith({
-      settings,
-      subjectName: "Biology",
-      noteTitle: "Photosynthesis lecture",
-      text: "Chloroplasts contain chlorophyll.",
     });
   });
 });

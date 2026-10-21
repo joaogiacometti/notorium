@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
-import { PLAYWRIGHT_GENERATED_CARDS } from "@/features/flashcards/ai";
+import { countFlashcardsBySubjectForUser } from "@/features/flashcards/queries";
+import { AssistantChatFixture } from "./support/assistant-chat-fixture";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
@@ -217,62 +218,61 @@ test("can delete a note", async ({ page, e2eUser }) => {
   }
 });
 
-test("can generate flashcards from a note with AI", async ({
+test("creates a flashcard from the open note through the assistant after confirmation", async ({
   page,
   e2eUser,
 }) => {
-  const user = e2eUser;
-  const subjectName = getUniqueSubjectName("ai-flashcards");
-  const noteTitle = getUniqueNoteTitle("ai-flashcards");
-
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
+  const subjectName = getUniqueSubjectName("assistant-flashcards");
+  const noteTitle = getUniqueNoteTitle("assistant-flashcards");
+  const content =
+    "Active recall and spaced repetition are core study practices.";
+  const front = "What does active recall strengthen?";
+  const subject = await createSubject(e2eUser.userId, subjectName);
+  const assistant = new AssistantChatFixture([
+    { front, back: "Retrieval through practice.", subjectPath: subjectName },
+  ]);
+  await assistant.install(page);
 
   try {
-    const createdSubject = await createSubject(user.userId, subjectName);
-
-    await createNote(
-      user.userId,
-      createdSubject.id,
+    const note = await createNote(
+      e2eUser.userId,
+      subject.id,
       noteTitle,
-      "Active recall and spaced repetition are core study practices.",
+      content,
     );
-
-    await openSubjectInSidebar(page, subjectName);
-    await expandSubjectSidebarRow(page, subjectName);
-    await openNoteDetailByTitle(page, noteTitle);
-
-    await openNoteActions(page);
+    await page.goto(`/subjects/${subject.id}/documents/notes/${note.id}`);
     await page
-      .getByRole("menuitem", { name: "Generate flashcards", exact: true })
-      .click();
-
-    const generateDialog = page.getByRole("dialog", {
-      name: "Generate Flashcards",
+      .locator("#form-edit-note-content")
+      .fill(`${content} Retrieval improves with practice.`);
+    await page.getByRole("button", { name: "Open study assistant" }).click();
+    const composer = page.getByRole("textbox", {
+      name: "Message the study assistant",
     });
-    await generateDialog
-      .getByRole("button", { name: "Generate Flashcards", exact: true })
-      .click();
+    await composer.fill("Create a flashcard from this note");
+    await composer.press("Enter");
 
-    await expect(
-      generateDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[0].front),
-    ).toBeVisible();
-    await expect(
-      generateDialog.getByText(PLAYWRIGHT_GENERATED_CARDS[1].front),
-    ).toBeVisible();
+    await expect(page.getByText(front, { exact: true })).toBeVisible();
+    expect(assistant.requests.at(-1)?.context).toMatchObject({
+      kind: "note",
+      title: noteTitle,
+      subjectPath: subjectName,
+      content: `${content} Retrieval improves with practice.`,
+      partial: false,
+    });
+    expect(
+      await countFlashcardsBySubjectForUser(e2eUser.userId, subject.id),
+    ).toBe(0);
 
-    await generateDialog
-      .getByRole("button", { name: "Create 2 Cards", exact: true })
-      .click();
-    await expect(generateDialog).toHaveCount(0);
-
-    await page.goto(`/flashcards?view=manage&subjectId=${createdSubject.id}`);
+    await page.getByRole("button", { name: "Create", exact: true }).click();
     await expect(
-      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[0].front, { exact: true }),
+      page.getByText("Flashcard created:", { exact: true }),
     ).toBeVisible();
-    await expect(
-      page.getByTitle(PLAYWRIGHT_GENERATED_CARDS[1].front, { exact: true }),
-    ).toBeVisible();
+    expect(
+      await countFlashcardsBySubjectForUser(e2eUser.userId, subject.id),
+    ).toBe(1);
+    await page.goto(`/flashcards?view=manage&subjectId=${subject.id}`);
+    await expect(page.getByTitle(front, { exact: true })).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
+    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
   }
 });

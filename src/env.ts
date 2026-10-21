@@ -17,7 +17,6 @@ const serverEnvSchema = z
     OPENROUTER_REASONING_EFFORT: z
       .enum(["none", "minimal", "low", "medium", "high"])
       .optional(),
-    NOTORIUM_AI_FIXTURE_MODE: z.enum(["playwright"]).optional(),
     NOTORIUM_EMAIL_FIXTURE_MODE: z.enum(["playwright"]).optional(),
     NOTORIUM_EMAIL_FIXTURE_INBOX_PATH: z.string().min(1).optional(),
     RESEND_API_KEY: z.string().min(1).optional(),

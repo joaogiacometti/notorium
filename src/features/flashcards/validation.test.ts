@@ -7,8 +7,6 @@ import {
   deleteFlashcardSchema,
   editFlashcardSchema,
   flashcardsManageQuerySchema,
-  generateMindmapFlashcardsSchema,
-  generateNoteFlashcardsSchema,
   improveFlashcardBackSchema,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
@@ -157,69 +155,5 @@ describe("flashcardsManageQuerySchema", () => {
     });
 
     expect(result.success).toBe(true);
-  });
-});
-
-describe("generateMindmapFlashcardsSchema", () => {
-  it("accepts mindmap and deck ids", () => {
-    const result = generateMindmapFlashcardsSchema.safeParse({
-      mindmapId: "mindmap-123",
-      subjectId: "deck-123",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts an optional source node id", () => {
-    const result = generateMindmapFlashcardsSchema.safeParse({
-      mindmapId: "mindmap-123",
-      sourceNodeId: "node-123",
-      subjectId: "deck-123",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects missing mindmap id", () => {
-    const result = generateMindmapFlashcardsSchema.safeParse({
-      subjectId: "deck-123",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing deck id", () => {
-    const result = generateMindmapFlashcardsSchema.safeParse({
-      mindmapId: "mindmap-123",
-    });
-
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("generateNoteFlashcardsSchema", () => {
-  it("accepts note and deck ids", () => {
-    const result = generateNoteFlashcardsSchema.safeParse({
-      noteId: "note-123",
-      subjectId: "deck-123",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects missing note id", () => {
-    const result = generateNoteFlashcardsSchema.safeParse({
-      subjectId: "deck-123",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing deck id", () => {
-    const result = generateNoteFlashcardsSchema.safeParse({
-      noteId: "note-123",
-    });
-
-    expect(result.success).toBe(false);
   });
 });

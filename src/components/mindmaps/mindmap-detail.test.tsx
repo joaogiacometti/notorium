@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MindmapDetail } from "@/components/mindmaps/mindmap-detail";
-import type { MindmapEntity, SubjectOption } from "@/lib/server/api-contracts";
+import type { MindmapEntity } from "@/lib/server/api-contracts";
 
 const { editMindmapMock, pushMock, toastErrorMock, toastSuccessMock } =
   vi.hoisted(() => ({
@@ -35,13 +35,8 @@ let graphSeq = 0;
 vi.mock("@/components/mindmaps/lazy-mindmap-canvas", () => ({
   LazyMindmapCanvas: ({
     onGraphChange,
-    onGenerateFlashcardsFromNode,
   }: {
     onGraphChange: (graph: { nodes: unknown[]; edges: unknown[] }) => void;
-    onGenerateFlashcardsFromNode?: (
-      nodeId: string,
-      graph: { nodes: unknown[]; edges: unknown[] },
-    ) => void;
   }) => {
     const editedGraph = () => {
       graphSeq += 1;
@@ -60,17 +55,9 @@ vi.mock("@/components/mindmaps/lazy-mindmap-canvas", () => ({
       onGraphChange(editedGraph());
     };
     return (
-      <>
-        <button type="button" onClick={pushEdit}>
-          edit-graph
-        </button>
-        <button
-          type="button"
-          onClick={() => onGenerateFlashcardsFromNode?.("n-1", editedGraph())}
-        >
-          generate-node
-        </button>
-      </>
+      <button type="button" onClick={pushEdit}>
+        edit-graph
+      </button>
     );
   },
 }));
@@ -81,11 +68,6 @@ vi.mock("@/components/mindmaps/delete-mindmap-dialog", () => ({
 
 vi.mock("@/components/mindmaps/edit-mindmap-title-dialog", () => ({
   EditMindmapTitleDialog: () => null,
-}));
-
-vi.mock("@/components/mindmaps/generate-mindmap-flashcards-dialog", () => ({
-  GenerateMindmapFlashcardsDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="generate-mindmap-dialog" /> : null,
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
@@ -128,28 +110,8 @@ const mindmap: MindmapEntity = {
   updatedAt: new Date("2026-04-20T10:00:00.000Z"),
 };
 
-const deck: SubjectOption = {
-  id: "deck-1",
-  userId: "user-1",
-  parentSubjectId: null,
-  name: "Biology",
-  path: "Biology",
-  createdAt: new Date("2026-04-20T10:00:00.000Z"),
-  updatedAt: new Date("2026-04-20T10:00:00.000Z"),
-};
-
-function renderDetail(
-  root: Root,
-  overrides?: { aiEnabled?: boolean; subjects?: SubjectOption[] },
-) {
-  root.render(
-    <MindmapDetail
-      aiEnabled={overrides?.aiEnabled ?? true}
-      subjects={overrides?.subjects ?? [deck]}
-      mindmap={mindmap}
-      subjectName="Subject 1"
-    />,
-  );
+function renderDetail(root: Root) {
+  root.render(<MindmapDetail mindmap={mindmap} subjectName="Subject 1" />);
 }
 
 function findButton(container: HTMLElement, text: string) {
@@ -236,7 +198,7 @@ describe("MindmapDetail autosave", () => {
   });
 });
 
-describe("MindmapDetail generate flashcards action", () => {
+describe("MindmapDetail actions", () => {
   let container: HTMLDivElement;
   let root: Root;
 
@@ -254,47 +216,12 @@ describe("MindmapDetail generate flashcards action", () => {
     container.remove();
   });
 
-  it("hides the generate action when AI is disabled", () => {
-    act(() => renderDetail(root, { aiEnabled: false }));
+  it("offers document actions without dedicated flashcard generation", () => {
+    act(() => renderDetail(root));
 
     expect(findButton(container, "Generate flashcards")).toBeUndefined();
-  });
-
-  it("disables the generate action when no decks exist", () => {
-    act(() => renderDetail(root, { subjects: [] }));
-
-    const button = findButton(container, "Generate flashcards");
-
-    expect(button?.disabled).toBe(true);
-    expect(button?.title).toBe(
-      "Create a subject before generating flashcards.",
-    );
-  });
-
-  it("opens the generate dialog from the header menu", () => {
-    act(() => renderDetail(root));
-
-    act(() => {
-      findButton(container, "Generate flashcards")?.click();
-    });
-
-    expect(
-      container.querySelector('[data-testid="generate-mindmap-dialog"]'),
-    ).not.toBeNull();
-  });
-
-  it("does not open node generation when the autosave flush fails", async () => {
-    editMindmapMock.mockRejectedValueOnce(new Error("network down"));
-    act(() => renderDetail(root));
-
-    await act(async () => {
-      findButton(container, "generate-node")?.click();
-      await Promise.resolve();
-    });
-
-    expect(
-      container.querySelector('[data-testid="generate-mindmap-dialog"]'),
-    ).toBeNull();
-    expect(toastErrorMock).toHaveBeenCalledWith("Couldn't save the mindmap");
+    for (const label of ["Edit", "Export as PNG", "Delete"]) {
+      expect(findButton(container, label)).toBeDefined();
+    }
   });
 });

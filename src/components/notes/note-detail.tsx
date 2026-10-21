@@ -2,13 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Clipboard,
-  MoreVertical,
-  Pencil,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { Clipboard, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -20,7 +14,6 @@ import { buildDocumentContext } from "@/components/assistant/study-context-conte
 import { useStudyContext } from "@/components/assistant/use-study-context";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
-import { GenerateNoteFlashcardsDialog } from "@/components/notes/generate-note-flashcards-dialog";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { PageTopBar } from "@/components/shared/page-top-bar";
@@ -43,14 +36,12 @@ import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
-import type { NoteEntity, SubjectOption } from "@/lib/server/api-contracts";
+import type { NoteEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
-  aiEnabled: boolean;
-  subjects?: SubjectOption[];
   note: NoteEntity;
   subjectName: string;
 }
@@ -69,25 +60,18 @@ function isSameNoteEdit(left: EditNoteForm, right: EditNoteForm) {
   return left.title === right.title && (left.content ?? "") === right.content;
 }
 
-export function NoteDetail({
-  aiEnabled,
-  subjects,
-  note,
-  subjectName,
-}: Readonly<NoteDetailProps>) {
+export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
   const { isZenMode, toggleZenMode } = useZenMode();
   const assistantWorkspace = useAssistantWorkspace();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [generateOpen, setGenerateOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
   const lastSavedValuesRef = useRef(getEditValues(note));
   const saveSequenceRef = useRef(0);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
-  const hasSubjects = subjects ? subjects.length > 0 : true;
   const form = useForm<EditNoteForm>({
     resolver: zodResolver(editNoteSchema),
     defaultValues: getEditValues(note),
@@ -323,21 +307,6 @@ export function NoteDetail({
                       <Pencil className="size-4" />
                       Edit
                     </DropdownMenuItem>
-                    {aiEnabled ? (
-                      <DropdownMenuItem
-                        className="cursor-pointer"
-                        onClick={() => setGenerateOpen(true)}
-                        disabled={!hasSubjects}
-                        title={
-                          hasSubjects
-                            ? undefined
-                            : "Create a subject before generating flashcards."
-                        }
-                      >
-                        <Sparkles className="size-4" />
-                        Generate flashcards
-                      </DropdownMenuItem>
-                    ) : null}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="cursor-pointer"
@@ -417,14 +386,6 @@ export function NoteDetail({
             startNavTransition(() => router.push("/"));
           }}
         />
-        {aiEnabled ? (
-          <GenerateNoteFlashcardsDialog
-            subjects={subjects}
-            noteId={note.id}
-            open={generateOpen}
-            onOpenChange={setGenerateOpen}
-          />
-        ) : null}
       </AppPageContainer>
     </>
   );

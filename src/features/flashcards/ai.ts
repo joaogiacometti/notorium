@@ -1,16 +1,9 @@
-import { getServerEnv } from "@/env";
 import {
-  buildGenerateFlashcardsPrompt,
   buildImproveFlashcardBackPrompt,
   flashcardBackImproveSystemPrompt,
-  flashcardsGenerationSystemPrompt,
   generatedFlashcardBackSchema,
-  generatedFlashcardsSchema,
 } from "@/features/flashcards/ai-prompts";
-import {
-  normalizeGeneratedBack,
-  normalizeGeneratedCards,
-} from "@/features/flashcards/ai-utils";
+import { normalizeGeneratedBack } from "@/features/flashcards/ai-utils";
 import { flashcardBackSchema } from "@/features/flashcards/validation";
 import type { ResolvedAiSettings } from "@/lib/ai/config";
 import { generateStructuredOutput } from "@/lib/ai/generate-structured";
@@ -24,21 +17,6 @@ import {
   restoreImagePlaceholders,
   richTextToPlainText,
 } from "@/lib/editor/rich-text";
-
-export const PLAYWRIGHT_GENERATED_CARDS = [
-  {
-    front: "Playwright fixture card 1: What does active recall improve?",
-    back: "Active recall strengthens retrieval practice by requiring learners to produce an answer.",
-  },
-  {
-    front: "Playwright fixture card 2: What does spaced repetition optimize?",
-    back: "Spaced repetition schedules reviews near the point of forgetting.",
-  },
-];
-
-function isPlaywrightAiFixtureMode() {
-  return getServerEnv().NOTORIUM_AI_FIXTURE_MODE === "playwright";
-}
 
 // A generated back as rich text that fits a stored flashcard back.
 function toGeneratedBackHtml(backText: string): string {
@@ -81,29 +59,4 @@ export async function improveFlashcardBackContent(input: {
   });
 
   return restoreImagePlaceholders(toGeneratedBackHtml(output.backText), images);
-}
-
-export async function generateFlashcardsFromText(input: {
-  settings: ResolvedAiSettings;
-  subjectName?: string;
-  noteTitle?: string;
-  text: string;
-}): Promise<Array<{ front: string; back: string }>> {
-  if (isPlaywrightAiFixtureMode()) {
-    return PLAYWRIGHT_GENERATED_CARDS;
-  }
-
-  const output = await generateStructuredOutput({
-    settings: input.settings,
-    schema: generatedFlashcardsSchema,
-    system: flashcardsGenerationSystemPrompt,
-    prompt: buildGenerateFlashcardsPrompt({
-      subjectName: input.subjectName,
-      noteTitle: input.noteTitle,
-      text: input.text,
-    }),
-    maxOutputTokens: AI_LIMITS.maxGenerationTokens,
-  });
-
-  return normalizeGeneratedCards(output);
 }

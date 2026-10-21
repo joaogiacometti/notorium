@@ -14,16 +14,12 @@ import { MobileSidebarSheet } from "@/components/shared/mobile-sidebar-sheet";
 import { SidebarCollapseProvider } from "@/components/shared/sidebar-collapse-context";
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { useSidebarCollapsed } from "@/components/shared/use-sidebar-collapsed";
-import type {
-  SubjectOption,
-  SubjectTreeNode,
-} from "@/lib/server/api-contracts";
+import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutClientProps {
   tree: SubjectTreeNode[] | null;
-  subjects: SubjectOption[];
   accountName: string;
   email: string;
   isAdmin: boolean;
@@ -91,7 +87,6 @@ function CollapsedSidebar({
 
 export function AppLayoutClient({
   tree,
-  subjects,
   accountName,
   email,
   isAdmin,
@@ -127,7 +122,6 @@ export function AppLayoutClient({
   const sidebar = tree ? (
     <AppSidebar
       tree={tree}
-      subjects={subjects}
       aiEnabled={aiEnabled}
       accountName={accountName}
       email={email}

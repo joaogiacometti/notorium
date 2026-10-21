@@ -28,10 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { getSubjectDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
-import type {
-  SubjectOption,
-  SubjectTreeNode,
-} from "@/lib/server/api-contracts";
+import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { SUBJECT_DOCUMENTS_CHANGED_EVENT } from "@/lib/trees/subject-documents-events";
 import {
   findSubjectTreeNode,
@@ -41,13 +38,11 @@ import {
 
 interface SubjectTreeSidebarProps {
   tree: SubjectTreeNode[];
-  subjects: SubjectOption[];
   aiEnabled: boolean;
 }
 
 export function SubjectTreeSidebar({
   tree,
-  subjects,
   aiEnabled,
 }: Readonly<SubjectTreeSidebarProps>) {
   const router = useRouter();
@@ -77,13 +72,11 @@ export function SubjectTreeSidebar({
     string | null
   >(null);
 
-  // Document kebab actions (edit/delete/generate/copy/export) reuse the shared
+  // Document kebab actions (edit/delete/copy/export) reuse the shared
   // dialog host; reload the affected subject's documents so the tree reflects
   // renames and deletes without waiting for a manual re-expand.
   const { handlers: documentActions, dialogs: documentDialogs } =
     useDocumentRowDialogs({
-      aiEnabled,
-      subjects,
       onChanged: (item) => void loadDocuments(item.subjectId),
     });
 

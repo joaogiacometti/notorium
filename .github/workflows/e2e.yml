@@ -34,7 +34,6 @@ jobs:
       BETTER_AUTH_URL: http://127.0.0.1:3001
       RATE_LIMIT_BACKEND: redis
       REDIS_URL: redis://localhost:6380
-      NOTORIUM_AI_FIXTURE_MODE: playwright
       NOTORIUM_EMAIL_FIXTURE_MODE: playwright
       NOTORIUM_EMAIL_FIXTURE_INBOX_PATH: test-results/email-fixture-inbox.jsonl
       OPENROUTER_API_KEY: playwright-openrouter-key

@@ -4,7 +4,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteDetail } from "@/components/notes/note-detail";
-import type { NoteEntity, SubjectOption } from "@/lib/server/api-contracts";
+import type { NoteEntity } from "@/lib/server/api-contracts";
 import { SUBJECT_DOCUMENTS_CHANGED_EVENT } from "@/lib/trees/subject-documents-events";
 
 const {
@@ -60,11 +60,6 @@ vi.mock("@/components/notes/delete-note-dialog", () => ({
         </button>
       </div>
     ) : null,
-}));
-
-vi.mock("@/components/notes/generate-note-flashcards-dialog", () => ({
-  GenerateNoteFlashcardsDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="generate-note-flashcards-dialog" /> : null,
 }));
 
 vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
@@ -137,16 +132,6 @@ const note: NoteEntity = {
   updatedAt: new Date("2026-04-20T10:00:00.000Z"),
 };
 
-const deck: SubjectOption = {
-  id: "deck-1",
-  userId: "user-1",
-  parentSubjectId: null,
-  name: "Biology",
-  path: "Biology",
-  createdAt: new Date("2026-04-20T10:00:00.000Z"),
-  updatedAt: new Date("2026-04-20T10:00:00.000Z"),
-};
-
 function renderNoteDetail(
   root: Root,
   props: Partial<React.ComponentProps<typeof NoteDetail>> = {},
@@ -157,13 +142,7 @@ function renderNoteDetail(
 
   root.render(
     <QueryClientProvider client={queryClient}>
-      <NoteDetail
-        aiEnabled
-        subjects={[deck]}
-        note={note}
-        subjectName="Subject 1"
-        {...props}
-      />
+      <NoteDetail note={note} subjectName="Subject 1" {...props} />
     </QueryClientProvider>,
   );
 }
@@ -337,43 +316,20 @@ describe("NoteDetail", () => {
     expect(getContentInput(container)?.value).toBe("Newer local draft");
   });
 
-  it("hides the generate action when AI is disabled", async () => {
-    await act(async () => {
-      renderNoteDetail(root, { aiEnabled: false });
-    });
-
-    expect(findButton(container, "Generate flashcards")).toBeUndefined();
-  });
-
-  it("disables the generate action when no decks exist", async () => {
-    await act(async () => {
-      renderNoteDetail(root, { subjects: [] });
-    });
-
-    const button = findButton(container, "Generate flashcards");
-
-    expect(button?.disabled).toBe(true);
-    expect(button?.title).toBe(
-      "Create a subject before generating flashcards.",
-    );
-  });
-
-  it("opens the generate dialog", async () => {
+  it("offers document actions without dedicated flashcard generation", async () => {
     await act(async () => {
       renderNoteDetail(root);
     });
 
-    const button = findButton(container, "Generate flashcards");
-
-    await act(async () => {
-      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(
-      container.querySelector(
-        '[data-testid="generate-note-flashcards-dialog"]',
-      ),
-    ).toBeTruthy();
+    expect(findButton(container, "Generate flashcards")).toBeUndefined();
+    for (const label of [
+      "Edit",
+      "Copy as rich text",
+      "Copy as plain text",
+      "Delete",
+    ]) {
+      expect(findButton(container, label)).toBeDefined();
+    }
   });
 
   it("copies note content as rich text", async () => {

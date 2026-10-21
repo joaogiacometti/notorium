@@ -4,14 +4,10 @@ import { AccountMenu } from "@/components/navbar/account-menu";
 import { AppSidebarNav } from "@/components/navbar/app-sidebar-nav";
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { SubjectTreeSidebar } from "@/components/subjects/tree/subject-tree-sidebar";
-import type {
-  SubjectOption,
-  SubjectTreeNode,
-} from "@/lib/server/api-contracts";
+import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 
 interface AppSidebarProps {
   tree: SubjectTreeNode[];
-  subjects: SubjectOption[];
   aiEnabled: boolean;
   accountName: string;
   email: string;
@@ -27,7 +23,6 @@ interface AppSidebarProps {
  */
 export function AppSidebar({
   tree,
-  subjects,
   aiEnabled,
   accountName,
   email,
@@ -51,11 +46,7 @@ export function AppSidebar({
       <AppSidebarNav onOpenSearch={onOpenSearch} />
 
       <div className="mt-3 min-h-0 flex-1">
-        <SubjectTreeSidebar
-          tree={tree}
-          subjects={subjects}
-          aiEnabled={aiEnabled}
-        />
+        <SubjectTreeSidebar tree={tree} aiEnabled={aiEnabled} />
       </div>
     </div>
   );

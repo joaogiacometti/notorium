@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { NoteDetail } from "@/components/notes/note-detail";
 import { getNoteByIdForUser } from "@/features/notes/queries";
 import { getSubjectByIdForUser } from "@/features/subjects/queries";
-import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
 
@@ -29,11 +28,7 @@ export default async function NotePage({ params }: Readonly<NotePageProps>) {
 
   return (
     <main>
-      <NoteDetail
-        aiEnabled={isAiEnabled()}
-        note={note}
-        subjectName={subject?.name ?? ""}
-      />
+      <NoteDetail note={note} subjectName={subject?.name ?? ""} />
     </main>
   );
 }

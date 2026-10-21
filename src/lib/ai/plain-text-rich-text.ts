@@ -1,6 +1,6 @@
 // Converts AI plain-text output (paragraphs, `- `/`1.` lists, fenced code, and
 // `$...$`/`$$...$$` LaTeX) into Tiptap rich-text HTML. Pure and isomorphic:
-// flashcard generation runs it on the server, the study assistant in the browser.
+// flashcard back improvement runs it on the server, the study assistant in the browser.
 
 function escapeHtml(value: string) {
   return value

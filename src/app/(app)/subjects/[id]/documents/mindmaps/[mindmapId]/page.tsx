@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { MindmapDetail } from "@/components/mindmaps/mindmap-detail";
 import { getMindmapByIdForUser } from "@/features/mindmaps/queries";
 import { getSubjectByIdForUser } from "@/features/subjects/queries";
-import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { getMindmapDetailHref } from "@/lib/navigation/detail-page-back-link";
 
@@ -31,11 +30,7 @@ export default async function MindmapPage({
 
   return (
     <main>
-      <MindmapDetail
-        aiEnabled={isAiEnabled()}
-        mindmap={mindmap}
-        subjectName={subject?.name ?? ""}
-      />
+      <MindmapDetail mindmap={mindmap} subjectName={subject?.name ?? ""} />
     </main>
   );
 }

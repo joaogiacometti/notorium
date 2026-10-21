@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { AccountSettingsProvider } from "@/components/account/account-settings-provider";
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
-import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getSubjectTreeForUser } from "@/features/subjects/tree-queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
@@ -12,12 +11,7 @@ export default async function AuthenticatedAppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const authState = await getOptionalSessionAccess();
   const session = authState?.session ?? null;
-  const [tree, subjects] = session
-    ? await Promise.all([
-        getSubjectTreeForUser(session.user.id),
-        getAllSubjectsWithPathsForUser(session.user.id),
-      ])
-    : [null, []];
+  const tree = session ? await getSubjectTreeForUser(session.user.id) : null;
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
 
@@ -30,7 +24,6 @@ export default async function AuthenticatedAppLayout({
       <AccountSettingsProvider userId={session?.user.id ?? ""}>
         <AppLayoutClient
           tree={tree}
-          subjects={subjects}
           accountName={accountName}
           email={session?.user.email ?? ""}
           isAdmin={authState?.account.isAdmin ?? false}
