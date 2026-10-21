@@ -5,12 +5,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
   Copy,
-  Loader2,
   MoreVertical,
   RotateCcw,
-  Sparkles,
   Trash2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -22,9 +21,9 @@ import {
 } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { editFlashcard, generateFlashcardBack } from "@/app/actions/flashcards";
+import { editFlashcard } from "@/app/actions/flashcards";
+import { useActiveFlashcardEditor } from "@/components/assistant/use-active-flashcard-editor";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
-import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
 import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
@@ -43,7 +42,6 @@ import { FieldError } from "@/components/ui/field";
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
-  hasRichTextContent,
 } from "@/features/flashcards/validation";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
@@ -60,6 +58,13 @@ interface FlashcardDetailProps {
 }
 
 const AUTOSAVE_DELAY_MS = 800;
+const FlashcardFieldReview = dynamic(
+  () =>
+    import("@/components/flashcards/dialogs/flashcard-field-review").then(
+      (module) => module.FlashcardFieldReview,
+    ),
+  { ssr: false },
+);
 
 function getEditValues(flashcard: FlashcardDetailEntity): FlashcardFormValues {
   return {
@@ -91,9 +96,6 @@ export function FlashcardDetail({
   const [isSaving, setIsSaving] = useState(false);
   const [isFrontImageUploading, setIsFrontImageUploading] = useState(false);
   const [isBackImageUploading, setIsBackImageUploading] = useState(false);
-  const [isGeneratingAiBack, setIsGeneratingAiBack] = useState(false);
-  const [aiProposedBack, setAiProposedBack] = useState<string | null>(null);
-  const [aiPreviousBack, setAiPreviousBack] = useState<string | null>(null);
   const isImageUploading = isFrontImageUploading || isBackImageUploading;
   const lastSavedValuesRef = useRef(getEditValues(flashcard));
   const saveSequenceRef = useRef(0);
@@ -113,21 +115,20 @@ export function FlashcardDetail({
   );
   const debouncedValues = useDebouncedValue(watchedValues, AUTOSAVE_DELAY_MS);
 
-  let aiBackLabel: string;
-  if (isGeneratingAiBack) {
-    aiBackLabel = "Generating...";
-  } else if (hasRichTextContent(watchedBack)) {
-    aiBackLabel = "Improve with AI";
-  } else {
-    aiBackLabel = "Generate with AI";
-  }
-
+  const review = useActiveFlashcardEditor({
+    form,
+    enabled: aiEnabled,
+    resetVersion: flashcard.id,
+    blocked: isSaving || isImageUploading,
+  });
   const hasDirtyValues = !isSameFlashcardEdit(
     form.getValues(),
     lastSavedValuesRef.current,
   );
 
-  useBeforeUnload(hasDirtyValues || isSaving || isImageUploading);
+  useBeforeUnload(
+    hasDirtyValues || isSaving || isImageUploading || review.blocked,
+  );
 
   const saveFlashcardValues = useCallback(
     async (values: FlashcardFormValues) => {
@@ -164,39 +165,6 @@ export function FlashcardDetail({
     [form, queryClient, flashcard.id],
   );
 
-  async function handleGenerateAiBack() {
-    setIsGeneratingAiBack(true);
-    const currentBack = hasRichTextContent(watchedBack)
-      ? watchedBack
-      : undefined;
-    const result = await generateFlashcardBack({
-      subjectId: flashcard.subjectId ?? "",
-      front: watchedFront,
-      currentBack,
-    });
-    setIsGeneratingAiBack(false);
-
-    if (!result.success) {
-      toast.error(t(result.errorCode, result.errorParams));
-      return;
-    }
-
-    setAiPreviousBack(watchedBack);
-    setAiProposedBack(result.back);
-  }
-
-  function handleAiAccept() {
-    if (!aiProposedBack) return;
-    form.setValue("back", aiProposedBack, { shouldDirty: true });
-    setAiProposedBack(null);
-    setAiPreviousBack(null);
-  }
-
-  function handleAiReject() {
-    setAiProposedBack(null);
-    setAiPreviousBack(null);
-  }
-
   useEffect(() => {
     const nextValues: FlashcardFormValues = {
       id: flashcard.id,
@@ -209,7 +177,7 @@ export function FlashcardDetail({
       return;
     }
 
-    if (isImageUploading) {
+    if (isImageUploading || review.blocked) {
       return;
     }
 
@@ -219,6 +187,7 @@ export function FlashcardDetail({
     flashcard.id,
     flashcard.subjectId,
     isImageUploading,
+    review.blocked,
     saveFlashcardValues,
   ]);
 
@@ -293,7 +262,7 @@ export function FlashcardDetail({
         </div>
       </div>
 
-      <form className="space-y-4">
+      <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
         <Controller
           name="front"
           control={form.control}
@@ -302,16 +271,26 @@ export function FlashcardDetail({
               <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Front
               </h2>
-              <TiptapEditor
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="Front of the flashcard..."
-                id="form-edit-flashcard-front"
-                aria-invalid={fieldState.invalid}
-                imageUploadContext="flashcards"
-                contentClassName="min-h-40"
-                onImageUploadPendingChange={setIsFrontImageUploading}
-              />
+              {review.pending?.fields.front ? (
+                <FlashcardFieldReview
+                  key={`${review.pending.toolCallId}-front`}
+                  field="front"
+                  disabled={isSaving || isImageUploading}
+                  proposal={review.pending.fields.front}
+                  onDecide={(accept) => review.decide?.("front", accept)}
+                />
+              ) : (
+                <TiptapEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Front of the flashcard..."
+                  id="form-edit-flashcard-front"
+                  aria-invalid={fieldState.invalid}
+                  imageUploadContext="flashcards"
+                  contentClassName="min-h-40"
+                  onImageUploadPendingChange={setIsFrontImageUploading}
+                />
+              )}
               {fieldState.invalid ? (
                 <FieldError className="mt-2" errors={[fieldState.error]} />
               ) : null}
@@ -328,38 +307,14 @@ export function FlashcardDetail({
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Back
                 </h2>
-                {aiEnabled ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                    onClick={() => void handleGenerateAiBack()}
-                    disabled={
-                      !hasRichTextContent(watchedFront) ||
-                      isGeneratingAiBack ||
-                      !!aiProposedBack
-                    }
-                  >
-                    {isGeneratingAiBack ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="size-3.5" />
-                    )}
-                    {aiBackLabel}
-                  </Button>
-                ) : null}
               </div>
-              {aiProposedBack && aiPreviousBack !== null ? (
-                <FlashcardBackDiff
-                  previousBack={aiPreviousBack}
-                  proposedBack={aiProposedBack}
-                  originalLabel="Original"
-                  proposedLabel="Proposed"
-                  acceptLabel="Accept"
-                  rejectLabel="Reject"
-                  onAccept={handleAiAccept}
-                  onReject={handleAiReject}
+              {review.pending?.fields.back ? (
+                <FlashcardFieldReview
+                  key={`${review.pending.toolCallId}-back`}
+                  field="back"
+                  disabled={isSaving || isImageUploading}
+                  proposal={review.pending.fields.back}
+                  onDecide={(accept) => review.decide?.("back", accept)}
                 />
               ) : (
                 <TiptapEditor

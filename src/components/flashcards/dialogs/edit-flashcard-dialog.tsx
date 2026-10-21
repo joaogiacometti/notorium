@@ -6,15 +6,11 @@ import { useForm } from "react-hook-form";
 import { editFlashcard } from "@/app/actions/flashcards";
 import { getEditFlashcardFormValues } from "@/components/flashcards/dialogs/edit-flashcard-form-values";
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
+import { FlashcardEditorDialogContent } from "@/components/flashcards/dialogs/flashcard-editor-dialog-content";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import { loadSubjectOptions } from "@/components/shared/load-subject-options";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
@@ -62,7 +58,6 @@ export function EditFlashcardDialog({
   const dialog = useFlashcardDialogState({
     mode: "edit",
     open,
-    aiEnabled,
     onOpenChange,
     values: incomingValues,
     form,
@@ -83,7 +78,7 @@ export function EditFlashcardDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
-        <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
+        <FlashcardEditorDialogContent>
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Edit Flashcard</DialogTitle>
           </DialogHeader>
@@ -93,6 +88,7 @@ export function EditFlashcardDialog({
             onOpenChange={dialog.handleOpenChange}
             form={form}
             formId="form-edit-flashcard"
+            editorResetVersion={dialog.editorResetVersion}
             subjects={subjects}
             onSubmit={dialog.handleSubmit}
             isSubmitting={dialog.isSubmitting}
@@ -102,15 +98,6 @@ export function EditFlashcardDialog({
               onOpenChange: dialog.setDiscardDialogOpen,
               onDiscard: dialog.handleDiscardChanges,
             }}
-            aiBack={{
-              isGenerating: dialog.isGeneratingBack,
-              canUse: dialog.canUseAiBack,
-              onGenerate: dialog.handleGenerateBack,
-              previousValue: dialog.previousBack,
-              proposedValue: dialog.proposedBack,
-              onAccept: dialog.handleAcceptBack,
-              onReject: dialog.handleRejectBack,
-            }}
             aiEnabled={aiEnabled}
             duplicateFront={{
               isChecking: dialog.isCheckingDuplicateFront,
@@ -119,7 +106,7 @@ export function EditFlashcardDialog({
             }}
             noDialog
           />
-        </DialogContent>
+        </FlashcardEditorDialogContent>
       </Dialog>
       <UnsavedChangesDialog
         open={dialog.discardDialogOpen}

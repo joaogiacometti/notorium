@@ -1,5 +1,9 @@
 import { type InferUITools, tool } from "ai";
 import { z } from "zod";
+import {
+  flashcardEditsInputSchema,
+  flashcardEditsOutputSchema,
+} from "@/features/assistant/edit-contract";
 import { LIMITS } from "@/lib/config/limits";
 
 // Subject paths join up to `maxSubjectNestingDepth` names with "::".
@@ -106,6 +110,12 @@ export type FlashcardProposalOutput = z.infer<
  * streamChatResponse({ ...options, tools: assistantTools });
  */
 export const assistantTools = {
+  proposeFlashcardEdits: tool({
+    description:
+      "Suggest front/back replacements ONLY when the current user message explicitly requests changes to the flashcard draft. Never use this tool to answer questions, explain concepts, or give examples in chat, even when a draft is present. The user reviews changes in the editor; nothing is saved.",
+    inputSchema: flashcardEditsInputSchema,
+    outputSchema: flashcardEditsOutputSchema,
+  }),
   proposeFlashcards: tool({
     description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} flashcards for the user to review; nothing is saved until they confirm each card.`,
     inputSchema: flashcardProposalInputSchema,

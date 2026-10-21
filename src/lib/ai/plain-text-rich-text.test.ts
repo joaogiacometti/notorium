@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
+import {
+  mathTextToRichText,
+  plainTextToRichText,
+} from "@/lib/ai/plain-text-rich-text";
 
 describe("plainTextToRichText math conversion", () => {
   it("converts inline $...$ into an inline math node", () => {
@@ -46,5 +49,19 @@ describe("plainTextToRichText math conversion", () => {
     ).toBe(
       '<p>Example:</p><pre><code class="language-csharp">class Person\n{\n}</code></pre>',
     );
+  });
+});
+
+describe("mathTextToRichText", () => {
+  it("preserves whitespace around math and escapes surrounding HTML", () => {
+    expect(mathTextToRichText("  $x$ < limit  ")).toBe(
+      '  <span data-type="inline-math" data-latex="x"></span> &lt; limit  ',
+    );
+  });
+  it("uses block math nodes and leaves currency untouched", () => {
+    expect(mathTextToRichText("$$x^2$$")).toBe(
+      '<div data-type="block-math" data-latex="x^2"></div>',
+    );
+    expect(mathTextToRichText("$100$")).toBe("$100$");
   });
 });

@@ -1,17 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  type Path,
-  type PathValue,
-  type UseFormReturn,
-  useWatch,
-} from "react-hook-form";
+import { type Path, type UseFormReturn, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  checkFlashcardDuplicate,
-  generateFlashcardBack,
-} from "@/app/actions/flashcards";
+import { checkFlashcardDuplicate } from "@/app/actions/flashcards";
+import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
 import {
@@ -28,7 +21,6 @@ type FlashcardFormValues = FlashcardFormSchemaValues;
 interface UseFlashcardDialogStateOptions<TValues extends FlashcardFormValues> {
   mode: "create" | "edit";
   open: boolean;
-  aiEnabled: boolean;
   onOpenChange: (open: boolean) => void;
   values: TValues;
   form: UseFormReturn<TValues>;
@@ -51,7 +43,6 @@ interface UseFlashcardDialogStateOptions<TValues extends FlashcardFormValues> {
 export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   mode,
   open,
-  aiEnabled,
   onOpenChange,
   values,
   form,
@@ -60,10 +51,9 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   getSuccessValues,
   closeOnSuccess,
 }: Readonly<UseFlashcardDialogStateOptions<TValues>>) {
+  const workspace = useAssistantWorkspace();
+  const hasPendingEdits = Boolean(workspace?.pending);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
-  const [isGeneratingBack, setIsGeneratingBack] = useState(false);
-  const [previousBack, setPreviousBack] = useState<string | null>(null);
-  const [proposedBack, setProposedBack] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingDuplicateFront, setIsCheckingDuplicateFront] =
     useState(false);
@@ -91,15 +81,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
   }, [mode, open]);
 
-  const previousFrontRef = useRef(currentValues.front);
-  useEffect(() => {
-    if (previousFrontRef.current !== currentValues.front) {
-      previousFrontRef.current = currentValues.front;
-      setPreviousBack(null);
-      setProposedBack(null);
-    }
-  }, [currentValues.front]);
-
   useEffect(() => {
     if (
       shouldSyncFlashcardDialogValues({
@@ -126,7 +107,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }, []);
 
   useBeforeUnload(
-    open && (form.formState.isDirty || Boolean(proposedBack)) && !isSubmitting,
+    open && (form.formState.isDirty || hasPendingEdits) && !isSubmitting,
   );
 
   useEffect(() => {
@@ -199,8 +180,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       [savedValuesRef.current.front, savedValuesRef.current.back],
     );
     form.reset(savedValuesRef.current);
-    setPreviousBack(null);
-    setProposedBack(null);
     setDiscardDialogOpen(false);
     setIsSaved(false);
     onOpenChange(false);
@@ -234,7 +213,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
           currentValues.subjectId !== savedValues.subjectId
         : hasContent;
 
-    if ((hasUnsavedChanges || proposedBack) && !isSubmitting) {
+    if ((hasUnsavedChanges || hasPendingEdits) && !isSubmitting) {
       setDiscardDialogOpen(true);
       return;
     }
@@ -244,29 +223,18 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       [savedValuesRef.current.front, savedValuesRef.current.back],
     );
     form.reset(savedValuesRef.current);
-    setPreviousBack(null);
-    setProposedBack(null);
     setDiscardDialogOpen(false);
     onOpenChange(false);
   }
 
   async function handleSubmit(data: TValues) {
-    if (isDuplicateFront || isCheckingDuplicateFront || isSubmitting) {
+    if (
+      isDuplicateFront ||
+      isCheckingDuplicateFront ||
+      isSubmitting ||
+      hasPendingEdits
+    ) {
       return;
-    }
-
-    if (proposedBack) {
-      form.setValue(
-        "back" as Path<TValues>,
-        proposedBack as PathValue<TValues, Path<TValues>>,
-        {
-          shouldDirty: true,
-          shouldTouch: true,
-          shouldValidate: true,
-        },
-      );
-      setPreviousBack(null);
-      setProposedBack(null);
     }
 
     setIsSubmitting(true);
@@ -311,104 +279,21 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
   }
 
-  async function handleGenerateBack() {
-    if (!aiEnabled) {
-      return;
-    }
-
-    const hasBack = hasRichTextContent(currentValues.back);
-
-    if (!hasRichTextContent(currentValues.front) || isGeneratingBack) {
-      return;
-    }
-
-    if (hasBack) {
-      setPreviousBack(currentValues.back);
-    }
-
-    setIsGeneratingBack(true);
-
-    const result = await generateFlashcardBack({
-      subjectId: currentValues.subjectId ?? "",
-      front: currentValues.front,
-      currentBack: hasBack ? currentValues.back : undefined,
-    });
-
-    setIsGeneratingBack(false);
-
-    if (!result.success) {
-      setPreviousBack(null);
-      setProposedBack(null);
-      toast.error(t(result.errorCode, result.errorParams));
-      return;
-    }
-
-    if (hasBack) {
-      setProposedBack(result.back);
-    } else {
-      form.setValue(
-        "back" as Path<TValues>,
-        result.back as PathValue<TValues, Path<TValues>>,
-        {
-          shouldDirty: true,
-          shouldTouch: true,
-          shouldValidate: true,
-        },
-      );
-    }
-  }
-
-  function handleAcceptBack() {
-    if (!proposedBack) return;
-    form.setValue(
-      "back" as Path<TValues>,
-      proposedBack as PathValue<TValues, Path<TValues>>,
-      {
-        shouldDirty: true,
-        shouldTouch: true,
-        shouldValidate: true,
-      },
-    );
-    setPreviousBack(null);
-    setProposedBack(null);
-  }
-
-  function handleRejectBack() {
-    setPreviousBack(null);
-    setProposedBack(null);
-  }
-
-  const canUseAiBack =
-    aiEnabled &&
-    (currentValues.subjectId ?? "").length > 0 &&
-    hasRichTextContent(currentValues.front) &&
-    !isGeneratingBack &&
-    !isSubmitting &&
-    !proposedBack &&
-    !previousBack;
-
   return {
     discardDialogOpen,
     setDiscardDialogOpen,
-    isGeneratingBack,
     isSubmitting,
     isSaved,
-    previousBack,
-    proposedBack,
     editorResetVersion,
     keepFrontAfterSubmit,
     setKeepFrontAfterSubmit,
     keepBackAfterSubmit,
     setKeepBackAfterSubmit,
-    canUseAiBack,
     isDuplicateFront,
     isCheckingDuplicateFront,
     duplicateFrontMessage: t("flashcards.duplicateFront"),
     handleDiscardChanges,
     handleOpenChange,
     handleSubmit,
-    handleGenerateBack,
-    handleAcceptBack,
-    handleRejectBack,
   };
 }

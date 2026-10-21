@@ -2,7 +2,9 @@
 
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
+import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ReviewSessionShellProps {
   progress: number;
@@ -31,8 +33,14 @@ export function ReviewSessionShell({
   children,
   footer,
 }: Readonly<ReviewSessionShellProps>) {
+  const workspace = useAssistantWorkspace();
   return (
-    <div className="fixed inset-0 z-overlay flex flex-col overflow-hidden bg-background">
+    <div
+      className={cn(
+        "fixed inset-0 z-overlay flex flex-col overflow-hidden bg-background",
+        workspace?.open && "lg:right-96",
+      )}
+    >
       <progress
         className="h-1.5 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
         value={Math.round(progress * 100)}

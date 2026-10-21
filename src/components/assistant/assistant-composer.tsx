@@ -1,36 +1,48 @@
 "use client";
 
 import { ArrowUp, Square } from "lucide-react";
-import { type KeyboardEvent, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { LIMITS } from "@/lib/config/limits";
 
 interface AssistantComposerProps {
   busy: boolean;
-  onSend: (text: string) => void;
+  onSend: (text: string) => Promise<boolean>;
   onStop: () => void;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  focusRequested?: boolean;
 }
 
 export function AssistantComposer({
   busy,
   onSend,
   onStop,
+  value,
+  onValueChange,
+  focusRequested = false,
 }: Readonly<AssistantComposerProps>) {
-  const [draft, setDraft] = useState("");
+  const [localDraft, setLocalDraft] = useState("");
+  const draft = value ?? localDraft;
+  const setDraft = onValueChange ?? setLocalDraft;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (focusRequested) textareaRef.current?.focus();
+  }, [focusRequested]);
   const canSend = !busy && draft.trim().length > 0;
 
-  function submitDraft() {
+  async function submitDraft() {
     if (!canSend) return;
-    onSend(draft.trim());
-    setDraft("");
+    const sent = await onSend(draft.trim());
+    if (sent !== false) setDraft("");
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== "Enter" || event.shiftKey) return;
     if (event.nativeEvent.isComposing) return;
     event.preventDefault();
-    submitDraft();
+    void submitDraft();
   }
 
   return (
@@ -38,10 +50,11 @@ export function AssistantComposer({
       className="flex items-end gap-2 border-t border-border/60 p-3"
       onSubmit={(event) => {
         event.preventDefault();
-        submitDraft();
+        void submitDraft();
       }}
     >
       <Textarea
+        ref={textareaRef}
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={handleKeyDown}

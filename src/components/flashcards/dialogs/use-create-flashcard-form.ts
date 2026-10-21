@@ -38,7 +38,6 @@ export function getCreateFlashcardFormValues(
 
 interface UseCreateFlashcardFormOptions {
   open: boolean;
-  aiEnabled: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
   subjectId?: string;
@@ -52,11 +51,10 @@ interface UseCreateFlashcardFormOptions {
  * the floating flashcard window so the logic lives in exactly one place.
  *
  * @example
- * const { subjects, form, dialog } = useCreateFlashcardForm({ open, aiEnabled, onOpenChange });
+ * const { subjects, form, dialog } = useCreateFlashcardForm({ open, onOpenChange });
  */
 export function useCreateFlashcardForm({
   open,
-  aiEnabled,
   onOpenChange,
   onCreated,
   subjectId,
@@ -79,7 +77,6 @@ export function useCreateFlashcardForm({
   const dialog = useFlashcardDialogState({
     mode: "create",
     open,
-    aiEnabled,
     onOpenChange,
     values: getCreateFlashcardFormValues(subjectId, initialCard),
     form,

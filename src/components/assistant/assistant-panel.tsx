@@ -1,31 +1,24 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
-import type { ChatTransport } from "ai";
 import { Minus, RotateCcw, SquarePen } from "lucide-react";
-import {
-  createAssistantChatTransport,
-  readAssistantErrorMessage,
-} from "@/components/assistant/assistant-chat-transport";
+import { readAssistantErrorMessage } from "@/components/assistant/assistant-chat-transport";
 import { AssistantComposer } from "@/components/assistant/assistant-composer";
 import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
 import { AssistantPanelFrame } from "@/components/assistant/assistant-panel-frame";
-import { useFlashcardProposalOutcomes } from "@/components/assistant/use-flashcard-proposal-outcomes";
+import {
+  type AssistantWorkspace,
+  useAssistantWorkspace,
+} from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
-import type { AssistantUIMessage } from "@/features/assistant/types";
-
-// One transport for the page: `useChat` keeps the first one it gets anyway.
-const defaultAssistantTransport = createAssistantChatTransport();
 
 interface AssistantPanelProps {
-  /** Injected by tests; defaults to the `/api/assistant/chat` transport. */
-  transport?: ChatTransport<AssistantUIMessage>;
   /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
   onMinimize: () => void;
+  embedded?: boolean;
 }
 
 /**
- * Chat panel of the study assistant. Holds the in-memory conversation; it is
+ * Chat panel backed by the shared workspace. The conversation is
  * never saved, and "New chat" clears it. Minimize (or the floating launcher)
  * hides the panel without clearing it. Flashcard outcomes are recorded on
  * their tool call without sending a turn, so they reach the model with the
@@ -34,34 +27,27 @@ interface AssistantPanelProps {
  * @example
  * <AssistantPanel onMinimize={() => setOpen(false)} />
  */
-export function AssistantPanel({
-  transport = defaultAssistantTransport,
+export function AssistantPanel(props: Readonly<AssistantPanelProps>) {
+  const workspace = useAssistantWorkspace();
+  return workspace ? (
+    <AssistantConversationPanel {...props} workspace={workspace} />
+  ) : null;
+}
+
+interface AssistantConversationPanelProps extends AssistantPanelProps {
+  workspace: AssistantWorkspace;
+}
+
+function AssistantConversationPanel({
+  workspace,
+  embedded,
   onMinimize,
-}: Readonly<AssistantPanelProps>) {
-  const chat = useChat<AssistantUIMessage>({ transport });
+}: Readonly<AssistantConversationPanelProps>) {
+  const { chat, proposals } = workspace;
   const busy = chat.status === "submitted" || chat.status === "streaming";
-  const proposals = useFlashcardProposalOutcomes(chat);
-
-  function startNewChat() {
-    chat.stop();
-    chat.clearError();
-    chat.setMessages([]);
-    proposals.reset();
-  }
-
-  // Open cards are settled first so the model hears they were skipped.
-  async function sendText(text: string) {
-    await proposals.skipOpenCards();
-    await chat.sendMessage({ text });
-  }
-
-  async function retryLastMessage() {
-    await proposals.skipOpenCards();
-    await chat.regenerate();
-  }
-
   return (
     <AssistantPanelFrame
+      embedded={embedded}
       actions={
         <div className="flex items-center gap-1">
           <Button
@@ -78,7 +64,7 @@ export function AssistantPanel({
             type="button"
             variant="ghost"
             size="icon-sm"
-            onClick={startNewChat}
+            onClick={workspace.reset}
             disabled={chat.messages.length === 0}
             aria-label="New chat"
           >
@@ -87,6 +73,30 @@ export function AssistantPanel({
         </div>
       }
     >
+      {workspace.editor ? (
+        <p className="border-b px-4 py-2 text-xs text-muted-foreground">
+          Using current flashcard draft
+        </p>
+      ) : null}
+      {workspace.notice ? (
+        <p role="status" className="px-4 py-2 text-xs text-muted-foreground">
+          {workspace.notice}
+        </p>
+      ) : null}
+      {workspace.pending ? (
+        <p role="status" className="px-4 py-2 text-xs text-muted-foreground">
+          Review suggested changes in the editor.
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            className="lg:hidden"
+            onClick={onMinimize}
+          >
+            Back to editor
+          </Button>
+        </p>
+      ) : null}
       <AssistantMessageList
         messages={chat.messages}
         status={chat.status}
@@ -102,7 +112,7 @@ export function AssistantPanel({
             type="button"
             variant="outline"
             size="xs"
-            onClick={() => void retryLastMessage()}
+            onClick={() => void workspace.send()}
           >
             <RotateCcw />
             Retry
@@ -111,7 +121,10 @@ export function AssistantPanel({
       ) : null}
       <AssistantComposer
         busy={busy}
-        onSend={(text) => void sendText(text)}
+        value={workspace.composerDraft}
+        onValueChange={workspace.setComposerDraft}
+        onSend={(text) => workspace.send(text)}
+        focusRequested={workspace.open}
         onStop={() => void chat.stop()}
       />
     </AssistantPanelFrame>

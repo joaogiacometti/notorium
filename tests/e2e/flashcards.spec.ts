@@ -1,5 +1,4 @@
 import type { Locator, Page } from "@playwright/test";
-import { PLAYWRIGHT_GENERATED_BACK } from "@/features/flashcards/ai";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import { clearUserSubjectsByNames, createSubject } from "./support/db";
@@ -116,43 +115,6 @@ test("can create and open a flashcard", async ({ page, e2eUser }) => {
     await expect(page.getByText("Back", { exact: true })).toBeVisible();
     await expect(breadcrumbCurrent(page, subjectName)).toBeVisible();
     await expect(page.getByText(flashcardBack).first()).toBeVisible();
-  } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
-  }
-});
-
-test("can generate a single flashcard back with AI", async ({
-  page,
-  e2eUser,
-}) => {
-  const subjectName = getUniqueSubjectName("ai-single-back");
-  const flashcardFront = getUniqueFlashcardFront("ai-single-back");
-
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
-
-  try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-
-    await openFlashcardsManagePage(page, subject.id);
-    const createDialog = await openCreateFlashcardDialog(page);
-    await fillRichTextEditor(
-      createDialog.locator("#form-create-flashcard-front"),
-      flashcardFront,
-    );
-
-    await createDialog
-      .getByRole("button", { name: "Generate with AI", exact: true })
-      .click();
-    await expect(
-      createDialog.locator("#form-create-flashcard-back"),
-    ).toContainText(PLAYWRIGHT_GENERATED_BACK);
-
-    await createDialog
-      .getByRole("button", { name: "Create Flashcard", exact: true })
-      .click();
-    await expect(
-      page.getByTitle(flashcardFront, { exact: true }),
-    ).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
   }

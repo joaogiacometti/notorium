@@ -3,6 +3,7 @@
 import { Portal } from "radix-ui";
 import type { ReactNode } from "react";
 import { RemoveScroll } from "react-remove-scroll";
+import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
 
 interface ReviewScrollBoundaryProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ export function ReviewScrollBoundary({ children }: ReviewScrollBoundaryProps) {
     <Portal.Root asChild>
       <RemoveScroll allowPinchZoom className="fixed inset-0 z-overlay">
         {children}
+        <AssistantSurfaceHost />
       </RemoveScroll>
     </Portal.Root>
   );

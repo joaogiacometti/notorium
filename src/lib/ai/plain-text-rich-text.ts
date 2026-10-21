@@ -137,3 +137,11 @@ export function plainTextToRichText(value: string): string {
 
   return renderMathSegments(html, segments);
 }
+
+/** Convert math delimiters in a text node while preserving its exact spacing.
+ * @example mathTextToRichText(" $x$ ");
+ */
+export function mathTextToRichText(value: string): string {
+  const { text, segments } = extractMathSegments(value);
+  return renderMathSegments(escapeHtml(text), segments);
+}

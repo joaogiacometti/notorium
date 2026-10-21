@@ -1,14 +1,15 @@
 "use client";
 
-import { Loader2, Pin, PinOff, Sparkles } from "lucide-react";
+import { Pin, PinOff } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import {
   Controller,
   type FieldPath,
   type UseFormReturn,
-  useWatch,
 } from "react-hook-form";
-import { FlashcardBackDiff } from "@/components/flashcards/dialogs/flashcard-back-diff";
+import { useActiveFlashcardEditor } from "@/components/assistant/use-active-flashcard-editor";
+import { FlashcardEditorDialogContent } from "@/components/flashcards/dialogs/flashcard-editor-dialog-content";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { SubjectSelect } from "@/components/shared/subject-select";
@@ -16,7 +17,6 @@ import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -27,29 +27,23 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import {
-  type FlashcardFormValues as FlashcardFormSchemaValues,
-  hasRichTextContent,
-} from "@/features/flashcards/validation";
+import type { FlashcardFormValues as FlashcardFormSchemaValues } from "@/features/flashcards/validation";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 type FlashcardFormValues = FlashcardFormSchemaValues;
+const FlashcardFieldReview = dynamic(
+  () =>
+    import("@/components/flashcards/dialogs/flashcard-field-review").then(
+      (module) => module.FlashcardFieldReview,
+    ),
+  { ssr: false },
+);
 
 interface FlashcardDialogDiscardConfig {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDiscard: () => void;
-}
-
-interface FlashcardDialogAiBackConfig {
-  isGenerating: boolean;
-  canUse: boolean;
-  onGenerate: () => Promise<void>;
-  previousValue: string | null;
-  proposedValue: string | null;
-  onAccept: () => void;
-  onReject: () => void;
 }
 
 interface FlashcardDialogDuplicateConfig {
@@ -78,7 +72,6 @@ interface FlashcardDialogFormBaseProps<TValues extends FlashcardFormValues> {
   isSubmitting: boolean;
   isSaved?: boolean;
   discard: FlashcardDialogDiscardConfig;
-  aiBack: FlashcardDialogAiBackConfig;
   aiEnabled: boolean;
   duplicateFront: FlashcardDialogDuplicateConfig;
   noDialog?: boolean;
@@ -108,7 +101,6 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   isSubmitting,
   isSaved,
   discard,
-  aiBack,
   aiEnabled,
   duplicateFront,
   createOptions,
@@ -127,7 +119,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
   }
 
   function handleCtrlEnter() {
-    if (isSubmitting) {
+    if (isSubmitting || review.blocked || pendingImageUploads > 0) {
       return;
     }
 
@@ -136,22 +128,24 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
 
   const pendingSubmitLabel = mode === "create" ? "Creating..." : "Saving...";
 
-  const watchedBack = useWatch({
-    control: form.control,
-    name: "back" as FieldPath<TValues>,
-  }) as string | undefined;
-
-  const hasBack = hasRichTextContent(watchedBack ?? "");
-  const generateLabel = hasBack ? "Improve with AI" : "Generate with AI";
-  const generatingLabel = hasBack ? "Improving..." : "Generating...";
   const keepFrontAfterSubmit = createOptions?.keepFrontAfterSubmit ?? false;
   const keepBackAfterSubmit = createOptions?.keepBackAfterSubmit ?? false;
   const isImageUploading = pendingImageUploads > 0;
+  const review = useActiveFlashcardEditor({
+    form,
+    enabled: open && aiEnabled,
+    resetVersion: editorResetVersion,
+    subjects,
+    blocked: isSubmitting || isImageUploading,
+  });
 
   const formContent = (
     <form
       id={formId}
-      onSubmit={form.handleSubmit(onSubmit)}
+      onSubmit={form.handleSubmit(async (values) => {
+        if (!review.blocked && !isImageUploading && !isSubmitting)
+          await onSubmit(values);
+      })}
       className="flex min-h-0 flex-col"
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
@@ -231,18 +225,30 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                       ) : null}
                     </div>
                   </div>
-                  <TiptapEditor
-                    key={`${formId}-front-${editorResetVersion ?? 0}`}
-                    value={(field.value ?? "") as string}
-                    onChange={field.onChange}
-                    placeholder="e.g. What is photosynthesis?"
-                    id={`${formId}-front`}
-                    aria-invalid={frontInvalid}
-                    contentClassName="min-h-11 max-h-[40svh]"
-                    imageUploadContext="flashcards"
-                    onCtrlEnter={handleCtrlEnter}
-                    onImageUploadPendingChange={handleImageUploadPendingChange}
-                  />
+                  {review.pending?.fields.front ? (
+                    <FlashcardFieldReview
+                      key={`${review.pending.toolCallId}-front`}
+                      field="front"
+                      disabled={isSubmitting || isImageUploading}
+                      proposal={review.pending.fields.front}
+                      onDecide={(accept) => review.decide?.("front", accept)}
+                    />
+                  ) : (
+                    <TiptapEditor
+                      key={`${formId}-front-${editorResetVersion ?? 0}`}
+                      value={(field.value ?? "") as string}
+                      onChange={field.onChange}
+                      placeholder="e.g. What is photosynthesis?"
+                      id={`${formId}-front`}
+                      aria-invalid={frontInvalid}
+                      contentClassName="min-h-11 max-h-[40svh]"
+                      imageUploadContext="flashcards"
+                      onCtrlEnter={handleCtrlEnter}
+                      onImageUploadPendingChange={
+                        handleImageUploadPendingChange
+                      }
+                    />
+                  )}
                   {frontFeedback}
                 </Field>
               );
@@ -257,25 +263,6 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                   <div className="flex items-center justify-between gap-3">
                     <FieldLabel htmlFor={`${formId}-back`}>Back</FieldLabel>
                     <div className="flex items-center gap-1">
-                      {aiEnabled ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="xs"
-                          className="h-7 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
-                          onClick={() => void aiBack.onGenerate()}
-                          disabled={!aiBack.canUse}
-                        >
-                          {aiBack.isGenerating ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <Sparkles className="size-3.5" />
-                          )}
-                          {aiBack.isGenerating
-                            ? generatingLabel
-                            : generateLabel}
-                        </Button>
-                      ) : null}
                       {mode === "create" && createOptions ? (
                         <Button
                           type="button"
@@ -309,16 +296,13 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
                     </div>
                   </div>
                 </div>
-                {aiEnabled && aiBack.proposedValue && aiBack.previousValue ? (
-                  <FlashcardBackDiff
-                    previousBack={aiBack.previousValue}
-                    proposedBack={aiBack.proposedValue}
-                    originalLabel="Original"
-                    proposedLabel="Proposed"
-                    acceptLabel="Accept"
-                    rejectLabel="Reject"
-                    onAccept={aiBack.onAccept}
-                    onReject={aiBack.onReject}
+                {review.pending?.fields.back ? (
+                  <FlashcardFieldReview
+                    key={`${review.pending.toolCallId}-back`}
+                    field="back"
+                    disabled={isSubmitting || isImageUploading}
+                    proposal={review.pending.fields.back}
+                    onDecide={(accept) => review.decide?.("back", accept)}
                   />
                 ) : (
                   <TiptapEditor
@@ -349,10 +333,9 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
           disabled={
             isSubmitting ||
             isImageUploading ||
-            aiBack.isGenerating ||
             duplicateFront.isChecking ||
             duplicateFront.isDuplicate ||
-            Boolean(aiBack.proposedValue && aiBack.previousValue)
+            review.blocked
           }
           className={cn(
             "w-full",
@@ -380,14 +363,14 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-        <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
+        <FlashcardEditorDialogContent>
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>
               {mode === "create" ? "Create Flashcard" : "Edit Flashcard"}
             </DialogTitle>
           </DialogHeader>
           {formContent}
-        </DialogContent>
+        </FlashcardEditorDialogContent>
       </Dialog>
       <UnsavedChangesDialog
         open={discard.open}

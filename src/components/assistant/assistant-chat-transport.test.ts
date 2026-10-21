@@ -56,6 +56,29 @@ describe("createAssistantChatTransport", () => {
     return recorder.bodies[0] as SentChatBody;
   }
 
+  it("forwards the current per-send draft without altering history", async () => {
+    const recorder = new RecordingChatFetch().install();
+    const draft = {
+      sessionId: "d",
+      revision: 2,
+      front: "<p>Unsaved</p>",
+      back: "",
+    };
+    await createAssistantChatTransport().sendMessages({
+      trigger: "submit-message",
+      chatId: "c",
+      messageId: undefined,
+      messages: [textMessage(0)],
+      abortSignal: undefined,
+      body: { draft },
+    });
+    expect(recorder.bodies[0]).toEqual({
+      chatId: "c",
+      messages: [textMessage(0)],
+      draft,
+    });
+  });
+
   it("sends the chat id so the route can reuse the prompt cache", async () => {
     const body = await sendChat(1);
 

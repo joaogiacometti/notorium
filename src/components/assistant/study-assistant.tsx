@@ -1,9 +1,15 @@
 "use client";
 
-import { Sparkles, X } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AssistantPanelFrame } from "@/components/assistant/assistant-panel-frame";
+import {
+  type AssistantWorkspace,
+  useAssistantWorkspace,
+} from "@/components/assistant/assistant-workspace-context";
+import { useAssistantPortalTarget } from "@/components/assistant/use-assistant-portal-target";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +17,7 @@ function loadAssistantPanel() {
   return import("@/components/assistant/assistant-panel");
 }
 
-// Split out so the chat runtime stays out of every page's initial bundle, and
+// Split out so the chat presentation stays out of every page's initial bundle, and
 // preloaded once the page is idle. The frame shows while the chunk is still
 // on its way, so the panel opens the instant the button is pressed.
 const AssistantPanel = dynamic(
@@ -20,17 +26,36 @@ const AssistantPanel = dynamic(
 );
 
 /**
- * Floating study assistant: a bottom-right button that expands into a chat
- * panel. The panel stays mounted once opened, so closing it keeps the chat;
+ * Global study assistant: one collapsible sidebar shared across pages, review,
+ * and flashcard dialogs. Closing preserves the conversation and composer;
  * nothing is persisted, so a reload starts fresh.
  *
  * @example
  * {aiEnabled && <StudyAssistant />}
  */
 export function StudyAssistant() {
-  const [open, setOpen] = useState(false);
+  const workspace = useAssistantWorkspace();
+  return workspace ? <StudyAssistantSurface workspace={workspace} /> : null;
+}
+
+function StudyAssistantSurface({
+  workspace,
+}: Readonly<{ workspace: AssistantWorkspace }>) {
+  const portal = useAssistantPortalTarget(
+    workspace.host,
+    true,
+    workspace.registerPortalTarget,
+  );
+  const { open, setOpen } = workspace;
   const [opened, setOpened] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
+  const restoreLauncherFocus = useRef(false);
+  useEffect(() => {
+    if (!open && restoreLauncherFocus.current) {
+      launcherRef.current?.focus();
+      restoreLauncherFocus.current = false;
+    }
+  }, [open]);
 
   useEffect(() => preloadWhenIdle(loadAssistantPanel), []);
 
@@ -41,33 +66,61 @@ export function StudyAssistant() {
 
   // Focus would otherwise stay on a button inside the now-hidden panel.
   function minimize() {
+    restoreLauncherFocus.current = true;
     setOpen(false);
-    launcherRef.current?.focus();
   }
 
-  return (
-    <div className="fixed right-4 bottom-4 z-chrome flex flex-col items-end gap-3 print:hidden">
-      {opened ? (
-        <div id="study-assistant-panel" className={cn(!open && "hidden")}>
-          <AssistantPanel onMinimize={minimize} />
+  const assistant = (
+    <aside
+      aria-label="Study assistant controls"
+      data-study-assistant
+      className="pointer-events-auto print:hidden"
+      onKeyDown={(event) => {
+        event.stopPropagation();
+        if (event.key === "Escape" && open) {
+          event.preventDefault();
+          minimize();
+        }
+      }}
+    >
+      {opened || open ? (
+        <aside
+          id="study-assistant-panel"
+          aria-label="Study assistant sidebar"
+          className={cn(
+            "fixed inset-y-0 right-0 w-full flex-col border-l border-border/60 bg-card shadow-lg lg:w-96",
+            open ? "flex" : "hidden",
+          )}
+        >
+          <AssistantPanel embedded onMinimize={minimize} />
+        </aside>
+      ) : null}
+      {!open ? (
+        <div className="fixed right-4 bottom-4">
+          <Button
+            ref={launcherRef}
+            type="button"
+            size="icon"
+            variant="outline"
+            aria-label="Open study assistant"
+            aria-expanded={false}
+            onClick={toggleOpen}
+            className="size-11 rounded-full border-border/70 bg-card text-muted-foreground shadow-md"
+          >
+            <Sparkles className="size-5" />
+          </Button>
         </div>
       ) : null}
-      <Button
-        ref={launcherRef}
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={toggleOpen}
-        onPointerEnter={() => void loadAssistantPanel()}
-        onFocus={() => void loadAssistantPanel()}
-        aria-label={open ? "Close study assistant" : "Open study assistant"}
-        aria-expanded={open}
-        aria-controls="study-assistant-panel"
-        className="size-11 rounded-full border-border/70 bg-card text-muted-foreground shadow-md transition-colors hover:text-foreground"
-      >
-        {open ? <X className="size-5" /> : <Sparkles className="size-5" />}
-      </Button>
-    </div>
+    </aside>
+  );
+  return (
+    <>
+      <div
+        ref={portal.fallbackRef}
+        className="fixed inset-0 z-chrome pointer-events-none"
+      />
+      {portal.target ? createPortal(assistant, portal.target) : null}
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
+import { FlashcardEditorDialogContent } from "@/components/flashcards/dialogs/flashcard-editor-dialog-content";
 import {
   type CreateFlashcardInitialCard,
   useCreateFlashcardForm,
@@ -8,7 +9,6 @@ import {
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -38,7 +38,6 @@ export function CreateFlashcardDialog({
   const { subjects, form, dialog, handleCreateSubject } =
     useCreateFlashcardForm({
       open,
-      aiEnabled,
       onOpenChange,
       onCreated,
       subjectId,
@@ -49,7 +48,7 @@ export function CreateFlashcardDialog({
     <>
       <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-        <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
+        <FlashcardEditorDialogContent>
           <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Create Flashcard</DialogTitle>
           </DialogHeader>
@@ -72,15 +71,6 @@ export function CreateFlashcardDialog({
               onOpenChange: dialog.setDiscardDialogOpen,
               onDiscard: dialog.handleDiscardChanges,
             }}
-            aiBack={{
-              isGenerating: dialog.isGeneratingBack,
-              canUse: dialog.canUseAiBack,
-              onGenerate: dialog.handleGenerateBack,
-              previousValue: dialog.previousBack,
-              proposedValue: dialog.proposedBack,
-              onAccept: dialog.handleAcceptBack,
-              onReject: dialog.handleRejectBack,
-            }}
             aiEnabled={aiEnabled}
             duplicateFront={{
               isChecking: dialog.isCheckingDuplicateFront,
@@ -95,7 +85,7 @@ export function CreateFlashcardDialog({
             }}
             noDialog
           />
-        </DialogContent>
+        </FlashcardEditorDialogContent>
       </Dialog>
       <UnsavedChangesDialog
         open={dialog.discardDialogOpen}

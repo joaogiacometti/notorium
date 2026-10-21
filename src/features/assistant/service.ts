@@ -13,6 +13,7 @@ interface StreamAssistantReplyForUserInput {
   messages: AssistantChatRequest["messages"];
   /** `useChat` id; keeps the chat's turns on one provider's prompt cache. */
   chatId?: string;
+  draft?: AssistantChatRequest["draft"];
   abortSignal?: AbortSignal;
   /** Injected by tests; defaults to the user's subject paths from the DB. */
   loadSubjectPaths?: (userId: string) => Promise<string[]>;
@@ -39,6 +40,7 @@ export async function streamAssistantReplyForUser({
   userId,
   messages,
   chatId,
+  draft,
   abortSignal,
   loadSubjectPaths = readSubjectPathsForUser,
 }: StreamAssistantReplyForUserInput): Promise<StreamAssistantReplyForUserResult> {
@@ -62,7 +64,7 @@ export async function streamAssistantReplyForUser({
     settings: access.settings,
     logScope: "assistant.chat",
     instructions: buildAssistantSystemPrompt(await loadSubjectPaths(userId)),
-    messages,
+    messages: includeCurrentDraft(messages, draft),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: assistantTools,
     abortSignal,
@@ -76,4 +78,20 @@ export async function streamAssistantReplyForUser({
 async function readSubjectPathsForUser(userId: string): Promise<string[]> {
   const subjects = await getAllSubjectsWithPathsForUser(userId);
   return subjects.map((subject) => subject.path);
+}
+
+function includeCurrentDraft(
+  messages: AssistantChatRequest["messages"],
+  draft: AssistantChatRequest["draft"],
+): AssistantChatRequest["messages"] {
+  if (!draft) return messages;
+  return messages.map((message, index) => {
+    if (index !== messages.length - 1 || message.role !== "user")
+      return message;
+    const context = {
+      type: "text" as const,
+      text: `Current flashcard draft (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(draft)}`,
+    };
+    return { ...message, parts: [context, ...message.parts] };
+  });
 }

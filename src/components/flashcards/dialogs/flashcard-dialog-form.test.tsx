@@ -59,15 +59,6 @@ function Harness({
         onOpenChange: () => {},
         onDiscard: () => {},
       }}
-      aiBack={{
-        isGenerating: false,
-        canUse: true,
-        onGenerate: async () => {},
-        previousValue: null,
-        proposedValue: null,
-        onAccept: () => {},
-        onReject: () => {},
-      }}
       aiEnabled
       duplicateFront={{
         isChecking: false,

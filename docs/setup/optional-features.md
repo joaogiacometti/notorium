@@ -19,6 +19,8 @@ Set both variables:
 
 If either variable is missing, AI controls remain hidden.
 
+The study assistant is a shared collapsible sidebar across pages, review, and flashcard editing. Asking for improvements while an editor is open sends its current unsaved draft; suggestions are approved per field inside the editor. This uses the assistant message allowance and needs no additional configuration or database migration. Conversations remain in browser memory.
+
 The study assistant answers with thinking turned off (`none`) by default, because thinking tokens are billed as output tokens. Set `OPENROUTER_ASSISTANT_REASONING_EFFORT` (`none`, `minimal`, `low`, `medium`, or `high`) to change it. You must set it to something other than `none` for a model whose reasoning cannot be turned off, or that model rejects every assistant request.
 
 The study assistant sends each chat's id to OpenRouter as `session_id`. OpenRouter then routes every turn to the same upstream provider, which keeps the cached prompt prefix warm (for example, Gemini's implicit cache reads cost a tenth of normal input).

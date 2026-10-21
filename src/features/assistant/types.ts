@@ -3,7 +3,7 @@ import type { AssistantTools } from "@/features/assistant/tools";
 
 /**
  * Chat message shared by the assistant route and `useChat`: text plus typed
- * `tool-proposeFlashcards` parts for flashcards the assistant proposes.
+ * typed creation and draft-edit proposal parts for user-confirmed changes.
  */
 export type AssistantUIMessage = UIMessage<never, never, AssistantTools>;
 

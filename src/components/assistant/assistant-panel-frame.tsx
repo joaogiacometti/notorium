@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface AssistantPanelFrameProps {
   /** Header buttons, right-aligned next to the title. */
   actions?: ReactNode;
   children: ReactNode;
   busy?: boolean;
+  embedded?: boolean;
 }
 
 /**
@@ -19,12 +21,18 @@ export function AssistantPanelFrame({
   actions,
   children,
   busy = false,
+  embedded = false,
 }: Readonly<AssistantPanelFrameProps>) {
   return (
     <section
       aria-label="Study assistant"
       aria-busy={busy}
-      className="flex h-[min(36rem,calc(100svh-6rem))] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-lg sm:w-96"
+      className={cn(
+        "flex min-h-0 flex-col overflow-hidden bg-card",
+        embedded
+          ? "h-full w-full"
+          : "h-[min(36rem,calc(100svh-6rem))] w-[calc(100vw-2rem)] rounded-xl border border-border/70 shadow-lg sm:w-96",
+      )}
     >
       <header className="flex h-12 items-center border-b border-border/60 py-2 pr-2 pl-4">
         <h2 className="flex-1 text-sm font-semibold">Study assistant</h2>

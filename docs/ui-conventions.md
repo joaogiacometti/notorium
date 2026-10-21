@@ -86,7 +86,7 @@ arbitrary (`z-[60]`, `z-(--x)`) z-index classes are rejected outside
 | Utility | Value | Use for |
 | --- | --- | --- |
 | `z-raised` | 10 | In-flow content lifted over its siblings: sticky table headers, editor handles |
-| `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header, the floating study assistant button and panel |
+| `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header, the study assistant launcher and global sidebar |
 | `z-immersive` | 35 | Note/mindmap zen mode (`fixed inset-0`) |
 | `z-overlay` | 50 | Everything that floats or blocks the page: dialogs, sheets, menus, popovers, selects, tooltips, and full-screen review surfaces |
 
@@ -137,3 +137,19 @@ Enter animations use `tw-animate-css` (`animate-in fade-in …`) behind the
 `motion-safe:` variant so reduced-motion users get instant changes. Keep them
 at 200ms or less where users act repeatedly: review sessions fade each new card
 in (keyed by card id) and fade/slide the revealed answer in.
+
+## Study assistant and inline review
+
+The assistant is one global collapsible right sidebar. At desktop widths (`lg`)
+the app shell and review surface reserve `w-96`; on mobile it covers the page
+and its minimize control returns to the current task. Flashcard dialogs use one
+viewport-sized modal focus boundary containing the centered editor and a portal
+host for the same assistant. Review provides its own host inside its scroll
+boundary. Nested hosts restore the previous host on close; never raise z-index
+to expose chat above a dialog.
+
+AI edits are reviewed inside each affected input, with separate Accept and
+Discard controls per field. Additions use success intent variables; deletions
+use danger intent variables and strikethrough. Read-only review decorations
+never become editor content. Resolve proposals before saving; the unchanged
+fields remain editable.

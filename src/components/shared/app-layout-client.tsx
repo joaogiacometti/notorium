@@ -4,6 +4,8 @@ import { Home, Layers, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AssistantAppFrame } from "@/components/assistant/assistant-app-frame";
+import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { StudyAssistant } from "@/components/assistant/study-assistant";
 import { AppSidebar } from "@/components/navbar/app-sidebar";
 import { CommandPalette } from "@/components/navbar/command-palette";
@@ -157,7 +159,7 @@ export function AppLayoutClient({
     </div>
   );
 
-  return (
+  const content = (
     <div className="min-h-svh bg-background">
       {userId && <CommandPalette userId={userId} aiEnabled={aiEnabled} />}
       {userId && (
@@ -171,5 +173,12 @@ export function AppLayoutClient({
       {mainRow}
       {userId && aiEnabled ? <StudyAssistant /> : null}
     </div>
+  );
+  return userId && aiEnabled ? (
+    <AssistantWorkspaceProvider>
+      <AssistantAppFrame>{content}</AssistantAppFrame>
+    </AssistantWorkspaceProvider>
+  ) : (
+    content
   );
 }

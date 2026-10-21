@@ -22,15 +22,16 @@ vi.mock("next/navigation", () => ({
 }));
 
 const checkFlashcardDuplicateMock = vi.fn();
-const generateFlashcardBackMock = vi.fn();
+const chatEdits = vi.hoisted(() => ({ pending: false }));
+vi.mock("@/components/assistant/assistant-workspace-context", () => ({
+  useAssistantWorkspace: () => ({ pending: chatEdits.pending ? {} : null }),
+}));
 const addEventListenerSpy = vi.spyOn(window, "addEventListener");
 const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
 vi.mock("@/app/actions/flashcards", () => ({
   checkFlashcardDuplicate: (...args: unknown[]) =>
     checkFlashcardDuplicateMock(...args),
-  generateFlashcardBack: (...args: unknown[]) =>
-    generateFlashcardBackMock(...args),
 }));
 
 interface HarnessProps {
@@ -59,7 +60,6 @@ function TestHarness({
   const dialog = useFlashcardDialogState({
     mode,
     open,
-    aiEnabled: true,
     onOpenChange,
     values,
     form,
@@ -135,7 +135,7 @@ describe("useFlashcardDialogState", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     checkFlashcardDuplicateMock.mockReset();
-    generateFlashcardBackMock.mockReset();
+    chatEdits.pending = false;
     checkFlashcardDuplicateMock.mockResolvedValue({
       success: true,
       duplicate: false,
@@ -321,53 +321,26 @@ describe("useFlashcardDialogState", () => {
     expect(getByTestId(container, "back").textContent).toBe("<p>Back A</p>");
   });
 
-  it("registers beforeunload when AI back proposal is pending", async () => {
-    generateFlashcardBackMock.mockResolvedValueOnce({
-      success: true,
-      back: "<p>Generated improved back</p>",
-    });
-
-    function ProposalHarness() {
-      const form = useForm<FlashcardFormValues>({
-        defaultValues: {
-          subjectId: "deck-1",
-          front: "<p>Front A</p>",
-          back: "<p>Back A</p>",
-        },
-      });
-      const dialog = useFlashcardDialogState({
-        mode: "create",
-        open: true,
-        aiEnabled: true,
-        onOpenChange: () => {},
-        values: {
-          subjectId: "deck-1",
-          front: "<p>Front A</p>",
-          back: "<p>Back A</p>",
-        },
-        form,
-        onSubmitAction: async () => ({ success: true }),
-        getSuccessValues: (currentValues) => currentValues,
-        closeOnSuccess: false,
-      });
-
-      return (
-        <button
-          type="button"
-          data-testid="generate-back"
-          onClick={() => void dialog.handleGenerateBack()}
-        />
-      );
-    }
-
-    await act(async () => {
-      root.render(<ProposalHarness />);
-    });
-
-    await act(async () => {
-      getByTestId(container, "generate-back").click();
-    });
-
+  it("blocks saving and registers beforeunload while chat edits await review", async () => {
+    chatEdits.pending = true;
+    const onSubmitAction = vi.fn();
+    await act(async () =>
+      root.render(
+        <TestHarness
+          open
+          mode="edit"
+          onSubmitAction={onSubmitAction}
+          values={{
+            subjectId: "deck-1",
+            front: "<p>Front</p>",
+            back: "<p>Back</p>",
+          }}
+        />,
+      ),
+    );
+    await flushTimers();
+    await act(async () => getByTestId(container, "submit").click());
+    expect(onSubmitAction).not.toHaveBeenCalled();
     expect(addEventListenerSpy).toHaveBeenCalledWith(
       "beforeunload",
       expect.any(Function),

@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+  flashcardDraftSchema,
+  flashcardEditsInputSchema,
+  flashcardEditsOutputSchema,
+} from "@/features/assistant/edit-contract";
+import {
   flashcardProposalInputSchema,
   flashcardProposalOutputSchema,
 } from "@/features/assistant/tools";
@@ -42,7 +47,32 @@ const unansweredProposalPartSchema = z.object({
   state: z.enum(["input-streaming", "input-available", "output-error"]),
 });
 
+const answeredEditsPartSchema = z
+  .object({
+    type: z.literal("tool-proposeFlashcardEdits"),
+    toolCallId: z.string().min(1).max(100),
+    state: z.literal("output-available"),
+    input: flashcardEditsInputSchema,
+    output: flashcardEditsOutputSchema,
+  })
+  .refine(
+    (part) =>
+      (["front", "back"] as const).every(
+        (field) =>
+          (part.input[field] === undefined) ===
+          (part.output[field] === undefined),
+      ),
+    { message: "Expected one outcome per proposed field" },
+  );
+
+const unansweredEditsPartSchema = z.object({
+  type: z.literal("tool-proposeFlashcardEdits"),
+  state: z.enum(["input-streaming", "input-available", "output-error"]),
+});
+
 const replyPartSchema = z.union([
+  answeredEditsPartSchema,
+  unansweredEditsPartSchema,
   replyTextPartSchema,
   stepStartPartSchema,
   answeredProposalPartSchema,
@@ -55,7 +85,8 @@ function isModelVisiblePart(
   part: ReplyPart,
 ): part is
   | z.infer<typeof replyTextPartSchema>
-  | z.infer<typeof answeredProposalPartSchema> {
+  | z.infer<typeof answeredProposalPartSchema>
+  | z.infer<typeof answeredEditsPartSchema> {
   return (
     part.type === "text" ||
     ("state" in part && part.state === "output-available")
@@ -105,6 +136,7 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
  * });
  */
 export const assistantChatRequestSchema = z.object({
+  draft: flashcardDraftSchema.optional(),
   chatId: z.string().min(1).max(100).optional(),
   messages: z
     .array(

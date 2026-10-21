@@ -4,6 +4,7 @@ import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
+import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { StudyAssistant } from "@/components/assistant/study-assistant";
 import type { ProposedFlashcard } from "@/features/assistant/tools";
 import type { AssistantUIMessage } from "@/features/assistant/types";
@@ -139,7 +140,9 @@ describe("study assistant", () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={new QueryClient()}>
-          <AssistantPanel transport={transport} onMinimize={() => {}} />
+          <AssistantWorkspaceProvider transport={transport}>
+            <AssistantPanel onMinimize={() => {}} />
+          </AssistantWorkspaceProvider>
         </QueryClientProvider>,
       );
     });
@@ -290,7 +293,9 @@ describe("study assistant", () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={new QueryClient()}>
-          <StudyAssistant />
+          <AssistantWorkspaceProvider>
+            <StudyAssistant />
+          </AssistantWorkspaceProvider>
         </QueryClientProvider>,
       );
     });
@@ -336,7 +341,13 @@ describe("study assistant", () => {
 
   it("opens the panel from the floating button and keeps it when closed", async () => {
     await act(async () => {
-      root.render(<StudyAssistant />);
+      root.render(
+        <QueryClientProvider client={new QueryClient()}>
+          <AssistantWorkspaceProvider>
+            <StudyAssistant />
+          </AssistantWorkspaceProvider>
+        </QueryClientProvider>,
+      );
     });
 
     act(() => {
@@ -351,7 +362,7 @@ describe("study assistant", () => {
     });
 
     await act(async () => {
-      getByLabel<HTMLButtonElement>("Close study assistant").click();
+      getByLabel<HTMLButtonElement>("Minimize study assistant").click();
     });
 
     const panel = container.querySelector("#study-assistant-panel");

@@ -1,18 +1,10 @@
 "use client";
 
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import Highlight from "@tiptap/extension-highlight";
-import Image from "@tiptap/extension-image";
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { type ReactNode, useEffect, useState } from "react";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
+import { buildRichTextReviewExtensions } from "@/lib/editor/rich-text-review-schema";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
-import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
-import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
-import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 import { cn } from "@/lib/utils";
 
 interface TiptapRendererProps {
@@ -30,25 +22,9 @@ export function TiptapRenderer({
   const [resolvedContent, setResolvedContent] = useState(content);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-        codeBlock: false,
-        // The trailing empty paragraph only gives editors a place to type
-        // after a list or code block; read-only, it renders as a blank gap.
-        trailingNode: false,
-      }),
-      CodeBlockLowlight.configure({
-        defaultLanguage: "plaintext",
-        lowlight: tiptapLowlight,
-      }),
-      Highlight,
-      Image.configure({ allowBase64: false }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      ...buildTableExtensions(),
-      ...buildMathExtensions(),
-    ],
+    // The trailing empty paragraph only gives editors a place to type
+    // after a list or code block; read-only, it renders as a blank gap.
+    extensions: buildRichTextReviewExtensions(),
     content: resolvedContent,
     editable: false,
     immediatelyRender: false,

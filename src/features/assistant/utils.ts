@@ -1,7 +1,9 @@
+import type { FlashcardDraft } from "@/features/assistant/edit-contract";
 import type {
   FlashcardExample,
   ProposedFlashcard,
 } from "@/features/assistant/tools";
+import { replaceImagesWithPlaceholders } from "@/lib/editor/rich-text";
 
 interface SubjectPathOption {
   id: string;
@@ -70,4 +72,17 @@ export function composeProposedFlashcardBack(card: ProposedFlashcard): string {
   }
 
   return `${card.back}\n\n${formatFlashcardExample(card.example)}`;
+}
+
+/** Hide image locations while retaining the draft's rich-text structure.
+ * @example prepareDraftForAssistant(draft).front;
+ */
+export function prepareDraftForAssistant(
+  draft: FlashcardDraft,
+): FlashcardDraft {
+  return {
+    ...draft,
+    front: replaceImagesWithPlaceholders(draft.front).text,
+    back: replaceImagesWithPlaceholders(draft.back).text,
+  };
 }

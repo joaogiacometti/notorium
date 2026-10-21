@@ -141,9 +141,70 @@ describe("streamAssistantReplyForUser", () => {
     const call = model.doStreamCalls[0];
     expect(subjects.requestedUserIds).toEqual(["user-1"]);
     expect(call?.tools?.map((tool) => tool.name)).toEqual([
+      "proposeFlashcardEdits",
       "proposeFlashcards",
     ]);
     expect(JSON.stringify(call?.prompt[0])).toContain("Biology::Cells");
+  });
+
+  it("appends draft context after history without changing system instructions", async () => {
+    const model = createFakeStreamingModel("Review changes in the editor.");
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    for (const back of ["<p>First draft</p>", "<p>Second draft</p>"]) {
+      const result = await streamAssistantReplyForUser({
+        userId: "user-1",
+        messages,
+        draft: { sessionId: "d", revision: 0, front: "<p>Question</p>", back },
+        loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      });
+      if (result.success) await result.response.text();
+    }
+    const [first, second] = model.doStreamCalls;
+    expect(first.prompt[0]).toEqual(second.prompt[0]);
+    expect(first.tools).toEqual(second.tools);
+    expect(JSON.stringify(first.prompt.at(-1))).toContain("First draft");
+    expect(JSON.stringify(second.prompt.at(-1))).toContain("Second draft");
+    expect(JSON.stringify(first.prompt.slice(0, -1))).not.toContain(
+      "First draft",
+    );
+  });
+
+  it("keeps the user's question last when providing a draft as background", async () => {
+    const model = createFakeStreamingModel(
+      "Alpha squared means alpha multiplied by itself.",
+    );
+    getAiModelOrThrowMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const question = "what is alpha^2?";
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages: [
+        {
+          id: "question",
+          role: "user",
+          parts: [{ type: "text", text: question }],
+        },
+      ],
+      draft: {
+        sessionId: "d",
+        revision: 0,
+        front: "<p>Explain alpha</p>",
+        back: "",
+      },
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (result.success) await result.response.text();
+    const finalTurn = model.doStreamCalls[0].prompt.at(-1);
+    expect(finalTurn?.role).toBe("user");
+    expect(finalTurn?.content.at(-1)).toEqual({ type: "text", text: question });
+    expect(JSON.stringify(finalTurn?.content.slice(0, -1))).toContain(
+      "Explain alpha",
+    );
   });
 
   it("routes by chat id with the configured reasoning effort", async () => {

@@ -21,8 +21,8 @@ const ASSISTANT_CHAT_API = "/api/assistant/chat";
 export function createAssistantChatTransport(): ChatTransport<AssistantUIMessage> {
   return new DefaultChatTransport<AssistantUIMessage>({
     api: ASSISTANT_CHAT_API,
-    prepareSendMessagesRequest: ({ id, messages }) => ({
-      body: { chatId: id, messages: keepRecentChat(messages) },
+    prepareSendMessagesRequest: ({ id, messages, body }) => ({
+      body: { ...body, chatId: id, messages: keepRecentChat(messages) },
     }),
   });
 }
