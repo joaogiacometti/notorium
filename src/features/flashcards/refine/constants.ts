@@ -1,13 +1,11 @@
 /**
- * Streak thresholds and candidate limits for the Refine view.
+ * Thresholds for the Refine view's struggling cards (leeches).
  *
- * Mastered: last N reviews are all good/easy. Struggling: last N reviews are
- * all "again" ("hard" is neutral and breaks both streaks).
+ * Struggling: lapsed at least REFINE_LEECH_LAPSES times, matching Anki's first
+ * leech warning (half its default threshold of 8). A card leaves the list once
+ * its last REFINE_RECOVERY_STREAK reviews are all good/easy, so an improved
+ * card drops off after it proves itself.
  */
-export const REFINE_MASTERED_STREAK = 3;
-export const REFINE_STRUGGLING_STREAK = 3;
-export const REFINE_GROUP_LIMIT = 50;
-
-export const REFINE_MERGE_CANDIDATE_LIMIT = 8;
-export const REFINE_FRONT_SIMILARITY_THRESHOLD = 0.25;
-export const REFINE_BACK_SIMILARITY_THRESHOLD = 0.2;
+export const REFINE_LEECH_LAPSES = 4;
+export const REFINE_RECOVERY_STREAK = 3;
+export const REFINE_CARD_LIMIT = 50;

@@ -2,26 +2,16 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlashcardsRefineResults } from "@/components/flashcards/manage/flashcards-refine-results";
-import type {
-  RefineCardSummary,
-  RefineGroups,
-} from "@/features/flashcards/refine/types";
+import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-const proposeFlashcardMergeMock = vi.hoisted(() => vi.fn());
 const improveFlashcardBackMock = vi.hoisted(() => vi.fn());
 const toastMock = vi.hoisted(() => ({
-  info: vi.fn(),
   error: vi.fn(),
   success: vi.fn(),
-}));
-
-vi.mock("@/app/actions/flashcards-refine", () => ({
-  proposeFlashcardMerge: proposeFlashcardMergeMock,
-  applyFlashcardMerge: vi.fn(),
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({
@@ -31,12 +21,6 @@ vi.mock("@/app/actions/flashcards", () => ({
 
 vi.mock("sonner", () => ({
   toast: toastMock,
-}));
-
-vi.mock("@/components/flashcards/manage/merge-preview-dialog", () => ({
-  MergePreviewDialog: ({ primaryFront }: { primaryFront: string }) => (
-    <div data-testid="merge-preview-dialog">{primaryFront}</div>
-  ),
 }));
 
 vi.mock("@/components/flashcards/manage/improve-card-dialog", () => ({
@@ -50,31 +34,24 @@ vi.mock("@/lib/server/server-action-errors", () => ({
     result.errorCode,
 }));
 
-function buildRefineCard(
-  overrides: Partial<RefineCardSummary>,
-): RefineCardSummary {
+function buildStrugglingCard(
+  overrides: Partial<StrugglingFlashcard>,
+): StrugglingFlashcard {
   return {
     id: "card-1",
     front: "What is a B-tree?",
     back: "A balanced tree.",
     subjectId: "deck-1",
     subjectName: "Databases",
-    reviewCount: 5,
-    lapseCount: 0,
+    reviewCount: 12,
+    lapseCount: 5,
     ...overrides,
   };
 }
 
-const groups: RefineGroups = {
-  mastered: [buildRefineCard({ id: "mastered-1", front: "Mastered front" })],
-  struggling: [
-    buildRefineCard({
-      id: "struggling-1",
-      front: "Struggling front",
-      reviewCount: 1,
-    }),
-  ],
-};
+const cards = [
+  buildStrugglingCard({ id: "struggling-1", front: "Struggling front" }),
+];
 
 function findButtonByText(container: HTMLElement, text: string) {
   return Array.from(container.querySelectorAll("button")).find(
@@ -102,92 +79,29 @@ describe("FlashcardsRefineResults", () => {
     vi.clearAllMocks();
   });
 
-  it("renders mastered and struggling rows with group badges and actions", async () => {
+  it("renders struggling rows with their lapse count and Improve action", async () => {
     await act(async () => {
       root.render(
-        <FlashcardsRefineResults groups={groups} onRefineApplied={vi.fn()} />,
+        <FlashcardsRefineResults cards={cards} onRefineApplied={vi.fn()} />,
       );
     });
 
-    expect(container.textContent).toContain("Mastered front");
     expect(container.textContent).toContain("Struggling front");
-    expect(container.textContent).toContain("Mastered");
-    expect(container.textContent).toContain("Struggling");
-    expect(findButtonByText(container, "Level up")).toBeTruthy();
+    expect(container.textContent).toContain("Lapses");
+    expect(container.textContent).toContain("5");
     expect(findButtonByText(container, "Improve")).toBeTruthy();
   });
 
-  it("shows the empty message when there are no candidates", async () => {
+  it("shows the empty message when there are no struggling cards", async () => {
     await act(async () => {
       root.render(
-        <FlashcardsRefineResults
-          groups={{ mastered: [], struggling: [] }}
-          onRefineApplied={vi.fn()}
-        />,
+        <FlashcardsRefineResults cards={[]} onRefineApplied={vi.fn()} />,
       );
     });
 
     expect(container.textContent).toContain(
-      "No mastered or struggling cards yet. Keep reviewing!",
+      "No struggling cards. Cards you keep forgetting show up here.",
     );
-  });
-
-  it("opens the merge preview dialog after a successful proposal", async () => {
-    proposeFlashcardMergeMock.mockResolvedValue({
-      success: true,
-      proposal: {
-        action: "relate",
-        front: "New front",
-        back: "New back",
-        sourceFlashcardIds: ["other-1"],
-        rationale: "Related concepts.",
-      },
-      sources: [buildRefineCard({ id: "other-1" })],
-    });
-
-    await act(async () => {
-      root.render(
-        <FlashcardsRefineResults groups={groups} onRefineApplied={vi.fn()} />,
-      );
-    });
-
-    await act(async () => {
-      findButtonByText(container, "Level up")?.dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
-    });
-
-    expect(proposeFlashcardMergeMock).toHaveBeenCalledWith({
-      flashcardId: "mastered-1",
-    });
-    expect(
-      container.querySelector('[data-testid="merge-preview-dialog"]'),
-    ).toBeTruthy();
-  });
-
-  it("shows an info toast when the AI declines a merge", async () => {
-    proposeFlashcardMergeMock.mockResolvedValue({
-      success: false,
-      errorCode: "flashcards.merge.declined",
-    });
-
-    await act(async () => {
-      root.render(
-        <FlashcardsRefineResults groups={groups} onRefineApplied={vi.fn()} />,
-      );
-    });
-
-    await act(async () => {
-      findButtonByText(container, "Level up")?.dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
-    });
-
-    expect(toastMock.info).toHaveBeenCalledOnce();
-    expect(toastMock.error).not.toHaveBeenCalled();
-    expect(
-      container.querySelector('[data-testid="merge-preview-dialog"]'),
-    ).toBeNull();
   });
 
   it("opens the improve dialog after generating a new back", async () => {
@@ -198,7 +112,7 @@ describe("FlashcardsRefineResults", () => {
 
     await act(async () => {
       root.render(
-        <FlashcardsRefineResults groups={groups} onRefineApplied={vi.fn()} />,
+        <FlashcardsRefineResults cards={cards} onRefineApplied={vi.fn()} />,
       );
     });
 

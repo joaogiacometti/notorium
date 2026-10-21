@@ -40,7 +40,7 @@ export type FlashcardManageItem = Pick<
   subjectName: string;
   subjectPath: string;
 };
-/** A card's full content plus its subject, as AI validation and copy read it. */
+/** A card's full content plus its subject, as copy reads it. */
 export type FlashcardContentItem = Pick<
   FlashcardEntity,
   "id" | "front" | "back" | "subjectId"
@@ -261,18 +261,3 @@ export type CheckFlashcardDuplicateResult =
       duplicate: boolean;
     }
   | ActionErrorResult;
-
-export interface FlashcardValidationIssue {
-  id: string;
-  issueType: "incorrect" | "confusing" | "duplicate";
-  explanation: string;
-  relatedFlashcardId?: string;
-}
-
-export interface FlashcardValidationItem {
-  id: string;
-  front: string;
-  subjectName: string;
-  subjectPath?: string;
-  subjectId: string | null;
-}

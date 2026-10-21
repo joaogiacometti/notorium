@@ -10,14 +10,11 @@ import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flas
 import { FlashcardsManagerTable } from "@/components/flashcards/manage/flashcards-manager-table";
 import { FlashcardsManagerToolbar } from "@/components/flashcards/manage/flashcards-manager-toolbar";
 import { FlashcardsRefineResults } from "@/components/flashcards/manage/flashcards-refine-results";
-import { FlashcardsValidationResults } from "@/components/flashcards/manage/flashcards-validation-results";
 import { LazyBulkDeleteFlashcardsDialog as BulkDeleteFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-delete-flashcards-dialog";
 import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-move-flashcards-dialog";
 import { LazyBulkResetFlashcardsDialog as BulkResetFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-reset-flashcards-dialog";
 import { useFlashcardCopy } from "@/components/flashcards/manage/use-flashcard-copy";
 import { useFlashcardsManagerController } from "@/components/flashcards/manage/use-flashcards-manager-controller";
-import { ValidateAgainDialog } from "@/components/flashcards/manage/validate-again-dialog";
-import { ValidateFlashcardsDialog } from "@/components/flashcards/manage/validate-flashcards-dialog";
 import { Card } from "@/components/ui/card";
 import { LIMITS } from "@/lib/config/limits";
 import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
@@ -77,25 +74,11 @@ export function FlashcardsManager({
     setSelectedFlashcardIds,
     total,
     pageSize,
-    validationMode,
-    validationIssues,
-    validationFlashcards,
-    validateDialogOpen,
-    setValidateDialogOpen,
-    handleValidationStarted,
-    validateAgainDialogOpen,
-    setValidateAgainDialogOpen,
-    handleConfirmValidateAgain,
-    isValidatingAgain,
-    exitValidation,
-    removeValidationFlashcard,
-    refreshValidationFlashcard,
-    checkValidationEmpty,
     refineMode,
-    refineGroups,
-    isLoadingRefineGroups,
+    strugglingCards,
+    isLoadingStrugglingCards,
     startRefineMode,
-    refreshRefineGroups,
+    refreshStrugglingCards,
     exitRefine,
   } = useFlashcardsManagerController({
     initialPageData,
@@ -111,24 +94,12 @@ export function FlashcardsManager({
   );
 
   const renderMainContent = () => {
-    if (validationMode) {
-      return (
-        <FlashcardsValidationResults
-          issues={validationIssues}
-          flashcards={validationFlashcards}
-          onEdit={setEditingFlashcardId}
-          onCopy={(flashcardId) => void copyFlashcardsById([flashcardId])}
-          onDelete={setDeleteTarget}
-        />
-      );
-    }
-
     if (refineMode) {
       return (
         <FlashcardsRefineResults
-          groups={refineGroups}
+          cards={strugglingCards}
           onRefineApplied={() => {
-            void refreshRefineGroups();
+            void refreshStrugglingCards();
             refreshManagePage();
           }}
         />
@@ -175,27 +146,20 @@ export function FlashcardsManager({
       <FlashcardsManagerToolbar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
-        validationMode={validationMode}
         isManageScopeLoading={isManageScopeLoading}
         selectedFlashcardIds={selectedFlashcardIds}
         total={total}
-        validationIssuesCount={validationIssues.length}
-        isValidatingAgain={isValidatingAgain}
         refineMode={refineMode}
-        refineMasteredCount={refineGroups.mastered.length}
-        refineStrugglingCount={refineGroups.struggling.length}
-        isLoadingRefineGroups={isLoadingRefineGroups}
+        strugglingCount={strugglingCards.length}
+        isLoadingStrugglingCards={isLoadingStrugglingCards}
         aiEnabled={aiEnabled}
         isCopyingSelection={isCopying}
         onCopySelection={() =>
           void copySelectedFlashcards(flashcards, selectedFlashcardIds)
         }
-        onOpenValidateDialog={() => setValidateDialogOpen(true)}
         onOpenCreateDialog={() => setCreateOpen(true)}
-        onOpenValidateAgainDialog={() => setValidateAgainDialogOpen(true)}
-        onExitValidation={exitValidation}
         onStartRefine={() => void startRefineMode()}
-        onRefreshRefine={() => void refreshRefineGroups()}
+        onRefreshRefine={() => void refreshStrugglingCards()}
         onExitRefine={exitRefine}
         onOpenBulkMoveDialog={() => setBulkMoveOpen(true)}
         onOpenBulkDeleteDialog={() => setBulkDeleteOpen(true)}
@@ -230,12 +194,9 @@ export function FlashcardsManager({
               setEditingFlashcardId(null);
             }
           }}
-          onUpdated={async (updatedFlashcard) => {
+          onUpdated={(updatedFlashcard) => {
             cacheUpdatedFlashcard(updatedFlashcard);
             refreshManagePage();
-            if (validationMode && editingFlashcardId) {
-              await refreshValidationFlashcard(editingFlashcardId);
-            }
           }}
         />
       )}
@@ -294,10 +255,6 @@ export function FlashcardsManager({
           onDeleted={() => {
             setDeleteTarget(null);
             refreshManagePage();
-            if (validationMode) {
-              removeValidationFlashcard(deleteTarget.id);
-              checkValidationEmpty();
-            }
           }}
         />
       )}
@@ -315,21 +272,6 @@ export function FlashcardsManager({
           }}
         />
       )}
-      {aiEnabled ? (
-        <ValidateFlashcardsDialog
-          open={validateDialogOpen}
-          onOpenChange={setValidateDialogOpen}
-          onValidationStarted={handleValidationStarted}
-          currentSubjectId={selectedSubjectId}
-        />
-      ) : null}
-      <ValidateAgainDialog
-        open={validateAgainDialogOpen}
-        onOpenChange={setValidateAgainDialogOpen}
-        onConfirm={handleConfirmValidateAgain}
-        isValidating={isValidatingAgain}
-        count={validationIssues.length}
-      />
     </div>
   );
 }

@@ -308,39 +308,3 @@ export async function getFlashcardContentsForUser(
     subjectPath: subjectPathMap.get(result.subjectId) ?? result.subjectName,
   }));
 }
-
-export async function getAllFlashcardIdsForUser(
-  userId: string,
-): Promise<string[]> {
-  const results = await getDb()
-    .select({ id: flashcard.id })
-    .from(flashcard)
-    .where(eq(flashcard.userId, userId))
-    .orderBy(desc(flashcard.updatedAt));
-
-  return results.map((row) => row.id);
-}
-
-export async function getAllFlashcardIdsForSubject(
-  userId: string,
-  subjectId: string,
-): Promise<string[]> {
-  const scopedSubjectIds = await resolveScopedSubjectIds(userId, subjectId);
-
-  if (!scopedSubjectIds || scopedSubjectIds.length === 0) {
-    return [];
-  }
-
-  const results = await getDb()
-    .select({ id: flashcard.id })
-    .from(flashcard)
-    .where(
-      and(
-        eq(flashcard.userId, userId),
-        inArray(flashcard.subjectId, scopedSubjectIds),
-      ),
-    )
-    .orderBy(desc(flashcard.updatedAt));
-
-  return results.map((row) => row.id);
-}

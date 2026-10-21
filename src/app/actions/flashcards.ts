@@ -1,6 +1,5 @@
 "use server";
 
-import { validateFlashcardsForUser } from "@/features/flashcards/ai-service";
 import {
   bulkDeleteFlashcardsForUser,
   bulkMoveFlashcardsForUser,
@@ -11,10 +10,7 @@ import {
   improveFlashcardBackForUserInput,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
-import {
-  getFlashcardContentsForUser,
-  hasDuplicateFlashcardFrontForUser,
-} from "@/features/flashcards/queries";
+import { hasDuplicateFlashcardFrontForUser } from "@/features/flashcards/queries";
 import {
   type BulkDeleteFlashcardsForm,
   type BulkMoveFlashcardsForm,
@@ -34,13 +30,8 @@ import {
   improveFlashcardBackSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
-  type ValidateFlashcardsForm,
-  validateFlashcardsSchema,
 } from "@/features/flashcards/validation";
-import {
-  normalizeRichTextForUniqueness,
-  richTextToPlainText,
-} from "@/lib/editor/rich-text";
+import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkDeleteFlashcardsResult,
@@ -54,10 +45,6 @@ import type {
   ResetFlashcardResult,
 } from "@/lib/server/api-contracts";
 import { revalidateAppShell } from "@/lib/server/revalidate-views";
-import {
-  type ActionErrorResult,
-  actionError,
-} from "@/lib/server/server-action-errors";
 
 export async function createFlashcard(
   data: CreateFlashcardInput,
@@ -230,83 +217,4 @@ export async function resetFlashcard(
   }
 
   return result;
-}
-
-export async function validateFlashcards(data: ValidateFlashcardsForm): Promise<
-  | {
-      success: true;
-      issues: Array<{
-        id: string;
-        issueType: "incorrect" | "confusing" | "duplicate";
-        explanation: string;
-        relatedFlashcardId?: string;
-      }>;
-      flashcards: Array<{
-        id: string;
-        front: string;
-        subjectName: string;
-        subjectPath?: string;
-        subjectId: string | null;
-      }>;
-    }
-  | ActionErrorResult
-> {
-  return runValidatedUserAction(
-    "flashcards.validateFlashcards",
-    validateFlashcardsSchema,
-    data,
-    "ServerErrors.common.invalidRequest",
-    async (userId, parsedData) => {
-      const flashcards = await getFlashcardContentsForUser(
-        userId,
-        parsedData.flashcardIds,
-      );
-      const result = await validateFlashcardsForUser({ userId, flashcards });
-
-      if (!result.success) {
-        return actionError(result.errorCode);
-      }
-
-      const frontsById = new Map(
-        flashcards.map((card) => [card.id, card.front]),
-      );
-
-      return {
-        success: true,
-        issues: result.validation.issues.map((issue) => ({
-          id: issue.flashcardId,
-          issueType: issue.issueType,
-          explanation: withRelatedCardPreview(
-            issue.explanation,
-            issue.relatedFlashcardId &&
-              frontsById.get(issue.relatedFlashcardId),
-          ),
-          relatedFlashcardId: issue.relatedFlashcardId,
-        })),
-        flashcards: flashcards.map((card) => ({
-          id: card.id,
-          front: card.front,
-          subjectName: card.subjectName,
-          subjectId: card.subjectId,
-        })),
-      };
-    },
-  );
-}
-
-const RELATED_FRONT_PREVIEW_CHARS = 50;
-
-// Duplicate explanations name the other card so the user can find it.
-function withRelatedCardPreview(
-  explanation: string,
-  relatedFront: string | undefined,
-): string {
-  if (!relatedFront) {
-    return explanation;
-  }
-
-  const frontText = richTextToPlainText(relatedFront);
-  const preview = frontText.slice(0, RELATED_FRONT_PREVIEW_CHARS);
-  const ellipsis = frontText.length > RELATED_FRONT_PREVIEW_CHARS ? "..." : "";
-  return `${explanation} Similar to: "${preview}${ellipsis}"`;
 }

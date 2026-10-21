@@ -1,53 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { REFINE_GROUP_LIMIT } from "@/features/flashcards/refine/constants";
+import { REFINE_CARD_LIMIT } from "@/features/flashcards/refine/constants";
 import {
-  classifyRefineStreak,
-  groupRefineRows,
+  hasRecovered,
   parseRecentRatings,
+  selectStrugglingRows,
 } from "@/features/flashcards/refine/queries";
 
-function buildStreakRow(id: string, recentRatings: string[]) {
+function buildLeechRow(id: string, recentRatings: string[] | string) {
   return {
     id,
     front: `front-${id}`,
     back: `back-${id}`,
-    subjectId: "deck-1",
+    subjectId: "subject-1",
     subjectName: "Subject",
-    reviewCount: recentRatings.length,
-    lapseCount: 0,
+    reviewCount: 12,
+    lapseCount: 5,
     recentRatings,
   };
 }
 
-describe("classifyRefineStreak", () => {
-  it("classifies three consecutive good/easy ratings as mastered", () => {
-    expect(classifyRefineStreak(["good", "easy", "good"])).toBe("mastered");
+describe("hasRecovered", () => {
+  it("is true after three consecutive good/easy ratings", () => {
+    expect(hasRecovered(["good", "easy", "good"])).toBe(true);
   });
 
-  it("classifies three consecutive again ratings as struggling", () => {
-    expect(classifyRefineStreak(["again", "again", "again"])).toBe(
-      "struggling",
-    );
+  it("is false when a recent again or hard breaks the streak", () => {
+    expect(hasRecovered(["good", "again", "good"])).toBe(false);
+    expect(hasRecovered(["hard", "good", "good"])).toBe(false);
   });
 
-  it("treats hard as neutral and breaks both streaks", () => {
-    expect(classifyRefineStreak(["hard", "good", "good"])).toBeNull();
-    expect(classifyRefineStreak(["hard", "again", "again"])).toBeNull();
-  });
-
-  it("returns null when a recent miss breaks a mastered streak", () => {
-    expect(classifyRefineStreak(["again", "good", "good"])).toBeNull();
-  });
-
-  it("returns null for cards with fewer than three reviews", () => {
-    expect(classifyRefineStreak(["good", "good"])).toBeNull();
-    expect(classifyRefineStreak([])).toBeNull();
+  it("is false with fewer than three ratings", () => {
+    expect(hasRecovered(["good", "good"])).toBe(false);
+    expect(hasRecovered([])).toBe(false);
   });
 
   it("only inspects the most recent ratings", () => {
-    expect(classifyRefineStreak(["good", "good", "good", "again"])).toBe(
-      "mastered",
-    );
+    expect(hasRecovered(["good", "good", "good", "again"])).toBe(true);
   });
 });
 
@@ -69,39 +57,28 @@ describe("parseRecentRatings", () => {
   });
 });
 
-describe("groupRefineRows", () => {
-  it("classifies rows whose ratings arrive as Postgres array literals", () => {
-    const groups = groupRefineRows([
-      { ...buildStreakRow("a", []), recentRatings: "{good,good,easy}" },
+describe("selectStrugglingRows", () => {
+  it("keeps leeches that have not recovered, in input order", () => {
+    const cards = selectStrugglingRows([
+      buildLeechRow("a", ["again", "good", "good"]),
+      buildLeechRow("b", "{good,good,easy}"),
+      buildLeechRow("c", []),
     ]);
 
-    expect(groups.mastered.map((card) => card.id)).toEqual(["a"]);
+    expect(cards.map((card) => card.id)).toEqual(["a", "c"]);
   });
 
-  it("splits rows into mastered and struggling groups", () => {
-    const groups = groupRefineRows([
-      buildStreakRow("a", ["good", "good", "easy"]),
-      buildStreakRow("b", ["again", "again", "again"]),
-      buildStreakRow("c", ["good", "again", "good"]),
-    ]);
-
-    expect(groups.mastered.map((card) => card.id)).toEqual(["a"]);
-    expect(groups.struggling.map((card) => card.id)).toEqual(["b"]);
-  });
-
-  it("caps each group at the configured limit", () => {
-    const rows = Array.from({ length: REFINE_GROUP_LIMIT + 5 }, (_, index) =>
-      buildStreakRow(`card-${index}`, ["good", "good", "good"]),
+  it("caps the list at the configured limit", () => {
+    const rows = Array.from({ length: REFINE_CARD_LIMIT + 5 }, (_, index) =>
+      buildLeechRow(`card-${index}`, ["again"]),
     );
 
-    expect(groupRefineRows(rows).mastered).toHaveLength(REFINE_GROUP_LIMIT);
+    expect(selectStrugglingRows(rows)).toHaveLength(REFINE_CARD_LIMIT);
   });
 
-  it("strips recentRatings from the returned summaries", () => {
-    const groups = groupRefineRows([
-      buildStreakRow("a", ["good", "good", "good"]),
-    ]);
+  it("strips recentRatings from the returned cards", () => {
+    const [card] = selectStrugglingRows([buildLeechRow("a", ["again"])]);
 
-    expect(groups.mastered[0]).not.toHaveProperty("recentRatings");
+    expect(card).not.toHaveProperty("recentRatings");
   });
 });

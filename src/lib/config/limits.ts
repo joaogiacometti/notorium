@@ -30,7 +30,6 @@ export const LIMITS = {
   flashcardBackMax: 4000,
   flashcardAiMaxInput: 10000,
   flashcardAiMaxOutput: 50,
-  flashcardBatchSize: 500,
   // Ids per GET /api/flashcards/contents request. 100 UUIDs keep the query
   // string near 4 KB, well under proxy URL limits; the client splits larger
   // copy selections into several requests.
@@ -67,12 +66,8 @@ export const LIMITS = {
   passwordResetRateLimitPerDay: 3,
   aiBackGenerationRateLimitPrefix: "ratelimit:ai:back",
   aiFlashcardGenerationRateLimitPrefix: "ratelimit:ai:generation",
-  aiValidationRateLimitPrefix: "ratelimit:ai:validation",
-  aiMergeSynthesisRateLimitPrefix: "ratelimit:ai:merge",
   aiBackGenerationRateLimitPerDay: 500,
   aiFlashcardGenerationRateLimitPerDay: 250,
-  aiValidationRateLimitPerDay: 200,
-  aiMergeSynthesisRateLimitPerDay: 100,
   aiAssistantRateLimitPrefix: "ratelimit:ai:assistant",
   aiAssistantRateLimitPerDay: 300,
   // The whole chat is resent each turn (it is not persisted), so these caps
@@ -93,9 +88,5 @@ export const SUBJECT_PATH_MAX_CHARS =
 export const AI_LIMITS = {
   improveMaxTokens: 300,
   maxGenerationTokens: 4000,
-  maxValidationTokens: 500,
-  maxValidationExplanationLength: 300,
-  maxMergeSynthesisTokens: 800,
-  maxMergeRationaleLength: 300,
   assistantMaxOutputTokens: 1200,
 } as const;

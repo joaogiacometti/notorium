@@ -2,7 +2,7 @@ import type {
   FlashcardExamScopeInput,
   FlashcardReviewStateQueryInput,
 } from "@/features/flashcard-review/validation";
-import type { RefineGroups } from "@/features/flashcards/refine/types";
+import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
 import {
@@ -18,12 +18,8 @@ import type {
 } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
-type FlashcardIdsResult =
-  | { success: true; flashcardIds: string[] }
-  | ActionErrorResult;
-
-type RefineFlashcardGroupsResult =
-  | { success: true; groups: RefineGroups }
+type StrugglingFlashcardsResult =
+  | { success: true; cards: StrugglingFlashcard[] }
   | ActionErrorResult;
 
 /**
@@ -58,23 +54,6 @@ export async function fetchFlashcardForManage(
 }
 
 /**
- * Load every flashcard id, or one subject's when `subjectId` is given.
- *
- * @example
- * const result = await fetchFlashcardIds(subjectId);
- */
-export async function fetchFlashcardIds(
-  subjectId?: string,
-): Promise<FlashcardIdsResult> {
-  const result = await fetchReadApiResult<string[]>("/api/flashcards/ids", {
-    subjectId,
-  });
-  return Array.isArray(result)
-    ? { success: true, flashcardIds: result }
-    : result;
-}
-
-/**
  * Load the full content of the given flashcards for copying, in the order of
  * `flashcardIds`. Ids go out in chunks so a 500-card selection stays within URL
  * length limits; cards deleted in the meantime are skipped. Any failed chunk
@@ -99,16 +78,16 @@ export async function fetchFlashcardContents(
 }
 
 /**
- * Load the mastered and struggling groups for the manage refine mode.
+ * Load the struggling cards for the manage refine mode.
  *
  * @example
- * const result = await fetchRefineFlashcardGroups();
+ * const result = await fetchStrugglingFlashcards();
  */
-export async function fetchRefineFlashcardGroups(): Promise<RefineFlashcardGroupsResult> {
-  const result = await fetchReadApiResult<RefineGroups>(
-    "/api/flashcards/refine-groups",
+export async function fetchStrugglingFlashcards(): Promise<StrugglingFlashcardsResult> {
+  const result = await fetchReadApiResult<StrugglingFlashcard[]>(
+    "/api/flashcards/struggling",
   );
-  return "errorCode" in result ? result : { success: true, groups: result };
+  return "errorCode" in result ? result : { success: true, cards: result };
 }
 
 /**

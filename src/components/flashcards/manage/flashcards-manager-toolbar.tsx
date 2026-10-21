@@ -1,10 +1,8 @@
 "use client";
 
-import { CopyPlus, Search, Sparkles } from "lucide-react";
+import { CopyPlus, Loader2, Search, Sparkles, Wand2 } from "lucide-react";
 import type { JSX } from "react";
-import { FlashcardsAiToolsMenu } from "@/components/flashcards/manage/flashcards-ai-tools-menu";
 import { ToolbarActionBar } from "@/components/flashcards/manage/flashcards-manager-toolbar-actions";
-import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,23 +14,16 @@ import { cn } from "@/lib/utils";
 interface FlashcardsManagerToolbarProps {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
-  validationMode: boolean;
   isManageScopeLoading: boolean;
   selectedFlashcardIds: string[];
   total: number;
-  validationIssuesCount: number;
-  isValidatingAgain: boolean;
   refineMode: boolean;
-  refineMasteredCount: number;
-  refineStrugglingCount: number;
-  isLoadingRefineGroups: boolean;
+  strugglingCount: number;
+  isLoadingStrugglingCards: boolean;
   aiEnabled: boolean;
   isCopyingSelection: boolean;
   onCopySelection: () => void;
-  onOpenValidateDialog: () => void;
   onOpenCreateDialog: () => void;
-  onOpenValidateAgainDialog: () => void;
-  onExitValidation: () => void;
   onStartRefine: () => void;
   onRefreshRefine: () => void;
   onExitRefine: () => void;
@@ -45,39 +36,36 @@ interface FlashcardsManagerToolbarProps {
 interface ToolbarViewModel {
   selectedCountText: string;
   resultsCountText: string;
-  validationIssuesCountText: string;
   refineCountText: string;
   actionBarVisibilityClasses: string;
   hasSelection: boolean;
 }
 
 interface ToolbarStatusBadgesProps {
-  validationMode: boolean;
   refineMode: boolean;
   isManageScopeLoading: boolean;
   hasSelection: boolean;
   selectedCountText: string;
   resultsCountText: string;
-  validationIssuesCountText: string;
   refineCountText: string;
 }
 
+interface RefineCardsButtonProps {
+  refineMode: boolean;
+  isLoadingStrugglingCards: boolean;
+  onStartRefine: () => void;
+}
+
 function getToolbarViewModel({
-  validationMode,
   refineMode,
   selectedFlashcardIds,
   total,
-  validationIssuesCount,
-  refineMasteredCount,
-  refineStrugglingCount,
+  strugglingCount,
 }: {
-  validationMode: boolean;
   refineMode: boolean;
   selectedFlashcardIds: string[];
   total: number;
-  validationIssuesCount: number;
-  refineMasteredCount: number;
-  refineStrugglingCount: number;
+  strugglingCount: number;
 }): ToolbarViewModel {
   const selectedCount = selectedFlashcardIds.length;
   const hasSelection = selectedCount > 0;
@@ -86,13 +74,9 @@ function getToolbarViewModel({
     selectedCountText:
       selectedCount === 1 ? "1 selected" : `${selectedCount} selected`,
     resultsCountText: `${total} of ${total} flashcards`,
-    validationIssuesCountText:
-      validationIssuesCount === 1
-        ? "1 card with issues"
-        : `${validationIssuesCount} cards with issues`,
-    refineCountText: `${refineMasteredCount} mastered · ${refineStrugglingCount} struggling`,
+    refineCountText: `${strugglingCount} struggling`,
     actionBarVisibilityClasses:
-      validationMode || refineMode || hasSelection
+      refineMode || hasSelection
         ? "visible opacity-100"
         : "pointer-events-none invisible opacity-0",
     hasSelection,
@@ -100,23 +84,13 @@ function getToolbarViewModel({
 }
 
 function ToolbarStatusBadges({
-  validationMode,
   refineMode,
   isManageScopeLoading,
   hasSelection,
   selectedCountText,
   resultsCountText,
-  validationIssuesCountText,
   refineCountText,
 }: Readonly<ToolbarStatusBadgesProps>): JSX.Element {
-  if (validationMode) {
-    return (
-      <StatusToneBadge tone="danger" className="px-2.5 py-0.5 text-[11px]">
-        {validationIssuesCountText}
-      </StatusToneBadge>
-    );
-  }
-
   if (refineMode) {
     return (
       <Badge
@@ -152,26 +126,44 @@ function ToolbarStatusBadges({
   );
 }
 
+// Opens the refine mode that lists struggling cards for AI improvement.
+function RefineCardsButton({
+  refineMode,
+  isLoadingStrugglingCards,
+  onStartRefine,
+}: Readonly<RefineCardsButtonProps>): JSX.Element {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      onClick={onStartRefine}
+      disabled={refineMode || isLoadingStrugglingCards}
+      aria-label="Refine cards"
+      className="h-10 shrink-0 gap-2 rounded-lg border-primary/30 bg-primary/5 px-3 text-primary shadow-sm hover:bg-primary/10 hover:text-primary sm:px-4"
+    >
+      {isLoadingStrugglingCards && !refineMode ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <Wand2 className="size-4" />
+      )}
+      <span className="hidden sm:inline">Refine cards</span>
+    </Button>
+  );
+}
+
 export function FlashcardsManagerToolbar({
   searchQuery,
   onSearchQueryChange,
-  validationMode,
   isManageScopeLoading,
   selectedFlashcardIds,
   total,
-  validationIssuesCount,
-  isValidatingAgain,
   refineMode,
-  refineMasteredCount,
-  refineStrugglingCount,
-  isLoadingRefineGroups,
+  strugglingCount,
+  isLoadingStrugglingCards,
   aiEnabled,
   isCopyingSelection,
   onCopySelection,
-  onOpenValidateDialog,
   onOpenCreateDialog,
-  onOpenValidateAgainDialog,
-  onExitValidation,
   onStartRefine,
   onRefreshRefine,
   onExitRefine,
@@ -181,13 +173,10 @@ export function FlashcardsManagerToolbar({
   onClearSelection,
 }: Readonly<FlashcardsManagerToolbarProps>): JSX.Element {
   const viewModel = getToolbarViewModel({
-    validationMode,
     refineMode,
     selectedFlashcardIds,
     total,
-    validationIssuesCount,
-    refineMasteredCount,
-    refineStrugglingCount,
+    strugglingCount,
   });
   const createButton = (
     <Button
@@ -221,10 +210,9 @@ export function FlashcardsManagerToolbar({
               </div>
               <div className="flex gap-2">
                 {aiEnabled ? (
-                  <FlashcardsAiToolsMenu
+                  <RefineCardsButton
                     refineMode={refineMode}
-                    isLoadingRefineGroups={isLoadingRefineGroups}
-                    onOpenValidateDialog={onOpenValidateDialog}
+                    isLoadingStrugglingCards={isLoadingStrugglingCards}
                     onStartRefine={onStartRefine}
                   />
                 ) : null}
@@ -234,31 +222,23 @@ export function FlashcardsManagerToolbar({
             <div className="flex flex-wrap items-center gap-2 sm:justify-between">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
                 <ToolbarStatusBadges
-                  validationMode={validationMode}
                   refineMode={refineMode}
                   isManageScopeLoading={isManageScopeLoading}
                   hasSelection={viewModel.hasSelection}
                   selectedCountText={viewModel.selectedCountText}
                   resultsCountText={viewModel.resultsCountText}
-                  validationIssuesCountText={
-                    viewModel.validationIssuesCountText
-                  }
                   refineCountText={viewModel.refineCountText}
                 />
               </div>
 
               <ToolbarActionBar
-                validationMode={validationMode}
                 refineMode={refineMode}
-                isValidatingAgain={isValidatingAgain}
-                isLoadingRefineGroups={isLoadingRefineGroups}
+                isLoadingStrugglingCards={isLoadingStrugglingCards}
                 actionBarVisibilityClasses={
                   viewModel.actionBarVisibilityClasses
                 }
                 isCopyingSelection={isCopyingSelection}
                 onCopySelection={onCopySelection}
-                onOpenValidateAgainDialog={onOpenValidateAgainDialog}
-                onExitValidation={onExitValidation}
                 onRefreshRefine={onRefreshRefine}
                 onExitRefine={onExitRefine}
                 onOpenBulkMoveDialog={onOpenBulkMoveDialog}

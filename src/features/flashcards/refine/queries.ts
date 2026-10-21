@@ -1,23 +1,15 @@
 import { sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import {
-  REFINE_BACK_SIMILARITY_THRESHOLD,
-  REFINE_FRONT_SIMILARITY_THRESHOLD,
-  REFINE_GROUP_LIMIT,
-  REFINE_MASTERED_STREAK,
-  REFINE_MERGE_CANDIDATE_LIMIT,
-  REFINE_STRUGGLING_STREAK,
+  REFINE_CARD_LIMIT,
+  REFINE_LEECH_LAPSES,
+  REFINE_RECOVERY_STREAK,
 } from "@/features/flashcards/refine/constants";
-import type {
-  RefineCardSummary,
-  RefineGroups,
-  RefineMergeCandidate,
-} from "@/features/flashcards/refine/types";
-import { richTextToPlainText } from "@/lib/editor/rich-text";
+import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 
 // The postgres driver returns array_agg as a literal like "{good,easy}", so
 // rows can arrive with either shape depending on driver array parsing.
-type RefineStreakRow = RefineCardSummary & { recentRatings: string[] | string };
+type LeechRow = StrugglingFlashcard & { recentRatings: string[] | string };
 
 /**
  * Coerce a raw recent-ratings value into a string array, parsing Postgres
@@ -35,133 +27,77 @@ export function parseRecentRatings(value: string[] | string): string[] {
 }
 
 /**
- * Classify a card's most recent ratings (newest first) into a refine group.
- * Mastered: a full streak of good/easy. Struggling: a full streak of "again".
- * "hard" is neutral and breaks both streaks.
+ * Whether a leech's most recent ratings (newest first) are a full streak of
+ * good/easy, meaning it no longer needs attention. "hard" breaks the streak.
  *
- * Example: classifyRefineStreak(["good", "easy", "good"]) === "mastered"
+ * Example: hasRecovered(["good", "easy", "good"]) === true
  */
-export function classifyRefineStreak(
-  recentRatings: string[],
-): "mastered" | "struggling" | null {
-  const masteredWindow = recentRatings.slice(0, REFINE_MASTERED_STREAK);
-  if (
-    masteredWindow.length >= REFINE_MASTERED_STREAK &&
-    masteredWindow.every((rating) => rating === "good" || rating === "easy")
-  ) {
-    return "mastered";
-  }
-
-  const strugglingWindow = recentRatings.slice(0, REFINE_STRUGGLING_STREAK);
-  if (
-    strugglingWindow.length >= REFINE_STRUGGLING_STREAK &&
-    strugglingWindow.every((rating) => rating === "again")
-  ) {
-    return "struggling";
-  }
-
-  return null;
+export function hasRecovered(recentRatings: string[]): boolean {
+  const window = recentRatings.slice(0, REFINE_RECOVERY_STREAK);
+  return (
+    window.length >= REFINE_RECOVERY_STREAK &&
+    window.every((rating) => rating === "good" || rating === "easy")
+  );
 }
 
 /**
- * Split classified streak rows into capped mastered/struggling groups.
+ * Keep the leeches that have not recovered, capped at the list limit.
  *
- * Example: groupRefineRows([{ ...card, recentRatings: ["again", "again", "again"] }])
+ * Example: selectStrugglingRows([{ ...card, recentRatings: ["again"] }])
  */
-export function groupRefineRows(rows: RefineStreakRow[]): RefineGroups {
-  const mastered: RefineCardSummary[] = [];
-  const struggling: RefineCardSummary[] = [];
-
-  for (const { recentRatings, ...card } of rows) {
-    const group = classifyRefineStreak(parseRecentRatings(recentRatings));
-    if (group === "mastered" && mastered.length < REFINE_GROUP_LIMIT) {
-      mastered.push(card);
-    }
-    if (group === "struggling" && struggling.length < REFINE_GROUP_LIMIT) {
-      struggling.push(card);
-    }
-  }
-
-  return { mastered, struggling };
+export function selectStrugglingRows(rows: LeechRow[]): StrugglingFlashcard[] {
+  return rows
+    .filter((row) => !hasRecovered(parseRecentRatings(row.recentRatings)))
+    .slice(0, REFINE_CARD_LIMIT)
+    .map(({ recentRatings: _recentRatings, ...card }) => card);
 }
 
 /**
- * Fetch the user's refine groups by inspecting each card's most recent reviews.
+ * Fetch the user's struggling cards: leeches (repeated lapses) that have not
+ * recovered, most-lapsed first.
  *
- * Example: const groups = await getRefineGroupsForUser(session.user.id);
+ * Example: const cards = await getStrugglingFlashcardsForUser(session.user.id);
  */
-export async function getRefineGroupsForUser(
+export async function getStrugglingFlashcardsForUser(
   userId: string,
-): Promise<RefineGroups> {
-  const windowSize = Math.max(REFINE_MASTERED_STREAK, REFINE_STRUGGLING_STREAK);
+): Promise<StrugglingFlashcard[]> {
   const result = await getDb().execute(
     sql`
-      WITH ranked AS (
-        SELECT flashcard_id, rating,
-               row_number() OVER (
-                 PARTITION BY flashcard_id
-                 ORDER BY reviewed_at DESC, id DESC
-               ) AS rn
-        FROM flashcard_review_log
-        WHERE user_id = ${userId}
+      WITH leech AS (
+        SELECT f.id, f.front, f.back, f.subject_id, f.review_count,
+               f.lapse_count, f.last_reviewed_at
+        FROM flashcard f
+        WHERE f.user_id = ${userId}
+          AND f.lapse_count >= ${REFINE_LEECH_LAPSES}
       ),
-      recent AS (
-        SELECT flashcard_id,
-               array_agg(rating ORDER BY rn) AS recent_ratings
-        FROM ranked
-        WHERE rn <= ${windowSize}
-        GROUP BY flashcard_id
-        HAVING count(*) >= ${windowSize}
+      ranked AS (
+        SELECT l.flashcard_id, l.rating,
+               row_number() OVER (
+                 PARTITION BY l.flashcard_id
+                 ORDER BY l.reviewed_at DESC, l.id DESC
+               ) AS rn
+        FROM flashcard_review_log l
+        INNER JOIN leech ON leech.id = l.flashcard_id
+        WHERE l.user_id = ${userId}
       )
-      SELECT f.id, f.front, f.back, f.subject_id AS "subjectId",
-             d.name AS "subjectName", f.review_count AS "reviewCount",
-             f.lapse_count AS "lapseCount", r.recent_ratings AS "recentRatings"
-      FROM recent r
-      INNER JOIN flashcard f ON f.id = r.flashcard_id
-        AND f.user_id = ${userId}
-        AND f.type = 'basic'
-      INNER JOIN subject d ON d.id = f.subject_id
-      ORDER BY f.last_reviewed_at DESC NULLS LAST
+      SELECT leech.id, leech.front, leech.back,
+             leech.subject_id AS "subjectId", d.name AS "subjectName",
+             leech.review_count AS "reviewCount",
+             leech.lapse_count AS "lapseCount",
+             coalesce(
+               array_agg(r.rating ORDER BY r.rn)
+                 FILTER (WHERE r.rn <= ${REFINE_RECOVERY_STREAK}),
+               '{}'
+             ) AS "recentRatings"
+      FROM leech
+      INNER JOIN subject d ON d.id = leech.subject_id
+      LEFT JOIN ranked r ON r.flashcard_id = leech.id
+      GROUP BY leech.id, leech.front, leech.back, leech.subject_id, d.name,
+               leech.review_count, leech.lapse_count, leech.last_reviewed_at
+      ORDER BY leech.lapse_count DESC, leech.last_reviewed_at DESC NULLS LAST
     `,
   );
 
-  const rows = (result as unknown as { rows: RefineStreakRow[] }).rows;
-  return groupRefineRows(rows);
-}
-
-/**
- * Find merge candidates similar to the given card via trigram similarity
- * across all the user's cards, ranking same-subject matches first.
- *
- * Example: const candidates = await findSimilarFlashcardsForUser(userId, card);
- */
-export async function findSimilarFlashcardsForUser(
-  userId: string,
-  source: { id: string; subjectId: string | null; front: string; back: string },
-): Promise<RefineMergeCandidate[]> {
-  const frontText = richTextToPlainText(source.front);
-  const backText = richTextToPlainText(source.back);
-  const result = await getDb().execute(
-    sql`
-      SELECT f.id, f.front, f.back, f.subject_id AS "subjectId",
-             d.name AS "subjectName"
-      FROM flashcard f
-      INNER JOIN subject d ON d.id = f.subject_id
-      WHERE f.user_id = ${userId}
-        AND f.type = 'basic'
-        AND f.id != ${source.id}
-        AND (
-          similarity(f.front, ${frontText}) > ${REFINE_FRONT_SIMILARITY_THRESHOLD}
-          OR similarity(f.back, ${backText}) > ${REFINE_BACK_SIMILARITY_THRESHOLD}
-        )
-      ORDER BY (f.subject_id = ${source.subjectId}) DESC,
-               greatest(
-                 similarity(f.front, ${frontText}),
-                 similarity(f.back, ${backText})
-               ) DESC
-      LIMIT ${REFINE_MERGE_CANDIDATE_LIMIT}
-    `,
-  );
-
-  return (result as unknown as { rows: RefineMergeCandidate[] }).rows;
+  const rows = (result as unknown as { rows: LeechRow[] }).rows;
+  return selectStrugglingRows(rows);
 }

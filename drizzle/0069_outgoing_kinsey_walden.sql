@@ -1,0 +1,1 @@
+DROP TABLE "flashcard_merge_log" CASCADE;

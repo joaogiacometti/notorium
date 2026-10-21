@@ -120,52 +120,6 @@ test("can create and open a flashcard", async ({ page, e2eUser }) => {
   }
 });
 
-test("can validate flashcards with AI", async ({ page, e2eUser }) => {
-  const subjectName = getUniqueSubjectName("ai-validation");
-  const issueFront = getUniqueFlashcardFront("ai-validation-fixture issue");
-  const cleanFront = getUniqueFlashcardFront("ai-validation-clean");
-
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
-
-  try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    await createFlashcardForSubject(
-      e2eUser.userId,
-      subject.id,
-      issueFront,
-      "Too vague.",
-    );
-    await createFlashcardForSubject(
-      e2eUser.userId,
-      subject.id,
-      cleanFront,
-      "Specific enough for validation.",
-    );
-
-    await openFlashcardsManagePage(page, subject.id);
-    await page.getByRole("button", { name: "AI tools" }).click();
-    await page.getByRole("menuitem", { name: "Validate cards" }).click();
-
-    const validateDialog = page.getByRole("dialog", {
-      name: "Validate Flashcards",
-    });
-    await expect(
-      validateDialog.getByText("the selected subject"),
-    ).toBeVisible();
-    await validateDialog
-      .getByRole("button", { name: "Validate", exact: true })
-      .click();
-
-    await expect(page.getByText("Confusing", { exact: true })).toBeVisible();
-    await expect(page.getByTitle(issueFront, { exact: true })).toBeVisible();
-    await expect(
-      page.getByText(subjectName, { exact: true }).first(),
-    ).toBeVisible();
-  } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
-  }
-});
-
 test("can edit a flashcard", async ({ page, e2eUser }) => {
   const subjectName = getUniqueSubjectName("edit");
   const initialFront = getUniqueFlashcardFront("edit-initial");

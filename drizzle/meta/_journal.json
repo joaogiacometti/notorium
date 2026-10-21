@@ -484,6 +484,13 @@
       "when": 1792506521759,
       "tag": "0068_worthless_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1792616402690,
+      "tag": "0069_outgoing_kinsey_walden",
+      "breakpoints": true
     }
   ]
 }

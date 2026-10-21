@@ -19,15 +19,11 @@ import {
 import { cn } from "@/lib/utils";
 
 interface ToolbarActionBarProps {
-  validationMode: boolean;
   refineMode: boolean;
-  isValidatingAgain: boolean;
-  isLoadingRefineGroups: boolean;
+  isLoadingStrugglingCards: boolean;
   actionBarVisibilityClasses: string;
   isCopyingSelection: boolean;
   onCopySelection: () => void;
-  onOpenValidateAgainDialog: () => void;
-  onExitValidation: () => void;
   onRefreshRefine: () => void;
   onExitRefine: () => void;
   onOpenBulkMoveDialog: () => void;
@@ -36,14 +32,8 @@ interface ToolbarActionBarProps {
   onClearSelection: () => void;
 }
 
-interface ValidationActionButtonsProps {
-  isValidatingAgain: boolean;
-  onOpenValidateAgainDialog: () => void;
-  onExitValidation: () => void;
-}
-
 interface RefineActionButtonsProps {
-  isLoadingRefineGroups: boolean;
+  isLoadingStrugglingCards: boolean;
   onRefreshRefine: () => void;
   onExitRefine: () => void;
 }
@@ -92,32 +82,8 @@ function ToolbarIconActionButton({
   );
 }
 
-function ValidationActionButtons({
-  isValidatingAgain,
-  onOpenValidateAgainDialog,
-  onExitValidation,
-}: Readonly<ValidationActionButtonsProps>): JSX.Element {
-  return (
-    <>
-      <ToolbarIconActionButton
-        ariaLabel="Validate Again"
-        onClick={onOpenValidateAgainDialog}
-        disabled={isValidatingAgain}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<RotateCw className="size-4" />}
-      />
-      <ToolbarIconActionButton
-        ariaLabel="Exit Validation"
-        onClick={onExitValidation}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<X className="size-4" />}
-      />
-    </>
-  );
-}
-
 function RefineActionButtons({
-  isLoadingRefineGroups,
+  isLoadingStrugglingCards,
   onRefreshRefine,
   onExitRefine,
 }: Readonly<RefineActionButtonsProps>): JSX.Element {
@@ -126,7 +92,7 @@ function RefineActionButtons({
       <ToolbarIconActionButton
         ariaLabel="Refresh Refine"
         onClick={onRefreshRefine}
-        disabled={isLoadingRefineGroups}
+        disabled={isLoadingStrugglingCards}
         className="rounded-md text-muted-foreground hover:text-foreground"
         icon={<RotateCw className="size-4" />}
       />
@@ -193,22 +159,17 @@ function SelectionActionButtons({
 }
 
 /**
- * Mode-aware action bar for the manage toolbar: validation actions in
- * validation mode, refresh/exit in refine mode, and bulk selection
- * actions otherwise. Modes are mutually exclusive in the controller.
+ * Mode-aware action bar for the manage toolbar: refresh/exit in refine mode,
+ * and bulk selection actions otherwise.
  *
- * Example: <ToolbarActionBar validationMode refineMode={false} ... />
+ * Example: <ToolbarActionBar refineMode={false} ... />
  */
 export function ToolbarActionBar({
-  validationMode,
   refineMode,
-  isValidatingAgain,
-  isLoadingRefineGroups,
+  isLoadingStrugglingCards,
   actionBarVisibilityClasses,
   isCopyingSelection,
   onCopySelection,
-  onOpenValidateAgainDialog,
-  onExitValidation,
   onRefreshRefine,
   onExitRefine,
   onOpenBulkMoveDialog,
@@ -217,20 +178,10 @@ export function ToolbarActionBar({
   onClearSelection,
 }: Readonly<ToolbarActionBarProps>): JSX.Element {
   function renderModeActions(): JSX.Element {
-    if (validationMode) {
-      return (
-        <ValidationActionButtons
-          isValidatingAgain={isValidatingAgain}
-          onOpenValidateAgainDialog={onOpenValidateAgainDialog}
-          onExitValidation={onExitValidation}
-        />
-      );
-    }
-
     if (refineMode) {
       return (
         <RefineActionButtons
-          isLoadingRefineGroups={isLoadingRefineGroups}
+          isLoadingStrugglingCards={isLoadingStrugglingCards}
           onRefreshRefine={onRefreshRefine}
           onExitRefine={onExitRefine}
         />

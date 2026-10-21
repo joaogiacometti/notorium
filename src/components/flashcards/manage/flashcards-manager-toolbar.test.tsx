@@ -7,48 +7,19 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => children,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) =>
-    children,
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuItem: ({
-    children,
-    onClick,
-    disabled,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button type="button" onClick={onClick} disabled={disabled}>
-      {children}
-    </button>
-  ),
-}));
-
 const baseProps = {
   searchQuery: "",
   onSearchQueryChange: vi.fn(),
-  validationMode: false,
   isManageScopeLoading: false,
   selectedFlashcardIds: [],
   total: 0,
-  validationIssuesCount: 0,
-  isValidatingAgain: false,
   refineMode: false,
-  refineMasteredCount: 0,
-  refineStrugglingCount: 0,
-  isLoadingRefineGroups: false,
+  strugglingCount: 0,
+  isLoadingStrugglingCards: false,
   aiEnabled: false,
   isCopyingSelection: false,
   onCopySelection: vi.fn(),
-  onOpenValidateDialog: vi.fn(),
   onOpenCreateDialog: vi.fn(),
-  onOpenValidateAgainDialog: vi.fn(),
-  onExitValidation: vi.fn(),
   onStartRefine: vi.fn(),
   onRefreshRefine: vi.fn(),
   onExitRefine: vi.fn(),
@@ -196,80 +167,37 @@ describe("FlashcardsManagerToolbar", () => {
     expect(copyingButton?.disabled).toBe(true);
   });
 
-  it("shows hover and focus tooltips for validation toolbar actions", async () => {
-    await act(async () => {
-      root.render(
-        <FlashcardsManagerToolbar
-          {...baseProps}
-          validationMode
-          validationIssuesCount={2}
-        />,
-      );
-    });
-
-    const validateAgainButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Validate Again"]',
-    );
-    const exitValidationButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Exit Validation"]',
-    );
-
-    expect(validateAgainButton).toBeTruthy();
-    expect(exitValidationButton).toBeTruthy();
-
-    await act(async () => {
-      validateAgainButton?.focus();
-      vi.runAllTimers();
-    });
-
-    expect(document.body.textContent).toContain("Validate Again");
-
-    await act(async () => {
-      exitValidationButton?.focus();
-      vi.runAllTimers();
-    });
-
-    expect(document.body.textContent).toContain("Exit Validation");
-  });
-
-  it("hides the AI dropdown when AI is disabled", async () => {
+  it("hides the refine entry when AI is disabled", async () => {
     await act(async () => {
       root.render(
         <FlashcardsManagerToolbar {...baseProps} aiEnabled={false} />,
       );
     });
 
-    expect(findButtonByText(container, "Validate cards")).toBeUndefined();
     expect(findButtonByText(container, "Refine cards")).toBeUndefined();
   });
 
-  it("triggers validate and refine flows from the AI dropdown", async () => {
+  it("starts the refine flow from the Refine cards button", async () => {
     await act(async () => {
       root.render(<FlashcardsManagerToolbar {...baseProps} aiEnabled />);
     });
 
-    const validateItem = findButtonByText(container, "Validate cards");
-    const refineItem = findButtonByText(container, "Refine cards");
-
-    expect(validateItem).toBeTruthy();
-    expect(refineItem).toBeTruthy();
-
     await act(async () => {
-      validateItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      refineItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      findButtonByText(container, "Refine cards")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
     });
 
-    expect(baseProps.onOpenValidateDialog).toHaveBeenCalledOnce();
     expect(baseProps.onStartRefine).toHaveBeenCalledOnce();
   });
 
-  it("disables the refine entry while refine groups are loading", async () => {
+  it("disables the refine entry while struggling cards are loading", async () => {
     await act(async () => {
       root.render(
         <FlashcardsManagerToolbar
           {...baseProps}
           aiEnabled
-          isLoadingRefineGroups
+          isLoadingStrugglingCards
         />,
       );
     });
@@ -286,13 +214,12 @@ describe("FlashcardsManagerToolbar", () => {
           {...baseProps}
           aiEnabled
           refineMode
-          refineMasteredCount={2}
-          refineStrugglingCount={1}
+          strugglingCount={3}
         />,
       );
     });
 
-    expect(container.textContent).toContain("2 mastered · 1 struggling");
+    expect(container.textContent).toContain("3 struggling");
 
     const refreshButton = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Refresh Refine"]',

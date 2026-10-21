@@ -4,21 +4,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { validateFlashcards } from "@/app/actions/flashcards";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
-import type { RefineGroups } from "@/features/flashcards/refine/types";
+import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 import { LIMITS } from "@/lib/config/limits";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
 import {
   fetchFlashcardForManage,
   fetchFlashcardsManagePage,
-  fetchRefineFlashcardGroups,
+  fetchStrugglingFlashcards,
 } from "@/lib/read-api/flashcards";
 import type {
   FlashcardEntity,
   FlashcardManagePage,
-  FlashcardValidationIssue,
-  FlashcardValidationItem,
 } from "@/lib/server/api-contracts";
 import {
   actionError,
@@ -82,22 +79,12 @@ export function useFlashcardsManagerController({
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
-  const [validationMode, setValidationMode] = useState(false);
-  const [validationIssues, setValidationIssues] = useState<
-    FlashcardValidationIssue[]
-  >([]);
-  const [validationFlashcards, setValidationFlashcards] = useState<
-    FlashcardValidationItem[]
-  >([]);
   const [refineMode, setRefineMode] = useState(false);
-  const [refineGroups, setRefineGroups] = useState<RefineGroups>({
-    mastered: [],
-    struggling: [],
-  });
-  const [isLoadingRefineGroups, setIsLoadingRefineGroups] = useState(false);
-  const [validateDialogOpen, setValidateDialogOpen] = useState(false);
-  const [validateAgainDialogOpen, setValidateAgainDialogOpen] = useState(false);
-  const [isValidatingAgain, setIsValidatingAgain] = useState(false);
+  const [strugglingCards, setStrugglingCards] = useState<StrugglingFlashcard[]>(
+    [],
+  );
+  const [isLoadingStrugglingCards, setIsLoadingStrugglingCards] =
+    useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<
     string | undefined
   >(initialSubjectId);
@@ -249,129 +236,38 @@ export function useFlashcardsManagerController({
     );
   }
 
-  function handleValidationStarted(
-    issues: FlashcardValidationIssue[],
-    flashcards: FlashcardValidationItem[],
-  ) {
-    exitRefine();
-    setValidationIssues(issues);
-    setValidationFlashcards(flashcards);
-    setValidationMode(true);
-    setValidateDialogOpen(false);
-  }
-
-  async function refreshRefineGroups(): Promise<boolean> {
-    setIsLoadingRefineGroups(true);
+  async function refreshStrugglingCards(): Promise<boolean> {
+    setIsLoadingStrugglingCards(true);
 
     try {
-      const result = await fetchRefineFlashcardGroups();
+      const result = await fetchStrugglingFlashcards();
 
       if (!result.success) {
         toast.error(resolveActionErrorMessage(result));
         return false;
       }
 
-      setRefineGroups(result.groups);
+      setStrugglingCards(result.cards);
       return true;
     } catch {
       toast.error(resolveActionErrorMessage(actionError("common.generic")));
       return false;
     } finally {
-      setIsLoadingRefineGroups(false);
+      setIsLoadingStrugglingCards(false);
     }
   }
 
   async function startRefineMode() {
-    const loaded = await refreshRefineGroups();
+    const loaded = await refreshStrugglingCards();
 
-    if (!loaded) {
-      return;
+    if (loaded) {
+      setRefineMode(true);
     }
-
-    exitValidation();
-    setRefineMode(true);
   }
 
   function exitRefine() {
     setRefineMode(false);
-    setRefineGroups({ mastered: [], struggling: [] });
-  }
-
-  async function handleValidateAgain() {
-    const flashcardIdsToValidate = validationIssues.map((issue) => issue.id);
-
-    if (flashcardIdsToValidate.length === 0) {
-      return;
-    }
-
-    setIsValidatingAgain(true);
-
-    try {
-      const result = await validateFlashcards({
-        flashcardIds: flashcardIdsToValidate,
-      });
-
-      if ("errorCode" in result) {
-        return;
-      }
-
-      setValidationIssues(result.issues);
-      setValidationFlashcards(result.flashcards);
-      setValidateAgainDialogOpen(false);
-    } finally {
-      setIsValidatingAgain(false);
-    }
-  }
-
-  async function handleConfirmValidateAgain() {
-    await handleValidateAgain();
-  }
-
-  function exitValidation() {
-    setValidationMode(false);
-    setValidationIssues([]);
-    setValidationFlashcards([]);
-  }
-
-  function removeValidationFlashcard(flashcardId: string) {
-    setValidationIssues((prev) =>
-      prev.filter((issue) => issue.id !== flashcardId),
-    );
-    setValidationFlashcards((prev) =>
-      prev.filter((card) => card.id !== flashcardId),
-    );
-  }
-
-  // The edit itself already saved; if this refresh fails the row just keeps
-  // its previous preview text rather than surfacing a second error.
-  async function refreshValidationFlashcard(flashcardId: string) {
-    const result = await fetchFlashcardForManage(flashcardId).catch(() => null);
-    if (!result || "errorCode" in result) {
-      return;
-    }
-
-    const { flashcard } = result;
-    setValidationFlashcards((prev) =>
-      prev.map((card) =>
-        card.id === flashcard.id
-          ? {
-              ...card,
-              front: flashcard.front,
-              subjectPath: card.subjectPath ?? card.subjectName,
-              subjectId: flashcard.subjectId ?? "",
-            }
-          : card,
-      ),
-    );
-  }
-
-  function checkValidationEmpty() {
-    setValidationIssues((prev) => {
-      if (prev.length === 0) {
-        exitValidation();
-      }
-      return prev;
-    });
+    setStrugglingCards([]);
   }
 
   return {
@@ -412,26 +308,11 @@ export function useFlashcardsManagerController({
     total,
     pageSize: pageSizeState,
     editingFlashcard: editFlashcardQuery.data,
-    validationMode,
-    validationIssues,
-    validationFlashcards,
-    validateDialogOpen,
-    setValidateDialogOpen,
-    handleValidationStarted,
-    handleValidateAgain,
-    isValidatingAgain,
-    exitValidation,
-    validateAgainDialogOpen,
-    setValidateAgainDialogOpen,
-    handleConfirmValidateAgain,
-    removeValidationFlashcard,
-    refreshValidationFlashcard,
-    checkValidationEmpty,
     refineMode,
-    refineGroups,
-    isLoadingRefineGroups,
+    strugglingCards,
+    isLoadingStrugglingCards,
     startRefineMode,
-    refreshRefineGroups,
+    refreshStrugglingCards,
     exitRefine,
   };
 }

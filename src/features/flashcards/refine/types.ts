@@ -1,4 +1,5 @@
-export interface RefineCardSummary {
+/** A leech card the Refine view offers to improve. */
+export interface StrugglingFlashcard {
   id: string;
   front: string;
   back: string;
@@ -6,27 +7,4 @@ export interface RefineCardSummary {
   subjectName: string;
   reviewCount: number;
   lapseCount: number;
-}
-
-export interface RefineGroups {
-  mastered: RefineCardSummary[];
-  struggling: RefineCardSummary[];
-}
-
-export interface RefineMergeCandidate {
-  id: string;
-  front: string;
-  back: string;
-  subjectId: string | null;
-  subjectName: string;
-}
-
-export type RefineProposalAction = "relate" | "merge";
-
-export interface RefineMergeProposal {
-  action: RefineProposalAction;
-  front: string;
-  back: string;
-  sourceFlashcardIds: string[];
-  rationale: string;
 }

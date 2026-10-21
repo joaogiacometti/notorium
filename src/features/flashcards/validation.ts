@@ -135,30 +135,6 @@ export const resetFlashcardSchema = z.object({
 
 export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;
 
-export const proposeFlashcardMergeSchema = z.object({
-  flashcardId: idSchema,
-});
-
-export type ProposeFlashcardMergeForm = z.infer<
-  typeof proposeFlashcardMergeSchema
->;
-
-export const applyFlashcardMergeSchema = withFlashcardAttachmentLimit(
-  z.object({
-    action: z.enum(["relate", "merge"]),
-    primaryFlashcardId: idSchema,
-    front: flashcardFrontSchema,
-    back: flashcardBackSchema,
-    sourceFlashcardIds: z
-      .array(idSchema)
-      .min(1)
-      .max(LIMITS.flashcardBatchSize)
-      .refine((ids) => new Set(ids).size === ids.length),
-  }),
-);
-
-export type ApplyFlashcardMergeForm = z.infer<typeof applyFlashcardMergeSchema>;
-
 export const flashcardsManageQuerySchema = z.object({
   pageIndex: z.number().int().min(0).default(0),
   pageSize: z
@@ -175,20 +151,6 @@ export const flashcardsManageQuerySchema = z.object({
 export type FlashcardsManageQueryInput = z.infer<
   typeof flashcardsManageQuerySchema
 >;
-
-export const validateFlashcardsSchema = z.object({
-  flashcardIds: z
-    .array(z.string().min(1))
-    .min(1)
-    .max(LIMITS.flashcardBatchSize)
-    .refine((ids) => new Set(ids).size === ids.length),
-});
-
-export type ValidateFlashcardsForm = z.infer<typeof validateFlashcardsSchema>;
-
-export const flashcardIdsQuerySchema = z.object({
-  subjectId: idSchema.optional(),
-});
 
 export const flashcardContentsQuerySchema = z.object({
   ids: z.array(idSchema).min(1).max(LIMITS.flashcardContentsReadMax),

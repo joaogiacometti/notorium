@@ -10,12 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { RefineCardSummary } from "@/features/flashcards/refine/types";
+import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 import { getRichTextExcerpt } from "@/lib/editor/rich-text";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface ImproveCardDialogProps {
-  card: RefineCardSummary;
+  card: StrugglingFlashcard;
   proposedBack: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;

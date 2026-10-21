@@ -5,10 +5,8 @@ const queries = vi.hoisted(() => ({
   getAccountSettingsForUser: vi.fn(),
   getFlashcardsManagePageForUser: vi.fn(),
   getFlashcardByIdForUser: vi.fn(),
-  getAllFlashcardIdsForSubject: vi.fn(),
-  getAllFlashcardIdsForUser: vi.fn(),
   getFlashcardContentsForUser: vi.fn(),
-  getRefineGroupsForUser: vi.fn(),
+  getStrugglingFlashcardsForUser: vi.fn(),
   getFlashcardReviewStateForUser: vi.fn(),
   getAllFlashcardsForExam: vi.fn(),
   ensureFsrsSettings: vi.fn(),
@@ -115,18 +113,6 @@ describe("read route handlers", () => {
     );
   });
 
-  it("flashcard ids scopes to a subject only when one is given", async () => {
-    const route = import("@/app/api/flashcards/ids/route");
-    await callRoute(route, "/api/flashcards/ids?subjectId=s1");
-    await callRoute(route, "/api/flashcards/ids");
-
-    expect(queries.getAllFlashcardIdsForSubject).toHaveBeenCalledWith(
-      "user-1",
-      "s1",
-    );
-    expect(queries.getAllFlashcardIdsForUser).toHaveBeenCalledWith("user-1");
-  });
-
   it("flashcard contents collects repeated ids and caps them per request", async () => {
     const route = import("@/app/api/flashcards/contents/route");
     const tooMany = Array.from({ length: 101 }, (_, index) => `ids=c${index}`);
@@ -146,13 +132,15 @@ describe("read route handlers", () => {
     ]);
   });
 
-  it("refine groups reads for the session user", async () => {
+  it("struggling cards reads for the session user", async () => {
     await callRoute(
-      import("@/app/api/flashcards/refine-groups/route"),
-      "/api/flashcards/refine-groups",
+      import("@/app/api/flashcards/struggling/route"),
+      "/api/flashcards/struggling",
     );
 
-    expect(queries.getRefineGroupsForUser).toHaveBeenCalledWith("user-1");
+    expect(queries.getStrugglingFlashcardsForUser).toHaveBeenCalledWith(
+      "user-1",
+    );
   });
 
   it("review state rejects an out-of-range limit before querying", async () => {

@@ -96,10 +96,10 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Flashcards can also be generated from a note or mindmap, via their detail-page header menu or sidebar/documents-list row menu, when AI is configured.
 - Generated AI flashcards use concise retrieval-cue fronts and minimal, directly testable answer bullets.
 - AI generation may emit LaTeX math (`$...$` inline, `$$...$$` block), which is converted to rendered math nodes.
-- AI output follows the user's language: generated, improved, and refined cards and validation notes use the language of the source material or cards; nothing is translated to English.
+- AI output follows the user's language: generated and improved cards use the language of the source material or cards; nothing is translated to English.
 - AI flashcard generation is optional and configured globally at the instance level with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`.
 - AI flashcard controls are hidden when AI env vars are not configured.
-- AI generation and validation are limited per approved user per day.
+- AI generation and improvement are limited per approved user per day.
 - Flashcard rich text supports the same shared editor capabilities as notes, including syntax-highlighted code blocks, LaTeX math, and supported image rendering.
 - Flashcard content renders images from:
   - pasted direct image URLs
@@ -109,10 +109,10 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Flashcards have a global top-level page with review and management views.
 - The default flashcards page opens in the review view, with management available as an alternate global view.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`.
-- Flashcards can be copied as Markdown for pasting into an AI chat or sharing with others. A single card copies from the manage table row menu, the validation results row menu, the detail-page header menu (with the content currently in its editors), or the review/exam session card actions menu; the manage toolbar's `Copy` action copies every selected row at once, in table order. Each card copies its subject path, front, and back; several cards get numbered `## Card N` headings separated by `---`. Rich text becomes Markdown (bold, italics, strikethrough, inline code, links, lists, task lists, code blocks, tables, and LaTeX math as `$...$`/`$$...$$`). Uploaded images are private to their owner, so they copy as `[Image]` placeholders; public image URLs copy as Markdown images. A toast confirms how many cards were copied or reports the failure, including when the cards no longer exist. The toolbar `Copy` action stays disabled with a spinner until every copy in progress finishes.
+- Flashcards can be copied as Markdown for pasting into an AI chat or sharing with others. A single card copies from the manage table row menu, the detail-page header menu (with the content currently in its editors), or the review/exam session card actions menu; the manage toolbar's `Copy` action copies every selected row at once, in table order. Each card copies its subject path, front, and back; several cards get numbered `## Card N` headings separated by `---`. Rich text becomes Markdown (bold, italics, strikethrough, inline code, links, lists, task lists, code blocks, tables, and LaTeX math as `$...$`/`$$...$$`). Uploaded images are private to their owner, so they copy as `[Image]` placeholders; public image URLs copy as Markdown images. A toast confirms how many cards were copied or reports the failure, including when the cards no longer exist. The toolbar `Copy` action stays disabled with a spinner until every copy in progress finishes.
 - Flashcard review remains available in the global flashcards page.
 - Full-screen flashcard review and exam sessions lock background page scrolling until exit, including the caught-up state. Review content scrolls within the session only when it exceeds the available screen space.
-- When AI env vars are configured, the manage toolbar shows a sparkles `AI` dropdown with `Validate cards` and `Refine cards` entries; without AI the dropdown is hidden.
+- When AI env vars are configured, the manage toolbar shows a `Refine cards` button; without AI it is hidden.
 - In the flashcards manage toolbar, every icon-only action must show a descriptive tooltip on hover and keyboard focus instead of relying on icon recognition alone.
 
 ### Flashcard organization by subject
@@ -163,23 +163,12 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 ### Flashcard Refine
 
-- Refine is a mode inside the manage view, entered via the `Refine cards` entry of the manage toolbar AI dropdown. It is only available when AI env vars are configured.
-- Refine candidates load on demand when the mode is entered; they are global to the user and are not filtered by the selected subject scope or search.
-- While in refine mode the manage area shows the candidates as table rows with per-row actions, and the toolbar shows the mastered/struggling counts plus `Refresh Refine` and `Exit Refine` actions.
-- Refine surfaces two groups derived from each card's most recent reviews:
-  - Mastered: the last 3 reviews are all `Good` or `Easy`.
-  - Struggling: the last 3 reviews are all `Again`.
-- `Hard` is neutral: it breaks both streaks without counting toward either group.
-- Cards with fewer than 3 reviews never appear; each group is capped at 50 cards.
-- Mastered cards offer a "Level up" action:
-  - Similar cards are found across all the user's cards via trigram similarity, ranking same-subject matches first.
-  - The AI chooses one outcome: relate (preferred), merge (rare), or decline.
-  - Relate: the AI proposes one new card testing the relationship between the mastered card and related ones (contrast, computation, application). On accept, the new card is created in the mastered card's subject with fresh scheduling state and the original cards are kept.
-  - Merge: only for true redundancy (same fact, different wording). On accept, the merged card replaces the source cards (including the mastered card), which are deleted; lineage rows snapshot each deleted card's front and back.
-  - Decline: when no candidate supports a meaningful relationship or merge, the user sees an informational notice instead of a proposal.
-  - The user always previews the proposed card — and, for merges, the cards that will be deleted — before accepting.
-- Struggling cards offer an "Improve" action: the AI proposes a rewritten back, shown as a before/after diff the user can accept or discard.
-- Merge proposals are limited per approved user per day, separately from other AI limits.
+- Refine is a mode inside the manage view, entered via the `Refine cards` button in the manage toolbar. It is only available when AI env vars are configured.
+- Refine lists struggling cards (leeches): cards that have lapsed (been forgotten after graduating) at least 4 times, matching Anki's first leech warning.
+- A struggling card leaves the list once its last 3 reviews are all `Good` or `Easy`; `Hard` and `Again` keep it listed. Resetting a card's review progress clears its lapses.
+- Struggling cards load on demand when the mode is entered; they are global to the user and are not filtered by the selected subject scope or search. The list shows the most-lapsed cards first, capped at 50.
+- While in refine mode the manage area shows the struggling cards as table rows with their lapse count and an "Improve" action, and the toolbar shows the struggling count plus `Refresh Refine` and `Exit Refine` actions.
+- "Improve" asks the AI for a rewritten back, shown as a before/after diff the user can accept or discard.
 - Legacy `view=refine` URLs fall back to the review view.
 
 ### Focus Mode
@@ -278,7 +267,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - A mindmap can have a maximum of 200 nodes.
 - A user can create a maximum of 2000 flashcards per subject.
 - A user can send a maximum of 300 study assistant messages per day.
-- A user can make at most 250 AI flashcard generations, 500 AI back improvements, 200 AI validations, and 100 AI refine proposals per day.
+- A user can make at most 250 AI flashcard generations and 500 AI back improvements per day.
 
 ## Data Ownership and Security Rules
 
