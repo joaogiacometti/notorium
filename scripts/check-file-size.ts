@@ -1,5 +1,5 @@
 /**
- * File-size guard. Enforces the "files under 500 lines" rule from CLAUDE.md so
+ * File-size guard. Enforces the "files under 500 lines" rule from AGENTS.md so
  * large modules can't creep in unnoticed as the codebase grows.
  *
  * Run with `npm run check:size`. Exits non-zero (failing CI) when a source file

@@ -16,7 +16,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 ## Code Style
 
 - Functions: 4-20 lines. Split if longer.
-- Files: under 500 lines. Split by responsibility. Enforced by `npm run check:size` (see Automated Guards).
+- Files: at most 500 source lines or 800 test lines (schema exempt). Split by responsibility. Enforced by `npm run check:size` (see Automated Guards).
 - One thing per function, one responsibility per module.
 - Names: specific and unique. Avoid `data`, `handler`, `Manager`, and other vague names.
 - Prefer names that return fewer than 5 grep hits in the codebase.
@@ -80,7 +80,7 @@ Only add optional files when they are needed.
 
 - Use Server Components by default.
 - Add `"use client"` only when browser state, effects, or event handlers are required.
-- Client-callable server boundaries: Server Actions in `src/app/actions/` for writes, GET Route Handlers in `src/app/api/` for reads. Server Actions run one at a time per client and are POST-only, so never add a read Server Action. The streaming study assistant (`POST /api/assistant/chat`) is the one sanctioned AI chat route outside both; add future AI chat features or assistant tools through it and `src/lib/ai/stream-chat.ts`, not new endpoints.
+- Client-callable server boundaries: Server Actions in `src/app/actions/` for writes, GET Route Handlers in `src/app/api/` for reads. Server Actions run one at a time per client and are POST-only, so never add a read Server Action. Image uploads use the sanctioned multipart write route `POST /api/attachments/image`. The streaming study assistant (`POST /api/assistant/chat`) is the one sanctioned AI chat route outside both; add future AI chat features or assistant tools through it and `src/lib/ai/stream-chat.ts`, not new endpoints.
 - Client Components write through Server Actions and read through the typed fetchers in `src/lib/read-api/*` (usually as a React Query `queryFn`). Never `fetch` an `/api` read route directly from a component.
 - Build read routes with `runUserReadRoute` from `src/lib/server/read-route.ts`: approved session, Zod-validated input, `userId`-scoped feature query, `private, no-store` JSON with `Date`s preserved. Keep them thin like Server Actions, and never write from them: call read-only feature functions (for example `readFsrsSettings`, not `ensureFsrsSettings`).
 - Server Components (`src/app/(app)/**`), feature query modules (`queries.ts`, `*-queries.ts`), and every `src/app/api/` route must not import write modules (`mutations`, `*-mutations`, `*-mutation`, `subject-write`). Lint-enforced; a new write endpoint needs an explicit exclusion in `biome.json`. Keep a feature's reads and writes in separate modules so the boundary stays importable.
@@ -102,7 +102,7 @@ Only add optional files when they are needed.
 
 - Server Actions must return typed results, never throw to the client.
 - Read routes answer data with 200, or an `ActionErrorResult` body with 400 (invalid input), 401 (no approved session), 404 (missing record), or 500 (unexpected, logged as `read_route_failed`).
-- Use this result shape: `{ success: true, data } | { success: false, error: string }`.
+- Use typed success payloads and the shared `ActionErrorResult` (`errorCode`, optional `errorParams` / `errorMessage`); construct failures with `actionError()` from `src/lib/server/server-action-errors.ts`.
 - Validate inputs with Zod before DB access.
 - Return validation error results on invalid input.
 - Do not expose internal errors, stack traces, SQL errors, provider errors, or secrets to clients.
@@ -203,9 +203,9 @@ className =
 
 ## Automated Guards
 
-These run in CI (`.github/workflows/checks.yml`) and locally. Do not weaken a guard to make a build pass; fix the code.
+These run locally and in CI (`.github/workflows/checks.yml`, enabled for `joaogiacometti/notorium`). Do not weaken a guard to make a build pass; fix the code.
 
-- `npm run check:size` fails on source files over 500 lines (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries. `src/db/schema.ts` is intentionally exempt via `SIZE_GUARD_EXEMPT`: keep the Drizzle schema as one file and let it grow — do not split it or try to "fix" its size.
+- `npm run check:size` enforces 500-line source and 800-line test limits (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries. `src/db/schema.ts` is intentionally exempt via `SIZE_GUARD_EXEMPT`: keep the Drizzle schema as one file and let it grow — do not split it or try to "fix" its size.
 - `npm run check:deadcode` (Knip, config in `knip.json`) fails on unused files, unused dependencies, and undeclared/unresolved imports — the high-confidence signals. When you delete a feature, remove its now-orphaned files and deps in the same change instead of leaving them. Unused *exports* and *types* are reported as non-blocking warnings (they have real false positives: the `src/components/ui/**` shadcn API surface, the `fsrs` barrel re-exports, and type-only exports), so don't chase them blindly, but do clean up ones you know are genuinely dead. Fix findings by removing the dead code, not by widening the `ignore`/`ignoreDependencies` lists — only add an ignore for a verified false positive, with the reason in your change summary.
 
 ## Definition of Done

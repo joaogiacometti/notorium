@@ -20,7 +20,6 @@ and bypassing a primitive is the most common source of drift.
 | Form field | `@/components/ui/field` + `input`/`textarea`/`select` | raw `<input>` with ad-hoc classes |
 | Button / action | `@/components/ui/button` variants | styled `<button>` for standard actions |
 | Status pill | `StatusToneBadge` (`src/components/shared/status-tone-badge.tsx`) | hand-rolled `rounded-full border` pill |
-| Full-page empty state | `EmptyState` (`src/components/shared/empty-state.tsx`) | re-building the icon medallion + title + body |
 | Detail/card page frame | `DetailPageLayout` (`src/components/shared/detail-page-layout.tsx`) | repeating `PageTopBar` + `AppPageContainer` |
 | Feature list/index page frame | `FeaturePageShell` | — |
 
@@ -47,7 +46,7 @@ Two intentional tiers — do not blur them:
   domain icon, a `text-base` title, and an optional right-aligned action.
 - **Flat panel** — `rounded-xl border border-border/70 bg-card/85`. For content
   panels, tables, and detail sections. This is the app-wide panel surface
-  (flashcards, subjects).
+  (such as flashcard management).
 
 ## Typography roles
 
@@ -63,8 +62,8 @@ Two intentional tiers — do not blur them:
 `border-dashed` carries three distinct meanings — keep them visually distinct:
 
 - **Static empty state** — `border-border/60`, muted fill (`bg-muted/20`), `text-center`,
-  not interactive. Full-page variants use the `EmptyState` component; inline
-  variants reuse the same surface token at smaller padding.
+  not interactive. Reuse these surface tokens at the appropriate padding; the
+  subject tree example is `src/components/subjects/tree/subject-tree-empty-state.tsx`.
 - **Interactive add affordance** — `border-border/50` + `transition-colors` + a
   `hover:` border/text change. It is a button.
 - **Drag-drop target** — primary-tinted dashed border, toggled on drag-over.

@@ -11,7 +11,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Notorium",
-  description: "Study management system",
+  description:
+    "Private study workspace for notes, mindmaps, flashcards, and AI assistance",
   applicationName: "Notorium",
   manifest: "/manifest.webmanifest",
   icons: {

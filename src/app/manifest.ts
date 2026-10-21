@@ -5,7 +5,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Notorium",
     short_name: "Notorium",
-    description: "Study management system",
+    description:
+      "Private study workspace for notes, mindmaps, flashcards, and AI assistance",
     start_url: "/",
     scope: "/",
     display: "standalone",

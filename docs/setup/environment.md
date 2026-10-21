@@ -35,9 +35,15 @@ Optional feature variables are not required for this workflow. Leave them commen
 | Variable | Notes |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string used by the app and migrations |
-| `BETTER_AUTH_URL` | Public base URL for the app |
 | `BETTER_AUTH_SECRET` | Better Auth secret, minimum 32 characters |
-| `RATE_LIMIT_BACKEND` | `redis` or `upstash` |
+
+### Defaults
+
+| Variable | Default |
+| --- | --- |
+| `BETTER_AUTH_URL` | `http://localhost:3000`; set to the public base URL for deployments |
+| `RATE_LIMIT_BACKEND` | `redis`; may be set to `upstash` |
+| `NODE_ENV` | `development` |
 
 ### Conditional
 

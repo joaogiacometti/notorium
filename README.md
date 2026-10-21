@@ -11,7 +11,7 @@ It is built for a single trusted group: the first account becomes an admin, and 
 - **Mindmaps** — branch-ordered React Flow canvases scoped to a subject, exportable as PNG.
 - **Flashcards** — front/back cards organized by subject, reviewed with an FSRS spaced-repetition scheduler. Focus Mode and Exam Mode tune the review session.
 - **AI assistance (optional)** — generate flashcards from notes or mindmaps, improve struggling flashcards, and use one global study assistant sidebar across pages, review, and editing. It receives the current review card (visible sides only), note, mindmap, or unsaved flashcard draft as context. Document excerpts are capped at 12,000 characters. It can propose new flashcards and suggest changes to the active flashcard draft, with per-field approval inside the editor. All AI features share the `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` settings.
-- **Search and command palette** — case-insensitive search across all content (`Cmd/Ctrl+K`) and an action palette (`Cmd/Ctrl+P`).
+- **Search and command palette** — case- and accent-insensitive search across notes, mindmaps, and flashcards (`Cmd/Ctrl+K`) and an action palette (`Cmd/Ctrl+P`).
 
 See [SPEC.md](./SPEC.md) for the full, authoritative behavior of every feature.
 
@@ -71,6 +71,7 @@ Open `http://localhost:3000`.
 Playwright runs against an isolated PostgreSQL and Redis stack from `compose.test.yml`.
 
 ```bash
+cp .env.test.example .env.test
 npx playwright install chromium   # once; not needed in the Nix shell
 npm run test:e2e:infra:up
 npm run test:e2e:migrate
@@ -92,10 +93,10 @@ The first account created on a new instance becomes an approved admin automatica
 | `npm run test:coverage` | Run tests and enforce coverage thresholds |
 | `npm run lint` | Run Biome checks, including architecture boundaries |
 | `npm run typecheck` | Type-check with `tsc` |
-| `npm run check:size` | Fail on source files over 500 lines |
+| `npm run check:size` | Enforce 500-line source and 800-line test limits (schema exempt) |
 | `npm run check:deadcode` | Fail on unused files and dependencies (Knip) |
 
-Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automatically on `npm install` and run these guards before each commit and push.
+Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automatically on `npm install` and run Biome on staged files before commits and lint, type checks, tests, file-size, and dead-code guards before pushes. CI checks and E2E jobs run in `joaogiacometti/notorium`; scheduled operations run in deployment repositories instead.
 
 ## More Docs
 

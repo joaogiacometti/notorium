@@ -7,7 +7,7 @@ import { actionError } from "@/lib/server/server-action-errors";
 // Server Actions cap request bodies at 1 MB (and raising that past Vercel's
 // 4.5 MB function-body ceiling is impossible), while multipart FormData here
 // carries raw binary with no base64 inflation. This is the one sanctioned
-// client-callable write endpoint outside Server Actions; see CLAUDE.md and
+// client-callable write endpoint outside Server Actions; see AGENTS.md and
 // docs/architecture.md. It stays thin: authenticate, validate, delegate to the
 // shared upload core, and return the same typed result shape Server Actions use.
 export async function POST(request: Request): Promise<Response> {

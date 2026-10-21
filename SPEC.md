@@ -36,7 +36,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Create, read, update, and hard-delete subjects.
 - Subjects are listed and managed only in the sidebar subject tree; there is no separate subjects table page. Subjects are deleted one at a time from the tree's row menu.
 - Subject fields: name.
-- Subject names must be unique per user. Creating or renaming a subject to a name already used by another of the user's subjects is rejected with a duplicate-name error. Uniqueness is case-sensitive.
+- Subject names must be unique among siblings for each user, including top-level subjects. Creating, renaming, or moving a subject to a name already used under the same parent is rejected with a duplicate-name error. The same name can appear under different parents. Uniqueness is case-sensitive.
 - Creating a subject with `Parent::Child` uses the existing `Parent` path as the parent and stores `Child` as the new subject name. If any path segment does not exist, it is created automatically in order. When creation starts from a selected parent, the path is resolved relative to that parent. All missing segments are inserted atomically. The `::` delimiter is reserved for path creation and cannot be stored in a renamed subject.
 - Subjects are folders: they hold documents (notes and mindmaps), flashcards, and subfolders, and are managed entirely in the sidebar tree. A folder icon marks each subject; its label is inert (expand via the chevron) and shows no navigation cursor. Subjects have no page of their own; visiting `/subjects/[id]` directly redirects home.
 
@@ -143,7 +143,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Review parameters support per-user tuning.
 - Users can manually optimize FSRS parameters from the account settings dialog using their review history.
 - Users can reset FSRS optimization from the account settings dialog to restore default scheduler tuning without deleting review history or flashcard progress.
-- Users can enable automatic FSRS optimization from the account settings dialog when workflows are configured; automatic optimization runs on a fixed 30-day cadence and does not rewrite existing card due dates.
+- Users can enable automatic FSRS optimization from the account settings dialog when workflows are configured; automatic optimization selects opted-in users who have never optimized or whose last optimization was more than 30 days ago when the scheduled job runs (the bundled workflow runs monthly) and does not rewrite existing card due dates.
 - Keyboard shortcuts on the review screen:
   - `Enter` or `Space` reveals the back when hidden.
   - `Enter` or `Space` grades `Good` after the back is shown.
@@ -293,7 +293,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`
 - `mindmap`
-  - `id`, `title`, `data` (JSON graph of nodes and edges), timestamps, `userId`
+  - `id`, `title`, `data` (JSON graph of nodes and edges), `subjectId`, timestamps, `userId`
 
 ## Out of Scope
 

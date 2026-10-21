@@ -12,7 +12,7 @@ const FAILURE_STATUS = {
 // The study assistant streams through this route handler rather than a Server
 // Action: Server Actions run one at a time per client (a reply in flight would
 // queue every other write behind it) and cannot stream a response body. It is
-// the one sanctioned streaming AI endpoint; see CLAUDE.md and
+// the one sanctioned streaming AI endpoint; see AGENTS.md and
 // docs/architecture.md. It writes nothing: authenticate, validate, delegate.
 export async function POST(request: Request): Promise<Response> {
   const session = await getOptionalSession();

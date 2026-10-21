@@ -25,7 +25,7 @@ Every AI call (the study assistant and flashcard generation and improvement) run
 
 AI output follows the user's language: the assistant answers in the language of the user's message, and generated or improved flashcards use the language of the source material or cards.
 
-The study assistant sends each chat's id to OpenRouter as `session_id`. OpenRouter then routes every turn to the same upstream provider, which keeps the cached prompt prefix warm (for example, Gemini's implicit cache reads cost a tenth of normal input).
+The study assistant sends each chat's id to OpenRouter as `session_id`. This supplies a session identifier for provider routing and prompt-cache reuse; availability and savings depend on the selected model and provider.
 
 ## Attachments
 
@@ -74,7 +74,7 @@ The repository includes `.github/workflows/fsrs-optimization.yml` for a monthly 
 | `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
 
-The workflow skips itself when either secret is missing.
+The workflow is disabled in `joaogiacometti/notorium`. In deployment repositories, it skips the request when `NOTORIUM_APP_URL` or `CRON_SECRET` is missing.
 
 ## Blob Orphan Garbage Collection
 
@@ -108,7 +108,7 @@ The repository includes `.github/workflows/blob-gc.yml` for a weekly GitHub Acti
 | `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
 
-The workflow skips itself when either secret is missing.
+The workflow is disabled in `joaogiacometti/notorium`. In deployment repositories, it skips the request when `NOTORIUM_APP_URL` or `CRON_SECRET` is missing.
 
 ## Upstash Rate Limiting
 
