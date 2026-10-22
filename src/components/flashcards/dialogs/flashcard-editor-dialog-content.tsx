@@ -17,13 +17,17 @@ export function FlashcardEditorDialogContent({
   const workspace = useAssistantWorkspace();
   if (!workspace)
     return (
-      <DialogContent className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl">
+      <DialogContent
+        onOpenAutoFocus={focusDialogContainer}
+        className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl"
+      >
         {children}
       </DialogContent>
     );
   return (
     <DialogContent
       showCloseButton={false}
+      onOpenAutoFocus={focusDialogContainer}
       onEscapeKeyDown={(event) => {
         if (
           event.target instanceof Element &&
@@ -60,4 +64,15 @@ export function FlashcardEditorDialogContent({
       <AssistantSurfaceHost />
     </DialogContent>
   );
+}
+
+/** Radix focuses the first tabbable non-link on open. With the subject picker
+ * disabled while subjects load, that was the Front toolbar's Heading 1 button
+ * (ring plus tooltip), and only sometimes. Focus the dialog itself so opening is
+ * calm and Tab still starts at the first field. */
+function focusDialogContainer(event: Event) {
+  event.preventDefault();
+  if (event.currentTarget instanceof HTMLElement) {
+    event.currentTarget.focus();
+  }
 }
