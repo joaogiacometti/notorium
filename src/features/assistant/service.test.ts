@@ -4,6 +4,7 @@ import type {
   LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
 import { tutoringModeLine } from "@/features/assistant/prompts";
+import { assistantChatRequestSchema } from "@/features/assistant/validation";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 import {
   createFakeStreamingModel,
@@ -273,6 +274,100 @@ describe("streamAssistantReplyForUser", () => {
       latest.indexOf("What is ATP?"),
     );
     expect(latest).not.toContain('"back"');
+  });
+
+  it("keeps a skipped card and its correction in history when the review card changes", async () => {
+    const model = createFakeStreamingModel("A revised card.");
+    getAiModelMock.mockReturnValue(model);
+    const card = {
+      front: "What is the purpose of functor/3?",
+      back: "Constructs or decomposes terms.",
+    };
+    const request = assistantChatRequestSchema.parse({
+      messages: [
+        {
+          id: "u1",
+          role: "user",
+          parts: [
+            { type: "text", text: "Create one flashcard about functor/3." },
+          ],
+        },
+        {
+          id: "a1",
+          role: "assistant",
+          parts: [
+            {
+              type: "tool-proposeFlashcards",
+              toolCallId: "proposal-1",
+              state: "output-available",
+              input: { cards: [card] },
+              output: { outcomes: ["skipped"] },
+            },
+          ],
+        },
+        {
+          id: "u2",
+          role: "user",
+          parts: [
+            {
+              type: "text",
+              text: "Inverse: ask what functor(filha(ana, bia), Name, Arity) does on the flashcard.",
+            },
+          ],
+        },
+        {
+          id: "a2",
+          role: "assistant",
+          parts: [{ type: "text", text: "Would you like me to update it?" }],
+        },
+        { id: "u3", role: "user", parts: [{ type: "text", text: "do it" }] },
+      ],
+      context: {
+        kind: "review",
+        mode: "review",
+        front: "What does fail/0 do?",
+        hiddenBack: "Always fails.",
+      },
+    });
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const result = await streamAssistantReplyForUser({
+      ...request,
+      userId: "user-1",
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (!result.success) throw new Error("Expected a streamed reply");
+    await result.response.text();
+
+    const prompt = model.doStreamCalls[0].prompt;
+    expect(prompt.map((turn) => turn.role)).toEqual([
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "user",
+      "assistant",
+      "user",
+    ]);
+    expect(prompt[2]).toMatchObject({
+      content: [
+        {
+          type: "tool-call",
+          toolCallId: "proposal-1",
+          input: { cards: [card] },
+        },
+      ],
+    });
+    expect(JSON.stringify(prompt[3])).toContain("skipped");
+    expect(JSON.stringify(prompt[4])).toContain(
+      "functor(filha(ana, bia), Name, Arity)",
+    );
+    expect(JSON.stringify(prompt.slice(0, -1))).not.toContain("fail/0");
+    expect(prompt.at(-1)?.content.at(-1)).toEqual({
+      type: "text",
+      text: "do it",
+    });
   });
 
   it("sends document drafts after history while keeping instructions and tools stable", async () => {

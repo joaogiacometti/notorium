@@ -1,4 +1,4 @@
-// Converts AI plain-text output (paragraphs, `- `/`1.` lists, fenced code, and
+// Converts AI plain-text output (paragraphs, `- `/`1.` lists, inline/fenced code, and
 // `$...$`/`$$...$$` LaTeX) into Tiptap rich-text HTML. Pure and isomorphic:
 // flashcard back improvement runs it on the server, the study assistant in the browser.
 
@@ -16,6 +16,52 @@ export function normalizeLine(value: string) {
 }
 
 type MathSegment = { token: string; latex: string; display: boolean };
+type CodeSegment = { token: string; html: string; block: boolean };
+
+// Protect code before parsing math or collapsing paragraph whitespace. Accept
+// accidental inline <code> wrappers, but always escape their contents as text.
+function extractCodeSegments(value: string): {
+  text: string;
+  segments: CodeSegment[];
+} {
+  const segments: CodeSegment[] = [];
+  const chunks: string[] = [];
+  let cursor = 0;
+  const pattern =
+    /```([A-Za-z0-9_-]*)\n([\s\S]*?)```|`([^`\n]+)`|<code>([\s\S]*?)<\/code>/g;
+  for (const match of value.matchAll(pattern)) {
+    const segment = captureCodeSegment(match, segments.length);
+    chunks.push(value.slice(cursor, match.index));
+    chunks.push(segment.block ? `\n\n${segment.token}\n\n` : segment.token);
+    segments.push(segment);
+    cursor = match.index + match[0].length;
+  }
+  return { text: chunks.join("") + value.slice(cursor), segments };
+}
+
+function captureCodeSegment(
+  match: RegExpMatchArray,
+  index: number,
+): CodeSegment {
+  const [, language, fenced, inline, wrapped] = match;
+  const block = fenced !== undefined;
+  return {
+    token: `CODEMARKER${index}END`,
+    block,
+    html: block
+      ? codeBlockHtml(language ?? "", fenced)
+      : `<code>${escapeHtml(inline ?? wrapped ?? "")}</code>`,
+  };
+}
+
+function restoreCodeSegments(html: string, segments: CodeSegment[]): string {
+  let result = html;
+  for (const segment of segments) {
+    const target = segment.block ? `<p>${segment.token}</p>` : segment.token;
+    result = result.replaceAll(target, () => segment.html);
+  }
+  return result;
+}
 
 // Pull math out before line processing so escaping/classification cannot corrupt
 // the LaTeX, then reinsert math nodes after the HTML skeleton is built. Tokens
@@ -97,25 +143,17 @@ function textBlocksToRichText(value: string): string {
     .join("");
 }
 
+/** Convert assistant text to safe editor HTML, preserving code literally.
+ * @example plainTextToRichText("What does `functor/3` do?");
+ */
 export function plainTextToRichText(value: string): string {
-  const { text, segments } = extractMathSegments(value);
-  const chunks: string[] = [];
-  let cursor = 0;
-
-  for (const match of text.matchAll(/```([A-Za-z0-9_-]*)\n([\s\S]*?)```/g)) {
-    const index = match.index ?? 0;
-    chunks.push(textBlocksToRichText(text.slice(cursor, index)));
-    chunks.push(codeBlockHtml(match[1] ?? "", match[2] ?? ""));
-    cursor = index + match[0].length;
-  }
-  chunks.push(textBlocksToRichText(text.slice(cursor)));
-
-  const html = chunks.join("");
-  if (html.length === 0) {
-    return "";
-  }
-
-  return renderMathSegments(html, segments);
+  const code = extractCodeSegments(value);
+  const math = extractMathSegments(code.text);
+  const html = renderMathSegments(
+    textBlocksToRichText(math.text),
+    math.segments,
+  );
+  return restoreCodeSegments(html, code.segments);
 }
 
 /** Convert math delimiters in a text node while preserving its exact spacing.

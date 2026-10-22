@@ -263,6 +263,44 @@ describe("AssistantFlashcardProposal", () => {
     );
   });
 
+  it("renders and saves inline code instead of literal HTML tags or backticks", async () => {
+    await renderPendingProposal("Biology", [
+      {
+        front:
+          "What does <code>functor(filha(ana, bia), Name, Arity)</code> do?",
+        back: "Unifies `Name = filha` and `Arity = 2`.",
+      },
+    ]);
+    expect(container.textContent).not.toContain("&lt;code&gt;");
+    await click("Create");
+
+    expect(fakes.actions?.created[0]).toMatchObject({
+      front:
+        "<p>What does <code>functor(filha(ana, bia), Name, Arity)</code> do?</p>",
+      back: "<p>Unifies <code>Name = filha</code> and <code>Arity = 2</code>.</p>",
+    });
+    expect(container.textContent).toContain(
+      "What does functor(filha(ana, bia), Name, Arity) do?",
+    );
+    expect(container.textContent).not.toContain("<code>");
+  });
+
+  it("shows readable code in skipped cards and restores the same content", async () => {
+    await renderPendingProposal("Biology", [
+      {
+        front: "What does <code>functor/3</code> do?",
+        back: "Decomposes or constructs a term.",
+      },
+    ]);
+    await click("Send next message");
+    expect(container.textContent).toContain("Skipped:What does functor/3 do?");
+    await click("Restore");
+    await click("Create");
+    expect(fakes.actions?.created[0]?.front).toBe(
+      "<p>What does <code>functor/3</code> do?</p>",
+    );
+  });
+
   it("keeps Create disabled until a subject is known", async () => {
     await renderPendingProposal("Chemistry");
 

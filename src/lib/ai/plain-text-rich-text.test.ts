@@ -50,6 +50,40 @@ describe("plainTextToRichText math conversion", () => {
       '<p>Example:</p><pre><code class="language-csharp">class Person\n{\n}</code></pre>',
     );
   });
+
+  it.each([
+    "What does `functor(filha(ana, bia), Name, Arity)` do?",
+    "What does <code>functor(filha(ana, bia), Name, Arity)</code> do?",
+  ])("formats inline code without displaying its delimiters: %s", (front) => {
+    expect(plainTextToRichText(front)).toBe(
+      "<p>What does <code>functor(filha(ana, bia), Name, Arity)</code> do?</p>",
+    );
+  });
+
+  it("preserves code literally without converting dollars to math", () => {
+    expect(plainTextToRichText("Use `$x$`\n\n```sh\necho '$x$'\n```")).toBe(
+      '<p>Use <code>$x$</code></p><pre><code class="language-sh">echo &#39;$x$&#39;</code></pre>',
+    );
+  });
+
+  it("keeps HTML examples literal inside code and escapes unsafe markup", () => {
+    expect(
+      plainTextToRichText(
+        "`<code>x</code>` and <code><img src=x onerror=alert(1)></code>",
+      ),
+    ).toBe(
+      "<p><code>&lt;code&gt;x&lt;/code&gt;</code> and <code>&lt;img src=x onerror=alert(1)&gt;</code></p>",
+    );
+    expect(plainTextToRichText("<script>alert(1)</script>")).toBe(
+      "<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>",
+    );
+  });
+
+  it("supports code in lists alongside math without changing either", () => {
+    expect(plainTextToRichText("- `a < b`\n- $a < b$")).toBe(
+      '<ul><li><code>a &lt; b</code></li><li><span data-type="inline-math" data-latex="a &lt; b"></span></li></ul>',
+    );
+  });
 });
 
 describe("mathTextToRichText", () => {

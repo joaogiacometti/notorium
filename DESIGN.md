@@ -191,6 +191,11 @@ use danger intent variables and strikethrough. Read-only review decorations
 never become editor content. Resolve proposals before saving; the unchanged
 fields remain editable.
 
+Chat flashcard proposals render inline code and fenced code through the same
+rich-text conversion used for Edit and Create. Collapsed proposal outcomes use
+readable text without code delimiters or HTML tags. An example used as the
+question belongs in the Front region; supplementary examples stay below Back.
+
 Note and mindmap AI proposals preview in the document region, not in chat. A
 bordered `DocumentEditReviewControls` bar (Added / Removed legend, one Discard
 changes / Accept changes pair) resolves the entire proposal. Notes show a

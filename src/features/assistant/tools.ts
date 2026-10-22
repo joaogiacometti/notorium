@@ -57,8 +57,22 @@ export const flashcardExampleSchema = z.object({
  */
 export const proposedFlashcardSchema = z
   .object({
-    front: z.string().trim().min(1).max(LIMITS.flashcardFrontMax),
-    back: z.string().trim().min(1).max(LIMITS.flashcardBackMax),
+    front: z
+      .string()
+      .trim()
+      .min(1)
+      .max(LIMITS.flashcardFrontMax)
+      .describe(
+        "The requested retrieval cue as plain text, never HTML. Use backticks or fenced code for an example-based question; keep its result on the back.",
+      ),
+    back: z
+      .string()
+      .trim()
+      .min(1)
+      .max(LIMITS.flashcardBackMax)
+      .describe(
+        "A concise answer to the front, as plain text with optional backticks for code or LaTeX for math; never HTML. Do not duplicate the supplementary example.",
+      ),
     example: flashcardExampleSchema
       .optional()
       .describe("Only when the user asks for examples."),
@@ -139,12 +153,12 @@ export function buildAssistantTools(searchLibrary: LibrarySearchFunction) {
     }),
     proposeFlashcardEdits: tool({
       description:
-        "Suggest front/back replacements ONLY when the current user message explicitly requests changes to the flashcard draft. Never use this tool to answer questions, explain concepts, or give examples in chat, even when a draft is present. The user reviews changes in the editor; nothing is saved.",
+        "Suggest front/back replacements when the current user message requests changes to the flashcard draft, including contextual follow-ups such as 'do it' or 'add it'. Infer wording from the requested change; do not ask for confirmation. Never use this tool for ordinary study questions. The user reviews changes in the editor; nothing is saved.",
       inputSchema: flashcardEditsInputSchema,
       outputSchema: flashcardEditsOutputSchema,
     }),
     proposeFlashcards: tool({
-      description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} flashcards for the user to review; nothing is saved until they confirm each card.`,
+      description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} new flashcards or revise a chat proposal, including follow-up corrections. Never use this tool to change the CURRENT editor draft: use proposeFlashcardEdits for that, including 'do it' confirming a draft change. Follow the requested recall direction and count. Call directly without asking for confirmation; nothing is saved until the user clicks Create.`,
       inputSchema: flashcardProposalInputSchema,
       outputSchema: flashcardProposalOutputSchema,
     }),

@@ -83,6 +83,16 @@ A separate guard, `npm run check:size`, enforces 500-line source and 800-line te
 
 ### Study surface context
 
+Flashcard creation and revision instructions resolve short follow-ups against
+conversation history before consulting the active study surface. A skipped
+proposal remains available in history for corrections; its outcome records
+that it was not saved. Proposal tools accept plain text (including inline or
+fenced code), while draft edit tools accept editor HTML. The shared
+`src/lib/ai/plain-text-rich-text.ts` converter protects code before parsing math,
+escapes its contents, and tolerates accidental inline `<code>` wrappers without
+interpreting arbitrary HTML. Proposal preview, Edit prefill, and Create use that
+same conversion; collapsed outcomes derive readable text from it.
+
 `useStudyContext` registers live review/exam, note, and mindmap snapshots with the shell workspace. Editor drafts take precedence; mounted study surfaces stack and restore on teardown. The request accepts the existing flashcard draft, a validated `StudyContext` union, or a document draft, with at most one supplied. Context precedes the latest question as untrusted background; system instructions and tools stay stable. Review snapshots omit unrevealed backs. Document snapshots use current client edits, cap readable content at 12,000 characters, and mark partial excerpts. Notes replace explicit images and renderer-recognized image paragraphs with placeholders before converting to Markdown; mindmaps serialize root-first labels and edges with explicit arrow directions, without positions or attachment locations. Document zen mode mounts the existing assistant surface host inside its immersive boundary and reserves desktop sidebar space. No new reads, writes, endpoints, or AI requests are introduced.
 
 ### Flashcard source documents

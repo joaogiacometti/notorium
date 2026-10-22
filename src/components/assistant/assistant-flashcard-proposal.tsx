@@ -26,6 +26,7 @@ import {
 } from "@/features/assistant/utils";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
+import { richTextToPlainText } from "@/lib/editor/rich-text";
 import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
@@ -279,7 +280,9 @@ function ResolvedFlashcardProposal({
     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
       <Icon className="size-3.5 shrink-0" />
       <span className="shrink-0">{OUTCOME_LABELS[status]}</span>
-      <span className="min-w-0 flex-1 truncate">{front}</span>
+      <span className="min-w-0 flex-1 truncate">
+        {richTextToPlainText(plainTextToRichText(front))}
+      </span>
       {onRestore ? (
         <Button type="button" variant="ghost" size="xs" onClick={onRestore}>
           <Undo2 />
