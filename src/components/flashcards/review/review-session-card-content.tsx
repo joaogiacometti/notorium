@@ -1,5 +1,7 @@
 "use client";
 
+import { Lightbulb } from "lucide-react";
+import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { buildReviewContext } from "@/components/assistant/study-context-content";
 import { useStudyContext } from "@/components/assistant/use-study-context";
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
@@ -37,7 +39,10 @@ export function ReviewSessionCardContent({
   revealed,
   mode = "review",
 }: Readonly<ReviewSessionCardContentProps>) {
-  useStudyContext(buildReviewContext(card, subjectLabel, revealed, mode));
+  const context = buildReviewContext(card, subjectLabel, revealed, mode);
+  useStudyContext(context);
+  const assistedRecall =
+    useAssistantWorkspace()?.assistedRecallFront === context.front;
   // Keying by card id remounts the wrapper so the enter animation replays on
   // every new card instead of the content swapping in place.
   return (
@@ -67,7 +72,20 @@ export function ReviewSessionCardContent({
           ) : null}
         </div>
       </div>
+      {revealed && assistedRecall ? <AssistedRecallNote /> : null}
     </div>
+  );
+}
+
+// Recall prompted by a hint is weaker than unaided recall, so grading it Good
+// would schedule the card too far out. Advice only; the user still decides.
+function AssistedRecallNote() {
+  return (
+    <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+      <Lightbulb className="size-4 shrink-0" />
+      You asked the assistant before revealing. If it helped you recall, grade
+      Hard or Again.
+    </p>
   );
 }
 

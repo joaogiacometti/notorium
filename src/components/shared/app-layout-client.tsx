@@ -14,6 +14,7 @@ import { MobileSidebarSheet } from "@/components/shared/mobile-sidebar-sheet";
 import { SidebarCollapseProvider } from "@/components/shared/sidebar-collapse-context";
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { useSidebarCollapsed } from "@/components/shared/use-sidebar-collapsed";
+import type { TutoringMode } from "@/features/assistant/validation";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ interface AppLayoutClientProps {
   userId: string;
   aiEnabled: boolean;
   initialSidebarCollapsed: boolean;
+  initialTutoring: TutoringMode;
   children: React.ReactNode;
 }
 
@@ -93,6 +95,7 @@ export function AppLayoutClient({
   userId,
   aiEnabled,
   initialSidebarCollapsed,
+  initialTutoring,
   children,
 }: Readonly<AppLayoutClientProps>) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -169,7 +172,7 @@ export function AppLayoutClient({
     </div>
   );
   return userId && aiEnabled ? (
-    <AssistantWorkspaceProvider>
+    <AssistantWorkspaceProvider initialTutoring={initialTutoring}>
       <AssistantAppFrame>{content}</AssistantAppFrame>
     </AssistantWorkspaceProvider>
   ) : (

@@ -8,6 +8,7 @@ import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-wor
 import { StudyAssistant } from "@/components/assistant/study-assistant";
 import type { ProposedFlashcard } from "@/features/assistant/tools";
 import type { AssistantUIMessage } from "@/features/assistant/types";
+import type { TutoringMode } from "@/features/assistant/validation";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
 
 // Stands in for the Tiptap editor, which needs a real layout engine. While
@@ -27,6 +28,15 @@ vi.mock("@/components/shared/tiptap-renderer", () => ({
     ) : (
       fallback
     ),
+}));
+
+// Records the cookie writes the Hints first toggle would make on the server.
+const savedTutoringModes = vi.hoisted((): string[] => []);
+
+vi.mock("@/app/actions/assistant-preferences", () => ({
+  setTutoringModePreference: async (mode: string) => {
+    savedTutoringModes.push(mode);
+  },
 }));
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -136,11 +146,17 @@ describe("study assistant", () => {
     vi.unstubAllGlobals();
   });
 
-  async function renderPanel(transport: FakeAssistantChatTransport) {
+  async function renderPanel(
+    transport: FakeAssistantChatTransport,
+    initialTutoring?: TutoringMode,
+  ) {
     await act(async () => {
       root.render(
         <QueryClientProvider client={new QueryClient()}>
-          <AssistantWorkspaceProvider transport={transport}>
+          <AssistantWorkspaceProvider
+            transport={transport}
+            initialTutoring={initialTutoring}
+          >
             <AssistantPanel onMinimize={() => {}} />
           </AssistantWorkspaceProvider>
         </QueryClientProvider>,
@@ -201,6 +217,21 @@ describe("study assistant", () => {
     expect(toggle?.getAttribute("aria-pressed")).toBe("false");
     expect(transport.requests[0]?.body).toMatchObject({ tutoring: "hints" });
     expect(transport.requests[1]?.body).toMatchObject({ tutoring: "answers" });
+    expect(savedTutoringModes.at(-1)).toBe("answers");
+  });
+
+  it("starts from the saved tutoring mode", async () => {
+    const transport = new FakeAssistantChatTransport().replyWith("x = 3.");
+    await renderPanel(transport, "answers");
+
+    await sendMessage("Solve x + 2 = 5");
+
+    expect(
+      container
+        .querySelector("button[aria-pressed]")
+        ?.getAttribute("aria-pressed"),
+    ).toBe("false");
+    expect(transport.requests[0]?.body).toMatchObject({ tutoring: "answers" });
   });
 
   it("keeps the finished reply visible until the rich renderer is ready", async () => {

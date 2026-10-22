@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import type { ChatTransport } from "ai";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { setTutoringModePreference } from "@/app/actions/assistant-preferences";
 import { createAssistantChatTransport } from "@/components/assistant/assistant-chat-transport";
 import {
   type ActiveFlashcardEditor,
@@ -37,6 +38,8 @@ const EDIT_FIELDS = ["front", "back"] as const;
 interface AssistantWorkspaceProviderProps {
   children: ReactNode;
   transport?: ChatTransport<AssistantUIMessage>;
+  /** Saved Hints first choice, read from its cookie by the server layout. */
+  initialTutoring?: TutoringMode;
 }
 
 /** Own the conversation independently of floating or editor presentation.
@@ -45,6 +48,7 @@ interface AssistantWorkspaceProviderProps {
 export function AssistantWorkspaceProvider({
   children,
   transport = sharedTransport,
+  initialTutoring = "hints",
 }: Readonly<AssistantWorkspaceProviderProps>) {
   const contexts = useRef<Array<() => StudyContext | null>>([]);
   const [context, setContext] = useState<StudyContext | null>(null);
@@ -63,7 +67,10 @@ export function AssistantWorkspaceProvider({
   }).current;
   const chat = useChat<AssistantUIMessage>({ transport });
   const [composerDraft, setComposerDraft] = useState("");
-  const [tutoring, setTutoring] = useState<TutoringMode>("hints");
+  const [tutoring, setTutoringState] = useState(initialTutoring);
+  const [assistedRecallFront, setAssistedRecallFront] = useState<string | null>(
+    null,
+  );
   const [open, setOpen] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);
@@ -224,6 +231,9 @@ export function AssistantWorkspaceProvider({
       await documents.settle();
       await proposals.skipOpenCards();
       requestRef.current = draft ?? null;
+      if (studyContext?.kind === "review" && studyContext.hiddenBack) {
+        setAssistedRecallFront(studyContext.front);
+      }
       setNotice(null);
       const options = {
         body: {
@@ -339,6 +349,12 @@ export function AssistantWorkspaceProvider({
     }
   });
 
+  function setTutoring(mode: TutoringMode) {
+    setTutoringState(mode);
+    // Best effort: a lost write only means the next reload starts in hints.
+    void setTutoringModePreference(mode).catch(() => {});
+  }
+
   function reset() {
     chatGeneration.current += 1;
     chat.stop();
@@ -369,6 +385,7 @@ export function AssistantWorkspaceProvider({
         setTutoring,
         proposals,
         context,
+        assistedRecallFront,
         ...contextCallbacks,
         editor,
         register,

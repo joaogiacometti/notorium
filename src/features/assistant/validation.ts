@@ -27,6 +27,18 @@ import { LIMITS } from "@/lib/config/limits";
 export const tutoringModeSchema = z.enum(["hints", "answers"]);
 export type TutoringMode = z.infer<typeof tutoringModeSchema>;
 
+/** Cookie that keeps the user's tutoring toggle across reloads. */
+export const TUTORING_MODE_COOKIE = "notorium:assistant-tutoring";
+
+/** Saved tutoring mode; a missing or unknown cookie value falls back to hints.
+ * @example parseSavedTutoringMode(undefined); // "hints"
+ */
+export function parseSavedTutoringMode(
+  value: string | undefined,
+): TutoringMode {
+  return tutoringModeSchema.catch("hints").parse(value);
+}
+
 const userTextPartSchema = z.object({
   type: z.literal("text"),
   text: z.string().trim().min(1).max(LIMITS.assistantMessageMaxChars),

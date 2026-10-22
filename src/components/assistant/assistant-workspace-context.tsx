@@ -37,7 +37,7 @@ export interface AssistantWorkspace {
   documents: DocumentEditControls;
   composerDraft: string;
   setComposerDraft: (draft: string) => void;
-  /** Hint-first by default; lasts for the page session like the chat. */
+  /** Hint-first by default; the choice is saved in a cookie across reloads. */
   tutoring: TutoringMode;
   setTutoring: (mode: TutoringMode) => void;
   open: boolean;
@@ -50,6 +50,9 @@ export interface AssistantWorkspace {
   ) => () => void;
   proposals: FlashcardProposalControls;
   context: StudyContext | null;
+  /** Front of the last review or exam card the user asked about before its
+   * answer was revealed, so the session can suggest grading that recall lower. */
+  assistedRecallFront: string | null;
   registerContext: (snapshot: () => StudyContext | null) => () => void;
   refreshContext: () => void;
   editor: ActiveFlashcardEditor | null;

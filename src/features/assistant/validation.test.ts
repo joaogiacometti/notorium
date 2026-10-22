@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { assistantChatRequestSchema } from "@/features/assistant/validation";
+import {
+  assistantChatRequestSchema,
+  parseSavedTutoringMode,
+} from "@/features/assistant/validation";
 import { LIMITS } from "@/lib/config/limits";
 
 function userMessage(id: string, text: string) {
@@ -59,6 +62,12 @@ describe("assistantChatRequestSchema", () => {
       assistantChatRequestSchema.safeParse({ messages, tutoring: "cheat" })
         .success,
     ).toBe(false);
+  });
+
+  it("restores a saved tutoring mode and falls back to hints", () => {
+    expect(parseSavedTutoringMode("answers")).toBe("answers");
+    expect(parseSavedTutoringMode(undefined)).toBe("hints");
+    expect(parseSavedTutoringMode("cheat")).toBe("hints");
   });
 
   it("rejects an empty or oversized chat id", () => {
