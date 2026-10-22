@@ -73,7 +73,6 @@ export function CreateFlashcardDialog({
             }}
             aiEnabled={aiEnabled}
             duplicateFront={{
-              isChecking: dialog.isCheckingDuplicateFront,
               isDuplicate: dialog.isDuplicateFront,
               message: dialog.duplicateFrontMessage,
             }}

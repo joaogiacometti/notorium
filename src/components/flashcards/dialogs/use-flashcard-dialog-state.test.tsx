@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -21,7 +22,6 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-const checkFlashcardDuplicateMock = vi.fn();
 const chatEdits = vi.hoisted(() => ({ pending: false }));
 vi.mock("@/components/assistant/assistant-workspace-context", () => ({
   useAssistantWorkspace: () => ({ pending: chatEdits.pending ? {} : null }),
@@ -29,17 +29,14 @@ vi.mock("@/components/assistant/assistant-workspace-context", () => ({
 const addEventListenerSpy = vi.spyOn(window, "addEventListener");
 const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
-vi.mock("@/app/actions/flashcards", () => ({
-  checkFlashcardDuplicate: (...args: unknown[]) =>
-    checkFlashcardDuplicateMock(...args),
-}));
-
 interface HarnessProps {
   mode?: "create" | "edit";
   open: boolean;
   values: FlashcardFormValues;
   onOpenChange?: (open: boolean) => void;
-  onSubmitAction?: (values: FlashcardFormValues) => Promise<{ success: true }>;
+  onSubmitAction?: (
+    values: FlashcardFormValues,
+  ) => Promise<{ success: true } | ActionErrorResult>;
   getSuccessValues?: (
     values: FlashcardFormValues,
     options: { keepFrontAfterSubmit: boolean; keepBackAfterSubmit: boolean },
@@ -78,12 +75,17 @@ function TestHarness({
       <output data-testid="duplicate">
         {dialog.isDuplicateFront ? "true" : "false"}
       </output>
-      <output data-testid="checking">
-        {dialog.isCheckingDuplicateFront ? "true" : "false"}
-      </output>
+      <output data-testid="saved">{dialog.isSaved ? "true" : "false"}</output>
       <output data-testid="discard">
         {dialog.discardDialogOpen ? "true" : "false"}
       </output>
+      <button
+        type="button"
+        data-testid="edit-front"
+        onClick={() =>
+          form.setValue("front", "<p>Revised front</p>", { shouldDirty: true })
+        }
+      />
       <button
         type="button"
         data-testid="submit"
@@ -118,12 +120,6 @@ function getByTestId(container: HTMLElement, testId: string) {
   return element;
 }
 
-async function flushTimers() {
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(400);
-  });
-}
-
 describe("useFlashcardDialogState", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -134,12 +130,7 @@ describe("useFlashcardDialogState", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    checkFlashcardDuplicateMock.mockReset();
     chatEdits.pending = false;
-    checkFlashcardDuplicateMock.mockResolvedValue({
-      success: true,
-      duplicate: false,
-    });
     addEventListenerSpy.mockClear();
     removeEventListenerSpy.mockClear();
   });
@@ -167,8 +158,6 @@ describe("useFlashcardDialogState", () => {
       );
     });
 
-    await flushTimers();
-
     await act(async () => {
       root.render(
         <TestHarness
@@ -187,43 +176,99 @@ describe("useFlashcardDialogState", () => {
     expect(getByTestId(container, "back").textContent).toBe("<p>Back B</p>");
   });
 
-  it("rechecks duplicate status after a successful submit resets to kept values", async () => {
-    const onSubmitAction = vi.fn().mockResolvedValue({ success: true });
+  it.each(["create", "edit"] as const)(
+    "submits %s immediately after editing the front",
+    async (mode) => {
+      const onSubmitAction = vi.fn().mockResolvedValue({ success: true });
+      await act(async () =>
+        root.render(
+          <TestHarness
+            mode={mode}
+            open
+            values={{
+              subjectId: "deck-1",
+              front: "<p>Front</p>",
+              back: "<p>Back</p>",
+            }}
+            onSubmitAction={onSubmitAction}
+          />,
+        ),
+      );
+      await act(async () => getByTestId(container, "edit-front").click());
+      await act(async () => getByTestId(container, "submit").click());
+      expect(onSubmitAction).toHaveBeenCalledWith({
+        subjectId: "deck-1",
+        front: "<p>Revised front</p>",
+        back: "<p>Back</p>",
+      });
+    },
+  );
 
-    await act(async () => {
+  it.each(["create", "edit"] as const)(
+    "preserves a rejected %s draft and clears the error before retrying an edited front",
+    async (mode) => {
+      const onSubmitAction = vi
+        .fn()
+        .mockResolvedValueOnce({
+          success: false,
+          errorCode: "flashcards.duplicateFront",
+        })
+        .mockResolvedValueOnce({ success: true });
+      await act(async () =>
+        root.render(
+          <TestHarness
+            mode={mode}
+            open
+            values={{
+              subjectId: "deck-1",
+              front: "<p>Front</p>",
+              back: "<p>Back</p>",
+            }}
+            onSubmitAction={onSubmitAction}
+          />,
+        ),
+      );
+      await act(async () => getByTestId(container, "submit").click());
+      expect(getByTestId(container, "duplicate").textContent).toBe("true");
+      expect(getByTestId(container, "front").textContent).toBe("<p>Front</p>");
+      expect(getByTestId(container, "back").textContent).toBe("<p>Back</p>");
+      expect(getByTestId(container, "subjectId").textContent).toBe("deck-1");
+      await act(async () => getByTestId(container, "edit-front").click());
+      expect(getByTestId(container, "duplicate").textContent).toBe("false");
+      await act(async () => getByTestId(container, "submit").click());
+      expect(onSubmitAction).toHaveBeenCalledTimes(2);
+      expect(getByTestId(container, "duplicate").textContent).toBe("false");
+    },
+  );
+
+  it("lets a kept front submit again and reports the save-time conflict", async () => {
+    const onSubmitAction = vi
+      .fn()
+      .mockResolvedValueOnce({ success: true })
+      .mockResolvedValueOnce({
+        success: false,
+        errorCode: "flashcards.duplicateFront",
+      });
+    await act(async () =>
       root.render(
         <TestHarness
           open
           values={{
             subjectId: "deck-1",
-            front: "<p>Front A</p>",
-            back: "<p>Back A</p>",
+            front: "<p>Front</p>",
+            back: "<p>Back</p>",
           }}
           onSubmitAction={onSubmitAction}
-          getSuccessValues={(currentValues) => currentValues}
         />,
-      );
-    });
-
-    await flushTimers();
-    expect(checkFlashcardDuplicateMock).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      getByTestId(container, "submit").click();
-    });
-
-    await flushTimers();
-
-    expect(onSubmitAction).toHaveBeenCalledWith({
-      subjectId: "deck-1",
-      front: "<p>Front A</p>",
-      back: "<p>Back A</p>",
-    });
-    expect(checkFlashcardDuplicateMock).toHaveBeenCalledTimes(2);
-    expect(checkFlashcardDuplicateMock).toHaveBeenLastCalledWith({
-      id: undefined,
-      front: "<p>Front A</p>",
-    });
+      ),
+    );
+    await act(async () => getByTestId(container, "submit").click());
+    expect(getByTestId(container, "duplicate").textContent).toBe("false");
+    expect(getByTestId(container, "saved").textContent).toBe("true");
+    await act(async () => getByTestId(container, "submit").click());
+    expect(onSubmitAction).toHaveBeenCalledTimes(2);
+    expect(getByTestId(container, "duplicate").textContent).toBe("true");
+    expect(getByTestId(container, "saved").textContent).toBe("false");
   });
 
   it("clears front and back after submit when both pins are off", async () => {
@@ -244,8 +289,6 @@ describe("useFlashcardDialogState", () => {
         />,
       );
     });
-
-    await flushTimers();
 
     await act(async () => {
       getByTestId(container, "submit").click();
@@ -273,8 +316,6 @@ describe("useFlashcardDialogState", () => {
         />,
       );
     });
-
-    await flushTimers();
 
     await act(async () => {
       getByTestId(container, "keep-front-on").click();
@@ -307,8 +348,6 @@ describe("useFlashcardDialogState", () => {
       );
     });
 
-    await flushTimers();
-
     await act(async () => {
       getByTestId(container, "keep-back-on").click();
     });
@@ -338,7 +377,6 @@ describe("useFlashcardDialogState", () => {
         />,
       ),
     );
-    await flushTimers();
     await act(async () => getByTestId(container, "submit").click());
     expect(onSubmitAction).not.toHaveBeenCalled();
     expect(addEventListenerSpy).toHaveBeenCalledWith(
@@ -367,8 +405,6 @@ describe("useFlashcardDialogState", () => {
         />,
       );
     });
-
-    await flushTimers();
 
     await act(async () => {
       getByTestId(container, "submit").click();

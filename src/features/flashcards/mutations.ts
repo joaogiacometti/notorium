@@ -7,7 +7,6 @@ import {
   countFlashcardsBySubjectForUser,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
-  hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
 import { readOwnedFlashcardSource } from "@/features/flashcards/source-queries";
 import type {
@@ -47,13 +46,11 @@ async function validateCreateFlashcardInput(
 > {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
-  const [existingSubject, currentCount, hasDuplicate, ownedSource] =
-    await Promise.all([
-      getSubjectRecordForUser(userId, data.subjectId),
-      countFlashcardsBySubjectForUser(userId, data.subjectId),
-      hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
-      data.source ? readOwnedFlashcardSource(userId, data.source) : null,
-    ]);
+  const [existingSubject, currentCount, ownedSource] = await Promise.all([
+    getSubjectRecordForUser(userId, data.subjectId),
+    countFlashcardsBySubjectForUser(userId, data.subjectId),
+    data.source ? readOwnedFlashcardSource(userId, data.source) : null,
+  ]);
 
   if (!existingSubject) {
     return { error: actionError("subjects.notFound") };
@@ -65,10 +62,6 @@ async function validateCreateFlashcardInput(
         errorParams: { max: LIMITS.maxFlashcardsPerSubject },
       }),
     };
-  }
-
-  if (hasDuplicate) {
-    return { error: actionError("flashcards.duplicateFront") };
   }
 
   if (data.source && !ownedSource) {
@@ -154,10 +147,7 @@ async function validateEditFlashcardInput(
 ): Promise<ValidateEditFlashcardResult> {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
-  const [existingSubject, hasDuplicate] = await Promise.all([
-    getSubjectRecordForUser(userId, data.subjectId),
-    hasDuplicateFlashcardFrontForUser(userId, frontNormalized, data.id),
-  ]);
+  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
 
   if (!existingSubject) {
     return {
@@ -182,14 +172,6 @@ async function validateEditFlashcardInput(
         existingFlashcard,
       };
     }
-  }
-
-  if (hasDuplicate) {
-    return {
-      ok: false,
-      error: actionError("flashcards.duplicateFront"),
-      existingFlashcard,
-    };
   }
 
   return { ok: true, frontNormalized, existingFlashcard };

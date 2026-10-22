@@ -31,7 +31,9 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
 function Harness({
   subjects = [],
   onCreateSubject,
+  isDuplicate = false,
 }: Readonly<{
+  isDuplicate?: boolean;
   subjects?: SubjectOption[] | undefined;
   onCreateSubject?: (name: string) => Promise<boolean>;
 }>) {
@@ -61,9 +63,8 @@ function Harness({
       }}
       aiEnabled
       duplicateFront={{
-        isChecking: false,
-        isDuplicate: false,
-        message: "",
+        isDuplicate,
+        message: "A flashcard with this front already exists.",
       }}
       createOptions={{
         keepFrontAfterSubmit: false,
@@ -116,6 +117,17 @@ describe("FlashcardDialogForm", () => {
     });
     container.remove();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
+  });
+
+  it("shows a save-time duplicate error inline while allowing a retry", async () => {
+    await act(async () => root.render(<Harness isDuplicate />));
+    expect(container.textContent).toContain(
+      "A flashcard with this front already exists.",
+    );
+    const button = container.querySelector(
+      'button[form="form-create-flashcard"]',
+    ) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
   });
 
   it("disables submit while either editor is uploading an image", async () => {

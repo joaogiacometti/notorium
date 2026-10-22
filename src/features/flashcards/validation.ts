@@ -93,15 +93,6 @@ export type ImproveFlashcardBackForm = z.infer<
   typeof improveFlashcardBackSchema
 >;
 
-export const checkFlashcardDuplicateSchema = z.object({
-  id: z.string().min(1).optional(),
-  front: flashcardFrontSchema,
-});
-
-export type CheckFlashcardDuplicateForm = z.infer<
-  typeof checkFlashcardDuplicateSchema
->;
-
 export { hasRichTextContent } from "@/lib/editor/rich-text";
 
 export const deleteFlashcardSchema = z.object({

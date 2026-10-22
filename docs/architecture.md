@@ -41,6 +41,7 @@ Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* serv
 - `src/components/` owns reusable and feature UI; shadcn primitives stay in `src/components/ui/`.
 - `src/features/` owns product read/write logic, validation, mapping, constants, and feature-local types.
 - Dense algorithms may live in feature subfolders, such as `src/features/flashcards/fsrs/`.
+- Flashcard front uniqueness is enforced by the database constraint on `(userId, frontNormalized)`. Create/edit mutations map uniqueness violations to `flashcards.duplicateFront`; dialogs display that save-time failure without live duplicate reads or preliminary lookup queries.
 - Flashcard refine (leech detection from `lapse_count` and recent review ratings) lives in `src/features/flashcards/refine/` and is read through `GET /api/flashcards/struggling`. The UI is a mode of the manage view in `src/components/flashcards/manage/` (refine results table, improve dialog, `use-refine-card-actions.ts`), entered from the manage toolbar `Refine cards` button; accepting an improvement saves through the `editFlashcard` Server Action.
 - Flashcard review shortcut handling lives in `src/features/flashcard-review/shortcuts.ts`; the review UI calls that one hook instead of registering key listeners locally.
 - Full-screen flashcard sessions mount through `ReviewScrollBoundary`, which portals the session and its auxiliary overlays outside the page layout and uses `react-remove-scroll` (also used by Radix dialogs) to coordinate nested scroll locks. The session shell owns the scrollable card area.

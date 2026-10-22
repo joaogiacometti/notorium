@@ -106,7 +106,6 @@ export function EditFlashcardDialog({
             }}
             aiEnabled={aiEnabled}
             duplicateFront={{
-              isChecking: dialog.isCheckingDuplicateFront,
               isDuplicate: dialog.isDuplicateFront,
               message: dialog.duplicateFrontMessage,
             }}

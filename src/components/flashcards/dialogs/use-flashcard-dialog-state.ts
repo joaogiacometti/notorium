@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { type Path, type UseFormReturn, useWatch } from "react-hook-form";
+import { type UseFormReturn, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { checkFlashcardDuplicate } from "@/app/actions/flashcards";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
@@ -40,6 +39,10 @@ interface UseFlashcardDialogStateOptions<TValues extends FlashcardFormValues> {
   closeOnSuccess: boolean;
 }
 
+/**
+ * Preserve dialog drafts and show duplicate-front feedback only after a save.
+ * @example const dialog = useFlashcardDialogState({ ...options, form });
+ */
 export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   mode,
   open,
@@ -55,24 +58,16 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const hasPendingEdits = Boolean(workspace?.pending);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCheckingDuplicateFront, setIsCheckingDuplicateFront] =
-    useState(false);
-  const [isDuplicateFront, setIsDuplicateFront] = useState(false);
-  const [duplicateCheckVersion, setDuplicateCheckVersion] = useState(0);
+  const [rejectedFront, setRejectedFront] = useState<string | null>(null);
   const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
   const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
   const [editorResetVersion, setEditorResetVersion] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestDuplicateCheckVersionRef = useRef(duplicateCheckVersion);
   const previousOpenRef = useRef(false);
   const previousValuesRef = useRef<TValues | null>(null);
   const savedValuesRef = useRef(values);
   const currentValues = useWatch({ control: form.control }) as TValues;
-
-  useEffect(() => {
-    latestDuplicateCheckVersionRef.current = duplicateCheckVersion;
-  }, [duplicateCheckVersion]);
 
   useEffect(() => {
     if (!open && mode === "create") {
@@ -92,6 +87,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     ) {
       form.reset(values);
       savedValuesRef.current = values;
+      setRejectedFront(null);
     }
 
     previousOpenRef.current = open;
@@ -111,64 +107,10 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   );
 
   useEffect(() => {
-    let active = true;
-    const currentDuplicateCheckVersion = duplicateCheckVersion;
-
-    if (!open) {
-      setIsCheckingDuplicateFront(false);
-      setIsDuplicateFront(false);
-      return () => {
-        active = false;
-      };
+    if (!open || rejectedFront !== currentValues.front) {
+      setRejectedFront(null);
     }
-
-    if (
-      !hasRichTextContent(currentValues.front) ||
-      form.getFieldState("front" as Path<TValues>).invalid
-    ) {
-      setIsCheckingDuplicateFront(false);
-      setIsDuplicateFront(false);
-      return () => {
-        active = false;
-      };
-    }
-
-    setIsCheckingDuplicateFront(true);
-    const timeoutId = globalThis.setTimeout(() => {
-      void checkFlashcardDuplicate({
-        id: currentValues.id,
-        front: currentValues.front,
-      }).then((result) => {
-        if (
-          !active ||
-          currentDuplicateCheckVersion !==
-            latestDuplicateCheckVersionRef.current
-        ) {
-          return;
-        }
-
-        setIsCheckingDuplicateFront(false);
-
-        if (!result.success) {
-          setIsDuplicateFront(false);
-          return;
-        }
-
-        setIsDuplicateFront(result.duplicate);
-      });
-    }, 400);
-
-    return () => {
-      active = false;
-      globalThis.clearTimeout(timeoutId);
-    };
-  }, [
-    currentValues.front,
-    currentValues.id,
-    duplicateCheckVersion,
-    form,
-    open,
-  ]);
+  }, [currentValues.front, open, rejectedFront]);
 
   async function handleDiscardChanges() {
     if (savedTimerRef.current) {
@@ -228,22 +170,19 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   }
 
   async function handleSubmit(data: TValues) {
-    if (
-      isDuplicateFront ||
-      isCheckingDuplicateFront ||
-      isSubmitting ||
-      hasPendingEdits
-    ) {
+    if (isSubmitting || hasPendingEdits) {
       return;
     }
 
     setIsSubmitting(true);
+    setIsSaved(false);
+    setRejectedFront(null);
 
     try {
       const result = await onSubmitAction(data);
       if (!result.success) {
         if (result.errorCode === "flashcards.duplicateFront") {
-          setIsDuplicateFront(true);
+          setRejectedFront(data.front);
           return;
         }
 
@@ -259,7 +198,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       form.reset(successValues);
       savedValuesRef.current = successValues;
       setEditorResetVersion((currentVersion) => currentVersion + 1);
-      setDuplicateCheckVersion((currentVersion) => currentVersion + 1);
       setDiscardDialogOpen(false);
       await onSuccess?.(result.flashcard);
 
@@ -289,8 +227,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     setKeepFrontAfterSubmit,
     keepBackAfterSubmit,
     setKeepBackAfterSubmit,
-    isDuplicateFront,
-    isCheckingDuplicateFront,
+    isDuplicateFront: open && rejectedFront === currentValues.front,
     duplicateFrontMessage: t("flashcards.duplicateFront"),
     handleDiscardChanges,
     handleOpenChange,

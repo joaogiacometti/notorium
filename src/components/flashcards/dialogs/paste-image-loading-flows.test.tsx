@@ -72,7 +72,6 @@ describe("paste-image loading flows", () => {
       discardDialogOpen: false,
       setDiscardDialogOpen: vi.fn(),
       handleDiscardChanges: vi.fn(),
-      isCheckingDuplicateFront: false,
       isDuplicateFront: false,
       duplicateFrontMessage: "",
     };

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+class FakeUniqueConstraintError extends Error {
+  readonly code = "23505";
+}
+
 const readOwnedFlashcardSourceMock = vi.fn();
 vi.mock("@/features/flashcards/source-queries", () => ({
   readOwnedFlashcardSource: readOwnedFlashcardSourceMock,
@@ -36,7 +40,6 @@ const getFlashcardByIdForUserMock = vi.fn();
 const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
-const hasDuplicateFlashcardFrontForUserMock = vi.fn();
 const improveFlashcardBackForUserMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
@@ -81,7 +84,6 @@ vi.mock("@/features/flashcards/queries", () => ({
   getFlashcardByIdForUser: getFlashcardByIdForUserMock,
   getFlashcardRecordForUser: getFlashcardRecordForUserMock,
   getFlashcardRecordsForUser: getFlashcardRecordsForUserMock,
-  hasDuplicateFlashcardFrontForUser: hasDuplicateFlashcardFrontForUserMock,
 }));
 
 describe("createFlashcardForUser", () => {
@@ -104,7 +106,6 @@ describe("createFlashcardForUser", () => {
       reviewCount: 0,
       lapseCount: 0,
     });
-    hasDuplicateFlashcardFrontForUserMock.mockResolvedValue(false);
   });
 
   it.each(["note", "mindmap"] as const)(
@@ -161,7 +162,7 @@ describe("createFlashcardForUser", () => {
   );
 
   it("returns duplicate error when the normalized front already exists", async () => {
-    hasDuplicateFlashcardFrontForUserMock.mockResolvedValueOnce(true);
+    insertReturningMock.mockRejectedValueOnce(new FakeUniqueConstraintError());
 
     const { createFlashcardForUser } = await import(
       "@/features/flashcards/mutations"
@@ -179,7 +180,7 @@ describe("createFlashcardForUser", () => {
       errorParams: undefined,
       errorMessage: undefined,
     });
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(insertMock).toHaveBeenCalledOnce();
   });
 
   it("persists normalized front content on insert", async () => {
@@ -242,7 +243,28 @@ describe("editFlashcardForUser", () => {
       id: "deck-2",
       name: "Revised Deck",
     });
-    hasDuplicateFlashcardFrontForUserMock.mockResolvedValue(false);
+  });
+
+  it("returns a duplicate error when the database rejects an updated front", async () => {
+    getFlashcardByIdForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      subjectId: "deck-2",
+      front: "<p>Original front</p>",
+      back: "<p>Original back</p>",
+    });
+    updateReturningMock.mockRejectedValueOnce(new FakeUniqueConstraintError());
+    const { editFlashcardForUser } = await import(
+      "@/features/flashcards/mutations"
+    );
+    expect(
+      await editFlashcardForUser("user-1", {
+        id: "flashcard-1",
+        subjectId: "deck-2",
+        front: "<p>Same Front</p>",
+        back: "<p>Back</p>",
+      }),
+    ).toMatchObject({ success: false, errorCode: "flashcards.duplicateFront" });
+    expect(cleanupAttachmentPathnamesMock).not.toHaveBeenCalled();
   });
 
   it("updates front, back, and deck", async () => {

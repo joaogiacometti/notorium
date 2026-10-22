@@ -10,7 +10,6 @@ import {
   improveFlashcardBackForUserInput,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
-import { hasDuplicateFlashcardFrontForUser } from "@/features/flashcards/queries";
 import {
   type BulkDeleteFlashcardsForm,
   type BulkMoveFlashcardsForm,
@@ -18,9 +17,7 @@ import {
   bulkDeleteFlashcardsSchema,
   bulkMoveFlashcardsSchema,
   bulkResetFlashcardsSchema,
-  type CheckFlashcardDuplicateForm,
   type CreateFlashcardForm as CreateFlashcardInput,
-  checkFlashcardDuplicateSchema,
   createFlashcardSchema as createFlashcardInputSchema,
   type DeleteFlashcardForm,
   deleteFlashcardSchema,
@@ -31,13 +28,11 @@ import {
   type ResetFlashcardForm,
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
-import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkDeleteFlashcardsResult,
   BulkMoveFlashcardsResult,
   BulkResetFlashcardsResult,
-  CheckFlashcardDuplicateResult,
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
@@ -62,26 +57,6 @@ export async function createFlashcard(
   }
 
   return result;
-}
-
-export async function checkFlashcardDuplicate(
-  data: CheckFlashcardDuplicateForm,
-): Promise<CheckFlashcardDuplicateResult> {
-  return runValidatedUserAction(
-    "flashcards.checkFlashcardDuplicate",
-    checkFlashcardDuplicateSchema,
-    data,
-    "flashcards.invalidData",
-    async (userId, parsedData) => {
-      const duplicate = await hasDuplicateFlashcardFrontForUser(
-        userId,
-        normalizeRichTextForUniqueness(parsedData.front),
-        parsedData.id,
-      );
-
-      return { success: true, duplicate };
-    },
-  );
 }
 
 export async function editFlashcard(

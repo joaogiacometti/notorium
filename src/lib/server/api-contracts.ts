@@ -261,9 +261,3 @@ export type ResetFlashcardResult =
       flashcard: FlashcardEntity;
     }
   | ActionErrorResult;
-export type CheckFlashcardDuplicateResult =
-  | {
-      success: true;
-      duplicate: boolean;
-    }
-  | ActionErrorResult;

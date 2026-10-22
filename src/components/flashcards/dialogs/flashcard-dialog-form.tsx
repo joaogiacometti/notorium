@@ -47,7 +47,6 @@ interface FlashcardDialogDiscardConfig {
 }
 
 interface FlashcardDialogDuplicateConfig {
-  isChecking: boolean;
   isDuplicate: boolean;
   message: string;
 }
@@ -330,13 +329,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
         <Button
           type="submit"
           form={formId}
-          disabled={
-            isSubmitting ||
-            isImageUploading ||
-            duplicateFront.isChecking ||
-            duplicateFront.isDuplicate ||
-            review.blocked
-          }
+          disabled={isSubmitting || isImageUploading || review.blocked}
           className={cn(
             "w-full",
             isSaved &&
