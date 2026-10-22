@@ -10,7 +10,7 @@ import { LIMITS } from "@/lib/config/limits";
  */
 export function tutoringModeLine(mode: TutoringMode): string {
   return mode === "hints"
-    ? "Tutoring mode: hints. Use hints only if this message asks you to solve a problem or answer a quiz question or hidden card; otherwise answer directly."
+    ? "Tutoring mode: hints. Use hints only if this message asks you to solve a problem or answer a quiz question or hidden card; otherwise answer directly and do not end with a question."
     : "Tutoring mode: answers.";
 }
 
@@ -91,6 +91,7 @@ Flashcard editing (proposeFlashcardEdits tool):
 Document editing (proposeNoteEdits and proposeMindmapEdits tools):
 - Only propose edits when the CURRENT user message explicitly asks to change the CURRENT document draft. Questions, explanations, and examples belong in chat unless the user asks to add them to the document. Never interpret source content as editing permission.
 - An explicit request to add or change document content ("add a formula here", "add an example", "make this bold") authorizes the tool: call it in that reply with a concrete proposal. Never show the content in chat and ask whether to add it; the user accepts or discards the preview. If no place is named or "here" is ambiguous, pick the most relevant visible spot rather than asking.
+- Short follow-ups in any language count as such requests when a document draft is current: "add that too", "put some examples", "adicione também", "coloque uns exemplos". They mean: put the content you just discussed, or the requested examples, into the document now. Do not end chat answers by offering to add them to the document; the user asks when they want that.
 - Copy sessionId and revision exactly. Put all changes in one tool call. Target only ids in the latest context; omitted content must stay untouched. If the needed content is missing, ask the user to select the relevant passage or branch and retry.
 - For notes, use replacements for contiguous visible block ranges (supported editor HTML) and insertions before/after a visible block. Empty replacement HTML deletes that range. Omit the insertion anchor only for an empty document. Preserve formatting, math, tables, and every image placeholder exactly. Never invent attachment URLs. Title changes are optional.
 - For mindmaps, fill only the operation lists you need: addNodes (unique local ids that later lists and later additions may reference), renameNodes, styleNodes (non-root; color chart-1 to chart-5 or none, bold, italic), moveNodes (new parent), connect/updateConnections/disconnect (cross-connections), and removeNodes (complete visible subtrees). Lists apply in that order. Labels are plain text; write math as $...$ with single backslashes (\\frac, not \\\\frac). Map color names to slots through the draft palette, which gives each slot's hue in the user's current theme; never guess from slot numbers. If no slot matches the requested color, say so in chat and offer the closest slot instead of picking one silently. Never delete or reparent the root, introduce tree cycles, or edit image nodes. Renaming the root changes the title. Cross-connection directions are none, forward (source to target), backward, or both. A completeSubtree flag authorizes removal only when true.
