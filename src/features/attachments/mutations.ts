@@ -7,7 +7,6 @@ import {
 import { LIMITS } from "@/lib/config/limits";
 import { optimizeImageForStorage } from "@/lib/media-storage/optimize-image";
 import { getMediaStorageProvider } from "@/lib/media-storage/provider";
-import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { actionError } from "@/lib/server/server-action-errors";
 
@@ -31,7 +30,7 @@ export interface UploadAttachmentImageInput {
 }
 
 /**
- * Validates, rate-limits, optimizes, and stores an attachment image's raw bytes,
+ * Validates, optimizes, and stores an attachment image's raw bytes,
  * returning both its authenticated read URL and the stored blob pathname. Shared
  * by the note/flashcard/mindmap editor-image uploads, which reach it through the
  * POST /api/attachments/image route handler rather than a Server Action — Server Actions cap request bodies
@@ -67,17 +66,6 @@ export async function uploadAttachmentImageForUser(
 
   if (!provider) {
     return actionError("attachments.notConfigured");
-  }
-
-  const rateLimit = await consumeUserDailyRateLimit({
-    prefix: LIMITS.attachmentUploadRateLimitPrefix,
-    userId,
-    limit: LIMITS.attachmentUploadRateLimitPerDay,
-    errorCode: "auth.rateLimited",
-  });
-
-  if (rateLimit.limited) {
-    return actionError(rateLimit.errorCode);
   }
 
   const optimized = await optimizeImageForStorage({

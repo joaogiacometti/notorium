@@ -1,6 +1,12 @@
 import { uploadAttachmentImageForUser } from "@/features/attachments/mutations";
 import { isUploadImageContext } from "@/features/attachments/validation";
+import {
+  readUploadForm,
+  UploadBodyTooLargeError,
+} from "@/lib/attachments/read-upload-form";
 import { getOptionalSession } from "@/lib/auth/auth";
+import { LIMITS } from "@/lib/config/limits";
+import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 import { actionError } from "@/lib/server/server-action-errors";
 
 // Image uploads run through this route handler rather than a Server Action:
@@ -17,10 +23,21 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(actionError("auth.forbidden"), { status: 401 });
   }
 
+  const quota = await consumeUserDailyRateLimit({
+    prefix: LIMITS.attachmentUploadRateLimitPrefix,
+    userId: session.user.id,
+    limit: LIMITS.attachmentUploadRateLimitPerDay,
+    errorCode: "auth.rateLimited",
+  });
+  if (quota.limited) {
+    return Response.json(actionError(quota.errorCode), { status: 429 });
+  }
+
   let form: FormData;
   try {
-    form = await request.formData();
-  } catch {
+    form = await readUploadForm(request);
+  } catch (error) {
+    if (error instanceof UploadBodyTooLargeError) return uploadSizeError();
     return Response.json(actionError("attachments.invalidData"), {
       status: 400,
     });
@@ -39,6 +56,8 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
+  if (file.size > LIMITS.attachmentMaxBytes) return uploadSizeError();
+
   const bytes = new Uint8Array(await file.arrayBuffer());
   const result = await uploadAttachmentImageForUser(session.user.id, {
     fileName: file.name,
@@ -48,4 +67,13 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   return Response.json(result, { status: result.success ? 200 : 400 });
+}
+
+function uploadSizeError(): Response {
+  return Response.json(
+    actionError("limits.attachmentSizeLimit", {
+      errorParams: { max: LIMITS.attachmentMaxBytes },
+    }),
+    { status: 413 },
+  );
 }

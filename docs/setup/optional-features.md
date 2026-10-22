@@ -31,7 +31,7 @@ The study assistant sends each chat's id to OpenRouter as `session_id`. This sup
 
 ## Attachments
 
-Attachment uploads use Vercel Blob.
+Attachment uploads use Vercel Blob. Files are limited to 4 MiB and multipart bodies to 4 MiB plus 64 KiB. Each authenticated attempt consumes the 200-per-day upload allowance before the body is read, including invalid and oversized attempts.
 
 Set:
 

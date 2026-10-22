@@ -22,6 +22,8 @@ export const LIMITS = {
   // 4.5 MB, so the accepted size stays safely below that (with multipart
   // overhead headroom). Server-side optimization shrinks most uploads further.
   attachmentMaxBytes: 4194304,
+  // Bound multipart fields and headers as well as the image itself.
+  attachmentRequestMaxBytes: 4194304 + 65536,
   attachmentSignedReadTtlSeconds: 300,
   attachmentUploadRateLimitPrefix: "ratelimit:attachments:upload",
   attachmentUploadRateLimitPerDay: 200,

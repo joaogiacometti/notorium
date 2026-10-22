@@ -64,6 +64,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
   - pasted image uploads stored in private blob storage
   - Markdown image syntax
 - Unsupported relative or local media references degrade to plain text instead of rendering as images.
+- Image uploads accept files up to 4 MiB. Authenticated upload attempts (including invalid or oversized requests) count toward the 200-per-day allowance, checked before reading the body. The total multipart body is capped at 4 MiB plus 64 KiB of overhead; oversized uploads return a size-limit error.
 - Uploaded images (note, flashcard, and mindmap images) are automatically optimized to WebP on upload, with a maximum dimension cap, to reduce stored size and bandwidth without a visible quality loss. The original is kept only if optimization would not make the file smaller.
 - When AI is configured, users can ask the study assistant to propose flashcards using the open note’s current content, then review and create them in chat.
 

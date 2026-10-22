@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const consumeUploadQuotaMock = vi.fn();
+vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
+  consumeUserDailyRateLimit: consumeUploadQuotaMock,
+}));
+
 const getOptionalSessionMock = vi.fn();
 const uploadAttachmentImageForUserMock = vi.fn();
 
@@ -34,6 +39,7 @@ function buildForm(
 describe("POST /api/attachments/image", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    consumeUploadQuotaMock.mockResolvedValue({ limited: false });
     getOptionalSessionMock.mockResolvedValue({ user: { id: "user-1" } });
     uploadAttachmentImageForUserMock.mockResolvedValue({
       success: true,
@@ -56,6 +62,37 @@ describe("POST /api/attachments/image", () => {
     );
 
     expect(response.status).toBe(401);
+    expect(uploadAttachmentImageForUserMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects exhausted quota before reading the body", async () => {
+    consumeUploadQuotaMock.mockResolvedValueOnce({
+      limited: true,
+      errorCode: "auth.rateLimited",
+    });
+    const { POST } = await import("./route");
+    const request = buildRequest(buildForm());
+    expect((await POST(request)).status).toBe(429);
+    expect(request.bodyUsed).toBe(false);
+    expect(uploadAttachmentImageForUserMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized files before delegating", async () => {
+    const { LIMITS } = await import("@/lib/config/limits");
+    const { POST } = await import("./route");
+    const response = await POST(
+      buildRequest(
+        buildForm({
+          file: new File(
+            [new Uint8Array(LIMITS.attachmentMaxBytes + 1)],
+            "large.png",
+            { type: "image/png" },
+          ),
+          context: "notes",
+        }),
+      ),
+    );
+    expect(response.status).toBe(413);
     expect(uploadAttachmentImageForUserMock).not.toHaveBeenCalled();
   });
 
