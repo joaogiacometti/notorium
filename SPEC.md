@@ -55,7 +55,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 - Create, read, update, and delete notes per subject.
 - Notes use rich text editing and rendering.
-- Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, tables, LaTeX math, and other shared editor formatting exposed by the app. A compact toolbar exposes headings, inline formatting, lists, quotes, code blocks, links, tables, and image uploads, with active-format state and keyboard-focus tooltips.
+- Rich text supports headings, lists, quotes, inline code, syntax-highlighted code blocks, tables, LaTeX math, and other shared editor formatting exposed by the app. A compact toolbar exposes headings, inline formatting, lists, quotes, code blocks, links, tables, and image uploads, with active-format state and keyboard-focus tooltips. The toolbar is not a Tab stop, so Tab moves between fields and straight into the text; Alt+F10 from the text moves into the toolbar, arrow keys/Home/End move within it, and Tab returns to the text.
 - Math renders with KaTeX in both editing and reading. Inline math is typed as `$...$`; the `/math` slash command inserts a block equation. Equations are editable by clicking them, and their LaTeX stays searchable.
 - Note detail edits the active note inline with auto-save across the full content width. The header kebab (three-dot) menu offers Edit (focuses the inline title), Copy as rich text, Copy as plain text, and Delete.
 - Note detail supports copying note content as rich text or plain text.

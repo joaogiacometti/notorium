@@ -178,6 +178,8 @@ export function TiptapFormattingToolbar({
       <div
         role="toolbar"
         aria-label="Text formatting"
+        aria-orientation="horizontal"
+        onKeyDown={moveToolbarFocus}
         className="flex shrink-0 items-center overflow-x-auto border-b border-border/60 bg-background/95 px-2 py-1"
       >
         {actions.map((action, index) => (
@@ -191,6 +193,7 @@ export function TiptapFormattingToolbar({
                   type="button"
                   variant={action.active ? "secondary" : "ghost"}
                   size="icon-sm"
+                  tabIndex={-1}
                   aria-label={action.label}
                   aria-pressed={action.active}
                   disabled={action.disabled}
@@ -207,4 +210,56 @@ export function TiptapFormattingToolbar({
       </div>
     </TooltipProvider>
   );
+}
+
+export const EDITOR_ROOT_ATTRIBUTE = "data-tiptap-editor-root";
+
+/**
+ * Toolbar buttons sit outside the Tab order so Tab moves between fields, not
+ * through every formatting command. Alt+F10 in the text enters the toolbar
+ * (the CKEditor/TinyMCE convention). Returns whether the key was handled.
+ * @example handleKeyDown: (view, event) => focusToolbarOnShortcut(event, view.dom)
+ */
+export function focusToolbarOnShortcut(
+  event: Pick<KeyboardEvent, "altKey" | "key" | "preventDefault">,
+  editorText: Element,
+): boolean {
+  if (!event.altKey || event.key !== "F10") return false;
+  const firstButton = editorText
+    .closest(`[${EDITOR_ROOT_ATTRIBUTE}]`)
+    ?.querySelector<HTMLButtonElement>(
+      '[role="toolbar"] button:not(:disabled)',
+    );
+  if (!firstButton) return false;
+  event.preventDefault();
+  firstButton.focus();
+  return true;
+}
+
+/** Roving focus inside the toolbar, per the WAI-ARIA toolbar pattern. */
+function moveToolbarFocus(event: React.KeyboardEvent<HTMLDivElement>) {
+  const buttons = Array.from(
+    event.currentTarget.querySelectorAll<HTMLButtonElement>(
+      "button:not(:disabled)",
+    ),
+  );
+  const target = pickToolbarButton(buttons, event.key);
+  if (!target) return;
+  event.preventDefault();
+  target.focus();
+}
+
+function pickToolbarButton(
+  buttons: HTMLButtonElement[],
+  key: string,
+): HTMLButtonElement | undefined {
+  const index = buttons.findIndex(
+    (button) => button === document.activeElement,
+  );
+  const count = buttons.length;
+  if (key === "ArrowRight") return buttons[(index + 1) % count];
+  if (key === "ArrowLeft") return buttons[(index - 1 + count) % count];
+  if (key === "Home") return buttons[0];
+  if (key === "End") return buttons.at(-1);
+  return undefined;
 }

@@ -30,6 +30,10 @@ describe("formatShortcutKeys", () => {
     ]);
   });
 
+  it("formats function-key chords", () => {
+    expect(formatShortcutKeys(["alt+f10"])).toEqual(["Alt + F10"]);
+  });
+
   it("formats multi-modifier chords", () => {
     expect(formatShortcutKeys(["cmd+shift+z"])).toEqual(["⌘ + Shift + z"]);
   });

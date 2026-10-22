@@ -117,6 +117,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.NotesEditor,
   },
   {
+    id: "editor-focus-toolbar",
+    kind: "keys",
+    keys: ["alt+f10"],
+    description: "Move to the formatting toolbar (arrow keys move within it)",
+    category: ShortcutCategory.NotesEditor,
+  },
+  {
     id: "editor-zen-exit",
     kind: "keys",
     keys: ["escape"],
@@ -334,6 +341,7 @@ const SHORTCUT_KEY_LABELS: Record<string, string> = {
   tab: "Tab",
   delete: "Del",
   backspace: "Backspace",
+  f10: "F10",
 };
 
 /**

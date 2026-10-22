@@ -20,7 +20,11 @@ import {
   type MathDialogState,
   MathEditDialog,
 } from "@/components/shared/math-edit-dialog";
-import { TiptapFormattingToolbar } from "@/components/shared/tiptap-formatting-toolbar";
+import {
+  EDITOR_ROOT_ATTRIBUTE,
+  focusToolbarOnShortcut,
+  TiptapFormattingToolbar,
+} from "@/components/shared/tiptap-formatting-toolbar";
 import {
   createImageUrlPasteExtension,
   type EditorImageUploadContext,
@@ -164,7 +168,8 @@ export function TiptapEditor({
         "aria-invalid": ariaInvalid ? "true" : "false",
         class: "tiptap-editor-content",
       },
-      handleKeyDown: (_, event) => {
+      handleKeyDown: (view, event) => {
+        if (focusToolbarOnShortcut(event, view.dom)) return true;
         if (
           event.key === "k" &&
           (event.metaKey || event.ctrlKey) &&
@@ -249,6 +254,7 @@ export function TiptapEditor({
 
   return (
     <div
+      {...{ [EDITOR_ROOT_ATTRIBUTE]: "" }}
       className={cn(
         "w-full min-w-0 rounded-md border border-input shadow-xs transition-colors",
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",

@@ -2,7 +2,11 @@ import type { Editor } from "@tiptap/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TiptapFormattingToolbar } from "@/components/shared/tiptap-formatting-toolbar";
+import {
+  EDITOR_ROOT_ATTRIBUTE,
+  focusToolbarOnShortcut,
+  TiptapFormattingToolbar,
+} from "@/components/shared/tiptap-formatting-toolbar";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -147,5 +151,83 @@ describe("TiptapFormattingToolbar", () => {
         'button[aria-label="Uploading image"]',
       )?.disabled,
     ).toBe(true);
+  });
+
+  async function renderToolbar(imageUploadPending = false) {
+    const { editor } = createEditor();
+    await act(async () => {
+      root.render(
+        <TiptapFormattingToolbar
+          editor={editor}
+          imageUploadPending={imageUploadPending}
+          onEditLink={onEditLink}
+          onSelectImage={onSelectImage}
+        />,
+      );
+    });
+  }
+
+  function pressInToolbar(key: string) {
+    const toolbar = container.querySelector('[role="toolbar"]');
+    act(() => {
+      toolbar?.dispatchEvent(
+        new KeyboardEvent("keydown", { key, bubbles: true }),
+      );
+    });
+  }
+
+  function focusedLabel() {
+    return document.activeElement?.getAttribute("aria-label");
+  }
+
+  it("keeps toolbar buttons out of the Tab order", async () => {
+    await renderToolbar();
+
+    const buttons = Array.from(container.querySelectorAll("button"));
+    expect(buttons.length).toBeGreaterThan(0);
+    expect(buttons.every((button) => button.tabIndex === -1)).toBe(true);
+  });
+
+  it("moves between enabled buttons with arrow, Home, and End keys", async () => {
+    await renderToolbar(true);
+    container
+      .querySelector<HTMLButtonElement>('button[aria-label="Heading 1"]')
+      ?.focus();
+
+    pressInToolbar("ArrowRight");
+    expect(focusedLabel()).toBe("Heading 2");
+    pressInToolbar("End");
+    expect(focusedLabel()).toBe("Table");
+    pressInToolbar("ArrowRight");
+    expect(focusedLabel()).toBe("Heading 1");
+    pressInToolbar("ArrowLeft");
+    expect(focusedLabel()).toBe("Table");
+    pressInToolbar("Home");
+    expect(focusedLabel()).toBe("Heading 1");
+  });
+
+  it("enters the toolbar from its editor text on Alt+F10 only", async () => {
+    container.setAttribute(EDITOR_ROOT_ATTRIBUTE, "");
+    await renderToolbar();
+    const editorText = document.createElement("div");
+    container.append(editorText);
+    const press = (altKey: boolean, key: string) =>
+      focusToolbarOnShortcut(
+        { altKey, key, preventDefault: vi.fn() },
+        editorText,
+      );
+
+    expect(press(false, "F10")).toBe(false);
+    expect(press(true, "F9")).toBe(false);
+    expect(press(true, "F10")).toBe(true);
+    expect(focusedLabel()).toBe("Heading 1");
+    expect(
+      focusToolbarOnShortcut(
+        { altKey: true, key: "F10", preventDefault: vi.fn() },
+        document.createElement("div"),
+      ),
+    ).toBe(false);
+    editorText.remove();
+    container.removeAttribute(EDITOR_ROOT_ATTRIBUTE);
   });
 });
