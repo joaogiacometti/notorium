@@ -4,12 +4,18 @@ import type {
   LibrarySearchInput,
   LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
-import { buildAssistantSystemPrompt } from "@/features/assistant/prompts";
+import {
+  buildAssistantSystemPrompt,
+  tutoringModeLine,
+} from "@/features/assistant/prompts";
 import {
   buildAssistantTools,
   type LibrarySearchFunction,
 } from "@/features/assistant/tools";
-import type { AssistantChatRequest } from "@/features/assistant/validation";
+import type {
+  AssistantChatRequest,
+  TutoringMode,
+} from "@/features/assistant/validation";
 import { searchLibraryForUser } from "@/features/search/library-queries";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { streamChatResponse } from "@/lib/ai/stream-chat";
@@ -35,6 +41,8 @@ interface StreamAssistantReplyForUserInput {
   draft?: AssistantChatRequest["draft"];
   context?: AssistantChatRequest["context"];
   documentDraft?: AssistantChatRequest["documentDraft"];
+  /** The user's toggle; omitted means hint-first. */
+  tutoring?: TutoringMode;
   abortSignal?: AbortSignal;
   /** Injected by tests; defaults to the user's subject paths from the DB. */
   loadSubjectPaths?: (userId: string) => Promise<string[]>;
@@ -66,6 +74,7 @@ export async function streamAssistantReplyForUser({
   draft,
   context,
   documentDraft,
+  tutoring = "hints",
   abortSignal,
   loadSubjectPaths = readSubjectPathsForUser,
   searchLibrary = searchLibraryForUser,
@@ -90,12 +99,10 @@ export async function streamAssistantReplyForUser({
     settings: access.settings,
     logScope: "assistant.chat",
     instructions: buildAssistantSystemPrompt(await loadSubjectPaths(userId)),
-    messages: includeCurrentStudyContext(
-      messages,
-      draft,
-      context,
-      documentDraft,
-    ),
+    messages: prefixLatestUserTurn(messages, [
+      tutoringModeLine(tutoring),
+      ...describeCurrentMaterial(draft, context, documentDraft),
+    ]),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId)),
     maxModelSteps: ASSISTANT_MAX_MODEL_STEPS,
@@ -127,20 +134,33 @@ async function readSubjectPathsForUser(userId: string): Promise<string[]> {
   return subjects.map((subject) => subject.path);
 }
 
-function includeCurrentStudyContext(
+// Per-turn settings and material ride in the latest user turn, never the
+// system prompt, so instructions and tools stay byte-identical for the cache.
+function prefixLatestUserTurn(
   messages: AssistantChatRequest["messages"],
-  draft: AssistantChatRequest["draft"],
-  studyContext?: AssistantChatRequest["context"],
-  documentDraft?: AssistantChatRequest["documentDraft"],
+  prefixes: string[],
 ): AssistantChatRequest["messages"] {
-  if (!draft && !studyContext && !documentDraft) return messages;
   return messages.map((message, index) => {
     if (index !== messages.length - 1 || message.role !== "user")
       return message;
-    const context = {
-      type: "text" as const,
-      text: `${draft ? "Current flashcard draft" : documentDraft ? "Current document draft" : "Current study context"} (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(draft ?? documentDraft ?? studyContext)}`,
-    };
-    return { ...message, parts: [context, ...message.parts] };
+    const parts = prefixes.map((text) => ({ type: "text" as const, text }));
+    return { ...message, parts: [...parts, ...message.parts] };
   });
+}
+
+function describeCurrentMaterial(
+  draft: AssistantChatRequest["draft"],
+  studyContext?: AssistantChatRequest["context"],
+  documentDraft?: AssistantChatRequest["documentDraft"],
+): string[] {
+  const material = draft ?? documentDraft ?? studyContext;
+  if (!material) return [];
+  const label = draft
+    ? "Current flashcard draft"
+    : documentDraft
+      ? "Current document draft"
+      : "Current study context";
+  return [
+    `${label} (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(material)}`,
+  ];
 }

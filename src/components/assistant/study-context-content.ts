@@ -66,7 +66,7 @@ function orderedMindmapLabels(graph: MindmapGraph): string[] {
   return lines;
 }
 
-/** Snapshot only the card sides visible in the current session.
+/** Snapshot the card, marking the answer hidden until the session reveals it.
  * @example buildReviewContext({front: "Q", back: "A"}, "Math", false, "review");
  */
 export function buildReviewContext(
@@ -80,7 +80,9 @@ export function buildReviewContext(
     mode,
     subjectPath,
     front: studyRichText(card.front),
-    ...(revealed ? { back: studyRichText(card.back) } : {}),
+    ...(revealed
+      ? { back: studyRichText(card.back) }
+      : { hiddenBack: studyRichText(card.back) }),
   };
 }
 

@@ -3,6 +3,7 @@ import type {
   LibrarySearchInput,
   LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
+import { tutoringModeLine } from "@/features/assistant/prompts";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 import {
   createFakeStreamingModel,
@@ -366,6 +367,32 @@ describe("streamAssistantReplyForUser", () => {
     expect(finalTurn?.content.at(-1)).toEqual({ type: "text", text: question });
     expect(JSON.stringify(finalTurn?.content.slice(0, -1))).toContain(
       "Explain alpha",
+    );
+  });
+
+  it("sends the tutoring mode in the latest turn, keeping instructions stable", async () => {
+    const model = createFakeStreamingModel("What have you tried?");
+    getAiModelMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    for (const tutoring of [undefined, "answers"] as const) {
+      const result = await streamAssistantReplyForUser({
+        userId: "user-1",
+        messages,
+        tutoring,
+        loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      });
+      if (result.success) await result.response.text();
+    }
+    const [first, second] = model.doStreamCalls;
+    expect(first.prompt[0]).toEqual(second.prompt[0]);
+    expect(first.prompt.at(-1)?.content).toEqual([
+      { type: "text", text: tutoringModeLine("hints") },
+      { type: "text", text: "What is ATP?" },
+    ]);
+    expect(JSON.stringify(second.prompt.at(-1))).toContain(
+      tutoringModeLine("answers"),
     );
   });
 

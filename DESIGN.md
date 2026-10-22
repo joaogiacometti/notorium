@@ -180,6 +180,11 @@ host for the same assistant. Review provides its own host inside its scroll
 boundary. Nested hosts restore the previous host on close; never raise z-index
 to expose chat above a dialog.
 
+The header's Hints first toggle is an `icon-sm` ghost button like its
+neighbors, with `aria-pressed`: a lightbulb on a `bg-primary/10` tint when on, a
+muted crossed-out lightbulb when off. Keep its accessible label fixed and let
+the pressed state carry the mode; the title explains it on hover.
+
 AI flashcard edits are reviewed inside each affected input, with separate Accept and
 Discard controls per field. Additions use success intent variables; deletions
 use danger intent variables and strikethrough. Read-only review decorations

@@ -79,11 +79,14 @@ describe("study context snapshots", () => {
     });
     expect(content).toBe("A <- B\nB <-> C\nC -- D");
   });
-  it("never includes an unrevealed answer and updates card content and mode", () => {
+  it("marks an unrevealed answer hidden and updates card content and mode", () => {
     const card = {
       front: '<p>Question</p><img src="https://private/image">',
       back: "Hidden answer",
     };
+    expect(buildReviewContext(card, "Math", false, "review")).toMatchObject({
+      hiddenBack: "Hidden answer",
+    });
     expect(
       buildReviewContext(card, "Math", false, "review"),
     ).not.toHaveProperty("back");
@@ -94,6 +97,9 @@ describe("study context snapshots", () => {
       mode: "exam",
       back: "Hidden answer",
     });
+    expect(buildReviewContext(card, "Math", true, "exam")).not.toHaveProperty(
+      "hiddenBack",
+    );
     expect(
       buildReviewContext(
         { front: "Next", back: "Next answer" },
@@ -103,10 +109,10 @@ describe("study context snapshots", () => {
       ),
     ).toMatchObject({ front: "Next" });
   });
-  it("distinguishes front-only and revealed cards", () => {
+  it("distinguishes hidden and revealed answers", () => {
     expect(
       describeStudyContext({ kind: "review", mode: "exam", front: "Q" }),
-    ).toContain("exam card · front only");
+    ).toContain("exam card · answer hidden");
     expect(
       describeStudyContext({
         kind: "review",

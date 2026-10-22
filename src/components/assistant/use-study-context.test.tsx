@@ -64,12 +64,14 @@ it("refreshes visible card context and restores the underlying note on exit", as
     );
     await act(async () => container.querySelectorAll("button")[3].click());
     expect(transport.requests.at(-1)?.body).toEqual({
+      tutoring: "hints",
       context: { kind: "review", mode: "review", front: "Question" },
     });
     await act(async () => container.querySelectorAll("button")[1].click());
     expect(container.querySelector("output")?.textContent).toContain("Answer");
     await act(async () => container.querySelectorAll("button")[3].click());
     expect(transport.requests.at(-1)?.body).toEqual({
+      tutoring: "hints",
       context: {
         kind: "review",
         mode: "review",
@@ -81,6 +83,7 @@ it("refreshes visible card context and restores the underlying note on exit", as
     expect(container.querySelector("output")?.textContent).toContain("Unsaved");
     await act(async () => container.querySelectorAll("button")[2].click());
     expect(transport.requests.at(-1)?.body).toEqual({
+      tutoring: "hints",
       context: {
         kind: "note",
         title: "Note",

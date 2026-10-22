@@ -24,6 +24,10 @@ export const studyContextSchema = z.discriminatedUnion("kind", [
     subjectPath: z.string().max(SUBJECT_PATH_MAX_CHARS).optional(),
     front: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS),
     back: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS).optional(),
+    // The unrevealed answer, so hints and attempt checks match the user's own
+    // card; a tutor given the solution stopped making errors students copied
+    // (Bastani et al., PNAS 2025). The prompt forbids stating it unasked.
+    hiddenBack: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS).optional(),
   }),
 ]);
 export type StudyContext = z.infer<typeof studyContextSchema>;
@@ -33,6 +37,6 @@ export type StudyContext = z.infer<typeof studyContextSchema>;
  */
 export function describeStudyContext(context: StudyContext): string {
   if (context.kind === "review")
-    return `Using current ${context.mode === "exam" ? "exam" : "review"} card · ${context.back === undefined ? "front only" : "front and answer"}`;
+    return `Using current ${context.mode === "exam" ? "exam" : "review"} card · ${context.back === undefined ? "answer hidden" : "front and answer"}`;
   return `Using ${context.kind}: ${context.title || "Untitled"}${context.partial ? " · partial context" : ""}`;
 }

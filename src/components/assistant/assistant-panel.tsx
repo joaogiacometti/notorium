@@ -1,6 +1,12 @@
 "use client";
 
-import { Minus, RotateCcw, SquarePen } from "lucide-react";
+import {
+  Lightbulb,
+  LightbulbOff,
+  Minus,
+  RotateCcw,
+  SquarePen,
+} from "lucide-react";
 import { readAssistantErrorMessage } from "@/components/assistant/assistant-chat-transport";
 import { AssistantComposer } from "@/components/assistant/assistant-composer";
 import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
@@ -12,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { describeStudyContext } from "@/features/assistant/study-context";
 import { isAssistantReplyInFlight } from "@/features/assistant/utils";
+import { cn } from "@/lib/utils";
 
 interface AssistantPanelProps {
   /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
@@ -52,6 +59,7 @@ function AssistantConversationPanel({
       embedded={embedded}
       actions={
         <div className="flex items-center gap-1">
+          <HintsFirstToggle workspace={workspace} />
           <Button
             type="button"
             variant="ghost"
@@ -138,6 +146,37 @@ function AssistantConversationPanel({
         onStop={() => void chat.stop()}
       />
     </AssistantPanelFrame>
+  );
+}
+
+// An icon button like its header neighbors. The pressed state is the mode; the
+// label stays fixed so screen readers announce "Hints first, pressed" rather
+// than a changing name, and the title explains the current mode on hover.
+function HintsFirstToggle({
+  workspace,
+}: Readonly<{ workspace: AssistantWorkspace }>) {
+  const hints = workspace.tutoring === "hints";
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Hints first"
+      aria-pressed={hints}
+      title={
+        hints
+          ? "Hints first is on: problems get hints before the answer"
+          : "Hints first is off: problems are solved right away"
+      }
+      className={cn(hints ? "bg-primary/10" : "text-muted-foreground")}
+      onClick={() => workspace.setTutoring(hints ? "answers" : "hints")}
+    >
+      {hints ? (
+        <Lightbulb className="size-4" />
+      ) : (
+        <LightbulbOff className="size-4" />
+      )}
+    </Button>
   );
 }
 

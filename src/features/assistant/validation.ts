@@ -21,6 +21,12 @@ import {
 } from "@/features/assistant/tools";
 import { LIMITS } from "@/lib/config/limits";
 
+/** How the assistant handles problems: graduated hints first, or direct answers.
+ * @example tutoringModeSchema.parse("hints");
+ */
+export const tutoringModeSchema = z.enum(["hints", "answers"]);
+export type TutoringMode = z.infer<typeof tutoringModeSchema>;
+
 const userTextPartSchema = z.object({
   type: z.literal("text"),
   text: z.string().trim().min(1).max(LIMITS.assistantMessageMaxChars),
@@ -177,6 +183,8 @@ export const assistantChatRequestSchema = z
     draft: flashcardDraftSchema.optional(),
     documentDraft: documentDraftSchema.optional(),
     context: studyContextSchema.optional(),
+    // Defaults to hints so tabs loaded before the toggle existed stay guarded.
+    tutoring: tutoringModeSchema.default("hints"),
     chatId: z.string().min(1).max(100).optional(),
     messages: z
       .array(

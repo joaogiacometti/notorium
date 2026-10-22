@@ -11,6 +11,7 @@ import type {
 } from "@/features/assistant/edit-contract";
 import type { StudyContext } from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
+import type { TutoringMode } from "@/features/assistant/validation";
 
 export interface ActiveFlashcardEditor {
   sessionId: string;
@@ -36,6 +37,9 @@ export interface AssistantWorkspace {
   documents: DocumentEditControls;
   composerDraft: string;
   setComposerDraft: (draft: string) => void;
+  /** Hint-first by default; lasts for the page session like the chat. */
+  tutoring: TutoringMode;
+  setTutoring: (mode: TutoringMode) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
   host: HTMLElement | null;

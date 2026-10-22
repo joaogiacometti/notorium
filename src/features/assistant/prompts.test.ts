@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildAssistantSystemPrompt } from "@/features/assistant/prompts";
+import {
+  buildAssistantSystemPrompt,
+  tutoringModeLine,
+} from "@/features/assistant/prompts";
 import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
 
 describe("buildAssistantSystemPrompt", () => {
@@ -31,5 +34,18 @@ describe("buildAssistantSystemPrompt", () => {
     const prompt = buildAssistantSystemPrompt([]);
 
     expect(prompt).toContain(FLASHCARD_CARD_SHAPE_RULES);
+  });
+});
+
+describe("tutoringModeLine", () => {
+  it("starts with the mode name the system prompt refers to", () => {
+    for (const mode of ["hints", "answers"] as const) {
+      expect(tutoringModeLine(mode).startsWith(`Tutoring mode: ${mode}`)).toBe(
+        true,
+      );
+      expect(buildAssistantSystemPrompt([])).toContain(
+        `"Tutoring mode: ${mode}"`,
+      );
+    }
   });
 });

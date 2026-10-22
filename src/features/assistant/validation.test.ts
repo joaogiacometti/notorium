@@ -45,6 +45,22 @@ describe("assistantChatRequestSchema", () => {
     ).toBeUndefined();
   });
 
+  it("defaults tutoring to hints and rejects unknown modes", () => {
+    const messages = [userMessage("m1", "Solve x + 2 = 5")];
+
+    expect(assistantChatRequestSchema.parse({ messages }).tutoring).toBe(
+      "hints",
+    );
+    expect(
+      assistantChatRequestSchema.parse({ messages, tutoring: "answers" })
+        .tutoring,
+    ).toBe("answers");
+    expect(
+      assistantChatRequestSchema.safeParse({ messages, tutoring: "cheat" })
+        .success,
+    ).toBe(false);
+  });
+
   it("rejects an empty or oversized chat id", () => {
     const messages = [userMessage("m1", "What is ATP?")];
 

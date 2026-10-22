@@ -185,6 +185,24 @@ describe("study assistant", () => {
     ]);
   });
 
+  it("sends hint-first tutoring by default and direct answers once toggled off", async () => {
+    const transport = new FakeAssistantChatTransport()
+      .replyWith("What have you tried?")
+      .replyWith("x = 3.");
+    await renderPanel(transport);
+    const toggle = container.querySelector<HTMLButtonElement>(
+      "button[aria-pressed]",
+    );
+
+    await sendMessage("Solve x + 2 = 5");
+    await act(async () => toggle?.click());
+    await sendMessage("Just tell me");
+
+    expect(toggle?.getAttribute("aria-pressed")).toBe("false");
+    expect(transport.requests[0]?.body).toMatchObject({ tutoring: "hints" });
+    expect(transport.requests[1]?.body).toMatchObject({ tutoring: "answers" });
+  });
+
   it("keeps the finished reply visible until the rich renderer is ready", async () => {
     fakeTiptapRenderer.ready = false;
     await renderPanel(
@@ -258,13 +276,13 @@ describe("study assistant", () => {
 
   it("clears the conversation on New chat", async () => {
     await renderPanel(new FakeAssistantChatTransport().replyWith("Hello."));
-    await sendMessage("Hi");
+    await sendMessage("Mitosis?");
 
     await act(async () => {
       getByLabel<HTMLButtonElement>("New chat").click();
     });
 
-    expect(container.textContent).not.toContain("Hi");
+    expect(container.textContent).not.toContain("Mitosis?");
     expect(container.querySelector('[data-testid="rich-reply"]')).toBeNull();
   });
 

@@ -29,6 +29,7 @@ import {
   readStudyContextSource,
   stampLastUserMetadata,
 } from "@/features/assistant/utils";
+import type { TutoringMode } from "@/features/assistant/validation";
 
 const sharedTransport = createAssistantChatTransport();
 const EDIT_FIELDS = ["front", "back"] as const;
@@ -62,6 +63,7 @@ export function AssistantWorkspaceProvider({
   }).current;
   const chat = useChat<AssistantUIMessage>({ transport });
   const [composerDraft, setComposerDraft] = useState("");
+  const [tutoring, setTutoring] = useState<TutoringMode>("hints");
   const [open, setOpen] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);
@@ -224,11 +226,14 @@ export function AssistantWorkspaceProvider({
       requestRef.current = draft ?? null;
       setNotice(null);
       const options = {
-        body: draft
-          ? { draft: prepareDraftForAssistant(draft) }
-          : documentDraft
-            ? { documentDraft }
-            : { context: studyContext },
+        body: {
+          tutoring,
+          ...(draft
+            ? { draft: prepareDraftForAssistant(draft) }
+            : documentDraft
+              ? { documentDraft }
+              : { context: studyContext }),
+        },
       };
       const metadata = {
         source: readStudyContextSource(
@@ -360,6 +365,8 @@ export function AssistantWorkspaceProvider({
         registerPortalTarget,
         composerDraft,
         setComposerDraft,
+        tutoring,
+        setTutoring,
         proposals,
         context,
         ...contextCallbacks,

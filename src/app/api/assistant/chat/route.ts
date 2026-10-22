@@ -35,6 +35,7 @@ export async function POST(request: Request): Promise<Response> {
       draft: parsed.data.draft,
       documentDraft: parsed.data.documentDraft,
       context: parsed.data.context,
+      tutoring: parsed.data.tutoring,
       abortSignal: request.signal,
     });
 
