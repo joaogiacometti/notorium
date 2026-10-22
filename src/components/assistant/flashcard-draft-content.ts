@@ -8,9 +8,9 @@ import {
   restoreImagePlaceholders,
 } from "@/lib/editor/rich-text";
 import { normalizeReviewedRichText } from "@/lib/editor/rich-text-review-schema";
+import { MATH_NODE_SELECTOR } from "@/lib/math/math-nodes";
 
-const PROTECTED_MATH_TEXT =
-  "pre, code, [data-type='inline-math'], [data-type='block-math']";
+const PROTECTED_MATH_TEXT = `pre, code, ${MATH_NODE_SELECTOR}`;
 
 /** Restore only images belonging to the source field, then normalize to editor HTML.
  * @example restoreDraftReplacement("<p>Short answer</p>", "<p>Long answer</p>");

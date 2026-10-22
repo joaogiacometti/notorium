@@ -2,6 +2,10 @@
 
 import DOMPurify from "dompurify";
 import { canWriteClipboardItems } from "@/lib/clipboard/clipboard-writer";
+import {
+  MATH_NODE_SELECTOR,
+  mathNodeToDelimitedLatex,
+} from "@/lib/math/math-nodes";
 
 export type NoteCopyFormat = "plain" | "rich";
 
@@ -44,8 +48,10 @@ function getPlainTextFromHtml(html: string): string {
 
   // Math nodes serialize as empty elements with the LaTeX in data-latex, so
   // textContent would drop equations. Surface them as round-trippable $...$.
-  replaceMathNodesWithLatex(container, "inline-math", "$");
-  replaceMathNodesWithLatex(container, "block-math", "$$");
+  for (const element of container.querySelectorAll(MATH_NODE_SELECTOR))
+    element.replaceWith(
+      document.createTextNode(mathNodeToDelimitedLatex(element)),
+    );
 
   container.querySelectorAll("br").forEach((br) => {
     br.replaceWith(document.createTextNode("\n"));
@@ -61,17 +67,4 @@ function getPlainTextFromHtml(html: string): string {
     .map((line) => line.trim())
     .filter(Boolean)
     .join("\n");
-}
-
-function replaceMathNodesWithLatex(
-  container: Element,
-  dataType: "inline-math" | "block-math",
-  delimiter: "$" | "$$",
-) {
-  container.querySelectorAll(`[data-type="${dataType}"]`).forEach((element) => {
-    const latex = (element as HTMLElement).dataset.latex ?? "";
-    element.replaceWith(
-      document.createTextNode(`${delimiter}${latex}${delimiter}`),
-    );
-  });
 }

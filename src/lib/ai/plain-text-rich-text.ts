@@ -2,14 +2,9 @@
 // `$...$`/`$$...$$` LaTeX) into Tiptap rich-text HTML. Pure and isomorphic:
 // flashcard back improvement runs it on the server, the study assistant in the browser.
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+import { escapeHtml } from "@/lib/html-escape";
+import { splitDollarMath } from "@/lib/math/dollar-math";
+import { mathNodeHtml } from "@/lib/math/math-nodes";
 
 function codeBlockHtml(language: string, code: string): string {
   const className = language ? ` class="language-${escapeHtml(language)}"` : "";
@@ -20,13 +15,7 @@ export function normalizeLine(value: string) {
   return value.replaceAll(/\s+/g, " ").trim();
 }
 
-type MathSegment = { token: string; type: "inline" | "block"; latex: string };
-
-// `$$...$$` (block) is tried before `$...$` (inline) via alternation order.
-// Exported so other AI output cleanup recognizes exactly the same math.
-export const MATH_MARKER_RE = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
-// Bare numbers/currency such as `$100$` are not math.
-const CURRENCY_LIKE_RE = /^[\d.,\s]+$/;
+type MathSegment = { token: string; latex: string; display: boolean };
 
 // Pull math out before line processing so escaping/classification cannot corrupt
 // the LaTeX, then reinsert math nodes after the HTML skeleton is built. Tokens
@@ -37,19 +26,14 @@ function extractMathSegments(value: string): {
   segments: MathSegment[];
 } {
   const segments: MathSegment[] = [];
-  const text = value.replace(
-    MATH_MARKER_RE,
-    (match, blockLatex?: string, inlineLatex?: string) => {
-      const isBlock = typeof blockLatex === "string";
-      const latex = (isBlock ? blockLatex : inlineLatex)?.trim() ?? "";
-      if (latex.length === 0) return match;
-      if (!isBlock && CURRENCY_LIKE_RE.test(latex)) return match;
-
+  const text = splitDollarMath(value)
+    .map((part) => {
+      if (part.kind === "text") return part.text;
       const token = `MATHMARKER${segments.length}END`;
-      segments.push({ token, type: isBlock ? "block" : "inline", latex });
+      segments.push({ token, latex: part.latex, display: part.display });
       return token;
-    },
-  );
+    })
+    .join("");
 
   return { text, segments };
 }
@@ -57,15 +41,10 @@ function extractMathSegments(value: string): {
 function renderMathSegments(html: string, segments: MathSegment[]): string {
   let result = html;
   for (const segment of segments) {
-    if (segment.type === "block") {
-      const block = `<div data-type="block-math" data-latex="${escapeHtml(segment.latex)}"></div>`;
-      result = result
-        .replaceAll(`<p>${segment.token}</p>`, block)
-        .replaceAll(segment.token, block);
-    } else {
-      const inline = `<span data-type="inline-math" data-latex="${escapeHtml(segment.latex)}"></span>`;
-      result = result.replaceAll(segment.token, inline);
-    }
+    const node = mathNodeHtml(segment.latex, segment.display);
+    if (segment.display)
+      result = result.replaceAll(`<p>${segment.token}</p>`, node);
+    result = result.replaceAll(segment.token, node);
   }
 
   return result;

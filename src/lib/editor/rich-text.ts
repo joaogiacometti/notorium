@@ -1,4 +1,5 @@
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
+import { escapeHtml } from "@/lib/html-escape";
 
 // Math nodes serialize as empty <span>/<div> with the LaTeX held in a
 // data-latex attribute (see tiptap-math-extensions.ts). A plain tag strip would
@@ -247,15 +248,6 @@ function decodeHtmlEntities(value: string): string {
     .replaceAll("&amp;", "&");
 }
 
-function escapeHtmlAttribute(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-
 function extractImageFallbackText(attributes: string): string | null {
   const altMatch = /\balt\s*=\s*["']([^"']*)["']/i.exec(attributes);
   const srcMatch = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(attributes);
@@ -310,7 +302,7 @@ function normalizeUnsupportedImageMarkup(value: string): string {
     }
 
     const fallbackText = extractImageFallbackText(attributes);
-    return fallbackText ? escapeHtmlAttribute(fallbackText) : "";
+    return fallbackText ? escapeHtml(fallbackText) : "";
   });
 }
 
@@ -383,7 +375,7 @@ type ParagraphReplacement = { index: number; length: number; html: string };
 
 // Wraps a resolved image source in a standalone, paragraph-replacing <img>.
 function imageParagraphHtml(src: string): string {
-  return `<img src="${escapeHtmlAttribute(src)}" alt="">`;
+  return `<img src="${escapeHtml(src)}" alt="">`;
 }
 
 // Resolves a non-internal image candidate via the caller's async resolver, then

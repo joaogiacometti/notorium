@@ -1,6 +1,11 @@
 import { gfm } from "@joplin/turndown-plugin-gfm";
 import TurndownService from "turndown";
 import { normalizeRichTextForStaticRendering } from "@/lib/editor/rich-text";
+import {
+  MATH_NODE_SELECTOR,
+  mathNodeToDelimitedLatex,
+  readMathNode,
+} from "@/lib/math/math-nodes";
 
 // Stored rich text is Tiptap HTML. AI chats and messengers render Markdown, so
 // copy-for-sharing converts it with Turndown plus GFM (tables, strikethrough,
@@ -50,14 +55,11 @@ function createMarkdownConverter(): TurndownService {
 // Math nodes are empty elements holding their LaTeX in data-latex, which
 // Turndown would drop as blank, so the LaTeX goes in as text first.
 function replaceMathWithLatex(body: HTMLElement): void {
-  const mathNodes = body.querySelectorAll(
-    '[data-type="inline-math"], [data-type="block-math"]',
-  );
-  for (const mathNode of mathNodes) {
-    const isBlock = mathNode.getAttribute("data-type") === "block-math";
-    const delimiter = isBlock ? "$$" : "$";
-    const latex = `${delimiter}${mathNode.getAttribute("data-latex") ?? ""}${delimiter}`;
-    mathNode.replaceWith(isBlock ? createParagraph(body, latex) : latex);
+  for (const mathNode of body.querySelectorAll(MATH_NODE_SELECTOR)) {
+    const latex = mathNodeToDelimitedLatex(mathNode);
+    mathNode.replaceWith(
+      readMathNode(mathNode).display ? createParagraph(body, latex) : latex,
+    );
   }
 }
 

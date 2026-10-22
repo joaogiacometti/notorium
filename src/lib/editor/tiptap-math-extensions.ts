@@ -1,7 +1,7 @@
 import { InputRule, nodePasteRule } from "@tiptap/core";
 import { BlockMath, InlineMath } from "@tiptap/extension-mathematics";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import type { KatexOptions } from "katex";
+import { MATH_KATEX_OPTIONS } from "@/lib/math/katex";
 
 /** A math node the user clicked, surfaced so the editor can open its editor. */
 export type MathClickTarget = {
@@ -17,18 +17,6 @@ export type MathExtensionOptions = {
    * it (e.g. in the read-only renderer) to keep equations non-interactive.
    */
   onClickMath?: (target: MathClickTarget) => void;
-};
-
-/**
- * KaTeX options shared by every math surface. `trust: false` blocks injection
- * vectors such as \href and \includegraphics; `throwOnError: false` renders
- * invalid LaTeX as inline error text instead of crashing the editor.
- */
-export const MATH_KATEX_OPTIONS: KatexOptions = {
-  throwOnError: false,
-  trust: false,
-  strict: "ignore",
-  maxExpand: 1000,
 };
 
 /**

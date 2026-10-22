@@ -1,7 +1,6 @@
 "use client";
 
 import type { Editor } from "@tiptap/react";
-import katex from "katex";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { MATH_KATEX_OPTIONS } from "@/lib/editor/tiptap-math-extensions";
 import type { SlashCommandRange } from "@/lib/editor/tiptap-slash-commands";
+import { renderLatexToHtml } from "@/lib/math/katex";
 
 export type MathDialogState =
   | { mode: "insert-block"; range: SlashCommandRange }
@@ -138,18 +137,10 @@ export function MathEditDialog({
 
 /**
  * Renders a LaTeX string to KaTeX HTML for the live preview. Empty input shows a
- * thin space (`\;`) so the preview box keeps its height. `throwOnError: false`
- * already yields error markup for invalid LaTeX; the catch is a final guard.
+ * thin space (`\;`) so the preview box keeps its height.
  */
 function renderMathPreview(latex: string, isBlock: boolean): string {
-  try {
-    return katex.renderToString(latex.trim() || "\\;", {
-      ...MATH_KATEX_OPTIONS,
-      displayMode: isBlock,
-    });
-  } catch {
-    return "";
-  }
+  return renderLatexToHtml(latex.trim() || "\\;", isBlock);
 }
 
 function applyMathChange(

@@ -3,10 +3,8 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { describe, expect, it } from "vitest";
-import {
-  buildMathExtensions,
-  MATH_KATEX_OPTIONS,
-} from "@/lib/editor/tiptap-math-extensions";
+import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
+import { MATH_KATEX_OPTIONS } from "@/lib/math/katex";
 
 function roundTrip(html: string): string {
   const editor = new Editor({

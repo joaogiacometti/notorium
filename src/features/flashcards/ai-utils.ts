@@ -1,4 +1,4 @@
-import { MATH_MARKER_RE } from "@/lib/ai/plain-text-rich-text";
+import { MATH_MARKER_RE } from "@/lib/math/dollar-math";
 
 const LABEL_PREFIX_RE = /^(Back:|Answer:|Definition:|Response:|Improved:)\s*/i;
 
