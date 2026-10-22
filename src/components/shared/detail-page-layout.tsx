@@ -3,13 +3,10 @@ import {
   AppPageContainer,
   type AppPageContainerMaxWidth,
 } from "@/components/shared/app-page-container";
-import {
-  type BreadcrumbItem,
-  PageTopBar,
-} from "@/components/shared/page-top-bar";
+import { type Breadcrumb, PageTopBar } from "@/components/shared/page-top-bar";
 
 interface DetailPageLayoutProps {
-  breadcrumb: BreadcrumbItem[];
+  breadcrumb: Breadcrumb;
   children: ReactNode;
   /** Optional right-aligned controls rendered in the sticky top bar. */
   actions?: ReactNode;
@@ -27,7 +24,7 @@ interface DetailPageLayoutProps {
  *
  * @example
  * <DetailPageLayout
- *   breadcrumb={[{ label: "Flashcards", href: "/flashcards", icon: "layers" }]}
+ *   breadcrumb={{ current: { label: "Admin", icon: "shield" } }}
  *   maxWidth="7xl"
  * >
  *   <FlashcardEditor />

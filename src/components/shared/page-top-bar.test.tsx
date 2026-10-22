@@ -41,32 +41,56 @@ describe("PageTopBar", () => {
     await act(async () => {
       root.render(
         <PageTopBar
-          breadcrumb={[
-            { label: "Physics", href: "/subjects/p", icon: "book-open" },
-            { label: "Documents", href: "/subjects/p/documents/notes/n1" },
-            { label: "Lecture 3" },
-          ]}
+          breadcrumb={{
+            parent: {
+              label: "Flashcards",
+              href: "/flashcards",
+              icon: "layers",
+            },
+            current: { label: "Biology::Cells" },
+          }}
         />,
       );
     });
   }
 
-  it("links ancestor crumbs to their href", async () => {
+  it("renders crumbs that share a label without duplicate keys", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    await act(async () => {
+      root.render(
+        <PageTopBar
+          breadcrumb={{
+            parent: { label: "Prolog", icon: "book-open" },
+            current: { label: "Prolog" },
+          }}
+        />,
+      );
+    });
+
+    expect(container.textContent).toBe("PrologProlog");
+    const messages = consoleError.mock.calls.map((call) => call.join(" "));
+    expect(messages.filter((message) => message.includes("same key"))).toEqual(
+      [],
+    );
+    consoleError.mockRestore();
+  });
+
+  it("links the parent crumb to its href", async () => {
     await renderBar();
 
     const links = Array.from(container.querySelectorAll("a"));
-    expect(links).toHaveLength(2);
-    expect(links[0]?.getAttribute("href")).toBe("/subjects/p");
-    expect(links[1]?.getAttribute("href")).toBe(
-      "/subjects/p/documents/notes/n1",
-    );
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/flashcards",
+    ]);
   });
 
   it("renders the current crumb as unlinked, marked aria-current", async () => {
     await renderBar();
 
     const current = container.querySelector('[aria-current="page"]');
-    expect(current?.textContent).toContain("Lecture 3");
+    expect(current?.textContent).toContain("Biology::Cells");
     expect(current?.tagName).not.toBe("A");
   });
 
@@ -74,7 +98,7 @@ describe("PageTopBar", () => {
     await renderBar();
 
     const nav = container.querySelector('nav[aria-label="Breadcrumb"]');
-    expect(nav?.textContent).toContain("Physics");
-    expect(nav?.textContent).toContain("Documents");
+    expect(nav?.textContent).toContain("Flashcards");
+    expect(nav?.textContent).toContain("Biology::Cells");
   });
 });

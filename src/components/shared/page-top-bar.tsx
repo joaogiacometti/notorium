@@ -8,7 +8,7 @@ import {
   Shield,
 } from "lucide-react";
 import Link from "next/link";
-import { Fragment, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -33,13 +33,24 @@ const breadcrumbIconMap: Record<BreadcrumbIcon, LucideIcon> = {
 
 export interface BreadcrumbItem {
   label: string;
-  /** When set, the crumb links here. The current (last) crumb is unlinked. */
+  /** When set, the crumb links here. */
   href?: string;
   icon?: BreadcrumbIcon;
 }
 
+/**
+ * Where the page sits: an optional parent (a subject, or a section that links
+ * back) and the current page, which is never linked. Two named slots instead of
+ * a list, so a note named like its unlinked subject still renders as two
+ * distinct crumbs.
+ */
+export interface Breadcrumb {
+  parent?: BreadcrumbItem;
+  current: Omit<BreadcrumbItem, "href">;
+}
+
 interface PageTopBarProps {
-  breadcrumb: BreadcrumbItem[];
+  breadcrumb: Breadcrumb;
   /** Optional right-aligned controls (e.g. document actions). */
   actions?: ReactNode;
 }
@@ -52,11 +63,10 @@ interface PageTopBarProps {
  *
  * @example
  * <PageTopBar
- *   breadcrumb={[
- *     { label: "Physics", href: "/subjects/abc", icon: "book-open" },
- *     { label: "Lecture 3", href: "/subjects/abc/documents/notes/n1" },
- *     { label: "Edit" },
- *   ]}
+ *   breadcrumb={{
+ *     parent: { label: "Flashcards", href: "/flashcards", icon: "layers" },
+ *     current: { label: "Biology::Cells" },
+ *   }}
  * />
  */
 export function PageTopBar({ breadcrumb, actions }: Readonly<PageTopBarProps>) {
@@ -66,17 +76,13 @@ export function PageTopBar({ breadcrumb, actions }: Readonly<PageTopBarProps>) {
         aria-label="Breadcrumb"
         className="flex min-w-0 flex-1 items-center gap-1 pl-1 text-sm"
       >
-        {breadcrumb.map((item, index) => (
-          <Fragment key={`${item.href ?? ""}:${item.label}`}>
-            {index > 0 ? (
-              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
-            ) : null}
-            <BreadcrumbCrumb
-              item={item}
-              isCurrent={index === breadcrumb.length - 1}
-            />
-          </Fragment>
-        ))}
+        {breadcrumb.parent ? (
+          <>
+            <BreadcrumbCrumb item={breadcrumb.parent} isCurrent={false} />
+            <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
+          </>
+        ) : null}
+        <BreadcrumbCrumb item={breadcrumb.current} isCurrent />
       </nav>
       {actions ? (
         <div className="flex shrink-0 items-center gap-2">{actions}</div>

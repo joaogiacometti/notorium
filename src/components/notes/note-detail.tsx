@@ -236,13 +236,10 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
     <>
       {!isZenMode ? (
         <PageTopBar
-          breadcrumb={[
-            {
-              label: subjectName,
-              icon: "book-open",
-            },
-            { label: watchedTitle || note.title || "Untitled" },
-          ]}
+          breadcrumb={{
+            parent: { label: subjectName, icon: "book-open" },
+            current: { label: watchedTitle || note.title || "Untitled" },
+          }}
         />
       ) : null}
       <AppPageContainer

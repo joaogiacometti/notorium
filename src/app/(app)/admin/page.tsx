@@ -11,7 +11,7 @@ export default async function AdminPage() {
   return (
     <main>
       <DetailPageLayout
-        breadcrumb={[{ label: "Admin", icon: "shield" }]}
+        breadcrumb={{ current: { label: "Admin", icon: "shield" } }}
         maxWidth="3xl"
       >
         <div className="mb-6 flex min-w-0 items-start gap-4">

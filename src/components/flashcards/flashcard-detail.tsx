@@ -30,7 +30,7 @@ import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-fla
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
-import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
+import type { Breadcrumb } from "@/components/shared/page-top-bar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -50,7 +50,7 @@ import type { FlashcardDetailEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface FlashcardDetailProps {
-  breadcrumb: BreadcrumbItem[];
+  breadcrumb: Breadcrumb;
   /** Where to navigate after the flashcard is deleted. */
   returnHref: string;
   flashcard: FlashcardDetailEntity;

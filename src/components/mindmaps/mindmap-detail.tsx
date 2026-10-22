@@ -169,13 +169,10 @@ export function MindmapDetail({
     <>
       {isZenMode ? null : (
         <PageTopBar
-          breadcrumb={[
-            {
-              label: subjectName,
-              icon: "book-open",
-            },
-            { label: title || mindmap.title || "Untitled" },
-          ]}
+          breadcrumb={{
+            parent: { label: subjectName, icon: "book-open" },
+            current: { label: title || mindmap.title || "Untitled" },
+          }}
         />
       )}
       <AppPageContainer
