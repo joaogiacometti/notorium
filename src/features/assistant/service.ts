@@ -4,13 +4,12 @@ import type {
   LibrarySearchInput,
   LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
-import {
-  buildAssistantSystemPrompt,
-  tutoringModeLine,
-} from "@/features/assistant/prompts";
+import { buildAssistantSystemPrompt } from "@/features/assistant/prompts";
+import { assembleAssistantMessages } from "@/features/assistant/request-context";
 import {
   buildAssistantTools,
   type LibrarySearchFunction,
+  selectAssistantActiveTools,
 } from "@/features/assistant/tools";
 import type {
   AssistantChatRequest,
@@ -28,9 +27,8 @@ type UserLibrarySearch = (
   input: LibrarySearchInput,
 ) => Promise<LibrarySearchOutput>;
 
-// One step to search, one to answer from the results. The answer step keeps
-// the same tools: changing the list would miss the prompt cache, so a second
-// search (the prompt forbids it) just ends the reply on its links.
+// One step to search, one to answer. Keep the active tools fixed across both
+// steps so the answer can reuse the same prompt prefix.
 const ASSISTANT_MAX_MODEL_STEPS = 2;
 
 interface StreamAssistantReplyForUserInput {
@@ -98,13 +96,14 @@ export async function streamAssistantReplyForUser({
   const response = await streamChatResponse({
     settings: access.settings,
     logScope: "assistant.chat",
-    instructions: buildAssistantSystemPrompt(await loadSubjectPaths(userId)),
-    messages: prefixLatestUserTurn(messages, [
-      tutoringModeLine(tutoring),
-      ...describeCurrentMaterial(draft, context, documentDraft),
-    ]),
+    instructions: buildAssistantSystemPrompt(),
+    messages: assembleAssistantMessages(
+      { messages, tutoring, draft, context, documentDraft },
+      await loadSubjectPaths(userId),
+    ),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId)),
+    activeTools: selectAssistantActiveTools({ draft, documentDraft }),
     maxModelSteps: ASSISTANT_MAX_MODEL_STEPS,
     abortSignal,
     sessionId: chatId,
@@ -132,35 +131,4 @@ function bindLibrarySearchToUser(
 async function readSubjectPathsForUser(userId: string): Promise<string[]> {
   const subjects = await getAllSubjectsWithPathsForUser(userId);
   return subjects.map((subject) => subject.path);
-}
-
-// Per-turn settings and material ride in the latest user turn, never the
-// system prompt, so instructions and tools stay byte-identical for the cache.
-function prefixLatestUserTurn(
-  messages: AssistantChatRequest["messages"],
-  prefixes: string[],
-): AssistantChatRequest["messages"] {
-  return messages.map((message, index) => {
-    if (index !== messages.length - 1 || message.role !== "user")
-      return message;
-    const parts = prefixes.map((text) => ({ type: "text" as const, text }));
-    return { ...message, parts: [...parts, ...message.parts] };
-  });
-}
-
-function describeCurrentMaterial(
-  draft: AssistantChatRequest["draft"],
-  studyContext?: AssistantChatRequest["context"],
-  documentDraft?: AssistantChatRequest["documentDraft"],
-): string[] {
-  const material = draft ?? documentDraft ?? studyContext;
-  if (!material) return [];
-  const label = draft
-    ? "Current flashcard draft"
-    : documentDraft
-      ? "Current document draft"
-      : "Current study context";
-  return [
-    `${label} (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(material)}`,
-  ];
 }

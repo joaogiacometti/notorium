@@ -27,7 +27,7 @@ Every AI call (the study assistant and flashcard back improvement) runs with thi
 
 AI output follows the user's language: the assistant answers in the language of the user's message, and generated or improved flashcards use the language of the source material or cards.
 
-The study assistant sends each chat's id to OpenRouter as `session_id`. This supplies a session identifier for provider routing and prompt-cache reuse; availability and savings depend on the selected model and provider.
+The study assistant sends each chat's id to OpenRouter as `session_id`. This supplies a session identifier for provider routing and prompt-cache reuse; availability and savings depend on the selected model and provider. System instructions stay stable; only the current editor tool is exposed alongside creation and search, and switching editor kinds can reduce prompt-cache reuse.
 
 ## Attachments
 

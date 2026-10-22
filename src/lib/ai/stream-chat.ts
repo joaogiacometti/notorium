@@ -18,6 +18,8 @@ interface StreamChatResponseOptions {
   maxOutputTokens: number;
   /** Tools without `execute` end the reply; the client answers them. */
   tools?: ToolSet;
+  /** Available this reply; all definitions remain available for history. */
+  activeTools?: string[];
   /**
    * Model calls allowed per reply (default 1). Above 1, results of tools with
    * `execute` go back to the model so it can answer from them; each extra
@@ -44,7 +46,7 @@ interface StreamChatResponseOptions {
  * return streamChatResponse({
  *   settings,
  *   logScope: "assistant.chat",
- *   instructions: buildAssistantSystemPrompt(subjectPaths),
+ *   instructions: buildAssistantSystemPrompt(),
  *   messages,
  *   maxOutputTokens: 1200,
  *   sessionId: chatId,
@@ -57,6 +59,7 @@ export async function streamChatResponse({
   messages,
   maxOutputTokens,
   tools,
+  activeTools,
   maxModelSteps = 1,
   abortSignal,
   sessionId,
@@ -67,6 +70,7 @@ export async function streamChatResponse({
     messages: await convertToModelMessages(messages, { tools }),
     maxOutputTokens,
     tools,
+    activeTools,
     stopWhen: isStepCount(maxModelSteps),
     abortSignal,
     // Spread into the OpenRouter request body as-is, hence the snake_case.

@@ -16,6 +16,9 @@ import {
   librarySearchInputSchema,
   librarySearchOutputSchema,
 } from "@/features/assistant/library-search-contract";
+import type { AssistantChatRequest } from "@/features/assistant/validation";
+import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
+import { MATH_RULE } from "@/lib/ai/prompt-rules";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
 /** Most cards one proposal may hold; keeps a single turn reviewable. */
@@ -28,21 +31,21 @@ const EXAMPLE_LANGUAGE_MAX_CHARS = 30;
  * section and the app, not the model, decides how it is appended to the card.
  *
  * @example
- * flashcardExampleSchema.parse({ language: "sql", code: "SELECT 1;" });
+ * flashcardExampleSchema.parse({ language, code });
  */
 export const flashcardExampleSchema = z.object({
   language: z
     .string()
     .trim()
     .max(EXAMPLE_LANGUAGE_MAX_CHARS)
-    .describe("Fence language tag such as prolog, python, sql, or cpp."),
+    .describe("Code fence language tag, or an empty string for plain code."),
   code: z
     .string()
     .trim()
     .min(1)
     .max(LIMITS.flashcardBackMax)
     .describe(
-      "Definitions or data first, a blank line, then the call or query with its result as a comment.",
+      "A short, runnable supplementary example with necessary definitions and data. Include its result as a comment; do not duplicate the front or back.",
     ),
 });
 
@@ -53,7 +56,7 @@ export const flashcardExampleSchema = z.object({
  * together must fit the back limit.
  *
  * @example
- * proposedFlashcardSchema.parse({ front: "What is ATP?", back: "The cell's energy carrier." });
+ * proposedFlashcardSchema.parse({ front, back });
  */
 export const proposedFlashcardSchema = z
   .object({
@@ -76,7 +79,14 @@ export const proposedFlashcardSchema = z
     example: flashcardExampleSchema
       .optional()
       .describe("Only when the user asks for examples."),
-    subjectPath: z.string().trim().max(SUBJECT_PATH_MAX_CHARS).optional(),
+    subjectPath: z
+      .string()
+      .trim()
+      .max(SUBJECT_PATH_MAX_CHARS)
+      .optional()
+      .describe(
+        "Copy an exact available subject path from request context; :: separates parent and child. Omit if none fits. Never invent a path.",
+      ),
   })
   .superRefine((card, ctx) => {
     const length = card.back.length + (card.example?.code.length ?? 0);
@@ -95,7 +105,10 @@ export const flashcardProposalInputSchema = z.object({
   cards: z
     .array(proposedFlashcardSchema)
     .min(1)
-    .max(FLASHCARD_PROPOSAL_MAX_CARDS),
+    .max(FLASHCARD_PROPOSAL_MAX_CARDS)
+    .describe(
+      `All requested cards in one call, exactly the requested count (one if unspecified), up to ${FLASHCARD_PROPOSAL_MAX_CARDS}. ${FLASHCARD_CARD_SHAPE_RULES} ${MATH_RULE}`,
+    ),
 });
 
 /**
@@ -141,30 +154,31 @@ export function buildAssistantTools(searchLibrary: LibrarySearchFunction) {
   return {
     proposeNoteEdits: tool({
       description:
-        "Propose targeted block edits or a title change ONLY when explicitly asked to modify the CURRENT note draft. Refer only to visible block ids. Empty replacement HTML deletes a range. Nothing changes until the user applies the proposal.",
+        "Propose requested changes to the current note draft, including conversational follow-ups. Questions stay in chat. Target visible content only and preserve everything else. Send one concrete proposal for review in the document; acceptance enters normal autosave, while discarded, skipped, or stale proposals are unapplied.",
       inputSchema: noteEditsInputSchema,
       outputSchema: documentEditsOutputSchema,
     }),
     proposeMindmapEdits: tool({
       description:
-        "Propose branch, style (color/bold/italic), or cross-connection operations ONLY when explicitly asked to modify the CURRENT mindmap draft. Refer only to visible ids or earlier new-node aliases. Nothing changes until the user applies the proposal.",
+        "Propose requested changes to the current mindmap draft, including conversational follow-ups. Questions stay in chat. Target visible content only and preserve everything else. Send one concrete proposal for review on the canvas; acceptance enters normal autosave, while discarded, skipped, or stale proposals are unapplied.",
       inputSchema: mindmapEditsInputSchema,
       outputSchema: documentEditsOutputSchema,
     }),
     proposeFlashcardEdits: tool({
       description:
-        "Suggest front/back replacements when the current user message requests changes to the flashcard draft, including contextual follow-ups such as 'do it' or 'add it'. Infer wording from the requested change; do not ask for confirmation. Never use this tool for ordinary study questions. The user reviews changes in the editor; nothing is saved.",
+        "Propose requested front/back changes to the current flashcard draft, including conversational follow-ups. Target this draft only when the request refers to it; corrections to earlier chat proposals use creation even while an editor is open. Questions stay in chat. Send only changed fields in one call for per-field review inside the editor. Acceptance changes the unsaved draft; discarded, skipped, or stale fields remain unapplied.",
       inputSchema: flashcardEditsInputSchema,
       outputSchema: flashcardEditsOutputSchema,
     }),
     proposeFlashcards: tool({
-      description: `Propose 1 to ${FLASHCARD_PROPOSAL_MAX_CARDS} new flashcards or revise a chat proposal, including follow-up corrections. Never use this tool to change the CURRENT editor draft: use proposeFlashcardEdits for that, including 'do it' confirming a draft change. Follow the requested recall direction and count. Call directly without asking for confirmation; nothing is saved until the user clicks Create.`,
+      description:
+        "Propose separate new flashcards or revise an earlier chat proposal at the user's request, including follow-up corrections to skipped proposals. For chat-proposal corrections, use this tool regardless of any open draft. Only requests targeting the current draft use its editor tool. Submit concrete cards directly for Create/Edit/Discard review in chat. Only created outcomes confirm saving; dismissed or skipped cards were not saved. This tool cannot change saved cards.",
       inputSchema: flashcardProposalInputSchema,
       outputSchema: flashcardProposalOutputSchema,
     }),
     searchLibrary: tool({
       description:
-        "Search the user's own notes, flashcards, and mindmaps by keyword. Use ONLY when the user asks whether they have material on something or where they wrote about it. Returns a few short excerpts, which the chat shows as links.",
+        "Search the user's library only when asked to find their own material, at most once per reply. Keyword matching ignores case and accents and tolerates small typos; it does not match by meaning. Returns short excerpts, already linked in chat. Summarize them briefly without repeating links or claiming to read full documents. No hits means these terms did not match, not proof the topic is absent. Read-only; no review is needed.",
       inputSchema: librarySearchInputSchema,
       outputSchema: librarySearchOutputSchema,
       execute: (input) => searchLibrary(input),
@@ -179,3 +193,23 @@ export function buildAssistantTools(searchLibrary: LibrarySearchFunction) {
 export type AssistantTools = InferUITools<
   ReturnType<typeof buildAssistantTools>
 >;
+
+/**
+ * Expose creation/search and only the editor supported by current context.
+ * Keep this selection fixed for every model step of the reply.
+ * @example selectAssistantActiveTools({}); // creation and search
+ */
+export function selectAssistantActiveTools(
+  context: Pick<AssistantChatRequest, "draft" | "documentDraft">,
+): Array<keyof ReturnType<typeof buildAssistantTools>> {
+  const base: Array<keyof ReturnType<typeof buildAssistantTools>> = [
+    "proposeFlashcards",
+    "searchLibrary",
+  ];
+  if (context.draft) return [...base, "proposeFlashcardEdits"];
+  if (context.documentDraft?.kind === "note")
+    return [...base, "proposeNoteEdits"];
+  if (context.documentDraft?.kind === "mindmap")
+    return [...base, "proposeMindmapEdits"];
+  return base;
+}

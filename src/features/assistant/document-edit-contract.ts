@@ -8,8 +8,14 @@ import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
 const reference = z.string().min(1).max(100);
 const sessionFields = {
-  sessionId: reference,
-  revision: z.number().int().nonnegative(),
+  sessionId: reference.describe(
+    "Copy sessionId exactly from the current document draft, never history.",
+  ),
+  revision: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Copy revision exactly from the current document draft."),
 };
 const title = z.string().trim().min(1).max(LIMITS.noteTitleMax);
 const draftFields = {
@@ -98,17 +104,36 @@ export const noteEditsInputSchema = z
     title: title.optional(),
     replacements: editList(
       z.object({
-        firstBlockId: reference,
-        lastBlockId: reference,
-        html: z.string().max(LIMITS.assistantReplyMaxChars),
+        firstBlockId: reference.describe(
+          "First visible block id in the contiguous range to replace.",
+        ),
+        lastBlockId: reference.describe(
+          "Last visible block id, inclusive. All blocks in the range must be visible.",
+        ),
+        html: z
+          .string()
+          .max(LIMITS.assistantReplyMaxChars)
+          .describe(
+            "Replacement supported editor HTML; empty deletes the range. Preserve unrelated formatting, math, tables, and all image placeholders; never invent attachments.",
+          ),
       }),
     ),
     insertions: editList(
       z.object({
         // Omitted only when the note is empty.
-        anchorBlockId: reference.optional(),
+        anchorBlockId: reference
+          .optional()
+          .describe(
+            "Visible block to insert beside; omit only for an empty note.",
+          ),
         side: z.enum(["before", "after"]),
-        html: z.string().min(1).max(LIMITS.assistantReplyMaxChars),
+        html: z
+          .string()
+          .min(1)
+          .max(LIMITS.assistantReplyMaxChars)
+          .describe(
+            "Inserted editor HTML with paragraphs, headings, lists, strong/em, pre/code, tables, or math nodes with data-type and data-latex. Preserve image placeholders exactly.",
+          ),
       }),
     ),
   })
@@ -124,10 +149,19 @@ export const noteEditsInputSchema = z
     { message: `Expected at most ${DOCUMENT_EDITS_MAX} block edits` },
   );
 
-const label = z.string().max(LIMITS.mindmapNodeLabelMax);
+const label = z
+  .string()
+  .max(LIMITS.mindmapNodeLabelMax)
+  .describe(
+    "Plain-text node label; math uses dollar-delimited LaTeX with single backslashes. No HTML or image URLs.",
+  );
 const connectionFields = {
   label: z.string().max(LIMITS.mindmapEdgeLabelMax),
-  direction: z.enum(MINDMAP_EDGE_DIRECTIONS),
+  direction: z
+    .enum(MINDMAP_EDGE_DIRECTIONS)
+    .describe(
+      "none is undirected; forward goes source to target; backward reverses it; both is bidirectional.",
+    ),
 };
 const mindmapEditListShape = {
   addNodes: editList(z.object({ id: reference, parentId: reference, label })),
@@ -136,7 +170,12 @@ const mindmapEditListShape = {
     z.object({
       nodeId: reference,
       // "none" clears the tint; omitted fields keep their current value.
-      color: z.enum([...MINDMAP_NODE_COLOR_TOKENS, "none"]).optional(),
+      color: z
+        .enum([...MINDMAP_NODE_COLOR_TOKENS, "none"])
+        .optional()
+        .describe(
+          "Resolve named colors through the current draft palette hues, never slot numbers. Report unavailable colors rather than silently substituting. none clears tint; omission keeps it.",
+        ),
       bold: z.boolean().optional(),
       italic: z.boolean().optional(),
     }),
@@ -164,6 +203,9 @@ export const mindmapEditsInputSchema = z
       return total > 0 && total <= DOCUMENT_EDITS_MAX;
     },
     { message: `Expected 1 to ${DOCUMENT_EDITS_MAX} mindmap operations` },
+  )
+  .describe(
+    "Fill only needed lists; apply addNodes, renameNodes, styleNodes, moveNodes, connect, updateConnections, disconnect, removeNodes in that order. Existing ids must be visible in current context; new ids are unique local aliases usable by later additions and lists. Never edit image nodes, style/delete/reparent the root, or create hierarchy cycles. Renaming the root changes the title. Remove only complete visible subtrees (completeSubtree true), including every descendant in removeNodes. Omitted fields keep their values.",
   );
 export const documentEditsOutputSchema = z.object({
   outcome: z.enum(["accepted", "discarded", "skipped", "stale"]),

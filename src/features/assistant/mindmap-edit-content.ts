@@ -23,7 +23,7 @@ import { editMindmapSchema } from "@/features/mindmaps/validation";
 import { normalizeOverEscapedLatex } from "@/lib/math/dollar-math";
 
 /** Capture a bounded graph view, prioritizing selected branches over other nodes.
- * @example buildMindmapDraft("s", 0, "Cells", graph, ["branch"]);
+ * @example buildMindmapDraft(sessionId, revision, title, graph, selectedIds);
  */
 export function buildMindmapDraft(
   sessionId: string,

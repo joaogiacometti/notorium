@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 
@@ -31,14 +32,35 @@ export const flashcardDraftSchema = z.object({
  */
 export const flashcardEditsInputSchema = z
   .object({
-    sessionId: z.string().min(1).max(100),
-    revision: z.number().int().nonnegative(),
-    front: draftHtml(LIMITS.flashcardFrontMax).optional(),
-    back: draftHtml(LIMITS.flashcardBackMax).optional(),
+    sessionId: z
+      .string()
+      .min(1)
+      .max(100)
+      .describe(
+        "Copy sessionId exactly from the current flashcard draft, never history.",
+      ),
+    revision: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe("Copy revision exactly from the current flashcard draft."),
+    front: draftHtml(LIMITS.flashcardFrontMax)
+      .optional()
+      .describe(
+        "Full replacement front in supported editor HTML; omit to keep unchanged.",
+      ),
+    back: draftHtml(LIMITS.flashcardBackMax)
+      .optional()
+      .describe(
+        "Full replacement back in supported editor HTML; omit to keep unchanged.",
+      ),
   })
   .refine((value) => value.front !== undefined || value.back !== undefined, {
     message: "Expected a front or back replacement",
-  });
+  })
+  .describe(
+    `Replace only requested fields; preserve unrelated content, formatting, and every image placeholder exactly. Never invent image URLs. Supported HTML includes paragraphs, headings, strong/em, lists, pre/code, tables, and math nodes: span data-type="inline-math" or div data-type="block-math", each with data-latex. Use compact lists without spacer paragraphs. ${FLASHCARD_CARD_SHAPE_RULES}`,
+  );
 
 const editOutcome = z.enum(["accepted", "discarded", "skipped", "stale"]);
 export const flashcardEditsOutputSchema = z.object({

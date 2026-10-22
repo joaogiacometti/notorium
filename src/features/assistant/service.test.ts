@@ -3,7 +3,6 @@ import type {
   LibrarySearchInput,
   LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
-import { tutoringModeLine } from "@/features/assistant/prompts";
 import { assistantChatRequestSchema } from "@/features/assistant/validation";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 import {
@@ -163,13 +162,11 @@ describe("streamAssistantReplyForUser", () => {
     const call = model.doStreamCalls[0];
     expect(subjects.requestedUserIds).toEqual(["user-1"]);
     expect(call?.tools?.map((tool) => tool.name)).toEqual([
-      "proposeNoteEdits",
-      "proposeMindmapEdits",
-      "proposeFlashcardEdits",
       "proposeFlashcards",
       "searchLibrary",
     ]);
-    expect(JSON.stringify(call?.prompt[0])).toContain("Biology::Cells");
+    expect(JSON.stringify(call?.prompt[0])).not.toContain("Biology::Cells");
+    expect(JSON.stringify(call?.prompt.at(-1))).toContain("Biology::Cells");
   });
 
   it("searches the user's library, then answers from the hits", async () => {
@@ -280,8 +277,8 @@ describe("streamAssistantReplyForUser", () => {
     const model = createFakeStreamingModel("A revised card.");
     getAiModelMock.mockReturnValue(model);
     const card = {
-      front: "What is the purpose of functor/3?",
-      back: "Constructs or decomposes terms.",
+      front: "What does evaporation do?",
+      back: "Changes liquid into gas.",
     };
     const request = assistantChatRequestSchema.parse({
       messages: [
@@ -289,7 +286,7 @@ describe("streamAssistantReplyForUser", () => {
           id: "u1",
           role: "user",
           parts: [
-            { type: "text", text: "Create one flashcard about functor/3." },
+            { type: "text", text: "Create one flashcard about evaporation." },
           ],
         },
         {
@@ -311,7 +308,7 @@ describe("streamAssistantReplyForUser", () => {
           parts: [
             {
               type: "text",
-              text: "Inverse: ask what functor(filha(ana, bia), Name, Arity) does on the flashcard.",
+              text: "Inverse: put drying clothes on the front and ask which process it shows.",
             },
           ],
         },
@@ -325,8 +322,8 @@ describe("streamAssistantReplyForUser", () => {
       context: {
         kind: "review",
         mode: "review",
-        front: "What does fail/0 do?",
-        hiddenBack: "Always fails.",
+        front: "What is a prime number?",
+        hiddenBack: "A whole number above one with exactly two factors.",
       },
     });
     const { streamAssistantReplyForUser } = await import(
@@ -360,10 +357,8 @@ describe("streamAssistantReplyForUser", () => {
       ],
     });
     expect(JSON.stringify(prompt[3])).toContain("skipped");
-    expect(JSON.stringify(prompt[4])).toContain(
-      "functor(filha(ana, bia), Name, Arity)",
-    );
-    expect(JSON.stringify(prompt.slice(0, -1))).not.toContain("fail/0");
+    expect(JSON.stringify(prompt[4])).toContain("drying clothes");
+    expect(JSON.stringify(prompt.slice(0, -1))).not.toContain("prime number");
     expect(prompt.at(-1)?.content.at(-1)).toEqual({
       type: "text",
       text: "do it",
@@ -482,12 +477,86 @@ describe("streamAssistantReplyForUser", () => {
     }
     const [first, second] = model.doStreamCalls;
     expect(first.prompt[0]).toEqual(second.prompt[0]);
-    expect(first.prompt.at(-1)?.content).toEqual([
-      { type: "text", text: tutoringModeLine("hints") },
-      { type: "text", text: "What is ATP?" },
+    const firstContext = first.prompt.at(-1)?.content[0];
+    const secondContext = second.prompt.at(-1)?.content[0];
+    if (
+      typeof firstContext === "string" ||
+      typeof secondContext === "string" ||
+      firstContext?.type !== "text" ||
+      secondContext?.type !== "text"
+    ) {
+      throw new Error("Expected labeled tutoring context text");
+    }
+    expect(JSON.parse(firstContext.text.split("\n")[1])).toEqual({
+      mode: "hints",
+    });
+    expect(JSON.parse(secondContext.text.split("\n")[1])).toEqual({
+      mode: "answers",
+    });
+  });
+
+  it("preserves old editor tool results after the editor closes", async () => {
+    const model = createFakeStreamingModel(
+      "The note suggestion was discarded.",
+    );
+    getAiModelMock.mockReturnValue(model);
+    const request = assistantChatRequestSchema.parse({
+      messages: [
+        {
+          id: "a",
+          role: "assistant",
+          parts: [
+            {
+              type: "tool-proposeNoteEdits",
+              toolCallId: "old-note",
+              state: "output-available",
+              input: {
+                sessionId: "note-session",
+                revision: 2,
+                replacements: [
+                  {
+                    firstBlockId: "block-1",
+                    lastBlockId: "block-1",
+                    html: "<p>Updated content</p>",
+                  },
+                ],
+              },
+              output: { outcome: "discarded" },
+            },
+          ],
+        },
+        {
+          id: "u",
+          role: "user",
+          parts: [{ type: "text", text: "What happened to that suggestion?" }],
+        },
+      ],
+    });
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const result = await streamAssistantReplyForUser({
+      ...request,
+      userId: "user-1",
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (result.success) await result.response.text();
+    const call = model.doStreamCalls[0];
+    expect(call.tools?.map((tool) => tool.name)).toEqual([
+      "proposeFlashcards",
+      "searchLibrary",
     ]);
-    expect(JSON.stringify(second.prompt.at(-1))).toContain(
-      tutoringModeLine("answers"),
+    expect(call.prompt).toContainEqual(
+      expect.objectContaining({
+        role: "tool",
+        content: [
+          expect.objectContaining({
+            toolCallId: "old-note",
+            toolName: "proposeNoteEdits",
+            output: { type: "json", value: { outcome: "discarded" } },
+          }),
+        ],
+      }),
     );
   });
 

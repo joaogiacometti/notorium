@@ -144,7 +144,7 @@ function textBlocksToRichText(value: string): string {
 }
 
 /** Convert assistant text to safe editor HTML, preserving code literally.
- * @example plainTextToRichText("What does `functor/3` do?");
+ * @example plainTextToRichText(replyText);
  */
 export function plainTextToRichText(value: string): string {
   const code = extractCodeSegments(value);

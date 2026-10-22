@@ -14,7 +14,7 @@ const LIBRARY_TEXT_MAX_CHARS = LIMITS.assistantLibraryExcerptMaxChars + 6;
  * meaning; the model supplies synonyms and translations instead.
  *
  * @example
- * librarySearchInputSchema.parse({ terms: ["mitose", "mitosis"], kinds: ["flashcard"] });
+ * librarySearchInputSchema.parse({ terms, kinds });
  */
 export const librarySearchInputSchema = z.object({
   terms: z
@@ -42,7 +42,7 @@ export const librarySearchInputSchema = z.object({
  * One matching item: enough to name it and link to it, never its full content.
  *
  * @example
- * libraryHitSchema.parse({ kind: "note", id: "n1", subjectId: "s1", title: "Mitose", subjectPath: "Biologia", snippet: "" });
+ * libraryHitSchema.parse({ kind, id, subjectId, title, subjectPath, snippet });
  */
 export const libraryHitSchema = z.object({
   kind: z.enum(LIBRARY_HIT_KINDS),

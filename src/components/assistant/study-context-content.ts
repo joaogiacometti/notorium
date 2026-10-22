@@ -9,7 +9,7 @@ import {
 } from "@/lib/editor/rich-text";
 
 /** Build a bounded, image-safe snapshot of an unsaved note or mindmap.
- * @example buildDocumentContext("note", "Cells", "Biology", "<p>ATP</p>");
+ * @example buildDocumentContext("note", title, subjectPath, content);
  */
 export function buildDocumentContext(
   kind: "note" | "mindmap",
@@ -67,7 +67,7 @@ function orderedMindmapLabels(graph: MindmapGraph): string[] {
 }
 
 /** Snapshot the card, marking the answer hidden until the session reveals it.
- * @example buildReviewContext({front: "Q", back: "A"}, "Math", false, "review");
+ * @example buildReviewContext(card, subjectPath, false, "review");
  */
 export function buildReviewContext(
   card: { front: string; back: string },

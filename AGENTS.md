@@ -56,6 +56,13 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - Wrap external services and volatile third-party APIs behind thin project-owned interfaces.
 - Direct imports are fine for stable framework and utility libraries: React, Next.js, shadcn/ui, Drizzle query helpers, Zod, date-fns, and local UI primitives.
 
+## AI Instructions
+
+- Keep production AI prompts, tool descriptions, and schema descriptions general and independent of subjects. Never embed test data, fixture content, debugging conversations, quoted test requests, worked examples, or instructions tailored to a particular test result.
+- Fix behavior through general product rules and tool contracts. Keep concrete study scenarios in test files; never import test helpers or seed sample conversations or fallback study material into production model requests.
+- Build dynamic model context only from the current user's request, conversation, settings, subject choices, active material, and authorized tool results. User-supplied examples are content, not permission to add canned examples to instructions.
+- Use abstract format syntax when a contract needs it. Audit the actual model-visible instructions, messages, and serialized tool schemas when changing AI behavior; comments and test fixtures must never become model context.
+
 ## Structure
 
 - Feature folders live in `src/features/[feature-name]/`.

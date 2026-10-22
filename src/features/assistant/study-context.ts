@@ -13,7 +13,7 @@ const documentFields = {
 };
 
 /** Background material for the current study surface, never a write target.
- * @example studyContextSchema.parse({ kind: "note", title: "Cells", content: "ATP", partial: false });
+ * @example studyContextSchema.parse({ kind: "note", title, content, partial: false });
  */
 export const studyContextSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("note"), ...documentFields }),

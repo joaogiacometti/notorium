@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import {
+  buildAssistantTools,
   FLASHCARD_PROPOSAL_MAX_CARDS,
   flashcardProposalInputSchema,
+  selectAssistantActiveTools,
 } from "@/features/assistant/tools";
+import type { AssistantChatRequest } from "@/features/assistant/validation";
 import { LIMITS } from "@/lib/config/limits";
 
 const atpCard = { front: "What is ATP?", back: "Energy carrier." };
@@ -70,5 +74,75 @@ describe("flashcardProposalInputSchema", () => {
 
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["cards", 0, "example"]);
+  });
+});
+
+class EmptyToolLibrary {
+  search = async (): Promise<{ hits: [] }> => ({ hits: [] });
+}
+
+describe("assistant tool availability", () => {
+  it.each<{
+    name: string;
+    context: Pick<AssistantChatRequest, "draft" | "documentDraft">;
+    editor?: string;
+  }>([
+    { name: "no editor", context: {} },
+    {
+      name: "flashcard",
+      editor: "proposeFlashcardEdits",
+      context: {
+        draft: { sessionId: "card", revision: 0, front: "", back: "" },
+      },
+    },
+    {
+      name: "note",
+      editor: "proposeNoteEdits",
+      context: {
+        documentDraft: {
+          kind: "note",
+          sessionId: "note",
+          revision: 0,
+          title: "Note",
+          partial: false,
+          blocks: [],
+        },
+      },
+    },
+    {
+      name: "mindmap",
+      editor: "proposeMindmapEdits",
+      context: {
+        documentDraft: {
+          kind: "mindmap",
+          sessionId: "map",
+          revision: 0,
+          title: "Map",
+          partial: false,
+          nodes: [],
+          edges: [],
+        },
+      },
+    },
+  ])("exposes only the supported editor for $name", ({ context, editor }) => {
+    expect(selectAssistantActiveTools(context)).toEqual([
+      "proposeFlashcards",
+      "searchLibrary",
+      ...(editor ? [editor] : []),
+    ]);
+  });
+  it("retains every tool definition for history, with only search executable", () => {
+    const tools = buildAssistantTools(new EmptyToolLibrary().search);
+    expect(Object.keys(tools)).toHaveLength(5);
+    expect(
+      Object.entries(tools)
+        .filter(([, value]) => value.execute)
+        .map(([name]) => name),
+    ).toEqual(["searchLibrary"]);
+    for (const definition of Object.values(tools)) {
+      expect(
+        JSON.stringify(z.toJSONSchema(definition.inputSchema as z.ZodType)),
+      ).not.toMatch(/"(oneOf|anyOf|allOf|const)"/);
+    }
   });
 });

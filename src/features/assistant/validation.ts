@@ -187,7 +187,7 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
  * @example
  * assistantChatRequestSchema.safeParse({
  *   chatId: "chat-1",
- *   messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: "What is ATP?" }] }],
+ *   messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: userQuestion }] }],
  * });
  */
 export const assistantChatRequestSchema = z
