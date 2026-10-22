@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { editToolInputObject } from "@/features/assistant/edit-guards";
 import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
+import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 
@@ -30,8 +32,8 @@ export const flashcardDraftSchema = z.object({
 /** Model replacements use supported editor HTML, with images represented by placeholders.
  * @example flashcardEditsInputSchema.parse({ sessionId: "d", revision: 0, front: "<p>Why?</p>" });
  */
-export const flashcardEditsInputSchema = z
-  .object({
+export const flashcardEditsInputSchema = editToolInputObject(
+  {
     sessionId: z
       .string()
       .min(1)
@@ -54,12 +56,14 @@ export const flashcardEditsInputSchema = z
       .describe(
         "Full replacement back in supported editor HTML; omit to keep unchanged.",
       ),
-  })
+  },
+  "",
+)
   .refine((value) => value.front !== undefined || value.back !== undefined, {
     message: "Expected a front or back replacement",
   })
   .describe(
-    `Replace only requested fields; preserve unrelated content, formatting, and every image placeholder exactly. Never invent image URLs. Supported HTML includes paragraphs, headings, strong/em, lists, pre/code, tables, and math nodes: span data-type="inline-math" or div data-type="block-math", each with data-latex. Use compact lists without spacer paragraphs. ${FLASHCARD_CARD_SHAPE_RULES}`,
+    `Replace only requested fields; preserve unrelated content, formatting, and every image placeholder exactly. Never invent image URLs. Supported HTML includes paragraphs, headings, strong/em, lists, pre/code, and tables. ${EDITOR_HTML_MATH_RULE} Use compact lists without spacer paragraphs. ${FLASHCARD_CARD_SHAPE_RULES}`,
   );
 
 const editOutcome = z.enum(["accepted", "discarded", "skipped", "stale"]);

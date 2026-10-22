@@ -24,6 +24,18 @@ describe("flashcard draft rich text", () => {
     expect(result.back).not.toContain("private-image");
   });
 
+  it("sends math as dollar-delimited LaTeX, matching the model's math format", () => {
+    const result = prepareDraftForAssistant({
+      sessionId: "d",
+      revision: 0,
+      front:
+        '<p>Define <span data-type="inline-math" data-latex="\\sigma"></span></p>',
+      back: '<div data-type="block-math" data-latex="x^2"></div>',
+    });
+    expect(result.front).toBe("<p>Define $\\sigma$</p>");
+    expect(result.back).toBe("<p>$$x^2$$</p>");
+  });
+
   it("retains existing images even when the model omits them and rejects invented images", () => {
     const result = restoreDraftReplacement(
       '<p>New answer</p><img src="https://evil.example/tracker">',
@@ -85,6 +97,25 @@ describe("flashcard draft rich text", () => {
     expect(result).not.toContain("$");
     expect(result).not.toContain("<p></p>");
     expect(result).toContain("<p>Legend</p>");
+  });
+
+  it("keeps LaTeX written as math node text instead of producing empty equations", () => {
+    const result = restoreDraftReplacement(
+      '<div data-type="block-math">$$\\hat{y} = h_w(x)$$</div><p>Where <span data-type="inline-math" data-latex="">w_0</span> is the bias.</p>',
+      "",
+    );
+    expect(result).toContain('data-latex="\\hat{y} = h_w(x)"');
+    expect(result).toContain('data-latex="w_0"');
+    expect(result).not.toContain('data-latex=""');
+  });
+
+  it("drops math nodes that carry no LaTeX at all", () => {
+    const result = restoreDraftReplacement(
+      '<p>Before</p><div data-type="block-math"></div><p>After</p>',
+      "",
+    );
+    expect(result).not.toContain("block-math");
+    expect(result).toContain("<p>Before</p><p>After</p>");
   });
 
   it("preserves math, lists, tables, code, and formatting through schema normalization", () => {

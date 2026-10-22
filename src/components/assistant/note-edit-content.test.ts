@@ -42,6 +42,29 @@ describe("targeted note edits", () => {
     );
     expect(content).toContain("Original explanation");
   });
+  it("shows math to the model as delimited LaTeX and restores edited math nodes", () => {
+    const mathContent =
+      '<p>Weight <span data-type="inline-math" data-latex="w_1"></span></p><div data-type="block-math" data-latex="y = ax + b"></div>';
+    const draft = buildNoteDraft("s", 0, "Regression", mathContent);
+    expect(draft.blocks.map((block) => block.html)).toEqual([
+      "<p>Weight $w_1$</p>",
+      "<p>$$y = ax + b$$</p>",
+    ]);
+    const result = prepareNoteEdits(
+      draft,
+      mathContent,
+      proposal([
+        {
+          firstBlockId: "b0",
+          lastBlockId: "b1",
+          html: "<p><strong>Weight</strong> $w_1$</p><p>$$\\hat{y} = ax + b$$</p>",
+        },
+      ]),
+    );
+    expect(result.content).toBe(
+      '<p><strong>Weight</strong> <span data-latex="w_1" data-type="inline-math"></span></p><div data-latex="\\hat{y} = ax + b" data-type="block-math"></div>',
+    );
+  });
   it("supports insertion, deletion, and title changes together", () => {
     const draft = buildNoteDraft("s", 0, "Cells", content);
     const result = prepareNoteEdits(draft, content, {
@@ -65,6 +88,48 @@ describe("targeted note edits", () => {
       ).content,
     ).toBe("<p>First</p>");
   });
+  it("applies an insertion just before an adjacent replaced block", () => {
+    const draft = buildNoteDraft("s", 0, "Cells", content);
+    const result = prepareNoteEdits(
+      draft,
+      content,
+      proposal(
+        [{ firstBlockId: "b1", lastBlockId: "b1", html: "" }],
+        [{ anchorBlockId: "b0", side: "after", html: "<p>Moved</p>" }],
+      ),
+    );
+    expect(result.content).toBe("<h2>Cells</h2><p>Moved</p><p>Keep this</p>");
+    expect(result.segments.map((segment) => segment.replacement)).toEqual([
+      "<p>Moved</p>",
+      "",
+    ]);
+  });
+  it("rejects an unanchored insertion into a non-empty note", () => {
+    const draft = buildNoteDraft("s", 0, "Cells", content);
+    expect(() =>
+      prepareNoteEdits(
+        draft,
+        content,
+        proposal([], [{ side: "after", html: "<p>Last</p>" }]),
+      ),
+    ).toThrow("anchorBlockId");
+  });
+  it("rejects ambiguous insertions at the same position", () => {
+    const draft = buildNoteDraft("s", 0, "Cells", content);
+    expect(() =>
+      prepareNoteEdits(
+        draft,
+        content,
+        proposal(
+          [],
+          [
+            { anchorBlockId: "b0", side: "after", html: "<p>One</p>" },
+            { anchorBlockId: "b1", side: "before", html: "<p>Two</p>" },
+          ],
+        ),
+      ),
+    ).toThrow("overlaps");
+  });
   it("rejects overlap and unseen blocks", () => {
     const draft = buildNoteDraft("s", 0, "Cells", content);
     const replace = {
@@ -78,7 +143,7 @@ describe("targeted note edits", () => {
         content,
         proposal([replace, { ...replace, firstBlockId: "b1" }]),
       ),
-    ).toThrow("Overlapping");
+    ).toThrow("overlaps");
     expect(() =>
       prepareNoteEdits(
         { ...draft, blocks: draft.blocks.filter((block) => block.id !== "b1") },

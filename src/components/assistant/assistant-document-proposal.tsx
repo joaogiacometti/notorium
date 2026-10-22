@@ -40,9 +40,22 @@ export function readDocumentProposalParts(
   message: AssistantUIMessage,
 ): DocumentProposalPart[] {
   return message.parts.filter(
-    (part): part is DocumentProposalPart =>
+    (part, index): part is DocumentProposalPart =>
       (part.type === "tool-proposeNoteEdits" ||
         part.type === "tool-proposeMindmapEdits") &&
-      part.state !== "input-streaming",
+      part.state !== "input-streaming" &&
+      !(part.state === "output-error" && answeredLater(message, index)),
   );
+}
+
+// A proposal the server rejected goes back to the model, which corrects it or
+// explains in the same reply; only an unanswered failure needs the notice.
+function answeredLater(message: AssistantUIMessage, index: number): boolean {
+  return message.parts
+    .slice(index + 1)
+    .some(
+      (part) =>
+        (part.type === "text" && part.text.trim() !== "") ||
+        part.type.startsWith("tool-"),
+    );
 }

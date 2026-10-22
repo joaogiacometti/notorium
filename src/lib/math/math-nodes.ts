@@ -47,3 +47,28 @@ export function mathNodeToDelimitedLatex(element: Element): string {
   const { latex, display } = readMathNode(element);
   return delimitLatex(latex, display);
 }
+
+/**
+ * Rewrite every math node in editor HTML as dollar-delimited text, so models
+ * read math in the same `$...$`/`$$...$$` format they are told to write.
+ * Block equations become their own paragraph, which draft normalization turns
+ * back into a block node.
+ *
+ * @example
+ * delimitMathNodesInHtml(mathNodeHtml("x", false)); // "$x$"
+ */
+export function delimitMathNodesInHtml(html: string): string {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  for (const element of template.content.querySelectorAll(MATH_NODE_SELECTOR)) {
+    const text = document.createTextNode(mathNodeToDelimitedLatex(element));
+    if (!readMathNode(element).display) {
+      element.replaceWith(text);
+      continue;
+    }
+    const paragraph = document.createElement("p");
+    paragraph.append(text);
+    element.replaceWith(paragraph);
+  }
+  return template.innerHTML;
+}

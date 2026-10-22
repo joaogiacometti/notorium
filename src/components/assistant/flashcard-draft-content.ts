@@ -8,7 +8,7 @@ import {
   restoreImagePlaceholders,
 } from "@/lib/editor/rich-text";
 import { normalizeReviewedRichText } from "@/lib/editor/rich-text-review-schema";
-import { MATH_NODE_SELECTOR } from "@/lib/math/math-nodes";
+import { MATH_NODE_SELECTOR, readMathNode } from "@/lib/math/math-nodes";
 
 const PROTECTED_MATH_TEXT = `pre, code, ${MATH_NODE_SELECTOR}`;
 
@@ -34,6 +34,7 @@ export function restoreDraftReplacement(
 function normalizeDraftMath(html: string): string {
   const template = document.createElement("template");
   template.innerHTML = html;
+  repairDraftMathNodes(template.content);
   const walker = document.createTreeWalker(
     template.content,
     NodeFilter.SHOW_TEXT,
@@ -46,6 +47,29 @@ function normalizeDraftMath(html: string): string {
     replaceDraftMathText(text);
   }
   return template.innerHTML;
+}
+
+// Models sometimes write LaTeX as a math node's text instead of `data-latex`;
+// the schema reads only the attribute, so that text became an empty equation.
+function repairDraftMathNodes(root: DocumentFragment): void {
+  for (const math of root.querySelectorAll(MATH_NODE_SELECTOR)) {
+    const latex =
+      readMathNode(math).latex.trim() ||
+      stripMathDelimiters(math.textContent ?? "");
+    if (!latex) {
+      math.remove();
+      continue;
+    }
+    math.setAttribute("data-latex", latex);
+    math.replaceChildren();
+  }
+}
+
+function stripMathDelimiters(text: string): string {
+  return text
+    .trim()
+    .replace(/^\$+|\$+$/g, "")
+    .trim();
 }
 
 function replaceDraftMathText(text: Text): void {

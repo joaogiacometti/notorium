@@ -10,12 +10,19 @@ import {
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
 import {
+  type EditGuard,
+  guardEditSchema,
+} from "@/features/assistant/edit-guards";
+import { findFlashcardEditProblems } from "@/features/assistant/flashcard-edit-rules";
+import {
   formatLibraryHitsForModel,
   type LibrarySearchInput,
   type LibrarySearchOutput,
   librarySearchInputSchema,
   librarySearchOutputSchema,
 } from "@/features/assistant/library-search-contract";
+import { findMindmapEditProblems } from "@/features/assistant/mindmap-edit-rules";
+import { findNoteEditProblems } from "@/features/assistant/note-edit-rules";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
 import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
 import { MATH_RULE } from "@/lib/ai/prompt-rules";
@@ -145,29 +152,45 @@ export type LibrarySearchFunction = (
  * the reply and the chat shows the cards or edits for the user to accept, so
  * nothing is written without the user's click and the route stays write-free.
  * `searchLibrary` is the one tool run on the server: it only reads, through
- * the injected user-bound search.
+ * the injected user-bound search. Edit tools check proposals against the open
+ * draft (see edit-guards.ts), so the model corrects a rejected call itself.
  *
  * @example
- * streamChatResponse({ ...options, tools: buildAssistantTools(search) });
+ * streamChatResponse({ ...options, tools: buildAssistantTools(search, { documentDraft }) });
  */
-export function buildAssistantTools(searchLibrary: LibrarySearchFunction) {
+export function buildAssistantTools(
+  searchLibrary: LibrarySearchFunction,
+  drafts: EditableDrafts = {},
+) {
+  const { draft, documentDraft } = drafts;
+  const note = documentDraft?.kind === "note" ? documentDraft : undefined;
+  const mindmap = documentDraft?.kind === "mindmap" ? documentDraft : undefined;
   return {
     proposeNoteEdits: tool({
       description:
-        "Propose requested changes to the current note draft, including conversational follow-ups. Questions stay in chat. Target visible content only and preserve everything else. Send one concrete proposal for review in the document; acceptance enters normal autosave, while discarded, skipped, or stale proposals are unapplied.",
-      inputSchema: noteEditsInputSchema,
+        "Propose requested changes to the current note draft, including conversational follow-ups. Questions stay in chat. Target visible content only and preserve everything else. Send one concrete proposal for review in the document; acceptance enters normal autosave, while discarded, skipped, or stale proposals are unapplied. Block ids are internal; never mention them in chat.",
+      inputSchema: guardEditSchema(
+        noteEditsInputSchema,
+        guardsFor(note, findNoteEditProblems),
+      ),
       outputSchema: documentEditsOutputSchema,
     }),
     proposeMindmapEdits: tool({
       description:
         "Propose requested changes to the current mindmap draft, including conversational follow-ups. Questions stay in chat. Target visible content only and preserve everything else. Send one concrete proposal for review on the canvas; acceptance enters normal autosave, while discarded, skipped, or stale proposals are unapplied.",
-      inputSchema: mindmapEditsInputSchema,
+      inputSchema: guardEditSchema(
+        mindmapEditsInputSchema,
+        guardsFor(mindmap, findMindmapEditProblems),
+      ),
       outputSchema: documentEditsOutputSchema,
     }),
     proposeFlashcardEdits: tool({
       description:
         "Propose requested front/back changes to the current flashcard draft, including conversational follow-ups. Target this draft only when the request refers to it; corrections to earlier chat proposals use creation even while an editor is open. Questions stay in chat. Send only changed fields in one call for per-field review inside the editor. Acceptance changes the unsaved draft; discarded, skipped, or stale fields remain unapplied.",
-      inputSchema: flashcardEditsInputSchema,
+      inputSchema: guardEditSchema(
+        flashcardEditsInputSchema,
+        guardsFor(draft, findFlashcardEditProblems),
+      ),
       outputSchema: flashcardEditsOutputSchema,
     }),
     proposeFlashcards: tool({
@@ -188,6 +211,16 @@ export function buildAssistantTools(searchLibrary: LibrarySearchFunction) {
       }),
     }),
   };
+}
+
+type EditableDrafts = Pick<AssistantChatRequest, "draft" | "documentDraft">;
+
+// Without an open draft the editor tool is inactive, so it needs no guard.
+function guardsFor<Input, Draft>(
+  draft: Draft | undefined,
+  findProblems: (input: Input, draft: Draft) => string[],
+): EditGuard<Input>[] {
+  return draft ? [(input) => findProblems(input, draft)] : [];
 }
 
 export type AssistantTools = InferUITools<

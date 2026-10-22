@@ -145,4 +145,29 @@ describe("assistant tool availability", () => {
       ).not.toMatch(/"(oneOf|anyOf|allOf|const)"/);
     }
   });
+  it("checks edit proposals against the open draft", () => {
+    const note = {
+      kind: "note" as const,
+      sessionId: "note",
+      revision: 0,
+      title: "Note",
+      partial: false,
+      blocks: [{ id: "b0", html: "<p>Text</p>" }],
+    };
+    const tools = buildAssistantTools(new EmptyToolLibrary().search, {
+      documentDraft: note,
+    });
+    const schema = tools.proposeNoteEdits.inputSchema as z.ZodType;
+    const edit = (html: string) => ({
+      sessionId: "note",
+      revision: 0,
+      replacements: [{ firstBlockId: "b0", lastBlockId: "b0", html }],
+    });
+    expect(schema.safeParse(edit("<p>New</p>")).success).toBe(true);
+    expect(
+      schema.safeParse(edit("<p>Text</p>")).error?.issues[0]?.message,
+    ).toBe(
+      "replacement b0:b0 keeps the current content; expected changed HTML",
+    );
+  });
 });

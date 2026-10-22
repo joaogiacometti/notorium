@@ -13,6 +13,7 @@ import type {
 } from "@/features/assistant/types";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import { replaceImagesWithPlaceholders } from "@/lib/editor/rich-text";
+import { delimitMathNodesInHtml } from "@/lib/math/math-nodes";
 import {
   getDocumentDetailHref,
   getFlashcardDetailHref,
@@ -95,9 +96,17 @@ export function prepareDraftForAssistant(
 ): FlashcardDraft {
   return {
     ...draft,
-    front: replaceImagesWithPlaceholders(draft.front).text,
-    back: replaceImagesWithPlaceholders(draft.back).text,
+    front: draftHtmlForAssistant(draft.front),
+    back: draftHtmlForAssistant(draft.back),
   };
+}
+
+/** Model-visible editor HTML: image placeholders and math in the `$` format
+ * the model writes, so it never copies math elements with misplaced LaTeX.
+ * @example draftHtmlForAssistant("<p>Hi</p>"); // "<p>Hi</p>"
+ */
+export function draftHtmlForAssistant(html: string): string {
+  return replaceImagesWithPlaceholders(delimitMathNodesInHtml(html)).text;
 }
 
 /** True while a reply is requested or streaming; sends and tool outputs wait.

@@ -3,7 +3,12 @@ import type {
   NoteDraft,
   NoteEditsInput,
 } from "@/features/assistant/document-edit-contract";
+import {
+  type LocatedNoteEdit,
+  locateNoteEdits,
+} from "@/features/assistant/note-edit-ranges";
 import { STUDY_CONTEXT_MAX_CHARS } from "@/features/assistant/study-context";
+import { draftHtmlForAssistant } from "@/features/assistant/utils";
 import { editNoteSchema } from "@/features/notes/validation";
 import { replaceImagesWithPlaceholders } from "@/lib/editor/rich-text";
 import type { RichTextReviewSegment } from "@/lib/editor/rich-text-review-decorations";
@@ -49,7 +54,7 @@ export function buildNoteDraft(
     if (!block) continue;
     const safe = {
       ...block,
-      html: replaceImagesWithPlaceholders(block.html).text.replaceAll(
+      html: draftHtmlForAssistant(block.html).replaceAll(
         /\{\{IMAGE_(\d+)\}\}/g,
         `{{NOTE_IMAGE_${block.id}_$1}}`,
       ),
@@ -81,22 +86,16 @@ export function prepareNoteEdits(
   proposal: NoteEditsInput,
 ): PreparedNoteEdit {
   const blocks = splitNoteBlocks(content);
-  const visible = new Set(draft.blocks.map((block) => block.id));
-  const replacements = [
-    ...(proposal.replacements ?? []).map((edit) =>
-      resolveNoteReplacement(edit, blocks, visible),
-    ),
-    ...(proposal.insertions ?? []).map((edit) =>
-      resolveNoteInsertion(edit, blocks, visible),
-    ),
-  ];
-  const sorted = replacements.sort(
-    (left, right) => left.from - right.from || left.to - right.to,
+  const { edits, problems } = locateNoteEdits(
+    blocks.map((block) => block.id),
+    new Set(draft.blocks.map((block) => block.id)),
+    proposal,
   );
-  assertDisjointNoteEdits(sorted);
+  if (problems.length > 0) throw new Error(problems.join("; "));
+  const resolved = edits.map((edit) => resolveNoteEdit(edit, blocks));
   let cursor = 0;
   const pieces: string[] = [];
-  for (const edit of sorted) {
+  for (const edit of resolved) {
     pieces.push(
       ...blocks.slice(cursor, edit.from).map((block) => block.html),
       edit.html,
@@ -112,58 +111,22 @@ export function prepareNoteEdits(
   return {
     title: result.title,
     content: result.content ?? "",
-    segments: buildNoteReviewSegments(blocks, sorted),
+    segments: buildNoteReviewSegments(blocks, resolved),
   };
 }
 
-interface ResolvedNoteEdit {
-  from: number;
-  to: number;
-  html: string;
-}
-function resolveNoteReplacement(
-  edit: NonNullable<NoteEditsInput["replacements"]>[number],
+function resolveNoteEdit(
+  edit: LocatedNoteEdit,
   blocks: NoteBlock[],
-  visible: Set<string>,
-): ResolvedNoteEdit {
-  const from = blocks.findIndex((block) => block.id === edit.firstBlockId);
-  const last = blocks.findIndex((block) => block.id === edit.lastBlockId);
-  if (
-    from < 0 ||
-    last < from ||
-    blocks.slice(from, last + 1).some((block) => !visible.has(block.id))
-  )
-    throw new Error(
-      `Invalid block range ${edit.firstBlockId}:${edit.lastBlockId}; expected contiguous visible blocks`,
-    );
-  const original = blocks
-    .slice(from, last + 1)
-    .map((block) => block.html)
-    .join("");
+): LocatedNoteEdit {
+  if (edit.kind === "insertion")
+    return { ...edit, html: safeNoteReplacement(edit.html, "") };
+  const range = blocks.slice(edit.from, edit.to);
+  const original = range.map((block) => block.html).join("");
   return {
-    from,
-    to: last + 1,
-    html: safeNoteReplacement(
-      remapNoteImages(edit.html, blocks.slice(from, last + 1)),
-      original,
-    ),
+    ...edit,
+    html: safeNoteReplacement(remapNoteImages(edit.html, range), original),
   };
-}
-
-function resolveNoteInsertion(
-  edit: NonNullable<NoteEditsInput["insertions"]>[number],
-  blocks: NoteBlock[],
-  visible: Set<string>,
-): ResolvedNoteEdit {
-  if (edit.anchorBlockId === undefined && blocks.length === 0)
-    return { from: 0, to: 0, html: safeNoteReplacement(edit.html, "") };
-  const anchor = blocks.findIndex((block) => block.id === edit.anchorBlockId);
-  if (anchor < 0 || !visible.has(edit.anchorBlockId ?? ""))
-    throw new Error(
-      `Invalid insertion anchor ${edit.anchorBlockId}; expected a visible block`,
-    );
-  const from = anchor + (edit.side === "after" ? 1 : 0);
-  return { from, to: from, html: safeNoteReplacement(edit.html, "") };
 }
 
 function safeNoteReplacement(html: string, original: string): string {
@@ -173,17 +136,6 @@ function safeNoteReplacement(html: string, original: string): string {
     );
   if (!html) return "";
   return restoreDraftReplacement(html, original);
-}
-
-function assertDisjointNoteEdits(edits: ResolvedNoteEdit[]): void {
-  for (let index = 1; index < edits.length; index += 1) {
-    const previous = edits[index - 1];
-    const current = edits[index];
-    if (current.from < previous.to || current.from === previous.from)
-      throw new Error(
-        `Overlapping block edits at ${current.from}; expected disjoint ranges`,
-      );
-  }
 }
 
 function remapNoteImages(html: string, blocks: NoteBlock[]): string {
@@ -221,7 +173,7 @@ function noteFragmentSize(html: string): number {
 
 function buildNoteReviewSegments(
   blocks: NoteBlock[],
-  edits: ResolvedNoteEdit[],
+  edits: LocatedNoteEdit[],
 ): RichTextReviewSegment[] {
   let delta = 0;
   return edits.map((edit) => {

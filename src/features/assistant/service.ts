@@ -27,9 +27,11 @@ type UserLibrarySearch = (
   input: LibrarySearchInput,
 ) => Promise<LibrarySearchOutput>;
 
-// One step to search, one to answer. Keep the active tools fixed across both
-// steps so the answer can reuse the same prompt prefix.
-const ASSISTANT_MAX_MODEL_STEPS = 2;
+// One step to search, one to answer, and one to correct an edit proposal the
+// draft guards rejected (a valid proposal ends the reply, so the extra step
+// runs only after a rejection). Keep the active tools fixed across steps so
+// later steps reuse the same prompt prefix.
+const ASSISTANT_MAX_MODEL_STEPS = 3;
 
 interface StreamAssistantReplyForUserInput {
   userId: string;
@@ -102,7 +104,10 @@ export async function streamAssistantReplyForUser({
       await loadSubjectPaths(userId),
     ),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
-    tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId)),
+    tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId), {
+      draft,
+      documentDraft,
+    }),
     activeTools: selectAssistantActiveTools({ draft, documentDraft }),
     maxModelSteps: ASSISTANT_MAX_MODEL_STEPS,
     abortSignal,

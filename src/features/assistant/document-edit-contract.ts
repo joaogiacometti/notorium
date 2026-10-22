@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { editToolInputObject } from "@/features/assistant/edit-guards";
 import { STUDY_CONTEXT_MAX_CHARS } from "@/features/assistant/study-context";
 import {
   MINDMAP_EDGE_DIRECTIONS,
   MINDMAP_NODE_COLOR_TOKENS,
 } from "@/features/mindmaps/constants";
+import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
 const reference = z.string().min(1).max(100);
@@ -98,8 +100,8 @@ function countEdits(lists: (unknown[] | undefined)[]): number {
 }
 
 // Block ids exist only in one captured editor revision; they never enter stored HTML.
-export const noteEditsInputSchema = z
-  .object({
+export const noteEditsInputSchema = editToolInputObject(
+  {
     ...sessionFields,
     title: title.optional(),
     replacements: editList(
@@ -114,7 +116,7 @@ export const noteEditsInputSchema = z
           .string()
           .max(LIMITS.assistantReplyMaxChars)
           .describe(
-            "Replacement supported editor HTML; empty deletes the range. Preserve unrelated formatting, math, tables, and all image placeholders; never invent attachments.",
+            `Replacement supported editor HTML; empty deletes the range. Preserve unrelated formatting, math, tables, and all image placeholders; never invent attachments. ${EDITOR_HTML_MATH_RULE}`,
           ),
       }),
     ),
@@ -132,11 +134,13 @@ export const noteEditsInputSchema = z
           .min(1)
           .max(LIMITS.assistantReplyMaxChars)
           .describe(
-            "Inserted editor HTML with paragraphs, headings, lists, strong/em, pre/code, tables, or math nodes with data-type and data-latex. Preserve image placeholders exactly.",
+            `Inserted editor HTML with paragraphs, headings, lists, strong/em, pre/code, or tables. ${EDITOR_HTML_MATH_RULE} Preserve image placeholders exactly.`,
           ),
       }),
     ),
-  })
+  },
+  ", with each edit inside replacements or insertions",
+)
   .refine(
     (input) =>
       input.title !== undefined ||
@@ -195,8 +199,10 @@ const MINDMAP_EDIT_LIST_KEYS = Object.keys(
   mindmapEditListShape,
 ) as MindmapEditListKey[];
 
-export const mindmapEditsInputSchema = z
-  .object({ ...sessionFields, ...mindmapEditListShape })
+export const mindmapEditsInputSchema = editToolInputObject(
+  { ...sessionFields, ...mindmapEditListShape },
+  ", with each operation inside its list",
+)
   .refine(
     (input) => {
       const total = countEdits(MINDMAP_EDIT_LIST_KEYS.map((key) => input[key]));
