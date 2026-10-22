@@ -1,13 +1,9 @@
 "use client";
 
-import { EditorContent, useEditor } from "@tiptap/react";
+import { useState } from "react";
 import type { PendingFlashcardField } from "@/components/assistant/assistant-workspace-context";
+import { RichTextEditPreview } from "@/components/shared/rich-text-edit-preview";
 import { Button } from "@/components/ui/button";
-import { buildRichTextReviewExtension } from "@/lib/editor/rich-text-review-decorations";
-import {
-  buildRichTextReviewExtensions,
-  parseReviewedRichText,
-} from "@/lib/editor/rich-text-review-schema";
 
 interface FlashcardFieldReviewProps {
   field: "front" | "back";
@@ -25,32 +21,19 @@ export function FlashcardFieldReview({
   onDecide,
   disabled = false,
 }: Readonly<FlashcardFieldReviewProps>) {
-  const editor = useEditor(
-    {
-      extensions: [
-        ...buildRichTextReviewExtensions(),
-        buildRichTextReviewExtension(parseReviewedRichText(proposal.original)),
-      ],
-      content: proposal.replacement,
-      editable: false,
-      immediatelyRender: false,
-      editorProps: {
-        attributes: {
-          class: "tiptap-editor-content",
-          "aria-label": `Suggested ${field} changes`,
-        },
-      },
-    },
-    [proposal.original, proposal.replacement],
-  );
+  const [ready, setReady] = useState(false);
   return (
     <fieldset
       className="min-w-0 rounded-md border border-input"
       aria-label={`${field} suggestion`}
     >
-      <div className="tiptap-content max-h-[40svh] overflow-y-auto p-3">
-        <EditorContent editor={editor} />
-      </div>
+      <RichTextEditPreview
+        onReadyChange={setReady}
+        original={proposal.original}
+        replacement={proposal.replacement}
+        label={`Suggested ${field} changes`}
+        className="max-h-[40svh]"
+      />
       <div className="flex items-center justify-end gap-2 border-t p-2">
         <span className="mr-auto text-xs text-muted-foreground">
           Added / <span className="line-through">Removed</span>
@@ -59,7 +42,7 @@ export function FlashcardFieldReview({
           type="button"
           size="sm"
           variant="outline"
-          disabled={disabled || !editor}
+          disabled={disabled || !ready}
           onClick={() => onDecide(false)}
         >
           Discard {field}
@@ -67,7 +50,7 @@ export function FlashcardFieldReview({
         <Button
           type="button"
           size="sm"
-          disabled={disabled || !editor}
+          disabled={disabled || !ready}
           onClick={() => onDecide(true)}
         >
           Accept {field}

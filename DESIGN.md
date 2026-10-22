@@ -180,8 +180,23 @@ host for the same assistant. Review provides its own host inside its scroll
 boundary. Nested hosts restore the previous host on close; never raise z-index
 to expose chat above a dialog.
 
-AI edits are reviewed inside each affected input, with separate Accept and
+AI flashcard edits are reviewed inside each affected input, with separate Accept and
 Discard controls per field. Additions use success intent variables; deletions
 use danger intent variables and strikethrough. Read-only review decorations
 never become editor content. Resolve proposals before saving; the unchanged
 fields remain editable.
+
+Note and mindmap AI proposals preview in the document region, not in chat. A
+bordered `DocumentEditReviewControls` bar (Added / Removed legend, one Discard
+changes / Accept changes pair) resolves the entire proposal. Notes show a
+read-only preview in place of the editor, using danger intent strikethrough for
+removals and success intent text for additions; a title change shows the
+struck original beside the suggestion. Preview content never enters the live
+document; Accept uses normal autosave and existing undo. The chat keeps only a
+muted one-line outcome per proposal and opens no overlay.
+
+Mindmap review nodes keep the plain
+node box (`w-48`, theme color tint, bold/italic) with a dashed success or danger
+border, and their state badge sits on the top border so it never adds height.
+Only cross-connection edges carry a text badge; tree-edge changes show on the
+child node.

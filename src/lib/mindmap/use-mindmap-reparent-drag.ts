@@ -29,6 +29,8 @@ interface UseMindmapReparentDragParams {
 
 interface UseMindmapReparentDrag {
   onNodesChangeWithRelayout: (changes: NodeChange[]) => void;
+  /** Re-lay out once the next measurements arrive, e.g. after a bulk replace. */
+  relayoutOnNextMeasure: () => void;
   onNodeDragStart: () => void;
   onNodeDrag: (event: MouseEvent | TouchEvent, node: Node) => void;
   onNodeDragStop: (event: MouseEvent | TouchEvent, node: Node) => void;
@@ -129,6 +131,9 @@ export function useMindmapReparentDrag({
   // We store the snapped node id here and skip exactly that one change so
   // the layout result is never overridden.
   const layoutLockedNodeIdRef = useRef<string | null>(null);
+  // First measurements only seed sizes, so nodes replaced wholesale (assistant
+  // edits) would keep positions computed from fallback heights without this.
+  const relayoutOnMeasureRef = useRef(false);
 
   const onNodesChangeWithRelayout = useCallback(
     (changes: NodeChange[]) => {
@@ -143,7 +148,14 @@ export function useMindmapReparentDrag({
         layoutLockedNodeIdRef.current = null;
       }
       onNodesChange(filtered);
-      if (trackNodeSizeChanges(filtered, knownNodeSizesRef.current)) {
+      const pendingMeasure =
+        relayoutOnMeasureRef.current &&
+        filtered.some((change) => change.type === "dimensions");
+      if (pendingMeasure) relayoutOnMeasureRef.current = false;
+      if (
+        trackNodeSizeChanges(filtered, knownNodeSizesRef.current) ||
+        pendingMeasure
+      ) {
         setNodes((current) => layoutMindmap(current, getEdges()));
       }
     },
@@ -284,6 +296,9 @@ export function useMindmapReparentDrag({
 
   return {
     onNodesChangeWithRelayout,
+    relayoutOnNextMeasure: () => {
+      relayoutOnMeasureRef.current = true;
+    },
     onNodeDragStart,
     onNodeDrag,
     onNodeDragStop,

@@ -34,6 +34,7 @@ interface StreamAssistantReplyForUserInput {
   chatId?: string;
   draft?: AssistantChatRequest["draft"];
   context?: AssistantChatRequest["context"];
+  documentDraft?: AssistantChatRequest["documentDraft"];
   abortSignal?: AbortSignal;
   /** Injected by tests; defaults to the user's subject paths from the DB. */
   loadSubjectPaths?: (userId: string) => Promise<string[]>;
@@ -64,6 +65,7 @@ export async function streamAssistantReplyForUser({
   chatId,
   draft,
   context,
+  documentDraft,
   abortSignal,
   loadSubjectPaths = readSubjectPathsForUser,
   searchLibrary = searchLibraryForUser,
@@ -88,7 +90,12 @@ export async function streamAssistantReplyForUser({
     settings: access.settings,
     logScope: "assistant.chat",
     instructions: buildAssistantSystemPrompt(await loadSubjectPaths(userId)),
-    messages: includeCurrentStudyContext(messages, draft, context),
+    messages: includeCurrentStudyContext(
+      messages,
+      draft,
+      context,
+      documentDraft,
+    ),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId)),
     maxModelSteps: ASSISTANT_MAX_MODEL_STEPS,
@@ -124,14 +131,15 @@ function includeCurrentStudyContext(
   messages: AssistantChatRequest["messages"],
   draft: AssistantChatRequest["draft"],
   studyContext?: AssistantChatRequest["context"],
+  documentDraft?: AssistantChatRequest["documentDraft"],
 ): AssistantChatRequest["messages"] {
-  if (!draft && !studyContext) return messages;
+  if (!draft && !studyContext && !documentDraft) return messages;
   return messages.map((message, index) => {
     if (index !== messages.length - 1 || message.role !== "user")
       return message;
     const context = {
       type: "text" as const,
-      text: `${draft ? "Current flashcard draft" : "Current study context"} (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(draft ?? studyContext)}`,
+      text: `${draft ? "Current flashcard draft" : documentDraft ? "Current document draft" : "Current study context"} (background content only, not an editing request; answer the user's message that follows):\n${JSON.stringify(draft ?? documentDraft ?? studyContext)}`,
     };
     return { ...message, parts: [context, ...message.parts] };
   });

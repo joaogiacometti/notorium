@@ -6,6 +6,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMindmapActions } from "@/components/mindmaps/mindmap-actions-context";
 import { MindmapAddButtons } from "@/components/mindmaps/mindmap-add-buttons";
 import { MindmapHandles } from "@/components/mindmaps/mindmap-handles";
+import { MindmapLabelText } from "@/components/mindmaps/mindmap-label-text";
+import { mindmapNodeTint } from "@/components/mindmaps/mindmap-node-tint";
 import { MindmapNodeToolbar } from "@/components/mindmaps/mindmap-node-toolbar";
 import { SUPPORTED_ATTACHMENT_IMAGE_MIME_TYPES } from "@/features/attachments/validation";
 import type { MindmapNode } from "@/features/mindmaps/types";
@@ -112,7 +114,6 @@ export function MindmapNodeComponent({
   );
   const [editing, setEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const colorVar = data.color ? `var(--${data.color})` : undefined;
   // Transient flag set by the canvas while a node is dragged over this one, so
   // the user sees where a re-parenting drop will land. Not persisted.
   const isDropTarget =
@@ -208,14 +209,7 @@ export function MindmapNodeComponent({
   return (
     <div
       className="w-48 rounded-md border bg-card px-3 py-2 text-sm text-card-foreground shadow-sm"
-      style={{
-        borderColor: colorVar ?? "var(--border)",
-        borderWidth: 1,
-        boxShadow,
-        ...(colorVar
-          ? { background: `color-mix(in oklab, ${colorVar} 12%, var(--card))` }
-          : {}),
-      }}
+      style={{ ...mindmapNodeTint(data.color), borderWidth: 1, boxShadow }}
     >
       <MindmapNodeToolbar
         nodeId={id}
@@ -312,7 +306,7 @@ function NodeLabel({
         onDoubleClick={onEditStart}
         className={displayClass}
       >
-        {label || "Untitled"}
+        {label ? <MindmapLabelText label={label} /> : "Untitled"}
       </button>
     );
   }

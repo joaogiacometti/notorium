@@ -161,6 +161,8 @@ describe("streamAssistantReplyForUser", () => {
     const call = model.doStreamCalls[0];
     expect(subjects.requestedUserIds).toEqual(["user-1"]);
     expect(call?.tools?.map((tool) => tool.name)).toEqual([
+      "proposeNoteEdits",
+      "proposeMindmapEdits",
       "proposeFlashcardEdits",
       "proposeFlashcards",
       "searchLibrary",
@@ -270,6 +272,41 @@ describe("streamAssistantReplyForUser", () => {
       latest.indexOf("What is ATP?"),
     );
     expect(latest).not.toContain('"back"');
+  });
+
+  it("sends document drafts after history while keeping instructions and tools stable", async () => {
+    const model = createFakeStreamingModel("A proposed change.");
+    getAiModelMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    for (const html of ["<p>Original note</p>", "<p>Updated note</p>"]) {
+      const result = await streamAssistantReplyForUser({
+        userId: "user-1",
+        messages,
+        documentDraft: {
+          kind: "note",
+          sessionId: "s",
+          revision: 0,
+          title: "Title",
+          partial: true,
+          blocks: [{ id: "b0", html }],
+        },
+        loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      });
+      if (result.success) await result.response.text();
+    }
+    const [first, second] = model.doStreamCalls;
+    expect(first.prompt[0]).toEqual(second.prompt[0]);
+    expect(first.tools).toEqual(second.tools);
+    const latest = JSON.stringify(second.prompt.at(-1));
+    expect(latest).toContain("Updated note");
+    expect(latest.indexOf("Updated note")).toBeLessThan(
+      latest.indexOf("What is ATP?"),
+    );
+    expect(JSON.stringify(second.prompt.slice(0, -1))).not.toContain(
+      "Updated note",
+    );
   });
 
   it("appends draft context after history without changing system instructions", async () => {

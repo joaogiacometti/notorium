@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Editor } from "@tiptap/core";
 import { Clipboard, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -11,9 +12,12 @@ import { editNote } from "@/app/actions/notes";
 import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { buildDocumentContext } from "@/components/assistant/study-context-content";
+import { useActiveNoteEditor } from "@/components/assistant/use-active-note-editor";
 import { useStudyContext } from "@/components/assistant/use-study-context";
+import { DocumentTitleReview } from "@/components/documents/document-title-review";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
+import { NoteDocumentReview } from "@/components/notes/note-document-review";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { PageTopBar } from "@/components/shared/page-top-bar";
@@ -69,6 +73,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [assistantEditor, setAssistantEditor] = useState<Editor | null>(null);
   const lastSavedValuesRef = useRef(getEditValues(note));
   const saveSequenceRef = useRef(0);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
@@ -78,6 +83,14 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
   });
   const watchedTitle = form.watch("title");
   const watchedContent = form.watch("content") ?? "";
+  const documentReview = useActiveNoteEditor({
+    editor: assistantEditor,
+    form,
+    id: note.id,
+    title: watchedTitle,
+    subjectPath: subjectName,
+    blocked: isImageUploading,
+  });
   useStudyContext(
     buildDocumentContext(
       "note",
@@ -273,9 +286,23 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                         id="form-edit-note-title"
                         aria-label="Note title"
                         aria-invalid={fieldState.invalid}
-                        className="h-10 w-full min-w-0 rounded-md border-0 bg-transparent px-3 py-0 text-lg leading-10 font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl"
+                        className={cn(
+                          "h-10 w-full min-w-0 rounded-md border-0 bg-transparent px-3 py-0 text-lg leading-10 font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl",
+                          documentReview &&
+                            documentReview.baseline.draft.title !==
+                              documentReview.prepared.title &&
+                            "hidden",
+                        )}
                         placeholder="Untitled note"
                       />
+                      {documentReview &&
+                      documentReview.baseline.draft.title !==
+                        documentReview.prepared.title ? (
+                        <DocumentTitleReview
+                          original={documentReview.baseline.draft.title}
+                          replacement={documentReview.prepared.title}
+                        />
+                      ) : null}
                       {fieldState.invalid ? (
                         <FieldError
                           className="mt-2"
@@ -352,6 +379,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                   )}
                 >
                   <TiptapEditor
+                    onEditorReady={setAssistantEditor}
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     placeholder="Write your notes here..."
@@ -363,6 +391,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                       isZenMode
                         ? "flex min-h-0 flex-1 flex-col"
                         : "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col",
+                      documentReview && "hidden lg:hidden",
                     )}
                     contentClassName={cn(
                       "w-full min-w-0 overflow-x-hidden",
@@ -372,6 +401,12 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                     )}
                     onImageUploadPendingChange={setIsImageUploading}
                   />
+                  {documentReview ? (
+                    <NoteDocumentReview
+                      proposal={documentReview}
+                      disabled={isImageUploading}
+                    />
+                  ) : null}
                   {fieldState.invalid ? (
                     <FieldError className="mt-2" errors={[fieldState.error]} />
                   ) : null}

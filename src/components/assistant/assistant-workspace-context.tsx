@@ -2,6 +2,7 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { createContext, useContext } from "react";
+import type { DocumentEditControls } from "@/components/assistant/document-editor-types";
 import type { FlashcardProposalControls } from "@/components/assistant/use-flashcard-proposal-outcomes";
 import type {
   FlashcardDraft,
@@ -32,6 +33,7 @@ export interface PendingFlashcardEdits {
 
 export interface AssistantWorkspace {
   chat: UseChatHelpers<AssistantUIMessage>;
+  documents: DocumentEditControls;
   composerDraft: string;
   setComposerDraft: (draft: string) => void;
   open: boolean;

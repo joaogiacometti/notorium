@@ -8,6 +8,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
+import { createDraftRevisionCounter } from "@/components/assistant/draft-revision";
 import type {
   FlashcardDraft,
   FlashcardEditField,
@@ -45,20 +46,20 @@ export function useActiveFlashcardEditor<TValues extends FlashcardFormValues>(
     if (!options.enabled || !hasWorkspace || !workspaceRef.current) return;
     const sessionId = crypto.randomUUID();
     sessionRef.current = sessionId;
-    let revision =
-      typeof options.resetVersion === "number" ? options.resetVersion : 0;
-    let signature = "";
+    const nextRevision = createDraftRevisionCounter(
+      typeof options.resetVersion === "number" ? options.resetVersion : 0,
+    );
     const snapshot = (): FlashcardDraft => {
       const current = optionsRef.current;
       const values = current.form.getValues();
-      const nextSignature = JSON.stringify([
-        values.id,
-        values.front,
-        values.back,
-        values.subjectId,
-      ]);
-      if (signature && signature !== nextSignature) revision += 1;
-      signature = nextSignature;
+      const revision = nextRevision(
+        JSON.stringify([
+          values.id,
+          values.front,
+          values.back,
+          values.subjectId,
+        ]),
+      );
       return {
         sessionId,
         revision,

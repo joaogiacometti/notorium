@@ -266,6 +266,8 @@ export function MindmapDetail({
               )}
             >
               <LazyMindmapCanvas
+                assistantEditing
+                subjectPath={subjectName}
                 initialGraph={initialGraph}
                 title={title}
                 onTitleChange={setTitle}

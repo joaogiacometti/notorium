@@ -255,11 +255,16 @@ test("creates a flashcard from the open note through the assistant after confirm
     await composer.press("Enter");
 
     await expect(page.getByText(front, { exact: true })).toBeVisible();
-    expect(assistant.requests.at(-1)?.context).toMatchObject({
+    expect(assistant.requests.at(-1)?.documentDraft).toMatchObject({
       kind: "note",
       title: noteTitle,
       subjectPath: subjectName,
-      content: `${content} Retrieval improves with practice.`,
+      blocks: [
+        {
+          id: "b0",
+          html: `<p>${content} Retrieval improves with practice.</p>`,
+        },
+      ],
       partial: false,
     });
     expect(

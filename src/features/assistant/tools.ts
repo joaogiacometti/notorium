@@ -1,6 +1,11 @@
 import { type InferUITools, tool } from "ai";
 import { z } from "zod";
 import {
+  documentEditsOutputSchema,
+  mindmapEditsInputSchema,
+  noteEditsInputSchema,
+} from "@/features/assistant/document-edit-contract";
+import {
   flashcardEditsInputSchema,
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
@@ -120,6 +125,18 @@ export type LibrarySearchFunction = (
  */
 export function buildAssistantTools(searchLibrary: LibrarySearchFunction) {
   return {
+    proposeNoteEdits: tool({
+      description:
+        "Propose targeted block edits or a title change ONLY when explicitly asked to modify the CURRENT note draft. Refer only to visible block ids. Empty replacement HTML deletes a range. Nothing changes until the user applies the proposal.",
+      inputSchema: noteEditsInputSchema,
+      outputSchema: documentEditsOutputSchema,
+    }),
+    proposeMindmapEdits: tool({
+      description:
+        "Propose branch, style (color/bold/italic), or cross-connection operations ONLY when explicitly asked to modify the CURRENT mindmap draft. Refer only to visible ids or earlier new-node aliases. Nothing changes until the user applies the proposal.",
+      inputSchema: mindmapEditsInputSchema,
+      outputSchema: documentEditsOutputSchema,
+    }),
     proposeFlashcardEdits: tool({
       description:
         "Suggest front/back replacements ONLY when the current user message explicitly requests changes to the flashcard draft. Never use this tool to answer questions, explain concepts, or give examples in chat, even when a draft is present. The user reviews changes in the editor; nothing is saved.",

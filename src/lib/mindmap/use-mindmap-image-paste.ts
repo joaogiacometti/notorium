@@ -16,6 +16,7 @@ interface ScreenPoint {
 }
 
 interface UseMindmapImagePasteParams {
+  enabled?: boolean;
   getNodes: () => Node[];
   setNodes: (updater: (current: Node[]) => Node[]) => void;
   screenToFlowPosition: (point: ScreenPoint) => ScreenPoint;
@@ -172,6 +173,7 @@ async function handleImagePaste(event: ClipboardEvent, deps: PasteHandlerDeps) {
  * useMindmapImagePaste({ getNodes, setNodes, screenToFlowPosition, takeSnapshot, canvasWrapperRef });
  */
 export function useMindmapImagePaste({
+  enabled = true,
   getNodes,
   setNodes,
   screenToFlowPosition,
@@ -190,6 +192,7 @@ export function useMindmapImagePaste({
   }, [canvasWrapperRef]);
 
   useEffect(() => {
+    if (!enabled) return;
     const deps: PasteHandlerDeps = {
       getNodes,
       setNodes,
@@ -202,6 +205,7 @@ export function useMindmapImagePaste({
     globalThis.addEventListener("paste", onPaste);
     return () => globalThis.removeEventListener("paste", onPaste);
   }, [
+    enabled,
     getNodes,
     setNodes,
     screenToFlowPosition,

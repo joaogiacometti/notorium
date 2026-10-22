@@ -34,6 +34,7 @@ import {
   uploadPastedImage,
 } from "@/components/shared/tiptap-helpers";
 import { TiptapTableControls } from "@/components/shared/tiptap-table-controls";
+import { DocumentTitleHistory } from "@/lib/editor/document-title-history";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
@@ -44,6 +45,7 @@ import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 import { cn } from "@/lib/utils";
 
 interface TiptapEditorProps {
+  onEditorReady?: (editor: Editor | null) => void;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -58,6 +60,7 @@ interface TiptapEditorProps {
 
 export function TiptapEditor({
   value,
+  onEditorReady,
   onChange,
   placeholder,
   id,
@@ -69,6 +72,8 @@ export function TiptapEditor({
   onImageUploadPendingChange,
 }: Readonly<TiptapEditorProps>) {
   const resolvedPlaceholder = placeholder ?? "Start writing your notes...";
+  const onEditorReadyRef = useRef(onEditorReady);
+  onEditorReadyRef.current = onEditorReady;
   const onCtrlEnterRef = useRef(onCtrlEnter);
   const onImageUploadPendingChangeRef = useRef(onImageUploadPendingChange);
   const activeUploadsRef = useRef(0);
@@ -111,6 +116,7 @@ export function TiptapEditor({
 
   const editor = useEditor({
     extensions: [
+      DocumentTitleHistory,
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         codeBlock: false,
@@ -206,6 +212,8 @@ export function TiptapEditor({
 
   useEffect(() => {
     editorRef.current = editor;
+    onEditorReadyRef.current?.(editor);
+    return () => onEditorReadyRef.current?.(null);
   }, [editor]);
 
   useEffect(() => {

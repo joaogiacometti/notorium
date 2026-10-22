@@ -90,9 +90,11 @@ function AssistantConversationPanel({
           {workspace.notice}
         </p>
       ) : null}
-      {workspace.pending ? (
+      {workspace.pending || workspace.documents.pending ? (
         <p role="status" className="px-4 py-2 text-xs text-muted-foreground">
-          Review suggested changes in the editor.
+          {workspace.documents.pending
+            ? "Review suggested changes in the document."
+            : "Review suggested changes in the editor."}
           <Button
             type="button"
             variant="ghost"

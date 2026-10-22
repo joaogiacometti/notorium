@@ -1,5 +1,11 @@
 import { z } from "zod";
 import {
+  documentDraftSchema,
+  documentEditsOutputSchema,
+  mindmapEditsInputSchema,
+  noteEditsInputSchema,
+} from "@/features/assistant/document-edit-contract";
+import {
   flashcardDraftSchema,
   flashcardEditsInputSchema,
   flashcardEditsOutputSchema,
@@ -84,6 +90,8 @@ const unansweredToolPartSchema = z.object({
   type: z.enum([
     "tool-proposeFlashcards",
     "tool-proposeFlashcardEdits",
+    "tool-proposeNoteEdits",
+    "tool-proposeMindmapEdits",
     "tool-searchLibrary",
   ]),
   state: z.enum(["input-streaming", "input-available", "output-error"]),
@@ -95,6 +103,16 @@ const replyPartSchema = z.union([
   answeredProposalPartSchema,
   answeredEditsPartSchema,
   answeredLibrarySearchPartSchema,
+  answeredToolPartSchema(
+    "tool-proposeNoteEdits",
+    noteEditsInputSchema,
+    documentEditsOutputSchema,
+  ),
+  answeredToolPartSchema(
+    "tool-proposeMindmapEdits",
+    mindmapEditsInputSchema,
+    documentEditsOutputSchema,
+  ),
   unansweredToolPartSchema,
 ]);
 
@@ -157,6 +175,7 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
 export const assistantChatRequestSchema = z
   .object({
     draft: flashcardDraftSchema.optional(),
+    documentDraft: documentDraftSchema.optional(),
     context: studyContextSchema.optional(),
     chatId: z.string().min(1).max(100).optional(),
     messages: z
@@ -170,8 +189,13 @@ export const assistantChatRequestSchema = z
       })
       .transform(dropEmptyReplies),
   })
-  .refine((request) => !(request.draft && request.context), {
-    message: "Expected either draft or study context, not both",
-  });
+  .refine(
+    (request) =>
+      [request.draft, request.documentDraft, request.context].filter(Boolean)
+        .length <= 1,
+    {
+      message: "Expected one flashcard draft, document draft, or study context",
+    },
+  );
 
 export type AssistantChatRequest = z.infer<typeof assistantChatRequestSchema>;

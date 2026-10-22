@@ -2,6 +2,10 @@
 
 import type { ChatStatus } from "ai";
 import { useEffect, useRef } from "react";
+import {
+  AssistantDocumentProposal,
+  readDocumentProposalParts,
+} from "@/components/assistant/assistant-document-proposal";
 import { AssistantFlashcardProposal } from "@/components/assistant/assistant-flashcard-proposal";
 import { AssistantLibraryResults } from "@/components/assistant/assistant-library-results";
 import {
@@ -80,6 +84,12 @@ export function AssistantMessageList({
               onOpenHit={onOpenLibraryHit}
             />
           ))}
+          {readDocumentProposalParts(message).map((proposal) => (
+            <AssistantDocumentProposal
+              key={proposal.toolCallId}
+              proposal={proposal}
+            />
+          ))}
           {readFlashcardProposalParts(message).map((proposal) => (
             <AssistantFlashcardProposal
               key={proposal.toolCallId}
@@ -131,7 +141,8 @@ function hasVisibleContent(message: AssistantUIMessage): boolean {
   return (
     readMessageText(message) !== "" ||
     readFlashcardProposalParts(message).length > 0 ||
-    readLibrarySearchParts(message).length > 0
+    readLibrarySearchParts(message).length > 0 ||
+    readDocumentProposalParts(message).length > 0
   );
 }
 

@@ -88,5 +88,5 @@ export const SUBJECT_PATH_MAX_CHARS =
 
 export const AI_LIMITS = {
   improveMaxTokens: 300,
-  assistantMaxOutputTokens: 1200,
+  assistantMaxOutputTokens: 4000,
 } as const;

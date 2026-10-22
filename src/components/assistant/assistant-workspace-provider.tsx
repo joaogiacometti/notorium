@@ -9,6 +9,7 @@ import {
   AssistantWorkspaceContext,
   type PendingFlashcardEdits,
 } from "@/components/assistant/assistant-workspace-context";
+import { useDocumentEditWorkspace } from "@/components/assistant/use-document-edit-workspace";
 import { useFlashcardProposalOutcomes } from "@/components/assistant/use-flashcard-proposal-outcomes";
 import {
   type FlashcardDraft,
@@ -70,6 +71,10 @@ export function AssistantWorkspaceProvider({
   } | null>(null);
   const proposals = useFlashcardProposalOutcomes(chat);
   const [editor, setEditor] = useState<ActiveFlashcardEditor | null>(null);
+  const documents = useDocumentEditWorkspace(
+    chat,
+    !editor && context?.kind !== "review",
+  );
   const editorRef = useRef(editor);
   const [pending, setPending] = useState<PendingFlashcardEdits | null>(null);
   const pendingRef = useRef(pending);
@@ -198,9 +203,11 @@ export function AssistantWorkspaceProvider({
     }
     try {
       const draft = editorRef.current?.snapshot();
-      const studyContext = draft
-        ? undefined
-        : (contexts.current.at(-1)?.() ?? undefined);
+      const documentDraft = documents.capture();
+      const studyContext =
+        draft || documentDraft
+          ? undefined
+          : (contexts.current.at(-1)?.() ?? undefined);
       if (draft && !flashcardDraftSchema.safeParse(draft).success) {
         setNotice("This draft is too large to send. Shorten it and try again.");
         return false;
@@ -212,15 +219,22 @@ export function AssistantWorkspaceProvider({
         return false;
       }
       await settlePending();
+      await documents.settle();
       await proposals.skipOpenCards();
       requestRef.current = draft ?? null;
       setNotice(null);
       const options = {
         body: draft
           ? { draft: prepareDraftForAssistant(draft) }
-          : { context: studyContext },
+          : documentDraft
+            ? { documentDraft }
+            : { context: studyContext },
       };
-      const metadata = { source: readStudyContextSource(studyContext) };
+      const metadata = {
+        source: readStudyContextSource(
+          draft ? undefined : (contexts.current.at(-1)?.() ?? undefined),
+        ),
+      };
       if (text === undefined) {
         chat.setMessages((messages) =>
           stampLastUserMetadata(messages, metadata),
@@ -323,6 +337,7 @@ export function AssistantWorkspaceProvider({
   function reset() {
     chatGeneration.current += 1;
     chat.stop();
+    documents.reset();
     void settlePending();
     requestRef.current = null;
     handled.current.clear();
@@ -337,6 +352,7 @@ export function AssistantWorkspaceProvider({
     <AssistantWorkspaceContext
       value={{
         chat,
+        documents,
         open,
         setOpen,
         host,
@@ -353,7 +369,7 @@ export function AssistantWorkspaceProvider({
         decide,
         send,
         reset,
-        notice,
+        notice: notice ?? documents.notice,
       }}
     >
       {children}

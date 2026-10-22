@@ -29,13 +29,17 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { DocumentEditReviewControls } from "@/components/assistant/document-edit-review-controls";
 import { MindmapActionsProvider } from "@/components/mindmaps/mindmap-actions-context";
 import { MindmapCanvasToolbar } from "@/components/mindmaps/mindmap-canvas-toolbar";
 import { MindmapEdge } from "@/components/mindmaps/mindmap-edge";
 import { MindmapImageNode } from "@/components/mindmaps/mindmap-image-node";
 import { MindmapModeToolbar } from "@/components/mindmaps/mindmap-mode-toolbar";
 import { MindmapNodeComponent } from "@/components/mindmaps/mindmap-node";
+import { MindmapReviewEdge } from "@/components/mindmaps/mindmap-review-edge";
+import { MindmapReviewNode } from "@/components/mindmaps/mindmap-review-node";
 import { MindmapRootNode } from "@/components/mindmaps/mindmap-root-node";
+import { useMindmapAssistantReview } from "@/components/mindmaps/use-mindmap-assistant-review";
 import { useMindmapCanvasActions } from "@/components/mindmaps/use-mindmap-canvas-actions";
 import { useMindmapPngExport } from "@/components/mindmaps/use-mindmap-png-export";
 import {
@@ -64,6 +68,8 @@ import { cn } from "@/lib/utils";
 export type MindmapExporter = () => Promise<void>;
 
 interface MindmapCanvasProps {
+  assistantEditing?: boolean;
+  subjectPath?: string;
   initialGraph: MindmapGraph;
   title: string;
   onTitleChange: (title: string) => void;
@@ -81,11 +87,15 @@ interface MindmapCanvasProps {
 }
 
 const nodeTypes = {
+  review: MindmapReviewNode,
   mindmap: MindmapNodeComponent,
   root: MindmapRootNode,
   image: MindmapImageNode,
 };
-const edgeTypes = { mindmap: MindmapEdge };
+const edgeTypes = {
+  review: MindmapReviewEdge,
+  mindmap: MindmapEdge,
+};
 
 // React Flow's chrome reads these CSS variables; map them to theme tokens so
 // user themes (dark/halloween/catppuccin) recolor the canvas automatically.
@@ -100,6 +110,8 @@ const canvasVariables = {
 
 function MindmapCanvasInner({
   initialGraph,
+  assistantEditing = false,
+  subjectPath,
   title,
   onTitleChange,
   onGraphChange,
@@ -121,6 +133,7 @@ function MindmapCanvasInner({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const {
     getNode,
+    fitView,
     getNodes,
     getEdges,
     getIntersectingNodes,
@@ -162,6 +175,39 @@ function MindmapCanvasInner({
     setEdges: (next) => setEdges(next),
   });
 
+  const {
+    onNodesChangeWithRelayout,
+    onNodeDragStart,
+    onNodeDrag,
+    onNodeDragStop,
+    relayoutOnNextMeasure,
+  } = useMindmapReparentDrag({
+    getNodes,
+    getEdges,
+    getIntersectingNodes,
+    setNodes,
+    setEdges,
+    onNodesChange,
+    takeSnapshot,
+  });
+
+  const display = useMindmapAssistantReview({
+    enabled: assistantEditing,
+    identity: initialGraph,
+    title,
+    subjectPath,
+    nodes,
+    edges,
+    getNodes: () => nodes,
+    getEdges: () => edges,
+    setNodes,
+    setEdges,
+    takeSnapshot,
+    onApplied: relayoutOnNextMeasure,
+    fitView: () => void fitView({ padding: 0.2, duration: 150 }),
+  });
+  const documentReview = display.review;
+
   // Report the serialized graph upward whenever nodes or edges change, so the
   // parent can debounce-autosave. Also mirror the root node's label back to the
   // title (root edits flow up); the title->root direction is handled below.
@@ -189,21 +235,6 @@ function MindmapCanvasInner({
 
     setNodes((current) => syncRootNodeLabel(current, title));
   }, [title, setNodes]);
-
-  const {
-    onNodesChangeWithRelayout,
-    onNodeDragStart,
-    onNodeDrag,
-    onNodeDragStop,
-  } = useMindmapReparentDrag({
-    getNodes,
-    getEdges,
-    getIntersectingNodes,
-    setNodes,
-    setEdges,
-    onNodesChange,
-    takeSnapshot,
-  });
 
   const onConnect = useCallback<OnConnect>(
     (connection: Connection) => {
@@ -339,7 +370,7 @@ function MindmapCanvasInner({
   ).length;
 
   useMindmapShortcuts({
-    enabled: shortcutsEnabled,
+    enabled: shortcutsEnabled && !documentReview,
     setMode,
     setSpaceHeld,
     deleteSelected,
@@ -377,6 +408,7 @@ function MindmapCanvasInner({
 
   // Ctrl/Cmd+V over empty canvas drops a standalone, resizable image node.
   useMindmapImagePaste({
+    enabled: !documentReview,
     getNodes,
     setNodes,
     screenToFlowPosition,
@@ -395,8 +427,8 @@ function MindmapCanvasInner({
         style={canvasVariables}
       >
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={display.nodes}
+          edges={display.edges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodesChange={onNodesChangeWithRelayout}
@@ -421,21 +453,28 @@ function MindmapCanvasInner({
           // on initial mount so the user lands on content, not empty canvas.
           fitView
           fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
+          {...display.reviewFlowProps}
         >
-          <Panel position="top-left">
-            <MindmapModeToolbar mode={mode} onModeChange={setMode} />
-          </Panel>
+          {!documentReview ? (
+            <Panel position="top-left">
+              <MindmapModeToolbar mode={mode} onModeChange={setMode} />
+            </Panel>
+          ) : null}
           <Panel position="top-center">
-            <MindmapCanvasToolbar
-              nodes={nodes}
-              searchInputRef={searchInputRef}
-              canAddChild={selectedBranchCount === 1}
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onAddChild={addChildToSelected}
-              onUndo={undo}
-              onRedo={redo}
-            />
+            {documentReview ? (
+              <DocumentEditReviewControls />
+            ) : (
+              <MindmapCanvasToolbar
+                nodes={nodes}
+                searchInputRef={searchInputRef}
+                canAddChild={selectedBranchCount === 1}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onAddChild={addChildToSelected}
+                onUndo={undo}
+                onRedo={redo}
+              />
+            )}
           </Panel>
           <Background id={backgroundId} />
           <Controls />
