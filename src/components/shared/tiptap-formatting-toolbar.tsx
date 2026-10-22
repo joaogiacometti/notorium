@@ -253,9 +253,9 @@ function pickToolbarButton(
   buttons: HTMLButtonElement[],
   key: string,
 ): HTMLButtonElement | undefined {
-  const index = buttons.findIndex(
-    (button) => button === document.activeElement,
-  );
+  const active = document.activeElement;
+  const index =
+    active instanceof HTMLButtonElement ? buttons.indexOf(active) : -1;
   const count = buttons.length;
   if (key === "ArrowRight") return buttons[(index + 1) % count];
   if (key === "ArrowLeft") return buttons[(index - 1 + count) % count];

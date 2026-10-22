@@ -5,6 +5,10 @@ import { AssistantLibraryResults } from "@/components/assistant/assistant-librar
 import type { LibraryHit } from "@/features/assistant/library-search-contract";
 import type { AssistantLibrarySearchPart } from "@/features/assistant/types";
 
+type ReactActEnvironmentGlobal = typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT?: boolean;
+};
+
 const noteHit: LibraryHit = {
   kind: "note",
   id: "note-1",
@@ -31,7 +35,11 @@ describe("AssistantLibraryResults", () => {
   let root: Root;
 
   beforeEach(() => {
+    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
+    // jsdom cannot load another document, so stop a clicked link from
+    // navigating after the app's own click handling has run.
+    container.addEventListener("click", (event) => event.preventDefault());
     document.body.append(container);
     root = createRoot(container);
   });
@@ -39,6 +47,7 @@ describe("AssistantLibraryResults", () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
   });
 
   function render(search: AssistantLibrarySearchPart, onOpenHit?: () => void) {

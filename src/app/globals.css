@@ -576,10 +576,7 @@
   @apply mb-1 last:mb-0;
 }
 
-.tiptap-content li > ul,
-.tiptap-content li > ol,
-.tiptap-wrapper .tiptap li > ul,
-.tiptap-wrapper .tiptap li > ol {
+:is(.tiptap-content, .tiptap-wrapper .tiptap) li > :is(ul, ol) {
   @apply mt-1 mb-0;
 }
 
@@ -598,8 +595,7 @@
   @apply mb-3 overflow-x-auto rounded-lg bg-muted p-4 last:mb-0;
 }
 
-.tiptap-content pre code,
-.tiptap-wrapper .tiptap pre code {
+:is(.tiptap-content, .tiptap-wrapper .tiptap) pre code {
   @apply bg-transparent p-0;
 }
 
@@ -826,8 +822,7 @@
   position: relative;
 }
 
-.tiptap-content table th,
-.tiptap-wrapper .tiptap table th {
+:is(.tiptap-content, .tiptap-wrapper .tiptap) table th {
   @apply font-semibold;
   background-color: var(--muted);
   color: var(--muted-foreground);
