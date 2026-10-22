@@ -115,6 +115,7 @@ export function replaceFlashcardInReviewState(
 
   const cards = [...state.cards];
   cards[cardIndex] = {
+    ...state.cards[cardIndex],
     ...flashcard,
     subjectName: flashcard.subjectName ?? state.cards[cardIndex].subjectName,
   };

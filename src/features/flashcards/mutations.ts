@@ -9,6 +9,7 @@ import {
   getFlashcardRecordForUser,
   hasDuplicateFlashcardFrontForUser,
 } from "@/features/flashcards/queries";
+import { readOwnedFlashcardSource } from "@/features/flashcards/source-queries";
 import type {
   CreateFlashcardForm,
   DeleteFlashcardForm,
@@ -46,11 +47,13 @@ async function validateCreateFlashcardInput(
 > {
   const frontNormalized = normalizeRichTextForUniqueness(data.front);
 
-  const [existingSubject, currentCount, hasDuplicate] = await Promise.all([
-    getSubjectRecordForUser(userId, data.subjectId),
-    countFlashcardsBySubjectForUser(userId, data.subjectId),
-    hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
-  ]);
+  const [existingSubject, currentCount, hasDuplicate, ownedSource] =
+    await Promise.all([
+      getSubjectRecordForUser(userId, data.subjectId),
+      countFlashcardsBySubjectForUser(userId, data.subjectId),
+      hasDuplicateFlashcardFrontForUser(userId, frontNormalized),
+      data.source ? readOwnedFlashcardSource(userId, data.source) : null,
+    ]);
 
   if (!existingSubject) {
     return { error: actionError("subjects.notFound") };
@@ -66,6 +69,10 @@ async function validateCreateFlashcardInput(
 
   if (hasDuplicate) {
     return { error: actionError("flashcards.duplicateFront") };
+  }
+
+  if (data.source && !ownedSource) {
+    return { error: actionError(`${data.source.kind}s.notFound`) };
   }
 
   return { subjectId: data.subjectId, frontNormalized };
@@ -87,6 +94,8 @@ async function createFlashcardRecord(
       front: data.front,
       frontNormalized,
       back: data.back,
+      sourceNoteId: data.source?.kind === "note" ? data.source.id : null,
+      sourceMindmapId: data.source?.kind === "mindmap" ? data.source.id : null,
       state: schedulingState.state,
       dueAt: schedulingState.dueAt,
       stability: schedulingState.stability,

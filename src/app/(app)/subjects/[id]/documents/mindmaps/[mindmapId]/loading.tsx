@@ -14,7 +14,7 @@ export default function MindmapDetailLoading() {
           <div className="min-w-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
             <div className="mb-4 flex shrink-0 items-center gap-2">
               <Skeleton className="h-10 min-w-0 flex-1 rounded-md" />
-              <Skeleton className="size-9 shrink-0 rounded-lg" />
+              <Skeleton className="size-10 shrink-0 rounded-lg" />
             </div>
             <Skeleton className="h-[60svh] flex-1 rounded-lg lg:h-auto lg:min-h-0" />
           </div>

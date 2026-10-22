@@ -4,6 +4,7 @@ import { flashcard, flashcardReviewLog, subject } from "@/db/schema";
 import { buildDueAtFilter } from "@/features/flashcard-review/due-filter";
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
+import { attachFlashcardSources } from "@/features/flashcards/source-queries";
 import {
   getDescendantSubjectIds,
   getSubjectPathMapForUser,
@@ -48,7 +49,7 @@ type ReviewEntityRow = {
 function toReviewEntity(
   row: ReviewEntityRow,
   subjectPathMap: Map<string, string>,
-): FlashcardReviewEntity {
+): ReviewEntityRow["flashcard"] & FlashcardReviewEntity {
   return {
     ...row.flashcard,
     subjectName: row.subjectName,
@@ -82,6 +83,7 @@ function resolveDueLimit(limit: number | undefined): number {
 }
 
 async function selectDueFlashcards(
+  userId: string,
   scopeFilters: SQL<unknown>[],
   subjectPathMap: Map<string, string>,
   now: Date,
@@ -95,7 +97,10 @@ async function selectDueFlashcards(
     .orderBy(asc(flashcard.dueAt), asc(flashcard.createdAt))
     .limit(limit);
 
-  return rows.map((row) => toReviewEntity(row, subjectPathMap));
+  return attachFlashcardSources(
+    userId,
+    rows.map((row) => toReviewEntity(row, subjectPathMap)),
+  );
 }
 
 async function countScopedFlashcards(
@@ -199,6 +204,7 @@ export async function getFlashcardReviewStateForUser(
   ]);
   const [cards, summary] = await Promise.all([
     selectDueFlashcards(
+      userId,
       scopeFilters,
       subjectPathMap,
       now,
@@ -265,5 +271,10 @@ export async function getAllFlashcardsForExam(
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(and(...filters))
     .orderBy(asc(flashcard.createdAt))
-    .then((rows) => rows.map((row) => toReviewEntity(row, subjectPathMap)));
+    .then((rows) =>
+      attachFlashcardSources(
+        userId,
+        rows.map((row) => toReviewEntity(row, subjectPathMap)),
+      ),
+    );
 }

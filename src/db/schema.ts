@@ -225,6 +225,12 @@ export const flashcard = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     front: text("front").notNull(),
     frontNormalized: text("front_normalized").notNull(),
+    sourceNoteId: text("source_note_id").references(() => note.id, {
+      onDelete: "set null",
+    }),
+    sourceMindmapId: text("source_mindmap_id").references(() => mindmap.id, {
+      onDelete: "set null",
+    }),
     back: text("back").notNull(),
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
@@ -256,6 +262,9 @@ export const flashcard = pgTable(
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
+    // ON DELETE SET NULL looks up cards by source; unindexed it scans flashcard.
+    index("flashcard_sourceNoteId_idx").on(table.sourceNoteId),
+    index("flashcard_sourceMindmapId_idx").on(table.sourceMindmapId),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),
     index("flashcard_userId_subjectId_updatedAt_idx").on(
       table.userId,
@@ -410,6 +419,14 @@ export const mindmapRelations = relations(mindmap, ({ one }) => ({
 }));
 
 export const flashcardRelations = relations(flashcard, ({ one }) => ({
+  sourceNote: one(note, {
+    fields: [flashcard.sourceNoteId],
+    references: [note.id],
+  }),
+  sourceMindmap: one(mindmap, {
+    fields: [flashcard.sourceMindmapId],
+    references: [mindmap.id],
+  }),
   subject: one(subject, {
     fields: [flashcard.subjectId],
     references: [subject.id],

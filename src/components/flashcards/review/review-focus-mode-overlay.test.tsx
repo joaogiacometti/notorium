@@ -90,6 +90,26 @@ describe("FocusModeOverlay", () => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
   });
 
+  it("shows the source only after revealing the answer", async () => {
+    const currentCard = {
+      ...makeCard(),
+      source: {
+        kind: "note" as const,
+        id: "n1",
+        title: "Cells",
+        subjectId: "biology",
+      },
+    };
+    await renderFocusModeOverlay({ currentCard, revealed: false });
+    expect(container.querySelector('a[aria-label^="Source note"]')).toBeNull();
+    await renderFocusModeOverlay({ currentCard, revealed: true });
+    expect(
+      container
+        .querySelector('a[aria-label^="Source note"]')
+        ?.getAttribute("href"),
+    ).toBe("/subjects/biology/documents/notes/n1");
+  });
+
   it("shows the card actions menu before the focus mode close button", async () => {
     await renderFocusModeOverlay();
 

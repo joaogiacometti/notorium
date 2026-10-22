@@ -1,6 +1,7 @@
 import type { ChatStatus } from "ai";
 import type { FlashcardDraft } from "@/features/assistant/edit-contract";
 import type { LibraryHit } from "@/features/assistant/library-search-contract";
+import type { StudyContext } from "@/features/assistant/study-context";
 import type {
   FlashcardExample,
   ProposedFlashcard,
@@ -10,6 +11,7 @@ import type {
   AssistantLibrarySearchPart,
   AssistantUIMessage,
 } from "@/features/assistant/types";
+import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import { replaceImagesWithPlaceholders } from "@/lib/editor/rich-text";
 import {
   getDocumentDetailHref,
@@ -140,4 +142,43 @@ export function getLibraryHitHref(hit: LibraryHit): string {
   return hit.kind === "flashcard"
     ? getFlashcardDetailHref(hit.id)
     : getDocumentDetailHref({ ...hit, kind: hit.kind });
+}
+
+/** Keep proposals tied to the document used for their own request, across navigation.
+ * @example readProposalSource(messages, reply.id);
+ */
+export function readProposalSource(
+  messages: AssistantUIMessage[],
+  replyId: string,
+): FlashcardSource | undefined {
+  const replyIndex = messages.findIndex((message) => message.id === replyId);
+  if (replyIndex < 0) return undefined;
+  return messages
+    .slice(0, replyIndex)
+    .findLast((message) => message.role === "user")?.metadata?.source;
+}
+
+/** The open document a request is about, recorded as its flashcard source.
+ * @example readStudyContextSource({ kind: "note", documentId: "n1", ... });
+ */
+export function readStudyContextSource(
+  context: StudyContext | undefined,
+): FlashcardSource | undefined {
+  if (!context || context.kind === "review" || !context.documentId) {
+    return undefined;
+  }
+  return { kind: context.kind, id: context.documentId };
+}
+
+/** Retry re-sends the last user turn, so it takes the retry's provenance.
+ * @example setMessages((m) => stampLastUserMetadata(m, { source }));
+ */
+export function stampLastUserMetadata(
+  messages: AssistantUIMessage[],
+  metadata: AssistantUIMessage["metadata"],
+): AssistantUIMessage[] {
+  const lastUser = messages.findLast((message) => message.role === "user");
+  return messages.map((message) =>
+    message === lastUser ? { ...message, metadata } : message,
+  );
 }

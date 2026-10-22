@@ -1,4 +1,4 @@
-import { getFlashcardByIdForUser } from "@/features/flashcards/queries";
+import { getFlashcardWithSourceByIdForUser } from "@/features/flashcards/queries";
 import { runUserReadRoute } from "@/lib/server/read-route";
 import { idSchema } from "@/lib/validations/schemas";
 
@@ -16,7 +16,7 @@ export async function GET(
     logScope: "flashcards.byId",
     schema: idSchema,
     input: flashcardId,
-    read: (user, id) => getFlashcardByIdForUser(user.id, id),
+    read: (user, id) => getFlashcardWithSourceByIdForUser(user.id, id),
     notFoundErrorCode: "flashcards.notFound",
   });
 }

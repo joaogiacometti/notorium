@@ -27,6 +27,7 @@ import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-fl
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
 import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
+import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import type { BreadcrumbItem } from "@/components/shared/page-top-bar";
@@ -38,12 +39,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FieldError } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
 } from "@/features/flashcards/validation";
-import { formatRelativeTime } from "@/lib/dates/format";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { FlashcardDetailEntity } from "@/lib/server/api-contracts";
@@ -193,7 +193,7 @@ export function FlashcardDetail({
 
   return (
     <DetailPageLayout breadcrumb={breadcrumb} maxWidth="3xl">
-      <div className="mb-6 flex min-w-0 items-start justify-between gap-2 sm:gap-4">
+      <div className="mb-4 flex min-w-0 items-start justify-between gap-2 sm:gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <span
             className="truncate text-sm font-medium text-foreground"
@@ -201,9 +201,7 @@ export function FlashcardDetail({
           >
             Subject: {flashcard.subjectPath}
           </span>
-          <span className="text-xs text-muted-foreground/60">
-            Created {formatRelativeTime(flashcard.createdAt)}
-          </span>
+          <FlashcardSourceReference source={flashcard.source} />
         </div>
 
         <div className="flex shrink-0">
@@ -267,10 +265,8 @@ export function FlashcardDetail({
           name="front"
           control={form.control}
           render={({ field, fieldState }) => (
-            <div className="min-w-0 space-y-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Front
-              </h2>
+            <Field className="min-w-0" data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="form-edit-flashcard-front">Front</FieldLabel>
               {review.pending?.fields.front ? (
                 <FlashcardFieldReview
                   key={`${review.pending.toolCallId}-front`}
@@ -292,9 +288,9 @@ export function FlashcardDetail({
                 />
               )}
               {fieldState.invalid ? (
-                <FieldError className="mt-2" errors={[fieldState.error]} />
+                <FieldError errors={[fieldState.error]} />
               ) : null}
-            </div>
+            </Field>
           )}
         />
 
@@ -302,12 +298,8 @@ export function FlashcardDetail({
           name="back"
           control={form.control}
           render={({ field, fieldState }) => (
-            <div className="min-w-0 space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Back
-                </h2>
-              </div>
+            <Field className="min-w-0" data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="form-edit-flashcard-back">Back</FieldLabel>
               {review.pending?.fields.back ? (
                 <FlashcardFieldReview
                   key={`${review.pending.toolCallId}-back`}
@@ -329,9 +321,9 @@ export function FlashcardDetail({
                 />
               )}
               {fieldState.invalid ? (
-                <FieldError className="mt-2" errors={[fieldState.error]} />
+                <FieldError errors={[fieldState.error]} />
               ) : null}
-            </div>
+            </Field>
           )}
         />
       </form>

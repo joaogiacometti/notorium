@@ -8,9 +8,11 @@ import { getEditFlashcardFormValues } from "@/components/flashcards/dialogs/edit
 import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
 import { FlashcardEditorDialogContent } from "@/components/flashcards/dialogs/flashcard-editor-dialog-content";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
+import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
 import { loadSubjectOptions } from "@/components/shared/load-subject-options";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { FlashcardSourceLink } from "@/features/flashcards/source-contract";
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
@@ -21,7 +23,9 @@ import type {
 } from "@/lib/server/api-contracts";
 
 interface EditFlashcardDialogProps {
-  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">;
+  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back"> & {
+    source?: FlashcardSourceLink | null;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
   aiEnabled: boolean;
@@ -79,8 +83,10 @@ export function EditFlashcardDialog({
     <>
       <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
         <FlashcardEditorDialogContent>
-          <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
+          <DialogHeader className="shrink-0 gap-1 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
             <DialogTitle>Edit Flashcard</DialogTitle>
+            {/* New tab keeps unsaved edits and any running review session. */}
+            <FlashcardSourceReference source={flashcard.source} newTab />
           </DialogHeader>
           <FlashcardDialogForm
             mode="edit"

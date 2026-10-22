@@ -1,7 +1,8 @@
 "use client";
 
-import { FileText, Loader2, Workflow } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { DOCUMENT_KIND_ICONS } from "@/components/documents/document-kind-icons";
 import {
   type DocumentRowActionHandlers,
   DocumentRowMenu,
@@ -12,11 +13,6 @@ import { Button } from "@/components/ui/button";
 import type { DocumentListItem } from "@/features/documents/types";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import { cn } from "@/lib/utils";
-
-const DOCUMENT_ROW_ICONS = {
-  note: FileText,
-  mindmap: Workflow,
-} as const;
 
 interface DocumentRowsProps {
   documents: DocumentListItem[] | "loading" | "error" | undefined;
@@ -81,7 +77,7 @@ export function DocumentRows({
     <>
       {documents.map((document) => {
         const href = getDocumentDetailHref(document);
-        const Icon = DOCUMENT_ROW_ICONS[document.kind];
+        const Icon = DOCUMENT_KIND_ICONS[document.kind];
         const isActive = href === activeHref;
         const isDragging = draggedDocumentId === document.id;
         const isMoving = pendingMoveId === document.id;

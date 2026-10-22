@@ -128,3 +128,12 @@ describe("study context snapshots", () => {
     ).toBe(false);
   });
 });
+
+it("captures document identity alongside the live content", () => {
+  expect(
+    buildDocumentContext("note", "Cells", "Biology", "<p>ATP</p>", "note-1"),
+  ).toMatchObject({ documentId: "note-1", kind: "note" });
+  expect(
+    buildDocumentContext("mindmap", "Cells", "Biology", "Root -> ATP", "map-1"),
+  ).toMatchObject({ documentId: "map-1", kind: "mindmap" });
+});

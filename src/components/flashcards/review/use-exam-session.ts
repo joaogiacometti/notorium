@@ -55,7 +55,7 @@ function replaceCard(
   return {
     ...session,
     cards: session.cards.map((card) =>
-      card.id === updatedCard.id ? updatedCard : card,
+      card.id === updatedCard.id ? { ...card, ...updatedCard } : card,
     ),
   };
 }

@@ -73,6 +73,7 @@ export function MindmapDetail({
       title,
       subjectName,
       describeMindmapGraph(graph),
+      mindmap.id,
     ),
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -214,7 +215,7 @@ export function MindmapDetail({
               <ZenModeToggle
                 isZenMode={isZenMode}
                 onToggle={toggleZenMode}
-                className="size-9"
+                className="size-10"
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -222,7 +223,7 @@ export function MindmapDetail({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-9 shrink-0"
+                    className="size-10 shrink-0"
                     aria-label="Open mindmap actions"
                   >
                     <MoreVertical className="size-4" />

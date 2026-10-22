@@ -15,6 +15,7 @@ import {
   isAssistantReplyInFlight,
   readFlashcardProposalParts,
   readLibrarySearchParts,
+  readProposalSource,
 } from "@/features/assistant/utils";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +84,7 @@ export function AssistantMessageList({
             <AssistantFlashcardProposal
               key={proposal.toolCallId}
               proposal={proposal}
+              source={readProposalSource(messages, message.id)}
               disabled={busy}
               controls={proposals}
             />

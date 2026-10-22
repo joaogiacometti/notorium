@@ -96,7 +96,7 @@
    classes (enforced by src/app/z-index-layers.test.ts). Every floating or modal
    surface shares `overlay` — the same 50 shadcn primitives hardcode — so
    whichever opened last paints on top via portal DOM order. Do not add a
-   layer to "win" over another surface; see docs/ui-conventions.md. */
+   layer to "win" over another surface; see DESIGN.md. */
 @theme {
   --z-index-raised: 10;
   --z-index-chrome: 30;

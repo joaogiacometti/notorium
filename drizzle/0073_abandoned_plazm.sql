@@ -1,0 +1,2 @@
+CREATE INDEX "flashcard_sourceNoteId_idx" ON "flashcard" USING btree ("source_note_id");--> statement-breakpoint
+CREATE INDEX "flashcard_sourceMindmapId_idx" ON "flashcard" USING btree ("source_mindmap_id");

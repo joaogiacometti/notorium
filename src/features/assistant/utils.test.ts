@@ -7,6 +7,9 @@ import {
   isAssistantReplyInFlight,
   readFlashcardProposalParts,
   readLibrarySearchParts,
+  readProposalSource,
+  readStudyContextSource,
+  stampLastUserMetadata,
 } from "@/features/assistant/utils";
 
 const subjects = [
@@ -125,5 +128,80 @@ describe("getLibraryHitHref", () => {
     expect(getLibraryHitHref({ ...hit, kind: "flashcard" })).toBe(
       "/flashcards/item-1",
     );
+  });
+});
+
+describe("readProposalSource", () => {
+  it("retains the source of each request across later navigation and messages", () => {
+    const messages: import("@/features/assistant/types").AssistantUIMessage[] =
+      [
+        {
+          id: "u1",
+          role: "user",
+          parts: [],
+          metadata: { source: { kind: "note", id: "n1" } },
+        },
+        { id: "a1", role: "assistant", parts: [] },
+        {
+          id: "u2",
+          role: "user",
+          parts: [],
+          metadata: { source: { kind: "mindmap", id: "m1" } },
+        },
+        { id: "a2", role: "assistant", parts: [] },
+        { id: "u3", role: "user", parts: [] },
+        { id: "a3", role: "assistant", parts: [] },
+      ];
+    expect(readProposalSource(messages, "a1")).toEqual({
+      kind: "note",
+      id: "n1",
+    });
+    expect(readProposalSource(messages, "a2")).toEqual({
+      kind: "mindmap",
+      id: "m1",
+    });
+    expect(readProposalSource(messages, "a3")).toBeUndefined();
+    expect(readProposalSource(messages, "missing")).toBeUndefined();
+  });
+});
+
+describe("readStudyContextSource", () => {
+  it("records an open document as the source and ignores review context", () => {
+    const document = {
+      kind: "mindmap" as const,
+      documentId: "m1",
+      title: "Cells",
+      subjectPath: "Biology",
+      content: "ATP",
+      partial: false,
+    };
+    expect(readStudyContextSource(document)).toEqual({
+      kind: "mindmap",
+      id: "m1",
+    });
+    expect(
+      readStudyContextSource({ ...document, documentId: undefined }),
+    ).toBeUndefined();
+    expect(readStudyContextSource(undefined)).toBeUndefined();
+  });
+});
+
+describe("stampLastUserMetadata", () => {
+  it("gives only the last user turn the retry's source", () => {
+    const messages: import("@/features/assistant/types").AssistantUIMessage[] =
+      [
+        { id: "u1", role: "user", parts: [] },
+        { id: "a1", role: "assistant", parts: [] },
+        { id: "u2", role: "user", parts: [] },
+        { id: "a2", role: "assistant", parts: [] },
+      ];
+    const source = { kind: "note" as const, id: "n2" };
+    const stamped = stampLastUserMetadata(messages, { source });
+    expect(stamped.map((message) => message.metadata)).toEqual([
+      undefined,
+      undefined,
+      { source },
+      undefined,
+    ]);
   });
 });

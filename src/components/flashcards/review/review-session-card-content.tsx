@@ -2,8 +2,10 @@
 
 import { buildReviewContext } from "@/components/assistant/study-context-content";
 import { useStudyContext } from "@/components/assistant/use-study-context";
+import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import type { FlashcardReviewState } from "@/lib/server/api-contracts";
+import { cn } from "@/lib/utils";
 
 type ReviewCard = FlashcardReviewState["cards"][number];
 
@@ -40,11 +42,21 @@ export function ReviewSessionCardContent({
   // every new card instead of the content swapping in place.
   return (
     <div key={card.id} className={cardEnterClassName}>
-      {subjectLabel ? (
-        <p className="mb-3 truncate text-xs font-semibold tracking-wider text-primary/80 uppercase">
-          {subjectLabel}
-        </p>
-      ) : null}
+      <div className="mb-3 flex min-w-0 items-center justify-between gap-3 empty:hidden">
+        {subjectLabel ? (
+          <p className="truncate text-xs font-semibold tracking-wide text-primary/80 uppercase">
+            {subjectLabel}
+          </p>
+        ) : null}
+        {/* Hidden until reveal: the source title can give the answer away. */}
+        {revealed ? (
+          <FlashcardSourceReference
+            source={card.source}
+            newTab
+            className="ml-auto max-w-[50%]"
+          />
+        ) : null}
+      </div>
       <div className="relative flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">
         <div className="flex flex-col">
           <CardFace title="Front" content={card.front} tone="front" />
@@ -70,9 +82,10 @@ function CardFace({ title, content, tone }: Readonly<CardFaceProps>) {
   const sectionClassName = isBack
     ? "flex flex-col border-t border-border/60 bg-primary/5 p-5 sm:p-6"
     : "flex flex-col p-5 sm:p-6";
-  const titleClassName = isBack
-    ? "mb-2 text-xs font-semibold tracking-wider text-primary/80 uppercase"
-    : "mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase";
+  const titleClassName = cn(
+    "mb-2 text-xs font-semibold tracking-wide uppercase",
+    isBack ? "text-primary/80" : "text-muted-foreground",
+  );
   const contentClassName = isBack
     ? `${reviewRichTextClassName} text-lg leading-relaxed text-foreground`
     : `${reviewRichTextClassName} text-lg leading-relaxed`;

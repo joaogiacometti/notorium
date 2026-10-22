@@ -79,7 +79,13 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
   const watchedTitle = form.watch("title");
   const watchedContent = form.watch("content") ?? "";
   useStudyContext(
-    buildDocumentContext("note", watchedTitle, subjectName, watchedContent),
+    buildDocumentContext(
+      "note",
+      watchedTitle,
+      subjectName,
+      watchedContent,
+      note.id,
+    ),
   );
   const debouncedTitle = useDebouncedValue(watchedTitle, AUTOSAVE_DELAY_MS);
   const debouncedContent = useDebouncedValue(watchedContent, AUTOSAVE_DELAY_MS);

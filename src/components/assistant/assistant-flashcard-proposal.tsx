@@ -24,6 +24,7 @@ import {
   findProposedSubjectId,
   formatFlashcardExample,
 } from "@/features/assistant/utils";
+import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
 import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
@@ -32,6 +33,7 @@ interface AssistantFlashcardProposalProps {
   proposal: AssistantFlashcardProposalPart;
   /** True while the chat streams; tool outputs wait for the reply to end. */
   disabled: boolean;
+  source?: FlashcardSource;
   controls: FlashcardProposalControls;
 }
 
@@ -48,6 +50,7 @@ interface AssistantFlashcardProposalProps {
 export function AssistantFlashcardProposal({
   proposal,
   disabled,
+  source,
   controls,
 }: Readonly<AssistantFlashcardProposalProps>) {
   if (proposal.state === "input-streaming") {
@@ -78,6 +81,7 @@ export function AssistantFlashcardProposal({
           // biome-ignore lint/suspicious/noArrayIndexKey: proposed cards never reorder.
           key={index}
           card={card}
+          source={source}
           status={controls.statusOf(proposal, index)}
           disabled={disabled}
           onDecide={(outcome) => controls.decide(proposal, index, outcome)}
@@ -92,6 +96,7 @@ interface ProposedFlashcardSlotProps {
   card: ProposedFlashcard;
   status: FlashcardCardStatus;
   disabled: boolean;
+  source?: FlashcardSource;
   onDecide: (outcome: FlashcardProposalOutcome) => void;
   onRestore: () => void;
 }
@@ -101,6 +106,7 @@ function ProposedFlashcardSlot({
   card,
   status,
   disabled,
+  source,
   onDecide,
   onRestore,
 }: Readonly<ProposedFlashcardSlotProps>) {
@@ -117,6 +123,7 @@ function ProposedFlashcardSlot({
   return (
     <PendingFlashcardProposal
       input={card}
+      source={source}
       disabled={disabled}
       onResolve={onDecide}
     />
@@ -126,18 +133,20 @@ function ProposedFlashcardSlot({
 interface PendingFlashcardProposalProps {
   input: ProposedFlashcard;
   disabled: boolean;
+  source?: FlashcardSource;
   onResolve: (outcome: FlashcardProposalOutcome) => void;
 }
 
 function PendingFlashcardProposal({
   input,
   disabled,
+  source,
   onResolve,
 }: Readonly<PendingFlashcardProposalProps>) {
   const subject = useProposedSubject(input.subjectPath);
   const [isCreating, startCreating] = useTransition();
   const [editorOpen, setEditorOpen] = useState(false);
-  const richCard = toRichFlashcard(input);
+  const richCard = { ...toRichFlashcard(input), ...(source ? { source } : {}) };
 
   function createProposedCard(subjectId: string) {
     startCreating(async () => {

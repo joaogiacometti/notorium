@@ -67,9 +67,11 @@ interface RecordedToolOutput {
 function ProposalChatHarness({
   initialPart,
   recorded,
+  source,
 }: Readonly<{
   initialPart: AssistantFlashcardProposalPart;
   recorded: RecordedToolOutput[];
+  source?: import("@/features/flashcards/source-contract").FlashcardSource;
 }>) {
   const [part, setPart] = useState(initialPart);
   const messages: AssistantUIMessage[] = [
@@ -93,6 +95,7 @@ function ProposalChatHarness({
     <>
       <AssistantFlashcardProposal
         proposal={part}
+        source={source}
         disabled={false}
         controls={controls}
       />
@@ -149,14 +152,21 @@ describe("AssistantFlashcardProposal", () => {
     vi.unstubAllGlobals();
   });
 
-  async function renderProposal(proposal: AssistantFlashcardProposalPart) {
+  async function renderProposal(
+    proposal: AssistantFlashcardProposalPart,
+    source?: import("@/features/flashcards/source-contract").FlashcardSource,
+  ) {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ProposalChatHarness initialPart={proposal} recorded={resolved} />
+          <ProposalChatHarness
+            initialPart={proposal}
+            recorded={resolved}
+            source={source}
+          />
         </QueryClientProvider>,
       );
     });
@@ -188,6 +198,24 @@ describe("AssistantFlashcardProposal", () => {
       button(name).click();
     });
   }
+
+  it.each(["note", "mindmap"] as const)(
+    "creates cards with the %s source captured for the proposal",
+    async (kind) => {
+      await renderProposal(pendingProposal("Biology"), {
+        kind,
+        id: "original-document",
+      });
+      await act(async () => {
+        await vi.waitFor(() => expect(button("Create").disabled).toBe(false));
+      });
+      await click("Create");
+      expect(fakes.actions?.created[0].source).toEqual({
+        kind,
+        id: "original-document",
+      });
+    },
+  );
 
   it("records the outcomes once every proposed card is handled", async () => {
     await renderPendingProposal("Biology", [atpCard, dnaCard]);

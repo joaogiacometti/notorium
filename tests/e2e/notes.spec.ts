@@ -1,5 +1,8 @@
 import type { Page } from "@playwright/test";
-import { countFlashcardsBySubjectForUser } from "@/features/flashcards/queries";
+import {
+  countFlashcardsBySubjectForUser,
+  getFlashcardsManagePageForUser,
+} from "@/features/flashcards/queries";
 import { AssistantChatFixture } from "./support/assistant-chat-fixture";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
@@ -272,6 +275,34 @@ test("creates a flashcard from the open note through the assistant after confirm
     ).toBe(1);
     await page.goto(`/flashcards?view=manage&subjectId=${subject.id}`);
     await expect(page.getByTitle(front, { exact: true })).toBeVisible();
+    const savedCards = await getFlashcardsManagePageForUser(e2eUser.userId, {
+      pageIndex: 0,
+      pageSize: 25,
+      subjectId: subject.id,
+    });
+    const cardUrl = `/flashcards/${savedCards.items[0].id}`;
+    await page.goto(cardUrl);
+    const sourceLink = page.getByRole("link", {
+      name: `Source note: ${noteTitle}`,
+      exact: true,
+    });
+    await expect(sourceLink).toHaveAttribute(
+      "href",
+      `/subjects/${subject.id}/documents/notes/${note.id}`,
+    );
+    await page.reload();
+    await sourceLink.click();
+    await expect(page.locator("#form-edit-note-title")).toHaveValue(noteTitle);
+    await openNoteActions(page);
+    await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+    const deleteDialog = page.getByRole("dialog", { name: "Delete Note" });
+    await deleteDialog.getByRole("button", { name: "Delete" }).click();
+    await expect(deleteDialog).toHaveCount(0);
+    await page.goto(cardUrl);
+    await expect(page.locator("#form-edit-flashcard-front")).toContainText(
+      front,
+    );
+    await expect(sourceLink).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
   }

@@ -9,7 +9,7 @@ It is built for a single trusted group: the first account becomes an admin, and 
 - **Subjects** — a nestable folder tree, navigated from a persistent sidebar with drag-and-drop reorganization.
 - **Notes** — rich-text notes with a compact formatting toolbar, tables, syntax-highlighted code, image uploads, and searchable LaTeX math (KaTeX), edited inline with autosave.
 - **Mindmaps** — branch-ordered React Flow canvases scoped to a subject, exportable as PNG.
-- **Flashcards** — front/back cards organized by subject, reviewed with an FSRS spaced-repetition scheduler. Focus Mode and Exam Mode tune the review session.
+- **Flashcards** — front/back cards organized by subject, reviewed with an FSRS spaced-repetition scheduler. Focus Mode and Exam Mode tune the review session. Cards created from an open note or mindmap retain a source link in card details, the edit dialog, and revealed review/exam answers; links follow document renames and moves.
 - **AI assistance (optional)** — improve struggling flashcards and use one global study assistant sidebar across pages, review, and editing. Ask the assistant to create flashcards from the open note or mindmap. It receives the current review card (visible sides only), note, mindmap, or unsaved flashcard draft as context. Document excerpts are capped at 12,000 characters. It can propose new flashcards and suggest changes to the active flashcard draft, with per-field approval inside the editor. All AI features share the `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` settings.
 - **Search and command palette** — case- and accent-insensitive search across notes, mindmaps, and flashcards (`Cmd/Ctrl+K`) and an action palette (`Cmd/Ctrl+P`).
 
@@ -89,6 +89,7 @@ The first account created on a new instance becomes an approved admin automatica
 | --- | --- |
 | `npm run dev` | Start the Next.js development server |
 | `npm run db:migrate` | Apply Drizzle migrations |
+| `npm run db:generate` | Generate migrations after changing the schema |
 | `npm run test` | Run the Vitest suite |
 | `npm run test:coverage` | Run tests and enforce coverage thresholds |
 | `npm run lint` | Run Biome checks, including architecture boundaries |
@@ -96,12 +97,15 @@ The first account created on a new instance becomes an approved admin automatica
 | `npm run check:size` | Enforce 500-line source and 800-line test limits (schema exempt) |
 | `npm run check:deadcode` | Fail on unused files and dependencies (Knip) |
 
+After changing the schema, run `npm run db:generate` and `npm run db:migrate` inside the Nix development shell before starting the app.
+
 Git hooks (via [Lefthook](https://lefthook.dev), `lefthook.yml`) install automatically on `npm install` and run Biome on staged files before commits and lint, type checks, tests, file-size, and dead-code guards before pushes. CI checks and E2E jobs run in `joaogiacometti/notorium`; scheduled operations run in deployment repositories instead.
 
 ## More Docs
 
 - [Docs Index](./docs/README.md): setup, configuration, optional features, and operations
 - [Architecture](./docs/architecture.md): source layout, data flow, and ownership boundaries
+- [Design System](./DESIGN.md): spacing, surfaces, typography, z-index layers, and UI conventions
 - [SPEC.md](./SPEC.md): product behavior and acceptance criteria
 - [AGENTS.md](./AGENTS.md): engineering rules, architecture guidance, and testing expectations
 

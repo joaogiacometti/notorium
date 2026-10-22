@@ -7,6 +7,7 @@ import type {
   note,
   subject,
 } from "@/db/schema";
+import type { FlashcardSourceLink } from "@/features/flashcards/source-contract";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
@@ -26,7 +27,11 @@ export type NoteEntity = InferSelectModel<typeof note>;
 export type MindmapEntity = InferSelectModel<typeof mindmap>;
 export type MindmapListItem = Pick<MindmapEntity, "id" | "title" | "updatedAt">;
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
-export type FlashcardDetailEntity = FlashcardEntity & {
+/** A stored card plus its resolved source link, as the edit dialog reads it. */
+export type FlashcardWithSourceEntity = FlashcardEntity & {
+  source: FlashcardSourceLink | null;
+};
+export type FlashcardDetailEntity = FlashcardWithSourceEntity & {
   subjectName: string;
   subjectPath: string;
 };
@@ -75,6 +80,7 @@ export type FlashcardReviewEntity = Pick<
   | "reviewCount"
   | "lapseCount"
 > & {
+  source?: FlashcardSourceLink | null;
   subjectName?: string;
   subjectPath?: string;
 };

@@ -8,10 +8,11 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - On NixOS, run npm, tests, and git hooks inside the `flake.nix` dev shell (`nix develop -c <cmd>`, or direnv via `.envrc`). It supplies Node 24, a Nix-built Biome (`BIOME_BINARY`), and Playwright browsers; the npm-downloaded binaries do not run on NixOS.
 - `SPEC.md` is the product behavior source of truth.
 - `README.md` owns quick setup and basic runtime commands.
+- `DESIGN.md` is the UI design-system source of truth (spacing, surfaces, typography, layers, motion).
 - `docs/architecture.md` owns high-level architecture, source layout, and boundary guidance.
 - `docs/` owns focused setup, architecture, operations, and historical planning notes.
 - Read `docs/architecture.md` before structural or cross-boundary code changes.
-- When changing behavior or adding a feature, update every related document in the same change: `SPEC.md` for product behavior, `README.md` for setup/runtime commands, `docs/architecture.md` for boundaries or source layout, and focused `docs/` files for operations or setup details.
+- When changing behavior or adding a feature, update every related document in the same change: `SPEC.md` for product behavior, `README.md` for setup/runtime commands, `docs/architecture.md` for boundaries or source layout, `DESIGN.md` for UI conventions, and focused `docs/` files for operations or setup details.
 
 ## Code Style
 
@@ -162,8 +163,9 @@ Only add optional files when they are needed.
 
 ## Styling
 
-- `docs/ui-conventions.md` is the design-system source of truth: pick the matching role (page frame, surface tier, typography, dashed-border role, z-index layer, transition) instead of inventing a one-off class string. Update it when a convention changes.
-- Stack with the named z-index layers only (`z-raised`, `z-chrome`, `z-immersive`, `z-overlay`); numeric/arbitrary `z-*` classes fail `src/app/z-index-layers.test.ts`. Every dialog, menu, and full-screen surface uses `z-overlay` and stacks by opening order. If something renders behind an overlay, fix the open order or portal; never raise its z-index or add `className`/`overlayClassName` props to change its layer. See "Z-index layers" in `docs/ui-conventions.md`.
+- `DESIGN.md` is the design-system source of truth: pick the matching role (page frame, spacing, surface tier, typography, dashed-border role, header metadata, z-index layer, transition) instead of inventing a one-off class string. Update it when a convention changes.
+- Stack with the named z-index layers only (`z-raised`, `z-chrome`, `z-immersive`, `z-overlay`); numeric/arbitrary `z-*` classes fail `src/app/z-index-layers.test.ts`. Every dialog, menu, and full-screen surface uses `z-overlay` and stacks by opening order. If something renders behind an overlay, fix the open order or portal; never raise its z-index or add `className`/`overlayClassName` props to change its layer. See "Z-index layers" in `DESIGN.md`.
+- Record metadata (subject, source) is muted header text sized to its content, not a chip or form-row control; detail headers show no created/updated timestamps. See "Header metadata" in `DESIGN.md`.
 - Use `cn()` from `src/lib/utils.ts` for conditional classes.
 - Never use hardcoded Tailwind color classes.
 - All UI colors must use CSS variables so user themes work.

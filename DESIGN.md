@@ -1,4 +1,4 @@
-# UI Conventions
+# Design System
 
 The single source of truth for Notorium's visual/interaction standards. When two
 surfaces share a role, they must share these tokens. New UI picks the matching
@@ -6,7 +6,7 @@ role here instead of inventing a one-off class string.
 
 Audience: agents and contributors building or changing UI.
 
-Related docs: [Architecture](./architecture.md), [Agent Guide](../AGENTS.md)
+Related docs: [Architecture](./docs/architecture.md), [Agent Guide](./AGENTS.md)
 
 ## Primitives first
 
@@ -35,6 +35,27 @@ graph nodes, segmented toggles, drop zones), not for standard actions.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
   `PageTopBar` (`PageTopBarSkeleton`).
 
+## Spacing
+
+Spacing uses Tailwind's 4px scale. Pick the role below; do not invent
+in-between values (`gap-5`, `mb-7`) for a role that already has one.
+
+| Role | Token | Notes |
+| --- | --- | --- |
+| Page frame | `AppPageContainer` (`px-4 sm:px-6 lg:px-8`, `pt-6 pb-8`) | Never re-pad a page body by hand |
+| Dialog frame | `DialogContent` default `p-6 gap-4`; scrolling editor dialogs use `px-4 sm:px-6` with `pt-5 sm:pt-6` header and `py-4` footer | Footer actions sit below a `border-t` |
+| Page/detail header → body | `16px` (`mb-4` / `gap-4`) | Note, mindmap, and flashcard detail share it |
+| Between form fields | `16px` (`FieldGroup className="gap-4"`, or `space-y-4`) | Auth pages may widen to `md:gap-6` |
+| Label → control | `Field` primitive (`gap-3`) | Label rows with optional inline buttons use `min-h-6` so labels with and without buttons align |
+| Title → header metadata | `4px` (`gap-1`) | See [Header metadata](#header-metadata) |
+| Inline icon + text | `gap-1` (`text-xs`), `gap-1.5`–`gap-2` (`text-sm`+) | |
+| Header action buttons | `size-10` icon buttons, `gap-2` between them | Same on note, mindmap, and flashcard detail |
+
+Editable fields use `Field` + `FieldLabel` (title case) everywhere, including
+autosaving detail pages, so a card looks the same in its page and its dialog.
+Uppercase section labels are for read-only sections (review card faces,
+dashboard groups), not form inputs.
+
 ## Surfaces (elevation tiers)
 
 Two intentional tiers — do not blur them:
@@ -54,8 +75,20 @@ Two intentional tiers — do not blur them:
 | --- | --- |
 | Page / primary heading | `text-2xl font-bold tracking-tight` |
 | Section heading | `text-lg font-semibold tracking-tight` |
-| Uppercase section label | `text-xs font-semibold uppercase tracking-wide text-muted-foreground` |
+| Uppercase section label (read-only sections) | `text-xs font-semibold uppercase tracking-wide text-muted-foreground` |
 | Table micro-label | `text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground` |
+
+## Header metadata
+
+Record metadata (subject, provenance such as a flashcard's source) sits in the
+header as muted `text-xs` text, beside or under what it describes, never as a
+chip, badge, or form-row control. Links in it size to their content (`w-fit`)
+so the click target is only the text, and open a new tab from dialogs and
+review sessions so drafts and progress survive. Detail headers do not show
+created/updated timestamps; recency belongs in lists (for example the home
+recent-documents card) where it helps sort or scan. The flashcard example is
+`FlashcardSourceReference`
+(`src/components/flashcards/shared/flashcard-source-reference.tsx`).
 
 ## Dashed-border roles
 
@@ -71,7 +104,7 @@ Two intentional tiers — do not blur them:
 ## Color & tone
 
 - All UI colors are CSS variables (`globals.css`); never hardcoded Tailwind color
-  classes (`bg-red-500`, etc.). See the styling rules in [AGENTS.md](../AGENTS.md).
+  classes (`bg-red-500`, etc.). See the styling rules in [AGENTS.md](./AGENTS.md).
 - Status colors flow through `getStatusToneClasses(tone)` / `StatusToneBadge`
   (`src/lib/ui/status-tones.ts`), never bespoke per-status hex/utility maps.
 

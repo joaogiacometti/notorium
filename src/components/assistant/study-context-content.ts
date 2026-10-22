@@ -16,10 +16,12 @@ export function buildDocumentContext(
   title: string,
   subjectPath: string,
   content: string,
+  documentId?: string,
 ): Exclude<StudyContext, { kind: "review" }> {
   const text = kind === "mindmap" ? content : studyRichText(content);
   return {
     kind,
+    ...(documentId ? { documentId } : {}),
     title,
     subjectPath,
     content: text.slice(0, STUDY_CONTEXT_MAX_CHARS),

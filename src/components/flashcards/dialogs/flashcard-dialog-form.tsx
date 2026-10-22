@@ -149,7 +149,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
       className="flex min-h-0 flex-col"
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-6">
-        <FieldGroup className="gap-5">
+        <FieldGroup className="gap-4">
           {subjects ? (
             <Controller
               name={"subjectId" as FieldPath<TValues>}
@@ -190,7 +190,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
 
               return (
                 <Field data-invalid={frontInvalid}>
-                  <div className="flex h-9 items-center justify-between gap-3">
+                  <div className="flex min-h-6 items-center justify-between gap-3">
                     <FieldLabel htmlFor={`${formId}-front`}>Front</FieldLabel>
                     <div className="flex items-center gap-1">
                       {mode === "create" && createOptions ? (
@@ -260,7 +260,7 @@ export function FlashcardDialogForm<TValues extends FlashcardFormValues>({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-h-6 items-center justify-between gap-3">
                     <FieldLabel htmlFor={`${formId}-back`}>Back</FieldLabel>
                     <div className="flex items-center gap-1">
                       {mode === "create" && createOptions ? (

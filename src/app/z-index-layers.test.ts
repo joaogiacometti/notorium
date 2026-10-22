@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 // Stacking must use the named `--z-index-*` layers in globals.css. Ad-hoc values
 // (`z-110`, `z-120`) repeatedly hid dialogs behind the flashcard review surface;
-// see "Z-index layers" in docs/ui-conventions.md.
+// see "Z-index layers" in DESIGN.md.
 const RAW_Z_INDEX_CLASS =
   /(?<![\w-])-?z-(?:\d+|\[[^\]\s]*\]|\([^)\s]*\))(?![\w-])/g;
 // shadcn primitives hardcode `z-50` (the overlay layer) and are not hand-edited.

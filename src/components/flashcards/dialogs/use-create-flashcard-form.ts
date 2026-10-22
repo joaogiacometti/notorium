@@ -6,6 +6,7 @@ import { createFlashcard } from "@/app/actions/flashcards";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
+import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
@@ -16,6 +17,7 @@ import type { FlashcardEntity } from "@/lib/server/api-contracts";
 export interface CreateFlashcardInitialCard {
   front: string;
   back: string;
+  source?: FlashcardSource;
 }
 
 /**
@@ -31,6 +33,7 @@ export function getCreateFlashcardFormValues(
 ): FlashcardFormValues {
   return {
     subjectId: subjectId ?? "",
+    ...(initialCard?.source ? { source: initialCard.source } : {}),
     front: initialCard?.front ?? "",
     back: initialCard?.back ?? "",
   };

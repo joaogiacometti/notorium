@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
+import { attachFlashcardSources } from "@/features/flashcards/source-queries";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import { foldedContains } from "@/features/search/match-sql";
 import {
@@ -28,6 +29,7 @@ import type {
   FlashcardDetailEntity,
   FlashcardEntity,
   FlashcardManagePage,
+  FlashcardWithSourceEntity,
 } from "@/lib/server/api-contracts";
 
 async function resolveScopedSubjectIds(
@@ -167,6 +169,25 @@ export async function getFlashcardByIdForUser(
   return results[0]?.flashcard ?? null;
 }
 
+/**
+ * Load one owned card with its current source link for the edit dialog.
+ *
+ * @example
+ * const card = await getFlashcardWithSourceByIdForUser(userId, flashcardId);
+ */
+export async function getFlashcardWithSourceByIdForUser(
+  userId: string,
+  flashcardId: string,
+): Promise<FlashcardWithSourceEntity | null> {
+  const card = await getFlashcardByIdForUser(userId, flashcardId);
+  if (!card) {
+    return null;
+  }
+
+  const [cardWithSource] = await attachFlashcardSources(userId, [card]);
+  return cardWithSource;
+}
+
 export async function getFlashcardDetailByIdForUser(
   userId: string,
   flashcardId: string,
@@ -185,12 +206,14 @@ export async function getFlashcardDetailByIdForUser(
 
   // Resolve only this card's subject path (one ancestor-chain walk) rather than
   // materializing the whole subject path map just to read a single entry.
-  const subjectPath = result.flashcard.subjectId
-    ? await getSubjectPathForUser(userId, result.flashcard.subjectId)
-    : "";
-
+  const [subjectPath, [cardWithSource]] = await Promise.all([
+    result.flashcard.subjectId
+      ? getSubjectPathForUser(userId, result.flashcard.subjectId)
+      : "",
+    attachFlashcardSources(userId, [result.flashcard]),
+  ]);
   return {
-    ...result.flashcard,
+    ...cardWithSource,
     subjectName: result.subjectName,
     subjectPath: subjectPath || result.subjectName,
   };

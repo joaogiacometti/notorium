@@ -336,6 +336,35 @@ describe("mergeFlashcardReviewStates", () => {
 });
 
 describe("replaceFlashcardInReviewState", () => {
+  it("retains source metadata after content or scheduling updates, while honoring explicit removal", () => {
+    const source = {
+      kind: "note" as const,
+      id: "n1",
+      title: "Cells",
+      subjectId: "biology",
+    };
+    const card = {
+      id: "c1",
+      source,
+    } as import("@/lib/server/api-contracts").FlashcardReviewEntity;
+    const state = {
+      cards: [card],
+      summary: { dueCount: 1, totalCount: 1 },
+      scheduler: { desiredRetention: 0.9, weights: [] },
+    };
+    const update = {
+      id: "c1",
+      back: "Edited",
+    } as import("@/lib/server/api-contracts").FlashcardReviewEntity;
+    expect(
+      replaceFlashcardInReviewState(state, update).cards[0].source,
+    ).toEqual(source);
+    expect(
+      replaceFlashcardInReviewState(state, { ...update, source: null }).cards[0]
+        .source,
+    ).toBeNull();
+  });
+
   it("replaces the matching card without changing queue order", () => {
     const state = makeState(
       [

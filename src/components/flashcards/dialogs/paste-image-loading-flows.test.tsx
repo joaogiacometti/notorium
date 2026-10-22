@@ -140,4 +140,25 @@ describe("paste-image loading flows", () => {
 
     expect(document.body.textContent).toContain("Discard changes?");
   });
+  it("links the edited card's source in a new tab so unsaved edits survive", async () => {
+    await act(async () => {
+      root.render(
+        <EditFlashcardDialog
+          open
+          onOpenChange={() => {}}
+          flashcard={{
+            ...flashcard,
+            source: { kind: "note", id: "n1", title: "Cells", subjectId: "s1" },
+          }}
+          aiEnabled
+        />,
+      );
+    });
+
+    const link = document.body.querySelector<HTMLAnchorElement>(
+      'a[aria-label^="Source note"]',
+    );
+    expect(link?.getAttribute("href")).toBe("/subjects/s1/documents/notes/n1");
+    expect(link?.target).toBe("_blank");
+  });
 });

@@ -11,10 +11,10 @@ import {
 } from "@/lib/read-api/read-api-client";
 import type {
   FlashcardContentItem,
-  FlashcardEntity,
   FlashcardManagePage,
   FlashcardReviewEntity,
   FlashcardReviewState,
+  FlashcardWithSourceEntity,
 } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
@@ -46,8 +46,8 @@ export function fetchFlashcardsManagePage(
  */
 export async function fetchFlashcardForManage(
   flashcardId: string,
-): Promise<{ flashcard: FlashcardEntity } | ActionErrorResult> {
-  const result = await fetchReadApiResult<FlashcardEntity>(
+): Promise<{ flashcard: FlashcardWithSourceEntity } | ActionErrorResult> {
+  const result = await fetchReadApiResult<FlashcardWithSourceEntity>(
     `/api/flashcards/${encodeURIComponent(flashcardId)}`,
   );
   return "errorCode" in result ? result : { flashcard: result };

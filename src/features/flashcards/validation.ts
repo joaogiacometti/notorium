@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { flashcardSourceSchema } from "@/features/flashcards/source-contract";
 import { LIMITS } from "@/lib/config/limits";
 import {
   countInternalAttachmentImages,
@@ -57,6 +58,7 @@ function withFlashcardAttachmentLimit<
 
 const createFlashcardObject = z.object({
   subjectId: subjectIdField,
+  source: flashcardSourceSchema.optional(),
   front: flashcardFrontSchema,
   back: flashcardBackSchema,
 });

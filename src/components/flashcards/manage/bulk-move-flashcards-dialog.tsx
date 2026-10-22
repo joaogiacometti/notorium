@@ -97,7 +97,7 @@ export function BulkMoveFlashcardsDialog({
           <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup className="gap-5">
+          <FieldGroup className="gap-4">
             <Controller
               name="subjectId"
               control={form.control}

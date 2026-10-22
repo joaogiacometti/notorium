@@ -157,3 +157,24 @@ describe("flashcardsManageQuerySchema", () => {
     expect(result.success).toBe(true);
   });
 });
+
+describe("flashcard source validation", () => {
+  const card = { subjectId: "s1", front: "<p>Q</p>", back: "<p>A</p>" };
+  it.each(["note", "mindmap"] as const)(
+    "preserves a valid %s source",
+    (kind) => {
+      expect(
+        createFlashcardSchema.parse({ ...card, source: { kind, id: "doc-1" } })
+          .source,
+      ).toEqual({ kind, id: "doc-1" });
+    },
+  );
+  it.each([
+    { kind: "note", id: "" },
+    { kind: "url", id: "https://example.com" },
+  ])("rejects invalid source %j", (source) => {
+    expect(createFlashcardSchema.safeParse({ ...card, source }).success).toBe(
+      false,
+    );
+  });
+});

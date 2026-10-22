@@ -4,7 +4,7 @@ import { decodeReadPayload } from "@/lib/read-api/read-payload";
 const queries = vi.hoisted(() => ({
   getAccountSettingsForUser: vi.fn(),
   getFlashcardsManagePageForUser: vi.fn(),
-  getFlashcardByIdForUser: vi.fn(),
+  getFlashcardWithSourceByIdForUser: vi.fn(),
   getFlashcardContentsForUser: vi.fn(),
   getStrugglingFlashcardsForUser: vi.fn(),
   getFlashcardReviewStateForUser: vi.fn(),
@@ -97,7 +97,7 @@ describe("read route handlers", () => {
   });
 
   it("flashcard by id answers 404 when missing", async () => {
-    queries.getFlashcardByIdForUser.mockResolvedValue(null);
+    queries.getFlashcardWithSourceByIdForUser.mockResolvedValue(null);
 
     const result = await callRoute(
       import("@/app/api/flashcards/[flashcardId]/route"),
@@ -107,7 +107,7 @@ describe("read route handlers", () => {
 
     expect(result.status).toBe(404);
     expect(result.body).toMatchObject({ errorCode: "flashcards.notFound" });
-    expect(queries.getFlashcardByIdForUser).toHaveBeenCalledWith(
+    expect(queries.getFlashcardWithSourceByIdForUser).toHaveBeenCalledWith(
       "user-1",
       "card-1",
     );

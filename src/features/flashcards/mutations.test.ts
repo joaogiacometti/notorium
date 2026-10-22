@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const readOwnedFlashcardSourceMock = vi.fn();
+vi.mock("@/features/flashcards/source-queries", () => ({
+  readOwnedFlashcardSource: readOwnedFlashcardSourceMock,
+}));
+
 const insertReturningMock = vi.fn();
 const insertValuesMock = vi.fn(() => ({
   returning: insertReturningMock,
@@ -102,6 +107,59 @@ describe("createFlashcardForUser", () => {
     hasDuplicateFlashcardFrontForUserMock.mockResolvedValue(false);
   });
 
+  it.each(["note", "mindmap"] as const)(
+    "rejects a missing or unowned %s source before inserting",
+    async (kind) => {
+      readOwnedFlashcardSourceMock.mockResolvedValueOnce(null);
+      const { createFlashcardForUser } = await import(
+        "@/features/flashcards/mutations"
+      );
+      const result = await createFlashcardForUser("user-1", {
+        subjectId: "deck-1",
+        front: "<p>Q</p>",
+        back: "<p>A</p>",
+        source: { kind, id: "foreign" },
+      });
+      expect(result).toMatchObject({
+        success: false,
+        errorCode: kind === "note" ? "notes.notFound" : "mindmaps.notFound",
+      });
+      expect(readOwnedFlashcardSourceMock).toHaveBeenCalledWith("user-1", {
+        kind,
+        id: "foreign",
+      });
+      expect(insertMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["note", "mindmap"] as const)(
+    "persists an owned %s source independently of the card subject",
+    async (kind) => {
+      readOwnedFlashcardSourceMock.mockResolvedValueOnce({
+        id: "doc-1",
+        kind,
+        subjectId: "other-subject",
+      });
+      insertReturningMock.mockResolvedValueOnce([{ id: "card-1" }]);
+      const { createFlashcardForUser } = await import(
+        "@/features/flashcards/mutations"
+      );
+      expect(
+        await createFlashcardForUser("user-1", {
+          subjectId: "deck-1",
+          front: "<p>Q</p>",
+          back: "<p>A</p>",
+          source: { kind, id: "doc-1" },
+        }),
+      ).toMatchObject({ success: true });
+      expect(insertValuesMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          [kind === "note" ? "sourceNoteId" : "sourceMindmapId"]: "doc-1",
+        }),
+      );
+    },
+  );
+
   it("returns duplicate error when the normalized front already exists", async () => {
     hasDuplicateFlashcardFrontForUserMock.mockResolvedValueOnce(true);
 
@@ -161,6 +219,8 @@ describe("createFlashcardForUser", () => {
       front: "<p>Front</p>",
       frontNormalized: "front",
       back: "<p>Back</p>",
+      sourceNoteId: null,
+      sourceMindmapId: null,
       state: "new",
       dueAt: new Date("2026-03-18T10:00:00.000Z"),
       stability: null,

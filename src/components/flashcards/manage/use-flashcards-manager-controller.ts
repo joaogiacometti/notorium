@@ -16,6 +16,7 @@ import {
 import type {
   FlashcardEntity,
   FlashcardManagePage,
+  FlashcardWithSourceEntity,
 } from "@/lib/server/api-contracts";
 import {
   actionError,
@@ -230,9 +231,10 @@ export function useFlashcardsManagerController({
   }
 
   function cacheUpdatedFlashcard(updatedFlashcard: FlashcardEntity) {
-    queryClient.setQueryData(
+    // Edit results omit the resolved source link; keep the one already loaded.
+    queryClient.setQueryData<FlashcardWithSourceEntity | null>(
       ["flashcard-manage-edit", updatedFlashcard.id],
-      updatedFlashcard,
+      (cached) => ({ ...updatedFlashcard, source: cached?.source ?? null }),
     );
   }
 

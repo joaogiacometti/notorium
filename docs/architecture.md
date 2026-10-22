@@ -4,7 +4,7 @@ Notorium keeps framework entrypoints thin and pushes product logic into feature 
 
 Audience: agents and contributors making structural, cross-boundary, or feature-module changes.
 
-Related docs: [Docs Index](./README.md), [UI Conventions](./ui-conventions.md), [Agent Guide](../AGENTS.md), [README](../README.md)
+Related docs: [Docs Index](./README.md), [Design System](../DESIGN.md), [Agent Guide](../AGENTS.md), [README](../README.md)
 
 ## Source Layout
 
@@ -78,3 +78,22 @@ A separate guard, `npm run check:size`, enforces 500-line source and 800-line te
 ### Study surface context
 
 `useStudyContext` registers live review/exam, note, and mindmap snapshots with the shell workspace. Editor drafts take precedence; mounted study surfaces stack and restore on teardown. The request accepts either the existing draft or a validated `StudyContext` union, never both. Context precedes the latest question as untrusted background; system instructions and tools stay stable. Review snapshots omit unrevealed backs. Document snapshots use current client edits, cap readable content at 12,000 characters, and mark partial excerpts. Notes replace explicit images and renderer-recognized image paragraphs with placeholders before converting to Markdown; mindmaps serialize root-first labels and edges with explicit arrow directions, without positions or attachment locations. Document zen mode mounts the existing assistant surface host inside its immersive boundary and reserves desktop sidebar space. No new reads, writes, endpoints, or AI requests are introduced.
+
+### Flashcard source documents
+
+Flashcards keep nullable `sourceNoteId` / `sourceMindmapId` foreign keys with
+`ON DELETE SET NULL` (both indexed so document deletes stay cheap); deleting a document preserves its cards. Creation accepts
+one validated `{ kind, id }` source and checks ownership before insertion.
+`src/features/flashcards/source-queries.ts` resolves current document titles and
+subject locations in batches for detail, manage-edit, review, and exam reads, selecting only
+link metadata and filtering documents by `userId`. Existing card writes leave
+source references unchanged.
+
+Document study snapshots carry `documentId`. User message metadata captures its
+source when sending (and refreshes it when retrying); proposals use their own
+preceding user message's source, never the currently open page or model-supplied
+ids. Proposal Edit prefills the same source in the create form. The source stays
+outside editor content and model tool input. `FlashcardSourceReference` is the
+single link UI, rendered as header metadata under the subject in detail,
+the edit dialog header, and review/exam (after reveal); the dialog and session links open a separate
+tab so drafts and the session stay mounted.

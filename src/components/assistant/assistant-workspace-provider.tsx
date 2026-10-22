@@ -25,6 +25,8 @@ import type { AssistantUIMessage } from "@/features/assistant/types";
 import {
   isAssistantReplyInFlight,
   prepareDraftForAssistant,
+  readStudyContextSource,
+  stampLastUserMetadata,
 } from "@/features/assistant/utils";
 
 const sharedTransport = createAssistantChatTransport();
@@ -218,9 +220,15 @@ export function AssistantWorkspaceProvider({
           ? { draft: prepareDraftForAssistant(draft) }
           : { context: studyContext },
       };
+      const metadata = { source: readStudyContextSource(studyContext) };
+      if (text === undefined) {
+        chat.setMessages((messages) =>
+          stampLastUserMetadata(messages, metadata),
+        );
+      }
       const sending =
         text !== undefined
-          ? chat.sendMessage({ text }, options)
+          ? chat.sendMessage({ text, metadata }, options)
           : chat.regenerate(options);
       void sending.catch(() =>
         setNotice("The message could not be sent. Please retry."),

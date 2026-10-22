@@ -12,8 +12,10 @@ import "@/components/assistant/flashcard-draft-content";
 
 function DraftHarness() {
   const workspace = useAssistantWorkspace();
+  const [documentId, setDocumentId] = useState("underlying-note");
   useStudyContext({
     kind: "note",
+    documentId,
     title: "Underlying note",
     content: "Background",
     partial: false,
@@ -86,6 +88,12 @@ function DraftHarness() {
       <button type="button" onClick={() => setGeneration(generation + 1)}>
         Reset draft
       </button>
+      <button type="button" onClick={() => setDocumentId("another-note")}>
+        Navigate document
+      </button>
+      <button type="button" onClick={() => void workspace?.send()}>
+        Retry
+      </button>
       <button type="button" onClick={() => workspace?.reset()}>
         New chat
       </button>
@@ -127,6 +135,36 @@ describe("shared assistant flashcard editing", () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
   }
+
+  it("captures the document source on the user turn only when document context is active", async () => {
+    await click("Send");
+    expect(
+      transport.requests[0].messages.findLast(
+        (message) => message.role === "user",
+      )?.metadata?.source,
+    ).toBeUndefined();
+    await click("Close");
+    await click("Send");
+    expect(
+      transport.requests
+        .at(-1)
+        ?.messages.findLast((message) => message.role === "user")?.metadata
+        ?.source,
+    ).toEqual({ kind: "note", id: "underlying-note" });
+  });
+
+  it("refreshes the source when retrying from another document", async () => {
+    await click("Close");
+    await click("Send");
+    await click("Navigate document");
+    await click("Retry");
+    expect(
+      transport.requests
+        .at(-1)
+        ?.messages.findLast((message) => message.role === "user")?.metadata
+        ?.source,
+    ).toEqual({ kind: "note", id: "another-note" });
+  });
 
   it("uses current unsaved content and independently accepts/discards fields", async () => {
     transport.replacements = {
