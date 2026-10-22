@@ -30,7 +30,7 @@ graph nodes, segmented toggles, drop zones), not for standard actions.
 
 - **Card/detail pages** compose `DetailPageLayout` (sticky `PageTopBar`
   breadcrumb over a centered `AppPageContainer`). Default width `max-w-5xl`;
-  narrow per content via `maxWidth` (`3xl` flashcard/admin). Width is the only thing a detail page tunes — structure is fixed.
+  narrow per content via `maxWidth` (`3xl` admin; flashcard detail uses `7xl` to match documents, with Front/Back side by side). Width is the only thing a detail page tunes — structure is fixed.
 - **Document workspaces** (note, mindmap) stay full-width (`max-w-7xl`) and own their layout for zen mode.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
   `PageTopBar` (`PageTopBarSkeleton`).

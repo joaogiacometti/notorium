@@ -192,15 +192,16 @@ export function FlashcardDetail({
   ]);
 
   return (
-    <DetailPageLayout breadcrumb={breadcrumb} maxWidth="3xl">
-      <div className="mb-4 flex min-w-0 items-start justify-between gap-2 sm:gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <span
-            className="truncate text-sm font-medium text-foreground"
+    <DetailPageLayout breadcrumb={breadcrumb} maxWidth="7xl">
+      <div className="mb-4 flex min-w-0 items-start gap-2">
+        {/* Mirrors the note/mindmap header: an h-10 title row, then metadata. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h1
+            className="truncate text-lg leading-10 font-semibold tracking-tight sm:text-xl"
             title={flashcard.subjectPath}
           >
-            Subject: {flashcard.subjectPath}
-          </span>
+            {flashcard.subjectPath}
+          </h1>
           <FlashcardSourceReference source={flashcard.source} />
         </div>
 
@@ -260,7 +261,10 @@ export function FlashcardDetail({
         </div>
       </div>
 
-      <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
+      <form
+        className="grid gap-6 lg:grid-cols-2"
+        onSubmit={(event) => event.preventDefault()}
+      >
         <Controller
           name="front"
           control={form.control}
@@ -283,7 +287,7 @@ export function FlashcardDetail({
                   id="form-edit-flashcard-front"
                   aria-invalid={fieldState.invalid}
                   imageUploadContext="flashcards"
-                  contentClassName="min-h-40"
+                  contentClassName="min-h-40 lg:min-h-80"
                   onImageUploadPendingChange={setIsFrontImageUploading}
                 />
               )}
@@ -316,7 +320,7 @@ export function FlashcardDetail({
                   id="form-edit-flashcard-back"
                   aria-invalid={fieldState.invalid}
                   imageUploadContext="flashcards"
-                  contentClassName="min-h-40"
+                  contentClassName="min-h-40 lg:min-h-80"
                   onImageUploadPendingChange={setIsBackImageUploading}
                 />
               )}

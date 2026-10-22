@@ -28,7 +28,7 @@ interface DetailPageLayoutProps {
  * @example
  * <DetailPageLayout
  *   breadcrumb={[{ label: "Flashcards", href: "/flashcards", icon: "layers" }]}
- *   maxWidth="3xl"
+ *   maxWidth="7xl"
  * >
  *   <FlashcardEditor />
  * </DetailPageLayout>

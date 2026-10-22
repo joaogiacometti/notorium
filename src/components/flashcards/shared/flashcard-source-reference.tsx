@@ -12,7 +12,7 @@ interface FlashcardSourceReferenceProps {
 }
 
 /** Return to a card's source. Provenance is metadata, so it always sits with
- * the card's header metadata: under the subject in detail, under the edit dialog
+ * the card's header metadata: under the subject heading in detail, under the edit dialog
  * title, and on the subject row of revealed review/exam. Sessions and dialogs open a new tab to keep progress/drafts.
  * @example <FlashcardSourceReference source={card.source} />
  */
