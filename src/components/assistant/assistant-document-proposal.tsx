@@ -33,18 +33,22 @@ export function AssistantDocumentProposal({
   );
 }
 
-/** Document proposal parts that have settled enough to show an outcome.
- * @example readDocumentProposalParts(message).map(...);
+/** Defer failures until the reply finishes, allowing the model to correct them.
+ * @example readDocumentProposalParts(message, replyInFlight).map(...);
  */
 export function readDocumentProposalParts(
   message: AssistantUIMessage,
+  replyInFlight = false,
 ): DocumentProposalPart[] {
   return message.parts.filter(
     (part, index): part is DocumentProposalPart =>
       (part.type === "tool-proposeNoteEdits" ||
         part.type === "tool-proposeMindmapEdits") &&
       part.state !== "input-streaming" &&
-      !(part.state === "output-error" && answeredLater(message, index)),
+      !(
+        part.state === "output-error" &&
+        (replyInFlight || answeredLater(message, index))
+      ),
   );
 }
 

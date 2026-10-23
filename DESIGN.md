@@ -203,7 +203,10 @@ read-only preview in place of the editor, using danger intent strikethrough for
 removals and success intent text for additions; a title change shows the
 struck original beside the suggestion. Preview content never enters the live
 document; Accept uses normal autosave and existing undo. The chat keeps only a
-muted one-line outcome per proposal and opens no overlay.
+muted one-line outcome per proposal and opens no overlay. While a reply is still
+streaming, rejected document edits keep the existing Thinking indicator when
+there is no other visible content; show a failure only after the reply ends
+without a correction or explanation.
 
 Mindmap review nodes keep the plain
 node box (`w-48`, theme color tint, bold/italic) with a dashed success or danger

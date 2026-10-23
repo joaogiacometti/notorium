@@ -4,7 +4,7 @@ import { act, useEffect, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { AssistantDocumentProposal } from "@/components/assistant/assistant-document-proposal";
+import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { useActiveNoteEditor } from "@/components/assistant/use-active-note-editor";
@@ -89,14 +89,13 @@ function WorkspaceHarness({ editor }: { editor: Editor }) {
       <output data-testid="messages">
         {JSON.stringify(workspace?.chat.messages)}
       </output>
-      {workspace?.chat.messages.flatMap((message) =>
-        message.parts.map((part) =>
-          part.type === "tool-proposeNoteEdits" ||
-          part.type === "tool-proposeMindmapEdits" ? (
-            <AssistantDocumentProposal key={part.toolCallId} proposal={part} />
-          ) : null,
-        ),
-      )}
+      {workspace ? (
+        <AssistantMessageList
+          messages={workspace.chat.messages}
+          status={workspace.chat.status}
+          proposals={workspace.proposals}
+        />
+      ) : null}
     </>
   );
 }
@@ -222,6 +221,23 @@ describe("document proposal lifecycle", () => {
     expect(read("values")).toContain("Original explanation");
     expect(read("messages")).toContain('"state":"output-error"');
     expect(read("notice")).toContain("could not be prepared");
+  });
+  it("keeps thinking while a rejected edit is corrected in the same reply", async () => {
+    transport.delayed = true;
+    transport.rejectFirst = true;
+    await click("Send");
+    expect(read("messages")).toContain('"state":"output-error"');
+    expect(container.textContent).not.toContain("could not be prepared");
+    expect(container.textContent).toContain("Thinking…");
+    await act(async () => transport.finishReply());
+    expect(container.textContent).not.toContain("could not be prepared");
+    expect(container.textContent).not.toContain("Thinking…");
+    expect(container.textContent).toContain("Accept changes");
+    await click("Accept changes");
+    expect(read("values")).toContain("Improved explanation");
+    expect(container.textContent).toContain(
+      "Changes accepted in the document.",
+    );
   });
   it("resets pending proposals and handles reused call ids", async () => {
     transport.callId = "reused";

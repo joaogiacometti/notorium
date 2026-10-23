@@ -38,14 +38,14 @@ export function AssistantMessageList({
 }: Readonly<AssistantMessageListProps>) {
   const endRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages.at(-1);
+  const busy = isAssistantReplyInFlight(status);
   // The reply exists before its first token arrives; until then it reads as
   // "Thinking…" rather than an empty bubble.
   const awaitingFirstToken =
     status === "submitted" ||
     (status === "streaming" &&
       lastMessage?.role === "assistant" &&
-      !hasVisibleContent(lastMessage));
-  const busy = isAssistantReplyInFlight(status);
+      !hasVisibleContent(lastMessage, busy));
 
   // Runs after every render: each streamed chunk re-renders the list, and the
   // view should follow the reply as it grows.
@@ -69,38 +69,45 @@ export function AssistantMessageList({
       className="flex-1 space-y-3 overflow-y-auto px-4 py-3"
       aria-live="polite"
     >
-      {messages.filter(hasVisibleContent).map((message) => (
-        <div key={message.id} className="space-y-2">
-          {readMessageText(message) === "" ? null : (
-            <AssistantMessageBubble
-              message={message}
-              streaming={status === "streaming" && message === lastMessage}
-            />
-          )}
-          {readLibrarySearchParts(message).map((search) => (
-            <AssistantLibraryResults
-              key={search.toolCallId}
-              search={search}
-              onOpenHit={onOpenLibraryHit}
-            />
-          ))}
-          {readDocumentProposalParts(message).map((proposal) => (
-            <AssistantDocumentProposal
-              key={proposal.toolCallId}
-              proposal={proposal}
-            />
-          ))}
-          {readFlashcardProposalParts(message).map((proposal) => (
-            <AssistantFlashcardProposal
-              key={proposal.toolCallId}
-              proposal={proposal}
-              source={readProposalSource(messages, message.id)}
-              disabled={busy}
-              controls={proposals}
-            />
-          ))}
-        </div>
-      ))}
+      {messages
+        .filter((message) =>
+          hasVisibleContent(message, busy && message === lastMessage),
+        )
+        .map((message) => (
+          <div key={message.id} className="space-y-2">
+            {readMessageText(message) === "" ? null : (
+              <AssistantMessageBubble
+                message={message}
+                streaming={status === "streaming" && message === lastMessage}
+              />
+            )}
+            {readLibrarySearchParts(message).map((search) => (
+              <AssistantLibraryResults
+                key={search.toolCallId}
+                search={search}
+                onOpenHit={onOpenLibraryHit}
+              />
+            ))}
+            {readDocumentProposalParts(
+              message,
+              busy && message === lastMessage,
+            ).map((proposal) => (
+              <AssistantDocumentProposal
+                key={proposal.toolCallId}
+                proposal={proposal}
+              />
+            ))}
+            {readFlashcardProposalParts(message).map((proposal) => (
+              <AssistantFlashcardProposal
+                key={proposal.toolCallId}
+                proposal={proposal}
+                source={readProposalSource(messages, message.id)}
+                disabled={busy}
+                controls={proposals}
+              />
+            ))}
+          </div>
+        ))}
       {awaitingFirstToken ? (
         <p className="text-xs text-muted-foreground">Thinking…</p>
       ) : null}
@@ -137,12 +144,15 @@ function AssistantMessageBubble({
 }
 
 // Replies stopped before their first token have nothing to show.
-function hasVisibleContent(message: AssistantUIMessage): boolean {
+function hasVisibleContent(
+  message: AssistantUIMessage,
+  replyInFlight = false,
+): boolean {
   return (
     readMessageText(message) !== "" ||
     readFlashcardProposalParts(message).length > 0 ||
     readLibrarySearchParts(message).length > 0 ||
-    readDocumentProposalParts(message).length > 0
+    readDocumentProposalParts(message, replyInFlight).length > 0
   );
 }
 

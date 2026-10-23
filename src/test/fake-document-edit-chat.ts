@@ -15,6 +15,7 @@ export class FakeDocumentEditChat implements ChatTransport<AssistantUIMessage> {
   delayed = false;
   duplicate = false;
   invalid = false;
+  rejectFirst = false;
   title: string | undefined;
   callId: string | undefined;
   private release: (() => void) | null = null;
@@ -55,6 +56,14 @@ export class FakeDocumentEditChat implements ChatTransport<AssistantUIMessage> {
     return new ReadableStream({
       start: (controller) => {
         controller.enqueue({ type: "start" });
+        if (this.rejectFirst)
+          controller.enqueue({
+            type: "tool-input-error",
+            toolName,
+            toolCallId: `rejected-${this.requests.length}`,
+            input,
+            errorText: "Invalid edit target; expected a visible block id",
+          });
         this.release = () => {
           const toolCallId = this.callId ?? `document-${this.requests.length}`;
           controller.enqueue({
