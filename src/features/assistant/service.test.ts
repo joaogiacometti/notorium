@@ -359,9 +359,9 @@ describe("streamAssistantReplyForUser", () => {
     expect(JSON.stringify(prompt[3])).toContain("skipped");
     expect(JSON.stringify(prompt[4])).toContain("drying clothes");
     expect(JSON.stringify(prompt.slice(0, -1))).not.toContain("prime number");
-    expect(prompt.at(-1)?.content.at(-1)).toEqual({
+    expect(prompt.at(-1)?.content.at(-2)).toEqual({
       type: "text",
-      text: "do it",
+      text: "<user_request>\ndo it\n</user_request>",
     });
   });
 
@@ -425,7 +425,7 @@ describe("streamAssistantReplyForUser", () => {
     );
   });
 
-  it("keeps the user's question last when providing a draft as background", async () => {
+  it("keeps the user's question after the draft background, tagged as the request", async () => {
     const model = createFakeStreamingModel(
       "Alpha squared means alpha multiplied by itself.",
     );
@@ -454,8 +454,11 @@ describe("streamAssistantReplyForUser", () => {
     if (result.success) await result.response.text();
     const finalTurn = model.doStreamCalls[0].prompt.at(-1);
     expect(finalTurn?.role).toBe("user");
-    expect(finalTurn?.content.at(-1)).toEqual({ type: "text", text: question });
-    expect(JSON.stringify(finalTurn?.content.slice(0, -1))).toContain(
+    expect(finalTurn?.content.at(-2)).toEqual({
+      type: "text",
+      text: `<user_request>\n${question}\n</user_request>`,
+    });
+    expect(JSON.stringify(finalTurn?.content.slice(0, -2))).toContain(
       "Explain alpha",
     );
   });

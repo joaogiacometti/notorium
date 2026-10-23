@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { assembleAssistantMessages } from "@/features/assistant/request-context";
+import {
+  assembleAssistantMessages,
+  tagUserRequest,
+} from "@/features/assistant/request-context";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
 
 const conversation: AssistantChatRequest["messages"] = [
@@ -21,9 +24,14 @@ describe("assembleAssistantMessages", () => {
     const original = structuredClone(conversation);
     const messages = assembleAssistantMessages({ messages: conversation }, []);
     expect(messages.slice(0, -1)).toEqual(original.slice(0, -1));
-    expect(messages.at(-1)?.parts.at(-1)).toEqual(
-      conversation.at(-1)?.parts[0],
+    const reminder = messages.at(-1)?.parts.at(-1);
+    expect(reminder?.type === "text" && reminder.text).toContain(
+      "user_request",
     );
+    expect(messages.at(-1)?.parts.at(-2)).toEqual({
+      type: "text",
+      text: "<user_request>\nWhy twice daily?\n</user_request>",
+    });
     expect(conversation).toEqual(original);
     expect(assembleAssistantMessages({ messages: conversation }, [])).toEqual(
       messages,
@@ -35,9 +43,9 @@ describe("assembleAssistantMessages", () => {
     const parts =
       assembleAssistantMessages({ messages: conversation }, subjects).at(-1)
         ?.parts ?? [];
-    const contexts = parts.slice(0, -1).map((part) => {
+    const contexts = parts.slice(0, -2).map((part) => {
       if (part.type !== "text") throw new Error("Expected text context");
-      expect(part.text.split("\n")).toHaveLength(2);
+      expect(part.text.split("\n")).toHaveLength(3);
       return JSON.parse(part.text.split("\n")[1]);
     });
     expect(contexts).toEqual([{ mode: "hints" }, subjects, null]);
@@ -76,7 +84,9 @@ describe("assembleAssistantMessages", () => {
       throw new Error("Expected material context");
     const parsed = JSON.parse(materialPart.text.split("\n")[1]);
     expect(parsed).toMatchObject(Object.values(material)[0]);
-    expect(parts.at(-1)).toEqual(conversation.at(-1)?.parts.at(-1));
+    const question = conversation.at(-1)?.parts[0];
+    if (question?.type !== "text") throw new Error("Expected a question");
+    expect(parts.at(-2)).toEqual(tagUserRequest(question));
     expect(messages.slice(0, -1)).toEqual(conversation.slice(0, -1));
   });
 });

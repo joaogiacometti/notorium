@@ -109,6 +109,15 @@ describe("flashcard draft rich text", () => {
     expect(result).not.toContain('data-latex=""');
   });
 
+  it("undoes double-escaped LaTeX commands inside math only", () => {
+    const result = restoreDraftReplacement(
+      "<p>$$\\\\hat{y} = h_w(x)$$</p><p>Path C:\\\\temp</p>",
+      "",
+    );
+    expect(result).toContain('data-latex="\\hat{y} = h_w(x)"');
+    expect(result).toContain("C:\\\\temp");
+  });
+
   it("drops math nodes that carry no LaTeX at all", () => {
     const result = restoreDraftReplacement(
       '<p>Before</p><div data-type="block-math"></div><p>After</p>',

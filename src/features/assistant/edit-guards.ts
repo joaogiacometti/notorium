@@ -131,6 +131,44 @@ export function findAddedSide(
   return undefined;
 }
 
+// A reworded copy keeps most of the original's words.
+const REWORDED_COPY_SHARED_WORDS = 0.8;
+
+/**
+ * Whether `candidate` keeps most words of `existing`, a text with at least
+ * `minWords` distinct words; shorter texts are too generic to judge.
+ *
+ * @example
+ * repeatsMostWords("The membrane controls what enters cells", "The membrane controls what enters a cell", 6); // true
+ */
+export function repeatsMostWords(
+  existing: string,
+  candidate: string,
+  minWords: number,
+): boolean {
+  const words = wordSet(existing);
+  if (words.size < minWords) return false;
+  const candidateWords = wordSet(candidate);
+  const shared = [...words].filter((word) => candidateWords.has(word)).length;
+  return shared / words.size >= REWORDED_COPY_SHARED_WORDS;
+}
+
+/**
+ * Whether two texts use the same words, ignoring case, punctuation, and order.
+ *
+ * @example
+ * hasSameWords("What is ATP?", "what is atp"); // true
+ */
+export function hasSameWords(first: string, second: string): boolean {
+  const left = wordSet(first);
+  const right = wordSet(second);
+  return (
+    left.size > 0 &&
+    left.size === right.size &&
+    [...left].every((word) => right.has(word))
+  );
+}
+
 /**
  * Visible text of editor HTML with whitespace collapsed, for content checks.
  *
@@ -198,6 +236,10 @@ function expectedOneOf(values: readonly string[], noun: string): string {
   return values.length > 0
     ? `expected one of ${values.join(", ")}`
     : `expected no ${noun}`;
+}
+
+function wordSet(text: string): Set<string> {
+  return new Set(text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []);
 }
 
 function compactHtml(html: string): string {

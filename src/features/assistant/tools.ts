@@ -14,6 +14,7 @@ import {
   guardEditSchema,
 } from "@/features/assistant/edit-guards";
 import { findFlashcardEditProblems } from "@/features/assistant/flashcard-edit-rules";
+import { findFlashcardProposalProblems } from "@/features/assistant/flashcard-proposal-rules";
 import {
   formatLibraryHitsForModel,
   type LibrarySearchInput,
@@ -152,8 +153,9 @@ export type LibrarySearchFunction = (
  * the reply and the chat shows the cards or edits for the user to accept, so
  * nothing is written without the user's click and the route stays write-free.
  * `searchLibrary` is the one tool run on the server: it only reads, through
- * the injected user-bound search. Edit tools check proposals against the open
- * draft (see edit-guards.ts), so the model corrects a rejected call itself.
+ * the injected user-bound search. Proposal tools check calls against the open
+ * draft or review card (see edit-guards.ts), so the model corrects a rejected
+ * call itself.
  *
  * @example
  * streamChatResponse({ ...options, tools: buildAssistantTools(search, { documentDraft }) });
@@ -162,7 +164,8 @@ export function buildAssistantTools(
   searchLibrary: LibrarySearchFunction,
   drafts: EditableDrafts = {},
 ) {
-  const { draft, documentDraft } = drafts;
+  const { draft, documentDraft, context } = drafts;
+  const review = context?.kind === "review" ? context : undefined;
   const note = documentDraft?.kind === "note" ? documentDraft : undefined;
   const mindmap = documentDraft?.kind === "mindmap" ? documentDraft : undefined;
   return {
@@ -196,7 +199,10 @@ export function buildAssistantTools(
     proposeFlashcards: tool({
       description:
         "Propose separate new flashcards or revise an earlier chat proposal at the user's request, including follow-up corrections to skipped proposals. For chat-proposal corrections, use this tool regardless of any open draft. Only requests targeting the current draft use its editor tool. Submit concrete cards directly for Create/Edit/Discard review in chat. Only created outcomes confirm saving; dismissed or skipped cards were not saved. This tool cannot change saved cards.",
-      inputSchema: flashcardProposalInputSchema,
+      inputSchema: guardEditSchema(
+        flashcardProposalInputSchema,
+        guardsFor(review, findFlashcardProposalProblems),
+      ),
       outputSchema: flashcardProposalOutputSchema,
     }),
     searchLibrary: tool({
@@ -213,9 +219,12 @@ export function buildAssistantTools(
   };
 }
 
-type EditableDrafts = Pick<AssistantChatRequest, "draft" | "documentDraft">;
+type EditableDrafts = Pick<
+  AssistantChatRequest,
+  "draft" | "documentDraft" | "context"
+>;
 
-// Without an open draft the editor tool is inactive, so it needs no guard.
+// Without the material a rule checks against, the tool needs no guard.
 function guardsFor<Input, Draft>(
   draft: Draft | undefined,
   findProblems: (input: Input, draft: Draft) => string[],

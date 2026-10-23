@@ -107,6 +107,7 @@ export async function streamAssistantReplyForUser({
     tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId), {
       draft,
       documentDraft,
+      context,
     }),
     activeTools: selectAssistantActiveTools({ draft, documentDraft }),
     maxModelSteps: ASSISTANT_MAX_MODEL_STEPS,

@@ -6,7 +6,9 @@ import {
   findImageReferenceProblems,
   findUnknownIdProblems,
   guardEditSchema,
+  hasSameWords,
   isUnchangedHtml,
+  repeatsMostWords,
   visibleHtmlText,
 } from "@/features/assistant/edit-guards";
 
@@ -61,6 +63,19 @@ describe("edit guards", () => {
     expect(findAddedSide("<p>A</p>\n<p>B</p>", "<p>A</p>")).toBe("after");
     expect(findAddedSide("<p>B</p><p>A</p>", "<p>A</p>")).toBe("before");
     expect(findAddedSide("<p>A!</p>", "<p>A</p>")).toBeUndefined();
+  });
+
+  it("detects copies by words, reworded or reordered", () => {
+    expect(hasSameWords("What is ATP?", "what is atp")).toBe(true);
+    expect(hasSameWords("What is ATP?", "What is ADP?")).toBe(false);
+    expect(
+      repeatsMostWords(
+        "the cell membrane controls entry",
+        "entry: the cell membrane controls it",
+        4,
+      ),
+    ).toBe(true);
+    expect(repeatsMostWords("What is ATP?", "What is ATP?", 4)).toBe(false);
   });
 
   it("allows each known image placeholder once", () => {

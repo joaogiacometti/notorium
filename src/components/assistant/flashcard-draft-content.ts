@@ -8,6 +8,7 @@ import {
   restoreImagePlaceholders,
 } from "@/lib/editor/rich-text";
 import { normalizeReviewedRichText } from "@/lib/editor/rich-text-review-schema";
+import { normalizeOverEscapedLatex } from "@/lib/math/dollar-math";
 import { MATH_NODE_SELECTOR, readMathNode } from "@/lib/math/math-nodes";
 
 const PROTECTED_MATH_TEXT = `pre, code, ${MATH_NODE_SELECTOR}`;
@@ -20,9 +21,12 @@ export function restoreDraftReplacement(
   original: string,
 ): string {
   const { images } = replaceImagesWithPlaceholders(original);
-  const html = /<\/?[a-z][^>]*>/i.test(replacement)
-    ? replacement
-    : plainTextToRichText(replacement);
+  // Models sometimes JSON-escape LaTeX twice (`\\hat`), which renders as a
+  // line break followed by plain text.
+  const latex = normalizeOverEscapedLatex(replacement);
+  const html = /<\/?[a-z][^>]*>/i.test(latex)
+    ? latex
+    : plainTextToRichText(latex);
   const sanitized = DOMPurify.sanitize(html, {
     FORBID_TAGS: ["img", "script", "style", "iframe", "object"],
   });

@@ -136,6 +136,33 @@ describe("note edit rules", () => {
     expect(insert("<p>$$x^2$$</p>")).toEqual([]);
   });
 
+  it("rejects a shortened copy of a long block", () => {
+    const long = {
+      ...draft,
+      blocks: [
+        {
+          id: "b0",
+          html: "<p>The notation for the prediction made by the model (the estimated value) is often written as:</p>",
+        },
+      ],
+    };
+    expect(
+      findNoteEditProblems(
+        {
+          ...identity,
+          insertions: [
+            {
+              anchorBlockId: "b0",
+              side: "before",
+              html: "<p>The notation for the prediction made by the model is written as:</p><p>$$y$$</p>",
+            },
+          ],
+        },
+        long,
+      ),
+    ).toHaveLength(1);
+  });
+
   it("rejects invented or misplaced images", () => {
     expect(
       problems({

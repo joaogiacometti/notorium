@@ -9,6 +9,7 @@ import {
   findUnknownIdProblems,
   imagePlaceholdersIn,
   isUnchangedHtml,
+  repeatsMostWords,
   visibleHtmlText,
 } from "@/features/assistant/edit-guards";
 import {
@@ -18,10 +19,8 @@ import {
 
 // Shorter blocks (headings, labels) are too generic to call a copy.
 const COPY_MIN_CHARS = 20;
-// A reworded copy keeps most of a sentence's words; fewer words than this are
-// too generic to judge.
+// Sentences with fewer words are too generic to call a reworded copy.
 const REWORDED_COPY_MIN_WORDS = 6;
-const REWORDED_COPY_SHARED_WORDS = 0.8;
 const EXCERPT_CHARS = 40;
 
 /**
@@ -115,11 +114,11 @@ function repeatsText(existing: string, inserted: string): boolean {
     return false;
   if (existing.length >= COPY_MIN_CHARS && inserted.includes(existing))
     return true;
-  const words = wordSet(existing);
-  if (words.size < REWORDED_COPY_MIN_WORDS) return false;
-  const insertedWords = wordSet(inserted);
-  const shared = [...words].filter((word) => insertedWords.has(word)).length;
-  return shared / words.size >= REWORDED_COPY_SHARED_WORDS;
+  // Either direction: a reworded copy may add words or drop some.
+  return (
+    repeatsMostWords(existing, inserted, REWORDED_COPY_MIN_WORDS) ||
+    repeatsMostWords(inserted, existing, REWORDED_COPY_MIN_WORDS)
+  );
 }
 
 // Each inserted block is compared on its own, so a long insertion does not
@@ -129,10 +128,6 @@ function htmlBlockTexts(html: string): string[] {
     .split(/<\/(?:p|h[1-6]|li|pre|blockquote|td|th)>/i)
     .map(visibleHtmlText)
     .filter(Boolean);
-}
-
-function wordSet(text: string): Set<string> {
-  return new Set(text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []);
 }
 
 function findEmptyProposalProblems(
