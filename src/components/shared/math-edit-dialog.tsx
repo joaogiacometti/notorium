@@ -86,7 +86,9 @@ export function MathEditDialog({
             Write LaTeX and preview the rendered equation.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+        {/* min-w-0: DialogContent is a grid, so unwrappable KaTeX would
+            otherwise widen the column and push everything past the dialog. */}
+        <div className="min-w-0 space-y-3">
           <Textarea
             value={value}
             onChange={(event) => setValue(event.target.value)}
@@ -102,7 +104,9 @@ export function MathEditDialog({
               }
             }}
           />
-          <div className="flex min-h-12 items-center justify-center overflow-x-auto rounded-md border border-border bg-muted/30 px-3 py-2">
+          {/* Safe centering: plain centering clips wide equations on the
+              left, beyond the scroll origin. */}
+          <div className="flex min-h-12 items-center justify-center-safe overflow-x-auto rounded-md border border-border bg-muted/30 px-3 py-2">
             {/* KaTeX output: trust:false (see MATH_KATEX_OPTIONS) blocks markup
                 injection, so the rendered string is safe to inject here. */}
             <div
