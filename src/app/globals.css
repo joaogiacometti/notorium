@@ -847,13 +847,17 @@
   color: var(--foreground);
 }
 
-/* Block math renders centered with breathing room */
+/* Block math renders centered with breathing room. Wide equations scroll
+   horizontally. Pin overflow-y: with only overflow-x set, CSS computes the
+   other axis to auto, so the sub-pixel line-box overhang of KaTeX content
+   painted a stray vertical scrollbar on every block equation. */
 .tiptap-content [data-type="block-math"],
 .tiptap-wrapper .tiptap [data-type="block-math"] {
   display: block;
   margin: 0.75rem 0;
   text-align: center;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* Editable equations (editor only) invite a click to open the LaTeX dialog */
