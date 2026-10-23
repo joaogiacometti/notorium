@@ -66,7 +66,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "account.deleteFailed": "Failed to delete account.",
   "attachments.invalidData": "Invalid attachment data.",
   "attachments.uploadFailed": "Failed to upload attachment.",
-  "attachments.deleteFailed": "Failed to delete attachment.",
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
   "attachments.notConfigured":
     "No media storage is configured. Contact your administrator.",

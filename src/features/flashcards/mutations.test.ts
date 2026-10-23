@@ -33,7 +33,6 @@ const deleteMock = vi.fn(() => ({
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
-const cleanupAttachmentPathnamesMock = vi.fn();
 const countFlashcardsBySubjectForUserMock = vi.fn();
 const getSubjectRecordForUserMock = vi.fn();
 const getFlashcardByIdForUserMock = vi.fn();
@@ -63,10 +62,6 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/attachments/cleanup", () => ({
-  cleanupAttachmentPathnames: cleanupAttachmentPathnamesMock,
-}));
-
 vi.mock("@/features/subjects/queries", () => ({
   getSubjectRecordForUser: getSubjectRecordForUserMock,
 }));
@@ -89,7 +84,6 @@ vi.mock("@/features/flashcards/queries", () => ({
 describe("createFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    cleanupAttachmentPathnamesMock.mockResolvedValue(undefined);
     countFlashcardsBySubjectForUserMock.mockResolvedValue(0);
     getSubjectRecordForUserMock.mockResolvedValue({
       id: "deck-1",
@@ -238,7 +232,6 @@ describe("createFlashcardForUser", () => {
 describe("editFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    cleanupAttachmentPathnamesMock.mockResolvedValue(undefined);
     getSubjectRecordForUserMock.mockResolvedValue({
       id: "deck-2",
       name: "Revised Deck",
@@ -264,7 +257,6 @@ describe("editFlashcardForUser", () => {
         back: "<p>Back</p>",
       }),
     ).toMatchObject({ success: false, errorCode: "flashcards.duplicateFront" });
-    expect(cleanupAttachmentPathnamesMock).not.toHaveBeenCalled();
   });
 
   it("updates front, back, and deck", async () => {
@@ -317,7 +309,6 @@ describe("editFlashcardForUser", () => {
 describe("bulkDeleteFlashcardsForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    cleanupAttachmentPathnamesMock.mockResolvedValue(undefined);
   });
 
   it("deletes owned flashcards and returns their ids and deck ids", async () => {

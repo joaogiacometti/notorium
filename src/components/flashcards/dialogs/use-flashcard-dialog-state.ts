@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { type UseFormReturn, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
-import { cleanupDiscardedEditorAttachments } from "@/features/attachments/client-cleanup";
 import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
 import {
   type FlashcardFormValues as FlashcardFormSchemaValues,
@@ -112,22 +111,18 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
   }, [currentValues.front, open, rejectedFront]);
 
-  async function handleDiscardChanges() {
+  function handleDiscardChanges() {
     if (savedTimerRef.current) {
       clearTimeout(savedTimerRef.current);
       savedTimerRef.current = null;
     }
-    await cleanupDiscardedEditorAttachments(
-      [currentValues.front, currentValues.back],
-      [savedValuesRef.current.front, savedValuesRef.current.back],
-    );
     form.reset(savedValuesRef.current);
     setDiscardDialogOpen(false);
     setIsSaved(false);
     onOpenChange(false);
   }
 
-  async function handleOpenChange(nextOpen: boolean) {
+  function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
       setDiscardDialogOpen(false);
       if (mode === "create") {
@@ -160,10 +155,6 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
       return;
     }
 
-    await cleanupDiscardedEditorAttachments(
-      [currentValues.front, currentValues.back],
-      [savedValuesRef.current.front, savedValuesRef.current.back],
-    );
     form.reset(savedValuesRef.current);
     setDiscardDialogOpen(false);
     onOpenChange(false);

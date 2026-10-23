@@ -37,8 +37,6 @@ const getSubjectTreeRecordForUserMock = vi.fn();
 const getSubjectDepthForUserMock = vi.fn();
 const getSubjectSubtreeHeightForUserMock = vi.fn();
 const isSubjectAncestorOfMock = vi.fn();
-const getSubjectAttachmentPathnamesForUserMock = vi.fn();
-const cleanupAttachmentPathnamesMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -62,12 +60,6 @@ vi.mock("@/db/schema", () => ({
     id: "subject_id_column",
     userId: "subject_user_id_column",
   },
-}));
-
-vi.mock("@/features/attachments/cleanup", () => ({
-  cleanupAttachmentPathnames: cleanupAttachmentPathnamesMock,
-  getSubjectAttachmentPathnamesForUser:
-    getSubjectAttachmentPathnamesForUserMock,
 }));
 
 vi.mock("@/features/subjects/queries", () => ({

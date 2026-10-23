@@ -63,6 +63,8 @@ Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* serv
 - `src/lib/` owns cross-cutting project helpers and wrappers for external services.
 - `src/env.ts` owns runtime environment validation.
 
+Attachment deletion has one policy: edits, record/subtree deletion, and discarded drafts leave files in storage; `src/features/attachments/blob-gc.ts` reclaims unreferenced blobs through the scheduled sweep. `blob-references.ts` collects references across notes, both flashcard faces, and mindmap images, so removing one reference preserves shared files. The existing upload-age grace period and deletion-fraction circuit breaker still apply. Account deletion is the exception: `purgeUserBlobs` deletes all files under that user’s owned prefixes. Scheduling requirements live in [optional features](./setup/optional-features.md#blob-orphan-garbage-collection).
+
 Image upload admission lives in `POST /api/attachments/image`: authenticate and consume the daily attempt quota before reading bytes, then `src/lib/attachments/read-upload-form.ts` bounds the complete request stream before multipart parsing (including missing or dishonest Content-Length). The route checks file size before creating its byte array; the feature mutation retains byte-size and MIME validation before optimization/storage.
 
 Cross-cutting services live behind project-owned helpers in `src/lib/`, including Better Auth, AI providers, email, media storage, and rate limiting.

@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export const SUPPORTED_ATTACHMENT_IMAGE_MIME_TYPES = [
   "image/avif",
   "image/bmp",
@@ -38,9 +36,3 @@ export function isUploadImageContext(
 ): value is UploadImageContext {
   return uploadImageContextSet.has(value);
 }
-
-export const deleteEditorImagesSchema = z.object({
-  pathnames: z.array(z.string().trim().min(1).max(512)).max(100),
-});
-
-export type DeleteEditorImagesForm = z.infer<typeof deleteEditorImagesSchema>;

@@ -18,12 +18,10 @@ const USER_BLOB_CONTEXTS = ["notes", "flashcards", "mindmaps"] as const;
 // grace period keeps the sweep from deleting freshly uploaded, in-flight blobs.
 const DEFAULT_MIN_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
 
-// Circuit breaker. A healthy store is mostly referenced, so a sweep that wants
-// to delete a large share of everything is the signature of a regression
-// (e.g. a reference collector that stopped matching, or a save path that strands
-// uploads) rather than real garbage. Above this fraction the sweep refuses to
-// delete and reports `aborted` so a human investigates before data is lost. The
-// minimum-scan floor keeps tiny stores — where a couple of orphans trivially
+// Circuit breaker. A large deletion can indicate a reference-collector
+// regression or legitimate bulk content deletion. Above this fraction the sweep
+// refuses to delete and reports `aborted` for operator review before files are
+// lost. The minimum-scan floor keeps tiny stores — where a couple of orphans trivially
 // exceed any fraction — from tripping the brake on normal cleanup.
 const DEFAULT_MAX_DELETE_FRACTION = 0.5;
 const SAFETY_MIN_SCAN_FOR_FRACTION = 20;
@@ -106,9 +104,9 @@ export function selectOrphanBlobs(
 }
 
 /**
- * Safety-net sweep that deletes blobs no live database row references. Pairs
- * with the immediate per-mutation cleanup: mutations delete blobs synchronously,
- * and this catches leaks from cascade deletes or transient delete failures.
+ * Deletes blobs no live database row references. This is the single cleanup
+ * path for edited/deleted records and discarded drafts: individual records
+ * cannot safely delete images that other records may still reference.
  * Returns null when no media storage is configured.
  *
  * @example

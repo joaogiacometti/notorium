@@ -1,7 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
-import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   countFlashcardsBySubjectForUser,
@@ -40,12 +39,6 @@ export async function bulkDeleteFlashcardsForUser(
   await getDb()
     .delete(flashcard)
     .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
-
-  await cleanupAttachmentsAfterMutation(
-    userId,
-    ownedFlashcards.flatMap((flashcard) => [flashcard.front, flashcard.back]),
-    [],
-  );
 
   return {
     success: true,

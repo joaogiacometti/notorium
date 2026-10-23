@@ -1,6 +1,4 @@
-import { getOwnedAttachmentPathnames } from "@/features/attachments/pathname";
 import {
-  type DeleteEditorImagesForm,
   isSupportedAttachmentImageMimeType,
   type UploadImageContext,
 } from "@/features/attachments/validation";
@@ -90,29 +88,5 @@ export async function uploadAttachmentImageForUser(
     };
   } catch {
     return actionError("attachments.uploadFailed");
-  }
-}
-
-export async function deleteEditorImagesForUser(
-  userId: string,
-  data: DeleteEditorImagesForm,
-): Promise<{ success: true } | ActionErrorResult> {
-  const ownedPathnames = getOwnedAttachmentPathnames(data.pathnames, userId);
-
-  if (ownedPathnames.length !== data.pathnames.length) {
-    return actionError("attachments.invalidData");
-  }
-
-  const provider = await getMediaStorageProvider();
-
-  if (!provider) {
-    return { success: true };
-  }
-
-  try {
-    await provider.deleteImages({ pathnames: ownedPathnames });
-    return { success: true };
-  } catch {
-    return actionError("attachments.deleteFailed");
   }
 }

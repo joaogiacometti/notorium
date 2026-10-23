@@ -80,11 +80,18 @@ The workflow is disabled in `joaogiacometti/notorium`. In deployment repositorie
 
 ## Blob Orphan Garbage Collection
 
-Deleting content removes its blobs immediately. As a safety net for blobs left
-behind by cascade deletes or transient delete failures, a sweep removes blobs
-that no live database row references and that are older than a 24-hour grace
-period (so freshly uploaded blobs awaiting their database reference are never
-collected). Requires `BLOB_READ_WRITE_TOKEN` and `CRON_SECRET`.
+The scheduled sweep owns image cleanup after edits, record/subtree deletion,
+and discarded drafts. These operations never delete files immediately because
+another saved note, flashcard, or mindmap may share the image. The sweep removes
+only blobs that no live database row references and that were uploaded more
+than 24 hours ago, protecting fresh uploads awaiting a save. The grace period
+is measured from upload time, not the removal of the last reference. Account
+deletion still purges all files owned by that user.
+
+Cleanup requires `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, and a configured schedule
+(or a manual authenticated sweep). Without successful sweeps, unused files remain
+in storage and continue to incur storage costs. With the weekly workflow below,
+eligible unused images remain until the next successful weekly run.
 
 The sweep endpoint is:
 
@@ -96,11 +103,13 @@ Authorization: Bearer <CRON_SECRET>
 Pass `?dryRun=1` to report orphan counts without deleting anything.
 
 A safety circuit breaker guards against a regression turning the sweep
-destructive: if orphans exceed half of all scanned blobs, the sweep deletes
+destructive: for stores with at least 20 blobs, if orphans exceed half of all scanned blobs, the sweep deletes
 nothing, reports `"aborted": true`, and the endpoint returns HTTP 409 so the
-scheduled workflow fails loudly for a human to investigate. A healthy store is
-mostly referenced, so a sweep wanting to delete most of it signals a broken
-reference collector or a save path stranding uploads — not real garbage.
+scheduled workflow fails loudly for a human to investigate. Legitimate bulk
+deletions can also trigger this brake now that the sweep owns all cleanup.
+Repeated runs will remain blocked until the orphan fraction drops or an
+operator reviews the candidates and explicitly adjusts the sweep options;
+the HTTP endpoint does not expose a safety-limit override.
 
 The repository includes `.github/workflows/blob-gc.yml` for a weekly GitHub Actions trigger. Configure these repository secrets in your fork or deployment repository:
 

@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
-import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   countFlashcardsBySubjectForUser,
@@ -235,10 +234,6 @@ async function updateFlashcardContent(
   }
 
   const { frontNormalized } = validation;
-  const previousAttachmentValues = [
-    existingFlashcard.front,
-    existingFlashcard.back,
-  ];
 
   const { updatedFlashcard, error } = await performFlashcardUpdate(
     userId,
@@ -253,11 +248,6 @@ async function updateFlashcardContent(
   if (!updatedFlashcard) {
     return actionError("flashcards.notFound");
   }
-
-  await cleanupAttachmentsAfterMutation(userId, previousAttachmentValues, [
-    data.front,
-    data.back,
-  ]);
 
   return {
     success: true,
@@ -281,12 +271,6 @@ export async function deleteFlashcardForUser(
   await getDb()
     .delete(flashcard)
     .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)));
-
-  await cleanupAttachmentsAfterMutation(
-    userId,
-    [existingFlashcard.front, existingFlashcard.back],
-    [],
-  );
 
   return {
     success: true,

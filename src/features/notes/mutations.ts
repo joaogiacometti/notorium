@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { note } from "@/db/schema";
-import { cleanupAttachmentsAfterMutation } from "@/features/attachments";
 import type {
   MoveDocumentMutationInput,
   MoveDocumentResult,
@@ -92,12 +91,6 @@ export async function editNoteForUser(
     .set(getNoteMutationValues(data))
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 
-  await cleanupAttachmentsAfterMutation(
-    userId,
-    [existing.content ?? ""],
-    [data.content ?? ""],
-  );
-
   return { success: true, subjectId: existing.subjectId };
 }
 
@@ -172,8 +165,6 @@ export async function deleteNoteForUser(
   await getDb()
     .delete(note)
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
-
-  await cleanupAttachmentsAfterMutation(userId, [existing.content ?? ""], []);
 
   return { success: true, subjectId: existing.subjectId };
 }

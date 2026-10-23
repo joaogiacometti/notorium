@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { mindmap } from "@/db/schema";
-import { cleanupAttachmentPathnames } from "@/features/attachments/cleanup";
 import type {
   MoveDocumentMutationInput,
   MoveDocumentResult,
@@ -11,10 +10,6 @@ import {
   getMindmapByIdForUser,
 } from "@/features/mindmaps/queries";
 import { splitMindmapGraph } from "@/features/mindmaps/split";
-import {
-  getMindmapImagePathnames,
-  getRemovedMindmapImagePathnames,
-} from "@/features/mindmaps/utils";
 import type {
   CreateMindmapForm,
   DeleteMindmapForm,
@@ -89,12 +84,6 @@ export async function editMindmapForUser(
     .update(mindmap)
     .set({ title: data.title, data: data.data })
     .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
-
-  // Remove blobs for node images dropped in this edit.
-  await cleanupAttachmentPathnames(
-    userId,
-    getRemovedMindmapImagePathnames(existing.data, data.data),
-  );
 
   return { success: true, mindmapId: data.id, subjectId: existing.subjectId };
 }
@@ -233,12 +222,6 @@ export async function deleteMindmapForUser(
   await getDb()
     .delete(mindmap)
     .where(and(eq(mindmap.id, data.id), eq(mindmap.userId, userId)));
-
-  // Remove blobs for any node images the deleted mindmap referenced.
-  await cleanupAttachmentPathnames(
-    userId,
-    getMindmapImagePathnames(existing.data),
-  );
 
   return { success: true, mindmapId: data.id, subjectId: existing.subjectId };
 }

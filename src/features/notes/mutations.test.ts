@@ -23,6 +23,14 @@ const getNoteByIdForUserMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
 const deleteImagesMock = vi.fn();
 
+class SharedImageStorageFake {
+  readonly pathnames = new Set(["notorium/notes/user-1/shared.png"]);
+
+  async deleteImages(input: { pathnames: string[] }): Promise<void> {
+    for (const pathname of input.pathnames) this.pathnames.delete(pathname);
+  }
+}
+
 vi.mock("@/db/index", () => ({
   getDb: () => ({
     insert: insertMock,
@@ -103,7 +111,43 @@ describe("editNoteForUser", () => {
     });
   });
 
-  it("deletes removed attachment blobs after updating note content", async () => {
+  it("preserves an image still referenced by a second saved note", async () => {
+    const storage = new SharedImageStorageFake();
+    const sharedContent =
+      '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fshared.png"></p>';
+    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-1" });
+    countNotesBySubjectForUserMock.mockResolvedValueOnce(1);
+    getNoteByIdForUserMock.mockResolvedValueOnce({
+      id: "note-1",
+      subjectId: "subject-1",
+      content: sharedContent,
+    });
+    getMediaStorageProviderMock.mockResolvedValue(storage);
+    const { createNoteForUser, editNoteForUser } = await import(
+      "@/features/notes/mutations"
+    );
+    const { createNoteSchema } = await import("@/features/notes/validation");
+    const copiedNote = createNoteSchema.parse({
+      title: "Copy with shared image",
+      subjectId: "subject-1",
+      content: sharedContent,
+    });
+
+    expect((await createNoteForUser("user-1", copiedNote)).success).toBe(true);
+    expect(insertValuesMock.mock.lastCall?.[0]).toMatchObject(copiedNote);
+    const result = await editNoteForUser("user-1", {
+      id: "note-1",
+      title: "Original without image",
+      content: "<p>Image removed</p>",
+    });
+
+    expect(result.success).toBe(true);
+    expect(storage.pathnames.has("notorium/notes/user-1/shared.png")).toBe(
+      true,
+    );
+  });
+
+  it("defers removed attachment deletion to the orphan sweep", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
@@ -120,36 +164,10 @@ describe("editNoteForUser", () => {
     });
 
     expect(result).toEqual({ success: true, subjectId: "subject-1" });
-    expect(deleteImagesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/notes/user-1/old.png"],
-    });
+    expect(deleteImagesMock).not.toHaveBeenCalled();
   });
 
-  it("returns success when attachment cleanup fails after updating", async () => {
-    getNoteByIdForUserMock.mockResolvedValueOnce({
-      id: "note-1",
-      subjectId: "subject-1",
-      content:
-        '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png"></p><p>Keep</p>',
-    });
-    deleteImagesMock.mockRejectedValueOnce(new Error("cleanup failed"));
-
-    const { editNoteForUser } = await import("@/features/notes/mutations");
-
-    const result = await editNoteForUser("user-1", {
-      id: "note-1",
-      title: "Updated",
-      content: "<p>Keep</p>",
-    });
-
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
-    expect(updateMock).toHaveBeenCalled();
-    expect(deleteImagesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/notes/user-1/old.png"],
-    });
-  });
-
-  it("only deletes owned attachment blobs after updating note content", async () => {
+  it("does not eagerly delete owned or foreign images when editing", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
@@ -166,9 +184,7 @@ describe("editNoteForUser", () => {
     });
 
     expect(result).toEqual({ success: true, subjectId: "subject-1" });
-    expect(deleteImagesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/notes/user-1/old.png"],
-    });
+    expect(deleteImagesMock).not.toHaveBeenCalled();
   });
 });
 
@@ -290,7 +306,7 @@ describe("deleteNoteForUser", () => {
     });
   });
 
-  it("deletes owned attachment blobs after deleting a note", async () => {
+  it("preserves attachment files when deleting a note", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
@@ -305,30 +321,6 @@ describe("deleteNoteForUser", () => {
     });
 
     expect(result).toEqual({ success: true, subjectId: "subject-1" });
-    expect(deleteImagesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/notes/user-1/old.png"],
-    });
-  });
-
-  it("returns success when attachment cleanup fails after deleting", async () => {
-    getNoteByIdForUserMock.mockResolvedValueOnce({
-      id: "note-1",
-      subjectId: "subject-1",
-      content:
-        "<p>/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png</p>",
-    });
-    deleteImagesMock.mockRejectedValueOnce(new Error("cleanup failed"));
-
-    const { deleteNoteForUser } = await import("@/features/notes/mutations");
-
-    const result = await deleteNoteForUser("user-1", {
-      id: "note-1",
-    });
-
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
-    expect(deleteMock).toHaveBeenCalled();
-    expect(deleteImagesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/notes/user-1/old.png"],
-    });
+    expect(deleteImagesMock).not.toHaveBeenCalled();
   });
 });

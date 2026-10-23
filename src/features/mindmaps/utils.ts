@@ -136,14 +136,3 @@ export function findMindmapNodeLabelMatch(
     return foldedQueries.some((query) => label.includes(query));
   })?.data.label;
 }
-
-/** Pathnames present in `previousData` but no longer referenced by `nextData`. */
-export function getRemovedMindmapImagePathnames(
-  previousData: string | null,
-  nextData: string | null,
-): string[] {
-  const next = new Set(getMindmapImagePathnames(nextData));
-  return getMindmapImagePathnames(previousData).filter(
-    (pathname) => !next.has(pathname),
-  );
-}

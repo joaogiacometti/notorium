@@ -21,7 +21,6 @@ const eqMock = vi.fn((column, value) => ({ column, value }));
 const countMindmapsBySubjectForUserMock = vi.fn();
 const getMindmapByIdForUserMock = vi.fn();
 const getSubjectRecordForUserMock = vi.fn();
-const cleanupAttachmentPathnamesMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -45,10 +44,6 @@ vi.mock("@/features/mindmaps/queries", () => ({
 
 vi.mock("@/features/subjects/queries", () => ({
   getSubjectRecordForUser: getSubjectRecordForUserMock,
-}));
-
-vi.mock("@/features/attachments/cleanup", () => ({
-  cleanupAttachmentPathnames: cleanupAttachmentPathnamesMock,
 }));
 
 describe("createMindmapForUser", () => {
@@ -321,7 +316,6 @@ describe("editMindmapTitleForUser", () => {
       subjectId: "subject-1",
     });
     expect(updateSetMock).toHaveBeenCalledWith({ title: "Renamed" });
-    expect(cleanupAttachmentPathnamesMock).not.toHaveBeenCalled();
   });
 
   it("returns not found for a mindmap the user does not own", async () => {

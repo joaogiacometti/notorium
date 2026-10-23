@@ -4,7 +4,6 @@ import {
   ensureRootNode,
   findMindmapNodeLabelMatch,
   getMindmapImagePathnames,
-  getRemovedMindmapImagePathnames,
   parseMindmapGraph,
   syncRootNodeLabel,
 } from "@/features/mindmaps/utils";
@@ -116,21 +115,6 @@ describe("getMindmapImagePathnames", () => {
       edges: [],
     });
     expect(getMindmapImagePathnames(data)).toEqual([]);
-  });
-});
-
-describe("getRemovedMindmapImagePathnames", () => {
-  it("returns pathnames present before but not after", () => {
-    const previous = graphWithImage("notorium/mindmaps/u1/old.png");
-    const next = graphWithImage("notorium/mindmaps/u1/new.png");
-    expect(getRemovedMindmapImagePathnames(previous, next)).toEqual([
-      "notorium/mindmaps/u1/old.png",
-    ]);
-  });
-
-  it("returns nothing when the image is unchanged", () => {
-    const data = graphWithImage("notorium/mindmaps/u1/keep.png");
-    expect(getRemovedMindmapImagePathnames(data, data)).toEqual([]);
   });
 });
 

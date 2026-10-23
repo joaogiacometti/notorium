@@ -59,25 +59,3 @@ export function parseOwnedAttachmentPathname(
     fileName,
   };
 }
-
-export function isOwnedAttachmentPathname(
-  pathname: string,
-  userId: string,
-): boolean {
-  const parsed = parseOwnedAttachmentPathname(pathname);
-
-  if (!parsed) {
-    return false;
-  }
-
-  return parsed.ownerId === userId;
-}
-
-export function getOwnedAttachmentPathnames(
-  pathnames: string[],
-  userId: string,
-): string[] {
-  return [...new Set(pathnames)].filter((pathname) =>
-    isOwnedAttachmentPathname(pathname, userId),
-  );
-}

@@ -4,9 +4,9 @@ import { sweepOrphanBlobs } from "@/features/attachments/blob-gc";
 
 export const dynamic = "force-dynamic";
 
-// Safety-net garbage collector for orphaned blobs. Mutations delete blobs
-// synchronously; this catches leaks from cascade deletes and transient delete
-// failures. Pass `?dryRun=1` to report orphans without deleting them.
+// Collect images only after checking references across all content types;
+// per-record deletion would break shared images. Pass `?dryRun=1` to report
+// orphans without deleting them.
 export async function GET(request: Request): Promise<NextResponse> {
   const env = getServerEnv();
 
