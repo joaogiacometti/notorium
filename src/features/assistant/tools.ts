@@ -82,7 +82,7 @@ export const proposedFlashcardSchema = z
       .min(1)
       .max(LIMITS.flashcardBackMax)
       .describe(
-        "A concise answer to the front, as plain text with optional backticks for code or LaTeX for math; never HTML. Do not duplicate the supplementary example.",
+        "The direct, minimal complete answer to the front, as plain text with compact lists when needed, optional backticks for code or LaTeX for math; never HTML. Do not duplicate the supplementary example.",
       ),
     example: flashcardExampleSchema
       .optional()
