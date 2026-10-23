@@ -2,6 +2,7 @@
 
 import type { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
+import { KatexHtml } from "@/components/shared/katex-html";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import type { SlashCommandRange } from "@/lib/editor/tiptap-slash-commands";
-import { renderLatexToHtml } from "@/lib/math/katex";
 
 export type MathDialogState =
   | { mode: "insert-block"; range: SlashCommandRange }
@@ -57,7 +57,8 @@ export function MathEditDialog({
   // ref-based effect sees a null/replaced node on open and the preview stays
   // blank until the next keystroke. Deriving the HTML keeps it in sync with
   // `value`/`isBlock` on every render, including the first one after opening.
-  const previewHtml = renderMathPreview(value, isBlock);
+  // Empty input shows a thin space (`\;`) so the preview box keeps its height.
+  const previewLatex = value.trim() || "\\;";
 
   function handleSave() {
     if (editor && state) {
@@ -107,12 +108,10 @@ export function MathEditDialog({
           {/* Safe centering: plain centering clips wide equations on the
               left, beyond the scroll origin. */}
           <div className="flex min-h-12 items-center justify-center-safe overflow-x-auto rounded-md border border-border bg-muted/30 px-3 py-2">
-            {/* KaTeX output: trust:false (see MATH_KATEX_OPTIONS) blocks markup
-                injection, so the rendered string is safe to inject here. */}
-            <div
+            <KatexHtml
+              latex={previewLatex}
+              display={isBlock}
               className="text-foreground"
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: KaTeX output with trust:false
-              dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
           </div>
         </div>
@@ -137,14 +136,6 @@ export function MathEditDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-/**
- * Renders a LaTeX string to KaTeX HTML for the live preview. Empty input shows a
- * thin space (`\;`) so the preview box keeps its height.
- */
-function renderMathPreview(latex: string, isBlock: boolean): string {
-  return renderLatexToHtml(latex.trim() || "\\;", isBlock);
 }
 
 function applyMathChange(

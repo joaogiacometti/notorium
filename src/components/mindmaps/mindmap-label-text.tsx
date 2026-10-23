@@ -1,7 +1,7 @@
 "use client";
 
+import { KatexHtml } from "@/components/shared/katex-html";
 import { splitDollarMath } from "@/lib/math/dollar-math";
-import { renderLatexToHtml } from "@/lib/math/katex";
 
 interface MindmapLabelTextProps {
   label: string;
@@ -20,14 +20,12 @@ export function MindmapLabelText({ label }: Readonly<MindmapLabelTextProps>) {
       // biome-ignore lint/suspicious/noArrayIndexKey: segments are positional and never reorder.
       <span key={index}>{segment.text}</span>
     ) : (
-      <span
+      <KatexHtml
         // biome-ignore lint/suspicious/noArrayIndexKey: segments are positional and never reorder.
         key={index}
+        latex={segment.latex}
+        display={segment.display}
         className={segment.display ? "block text-center" : undefined}
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: KaTeX output with trust:false (no links or raw HTML).
-        dangerouslySetInnerHTML={{
-          __html: renderLatexToHtml(segment.latex, segment.display),
-        }}
       />
     ),
   );

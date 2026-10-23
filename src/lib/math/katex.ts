@@ -4,11 +4,15 @@ import katex, { type KatexOptions } from "katex";
  * KaTeX options shared by every math surface. `trust: false` blocks injection
  * vectors such as \href and \includegraphics; `throwOnError: false` renders
  * invalid LaTeX as inline error text instead of crashing the editor.
+ * `maxSize` and `maxExpand` bound untrusted input, as KaTeX's security notes
+ * recommend: an unbounded `\rule` or `\kern` could render an element large
+ * enough to break the page layout.
  */
 export const MATH_KATEX_OPTIONS: KatexOptions = {
   throwOnError: false,
   trust: false,
   strict: "ignore",
+  maxSize: 50,
   maxExpand: 1000,
 };
 
