@@ -312,19 +312,10 @@ describe("bulkDeleteFlashcardsForUser", () => {
   });
 
   it("deletes owned flashcards and returns their ids and deck ids", async () => {
-    getFlashcardByIdForUserMock
-      .mockResolvedValueOnce({
-        id: "flashcard-1",
-        subjectId: "deck-1",
-        front: "<p>Front 1</p>",
-        back: "<p>Back 1</p>",
-      })
-      .mockResolvedValueOnce({
-        id: "flashcard-2",
-        subjectId: "deck-2",
-        front: "<p>Front 2</p>",
-        back: "<p>Back 2</p>",
-      });
+    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
+      { id: "flashcard-1", subjectId: "deck-1" },
+      { id: "flashcard-2", subjectId: "deck-2" },
+    ]);
 
     const { bulkDeleteFlashcardsForUser } = await import(
       "@/features/flashcards/mutations"
@@ -340,6 +331,46 @@ describe("bulkDeleteFlashcardsForUser", () => {
       subjectIds: ["deck-1", "deck-2"],
     });
     expect(deleteMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("loads a large deletion batch with one ownership read", async () => {
+    const ids = Array.from({ length: 1000 }, (_, index) => `card-${index}`);
+    const records = ids.map((id) => ({ id, subjectId: "deck-1" }));
+    getFlashcardRecordsForUserMock.mockResolvedValueOnce(records);
+    const { bulkDeleteFlashcardsForUser } = await import(
+      "@/features/flashcards/bulk-mutations"
+    );
+
+    const result = await bulkDeleteFlashcardsForUser("user-1", { ids });
+
+    expect(result).toEqual({ success: true, ids, subjectIds: ["deck-1"] });
+    const ownershipReadCount =
+      getFlashcardByIdForUserMock.mock.calls.length +
+      getFlashcardRecordsForUserMock.mock.calls.length;
+    expect(ownershipReadCount).toBe(1);
+    expect(getFlashcardRecordsForUserMock).toHaveBeenCalledWith("user-1", ids);
+    expect(deleteWhereMock).toHaveBeenCalledWith([
+      { column: "flashcard_id_column", values: ids },
+      { column: "flashcard_user_id_column", value: "user-1" },
+    ]);
+  });
+
+  it("does not delete any cards when a requested card is missing or unowned", async () => {
+    getFlashcardRecordsForUserMock.mockResolvedValueOnce([
+      { id: "owned", subjectId: "deck-1" },
+    ]);
+    const { bulkDeleteFlashcardsForUser } = await import(
+      "@/features/flashcards/bulk-mutations"
+    );
+
+    const result = await bulkDeleteFlashcardsForUser("user-1", {
+      ids: ["owned", "missing"],
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({ errorCode: "flashcards.notFound" }),
+    );
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 });
 

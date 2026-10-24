@@ -4,7 +4,6 @@ import { flashcard } from "@/db/schema";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
   countFlashcardsBySubjectForUser,
-  getFlashcardByIdForUser,
   getFlashcardRecordsForUser,
 } from "@/features/flashcards/queries";
 import type {
@@ -26,15 +25,11 @@ export async function bulkDeleteFlashcardsForUser(
   userId: string,
   data: BulkDeleteFlashcardsForm,
 ): Promise<BulkDeleteFlashcardsResult> {
-  const existingFlashcards = await Promise.all(
-    data.ids.map((id) => getFlashcardByIdForUser(userId, id)),
-  );
+  const existingFlashcards = await getFlashcardRecordsForUser(userId, data.ids);
 
-  if (existingFlashcards.some((item) => !item)) {
+  if (existingFlashcards.length !== data.ids.length) {
     return actionError("flashcards.notFound");
   }
-
-  const ownedFlashcards = existingFlashcards.filter((item) => item !== null);
 
   await getDb()
     .delete(flashcard)
@@ -44,7 +39,7 @@ export async function bulkDeleteFlashcardsForUser(
     success: true,
     ids: data.ids,
     subjectIds: uniqueItems(
-      ownedFlashcards
+      existingFlashcards
         .map((flashcard) => flashcard.subjectId)
         .filter((id): id is string => id !== null),
     ),
