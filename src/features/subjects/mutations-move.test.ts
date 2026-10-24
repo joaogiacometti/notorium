@@ -20,9 +20,12 @@ const deleteMock = vi.fn(() => ({
 }));
 type TransactionCallback = (transaction: {
   insert: typeof insertMock;
+  update: typeof updateMock;
+  execute: typeof executeMock;
 }) => Promise<unknown>;
+const executeMock = vi.fn();
 const transactionMock = vi.fn((callback: TransactionCallback) =>
-  callback({ insert: insertMock }),
+  callback({ insert: insertMock, update: updateMock, execute: executeMock }),
 );
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
@@ -48,6 +51,7 @@ vi.mock("@/db/index", () => ({
 }));
 
 vi.mock("drizzle-orm", () => ({
+  sql: vi.fn(),
   and: andMock,
   eq: eqMock,
   inArray: inArrayMock,

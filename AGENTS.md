@@ -12,7 +12,7 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 - `docs/architecture.md` owns high-level architecture, source layout, and boundary guidance.
 - `docs/` owns focused setup, architecture, operations, and historical planning notes.
 - Read `docs/architecture.md` before structural or cross-boundary code changes.
-- When changing behavior or adding a feature, update every related document in the same change: `SPEC.md` for product behavior, `README.md` for setup/runtime commands, `docs/architecture.md` for boundaries or source layout, `DESIGN.md` for UI conventions, and focused `docs/` files for operations or setup details.
+- Update documentation only where the change makes existing guidance inaccurate or incomplete. Use the owning document above; do not duplicate explanations or add implementation notes to unrelated docs. If documented behavior and guidance remain accurate, no documentation change is needed.
 
 ## Code Style
 
@@ -30,10 +30,10 @@ This file is for agents. Keep it short, direct, imperative, and focused on what 
 
 ## Comments
 
-- Keep existing comments during refactors. They carry intent and provenance.
-- Write WHY, not WHAT. Skip comments like `// increment counter` above `i++`.
-- Public/exported functions need docstrings with intent and one usage example.
-- Reference issue numbers or commit SHAs when code exists because of a specific bug or upstream constraint.
+- Prefer clear names and code over comments that restate them.
+- Comment only non-obvious rationale, constraints, invariants, or workarounds. Exporting a function alone does not require a docstring; add examples only when usage is not obvious.
+- When changing code, update or remove comments that become inaccurate. Preserve useful intent and provenance during refactors, not stale or redundant wording.
+- Reference an issue or commit when it explains a workaround or when that workaround can be removed.
 
 ## Tests
 
@@ -220,7 +220,7 @@ These run locally and in CI (`.github/workflows/checks.yml`, enabled for `joaogi
 ## Definition of Done
 
 - Behavior matches `SPEC.md`.
-- Related documentation is updated in the same change.
+- Existing comments and documentation remain accurate; update only affected guidance.
 - Inputs are validated with Zod.
 - Auth and `userId` ownership are enforced.
 - Server Actions return typed results.

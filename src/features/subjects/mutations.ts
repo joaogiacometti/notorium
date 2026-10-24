@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { subject } from "@/db/schema";
 import { createSubjectPathForUser } from "@/features/subjects/path-mutations";
@@ -28,6 +28,10 @@ import {
   actionError,
 } from "@/lib/server/server-action-errors";
 
+type SubjectMoveTransaction = Parameters<
+  Parameters<ReturnType<typeof getDb>["transaction"]>[0]
+>[0];
+
 export type SubjectMutationResult =
   | {
       success: true;
@@ -55,10 +59,11 @@ async function validateSubjectNesting(
   parentSubjectId: string,
   childCount: number,
   nestedDepth = 1,
+  executor: Pick<ReturnType<typeof getDb>, "select" | "execute"> = getDb(),
 ): Promise<ActionErrorResult | null> {
   const [parent, parentDepth] = await Promise.all([
-    getSubjectTreeRecordForUser(userId, parentSubjectId),
-    getSubjectDepthForUser(userId, parentSubjectId),
+    getSubjectTreeRecordForUser(userId, parentSubjectId, executor),
+    getSubjectDepthForUser(userId, parentSubjectId, executor),
   ]);
 
   if (!parent) {
@@ -177,69 +182,88 @@ export async function deleteSubjectForUser(
   return { success: true };
 }
 
-export async function moveSubjectForUser(
+async function moveSubjectInTransaction(
   userId: string,
-  data: MoveSubjectForm,
+  values: MoveSubjectForm,
+  transaction: SubjectMoveTransaction,
 ): Promise<MoveSubjectResult> {
-  const existing = await getSubjectTreeRecordForUser(userId, data.id);
+  const existing = await getSubjectTreeRecordForUser(
+    userId,
+    values.id,
+    transaction,
+  );
+  if (!existing) return actionError("subjects.notFound");
+  const newParentSubjectId = values.parentSubjectId ?? null;
+  const result = subjectMoveSuccess(
+    values.id,
+    existing.parentSubjectId,
+    newParentSubjectId,
+  );
+  if (newParentSubjectId === existing.parentSubjectId) return result;
+  const validationError =
+    newParentSubjectId === null
+      ? null
+      : await validateSubjectReparenting(
+          userId,
+          values.id,
+          newParentSubjectId,
+          transaction,
+        );
+  if (validationError) return validationError;
+  return persistSubjectMove(userId, values, transaction, result);
+}
 
-  if (!existing) {
-    return actionError("subjects.notFound");
-  }
+function subjectMoveSuccess(
+  id: string,
+  previousParentSubjectId: string | null,
+  newParentSubjectId: string | null,
+): Extract<MoveSubjectResult, { success: true }> {
+  return { success: true, id, previousParentSubjectId, newParentSubjectId };
+}
 
-  const newParentSubjectId = data.parentSubjectId ?? null;
+async function validateSubjectReparenting(
+  userId: string,
+  subjectId: string,
+  parentSubjectId: string,
+  transaction: SubjectMoveTransaction,
+): Promise<ActionErrorResult | null> {
+  const cycleError = await validateSubjectMoveTarget(
+    userId,
+    subjectId,
+    parentSubjectId,
+    transaction,
+  );
+  if (cycleError) return cycleError;
+  const [childCount, subtreeHeight] = await Promise.all([
+    countChildSubjectsForUser(userId, parentSubjectId, transaction),
+    getSubjectSubtreeHeightForUser(userId, subjectId, transaction),
+  ]);
+  return validateSubjectNesting(
+    userId,
+    parentSubjectId,
+    childCount,
+    subtreeHeight,
+    transaction,
+  );
+}
 
-  if (newParentSubjectId === existing.parentSubjectId) {
-    return {
-      success: true,
-      id: data.id,
-      previousParentSubjectId: existing.parentSubjectId,
-      newParentSubjectId,
-    };
-  }
-
-  if (newParentSubjectId !== null) {
-    const cycleError = await validateSubjectMoveTarget(
-      userId,
-      data.id,
-      newParentSubjectId,
-    );
-    if (cycleError) {
-      return cycleError;
-    }
-
-    const [childCount, subtreeHeight] = await Promise.all([
-      countChildSubjectsForUser(userId, newParentSubjectId),
-      getSubjectSubtreeHeightForUser(userId, data.id),
-    ]);
-    const nestingError = await validateSubjectNesting(
-      userId,
-      newParentSubjectId,
-      childCount,
-      subtreeHeight,
-    );
-    if (nestingError) {
-      return nestingError;
-    }
-  }
-
+async function persistSubjectMove(
+  userId: string,
+  values: MoveSubjectForm,
+  transaction: SubjectMoveTransaction,
+  result: Extract<MoveSubjectResult, { success: true }>,
+): Promise<MoveSubjectResult> {
   try {
-    await getDb()
+    await transaction
       .update(subject)
-      .set({ parentSubjectId: newParentSubjectId })
-      .where(and(eq(subject.id, data.id), eq(subject.userId, userId)));
+      .set({ parentSubjectId: values.parentSubjectId ?? null })
+      .where(and(eq(subject.id, values.id), eq(subject.userId, userId)));
+    return result;
   } catch (error) {
-    const insertError = resolveSubjectUniqueError(error);
-    if (insertError) return insertError;
+    const uniqueError = resolveSubjectUniqueError(error);
+    if (uniqueError) return uniqueError;
     throw error;
   }
-
-  return {
-    success: true,
-    id: data.id,
-    previousParentSubjectId: existing.parentSubjectId,
-    newParentSubjectId,
-  };
 }
 
 /**
@@ -250,6 +274,7 @@ async function validateSubjectMoveTarget(
   userId: string,
   subjectId: string,
   newParentSubjectId: string,
+  transaction: SubjectMoveTransaction,
 ): Promise<ActionErrorResult | null> {
   if (newParentSubjectId === subjectId) {
     return actionError("subjects.cannotMoveIntoSelf");
@@ -259,10 +284,28 @@ async function validateSubjectMoveTarget(
     userId,
     subjectId,
     newParentSubjectId,
+    transaction,
   );
   if (wouldCreateCycle) {
     return actionError("subjects.wouldCreateCycle");
   }
 
   return null;
+}
+
+/** Prevents concurrent moves from validating against the same stale hierarchy. */
+export async function moveSubjectForUser(
+  userId: string,
+  values: MoveSubjectForm,
+): Promise<MoveSubjectResult> {
+  return getDb().transaction(
+    async (transaction) => {
+      await transaction.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${`subject-move:${userId}`}, 0))`,
+      );
+      return moveSubjectInTransaction(userId, values, transaction);
+    },
+    // Reads after a lock wait must see the preceding move's committed hierarchy.
+    { isolationLevel: "read committed" },
+  );
 }

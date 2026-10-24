@@ -7,6 +7,8 @@ import type {
   SubjectOption,
 } from "@/lib/server/api-contracts";
 
+type SubjectReadExecutor = Pick<ReturnType<typeof getDb>, "select" | "execute">;
+
 export async function getSubjectByIdForUser(
   userId: string,
   subjectId: string,
@@ -47,8 +49,9 @@ export async function countTotalSubjectsForUser(
 export async function countChildSubjectsForUser(
   userId: string,
   parentSubjectId: string,
+  executor: SubjectReadExecutor = getDb(),
 ): Promise<number> {
-  const result = await getDb()
+  const result = await executor
     .select({ total: count() })
     .from(subject)
     .where(
@@ -64,12 +67,13 @@ export async function countChildSubjectsForUser(
 export async function getSubjectTreeRecordForUser(
   userId: string,
   subjectId: string,
+  executor: SubjectReadExecutor = getDb(),
 ): Promise<{
   id: string;
   parentSubjectId: string | null;
   name: string;
 } | null> {
-  const results = await getDb()
+  const results = await executor
     .select({
       id: subject.id,
       parentSubjectId: subject.parentSubjectId,
@@ -178,8 +182,9 @@ export async function getSubjectPathForUser(
 export async function getSubjectDepthForUser(
   userId: string,
   subjectId: string,
+  executor: SubjectReadExecutor = getDb(),
 ): Promise<number | null> {
-  const rows = await getDb().execute(
+  const rows = await executor.execute(
     sql`
       WITH RECURSIVE ancestors AS (
         SELECT id, parent_subject_id, 1 AS depth
@@ -209,8 +214,9 @@ export async function getSubjectDepthForUser(
 export async function getSubjectSubtreeHeightForUser(
   userId: string,
   subjectId: string,
+  executor: SubjectReadExecutor = getDb(),
 ): Promise<number> {
-  const rows = await getDb().execute(
+  const rows = await executor.execute(
     sql`
       WITH RECURSIVE descendants AS (
         SELECT id, 1 AS depth
@@ -309,8 +315,9 @@ export async function isSubjectAncestorOf(
   userId: string,
   potentialAncestorId: string,
   targetId: string,
+  executor: SubjectReadExecutor = getDb(),
 ): Promise<boolean> {
-  const rows = await getDb().execute(
+  const rows = await executor.execute(
     sql`
       WITH RECURSIVE ancestors AS (
         SELECT parent_subject_id AS id
