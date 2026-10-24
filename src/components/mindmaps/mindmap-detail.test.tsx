@@ -183,6 +183,20 @@ describe("MindmapDetail autosave", () => {
     expect(editMindmapMock).toHaveBeenCalledTimes(2);
   });
 
+  it("flushes graph edits when navigating before autosave", async () => {
+    editMindmapMock.mockResolvedValue({
+      success: true,
+      mindmapId: mindmap.id,
+      subjectId: mindmap.subjectId,
+    });
+    await clickEditGraph(container);
+    await act(async () => root.render(null));
+    expect(editMindmapMock).toHaveBeenCalledTimes(1);
+    expect(
+      JSON.parse(editMindmapMock.mock.calls[0][0].data).nodes[0].data.label,
+    ).toBe("edited");
+  });
+
   it("does not toast an error when the save succeeds", async () => {
     editMindmapMock.mockResolvedValue({
       success: true,

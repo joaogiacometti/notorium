@@ -2,14 +2,7 @@
 
 import { ImageDown, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { editMindmap } from "@/app/actions/mindmaps";
 import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
@@ -19,6 +12,7 @@ import {
   describeMindmapGraph,
 } from "@/components/assistant/study-context-content";
 import { useStudyContext } from "@/components/assistant/use-study-context";
+import { DocumentAutosaveFeedback } from "@/components/documents/document-autosave-feedback";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
 import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
@@ -37,9 +31,9 @@ import {
 import { Input } from "@/components/ui/input";
 import type { MindmapGraph } from "@/features/mindmaps/types";
 import { ensureRootNode, parseMindmapGraph } from "@/features/mindmaps/utils";
-import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { editMindmapSchema } from "@/features/mindmaps/validation";
+import { useDocumentAutosave } from "@/lib/editor/use-document-autosave";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
-import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { MindmapEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
@@ -49,8 +43,6 @@ interface MindmapDetailProps {
   mindmap: MindmapEntity;
   subjectName: string;
 }
-
-const AUTOSAVE_DELAY_MS = 800;
 
 export function MindmapDetail({
   mindmap,
@@ -78,72 +70,19 @@ export function MindmapDetail({
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const lastSavedRef = useRef(
-    JSON.stringify({ title: mindmap.title, data: initialGraph }),
-  );
-  const saveSequenceRef = useRef(0);
-
-  const debouncedTitle = useDebouncedValue(title, AUTOSAVE_DELAY_MS);
-  const debouncedGraph = useDebouncedValue(graph, AUTOSAVE_DELAY_MS);
-
-  // Serialize only when title or graph actually changes, not on every render.
-  const currentSnapshot = useMemo(
-    () => JSON.stringify({ title, data: graph }),
-    [title, graph],
-  );
-  const isDirty = currentSnapshot !== lastSavedRef.current;
-  useBeforeUnload(isDirty || isSaving);
-
-  const save = useCallback(
-    async (nextTitle: string, nextGraph: MindmapGraph) => {
-      const snapshot = JSON.stringify({ title: nextTitle, data: nextGraph });
-      if (snapshot === lastSavedRef.current || nextTitle.trim().length === 0) {
-        return snapshot === lastSavedRef.current;
-      }
-
-      const saveSequence = saveSequenceRef.current + 1;
-      saveSequenceRef.current = saveSequence;
-      setIsSaving(true);
-
-      try {
-        const result = await editMindmap({
-          id: mindmap.id,
-          title: nextTitle,
-          data: JSON.stringify(nextGraph),
-        });
-
-        // A newer save superseded this one; let it own the saving state.
-        if (saveSequence !== saveSequenceRef.current) {
-          return false;
-        }
-
-        if (!result.success) {
-          toast.error(t(result.errorCode, result.errorParams));
-          return false;
-        }
-
-        lastSavedRef.current = snapshot;
-        return true;
-      } catch {
-        // A rejected action (network/serialization failure) must not leave the
-        // editor stuck in the saving state, which would warn on every unload.
-        if (saveSequence === saveSequenceRef.current) {
-          toast.error("Couldn't save the mindmap");
-        }
-        return false;
-      } finally {
-        if (saveSequence === saveSequenceRef.current) {
-          setIsSaving(false);
-        }
-      }
+  const autosave = useDocumentAutosave({
+    documentId: mindmap.id,
+    initialValue: { title: mindmap.title, data: JSON.stringify(initialGraph) },
+    value: { title, data: JSON.stringify(graph) },
+    persist: async (values) => {
+      const parsed = editMindmapSchema.safeParse({ id: mindmap.id, ...values });
+      if (!parsed.success) return false;
+      const result = await editMindmap(parsed.data);
+      if (!result.success) toast.error(t(result.errorCode, result.errorParams));
+      return result.success === true;
     },
-    [mindmap.id],
-  );
-
-  useEffect(() => {
-    void save(debouncedTitle, debouncedGraph);
-  }, [debouncedTitle, debouncedGraph, save]);
+    onError: () => toast.error("Couldn't save the mindmap"),
+  });
 
   return (
     <>
@@ -189,6 +128,7 @@ export function MindmapDetail({
                 placeholder="Untitled mindmap"
                 className="h-10 min-w-0 flex-1 rounded-md border-0 bg-transparent px-3 text-lg font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl"
               />
+              <DocumentAutosaveFeedback {...autosave} />
               <ZenModeToggle
                 isZenMode={isZenMode}
                 onToggle={toggleZenMode}

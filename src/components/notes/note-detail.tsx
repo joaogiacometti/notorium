@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Editor } from "@tiptap/core";
 import { Clipboard, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editNote } from "@/app/actions/notes";
@@ -14,6 +14,7 @@ import { useAssistantWorkspace } from "@/components/assistant/assistant-workspac
 import { buildDocumentContext } from "@/components/assistant/study-context-content";
 import { useActiveNoteEditor } from "@/components/assistant/use-active-note-editor";
 import { useStudyContext } from "@/components/assistant/use-study-context";
+import { DocumentAutosaveFeedback } from "@/components/documents/document-autosave-feedback";
 import { DocumentTitleReview } from "@/components/documents/document-title-review";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
@@ -36,10 +37,9 @@ import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
-import { useBeforeUnload } from "@/lib/editor/use-before-unload";
+import { useDocumentAutosave } from "@/lib/editor/use-document-autosave";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
-import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import type { NoteEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
@@ -49,8 +49,6 @@ interface NoteDetailProps {
   note: NoteEntity;
   subjectName: string;
 }
-
-const AUTOSAVE_DELAY_MS = 800;
 
 function getEditValues(note: NoteEntity): EditNoteForm {
   return {
@@ -71,11 +69,9 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
   const { isZenMode, toggleZenMode } = useZenMode();
   const assistantWorkspace = useAssistantWorkspace();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [assistantEditor, setAssistantEditor] = useState<Editor | null>(null);
   const lastSavedValuesRef = useRef(getEditValues(note));
-  const saveSequenceRef = useRef(0);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const form = useForm<EditNoteForm>({
     resolver: zodResolver(editNoteSchema),
@@ -100,16 +96,6 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
       note.id,
     ),
   );
-  const debouncedTitle = useDebouncedValue(watchedTitle, AUTOSAVE_DELAY_MS);
-  const debouncedContent = useDebouncedValue(watchedContent, AUTOSAVE_DELAY_MS);
-
-  const hasDirtyValues = !isSameNoteEdit(form.getValues(), {
-    ...lastSavedValuesRef.current,
-    id: note.id,
-  });
-
-  useBeforeUnload(hasDirtyValues || isSaving || isImageUploading);
-
   useEffect(() => {
     const nextValues = getEditValues(note);
     const currentValues = form.getValues();
@@ -126,102 +112,30 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
     ) {
       form.reset(nextValues);
     }
-
-    setIsSaving(false);
   }, [form, note]);
 
-  const saveNoteValues = useCallback(
-    async (values: EditNoteForm) => {
-      const isValid = await form.trigger();
-      if (!isValid) {
+  const autosave = useDocumentAutosave({
+    documentId: note.id,
+    initialValue: getEditValues(note),
+    value: { id: note.id, title: watchedTitle, content: watchedContent },
+    blocked: isImageUploading,
+    persist: async (values) => {
+      if (!editNoteSchema.safeParse(values).success) {
+        await form.trigger();
         return false;
       }
-
-      const saveSequence = saveSequenceRef.current + 1;
-      saveSequenceRef.current = saveSequence;
-      setIsSaving(true);
-
       const result = await editNote(values);
-
-      if (saveSequence !== saveSequenceRef.current) {
-        return result.success;
-      }
-
-      setIsSaving(false);
-
       if (!result.success) {
         toast.error(t(result.errorCode, result.errorParams));
         return false;
       }
-
-      lastSavedValuesRef.current = values;
+      if (form.getValues("id") === values.id)
+        lastSavedValuesRef.current = values;
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      if (isSameNoteEdit(form.getValues(), values)) {
-        form.reset(values);
-      }
-
       return true;
     },
-    [form, queryClient],
-  );
-
-  useEffect(() => {
-    const nextValues = {
-      id: note.id,
-      title: debouncedTitle,
-      content: debouncedContent,
-    };
-
-    if (isSameNoteEdit(nextValues, lastSavedValuesRef.current)) {
-      return;
-    }
-
-    if (isImageUploading) {
-      return;
-    }
-
-    void saveNoteValues(nextValues);
-  }, [
-    debouncedContent,
-    debouncedTitle,
-    isImageUploading,
-    note.id,
-    saveNoteValues,
-  ]);
-
-  // Persist immediately when an image upload settles. An image lands in the
-  // content only after its upload resolves, and the 800ms debounced autosave can
-  // lose the race against a fast navigation — stranding the uploaded blob with
-  // no note referencing it, which the orphan GC then reclaims and the image
-  // "disappears". Saving on the upload's falling edge writes the reference at
-  // once instead of waiting for the debounce.
-  const wasImageUploadingRef = useRef(false);
-  useEffect(() => {
-    const justFinished = wasImageUploadingRef.current && !isImageUploading;
-    wasImageUploadingRef.current = isImageUploading;
-
-    if (!justFinished) {
-      return;
-    }
-
-    const values = form.getValues();
-    if (!isSameNoteEdit(values, lastSavedValuesRef.current)) {
-      void saveNoteValues(values);
-    }
-  }, [form, isImageUploading, saveNoteValues]);
-
-  // Flush a pending autosave when the editor unmounts (e.g. client-side
-  // navigation to another note), which neither the debounce nor the browser
-  // `beforeunload` guard catches. Without this, edits made inside the debounce
-  // window — including a just-added image — are lost on navigation. The ref is
-  // reassigned every render so the unmount-only effect reads the latest values.
-  const flushPendingSaveRef = useRef<() => void>(() => {});
-  flushPendingSaveRef.current = () => {
-    if (hasDirtyValues && !isImageUploading) {
-      void saveNoteValues(form.getValues());
-    }
-  };
-  useEffect(() => () => flushPendingSaveRef.current(), []);
+    onError: () => toast.error("Couldn't save the note"),
+  });
 
   async function copyNoteContent(format: NoteCopyFormat) {
     try {
@@ -312,6 +226,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
               </div>
 
               <div className="flex shrink-0 gap-2">
+                <DocumentAutosaveFeedback {...autosave} />
                 <ZenModeToggle
                   isZenMode={isZenMode}
                   onToggle={toggleZenMode}

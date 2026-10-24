@@ -286,6 +286,24 @@ describe("NoteDetail", () => {
     expect(toastSuccessMock).not.toHaveBeenCalled();
   });
 
+  it("retains a rejected save and lets the user retry", async () => {
+    editNoteMock.mockRejectedValueOnce(new Error("Network unavailable"));
+    await act(async () => renderNoteDetail(root));
+    await act(async () =>
+      changeFormControlValue(getContentInput(container), "Unsaved draft"),
+    );
+    await waitForAutosave();
+    expect(toastErrorMock).toHaveBeenCalledWith("Couldn't save the note");
+    expect(getContentInput(container)?.value).toBe("Unsaved draft");
+    await act(async () => findButton(container, "Retry save")?.click());
+    expect(editNoteMock).toHaveBeenLastCalledWith({
+      id: note.id,
+      title: note.title,
+      content: "Unsaved draft",
+    });
+    expect(findButton(container, "Retry save")).toBeUndefined();
+  });
+
   it("keeps newer local content when saved note props refresh", async () => {
     await act(async () => {
       renderNoteDetail(root);
