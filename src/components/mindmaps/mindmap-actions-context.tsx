@@ -27,7 +27,6 @@ export interface MindmapActions {
   /** Remove every selected node and its subtree in one undoable step. */
   deleteSelected: () => void;
   /** Move one node's subtree into a new mindmap. */
-  splitIntoMindmap: (nodeId: string) => Promise<void>;
   updateEdge: (
     edgeId: string,
     patch: { label?: string; direction?: MindmapEdgeDirection },

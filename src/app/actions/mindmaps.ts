@@ -7,7 +7,6 @@ import {
   editMindmapForUser,
   editMindmapTitleForUser,
   type MindmapMutationResult,
-  splitMindmapForUser,
 } from "@/features/mindmaps/mutations";
 import {
   type CreateMindmapForm,
@@ -18,8 +17,6 @@ import {
   type EditMindmapTitleForm,
   editMindmapSchema,
   editMindmapTitleSchema,
-  type SplitMindmapForm,
-  splitMindmapSchema,
 } from "@/features/mindmaps/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import {
@@ -58,24 +55,6 @@ export async function editMindmap(
 
   if (result.success) {
     revalidateDocumentPage("mindmaps", result.subjectId, data.id);
-  }
-
-  return result;
-}
-
-export async function splitMindmap(
-  data: SplitMindmapForm,
-): Promise<CreateMindmapMutationResult> {
-  const result = await runValidatedUserAction(
-    "mindmaps.splitMindmap",
-    splitMindmapSchema,
-    data,
-    "mindmaps.invalidData",
-    async (userId, parsedData) => splitMindmapForUser(userId, parsedData),
-  );
-
-  if (result.success) {
-    revalidateAppShell();
   }
 
   return result;

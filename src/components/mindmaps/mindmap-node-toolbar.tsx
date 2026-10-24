@@ -1,15 +1,8 @@
 "use client";
 
 import { NodeToolbar, Position } from "@xyflow/react";
-import {
-  Bold,
-  ImageIcon,
-  Italic,
-  Loader2,
-  Scissors,
-  Trash2,
-} from "lucide-react";
-import { type CSSProperties, useState } from "react";
+import { Bold, ImageIcon, Italic, Loader2, Trash2 } from "lucide-react";
+import type { CSSProperties } from "react";
 import { useMindmapActions } from "@/components/mindmaps/mindmap-actions-context";
 import { MindmapToolbarButton } from "@/components/mindmaps/mindmap-toolbar-button";
 import { MINDMAP_NODE_COLOR_TOKENS } from "@/features/mindmaps/constants";
@@ -26,7 +19,7 @@ interface MindmapNodeToolbarProps {
 }
 
 /** Floating toolbar for a selected branch node: text style, color, image,
- * split and delete actions. */
+ * and delete actions. */
 export function MindmapNodeToolbar({
   nodeId,
   data,
@@ -36,7 +29,6 @@ export function MindmapNodeToolbar({
   onImageClick,
 }: Readonly<MindmapNodeToolbarProps>) {
   const actions = useMindmapActions();
-  const [splitting, setSplitting] = useState(false);
 
   return (
     <NodeToolbar isVisible={isVisible} position={Position.Top}>
@@ -78,24 +70,6 @@ export function MindmapNodeToolbar({
           imageUrl={data.imageUrl}
           onClick={onImageClick}
         />
-        {!isMultiSelect ? (
-          <MindmapToolbarButton
-            label="Break into new mindmap"
-            disabled={splitting}
-            onClick={() => {
-              setSplitting(true);
-              void actions.splitIntoMindmap(nodeId).finally(() => {
-                setSplitting(false);
-              });
-            }}
-          >
-            {splitting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Scissors className="size-4" />
-            )}
-          </MindmapToolbarButton>
-        ) : null}
         <MindmapToolbarButton
           label="Delete node"
           destructive
