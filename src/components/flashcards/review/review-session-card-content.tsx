@@ -1,6 +1,7 @@
 "use client";
 
 import { Lightbulb } from "lucide-react";
+import { useEffect } from "react";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { buildReviewContext } from "@/components/assistant/study-context-content";
 import { useStudyContext } from "@/components/assistant/use-study-context";
@@ -33,7 +34,13 @@ const answerEnterClassName =
  * @example
  * <ReviewSessionCardContent card={card} subjectLabel="Biology" revealed />
  */
-export function ReviewSessionCardContent({
+export function ReviewSessionCardContent(
+  props: Readonly<ReviewSessionCardContentProps>,
+) {
+  return <ReviewSessionCardAttempt key={props.card.id} {...props} />;
+}
+
+function ReviewSessionCardAttempt({
   card,
   subjectLabel,
   revealed,
@@ -41,12 +48,14 @@ export function ReviewSessionCardContent({
 }: Readonly<ReviewSessionCardContentProps>) {
   const context = buildReviewContext(card, subjectLabel, revealed, mode);
   useStudyContext(context);
-  const assistedRecall =
-    useAssistantWorkspace()?.assistedRecallFront === context.front;
-  // Keying by card id remounts the wrapper so the enter animation replays on
-  // every new card instead of the content swapping in place.
+  const workspace = useAssistantWorkspace();
+  const clearAssistedRecall = workspace?.clearAssistedRecall;
+  const assistedRecall = workspace?.assistedRecallFront === context.front;
+  useEffect(() => {
+    if (!revealed) clearAssistedRecall?.();
+  }, [revealed, clearAssistedRecall]);
   return (
-    <div key={card.id} className={cardEnterClassName}>
+    <div className={cardEnterClassName}>
       <div className="mb-3 flex min-w-0 items-center justify-between gap-3 empty:hidden">
         {subjectLabel ? (
           <p className="truncate text-xs font-semibold tracking-wide text-primary/80 uppercase">

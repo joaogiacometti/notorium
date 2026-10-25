@@ -1,10 +1,12 @@
 "use client";
 
+import { createDocument } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import { buildRichTextReviewExtensions } from "@/lib/editor/rich-text-review-schema";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
+import { trimDisplayParagraphs } from "@/lib/editor/trim-display-paragraphs";
 import { cn } from "@/lib/utils";
 
 interface TiptapRendererProps {
@@ -25,7 +27,6 @@ export function TiptapRenderer({
     // The trailing empty paragraph only gives editors a place to type
     // after a list or code block; read-only, it renders as a blank gap.
     extensions: buildRichTextReviewExtensions(),
-    content: resolvedContent,
     editable: false,
     immediatelyRender: false,
     editorProps: {
@@ -53,10 +54,10 @@ export function TiptapRenderer({
 
   useEffect(() => {
     if (!editor) return;
-    const currentHTML = editor.isEmpty ? "" : editor.getHTML();
-    if (resolvedContent !== currentHTML) {
-      editor.commands.setContent(resolvedContent || "", { emitUpdate: false });
-    }
+    const document = createDocument(resolvedContent, editor.schema);
+    editor.commands.setContent(trimDisplayParagraphs(document.toJSON()), {
+      emitUpdate: false,
+    });
   }, [editor, resolvedContent]);
 
   if (!editor && fallback !== undefined) return fallback;

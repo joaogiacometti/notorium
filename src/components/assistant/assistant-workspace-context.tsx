@@ -50,9 +50,9 @@ export interface AssistantWorkspace {
   ) => () => void;
   proposals: FlashcardProposalControls;
   context: StudyContext | null;
-  /** Front of the last review or exam card the user asked about before its
-   * answer was revealed, so the session can suggest grading that recall lower. */
+  /** Front assisted during the current review or exam attempt before reveal. */
   assistedRecallFront: string | null;
+  clearAssistedRecall: () => void;
   registerContext: (snapshot: () => StudyContext | null) => () => void;
   refreshContext: () => void;
   editor: ActiveFlashcardEditor | null;

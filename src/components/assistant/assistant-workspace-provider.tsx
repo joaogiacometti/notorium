@@ -52,7 +52,11 @@ export function AssistantWorkspaceProvider({
 }: Readonly<AssistantWorkspaceProviderProps>) {
   const contexts = useRef<Array<() => StudyContext | null>>([]);
   const [context, setContext] = useState<StudyContext | null>(null);
+  const [assistedRecallFront, setAssistedRecallFront] = useState<string | null>(
+    null,
+  );
   const contextCallbacks = useRef({
+    clearAssistedRecall: () => setAssistedRecallFront(null),
     refreshContext: () => setContext(contexts.current.at(-1)?.() ?? null),
     registerContext: (snapshot: () => StudyContext | null) => {
       contexts.current.push(snapshot);
@@ -68,9 +72,6 @@ export function AssistantWorkspaceProvider({
   const chat = useChat<AssistantUIMessage>({ transport });
   const [composerDraft, setComposerDraft] = useState("");
   const [tutoring, setTutoringState] = useState(initialTutoring);
-  const [assistedRecallFront, setAssistedRecallFront] = useState<string | null>(
-    null,
-  );
   const [open, setOpen] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);

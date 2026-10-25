@@ -27,14 +27,19 @@ function AskButton() {
   );
 }
 
-async function renderCard(revealed: boolean) {
+async function renderCard(
+  revealed: boolean,
+  cardId = "card-1",
+  mode: "review" | "exam" = "review",
+) {
   await act(async () =>
     root.render(
       <AssistantWorkspaceProvider transport={new FakeFlashcardEditChat()}>
         <ReviewSessionCardContent
-          card={makeCard("card-1")}
+          card={makeCard(cardId)}
           subjectLabel="Biology"
           revealed={revealed}
+          mode={mode}
         />
         <AskButton />
       </AssistantWorkspaceProvider>,
@@ -67,5 +72,47 @@ it("shows no grading note when the answer was recalled unaided", async () => {
   await renderCard(true);
   await act(async () => container.querySelector("button")?.click());
 
+  expect(container.textContent).not.toContain(ASSISTED_NOTE);
+});
+
+it.each(["review", "exam"] as const)(
+  "clears assisted recall when the same card starts another %s attempt",
+  async (mode) => {
+    await renderCard(false, "card-1", mode);
+    await act(async () => container.querySelector("button")?.click());
+    await renderCard(true, "card-1", mode);
+    expect(container.textContent).toContain(ASSISTED_NOTE);
+
+    await renderCard(false, "card-1", mode);
+    await renderCard(true, "card-1", mode);
+    expect(container.textContent).not.toContain(ASSISTED_NOTE);
+  },
+);
+
+it("does not carry assistance through another card and back", async () => {
+  await renderCard(false);
+  await act(async () => container.querySelector("button")?.click());
+  await renderCard(true);
+  await renderCard(false, "card-2");
+  await renderCard(false);
+  await renderCard(true);
+  expect(container.textContent).not.toContain(ASSISTED_NOTE);
+});
+
+it("records fresh assistance on a repeated attempt", async () => {
+  await renderCard(false);
+  await act(async () => container.querySelector("button")?.click());
+  await renderCard(true);
+  await renderCard(false);
+  await act(async () => container.querySelector("button")?.click());
+  await renderCard(true);
+  expect(container.textContent).toContain(ASSISTED_NOTE);
+});
+
+it("clears assistance when switching cards while the answer stays hidden", async () => {
+  await renderCard(false);
+  await act(async () => container.querySelector("button")?.click());
+  await renderCard(false, "card-2");
+  await renderCard(true);
   expect(container.textContent).not.toContain(ASSISTED_NOTE);
 });
