@@ -3,6 +3,7 @@
 import { CopyPlus, Loader2, Search, Sparkles, Wand2 } from "lucide-react";
 import type { JSX } from "react";
 import { ToolbarActionBar } from "@/components/flashcards/manage/flashcards-manager-toolbar-actions";
+import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,7 @@ interface FlashcardsManagerToolbarProps {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   isManageScopeLoading: boolean;
+  hasManageScopeError: boolean;
   selectedFlashcardIds: string[];
   total: number;
   refineMode: boolean;
@@ -44,6 +46,7 @@ interface ToolbarViewModel {
 interface ToolbarStatusBadgesProps {
   refineMode: boolean;
   isManageScopeLoading: boolean;
+  hasManageScopeError: boolean;
   hasSelection: boolean;
   selectedCountText: string;
   resultsCountText: string;
@@ -86,6 +89,7 @@ function getToolbarViewModel({
 function ToolbarStatusBadges({
   refineMode,
   isManageScopeLoading,
+  hasManageScopeError,
   hasSelection,
   selectedCountText,
   resultsCountText,
@@ -100,6 +104,12 @@ function ToolbarStatusBadges({
         <Sparkles className="size-3.5" />
         {refineCountText}
       </Badge>
+    );
+  }
+
+  if (hasManageScopeError) {
+    return (
+      <StatusToneBadge tone="danger">Flashcards unavailable</StatusToneBadge>
     );
   }
 
@@ -155,6 +165,7 @@ export function FlashcardsManagerToolbar({
   searchQuery,
   onSearchQueryChange,
   isManageScopeLoading,
+  hasManageScopeError,
   selectedFlashcardIds,
   total,
   refineMode,
@@ -224,6 +235,7 @@ export function FlashcardsManagerToolbar({
                 <ToolbarStatusBadges
                   refineMode={refineMode}
                   isManageScopeLoading={isManageScopeLoading}
+                  hasManageScopeError={hasManageScopeError}
                   hasSelection={viewModel.hasSelection}
                   selectedCountText={viewModel.selectedCountText}
                   resultsCountText={viewModel.resultsCountText}

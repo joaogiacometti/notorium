@@ -11,6 +11,7 @@ const baseProps = {
   searchQuery: "",
   onSearchQueryChange: vi.fn(),
   isManageScopeLoading: false,
+  hasManageScopeError: false,
   selectedFlashcardIds: [],
   total: 0,
   refineMode: false,
@@ -74,6 +75,21 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     expect(baseProps.onOpenCreateDialog).toHaveBeenCalledOnce();
+  });
+
+  it("shows an unavailable count when the manage read fails", async () => {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar
+          {...baseProps}
+          total={17}
+          hasManageScopeError
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain("Flashcards unavailable");
+    expect(container.textContent).not.toContain("17 of 17 flashcards");
   });
 
   it("shows hover and focus tooltips for selection toolbar actions", async () => {

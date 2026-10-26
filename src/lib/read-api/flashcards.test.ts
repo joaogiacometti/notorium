@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchFlashcardContents,
   fetchFlashcardForManage,
+  fetchFlashcardsManagePage,
   fetchStrugglingFlashcards,
 } from "@/lib/read-api/flashcards";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
@@ -11,19 +12,30 @@ describe("flashcard read-api fetchers", () => {
     vi.unstubAllGlobals();
   });
 
-  it("wraps a found flashcard and passes a not-found error through", async () => {
+  it("returns a found flashcard and rejects a missing one", async () => {
     const server = new FakeReadApiFetch()
       .install()
       .replyJson(200, { id: "c/1" })
       .replyJson(404, { errorCode: "flashcards.notFound" });
 
     await expect(fetchFlashcardForManage("c/1")).resolves.toEqual({
-      flashcard: { id: "c/1" },
+      id: "c/1",
     });
-    await expect(fetchFlashcardForManage("c/1")).resolves.toEqual({
+    await expect(fetchFlashcardForManage("c/1")).rejects.toMatchObject({
+      status: 404,
       errorCode: "flashcards.notFound",
     });
     expect(server.requestedUrls[0]).toBe("/api/flashcards/c%2F1");
+  });
+
+  it("rejects a failed manage-page read instead of returning empty cards", async () => {
+    new FakeReadApiFetch()
+      .install()
+      .replyJson(500, { errorCode: "common.generic" });
+
+    await expect(
+      fetchFlashcardsManagePage({ pageIndex: 0, pageSize: 25 }),
+    ).rejects.toMatchObject({ status: 500, errorCode: "common.generic" });
   });
 
   it("wraps struggling cards and surfaces failures as error results", async () => {

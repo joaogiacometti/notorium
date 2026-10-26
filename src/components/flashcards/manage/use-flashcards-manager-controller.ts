@@ -24,6 +24,7 @@ import {
 } from "@/lib/server/server-action-errors";
 
 const flashcardManagerSearchDebounceMs = 200;
+const emptyManageItems: FlashcardManagePage["items"] = [];
 
 interface UseFlashcardsManagerControllerOptions {
   initialPageData: FlashcardManagePage;
@@ -158,20 +159,13 @@ export function useFlashcardsManagerController({
       selectedSubjectId ?? "all",
       resolvedSearchQuery,
     ],
-    queryFn: async () => {
-      const result = await fetchFlashcardsManagePage({
+    queryFn: () =>
+      fetchFlashcardsManagePage({
         pageIndex,
         pageSize: pageSizeState,
         subjectId: selectedSubjectId,
         search: resolvedSearchQuery,
-      });
-
-      if ("errorCode" in result) {
-        return { items: [], total: 0, subjectCardCount: null };
-      }
-
-      return result;
-    },
+      }),
     initialData:
       pageIndex === 0 &&
       (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
@@ -181,6 +175,7 @@ export function useFlashcardsManagerController({
         : undefined,
     placeholderData: (previousData) => previousData,
     staleTime: 1000 * 20,
+    retry: false,
   });
 
   const editFlashcardQuery = useQuery({
@@ -190,21 +185,17 @@ export function useFlashcardsManagerController({
         return null;
       }
 
-      const result = await fetchFlashcardForManage(editingFlashcardId);
-      if ("errorCode" in result) {
-        return null;
-      }
-
-      return result.flashcard;
+      return fetchFlashcardForManage(editingFlashcardId);
     },
     enabled: editingFlashcardId !== null,
+    retry: false,
   });
 
-  const pageData = managePageQuery.data ?? initialPageData;
-  const flashcards = pageData.items;
-  const total = pageData.total;
-  const subjectCardCount = pageData.subjectCardCount ?? 0;
+  const flashcards = managePageQuery.data?.items ?? emptyManageItems;
+  const total = managePageQuery.data?.total ?? 0;
+  const subjectCardCount = managePageQuery.data?.subjectCardCount ?? 0;
   const isAtSubjectLimit =
+    !managePageQuery.isError &&
     selectedSubjectId !== undefined &&
     subjectCardCount >= LIMITS.maxFlashcardsPerSubject;
 
@@ -212,9 +203,11 @@ export function useFlashcardsManagerController({
     const pageIds = new Set(flashcards.map((flashcard) => flashcard.id));
 
     setSelectedFlashcardIds((current) =>
-      current.filter((flashcardId) => pageIds.has(flashcardId)),
+      managePageQuery.isError
+        ? []
+        : current.filter((flashcardId) => pageIds.has(flashcardId)),
     );
-  }, [flashcards]);
+  }, [flashcards, managePageQuery.isError]);
 
   useEffect(() => {
     const pageCount = Math.max(1, Math.ceil(total / pageSizeState));

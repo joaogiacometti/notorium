@@ -7,6 +7,7 @@ import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-fl
 import { LazyCreateFlashcardDialog as CreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
 import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/dialogs/lazy-edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
+import { FlashcardsManagerReadFailure } from "@/components/flashcards/manage/flashcards-manager-read-failure";
 import { FlashcardsManagerTable } from "@/components/flashcards/manage/flashcards-manager-table";
 import { FlashcardsManagerToolbar } from "@/components/flashcards/manage/flashcards-manager-toolbar";
 import { FlashcardsRefineResults } from "@/components/flashcards/manage/flashcards-refine-results";
@@ -49,6 +50,7 @@ export function FlashcardsManager({
     deleteTarget,
     moveTarget,
     editingFlashcard,
+    editFlashcardQuery,
     editingFlashcardId,
     flashcards,
     isAtSubjectLimit,
@@ -106,6 +108,16 @@ export function FlashcardsManager({
       );
     }
 
+    if (managePageQuery.isError) {
+      return (
+        <FlashcardsManagerReadFailure
+          message="Could not load flashcards. Retry to refresh the list."
+          retrying={managePageQuery.isFetching}
+          onRetry={() => void managePageQuery.refetch()}
+        />
+      );
+    }
+
     return (
       <Card className="h-[clamp(22rem,58svh,36rem)] min-w-0 overflow-hidden rounded-xl border-border/70 bg-card/85 py-0 shadow-none lg:h-auto lg:min-h-0 lg:flex-1">
         <FlashcardsManagerTable
@@ -147,7 +159,10 @@ export function FlashcardsManager({
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
         isManageScopeLoading={isManageScopeLoading}
-        selectedFlashcardIds={selectedFlashcardIds}
+        hasManageScopeError={managePageQuery.isError}
+        selectedFlashcardIds={
+          managePageQuery.isError ? [] : selectedFlashcardIds
+        }
         total={total}
         refineMode={refineMode}
         strugglingCount={strugglingCards.length}
@@ -184,6 +199,14 @@ export function FlashcardsManager({
         subjectId={selectedSubjectId}
         aiEnabled={aiEnabled}
       />
+      {editingFlashcardId !== null && editFlashcardQuery.isError ? (
+        <FlashcardsManagerReadFailure
+          message="Could not open this flashcard. Retry or dismiss this message."
+          retrying={editFlashcardQuery.isFetching}
+          onRetry={() => void editFlashcardQuery.refetch()}
+          onDismiss={() => setEditingFlashcardId(null)}
+        />
+      ) : null}
       {editingFlashcardId !== null && editingFlashcard && (
         <EditFlashcardDialog
           flashcard={editingFlashcard}

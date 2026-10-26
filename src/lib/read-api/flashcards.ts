@@ -30,8 +30,8 @@ type StrugglingFlashcardsResult =
  */
 export function fetchFlashcardsManagePage(
   query: FlashcardsManageQueryInput,
-): Promise<FlashcardManagePage | ActionErrorResult> {
-  return fetchReadApiResult<FlashcardManagePage>(
+): Promise<FlashcardManagePage> {
+  return fetchReadApi<FlashcardManagePage>(
     "/api/flashcards/manage-page",
     query,
   );
@@ -41,16 +41,14 @@ export function fetchFlashcardsManagePage(
  * Load one flashcard for the manage edit dialog.
  *
  * @example
- * const result = await fetchFlashcardForManage(flashcardId);
- * if (!("errorCode" in result)) openEditor(result.flashcard);
+ * const flashcard = await fetchFlashcardForManage(flashcardId);
  */
-export async function fetchFlashcardForManage(
+export function fetchFlashcardForManage(
   flashcardId: string,
-): Promise<{ flashcard: FlashcardWithSourceEntity } | ActionErrorResult> {
-  const result = await fetchReadApiResult<FlashcardWithSourceEntity>(
+): Promise<FlashcardWithSourceEntity> {
+  return fetchReadApi<FlashcardWithSourceEntity>(
     `/api/flashcards/${encodeURIComponent(flashcardId)}`,
   );
-  return "errorCode" in result ? result : { flashcard: result };
 }
 
 /**

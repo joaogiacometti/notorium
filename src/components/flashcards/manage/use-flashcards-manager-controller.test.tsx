@@ -12,6 +12,8 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 type ManagerController = ReturnType<typeof useFlashcardsManagerController>;
 
 const fetchStrugglingFlashcardsMock = vi.hoisted(() => vi.fn());
+const fetchManagePageMock = vi.hoisted(() => vi.fn());
+const fetchManageEditMock = vi.hoisted(() => vi.fn());
 const toastMock = vi.hoisted(() => ({
   error: vi.fn(),
   success: vi.fn(),
@@ -23,10 +25,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib/read-api/flashcards", () => ({
-  fetchFlashcardForManage: vi.fn(),
-  fetchFlashcardsManagePage: vi
-    .fn()
-    .mockResolvedValue({ items: [], total: 0, subjectCardCount: null }),
+  fetchFlashcardForManage: fetchManageEditMock,
+  fetchFlashcardsManagePage: fetchManagePageMock,
   fetchStrugglingFlashcards: fetchStrugglingFlashcardsMock,
 }));
 
@@ -78,6 +78,7 @@ describe("useFlashcardsManagerController refine mode", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     queryClient = new QueryClient();
+    fetchManagePageMock.mockResolvedValue(emptyPageData);
   });
 
   afterEach(async () => {
@@ -114,6 +115,34 @@ describe("useFlashcardsManagerController refine mode", () => {
     expect(controller.refineMode).toBe(true);
     expect(controller.strugglingCards).toEqual(cards);
     expect(controller.isLoadingStrugglingCards).toBe(false);
+  });
+
+  it("surfaces a failed page read through query state", async () => {
+    fetchManagePageMock.mockRejectedValue(new Error("offline"));
+    await renderController();
+
+    await act(async () => {
+      controller.handleSubjectChange("subject-2");
+    });
+    await vi.waitFor(() =>
+      expect(controller.managePageQuery.isError).toBe(true),
+    );
+    expect(controller.managePageQuery.error).toBeInstanceOf(Error);
+    expect(fetchManagePageMock).toHaveBeenCalledOnce();
+  });
+
+  it("surfaces a failed edit read through query state", async () => {
+    fetchManageEditMock.mockRejectedValue(new Error("missing card"));
+    await renderController();
+
+    await act(async () => {
+      controller.setEditingFlashcardId("card-1");
+    });
+    await vi.waitFor(() =>
+      expect(controller.editFlashcardQuery.isError).toBe(true),
+    );
+    expect(controller.editingFlashcard).toBeUndefined();
+    expect(fetchManageEditMock).toHaveBeenCalledOnce();
   });
 
   it("stays out of refine mode and toasts when loading fails", async () => {
