@@ -75,6 +75,8 @@ export function AssistantWorkspaceProvider({
   const [open, setOpen] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);
+  const [inlineLauncher, setInlineLauncher] =
+    useState<HTMLButtonElement | null>(null);
   const portalNodes = useRef<{
     target: HTMLElement;
     fallback: HTMLElement;
@@ -108,6 +110,12 @@ export function AssistantWorkspaceProvider({
     return () => {
       if (portalNodes.current?.target === target) portalNodes.current = null;
     };
+  }
+
+  function registerInlineLauncher(button: HTMLButtonElement) {
+    setInlineLauncher(button);
+    return () =>
+      setInlineLauncher((current) => (current === button ? null : current));
   }
 
   function registerHost(element: HTMLElement) {
@@ -379,6 +387,8 @@ export function AssistantWorkspaceProvider({
         setOpen,
         host,
         registerHost,
+        inlineLauncher,
+        registerInlineLauncher,
         registerPortalTarget,
         composerDraft,
         setComposerDraft,

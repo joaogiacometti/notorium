@@ -155,6 +155,17 @@ describe("shortcutRegistry", () => {
     });
   });
 
+  it("lists the toggle-assistant shortcut under Global", () => {
+    const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
+      (item) => item.id === "global-toggle-assistant",
+    );
+    expect(shortcut).toMatchObject({
+      kind: "keys",
+      keys: ["cmd+j", "ctrl+j"],
+      description: "Toggle study assistant",
+    });
+  });
+
   it("lists the mindmap Tab add-child shortcut", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
       (item) => item.id === "mindmap-add-child",

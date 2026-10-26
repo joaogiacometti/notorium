@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
+import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,7 @@ function SessionHeader({
         {headerText}
       </span>
       <div className="flex items-center justify-end gap-1">
+        <AssistantLauncherButton />
         {actions}
         <Button
           variant="ghost"

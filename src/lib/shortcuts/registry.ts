@@ -68,6 +68,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Global,
   },
   {
+    id: "global-toggle-assistant",
+    kind: "keys",
+    keys: ["cmd+j", "ctrl+j"],
+    description: "Toggle study assistant",
+    category: ShortcutCategory.Global,
+  },
+  {
     id: "editor-slash-table",
     kind: "typed",
     keys: ["/table"],

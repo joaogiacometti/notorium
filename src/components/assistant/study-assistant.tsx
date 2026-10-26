@@ -10,6 +10,7 @@ import {
   useAssistantWorkspace,
 } from "@/components/assistant/assistant-workspace-context";
 import { useAssistantPortalTarget } from "@/components/assistant/use-assistant-portal-target";
+import { useAssistantToggleShortcut } from "@/components/assistant/use-assistant-toggle-shortcut";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -46,16 +47,16 @@ function StudyAssistantSurface({
     true,
     workspace.registerPortalTarget,
   );
-  const { open, setOpen } = workspace;
+  const { open, setOpen, inlineLauncher } = workspace;
   const [opened, setOpened] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const restoreLauncherFocus = useRef(false);
   useEffect(() => {
     if (!open && restoreLauncherFocus.current) {
-      launcherRef.current?.focus();
+      (inlineLauncher ?? launcherRef.current)?.focus();
       restoreLauncherFocus.current = false;
     }
-  }, [open]);
+  }, [open, inlineLauncher]);
 
   useEffect(() => preloadWhenIdle(loadAssistantPanel), []);
 
@@ -63,6 +64,11 @@ function StudyAssistantSurface({
     setOpened(true);
     setOpen(!open);
   }
+
+  useAssistantToggleShortcut(() => {
+    if (open) return minimize();
+    toggleOpen();
+  });
 
   // Focus would otherwise stay on a button inside the now-hidden panel.
   function minimize() {
@@ -95,7 +101,7 @@ function StudyAssistantSurface({
           <AssistantPanel embedded onMinimize={minimize} />
         </aside>
       ) : null}
-      {!open ? (
+      {!open && !inlineLauncher ? (
         <div className="fixed right-4 bottom-4">
           <Button
             ref={launcherRef}

@@ -180,6 +180,9 @@ host for the same assistant. Review provides its own host inside its scroll
 boundary. Nested hosts restore the previous host on close; never raise z-index
 to expose chat above a dialog.
 
+Full-screen sessions (review, exam) replace the floating launcher with a ghost
+icon button in the session header; never float a launcher over footer actions.
+
 The header's Hints first toggle is an `icon-sm` ghost button like its
 neighbors, with `aria-pressed`: a lightbulb on a `bg-primary/10` tint when on, a
 muted crossed-out lightbulb when off. Keep its accessible label fixed and let
