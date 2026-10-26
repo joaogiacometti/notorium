@@ -346,7 +346,7 @@ function ReviewSessionEmptyState({
         </div>
       ) : null}
       {isLoadingMoreCards ? (
-        <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <Loader2 className="mb-3 size-6 animate-spin text-muted-foreground" />
           <p className="mb-8 max-w-sm text-muted-foreground">
             Loading more cards…
@@ -356,7 +356,7 @@ function ReviewSessionEmptyState({
           </Button>
         </div>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <h1 className="mb-2 text-xl font-semibold tracking-tight">
             All caught up
           </h1>
