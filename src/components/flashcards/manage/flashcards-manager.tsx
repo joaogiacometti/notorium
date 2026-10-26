@@ -43,12 +43,7 @@ export function FlashcardsManager({
   const { isCopying, copyFlashcardsById, copySelectedFlashcards } =
     useFlashcardCopy();
   const {
-    bulkDeleteOpen,
-    bulkMoveOpen,
-    bulkResetOpen,
-    createOpen,
-    deleteTarget,
-    moveTarget,
+    dialog,
     editingFlashcard,
     editFlashcardQuery,
     editingFlashcardId,
@@ -59,19 +54,11 @@ export function FlashcardsManager({
     searchQuery,
     refreshManagePage,
     cacheUpdatedFlashcard,
-    resetTarget,
     selectedSubjectId,
     selectedFlashcardIds,
-    setBulkDeleteOpen,
-    setBulkMoveOpen,
-    setBulkResetOpen,
-    setCreateOpen,
-    setDeleteTarget,
-    setMoveTarget,
-    setEditingFlashcardId,
+    setDialog,
     setPageIndex,
     setPageSize,
-    setResetTarget,
     setSearchQuery,
     setSelectedFlashcardIds,
     total,
@@ -90,6 +77,7 @@ export function FlashcardsManager({
   });
   const isManageScopeLoading =
     managePageQuery.isFetching && managePageQuery.isPlaceholderData;
+  const moveTarget = dialog?.kind === "move" ? dialog.target : null;
   const singleMoveIds = useMemo(
     () => (moveTarget ? [moveTarget.id] : null),
     [moveTarget],
@@ -127,15 +115,17 @@ export function FlashcardsManager({
           pageIndex={pageIndex}
           pageSize={pageSize}
           isLoading={isManageScopeLoading}
-          onEditRequested={setEditingFlashcardId}
+          onEditRequested={(flashcardId) =>
+            setDialog({ kind: "edit", flashcardId })
+          }
           onCopyRequested={(flashcardId) =>
             void copyFlashcardsById([flashcardId])
           }
-          onMoveRequested={setMoveTarget}
+          onMoveRequested={(target) => setDialog({ kind: "move", target })}
           onPageIndexChange={setPageIndex}
           onPageSizeChange={setPageSize}
-          onDeleteRequested={setDeleteTarget}
-          onResetRequested={setResetTarget}
+          onDeleteRequested={(target) => setDialog({ kind: "delete", target })}
+          onResetRequested={(target) => setDialog({ kind: "reset", target })}
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           onRowClick={(row) =>
             startNavTransition(() =>
@@ -172,13 +162,13 @@ export function FlashcardsManager({
         onCopySelection={() =>
           void copySelectedFlashcards(flashcards, selectedFlashcardIds)
         }
-        onOpenCreateDialog={() => setCreateOpen(true)}
+        onOpenCreateDialog={() => setDialog({ kind: "create" })}
         onStartRefine={() => void startRefineMode()}
         onRefreshRefine={() => void refreshStrugglingCards()}
         onExitRefine={exitRefine}
-        onOpenBulkMoveDialog={() => setBulkMoveOpen(true)}
-        onOpenBulkDeleteDialog={() => setBulkDeleteOpen(true)}
-        onOpenBulkResetDialog={() => setBulkResetOpen(true)}
+        onOpenBulkMoveDialog={() => setDialog({ kind: "bulk-move" })}
+        onOpenBulkDeleteDialog={() => setDialog({ kind: "bulk-delete" })}
+        onOpenBulkResetDialog={() => setDialog({ kind: "bulk-reset" })}
         onClearSelection={() => setSelectedFlashcardIds([])}
       />
       {selectedSubjectId && isAtSubjectLimit && (
@@ -193,8 +183,8 @@ export function FlashcardsManager({
       )}
       {renderMainContent()}
       <CreateFlashcardDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        open={dialog?.kind === "create"}
+        onOpenChange={(open) => setDialog(open ? { kind: "create" } : null)}
         onCreated={refreshManagePage}
         subjectId={selectedSubjectId}
         aiEnabled={aiEnabled}
@@ -204,7 +194,7 @@ export function FlashcardsManager({
           message="Could not open this flashcard. Retry or dismiss this message."
           retrying={editFlashcardQuery.isFetching}
           onRetry={() => void editFlashcardQuery.refetch()}
-          onDismiss={() => setEditingFlashcardId(null)}
+          onDismiss={() => setDialog(null)}
         />
       ) : null}
       {editingFlashcardId !== null && editingFlashcard && (
@@ -214,7 +204,7 @@ export function FlashcardsManager({
           aiEnabled={aiEnabled}
           onOpenChange={(nextOpen) => {
             if (!nextOpen) {
-              setEditingFlashcardId(null);
+              setDialog(null);
             }
           }}
           onUpdated={(updatedFlashcard) => {
@@ -225,72 +215,76 @@ export function FlashcardsManager({
       )}
       <BulkDeleteFlashcardsDialog
         ids={selectedFlashcardIds}
-        open={bulkDeleteOpen}
-        onOpenChange={setBulkDeleteOpen}
+        open={dialog?.kind === "bulk-delete"}
+        onOpenChange={(open) =>
+          setDialog(open ? { kind: "bulk-delete" } : null)
+        }
         onDeleted={(_ids) => {
           refreshManagePage();
-          setBulkDeleteOpen(false);
+          setDialog(null);
         }}
       />
       <BulkMoveFlashcardsDialog
         ids={selectedFlashcardIds}
-        open={bulkMoveOpen}
-        onOpenChange={setBulkMoveOpen}
+        open={dialog?.kind === "bulk-move"}
+        onOpenChange={(open) => setDialog(open ? { kind: "bulk-move" } : null)}
         onMoved={(movedIds) => {
           setSelectedFlashcardIds((currentIds) =>
             currentIds.filter((id) => !movedIds.includes(id)),
           );
           refreshManagePage();
-          setBulkMoveOpen(false);
+          setDialog(null);
         }}
       />
       {moveTarget && singleMoveIds && (
         <BulkMoveFlashcardsDialog
           ids={singleMoveIds}
           open
-          onOpenChange={() => setMoveTarget(null)}
+          onOpenChange={(open) => {
+            if (!open) setDialog(null);
+          }}
           onMoved={(movedIds) => {
             setSelectedFlashcardIds((currentIds) =>
               currentIds.filter((id) => !movedIds.includes(id)),
             );
-            setMoveTarget(null);
+            setDialog(null);
             refreshManagePage();
           }}
         />
       )}
       <BulkResetFlashcardsDialog
         ids={selectedFlashcardIds}
-        open={bulkResetOpen}
-        onOpenChange={setBulkResetOpen}
+        open={dialog?.kind === "bulk-reset"}
+        onOpenChange={(open) => setDialog(open ? { kind: "bulk-reset" } : null)}
         onReset={(_ids) => {
           refreshManagePage();
-          setBulkResetOpen(false);
+          setDialog(null);
         }}
       />
-      {deleteTarget && (
+      {dialog?.kind === "delete" && (
         <DeleteFlashcardDialog
-          flashcardId={deleteTarget.id}
-          flashcardFront={deleteTarget.front}
+          flashcardId={dialog.target.id}
+          flashcardFront={dialog.target.front}
           open
           onOpenChange={(open) => {
-            if (!open) setDeleteTarget(null);
+            if (!open) setDialog(null);
           }}
           onDeleted={() => {
-            setDeleteTarget(null);
+            setDialog(null);
             refreshManagePage();
           }}
         />
       )}
-      {resetTarget && (
+      {dialog?.kind === "reset" && (
         <ResetFlashcardDialog
-          flashcardId={resetTarget.id}
-          flashcardFront={resetTarget.front}
+          flashcardId={dialog.target.id}
+          flashcardFront={dialog.target.front}
           open
           onOpenChange={(open) => {
-            if (!open) setResetTarget(null);
+            if (!open) setDialog(null);
           }}
           onReset={() => {
-            setResetTarget(null);
+            setDialog(null);
             refreshManagePage();
           }}
         />

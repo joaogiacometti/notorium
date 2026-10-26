@@ -52,7 +52,7 @@ function ControllerHarness({
   return null;
 }
 
-describe("useFlashcardsManagerController refine mode", () => {
+describe("useFlashcardsManagerController", () => {
   let container: HTMLDivElement;
   let root: Root;
   let queryClient: QueryClient;
@@ -136,13 +136,33 @@ describe("useFlashcardsManagerController refine mode", () => {
     await renderController();
 
     await act(async () => {
-      controller.setEditingFlashcardId("card-1");
+      controller.setDialog({ kind: "edit", flashcardId: "card-1" });
     });
     await vi.waitFor(() =>
       expect(controller.editFlashcardQuery.isError).toBe(true),
     );
     expect(controller.editingFlashcard).toBeUndefined();
     expect(fetchManageEditMock).toHaveBeenCalledOnce();
+  });
+
+  it("replaces the active dialog and clears the edit target on close", async () => {
+    await renderController();
+
+    await act(async () => {
+      controller.setDialog({ kind: "edit", flashcardId: "card-1" });
+    });
+    expect(controller.editingFlashcardId).toBe("card-1");
+
+    await act(async () => {
+      controller.setDialog({ kind: "bulk-delete" });
+    });
+    expect(controller.dialog).toEqual({ kind: "bulk-delete" });
+    expect(controller.editingFlashcardId).toBeNull();
+
+    await act(async () => {
+      controller.setDialog(null);
+    });
+    expect(controller.dialog).toBeNull();
   });
 
   it("stays out of refine mode and toasts when loading fails", async () => {

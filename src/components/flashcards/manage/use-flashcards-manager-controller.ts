@@ -38,6 +38,12 @@ export type FlashcardTarget = {
   front: string;
 };
 
+type FlashcardManagerDialog =
+  | { kind: "create" | "bulk-delete" | "bulk-move" | "bulk-reset" }
+  | { kind: "edit"; flashcardId: string }
+  | { kind: "delete" | "move" | "reset"; target: FlashcardTarget }
+  | null;
+
 function buildManageParams({
   subjectId,
   pageSize,
@@ -66,18 +72,9 @@ export function useFlashcardsManagerController({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
-  const [bulkResetOpen, setBulkResetOpen] = useState(false);
-  const [editingFlashcardId, setEditingFlashcardId] = useState<string | null>(
-    null,
-  );
-  const [deleteTarget, setDeleteTarget] = useState<FlashcardTarget | null>(
-    null,
-  );
-  const [moveTarget, setMoveTarget] = useState<FlashcardTarget | null>(null);
-  const [resetTarget, setResetTarget] = useState<FlashcardTarget | null>(null);
+  const [dialog, setDialog] = useState<FlashcardManagerDialog>(null);
+  const editingFlashcardId =
+    dialog?.kind === "edit" ? dialog.flashcardId : null;
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
@@ -266,12 +263,7 @@ export function useFlashcardsManagerController({
   }
 
   return {
-    bulkDeleteOpen,
-    bulkMoveOpen,
-    bulkResetOpen,
-    createOpen,
-    deleteTarget,
-    moveTarget,
+    dialog,
     editFlashcardQuery,
     editingFlashcardId,
     flashcards,
@@ -281,21 +273,13 @@ export function useFlashcardsManagerController({
     pageIndex,
     refreshManagePage,
     cacheUpdatedFlashcard,
-    resetTarget,
     resolvedSearchQuery,
     searchQuery,
     selectedSubjectId,
     selectedFlashcardIds,
-    setBulkDeleteOpen,
-    setBulkMoveOpen,
-    setBulkResetOpen,
-    setCreateOpen,
-    setDeleteTarget,
-    setMoveTarget,
-    setEditingFlashcardId,
+    setDialog,
     setPageIndex,
     setPageSize,
-    setResetTarget,
     setSearchQuery,
     setSelectedSubjectId,
     setSelectedFlashcardIds,
