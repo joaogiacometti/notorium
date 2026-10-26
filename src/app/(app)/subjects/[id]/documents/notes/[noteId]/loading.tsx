@@ -23,7 +23,7 @@ export default function NoteDetailLoading() {
               </div>
             </div>
 
-            <div className="min-w-0 overflow-hidden rounded-md border border-border/60 lg:min-h-0 lg:flex-1">
+            <div className="min-w-0 overflow-hidden rounded-md border lg:min-h-0 lg:flex-1">
               <Skeleton className="h-14 w-full rounded-b-none" />
               <div className="space-y-4 p-4">
                 <Skeleton className="h-4 w-full" />

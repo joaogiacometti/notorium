@@ -73,7 +73,7 @@ export function LoginForm({
       <form id="form-login" onSubmit={form.handleSubmit(onSubmit)}>
         <FieldGroup className="gap-4 md:gap-6">
           {showPendingApprovalNotice ? (
-            <div className="flex items-start gap-3 rounded-xl border border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-4 py-3 text-sm">
+            <div className="flex items-start gap-3 rounded-lg border border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-4 py-3 text-sm">
               <Clock3 className="mt-0.5 size-4 shrink-0 text-[var(--intent-info-fill)]" />
               <div className="space-y-1">
                 <p className="font-medium text-[var(--intent-info-text)]">

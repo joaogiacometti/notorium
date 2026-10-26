@@ -88,8 +88,8 @@ export function DocumentRows({
             className={cn(
               "group flex items-center gap-1 rounded-md pr-1 transition-colors",
               isActive
-                ? "bg-muted/60 text-foreground"
-                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
               isDragging && "opacity-50",
             )}
             style={{ paddingLeft: `${depth * INDENT_REM + 1.5}rem` }}

@@ -21,8 +21,8 @@ export function FlashcardReviewLoading() {
 
 export function FlashcardReviewActionCardSkeleton() {
   return (
-    <Card className="gap-0 rounded-xl py-0 shadow-none">
-      <CardContent className="flex h-full flex-col p-4 sm:p-5">
+    <Card className="gap-0 rounded-lg py-0">
+      <CardContent className="flex h-full flex-col p-4 sm:p-6">
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
             <Skeleton className="h-7 w-28" />

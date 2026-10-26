@@ -78,7 +78,7 @@ export function MindmapCanvasToolbar({
   };
 
   return (
-    <div className="flex max-w-[calc(100vw-1.5rem)] items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
+    <div className="flex max-w-[calc(100vw-1.5rem)] items-center gap-1 rounded-lg border bg-card p-1">
       <Button
         type="button"
         variant="ghost"

@@ -126,7 +126,7 @@ export function MindmapDetail({
                 onChange={(event) => setTitle(event.target.value)}
                 aria-label="Mindmap title"
                 placeholder="Untitled mindmap"
-                className="h-10 min-w-0 flex-1 rounded-md border-0 bg-transparent px-3 text-lg font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl"
+                className="h-10 min-w-0 flex-1 rounded-md border-0 bg-transparent px-3 text-xl font-semibold tracking-tight hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40"
               />
               <DocumentAutosaveFeedback {...autosave} />
               <ZenModeToggle
@@ -178,7 +178,7 @@ export function MindmapDetail({
               on lg the flex column chain provides the height. */}
             <div
               className={cn(
-                "flex-1 overflow-hidden rounded-lg border border-border",
+                "flex-1 overflow-hidden rounded-lg border",
                 isZenMode ? "h-auto min-h-0" : "h-[60svh] lg:h-auto lg:min-h-0",
               )}
             >

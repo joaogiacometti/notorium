@@ -51,6 +51,18 @@ describe("getUserPreferredTheme", () => {
     expect(result).toBe("system");
   });
 
+  it.each(["gruvbox", "catppuccin-mocha"])(
+    "falls back to system for the retired %s theme",
+    async (retiredTheme) => {
+      limitMock.mockResolvedValueOnce([{ preferredTheme: retiredTheme }]);
+
+      const { getUserPreferredTheme } = await import("@/features/user/queries");
+      const result = await getUserPreferredTheme("user-1");
+
+      expect(result).toBe("system");
+    },
+  );
+
   it("falls back to system when the user has no stored theme", async () => {
     limitMock.mockResolvedValueOnce([]);
 

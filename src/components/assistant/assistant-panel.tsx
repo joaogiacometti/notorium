@@ -123,7 +123,7 @@ function AssistantConversationPanel({
       {chat.error ? (
         <div
           role="alert"
-          className="flex items-center gap-2 border-t border-border/60 bg-(--intent-danger-bg) px-4 py-2 text-xs text-(--intent-danger-text)"
+          className="flex items-center gap-2 border-t bg-(--intent-danger-bg) px-4 py-2 text-xs text-(--intent-danger-text)"
         >
           <p className="flex-1">{readAssistantErrorMessage(chat.error)}</p>
           <Button

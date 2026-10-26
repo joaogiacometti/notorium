@@ -60,7 +60,7 @@ function AddButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="flex size-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-primary/10 hover:text-foreground"
+      className="flex size-6 items-center justify-center rounded-full border bg-card text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
     >
       <Plus className="size-3.5" />
     </button>

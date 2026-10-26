@@ -31,8 +31,10 @@ export default async function Page({
   return resetToken && !error ? (
     <ResetPasswordForm token={resetToken} />
   ) : (
-    <div className="rounded-xl border bg-card p-6 text-center">
-      <h1 className="text-2xl font-bold">Reset link unavailable</h1>
+    <div className="rounded-lg border bg-card p-6 text-center">
+      <h1 className="text-xl font-semibold tracking-tight">
+        Reset link unavailable
+      </h1>
       <p className="mt-3 text-sm text-muted-foreground">{recoveryMessage}</p>
       <p className="mt-2 text-sm text-muted-foreground">
         Request a new reset email and open the latest link.

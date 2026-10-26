@@ -131,7 +131,7 @@ export function FlashcardDetail({
         {/* Mirrors the note/mindmap header: an h-10 title row, then metadata. */}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1
-            className="truncate text-lg leading-10 font-semibold tracking-tight sm:text-xl"
+            className="truncate text-xl leading-10 font-semibold tracking-tight"
             title={flashcard.subjectPath}
           >
             {flashcard.subjectPath}

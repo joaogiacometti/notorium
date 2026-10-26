@@ -71,7 +71,7 @@ function ReviewSessionCardAttempt({
           />
         ) : null}
       </div>
-      <div className="relative flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">
+      <div className="relative flex flex-col overflow-hidden rounded-lg border bg-card">
         <div className="flex flex-col">
           <CardFace title="Front" content={card.front} tone="front" />
           {revealed ? (
@@ -107,8 +107,8 @@ interface CardFaceProps {
 function CardFace({ title, content, tone }: Readonly<CardFaceProps>) {
   const isBack = tone === "back";
   const sectionClassName = isBack
-    ? "flex flex-col border-t border-border/60 bg-primary/5 p-5 sm:p-6"
-    : "flex flex-col p-5 sm:p-6";
+    ? "flex flex-col border-t bg-muted/50 p-4 sm:p-6"
+    : "flex flex-col p-4 sm:p-6";
   const titleClassName = cn(
     "mb-2 text-xs font-semibold tracking-wide uppercase",
     isBack ? "text-primary/80" : "text-muted-foreground",

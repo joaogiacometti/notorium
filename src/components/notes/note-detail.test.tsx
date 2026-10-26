@@ -227,7 +227,7 @@ describe("NoteDetail", () => {
     expect(titleInput?.value).toBe(note.title);
     expect(titleInput?.getAttribute("aria-label")).toBe("Note title");
     expect(titleInput?.className).toContain("bg-transparent");
-    expect(titleInput?.className).toContain("hover:bg-muted/25");
+    expect(titleInput?.className).toContain("hover:bg-muted/50");
     expect(titleInput?.className).toContain("focus-visible:ring-2");
     expect(titleInput?.parentElement?.parentElement?.className).not.toContain(
       "overflow-hidden",

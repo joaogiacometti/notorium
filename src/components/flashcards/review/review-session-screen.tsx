@@ -2,7 +2,6 @@
 
 import {
   Copy,
-  GraduationCap,
   Loader2,
   MoreVertical,
   Pencil,
@@ -10,6 +9,7 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
+import { ExamBadge } from "@/components/flashcards/review/exam-badge";
 import { ReviewGradeButtons } from "@/components/flashcards/review/review-grade-buttons";
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
 import { ReviewSessionShell } from "@/components/flashcards/review/review-session-shell";
@@ -357,7 +357,7 @@ function ReviewSessionEmptyState({
         </div>
       ) : (
         <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-          <h1 className="mb-2 text-2xl font-semibold tracking-tight">
+          <h1 className="mb-2 text-xl font-semibold tracking-tight">
             All caught up
           </h1>
           <p className="mb-8 max-w-sm text-muted-foreground">
@@ -366,15 +366,6 @@ function ReviewSessionEmptyState({
           <Button onClick={onExit}>Back to flashcards</Button>
         </div>
       )}
-    </div>
-  );
-}
-
-function ExamBadge() {
-  return (
-    <div className="flex items-center gap-1.5 rounded-md border border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-2 py-1 text-xs font-semibold tracking-wider text-[var(--intent-info-text)] uppercase">
-      <GraduationCap className="size-3.5" />
-      <span>Exam</span>
     </div>
   );
 }

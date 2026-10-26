@@ -30,7 +30,7 @@ export function MindmapReviewNode({ data }: Readonly<NodeProps>) {
   return (
     <fieldset
       className={cn(
-        "relative w-48 min-w-0 rounded-md border-2 border-dashed bg-card px-3 py-2 text-sm text-card-foreground shadow-sm",
+        "relative w-48 min-w-0 rounded-md border-2 border-dashed bg-card px-3 py-2 text-sm text-card-foreground",
         data.bold === true && "font-bold",
         data.italic === true && "italic",
         removed && "opacity-70",

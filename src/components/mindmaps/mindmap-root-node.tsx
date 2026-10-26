@@ -50,7 +50,7 @@ export function MindmapRootNode({
 
   return (
     <div
-      className="w-48 rounded-xl bg-primary px-5 py-3 text-center text-base font-semibold text-primary-foreground shadow-md"
+      className="w-48 rounded-lg bg-primary px-5 py-3 text-center text-base font-semibold text-primary-foreground shadow-md"
       style={{ boxShadow: selected ? "0 0 0 2px var(--ring)" : undefined }}
     >
       <MindmapAddButtons

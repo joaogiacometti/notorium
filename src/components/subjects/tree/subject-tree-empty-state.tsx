@@ -17,7 +17,7 @@ export function SubjectTreeEmptyState({
   onCreateSubject,
 }: Readonly<SubjectTreeEmptyStateProps>) {
   return (
-    <div className="mt-2 rounded-lg border border-dashed border-border/60 p-4 text-center">
+    <div className="mt-2 rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center">
       <p className="text-sm text-muted-foreground">No subjects yet.</p>
       <Button
         type="button"

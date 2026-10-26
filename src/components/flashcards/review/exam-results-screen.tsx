@@ -1,4 +1,5 @@
-import { GraduationCap, RotateCcw, X } from "lucide-react";
+import { RotateCcw, X } from "lucide-react";
+import { ExamBadge } from "@/components/flashcards/review/exam-badge";
 import { Button } from "@/components/ui/button";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import { gradeLabels } from "@/features/flashcards/fsrs";
@@ -50,10 +51,7 @@ export function ExamResultsScreen({
     <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4 sm:px-6">
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="absolute top-6 left-6">
-          <div className="flex items-center gap-1.5 rounded-md border-2 border-(--intent-info-border) bg-(--intent-info-bg) px-2 py-1 text-xs font-bold tracking-wider text-(--intent-info-text) uppercase">
-            <GraduationCap className="size-3.5" />
-            <span>EXAM</span>
-          </div>
+          <ExamBadge />
         </div>
         <Button
           variant="ghost"
@@ -66,7 +64,9 @@ export function ExamResultsScreen({
         </Button>
 
         <div className="pt-8">
-          <h1 className="mb-2 text-3xl font-bold">Session complete</h1>
+          <h1 className="mb-2 text-xl font-semibold tracking-tight">
+            Session complete
+          </h1>
           <p className="text-muted-foreground">
             All {totalCards} cards reviewed · {formatDuration(duration)}
           </p>
@@ -158,10 +158,7 @@ export function ExamResultsScreen({
               easy: "text-[var(--intent-success-text)]",
             };
             return (
-              <div
-                key={grade}
-                className="rounded-lg border border-border/60 bg-card p-4 sm:p-5"
-              >
+              <div key={grade} className="rounded-lg border bg-card p-4 sm:p-6">
                 <div className={`mb-1 text-3xl font-bold ${colorMap[grade]}`}>
                   {counts[grade]}
                 </div>

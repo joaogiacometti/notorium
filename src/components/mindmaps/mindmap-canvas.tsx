@@ -94,7 +94,7 @@ const edgeTypes = {
 };
 
 // React Flow's chrome reads these CSS variables; map them to theme tokens so
-// user themes (dark/halloween/catppuccin) recolor the canvas automatically.
+// user themes recolor the canvas automatically.
 const canvasVariables = {
   "--xy-background-color": "var(--background)",
   "--xy-edge-stroke": "var(--muted-foreground)",

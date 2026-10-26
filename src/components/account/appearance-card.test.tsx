@@ -68,8 +68,8 @@ describe("AppearanceCard", () => {
     expect(darkOption).toBeTruthy();
     expect(darkOption?.getAttribute("aria-pressed")).toBe("true");
     expect(findOptionByLabel(container, "Light")).toBeTruthy();
-    expect(findOptionByLabel(container, "Catppuccin mocha")).toBeTruthy();
-    expect(findOptionByLabel(container, "Gruvbox")).toBeTruthy();
+    expect(findOptionByLabel(container, "Halloween")).toBeTruthy();
+    expect(findOptionByLabel(container, "Gruvbox")).toBeUndefined();
   });
 
   it("persists the chosen theme to the server", async () => {

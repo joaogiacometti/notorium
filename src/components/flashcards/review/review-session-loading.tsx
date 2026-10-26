@@ -27,22 +27,22 @@ function SessionLoadingFrame({ badge }: Readonly<SessionLoadingFrameProps>) {
       className="flex h-svh flex-col overflow-hidden bg-background"
       data-testid="review-session-loading"
     >
-      <Skeleton className="h-1.5 w-full rounded-none" />
-      <div className="flex items-center justify-between border-b border-border/40 px-4 py-3 sm:px-5">
+      <div className="flex items-center gap-2 px-4 py-2 sm:px-6">
         {badge}
         <Skeleton className="h-4 w-40" />
-        <div className="flex gap-1">
-          <Skeleton className="size-10" />
-          <Skeleton className="size-10" />
+        <div className="ml-auto flex gap-1">
+          <Skeleton className="size-9" />
+          <Skeleton className="size-9" />
         </div>
       </div>
-      <div className="min-h-0 flex-1 px-4 sm:px-5">
+      <div className="h-px w-full bg-border" />
+      <div className="min-h-0 flex-1 px-4 sm:px-6">
         <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col justify-center gap-4 py-6">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-8 w-3/4" />
         </div>
       </div>
-      <div className="border-t border-border/60 px-4 py-3 sm:px-5 sm:py-4">
+      <div className="border-t px-4 py-3 sm:px-6 sm:py-4">
         <Skeleton className="mx-auto h-12 w-full max-w-4xl rounded-lg sm:h-14" />
       </div>
     </div>

@@ -24,10 +24,10 @@ export function SubjectTreeRootDropZone({
         onDropTarget();
       }}
       className={cn(
-        "mb-1 w-full rounded-md border border-dashed px-2 py-1.5 text-center text-[11px] transition-colors",
+        "mb-1 w-full rounded-md border border-dashed px-2 py-1.5 text-center text-xs transition-colors",
         isActive
           ? "border-[color:var(--intent-info-border)] bg-background text-foreground"
-          : "border-border/70 text-muted-foreground",
+          : "border-border text-muted-foreground",
       )}
     >
       Move to top level

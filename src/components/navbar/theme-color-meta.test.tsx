@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeColorMeta } from "@/components/navbar/theme-color-meta";
 import { themeChromeColorById } from "@/lib/theme";
 
-const { themeState } = vi.hoisted(() => ({
+const { themeState, setThemeMock } = vi.hoisted(() => ({
+  setThemeMock: vi.fn(),
   themeState: {
     theme: "light",
     resolvedTheme: "light",
@@ -19,6 +20,7 @@ vi.mock("next-themes", () => ({
   useTheme: () => ({
     theme: themeState.theme,
     resolvedTheme: themeState.resolvedTheme,
+    setTheme: setThemeMock,
   }),
 }));
 
@@ -59,12 +61,7 @@ describe("ThemeColorMeta", () => {
       root.render(<ThemeColorMeta />);
     });
 
-    for (const theme of [
-      "dark",
-      "halloween",
-      "catppuccin-mocha",
-      "gruvbox",
-    ] as const) {
+    for (const theme of ["dark", "halloween"] as const) {
       themeState.theme = theme;
       themeState.resolvedTheme = theme;
 
@@ -77,5 +74,16 @@ describe("ThemeColorMeta", () => {
       );
       expect(themeColorMeta?.content).toBe(themeChromeColorById[theme]);
     }
+  });
+
+  it("resets a retired stored theme to system", async () => {
+    themeState.theme = "gruvbox";
+    themeState.resolvedTheme = "gruvbox";
+
+    await act(async () => {
+      root.render(<ThemeColorMeta />);
+    });
+
+    expect(setThemeMock).toHaveBeenCalledWith("system");
   });
 });

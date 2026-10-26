@@ -73,7 +73,7 @@ export function SettingsDialog({
           query={query}
           onQueryChange={setQuery}
         />
-        <div className="min-w-0 flex-1 overflow-y-auto p-5 sm:p-6">
+        <div className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">
           <DialogDescription className="sr-only">
             Manage your account, appearance, and flashcard settings.
           </DialogDescription>
@@ -115,7 +115,7 @@ function SettingsSidebar({
 }: Readonly<SettingsSidebarProps>) {
   const searching = query.trim().length > 0;
   return (
-    <nav className="shrink-0 border-b border-border/60 bg-muted/20 p-2 sm:w-48 sm:border-r sm:border-b-0 sm:p-3">
+    <nav className="shrink-0 border-b bg-muted/50 p-2 sm:w-48 sm:border-r sm:border-b-0 sm:p-3">
       <DialogTitle className="px-2 pb-2 text-base font-semibold">
         Settings
       </DialogTitle>
@@ -179,7 +179,7 @@ function SearchResults({
 }: Readonly<SearchResultsProps>) {
   return (
     <div>
-      <h2 className="mb-2 text-xl font-semibold tracking-tight">
+      <h2 className="mb-2 text-base font-semibold tracking-tight">
         {`"${query.trim()}"`}
       </h2>
       {settings ? (

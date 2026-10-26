@@ -1,61 +1,6 @@
-/**
- * CRITICAL: Color Theming
- *
- * This file defines theme-aware color variables for light and dark themes.
- * NEVER use hardcoded Tailwind colors (bg-red-500, text-yellow-600, etc.) in components.
- * ALWAYS use these CSS custom properties via Tailwind arbitrary values.
- *
- * Examples:
- *   - bg-[var(--intent-danger-fill)] instead of bg-red-500
- *   - text-[var(--intent-info-text)] instead of text-yellow-600
- *   - border-[var(--intent-warning-border)] instead of border-orange-500
- *
- * Available theme variable categories:
- *   - Semantic: --primary, --secondary, --accent, --destructive, --muted, etc.
- *   - Intent: --intent-danger-*, --intent-warning-*, --intent-success-*, --intent-info-*
- *   - Charts: --chart-1 through --chart-5
- *
- * This ensures colors adapt properly to user-selected themes (Catppuccin Mocha, etc.)
- * and provides consistent, accessible color schemes across light and dark modes.
- *
- * ---------------------------------------------------------------------------
- * DESIGN SYSTEM CONVENTIONS
- * ---------------------------------------------------------------------------
- *
- * OPACITY SCALE (for muted/border/primary variants):
- *   /10  — icon containers, primary tints
- *   /20  — empty/dashed states
- *   /30  — sidebar, muted backgrounds
- *   /40  — hover states
- *   /50  — subtle borders
- *   /60  — card containers (default)
- *   /70  — emphasized borders
- *
- * BORDER RADIUS SEMANTICS:
- *   rounded-md  — buttons, inputs, small elements
- *   rounded-lg  — content cards, dialogs
- *   rounded-xl  — page-level containers, loading skeletons
- *   rounded-full — avatars, icon circles
- *
- * TYPOGRAPHY SCALE:
- *   text-xs (12px)    — muted labels, secondary text, badge counts
- *   text-sm (14px)    — body text, sidebar labels
- *   text-base (16px)  — default prose
- *   text-lg (18px)    — section headers
- *   text-xl (20px)    — card titles, H2
- *   text-2xl (24px)   — page titles, H1
- *   text-3xl (30px)   — landing page hero
- *
- * SPACING CONVENTIONS:
- *   gap-1   — tight icon groups
- *   gap-2   — standard between related items
- *   gap-3   — between sections within a component
- *   gap-4   — section-level spacing
- *   gap-6   — major section spacing
- *
- *   p-4     — compact card padding
- *   p-5/p-6 — standard card padding
- *   p-8     — large card/section padding
+/*
+ * Colors: never hardcode Tailwind palette classes; use the theme and
+ * --intent-* variables below. Design conventions live in DESIGN.md.
  */
 
 @import "tailwindcss";
@@ -63,9 +8,7 @@
 @import "shadcn/tailwind.css";
 @import "katex/dist/katex.min.css";
 
-@custom-variant dark (
-  &:is(.dark *, .halloween *, .catppuccin-mocha *, .gruvbox *)
-);
+@custom-variant dark (&:is(.dark *, .halloween *));
 
 @layer components {
   .row-action-trigger {
@@ -104,11 +47,18 @@
   --z-index-overlay: 50;
 }
 
+/* Flat design: only floating surfaces (menus, dialogs, canvas chrome) keep
+   a shadow, via shadow-md and up. */
+@theme {
+  --shadow-xs: none;
+  --shadow-sm: none;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: var(--radius);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
@@ -147,9 +97,9 @@
 
 :root {
   color-scheme: light;
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.5rem;
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.145 0.02 265);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
@@ -158,13 +108,13 @@
   --primary-foreground: oklch(0.984 0.003 247.858);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
+  --muted: oklch(0.965 0.003 250);
+  --muted-foreground: oklch(0.5 0.02 257);
   --accent: oklch(0.968 0.007 247.896);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
+  --border: oklch(0.93 0.005 255);
+  --input: oklch(0.9 0.006 255);
   --ring: oklch(0.704 0.04 256.788);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -182,7 +132,7 @@
   --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
   --sidebar-accent: oklch(0.968 0.007 247.896);
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-border: oklch(0.93 0.005 255);
   --sidebar-ring: oklch(0.704 0.04 256.788);
   --intent-success-border: oklch(0.68 0.14 155 / 35%);
   --intent-success-bg: oklch(0.68 0.14 155 / 10%);
@@ -247,29 +197,27 @@
 }
 
 .dark,
-.halloween,
-.catppuccin-mocha,
-.gruvbox {
+.halloween {
   color-scheme: dark;
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
+  --background: oklch(0.15 0.012 265);
   --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
+  --card: oklch(0.19 0.012 265);
   --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
+  --popover: oklch(0.19 0.012 265);
   --popover-foreground: oklch(0.984 0.003 247.858);
   --primary: oklch(0.929 0.013 255.508);
   --primary-foreground: oklch(0.208 0.042 265.755);
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
+  --muted: oklch(0.25 0.012 262);
+  --muted-foreground: oklch(0.72 0.02 257);
   --accent: oklch(0.279 0.041 260.031);
   --accent-foreground: oklch(0.984 0.003 247.858);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
   --chart-1: oklch(0.488 0.243 264.376);
@@ -328,7 +276,7 @@
   --accent: oklch(0.32 0.07 24);
   --accent-foreground: oklch(0.97 0.015 85);
   --destructive: oklch(0.68 0.2 26);
-  --border: oklch(0.43 0.06 32 / 55%);
+  --border: oklch(0.32 0.04 315);
   --input: oklch(0.34 0.04 306 / 80%);
   --ring: oklch(0.72 0.19 48 / 75%);
   --chart-1: oklch(0.72 0.19 48);
@@ -347,7 +295,7 @@
   --sidebar-primary-foreground: oklch(0.19 0.02 315);
   --sidebar-accent: oklch(0.27 0.04 304);
   --sidebar-accent-foreground: oklch(0.95 0.02 85);
-  --sidebar-border: oklch(0.43 0.06 32 / 50%);
+  --sidebar-border: oklch(0.32 0.04 315);
   --sidebar-ring: oklch(0.72 0.19 48 / 75%);
   --intent-success-border: oklch(0.77 0.1 92 / 35%);
   --intent-success-bg: oklch(0.77 0.1 92 / 12%);
@@ -369,117 +317,6 @@
   --intent-info-bg: oklch(0.61 0.14 296 / 12%);
   --intent-info-text: oklch(0.82 0.08 298);
   --intent-info-fill: oklch(0.73 0.12 296);
-}
-
-.catppuccin-mocha {
-  --radius: 0.625rem;
-  --background: hsl(240 21.05% 14.9%);
-  --foreground: hsl(226 63.93% 88.04%);
-  --card: hsl(240 21.05% 14.9%);
-  --card-foreground: hsl(226 63.93% 88.04%);
-  --popover: hsl(240 21.05% 14.9%);
-  --popover-foreground: hsl(226 63.93% 88.04%);
-  --primary: hsl(267 83.51% 80.98%);
-  --primary-foreground: hsl(240 21.05% 14.9%);
-  --secondary: hsl(237 16.24% 22.94%);
-  --secondary-foreground: hsl(226 63.93% 88.04%);
-  --muted: hsl(237 16.24% 22.94%);
-  --muted-foreground: hsl(227 35.29% 80%);
-  --accent: hsl(237 16.24% 22.94%);
-  --accent-foreground: hsl(226 63.93% 88.04%);
-  --destructive: hsl(343 81.25% 74.9%);
-  --border: hsl(234 13.21% 31.18%);
-  --input: hsl(234 13.21% 31.18%);
-  --ring: hsl(226 63.93% 88.04%);
-  --chart-1: hsl(329 21.57% 37.25%);
-  --chart-2: hsl(188 18.82% 37.25%);
-  --chart-3: hsl(221 27.45% 39.61%);
-  --chart-4: hsl(30 9.41% 42.35%);
-  --chart-5: hsl(139 12.94% 38.04%);
-  --syntax-comment: hsl(229 24% 64%);
-  --syntax-keyword: hsl(267 83.51% 80.98%);
-  --syntax-string: hsl(115 54% 76%);
-  --syntax-type: hsl(189 71% 73%);
-  --syntax-function: hsl(217 92% 76%);
-  --sidebar: hsl(240 21.18% 14.12%);
-  --sidebar-foreground: hsl(226 63.93% 88.04%);
-  --sidebar-primary: hsl(267 83.51% 80.98%);
-  --sidebar-primary-foreground: hsl(240 21.05% 14.9%);
-  --sidebar-accent: hsl(240 21.05% 14.9%);
-  --sidebar-accent-foreground: hsl(226 63.93% 88.04%);
-  --sidebar-border: hsl(234 13.21% 31.18%);
-  --sidebar-ring: hsl(234 13.21% 31.18%);
-  --intent-success-border: hsl(172 39% 63% / 0.35);
-  --intent-success-bg: hsl(172 39% 63% / 0.1);
-  --intent-success-text: hsl(172 39% 70%);
-  --intent-success-fill: hsl(172 39% 63%);
-  --intent-warning-border: hsl(23 88% 74% / 0.35);
-  --intent-warning-bg: hsl(23 88% 74% / 0.1);
-  --intent-warning-text: hsl(23 88% 78%);
-  --intent-warning-fill: hsl(23 88% 74%);
-  --intent-danger-border: hsl(343 81.25% 74.9% / 0.35);
-  --intent-danger-bg: hsl(343 81.25% 74.9% / 0.1);
-  --intent-danger-text: hsl(343 81.25% 74.9%);
-  --intent-danger-fill: hsl(343 81.25% 74.9%);
-  --intent-info-border: hsl(267 83.51% 80.98% / 0.3);
-  --intent-info-bg: hsl(267 83.51% 80.98% / 0.1);
-  --intent-info-text: hsl(267 83.51% 80.98%);
-  --intent-info-fill: hsl(267 83.51% 80.98%);
-}
-
-.gruvbox {
-  --background: #282828;
-  --foreground: #ebdbb2;
-  --card: #32302f;
-  --card-foreground: #ebdbb2;
-  --popover: #32302f;
-  --popover-foreground: #ebdbb2;
-  --primary: #b8bb26;
-  --primary-foreground: #282828;
-  --secondary: #3c3836;
-  --secondary-foreground: #ebdbb2;
-  --muted: #3c3836;
-  --muted-foreground: #bdae93;
-  --accent: #504945;
-  --accent-foreground: #fbf1c7;
-  --destructive: #fb4934;
-  --border: #665c54;
-  --input: #504945;
-  --ring: #98971a;
-  --chart-1: #b8bb26;
-  --chart-2: #fabd2f;
-  --chart-3: #83a598;
-  --chart-4: #d3869b;
-  --chart-5: #fe8019;
-  --syntax-comment: #928374;
-  --syntax-keyword: #fb4934;
-  --syntax-string: #b8bb26;
-  --syntax-type: #fabd2f;
-  --syntax-function: #b8bb26;
-  --sidebar: #1d2021;
-  --sidebar-foreground: #ebdbb2;
-  --sidebar-primary: #b8bb26;
-  --sidebar-primary-foreground: #282828;
-  --sidebar-accent: #3c3836;
-  --sidebar-accent-foreground: #fbf1c7;
-  --sidebar-border: #504945;
-  --sidebar-ring: #98971a;
-  --intent-success-border: rgb(184 187 38 / 35%);
-  --intent-success-bg: rgb(184 187 38 / 10%);
-  --intent-success-text: #b8bb26;
-  --intent-success-fill: #98971a;
-  --intent-warning-border: rgb(250 189 47 / 35%);
-  --intent-warning-bg: rgb(250 189 47 / 10%);
-  --intent-warning-text: #fabd2f;
-  --intent-warning-fill: #d79921;
-  --intent-danger-border: rgb(251 73 52 / 35%);
-  --intent-danger-bg: rgb(251 73 52 / 10%);
-  --intent-danger-text: #fb4934;
-  --intent-danger-fill: #cc241d;
-  --intent-info-border: rgb(131 165 152 / 35%);
-  --intent-info-bg: rgb(131 165 152 / 10%);
-  --intent-info-text: #83a598;
-  --intent-info-fill: #458588;
 }
 
 @layer base {
@@ -677,7 +514,7 @@
 
 .tiptap-content img,
 .tiptap-wrapper .tiptap img {
-  @apply mb-3 block h-auto max-w-full rounded-md border border-border/60 last:mb-0;
+  @apply mb-3 block h-auto max-w-full rounded-md border border-border last:mb-0;
 }
 
 .tiptap-content [data-resize-container],
@@ -698,7 +535,7 @@
 }
 
 .tiptap-wrapper .tiptap [data-resize-handle] {
-  @apply z-raised size-3 rounded-full border-2 border-background bg-primary shadow-sm;
+  @apply z-raised size-3 rounded-full border-2 border-background bg-primary;
   opacity: 0;
   pointer-events: none;
   touch-action: none;
@@ -748,8 +585,7 @@
   color: var(--intent-warning-text);
 }
 
-.halloween [data-search-highlight="true"],
-.catppuccin-mocha [data-search-highlight="true"] {
+.halloween [data-search-highlight="true"] {
   background-color: color-mix(in oklab, var(--primary) 16%, transparent);
   color: color-mix(in oklab, var(--primary) 86%, var(--foreground));
 }

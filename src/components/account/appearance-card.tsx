@@ -49,8 +49,8 @@ export function AppearanceCard() {
                 className={cn(
                   "flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors",
                   isSelected
-                    ? "border-border/80 bg-accent/65 text-foreground"
-                    : "hover:border-border/50 hover:bg-accent/45",
+                    ? "border-border bg-accent/65 text-foreground"
+                    : "hover:border-border hover:bg-accent/45",
                 )}
               >
                 <ThemePreview themeId={option.id} isSelected={isSelected} />

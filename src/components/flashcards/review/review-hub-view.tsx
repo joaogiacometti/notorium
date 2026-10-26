@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ReviewHubViewProps {
   hasDueCards: boolean;
@@ -34,7 +35,7 @@ export function ReviewHubView({
         <ReviewActionCard
           title="Review"
           badgeText={dueBadgeText}
-          badgeTone={hasDueCards ? "primary" : "muted"}
+          isBadgeActive={hasDueCards}
           description="Review cards that are due on your spaced repetition schedule."
           bullets={[
             "Updates scheduling",
@@ -48,7 +49,7 @@ export function ReviewHubView({
         <ReviewActionCard
           title="Exam"
           badgeText={examBadgeText}
-          badgeTone={hasExamCards ? "info" : "muted"}
+          isBadgeActive={hasExamCards}
           description="Practice every card in this scope without changing its review schedule."
           bullets={[examScopeLabel, "Shuffled practice", "Weak-card retry"]}
           action={() => (
@@ -63,7 +64,7 @@ export function ReviewHubView({
 interface ReviewActionCardProps {
   title: string;
   badgeText: string;
-  badgeTone: "primary" | "info" | "muted";
+  isBadgeActive: boolean;
   description: string;
   bullets: string[];
   action: () => ReactNode;
@@ -72,18 +73,18 @@ interface ReviewActionCardProps {
 function ReviewActionCard({
   title,
   badgeText,
-  badgeTone,
+  isBadgeActive,
   description,
   bullets,
   action,
 }: Readonly<ReviewActionCardProps>) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/70 bg-card py-0 shadow-xs">
-      <div className="flex h-full flex-col p-4 sm:p-5">
+    <div className="rounded-lg border bg-card">
+      <div className="flex h-full flex-col p-4 sm:p-6">
         <ActionCardHeader
           title={title}
           badgeText={badgeText}
-          badgeTone={badgeTone}
+          isBadgeActive={isBadgeActive}
         />
         <div className="mt-3 lg:hidden">{action()}</div>
         <p className="mt-3 text-pretty text-sm text-muted-foreground">
@@ -98,18 +99,18 @@ function ReviewActionCard({
 function ActionCardHeader({
   title,
   badgeText,
-  badgeTone,
+  isBadgeActive,
 }: Readonly<{
   title: string;
   badgeText: string;
-  badgeTone: ReviewActionCardProps["badgeTone"];
+  isBadgeActive: boolean;
 }>) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <h2 className="min-w-0 truncate text-xl font-semibold tracking-tight">
+      <h2 className="min-w-0 truncate text-base font-semibold tracking-tight">
         {title}
       </h2>
-      <span className={getBadgeClassName(badgeTone)}>{badgeText}</span>
+      <span className={getBadgeClassName(isBadgeActive)}>{badgeText}</span>
     </div>
   );
 }
@@ -125,7 +126,7 @@ function ActionCardFooter({
       <ul className="grid gap-2 pb-4 text-sm text-muted-foreground">
         {bullets.map((bullet) => (
           <li key={bullet} className="flex items-center gap-2">
-            <span className="size-1.5 shrink-0 rounded-full bg-primary/70" />
+            <span className="size-1 shrink-0 rounded-full bg-muted-foreground" />
             <span>{bullet}</span>
           </li>
         ))}
@@ -169,17 +170,9 @@ function StartExamButton({
   );
 }
 
-function getBadgeClassName(tone: ReviewActionCardProps["badgeTone"]) {
-  const baseClassName =
-    "shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold";
-
-  if (tone === "primary") {
-    return `${baseClassName} border-primary/20 bg-primary/10 text-primary`;
-  }
-
-  if (tone === "info") {
-    return `${baseClassName} border-(--intent-info-border) bg-(--intent-info-bg) text-(--intent-info-text)`;
-  }
-
-  return `${baseClassName} border-border/70 bg-muted/60 text-muted-foreground`;
+function getBadgeClassName(isActive: boolean) {
+  return cn(
+    "shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium",
+    isActive ? "text-foreground" : "text-muted-foreground",
+  );
 }

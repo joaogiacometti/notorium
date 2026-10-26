@@ -117,7 +117,7 @@ export function SubjectScopeFilter({
             aria-expanded={open}
             aria-label="Filter by subject"
             disabled={isPending}
-            className="inline-flex h-9 w-full max-w-xs items-center justify-between gap-2 rounded-md border border-border/70 bg-background px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+            className="inline-flex h-9 w-full max-w-xs items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
           >
             <span className="min-w-0 flex-1 truncate text-left">
               {selectedLabel}

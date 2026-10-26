@@ -163,7 +163,7 @@ function PendingFlashcardProposal({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-border/70 bg-background p-3 text-sm">
+    <div className="space-y-3 rounded-lg border bg-background p-3 text-sm">
       <SubjectSelect
         value={subject.id}
         onChange={subject.choose}

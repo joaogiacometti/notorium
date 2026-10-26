@@ -50,7 +50,7 @@ function CollapsedSidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-12 shrink-0 border-r border-border/60 lg:block">
+    <aside className="hidden w-12 shrink-0 border-r lg:block">
       <div className="sticky top-0 flex h-svh flex-col items-center gap-0.5 pt-3">
         <SidebarCollapseToggle />
 
@@ -58,7 +58,7 @@ function CollapsedSidebar({
           type="button"
           onClick={onOpenSearch}
           aria-label="Search"
-          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground"
         >
           <Search className="size-4" />
         </button>
@@ -75,8 +75,8 @@ function CollapsedSidebar({
               href={link.href}
               aria-label={link.label}
               className={cn(
-                "flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground",
-                active && "bg-muted/60 text-foreground",
+                "flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                active && "bg-muted text-foreground",
               )}
             >
               <Icon className="size-4" />
@@ -144,7 +144,7 @@ export function AppLayoutClient({
         {collapsed ? (
           <CollapsedSidebar onOpenSearch={() => setSearchOpen(true)} />
         ) : (
-          <aside className="hidden w-72 shrink-0 border-r border-border/60 lg:block">
+          <aside className="hidden w-72 shrink-0 border-r lg:block">
             <div className="sticky top-0 flex h-svh flex-col px-2 pb-3">
               {sidebar}
             </div>

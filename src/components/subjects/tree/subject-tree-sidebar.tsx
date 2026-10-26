@@ -349,7 +349,7 @@ export function SubjectTreeSidebar({
     <>
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex items-center justify-between gap-2 px-2 py-1">
-          <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             Subjects
           </p>
           <Button

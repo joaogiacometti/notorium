@@ -45,7 +45,7 @@ export function ReviewGradeButtons({
             onClick={() => onGrade(grade)}
             disabled={isPending}
             aria-keyshortcuts={gradeShortcuts[grade]}
-            className={`h-12 w-full min-w-0 border-2 px-1.5 py-0 text-[11px] font-semibold leading-tight shadow-xs transition-transform hover:-translate-y-0.5 sm:h-auto sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
+            className={`h-12 w-full min-w-0 border px-1.5 py-0 text-xs font-semibold leading-tight sm:h-auto sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
           >
             <span className="flex min-w-0 flex-col items-center justify-center text-center sm:gap-1">
               <span className="flex min-w-0 items-center gap-1.5">

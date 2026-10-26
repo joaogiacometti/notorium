@@ -47,7 +47,7 @@ export function MindmapModeToolbar({
   onModeChange,
 }: Readonly<MindmapModeToolbarProps>) {
   return (
-    <div className="flex gap-1 rounded-lg border border-(--border) bg-(--card) p-1 shadow-sm">
+    <div className="flex gap-1 rounded-lg border border-(--border) bg-(--card) p-1">
       <ModeButton
         active={mode === "select"}
         label="Select (V)"

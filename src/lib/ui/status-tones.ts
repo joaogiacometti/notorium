@@ -35,7 +35,7 @@ const STATUS_TONE_CLASSES: Record<StatusTone, StatusToneClasses> = {
   neutral: {
     text: "text-muted-foreground",
     bg: "bg-background/70",
-    border: "border-border/70",
+    border: "border-border",
     fill: "bg-muted-foreground/45",
   },
 };

@@ -70,7 +70,7 @@ function LibraryHitLink({
     <Link
       href={getLibraryHitHref(hit)}
       onClick={onOpen}
-      className="flex gap-2 rounded-lg border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+      className="flex gap-2 rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted/50"
     >
       <Icon
         aria-hidden="true"

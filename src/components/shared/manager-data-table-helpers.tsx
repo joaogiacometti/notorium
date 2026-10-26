@@ -102,7 +102,7 @@ export function SelectAllCheckbox({
         checked={checked}
         onCheckedChange={(nextChecked) => onCheckedChange(Boolean(nextChecked))}
         aria-label={selectionAriaLabel}
-        className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+        className="pointer-events-none border-border text-muted-foreground/60 opacity-80 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
       />
     </div>
   );
@@ -130,7 +130,7 @@ function SelectColumnCell<TRow extends RowData>({
               row.toggleSelected(Boolean(nextChecked))
             }
             aria-label={selectionAriaLabel}
-            className="pointer-events-none border-border/50 text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
+            className="pointer-events-none border-border text-muted-foreground/60 opacity-70 transition-opacity hover:opacity-100 data-[state=checked]:border-primary data-[state=checked]:opacity-100"
           />
         )}
       </Subscribe>

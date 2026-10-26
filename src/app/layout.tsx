@@ -6,7 +6,11 @@ import { ServiceWorkerRegister } from "@/components/shared/service-worker-regist
 import { Toaster } from "@/components/ui/sonner";
 import { getUserPreferredTheme } from "@/features/user/queries";
 import { getOptionalSession } from "@/lib/auth/auth";
-import { defaultThemeChromeColor, themeStorageKey } from "@/lib/theme";
+import {
+  defaultThemeChromeColor,
+  themeStorageKey,
+  validThemes,
+} from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -50,7 +54,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
           storageKey={themeStorageKey}
-          themes={["light", "dark", "halloween", "catppuccin-mocha", "gruvbox"]}
+          themes={validThemes.filter((theme) => theme !== "system")}
         >
           <QueryProvider>
             {children}

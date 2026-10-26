@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/shared/page-header";
+
 interface HomeGreetingProps {
   name: string;
 }
@@ -12,16 +14,10 @@ interface HomeGreetingProps {
  */
 export function HomeGreeting({ name }: Readonly<HomeGreetingProps>) {
   return (
-    <div className="space-y-1">
-      <h1
-        data-testid="home-greeting"
-        className="text-2xl font-semibold tracking-tight text-foreground"
-      >
-        Welcome back, {name}
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Here's what's happening across your subjects.
-      </p>
-    </div>
+    <PageHeader
+      title={`Welcome back, ${name}`}
+      titleTestId="home-greeting"
+      description="Here's what's happening across your subjects."
+    />
   );
 }

@@ -12,7 +12,7 @@ export function DocumentEditReviewControls({
   const workspace = useAssistantWorkspace();
   return (
     <fieldset
-      className="min-w-0 flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2 text-sm"
+      className="min-w-0 flex flex-wrap items-center gap-2 rounded-md border bg-card p-2 text-sm"
       aria-label="Review document changes"
     >
       <span className="mr-auto text-xs text-muted-foreground">

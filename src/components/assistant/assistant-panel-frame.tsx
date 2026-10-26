@@ -31,10 +31,10 @@ export function AssistantPanelFrame({
         "flex min-h-0 flex-col overflow-hidden bg-card",
         embedded
           ? "h-full w-full"
-          : "h-[min(36rem,calc(100svh-6rem))] w-[calc(100vw-2rem)] rounded-xl border border-border/70 shadow-lg sm:w-96",
+          : "h-[min(36rem,calc(100svh-6rem))] w-[calc(100vw-2rem)] rounded-lg border shadow-lg sm:w-96",
       )}
     >
-      <header className="flex h-12 items-center border-b border-border/60 py-2 pr-2 pl-4">
+      <header className="flex h-12 items-center border-b py-2 pr-2 pl-4">
         <h2 className="flex-1 text-sm font-semibold">Study assistant</h2>
         {actions}
       </header>

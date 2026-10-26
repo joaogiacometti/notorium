@@ -41,7 +41,7 @@ export function FlashcardsTableRowActions({
         <Button
           variant="ghost"
           size="icon"
-          className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-full border border-transparent bg-background/70 text-muted-foreground/75 shadow-xs hover:border-border/70 hover:bg-background hover:text-foreground${hasSelection ? " invisible pointer-events-none" : ""}`}
+          className={`${ROW_ACTION_TRIGGER_CLASS} size-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground${hasSelection ? " invisible pointer-events-none" : ""}`}
           aria-label="Open flashcard actions"
         >
           <MoreVertical className="size-3.5" />

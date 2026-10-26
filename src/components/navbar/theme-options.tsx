@@ -15,8 +15,6 @@ export const themeLabelByKey: Record<
   light: "Light",
   dark: "Dark",
   halloween: "Halloween",
-  catppuccin_mocha: "Catppuccin mocha",
-  gruvbox: "Gruvbox",
 };
 
 export const themeDescriptionById: Record<AppTheme, string> = {
@@ -24,8 +22,6 @@ export const themeDescriptionById: Record<AppTheme, string> = {
   light: "Clean and bright workspace",
   dark: "Classic low-light contrast",
   halloween: "Warm seasonal orange accents",
-  "catppuccin-mocha": "Soft and cozy dark palette",
-  gruvbox: "Retro warm dark palette",
 };
 
 const themePreviewPaletteById: Record<
@@ -50,18 +46,6 @@ const themePreviewPaletteById: Record<
     card: "#241235",
     primary: "#f97316",
   },
-  "catppuccin-mocha": {
-    background: "#1e1e2e",
-    muted: "#313244",
-    card: "#313244",
-    primary: "#cba6f7",
-  },
-  gruvbox: {
-    background: "#282828",
-    muted: "#3c3836",
-    card: "#3c3836",
-    primary: "#b8bb26",
-  },
 };
 
 export function ThemePreview({
@@ -71,7 +55,7 @@ export function ThemePreview({
   return (
     <span
       className={cn(
-        "inline-flex h-7 w-10 items-center justify-center rounded-md border border-border/70 p-0.5",
+        "inline-flex h-7 w-10 items-center justify-center rounded-md border p-0.5",
         isSelected && "border-foreground/35",
       )}
     >

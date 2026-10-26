@@ -20,6 +20,7 @@ and bypassing a primitive is the most common source of drift.
 | Form field | `@/components/ui/field` + `input`/`textarea`/`select` | raw `<input>` with ad-hoc classes |
 | Button / action | `@/components/ui/button` variants | styled `<button>` for standard actions |
 | Status pill | `StatusToneBadge` (`src/components/shared/status-tone-badge.tsx`) | hand-rolled `rounded-full border` pill |
+| Page title + actions | `PageHeader` (`src/components/shared/page-header.tsx`) | hand-rolled `h1` rows, icon tiles |
 | Detail/card page frame | `DetailPageLayout` (`src/components/shared/detail-page-layout.tsx`) | repeating `PageTopBar` + `AppPageContainer` |
 | Feature list/index page frame | `FeaturePageShell` | — |
 
@@ -29,7 +30,7 @@ graph nodes, segmented toggles, drop zones), not for standard actions.
 ## Page frames
 
 - **Card/detail pages** compose `DetailPageLayout` (sticky `PageTopBar`
-  breadcrumb over a centered `AppPageContainer`). Default width `max-w-5xl`;
+  breadcrumb over a centered `AppPageContainer`). Widths are `3xl`, `5xl` (default) or `7xl` only (review sessions use `max-w-4xl`);
   narrow per content via `maxWidth` (`3xl` admin; flashcard detail uses `7xl` to match documents, with Front/Back side by side). Width is the only thing a detail page tunes — structure is fixed.
 - **Document workspaces** (note, mindmap) stay full-width (`max-w-7xl`) and own their layout for zen mode.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
@@ -56,27 +57,28 @@ autosaving detail pages, so a card looks the same in its page and its dialog.
 Uppercase section labels are for read-only sections (review card faces,
 dashboard groups), not form inputs.
 
-## Surfaces (elevation tiers)
+## Surfaces and radius
 
-Two intentional tiers — do not blur them:
+The UI is flat: one surface, no decorative shadows or gradients.
 
-- **Elevated card** — the shadcn `Card` primitive (`border bg-card shadow-sm`).
-  For dashboard/home cards and stat tiles that should lift off the page. Home
-  overview cards share `DashboardCardHeader`
-  (`src/components/home/dashboard-card-header.tsx`): a leading muted `size-4`
-  domain icon, a `text-base` title, and an optional right-aligned action.
-- **Flat panel** — `rounded-xl border border-border/70 bg-card/85`. For content
-  panels, tables, and detail sections. This is the app-wide panel surface
-  (such as flashcard management).
+- **Panel** — shadcn `Card` (`rounded-lg border bg-card`; shadow and radius
+  resolve flat through the theme tokens, so add no overrides). Always plain
+  `border-border`; do not stack opacity variants or nest bordered panels.
+- **Floating UI** (menus, popovers, dialogs, mindmap chrome) is the only place
+  for `shadow-md` and up. `shadow-xs`/`shadow-sm` are disabled in `globals.css`.
+- **Radius** — `--radius: 0.5rem`. Controls `rounded-md`, panels and dialogs
+  `rounded-lg`. `rounded-full` is for avatars and status dots only.
+- Hover/fill is `bg-muted/50`, selected is `bg-muted`. Primary is for the main
+  action, focus, and selection; intent colors are for status meaning only.
+- Home overview cards share `DashboardCardHeader`.
 
 ## Typography roles
 
 | Role | Token |
 | --- | --- |
-| Page / primary heading | `text-2xl font-bold tracking-tight` |
-| Section heading | `text-lg font-semibold tracking-tight` |
-| Uppercase section label (read-only sections) | `text-xs font-semibold uppercase tracking-wide text-muted-foreground` |
-| Table micro-label | `text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground` |
+| Page / primary / detail title | `text-xl font-semibold tracking-tight` |
+| Section heading | `text-base font-semibold tracking-tight` |
+| Uppercase section label (read-only sections) | `text-xs font-medium uppercase tracking-wide text-muted-foreground` |
 
 ## Header metadata
 
@@ -94,7 +96,7 @@ recent-documents card) where it helps sort or scan. The flashcard example is
 
 `border-dashed` carries three distinct meanings — keep them visually distinct:
 
-- **Static empty state** — `border-border/60`, muted fill (`bg-muted/20`), `text-center`,
+- **Static empty state** — `border-border`, muted fill (`bg-muted/20`), `text-center`,
   not interactive. Reuse these surface tokens at the appropriate padding; the
   subject tree example is `src/components/subjects/tree/subject-tree-empty-state.tsx`.
 - **Interactive add affordance** — `border-border/50` + `transition-colors` + a

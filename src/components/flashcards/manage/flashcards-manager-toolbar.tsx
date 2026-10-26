@@ -99,7 +99,7 @@ function ToolbarStatusBadges({
     return (
       <Badge
         variant="outline"
-        className="rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px] text-foreground"
+        className="rounded-md border-border px-2.5 py-0.5 text-xs text-foreground"
       >
         <Sparkles className="size-3.5" />
         {refineCountText}
@@ -126,7 +126,7 @@ function ToolbarStatusBadges({
     <Badge
       variant="outline"
       className={cn(
-        "rounded-full border-border/70 bg-background/70 px-2.5 py-0.5 text-[11px]",
+        "rounded-md border-border px-2.5 py-0.5 text-xs",
         hasSelection ? "text-foreground" : "text-muted-foreground",
       )}
     >
@@ -149,7 +149,7 @@ function RefineCardsButton({
       onClick={onStartRefine}
       disabled={refineMode || isLoadingStrugglingCards}
       aria-label="Refine cards"
-      className="h-10 shrink-0 gap-2 rounded-lg border-primary/30 bg-primary/5 px-3 text-primary shadow-sm hover:bg-primary/10 hover:text-primary sm:px-4"
+      className="h-10 shrink-0 gap-2 rounded-lg border-primary/30 bg-primary/5 px-3 text-primary hover:bg-primary/10 hover:text-primary sm:px-4"
     >
       {isLoadingStrugglingCards && !refineMode ? (
         <Loader2 className="size-4 animate-spin" />
@@ -193,7 +193,7 @@ export function FlashcardsManagerToolbar({
     <Button
       type="button"
       onClick={onOpenCreateDialog}
-      className="h-10 flex-1 gap-2 rounded-lg px-4 shadow-sm sm:flex-initial"
+      className="h-10 flex-1 gap-2 rounded-lg px-4 sm:flex-initial"
     >
       <CopyPlus className="size-4" />
       New Flashcard
@@ -202,8 +202,8 @@ export function FlashcardsManagerToolbar({
 
   return (
     <TooltipProvider>
-      <Card className="relative overflow-hidden rounded-xl border-border/70 bg-linear-to-br from-card via-card to-primary/5 py-0 shadow-none">
-        <CardContent className="relative px-4 py-3 sm:px-5 sm:py-4">
+      <Card className="border-border py-0">
+        <CardContent className="relative px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1 lg:max-w-3xl">
@@ -215,7 +215,7 @@ export function FlashcardsManagerToolbar({
                       onSearchQueryChange(event.target.value)
                     }
                     placeholder="Search front, back, or subject path..."
-                    className="h-10 rounded-lg border-border/70 bg-background/80 pl-10 shadow-xs"
+                    className="h-10 rounded-lg border-border bg-background/80 pl-10"
                   />
                 </div>
               </div>

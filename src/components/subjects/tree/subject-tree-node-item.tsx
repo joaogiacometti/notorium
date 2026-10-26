@@ -89,8 +89,8 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
         className={cn(
           "group flex items-center gap-1 rounded-md pr-1 transition-colors",
           isSelected
-            ? "bg-muted/60 text-foreground"
-            : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
           isDragging && "opacity-50",
           isDropTarget && "bg-background ring-1 ring-(--intent-info-border)",
         )}
@@ -268,7 +268,7 @@ function DueReviewBadge({
       href={getFlashcardReviewSessionHref(subjectId)}
       onClick={(event) => event.stopPropagation()}
       aria-label={`Review ${dueCount} due ${dueCount === 1 ? "card" : "cards"} in this subject`}
-      className="shrink-0 rounded-full bg-(--intent-info-bg) px-2 py-0.5 text-[10px] font-medium tabular-nums text-(--intent-info-text) transition-colors hover:bg-(--intent-info-bg-hover)"
+      className="shrink-0 rounded-full bg-(--intent-info-bg) px-2 py-0.5 text-xs font-medium tabular-nums text-(--intent-info-text) transition-colors hover:bg-(--intent-info-bg-hover)"
     >
       {dueCount}
     </Link>

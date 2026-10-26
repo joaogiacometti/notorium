@@ -107,7 +107,7 @@ export function FlashcardsManager({
     }
 
     return (
-      <Card className="h-[clamp(22rem,58svh,36rem)] min-w-0 overflow-hidden rounded-xl border-border/70 bg-card/85 py-0 shadow-none lg:h-auto lg:min-h-0 lg:flex-1">
+      <Card className="h-[clamp(22rem,58svh,36rem)] min-w-0 overflow-hidden rounded-lg border-border bg-card py-0 lg:h-auto lg:min-h-0 lg:flex-1">
         <FlashcardsManagerTable
           flashcards={flashcards}
           total={total}
@@ -173,7 +173,7 @@ export function FlashcardsManager({
       />
       {selectedSubjectId && isAtSubjectLimit && (
         <div
-          className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 text-sm shadow-xs ${warningTone.border} ${warningTone.bg}`}
+          className={`flex items-center gap-3 rounded-lg border px-4 py-2.5 text-sm ${warningTone.border} ${warningTone.bg}`}
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>

@@ -264,7 +264,7 @@ export function TiptapEditor({
     <div
       {...{ [EDITOR_ROOT_ATTRIBUTE]: "" }}
       className={cn(
-        "w-full min-w-0 rounded-md border border-input shadow-xs transition-colors",
+        "w-full min-w-0 rounded-md border border-input transition-colors",
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
         ariaInvalid &&
           "border-destructive focus-within:border-destructive focus-within:ring-destructive/20",
@@ -272,7 +272,7 @@ export function TiptapEditor({
       )}
     >
       {isImageUploadPending ? (
-        <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 border-b px-3 py-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
           <span>Uploading image...</span>
         </div>

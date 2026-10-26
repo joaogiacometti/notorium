@@ -221,15 +221,15 @@ export function ManagerDataTable<TRow extends RowData>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
-                    className="border-b border-border/60 bg-muted/30 hover:bg-muted/30"
+                    className="border-b bg-muted/50 hover:bg-muted/50"
                   >
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
                         className={cn(
                           header.column.id === "select"
-                            ? "sticky top-0 z-raised h-12 border-b border-border/60 bg-muted/30 px-2"
-                            : "sticky top-0 z-raised h-12 border-b border-border/60 bg-muted/30 px-3",
+                            ? "sticky top-0 z-raised h-12 border-b bg-muted/50 px-2"
+                            : "sticky top-0 z-raised h-12 border-b bg-muted/50 px-3",
                           header.column.id === "select"
                             ? selectionColumnClassName
                             : null,
@@ -287,10 +287,10 @@ export function ManagerDataTable<TRow extends RowData>({
                     <TableRow
                       key={row.id}
                       className={cn(
-                        "group border-b border-border/50 transition-colors duration-150 hover:bg-muted/20",
-                        row.getIsSelected() ? "bg-muted/10" : null,
+                        "group border-b transition-colors duration-150 hover:bg-muted/50",
+                        row.getIsSelected() ? "bg-muted" : null,
                         onRowClick
-                          ? "cursor-pointer focus-visible:bg-muted/20 focus-visible:outline-none"
+                          ? "cursor-pointer focus-visible:bg-muted/50 focus-visible:outline-none"
                           : null,
                         getRowClassName?.(row.original),
                       )}
@@ -373,7 +373,7 @@ export function ManagerDataTable<TRow extends RowData>({
           </div>
           <div
             className={cn(
-              "flex flex-col gap-2 border-t border-border/60 bg-muted/15 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-end",
+              "flex flex-col gap-2 border-t bg-muted/50 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-end",
               footerClassName,
             )}
           >
@@ -387,7 +387,7 @@ export function ManagerDataTable<TRow extends RowData>({
               <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
                 <Badge
                   variant="outline"
-                  className="rounded-full border-border/70 bg-background/80 px-3 py-1 text-muted-foreground"
+                  className="border-border px-3 py-1 text-muted-foreground"
                 >
                   {pageLabel(pagination.pageIndex + 1, totalPageCount)}
                 </Badge>
@@ -403,7 +403,7 @@ export function ManagerDataTable<TRow extends RowData>({
                     >
                       <SelectTrigger
                         size="sm"
-                        className="h-8 rounded-full border-border/70 bg-background/80"
+                        className="h-8 border-border"
                         aria-label={pageSizeLabel}
                       >
                         <SelectValue />
@@ -426,7 +426,7 @@ export function ManagerDataTable<TRow extends RowData>({
                   size="sm"
                   onClick={() => table.previousPage()}
                   disabled={isLoading || !table.getCanPreviousPage()}
-                  className="rounded-full border-border/70 bg-background/80 px-4"
+                  className="border-border px-4"
                 >
                   {prevLabel}
                 </Button>
@@ -436,7 +436,7 @@ export function ManagerDataTable<TRow extends RowData>({
                   size="sm"
                   onClick={() => table.nextPage()}
                   disabled={isLoading || !table.getCanNextPage()}
-                  className="rounded-full border-border/70 bg-background/80 px-4"
+                  className="border-border px-4"
                 >
                   {nextLabel}
                 </Button>

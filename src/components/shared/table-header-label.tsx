@@ -15,7 +15,7 @@ export function TableHeaderLabel({
   return (
     <div
       className={cn(
-        "px-1 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase",
+        "px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase",
         align === "center" ? "text-center" : null,
         align === "right" ? "text-right" : null,
         className,

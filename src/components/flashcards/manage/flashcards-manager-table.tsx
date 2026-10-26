@@ -253,8 +253,7 @@ export function FlashcardsManagerTableSkeleton({
           },
           { className: "h-6 w-full" },
           {
-            className:
-              "h-8 w-8 self-center justify-self-start rounded-full ml-1",
+            className: "h-8 w-8 self-center justify-self-start ml-1",
           },
         ],
       ]}

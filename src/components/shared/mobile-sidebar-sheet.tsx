@@ -31,7 +31,7 @@ export function MobileSidebarSheet({
   }, [pathname]);
 
   return (
-    <div className="sticky top-0 z-chrome flex items-center border-b border-border/60 bg-background/80 px-3 py-1.5 backdrop-blur lg:hidden">
+    <div className="sticky top-0 z-chrome flex items-center border-b bg-background/80 px-3 py-1.5 backdrop-blur lg:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button type="button" variant="ghost" size="sm" className="gap-1.5">

@@ -94,7 +94,7 @@ function StudyAssistantSurface({
           id="study-assistant-panel"
           aria-label="Study assistant sidebar"
           className={cn(
-            "fixed inset-y-0 right-0 w-full flex-col border-l border-border/60 bg-card shadow-lg lg:w-96",
+            "fixed inset-y-0 right-0 w-full flex-col border-l bg-card shadow-lg lg:w-96",
             open ? "flex" : "hidden",
           )}
         >
@@ -111,7 +111,7 @@ function StudyAssistantSurface({
             aria-label="Open study assistant"
             aria-expanded={false}
             onClick={toggleOpen}
-            className="size-11 rounded-full border-border/70 bg-card text-muted-foreground shadow-md"
+            className="size-11 rounded-full border-border bg-card text-muted-foreground shadow-md"
           >
             <Sparkles className="size-5" />
           </Button>

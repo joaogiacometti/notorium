@@ -76,12 +76,7 @@ export function TableSkeleton({
 
   return (
     <div className={className}>
-      <div
-        className={cn(
-          "border-b border-border/60 bg-muted/30 px-4 py-4",
-          headerClassName,
-        )}
-      >
+      <div className={cn("border-b bg-muted/50 px-4 py-4", headerClassName)}>
         <div
           className="grid gap-4"
           style={{ gridTemplateColumns: columnTemplate }}
@@ -93,10 +88,7 @@ export function TableSkeleton({
       </div>
       <div className="space-y-0">
         {normalizedRows.map((row) => (
-          <div
-            key={row.key}
-            className={cn("border-b border-border/50 px-4 py-3", rowClassName)}
-          >
+          <div key={row.key} className={cn("border-b px-4 py-3", rowClassName)}>
             <div
               className="grid gap-4"
               style={{ gridTemplateColumns: columnTemplate }}
@@ -115,7 +107,7 @@ export function TableSkeleton({
       {footer ? (
         <div
           className={cn(
-            "flex flex-col gap-2 border-t border-border/60 bg-muted/15 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-end",
+            "flex flex-col gap-2 border-t bg-muted/50 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-end",
             footerClassName,
           )}
         >

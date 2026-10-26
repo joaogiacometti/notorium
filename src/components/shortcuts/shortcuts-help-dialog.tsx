@@ -119,7 +119,7 @@ export function ShortcutsHelpDialog({
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
+            <div className="flex flex-col gap-4 overflow-y-auto px-4 py-4 sm:px-6">
               {isSearching ? (
                 <SearchResults
                   groups={searchGroups}
@@ -254,7 +254,7 @@ function ShortcutRow({ shortcut, isMac }: Readonly<ShortcutRowProps>) {
         {resolvePlatformShortcutKeys(shortcut, isMac).map((key) => (
           <kbd
             key={key}
-            className="pointer-events-none inline-flex h-6 min-w-6 select-none items-center justify-center gap-1 rounded-md border border-b-2 bg-muted px-1.5 font-mono text-xs font-semibold text-muted-foreground shadow-xs"
+            className="pointer-events-none inline-flex h-6 min-w-6 select-none items-center justify-center gap-1 rounded-md border border-b-2 bg-muted px-1.5 font-mono text-xs font-semibold text-muted-foreground"
           >
             {key}
           </kbd>

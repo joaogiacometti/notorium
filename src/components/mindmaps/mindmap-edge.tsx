@@ -220,7 +220,7 @@ export function MindmapEdge({
               matching the node toolbar's pill style. */}
           <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center gap-1">
             {showEdgeTools ? (
-              <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-md">
+              <div className="flex items-center gap-1 rounded-lg border bg-card p-1 shadow-md">
                 {MINDMAP_EDGE_DIRECTIONS.map((option) => {
                   const Icon = DIRECTION_ICONS[option];
                   return (
@@ -282,10 +282,10 @@ export function MindmapEdge({
                 }}
                 maxLength={LIMITS.mindmapEdgeLabelMax}
                 aria-label="Connection label"
-                className="h-7 w-32 rounded-md border border-border bg-card px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="h-7 w-32 rounded-md border bg-card px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               />
             ) : typeof label === "string" && label.length > 0 ? (
-              <span className="w-max max-w-48 whitespace-normal rounded-md border border-border bg-card px-2 py-1 text-center text-xs leading-snug text-muted-foreground shadow-sm">
+              <span className="w-max max-w-48 whitespace-normal rounded-md border bg-card px-2 py-1 text-center text-xs leading-snug text-muted-foreground">
                 {label}
               </span>
             ) : null}
@@ -299,7 +299,7 @@ export function MindmapEdge({
               onPointerDown={onDotPointerDown}
               onPointerMove={onDotPointerMove}
               onPointerUp={onDotPointerUp}
-              className="block size-3 cursor-grab rounded-full border border-primary bg-card shadow-sm active:cursor-grabbing"
+              className="block size-3 cursor-grab rounded-full border border-primary bg-card active:cursor-grabbing"
             />
           ) : null}
         </div>

@@ -183,7 +183,7 @@ export function MindmapNodeComponent({
             onClick={() => actions.setNodeImage(id, null)}
             aria-label="Remove image"
             title="Remove image"
-            className="nodrag absolute right-1 top-1 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-destructive/10 hover:text-destructive"
+            className="nodrag absolute right-1 top-1 flex size-5 items-center justify-center rounded-full border bg-card text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <X className="size-3" />
           </button>
@@ -192,7 +192,7 @@ export function MindmapNodeComponent({
     );
   } else if (uploading) {
     imageSection = (
-      <div className="mb-2 flex h-32 items-center justify-center rounded border border-dashed border-border bg-muted/30">
+      <div className="mb-2 flex h-32 items-center justify-center rounded border border-dashed border-border bg-muted/50">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
       </div>
     );
@@ -208,7 +208,7 @@ export function MindmapNodeComponent({
 
   return (
     <div
-      className="w-48 rounded-md border bg-card px-3 py-2 text-sm text-card-foreground shadow-sm"
+      className="w-48 rounded-md border bg-card px-3 py-2 text-sm text-card-foreground"
       style={{ ...mindmapNodeTint(data.color), borderWidth: 1, boxShadow }}
     >
       <MindmapNodeToolbar

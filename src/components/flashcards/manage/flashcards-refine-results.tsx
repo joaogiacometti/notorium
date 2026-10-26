@@ -63,7 +63,7 @@ function getColumns(
         <div className="flex min-w-0 items-center gap-3 py-1">
           <div
             className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-xl border shadow-xs",
+              "flex size-9 shrink-0 items-center justify-center rounded-lg border",
               strugglingTone.border,
               strugglingTone.bg,
               strugglingTone.text,
@@ -140,7 +140,7 @@ export function FlashcardsRefineResults({
   } = useRefineCardActions();
 
   return (
-    <Card className="overflow-hidden border-border/70 bg-card/85 py-0 shadow-none lg:min-h-0 lg:flex-1">
+    <Card className="overflow-hidden border-border bg-card py-0 lg:min-h-0 lg:flex-1">
       <ManagerDataTable
         data={cards}
         columns={getColumns(improvingCardId, handleImproveCard)}

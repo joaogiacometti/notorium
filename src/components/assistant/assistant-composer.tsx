@@ -47,7 +47,7 @@ export function AssistantComposer({
 
   return (
     <form
-      className="flex items-end gap-2 border-t border-border/60 p-3"
+      className="flex items-end gap-2 border-t p-3"
       onSubmit={(event) => {
         event.preventDefault();
         void submitDraft();

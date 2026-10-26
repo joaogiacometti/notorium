@@ -31,7 +31,7 @@ export function RecentDocumentsCard({
               <li key={`${document.kind}-${document.id}`}>
                 <Link
                   href={getDocumentDetailHref(document)}
-                  className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+                  className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 >
                   {document.kind === "note" ? (
                     <FileText className="size-4 shrink-0" />

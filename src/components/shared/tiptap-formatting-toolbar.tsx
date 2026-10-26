@@ -180,7 +180,7 @@ export function TiptapFormattingToolbar({
         aria-label="Text formatting"
         aria-orientation="horizontal"
         onKeyDown={moveToolbarFocus}
-        className="flex shrink-0 items-center overflow-x-auto border-b border-border/60 bg-background/95 px-2 py-1"
+        className="flex shrink-0 items-center overflow-x-auto border-b bg-background/95 px-2 py-1"
       >
         {actions.map((action, index) => (
           <Fragment key={action.label}>

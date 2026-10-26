@@ -20,7 +20,7 @@ export function StatusToneBadge({
     <Badge
       variant="outline"
       className={cn(
-        "rounded-full px-2 py-0.5 text-xs",
+        "rounded-md px-2 py-0.5 text-xs",
         toneClasses.border,
         toneClasses.bg,
         toneClasses.text,

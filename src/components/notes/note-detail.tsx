@@ -198,7 +198,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                         aria-label="Note title"
                         aria-invalid={fieldState.invalid}
                         className={cn(
-                          "h-10 w-full min-w-0 rounded-md border-0 bg-transparent px-3 py-0 text-lg leading-10 font-semibold tracking-tight shadow-none hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring/40 sm:text-xl",
+                          "h-10 w-full min-w-0 rounded-md border-0 bg-transparent px-3 py-0 text-xl leading-10 font-semibold tracking-tight hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40",
                           documentReview &&
                             documentReview.baseline.draft.title !==
                               documentReview.prepared.title &&

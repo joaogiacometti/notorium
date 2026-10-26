@@ -47,7 +47,7 @@ export function SettingsSection({
   return (
     <section>
       {query ? null : (
-        <h2 className="mb-2 text-xl font-semibold tracking-tight">{title}</h2>
+        <h2 className="mb-2 text-base font-semibold tracking-tight">{title}</h2>
       )}
       <div className="divide-y divide-border/60">{children}</div>
     </section>

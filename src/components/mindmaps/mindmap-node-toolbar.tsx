@@ -32,7 +32,7 @@ export function MindmapNodeToolbar({
 
   return (
     <NodeToolbar isVisible={isVisible} position={Position.Top}>
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-md">
+      <div className="flex items-center gap-1 rounded-lg border bg-card p-1 shadow-md">
         <MindmapToolbarButton
           label="Bold"
           active={Boolean(data.bold)}

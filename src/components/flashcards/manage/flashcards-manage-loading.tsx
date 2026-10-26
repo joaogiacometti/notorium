@@ -9,8 +9,8 @@ export function FlashcardsManageLoading() {
         className="flex flex-col gap-3 lg:h-full lg:min-h-0"
         data-testid="flashcards-manage-loading"
       >
-        <div className="relative overflow-hidden rounded-xl border border-border/70 bg-card/85">
-          <div className="relative px-4 py-3 sm:px-5 sm:py-4">
+        <div className="rounded-lg border bg-card">
+          <div className="relative px-4 py-3 sm:px-6 sm:py-4">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 flex-1 lg:max-w-3xl">
@@ -31,7 +31,7 @@ export function FlashcardsManageLoading() {
             </div>
           </div>
         </div>
-        <div className="overflow-hidden rounded-xl border border-border/70 bg-card/85 lg:min-h-0 lg:flex-1">
+        <div className="overflow-hidden rounded-lg border bg-card lg:min-h-0 lg:flex-1">
           <FlashcardsManagerTableSkeleton />
         </div>
       </div>

@@ -45,7 +45,7 @@ export function MindmapImageNode({
     );
   } else if (uploading) {
     nodeContent = (
-      <div className="flex size-full items-center justify-center rounded-md bg-muted/30">
+      <div className="flex size-full items-center justify-center rounded-md bg-muted/50">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -79,7 +79,7 @@ export function MindmapImageNode({
         }}
       />
       <NodeToolbar isVisible={Boolean(selected)} position={Position.Top}>
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-md">
+        <div className="flex items-center gap-1 rounded-lg border bg-card p-1 shadow-md">
           <MindmapToolbarButton
             label="Delete image"
             destructive
