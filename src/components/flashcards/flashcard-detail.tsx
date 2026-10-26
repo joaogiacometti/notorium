@@ -11,18 +11,12 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editFlashcard } from "@/app/actions/flashcards";
 import { useActiveFlashcardEditor } from "@/components/assistant/use-active-flashcard-editor";
+import { DocumentAutosaveFeedback } from "@/components/documents/document-autosave-feedback";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
@@ -44,8 +38,7 @@ import {
   type FlashcardFormValues,
   flashcardFormSchema,
 } from "@/features/flashcards/validation";
-import { useBeforeUnload } from "@/lib/editor/use-before-unload";
-import { useDebouncedValue } from "@/lib/react/use-debounced-value";
+import { useDocumentAutosave } from "@/lib/editor/use-document-autosave";
 import type { FlashcardDetailEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -57,7 +50,6 @@ interface FlashcardDetailProps {
   aiEnabled: boolean;
 }
 
-const AUTOSAVE_DELAY_MS = 800;
 const FlashcardFieldReview = dynamic(
   () =>
     import("@/components/flashcards/dialogs/flashcard-field-review").then(
@@ -75,10 +67,6 @@ function getEditValues(flashcard: FlashcardDetailEntity): FlashcardFormValues {
   };
 }
 
-function isSameFlashcardEdit(a: FlashcardFormValues, b: FlashcardFormValues) {
-  return a.front === b.front && a.back === b.back;
-}
-
 export function FlashcardDetail({
   breadcrumb,
   returnHref,
@@ -93,13 +81,9 @@ export function FlashcardDetail({
   const [moveOpen, setMoveOpen] = useState(false);
   // Stable reference required — BulkMoveFlashcardsDialog has `ids` in its effect deps
   const moveIds = useMemo(() => [flashcard.id], [flashcard.id]);
-  const [isSaving, setIsSaving] = useState(false);
   const [isFrontImageUploading, setIsFrontImageUploading] = useState(false);
   const [isBackImageUploading, setIsBackImageUploading] = useState(false);
   const isImageUploading = isFrontImageUploading || isBackImageUploading;
-  const lastSavedValuesRef = useRef(getEditValues(flashcard));
-  const saveSequenceRef = useRef(0);
-
   const form = useForm<FlashcardFormValues>({
     resolver: zodResolver(flashcardFormSchema),
     defaultValues: getEditValues(flashcard),
@@ -107,89 +91,39 @@ export function FlashcardDetail({
 
   const watchedFront = form.watch("front");
   const watchedBack = form.watch("back");
-  // useMemo required for correctness: prevents the debounce timer from resetting
-  // on every render — must only reset when a field value actually changes
-  const watchedValues = useMemo(
-    () => ({ front: watchedFront, back: watchedBack }),
-    [watchedFront, watchedBack],
-  );
-  const debouncedValues = useDebouncedValue(watchedValues, AUTOSAVE_DELAY_MS);
-
-  const review = useActiveFlashcardEditor({
-    form,
-    enabled: aiEnabled,
-    resetVersion: flashcard.id,
-    blocked: isSaving || isImageUploading,
-  });
-  const hasDirtyValues = !isSameFlashcardEdit(
-    form.getValues(),
-    lastSavedValuesRef.current,
-  );
-
-  useBeforeUnload(
-    hasDirtyValues || isSaving || isImageUploading || review.blocked,
-  );
-
-  const saveFlashcardValues = useCallback(
-    async (values: FlashcardFormValues) => {
-      const isValid = await form.trigger();
-      if (!isValid) {
+  // AI review pauses autosave; the availability check reads autosave after render.
+  const review: ReturnType<typeof useActiveFlashcardEditor> =
+    useActiveFlashcardEditor({
+      form,
+      enabled: aiEnabled,
+      resetVersion: flashcard.id,
+      blocked: (): boolean => autosave.isSaving || isImageUploading,
+    });
+  const autosave = useDocumentAutosave({
+    documentId: flashcard.id,
+    initialValue: getEditValues(flashcard),
+    value: {
+      id: flashcard.id,
+      subjectId: flashcard.subjectId ?? "",
+      front: watchedFront,
+      back: watchedBack,
+    },
+    blocked: isImageUploading || review.blocked,
+    persist: async (values) => {
+      if (!flashcardFormSchema.safeParse(values).success) {
+        await form.trigger();
         return false;
       }
-
-      const saveSequence = saveSequenceRef.current + 1;
-      saveSequenceRef.current = saveSequence;
-      setIsSaving(true);
-
       const result = await editFlashcard({ ...values, id: flashcard.id });
-
-      if (saveSequence !== saveSequenceRef.current) {
-        return result.success;
-      }
-
-      setIsSaving(false);
-
       if (!result.success) {
         toast.error(t(result.errorCode, result.errorParams));
         return false;
       }
-
-      lastSavedValuesRef.current = values;
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      if (isSameFlashcardEdit(form.getValues(), values)) {
-        form.reset(values);
-      }
-
       return true;
     },
-    [form, queryClient, flashcard.id],
-  );
-
-  useEffect(() => {
-    const nextValues: FlashcardFormValues = {
-      id: flashcard.id,
-      subjectId: flashcard.subjectId ?? "",
-      front: debouncedValues.front,
-      back: debouncedValues.back,
-    };
-
-    if (isSameFlashcardEdit(nextValues, lastSavedValuesRef.current)) {
-      return;
-    }
-
-    if (isImageUploading || review.blocked) {
-      return;
-    }
-
-    void saveFlashcardValues(nextValues);
-  }, [
-    debouncedValues,
-    flashcard.id,
-    flashcard.subjectId,
-    isImageUploading,
-    review.blocked,
-    saveFlashcardValues,
-  ]);
+    onError: () => toast.error("Could not save the flashcard."),
+  });
 
   return (
     <DetailPageLayout breadcrumb={breadcrumb} maxWidth="7xl">
@@ -206,6 +140,7 @@ export function FlashcardDetail({
         </div>
 
         <div className="flex shrink-0">
+          <DocumentAutosaveFeedback {...autosave} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -275,7 +210,7 @@ export function FlashcardDetail({
                 <FlashcardFieldReview
                   key={`${review.pending.toolCallId}-front`}
                   field="front"
-                  disabled={isSaving || isImageUploading}
+                  disabled={autosave.isSaving || isImageUploading}
                   proposal={review.pending.fields.front}
                   onDecide={(accept) => review.decide?.("front", accept)}
                 />
@@ -308,7 +243,7 @@ export function FlashcardDetail({
                 <FlashcardFieldReview
                   key={`${review.pending.toolCallId}-back`}
                   field="back"
-                  disabled={isSaving || isImageUploading}
+                  disabled={autosave.isSaving || isImageUploading}
                   proposal={review.pending.fields.back}
                   onDecide={(accept) => review.decide?.("back", accept)}
                 />

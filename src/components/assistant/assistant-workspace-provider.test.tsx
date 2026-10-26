@@ -21,6 +21,7 @@ function DraftHarness() {
     partial: false,
   });
   const [open, setOpen] = useState(true);
+  const [blocked, setBlocked] = useState(false);
   const [generation, setGeneration] = useState(0);
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
@@ -32,7 +33,7 @@ function DraftHarness() {
   const review = useActiveFlashcardEditor({
     form,
     enabled: open,
-    blocked: false,
+    blocked: () => blocked,
     resetVersion: generation,
   });
   const values = form.watch();
@@ -85,6 +86,9 @@ function DraftHarness() {
       <button type="button" onClick={() => setOpen(false)}>
         Close
       </button>
+      <button type="button" onClick={() => setBlocked(true)}>
+        Block editor
+      </button>
       <button type="button" onClick={() => setGeneration(generation + 1)}>
         Reset draft
       </button>
@@ -135,6 +139,13 @@ describe("shared assistant flashcard editing", () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
   }
+
+  it("checks the current editor availability when sending", async () => {
+    await click("Block editor");
+    await click("Send");
+    expect(transport.requests).toHaveLength(0);
+    expect(read("notice")).toContain("Wait for saving");
+  });
 
   it("captures the document source on the user turn only when document context is active", async () => {
     await click("Send");

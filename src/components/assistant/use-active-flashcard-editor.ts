@@ -21,7 +21,7 @@ interface ActiveFlashcardEditorOptions<TValues extends FlashcardFormValues> {
   enabled: boolean;
   resetVersion?: number | string;
   subjects?: SubjectOption[];
-  blocked: boolean;
+  blocked: boolean | (() => boolean);
 }
 
 /** Register the live form; snapshots are read at send time, never cached props.
@@ -73,9 +73,13 @@ export function useActiveFlashcardEditor<TValues extends FlashcardFormValues>(
     return workspaceRef.current.register({
       sessionId,
       snapshot,
-      available: () =>
-        !optionsRef.current.blocked &&
-        optionsRef.current.form.getValues().id === recordId,
+      available: () => {
+        const blocked = optionsRef.current.blocked;
+        return (
+          !(typeof blocked === "function" ? blocked() : blocked) &&
+          optionsRef.current.form.getValues().id === recordId
+        );
+      },
       apply: (field: FlashcardEditField, html: string) =>
         optionsRef.current.form.setValue(
           field as Path<TValues>,
