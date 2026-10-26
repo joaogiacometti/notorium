@@ -1,8 +1,9 @@
 import { FlashcardsPageClient } from "@/components/flashcards/flashcards-page-client";
 import { FlashcardsViewSwitch } from "@/components/flashcards/shared/flashcards-view-switch";
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
-import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
+import { getFlashcardReviewSummaryForUser } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
+import { resolveScopedSubjectId } from "@/features/flashcards/scope";
 import { resolveFlashcardsView } from "@/features/flashcards/view";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { isAiEnabled } from "@/lib/ai/config";
@@ -15,7 +16,6 @@ interface FlashcardsPageProps {
     subjectId?: string;
     search?: string;
     pageSize?: string;
-    focus?: string;
   }>;
 }
 
@@ -24,16 +24,12 @@ export default async function FlashcardsPage({
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
   const aiEnabled = isAiEnabled();
-  const { view, subjectId, search, pageSize, focus } = await searchParams;
+  const { view, subjectId, search, pageSize } = await searchParams;
   const currentView = resolveFlashcardsView(view);
-  const autoStartReview = currentView === "review" && focus === "1";
   const initialPageSize = resolvePageSize(pageSize);
   const subjects = await getAllSubjectsWithPathsForUser(session.user.id);
 
-  const scopedSubjectId =
-    subjectId && subjects.some((subject) => subject.id === subjectId)
-      ? subjectId
-      : undefined;
+  const scopedSubjectId = resolveScopedSubjectId(subjects, subjectId);
   const initialManageSearch =
     currentView === "manage" ? search?.trim() : undefined;
 
@@ -47,13 +43,16 @@ export default async function FlashcardsPage({
     },
   );
 
-  const initialReviewState = getFlashcardReviewStateForUser(session.user.id, {
-    subjectId: scopedSubjectId,
-    limit: 50,
-  });
+  const reviewSummary = getFlashcardReviewSummaryForUser(
+    session.user.id,
+    new Date(),
+    { subjectId: scopedSubjectId },
+  );
 
-  const [initialManagePageDataResult, initialReviewStateResult] =
-    await Promise.all([initialManagePageData, initialReviewState]);
+  const [initialManagePageDataResult, reviewSummaryResult] = await Promise.all([
+    initialManagePageData,
+    reviewSummary,
+  ]);
 
   return (
     <FeaturePageShell
@@ -71,12 +70,11 @@ export default async function FlashcardsPage({
       <FlashcardsPageClient
         currentView={currentView}
         scopedSubjectId={scopedSubjectId}
-        autoStartReview={autoStartReview}
         initialSearch={initialManageSearch}
         initialPageSize={initialPageSize}
         subjects={subjects}
         initialManagePageData={initialManagePageDataResult}
-        initialReviewState={initialReviewStateResult}
+        reviewSummary={reviewSummaryResult}
         aiEnabled={aiEnabled}
       />
     </FeaturePageShell>

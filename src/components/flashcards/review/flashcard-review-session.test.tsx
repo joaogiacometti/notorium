@@ -6,17 +6,13 @@ import {
   reviewFlashcard,
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
-import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
 import {
   createDeferred,
   makeCard,
   makeReviewState,
-  setDocumentVisibility,
 } from "@/components/flashcards/review/flashcard-review-client-test-support";
-import {
-  fetchExamFlashcards,
-  fetchFlashcardReviewState,
-} from "@/lib/read-api/flashcards";
+import { FlashcardReviewSession } from "@/components/flashcards/review/flashcard-review-session";
+import { fetchFlashcardReviewState } from "@/lib/read-api/flashcards";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -31,16 +27,24 @@ vi.mock("@/app/actions/flashcard-review", () => ({
   undoFlashcardReview: vi.fn(),
 }));
 
-// The controller refreshes the app shell through the App Router after review
-// writes settle; these tests only need a mounted router stand-in.
-const appRouterStandIn = vi.hoisted(() => ({ refresh: () => {} }));
+// Records navigation in place of the Next.js App Router.
+class FakeAppRouter {
+  pushedHrefs: string[] = [];
+  push = (href: string): void => {
+    this.pushedHrefs.push(href);
+  };
+  refresh = (): void => {};
+}
+
+const appRouterStandIn = vi.hoisted(() => ({
+  current: null as null | FakeAppRouter,
+}));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => appRouterStandIn,
+  useRouter: () => appRouterStandIn.current,
 }));
 
 vi.mock("@/lib/read-api/flashcards", () => ({
-  fetchExamFlashcards: vi.fn(),
   fetchFlashcardReviewState: vi.fn(),
 }));
 
@@ -75,38 +79,37 @@ vi.mock("@/components/flashcards/dialogs/lazy-edit-flashcard-dialog", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/flashcards/review/exam-results-screen", () => ({
-  ExamResultsScreen: () => null,
-}));
-
-vi.mock("@/components/flashcards/review/review-focus-mode-overlay", () => ({
-  FocusModeOverlay: ({
+vi.mock("@/components/flashcards/review/review-session-screen", () => ({
+  ReviewSessionScreen: ({
     currentCard,
-    isExamMode,
     isLoadingMoreCards,
     canUndoReview,
     onGrade,
     onUndoReview,
     onEditFlashcard,
+    onExit,
   }: {
     currentCard?: { id: string } | null;
-    isExamMode?: boolean;
     isLoadingMoreCards?: boolean;
     canUndoReview: boolean;
     onGrade: (grade: "good") => void;
     onUndoReview: () => void;
     onEditFlashcard: () => void;
+    onExit: () => void;
   }) => (
     <div
       data-current-card-id={currentCard?.id}
       data-loading-more-cards={isLoadingMoreCards ? "true" : "false"}
-      data-testid={isExamMode ? "exam-focus-mode" : "review-focus-mode"}
+      data-testid="review-session"
     >
       <button type="button" onClick={() => onGrade("good")}>
         Grade good
       </button>
       <button type="button" onClick={onEditFlashcard}>
         Edit card
+      </button>
+      <button type="button" onClick={onExit}>
+        Exit session
       </button>
       {canUndoReview ? (
         <button type="button" onClick={onUndoReview}>
@@ -129,20 +132,21 @@ vi.mock("sonner", () => ({
 }));
 
 const getFlashcardReviewStateMock = vi.mocked(fetchFlashcardReviewState);
-const getExamFlashcardsMock = vi.mocked(fetchExamFlashcards);
 const reviewFlashcardMock = vi.mocked(reviewFlashcard);
 const undoFlashcardReviewMock = vi.mocked(undoFlashcardReview);
 
-describe("FlashcardReviewClient", () => {
+describe("FlashcardReviewSession", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let router: FakeAppRouter;
 
   beforeEach(() => {
+    router = new FakeAppRouter();
+    appRouterStandIn.current = router;
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    setDocumentVisibility("visible");
   });
 
   afterEach(async () => {
@@ -151,110 +155,7 @@ describe("FlashcardReviewClient", () => {
     });
     container.remove();
     vi.clearAllMocks();
-    setDocumentVisibility("visible");
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
-  });
-
-  it("refreshes review counts when the document becomes visible again", async () => {
-    getFlashcardReviewStateMock.mockResolvedValue(makeReviewState(5));
-
-    await renderReviewClient(makeReviewState(8));
-
-    expect(container.textContent).toContain("8 due");
-
-    await act(async () => {
-      document.dispatchEvent(new Event("visibilitychange"));
-    });
-
-    expect(getFlashcardReviewStateMock).toHaveBeenCalledWith({
-      subjectId: undefined,
-      limit: 50,
-    });
-    expect(container.textContent).toContain("5 due");
-  });
-
-  it("refreshes review counts when the window receives focus", async () => {
-    getFlashcardReviewStateMock.mockResolvedValue(makeReviewState(3));
-
-    await renderReviewClient(makeReviewState(8));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("focus"));
-    });
-
-    expect(getFlashcardReviewStateMock).toHaveBeenCalledTimes(1);
-    expect(container.textContent).toContain("3 due");
-  });
-
-  it("does not start a duplicate return refresh while one is in flight", async () => {
-    const deferred = createDeferred<FlashcardReviewState>();
-    getFlashcardReviewStateMock.mockReturnValue(deferred.promise);
-
-    await renderReviewClient(makeReviewState(8));
-
-    await act(async () => {
-      window.dispatchEvent(new Event("focus"));
-      document.dispatchEvent(new Event("visibilitychange"));
-    });
-
-    expect(getFlashcardReviewStateMock).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      deferred.resolve(makeReviewState(4));
-      await deferred.promise;
-    });
-
-    expect(container.textContent).toContain("4 due");
-  });
-
-  it("skips return refresh while exam mode is active", async () => {
-    const card = makeCard("card-1");
-    getExamFlashcardsMock.mockResolvedValue([card]);
-
-    await renderReviewClient(makeReviewState(1, [card]));
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-exam-start-button"]',
-        )
-        ?.click();
-    });
-
-    await act(async () => {});
-
-    expect(
-      document.body.querySelector('[data-testid="exam-focus-mode"]'),
-    ).toBeTruthy();
-
-    await act(async () => {
-      window.dispatchEvent(new Event("focus"));
-    });
-
-    expect(getFlashcardReviewStateMock).not.toHaveBeenCalled();
-  });
-
-  it("skips return refresh while review focus mode is active", async () => {
-    await renderReviewClient(makeReviewState(1, [makeCard("card-1")]));
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-review-start-button"]',
-        )
-        ?.click();
-    });
-
-    expect(
-      document.body.querySelector('[data-testid="review-focus-mode"]'),
-    ).toBeTruthy();
-
-    await act(async () => {
-      window.dispatchEvent(new Event("focus"));
-      document.dispatchEvent(new Event("visibilitychange"));
-    });
-
-    expect(getFlashcardReviewStateMock).not.toHaveBeenCalled();
   });
 
   it("submits grades through the review server action", async () => {
@@ -270,15 +171,7 @@ describe("FlashcardReviewClient", () => {
       flashcard: card,
     });
 
-    await renderReviewClient(makeReviewState(1, [card]));
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-review-start-button"]',
-        )
-        ?.click();
-    });
+    await renderSession(makeReviewState(1, [card]));
 
     await act(async () => {
       document.body.querySelector<HTMLButtonElement>("button")?.click();
@@ -295,15 +188,7 @@ describe("FlashcardReviewClient", () => {
     const card = makeCard("card-1");
     reviewFlashcardMock.mockRejectedValue(new Error("network down"));
 
-    await renderReviewClient(makeReviewState(1, [card]));
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-review-start-button"]',
-        )
-        ?.click();
-    });
+    await renderSession(makeReviewState(1, [card]));
 
     await act(async () => {
       document.body.querySelector<HTMLButtonElement>("button")?.click();
@@ -317,92 +202,8 @@ describe("FlashcardReviewClient", () => {
     ).toBeTruthy();
   });
 
-  it("refreshes the active subject after undo and ignores an older refill", async () => {
-    const reviewedCard = {
-      ...makeCard("card-1"),
-      state: "review" as const,
-      dueAt: new Date("2026-04-07T11:00:00.000Z"),
-      reviewCount: 1,
-    };
-    const chemistryCard = {
-      ...makeCard("card-2"),
-      subjectId: "deck-2",
-      subjectName: "Chemistry",
-      subjectPath: "Chemistry",
-    };
-    const staleRefill = createDeferred<FlashcardReviewState>();
-    getFlashcardReviewStateMock
-      .mockReturnValueOnce(staleRefill.promise)
-      .mockResolvedValueOnce(makeReviewState(1, [chemistryCard]));
-    reviewFlashcardMock.mockResolvedValue({
-      success: true,
-      reviewedCardId: "card-1",
-      reviewLogId: "review-log-1",
-      flashcard: reviewedCard,
-    });
-    undoFlashcardReviewMock.mockResolvedValue({
-      success: true,
-      flashcard: makeCard("card-1"),
-    });
-
-    await renderReviewClient(
-      makeReviewState(2, [makeCard("card-1")]),
-      "deck-1",
-    );
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-review-start-button"]',
-        )
-        ?.click();
-    });
-
-    await act(async () => {
-      document.body.querySelector<HTMLButtonElement>("button")?.click();
-    });
-
-    await renderReviewClient(makeReviewState(1, [chemistryCard]), "deck-2");
-
-    await act(async () => {
-      Array.from(document.body.querySelectorAll("button"))
-        .find((button) => button.textContent === "Undo last review")
-        ?.click();
-    });
-
-    await vi.waitFor(() => {
-      expect(getFlashcardReviewStateMock).toHaveBeenLastCalledWith({
-        subjectId: "deck-2",
-        limit: 50,
-      });
-      expect(
-        document.body.querySelector('[data-current-card-id="card-2"]'),
-      ).toBeTruthy();
-    });
-
-    await act(async () => {
-      staleRefill.resolve(makeReviewState(1, [makeCard("stale-card")]));
-      await staleRefill.promise;
-    });
-
-    expect(
-      document.body.querySelector('[data-current-card-id="card-2"]'),
-    ).toBeTruthy();
-    expect(
-      document.body.querySelector('[data-current-card-id="stale-card"]'),
-    ).toBeFalsy();
-  });
-
-  it("opens reset confirmation on uppercase R in focus mode", async () => {
-    await renderReviewClient(makeReviewState(1, [makeCard("card-1")]));
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-review-start-button"]',
-        )
-        ?.click();
-    });
+  it("opens reset confirmation on uppercase R in the session", async () => {
+    await renderSession(makeReviewState(1, [makeCard("card-1")]));
 
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "R" }));
@@ -413,16 +214,8 @@ describe("FlashcardReviewClient", () => {
     ).toBeTruthy();
   });
 
-  it("keeps focus mode on Escape while the edit dialog is open", async () => {
-    await renderReviewClient(makeReviewState(1, [makeCard("card-1")]));
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-review-start-button"]',
-        )
-        ?.click();
-    });
+  it("stays on the session on Escape while the edit dialog is open", async () => {
+    await renderSession(makeReviewState(1, [makeCard("card-1")]));
 
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "e" }));
@@ -437,47 +230,14 @@ describe("FlashcardReviewClient", () => {
     });
 
     expect(
-      document.body.querySelector('[data-testid="review-focus-mode"]'),
+      document.body.querySelector('[data-testid="review-session"]'),
     ).toBeTruthy();
-  });
-
-  // Regression: the hub trailed the refreshed sidebar (17 vs 18) until reload.
-  it("re-reads hub due counts from the server after leaving focus mode", async () => {
-    const card = makeCard("card-1");
-    reviewFlashcardMock.mockResolvedValue({
-      success: true,
-      reviewedCardId: "card-1",
-      reviewLogId: "review-log-1",
-      flashcard: { ...card, reviewCount: 1 },
-    });
-    getFlashcardReviewStateMock.mockResolvedValue(
-      makeReviewState(5, [makeCard("card-2")]),
-    );
-    await renderReviewClient(makeReviewState(2, [card, makeCard("card-3")]));
-    await startReview();
-
-    await act(async () => clickButton("Grade good"));
-    await act(async () => {
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-    });
-
-    expect(container.textContent).toContain("5 due");
   });
 
   function clickButton(label: string) {
     Array.from(document.body.querySelectorAll("button"))
       .find((button) => button.textContent === label)
       ?.click();
-  }
-
-  async function startReview() {
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="flashcard-review-start-button"]',
-        )
-        ?.click();
-    });
   }
 
   it("reports once when refilling the review queue keeps failing", async () => {
@@ -492,11 +252,7 @@ describe("FlashcardReviewClient", () => {
         dueAt: new Date("2099-01-01T00:00:00.000Z"),
       },
     });
-    await renderReviewClient(
-      makeReviewState(3, [makeCard("card-1")]),
-      "deck-1",
-    );
-    await startReview();
+    await renderSession(makeReviewState(3, [makeCard("card-1")]), "deck-1");
 
     await act(async () => {
       clickButton("Grade good");
@@ -513,11 +269,10 @@ describe("FlashcardReviewClient", () => {
 
   it("drops a card moved out of scope when the refresh after editing fails", async () => {
     getFlashcardReviewStateMock.mockRejectedValue(new TypeError("offline"));
-    await renderReviewClient(
+    await renderSession(
       makeReviewState(2, [makeCard("card-1"), makeCard("card-2")]),
       "deck-1",
     );
-    await startReview();
 
     await act(async () => {
       clickButton("Edit card");
@@ -531,6 +286,51 @@ describe("FlashcardReviewClient", () => {
         document.body.querySelector('[data-current-card-id="card-2"]'),
       ).toBeTruthy();
     });
+  });
+
+  it("returns to the scoped review hub when exiting", async () => {
+    await renderSession(makeReviewState(1, [makeCard("card-1")]), "deck-1");
+
+    await act(async () => clickButton("Exit session"));
+
+    expect(router.pushedHrefs).toEqual([
+      "/flashcards?view=review&subjectId=deck-1",
+    ]);
+  });
+
+  it("waits for a grade to finish saving before leaving", async () => {
+    const save = createDeferred<Awaited<ReturnType<typeof reviewFlashcard>>>();
+    reviewFlashcardMock.mockReturnValue(save.promise);
+    await renderSession(
+      makeReviewState(2, [makeCard("card-1"), makeCard("card-2")]),
+    );
+
+    await act(async () => clickButton("Grade good"));
+    await act(async () => clickButton("Exit session"));
+
+    expect(router.pushedHrefs).toEqual([]);
+
+    await act(async () => {
+      save.resolve({
+        success: true,
+        reviewedCardId: "card-1",
+        reviewLogId: "review-log-1",
+        flashcard: makeCard("card-1"),
+      });
+      await save.promise;
+    });
+
+    expect(router.pushedHrefs).toEqual(["/flashcards?view=review"]);
+  });
+
+  it("exits on Escape", async () => {
+    await renderSession(makeReviewState(1, [makeCard("card-1")]));
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+
+    expect(router.pushedHrefs).toEqual(["/flashcards?view=review"]);
   });
 
   function makeReviewCard(id: string): FlashcardReviewEntity {
@@ -556,10 +356,9 @@ describe("FlashcardReviewClient", () => {
   it("shows the next card before the grade is saved and offers undo once it is", async () => {
     const save = createDeferred<Awaited<ReturnType<typeof reviewFlashcard>>>();
     reviewFlashcardMock.mockReturnValue(save.promise);
-    await renderReviewClient(
+    await renderSession(
       makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
     );
-    await startReview();
 
     await act(async () => {
       clickButton("Grade good");
@@ -601,10 +400,9 @@ describe("FlashcardReviewClient", () => {
       success: true,
       flashcard: makeReviewCard("card-1"),
     });
-    await renderReviewClient(
+    await renderSession(
       makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
     );
-    await startReview();
 
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "u" }));
@@ -632,10 +430,9 @@ describe("FlashcardReviewClient", () => {
       success: false,
       errorCode: "flashcards.review.unavailable",
     });
-    await renderReviewClient(
+    await renderSession(
       makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
     );
-    await startReview();
 
     await act(async () => {
       clickButton("Grade good");
@@ -653,8 +450,7 @@ describe("FlashcardReviewClient", () => {
     getFlashcardReviewStateMock.mockResolvedValue(
       makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
     );
-    await renderReviewClient(makeReviewState(2, [makeReviewCard("card-1")]));
-    await startReview();
+    await renderSession(makeReviewState(2, [makeReviewCard("card-1")]));
 
     await act(async () => {
       clickButton("Grade good");
@@ -683,10 +479,9 @@ describe("FlashcardReviewClient", () => {
   it("asks before leaving the page while a grade is still saving", async () => {
     const save = createDeferred<Awaited<ReturnType<typeof reviewFlashcard>>>();
     reviewFlashcardMock.mockReturnValue(save.promise);
-    await renderReviewClient(
+    await renderSession(
       makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
     );
-    await startReview();
 
     expect(dispatchBeforeUnload().defaultPrevented).toBe(false);
 
@@ -721,8 +516,7 @@ describe("FlashcardReviewClient", () => {
       },
     });
     getFlashcardReviewStateMock.mockReturnValue(refill.promise);
-    await renderReviewClient(makeReviewState(2, [makeReviewCard("card-1")]));
-    await startReview();
+    await renderSession(makeReviewState(2, [makeReviewCard("card-1")]));
 
     await act(async () => {
       clickButton("Grade good");
@@ -751,8 +545,7 @@ describe("FlashcardReviewClient", () => {
         ? makeReviewState(1, [makeReviewCard("card-2")])
         : makeReviewState(2, [makeReviewCard("card-1")]),
     );
-    await renderReviewClient(makeReviewState(2, [makeReviewCard("card-1")]));
-    await startReview();
+    await renderSession(makeReviewState(2, [makeReviewCard("card-1")]));
 
     await act(async () => {
       clickButton("Grade good");
@@ -780,13 +573,13 @@ describe("FlashcardReviewClient", () => {
     });
   });
 
-  async function renderReviewClient(
+  async function renderSession(
     initialState: FlashcardReviewState,
     subjectId?: string,
   ) {
     await act(async () => {
       root.render(
-        <FlashcardReviewClient
+        <FlashcardReviewSession
           initialState={initialState}
           subjects={[]}
           subjectId={subjectId}

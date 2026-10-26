@@ -24,8 +24,6 @@ export const flashcardExamScopeSchema = z.object({
   subjectId: idSchema.optional(),
 });
 
-export type FlashcardExamScopeInput = z.infer<typeof flashcardExamScopeSchema>;
-
 export const flashcardReviewStateQuerySchema = flashcardExamScopeSchema.extend({
   limit: z.number().int().positive().max(LIMITS.reviewDueLimitMax).optional(),
 });

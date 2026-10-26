@@ -43,8 +43,7 @@ async function openFlashcardsReviewPage(page: Page, subjectId?: string) {
   await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 }
 
-function getFocusModeSubjectLabel(page: Page, subjectName: string) {
-  // Focus mode is portaled to <body> by ReviewScrollBoundary (19e3ceb), outside <main>.
+function getSessionSubjectLabel(page: Page, subjectName: string) {
   return page
     .locator("p")
     .filter({ hasText: new RegExp(`^${escapeRegex(subjectName)}$`) })
@@ -288,10 +287,13 @@ test("can search subject-scoped manage flashcards without hanging", async ({
   }
 });
 
-test("can enter and exit Focus Mode", async ({ page, e2eUser }) => {
-  const subjectName = getUniqueSubjectName("focus-mode");
-  const flashcardFront = getUniqueFlashcardFront("focus-mode");
-  const flashcardBack = getUniqueFlashcardBack("focus-mode");
+test("can enter, reload, and exit a review session", async ({
+  page,
+  e2eUser,
+}) => {
+  const subjectName = getUniqueSubjectName("review-session");
+  const flashcardFront = getUniqueFlashcardFront("review-session");
+  const flashcardBack = getUniqueFlashcardBack("review-session");
 
   await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
 
@@ -305,24 +307,28 @@ test("can enter and exit Focus Mode", async ({ page, e2eUser }) => {
     );
 
     await openFlashcardsReviewPage(page, subject.id);
-    await page
-      .getByRole("button", { name: "Start review", exact: true })
-      .click();
+    await page.getByRole("link", { name: "Start review", exact: true }).click();
 
     await expect(
       page.getByText(/due of \d+ total cards/).first(),
     ).toBeVisible();
-    await expect(getFocusModeSubjectLabel(page, subjectName)).toBeVisible();
+    await expect(getSessionSubjectLabel(page, subjectName)).toBeVisible();
+    await expect(page.getByText(flashcardFront)).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`/flashcards/review\\?subjectId=${subject.id}`),
+    );
+
+    await page.reload();
     await expect(page.getByText(flashcardFront)).toBeVisible();
 
-    await page.getByRole("button", { name: "Exit Focus Mode" }).click();
+    await page.getByRole("button", { name: "Exit review" }).click();
     await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
   }
 });
 
-test("can complete a review in Focus Mode", async ({ page, e2eUser }) => {
+test("can complete a review session", async ({ page, e2eUser }) => {
   const subjectName = getUniqueSubjectName("focus-review");
   const flashcardFront = getUniqueFlashcardFront("focus-review");
   const flashcardBack = getUniqueFlashcardBack("focus-review");
@@ -339,9 +345,7 @@ test("can complete a review in Focus Mode", async ({ page, e2eUser }) => {
     );
 
     await openFlashcardsReviewPage(page, subject.id);
-    await page
-      .getByRole("button", { name: "Start review", exact: true })
-      .click();
+    await page.getByRole("link", { name: "Start review", exact: true }).click();
 
     await expect(page.getByText(flashcardFront)).toBeVisible();
     await page.getByRole("button", { name: "Show answer" }).click();
@@ -391,17 +395,15 @@ test("review and exam actions respect subject scope", async ({
     );
 
     await openFlashcardsReviewPage(page, dueSubject.id);
-    await page
-      .getByRole("button", { name: "Start review", exact: true })
-      .click();
+    await page.getByRole("link", { name: "Start review", exact: true }).click();
     await expect(page.getByText(dueFront, { exact: true })).toBeVisible();
     await expect(page.getByText(examFront, { exact: true })).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Exit Focus Mode" }).click();
+    await page.getByRole("button", { name: "Exit review" }).click();
     await openFlashcardsReviewPage(page, examSubject.id);
-    await page.getByRole("button", { name: "Start exam", exact: true }).click();
+    await page.getByRole("link", { name: "Start exam", exact: true }).click();
     await expect(page.getByText("Card 1 of 1", { exact: true })).toBeVisible();
-    await expect(getFocusModeSubjectLabel(page, examSubjectName)).toBeVisible();
+    await expect(getSessionSubjectLabel(page, examSubjectName)).toBeVisible();
   } finally {
     await clearUserSubjectsByNames(e2eUser.userId, [
       dueSubjectName,

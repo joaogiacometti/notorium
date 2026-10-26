@@ -54,10 +54,3 @@ export function createDeferred<T>() {
     resolve: resolvePromise,
   };
 }
-
-export function setDocumentVisibility(value: DocumentVisibilityState) {
-  Object.defineProperty(document, "visibilityState", {
-    configurable: true,
-    value,
-  });
-}

@@ -1,7 +1,4 @@
-import type {
-  FlashcardExamScopeInput,
-  FlashcardReviewStateQueryInput,
-} from "@/features/flashcard-review/validation";
+import type { FlashcardReviewStateQueryInput } from "@/features/flashcard-review/validation";
 import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
@@ -12,7 +9,6 @@ import {
 import type {
   FlashcardContentItem,
   FlashcardManagePage,
-  FlashcardReviewEntity,
   FlashcardReviewState,
   FlashcardWithSourceEntity,
 } from "@/lib/server/api-contracts";
@@ -99,21 +95,6 @@ export function fetchFlashcardReviewState(
 ): Promise<FlashcardReviewState> {
   return fetchReadApi<FlashcardReviewState>(
     "/api/flashcards/review-state",
-    query,
-  );
-}
-
-/**
- * Load every card in scope for exam mode.
- *
- * @example
- * const cards = await fetchExamFlashcards({ subjectId });
- */
-export function fetchExamFlashcards(
-  query: FlashcardExamScopeInput = {},
-): Promise<FlashcardReviewEntity[]> {
-  return fetchReadApi<FlashcardReviewEntity[]>(
-    "/api/flashcards/exam-cards",
     query,
   );
 }

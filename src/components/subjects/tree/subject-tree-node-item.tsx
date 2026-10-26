@@ -14,7 +14,7 @@ import type {
 } from "@/components/subjects/tree/subject-tree-types";
 import type { DraggedDocument } from "@/components/subjects/tree/use-subject-drag-and-drop";
 import { Button } from "@/components/ui/button";
-import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
+import { getFlashcardReviewSessionHref } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -265,7 +265,7 @@ function DueReviewBadge({
 
   return (
     <Link
-      href={getFlashcardsHref("review", subjectId, { focus: true })}
+      href={getFlashcardReviewSessionHref(subjectId)}
       onClick={(event) => event.stopPropagation()}
       aria-label={`Review ${dueCount} due ${dueCount === 1 ? "card" : "cards"} in this subject`}
       className="shrink-0 rounded-full bg-(--intent-info-bg) px-2 py-0.5 text-[10px] font-medium tabular-nums text-(--intent-info-text) transition-colors hover:bg-(--intent-info-bg-hover)"

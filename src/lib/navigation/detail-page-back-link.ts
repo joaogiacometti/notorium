@@ -67,15 +67,23 @@ function withSearchParams(
 export function getFlashcardsHref(
   view: FlashcardsReturnView = "manage",
   subjectId?: string,
-  options?: { focus?: boolean },
 ) {
-  return withSearchParams("/flashcards", {
-    view,
-    subjectId,
-    // `focus=1` tells the review view to jump straight into the full-screen
-    // focus session instead of landing on the review hub.
-    focus: options?.focus ? "1" : undefined,
-  });
+  return withSearchParams("/flashcards", { view, subjectId });
+}
+
+export function getFlashcardReviewSessionHref(subjectId?: string) {
+  return withSearchParams("/flashcards/review", { subjectId });
+}
+
+export function getFlashcardExamSessionHref(subjectId?: string) {
+  return withSearchParams("/flashcards/exam", { subjectId });
+}
+
+const flashcardSessionPaths = ["/flashcards/review", "/flashcards/exam"];
+
+/** True for the distraction-free review and exam session routes. */
+export function isFlashcardSessionPath(pathname: string | null) {
+  return pathname !== null && flashcardSessionPaths.includes(pathname);
 }
 
 export function getFlashcardDetailHref(

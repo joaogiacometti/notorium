@@ -8,7 +8,6 @@ const queries = vi.hoisted(() => ({
   getFlashcardContentsForUser: vi.fn(),
   getStrugglingFlashcardsForUser: vi.fn(),
   getFlashcardReviewStateForUser: vi.fn(),
-  getAllFlashcardsForExam: vi.fn(),
   ensureFsrsSettings: vi.fn(),
   getMindmapByIdForUser: vi.fn(),
   getNoteByIdForUser: vi.fn(),
@@ -160,18 +159,6 @@ describe("read route handlers", () => {
       "user-1",
       { subjectId: "s1", limit: 20 },
     );
-  });
-
-  it("exam cards reads without writing scheduler settings", async () => {
-    await callRoute(
-      import("@/app/api/flashcards/exam-cards/route"),
-      "/api/flashcards/exam-cards?subjectId=s1",
-    );
-
-    expect(queries.ensureFsrsSettings).not.toHaveBeenCalled();
-    expect(queries.getAllFlashcardsForExam).toHaveBeenCalledWith("user-1", {
-      subjectId: "s1",
-    });
   });
 
   it("mindmap and note by id answer 404 when missing", async () => {

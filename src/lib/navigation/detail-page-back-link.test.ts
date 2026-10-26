@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   getFlashcardDetailHref,
+  getFlashcardExamSessionHref,
+  getFlashcardReviewSessionHref,
   getFlashcardsHref,
   getNoteDetailHref,
+  isFlashcardSessionPath,
   resolveDetailPageReturnContext,
   resolveFlashcardDetailBackLink,
 } from "@/lib/navigation/detail-page-back-link";
@@ -85,5 +88,29 @@ describe("resolveFlashcardDetailBackLink", () => {
       href: "/flashcards",
       label: "flashcards",
     });
+  });
+});
+
+describe("flashcard session hrefs", () => {
+  it("links the review session with an optional subject scope", () => {
+    expect(getFlashcardReviewSessionHref()).toBe("/flashcards/review");
+    expect(getFlashcardReviewSessionHref("deck-1")).toBe(
+      "/flashcards/review?subjectId=deck-1",
+    );
+  });
+
+  it("links the exam session with an optional subject scope", () => {
+    expect(getFlashcardExamSessionHref()).toBe("/flashcards/exam");
+    expect(getFlashcardExamSessionHref("deck-1")).toBe(
+      "/flashcards/exam?subjectId=deck-1",
+    );
+  });
+
+  it("recognizes only the session routes", () => {
+    expect(isFlashcardSessionPath("/flashcards/review")).toBe(true);
+    expect(isFlashcardSessionPath("/flashcards/exam")).toBe(true);
+    expect(isFlashcardSessionPath("/flashcards")).toBe(false);
+    expect(isFlashcardSessionPath("/flashcards/card-1")).toBe(false);
+    expect(isFlashcardSessionPath(null)).toBe(false);
   });
 });

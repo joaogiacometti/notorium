@@ -3,9 +3,7 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
-import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface ReviewSessionShellProps {
   progress: number;
@@ -19,7 +17,7 @@ interface ReviewSessionShellProps {
 }
 
 /**
- * Provides the full-screen layout shared by review and exam sessions.
+ * Provides the page layout shared by review and exam sessions.
  *
  * @example
  * <ReviewSessionShell progress={0.5} headerText="1 due" exitLabel="Exit" onExit={onExit} footer={buttons}>...</ReviewSessionShell>
@@ -34,14 +32,8 @@ export function ReviewSessionShell({
   children,
   footer,
 }: Readonly<ReviewSessionShellProps>) {
-  const workspace = useAssistantWorkspace();
   return (
-    <div
-      className={cn(
-        "fixed inset-0 z-overlay flex flex-col overflow-hidden bg-background",
-        workspace?.open && "lg:right-96",
-      )}
-    >
+    <div className="flex h-svh flex-col overflow-hidden bg-background">
       <progress
         className="h-1.5 w-full appearance-none overflow-hidden bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
         value={Math.round(progress * 100)}

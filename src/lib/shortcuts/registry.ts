@@ -285,10 +285,10 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.FlashcardReview,
   },
   {
-    id: "flashcard-exit-focus",
+    id: "flashcard-exit-session",
     kind: "keys",
     keys: ["escape"],
-    description: "Exit focus / exam mode",
+    description: "Exit review / exam",
     category: ShortcutCategory.FlashcardReview,
   },
 ];

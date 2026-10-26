@@ -120,7 +120,7 @@ arbitrary (`z-[60]`, `z-(--x)`) z-index classes are rejected outside
 | `z-raised` | 10 | In-flow content lifted over its siblings: sticky table headers, editor handles |
 | `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header, the study assistant launcher and global sidebar |
 | `z-immersive` | 35 | Note/mindmap zen mode (`fixed inset-0`) |
-| `z-overlay` | 50 | Everything that floats or blocks the page: dialogs, sheets, menus, popovers, selects, tooltips, and full-screen review surfaces |
+| `z-overlay` | 50 | Everything that floats or blocks the page: dialogs, sheets, menus, popovers, selects, and tooltips |
 
 Toasts (Sonner) manage their own z-index above all layers.
 
@@ -139,9 +139,6 @@ Rules that keep it working:
   If something renders behind an overlay, it is opening in the wrong order or
   outside a portal; fix that instead. Do not add `className`/`overlayClassName`
   props to dialogs just to change their layer.
-- Full-screen surfaces that sit above the app shell (review sessions) render
-  through a portal (`ReviewScrollBoundary`) on `z-overlay`, so they share the
-  dialog ordering.
 - A surface opened *from* a dialog closes that dialog first; the dialog would
   otherwise sit underneath the newer surface.
 - Keep `z-immersive` below `z-overlay` so menus, dialogs, and toasts stay above
@@ -154,8 +151,8 @@ Rules that keep it working:
   this table, and an entry in `src/app/z-index-layers.test.ts`. It is never the fix
   for one component rendering behind another.
 
-Full-screen review surfaces use `ReviewScrollBoundary` for portal placement and
-background scroll isolation, including nested dialogs. Keep card scrolling inside
+Review and exam sessions are in-flow pages (`h-svh`, sidebar hidden), not
+overlays, so they use no z-index layer or scroll lock. Keep card scrolling inside
 the session's `min-h-0 flex-1 overflow-y-auto` region.
 
 ## Transitions
@@ -180,7 +177,7 @@ host for the same assistant. Review provides its own host inside its scroll
 boundary. Nested hosts restore the previous host on close; never raise z-index
 to expose chat above a dialog.
 
-Full-screen sessions (review, exam) replace the floating launcher with a ghost
+Review and exam session pages replace the floating launcher with a ghost
 icon button in the session header; never float a launcher over footer actions.
 
 The header's Hints first toggle is an `icon-sm` ghost button like its

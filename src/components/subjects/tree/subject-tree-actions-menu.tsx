@@ -30,7 +30,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
+import {
+  getFlashcardReviewSessionHref,
+  getFlashcardsHref,
+} from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 
 interface SubjectActionsMenuProps {
@@ -133,9 +136,7 @@ export function SubjectActionsMenu({
             </DropdownMenuItem>
             {node.dueFlashcardCount > 0 && (
               <DropdownMenuItem asChild>
-                <Link
-                  href={getFlashcardsHref("review", node.id, { focus: true })}
-                >
+                <Link href={getFlashcardReviewSessionHref(node.id)}>
                   <GraduationCap className="size-4" />
                   Review flashcards
                 </Link>

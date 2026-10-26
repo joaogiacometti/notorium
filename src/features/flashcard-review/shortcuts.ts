@@ -42,8 +42,6 @@ interface GetFlashcardReviewShortcutActionInput {
 
 interface UseFlashcardReviewShortcutsOptions {
   shortcutsSuspended: boolean;
-  isFocusMode: boolean;
-  isExamMode: boolean;
   revealed: boolean;
   hasCurrentCard: boolean;
   canUndoReview: boolean;
@@ -55,8 +53,7 @@ interface UseFlashcardReviewShortcutsOptions {
   onReset: () => void;
   onUndo: () => void;
   onGrade: (grade: ReviewGrade) => void;
-  onExitExamMode: () => void;
-  onExitFocusMode: () => void;
+  onExit: () => void;
 }
 
 const gradeKeyMap: Record<string, ReviewGrade> = Object.fromEntries(
@@ -64,10 +61,10 @@ const gradeKeyMap: Record<string, ReviewGrade> = Object.fromEntries(
 ) as Record<string, ReviewGrade>;
 
 /**
- * Wires flashcard review keyboard shortcuts for the focus/exam view.
+ * Wires flashcard review keyboard shortcuts for the review and exam session pages.
  *
  * @example
- * useFlashcardReviewShortcuts({ shortcutsSuspended, isFocusMode, isExamMode, revealed, hasCurrentCard, canUndoReview, isPending, isDialogOpen, onReveal, onEdit, onDelete, onReset, onUndo, onGrade, onExitExamMode, onExitFocusMode });
+ * useFlashcardReviewShortcuts({ shortcutsSuspended, revealed, hasCurrentCard, canUndoReview, isPending, isDialogOpen, onReveal, onEdit, onDelete, onReset, onUndo, onGrade, onExit });
  */
 export function useFlashcardReviewShortcuts(
   options: UseFlashcardReviewShortcutsOptions,
@@ -141,7 +138,6 @@ function handleFlashcardReviewKeyDown(
 ) {
   if (options.shortcutsSuspended) return;
   if (handleReviewEscape(event, options)) return;
-  if (!options.isFocusMode) return;
   const action = getFlashcardReviewShortcutAction({
     key: event.key,
     revealed: options.revealed,
@@ -162,11 +158,10 @@ function handleReviewEscape(
   event: KeyboardEvent,
   options: UseFlashcardReviewShortcutsOptions,
 ): boolean {
-  if (!options.isFocusMode || event.key !== "Escape") return false;
+  if (event.key !== "Escape") return false;
   if (options.isDialogOpen) return true;
   event.preventDefault();
-  if (options.isExamMode) options.onExitExamMode();
-  else options.onExitFocusMode();
+  options.onExit();
   return true;
 }
 

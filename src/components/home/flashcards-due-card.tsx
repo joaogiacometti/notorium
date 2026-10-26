@@ -2,6 +2,10 @@ import { Layers } from "lucide-react";
 import Link from "next/link";
 import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  getFlashcardReviewSessionHref,
+  getFlashcardsHref,
+} from "@/lib/navigation/detail-page-back-link";
 import type { FlashcardReviewSummary } from "@/lib/server/api-contracts";
 
 interface FlashcardsDueCardProps {
@@ -30,7 +34,11 @@ export function FlashcardsDueCard({
             : `of ${summary.totalCount} cards ready to review`}
         </p>
         <Link
-          href="/flashcards"
+          href={
+            caughtUp
+              ? getFlashcardsHref("review")
+              : getFlashcardReviewSessionHref()
+          }
           className="mt-auto inline-block pt-1 text-sm font-medium text-primary hover:underline"
         >
           {caughtUp ? "Browse flashcards →" : "Review now →"}

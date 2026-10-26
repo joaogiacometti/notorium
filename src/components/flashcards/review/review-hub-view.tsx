@@ -1,7 +1,5 @@
-"use client";
-
+import Link from "next/link";
 import type { ReactNode } from "react";
-import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 
 interface ReviewHubViewProps {
@@ -10,17 +8,16 @@ interface ReviewHubViewProps {
   hasExamCards: boolean;
   examBadgeText: string;
   examScopeLabel: string;
-  isLoadingExamCards: boolean;
-  isPending: boolean;
-  onStartReview: () => void;
-  onStartExam: () => void;
+  reviewHref: string;
+  examHref: string;
 }
 
 /**
- * Shows the flashcard review landing hub and its review/exam actions.
+ * Shows the flashcard review landing hub and its links to the review and exam
+ * session pages.
  *
  * @example
- * <ReviewHubView hasDueCards dueBadgeText="3 due" hasExamCards examBadgeText="12 cards" examScopeLabel="All flashcards" isLoadingExamCards={false} isPending={false} onStartReview={startReview} onStartExam={startExam} />
+ * <ReviewHubView hasDueCards dueBadgeText="3 due" hasExamCards examBadgeText="12 cards" examScopeLabel="All flashcards" reviewHref="/flashcards/review" examHref="/flashcards/exam" />
  */
 export function ReviewHubView({
   hasDueCards,
@@ -28,10 +25,8 @@ export function ReviewHubView({
   hasExamCards,
   examBadgeText,
   examScopeLabel,
-  isLoadingExamCards,
-  isPending,
-  onStartReview,
-  onStartExam,
+  reviewHref,
+  examHref,
 }: Readonly<ReviewHubViewProps>) {
   return (
     <div className="min-w-0 space-y-3" data-testid="flashcard-review-hub">
@@ -47,10 +42,7 @@ export function ReviewHubView({
             hasDueCards ? "Ready now" : "No due cards",
           ]}
           action={() => (
-            <StartReviewButton
-              disabled={isPending || !hasDueCards}
-              onClick={onStartReview}
-            />
+            <StartReviewButton disabled={!hasDueCards} href={reviewHref} />
           )}
         />
         <ReviewActionCard
@@ -60,11 +52,7 @@ export function ReviewHubView({
           description="Practice every card in this scope without changing its review schedule."
           bullets={[examScopeLabel, "Shuffled practice", "Weak-card retry"]}
           action={() => (
-            <StartExamButton
-              disabled={isPending || !hasExamCards || isLoadingExamCards}
-              isLoading={isLoadingExamCards}
-              onClick={onStartExam}
-            />
+            <StartExamButton disabled={!hasExamCards} href={examHref} />
           )}
         />
       </div>
@@ -149,43 +137,34 @@ function ActionCardFooter({
 
 function StartReviewButton({
   disabled,
-  onClick,
-}: Readonly<{ disabled: boolean; onClick: () => void }>) {
+  href,
+}: Readonly<{ disabled: boolean; href: string }>) {
   return (
     <Button
+      asChild={!disabled}
       data-testid="flashcard-review-start-button"
       variant="default"
-      onClick={onClick}
       disabled={disabled}
       className="h-11 w-full text-base"
     >
-      Start review
+      {disabled ? "Start review" : <Link href={href}>Start review</Link>}
     </Button>
   );
 }
 
 function StartExamButton({
   disabled,
-  isLoading,
-  onClick,
-}: Readonly<{
-  disabled: boolean;
-  isLoading: boolean;
-  onClick: () => void;
-}>) {
+  href,
+}: Readonly<{ disabled: boolean; href: string }>) {
   return (
     <Button
+      asChild={!disabled}
       data-testid="flashcard-exam-start-button"
       variant="outline"
-      onClick={onClick}
       disabled={disabled}
       className="h-11 w-full text-base"
     >
-      <AsyncButtonContent
-        pending={isLoading}
-        pendingLabel="Loading cards..."
-        idleLabel="Start exam"
-      />
+      {disabled ? "Start exam" : <Link href={href}>Start exam</Link>}
     </Button>
   );
 }

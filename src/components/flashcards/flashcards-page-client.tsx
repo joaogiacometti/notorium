@@ -3,27 +3,29 @@
 import { useState } from "react";
 import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-manager";
 import { FlashcardsManagerTableSkeleton } from "@/components/flashcards/manage/flashcards-manager-table";
-import { FlashcardReviewClient } from "@/components/flashcards/review/flashcard-review-client";
 import { FlashcardReviewActionCardSkeleton } from "@/components/flashcards/review/flashcard-review-loading";
+import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
 import { SubjectScopeFilter } from "@/components/flashcards/shared/subject-scope-filter";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FlashcardsView } from "@/features/flashcards/view";
+import {
+  getFlashcardExamSessionHref,
+  getFlashcardReviewSessionHref,
+} from "@/lib/navigation/detail-page-back-link";
 import type {
   FlashcardManagePage,
-  FlashcardReviewState,
+  FlashcardReviewSummary,
   SubjectOption,
 } from "@/lib/server/api-contracts";
 
 interface FlashcardsPageClientProps {
   currentView: FlashcardsView;
   scopedSubjectId?: string;
-  /** Jump straight into the full-screen focus session (review view only). */
-  autoStartReview?: boolean;
   initialSearch?: string;
   initialPageSize: number;
   subjects: SubjectOption[];
   initialManagePageData: FlashcardManagePage;
-  initialReviewState: FlashcardReviewState;
+  reviewSummary: FlashcardReviewSummary;
   aiEnabled: boolean;
 }
 
@@ -35,12 +37,11 @@ interface FlashcardsPageClientProps {
 export function FlashcardsPageClient({
   currentView,
   scopedSubjectId,
-  autoStartReview,
   initialSearch,
   initialPageSize,
   subjects,
   initialManagePageData,
-  initialReviewState,
+  reviewSummary,
   aiEnabled,
 }: Readonly<FlashcardsPageClientProps>) {
   const scopeKey = `${currentView}:${scopedSubjectId ?? "all"}`;
@@ -64,15 +65,21 @@ export function FlashcardsPageClient({
         </div>
       )}
       {currentView === "review" && !isSubjectChanging && (
-        <FlashcardReviewClient
-          key={scopeKey}
-          initialState={initialReviewState}
-          subjectId={scopedSubjectId}
-          subjects={subjects}
-          aiEnabled={aiEnabled}
-          autoStartReview={autoStartReview}
-          embedded
-        />
+        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto">
+          <ReviewHubView
+            hasDueCards={reviewSummary.dueCount > 0}
+            dueBadgeText={`${reviewSummary.dueCount} due`}
+            hasExamCards={reviewSummary.totalCount > 0}
+            examBadgeText={`${reviewSummary.totalCount} ${
+              reviewSummary.totalCount === 1 ? "card" : "cards"
+            }`}
+            examScopeLabel={
+              scopedSubjectId ? "All cards in subject" : "All flashcards"
+            }
+            reviewHref={getFlashcardReviewSessionHref(scopedSubjectId)}
+            examHref={getFlashcardExamSessionHref(scopedSubjectId)}
+          />
+        </div>
       )}
       {currentView === "manage" && isSubjectChanging && (
         <div

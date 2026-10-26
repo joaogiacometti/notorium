@@ -1,42 +1,21 @@
 import { useState } from "react";
+import { shuffleExamCards } from "@/features/flashcard-review/exam";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
-
-interface ExamSessionScope {
-  subjectId?: string;
-}
 
 interface ExamSession {
   cards: FlashcardReviewEntity[];
   currentIndex: number;
   ratings: ReviewGrade[];
   startedAt: Date;
-  scope: ExamSessionScope;
 }
 
-interface RemoveCardResult {
-  session: ExamSession | null;
-}
-
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-function createSession(
-  cards: FlashcardReviewEntity[],
-  scope: ExamSessionScope,
-): ExamSession {
+function createSession(cards: FlashcardReviewEntity[]): ExamSession {
   return {
-    cards: shuffleArray(cards),
+    cards,
     currentIndex: 0,
     ratings: [],
     startedAt: new Date(),
-    scope,
   };
 }
 
@@ -63,18 +42,18 @@ function replaceCard(
 function removeCardFromSession(
   session: ExamSession,
   cardId: string,
-): RemoveCardResult {
+): ExamSession | null {
   const cardIndex = session.cards.findIndex((card) => card.id === cardId);
 
   if (cardIndex === -1) {
-    return { session };
+    return session;
   }
 
   const cards = session.cards.filter((card) => card.id !== cardId);
   const ratings = session.ratings.filter((_, index) => index !== cardIndex);
 
   if (cards.length === 0) {
-    return { session: null };
+    return null;
   }
 
   let currentIndex = session.currentIndex;
@@ -85,14 +64,7 @@ function removeCardFromSession(
     currentIndex = Math.min(session.currentIndex, cards.length - 1);
   }
 
-  return {
-    session: {
-      ...session,
-      cards,
-      ratings,
-      currentIndex,
-    },
-  };
+  return { ...session, cards, ratings, currentIndex };
 }
 
 function getProgress(session: ExamSession | null): number {
@@ -103,24 +75,26 @@ function getProgress(session: ExamSession | null): number {
   return session.currentIndex / session.cards.length;
 }
 
-export function useExamSession() {
-  const [session, setSession] = useState<ExamSession | null>(null);
+/**
+ * Holds one exam run. `initialCards` is used as given (the exam page shuffles
+ * on the server so hydration matches); `startSession` reshuffles for retries.
+ *
+ * @example
+ * const examSession = useExamSession(shuffledCards);
+ */
+export function useExamSession(initialCards: FlashcardReviewEntity[]) {
+  const [session, setSession] = useState<ExamSession | null>(() =>
+    createSession(initialCards),
+  );
 
-  function startSession(
-    cards: FlashcardReviewEntity[],
-    scope: ExamSessionScope,
-  ) {
-    setSession(createSession(cards, scope));
+  function startSession(cards: FlashcardReviewEntity[]) {
+    setSession(createSession(shuffleExamCards(cards)));
   }
 
   function rateCard(rating: ReviewGrade) {
     setSession((currentSession) =>
       currentSession ? appendRating(currentSession, rating) : currentSession,
     );
-  }
-
-  function endSession() {
-    setSession(null);
   }
 
   function updateCard(updatedCard: FlashcardReviewEntity) {
@@ -132,13 +106,11 @@ export function useExamSession() {
   }
 
   function removeCard(cardId: string) {
-    setSession((currentSession) => {
-      if (!currentSession) {
-        return currentSession;
-      }
-
-      return removeCardFromSession(currentSession, cardId).session;
-    });
+    setSession((currentSession) =>
+      currentSession
+        ? removeCardFromSession(currentSession, cardId)
+        : currentSession,
+    );
   }
 
   const currentCard = session?.cards[session.currentIndex] ?? null;
@@ -156,7 +128,6 @@ export function useExamSession() {
     progress,
     startSession,
     rateCard,
-    endSession,
     updateCard,
     removeCard,
   };

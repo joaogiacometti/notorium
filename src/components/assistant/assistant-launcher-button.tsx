@@ -8,7 +8,7 @@ import {
 } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
 
-/** Header launcher for full-screen sessions; replaces the floating launcher while mounted.
+/** Header launcher for review and exam session pages; replaces the floating launcher while mounted.
  * @example <AssistantLauncherButton />
  */
 export function AssistantLauncherButton() {

@@ -118,7 +118,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`. Its header mirrors note and mindmap pages: the subject path as the title row beside the actions menu, with the source link under it when the card has one; it does not show creation time. Front and Back editors sit side by side on wide screens and stack on narrow ones.
 - Flashcards can be copied as Markdown for pasting into an AI chat or sharing with others. A single card copies from the manage table row menu, the detail-page header menu (with the content currently in its editors), or the review/exam session card actions menu; the manage toolbar's `Copy` action copies every selected row at once, in table order. Each card copies its subject path, front, and back; several cards get numbered `## Card N` headings separated by `---`. Rich text becomes Markdown (bold, italics, strikethrough, inline code, links, lists, task lists, code blocks, tables, and LaTeX math as `$...$`/`$$...$$`). Uploaded images are private to their owner, so they copy as `[Image]` placeholders; public image URLs copy as Markdown images. A toast confirms how many cards were copied or reports the failure, including when the cards no longer exist. The toolbar `Copy` action stays disabled with a spinner until every copy in progress finishes.
 - Flashcard review remains available in the global flashcards page.
-- Full-screen flashcard review and exam sessions lock background page scrolling until exit, including the caught-up state. Review content scrolls within the session only when it exceeds the available screen space.
+- Review and exam sessions are their own pages, `/flashcards/review` and `/flashcards/exam` (both accept `?subjectId`), so refresh, back, and deep links work. They hide the sidebar and page chrome. Review content scrolls within the session only when it exceeds the available screen space. A scope with no due cards (review) or no cards (exam) redirects to the review hub.
 - When AI env vars are configured, the manage toolbar shows a `Refine cards` button; without AI it is hidden.
 - In the flashcards manage toolbar, every icon-only action must show a descriptive tooltip on hover and keyboard focus instead of relying on icon recognition alone.
 
@@ -127,8 +127,8 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Flashcards belong to a subject (`flashcard.subjectId`); there is no separate deck concept.
 - Subjects already form the user's hierarchy (see Subjects); flashcards reuse it, so subject paths use `::` notation in display and searchable pickers, and review/manage scoped to a subject include cards from descendant subjects.
 - There is no in-page flashcard tree. The flashcards page is two global surfaces — review everything and manage all flashcards — with a subject filter dropdown that scopes the current view via the `?subjectId` URL param.
-- The global subject sidebar shows a per-subject "due" indicator counting cards due in that subject and its descendants with the same rule as the review queue (including the learn-ahead window below), refreshed after every flashcard write and, for review sessions, once grading settles and focus mode closes, when the review hub also re-reads its due count so both match; clicking the indicator opens the full-screen review session directly, scoped to that subject.
-- Each subject's sidebar kebab menu has a "Review flashcards" entry that opens the full-screen review session directly (scoped to that subject and its descendants, when cards are due; otherwise it lands on the review hub), and a "Manage flashcards" entry that opens the manage view pre-filtered to that subject. Both review entry points request the focus session via a `focus=1` URL flag the review view honors on load.
+- The global subject sidebar shows a per-subject "due" indicator counting cards due in that subject and its descendants with the same rule as the review queue (including the learn-ahead window below), refreshed after every flashcard write and, for review sessions, once the session is left after grading, when the review hub shows the same refreshed count; clicking the indicator opens the review session directly, scoped to that subject.
+- Each subject's sidebar kebab menu has a "Review flashcards" entry that opens the review session page directly (scoped to that subject and its descendants, when cards are due; otherwise it lands on the review hub), and a "Manage flashcards" entry that opens the manage view pre-filtered to that subject.
 - Flashcard creation from the manage toolbar is available before a subject exists because the create form can create one inline.
 - When creating, editing, moving, or generating a flashcard, the user chooses one of their subjects. The new-flashcard and move-flashcards subject pickers let the user create a subject from the filtered list when their search does not exactly match an existing subject path (case-insensitive): a plain name creates a root subject, while a `::` path reuses any existing leading segments and creates the missing ones as nested subjects. The created subject is selected automatically, and `::` path searches show existing path patterns segment-by-segment so users can autocomplete nested subjects.
 - Deleting a subject deletes its descendant subjects and all flashcards inside that subtree (alongside its notes and mindmaps).
@@ -178,23 +178,23 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - "Improve" asks the AI for a rewritten back, shown as a before/after diff the user can accept or discard.
 - Legacy `view=refine` URLs fall back to the review view.
 
-### Focus Mode
+### Review Session
 
-- Full-screen, distraction-free review experience optimized for mobile.
-- Due-card review sessions are focus-only and start from the `Start review` action card on the review hub.
+- Distraction-free review page at `/flashcards/review`, optimized for mobile. The home "Flashcards due" card's `Review now` link opens it directly.
+- Starts from the `Start review` link on the review hub, the home card, or the sidebar; reloading keeps the session and resumes the remaining due cards.
 - Hides the left menu and all non-essential UI elements.
 - Shows progress bar, card content, and rating buttons only.
 - Shows a card actions menu for copy, edit, reset review progress, and delete.
 - Keyboard shortcuts:
-  - `Escape` exits Focus Mode.
-- Completion screen provides an exit action back to the review hub.
+  - `Escape` exits the session.
+- Exiting waits for in-flight grade saves, then returns to the review hub with the same subject scope. The completion screen provides the same exit.
 
 ### Exam Mode
 
-- Accessed from the flashcard review hub via the `Start exam` action card.
+- Accessed from the flashcard review hub via the `Start exam` link, which opens `/flashcards/exam`.
 - Uses the active subject filter as the exam scope.
-- The first tap/click on `Start exam` loads scoped exam cards and enters exam mode in a single interaction.
-- Runs in focus-mode UI with exam progress shown as `Card X of Y`.
+- Exam cards load with the page; progress is not saved, so reloading starts a fresh shuffled exam.
+- Uses the review session layout with exam progress shown as `Card X of Y`.
 - Exam sessions do not modify due-card scheduling state for regular spaced-repetition reviews.
 - Exam completion provides a summary screen with a close action and retry-weak-cards action when applicable.
 
@@ -211,7 +211,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 ### Study Assistant
 
-- When AI env vars are configured, every authenticated page shows a round assistant launcher in the bottom-right corner, except full-screen review and exam, where the launcher is an icon button in the session header so it never covers the grade buttons; without AI it is hidden. Cmd/Ctrl+J toggles the assistant from anywhere, including inside the chat. It opens one global collapsible sidebar on the right. Desktop layouts reserve space beside page content, full-screen review, and flashcard dialogs; on mobile it covers the page until minimized. The same conversation, open state, and unsent composer text follow client-side navigation and movement into/out of review and flashcard editors. Minimizing keeps the conversation.
+- When AI env vars are configured, every authenticated page shows a round assistant launcher in the bottom-right corner, except review and exam sessions, where the launcher is an icon button in the session header so it never covers the grade buttons; without AI it is hidden. Cmd/Ctrl+J toggles the assistant from anywhere, including inside the chat. It opens one global collapsible sidebar on the right. Desktop layouts reserve space beside page content, review and exam sessions, and flashcard dialogs; on mobile it covers the page until minimized. The same conversation, open state, and unsent composer text follow client-side navigation and movement into/out of review and flashcard editors. Minimizing keeps the conversation.
 - The assistant answers study questions: explaining concepts, worked examples and practice problems, checking reasoning, summarizing pasted material, quizzing, and study-technique advice. It replies in the user's language, with lists, code blocks, and LaTeX math rendered once a reply finishes streaming.
 - Flashcard creation and revision follow the conversation, including short confirmations ("do it", "ok") and corrections ("on the flashcard", "ask what that example does"). The assistant proposes the concrete card without asking for exact field wording or another confirmation; the proposal controls provide review. The open review card stays background and does not replace the conversation's topic. Ordinary study questions still receive chat answers. Requests to invert a card or ask from an example put that example on the front and its result or meaning on the back, without duplicating it as a supplementary example. Skipping a proposal on follow-up does not cancel a request to revise it. Follow-ups such as "should we create a flashcard for it?" refer to the topic of the conversation, not to the open card or document, and a question suggesting a change ("should we create…?") gets a proposal directly, since its Create/Discard controls are the confirmation. A proposed card that asks what the card under review already asks is never shown: the assistant is told and proposes a card the user does not have yet.
 - Proposed cards use backticks for inline code, never HTML. The finished preview, Edit prefill, and created card render inline code consistently, including accidental `<code>` wrappers from the model; collapsed outcomes show readable text. Code contents remain literal (including dollar signs and HTML examples), and other HTML is escaped.

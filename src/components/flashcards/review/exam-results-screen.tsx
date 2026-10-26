@@ -47,7 +47,7 @@ export function ExamResultsScreen({
   const easyArc = (easyPercent / 100) * circumference;
 
   return (
-    <div className="fixed inset-0 z-overlay flex flex-col items-center justify-center overflow-hidden bg-background px-4 sm:px-6">
+    <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4 sm:px-6">
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="absolute top-6 left-6">
           <div className="flex items-center gap-1.5 rounded-md border-2 border-(--intent-info-border) bg-(--intent-info-bg) px-2 py-1 text-xs font-bold tracking-wider text-(--intent-info-text) uppercase">

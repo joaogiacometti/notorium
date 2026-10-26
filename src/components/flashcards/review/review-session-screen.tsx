@@ -32,9 +32,9 @@ import { isSubjectOption } from "@/lib/utils";
 
 type ReviewCard = FlashcardReviewState["cards"][number];
 
-interface FocusModeOverlayProps {
+interface ReviewSessionScreenProps {
   currentCard: ReviewCard | null;
-  reviewState: FlashcardReviewState;
+  headerText: string;
   subjects: Array<SubjectEntity | SubjectOption>;
   progress: number;
   revealed: boolean;
@@ -44,22 +44,20 @@ interface FocusModeOverlayProps {
   canUndoReview: boolean;
   isLoadingMoreCards?: boolean;
   onUndoReview: () => void;
-  onExitFocusMode: () => void;
+  onExit: () => void;
   onEditFlashcard: () => void;
   onResetFlashcard: () => void;
   onDeleteFlashcard: () => void;
   isExamMode?: boolean;
-  examCurrentIndex?: number;
-  examTotalCards?: number;
 }
 
 /**
- * Routes the focus overlay to the due-review or exam session presentation.
+ * Routes the session page to the due-review or exam session presentation.
  *
  * @example
- * <FocusModeOverlay currentCard={card} reviewState={state} subjects={subjects} progress={0} revealed={false} isPending={false} onReveal={showBack} onGrade={gradeCard} onExitFocusMode={exit} />
+ * <ReviewSessionScreen currentCard={card} headerText="3 due of 10 total cards" subjects={subjects} progress={0} revealed={false} isPending={false} onReveal={showBack} onGrade={gradeCard} onExit={exit} />
  */
-export function FocusModeOverlay(props: Readonly<FocusModeOverlayProps>) {
+export function ReviewSessionScreen(props: Readonly<ReviewSessionScreenProps>) {
   if (!props.currentCard) {
     return (
       <ReviewSessionEmptyState
@@ -67,40 +65,38 @@ export function FocusModeOverlay(props: Readonly<FocusModeOverlayProps>) {
         isPending={props.isPending}
         canUndoReview={props.canUndoReview}
         onUndoReview={props.onUndoReview}
-        onExit={props.onExitFocusMode}
+        onExit={props.onExit}
       />
     );
   }
 
   if (props.isExamMode) {
-    return <ExamFocusModeOverlay {...props} currentCard={props.currentCard} />;
+    return <ExamSessionScreen {...props} currentCard={props.currentCard} />;
   }
 
-  return (
-    <DueReviewFocusModeOverlay {...props} currentCard={props.currentCard} />
-  );
+  return <DueReviewSessionScreen {...props} currentCard={props.currentCard} />;
 }
 
-interface SessionOverlayProps extends FocusModeOverlayProps {
+interface SessionScreenProps extends ReviewSessionScreenProps {
   currentCard: ReviewCard;
 }
 
-function DueReviewFocusModeOverlay({
+function DueReviewSessionScreen({
   currentCard,
-  reviewState,
+  headerText,
   subjects,
   progress,
   revealed,
   isPending,
   onReveal,
   onGrade,
-  onExitFocusMode,
+  onExit,
   onEditFlashcard,
   onResetFlashcard,
   onDeleteFlashcard,
   canUndoReview,
   onUndoReview,
-}: Readonly<SessionOverlayProps>) {
+}: Readonly<SessionScreenProps>) {
   const footer = getSessionFooter({
     revealed,
     isPending,
@@ -111,11 +107,11 @@ function DueReviewFocusModeOverlay({
   return (
     <ReviewSessionShell
       progress={progress}
-      headerText={getDueReviewHeaderText(reviewState)}
-      exitLabel="Exit Focus Mode"
-      onExit={onExitFocusMode}
+      headerText={headerText}
+      exitLabel="Exit review"
+      onExit={onExit}
       actions={
-        <FocusModeCardActions
+        <SessionCardActions
           isPending={isPending}
           canUndoReview={canUndoReview}
           onUndoReview={onUndoReview}
@@ -136,22 +132,21 @@ function DueReviewFocusModeOverlay({
   );
 }
 
-function ExamFocusModeOverlay({
+function ExamSessionScreen({
   currentCard,
+  headerText,
   subjects,
   progress,
   revealed,
   isPending,
   onReveal,
   onGrade,
-  onExitFocusMode,
+  onExit,
   onEditFlashcard,
   onResetFlashcard,
   onDeleteFlashcard,
   onUndoReview,
-  examCurrentIndex = 0,
-  examTotalCards = 0,
-}: Readonly<SessionOverlayProps>) {
+}: Readonly<SessionScreenProps>) {
   const footer = getSessionFooter({
     revealed,
     isPending,
@@ -162,12 +157,12 @@ function ExamFocusModeOverlay({
   return (
     <ReviewSessionShell
       progress={progress}
-      headerText={`Card ${examCurrentIndex + 1} of ${examTotalCards}`}
-      exitLabel="Exit Focus Mode"
-      onExit={onExitFocusMode}
+      headerText={headerText}
+      exitLabel="Exit exam"
+      onExit={onExit}
       badge={<ExamBadge />}
       actions={
-        <FocusModeCardActions
+        <SessionCardActions
           isPending={isPending}
           canUndoReview={false}
           onUndoReview={onUndoReview}
@@ -189,7 +184,7 @@ function ExamFocusModeOverlay({
   );
 }
 
-interface FocusModeCardActionsProps {
+interface SessionCardActionsProps {
   isPending: boolean;
   canUndoReview: boolean;
   cardActions?: boolean;
@@ -200,7 +195,7 @@ interface FocusModeCardActionsProps {
   onDeleteFlashcard?: () => void;
 }
 
-function FocusModeCardActions({
+function SessionCardActions({
   isPending,
   canUndoReview,
   cardActions = true,
@@ -209,9 +204,9 @@ function FocusModeCardActions({
   onEditFlashcard,
   onResetFlashcard,
   onDeleteFlashcard,
-}: Readonly<FocusModeCardActionsProps>) {
+}: Readonly<SessionCardActionsProps>) {
   if (isPending) {
-    return <FocusModeCardActionsPendingButton />;
+    return <SessionCardActionsPendingButton />;
   }
 
   return (
@@ -273,7 +268,7 @@ function FocusModeCardActions({
   );
 }
 
-function FocusModeCardActionsPendingButton() {
+function SessionCardActionsPendingButton() {
   return (
     <Button
       variant="ghost"
@@ -339,10 +334,10 @@ function ReviewSessionEmptyState({
   onExit,
 }: Readonly<ReviewSessionEmptyStateProps>) {
   return (
-    <div className="fixed inset-0 z-overlay flex flex-col overflow-hidden bg-background">
+    <div className="relative flex min-h-svh flex-col bg-background">
       {canUndoReview ? (
         <div className="absolute top-3 right-4">
-          <FocusModeCardActions
+          <SessionCardActions
             isPending={isPending}
             canUndoReview
             cardActions={false}
@@ -357,7 +352,7 @@ function ReviewSessionEmptyState({
             Loading more cards…
           </p>
           <Button variant="outline" onClick={onExit}>
-            Exit focus mode
+            Back to flashcards
           </Button>
         </div>
       ) : (
@@ -368,7 +363,7 @@ function ReviewSessionEmptyState({
           <p className="mb-8 max-w-sm text-muted-foreground">
             No due flashcards in this scope right now.
           </p>
-          <Button onClick={onExit}>Exit focus mode</Button>
+          <Button onClick={onExit}>Back to flashcards</Button>
         </div>
       )}
     </div>
@@ -416,12 +411,4 @@ function getSubjectLabel(
   return isSubjectOption(currentSubject)
     ? currentSubject.path
     : currentSubject.name;
-}
-
-function getDueReviewHeaderText(reviewState: FlashcardReviewState) {
-  if (reviewState.summary.dueCount === 0) {
-    return "No cards due right now";
-  }
-
-  return `${reviewState.summary.dueCount} due of ${reviewState.summary.totalCount} total cards`;
 }

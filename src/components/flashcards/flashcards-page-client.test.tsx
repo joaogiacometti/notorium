@@ -21,10 +21,6 @@ vi.mock("@/components/flashcards/manage/flashcards-manager", () => ({
   FlashcardsManager: () => <div data-testid="flashcards-manager" />,
 }));
 
-vi.mock("@/components/flashcards/review/flashcard-review-client", () => ({
-  FlashcardReviewClient: () => <div data-testid="flashcard-review" />,
-}));
-
 const mockManagePageData: import("@/lib/server/api-contracts").FlashcardManagePage =
   {
     items: [],
@@ -32,15 +28,8 @@ const mockManagePageData: import("@/lib/server/api-contracts").FlashcardManagePa
     subjectCardCount: null,
   };
 
-const mockReviewState: import("@/lib/server/api-contracts").FlashcardReviewState =
-  {
-    cards: [],
-    summary: { dueCount: 0, totalCount: 0 },
-    scheduler: {
-      desiredRetention: 0.9,
-      weights: [0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.9, 2.4, 4.9, 6.7],
-    },
-  };
+const mockReviewSummary: import("@/lib/server/api-contracts").FlashcardReviewSummary =
+  { dueCount: 3, totalCount: 10 };
 
 const mockSubjects: import("@/lib/server/api-contracts").SubjectOption[] = [
   {
@@ -60,7 +49,7 @@ const defaultProps: ComponentProps<typeof FlashcardsPageClient> = {
   initialPageSize: 25,
   subjects: mockSubjects,
   initialManagePageData: mockManagePageData,
-  initialReviewState: mockReviewState,
+  reviewSummary: mockReviewSummary,
   aiEnabled: false,
 };
 
@@ -115,11 +104,34 @@ describe("FlashcardsPageClient", () => {
     ).toBeTruthy();
   });
 
-  it("renders the review client on the review view", async () => {
+  it("links the review hub to the scoped session pages", async () => {
     await render({ currentView: "review", scopedSubjectId: "subject-1" });
 
-    expect(
-      container.querySelector('[data-testid="flashcard-review"]'),
-    ).toBeTruthy();
+    const reviewLink = container.querySelector(
+      '[data-testid="flashcard-review-start-button"]',
+    );
+    const examLink = container.querySelector(
+      '[data-testid="flashcard-exam-start-button"]',
+    );
+
+    expect(reviewLink?.getAttribute("href")).toBe(
+      "/flashcards/review?subjectId=subject-1",
+    );
+    expect(examLink?.getAttribute("href")).toBe(
+      "/flashcards/exam?subjectId=subject-1",
+    );
+  });
+
+  it("disables the review start when no cards are due", async () => {
+    await render({
+      currentView: "review",
+      reviewSummary: { dueCount: 0, totalCount: 4 },
+    });
+
+    const reviewButton = container.querySelector<HTMLButtonElement>(
+      '[data-testid="flashcard-review-start-button"]',
+    );
+
+    expect(reviewButton?.disabled).toBe(true);
   });
 });

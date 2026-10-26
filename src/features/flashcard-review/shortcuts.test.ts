@@ -11,7 +11,6 @@ const defaultInput = {
   isEditableTarget: false,
   hasModifierKey: false,
   isRepeat: false,
-  isFocusMode: false,
 } as const;
 
 describe("getFlashcardReviewShortcutAction", () => {

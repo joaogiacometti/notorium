@@ -44,7 +44,7 @@ export interface AssistantWorkspace {
   setOpen: (open: boolean) => void;
   host: HTMLElement | null;
   registerHost: (host: HTMLElement) => () => void;
-  /** Header launcher that replaces the floating one while a full-screen session is mounted. */
+  /** Header launcher that replaces the floating one while a review or exam session page is mounted. */
   inlineLauncher: HTMLButtonElement | null;
   registerInlineLauncher: (button: HTMLButtonElement) => () => void;
   registerPortalTarget: (

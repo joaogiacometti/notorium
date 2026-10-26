@@ -1,13 +1,9 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FocusModeOverlay } from "@/components/flashcards/review/review-focus-mode-overlay";
-import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
+import { ReviewSessionScreen } from "@/components/flashcards/review/review-session-screen";
 import { formatFlashcardsAsMarkdown } from "@/lib/clipboard/flashcard-content";
-import type {
-  FlashcardReviewEntity,
-  FlashcardReviewState,
-} from "@/lib/server/api-contracts";
+import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
 import { FakeClipboard } from "@/test/fake-clipboard";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -20,15 +16,10 @@ vi.mock("@/components/shared/lazy-tiptap-renderer", () => ({
   ),
 }));
 
-const scheduler = {
-  desiredRetention: 0.9,
-  weights: getDefaultFsrsWeights(),
-};
-
 const baseHandlers = {
   onReveal: vi.fn(),
   onGrade: vi.fn(),
-  onExitFocusMode: vi.fn(),
+  onExit: vi.fn(),
   onEditFlashcard: vi.fn(),
   onResetFlashcard: vi.fn(),
   onDeleteFlashcard: vi.fn(),
@@ -55,18 +46,7 @@ function makeCard(): FlashcardReviewEntity {
   };
 }
 
-function makeReviewState(card: FlashcardReviewEntity): FlashcardReviewState {
-  return {
-    cards: [card],
-    summary: {
-      dueCount: 1,
-      totalCount: 1,
-    },
-    scheduler,
-  };
-}
-
-describe("FocusModeOverlay", () => {
+describe("ReviewSessionScreen", () => {
   let container: HTMLDivElement;
   let root: Root;
   let clipboard: FakeClipboard | null = null;
@@ -100,9 +80,9 @@ describe("FocusModeOverlay", () => {
         subjectId: "biology",
       },
     };
-    await renderFocusModeOverlay({ currentCard, revealed: false });
+    await renderReviewSessionScreen({ currentCard, revealed: false });
     expect(container.querySelector('a[aria-label^="Source note"]')).toBeNull();
-    await renderFocusModeOverlay({ currentCard, revealed: true });
+    await renderReviewSessionScreen({ currentCard, revealed: true });
     expect(
       container
         .querySelector('a[aria-label^="Source note"]')
@@ -110,21 +90,19 @@ describe("FocusModeOverlay", () => {
     ).toBe("/subjects/biology/documents/notes/n1");
   });
 
-  it("shows the card actions menu before the focus mode close button", async () => {
-    await renderFocusModeOverlay();
+  it("shows the card actions menu before the exit button", async () => {
+    await renderReviewSessionScreen();
 
     const headerButtons = container.querySelectorAll("button");
 
     expect(headerButtons[0]?.getAttribute("aria-label")).toBe(
       "Open review actions",
     );
-    expect(headerButtons[1]?.getAttribute("aria-label")).toBe(
-      "Exit Focus Mode",
-    );
+    expect(headerButtons[1]?.getAttribute("aria-label")).toBe("Exit review");
   });
 
   it("runs edit, reset, and delete from the card actions menu", async () => {
-    await renderFocusModeOverlay();
+    await renderReviewSessionScreen();
 
     await clickMenuItem("Edit");
     await clickMenuItem("Reset");
@@ -137,7 +115,7 @@ describe("FocusModeOverlay", () => {
 
   it("copies the current card as Markdown from the card actions menu", async () => {
     clipboard = new FakeClipboard().install();
-    await renderFocusModeOverlay();
+    await renderReviewSessionScreen();
 
     await clickMenuItem("Copy");
 
@@ -149,7 +127,7 @@ describe("FocusModeOverlay", () => {
   });
 
   it("offers the latest review undo from the card actions menu", async () => {
-    await renderFocusModeOverlay({ canUndoReview: true });
+    await renderReviewSessionScreen({ canUndoReview: true });
 
     await clickMenuItem("Undo last review");
 
@@ -157,7 +135,7 @@ describe("FocusModeOverlay", () => {
   });
 
   it("keeps undo available after the last due card is graded", async () => {
-    await renderFocusModeOverlay({
+    await renderReviewSessionScreen({
       currentCard: null,
       canUndoReview: true,
     });
@@ -168,7 +146,7 @@ describe("FocusModeOverlay", () => {
   });
 
   it("shows loading instead of caught up while more due cards are loading", async () => {
-    await renderFocusModeOverlay({
+    await renderReviewSessionScreen({
       currentCard: null,
       isLoadingMoreCards: true,
     });
@@ -178,15 +156,15 @@ describe("FocusModeOverlay", () => {
 
     await act(async () => {
       Array.from(document.body.querySelectorAll("button"))
-        .find((button) => button.textContent === "Exit focus mode")
+        .find((button) => button.textContent === "Back to flashcards")
         ?.click();
     });
 
-    expect(baseHandlers.onExitFocusMode).toHaveBeenCalledOnce();
+    expect(baseHandlers.onExit).toHaveBeenCalledOnce();
   });
 
   it("keeps the card actions menu disabled while review actions are pending", async () => {
-    await renderFocusModeOverlay({ isPending: true });
+    await renderReviewSessionScreen({ isPending: true });
 
     const headerButtons = container.querySelectorAll("button");
     const actionsButton = container.querySelector<HTMLButtonElement>(
@@ -197,9 +175,7 @@ describe("FocusModeOverlay", () => {
     expect(actionsButton?.disabled).toBe(true);
     expect(actionsButton?.getAttribute("aria-busy")).toBe("true");
     expect(headerButtons[0]).toBe(actionsButton);
-    expect(headerButtons[1]?.getAttribute("aria-label")).toBe(
-      "Exit Focus Mode",
-    );
+    expect(headerButtons[1]?.getAttribute("aria-label")).toBe("Exit review");
 
     await act(async () => {
       actionsButton?.dispatchEvent(
@@ -215,7 +191,7 @@ describe("FocusModeOverlay", () => {
   });
 
   it("does not show scheduling outcomes before the user grades the card", async () => {
-    await renderFocusModeOverlay({
+    await renderReviewSessionScreen({
       revealed: true,
     });
 
@@ -259,16 +235,16 @@ describe("FocusModeOverlay", () => {
     });
   }
 
-  async function renderFocusModeOverlay(
-    overrides: Partial<Parameters<typeof FocusModeOverlay>[0]> = {},
+  async function renderReviewSessionScreen(
+    overrides: Partial<Parameters<typeof ReviewSessionScreen>[0]> = {},
   ) {
     const currentCard = makeCard();
 
     await act(async () => {
       root.render(
-        <FocusModeOverlay
+        <ReviewSessionScreen
           currentCard={currentCard}
-          reviewState={makeReviewState(currentCard)}
+          headerText="1 due of 1 total cards"
           subjects={[]}
           progress={0}
           revealed={false}

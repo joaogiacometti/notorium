@@ -15,6 +15,7 @@ import { SidebarCollapseProvider } from "@/components/shared/sidebar-collapse-co
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { useSidebarCollapsed } from "@/components/shared/use-sidebar-collapsed";
 import type { TutoringMode } from "@/features/assistant/validation";
+import { isFlashcardSessionPath } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
@@ -98,6 +99,7 @@ export function AppLayoutClient({
   initialTutoring,
   children,
 }: Readonly<AppLayoutClientProps>) {
+  const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const { collapsed, setCollapsed } = useSidebarCollapsed(
     initialSidebarCollapsed,
@@ -118,7 +120,8 @@ export function AppLayoutClient({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [collapsed, setCollapsed]);
 
-  const showSidebar = tree != null;
+  // Review and exam sessions are distraction-free pages without the sidebar.
+  const showSidebar = tree != null && !isFlashcardSessionPath(pathname);
 
   // The sidebar mounts twice (mobile sheet + desktop aside), so the keyboard
   // dialogs live here in the shell to keep a single listener and dialog.
