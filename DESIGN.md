@@ -130,7 +130,7 @@ Toasts (Sonner) manage their own z-index above all layers.
 Overlay surfaces never compete on z-index. They all sit on `z-overlay` (the
 `z-50` that shadcn primitives hardcode), and Radix portals append each surface
 to the end of `<body>` when it opens, so **whichever opened last paints on
-top**. This is what lets the command palette (`Ctrl+P`), shortcuts help (`?`),
+top**. This is what lets global search and commands (`Ctrl+K`), shortcuts help (`?`),
 create dialogs, and review edit/delete/reset dialogs all appear over a review
 session without per-dialog configuration.
 

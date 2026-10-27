@@ -14,7 +14,7 @@ interface ThemeControl {
 
 /**
  * Shared theme switching with optimistic update and rollback on a failed
- * persist. Used by both the navbar mode toggle and the command palette so the
+ * persist. Used by both the navbar mode toggle and the search dialog commands so the
  * rollback logic lives in one place.
  *
  * @example

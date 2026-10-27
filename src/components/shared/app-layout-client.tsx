@@ -8,7 +8,6 @@ import { AssistantAppFrame } from "@/components/assistant/assistant-app-frame";
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { StudyAssistant } from "@/components/assistant/study-assistant";
 import { AppSidebar } from "@/components/navbar/app-sidebar";
-import { CommandPalette } from "@/components/navbar/command-palette";
 import { GlobalSearch } from "@/components/navbar/global-search";
 import { MobileSidebarSheet } from "@/components/shared/mobile-sidebar-sheet";
 import { SidebarCollapseProvider } from "@/components/shared/sidebar-collapse-context";
@@ -161,10 +160,10 @@ export function AppLayoutClient({
 
   const content = (
     <div className="min-h-svh bg-background">
-      {userId && <CommandPalette userId={userId} aiEnabled={aiEnabled} />}
       {userId && (
         <GlobalSearch
           userId={userId}
+          aiEnabled={aiEnabled}
           open={searchOpen}
           onOpenChange={setSearchOpen}
         />

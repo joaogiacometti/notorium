@@ -214,15 +214,15 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Context is captured only when sending or retrying a message, using already loaded content without background AI calls or additional database reads. Beyond library search (below), the assistant has no access to other documents and changes nothing without the user's click. Existing conversation history remains across navigation.
 - Asked whether the user has material on something ("do I have a flashcard on mitosis?", "which note talks about the Calvin cycle?"), the assistant searches the user's own notes and flashcards once per reply. It sends 1 to 4 short terms (the topic plus synonyms or translations it picks); matching ignores case and accents and tolerates small typos in titles and flashcard fronts, but does not match by meaning. The search returns at most 4 items per kind with short excerpts (titles and excerpts up to 120 characters; card backs can appear in excerpts), never whole documents, and the chat lists each match as a link to its note or flashcard. On mobile, opening a link minimizes the chat. The assistant answers briefly from the excerpts and does not repeat the links. A search runs inside the same message and daily limit; a failed search shows "Library search failed." and the assistant answers without it.
 
-### Command Palette
+### Commands in Global Search
 
-- Pressing `Ctrl`/`Cmd+P` opens a command palette for running actions and navigating, separate from Global Search (`Ctrl`/`Cmd+K`). The browser print shortcut is suppressed while the palette is available.
-- Commands are searchable by name and keyword and grouped as Create, Go to, and Settings.
+- The Global Search dialog (`Ctrl`/`Cmd+K`) also runs actions and navigates. Commands appear above note and flashcard results, including before the user types.
+- Commands are searchable by name and keyword (case- and accent-insensitive) and grouped as Create, Go to, and Settings.
 - Create commands open the existing create dialogs: Subject, Flashcard, and Note.
 - Creating a Note requires a subject: the create dialog preselects the current subject on note pages, otherwise the user chooses a subject in the dialog. The subject picker can create a subject inline, including a nested `::` path, and selects it automatically. Created notes navigate to their detail page.
 - Go to commands navigate to Home and Flashcards.
 - Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.
-- The palette hotkey is suspended while another dialog is open.
+- The search hotkey is suspended while another dialog is open.
 
 ### Keyboard Shortcuts Help
 

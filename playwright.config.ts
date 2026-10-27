@@ -56,7 +56,7 @@ export default defineConfig({
     {
       name: "authenticated",
       // Every other spec runs signed in. An allow-list here silently skipped
-      // newly added specs (command-palette.spec.ts never ran).
+      // newly added specs (search-commands.spec.ts never ran).
       testIgnore: [bootstrapSpecs, publicSpecs],
       dependencies: ["bootstrap"],
       use: {

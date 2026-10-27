@@ -1,255 +1,176 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Layers } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { SearchCommandGroups } from "@/components/navbar/search-command-groups";
+import {
+  type ContextFreeDialog,
+  filterSearchCommands,
+  parseSubjectIdFromPath,
+} from "@/components/navbar/search-commands";
+import {
+  type ActiveCreateDialog,
+  SearchCreateDialogs,
+} from "@/components/navbar/search-create-dialogs";
+import {
+  FlashcardResultGroup,
+  NoteResultGroup,
+} from "@/components/navbar/search-result-groups";
+import { useSearchCommandActions } from "@/components/navbar/use-search-command-actions";
+import { useSearchResults } from "@/components/navbar/use-search-results";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import {
   CommandDialog,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from "@/components/ui/command";
 import { LIMITS } from "@/lib/config/limits";
-import { richTextToPlainText } from "@/lib/editor/rich-text";
-import {
-  getFlashcardDetailHref,
-  getNoteDetailHref,
-} from "@/lib/navigation/detail-page-back-link";
-import { useDebouncedValue } from "@/lib/react/use-debounced-value";
-import { fetchRecentSearchData, fetchSearchData } from "@/lib/read-api/search";
-import {
-  buildSearchMatchSnippet,
-  renderSearchHighlightedText,
-} from "@/lib/search/highlight";
+import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 
 interface GlobalSearchProps {
   userId: string;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  aiEnabled: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
+/**
+ * One dialog for both finding notes and flashcards and running commands
+ * (create, go to, settings). Opened with Cmd/Ctrl+K or from the sidebar.
+ */
 export function GlobalSearch({
   userId,
-  open: openProp,
+  aiEnabled,
+  open,
   onOpenChange,
 }: Readonly<GlobalSearchProps>) {
   const shortcutsSuspended = useShortcutsDialogOpen();
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = openProp ?? internalOpen;
-
-  function setOpen(next: boolean) {
-    if (openProp === undefined) {
-      setInternalOpen(next);
-    }
-    onOpenChange?.(next);
-  }
-
-  const [query, setQuery] = useState("");
-  const debouncedQuery = useDebouncedValue(query, 200);
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [, startNavTransition] = useTransition();
+  const [query, setQuery] = useState("");
+  const [activeDialog, setActiveDialog] = useState<ActiveCreateDialog | null>(
+    null,
+  );
+  const [createSubjectId, setCreateSubjectId] = useState<string | null>(null);
 
-  const { data, isPending } = useQuery({
-    queryKey: ["search-data", userId, debouncedQuery],
-    queryFn: () => fetchSearchData(debouncedQuery),
-    enabled:
-      open &&
-      userId.length > 0 &&
-      debouncedQuery.trim().length >= LIMITS.searchQueryMin,
+  const { data: subjects = [] } = useQuery({
+    queryKey: ["create-dialog-subjects", userId],
+    queryFn: () => fetchSubjectOptions(),
+    enabled: (open || activeDialog !== null) && userId.length > 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
   });
-  const recentQuery = useQuery({
-    queryKey: ["search-data", "recent", userId],
-    queryFn: () => fetchRecentSearchData(),
-    enabled:
-      open &&
-      userId.length > 0 &&
-      debouncedQuery.trim().length < LIMITS.searchQueryMin,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 15,
-  });
+  const results = useSearchResults(query, userId, open);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (shortcutsSuspended) {
+      if (e.key !== "k" || !(e.metaKey || e.ctrlKey)) {
         return;
       }
-
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        const next = !open;
-        if (openProp === undefined) {
-          setInternalOpen(next);
-        }
-        onOpenChange?.(next);
+      if (shortcutsSuspended || activeDialog !== null) {
+        return;
       }
+      e.preventDefault();
+      onOpenChange(!open);
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [shortcutsSuspended, open, openProp, onOpenChange]);
+  }, [shortcutsSuspended, activeDialog, open, onOpenChange]);
 
-  function handleSelect(path: string) {
-    setOpen(false);
-    startNavTransition(() => router.push(path));
-  }
-
+  // cmdk keeps the search text in the shared Command context, so clear it on
+  // close; otherwise the next open starts pre-filtered by the old query.
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-
+    onOpenChange(nextOpen);
     if (!nextOpen) {
       setQuery("");
     }
   }
 
-  const canSearch =
-    userId.length > 0 && debouncedQuery.trim().length >= LIMITS.searchQueryMin;
-  const highlightQuery = canSearch ? debouncedQuery.trim() : "";
-  const isAuthenticated = userId.length > 0;
-  const showingRecents = isAuthenticated && !canSearch;
-  const currentData = canSearch ? data : recentQuery.data;
-  const isResultsPending = canSearch ? isPending : recentQuery.isPending;
-  const notes = currentData?.notes ?? [];
-  const flashcards = currentData?.flashcards ?? [];
-  const hasData = notes.length > 0 || flashcards.length > 0;
-  const flashcardsView =
-    pathname === "/flashcards"
-      ? (searchParams.get("view") ?? undefined)
-      : undefined;
-  const flashcardsSubjectId =
-    pathname === "/flashcards"
-      ? (searchParams.get("subjectId") ?? undefined)
-      : undefined;
+  function navigate(href: string) {
+    handleOpenChange(false);
+    startNavTransition(() => router.push(href));
+  }
+
+  const runAction = useSearchCommandActions({
+    onClose: () => handleOpenChange(false),
+    onNavigate: navigate,
+    onCreate: (dialog: ContextFreeDialog) => {
+      setCreateSubjectId(parseSubjectIdFromPath(pathname));
+      setActiveDialog(dialog);
+    },
+  });
+
+  const commands = filterSearchCommands(query);
+  const onFlashcards = pathname === "/flashcards";
+  const view = onFlashcards
+    ? (searchParams.get("view") ?? undefined)
+    : undefined;
+  const subjectId = onFlashcards
+    ? (searchParams.get("subjectId") ?? undefined)
+    : undefined;
+  const hasResults = results.notes.length + results.flashcards.length > 0;
 
   return (
-    <CommandDialog
-      open={open}
-      onOpenChange={handleOpenChange}
-      title="Global Search"
-      description="Search across all your notes and flashcards"
-      commandProps={{ shouldFilter: false }}
-    >
-      <CommandInput
-        value={query}
-        onValueChange={setQuery}
-        maxLength={LIMITS.searchQueryMax}
-        placeholder="Search notes and flashcards..."
+    <>
+      <CommandDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        title="Search and Commands"
+        description="Search your notes and flashcards or run a command"
+        commandProps={{ shouldFilter: false }}
+      >
+        <CommandInput
+          value={query}
+          onValueChange={setQuery}
+          maxLength={LIMITS.searchQueryMax}
+          placeholder="Search notes and flashcards, or run a command..."
+        />
+        <CommandList>
+          {results.isPending && <SearchSkeleton />}
+          {!results.isPending && commands.length === 0 && !hasResults && (
+            <CommandEmpty>
+              No matching commands, notes, or flashcards.
+            </CommandEmpty>
+          )}
+          <SearchCommandGroups commands={commands} onRun={runAction} />
+          <NoteResultGroup
+            notes={results.notes}
+            heading={results.showingRecents ? "Recent Notes" : "Notes"}
+            highlightQuery={results.highlightQuery}
+            onSelect={navigate}
+          />
+          <FlashcardResultGroup
+            flashcards={results.flashcards}
+            heading={
+              results.showingRecents ? "Recent Flashcards" : "Flashcards"
+            }
+            highlightQuery={results.highlightQuery}
+            detailOptions={{
+              from: view ? "flashcards-manage" : undefined,
+              view,
+              subjectId,
+            }}
+            onSelect={navigate}
+          />
+        </CommandList>
+      </CommandDialog>
+      <SearchCreateDialogs
+        activeDialog={activeDialog}
+        subjectId={createSubjectId}
+        subjects={subjects}
+        aiEnabled={aiEnabled}
+        onClose={() => {
+          setActiveDialog(null);
+          setCreateSubjectId(null);
+        }}
+        onNavigate={navigate}
       />
-      <CommandList>
-        {isResultsPending && <SearchSkeleton />}
-        {!isResultsPending && !isAuthenticated && (
-          <CommandEmpty>Sign in to search.</CommandEmpty>
-        )}
-        {!isResultsPending && isAuthenticated && !hasData && (
-          <CommandEmpty>No notes or flashcards yet.</CommandEmpty>
-        )}
-
-        {notes.length > 0 && (
-          <CommandGroup heading={showingRecents ? `Recent Notes` : "Notes"}>
-            {notes.map((n) => (
-              <CommandItem
-                key={n.id}
-                value={n.id}
-                onSelect={() =>
-                  handleSelect(getNoteDetailHref(n.subjectId, n.id))
-                }
-                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-              >
-                <div className="flex w-full min-w-0 items-center gap-2">
-                  <FileText className="!size-4 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate">
-                    {renderSearchHighlightedText(n.title, highlightQuery)}
-                  </span>
-                  <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                    <span className="shrink-0">in</span>
-                    <span className="block min-w-0 flex-1 truncate">
-                      {renderSearchHighlightedText(
-                        n.subjectName,
-                        highlightQuery,
-                      )}
-                    </span>
-                  </span>
-                </div>
-                {n.content && (
-                  <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
-                    {renderSearchHighlightedText(
-                      buildSearchMatchSnippet(
-                        richTextToPlainText(n.content),
-                        highlightQuery,
-                        LIMITS.contentPreviewTruncate,
-                      ),
-                      highlightQuery,
-                    )}
-                  </span>
-                )}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-
-        {flashcards.length > 0 && (
-          <CommandGroup
-            heading={showingRecents ? `Recent Flashcards` : "Flashcards"}
-          >
-            {flashcards.map((fc) => (
-              <CommandItem
-                key={fc.id}
-                value={fc.id}
-                onSelect={() =>
-                  handleSelect(
-                    getFlashcardDetailHref(fc.id, {
-                      from: flashcardsView ? "flashcards-manage" : undefined,
-                      view: flashcardsView,
-                      subjectId: flashcardsSubjectId,
-                    }),
-                  )
-                }
-                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-              >
-                <div className="flex w-full min-w-0 items-center gap-2">
-                  <Layers className="!size-4 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate">
-                    {renderSearchHighlightedText(
-                      buildSearchMatchSnippet(
-                        richTextToPlainText(fc.front),
-                        highlightQuery,
-                        80,
-                      ),
-                      highlightQuery,
-                    )}
-                  </span>
-                  <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                    <span className="shrink-0">in</span>
-                    <span className="block flex-1 truncate">
-                      {fc.subjectPath}
-                    </span>
-                  </span>
-                </div>
-                {fc.back && (
-                  <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
-                    {renderSearchHighlightedText(
-                      buildSearchMatchSnippet(
-                        richTextToPlainText(fc.back),
-                        highlightQuery,
-                        120,
-                      ),
-                      highlightQuery,
-                    )}
-                  </span>
-                )}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-      </CommandList>
-    </CommandDialog>
+    </>
   );
 }

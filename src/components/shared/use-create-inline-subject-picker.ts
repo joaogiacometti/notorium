@@ -57,7 +57,7 @@ export function useCreateInlineSubjectPicker({
       setSubjects(refreshed);
     }
     await queryClient.invalidateQueries({
-      queryKey: ["command-palette-subjects"],
+      queryKey: ["create-dialog-subjects"],
     });
     onSubjectCreated(result.subjectId ?? "");
     return true;

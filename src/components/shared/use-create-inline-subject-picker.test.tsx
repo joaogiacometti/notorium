@@ -131,7 +131,7 @@ describe("useCreateInlineSubjectPicker", () => {
       container.querySelector('[data-testid="selected"]')?.textContent,
     ).toBe("subject-2");
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-      queryKey: ["command-palette-subjects"],
+      queryKey: ["create-dialog-subjects"],
     });
   });
 

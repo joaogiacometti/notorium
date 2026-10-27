@@ -133,15 +133,15 @@ describe("shortcutRegistry", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("lists the command palette shortcut under Global", () => {
-    const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
-      (item) => item.id === "command-palette",
+  it("lists one search and command shortcut under Global", () => {
+    const shortcuts = getShortcutsByCategory(ShortcutCategory.Global);
+    expect(shortcuts.find((item) => item.id === "global-search")).toMatchObject(
+      {
+        kind: "keys",
+        keys: ["cmd+k", "ctrl+k"],
+        description: "Search and run commands",
+      },
     );
-    expect(shortcut).toMatchObject({
-      kind: "keys",
-      keys: ["cmd+p", "ctrl+p"],
-      description: "Open command palette",
-    });
   });
 
   it("lists the toggle-sidebar shortcut under Global", () => {

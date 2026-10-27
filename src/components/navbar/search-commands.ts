@@ -10,30 +10,31 @@ import {
   Sun,
   UserCog,
 } from "lucide-react";
+import { includesFoldedText } from "@/lib/search/fold";
 import type { AppTheme } from "@/lib/theme";
 
-export type PaletteGroup = "Create" | "Go to" | "Settings";
+export type SearchCommandGroup = "Create" | "Go to" | "Settings";
 
-/** Dialogs that open straight from the palette. */
+/** Dialogs that open straight from a search command. */
 export type ContextFreeDialog = "subject" | "flashcard" | "note";
 
-export type PaletteAction =
+export type SearchCommandAction =
   | { kind: "navigate"; href: string }
   | { kind: "create"; dialog: ContextFreeDialog }
   | { kind: "theme"; theme: AppTheme }
   | { kind: "open-settings" }
   | { kind: "shortcuts-help" };
 
-export interface PaletteCommand {
+export interface SearchCommand {
   id: string;
   label: string;
-  group: PaletteGroup;
+  group: SearchCommandGroup;
   keywords: string[];
   icon: LucideIcon;
-  action: PaletteAction;
+  action: SearchCommandAction;
 }
 
-export const paletteCommands: PaletteCommand[] = [
+export const searchCommands: SearchCommand[] = [
   {
     id: "create-subject",
     label: "Create Subject",
@@ -116,12 +117,31 @@ export const paletteCommands: PaletteCommand[] = [
   },
 ];
 
-/** Group order for rendering the palette. */
-export const paletteGroupOrder: PaletteGroup[] = [
+/** Group order for rendering commands in the search dialog. */
+export const searchCommandGroupOrder: SearchCommandGroup[] = [
   "Create",
   "Go to",
   "Settings",
 ];
+
+/**
+ * Commands whose label or keywords contain `query`, ignoring case and accents.
+ * A blank query returns every command.
+ *
+ * @example
+ * filterSearchCommands("THEME").map((command) => command.id); // theme commands
+ */
+export function filterSearchCommands(query: string): SearchCommand[] {
+  const trimmed = query.trim();
+  if (trimmed.length === 0) {
+    return searchCommands;
+  }
+  return searchCommands.filter((command) =>
+    [command.label, ...command.keywords].some((text) =>
+      includesFoldedText(text, trimmed),
+    ),
+  );
+}
 
 /**
  * Resolve the active subject id from a route so subject-scoped creates can skip

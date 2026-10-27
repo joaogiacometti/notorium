@@ -1,27 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
-  paletteCommands,
-  paletteGroupOrder,
+  filterSearchCommands,
   parseSubjectIdFromPath,
-} from "@/components/navbar/command-palette-commands";
+  searchCommandGroupOrder,
+  searchCommands,
+} from "@/components/navbar/search-commands";
 
-describe("paletteCommands", () => {
+describe("searchCommands", () => {
   it("has unique ids", () => {
-    const ids = paletteCommands.map((command) => command.id);
+    const ids = searchCommands.map((command) => command.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("gives every command keywords and a known group", () => {
-    for (const command of paletteCommands) {
+    for (const command of searchCommands) {
       expect(command.keywords.length).toBeGreaterThan(0);
-      expect(paletteGroupOrder).toContain(command.group);
+      expect(searchCommandGroupOrder).toContain(command.group);
     }
   });
 
   it("covers each create, navigate, theme, settings, and shortcuts action", () => {
-    const kinds = new Set(
-      paletteCommands.map((command) => command.action.kind),
-    );
+    const kinds = new Set(searchCommands.map((command) => command.action.kind));
     expect(kinds).toContain("create");
     expect(kinds).toContain("navigate");
     expect(kinds).toContain("theme");
@@ -30,8 +29,25 @@ describe("paletteCommands", () => {
   });
 
   it("navigates Home to the root route", () => {
-    const home = paletteCommands.find((command) => command.id === "goto-home");
+    const home = searchCommands.find((command) => command.id === "goto-home");
     expect(home?.action).toEqual({ kind: "navigate", href: "/" });
+  });
+});
+
+describe("filterSearchCommands", () => {
+  it("returns every command for a blank query", () => {
+    expect(filterSearchCommands("  ")).toEqual(searchCommands);
+  });
+
+  it("matches labels and keywords ignoring case", () => {
+    expect(filterSearchCommands("THEME")).toHaveLength(3);
+    expect(filterSearchCommands("Preferences").map((c) => c.id)).toEqual([
+      "open-settings",
+    ]);
+  });
+
+  it("returns nothing when no command matches", () => {
+    expect(filterSearchCommands("zzzz")).toEqual([]);
   });
 });
 
