@@ -43,7 +43,7 @@ describe("buildLibraryHit", () => {
   it("collapses whitespace and stays within the contract limits", () => {
     const hit = buildLibraryHit(
       {
-        kind: "mindmap",
+        kind: "note",
         id: "m1",
         subjectId: "s1",
         title: `Line one\n\n  line two ${"x".repeat(500)}`,

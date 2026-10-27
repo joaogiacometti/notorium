@@ -122,9 +122,6 @@ describe("getLibraryHitHref", () => {
     expect(getLibraryHitHref({ ...hit, kind: "note" })).toBe(
       "/subjects/subject-1/documents/notes/item-1",
     );
-    expect(getLibraryHitHref({ ...hit, kind: "mindmap" })).toBe(
-      "/subjects/subject-1/documents/mindmaps/item-1",
-    );
     expect(getLibraryHitHref({ ...hit, kind: "flashcard" })).toBe(
       "/flashcards/item-1",
     );
@@ -146,7 +143,7 @@ describe("readProposalSource", () => {
           id: "u2",
           role: "user",
           parts: [],
-          metadata: { source: { kind: "mindmap", id: "m1" } },
+          metadata: { source: { kind: "note", id: "n2" } },
         },
         { id: "a2", role: "assistant", parts: [] },
         { id: "u3", role: "user", parts: [] },
@@ -157,8 +154,8 @@ describe("readProposalSource", () => {
       id: "n1",
     });
     expect(readProposalSource(messages, "a2")).toEqual({
-      kind: "mindmap",
-      id: "m1",
+      kind: "note",
+      id: "n2",
     });
     expect(readProposalSource(messages, "a3")).toBeUndefined();
     expect(readProposalSource(messages, "missing")).toBeUndefined();
@@ -168,16 +165,16 @@ describe("readProposalSource", () => {
 describe("readStudyContextSource", () => {
   it("records an open document as the source and ignores review context", () => {
     const document = {
-      kind: "mindmap" as const,
-      documentId: "m1",
+      kind: "note" as const,
+      documentId: "n1",
       title: "Cells",
       subjectPath: "Biology",
       content: "ATP",
       partial: false,
     };
     expect(readStudyContextSource(document)).toEqual({
-      kind: "mindmap",
-      id: "m1",
+      kind: "note",
+      id: "n1",
     });
     expect(
       readStudyContextSource({ ...document, documentId: undefined }),

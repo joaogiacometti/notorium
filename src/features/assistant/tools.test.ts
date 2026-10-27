@@ -109,21 +109,6 @@ describe("assistant tool availability", () => {
         },
       },
     },
-    {
-      name: "mindmap",
-      editor: "proposeMindmapEdits",
-      context: {
-        documentDraft: {
-          kind: "mindmap",
-          sessionId: "map",
-          revision: 0,
-          title: "Map",
-          partial: false,
-          nodes: [],
-          edges: [],
-        },
-      },
-    },
   ])("exposes only the supported editor for $name", ({ context, editor }) => {
     expect(selectAssistantActiveTools(context)).toEqual([
       "proposeFlashcards",
@@ -133,7 +118,7 @@ describe("assistant tool availability", () => {
   });
   it("retains every tool definition for history, with only search executable", () => {
     const tools = buildAssistantTools(new EmptyToolLibrary().search);
-    expect(Object.keys(tools)).toHaveLength(5);
+    expect(Object.keys(tools)).toHaveLength(4);
     expect(
       Object.entries(tools)
         .filter(([, value]) => value.execute)

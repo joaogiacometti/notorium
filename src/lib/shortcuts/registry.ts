@@ -1,7 +1,6 @@
 export enum ShortcutCategory {
   Global = "global",
   NotesEditor = "notes_editor",
-  Mindmap = "mindmap",
   FlashcardReview = "flashcard_review",
 }
 
@@ -34,7 +33,6 @@ export interface ShortcutCategorySection {
 export const shortcutCategorySections: ShortcutCategorySection[] = [
   { category: ShortcutCategory.Global, label: "Global" },
   { category: ShortcutCategory.NotesEditor, label: "Notes editor" },
-  { category: ShortcutCategory.Mindmap, label: "Mindmap" },
   { category: ShortcutCategory.FlashcardReview, label: "Flashcard review" },
 ];
 
@@ -138,90 +136,6 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.NotesEditor,
   },
   {
-    id: "mindmap-select-mode",
-    kind: "keys",
-    keys: ["v"],
-    description: "Select mode",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-pan-mode",
-    kind: "keys",
-    keys: ["h"],
-    description: "Pan mode",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-search",
-    kind: "keys",
-    keys: ["cmd+f", "ctrl+f"],
-    description: "Search nodes",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-temp-pan",
-    kind: "keys",
-    keys: ["space"],
-    description: "Pan while held",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-delete-selection",
-    kind: "keys",
-    keys: ["delete", "backspace"],
-    description: "Delete selected node and its descendants",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-add-child",
-    kind: "keys",
-    keys: ["tab"],
-    description: "Add child to selected node",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-add-sibling",
-    kind: "keys",
-    keys: ["shift+enter"],
-    description: "Add sibling below selected node",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-copy-node",
-    kind: "keys",
-    keys: ["cmd+c", "ctrl+c"],
-    description: "Copy selected nodes as text",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-undo",
-    kind: "keys",
-    keys: ["cmd+z", "ctrl+z"],
-    description: "Undo",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-redo",
-    kind: "keys",
-    keys: ["cmd+shift+z", "ctrl+shift+z"],
-    description: "Redo",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-edit-label",
-    kind: "typed",
-    keys: ["Double-click"],
-    description: "Edit node or connection label",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
-    id: "mindmap-zen-exit",
-    kind: "keys",
-    keys: ["escape"],
-    description: "Exit zen mode",
-    category: ShortcutCategory.Mindmap,
-  },
-  {
     id: "flashcard-reveal-grade",
     kind: "keys",
     keys: ["enter", "space"],
@@ -310,9 +224,6 @@ export function getActiveShortcutCategories(
   const active = [ShortcutCategory.Global];
   if (pathname.includes("/documents/notes/")) {
     active.push(ShortcutCategory.NotesEditor);
-  }
-  if (pathname.includes("/documents/mindmaps/")) {
-    active.push(ShortcutCategory.Mindmap);
   }
   if (pathname.startsWith("/flashcards")) {
     active.push(ShortcutCategory.FlashcardReview);

@@ -11,7 +11,7 @@ interface RecentDocumentsCardProps {
 }
 
 /**
- * Dashboard card listing the user's most recently updated notes and mindmaps
+ * Dashboard card listing the user's most recently updated notes
  * across every subject, each linking to its detail page.
  */
 export function RecentDocumentsCard({
@@ -23,7 +23,7 @@ export function RecentDocumentsCard({
       <CardContent>
         {documents.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Notes and mindmaps you edit will show up here.
+            Notes you edit will show up here.
           </p>
         ) : (
           <ul className="grid gap-1">

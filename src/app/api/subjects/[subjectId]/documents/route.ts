@@ -7,7 +7,7 @@ interface SubjectDocumentsRouteContext {
 }
 
 /**
- * One subject's notes + mindmaps for the tree sidebar, fetched the first time
+ * One subject's notes for the tree sidebar, fetched the first time
  * a subject node is expanded. Ownership is enforced by `userId`.
  */
 export async function GET(

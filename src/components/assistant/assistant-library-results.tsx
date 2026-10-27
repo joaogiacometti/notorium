@@ -1,4 +1,4 @@
-import { FileText, Layers, type LucideIcon, Network } from "lucide-react";
+import { FileText, Layers, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { LibraryHit } from "@/features/assistant/library-search-contract";
 import type { AssistantLibrarySearchPart } from "@/features/assistant/types";
@@ -16,11 +16,10 @@ const LIBRARY_HIT_KIND_DISPLAY: Record<
 > = {
   note: { icon: FileText, label: "Note" },
   flashcard: { icon: Layers, label: "Flashcard" },
-  mindmap: { icon: Network, label: "Mindmap" },
 };
 
 /**
- * Links to the notes, flashcards, and mindmaps a `searchLibrary` call found.
+ * Links to the notes and flashcards a `searchLibrary` call found.
  * The model only summarizes; the links come from the result ids, so they
  * cannot point anywhere the search did not return.
  *

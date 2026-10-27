@@ -56,7 +56,7 @@ export function DeleteSubjectDialog({
             className="inline font-semibold text-foreground"
           />
           ? This action cannot be undone. Nested subjects and all associated
-          notes, mindmaps, flashcards, and attachments will also be deleted.
+          notes, flashcards, and attachments will also be deleted.
         </>
       }
       confirmLabel="Delete"

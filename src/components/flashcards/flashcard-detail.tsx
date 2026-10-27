@@ -128,7 +128,7 @@ export function FlashcardDetail({
   return (
     <DetailPageLayout breadcrumb={breadcrumb} maxWidth="7xl">
       <div className="mb-4 flex min-w-0 items-start gap-2">
-        {/* Mirrors the note/mindmap header: an h-10 title row, then metadata. */}
+        {/* Mirrors the note header: an h-10 title row, then metadata. */}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1
             className="truncate text-xl leading-10 font-semibold tracking-tight"

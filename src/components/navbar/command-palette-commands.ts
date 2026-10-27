@@ -7,7 +7,6 @@ import {
   Layers,
   type LucideIcon,
   Moon,
-  Network,
   Sun,
   UserCog,
 } from "lucide-react";
@@ -16,7 +15,7 @@ import type { AppTheme } from "@/lib/theme";
 export type PaletteGroup = "Create" | "Go to" | "Settings";
 
 /** Dialogs that open straight from the palette. */
-export type ContextFreeDialog = "subject" | "flashcard" | "note" | "mindmap";
+export type ContextFreeDialog = "subject" | "flashcard" | "note";
 
 export type PaletteAction =
   | { kind: "navigate"; href: string }
@@ -58,14 +57,6 @@ export const paletteCommands: PaletteCommand[] = [
     keywords: ["new", "add", "create", "note", "document"],
     icon: FileText,
     action: { kind: "create", dialog: "note" },
-  },
-  {
-    id: "create-mindmap",
-    label: "Create Mindmap",
-    group: "Create",
-    keywords: ["new", "add", "create", "mindmap", "map", "diagram"],
-    icon: Network,
-    action: { kind: "create", dialog: "mindmap" },
   },
   {
     id: "goto-home",

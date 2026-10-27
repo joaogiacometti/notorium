@@ -10,7 +10,7 @@ import {
 /** Root prefix shared by every stored blob: `notorium/{context}/{userId}/...`. */
 const BLOB_ROOT_PREFIX = "notorium/";
 
-/** Blob contexts owned by a single user, used when purging an account. */
+/** Keep the retired mindmaps prefix so account deletion purges older uploads. */
 const USER_BLOB_CONTEXTS = ["notes", "flashcards", "mindmaps"] as const;
 
 // Blobs younger than this are never collected. An upload that has not yet

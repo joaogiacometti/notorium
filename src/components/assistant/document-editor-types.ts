@@ -1,22 +1,20 @@
 import type {
   DocumentDraft,
-  MindmapDraft,
   NoteDraft,
 } from "@/features/assistant/document-edit-contract";
-import type { MindmapGraph } from "@/features/mindmaps/types";
 import type { RichTextReviewSegment } from "@/lib/editor/rich-text-review-decorations";
 
-export type DocumentSnapshot =
-  | { kind: "note"; draft: NoteDraft; content: string }
-  | { kind: "mindmap"; draft: MindmapDraft; graph: MindmapGraph };
-export type PreparedDocumentEdit =
-  | {
-      kind: "note";
-      title: string;
-      content: string;
-      segments: RichTextReviewSegment[];
-    }
-  | { kind: "mindmap"; title: string; graph: MindmapGraph };
+export type DocumentSnapshot = {
+  kind: "note";
+  draft: NoteDraft;
+  content: string;
+};
+export type PreparedDocumentEdit = {
+  kind: "note";
+  title: string;
+  content: string;
+  segments: RichTextReviewSegment[];
+};
 export interface ActiveDocumentEditor {
   sessionId: string;
   snapshot: () => DocumentSnapshot;
@@ -25,7 +23,7 @@ export interface ActiveDocumentEditor {
 }
 export interface PendingDocumentEdit {
   toolCallId: string;
-  tool: "proposeNoteEdits" | "proposeMindmapEdits";
+  tool: "proposeNoteEdits";
   baseline: DocumentSnapshot;
   prepared: PreparedDocumentEdit;
 }
@@ -48,6 +46,6 @@ export function documentSnapshotSignature(snapshot: DocumentSnapshot): string {
     snapshot.draft.sessionId,
     snapshot.draft.revision,
     snapshot.draft.title,
-    snapshot.kind === "note" ? snapshot.content : snapshot.graph,
+    snapshot.content,
   ]);
 }

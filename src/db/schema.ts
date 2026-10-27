@@ -187,36 +187,6 @@ export const note = pgTable(
   ],
 );
 
-export const mindmap = pgTable(
-  "mindmap",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    title: text("title").notNull(),
-    // JSON-serialized { nodes, edges } graph. Stored as text to mirror
-    // note.content; always parsed/validated with Zod, never trusted raw.
-    data: text("data"),
-    subjectId: text("subject_id")
-      .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    index("mindmap_subjectId_idx").on(table.subjectId),
-    index("mindmap_userId_idx").on(table.userId),
-    index("mindmap_userId_updatedAt_idx").on(table.userId, table.updatedAt),
-    unaccentTrigramIndex("mindmap_title_unaccent_trgm_idx", table.title),
-  ],
-);
-
 export const flashcard = pgTable(
   "flashcard",
   {
@@ -226,9 +196,6 @@ export const flashcard = pgTable(
     front: text("front").notNull(),
     frontNormalized: text("front_normalized").notNull(),
     sourceNoteId: text("source_note_id").references(() => note.id, {
-      onDelete: "set null",
-    }),
-    sourceMindmapId: text("source_mindmap_id").references(() => mindmap.id, {
       onDelete: "set null",
     }),
     back: text("back").notNull(),
@@ -264,7 +231,6 @@ export const flashcard = pgTable(
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
     // ON DELETE SET NULL looks up cards by source; unindexed it scans flashcard.
     index("flashcard_sourceNoteId_idx").on(table.sourceNoteId),
-    index("flashcard_sourceMindmapId_idx").on(table.sourceMindmapId),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),
     index("flashcard_userId_subjectId_updatedAt_idx").on(
       table.userId,
@@ -361,7 +327,6 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   subjects: many(subject),
   notes: many(note),
-  mindmaps: many(mindmap),
   flashcards: many(flashcard),
   flashcardReviewLogs: many(flashcardReviewLog),
 }));
@@ -392,7 +357,6 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
     references: [user.id],
   }),
   notes: many(note),
-  mindmaps: many(mindmap),
   flashcards: many(flashcard),
 }));
 
@@ -407,25 +371,10 @@ export const noteRelations = relations(note, ({ one }) => ({
   }),
 }));
 
-export const mindmapRelations = relations(mindmap, ({ one }) => ({
-  subject: one(subject, {
-    fields: [mindmap.subjectId],
-    references: [subject.id],
-  }),
-  user: one(user, {
-    fields: [mindmap.userId],
-    references: [user.id],
-  }),
-}));
-
 export const flashcardRelations = relations(flashcard, ({ one }) => ({
   sourceNote: one(note, {
     fields: [flashcard.sourceNoteId],
     references: [note.id],
-  }),
-  sourceMindmap: one(mindmap, {
-    fields: [flashcard.sourceMindmapId],
-    references: [mindmap.id],
   }),
   subject: one(subject, {
     fields: [flashcard.subjectId],

@@ -4,7 +4,7 @@ import type { AssistantUIMessage } from "@/features/assistant/types";
 
 export type DocumentProposalPart = Extract<
   AssistantUIMessage["parts"][number],
-  { type: "tool-proposeNoteEdits" | "tool-proposeMindmapEdits" }
+  { type: "tool-proposeNoteEdits" }
 >;
 
 /** Keep only the resolved outcome in chat; document differences belong in the workspace.
@@ -42,8 +42,7 @@ export function readDocumentProposalParts(
 ): DocumentProposalPart[] {
   return message.parts.filter(
     (part, index): part is DocumentProposalPart =>
-      (part.type === "tool-proposeNoteEdits" ||
-        part.type === "tool-proposeMindmapEdits") &&
+      part.type === "tool-proposeNoteEdits" &&
       part.state !== "input-streaming" &&
       !(
         part.state === "output-error" &&

@@ -87,7 +87,6 @@ async function createFlashcardRecord(
       frontNormalized,
       back: data.back,
       sourceNoteId: data.source?.kind === "note" ? data.source.id : null,
-      sourceMindmapId: data.source?.kind === "mindmap" ? data.source.id : null,
       state: schedulingState.state,
       dueAt: schedulingState.dueAt,
       stability: schedulingState.stability,

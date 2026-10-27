@@ -519,6 +519,20 @@
       "when": 1792679664673,
       "tag": "0073_abandoned_plazm",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1793107296188,
+      "tag": "0074_mushy_human_robot",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1793107305441,
+      "tag": "0075_tranquil_millenium_guard",
+      "breakpoints": true
     }
   ]
 }

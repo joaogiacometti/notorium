@@ -1,12 +1,10 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, mindmap, note, subject } from "@/db/schema";
-import { findMindmapNodeLabelMatch } from "@/features/mindmaps/utils";
+import { flashcard, note, subject } from "@/db/schema";
 import { foldedContains } from "@/features/search/match-sql";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { LIMITS } from "@/lib/config/limits";
-import { includesFoldedText } from "@/lib/search/fold";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type { SearchData } from "@/lib/server/api-contracts";
 
@@ -26,7 +24,7 @@ export async function getSearchDataForUser(
       ),
   );
 
-  const [allNotes, allFlashcards, allMindmaps] = await Promise.all([
+  const [allNotes, allFlashcards] = await Promise.all([
     getDb()
       .select({
         id: note.id,
@@ -71,29 +69,6 @@ export async function getSearchDataForUser(
       )
       .orderBy(desc(flashcard.updatedAt))
       .limit(LIMITS.searchResultsLimit),
-    getDb()
-      .select({
-        id: mindmap.id,
-        title: mindmap.title,
-        subjectId: mindmap.subjectId,
-        subjectName: subject.name,
-        data: mindmap.data,
-      })
-      .from(mindmap)
-      .innerJoin(subject, eq(mindmap.subjectId, subject.id))
-      .where(
-        and(
-          eq(mindmap.userId, userId),
-          ...subjectFilters,
-          or(
-            foldedContains(mindmap.title, searchPattern),
-            foldedContains(mindmap.data, searchPattern),
-            foldedContains(subject.name, searchPattern),
-          ),
-        ),
-      )
-      .orderBy(desc(mindmap.updatedAt))
-      .limit(LIMITS.searchResultsLimit),
   ]);
 
   return {
@@ -104,13 +79,6 @@ export async function getSearchDataForUser(
         (flashcard.subjectId
           ? subjectPathMap.get(flashcard.subjectId)
           : undefined) ?? flashcard.subjectName,
-    })),
-    mindmaps: allMindmaps.map(({ data, title, ...rest }) => ({
-      ...rest,
-      title,
-      matchedNodeLabel: includesFoldedText(title, searchQuery)
-        ? undefined
-        : findMindmapNodeLabelMatch(data, searchQuery),
     })),
   };
 }
@@ -129,7 +97,7 @@ export async function getRecentSearchDataForUser(
       ),
   );
 
-  const [allNotes, allFlashcards, allMindmaps] = await Promise.all([
+  const [allNotes, allFlashcards] = await Promise.all([
     getDb()
       .select({
         id: note.id,
@@ -156,18 +124,6 @@ export async function getRecentSearchDataForUser(
       .where(eq(flashcard.userId, userId))
       .orderBy(desc(flashcard.updatedAt))
       .limit(LIMITS.recentItemsLimit),
-    getDb()
-      .select({
-        id: mindmap.id,
-        title: mindmap.title,
-        subjectId: mindmap.subjectId,
-        subjectName: subject.name,
-      })
-      .from(mindmap)
-      .innerJoin(subject, eq(mindmap.subjectId, subject.id))
-      .where(and(eq(mindmap.userId, userId), ...subjectFilters))
-      .orderBy(desc(mindmap.updatedAt))
-      .limit(LIMITS.recentItemsLimit),
   ]);
 
   return {
@@ -179,6 +135,5 @@ export async function getRecentSearchDataForUser(
           ? subjectPathMap.get(flashcard.subjectId)
           : undefined) ?? flashcard.subjectName,
     })),
-    mindmaps: allMindmaps,
   };
 }

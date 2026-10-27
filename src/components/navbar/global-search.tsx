@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Layers, Network } from "lucide-react";
+import { FileText, Layers } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { SearchSkeleton } from "@/components/shared/search-skeleton";
@@ -18,7 +18,6 @@ import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import {
   getFlashcardDetailHref,
-  getMindmapDetailHref,
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
@@ -120,9 +119,7 @@ export function GlobalSearch({
   const isResultsPending = canSearch ? isPending : recentQuery.isPending;
   const notes = currentData?.notes ?? [];
   const flashcards = currentData?.flashcards ?? [];
-  const mindmaps = currentData?.mindmaps ?? [];
-  const hasData =
-    notes.length > 0 || flashcards.length > 0 || mindmaps.length > 0;
+  const hasData = notes.length > 0 || flashcards.length > 0;
   const flashcardsView =
     pathname === "/flashcards"
       ? (searchParams.get("view") ?? undefined)
@@ -137,14 +134,14 @@ export function GlobalSearch({
       open={open}
       onOpenChange={handleOpenChange}
       title="Global Search"
-      description="Search across all your notes, flashcards, and mindmaps"
+      description="Search across all your notes and flashcards"
       commandProps={{ shouldFilter: false }}
     >
       <CommandInput
         value={query}
         onValueChange={setQuery}
         maxLength={LIMITS.searchQueryMax}
-        placeholder="Search notes, flashcards, and mindmaps..."
+        placeholder="Search notes and flashcards..."
       />
       <CommandList>
         {isResultsPending && <SearchSkeleton />}
@@ -152,7 +149,7 @@ export function GlobalSearch({
           <CommandEmpty>Sign in to search.</CommandEmpty>
         )}
         {!isResultsPending && isAuthenticated && !hasData && (
-          <CommandEmpty>No notes, flashcards, or mindmaps yet.</CommandEmpty>
+          <CommandEmpty>No notes or flashcards yet.</CommandEmpty>
         )}
 
         {notes.length > 0 && (
@@ -244,47 +241,6 @@ export function GlobalSearch({
                         highlightQuery,
                         120,
                       ),
-                      highlightQuery,
-                    )}
-                  </span>
-                )}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-
-        {mindmaps.length > 0 && (
-          <CommandGroup
-            heading={showingRecents ? "Recent Mindmaps" : "Mindmaps"}
-          >
-            {mindmaps.map((mm) => (
-              <CommandItem
-                key={mm.id}
-                value={mm.id}
-                onSelect={() =>
-                  handleSelect(getMindmapDetailHref(mm.subjectId, mm.id))
-                }
-                className="flex cursor-pointer flex-col items-start gap-1 transition-colors"
-              >
-                <div className="flex w-full min-w-0 items-center gap-2">
-                  <Network className="!size-4 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate">
-                    {renderSearchHighlightedText(mm.title, highlightQuery)}
-                  </span>
-                  <span className="flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-                    <span className="shrink-0">in</span>
-                    <span className="block min-w-0 flex-1 truncate">
-                      {renderSearchHighlightedText(
-                        mm.subjectName,
-                        highlightQuery,
-                      )}
-                    </span>
-                  </span>
-                </div>
-                {mm.matchedNodeLabel && (
-                  <span className="pl-6 text-xs text-muted-foreground line-clamp-1">
-                    {renderSearchHighlightedText(
-                      mm.matchedNodeLabel,
                       highlightQuery,
                     )}
                   </span>

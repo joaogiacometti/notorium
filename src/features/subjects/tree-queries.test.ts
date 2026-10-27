@@ -1,7 +1,7 @@
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { flashcard, mindmap, note, subject } from "@/db/schema";
+import { flashcard, note, subject } from "@/db/schema";
 
 const rowsByTable = new Map<unknown, unknown[]>();
 const whereByTable = new Map<unknown, SQL>();
@@ -55,7 +55,6 @@ describe("getSubjectTreeForUser", () => {
       { subjectId: "math", count: 1 },
       { subjectId: "calc", count: 2 },
     ]);
-    rowsByTable.set(mindmap, [{ subjectId: "calc", count: 1 }]);
     rowsByTable.set(flashcard, [
       { subjectId: "calc", count: 4 },
       { subjectId: null, count: 9 },
@@ -71,14 +70,14 @@ describe("getSubjectTreeForUser", () => {
     const [math, history] = roots;
     expect(math).toMatchObject({
       path: "Math",
-      documentCount: 4,
+      documentCount: 3,
       dueFlashcardCount: 4,
     });
     expect(math?.children).toEqual([
       expect.objectContaining({
         id: "calc",
         path: "Math::Calc",
-        documentCount: 3,
+        documentCount: 2,
         dueFlashcardCount: 4,
         children: [],
       }),

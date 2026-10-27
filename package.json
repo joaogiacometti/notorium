@@ -1,7 +1,7 @@
 {
   "name": "notorium",
   "version": "0.1.0",
-  "description": "A learning app for making and reviewing notes, mindmaps, and flashcards with AI help",
+  "description": "A learning app for making and reviewing notes and flashcards with AI help",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
@@ -50,7 +50,6 @@
     "@upstash/redis": "^1.39.0",
     "@vercel/blob": "^2.8.1",
     "@vercel/speed-insights": "^2.0.0",
-    "@xyflow/react": "^12.12.0",
     "ai": "^7.0.138",
     "better-auth": "^1.7.7",
     "class-variance-authority": "^0.7.1",
@@ -59,7 +58,6 @@
     "date-fns": "^4.1.0",
     "dompurify": "^3.4.17",
     "drizzle-orm": "^0.45.4",
-    "html-to-image": "^1.11.13",
     "katex": "0.18.10",
     "lowlight": "^3.3.0",
     "lucide-react": "^1.56.0",

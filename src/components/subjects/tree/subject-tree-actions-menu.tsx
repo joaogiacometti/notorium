@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Files,
   FileText,
   FolderPlus,
   GraduationCap,
@@ -11,7 +10,6 @@ import {
   Pencil,
   SquarePen,
   Trash2,
-  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
@@ -40,21 +38,19 @@ interface SubjectActionsMenuProps {
   node: SubjectTreeNode;
   onCreateChild: (parentSubjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
-  onCreateMindmap: (subjectId: string) => void;
   onCreateFlashcard: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
 }
 
 /**
- * The per-subject kebab menu in the tree row. Create actions are grouped by kind
- * — Document and Flashcards — alongside Subfolder, edit, and delete.
+ * The per-subject kebab menu in the tree row. Subfolder and Add note are direct
+ * actions; flashcard actions share a submenu.
  */
 export function SubjectActionsMenu({
   node,
   onCreateChild,
   onCreateNote,
-  onCreateMindmap,
   onCreateFlashcard,
   onEdit,
   onDelete,
@@ -101,26 +97,12 @@ export function SubjectActionsMenu({
           Subfolder
         </DropdownMenuItem>
 
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Files className="size-4" />
-            Document
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem
-              onClick={() => openDialog(() => onCreateNote(node.id))}
-            >
-              <FileText className="size-4" />
-              Note
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => openDialog(() => onCreateMindmap(node.id))}
-            >
-              <Workflow className="size-4" />
-              Mindmap
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        <DropdownMenuItem
+          onClick={() => openDialog(() => onCreateNote(node.id))}
+        >
+          <FileText className="size-4" />
+          Add note
+        </DropdownMenuItem>
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>

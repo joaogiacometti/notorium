@@ -4,7 +4,7 @@ import { idSchema } from "@/lib/validations/schemas";
 
 /** Stable document identity captured when requesting flashcards. */
 export const flashcardSourceSchema = z.object({
-  kind: z.enum(["note", "mindmap"]) satisfies z.ZodType<DocumentKind>,
+  kind: z.literal("note") satisfies z.ZodType<DocumentKind>,
   id: idSchema,
 });
 export type FlashcardSource = z.infer<typeof flashcardSourceSchema>;

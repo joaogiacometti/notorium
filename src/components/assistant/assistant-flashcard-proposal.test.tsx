@@ -199,23 +199,20 @@ describe("AssistantFlashcardProposal", () => {
     });
   }
 
-  it.each(["note", "mindmap"] as const)(
-    "creates cards with the %s source captured for the proposal",
-    async (kind) => {
-      await renderProposal(pendingProposal("Biology"), {
-        kind,
-        id: "original-document",
-      });
-      await act(async () => {
-        await vi.waitFor(() => expect(button("Create").disabled).toBe(false));
-      });
-      await click("Create");
-      expect(fakes.actions?.created[0].source).toEqual({
-        kind,
-        id: "original-document",
-      });
-    },
-  );
+  it("creates cards with the note source captured for the proposal", async () => {
+    await renderProposal(pendingProposal("Biology"), {
+      kind: "note",
+      id: "original-document",
+    });
+    await act(async () => {
+      await vi.waitFor(() => expect(button("Create").disabled).toBe(false));
+    });
+    await click("Create");
+    expect(fakes.actions?.created[0].source).toEqual({
+      kind: "note",
+      id: "original-document",
+    });
+  });
 
   it("records the outcomes once every proposed card is handled", async () => {
     await renderPendingProposal("Biology", [atpCard, dnaCard]);

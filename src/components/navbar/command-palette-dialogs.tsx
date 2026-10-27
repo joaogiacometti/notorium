@@ -1,14 +1,10 @@
 "use client";
 
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
-import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import type { ContextFreeDialog } from "@/components/navbar/command-palette-commands";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
-import {
-  getMindmapDetailHref,
-  getNoteDetailHref,
-} from "@/lib/navigation/detail-page-back-link";
+import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
 export type ActiveCreateDialog = ContextFreeDialog;
@@ -60,15 +56,6 @@ export function CommandPaletteDialogs({
         onOpenChange={handleOpenChange}
         onSuccess={(noteId, createdSubjectId) =>
           onNavigate(getNoteDetailHref(createdSubjectId, noteId))
-        }
-      />
-      <CreateMindmapDialog
-        subjectId={subjectId ?? undefined}
-        subjects={subjects}
-        open={activeDialog === "mindmap"}
-        onOpenChange={handleOpenChange}
-        onSuccess={(mindmapId, createdSubjectId) =>
-          onNavigate(getMindmapDetailHref(createdSubjectId, mindmapId))
         }
       />
     </>

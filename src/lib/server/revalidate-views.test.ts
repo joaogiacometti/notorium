@@ -33,10 +33,10 @@ describe("revalidate-views", () => {
   it("refreshes a document page", async () => {
     const { revalidateDocumentPage } = await import("./revalidate-views");
 
-    revalidateDocumentPage("mindmaps", "math", "map-1");
+    revalidateDocumentPage("notes", "math", "note-1");
 
     expect(revalidationLog.calls).toEqual([
-      ["/subjects/math/documents/mindmaps/map-1", undefined],
+      ["/subjects/math/documents/notes/note-1", undefined],
     ]);
   });
 });

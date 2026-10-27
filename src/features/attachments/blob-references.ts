@@ -1,8 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/db/index";
-import { flashcard, mindmap, note } from "@/db/schema";
-import { getMindmapImagePathnames } from "@/features/mindmaps/utils";
+import { flashcard, note } from "@/db/schema";
 import { getInternalAttachmentPathnames } from "@/lib/editor/rich-text";
 
 async function collectNotePathnames(): Promise<string[]> {
@@ -31,15 +30,9 @@ async function collectFlashcardPathnames(): Promise<string[]> {
   return pathnames;
 }
 
-async function collectMindmapPathnames(): Promise<string[]> {
-  const rows = await getDb().select({ data: mindmap.data }).from(mindmap);
-
-  return rows.flatMap((row) => getMindmapImagePathnames(row.data));
-}
-
 /**
  * Collect every blob pathname referenced by live database rows across all
- * features that store media (notes, flashcards, mindmaps). The
+ * features that store media (notes and flashcards). The
  * orphan GC sweep treats any stored blob absent from this set as unreferenced.
  * Returning a complete set is safety-critical: a missing reference type would
  * cause the sweep to delete in-use blobs.
@@ -52,7 +45,6 @@ export async function collectAllReferencedPathnames(): Promise<Set<string>> {
   const groups = await Promise.all([
     collectNotePathnames(),
     collectFlashcardPathnames(),
-    collectMindmapPathnames(),
   ]);
 
   return new Set(groups.flat());

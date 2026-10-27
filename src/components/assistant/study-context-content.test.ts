@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildDocumentContext,
   buildReviewContext,
-  describeMindmapGraph,
 } from "@/components/assistant/study-context-content";
 import {
   describeStudyContext,
@@ -46,38 +45,6 @@ describe("study context snapshots", () => {
       studyContextSchema.safeParse({ ...context, content: "x".repeat(12001) })
         .success,
     ).toBe(false);
-  });
-  it("orders graph nodes from the root and preserves labeled relationships without image metadata", () => {
-    const context = describeMindmapGraph({
-      nodes: [
-        {
-          id: "b",
-          position: { x: 10, y: 20 },
-          data: { label: "Branch", imageUrl: "https://private/image" },
-        },
-        {
-          id: "r",
-          position: { x: 0, y: 0 },
-          data: { label: "Root", kind: "root" },
-        },
-      ],
-      edges: [
-        { id: "e", source: "r", target: "b", label: "includes" },
-        { id: "cycle", source: "b", target: "r" },
-      ],
-    });
-    expect(context).toBe("r: Root\nb: Branch\nr -> b (includes)\nb -> r");
-  });
-  it("preserves connection directions including connections without arrows", () => {
-    const content = describeMindmapGraph({
-      nodes: [],
-      edges: [
-        { id: "a", source: "A", target: "B", direction: "backward" },
-        { id: "b", source: "B", target: "C", direction: "both" },
-        { id: "c", source: "C", target: "D", direction: "none" },
-      ],
-    });
-    expect(content).toBe("A <- B\nB <-> C\nC -- D");
   });
   it("marks an unrevealed answer hidden and updates card content and mode", () => {
     const card = {
@@ -139,7 +106,4 @@ it("captures document identity alongside the live content", () => {
   expect(
     buildDocumentContext("note", "Cells", "Biology", "<p>ATP</p>", "note-1"),
   ).toMatchObject({ documentId: "note-1", kind: "note" });
-  expect(
-    buildDocumentContext("mindmap", "Cells", "Biology", "Root -> ATP", "map-1"),
-  ).toMatchObject({ documentId: "map-1", kind: "mindmap" });
 });

@@ -12,7 +12,7 @@ interface ZenModeToggleProps {
 
 /**
  * Icon button that enters or leaves the distraction-free zen mode on note and
- * mindmap detail pages.
+ * detail pages.
  *
  * @example
  * <ZenModeToggle isZenMode={isZenMode} onToggle={toggleZenMode} />

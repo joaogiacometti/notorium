@@ -46,45 +46,35 @@ describe("DocumentRowMenu", () => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
   });
 
-  it.each(["note", "mindmap"] as const)(
-    "keeps %s actions without generation",
-    (kind) => {
-      const item: DocumentListItem = {
-        id: "document-1",
-        subjectId: "subject-1",
-        title: "Cells",
-        kind,
-        updatedAt: new Date(),
-      };
-      const copy = vi.fn();
-      const exportPng = vi.fn();
-      act(() =>
-        root.render(
-          <DocumentRowMenu
-            item={item}
-            onEditRequested={vi.fn()}
-            onDeleteRequested={vi.fn()}
-            onCopyRequested={copy}
-            onExportRequested={exportPng}
-          />,
-        ),
-      );
-      const buttons = Array.from(container.querySelectorAll("button"));
-      const labels = buttons.map((button) => button.textContent?.trim());
-      expect(labels).not.toContain("Generate flashcards");
-      expect(labels).toEqual(expect.arrayContaining(["Edit", "Delete"]));
-      const action = kind === "note" ? "Copy as plain text" : "Export as PNG";
-      act(() =>
-        buttons
-          .find((button) => button.textContent?.trim() === action)
-          ?.click(),
-      );
-      if (kind === "note") {
-        expect(labels).toContain("Copy as rich text");
-        expect(copy).toHaveBeenCalledWith(item, "plain");
-      } else {
-        expect(exportPng).toHaveBeenCalledWith(item);
-      }
-    },
-  );
+  it("keeps note actions without generation", () => {
+    const item: DocumentListItem = {
+      id: "document-1",
+      subjectId: "subject-1",
+      title: "Cells",
+      kind: "note",
+      updatedAt: new Date(),
+    };
+    const copy = vi.fn();
+    act(() =>
+      root.render(
+        <DocumentRowMenu
+          item={item}
+          onEditRequested={vi.fn()}
+          onDeleteRequested={vi.fn()}
+          onCopyRequested={copy}
+        />,
+      ),
+    );
+    const buttons = Array.from(container.querySelectorAll("button"));
+    const labels = buttons.map((button) => button.textContent?.trim());
+    expect(labels).not.toContain("Generate flashcards");
+    expect(labels).toEqual(expect.arrayContaining(["Edit", "Delete"]));
+    act(() =>
+      buttons
+        .find((button) => button.textContent?.trim() === "Copy as plain text")
+        ?.click(),
+    );
+    expect(labels).toContain("Copy as rich text");
+    expect(copy).toHaveBeenCalledWith(item, "plain");
+  });
 });

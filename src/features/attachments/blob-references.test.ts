@@ -10,11 +10,6 @@ vi.mock("@/db/index", () => ({
 vi.mock("@/db/schema", () => ({
   note: "note_table",
   flashcard: "flashcard_table",
-  mindmap: "mindmap_table",
-}));
-
-vi.mock("@/features/mindmaps/utils", () => ({
-  getMindmapImagePathnames: (data: string | null) => (data ? [data] : []),
 }));
 
 vi.mock("@/lib/editor/rich-text", () => ({
@@ -34,8 +29,6 @@ describe("collectAllReferencedPathnames", () => {
             { front: "front-a", back: "back-a" },
             { front: "", back: "" },
           ]);
-        case "mindmap_table":
-          return Promise.resolve([{ data: "mindmap-a" }, { data: null }]);
         default:
           return Promise.resolve([]);
       }
@@ -49,8 +42,6 @@ describe("collectAllReferencedPathnames", () => {
 
     const referenced = await collectAllReferencedPathnames();
 
-    expect(referenced).toEqual(
-      new Set(["note-a", "front-aback-a", "mindmap-a"]),
-    );
+    expect(referenced).toEqual(new Set(["note-a", "front-aback-a"]));
   });
 });

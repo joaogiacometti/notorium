@@ -20,27 +20,24 @@ describe("FlashcardSourceReference", () => {
     container.remove();
   });
 
-  it.each(["note", "mindmap"] as const)(
-    "links to the current %s location and title",
-    (kind) => {
-      const source: FlashcardSourceLink = {
-        kind,
-        id: "doc-1",
-        title: "Renamed source",
-        subjectId: "moved-subject",
-      };
-      act(() => root.render(<FlashcardSourceReference source={source} />));
-      const link = container.querySelector("a");
-      expect(link?.getAttribute("href")).toBe(
-        `/subjects/moved-subject/documents/${kind === "note" ? "notes" : "mindmaps"}/doc-1`,
-      );
-      expect(link?.textContent).toContain("Renamed source");
-      expect(link?.getAttribute("aria-label")).toBe(
-        `Source ${kind}: Renamed source`,
-      );
-      expect(link?.getAttribute("target")).toBeNull();
-    },
-  );
+  it("links to the current note location and title", () => {
+    const source: FlashcardSourceLink = {
+      kind: "note",
+      id: "doc-1",
+      title: "Renamed source",
+      subjectId: "moved-subject",
+    };
+    act(() => root.render(<FlashcardSourceReference source={source} />));
+    const link = container.querySelector("a");
+    expect(link?.getAttribute("href")).toBe(
+      "/subjects/moved-subject/documents/notes/doc-1",
+    );
+    expect(link?.textContent).toContain("Renamed source");
+    expect(link?.getAttribute("aria-label")).toBe(
+      "Source note: Renamed source",
+    );
+    expect(link?.getAttribute("target")).toBeNull();
+  });
 
   it("opens a separate tab during sessions with an accessible indication", () => {
     act(() =>

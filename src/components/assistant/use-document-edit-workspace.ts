@@ -139,10 +139,6 @@ export function useDocumentEditWorkspace(
       );
       return;
     }
-    if ((tool === "proposeNoteEdits") !== (captured.kind === "note"))
-      throw new Error(
-        `Invalid tool ${tool}; expected the active document kind`,
-      );
     const prepared = prepareDocumentEdit(captured, input);
     await settle();
     if (requestGeneration !== generation.current) return;
@@ -155,17 +151,13 @@ export function useDocumentEditWorkspace(
     for (const message of chat.messages)
       for (const part of message.parts) {
         if (
-          (part.type !== "tool-proposeNoteEdits" &&
-            part.type !== "tool-proposeMindmapEdits") ||
+          part.type !== "tool-proposeNoteEdits" ||
           part.state !== "input-available" ||
           handled.current.has(part.toolCallId)
         )
           continue;
         handled.current.add(part.toolCallId);
-        const tool =
-          part.type === "tool-proposeNoteEdits"
-            ? "proposeNoteEdits"
-            : "proposeMindmapEdits";
+        const tool = "proposeNoteEdits";
         const captured = baseline.current;
         const requestGeneration = generation.current;
         receiveQueue.current = receiveQueue.current

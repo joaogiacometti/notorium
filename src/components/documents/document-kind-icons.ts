@@ -1,4 +1,4 @@
-import { FileText, Workflow } from "lucide-react";
+import { FileText } from "lucide-react";
 import type { DocumentKind } from "@/features/documents/types";
 
 /** One icon per document kind, shared by the subject tree and source links.
@@ -6,5 +6,4 @@ import type { DocumentKind } from "@/features/documents/types";
  */
 export const DOCUMENT_KIND_ICONS = {
   note: FileText,
-  mindmap: Workflow,
 } as const satisfies Record<DocumentKind, unknown>;

@@ -62,8 +62,7 @@ async function openNoteActions(page: Page) {
 
 async function clickSubjectNewNote(page: Page, subjectName: string) {
   await openSubjectSidebarActions(page, subjectName);
-  await page.getByRole("menuitem", { name: "Document", exact: true }).hover();
-  await page.getByRole("menuitem", { name: "Note", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Add note", exact: true }).click();
 }
 
 async function createSidebarNote(
@@ -71,8 +70,7 @@ async function createSidebarNote(
   subjectName: string,
   title: string,
 ) {
-  // After the refactor the note detail view has no create button; notes are
-  // created from the left-menu subject tree's document submenu.
+  // Notes are created from the left-menu subject tree.
   await clickSubjectNewNote(page, subjectName);
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);

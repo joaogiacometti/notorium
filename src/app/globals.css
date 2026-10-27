@@ -711,35 +711,3 @@
 .tiptap-wrapper .tiptap .block-math-error {
   color: var(--destructive);
 }
-
-/* Connection menus live in React Flow's edge-label layer, which sits below the
-   nodes layer by default; raise it so the on-edge toolbar paints over nodes. */
-.mindmap-canvas .react-flow__edgelabel-renderer {
-  z-index: 1001;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .mindmap-canvas .react-flow__node .react-flow__handle {
-    pointer-events: none;
-    opacity: 0;
-    transition:
-      opacity 120ms ease,
-      transform 120ms ease;
-  }
-
-  .mindmap-canvas .react-flow__node:hover .react-flow__handle,
-  .mindmap-canvas .react-flow__node:focus-within .react-flow__handle,
-  .mindmap-canvas .react-flow__node.selected .react-flow__handle {
-    pointer-events: auto;
-    opacity: 1;
-  }
-}
-
-/* Standalone image nodes fill their whole bounds with the picture, so nudge the
-   left/right connection handles a hair off the border to keep the body grabbable. */
-.mindmap-canvas .react-flow__node-image .react-flow__handle-left {
-  transform: translate(calc(-50% - 2px), -50%);
-}
-.mindmap-canvas .react-flow__node-image .react-flow__handle-right {
-  transform: translate(calc(50% + 2px), -50%);
-}

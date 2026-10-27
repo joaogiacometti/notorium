@@ -3,7 +3,7 @@ import "server-only";
 import { getServerEnv } from "@/env";
 import { createVercelBlobMediaStorageProvider } from "@/lib/media-storage/vercel-blob-provider";
 
-export type MediaStorageUploadContext = "notes" | "flashcards" | "mindmaps";
+export type MediaStorageUploadContext = "notes" | "flashcards";
 
 export interface UploadImageInput {
   userId: string;

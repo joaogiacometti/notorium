@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Clipboard,
-  ImageDown,
-  MoreVertical,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import type React from "react";
+import { Clipboard, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRef } from "react";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
@@ -26,8 +19,6 @@ export interface DocumentRowActionHandlers {
   onDeleteRequested?: (item: DocumentListItem) => void;
   /** Notes only: copy the note's content in the given clipboard format. */
   onCopyRequested?: (item: DocumentListItem, format: NoteCopyFormat) => void;
-  /** Mindmaps only: download the mindmap as a PNG. */
-  onExportRequested?: (item: DocumentListItem) => void;
 }
 
 interface DocumentRowMenuProps extends DocumentRowActionHandlers {
@@ -57,12 +48,7 @@ export function DocumentRowMenu({
     pendingActionRef.current = action;
   }
 
-  let kindItems: React.ReactNode = null;
-  if (item.kind === "note") {
-    kindItems = <NoteRowMenuItems item={item} {...handlers} />;
-  } else if (item.kind === "mindmap") {
-    kindItems = <MindmapRowMenuItems item={item} {...handlers} />;
-  }
+  const kindItems = <NoteRowMenuItems item={item} {...handlers} />;
 
   return (
     <DropdownMenu>
@@ -135,27 +121,6 @@ function NoteRowMenuItems({
       >
         <Clipboard className="size-4" />
         Copy as plain text
-      </DropdownMenuItem>
-      <DropdownMenuSeparator />
-    </>
-  );
-}
-
-function MindmapRowMenuItems({
-  item,
-  onExportRequested,
-}: Readonly<DocumentRowMenuProps>) {
-  if (!onExportRequested) {
-    return null;
-  }
-  return (
-    <>
-      <DropdownMenuItem
-        className="cursor-pointer"
-        onClick={() => onExportRequested(item)}
-      >
-        <ImageDown className="size-4" />
-        Export as PNG
       </DropdownMenuItem>
       <DropdownMenuSeparator />
     </>

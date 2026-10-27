@@ -83,7 +83,7 @@ describe("getFlashcardWithSourceByIdForUser", () => {
   });
 
   it("attaches the current source link so the edit dialog can show it", async () => {
-    database.cards = [{ id: "c1", sourceNoteId: "n1", sourceMindmapId: null }];
+    database.cards = [{ id: "c1", sourceNoteId: "n1" }];
     database.notes = [{ id: "n1", title: "Cells", subjectId: "biology" }];
 
     const card = await getFlashcardWithSourceByIdForUser("owner", "c1");

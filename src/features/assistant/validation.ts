@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   documentDraftSchema,
   documentEditsOutputSchema,
-  mindmapEditsInputSchema,
   noteEditsInputSchema,
 } from "@/features/assistant/document-edit-contract";
 import {
@@ -109,7 +108,6 @@ const unansweredToolPartSchema = z.object({
     "tool-proposeFlashcards",
     "tool-proposeFlashcardEdits",
     "tool-proposeNoteEdits",
-    "tool-proposeMindmapEdits",
     "tool-searchLibrary",
   ]),
   state: z.enum(["input-streaming", "input-available", "output-error"]),
@@ -124,11 +122,6 @@ const replyPartSchema = z.union([
   answeredToolPartSchema(
     "tool-proposeNoteEdits",
     noteEditsInputSchema,
-    documentEditsOutputSchema,
-  ),
-  answeredToolPartSchema(
-    "tool-proposeMindmapEdits",
-    mindmapEditsInputSchema,
     documentEditsOutputSchema,
   ),
   unansweredToolPartSchema,

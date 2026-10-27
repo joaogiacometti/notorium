@@ -24,15 +24,14 @@ and bypassing a primitive is the most common source of drift.
 | Detail/card page frame | `DetailPageLayout` (`src/components/shared/detail-page-layout.tsx`) | repeating `PageTopBar` + `AppPageContainer` |
 | Feature list/index page frame | `FeaturePageShell` | — |
 
-A raw `<button>` is correct only for genuinely custom controls (canvas tools,
-graph nodes, segmented toggles, drop zones), not for standard actions.
+A raw `<button>` is correct only for genuinely custom controls (segmented toggles, drop zones), not for standard actions.
 
 ## Page frames
 
 - **Card/detail pages** compose `DetailPageLayout` (sticky `PageTopBar`
   breadcrumb over a centered `AppPageContainer`). Widths are `3xl`, `5xl` (default) or `7xl` only (review sessions use `max-w-4xl`);
   narrow per content via `maxWidth` (`3xl` admin; flashcard detail uses `7xl` to match documents, with Front/Back side by side). Width is the only thing a detail page tunes — structure is fixed.
-- **Document workspaces** (note, mindmap) stay full-width (`max-w-7xl`) and own their layout for zen mode.
+- **Note workspaces** stay full-width (`max-w-7xl`) and own their layout for zen mode.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
   `PageTopBar` (`PageTopBarSkeleton`).
 
@@ -45,12 +44,12 @@ in-between values (`gap-5`, `mb-7`) for a role that already has one.
 | --- | --- | --- |
 | Page frame | `AppPageContainer` (`px-4 sm:px-6 lg:px-8`, `pt-6 pb-8`) | Never re-pad a page body by hand |
 | Dialog frame | `DialogContent` default `p-6 gap-4`; scrolling editor dialogs use `px-4 sm:px-6` with `pt-5 sm:pt-6` header and `py-4` footer | Footer actions sit below a `border-t` |
-| Page/detail header → body | `16px` (`mb-4` / `gap-4`) | Note, mindmap, and flashcard detail share it |
+| Page/detail header → body | `16px` (`mb-4` / `gap-4`) | Note and flashcard detail share it |
 | Between form fields | `16px` (`FieldGroup className="gap-4"`, or `space-y-4`) | Auth pages may widen to `md:gap-6` |
 | Label → control | `Field` primitive (`gap-3`) | Label rows with optional inline buttons use `min-h-6` so labels with and without buttons align |
 | Title → header metadata | `4px` (`gap-1`) | See [Header metadata](#header-metadata) |
 | Inline icon + text | `gap-1` (`text-xs`), `gap-1.5`–`gap-2` (`text-sm`+) | |
-| Header action buttons | `size-10` icon buttons, `gap-2` between them | Same on note, mindmap, and flashcard detail |
+| Header action buttons | `size-10` icon buttons, `gap-2` between them | Same on note and flashcard detail |
 
 Editable fields use `Field` + `FieldLabel` (title case) everywhere, including
 autosaving detail pages, so a card looks the same in its page and its dialog.
@@ -64,7 +63,7 @@ The UI is flat: one surface, no decorative shadows or gradients.
 - **Panel** — shadcn `Card` (`rounded-lg border bg-card`; shadow and radius
   resolve flat through the theme tokens, so add no overrides). Always plain
   `border-border`; do not stack opacity variants or nest bordered panels.
-- **Floating UI** (menus, popovers, dialogs, mindmap chrome) is the only place
+- **Floating UI** (menus, popovers, dialogs) is the only place
   for `shadow-md` and up. `shadow-xs`/`shadow-sm` are disabled in `globals.css`.
 - **Radius** — `--radius: 0.5rem`. Controls `rounded-md`, panels and dialogs
   `rounded-lg`. `rounded-full` is for avatars and status dots only.
@@ -121,7 +120,7 @@ arbitrary (`z-[60]`, `z-(--x)`) z-index classes are rejected outside
 | --- | --- | --- |
 | `z-raised` | 10 | In-flow content lifted over its siblings: sticky table headers, editor handles |
 | `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header, the study assistant launcher and global sidebar |
-| `z-immersive` | 35 | Note/mindmap zen mode (`fixed inset-0`) |
+| `z-immersive` | 35 | Note zen mode (`fixed inset-0`) |
 | `z-overlay` | 50 | Everything that floats or blocks the page: dialogs, sheets, menus, popovers, selects, and tooltips |
 
 Toasts (Sonner) manage their own z-index above all layers.
@@ -198,7 +197,7 @@ rich-text conversion used for Edit and Create. Collapsed proposal outcomes use
 readable text without code delimiters or HTML tags. An example used as the
 question belongs in the Front region; supplementary examples stay below Back.
 
-Note and mindmap AI proposals preview in the document region, not in chat. A
+Note AI proposals preview in the document region, not in chat. A
 bordered `DocumentEditReviewControls` bar (Added / Removed legend, one Discard
 changes / Accept changes pair) resolves the entire proposal. Notes show a
 read-only preview in place of the editor, using danger intent strikethrough for
@@ -209,9 +208,3 @@ muted one-line outcome per proposal and opens no overlay. While a reply is still
 streaming, rejected document edits keep the existing Thinking indicator when
 there is no other visible content; show a failure only after the reply ends
 without a correction or explanation.
-
-Mindmap review nodes keep the plain
-node box (`w-48`, theme color tint, bold/italic) with a dashed success or danger
-border, and their state badge sits on the top border so it never adds height.
-Only cross-connection edges carry a text badge; tree-edge changes show on the
-child node.

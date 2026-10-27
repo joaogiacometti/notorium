@@ -105,17 +105,12 @@ export function getNoteDetailHref(subjectId: string, noteId: string) {
   return `/subjects/${subjectId}/documents/notes/${noteId}`;
 }
 
-export function getMindmapDetailHref(subjectId: string, mindmapId: string) {
-  return `/subjects/${subjectId}/documents/mindmaps/${mindmapId}`;
-}
-
 export function getDocumentDetailHref(item: {
-  kind: "note" | "mindmap";
+  kind: "note";
   subjectId: string;
   id: string;
 }) {
-  if (item.kind === "note") return getNoteDetailHref(item.subjectId, item.id);
-  return getMindmapDetailHref(item.subjectId, item.id);
+  return getNoteDetailHref(item.subjectId, item.id);
 }
 
 export function resolveFlashcardDetailBackLink(

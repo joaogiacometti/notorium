@@ -15,7 +15,7 @@ import {
 /** Drop target id for the synthetic "top level" zone (reparents to no parent). */
 export const SUBJECT_TREE_ROOT_ID = "__subject_tree_root__";
 
-/** A note or mindmap being dragged, plus the subject it currently lives under. */
+/** A note being dragged, plus the subject it currently lives under. */
 export interface DraggedDocument {
   kind: DocumentKind;
   id: string;
@@ -57,7 +57,7 @@ function getProposedParentSubjectId(targetId: string): string | null {
 
 /**
  * Owns subject tree drag-and-drop for both subjects and documents (notes and
- * mindmaps): hover/drop target tracking, drop validity, and the move server
+ * notes): hover/drop target tracking, drop validity, and the move server
  * actions. On success it delegates tree mutation to the `onSubjectMoved` /
  * `onDocumentMoved` callbacks so the sidebar stays the single owner of its
  * local tree.

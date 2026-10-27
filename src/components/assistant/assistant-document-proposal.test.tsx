@@ -15,14 +15,11 @@ function reply(parts: unknown[]): AssistantUIMessage {
 }
 
 describe("readDocumentProposalParts", () => {
-  it.each(["tool-proposeNoteEdits", "tool-proposeMindmapEdits"])(
-    "defers an unanswered %s failure until the reply ends",
-    (type) => {
-      const message = reply([{ ...rejected, type }]);
-      expect(readDocumentProposalParts(message, true)).toEqual([]);
-      expect(readDocumentProposalParts(message, false)).toHaveLength(1);
-    },
-  );
+  it("defers an unanswered note edit failure until the reply ends", () => {
+    const message = reply([rejected]);
+    expect(readDocumentProposalParts(message, true)).toEqual([]);
+    expect(readDocumentProposalParts(message, false)).toHaveLength(1);
+  });
 
   it("hides a rejected proposal the model answered in the same reply", () => {
     const retried = {

@@ -28,14 +28,14 @@ describe("selectOrphanBlobs", () => {
 
     const entries = [
       entry("notorium/notes/u/referenced.png", 10 * DAY),
-      entry("notorium/mindmaps/u/orphan.png", 10 * DAY),
-      entry("notorium/mindmaps/u/fresh.png", 1000),
+      entry("notorium/notes/u/orphan.png", 10 * DAY),
+      entry("notorium/notes/u/fresh.png", 1000),
     ];
     const referenced = new Set(["notorium/notes/u/referenced.png"]);
 
     const result = selectOrphanBlobs(entries, referenced, Date.now(), DAY);
 
-    expect(result.orphans).toEqual(["notorium/mindmaps/u/orphan.png"]);
+    expect(result.orphans).toEqual(["notorium/notes/u/orphan.png"]);
     expect(result.skippedTooNew).toBe(1);
   });
 });
@@ -89,7 +89,7 @@ describe("sweepOrphanBlobs", () => {
   it("deletes orphaned blobs and reports counts", async () => {
     listImageEntriesMock.mockResolvedValue([
       entry("notorium/notes/u/keep.png", 10 * DAY),
-      entry("notorium/mindmaps/u/orphan.png", 10 * DAY),
+      entry("notorium/notes/u/orphan.png", 10 * DAY),
     ]);
     collectAllReferencedPathnamesMock.mockResolvedValue(
       new Set(["notorium/notes/u/keep.png"]),
@@ -99,7 +99,7 @@ describe("sweepOrphanBlobs", () => {
     const report = await sweepOrphanBlobs({ minAgeMs: DAY });
 
     expect(deleteImagesMock).toHaveBeenCalledWith({
-      pathnames: ["notorium/mindmaps/u/orphan.png"],
+      pathnames: ["notorium/notes/u/orphan.png"],
     });
     expect(report).toMatchObject({
       scanned: 2,
@@ -132,7 +132,7 @@ describe("sweepOrphanBlobs", () => {
 
   it("does not delete when dryRun is set", async () => {
     listImageEntriesMock.mockResolvedValue([
-      entry("notorium/mindmaps/u/orphan.png", 10 * DAY),
+      entry("notorium/notes/u/orphan.png", 10 * DAY),
     ]);
     collectAllReferencedPathnamesMock.mockResolvedValue(new Set<string>());
 

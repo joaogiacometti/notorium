@@ -2,7 +2,7 @@ import { z } from "zod";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
 /** Library item kinds the assistant can search, in result order. */
-export const LIBRARY_HIT_KINDS = ["note", "flashcard", "mindmap"] as const;
+export const LIBRARY_HIT_KINDS = ["note", "flashcard"] as const;
 
 const LIBRARY_ID_MAX_CHARS = 100;
 // Excerpts are cut to the excerpt limit, plus "..." on either side.
@@ -75,11 +75,11 @@ export type LibrarySearchOutput = z.infer<typeof librarySearchOutputSchema>;
  * links (the chat shows those), with user text quoted as data.
  *
  * @example
- * formatLibraryHitsForModel({ hits: [] }); // "No matching notes, flashcards, or mindmaps."
+ * formatLibraryHitsForModel({ hits: [] }); // "No matching notes or flashcards."
  */
 export function formatLibraryHitsForModel(output: LibrarySearchOutput): string {
   if (output.hits.length === 0) {
-    return "No matching notes, flashcards, or mindmaps.";
+    return "No matching notes or flashcards.";
   }
 
   const lines = output.hits.map((hit, index) => {

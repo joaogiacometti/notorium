@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 
-type DocumentRouteKind = "notes" | "mindmaps";
+type DocumentRouteKind = "notes";
 
 /**
  * Refreshes the app shell rendered by the `(app)` layout: the sidebar subject
@@ -18,7 +18,7 @@ export function revalidateAppShell(): void {
 }
 
 /**
- * Refreshes one note or mindmap page after a content or title edit.
+ * Refreshes one note page after a content or title edit.
  *
  * @example
  * revalidateDocumentPage("notes", result.subjectId, data.id);

@@ -1,6 +1,6 @@
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
-export type DocumentKind = "note" | "mindmap";
+export type DocumentKind = "note";
 
 /** Payload a feature move mutation receives: the document id and destination. */
 export interface MoveDocumentMutationInput {
@@ -9,7 +9,7 @@ export interface MoveDocumentMutationInput {
 }
 
 /**
- * Result of moving a note or mindmap to a different subject. Carries both the
+ * Result of moving a note to a different subject. Carries both the
  * destination and origin subject so the caller can revalidate each side.
  */
 export type MoveDocumentResult =
@@ -17,7 +17,7 @@ export type MoveDocumentResult =
   | ActionErrorResult;
 
 /**
- * A subject document is a note or mindmap surfaced in the subject "Documents"
+ * A subject document is a note surfaced in the subject "Documents"
  * area. `kind` drives the sidebar icon and the detail route.
  */
 export interface DocumentListItem {

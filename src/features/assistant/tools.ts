@@ -2,7 +2,6 @@ import { type InferUITools, tool } from "ai";
 import { z } from "zod";
 import {
   documentEditsOutputSchema,
-  mindmapEditsInputSchema,
   noteEditsInputSchema,
 } from "@/features/assistant/document-edit-contract";
 import {
@@ -22,7 +21,6 @@ import {
   librarySearchInputSchema,
   librarySearchOutputSchema,
 } from "@/features/assistant/library-search-contract";
-import { findMindmapEditProblems } from "@/features/assistant/mindmap-edit-rules";
 import { findNoteEditProblems } from "@/features/assistant/note-edit-rules";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
 import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
@@ -167,7 +165,6 @@ export function buildAssistantTools(
   const { draft, documentDraft, context } = drafts;
   const review = context?.kind === "review" ? context : undefined;
   const note = documentDraft?.kind === "note" ? documentDraft : undefined;
-  const mindmap = documentDraft?.kind === "mindmap" ? documentDraft : undefined;
   return {
     proposeNoteEdits: tool({
       description:
@@ -175,15 +172,6 @@ export function buildAssistantTools(
       inputSchema: guardEditSchema(
         noteEditsInputSchema,
         guardsFor(note, findNoteEditProblems),
-      ),
-      outputSchema: documentEditsOutputSchema,
-    }),
-    proposeMindmapEdits: tool({
-      description:
-        "Propose requested changes to the current mindmap draft, including conversational follow-ups. Questions stay in chat. Target visible content only and preserve everything else. Send one concrete proposal for review on the canvas; acceptance enters normal autosave, while discarded, skipped, or stale proposals are unapplied.",
-      inputSchema: guardEditSchema(
-        mindmapEditsInputSchema,
-        guardsFor(mindmap, findMindmapEditProblems),
       ),
       outputSchema: documentEditsOutputSchema,
     }),
@@ -251,7 +239,5 @@ export function selectAssistantActiveTools(
   if (context.draft) return [...base, "proposeFlashcardEdits"];
   if (context.documentDraft?.kind === "note")
     return [...base, "proposeNoteEdits"];
-  if (context.documentDraft?.kind === "mindmap")
-    return [...base, "proposeMindmapEdits"];
   return base;
 }

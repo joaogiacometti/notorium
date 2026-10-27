@@ -3,7 +3,6 @@ import type {
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
-  mindmap,
   note,
   subject,
 } from "@/db/schema";
@@ -24,8 +23,6 @@ export interface SubjectTreeNode extends SubjectEntity {
   path: string;
 }
 export type NoteEntity = InferSelectModel<typeof note>;
-export type MindmapEntity = InferSelectModel<typeof mindmap>;
-export type MindmapListItem = Pick<MindmapEntity, "id" | "title" | "updatedAt">;
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 /** A stored card plus its resolved source link, as the edit dialog reads it. */
 export type FlashcardWithSourceEntity = FlashcardEntity & {
@@ -154,18 +151,9 @@ export type SearchFlashcardResult = Pick<
   subjectPath: string;
 };
 
-export type SearchMindmapResult = Pick<
-  MindmapEntity,
-  "id" | "title" | "subjectId"
-> & {
-  subjectName: string;
-  matchedNodeLabel?: string;
-};
-
 export type SearchData = {
   notes: SearchNoteResult[];
   flashcards: SearchFlashcardResult[];
-  mindmaps: SearchMindmapResult[];
 };
 
 export type SubjectEditDto = Pick<SubjectEntity, "id" | "name">;

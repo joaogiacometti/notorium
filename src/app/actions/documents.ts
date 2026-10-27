@@ -5,14 +5,12 @@ import {
   type MoveDocumentForm,
   moveDocumentSchema,
 } from "@/features/documents/validation";
-import { moveMindmapForUser } from "@/features/mindmaps/mutations";
 import { moveNoteForUser } from "@/features/notes/mutations";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import { revalidateAppShell } from "@/lib/server/revalidate-views";
 
 /**
- * Moves a note or mindmap to another subject (tree drag-and-drop). Dispatches
- * to the matching feature mutation and revalidates both the origin and
+ * Moves a note to another subject (tree drag-and-drop). Revalidates the origin and
  * destination subject so each sidebar branch reflects the change.
  *
  * @example moveDocument({ kind: "note", id, subjectId: targetId })
@@ -25,12 +23,7 @@ export async function moveDocument(
     moveDocumentSchema,
     data,
     "documents.invalidData",
-    async (userId, parsedData) => {
-      if (parsedData.kind === "note") {
-        return moveNoteForUser(userId, parsedData);
-      }
-      return moveMindmapForUser(userId, parsedData);
-    },
+    (userId, parsedData) => moveNoteForUser(userId, parsedData),
   );
 
   if (result.success) {

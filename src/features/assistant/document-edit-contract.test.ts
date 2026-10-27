@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   documentDraftSchema,
-  mindmapEditsInputSchema,
   noteEditsInputSchema,
 } from "@/features/assistant/document-edit-contract";
 import { assistantChatRequestSchema } from "@/features/assistant/validation";
@@ -33,29 +32,10 @@ describe("document edit contracts", () => {
       }).title,
     ).toBe("Changed");
   });
-  it("rejects mindmap proposals without a known operation", () => {
-    expect(
-      mindmapEditsInputSchema.safeParse({
-        sessionId: "s",
-        revision: 0,
-        operations: [{ kind: "replaceGraph" }],
-      }).success,
-    ).toBe(false);
-    expect(
-      mindmapEditsInputSchema.safeParse({
-        sessionId: "s",
-        revision: 0,
-        removeNodes: [{ nodeId: "a" }],
-      }).success,
-    ).toBe(true);
-  });
   // Regression: Gemini function calling rejects `oneOf`/`anyOf`/`const`, so a
   // union-based tool schema made every first proposal fail validation.
-  it.each([
-    ["note", noteEditsInputSchema],
-    ["mindmap", mindmapEditsInputSchema],
-  ])("exposes a union-free %s tool schema", (_name, schema) => {
-    expect(JSON.stringify(z.toJSONSchema(schema))).not.toMatch(
+  it("exposes a union-free note tool schema", () => {
+    expect(JSON.stringify(z.toJSONSchema(noteEditsInputSchema))).not.toMatch(
       /"(oneOf|anyOf|allOf|const)"/,
     );
   });

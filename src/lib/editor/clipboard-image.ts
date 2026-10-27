@@ -1,6 +1,6 @@
 /**
  * Clipboard image extraction shared by paste handlers (rich text editors and
- * mindmap nodes). Lives outside tiptap-helpers so non-TipTap consumers don't
+ * other image surfaces). Lives outside tiptap-helpers so non-TipTap consumers don't
  * pull TipTap into their bundle.
  */
 

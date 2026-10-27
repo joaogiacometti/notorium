@@ -17,7 +17,6 @@ const documentFields = {
  */
 export const studyContextSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("note"), ...documentFields }),
-  z.object({ kind: z.literal("mindmap"), ...documentFields }),
   z.object({
     kind: z.literal("review"),
     mode: z.enum(["review", "exam"]),

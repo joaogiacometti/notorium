@@ -160,15 +160,14 @@ describe("flashcardsManageQuerySchema", () => {
 
 describe("flashcard source validation", () => {
   const card = { subjectId: "s1", front: "<p>Q</p>", back: "<p>A</p>" };
-  it.each(["note", "mindmap"] as const)(
-    "preserves a valid %s source",
-    (kind) => {
-      expect(
-        createFlashcardSchema.parse({ ...card, source: { kind, id: "doc-1" } })
-          .source,
-      ).toEqual({ kind, id: "doc-1" });
-    },
-  );
+  it("preserves a valid note source", () => {
+    expect(
+      createFlashcardSchema.parse({
+        ...card,
+        source: { kind: "note", id: "doc-1" },
+      }).source,
+    ).toEqual({ kind: "note", id: "doc-1" });
+  });
   it.each([
     { kind: "note", id: "" },
     { kind: "url", id: "https://example.com" },

@@ -1,9 +1,5 @@
 const ATTACHMENT_NAMESPACE = "notorium";
-export const ATTACHMENT_CONTEXT_VALUES = [
-  "notes",
-  "flashcards",
-  "mindmaps",
-] as const;
+export const ATTACHMENT_CONTEXT_VALUES = ["notes", "flashcards"] as const;
 const ATTACHMENT_CONTEXTS = new Set<string>(ATTACHMENT_CONTEXT_VALUES);
 
 export type AttachmentContext = (typeof ATTACHMENT_CONTEXT_VALUES)[number];

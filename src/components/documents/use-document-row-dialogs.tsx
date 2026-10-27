@@ -4,9 +4,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
-import { DeleteMindmapDialog } from "@/components/mindmaps/delete-mindmap-dialog";
-import { EditMindmapTitleDialog } from "@/components/mindmaps/edit-mindmap-title-dialog";
-import { OffscreenMindmapPngExport } from "@/components/mindmaps/offscreen-mindmap-png-export";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
 import type { DocumentListItem } from "@/features/documents/types";
@@ -62,7 +59,6 @@ export function useDocumentRowDialogs({
   const [deleteTarget, setDeleteTarget] = useState<DocumentListItem | null>(
     null,
   );
-  const [exportTargetId, setExportTargetId] = useState<string | null>(null);
 
   function handleChanged(item: DocumentListItem) {
     onChanged?.(item);
@@ -83,7 +79,6 @@ export function useDocumentRowDialogs({
     onDeleteRequested: (item) => setDeleteTarget(item),
     onCopyRequested: (item, format) =>
       void copySavedNoteContent(item.id, format),
-    onExportRequested: (item) => setExportTargetId(item.id),
   };
 
   const dialogs = (
@@ -91,20 +86,6 @@ export function useDocumentRowDialogs({
       {editTarget?.kind === "note" ? (
         <EditNoteTitleDialog
           note={{ id: editTarget.id, title: editTarget.title }}
-          open
-          onOpenChange={(open) => {
-            if (!open) setEditTarget(null);
-          }}
-          onSuccess={() => {
-            const target = editTarget;
-            setEditTarget(null);
-            handleChanged(target);
-          }}
-        />
-      ) : null}
-      {editTarget?.kind === "mindmap" ? (
-        <EditMindmapTitleDialog
-          mindmap={{ id: editTarget.id, title: editTarget.title }}
           open
           onOpenChange={(open) => {
             if (!open) setEditTarget(null);
@@ -129,27 +110,6 @@ export function useDocumentRowDialogs({
             setDeleteTarget(null);
             handleDeleted(target);
           }}
-        />
-      ) : null}
-      {deleteTarget?.kind === "mindmap" ? (
-        <DeleteMindmapDialog
-          mindmapId={deleteTarget.id}
-          mindmapTitle={deleteTarget.title}
-          open
-          onOpenChange={(open) => {
-            if (!open) setDeleteTarget(null);
-          }}
-          onSuccess={() => {
-            const target = deleteTarget;
-            setDeleteTarget(null);
-            handleDeleted(target);
-          }}
-        />
-      ) : null}
-      {exportTargetId ? (
-        <OffscreenMindmapPngExport
-          mindmapId={exportTargetId}
-          onDone={() => setExportTargetId(null)}
         />
       ) : null}
     </>

@@ -63,14 +63,14 @@ test("improves an unsaved card and keeps one conversation across review and edit
     await page.getByRole("button", { name: "Close flashcard editor" }).click();
     await expect(dialog).toHaveCount(0);
     await page.getByRole("tab", { name: "Review", exact: true }).click();
-    await page
-      .getByRole("button", { name: "Start review", exact: true })
-      .click();
+    await page.getByRole("link", { name: "Start review", exact: true }).click();
     await expect(
       page.getByText("I can help you study.", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText("Using current review card · front only", { exact: true }),
+      page.getByText("Using current review card · answer hidden", {
+        exact: true,
+      }),
     ).toBeVisible();
     await askAssistant(page, "Give me a hint");
     await expect
@@ -93,7 +93,9 @@ test("improves an unsaved card and keeps one conversation across review and edit
     await editDialog.getByRole("button", { name: "Discard back" }).click();
     await page.getByRole("button", { name: "Close flashcard editor" }).click();
     await expect(
-      page.getByText("Using current review card · front only", { exact: true }),
+      page.getByText("Using current review card · answer hidden", {
+        exact: true,
+      }),
     ).toBeVisible();
     await page
       .getByRole("button", { name: "Show answer", exact: true })

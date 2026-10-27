@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  fetchMindmapById,
-  fetchNoteById,
-  fetchSubjectDocuments,
-} from "@/lib/read-api/documents";
+import { fetchNoteById, fetchSubjectDocuments } from "@/lib/read-api/documents";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
 
 describe("document read-api fetchers", () => {
@@ -20,13 +16,11 @@ describe("document read-api fetchers", () => {
     expect(server.requestedUrls).toEqual(["/api/subjects/a%20b/documents"]);
   });
 
-  it("returns null for a deleted note or mindmap", async () => {
+  it("returns null for a deleted note", async () => {
     new FakeReadApiFetch()
       .install()
-      .replyJson(404, { errorCode: "notes.notFound" })
-      .replyJson(404, { errorCode: "mindmaps.notFound" });
+      .replyJson(404, { errorCode: "notes.notFound" });
 
     await expect(fetchNoteById("n1")).resolves.toBeNull();
-    await expect(fetchMindmapById("m1")).resolves.toBeNull();
   });
 });

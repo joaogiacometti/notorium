@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { LazyCreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
-import { CreateMindmapDialog } from "@/components/mindmaps/create-mindmap-dialog";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
@@ -27,9 +26,6 @@ interface SubjectTreeDialogsProps {
   createNoteSubjectId: string | null;
   onCreateNoteSubjectIdChange: (id: string | null) => void;
   onNoteCreated: (noteId: string) => void;
-  createMindmapSubjectId: string | null;
-  onCreateMindmapSubjectIdChange: (id: string | null) => void;
-  onMindmapCreated: (mindmapId: string) => void;
   createFlashcardSubjectId: string | null;
   onCreateFlashcardSubjectIdChange: (id: string | null) => void;
   /** Re-fetch tree counts after a mutating dialog completes. */
@@ -39,7 +35,7 @@ interface SubjectTreeDialogsProps {
 
 /**
  * Renders every dialog the subject tree can open (create/edit/delete subject,
- * create note/mindmap/flashcard) plus the shared
+ * create note/flashcard) plus the shared
  * document kebab dialog host. Split out of `subject-tree-sidebar.tsx` to keep
  * that file focused on tree state and within the file-size guard.
  */
@@ -57,9 +53,6 @@ export function SubjectTreeDialogs({
   createNoteSubjectId,
   onCreateNoteSubjectIdChange,
   onNoteCreated,
-  createMindmapSubjectId,
-  onCreateMindmapSubjectIdChange,
-  onMindmapCreated,
   createFlashcardSubjectId,
   onCreateFlashcardSubjectIdChange,
   onRefreshTree,
@@ -121,21 +114,6 @@ export function SubjectTreeDialogs({
           }}
           onSuccess={(noteId) => {
             onNoteCreated(noteId);
-          }}
-        />
-      ) : null}
-
-      {createMindmapSubjectId ? (
-        <CreateMindmapDialog
-          subjectId={createMindmapSubjectId}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              onCreateMindmapSubjectIdChange(null);
-            }
-          }}
-          onSuccess={(mindmapId) => {
-            onMindmapCreated(mindmapId);
           }}
         />
       ) : null}

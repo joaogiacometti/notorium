@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { flashcard, type mindmap, note } from "@/db/schema";
+import { flashcard, note } from "@/db/schema";
 import type { StoredBlobEntry } from "@/lib/media-storage/provider";
 
 const { getDbMock, getMediaStorageProviderMock } = vi.hoisted(() => ({
@@ -19,14 +19,13 @@ const SHARED_HTML = `<p><img src="${SHARED_URL}"></p>`;
 class AttachmentRowsFake {
   notes: { content: string }[] = [];
   cards: { front: string; back: string }[] = [];
-  maps: { data: string }[] = [];
 
   select() {
     return {
-      from: async (table: typeof note | typeof flashcard | typeof mindmap) => {
+      from: async (table: typeof note | typeof flashcard) => {
         if (table === note) return this.notes;
         if (table === flashcard) return this.cards;
-        return this.maps;
+        throw new Error("Unexpected attachment table");
       },
     };
   }
@@ -79,7 +78,7 @@ describe("shared attachment lifecycle", () => {
     expect(storage.pathnames.has(SHARED_PATHNAME)).toBe(true);
   });
 
-  it.each(["note", "front", "back", "mindmap"] as const)(
+  it.each(["note", "front", "back"] as const)(
     "keeps the blob while a %s references it, then collects it after the last reference is removed",
     async (surface) => {
       const rows = new AttachmentRowsFake();
@@ -89,22 +88,6 @@ describe("shared attachment lifecycle", () => {
       if (surface === "note") rows.notes = [{ content: SHARED_HTML }];
       if (surface === "front") rows.cards = [{ front: SHARED_HTML, back: "" }];
       if (surface === "back") rows.cards = [{ front: "", back: SHARED_HTML }];
-      if (surface === "mindmap") {
-        rows.maps = [
-          {
-            data: JSON.stringify({
-              nodes: [
-                {
-                  id: "image",
-                  position: { x: 0, y: 0 },
-                  data: { label: "Image", imageUrl: SHARED_URL },
-                },
-              ],
-              edges: [],
-            }),
-          },
-        ];
-      }
       const { sweepOrphanBlobs } = await import(
         "@/features/attachments/blob-gc"
       );
@@ -116,7 +99,6 @@ describe("shared attachment lifecycle", () => {
       expect(storage.pathnames.has(SHARED_PATHNAME)).toBe(true);
       rows.notes = [];
       rows.cards = [];
-      rows.maps = [];
 
       expect(await sweepOrphanBlobs()).toMatchObject({
         deleted: 1,

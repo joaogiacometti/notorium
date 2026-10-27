@@ -18,40 +18,23 @@ export class DocumentChatFixture {
       throw new Error(
         "Missing document draft; expected an open document editor",
       );
-    const input =
-      draft.kind === "note"
-        ? {
-            sessionId: draft.sessionId,
-            revision: draft.revision,
-            title: "Improved note title",
-            replacements: [
-              {
-                firstBlockId: draft.blocks[0].id,
-                lastBlockId: draft.blocks[0].id,
-                html: "<p>A clearer explanation.</p>",
-              },
-            ],
-          }
-        : {
-            sessionId: draft.sessionId,
-            revision: draft.revision,
-            renameNodes: [
-              {
-                nodeId: draft.nodes.find((node) => !node.root)?.id,
-                label: "Improved branch",
-              },
-              {
-                nodeId: draft.nodes.find((node) => node.root)?.id,
-                label: "Improved map title",
-              },
-            ],
-          };
+    const input = {
+      sessionId: draft.sessionId,
+      revision: draft.revision,
+      title: "Improved note title",
+      replacements: [
+        {
+          firstBlockId: draft.blocks[0].id,
+          lastBlockId: draft.blocks[0].id,
+          html: "<p>A clearer explanation.</p>",
+        },
+      ],
+    };
     const chunks: UIMessageChunk[] = [
       { type: "start" },
       {
         type: "tool-input-available",
-        toolName:
-          draft.kind === "note" ? "proposeNoteEdits" : "proposeMindmapEdits",
+        toolName: "proposeNoteEdits",
         toolCallId: `document-${request.messages.length}`,
         input,
       },

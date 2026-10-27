@@ -6,7 +6,7 @@ vi.mock("@/app/actions/flashcards", () => ({ createFlashcard: vi.fn() }));
 
 describe("getCreateFlashcardFormValues", () => {
   it("keeps proposal sources through the editable create form and validation", () => {
-    const source = { kind: "mindmap" as const, id: "map-1" };
+    const source = { kind: "note" as const, id: "note-1" };
     const values = getCreateFlashcardFormValues("subject-1", {
       front: "<p>Q</p>",
       back: "<p>A</p>",

@@ -65,14 +65,11 @@ export function SubjectTreeSidebar({
   const [createNoteSubjectId, setCreateNoteSubjectId] = useState<string | null>(
     null,
   );
-  const [createMindmapSubjectId, setCreateMindmapSubjectId] = useState<
-    string | null
-  >(null);
   const [createFlashcardSubjectId, setCreateFlashcardSubjectId] = useState<
     string | null
   >(null);
 
-  // Document kebab actions (edit/delete/copy/export) reuse the shared
+  // Document kebab actions (edit/delete/copy) reuse the shared
   // dialog host; reload the affected subject's documents so the tree reflects
   // renames and deletes without waiting for a manual re-expand.
   const { handlers: documentActions, dialogs: documentDialogs } =
@@ -184,7 +181,7 @@ export function SubjectTreeSidebar({
   }, [router]);
 
   // Reveal the active location by expanding the active subject's ancestor
-  // chain. When a note or mindmap is open, also expand its containing subject so
+  // chain. When a note is open, also expand its containing subject so
   // the document row itself is visible (ancestors alone leave it collapsed).
   useEffect(() => {
     if (!activeSubjectId) {
@@ -206,8 +203,7 @@ export function SubjectTreeSidebar({
     });
   }, [localTree, activeSubjectId, activeDocumentSubjectId]);
 
-  // Load the open document's subject rows on first paint so the active note or
-  // mindmap appears in the tree without a manual expand.
+  // Load the open note's subject rows on first paint so it appears in the tree.
   useEffect(() => {
     if (
       !activeDocumentSubjectId ||
@@ -308,20 +304,6 @@ export function SubjectTreeSidebar({
     refreshTree();
   }
 
-  function openCreateMindmap(subjectId: string) {
-    setCreateMindmapSubjectId(subjectId);
-  }
-
-  function handleMindmapCreated(mindmapId: string) {
-    const subjectId = createMindmapSubjectId;
-    setCreateMindmapSubjectId(null);
-    if (subjectId) {
-      void loadDocuments(subjectId);
-      router.push(`/subjects/${subjectId}/documents/mindmaps/${mindmapId}`);
-    }
-    refreshTree();
-  }
-
   function openCreateFlashcard(subjectId: string) {
     setCreateFlashcardSubjectId(subjectId);
   }
@@ -396,7 +378,6 @@ export function SubjectTreeSidebar({
                 onRetryDocuments={(subjectId) => void loadDocuments(subjectId)}
                 onCreateChild={openCreateChild}
                 onCreateNote={openCreateNote}
-                onCreateMindmap={openCreateMindmap}
                 onCreateFlashcard={openCreateFlashcard}
                 onEdit={setEditTarget}
                 onDelete={setDeleteTarget}
@@ -425,9 +406,6 @@ export function SubjectTreeSidebar({
         createNoteSubjectId={createNoteSubjectId}
         onCreateNoteSubjectIdChange={setCreateNoteSubjectId}
         onNoteCreated={handleNoteCreated}
-        createMindmapSubjectId={createMindmapSubjectId}
-        onCreateMindmapSubjectIdChange={setCreateMindmapSubjectId}
-        onMindmapCreated={handleMindmapCreated}
         createFlashcardSubjectId={createFlashcardSubjectId}
         onCreateFlashcardSubjectIdChange={setCreateFlashcardSubjectId}
         onRefreshTree={refreshTree}

@@ -1,13 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, mindmap, note, subject } from "@/db/schema";
+import { flashcard, note, subject } from "@/db/schema";
 import {
   LIBRARY_HIT_KINDS,
   type LibraryHit,
   type LibrarySearchInput,
   type LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
-import { findMindmapNodeLabelMatch } from "@/features/mindmaps/utils";
 import {
   buildLibraryHit,
   type LibraryHitSource,
@@ -26,7 +25,6 @@ const LIBRARY_HIT_FINDERS: Record<
 > = {
   note: findNoteHitSources,
   flashcard: findFlashcardHitSources,
-  mindmap: findMindmapHitSources,
 };
 
 /**
@@ -122,41 +120,5 @@ async function findFlashcardHitSources(
     kind: "flashcard",
     title: richTextToPlainText(front),
     body: richTextToPlainText(back),
-  }));
-}
-
-async function findMindmapHitSources(
-  userId: string,
-  terms: string[],
-): Promise<LibraryHitSource[]> {
-  const search = buildTermSearch(
-    terms,
-    [mindmap.title, mindmap.data, subject.name],
-    mindmap.title,
-    mindmap.updatedAt,
-  );
-  const rows = await getDb()
-    .select({
-      id: mindmap.id,
-      subjectId: mindmap.subjectId,
-      title: mindmap.title,
-      data: mindmap.data,
-    })
-    .from(mindmap)
-    .innerJoin(subject, eq(mindmap.subjectId, subject.id))
-    .where(
-      and(
-        eq(mindmap.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-        search.where,
-      ),
-    )
-    .orderBy(...search.orderBy)
-    .limit(LIMITS.assistantLibraryHitsPerKind);
-
-  return rows.map(({ data, ...row }) => ({
-    ...row,
-    kind: "mindmap",
-    body: findMindmapNodeLabelMatch(data, ...terms) ?? "",
   }));
 }

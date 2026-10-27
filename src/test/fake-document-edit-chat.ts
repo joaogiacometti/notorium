@@ -27,32 +27,19 @@ export class FakeDocumentEditChat implements ChatTransport<AssistantUIMessage> {
     const { documentDraft: draft } = z
       .object({ documentDraft: documentDraftSchema })
       .parse(request.body);
-    const toolName =
-      draft.kind === "note" ? "proposeNoteEdits" : "proposeMindmapEdits";
-    const input =
-      draft.kind === "note"
-        ? {
-            sessionId: draft.sessionId,
-            revision: draft.revision,
-            title: this.title,
-            replacements: [
-              {
-                firstBlockId: this.invalid ? "missing" : draft.blocks[0]?.id,
-                lastBlockId: draft.blocks[0]?.id,
-                html: "<p>Improved explanation</p>",
-              },
-            ],
-          }
-        : {
-            sessionId: draft.sessionId,
-            revision: draft.revision,
-            renameNodes: [
-              {
-                nodeId: this.invalid ? "missing" : draft.nodes[0]?.id,
-                label: "Improved explanation",
-              },
-            ],
-          };
+    const toolName = "proposeNoteEdits";
+    const input = {
+      sessionId: draft.sessionId,
+      revision: draft.revision,
+      title: this.title,
+      replacements: [
+        {
+          firstBlockId: this.invalid ? "missing" : draft.blocks[0]?.id,
+          lastBlockId: draft.blocks[0]?.id,
+          html: "<p>Improved explanation</p>",
+        },
+      ],
+    };
     return new ReadableStream({
       start: (controller) => {
         controller.enqueue({ type: "start" });

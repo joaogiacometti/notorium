@@ -54,7 +54,7 @@ describe("formatLibraryHitsForModel", () => {
 
   it("says so when nothing matched", () => {
     expect(formatLibraryHitsForModel({ hits: [] })).toBe(
-      "No matching notes, flashcards, or mindmaps.",
+      "No matching notes or flashcards.",
     );
   });
 });

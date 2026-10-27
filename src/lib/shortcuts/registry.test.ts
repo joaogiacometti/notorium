@@ -165,29 +165,6 @@ describe("shortcutRegistry", () => {
       description: "Toggle study assistant",
     });
   });
-
-  it("lists the mindmap Tab add-child shortcut", () => {
-    const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
-      (item) => item.id === "mindmap-add-child",
-    );
-    expect(shortcut).toMatchObject({
-      kind: "keys",
-      keys: ["tab"],
-      description: "Add child to selected node",
-    });
-    expect(shortcut ? displayShortcutKeys(shortcut) : []).toEqual(["Tab"]);
-  });
-
-  it("lists the mindmap search shortcut", () => {
-    const shortcut = getShortcutsByCategory(ShortcutCategory.Mindmap).find(
-      (item) => item.id === "mindmap-search",
-    );
-    expect(shortcut).toMatchObject({
-      kind: "keys",
-      keys: ["cmd+f", "ctrl+f"],
-      description: "Search nodes",
-    });
-  });
 });
 
 describe("getActiveShortcutCategories", () => {
@@ -201,12 +178,6 @@ describe("getActiveShortcutCategories", () => {
     expect(
       getActiveShortcutCategories("/subjects/s1/documents/notes/n1"),
     ).toEqual([ShortcutCategory.Global, ShortcutCategory.NotesEditor]);
-  });
-
-  it("marks the mindmap active on mindmap detail pages", () => {
-    expect(
-      getActiveShortcutCategories("/subjects/s1/documents/mindmaps/m1"),
-    ).toEqual([ShortcutCategory.Global, ShortcutCategory.Mindmap]);
   });
 
   it("marks flashcard review active on flashcards routes", () => {

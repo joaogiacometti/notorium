@@ -9,7 +9,6 @@ const queries = vi.hoisted(() => ({
   getStrugglingFlashcardsForUser: vi.fn(),
   getFlashcardReviewStateForUser: vi.fn(),
   ensureFsrsSettings: vi.fn(),
-  getMindmapByIdForUser: vi.fn(),
   getNoteByIdForUser: vi.fn(),
   getSearchDataForUser: vi.fn(),
   getRecentSearchDataForUser: vi.fn(),
@@ -32,7 +31,6 @@ vi.mock("@/features/flashcards/queries", () => queries);
 vi.mock("@/features/flashcards/refine/queries", () => queries);
 vi.mock("@/features/flashcard-review/queries", () => queries);
 vi.mock("@/features/flashcards/fsrs/settings-mutations", () => queries);
-vi.mock("@/features/mindmaps/queries", () => queries);
 vi.mock("@/features/notes/queries", () => queries);
 vi.mock("@/features/search/queries", () => queries);
 vi.mock("@/features/subjects/queries", () => queries);
@@ -161,22 +159,13 @@ describe("read route handlers", () => {
     );
   });
 
-  it("mindmap and note by id answer 404 when missing", async () => {
-    queries.getMindmapByIdForUser.mockResolvedValue(null);
+  it("note by id answers 404 when missing", async () => {
     queries.getNoteByIdForUser.mockResolvedValue(null);
-
-    const mindmap = await callRoute(
-      import("@/app/api/mindmaps/[mindmapId]/route"),
-      "/api/mindmaps/m1",
-      { mindmapId: "m1" },
-    );
     const note = await callRoute(
       import("@/app/api/notes/[noteId]/route"),
       "/api/notes/n1",
       { noteId: "n1" },
     );
-
-    expect(mindmap.body).toMatchObject({ errorCode: "mindmaps.notFound" });
     expect(note.body).toMatchObject({ errorCode: "notes.notFound" });
     expect(queries.getNoteByIdForUser).toHaveBeenCalledWith("user-1", "n1");
   });
@@ -202,7 +191,6 @@ describe("read route handlers", () => {
     expect(short.body).toEqual({
       notes: [],
       flashcards: [],
-      mindmaps: [],
     });
     expect(queries.getSearchDataForUser).toHaveBeenCalledTimes(1);
     expect(queries.getSearchDataForUser).toHaveBeenCalledWith(

@@ -27,7 +27,7 @@ interface DocumentRowsProps {
 }
 
 /**
- * The note and mindmap rows nested under an expanded subject in the tree. Each
+ * The note rows nested under an expanded subject in the tree. Each
  * row links to its document, can be dragged to another subject, and carries the
  * same kebab actions as the document's detail-page header menu.
  */

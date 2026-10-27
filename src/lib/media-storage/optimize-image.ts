@@ -32,7 +32,7 @@ function swapToWebpExtension(fileName: string): string {
 /**
  * Re-encodes a raster image upload to WebP with an EXIF-aware orientation fix and
  * a max-dimension cap before it is stored in blob storage, shrinking note,
- * flashcard, and mindmap images without a visible quality loss. Unsupported MIME
+ * flashcard images without a visible quality loss. Unsupported MIME
  * types pass through untouched, and the original is kept whenever sharp fails to decode the bytes or WebP would not be smaller, so
  * optimization can never enlarge or corrupt an upload.
  *
