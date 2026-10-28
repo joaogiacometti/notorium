@@ -25,7 +25,7 @@ AI flashcard creation uses the study assistant, including requests based on an o
 
 Every AI call (the study assistant and flashcard back improvement) runs with thinking turned off (`none`) by default: thinking tokens are billed as output tokens and count against each call's output cap, so they can cut an answer short. Set `OPENROUTER_REASONING_EFFORT` (`none`, `minimal`, `low`, `medium`, or `high`) to change it. You must set it to something other than `none` for a model whose reasoning cannot be turned off, or that model rejects every AI request.
 
-AI output follows the user's language: the assistant answers in the language of the user's message, and generated or improved flashcards use the language of the source material or cards.
+AI output follows the user's applicable explicit output-language instruction, otherwise the language of their latest request, including short follow-ups, even when source material is in another language. Only ambiguous or language-neutral requests inherit language from earlier user messages. This applies to assistant replies and new or rewritten flashcard prose; code identifiers, quotations, studied-language content, and unrelated text in targeted edits remain intact. Refine's standalone back improvement preserves the existing card's language.
 
 The study assistant sends each chat's id to OpenRouter as `session_id`. This supplies a session identifier for provider routing and prompt-cache reuse; availability and savings depend on the selected model and provider. System instructions stay stable; only the current editor tool is exposed alongside creation and search, and switching editor kinds can reduce prompt-cache reuse.
 

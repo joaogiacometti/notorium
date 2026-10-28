@@ -23,8 +23,6 @@ import {
 } from "@/features/assistant/library-search-contract";
 import { findNoteEditProblems } from "@/features/assistant/note-edit-rules";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
-import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
-import { MATH_RULE } from "@/lib/ai/prompt-rules";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
 /** Most cards one proposal may hold; keeps a single turn reviewable. */
@@ -72,7 +70,7 @@ export const proposedFlashcardSchema = z
       .min(1)
       .max(LIMITS.flashcardFrontMax)
       .describe(
-        "The requested retrieval cue as plain text, never HTML. Use backticks or fenced code for an example-based question; keep its result on the back.",
+        "The front as plain text, never HTML. Use backticks for inline code or language-tagged fences for code blocks; dollar-delimited LaTeX for math.",
       ),
     back: z
       .string()
@@ -80,11 +78,13 @@ export const proposedFlashcardSchema = z
       .min(1)
       .max(LIMITS.flashcardBackMax)
       .describe(
-        "The direct, minimal complete answer to the front, as plain text with compact lists when needed, optional backticks for code or LaTeX for math; never HTML. Do not duplicate the supplementary example.",
+        'The back as plain text, never HTML. Start each bullet with "- "; use backticks for inline code and dollar-delimited LaTeX for math. A short prose or inline-code illustration belongs in a final back bullet, not the separate code example field.',
       ),
     example: flashcardExampleSchema
       .optional()
-      .describe("Only when the user asks for examples."),
+      .describe(
+        "Optional supplementary code block, appended to the back on creation. Use only when a code block adds value; keep prose and inline-code illustrations in the back. Omit when the example is already in the front or back.",
+      ),
     subjectPath: z
       .string()
       .trim()
@@ -113,7 +113,7 @@ export const flashcardProposalInputSchema = z.object({
     .min(1)
     .max(FLASHCARD_PROPOSAL_MAX_CARDS)
     .describe(
-      `All requested cards in one call, exactly the requested count (one if unspecified), up to ${FLASHCARD_PROPOSAL_MAX_CARDS}. ${FLASHCARD_CARD_SHAPE_RULES} ${MATH_RULE}`,
+      `All requested cards in one call, exactly the requested count (one if unspecified), up to ${FLASHCARD_PROPOSAL_MAX_CARDS}.`,
     ),
 });
 

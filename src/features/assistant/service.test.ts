@@ -4,6 +4,11 @@ import type {
   LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
 import { assistantChatRequestSchema } from "@/features/assistant/validation";
+import {
+  FLASHCARD_ANSWER_RULES,
+  FLASHCARD_EXAMPLE_RULES,
+} from "@/features/flashcards/ai-prompts";
+import { USER_REQUEST_LANGUAGE_RULE } from "@/lib/ai/prompt-rules";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 import {
   createFakeStreamingModel,
@@ -211,6 +216,44 @@ describe("streamAssistantReplyForUser", () => {
     // Same tools on both steps, so the answer step hits the prompt cache.
     expect(answerCall?.tools).toEqual(model.doStreamCalls[0]?.tools);
     expect(model.doStreamCalls).toHaveLength(2);
+  });
+
+  it("sends global language and card policies once without promoting source content", async () => {
+    const model = createFakeStreamingModel("A proposed card.");
+    getAiModelMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+      draft: {
+        sessionId: "language-test",
+        revision: 0,
+        front: "O que é ATP?",
+        back: "Transporta energia.",
+      },
+      loadSubjectPaths: new FakeSubjectPathStore(["Biologia"]).load,
+    });
+    if (!result.success) throw new Error("Expected a streamed reply");
+    await result.response.text();
+
+    const call = model.doStreamCalls[0];
+    for (const rule of [
+      USER_REQUEST_LANGUAGE_RULE,
+      FLASHCARD_ANSWER_RULES,
+      FLASHCARD_EXAMPLE_RULES,
+    ]) {
+      expect(call.prompt[0]).toMatchObject({
+        role: "system",
+        content: expect.stringContaining(rule),
+      });
+      const encodedRule = JSON.stringify(rule).slice(1, -1);
+      expect(JSON.stringify(call).split(encodedRule)).toHaveLength(2);
+      expect(JSON.stringify(call.tools)).not.toContain(encodedRule);
+    }
+    expect(JSON.stringify(call.prompt[0])).not.toContain("Transporta energia");
+    expect(JSON.stringify(call.prompt.at(-1))).toContain("Transporta energia");
   });
 
   it("hides a failed search's internal error from the model", async () => {

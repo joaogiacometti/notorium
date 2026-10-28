@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { editToolInputObject } from "@/features/assistant/edit-guards";
-import { FLASHCARD_CARD_SHAPE_RULES } from "@/features/flashcards/ai-prompts";
 import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
@@ -54,7 +53,7 @@ export const flashcardEditsInputSchema = editToolInputObject(
     back: draftHtml(LIMITS.flashcardBackMax)
       .optional()
       .describe(
-        "Full replacement back in supported editor HTML; omit to keep unchanged.",
+        "Full replacement back in supported editor HTML; omit to keep unchanged. Use ul/li for bullets or ol/li for ordered steps, without spacer paragraphs. Code blocks use pre/code.",
       ),
   },
   "",
@@ -63,7 +62,7 @@ export const flashcardEditsInputSchema = editToolInputObject(
     message: "Expected a front or back replacement",
   })
   .describe(
-    `Replace only requested fields; preserve unrelated content, formatting, and every image placeholder exactly. Never invent image URLs. Supported HTML includes paragraphs, headings, strong/em, lists, pre/code, and tables. ${EDITOR_HTML_MATH_RULE} Use compact lists without spacer paragraphs. ${FLASHCARD_CARD_SHAPE_RULES}`,
+    `Replace only requested fields; preserve unrelated content, formatting, and every image placeholder exactly. Never invent image URLs. Supported HTML includes paragraphs, headings, strong/em, lists, pre/code, and tables. ${EDITOR_HTML_MATH_RULE}`,
   );
 
 const editOutcome = z.enum(["accepted", "discarded", "skipped", "stale"]);
