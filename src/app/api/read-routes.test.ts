@@ -10,7 +10,6 @@ const queries = vi.hoisted(() => ({
   ensureFsrsSettings: vi.fn(),
   getNoteByIdForUser: vi.fn(),
   getSearchDataForUser: vi.fn(),
-  getRecentSearchDataForUser: vi.fn(),
   getAllSubjectsWithPathsForUser: vi.fn(),
   getSubjectDocumentsForUser: vi.fn(),
 }));
@@ -181,17 +180,12 @@ describe("read route handlers", () => {
     );
   });
 
-  it("recent search and subject options read for the user", async () => {
-    await callRoute(
-      import("@/app/api/search/recent/route"),
-      "/api/search/recent",
-    );
+  it("subject options read for the user", async () => {
     await callRoute(
       import("@/app/api/subjects/options/route"),
       "/api/subjects/options",
     );
 
-    expect(queries.getRecentSearchDataForUser).toHaveBeenCalledWith("user-1");
     expect(queries.getAllSubjectsWithPathsForUser).toHaveBeenCalledWith(
       "user-1",
     );

@@ -187,10 +187,9 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Flashcard search results navigate to the flashcard detail page.
 - Flashcard search results display subject paths using `::` notation.
 - Search is user-scoped and accessible from the left menu (and the `Cmd/Ctrl+K` shortcut).
-- Empty search returns user data without text filtering, capped by configured result limits.
 - Search results are cached on the client and invalidated after related mutations.
 - Search result text matching the query (ignoring case and accents) is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
-- Empty queries show unfiltered data without highlighting.
+- Before the user types, the dialog shows only commands and loads nothing. Notes and flashcards are searched only once the query reaches the search minimum (2 characters); until the first matches arrive a "Searching…" row stands in for results (never the empty message), and refining a query keeps the previous matches visible until the new ones load.
 
 ### Study Assistant
 

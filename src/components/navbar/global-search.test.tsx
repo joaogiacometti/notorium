@@ -19,16 +19,15 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 class FakeSearchApi {
-  recent: SearchData = { notes: [], flashcards: [] };
   matches: SearchData = { notes: [], flashcards: [] };
   searchedQueries: string[] = [];
+  /** When true, searches never settle, simulating a slow server. */
+  holdSearches = false;
 
   fetchSearchData = async (query: string): Promise<SearchData> => {
     this.searchedQueries.push(query);
-    return this.matches;
+    return this.holdSearches ? new Promise(() => {}) : this.matches;
   };
-
-  fetchRecentSearchData = async (): Promise<SearchData> => this.recent;
 }
 
 let api = new FakeSearchApi();
@@ -44,7 +43,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/read-api/search", () => ({
   fetchSearchData: (query: string) => api.fetchSearchData(query),
-  fetchRecentSearchData: () => api.fetchRecentSearchData(),
 }));
 
 vi.mock("@/lib/read-api/subjects", () => ({
@@ -175,18 +173,28 @@ describe("GlobalSearch", () => {
     act(() => item.dispatchEvent(new MouseEvent("click", { bubbles: true })));
   }
 
-  it("shows every command and recent items before typing", async () => {
-    api.recent = {
-      notes: [note("n1", "Cell cycle")],
-      flashcards: [flashcard("f1", "Mitosis")],
-    };
+  it("shows only commands before typing, without loading anything", async () => {
     await renderSearch();
     const labels = optionLabels();
     expect(labels).toContain("Create Subject");
     expect(labels).toContain("Show Keyboard Shortcuts");
+    expect(api.searchedQueries).toEqual([]);
+    expect(document.body.textContent).not.toContain("Searching");
+  });
+
+  it("lists matching notes and flashcards once the user types", async () => {
+    api.matches = {
+      notes: [note("n1", "Cell cycle")],
+      flashcards: [flashcard("f1", "Cell membrane")],
+    };
+    await renderSearch();
+    await typeQuery("cell");
+
+    const labels = optionLabels();
     expect(labels.some((label) => label.startsWith("Cell cycle"))).toBe(true);
-    expect(document.body.textContent).toContain("Recent Notes");
-    expect(document.body.textContent).toContain("Recent Flashcards");
+    expect(labels.some((label) => label.startsWith("Cell membrane"))).toBe(
+      true,
+    );
   });
 
   it("filters commands without a server search for a one-character query", async () => {
@@ -212,6 +220,29 @@ describe("GlobalSearch", () => {
     expect(labels).not.toContain("Theme: Dark");
   });
 
+  it("shows a searching row instead of the empty message while searching", async () => {
+    api.holdSearches = true;
+    await renderSearch();
+    await typeQuery("zzzz");
+
+    expect(document.body.textContent).toContain("Searching");
+    expect(document.body.textContent).not.toContain("No matching");
+  });
+
+  it("keeps previous matches while a refined search loads", async () => {
+    api.matches = { notes: [note("n1", "Cell cycle")], flashcards: [] };
+    await renderSearch();
+    await typeQuery("cell");
+    api.holdSearches = true;
+    await typeQuery("cell c");
+
+    expect(api.searchedQueries).toEqual(["cell", "cell c"]);
+    expect(optionLabels().some((label) => label.startsWith("Cell cycle"))).toBe(
+      true,
+    );
+    expect(document.body.textContent).not.toContain("Searching");
+  });
+
   it("shows an empty message when nothing matches", async () => {
     await renderSearch();
     await typeQuery("zzzz");
@@ -222,8 +253,9 @@ describe("GlobalSearch", () => {
   });
 
   it("navigates and closes when a result is selected", async () => {
-    api.recent = { notes: [note("n1", "Cell cycle")], flashcards: [] };
+    api.matches = { notes: [note("n1", "Cell cycle")], flashcards: [] };
     await renderSearch();
+    await typeQuery("cell");
     clickOption("Cell cycle");
 
     expect(routerPushMock).toHaveBeenCalledWith(expect.stringContaining("n1"));

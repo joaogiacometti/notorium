@@ -10,13 +10,3 @@ import type { SearchData } from "@/lib/server/api-contracts";
 export function fetchSearchData(query: string): Promise<SearchData> {
   return fetchReadApi<SearchData>("/api/search", { q: query });
 }
-
-/**
- * Load the recent items shown before the user types.
- *
- * @example
- * const recent = await fetchRecentSearchData();
- */
-export function fetchRecentSearchData(): Promise<SearchData> {
-  return fetchReadApi<SearchData>("/api/search/recent");
-}

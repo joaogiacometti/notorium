@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { SearchCommandGroups } from "@/components/navbar/search-command-groups";
@@ -19,7 +20,6 @@ import {
 } from "@/components/navbar/search-result-groups";
 import { useSearchCommandActions } from "@/components/navbar/use-search-command-actions";
 import { useSearchResults } from "@/components/navbar/use-search-results";
-import { SearchSkeleton } from "@/components/shared/search-skeleton";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
 import {
   CommandDialog,
@@ -132,24 +132,20 @@ export function GlobalSearch({
           placeholder="Search notes and flashcards, or run a command..."
         />
         <CommandList>
-          {results.isPending && <SearchSkeleton />}
-          {!results.isPending && commands.length === 0 && !hasResults && (
+          {!results.isSearching && commands.length === 0 && !hasResults && (
             <CommandEmpty>
               No matching commands, notes, or flashcards.
             </CommandEmpty>
           )}
           <SearchCommandGroups commands={commands} onRun={runAction} />
+          {results.isSearching && !hasResults ? <SearchingRow /> : null}
           <NoteResultGroup
             notes={results.notes}
-            heading={results.showingRecents ? "Recent Notes" : "Notes"}
             highlightQuery={results.highlightQuery}
             onSelect={navigate}
           />
           <FlashcardResultGroup
             flashcards={results.flashcards}
-            heading={
-              results.showingRecents ? "Recent Flashcards" : "Flashcards"
-            }
             highlightQuery={results.highlightQuery}
             detailOptions={{
               from: view ? "flashcards-manage" : undefined,
@@ -172,5 +168,18 @@ export function GlobalSearch({
         onNavigate={navigate}
       />
     </>
+  );
+}
+
+/** Shown below the commands while a typed query's first matches load. */
+function SearchingRow() {
+  return (
+    <div
+      role="status"
+      className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground"
+    >
+      <Loader2 className="size-4 animate-spin" aria-hidden />
+      Searching…
+    </div>
   );
 }

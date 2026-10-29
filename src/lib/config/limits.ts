@@ -42,7 +42,6 @@ export const LIMITS = {
   searchQueryMin: 2,
   searchQueryMax: 200,
   searchResultsLimit: 50,
-  recentItemsLimit: 10,
   contentPreviewTruncate: 100,
 
   reviewDueLimitDefault: 50,

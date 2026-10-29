@@ -24,14 +24,12 @@ const SUBJECT_LABEL_CLASS =
 
 interface NoteResultGroupProps {
   notes: SearchNote[];
-  heading: string;
   highlightQuery: string;
   onSelect: (href: string) => void;
 }
 
 export function NoteResultGroup({
   notes,
-  heading,
   highlightQuery,
   onSelect,
 }: Readonly<NoteResultGroupProps>) {
@@ -39,7 +37,7 @@ export function NoteResultGroup({
     return null;
   }
   return (
-    <CommandGroup heading={heading}>
+    <CommandGroup heading="Notes">
       {notes.map((n) => (
         <CommandItem
           key={n.id}
@@ -74,7 +72,6 @@ export function NoteResultGroup({
 
 interface FlashcardResultGroupProps {
   flashcards: SearchFlashcard[];
-  heading: string;
   highlightQuery: string;
   detailOptions: Parameters<typeof getFlashcardDetailHref>[1];
   onSelect: (href: string) => void;
@@ -82,7 +79,6 @@ interface FlashcardResultGroupProps {
 
 export function FlashcardResultGroup({
   flashcards,
-  heading,
   highlightQuery,
   detailOptions,
   onSelect,
@@ -91,7 +87,7 @@ export function FlashcardResultGroup({
     return null;
   }
   return (
-    <CommandGroup heading={heading}>
+    <CommandGroup heading="Flashcards">
       {flashcards.map((fc) => (
         <CommandItem
           key={fc.id}
