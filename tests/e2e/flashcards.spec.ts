@@ -63,7 +63,7 @@ async function openCreateFlashcardDialog(page: Page) {
     .getByRole("button", { name: "New Flashcard", exact: true })
     .click();
 
-  return page.getByRole("dialog", { name: "Create Flashcard" });
+  return page.getByRole("dialog", { name: "New flashcard" });
 }
 
 async function createFlashcardFromManageDialog(
@@ -80,7 +80,9 @@ async function createFlashcardFromManageDialog(
     createDialog.locator("#form-create-flashcard-back"),
     back,
   );
-  await createDialog.getByRole("button", { name: "Create Flashcard" }).click();
+  await createDialog
+    .getByRole("button", { name: "Create", exact: true })
+    .click();
   await expect(page.getByTitle(front, { exact: true }).first()).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(createDialog).toHaveCount(0);

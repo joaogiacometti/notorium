@@ -36,7 +36,7 @@ test("improves an unsaved card and keeps one conversation across review and edit
     await page
       .getByRole("button", { name: "New Flashcard", exact: true })
       .click();
-    const dialog = page.getByRole("dialog", { name: "Create Flashcard" });
+    const dialog = page.getByRole("dialog", { name: "New flashcard" });
     await replaceEditor(dialog.locator("#form-create-flashcard-front"), front);
     await replaceEditor(
       dialog.locator("#form-create-flashcard-back"),
@@ -50,15 +50,13 @@ test("improves an unsaved card and keeps one conversation across review and edit
       dialog.getByRole("button", { name: "Accept back" }),
     ).toBeVisible();
     await expect(
-      dialog.getByRole("button", { name: "Create Flashcard", exact: true }),
+      dialog.getByRole("button", { name: "Create", exact: true }),
     ).toBeDisabled();
     await dialog.getByRole("button", { name: "Accept back" }).click();
     await expect(dialog.locator("#form-create-flashcard-back")).toContainText(
       "A concise improved answer.",
     );
-    await dialog
-      .getByRole("button", { name: "Create Flashcard", exact: true })
-      .click();
+    await dialog.getByRole("button", { name: "Create", exact: true }).click();
     await expect(page.getByTitle(front, { exact: true }).first()).toBeVisible();
     await page.getByRole("button", { name: "Close flashcard editor" }).click();
     await expect(dialog).toHaveCount(0);
@@ -86,12 +84,11 @@ test("improves an unsaved card and keeps one conversation across review and edit
       page.getByText("Using current flashcard draft", { exact: true }),
     ).toBeVisible();
     await askAssistant(page, "Improve this flashcard");
-    const editDialog = page.getByRole("dialog", { name: "Edit Flashcard" });
-    await expect(
-      editDialog.getByRole("button", { name: "Discard back" }),
-    ).toBeVisible();
-    await editDialog.getByRole("button", { name: "Discard back" }).click();
-    await page.getByRole("button", { name: "Close flashcard editor" }).click();
+    // Review edits the card in place; Cancel in the session footer leaves it.
+    const discardBack = page.getByRole("button", { name: "Discard back" });
+    await expect(discardBack).toBeVisible();
+    await discardBack.click();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(
       page.getByText("Using current review card · answer hidden", {
         exact: true,
