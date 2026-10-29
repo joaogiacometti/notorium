@@ -513,18 +513,33 @@
   @apply inline-block align-top;
 }
 
+/* The resize handles follow the image, so it is never the wrapper's last
+   child; drop its margin or the wrapper (and its handles) runs past it. */
 .tiptap-content [data-resize-wrapper] img,
 .tiptap-wrapper .tiptap [data-resize-wrapper] img {
-  width: 100%;
+  @apply mb-0 w-full;
 }
 
-/* Handles sit inside the image corners: nudged outward they overflow a
-   full-width image and give the editor stray scrollbars, even while hidden. */
+/* The editor content scrolls (overflow-x: auto), so selection chrome stays
+   inside the image: an outward outline or handle is clipped or adds stray
+   scrollbars to a full-width image. */
+.tiptap-wrapper .tiptap [data-resize-container].ProseMirror-selectednode img {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+/* Edge handles are full-height grab strips; the visible pill is centered on
+   the strip so it reads on light and dark images alike. */
 .tiptap-wrapper .tiptap [data-resize-handle] {
-  @apply z-raised size-3 rounded-full border-2 border-background bg-primary;
+  @apply z-raised flex w-4 cursor-ew-resize items-center justify-center transition-opacity motion-reduce:transition-none;
   opacity: 0;
   pointer-events: none;
   touch-action: none;
+}
+
+.tiptap-wrapper .tiptap [data-resize-handle]::after {
+  @apply h-12 max-h-[50%] w-2 rounded-full border border-background bg-primary shadow-md;
+  content: "";
 }
 
 .tiptap-wrapper
@@ -537,22 +552,6 @@
   [data-resize-handle] {
   opacity: 1;
   pointer-events: auto;
-}
-
-.tiptap-wrapper .tiptap [data-resize-handle="top-left"] {
-  cursor: nwse-resize;
-}
-
-.tiptap-wrapper .tiptap [data-resize-handle="top-right"] {
-  cursor: nesw-resize;
-}
-
-.tiptap-wrapper .tiptap [data-resize-handle="bottom-left"] {
-  cursor: nesw-resize;
-}
-
-.tiptap-wrapper .tiptap [data-resize-handle="bottom-right"] {
-  cursor: nwse-resize;
 }
 
 .tiptap-content mark,

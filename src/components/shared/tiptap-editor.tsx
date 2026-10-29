@@ -160,6 +160,7 @@ export function TiptapEditor({
         allowBase64: false,
         resize: {
           enabled: true,
+          directions: ["left", "right"],
           minWidth: 120,
           minHeight: 80,
           alwaysPreserveAspectRatio: true,
