@@ -184,7 +184,7 @@ export function FlashcardDetail({
           idPrefix="form-edit-flashcard"
           review={review}
           reviewDisabled={autosave.isSaving || isImageUploading}
-          contentClassName="min-h-24 max-h-none"
+          contentClassName="min-h-0 max-h-none"
           toolbarStickTo="page"
           onImageUploadPendingChange={(side, pending) =>
             side === "front"

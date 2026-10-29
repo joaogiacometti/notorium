@@ -64,7 +64,9 @@ top bar, otherwise at the top of the scrolling dialog/session region) that
 follows the focused face, then Front, then Back on `bg-muted/50`, mirroring the
 review card. Faces grow with their content; never give a face its own
 `max-h`/scroller, so a long card has exactly one scrollbar (page, dialog body,
-or session area). Review/exam edit in place with Cancel/Save in the session
+or session area). Only empty-by-default editors (create dialog) keep a
+`min-h` floor; an existing card's faces end where their content does, and the
+editor's trailing empty line stays collapsed until the face is focused. Review/exam edit in place with Cancel/Save in the session
 footer; never reintroduce an edit dialog.
 
 ## Surfaces and radius

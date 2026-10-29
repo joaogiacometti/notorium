@@ -18,11 +18,11 @@ export default function FlashcardDetailLoading() {
           <div className="h-10.25 border-b" />
           <div className="flex flex-col gap-2 p-4 sm:p-6">
             <Skeleton className="h-3 w-10" />
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-6 w-3/4" />
           </div>
           <div className="flex flex-col gap-2 border-t bg-muted/50 p-4 sm:p-6">
             <Skeleton className="h-3 w-10" />
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-24 w-full" />
           </div>
         </div>
       </AppPageContainer>

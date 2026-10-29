@@ -631,6 +631,23 @@
   @apply p-0;
 }
 
+/* The trailing empty paragraph only gives the caret a line below an image,
+   list or code block; collapse it (and the margin above it) until the field
+   is focused, so a face ends where its content does. */
+.tiptap-wrapper.tiptap-bare
+  .tiptap:not(.ProseMirror-focused)
+  > p:last-child:not(:first-child):has(
+    > br.ProseMirror-trailingBreak:only-child
+  ) {
+  @apply hidden;
+}
+
+.tiptap-wrapper.tiptap-bare
+  .tiptap:not(.ProseMirror-focused)
+  > :has(+ p:last-child > br.ProseMirror-trailingBreak:only-child) {
+  @apply mb-0;
+}
+
 .tiptap-wrapper .tiptap p.is-editor-empty:first-child::before {
   @apply pointer-events-none float-left h-0 text-muted-foreground/50;
   content: attr(data-placeholder);
