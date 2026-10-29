@@ -80,7 +80,7 @@ export function DocumentRowMenu({
             className="cursor-pointer"
           >
             <Pencil className="size-4" />
-            Edit
+            Rename
           </DropdownMenuItem>
         ) : null}
         {kindItems}

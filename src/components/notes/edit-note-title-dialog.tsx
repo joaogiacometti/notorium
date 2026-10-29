@@ -95,9 +95,9 @@ export function EditNoteTitleDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Edit Note</DialogTitle>
+          <DialogTitle>Rename Note</DialogTitle>
           <DialogDescription className="sr-only">
-            Update the note.
+            Update the note title.
           </DialogDescription>
         </DialogHeader>
         <form id="form-edit-note" onSubmit={form.handleSubmit(handleSubmit)}>

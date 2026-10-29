@@ -68,7 +68,7 @@ describe("DocumentRowMenu", () => {
     const buttons = Array.from(container.querySelectorAll("button"));
     const labels = buttons.map((button) => button.textContent?.trim());
     expect(labels).not.toContain("Generate flashcards");
-    expect(labels).toEqual(expect.arrayContaining(["Edit", "Delete"]));
+    expect(labels).toEqual(expect.arrayContaining(["Rename", "Delete"]));
     act(() =>
       buttons
         .find((button) => button.textContent?.trim() === "Copy as plain text")

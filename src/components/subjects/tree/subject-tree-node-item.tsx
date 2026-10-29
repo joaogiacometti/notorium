@@ -102,6 +102,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
         <SubjectNodeLabel
           node={node}
           isMoving={isMoving}
+          onToggle={isExpandable ? () => onToggle(node.id) : undefined}
           onDragStart={onDragStart}
           onDragTarget={onDragTarget}
           onDropTarget={onDropTarget}
@@ -148,6 +149,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
 interface SubjectNodeLabelProps {
   node: SubjectTreeNode;
   isMoving: boolean;
+  onToggle?: () => void;
   onDragStart: (subjectId: string) => void;
   onDragTarget: (targetId: string) => void;
   onDropTarget: (targetId: string) => void;
@@ -156,12 +158,15 @@ interface SubjectNodeLabelProps {
 
 /**
  * The subject label inside a tree row. Subjects have no page (the sidebar fully
- * manages their contents), so the label is inert text and the chevron is the
- * only expand control.
+ * manages their contents), so clicking the label toggles the folder like the
+ * chevron. The label stays a draggable span rather than a button because
+ * Firefox does not start drags on `<button draggable>`; the chevron remains the
+ * keyboard-accessible expand control.
  */
 function SubjectNodeLabel({
   node,
   isMoving,
+  onToggle,
   onDragStart,
   onDragTarget,
   onDropTarget,
@@ -185,9 +190,15 @@ function SubjectNodeLabel({
   };
 
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the chevron button is the keyboard equivalent of this mouse shortcut.
+    // biome-ignore lint/a11y/noStaticElementInteractions: see above; a button would break dragging in Firefox.
     <span
       {...dragProps}
-      className="flex min-w-0 flex-1 cursor-default items-center gap-2 py-1.5 text-left text-sm focus-visible:outline-none"
+      onClick={onToggle}
+      className={cn(
+        "flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm focus-visible:outline-none",
+        onToggle ? "cursor-pointer" : "cursor-default",
+      )}
     >
       {isMoving ? (
         <Loader2

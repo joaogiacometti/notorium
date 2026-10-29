@@ -75,8 +75,8 @@ test("can edit a subject", async ({ page, e2eUser }) => {
     await waitForAppShell(page);
 
     await openSubjectSidebarActions(page, initialSubjectName);
-    await page.getByRole("menuitem", { name: "Edit" }).click();
-    const editDialog = page.getByRole("dialog", { name: "Edit Subject" });
+    await page.getByRole("menuitem", { name: "Rename" }).click();
+    const editDialog = page.getByRole("dialog", { name: "Rename Subject" });
     await editDialog
       .locator("#form-edit-subject-name")
       .fill(updatedSubjectName);

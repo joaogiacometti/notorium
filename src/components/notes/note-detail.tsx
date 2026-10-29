@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Editor } from "@tiptap/core";
-import { Clipboard, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Clipboard, MoreVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -73,7 +73,6 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [assistantEditor, setAssistantEditor] = useState<Editor | null>(null);
   const lastSavedValuesRef = useRef(getEditValues(note));
-  const titleInputRef = useRef<HTMLInputElement | null>(null);
   const form = useForm<EditNoteForm>({
     resolver: zodResolver(editNoteSchema),
     defaultValues: getEditValues(note),
@@ -191,10 +190,6 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                     <div className="min-w-0 flex-1">
                       <Input
                         {...field}
-                        ref={(element) => {
-                          field.ref(element);
-                          titleInputRef.current = element;
-                        }}
                         id="form-edit-note-title"
                         aria-label="Note title"
                         aria-invalid={fieldState.invalid}
@@ -249,14 +244,6 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      onClick={() => titleInputRef.current?.focus()}
-                    >
-                      <Pencil className="size-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="cursor-pointer"
                       onClick={() => void copyNoteContent("rich")}

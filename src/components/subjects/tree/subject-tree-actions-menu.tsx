@@ -140,7 +140,7 @@ export function SubjectActionsMenu({
           }
         >
           <Pencil className="size-4" />
-          Edit
+          Rename
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"

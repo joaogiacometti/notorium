@@ -108,7 +108,7 @@ export function SubjectDialogForm({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {title ?? (mode === "create" ? "Create Subject" : "Edit Subject")}
+            {title ?? (mode === "create" ? "Create Subject" : "Rename Subject")}
           </DialogTitle>
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>

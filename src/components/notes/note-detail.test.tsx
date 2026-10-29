@@ -153,12 +153,6 @@ function findButton(container: HTMLElement, text: string) {
   );
 }
 
-function findButtons(container: HTMLElement, text: string) {
-  return Array.from(container.querySelectorAll("button")).filter((button) =>
-    button.textContent?.includes(text),
-  );
-}
-
 function getTitleInput(container: HTMLElement) {
   return container.querySelector<HTMLInputElement>("#form-edit-note-title");
 }
@@ -340,12 +334,9 @@ describe("NoteDetail", () => {
     });
 
     expect(findButton(container, "Generate flashcards")).toBeUndefined();
-    for (const label of [
-      "Edit",
-      "Copy as rich text",
-      "Copy as plain text",
-      "Delete",
-    ]) {
+    // The title is edited inline, so the header menu has no Edit action.
+    expect(findButton(container, "Edit")).toBeUndefined();
+    for (const label of ["Copy as rich text", "Copy as plain text", "Delete"]) {
       expect(findButton(container, label)).toBeDefined();
     }
   });
@@ -483,17 +474,5 @@ describe("NoteDetail", () => {
     expect(
       container.querySelector('button[aria-label="Enter zen mode"]'),
     ).toBeTruthy();
-  });
-
-  it("focuses the inline title from the header edit action", async () => {
-    await act(async () => {
-      renderNoteDetail(root);
-    });
-
-    await act(async () => {
-      findButtons(container, "Edit").at(-1)?.click();
-    });
-
-    expect(document.activeElement).toBe(getTitleInput(container));
   });
 });
