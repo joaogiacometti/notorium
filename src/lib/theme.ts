@@ -18,9 +18,9 @@ export const themeOptions: ThemeOption[] = [
 ];
 
 export const themeChromeColorById: Record<ResolvedAppTheme, string> = {
-  light: "#ffffff",
-  dark: "#09090b",
-  halloween: "#1a1028",
+  light: "#fafafa",
+  dark: "#0a0a0a",
+  halloween: "#140c18",
 };
 
 export const defaultThemeChromeColor = themeChromeColorById.dark;

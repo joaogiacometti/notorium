@@ -29,22 +29,22 @@ const themePreviewPaletteById: Record<
   { background: string; muted: string; card: string; primary: string }
 > = {
   light: {
-    background: "#f8fafc",
-    muted: "#e2e8f0",
+    background: "#fafafa",
+    muted: "#e5e5e5",
     card: "#ffffff",
-    primary: "#0f172a",
+    primary: "#171717",
   },
   dark: {
-    background: "#0f172a",
-    muted: "#1e293b",
-    card: "#1e293b",
-    primary: "#93c5fd",
+    background: "#0a0a0a",
+    muted: "#222222",
+    card: "#131313",
+    primary: "#e5e5e5",
   },
   halloween: {
-    background: "#1a0f2e",
-    muted: "#241235",
-    card: "#241235",
-    primary: "#f97316",
+    background: "#140c18",
+    muted: "#261e2d",
+    card: "#1f1625",
+    primary: "#ff7716",
   },
 };
 

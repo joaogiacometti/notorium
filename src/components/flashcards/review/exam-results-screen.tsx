@@ -176,10 +176,7 @@ export function ExamResultsScreen({
             Close
           </Button>
           {onRetryWeak && (counts.again > 0 || counts.hard > 0) ? (
-            <Button
-              onClick={onRetryWeak}
-              className="flex-1 gap-2 bg-(--intent-info-fill) text-primary-foreground hover:bg-(--intent-info-fill)/90"
-            >
+            <Button onClick={onRetryWeak} className="flex-1 gap-2">
               <RotateCcw className="size-4" />
               Retry weak cards
             </Button>

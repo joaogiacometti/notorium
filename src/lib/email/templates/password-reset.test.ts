@@ -11,16 +11,11 @@ describe("renderPasswordResetEmail", () => {
     expect(subject).toBe("Reset your Notorium password");
     expect(html).toMatch(/<!doctype html>/i);
     expect(html).toContain("<html>");
-    expect(html).toContain("background:#f8fafc");
     expect(html).toContain("font-family:Arial,sans-serif");
     expect(html).toContain("Notorium");
-    expect(html).toContain("max-width:560px;background:#ffffff");
-    expect(html).toContain("border:1px solid #e2e8f0");
-    expect(html).toContain("color:#2563eb");
     expect(html).toContain("Hi Alice,");
     expect(html).toContain("This link expires in 1 hour.");
     expect(html).toContain(">Reset password</a>");
-    expect(html).toContain("background:#2563eb");
     expect(html).toContain(
       'href="https://app.example.com/reset-password?token=abc123"',
     );

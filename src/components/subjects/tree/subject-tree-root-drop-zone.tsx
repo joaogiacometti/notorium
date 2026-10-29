@@ -26,7 +26,7 @@ export function SubjectTreeRootDropZone({
       className={cn(
         "mb-1 w-full rounded-md border border-dashed px-2 py-1.5 text-center text-xs transition-colors",
         isActive
-          ? "border-[color:var(--intent-info-border)] bg-background text-foreground"
+          ? "border-primary/60 bg-primary/5 text-foreground"
           : "border-border text-muted-foreground",
       )}
     >
