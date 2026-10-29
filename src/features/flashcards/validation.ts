@@ -75,8 +75,8 @@ export const editFlashcardSchema = withFlashcardAttachmentLimit(
 
 export type EditFlashcardForm = z.infer<typeof editFlashcardSchema>;
 
-// Shape the create/edit dialog forms bind to: the create payload plus the id
-// the edit dialog carries.
+// Shape the flashcard editors bind to: the create payload plus the id an
+// existing card carries.
 export const flashcardFormSchema = withFlashcardAttachmentLimit(
   createFlashcardObject.extend({ id: z.string().optional() }),
 );

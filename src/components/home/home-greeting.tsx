@@ -14,10 +14,6 @@ interface HomeGreetingProps {
  */
 export function HomeGreeting({ name }: Readonly<HomeGreetingProps>) {
   return (
-    <PageHeader
-      title={`Welcome back, ${name}`}
-      titleTestId="home-greeting"
-      description="Here's what's happening across your subjects."
-    />
+    <PageHeader title={`Welcome back, ${name}`} titleTestId="home-greeting" />
   );
 }

@@ -44,7 +44,7 @@ export interface AssistantWorkspace {
   setOpen: (open: boolean) => void;
   host: HTMLElement | null;
   registerHost: (host: HTMLElement) => () => void;
-  /** Header launcher that replaces the floating one while a review or exam session page is mounted. */
+  /** Most recently mounted header launcher; focus returns to it on minimize. */
   inlineLauncher: HTMLButtonElement | null;
   registerInlineLauncher: (button: HTMLButtonElement) => () => void;
   registerPortalTarget: (

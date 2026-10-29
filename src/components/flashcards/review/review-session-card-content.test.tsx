@@ -116,3 +116,55 @@ it("clears assistance when switching cards while the answer stays hidden", async
   await renderCard(true);
   expect(container.textContent).not.toContain(ASSISTED_NOTE);
 });
+
+it("scrolls the start of the answer into view on reveal, like Anki", async () => {
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+  await renderCard(false);
+  expect(scrollIntoView).toHaveBeenLastCalledWith(
+    expect.objectContaining({ block: "start" }),
+  );
+  const cardTop = scrollIntoView.mock.contexts.at(-1) as Element;
+
+  await renderCard(true);
+
+  const answerTop = scrollIntoView.mock.contexts.at(-1) as Element;
+  expect(answerTop).not.toBe(cardTop);
+  expect(answerTop.textContent).toContain("Back");
+  expect(answerTop.textContent).not.toContain("Front");
+  Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+});
+
+class FakeResizeObserver {
+  static latest: FakeResizeObserver | null = null;
+  connected = true;
+  constructor(readonly onResize: () => void) {
+    FakeResizeObserver.latest = this;
+  }
+  observe() {}
+  disconnect() {
+    this.connected = false;
+  }
+  resize() {
+    if (this.connected) this.onResize();
+  }
+}
+
+it("keeps the answer anchored while it renders, until the user scrolls", async () => {
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+  vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+  await renderCard(false);
+  await renderCard(true);
+  const callsAfterReveal = scrollIntoView.mock.calls.length;
+
+  act(() => FakeResizeObserver.latest?.resize());
+  expect(scrollIntoView).toHaveBeenCalledTimes(callsAfterReveal + 1);
+
+  window.dispatchEvent(new Event("wheel"));
+  act(() => FakeResizeObserver.latest?.resize());
+  expect(scrollIntoView).toHaveBeenCalledTimes(callsAfterReveal + 1);
+
+  vi.unstubAllGlobals();
+  Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+});

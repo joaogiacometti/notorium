@@ -50,8 +50,7 @@ interface UseCreateFlashcardFormOptions {
 /**
  * Shared create-flashcard wiring: loads subjects, owns the form, and drives submit
  * via {@link useFlashcardDialogState} with `closeOnSuccess: false` so the form
- * stays open for rapid consecutive captures. Used by both the create dialog and
- * the floating flashcard window so the logic lives in exactly one place.
+ * stays open for rapid consecutive captures.
  *
  * @example
  * const { subjects, form, dialog } = useCreateFlashcardForm({ open, onOpenChange });

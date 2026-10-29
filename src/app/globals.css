@@ -616,8 +616,19 @@
 }
 
 /* Tiptap editor-specific styles */
+/* The editable area fills the wrapper's min-height, so a click anywhere in an
+   empty field places the caret instead of landing on dead space. */
+.tiptap-wrapper {
+  @apply flex flex-col;
+}
+
 .tiptap-wrapper .tiptap {
-  @apply px-3 py-2 outline-none;
+  @apply grow px-3 py-2 outline-none;
+}
+
+/* Bare editors sit inside a surface that already pads them (flashcard faces). */
+.tiptap-wrapper.tiptap-bare .tiptap {
+  @apply p-0;
 }
 
 .tiptap-wrapper .tiptap p.is-editor-empty:first-child::before {

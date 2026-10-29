@@ -47,38 +47,45 @@ export function AssistantComposer({
 
   return (
     <form
-      className="flex items-end gap-2 border-t p-3"
+      className="shrink-0 border-t p-3"
       onSubmit={(event) => {
         event.preventDefault();
         void submitDraft();
       }}
     >
-      <Textarea
-        ref={textareaRef}
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        onKeyDown={handleKeyDown}
-        maxLength={LIMITS.assistantMessageMaxChars}
-        placeholder="Ask a study question…"
-        aria-label="Message the study assistant"
-        rows={1}
-        className="field-sizing-content max-h-32 min-h-9 resize-none"
-      />
-      {busy ? (
-        <Button
-          type="button"
-          size="icon"
-          variant="outline"
-          onClick={onStop}
-          aria-label="Stop answer"
-        >
-          <Square className="size-4" />
-        </Button>
-      ) : (
-        <Button type="submit" size="icon" disabled={!canSend} aria-label="Send">
-          <ArrowUp className="size-4" />
-        </Button>
-      )}
+      <div className="flex items-end gap-1 rounded-lg border border-input bg-background p-1.5 transition-colors focus-within:border-ring">
+        <Textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={handleKeyDown}
+          maxLength={LIMITS.assistantMessageMaxChars}
+          placeholder="Ask a study question…"
+          aria-label="Message the study assistant"
+          rows={1}
+          className="field-sizing-content max-h-32 min-h-8 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0 dark:bg-transparent"
+        />
+        {busy ? (
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="secondary"
+            onClick={onStop}
+            aria-label="Stop answer"
+          >
+            <Square className="size-3.5" />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            size="icon-sm"
+            disabled={!canSend}
+            aria-label="Send"
+          >
+            <ArrowUp className="size-4" />
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

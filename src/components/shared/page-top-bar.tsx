@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -84,9 +85,10 @@ export function PageTopBar({ breadcrumb, actions }: Readonly<PageTopBarProps>) {
         ) : null}
         <BreadcrumbCrumb item={breadcrumb.current} isCurrent />
       </nav>
-      {actions ? (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
-      ) : null}
+      <div className="flex shrink-0 items-center gap-2">
+        {actions}
+        <AssistantLauncherButton />
+      </div>
     </div>
   );
 }

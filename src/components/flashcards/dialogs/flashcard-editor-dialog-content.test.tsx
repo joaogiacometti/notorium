@@ -3,13 +3,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { FlashcardEditorDialogContent } from "@/components/flashcards/dialogs/flashcard-editor-dialog-content";
-import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 
 function DialogWithToolbar() {
   return (
     <Dialog open>
-      <FlashcardEditorDialogContent>
-        <DialogTitle>Edit Flashcard</DialogTitle>
+      <FlashcardEditorDialogContent title="New flashcard">
         <button type="button" disabled>
           Subject
         </button>

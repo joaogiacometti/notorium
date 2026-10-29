@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -9,15 +9,10 @@ import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 import { LIMITS } from "@/lib/config/limits";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
 import {
-  fetchFlashcardForManage,
   fetchFlashcardsManagePage,
   fetchStrugglingFlashcards,
 } from "@/lib/read-api/flashcards";
-import type {
-  FlashcardEntity,
-  FlashcardManagePage,
-  FlashcardWithSourceEntity,
-} from "@/lib/server/api-contracts";
+import type { FlashcardManagePage } from "@/lib/server/api-contracts";
 import {
   actionError,
   resolveActionErrorMessage,
@@ -40,7 +35,6 @@ export type FlashcardTarget = {
 
 type FlashcardManagerDialog =
   | { kind: "create" | "bulk-delete" | "bulk-move" | "bulk-reset" }
-  | { kind: "edit"; flashcardId: string }
   | { kind: "delete" | "move" | "reset"; target: FlashcardTarget }
   | null;
 
@@ -70,11 +64,8 @@ export function useFlashcardsManagerController({
 }: Readonly<UseFlashcardsManagerControllerOptions>) {
   const pathname = usePathname();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [, startTransition] = useTransition();
   const [dialog, setDialog] = useState<FlashcardManagerDialog>(null);
-  const editingFlashcardId =
-    dialog?.kind === "edit" ? dialog.flashcardId : null;
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
@@ -175,19 +166,6 @@ export function useFlashcardsManagerController({
     retry: false,
   });
 
-  const editFlashcardQuery = useQuery({
-    queryKey: ["flashcard-manage-edit", editingFlashcardId],
-    queryFn: async () => {
-      if (!editingFlashcardId) {
-        return null;
-      }
-
-      return fetchFlashcardForManage(editingFlashcardId);
-    },
-    enabled: editingFlashcardId !== null,
-    retry: false,
-  });
-
   const flashcards = managePageQuery.data?.items ?? emptyManageItems;
   const total = managePageQuery.data?.total ?? 0;
   const subjectCardCount = managePageQuery.data?.subjectCardCount ?? 0;
@@ -218,14 +196,6 @@ export function useFlashcardsManagerController({
   function refreshManagePage() {
     setSelectedFlashcardIds([]);
     void managePageQuery.refetch();
-  }
-
-  function cacheUpdatedFlashcard(updatedFlashcard: FlashcardEntity) {
-    // Edit results omit the resolved source link; keep the one already loaded.
-    queryClient.setQueryData<FlashcardWithSourceEntity | null>(
-      ["flashcard-manage-edit", updatedFlashcard.id],
-      (cached) => ({ ...updatedFlashcard, source: cached?.source ?? null }),
-    );
   }
 
   async function refreshStrugglingCards(): Promise<boolean> {
@@ -264,15 +234,12 @@ export function useFlashcardsManagerController({
 
   return {
     dialog,
-    editFlashcardQuery,
-    editingFlashcardId,
     flashcards,
     isAtSubjectLimit,
     subjectCardCount,
     managePageQuery,
     pageIndex,
     refreshManagePage,
-    cacheUpdatedFlashcard,
     resolvedSearchQuery,
     searchQuery,
     selectedSubjectId,
@@ -286,7 +253,6 @@ export function useFlashcardsManagerController({
     handleSubjectChange,
     total,
     pageSize: pageSizeState,
-    editingFlashcard: editFlashcardQuery.data,
     refineMode,
     strugglingCards,
     isLoadingStrugglingCards,

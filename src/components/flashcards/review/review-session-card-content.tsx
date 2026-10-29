@@ -1,10 +1,14 @@
 "use client";
 
 import { Lightbulb } from "lucide-react";
-import { useEffect } from "react";
+import { type RefObject, useEffect, useRef } from "react";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { buildReviewContext } from "@/components/assistant/study-context-content";
 import { useStudyContext } from "@/components/assistant/use-study-context";
+import {
+  FlashcardFace,
+  type FlashcardSide,
+} from "@/components/flashcards/shared/flashcard-face";
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
 import type { FlashcardReviewState } from "@/lib/server/api-contracts";
@@ -54,8 +58,17 @@ function ReviewSessionCardAttempt({
   useEffect(() => {
     if (!revealed) clearAssistedRecall?.();
   }, [revealed, clearAssistedRecall]);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const answerRef = useRef<HTMLDivElement>(null);
+  // Anki's answer scrolling: a new card starts at its top, and revealing a long
+  // card brings the start of the Back to the top instead of leaving it below
+  // the fold. Cards that fit the session area do not scroll at all.
+  useEffect(() => {
+    if (!revealed) cardRef.current?.scrollIntoView?.({ block: "start" });
+  }, [revealed]);
+  useAnswerScrollAnchor(answerRef, revealed);
   return (
-    <div className={cardEnterClassName}>
+    <div ref={cardRef} className={cn("scroll-mt-4", cardEnterClassName)}>
       <div className="mb-3 flex min-w-0 items-center justify-between gap-3 empty:hidden">
         {subjectLabel ? (
           <p className="truncate text-xs font-semibold tracking-wide text-primary/80 uppercase">
@@ -73,10 +86,13 @@ function ReviewSessionCardAttempt({
       </div>
       <div className="relative flex flex-col overflow-hidden rounded-lg border bg-card">
         <div className="flex flex-col">
-          <CardFace title="Front" content={card.front} tone="front" />
+          <CardFace side="front" content={card.front} />
           {revealed ? (
-            <div className={answerEnterClassName}>
-              <CardFace title="Answer" content={card.back} tone="back" />
+            <div
+              ref={answerRef}
+              className={cn("scroll-mt-4", answerEnterClassName)}
+            >
+              <CardFace side="back" content={card.back} />
             </div>
           ) : null}
         </div>
@@ -99,30 +115,51 @@ function AssistedRecallNote() {
 }
 
 interface CardFaceProps {
-  title: string;
+  side: FlashcardSide;
   content: string;
-  tone: "front" | "back";
 }
 
-function CardFace({ title, content, tone }: Readonly<CardFaceProps>) {
-  const isBack = tone === "back";
-  const sectionClassName = isBack
-    ? "flex flex-col border-t bg-muted/50 p-4 sm:p-6"
-    : "flex flex-col p-4 sm:p-6";
-  const titleClassName = cn(
-    "mb-2 text-xs font-semibold tracking-wide uppercase",
-    isBack ? "text-primary/80" : "text-muted-foreground",
-  );
-  const contentClassName = isBack
-    ? `${reviewRichTextClassName} text-lg leading-relaxed text-foreground`
-    : `${reviewRichTextClassName} text-lg leading-relaxed`;
-
+function CardFace({ side, content }: Readonly<CardFaceProps>) {
   return (
-    <div className={sectionClassName}>
-      <h3 className={titleClassName}>{title}</h3>
-      <div className="max-h-[44vh] overflow-y-auto pr-1 pb-1">
-        <TiptapRenderer content={content} className={contentClassName} />
-      </div>
-    </div>
+    // No scroller of its own: the session's card area is the one scroll region.
+    <FlashcardFace side={side}>
+      <TiptapRenderer
+        content={content}
+        className={`${reviewRichTextClassName} text-lg leading-relaxed`}
+      />
+    </FlashcardFace>
   );
+}
+
+// The renderer fills the Back asynchronously, so a single scroll on reveal
+// lands while the answer is still short. Re-anchor whenever it resizes until it
+// settles, and never fight a scroll the user starts.
+const ANSWER_SETTLE_MS = 1000;
+const userScrollEvents = ["wheel", "touchstart", "keydown"] as const;
+
+function useAnswerScrollAnchor(
+  answerRef: RefObject<HTMLDivElement | null>,
+  revealed: boolean,
+) {
+  useEffect(() => {
+    const answer = answerRef.current;
+    if (!revealed || !answer) return;
+    const anchor = () => answer.scrollIntoView?.({ block: "start" });
+    anchor();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(anchor);
+    observer.observe(answer);
+    const stop = () => observer.disconnect();
+    const timer = window.setTimeout(stop, ANSWER_SETTLE_MS);
+    for (const type of userScrollEvents) {
+      window.addEventListener(type, stop, { passive: true });
+    }
+    return () => {
+      stop();
+      window.clearTimeout(timer);
+      for (const type of userScrollEvents) {
+        window.removeEventListener(type, stop);
+      }
+    };
+  }, [answerRef, revealed]);
 }

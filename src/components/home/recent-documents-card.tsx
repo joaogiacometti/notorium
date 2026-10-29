@@ -19,7 +19,7 @@ export function RecentDocumentsCard({
 }: Readonly<RecentDocumentsCardProps>) {
   return (
     <Card className="gap-3 py-4">
-      <DashboardCardHeader icon={FileText} title="Recent documents" />
+      <DashboardCardHeader title="Recent documents" />
       <CardContent>
         {documents.length === 0 ? (
           <p className="text-sm text-muted-foreground">

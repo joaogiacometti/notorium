@@ -41,8 +41,8 @@ export function FlashcardReviewSession({
   const {
     revealed,
     setRevealed,
-    editOpen,
-    setEditOpen,
+    editing,
+    setEditing,
     deleteOpen,
     setDeleteOpen,
     resetOpen,
@@ -74,7 +74,7 @@ export function FlashcardReviewSession({
     isPending,
     isDialogOpen,
     onReveal: () => setRevealed(true),
-    onEdit: () => setEditOpen(true),
+    onEdit: () => setEditing(true),
     onDelete: () => setDeleteOpen(true),
     onReset: () => setResetOpen(true),
     onUndo: controller.handleUndoReview,
@@ -97,20 +97,20 @@ export function FlashcardReviewSession({
         isLoadingMoreCards={controller.isLoadingMoreCards}
         onUndoReview={controller.handleUndoReview}
         onExit={() => setExitRequested(true)}
-        onEditFlashcard={() => setEditOpen(true)}
+        onEditFlashcard={() => setEditing(true)}
+        editing={editing}
+        aiEnabled={aiEnabled}
+        onStopEditing={() => setEditing(false)}
+        onFlashcardUpdated={controller.handleFlashcardUpdated}
         onResetFlashcard={() => setResetOpen(true)}
         onDeleteFlashcard={() => setDeleteOpen(true)}
       />
       <ReviewSessionDialogs
         currentCard={currentCard}
-        aiEnabled={aiEnabled}
-        editOpen={editOpen}
         deleteOpen={deleteOpen}
         resetOpen={resetOpen}
-        onEditOpenChange={setEditOpen}
         onDeleteOpenChange={setDeleteOpen}
         onResetOpenChange={setResetOpen}
-        onUpdated={controller.handleFlashcardUpdated}
         onDeleted={controller.handleFlashcardDeleted}
         onReset={(updated) => {
           if (!currentCard) return;

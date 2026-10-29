@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
+import { CreateFlashcardForm } from "@/components/flashcards/dialogs/create-flashcard-form";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
@@ -34,7 +34,7 @@ function Harness({
   isDuplicate = false,
 }: Readonly<{
   isDuplicate?: boolean;
-  subjects?: SubjectOption[] | undefined;
+  subjects?: SubjectOption[];
   onCreateSubject?: (name: string) => Promise<boolean>;
 }>) {
   const form = useForm<FlashcardFormValues>({
@@ -46,33 +46,24 @@ function Harness({
   });
 
   return (
-    <FlashcardDialogForm
-      mode="create"
+    <CreateFlashcardForm
       open
-      onOpenChange={() => {}}
       form={form}
       formId="form-create-flashcard"
       subjects={subjects}
       onCreateSubject={onCreateSubject}
       onSubmit={async () => {}}
       isSubmitting={false}
-      discard={{
-        open: true,
-        onOpenChange: () => {},
-        onDiscard: () => {},
-      }}
       aiEnabled
-      duplicateFront={{
-        isDuplicate,
-        message: "A flashcard with this front already exists.",
-      }}
-      createOptions={{
+      duplicateFrontMessage={
+        isDuplicate ? "A flashcard with this front already exists." : null
+      }
+      keepOptions={{
         keepFrontAfterSubmit: false,
         onKeepFrontAfterSubmitChange: () => {},
         keepBackAfterSubmit: false,
         onKeepBackAfterSubmitChange: () => {},
       }}
-      noDialog
     />
   );
 }
@@ -99,7 +90,7 @@ function setInputValue(input: HTMLInputElement, value: string) {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
-describe("FlashcardDialogForm", () => {
+describe("CreateFlashcardForm", () => {
   let container: HTMLDivElement;
   let root: Root;
 

@@ -10,6 +10,10 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
+vi.mock("@/app/actions/flashcards", () => ({
+  editFlashcard: vi.fn(),
+}));
+
 vi.mock("@/components/shared/lazy-tiptap-renderer", () => ({
   LazyTiptapRenderer: ({ content }: { content: string }) => (
     <div>{content}</div>
@@ -24,6 +28,8 @@ const baseHandlers = {
   onResetFlashcard: vi.fn(),
   onDeleteFlashcard: vi.fn(),
   onUndoReview: vi.fn(),
+  onStopEditing: vi.fn(),
+  onFlashcardUpdated: vi.fn(),
 };
 
 function makeCard(): FlashcardReviewEntity {
@@ -250,6 +256,8 @@ describe("ReviewSessionScreen", () => {
           revealed={false}
           isPending={false}
           canUndoReview={false}
+          editing={false}
+          aiEnabled={false}
           {...baseHandlers}
           {...overrides}
         />,

@@ -34,7 +34,7 @@ export function AssistantPanelFrame({
           : "h-[min(36rem,calc(100svh-6rem))] w-[calc(100vw-2rem)] rounded-lg border shadow-lg sm:w-96",
       )}
     >
-      <header className="flex h-12 items-center border-b py-2 pr-2 pl-4">
+      <header className="flex h-14 shrink-0 items-center gap-1 border-b pr-3 pl-4">
         <h2 className="flex-1 text-sm font-semibold">Study assistant</h2>
         {actions}
       </header>

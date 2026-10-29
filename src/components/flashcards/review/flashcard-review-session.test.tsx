@@ -57,28 +57,6 @@ vi.mock("@/components/flashcards/dialogs/reset-flashcard-dialog", () => ({
     open ? <div data-testid="reset-flashcard-dialog" /> : null,
 }));
 
-vi.mock("@/components/flashcards/dialogs/lazy-edit-flashcard-dialog", () => ({
-  LazyEditFlashcardDialog: ({
-    open,
-    flashcard,
-    onUpdated,
-  }: {
-    open: boolean;
-    flashcard: { id: string; subjectId: string | null };
-    onUpdated?: (card: { id: string; subjectId: string }) => void;
-  }) =>
-    open ? (
-      <div data-testid="edit-flashcard-dialog">
-        <button
-          type="button"
-          onClick={() => onUpdated?.({ ...flashcard, subjectId: "deck-9" })}
-        >
-          Save moved card
-        </button>
-      </div>
-    ) : null,
-}));
-
 vi.mock("@/components/flashcards/review/review-session-screen", () => ({
   ReviewSessionScreen: ({
     currentCard,
@@ -88,14 +66,18 @@ vi.mock("@/components/flashcards/review/review-session-screen", () => ({
     onUndoReview,
     onEditFlashcard,
     onExit,
+    editing,
+    onFlashcardUpdated,
   }: {
-    currentCard?: { id: string } | null;
+    currentCard?: { id: string; subjectId: string | null } | null;
     isLoadingMoreCards?: boolean;
     canUndoReview: boolean;
     onGrade: (grade: "good") => void;
     onUndoReview: () => void;
     onEditFlashcard: () => void;
     onExit: () => void;
+    editing: boolean;
+    onFlashcardUpdated: (card: { id: string; subjectId: string }) => void;
   }) => (
     <div
       data-current-card-id={currentCard?.id}
@@ -111,6 +93,18 @@ vi.mock("@/components/flashcards/review/review-session-screen", () => ({
       <button type="button" onClick={onExit}>
         Exit session
       </button>
+      {editing && currentCard ? (
+        <div data-testid="review-card-editor">
+          <button
+            type="button"
+            onClick={() =>
+              onFlashcardUpdated({ ...currentCard, subjectId: "deck-9" })
+            }
+          >
+            Save moved card
+          </button>
+        </div>
+      ) : null}
       {canUndoReview ? (
         <button type="button" onClick={onUndoReview}>
           Undo last review
@@ -214,7 +208,7 @@ describe("FlashcardReviewSession", () => {
     ).toBeTruthy();
   });
 
-  it("stays on the session on Escape while the edit dialog is open", async () => {
+  it("stays on the session on Escape while editing the card", async () => {
     await renderSession(makeReviewState(1, [makeCard("card-1")]));
 
     await act(async () => {
@@ -222,7 +216,7 @@ describe("FlashcardReviewSession", () => {
     });
 
     expect(
-      document.body.querySelector('[data-testid="edit-flashcard-dialog"]'),
+      document.body.querySelector('[data-testid="review-card-editor"]'),
     ).toBeTruthy();
 
     await act(async () => {

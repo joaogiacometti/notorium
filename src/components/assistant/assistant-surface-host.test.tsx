@@ -8,7 +8,7 @@ import { useAssistantWorkspace } from "@/components/assistant/assistant-workspac
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { useAssistantPortalTarget } from "@/components/assistant/use-assistant-portal-target";
 import { FlashcardEditorDialogContent } from "@/components/flashcards/dialogs/flashcard-editor-dialog-content";
-import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 
 function StatefulChat() {
   const [count, setCount] = useState(0);
@@ -47,8 +47,8 @@ function PortalHarness({
       ) : null}
       {modal ? (
         <Dialog open={nested}>
-          <FlashcardEditorDialogContent>
-            <DialogTitle>Edit flashcard</DialogTitle>
+          <FlashcardEditorDialogContent title="New flashcard">
+            <p>Card editor</p>
           </FlashcardEditorDialogContent>
         </Dialog>
       ) : null}

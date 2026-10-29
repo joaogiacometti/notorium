@@ -44,8 +44,23 @@ import { SlashCommands } from "@/lib/editor/tiptap-slash-commands";
 import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 import { cn } from "@/lib/utils";
 
+/** What a toolbar outside the editor needs to drive it. */
+export interface EditorToolbarTarget {
+  editor: Editor;
+  imageUploadPending: boolean;
+  onEditLink: () => void;
+  onSelectImage: () => void;
+}
+
 interface TiptapEditorProps {
   onEditorReady?: (editor: Editor | null) => void;
+  /**
+   * Hands the formatting controls to a toolbar the parent renders (one toolbar
+   * for several fields). The editor then draws no border or toolbar of its own;
+   * it reports null when it unmounts.
+   */
+  onToolbarTargetChange?: (target: EditorToolbarTarget | null) => void;
+  onFocus?: () => void;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -70,10 +85,17 @@ export function TiptapEditor({
   imageUploadContext = "notes",
   onCtrlEnter,
   onImageUploadPendingChange,
+  onToolbarTargetChange,
+  onFocus,
 }: Readonly<TiptapEditorProps>) {
   const resolvedPlaceholder = placeholder ?? "Start writing your notes...";
   const onEditorReadyRef = useRef(onEditorReady);
   onEditorReadyRef.current = onEditorReady;
+  const onToolbarTargetChangeRef = useRef(onToolbarTargetChange);
+  onToolbarTargetChangeRef.current = onToolbarTargetChange;
+  const bare = onToolbarTargetChange !== undefined;
+  const onFocusRef = useRef(onFocus);
+  onFocusRef.current = onFocus;
   const onCtrlEnterRef = useRef(onCtrlEnter);
   const onImageUploadPendingChangeRef = useRef(onImageUploadPendingChange);
   const activeUploadsRef = useRef(0);
@@ -168,6 +190,7 @@ export function TiptapEditor({
     ],
     content: resolvedValue || "",
     onUpdate: handleUpdate,
+    onFocus: () => onFocusRef.current?.(),
     editorProps: {
       attributes: {
         id: id ?? "",
@@ -253,6 +276,18 @@ export function TiptapEditor({
   }, [isImageUploadPending]);
 
   useEffect(() => {
+    if (!editor) return;
+    onToolbarTargetChangeRef.current?.({
+      editor,
+      imageUploadPending: isImageUploadPending,
+      onEditLink: () => setLinkDialog(prepareLinkDialogState(editor)),
+      onSelectImage: () => imageInputRef.current?.click(),
+    });
+  }, [editor, isImageUploadPending]);
+
+  useEffect(() => () => onToolbarTargetChangeRef.current?.(null), []);
+
+  useEffect(() => {
     return () => {
       if (activeUploadsRef.current > 0) {
         onImageUploadPendingChangeRef.current?.(false);
@@ -262,22 +297,29 @@ export function TiptapEditor({
 
   return (
     <div
-      {...{ [EDITOR_ROOT_ATTRIBUTE]: "" }}
+      {...(bare ? {} : { [EDITOR_ROOT_ATTRIBUTE]: "" })}
       className={cn(
-        "w-full min-w-0 rounded-md border border-input transition-colors",
-        "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
-        ariaInvalid &&
+        "w-full min-w-0",
+        !bare &&
+          "rounded-md border border-input transition-colors focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+        !bare &&
+          ariaInvalid &&
           "border-destructive focus-within:border-destructive focus-within:ring-destructive/20",
         className,
       )}
     >
       {isImageUploadPending ? (
-        <div className="flex items-center gap-2 border-b px-3 py-2 text-sm text-muted-foreground">
+        <div
+          className={cn(
+            "flex items-center gap-2 text-sm text-muted-foreground",
+            bare ? "pb-2" : "border-b px-3 py-2",
+          )}
+        >
           <Loader2 className="size-4 animate-spin" />
           <span>Uploading image...</span>
         </div>
       ) : null}
-      {editor ? (
+      {editor && !bare ? (
         <TiptapFormattingToolbar
           editor={editor}
           imageUploadPending={isImageUploadPending}
@@ -309,6 +351,7 @@ export function TiptapEditor({
         editor={editor}
         className={cn(
           "tiptap-wrapper min-h-52 max-h-[52svh] overflow-y-auto",
+          bare && "tiptap-bare",
           contentClassName,
         )}
       />

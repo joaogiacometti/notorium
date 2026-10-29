@@ -42,8 +42,8 @@ export function FlashcardExamSession({
   const {
     revealed,
     setRevealed,
-    editOpen,
-    setEditOpen,
+    editing,
+    setEditing,
     deleteOpen,
     setDeleteOpen,
     resetOpen,
@@ -67,7 +67,7 @@ export function FlashcardExamSession({
     isPending: false,
     isDialogOpen,
     onReveal: () => setRevealed(true),
-    onEdit: () => setEditOpen(true),
+    onEdit: () => setEditing(true),
     onDelete: () => setDeleteOpen(true),
     onReset: () => setResetOpen(true),
     onUndo: () => {},
@@ -102,20 +102,20 @@ export function FlashcardExamSession({
         canUndoReview={false}
         onUndoReview={() => {}}
         onExit={exam.handleExit}
-        onEditFlashcard={() => setEditOpen(true)}
+        onEditFlashcard={() => setEditing(true)}
+        editing={editing}
+        aiEnabled={aiEnabled}
+        onStopEditing={() => setEditing(false)}
+        onFlashcardUpdated={exam.updateExamCard}
         onResetFlashcard={() => setResetOpen(true)}
         onDeleteFlashcard={() => setDeleteOpen(true)}
       />
       <ReviewSessionDialogs
         currentCard={currentCard}
-        aiEnabled={aiEnabled}
-        editOpen={editOpen}
         deleteOpen={deleteOpen}
         resetOpen={resetOpen}
-        onEditOpenChange={setEditOpen}
         onDeleteOpenChange={setDeleteOpen}
         onResetOpenChange={setResetOpen}
-        onUpdated={exam.updateExamCard}
         onDeleted={exam.removeExamCard}
         onReset={exam.updateExamCard}
       />

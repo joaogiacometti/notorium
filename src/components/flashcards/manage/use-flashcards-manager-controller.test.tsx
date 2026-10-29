@@ -13,7 +13,6 @@ type ManagerController = ReturnType<typeof useFlashcardsManagerController>;
 
 const fetchStrugglingFlashcardsMock = vi.hoisted(() => vi.fn());
 const fetchManagePageMock = vi.hoisted(() => vi.fn());
-const fetchManageEditMock = vi.hoisted(() => vi.fn());
 const toastMock = vi.hoisted(() => ({
   error: vi.fn(),
   success: vi.fn(),
@@ -25,7 +24,6 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib/read-api/flashcards", () => ({
-  fetchFlashcardForManage: fetchManageEditMock,
   fetchFlashcardsManagePage: fetchManagePageMock,
   fetchStrugglingFlashcards: fetchStrugglingFlashcardsMock,
 }));
@@ -131,33 +129,16 @@ describe("useFlashcardsManagerController", () => {
     expect(fetchManagePageMock).toHaveBeenCalledOnce();
   });
 
-  it("surfaces a failed edit read through query state", async () => {
-    fetchManageEditMock.mockRejectedValue(new Error("missing card"));
+  it("replaces the active dialog and clears it on close", async () => {
     await renderController();
 
     await act(async () => {
-      controller.setDialog({ kind: "edit", flashcardId: "card-1" });
+      controller.setDialog({ kind: "create" });
     });
-    await vi.waitFor(() =>
-      expect(controller.editFlashcardQuery.isError).toBe(true),
-    );
-    expect(controller.editingFlashcard).toBeUndefined();
-    expect(fetchManageEditMock).toHaveBeenCalledOnce();
-  });
-
-  it("replaces the active dialog and clears the edit target on close", async () => {
-    await renderController();
-
-    await act(async () => {
-      controller.setDialog({ kind: "edit", flashcardId: "card-1" });
-    });
-    expect(controller.editingFlashcardId).toBe("card-1");
-
     await act(async () => {
       controller.setDialog({ kind: "bulk-delete" });
     });
     expect(controller.dialog).toEqual({ kind: "bulk-delete" });
-    expect(controller.editingFlashcardId).toBeNull();
 
     await act(async () => {
       controller.setDialog(null);

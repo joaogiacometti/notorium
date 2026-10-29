@@ -24,7 +24,7 @@ export interface SubjectTreeNode extends SubjectEntity {
 }
 export type NoteEntity = InferSelectModel<typeof note>;
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
-/** A stored card plus its resolved source link, as the edit dialog reads it. */
+/** A stored card plus its resolved source link. */
 export type FlashcardWithSourceEntity = FlashcardEntity & {
   source: FlashcardSourceLink | null;
 };

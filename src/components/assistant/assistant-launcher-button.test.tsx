@@ -74,16 +74,21 @@ describe("assistant launcher button", () => {
     expect(container.querySelector("button")).toBeNull();
   });
 
-  it("replaces the floating launcher while a session header hosts it", async () => {
+  it("returns focus to the page launcher once a dialog launcher unmounts", async () => {
+    await render(
+      <>
+        <AssistantLauncherButton />
+        <AssistantLauncherButton />
+      </>,
+    );
     await render(<AssistantLauncherButton />);
+    const pageLauncher = launchers()[0];
+
+    pressShortcut(document.body, { ctrlKey: true });
+    pressShortcut(document.body, { ctrlKey: true });
 
     expect(launchers()).toHaveLength(1);
-    expect(launchers()[0]?.closest(".fixed")).toBeNull();
-
-    await render(null);
-
-    expect(launchers()).toHaveLength(1);
-    expect(launchers()[0]?.closest(".fixed")).not.toBeNull();
+    expect(document.activeElement).toBe(pageLauncher);
   });
 
   it("toggles the panel and reflects it in aria-expanded", async () => {

@@ -9,10 +9,9 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editFlashcard } from "@/app/actions/flashcards";
 import { useActiveFlashcardEditor } from "@/components/assistant/use-active-flashcard-editor";
@@ -21,9 +20,10 @@ import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-fl
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
 import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
+import { getEditFlashcardFormValues } from "@/components/flashcards/shared/edit-flashcard-form-values";
+import { FlashcardCardEditor } from "@/components/flashcards/shared/flashcard-card-editor";
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
-import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import type { Breadcrumb } from "@/components/shared/page-top-bar";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   type FlashcardFormValues,
   flashcardFormSchema,
@@ -48,23 +47,6 @@ interface FlashcardDetailProps {
   returnHref: string;
   flashcard: FlashcardDetailEntity;
   aiEnabled: boolean;
-}
-
-const FlashcardFieldReview = dynamic(
-  () =>
-    import("@/components/flashcards/dialogs/flashcard-field-review").then(
-      (module) => module.FlashcardFieldReview,
-    ),
-  { ssr: false },
-);
-
-function getEditValues(flashcard: FlashcardDetailEntity): FlashcardFormValues {
-  return {
-    id: flashcard.id,
-    subjectId: flashcard.subjectId ?? "",
-    front: flashcard.front,
-    back: flashcard.back,
-  };
 }
 
 export function FlashcardDetail({
@@ -86,7 +68,7 @@ export function FlashcardDetail({
   const isImageUploading = isFrontImageUploading || isBackImageUploading;
   const form = useForm<FlashcardFormValues>({
     resolver: zodResolver(flashcardFormSchema),
-    defaultValues: getEditValues(flashcard),
+    defaultValues: getEditFlashcardFormValues(flashcard),
   });
 
   const watchedFront = form.watch("front");
@@ -101,7 +83,7 @@ export function FlashcardDetail({
     });
   const autosave = useDocumentAutosave({
     documentId: flashcard.id,
-    initialValue: getEditValues(flashcard),
+    initialValue: getEditFlashcardFormValues(flashcard),
     value: {
       id: flashcard.id,
       subjectId: flashcard.subjectId ?? "",
@@ -126,7 +108,7 @@ export function FlashcardDetail({
   });
 
   return (
-    <DetailPageLayout breadcrumb={breadcrumb} maxWidth="7xl">
+    <DetailPageLayout breadcrumb={breadcrumb} maxWidth="3xl">
       <div className="mb-4 flex min-w-0 items-start gap-2">
         {/* Mirrors the note header: an h-10 title row, then metadata. */}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -196,74 +178,19 @@ export function FlashcardDetail({
         </div>
       </div>
 
-      <form
-        className="grid gap-6 lg:grid-cols-2"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <Controller
-          name="front"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field className="min-w-0" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="form-edit-flashcard-front">Front</FieldLabel>
-              {review.pending?.fields.front ? (
-                <FlashcardFieldReview
-                  key={`${review.pending.toolCallId}-front`}
-                  field="front"
-                  disabled={autosave.isSaving || isImageUploading}
-                  proposal={review.pending.fields.front}
-                  onDecide={(accept) => review.decide?.("front", accept)}
-                />
-              ) : (
-                <TiptapEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Front of the flashcard..."
-                  id="form-edit-flashcard-front"
-                  aria-invalid={fieldState.invalid}
-                  imageUploadContext="flashcards"
-                  contentClassName="min-h-40 lg:min-h-80"
-                  onImageUploadPendingChange={setIsFrontImageUploading}
-                />
-              )}
-              {fieldState.invalid ? (
-                <FieldError errors={[fieldState.error]} />
-              ) : null}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="back"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field className="min-w-0" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="form-edit-flashcard-back">Back</FieldLabel>
-              {review.pending?.fields.back ? (
-                <FlashcardFieldReview
-                  key={`${review.pending.toolCallId}-back`}
-                  field="back"
-                  disabled={autosave.isSaving || isImageUploading}
-                  proposal={review.pending.fields.back}
-                  onDecide={(accept) => review.decide?.("back", accept)}
-                />
-              ) : (
-                <TiptapEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Back of the flashcard..."
-                  id="form-edit-flashcard-back"
-                  aria-invalid={fieldState.invalid}
-                  imageUploadContext="flashcards"
-                  contentClassName="min-h-40 lg:min-h-80"
-                  onImageUploadPendingChange={setIsBackImageUploading}
-                />
-              )}
-              {fieldState.invalid ? (
-                <FieldError errors={[fieldState.error]} />
-              ) : null}
-            </Field>
-          )}
+      <form onSubmit={(event) => event.preventDefault()}>
+        <FlashcardCardEditor
+          form={form}
+          idPrefix="form-edit-flashcard"
+          review={review}
+          reviewDisabled={autosave.isSaving || isImageUploading}
+          contentClassName="min-h-24 max-h-none"
+          toolbarStickTo="page"
+          onImageUploadPendingChange={(side, pending) =>
+            side === "front"
+              ? setIsFrontImageUploading(pending)
+              : setIsBackImageUploading(pending)
+          }
         />
       </form>
 

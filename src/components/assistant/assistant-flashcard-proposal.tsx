@@ -40,7 +40,7 @@ interface AssistantFlashcardProposalProps {
 
 /**
  * Flashcards the assistant proposed in one tool call. Nothing is saved until
- * the user clicks Create on a card (or saves it from the Edit dialog);
+ * the user clicks Create on a card (or saves it from the create dialog its Edit opens);
  * Discard drops it. Cards left open when the user sends another message are
  * skipped and can be restored. `controls` records every outcome on the tool
  * call so the model sees it next turn.

@@ -3,6 +3,7 @@ import type { ChatTransport, UIMessageChunk } from "ai";
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { StudyAssistant } from "@/components/assistant/study-assistant";
@@ -344,6 +345,7 @@ describe("study assistant", () => {
         <QueryClientProvider client={new QueryClient()}>
           <AssistantWorkspaceProvider>
             <StudyAssistant />
+            <AssistantLauncherButton />
           </AssistantWorkspaceProvider>
         </QueryClientProvider>,
       );
@@ -388,12 +390,13 @@ describe("study assistant", () => {
     expect(panel?.textContent).toContain("What is ATP?");
   });
 
-  it("opens the panel from the floating button and keeps it when closed", async () => {
+  it("opens the panel from the header launcher and keeps it when closed", async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={new QueryClient()}>
           <AssistantWorkspaceProvider>
             <StudyAssistant />
+            <AssistantLauncherButton />
           </AssistantWorkspaceProvider>
         </QueryClientProvider>,
       );

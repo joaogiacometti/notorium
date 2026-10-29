@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editNote } from "@/app/actions/notes";
+import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
 import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { buildDocumentContext } from "@/components/assistant/study-context-content";
@@ -227,6 +228,9 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
 
               <div className="flex shrink-0 gap-2">
                 <DocumentAutosaveFeedback {...autosave} />
+                {isZenMode ? (
+                  <AssistantLauncherButton className="size-10" />
+                ) : null}
                 <ZenModeToggle
                   isZenMode={isZenMode}
                   onToggle={toggleZenMode}

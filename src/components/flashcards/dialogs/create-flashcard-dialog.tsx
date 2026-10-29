@@ -1,18 +1,13 @@
 "use client";
 
-import { FlashcardDialogForm } from "@/components/flashcards/dialogs/flashcard-dialog-form";
+import { CreateFlashcardForm } from "@/components/flashcards/dialogs/create-flashcard-form";
 import { FlashcardEditorDialogContent } from "@/components/flashcards/dialogs/flashcard-editor-dialog-content";
 import {
   type CreateFlashcardInitialCard,
   useCreateFlashcardForm,
 } from "@/components/flashcards/dialogs/use-create-flashcard-form";
 import { UnsavedChangesDialog } from "@/components/shared/unsaved-changes-dialog";
-import {
-  Dialog,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 interface CreateFlashcardDialogProps {
@@ -48,16 +43,9 @@ export function CreateFlashcardDialog({
     <>
       <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-        <FlashcardEditorDialogContent>
-          <DialogHeader className="shrink-0 px-4 pt-5 pb-1 sm:px-6 sm:pt-6">
-            <DialogTitle>Create Flashcard</DialogTitle>
-          </DialogHeader>
-
-          <FlashcardDialogForm
-            mode="create"
+        <FlashcardEditorDialogContent title="New flashcard">
+          <CreateFlashcardForm
             open={open}
-            onOpenChange={dialog.handleOpenChange}
-            trigger={null}
             form={form}
             formId="form-create-flashcard"
             editorResetVersion={dialog.editorResetVersion}
@@ -66,23 +54,16 @@ export function CreateFlashcardDialog({
             onSubmit={dialog.handleSubmit}
             isSubmitting={dialog.isSubmitting}
             isSaved={dialog.isSaved}
-            discard={{
-              open: dialog.discardDialogOpen,
-              onOpenChange: dialog.setDiscardDialogOpen,
-              onDiscard: dialog.handleDiscardChanges,
-            }}
             aiEnabled={aiEnabled}
-            duplicateFront={{
-              isDuplicate: dialog.isDuplicateFront,
-              message: dialog.duplicateFrontMessage,
-            }}
-            createOptions={{
+            duplicateFrontMessage={
+              dialog.isDuplicateFront ? dialog.duplicateFrontMessage : null
+            }
+            keepOptions={{
               keepFrontAfterSubmit: dialog.keepFrontAfterSubmit,
               onKeepFrontAfterSubmitChange: dialog.setKeepFrontAfterSubmit,
               keepBackAfterSubmit: dialog.keepBackAfterSubmit,
               onKeepBackAfterSubmitChange: dialog.setKeepBackAfterSubmit,
             }}
-            noDialog
           />
         </FlashcardEditorDialogContent>
       </Dialog>

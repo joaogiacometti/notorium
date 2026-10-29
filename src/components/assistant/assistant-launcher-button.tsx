@@ -7,18 +7,29 @@ import {
   useAssistantWorkspace,
 } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-/** Header launcher for review and exam session pages; replaces the floating launcher while mounted.
+interface AssistantLauncherButtonProps {
+  className?: string;
+}
+
+/** The assistant toggle every page header carries (top bar, sessions, flashcard
+ * dialogs, zen mode); the most recently mounted one receives focus on minimize.
  * @example <AssistantLauncherButton />
  */
-export function AssistantLauncherButton() {
+export function AssistantLauncherButton({
+  className,
+}: Readonly<AssistantLauncherButtonProps>) {
   const workspace = useAssistantWorkspace();
-  return workspace ? <HeaderLauncher workspace={workspace} /> : null;
+  return workspace ? (
+    <HeaderLauncher workspace={workspace} className={className} />
+  ) : null;
 }
 
 function HeaderLauncher({
   workspace,
-}: Readonly<{ workspace: AssistantWorkspace }>) {
+  className,
+}: Readonly<{ workspace: AssistantWorkspace; className?: string }>) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { open, setOpen, registerInlineLauncher } = workspace;
   const attach = useEffectEvent((button: HTMLButtonElement) =>
@@ -34,14 +45,18 @@ function HeaderLauncher({
       type="button"
       variant="ghost"
       size="icon"
-      className="size-10"
+      className={cn(
+        "size-9 text-muted-foreground hover:text-foreground",
+        open && "bg-muted text-foreground",
+        className,
+      )}
       aria-label="Open study assistant"
       aria-expanded={open}
       aria-controls="study-assistant-panel"
       aria-keyshortcuts="Control+J Meta+J"
       onClick={() => setOpen(!open)}
     >
-      <Sparkles className="size-5" />
+      <Sparkles className="size-4" />
     </Button>
   );
 }

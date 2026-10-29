@@ -30,7 +30,7 @@ A raw `<button>` is correct only for genuinely custom controls (segmented toggle
 
 - **Card/detail pages** compose `DetailPageLayout` (sticky `PageTopBar`
   breadcrumb over a centered `AppPageContainer`). Widths are `3xl`, `5xl` (default) or `7xl` only (review sessions use `max-w-4xl`);
-  narrow per content via `maxWidth` (`3xl` admin; flashcard detail uses `7xl` to match documents, with Front/Back side by side). Width is the only thing a detail page tunes — structure is fixed.
+  narrow per content via `maxWidth` (`3xl` for admin and flashcard detail). Width is the only thing a detail page tunes — structure is fixed.
 - **Note workspaces** stay full-width (`max-w-7xl`) and own their layout for zen mode.
 - Every `page.tsx` has a sibling `loading.tsx` that mirrors its layout and the
   `PageTopBar` (`PageTopBarSkeleton`).
@@ -51,10 +51,21 @@ in-between values (`gap-5`, `mb-7`) for a role that already has one.
 | Inline icon + text | `gap-1` (`text-xs`), `gap-1.5`–`gap-2` (`text-sm`+) | |
 | Header action buttons | `size-10` icon buttons, `gap-2` between them | Same on note and flashcard detail |
 
-Editable fields use `Field` + `FieldLabel` (title case) everywhere, including
-autosaving detail pages, so a card looks the same in its page and its dialog.
-Uppercase section labels are for read-only sections (review card faces,
-dashboard groups), not form inputs.
+Editable fields use `Field` + `FieldLabel` (title case) everywhere, except
+flashcard faces: a card is one surface, read or edited, so its Front/Back keep
+the uppercase face labels of `FlashcardFace` in review, the detail page, and the
+create dialog alike. Other uppercase section labels are for read-only sections.
+
+## Flashcard editor
+
+`FlashcardCardEditor` is the only way a flashcard is edited. It is one bordered
+panel: a single formatting toolbar (sticky; `toolbarStickTo="page"` under the
+top bar, otherwise at the top of the scrolling dialog/session region) that
+follows the focused face, then Front, then Back on `bg-muted/50`, mirroring the
+review card. Faces grow with their content; never give a face its own
+`max-h`/scroller, so a long card has exactly one scrollbar (page, dialog body,
+or session area). Review/exam edit in place with Cancel/Save in the session
+footer; never reintroduce an edit dialog.
 
 ## Surfaces and radius
 
@@ -69,7 +80,7 @@ The UI is flat: one surface, no decorative shadows or gradients.
   `rounded-lg`. `rounded-full` is for avatars and status dots only.
 - Hover/fill is `bg-muted/50`, selected is `bg-muted`. Primary is for the main
   action, focus, and selection; intent colors are for status meaning only.
-- Home overview cards share `DashboardCardHeader`.
+- Home overview cards share `DashboardCardHeader` (a `text-sm font-medium` title, no icon, optional right-aligned metadata).
 
 ## Typography roles
 
@@ -154,7 +165,10 @@ Rules that keep it working:
 
 Review and exam sessions are in-flow pages (`h-svh`, sidebar hidden), not
 overlays, so they use no z-index layer or scroll lock. Keep card scrolling inside
-the session's `min-h-0 flex-1 overflow-y-auto` region.
+the session's `min-h-0 flex-1 overflow-y-auto` region. Card faces have no
+scroller of their own. Like Anki, a new card starts at its top, and revealing a
+long card jumps the start of the Back to the top of that region, re-anchoring
+while the answer renders until the user scrolls.
 
 ## Transitions
 
@@ -178,8 +192,11 @@ host for the same assistant. Review provides its own host inside its scroll
 boundary. Nested hosts restore the previous host on close; never raise z-index
 to expose chat above a dialog.
 
-Review and exam session pages replace the floating launcher with a ghost
-icon button in the session header; never float a launcher over footer actions.
+There is no floating launcher. `AssistantLauncherButton` (a `size-9` ghost icon
+button, `bg-muted` while open) sits at the right end of `PageTopBar`, and in the
+review/exam session header, the New flashcard dialog header, and zen mode. The
+panel header matches the top bar's `h-14`; the composer is one rounded field
+with the send button inside it.
 
 The header's Hints first toggle is an `icon-sm` ghost button like its
 neighbors, with `aria-pressed`: a lightbulb on a `bg-primary/10` tint when on, a

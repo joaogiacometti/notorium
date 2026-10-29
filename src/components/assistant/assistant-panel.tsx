@@ -3,7 +3,7 @@
 import {
   Lightbulb,
   LightbulbOff,
-  Minus,
+  PanelRightClose,
   RotateCcw,
   SquarePen,
 } from "lucide-react";
@@ -28,7 +28,7 @@ interface AssistantPanelProps {
 
 /**
  * Chat panel backed by the shared workspace. The conversation is
- * never saved, and "New chat" clears it. Minimize (or the floating launcher)
+ * never saved, and "New chat" clears it. Minimize (or a header launcher)
  * hides the panel without clearing it. Flashcard outcomes are recorded on
  * their tool call without sending a turn, so they reach the model with the
  * user's next message instead of spending an assistant reply.
@@ -64,21 +64,21 @@ function AssistantConversationPanel({
             type="button"
             variant="ghost"
             size="icon-sm"
-            onClick={onMinimize}
-            aria-label="Minimize study assistant"
-            aria-controls="study-assistant-panel"
-          >
-            <Minus className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
             onClick={workspace.reset}
             disabled={chat.messages.length === 0}
             aria-label="New chat"
           >
             <SquarePen className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onMinimize}
+            aria-label="Minimize study assistant"
+            aria-controls="study-assistant-panel"
+          >
+            <PanelRightClose className="size-4" />
           </Button>
         </div>
       }

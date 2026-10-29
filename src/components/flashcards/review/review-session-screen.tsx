@@ -10,6 +10,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { ExamBadge } from "@/components/flashcards/review/exam-badge";
+import { ReviewCardEditor } from "@/components/flashcards/review/review-card-editor";
 import { ReviewGradeButtons } from "@/components/flashcards/review/review-grade-buttons";
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
 import { ReviewSessionShell } from "@/components/flashcards/review/review-session-shell";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
+  FlashcardEntity,
   FlashcardReviewState,
   SubjectEntity,
   SubjectOption,
@@ -49,6 +51,11 @@ interface ReviewSessionScreenProps {
   onResetFlashcard: () => void;
   onDeleteFlashcard: () => void;
   isExamMode?: boolean;
+  /** The current card is open in the inline editor instead of being reviewed. */
+  editing: boolean;
+  aiEnabled: boolean;
+  onStopEditing: () => void;
+  onFlashcardUpdated: (flashcard: FlashcardEntity) => void | Promise<void>;
 }
 
 /**
@@ -70,115 +77,63 @@ export function ReviewSessionScreen(props: Readonly<ReviewSessionScreenProps>) {
     );
   }
 
-  if (props.isExamMode) {
-    return <ExamSessionScreen {...props} currentCard={props.currentCard} />;
-  }
-
-  return <DueReviewSessionScreen {...props} currentCard={props.currentCard} />;
+  return <ActiveSessionScreen {...props} currentCard={props.currentCard} />;
 }
 
 interface SessionScreenProps extends ReviewSessionScreenProps {
   currentCard: ReviewCard;
 }
 
-function DueReviewSessionScreen({
-  currentCard,
-  headerText,
-  subjects,
-  progress,
-  revealed,
-  isPending,
-  onReveal,
-  onGrade,
-  onExit,
-  onEditFlashcard,
-  onResetFlashcard,
-  onDeleteFlashcard,
-  canUndoReview,
-  onUndoReview,
-}: Readonly<SessionScreenProps>) {
-  const footer = getSessionFooter({
-    revealed,
-    isPending,
-    onReveal,
-    onGrade,
-  });
+function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
+  const { currentCard, subjects, isExamMode = false } = props;
+  const subjectLabel = getSubjectLabel(currentCard, subjects);
+  const shellProps = {
+    progress: props.progress,
+    headerText: props.headerText,
+    exitLabel: isExamMode ? "Exit exam" : "Exit review",
+    onExit: props.onExit,
+    badge: isExamMode ? <ExamBadge /> : undefined,
+  };
 
-  return (
-    <ReviewSessionShell
-      progress={progress}
-      headerText={headerText}
-      exitLabel="Exit review"
-      onExit={onExit}
-      actions={
-        <SessionCardActions
-          isPending={isPending}
-          canUndoReview={canUndoReview}
-          onUndoReview={onUndoReview}
-          onCopyFlashcard={() => copyReviewCard(currentCard, subjects)}
-          onEditFlashcard={onEditFlashcard}
-          onResetFlashcard={onResetFlashcard}
-          onDeleteFlashcard={onDeleteFlashcard}
-        />
-      }
-      footer={footer}
-    >
-      <ReviewSessionCardContent
+  if (props.editing) {
+    return (
+      <ReviewCardEditor
+        key={currentCard.id}
         card={currentCard}
-        subjectLabel={getSubjectLabel(currentCard, subjects)}
-        revealed={revealed}
+        subjectLabel={subjectLabel}
+        aiEnabled={props.aiEnabled}
+        onSaved={props.onFlashcardUpdated}
+        onClose={props.onStopEditing}
+        renderSession={(content, footer) => (
+          <ReviewSessionShell {...shellProps} footer={footer}>
+            {content}
+          </ReviewSessionShell>
+        )}
       />
-    </ReviewSessionShell>
-  );
-}
-
-function ExamSessionScreen({
-  currentCard,
-  headerText,
-  subjects,
-  progress,
-  revealed,
-  isPending,
-  onReveal,
-  onGrade,
-  onExit,
-  onEditFlashcard,
-  onResetFlashcard,
-  onDeleteFlashcard,
-  onUndoReview,
-}: Readonly<SessionScreenProps>) {
-  const footer = getSessionFooter({
-    revealed,
-    isPending,
-    onReveal,
-    onGrade,
-  });
+    );
+  }
 
   return (
     <ReviewSessionShell
-      progress={progress}
-      headerText={headerText}
-      exitLabel="Exit exam"
-      onExit={onExit}
-      badge={<ExamBadge />}
+      {...shellProps}
       actions={
         <SessionCardActions
-          isPending={isPending}
-          canUndoReview={false}
-          onUndoReview={onUndoReview}
+          isPending={props.isPending}
+          canUndoReview={!isExamMode && props.canUndoReview}
+          onUndoReview={props.onUndoReview}
           onCopyFlashcard={() => copyReviewCard(currentCard, subjects)}
-          onEditFlashcard={onEditFlashcard}
-          onResetFlashcard={onResetFlashcard}
-          onDeleteFlashcard={onDeleteFlashcard}
+          onEditFlashcard={props.onEditFlashcard}
+          onResetFlashcard={props.onResetFlashcard}
+          onDeleteFlashcard={props.onDeleteFlashcard}
         />
       }
-      footer={footer}
+      footer={getSessionFooter(props)}
     >
       <ReviewSessionCardContent
-        mode="exam"
+        mode={isExamMode ? "exam" : "review"}
         card={currentCard}
-        subjectLabel={getSubjectLabel(currentCard, subjects)}
-        revealed={revealed}
+        subjectLabel={subjectLabel}
+        revealed={props.revealed}
       />
     </ReviewSessionShell>
   );

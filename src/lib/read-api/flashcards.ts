@@ -10,7 +10,6 @@ import type {
   FlashcardContentItem,
   FlashcardManagePage,
   FlashcardReviewState,
-  FlashcardWithSourceEntity,
 } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
@@ -30,20 +29,6 @@ export function fetchFlashcardsManagePage(
   return fetchReadApi<FlashcardManagePage>(
     "/api/flashcards/manage-page",
     query,
-  );
-}
-
-/**
- * Load one flashcard for the manage edit dialog.
- *
- * @example
- * const flashcard = await fetchFlashcardForManage(flashcardId);
- */
-export function fetchFlashcardForManage(
-  flashcardId: string,
-): Promise<FlashcardWithSourceEntity> {
-  return fetchReadApi<FlashcardWithSourceEntity>(
-    `/api/flashcards/${encodeURIComponent(flashcardId)}`,
   );
 }
 

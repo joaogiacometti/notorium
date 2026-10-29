@@ -19,7 +19,6 @@ import type {
   FlashcardDetailEntity,
   FlashcardEntity,
   FlashcardManagePage,
-  FlashcardWithSourceEntity,
 } from "@/lib/server/api-contracts";
 
 async function resolveScopedSubjectIds(
@@ -157,25 +156,6 @@ export async function getFlashcardByIdForUser(
     .limit(1);
 
   return results[0]?.flashcard ?? null;
-}
-
-/**
- * Load one owned card with its current source link for the edit dialog.
- *
- * @example
- * const card = await getFlashcardWithSourceByIdForUser(userId, flashcardId);
- */
-export async function getFlashcardWithSourceByIdForUser(
-  userId: string,
-  flashcardId: string,
-): Promise<FlashcardWithSourceEntity | null> {
-  const card = await getFlashcardByIdForUser(userId, flashcardId);
-  if (!card) {
-    return null;
-  }
-
-  const [cardWithSource] = await attachFlashcardSources(userId, [card]);
-  return cardWithSource;
 }
 
 export async function getFlashcardDetailByIdForUser(

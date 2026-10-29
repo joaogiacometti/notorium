@@ -2,26 +2,47 @@
 
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
+import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
 import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
-import { DialogClose, DialogContent } from "@/components/ui/dialog";
+import {
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
+interface FlashcardEditorDialogContentProps {
+  title: string;
+  children: ReactNode;
+}
+
+const panelClassName =
+  "flex max-h-[90svh] w-full max-w-2xl flex-col rounded-lg border bg-background shadow-lg";
+
 /** Keep editor and global chat in one modal focus scope without changing layers.
- * @example <FlashcardEditorDialogContent>{form}</FlashcardEditorDialogContent>
+ * @example <FlashcardEditorDialogContent title="New flashcard">{form}</FlashcardEditorDialogContent>
  */
 export function FlashcardEditorDialogContent({
+  title,
   children,
-}: Readonly<{ children: ReactNode }>) {
+}: Readonly<FlashcardEditorDialogContentProps>) {
   const workspace = useAssistantWorkspace();
+  const panel = (
+    <>
+      <FlashcardEditorDialogHeader title={title} />
+      {children}
+    </>
+  );
   if (!workspace)
     return (
       <DialogContent
+        showCloseButton={false}
         onOpenAutoFocus={focusDialogContainer}
-        className="flex max-h-[90svh] flex-col gap-0 p-0 sm:max-w-2xl"
+        className={cn(panelClassName, "gap-0 p-0 sm:max-w-2xl")}
       >
-        {children}
+        {panel}
       </DialogContent>
     );
   return (
@@ -47,22 +68,31 @@ export function FlashcardEditorDialogContent({
         tabIndex={-1}
         aria-hidden="true"
       />
-      <div className="pointer-events-auto relative flex max-h-[90svh] w-full max-w-2xl flex-col rounded-lg border bg-background shadow-lg">
-        {children}
-        <DialogClose asChild>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="absolute top-3 right-3"
-            aria-label="Close flashcard editor"
-          >
-            <X />
-          </Button>
-        </DialogClose>
+      <div className={cn(panelClassName, "pointer-events-auto relative")}>
+        {panel}
       </div>
       <AssistantSurfaceHost />
     </DialogContent>
+  );
+}
+
+function FlashcardEditorDialogHeader({ title }: Readonly<{ title: string }>) {
+  return (
+    <div className="flex shrink-0 items-center gap-1 px-4 pt-4 pb-3 sm:px-6">
+      <DialogTitle className="flex-1 text-base">{title}</DialogTitle>
+      <AssistantLauncherButton />
+      <DialogClose asChild>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="size-9"
+          aria-label="Close flashcard editor"
+        >
+          <X className="size-4" />
+        </Button>
+      </DialogClose>
+    </div>
   );
 }
 

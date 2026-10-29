@@ -1,4 +1,4 @@
-import { Activity, Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -105,7 +105,6 @@ export function ReviewActivityCard({
   return (
     <Card className="gap-3 py-4">
       <DashboardCardHeader
-        icon={Activity}
         title="Review activity"
         action={
           <div className="flex items-center gap-4">
@@ -120,20 +119,21 @@ export function ReviewActivityCard({
             No reviews in the last year. Start reviewing to build a streak.
           </p>
         ) : (
+          // Weeks stretch to fill the card; below ~8px per cell it scrolls.
           <div className="overflow-x-auto pb-1">
-            <div className="flex gap-0.75">
+            <div className="grid auto-cols-[minmax(0.5rem,1fr)] grid-flow-col gap-0.75">
               {weeks.map((week, weekIndex) => (
                 <div
                   // biome-ignore lint/suspicious/noArrayIndexKey: week columns are positional and stable
                   key={weekIndex}
-                  className="flex flex-col gap-0.75"
+                  className="grid grid-rows-7 gap-0.75"
                 >
                   {week.map((cell, dayIndex) =>
                     cell ? (
                       <span
                         key={cell.date}
                         title={formatCellLabel(cell)}
-                        className="size-2.5 rounded-[2px]"
+                        className="aspect-square rounded-[2px]"
                         style={{
                           backgroundColor: cellBackground(
                             getIntensityLevel(cell.count),
@@ -144,7 +144,7 @@ export function ReviewActivityCard({
                       <span
                         // biome-ignore lint/suspicious/noArrayIndexKey: leading pad cells have no date
                         key={`pad-${weekIndex}-${dayIndex}`}
-                        className="size-2.5"
+                        className="aspect-square"
                       />
                     ),
                   )}
@@ -173,9 +173,8 @@ export function ReviewActivityCard({
 export function ReviewActivityCardSkeleton() {
   return (
     <Card className="gap-3 py-4">
-      <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-        <Skeleton className="size-4 rounded-md" />
-        <Skeleton className="h-5 w-40" />
+      <CardHeader className="flex min-h-5 flex-row items-center gap-2 space-y-0">
+        <Skeleton className="h-4 w-32" />
         <Skeleton className="ml-auto h-4 w-32" />
       </CardHeader>
       <CardContent className="space-y-2.5">

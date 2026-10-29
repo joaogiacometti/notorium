@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useTransition } from "react";
 import { DeleteFlashcardDialog } from "@/components/flashcards/dialogs/delete-flashcard-dialog";
 import { LazyCreateFlashcardDialog as CreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
-import { LazyEditFlashcardDialog as EditFlashcardDialog } from "@/components/flashcards/dialogs/lazy-edit-flashcard-dialog";
 import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flashcard-dialog";
 import { FlashcardsManagerReadFailure } from "@/components/flashcards/manage/flashcards-manager-read-failure";
 import { FlashcardsManagerTable } from "@/components/flashcards/manage/flashcards-manager-table";
@@ -44,16 +43,12 @@ export function FlashcardsManager({
     useFlashcardCopy();
   const {
     dialog,
-    editingFlashcard,
-    editFlashcardQuery,
-    editingFlashcardId,
     flashcards,
     isAtSubjectLimit,
     managePageQuery,
     pageIndex,
     searchQuery,
     refreshManagePage,
-    cacheUpdatedFlashcard,
     selectedSubjectId,
     selectedFlashcardIds,
     setDialog,
@@ -82,6 +77,18 @@ export function FlashcardsManager({
     () => (moveTarget ? [moveTarget.id] : null),
     [moveTarget],
   );
+
+  function openFlashcardDetail(flashcardId: string) {
+    startNavTransition(() =>
+      router.push(
+        getFlashcardDetailHref(flashcardId, {
+          from: "flashcards-manage",
+          view: "manage",
+          subjectId: selectedSubjectId,
+        }),
+      ),
+    );
+  }
 
   const renderMainContent = () => {
     if (refineMode) {
@@ -115,9 +122,7 @@ export function FlashcardsManager({
           pageIndex={pageIndex}
           pageSize={pageSize}
           isLoading={isManageScopeLoading}
-          onEditRequested={(flashcardId) =>
-            setDialog({ kind: "edit", flashcardId })
-          }
+          onEditRequested={openFlashcardDetail}
           onCopyRequested={(flashcardId) =>
             void copyFlashcardsById([flashcardId])
           }
@@ -127,17 +132,7 @@ export function FlashcardsManager({
           onDeleteRequested={(target) => setDialog({ kind: "delete", target })}
           onResetRequested={(target) => setDialog({ kind: "reset", target })}
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
-          onRowClick={(row) =>
-            startNavTransition(() =>
-              router.push(
-                getFlashcardDetailHref(row.id, {
-                  from: "flashcards-manage",
-                  view: "manage",
-                  subjectId: selectedSubjectId,
-                }),
-              ),
-            )
-          }
+          onRowClick={(row) => openFlashcardDetail(row.id)}
         />
       </Card>
     );
@@ -189,30 +184,6 @@ export function FlashcardsManager({
         subjectId={selectedSubjectId}
         aiEnabled={aiEnabled}
       />
-      {editingFlashcardId !== null && editFlashcardQuery.isError ? (
-        <FlashcardsManagerReadFailure
-          message="Could not open this flashcard. Retry or dismiss this message."
-          retrying={editFlashcardQuery.isFetching}
-          onRetry={() => void editFlashcardQuery.refetch()}
-          onDismiss={() => setDialog(null)}
-        />
-      ) : null}
-      {editingFlashcardId !== null && editingFlashcard && (
-        <EditFlashcardDialog
-          flashcard={editingFlashcard}
-          open={editingFlashcardId !== null}
-          aiEnabled={aiEnabled}
-          onOpenChange={(nextOpen) => {
-            if (!nextOpen) {
-              setDialog(null);
-            }
-          }}
-          onUpdated={(updatedFlashcard) => {
-            cacheUpdatedFlashcard(updatedFlashcard);
-            refreshManagePage();
-          }}
-        />
-      )}
       <BulkDeleteFlashcardsDialog
         ids={selectedFlashcardIds}
         open={dialog?.kind === "bulk-delete"}

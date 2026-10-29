@@ -1,6 +1,5 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -11,7 +10,6 @@ import {
 } from "@/components/assistant/assistant-workspace-context";
 import { useAssistantPortalTarget } from "@/components/assistant/use-assistant-portal-target";
 import { useAssistantToggleShortcut } from "@/components/assistant/use-assistant-toggle-shortcut";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function loadAssistantPanel() {
@@ -48,26 +46,22 @@ function StudyAssistantSurface({
     workspace.registerPortalTarget,
   );
   const { open, setOpen, inlineLauncher } = workspace;
+  // Keep the panel mounted after its first open so hiding it is instant.
   const [opened, setOpened] = useState(false);
-  const launcherRef = useRef<HTMLButtonElement>(null);
+  if (open && !opened) setOpened(true);
   const restoreLauncherFocus = useRef(false);
   useEffect(() => {
     if (!open && restoreLauncherFocus.current) {
-      (inlineLauncher ?? launcherRef.current)?.focus();
+      inlineLauncher?.focus();
       restoreLauncherFocus.current = false;
     }
   }, [open, inlineLauncher]);
 
   useEffect(() => preloadWhenIdle(loadAssistantPanel), []);
 
-  function toggleOpen() {
-    setOpened(true);
-    setOpen(!open);
-  }
-
   useAssistantToggleShortcut(() => {
     if (open) return minimize();
-    toggleOpen();
+    setOpen(true);
   });
 
   // Focus would otherwise stay on a button inside the now-hidden panel.
@@ -100,22 +94,6 @@ function StudyAssistantSurface({
         >
           <AssistantPanel embedded onMinimize={minimize} />
         </aside>
-      ) : null}
-      {!open && !inlineLauncher ? (
-        <div className="fixed right-4 bottom-4">
-          <Button
-            ref={launcherRef}
-            type="button"
-            size="icon"
-            variant="outline"
-            aria-label="Open study assistant"
-            aria-expanded={false}
-            onClick={toggleOpen}
-            className="size-11 rounded-full border-border bg-card text-muted-foreground shadow-md"
-          >
-            <Sparkles className="size-5" />
-          </Button>
-        </div>
       ) : null}
     </aside>
   );

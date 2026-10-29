@@ -46,7 +46,7 @@ describe("useSessionCardView", () => {
   it("resets the reveal and closes every dialog", () => {
     act(() => {
       view.setRevealed(true);
-      view.setEditOpen(true);
+      view.setEditing(true);
       view.setResetOpen(true);
     });
     act(() => view.resetCardViewState());

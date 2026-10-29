@@ -4,7 +4,7 @@ import { useState } from "react";
 
 /**
  * Holds the per-card view state shared by review and exam sessions: answer
- * revealed plus the edit, delete and reset dialogs.
+ * revealed, inline editing, and the delete and reset dialogs.
  *
  * @example
  * const view = useSessionCardView();
@@ -12,13 +12,13 @@ import { useState } from "react";
  */
 export function useSessionCardView() {
   const [revealed, setRevealed] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
 
   function resetCardViewState() {
     setRevealed(false);
-    setEditOpen(false);
+    setEditing(false);
     setDeleteOpen(false);
     setResetOpen(false);
   }
@@ -26,13 +26,13 @@ export function useSessionCardView() {
   return {
     revealed,
     setRevealed,
-    editOpen,
-    setEditOpen,
+    editing,
+    setEditing,
     deleteOpen,
     setDeleteOpen,
     resetOpen,
     setResetOpen,
-    isDialogOpen: editOpen || deleteOpen || resetOpen,
+    isDialogOpen: editing || deleteOpen || resetOpen,
     resetCardViewState,
   };
 }

@@ -75,8 +75,10 @@ export function AssistantWorkspaceProvider({
   const [open, setOpen] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);
-  const [inlineLauncher, setInlineLauncher] =
-    useState<HTMLButtonElement | null>(null);
+  // A stack, so closing a dialog's launcher hands focus back to the page's.
+  const [inlineLaunchers, setInlineLaunchers] = useState<HTMLButtonElement[]>(
+    [],
+  );
   const portalNodes = useRef<{
     target: HTMLElement;
     fallback: HTMLElement;
@@ -113,9 +115,14 @@ export function AssistantWorkspaceProvider({
   }
 
   function registerInlineLauncher(button: HTMLButtonElement) {
-    setInlineLauncher(button);
+    setInlineLaunchers((current) => [
+      ...current.filter((candidate) => candidate !== button),
+      button,
+    ]);
     return () =>
-      setInlineLauncher((current) => (current === button ? null : current));
+      setInlineLaunchers((current) =>
+        current.filter((candidate) => candidate !== button),
+      );
   }
 
   function registerHost(element: HTMLElement) {
@@ -387,7 +394,7 @@ export function AssistantWorkspaceProvider({
         setOpen,
         host,
         registerHost,
-        inlineLauncher,
+        inlineLauncher: inlineLaunchers.at(-1) ?? null,
         registerInlineLauncher,
         registerPortalTarget,
         composerDraft,
