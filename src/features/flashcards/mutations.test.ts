@@ -39,7 +39,6 @@ const getFlashcardByIdForUserMock = vi.fn();
 const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
 const getInitialFlashcardSchedulingStateMock = vi.fn();
-const improveFlashcardBackForUserMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -64,10 +63,6 @@ vi.mock("@/db/schema", () => ({
 
 vi.mock("@/features/subjects/queries", () => ({
   getSubjectRecordForUser: getSubjectRecordForUserMock,
-}));
-
-vi.mock("@/features/flashcards/ai-service", () => ({
-  improveFlashcardBackForUser: improveFlashcardBackForUserMock,
 }));
 
 vi.mock("@/features/flashcards/fsrs", () => ({
@@ -397,65 +392,6 @@ describe("bulkMoveFlashcardsForUser", () => {
       ids: ["flashcard-1", "flashcard-2"],
       subjectId: "deck-3",
       previousSubjectIds: ["deck-1", "deck-2"],
-    });
-  });
-});
-
-describe("improveFlashcardBackForUserInput", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getSubjectRecordForUserMock.mockResolvedValue({
-      id: "deck-1",
-      name: "Metabolism",
-    });
-  });
-
-  it("improves the back with the subject name as context", async () => {
-    improveFlashcardBackForUserMock.mockResolvedValueOnce({
-      success: true,
-      back: "<p>Improved back</p>",
-    });
-
-    const { improveFlashcardBackForUserInput } = await import(
-      "@/features/flashcards/mutations"
-    );
-
-    const result = await improveFlashcardBackForUserInput("user-1", {
-      subjectId: "deck-1",
-      front: "<p>What is ATP?</p>",
-      currentBack: "<p>Energy</p>",
-    });
-
-    expect(result).toEqual({
-      success: true,
-      back: "<p>Improved back</p>",
-    });
-    expect(improveFlashcardBackForUserMock).toHaveBeenCalledWith({
-      userId: "user-1",
-      subjectName: "Metabolism",
-      front: "<p>What is ATP?</p>",
-      currentBack: "<p>Energy</p>",
-    });
-  });
-
-  it("returns notFound when the deck does not exist", async () => {
-    getSubjectRecordForUserMock.mockResolvedValueOnce(null);
-
-    const { improveFlashcardBackForUserInput } = await import(
-      "@/features/flashcards/mutations"
-    );
-
-    const result = await improveFlashcardBackForUserInput("user-1", {
-      subjectId: "deck-1",
-      front: "<p>What is ATP?</p>",
-      currentBack: "<p>Energy</p>",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "subjects.notFound",
-      errorParams: undefined,
-      errorMessage: undefined,
     });
   });
 });

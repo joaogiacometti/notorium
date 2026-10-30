@@ -1,6 +1,6 @@
 // Converts AI plain-text output (paragraphs, `- `/`1.` lists, inline/fenced code, and
-// `$...$`/`$$...$$` LaTeX) into Tiptap rich-text HTML. Pure and isomorphic:
-// flashcard back improvement runs it on the server, the study assistant in the browser.
+// `$...$`/`$$...$$` LaTeX) into Tiptap rich-text HTML. Pure, so the study
+// assistant can run it in the browser.
 
 import { escapeHtml } from "@/lib/html-escape";
 import { splitDollarMath } from "@/lib/math/dollar-math";

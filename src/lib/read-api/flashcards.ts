@@ -1,21 +1,12 @@
 import type { FlashcardReviewStateQueryInput } from "@/features/flashcard-review/validation";
-import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
-import {
-  fetchReadApi,
-  fetchReadApiResult,
-} from "@/lib/read-api/read-api-client";
+import { fetchReadApi } from "@/lib/read-api/read-api-client";
 import type {
   FlashcardContentItem,
   FlashcardManagePage,
   FlashcardReviewState,
 } from "@/lib/server/api-contracts";
-import type { ActionErrorResult } from "@/lib/server/server-action-errors";
-
-type StrugglingFlashcardsResult =
-  | { success: true; cards: StrugglingFlashcard[] }
-  | ActionErrorResult;
 
 /**
  * Load one page of the flashcard manage table.
@@ -54,19 +45,6 @@ export async function fetchFlashcardContents(
     chunkResults.flat().map((item) => [item.id, item]),
   );
   return flashcardIds.flatMap((id) => contentsById.get(id) ?? []);
-}
-
-/**
- * Load the struggling cards for the manage refine mode.
- *
- * @example
- * const result = await fetchStrugglingFlashcards();
- */
-export async function fetchStrugglingFlashcards(): Promise<StrugglingFlashcardsResult> {
-  const result = await fetchReadApiResult<StrugglingFlashcard[]>(
-    "/api/flashcards/struggling",
-  );
-  return "errorCode" in result ? result : { success: true, cards: result };
 }
 
 /**

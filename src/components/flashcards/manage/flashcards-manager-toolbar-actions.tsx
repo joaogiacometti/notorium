@@ -5,7 +5,6 @@ import {
   Copy,
   Loader2,
   RotateCcw,
-  RotateCw,
   Trash2,
   X,
 } from "lucide-react";
@@ -19,26 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface ToolbarActionBarProps {
-  refineMode: boolean;
-  isLoadingStrugglingCards: boolean;
-  actionBarVisibilityClasses: string;
-  isCopyingSelection: boolean;
-  onCopySelection: () => void;
-  onRefreshRefine: () => void;
-  onExitRefine: () => void;
-  onOpenBulkMoveDialog: () => void;
-  onOpenBulkDeleteDialog: () => void;
-  onOpenBulkResetDialog: () => void;
-  onClearSelection: () => void;
-}
-
-interface RefineActionButtonsProps {
-  isLoadingStrugglingCards: boolean;
-  onRefreshRefine: () => void;
-  onExitRefine: () => void;
-}
-
-interface SelectionActionButtonsProps {
+  visible: boolean;
   isCopyingSelection: boolean;
   onCopySelection: () => void;
   onOpenBulkMoveDialog: () => void;
@@ -82,40 +62,29 @@ function ToolbarIconActionButton({
   );
 }
 
-function RefineActionButtons({
-  isLoadingStrugglingCards,
-  onRefreshRefine,
-  onExitRefine,
-}: Readonly<RefineActionButtonsProps>): JSX.Element {
-  return (
-    <>
-      <ToolbarIconActionButton
-        ariaLabel="Refresh Refine"
-        onClick={onRefreshRefine}
-        disabled={isLoadingStrugglingCards}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<RotateCw className="size-4" />}
-      />
-      <ToolbarIconActionButton
-        ariaLabel="Exit Refine"
-        onClick={onExitRefine}
-        className="rounded-md text-muted-foreground hover:text-foreground"
-        icon={<X className="size-4" />}
-      />
-    </>
-  );
-}
-
-function SelectionActionButtons({
+/**
+ * Bulk selection actions for the manage toolbar, shown while cards are selected.
+ *
+ * Example: <ToolbarActionBar visible={selectedIds.length > 0} ... />
+ */
+export function ToolbarActionBar({
+  visible,
   isCopyingSelection,
   onCopySelection,
   onOpenBulkMoveDialog,
   onOpenBulkDeleteDialog,
   onOpenBulkResetDialog,
   onClearSelection,
-}: Readonly<SelectionActionButtonsProps>): JSX.Element {
+}: Readonly<ToolbarActionBarProps>): JSX.Element {
   return (
-    <>
+    <div
+      className={cn(
+        "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34",
+        visible
+          ? "visible opacity-100"
+          : "pointer-events-none invisible opacity-0",
+      )}
+    >
       <ToolbarIconActionButton
         ariaLabel={isCopyingSelection ? "Copying..." : "Copy"}
         onClick={onCopySelection}
@@ -154,60 +123,6 @@ function SelectionActionButtons({
         className="rounded-md text-muted-foreground hover:text-foreground"
         icon={<X className="size-4" />}
       />
-    </>
-  );
-}
-
-/**
- * Mode-aware action bar for the manage toolbar: refresh/exit in refine mode,
- * and bulk selection actions otherwise.
- *
- * Example: <ToolbarActionBar refineMode={false} ... />
- */
-export function ToolbarActionBar({
-  refineMode,
-  isLoadingStrugglingCards,
-  actionBarVisibilityClasses,
-  isCopyingSelection,
-  onCopySelection,
-  onRefreshRefine,
-  onExitRefine,
-  onOpenBulkMoveDialog,
-  onOpenBulkDeleteDialog,
-  onOpenBulkResetDialog,
-  onClearSelection,
-}: Readonly<ToolbarActionBarProps>): JSX.Element {
-  function renderModeActions(): JSX.Element {
-    if (refineMode) {
-      return (
-        <RefineActionButtons
-          isLoadingStrugglingCards={isLoadingStrugglingCards}
-          onRefreshRefine={onRefreshRefine}
-          onExitRefine={onExitRefine}
-        />
-      );
-    }
-
-    return (
-      <SelectionActionButtons
-        isCopyingSelection={isCopyingSelection}
-        onCopySelection={onCopySelection}
-        onOpenBulkMoveDialog={onOpenBulkMoveDialog}
-        onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
-        onOpenBulkResetDialog={onOpenBulkResetDialog}
-        onClearSelection={onClearSelection}
-      />
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34",
-        actionBarVisibilityClasses,
-      )}
-    >
-      {renderModeActions()}
     </div>
   );
 }

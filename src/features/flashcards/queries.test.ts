@@ -1,3 +1,5 @@
+import { sql } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { getFlashcardsManageOrderBy } from "@/features/flashcards/queries";
 
@@ -42,5 +44,15 @@ describe("getFlashcardsManageOrderBy", () => {
 
   it("keeps updated-at ordering for empty search", () => {
     expect(getFlashcardsManageOrderBy("", "%%")).toHaveLength(1);
+  });
+
+  it("puts the most-lapsed cards first for the struggling filter", () => {
+    const query = new PgDialect().sqlToQuery(
+      sql.join(getFlashcardsManageOrderBy("", "%%", "struggling"), sql`, `),
+    );
+
+    expect(query.sql).toBe(
+      '"flashcard"."lapse_count" desc, "flashcard"."updated_at" desc',
+    );
   });
 });

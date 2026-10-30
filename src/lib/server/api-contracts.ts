@@ -34,7 +34,7 @@ export type FlashcardDetailEntity = FlashcardWithSourceEntity & {
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "subjectId" | "updatedAt" | "studyLaterAt"
+  "id" | "subjectId" | "updatedAt" | "studyLaterAt" | "lapseCount"
 > & {
   front: string;
   frontExcerpt: string;
@@ -207,12 +207,6 @@ export type EditFlashcardResult =
       success: true;
       flashcard: FlashcardEntity;
       previousSubjectId: string | null;
-    }
-  | ActionErrorResult;
-export type ImproveFlashcardBackResult =
-  | {
-      success: true;
-      back: string;
     }
   | ActionErrorResult;
 export type DeleteFlashcardResult =

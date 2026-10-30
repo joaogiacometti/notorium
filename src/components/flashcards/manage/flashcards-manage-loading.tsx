@@ -16,15 +16,14 @@ export function FlashcardsManageLoading() {
                 <div className="min-w-0 flex-1 lg:max-w-3xl">
                   <Skeleton className="h-10 w-full rounded-lg" />
                 </div>
-                <div className="flex gap-2">
-                  <Skeleton className="h-10 w-28 rounded-lg" />
-                  <Skeleton className="h-10 w-36 rounded-lg" />
-                </div>
+                <Skeleton className="h-10 w-36 rounded-lg" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:justify-between">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
                   <Skeleton className="h-6 w-44 rounded-full" />
+                  <Skeleton className="h-6 w-24 rounded-md" />
+                  <Skeleton className="h-6 w-24 rounded-md" />
                 </div>
                 <div className="ml-auto min-h-8 sm:min-w-34" />
               </div>

@@ -14,29 +14,16 @@ const baseProps = {
   hasManageScopeError: false,
   selectedFlashcardIds: [],
   total: 0,
-  refineMode: false,
-  studyLaterFilterActive: false,
-  onToggleStudyLaterFilter: vi.fn(),
-  strugglingCount: 0,
-  isLoadingStrugglingCards: false,
-  aiEnabled: false,
+  filter: undefined,
+  onToggleFilter: vi.fn(),
   isCopyingSelection: false,
   onCopySelection: vi.fn(),
   onOpenCreateDialog: vi.fn(),
-  onStartRefine: vi.fn(),
-  onRefreshRefine: vi.fn(),
-  onExitRefine: vi.fn(),
   onOpenBulkMoveDialog: vi.fn(),
   onOpenBulkDeleteDialog: vi.fn(),
   onOpenBulkResetDialog: vi.fn(),
   onClearSelection: vi.fn(),
 };
-
-function findButtonByText(container: HTMLElement, text: string) {
-  return Array.from(container.querySelectorAll("button")).find(
-    (currentButton) => currentButton.textContent?.includes(text),
-  );
-}
 
 describe("FlashcardsManagerToolbar", () => {
   let container: HTMLDivElement;
@@ -79,30 +66,46 @@ describe("FlashcardsManagerToolbar", () => {
     expect(baseProps.onOpenCreateDialog).toHaveBeenCalledOnce();
   });
 
-  it("toggles the study later filter and shows when it is on", async () => {
-    await act(async () => {
-      root.render(<FlashcardsManagerToolbar {...baseProps} />);
-    });
-    const button = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Show Study later cards"]',
-    );
-    expect(button?.getAttribute("aria-pressed")).toBe("false");
+  it.each([
+    ["studyLater", "Study later"],
+    ["struggling", "Struggling"],
+  ] as const)(
+    "toggles the %s filter and shows when it is on",
+    async (filter, label) => {
+      const selector = `button[aria-label="Show ${label} cards"]`;
+      await act(async () => {
+        root.render(<FlashcardsManagerToolbar {...baseProps} />);
+      });
+      const button = container.querySelector<HTMLButtonElement>(selector);
+      expect(button?.getAttribute("aria-pressed")).toBe("false");
 
-    await act(async () => {
-      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(baseProps.onToggleStudyLaterFilter).toHaveBeenCalledOnce();
+      await act(async () => {
+        button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(baseProps.onToggleFilter).toHaveBeenCalledExactlyOnceWith(filter);
 
+      await act(async () => {
+        root.render(
+          <FlashcardsManagerToolbar {...baseProps} filter={filter} />,
+        );
+      });
+      expect(
+        container.querySelector(selector)?.getAttribute("aria-pressed"),
+      ).toBe("true");
+    },
+  );
+
+  it("presses only the active filter chip", async () => {
     await act(async () => {
       root.render(
-        <FlashcardsManagerToolbar {...baseProps} studyLaterFilterActive />,
+        <FlashcardsManagerToolbar {...baseProps} filter="struggling" />,
       );
     });
-    expect(
-      container
-        .querySelector('button[aria-label="Show Study later cards"]')
-        ?.getAttribute("aria-pressed"),
-    ).toBe("true");
+
+    const pressedLabels = Array.from(
+      container.querySelectorAll('button[aria-pressed="true"]'),
+    ).map((button) => button.getAttribute("aria-label"));
+    expect(pressedLabels).toEqual(["Show Struggling cards"]);
   });
 
   it("shows an unavailable count when the manage read fails", async () => {
@@ -209,78 +212,5 @@ describe("FlashcardsManagerToolbar", () => {
       'button[aria-label="Copying..."]',
     );
     expect(copyingButton?.disabled).toBe(true);
-  });
-
-  it("hides the refine entry when AI is disabled", async () => {
-    await act(async () => {
-      root.render(
-        <FlashcardsManagerToolbar {...baseProps} aiEnabled={false} />,
-      );
-    });
-
-    expect(findButtonByText(container, "Refine cards")).toBeUndefined();
-  });
-
-  it("starts the refine flow from the Refine cards button", async () => {
-    await act(async () => {
-      root.render(<FlashcardsManagerToolbar {...baseProps} aiEnabled />);
-    });
-
-    await act(async () => {
-      findButtonByText(container, "Refine cards")?.dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
-    });
-
-    expect(baseProps.onStartRefine).toHaveBeenCalledOnce();
-  });
-
-  it("disables the refine entry while struggling cards are loading", async () => {
-    await act(async () => {
-      root.render(
-        <FlashcardsManagerToolbar
-          {...baseProps}
-          aiEnabled
-          isLoadingStrugglingCards
-        />,
-      );
-    });
-
-    const refineItem = findButtonByText(container, "Refine cards");
-
-    expect(refineItem?.disabled).toBe(true);
-  });
-
-  it("shows refine counts and mode actions in refine mode", async () => {
-    await act(async () => {
-      root.render(
-        <FlashcardsManagerToolbar
-          {...baseProps}
-          aiEnabled
-          refineMode
-          strugglingCount={3}
-        />,
-      );
-    });
-
-    expect(container.textContent).toContain("3 struggling");
-
-    const refreshButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Refresh Refine"]',
-    );
-    const exitButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Exit Refine"]',
-    );
-
-    expect(refreshButton).toBeTruthy();
-    expect(exitButton).toBeTruthy();
-
-    await act(async () => {
-      refreshButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      exitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(baseProps.onRefreshRefine).toHaveBeenCalledOnce();
-    expect(baseProps.onExitRefine).toHaveBeenCalledOnce();
   });
 });

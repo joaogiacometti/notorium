@@ -99,3 +99,29 @@ describe("mathTextToRichText", () => {
     expect(mathTextToRichText("$100$")).toBe("$100$");
   });
 });
+
+describe("plainTextToRichText structure", () => {
+  it("converts paragraphs into rich text html", () => {
+    const result = plainTextToRichText("Line one\nLine two");
+
+    expect(result).toBe("<p>Line one Line two</p>");
+  });
+
+  it("converts short bullet lists into ul markup", () => {
+    const result = plainTextToRichText("- ATP\n- NADPH");
+
+    expect(result).toBe("<ul><li>ATP</li><li>NADPH</li></ul>");
+  });
+
+  it("converts numbered lists into ol markup", () => {
+    const result = plainTextToRichText("1. Write program\n2. Compile");
+
+    expect(result).toBe("<ol><li>Write program</li><li>Compile</li></ol>");
+  });
+
+  it("escapes html content", () => {
+    const result = plainTextToRichText("<script>alert(1)</script>");
+
+    expect(result).toBe("<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>");
+  });
+});

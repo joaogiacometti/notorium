@@ -76,11 +76,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
   "flashcards.duplicateFront": "A flashcard with this front already exists.",
-  "flashcards.ai.invalidData": "Invalid flashcard input for AI generation.",
-  "flashcards.ai.notConfigured":
-    "AI flashcard generation is not configured for this instance.",
-  "flashcards.ai.unavailable":
-    "AI flashcard generation is temporarily unavailable.",
   "flashcards.review.invalidData": "Invalid review input.",
   "flashcards.review.notFound": "Flashcard not found for review.",
   "flashcards.review.notDue": "This flashcard is not due yet.",
@@ -113,8 +108,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.flashcardLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
-  "limits.aiBackGenerationPerDay":
-    "Daily limit reached for AI back generation.",
   "limits.aiAssistantPerDay": "Daily limit reached for the study assistant.",
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",

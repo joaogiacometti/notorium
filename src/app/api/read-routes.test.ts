@@ -5,7 +5,6 @@ const queries = vi.hoisted(() => ({
   getAccountSettingsForUser: vi.fn(),
   getFlashcardsManagePageForUser: vi.fn(),
   getFlashcardContentsForUser: vi.fn(),
-  getStrugglingFlashcardsForUser: vi.fn(),
   getFlashcardReviewStateForUser: vi.fn(),
   ensureFsrsSettings: vi.fn(),
   getNoteByIdForUser: vi.fn(),
@@ -26,7 +25,6 @@ vi.mock("@/lib/auth/auth", () => ({
 }));
 vi.mock("@/features/account/queries", () => queries);
 vi.mock("@/features/flashcards/queries", () => queries);
-vi.mock("@/features/flashcards/refine/queries", () => queries);
 vi.mock("@/features/flashcard-review/queries", () => queries);
 vi.mock("@/features/flashcards/fsrs/settings-mutations", () => queries);
 vi.mock("@/features/notes/queries", () => queries);
@@ -91,16 +89,21 @@ describe("read route handlers", () => {
     );
   });
 
-  it("manage page passes the study later filter and rejects unknown ones", async () => {
+  it("manage page passes known filters and rejects unknown ones", async () => {
     const route = import("@/app/api/flashcards/manage-page/route");
     await callRoute(route, "/api/flashcards/manage-page?filter=studyLater");
+    await callRoute(route, "/api/flashcards/manage-page?filter=struggling");
     const bad = await callRoute(route, "/api/flashcards/manage-page?filter=x");
 
     expect(bad.status).toBe(400);
-    expect(queries.getFlashcardsManagePageForUser).toHaveBeenCalledTimes(1);
+    expect(queries.getFlashcardsManagePageForUser).toHaveBeenCalledTimes(2);
     expect(queries.getFlashcardsManagePageForUser).toHaveBeenCalledWith(
       "user-1",
       expect.objectContaining({ filter: "studyLater" }),
+    );
+    expect(queries.getFlashcardsManagePageForUser).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ filter: "struggling" }),
     );
   });
 
@@ -121,17 +124,6 @@ describe("read route handlers", () => {
       "c1",
       "c2",
     ]);
-  });
-
-  it("struggling cards reads for the session user", async () => {
-    await callRoute(
-      import("@/app/api/flashcards/struggling/route"),
-      "/api/flashcards/struggling",
-    );
-
-    expect(queries.getStrugglingFlashcardsForUser).toHaveBeenCalledWith(
-      "user-1",
-    );
   });
 
   it("review state rejects an out-of-range limit before querying", async () => {

@@ -12,7 +12,11 @@ import {
 import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import { attachFlashcardSources } from "@/features/flashcards/source-queries";
-import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
+import { buildStrugglingFlashcardFilter } from "@/features/flashcards/struggling-filter";
+import type {
+  FlashcardManageFilter,
+  FlashcardsManageQueryInput,
+} from "@/features/flashcards/validation";
 import { foldedContains } from "@/features/search/match-sql";
 import {
   getDescendantSubjectIds,
@@ -47,12 +51,31 @@ async function resolveScopedSubjectIds(
   return getDescendantSubjectIds(userId, subjectId);
 }
 
+interface ManageFilterRule {
+  condition: (userId: string) => SQL;
+  /** Sort keys ahead of recency when the list is not ranked by a search. */
+  leadingOrderBy: SQL[];
+}
+
+const manageFilterRules: Record<FlashcardManageFilter, ManageFilterRule> = {
+  studyLater: {
+    condition: () => isNotNull(flashcard.studyLaterAt),
+    leadingOrderBy: [],
+  },
+  struggling: {
+    condition: buildStrugglingFlashcardFilter,
+    leadingOrderBy: [desc(flashcard.lapseCount)],
+  },
+};
+
 export function getFlashcardsManageOrderBy(
   normalizedSearch: string,
   searchPattern: string,
+  filter?: FlashcardManageFilter,
 ): SQL<unknown>[] {
   if (normalizedSearch.length === 0) {
-    return [desc(flashcard.updatedAt)];
+    const leading = filter ? manageFilterRules[filter].leadingOrderBy : [];
+    return [...leading, desc(flashcard.updatedAt)];
   }
 
   return [
@@ -85,8 +108,8 @@ async function buildManageFilters(
     filters.push(inArray(flashcard.subjectId, scopedSubjectIds));
   }
 
-  if (filter === "studyLater") {
-    filters.push(isNotNull(flashcard.studyLaterAt));
+  if (filter) {
+    filters.push(manageFilterRules[filter].condition(userId));
   }
 
   return filters;
@@ -132,13 +155,20 @@ export async function getFlashcardsManagePageForUser(
           subjectId: flashcard.subjectId,
           updatedAt: flashcard.updatedAt,
           studyLaterAt: flashcard.studyLaterAt,
+          lapseCount: flashcard.lapseCount,
           front: flashcard.front,
           subjectName: subject.name,
         })
         .from(flashcard)
         .innerJoin(subject, eq(flashcard.subjectId, subject.id))
         .where(and(...totalFilters))
-        .orderBy(...getFlashcardsManageOrderBy(normalizedSearch, searchPattern))
+        .orderBy(
+          ...getFlashcardsManageOrderBy(
+            normalizedSearch,
+            searchPattern,
+            filter,
+          ),
+        )
         .limit(pageSize)
         .offset(offset),
       getDb()
@@ -166,6 +196,7 @@ export async function getFlashcardsManagePageForUser(
       subjectId: row.subjectId,
       updatedAt: row.updatedAt,
       studyLaterAt: row.studyLaterAt,
+      lapseCount: row.lapseCount,
       front: row.front,
       frontExcerpt: getRichTextExcerpt(row.front, 45),
       frontTitle: richTextToPlainText(row.front) || null,

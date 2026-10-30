@@ -4,7 +4,6 @@ import {
   buildReadApiUrl,
   fetchReadApi,
   fetchReadApiOrNull,
-  fetchReadApiResult,
   ReadApiError,
 } from "@/lib/read-api/read-api-client";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
@@ -67,16 +66,6 @@ describe("read-api client", () => {
 
     expect(error).toBeInstanceOf(ReadApiError);
     expect((error as ReadApiError).errorCode).toBe("common.generic");
-  });
-
-  it("returns the error result instead of throwing for result callers", async () => {
-    new FakeReadApiFetch()
-      .install()
-      .replyJson(400, { errorCode: "ServerErrors.common.invalidRequest" });
-
-    await expect(fetchReadApiResult("/api/x")).resolves.toEqual({
-      errorCode: "ServerErrors.common.invalidRequest",
-    });
   });
 
   it("maps a 404 to null and rethrows other failures", async () => {

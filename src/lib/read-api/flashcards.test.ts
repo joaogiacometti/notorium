@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchFlashcardContents,
   fetchFlashcardsManagePage,
-  fetchStrugglingFlashcards,
 } from "@/lib/read-api/flashcards";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
 
@@ -19,22 +18,6 @@ describe("flashcard read-api fetchers", () => {
     await expect(
       fetchFlashcardsManagePage({ pageIndex: 0, pageSize: 25 }),
     ).rejects.toMatchObject({ status: 500, errorCode: "common.generic" });
-  });
-
-  it("wraps struggling cards and surfaces failures as error results", async () => {
-    const server = new FakeReadApiFetch()
-      .install()
-      .replyJson(200, [])
-      .replyJson(500, { errorCode: "common.generic" });
-
-    await expect(fetchStrugglingFlashcards()).resolves.toEqual({
-      success: true,
-      cards: [],
-    });
-    expect(server.requestedUrls[0]).toBe("/api/flashcards/struggling");
-    await expect(fetchStrugglingFlashcards()).resolves.toEqual({
-      errorCode: "common.generic",
-    });
   });
 
   it("loads copy contents in URL-sized chunks and in the requested order", async () => {

@@ -25,6 +25,7 @@ function createFlashcard(
     subjectPath: "Biology / Cells",
     updatedAt: new Date("2026-04-20T10:00:00.000Z"),
     studyLaterAt: null,
+    lapseCount: 0,
     ...overrides,
   };
 }
@@ -69,7 +70,24 @@ describe("FlashcardsManagerTable", () => {
     ).toHaveLength(1);
   });
 
-  async function renderTable(flashcards: FlashcardManageItem[]) {
+  it("shows lapse counts only when asked", async () => {
+    const flashcards = [createFlashcard({ lapseCount: 6 })];
+
+    await renderTable(flashcards);
+    expect(container.querySelector('[aria-label="Forgotten 6 times"]')).toBe(
+      null,
+    );
+
+    await renderTable(flashcards, { showLapseCount: true });
+    expect(
+      container.querySelector('[aria-label="Forgotten 6 times"]')?.textContent,
+    ).toBe("6");
+  });
+
+  async function renderTable(
+    flashcards: FlashcardManageItem[],
+    { showLapseCount = false }: { showLapseCount?: boolean } = {},
+  ) {
     await act(async () => {
       root.render(
         <FlashcardsManagerTable
@@ -79,6 +97,7 @@ describe("FlashcardsManagerTable", () => {
           pageIndex={0}
           pageSize={25}
           isLoading={false}
+          showLapseCount={showLapseCount}
           onCopyRequested={() => {}}
           onMoveRequested={() => {}}
           onPageIndexChange={() => {}}

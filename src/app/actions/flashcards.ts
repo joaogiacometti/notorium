@@ -7,7 +7,6 @@ import {
   createFlashcardForUser,
   deleteFlashcardForUser,
   editFlashcardForUser,
-  improveFlashcardBackForUserInput,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import { setFlashcardStudyLaterForUser } from "@/features/flashcards/study-later-mutations";
@@ -24,8 +23,6 @@ import {
   deleteFlashcardSchema,
   type EditFlashcardForm,
   editFlashcardSchema,
-  type ImproveFlashcardBackForm,
-  improveFlashcardBackSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type SetFlashcardStudyLaterForm,
@@ -39,7 +36,6 @@ import type {
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
-  ImproveFlashcardBackResult,
   ResetFlashcardResult,
   SetFlashcardStudyLaterResult,
 } from "@/lib/server/api-contracts";
@@ -79,19 +75,6 @@ export async function editFlashcard(
   }
 
   return result;
-}
-
-export async function improveFlashcardBack(
-  data: ImproveFlashcardBackForm,
-): Promise<ImproveFlashcardBackResult> {
-  return runValidatedUserAction(
-    "flashcards.improveFlashcardBack",
-    improveFlashcardBackSchema,
-    data,
-    "flashcards.ai.invalidData",
-    (userId, parsedData) =>
-      improveFlashcardBackForUserInput(userId, parsedData),
-  );
 }
 
 export async function deleteFlashcard(

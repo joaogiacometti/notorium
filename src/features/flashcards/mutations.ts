@@ -255,8 +255,6 @@ async function updateFlashcardContent(
   };
 }
 
-export { improveFlashcardBackForUserInput } from "@/features/flashcards/back-improvement";
-
 export async function deleteFlashcardForUser(
   userId: string,
   data: DeleteFlashcardForm,

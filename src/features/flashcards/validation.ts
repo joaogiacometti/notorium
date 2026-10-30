@@ -83,16 +83,6 @@ export const flashcardFormSchema = withFlashcardAttachmentLimit(
 
 export type FlashcardFormValues = z.infer<typeof flashcardFormSchema>;
 
-export const improveFlashcardBackSchema = z.object({
-  subjectId: subjectIdField,
-  front: flashcardFrontSchema,
-  currentBack: flashcardBackSchema,
-});
-
-export type ImproveFlashcardBackForm = z.infer<
-  typeof improveFlashcardBackSchema
->;
-
 export { hasRichTextContent } from "@/lib/editor/rich-text";
 
 export const deleteFlashcardSchema = z.object({
@@ -137,7 +127,7 @@ export const resetFlashcardSchema = z.object({
 
 export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;
 
-export const flashcardManageFilterSchema = z.enum(["studyLater"]);
+export const flashcardManageFilterSchema = z.enum(["studyLater", "struggling"]);
 
 export type FlashcardManageFilter = z.infer<typeof flashcardManageFilterSchema>;
 

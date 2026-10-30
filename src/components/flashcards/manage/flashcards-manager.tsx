@@ -9,7 +9,6 @@ import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flas
 import { FlashcardsManagerReadFailure } from "@/components/flashcards/manage/flashcards-manager-read-failure";
 import { FlashcardsManagerTable } from "@/components/flashcards/manage/flashcards-manager-table";
 import { FlashcardsManagerToolbar } from "@/components/flashcards/manage/flashcards-manager-toolbar";
-import { FlashcardsRefineResults } from "@/components/flashcards/manage/flashcards-refine-results";
 import { LazyBulkDeleteFlashcardsDialog as BulkDeleteFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-delete-flashcards-dialog";
 import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-move-flashcards-dialog";
 import { LazyBulkResetFlashcardsDialog as BulkResetFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-reset-flashcards-dialog";
@@ -64,12 +63,6 @@ export function FlashcardsManager({
     setSelectedFlashcardIds,
     total,
     pageSize,
-    refineMode,
-    strugglingCards,
-    isLoadingStrugglingCards,
-    startRefineMode,
-    refreshStrugglingCards,
-    exitRefine,
   } = useFlashcardsManagerController({
     initialPageData,
     initialSubjectId,
@@ -98,18 +91,6 @@ export function FlashcardsManager({
   }
 
   const renderMainContent = () => {
-    if (refineMode) {
-      return (
-        <FlashcardsRefineResults
-          cards={strugglingCards}
-          onRefineApplied={() => {
-            void refreshStrugglingCards();
-            refreshManagePage();
-          }}
-        />
-      );
-    }
-
     if (managePageQuery.isError) {
       return (
         <FlashcardsManagerReadFailure
@@ -129,6 +110,7 @@ export function FlashcardsManager({
           pageIndex={pageIndex}
           pageSize={pageSize}
           isLoading={isManageScopeLoading}
+          showLapseCount={filter === "struggling"}
           onCopyRequested={(flashcardId) =>
             void copyFlashcardsById([flashcardId])
           }
@@ -158,22 +140,15 @@ export function FlashcardsManager({
           managePageQuery.isError ? [] : selectedFlashcardIds
         }
         total={total}
-        refineMode={refineMode}
-        studyLaterFilterActive={filter === "studyLater"}
-        onToggleStudyLaterFilter={() =>
-          setFilter(filter === "studyLater" ? undefined : "studyLater")
+        filter={filter}
+        onToggleFilter={(nextFilter) =>
+          setFilter(filter === nextFilter ? undefined : nextFilter)
         }
-        strugglingCount={strugglingCards.length}
-        isLoadingStrugglingCards={isLoadingStrugglingCards}
-        aiEnabled={aiEnabled}
         isCopyingSelection={isCopying}
         onCopySelection={() =>
           void copySelectedFlashcards(flashcards, selectedFlashcardIds)
         }
         onOpenCreateDialog={() => setDialog({ kind: "create" })}
-        onStartRefine={() => void startRefineMode()}
-        onRefreshRefine={() => void refreshStrugglingCards()}
-        onExitRefine={exitRefine}
         onOpenBulkMoveDialog={() => setDialog({ kind: "bulk-move" })}
         onOpenBulkDeleteDialog={() => setDialog({ kind: "bulk-delete" })}
         onOpenBulkResetDialog={() => setDialog({ kind: "bulk-reset" })}

@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Clock,
-  CopyPlus,
-  Loader2,
-  Search,
-  Sparkles,
-  Wand2,
-} from "lucide-react";
+import { Clock, CopyPlus, Flame, type LucideIcon, Search } from "lucide-react";
 import type { JSX } from "react";
 import { ToolbarActionBar } from "@/components/flashcards/manage/flashcards-manager-toolbar-actions";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
@@ -17,6 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  type FlashcardManageFilter,
+  flashcardManageFilterSchema,
+} from "@/features/flashcards/validation";
 import { cn } from "@/lib/utils";
 
 interface FlashcardsManagerToolbarProps {
@@ -26,95 +23,31 @@ interface FlashcardsManagerToolbarProps {
   hasManageScopeError: boolean;
   selectedFlashcardIds: string[];
   total: number;
-  refineMode: boolean;
-  studyLaterFilterActive: boolean;
-  onToggleStudyLaterFilter: () => void;
-  strugglingCount: number;
-  isLoadingStrugglingCards: boolean;
-  aiEnabled: boolean;
+  filter?: FlashcardManageFilter;
+  onToggleFilter: (filter: FlashcardManageFilter) => void;
   isCopyingSelection: boolean;
   onCopySelection: () => void;
   onOpenCreateDialog: () => void;
-  onStartRefine: () => void;
-  onRefreshRefine: () => void;
-  onExitRefine: () => void;
   onOpenBulkMoveDialog: () => void;
   onOpenBulkDeleteDialog: () => void;
   onOpenBulkResetDialog: () => void;
   onClearSelection: () => void;
 }
 
-interface ToolbarViewModel {
-  selectedCountText: string;
-  resultsCountText: string;
-  refineCountText: string;
-  actionBarVisibilityClasses: string;
-  hasSelection: boolean;
-}
-
 interface ToolbarStatusBadgesProps {
-  refineMode: boolean;
   isManageScopeLoading: boolean;
   hasManageScopeError: boolean;
-  hasSelection: boolean;
-  selectedCountText: string;
-  resultsCountText: string;
-  refineCountText: string;
-}
-
-interface RefineCardsButtonProps {
-  refineMode: boolean;
-  isLoadingStrugglingCards: boolean;
-  onStartRefine: () => void;
-}
-
-function getToolbarViewModel({
-  refineMode,
-  selectedFlashcardIds,
-  total,
-  strugglingCount,
-}: {
-  refineMode: boolean;
-  selectedFlashcardIds: string[];
+  selectedCount: number;
   total: number;
-  strugglingCount: number;
-}): ToolbarViewModel {
-  const selectedCount = selectedFlashcardIds.length;
-  const hasSelection = selectedCount > 0;
-
-  return {
-    selectedCountText:
-      selectedCount === 1 ? "1 selected" : `${selectedCount} selected`,
-    resultsCountText: `${total} of ${total} flashcards`,
-    refineCountText: `${strugglingCount} struggling`,
-    actionBarVisibilityClasses:
-      refineMode || hasSelection
-        ? "visible opacity-100"
-        : "pointer-events-none invisible opacity-0",
-    hasSelection,
-  };
 }
 
 function ToolbarStatusBadges({
-  refineMode,
   isManageScopeLoading,
   hasManageScopeError,
-  hasSelection,
-  selectedCountText,
-  resultsCountText,
-  refineCountText,
+  selectedCount,
+  total,
 }: Readonly<ToolbarStatusBadgesProps>): JSX.Element {
-  if (refineMode) {
-    return (
-      <Badge
-        variant="outline"
-        className="rounded-md border-border px-2.5 py-0.5 text-xs text-foreground"
-      >
-        <Sparkles className="size-3.5" />
-        {refineCountText}
-      </Badge>
-    );
-  }
+  const hasSelection = selectedCount > 0;
 
   if (hasManageScopeError) {
     return (
@@ -140,22 +73,36 @@ function ToolbarStatusBadges({
       )}
     >
       {hasSelection ? null : <Search className="size-3.5" />}
-      {hasSelection ? selectedCountText : resultsCountText}
+      {hasSelection
+        ? `${selectedCount} selected`
+        : `${total} of ${total} flashcards`}
     </Badge>
   );
 }
 
-interface StudyLaterFilterChipProps {
+interface ManageFilterChipProps {
+  label: string;
+  icon: LucideIcon;
   active: boolean;
   onToggle: () => void;
 }
 
+const manageFilterChips: Record<
+  FlashcardManageFilter,
+  { label: string; icon: LucideIcon }
+> = {
+  studyLater: { label: "Study later", icon: Clock },
+  struggling: { label: "Struggling", icon: Flame },
+};
+
 // A filter, not an action: it sits with the result count, sized like it, and
-// takes the primary tint while the table shows only study-later cards.
-function StudyLaterFilterChip({
+// takes the primary tint while the table shows only the matching cards.
+function ManageFilterChip({
+  label,
+  icon: Icon,
   active,
   onToggle,
-}: Readonly<StudyLaterFilterChipProps>): JSX.Element {
+}: Readonly<ManageFilterChipProps>): JSX.Element {
   return (
     <Button
       type="button"
@@ -163,7 +110,7 @@ function StudyLaterFilterChip({
       size="xs"
       onClick={onToggle}
       aria-pressed={active}
-      aria-label="Show Study later cards"
+      aria-label={`Show ${label} cards`}
       className={cn(
         "border-border font-normal",
         active
@@ -171,33 +118,8 @@ function StudyLaterFilterChip({
           : "text-muted-foreground",
       )}
     >
-      <Clock className="size-3.5" />
-      Study later
-    </Button>
-  );
-}
-
-// Opens the refine mode that lists struggling cards for AI improvement.
-function RefineCardsButton({
-  refineMode,
-  isLoadingStrugglingCards,
-  onStartRefine,
-}: Readonly<RefineCardsButtonProps>): JSX.Element {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={onStartRefine}
-      disabled={refineMode || isLoadingStrugglingCards}
-      aria-label="Refine cards"
-      className="h-10 shrink-0 gap-2 rounded-lg border-primary/30 bg-primary/5 px-3 text-primary hover:bg-primary/10 hover:text-primary sm:px-4"
-    >
-      {isLoadingStrugglingCards && !refineMode ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        <Wand2 className="size-4" />
-      )}
-      <span className="hidden sm:inline">Refine cards</span>
+      <Icon className="size-3.5" />
+      {label}
     </Button>
   );
 }
@@ -209,40 +131,16 @@ export function FlashcardsManagerToolbar({
   hasManageScopeError,
   selectedFlashcardIds,
   total,
-  refineMode,
-  studyLaterFilterActive,
-  onToggleStudyLaterFilter,
-  strugglingCount,
-  isLoadingStrugglingCards,
-  aiEnabled,
+  filter,
+  onToggleFilter,
   isCopyingSelection,
   onCopySelection,
   onOpenCreateDialog,
-  onStartRefine,
-  onRefreshRefine,
-  onExitRefine,
   onOpenBulkMoveDialog,
   onOpenBulkDeleteDialog,
   onOpenBulkResetDialog,
   onClearSelection,
 }: Readonly<FlashcardsManagerToolbarProps>): JSX.Element {
-  const viewModel = getToolbarViewModel({
-    refineMode,
-    selectedFlashcardIds,
-    total,
-    strugglingCount,
-  });
-  const createButton = (
-    <Button
-      type="button"
-      onClick={onOpenCreateDialog}
-      className="h-10 flex-1 gap-2 rounded-lg px-4 sm:flex-initial"
-    >
-      <CopyPlus className="size-4" />
-      New Flashcard
-    </Button>
-  );
-
   return (
     <TooltipProvider>
       <Card className="border-border py-0">
@@ -262,46 +160,40 @@ export function FlashcardsManagerToolbar({
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
-                {aiEnabled ? (
-                  <RefineCardsButton
-                    refineMode={refineMode}
-                    isLoadingStrugglingCards={isLoadingStrugglingCards}
-                    onStartRefine={onStartRefine}
-                  />
-                ) : null}
-                {createButton}
+              <div className="flex">
+                <Button
+                  type="button"
+                  onClick={onOpenCreateDialog}
+                  className="h-10 flex-1 gap-2 rounded-lg px-4 sm:flex-initial"
+                >
+                  <CopyPlus className="size-4" />
+                  New Flashcard
+                </Button>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:justify-between">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
                 <ToolbarStatusBadges
-                  refineMode={refineMode}
                   isManageScopeLoading={isManageScopeLoading}
                   hasManageScopeError={hasManageScopeError}
-                  hasSelection={viewModel.hasSelection}
-                  selectedCountText={viewModel.selectedCountText}
-                  resultsCountText={viewModel.resultsCountText}
-                  refineCountText={viewModel.refineCountText}
+                  selectedCount={selectedFlashcardIds.length}
+                  total={total}
                 />
-                {refineMode ? null : (
-                  <StudyLaterFilterChip
-                    active={studyLaterFilterActive}
-                    onToggle={onToggleStudyLaterFilter}
+                {flashcardManageFilterSchema.options.map((chipFilter) => (
+                  <ManageFilterChip
+                    key={chipFilter}
+                    label={manageFilterChips[chipFilter].label}
+                    icon={manageFilterChips[chipFilter].icon}
+                    active={filter === chipFilter}
+                    onToggle={() => onToggleFilter(chipFilter)}
                   />
-                )}
+                ))}
               </div>
 
               <ToolbarActionBar
-                refineMode={refineMode}
-                isLoadingStrugglingCards={isLoadingStrugglingCards}
-                actionBarVisibilityClasses={
-                  viewModel.actionBarVisibilityClasses
-                }
+                visible={selectedFlashcardIds.length > 0}
                 isCopyingSelection={isCopyingSelection}
                 onCopySelection={onCopySelection}
-                onRefreshRefine={onRefreshRefine}
-                onExitRefine={onExitRefine}
                 onOpenBulkMoveDialog={onOpenBulkMoveDialog}
                 onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
                 onOpenBulkResetDialog={onOpenBulkResetDialog}

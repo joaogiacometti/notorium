@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { Clock, Flame } from "lucide-react";
 import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
@@ -19,6 +19,8 @@ interface FlashcardsManagerTableProps {
   pageIndex: number;
   pageSize: number;
   isLoading: boolean;
+  /** Shows each row's lapse count, which orders the struggling filter. */
+  showLapseCount: boolean;
   onCopyRequested: (flashcardId: string) => void;
   onMoveRequested: (flashcard: FlashcardTarget) => void;
   onPageIndexChange: (pageIndex: number) => void;
@@ -63,7 +65,15 @@ function getFlashcardFrontPreview(value: string) {
   return `${value.slice(0, flashcardFrontPreviewMaxLength).trimEnd()}...`;
 }
 
-function FlashcardFrontCell({ item }: Readonly<{ item: FlashcardManageItem }>) {
+interface FlashcardFrontCellProps {
+  item: FlashcardManageItem;
+  showLapseCount: boolean;
+}
+
+function FlashcardFrontCell({
+  item,
+  showLapseCount,
+}: Readonly<FlashcardFrontCellProps>) {
   return (
     <div className="flex min-w-0 items-center gap-1.5 py-1">
       <div className="min-w-0 overflow-hidden">
@@ -74,6 +84,9 @@ function FlashcardFrontCell({ item }: Readonly<{ item: FlashcardManageItem }>) {
           {getFlashcardFrontPreview(item.frontExcerpt)}
         </div>
       </div>
+      {showLapseCount ? (
+        <LapseCountMarker lapseCount={item.lapseCount} />
+      ) : null}
       {item.studyLaterAt ? (
         <Clock
           className="size-3.5 shrink-0 text-muted-foreground"
@@ -82,6 +95,23 @@ function FlashcardFrontCell({ item }: Readonly<{ item: FlashcardManageItem }>) {
         />
       ) : null}
     </div>
+  );
+}
+
+function LapseCountMarker({ lapseCount }: Readonly<{ lapseCount: number }>) {
+  const label =
+    lapseCount === 1 ? "Forgotten 1 time" : `Forgotten ${lapseCount} times`;
+
+  return (
+    <span
+      className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground"
+      role="img"
+      aria-label={label}
+      title={label}
+    >
+      <Flame className="size-3.5" />
+      {lapseCount}
+    </span>
   );
 }
 
@@ -94,13 +124,19 @@ function getColumns(
     onStudyLaterToggleRequested,
   }: FlashcardRowActionHandlers,
   hasSelection: boolean,
+  showLapseCount: boolean,
 ): ManagerColumnDef<FlashcardManageItem>[] {
   return [
     {
       accessorKey: "front",
       size: 220,
       header: () => <TableHeaderLabel>Front</TableHeaderLabel>,
-      cell: ({ row }) => <FlashcardFrontCell item={row.original} />,
+      cell: ({ row }) => (
+        <FlashcardFrontCell
+          item={row.original}
+          showLapseCount={showLapseCount}
+        />
+      ),
     },
     {
       accessorKey: "subjectPath",
@@ -160,6 +196,7 @@ export function FlashcardsManagerTable({
   pageIndex,
   pageSize,
   isLoading,
+  showLapseCount,
   onCopyRequested,
   onMoveRequested,
   onPageIndexChange,
@@ -182,9 +219,11 @@ export function FlashcardsManagerTable({
           onStudyLaterToggleRequested,
         },
         hasSelection,
+        showLapseCount,
       ),
     [
       hasSelection,
+      showLapseCount,
       onCopyRequested,
       onDeleteRequested,
       onMoveRequested,

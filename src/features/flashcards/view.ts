@@ -9,8 +9,8 @@ export type FlashcardsView = (typeof flashcardsViewValues)[number];
 
 /**
  * Resolves a raw `view` search param to a valid flashcards view,
- * falling back to "review" for unknown values. Legacy `refine` links
- * (folded into manage) and the removed `statistics` view both land here.
+ * falling back to "review" for unknown values. Links to the removed
+ * `refine` and `statistics` views land here.
  *
  * Example: resolveFlashcardsView("statistics") // "review"
  */

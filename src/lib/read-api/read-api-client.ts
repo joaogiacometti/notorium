@@ -65,26 +65,6 @@ export async function fetchReadApiOrNull<TBody>(
 }
 
 /**
- * GET a read route and return either its typed body or the route's
- * `ActionErrorResult`, for callers that render error codes instead of
- * catching. Network failures still throw.
- *
- * @example
- * const page = await fetchReadApiResult<FlashcardManagePage>(
- *   "/api/flashcards/manage-page",
- *   { pageIndex: 0, pageSize: 25 },
- * );
- * if ("errorCode" in page) toast.error(page.errorCode);
- */
-export async function fetchReadApiResult<TBody>(
-  path: string,
-  query: ReadApiQuery = {},
-): Promise<TBody | ActionErrorResult> {
-  const response = await sendReadApiRequest(buildReadApiUrl(path, query));
-  return response.ok ? (response.body as TBody) : response.error;
-}
-
-/**
  * Build a same-origin read-route URL, dropping `undefined` values and
  * repeating the key for array values.
  *

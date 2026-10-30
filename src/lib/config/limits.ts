@@ -27,7 +27,6 @@ export const LIMITS = {
   // string near 4 KB, well under proxy URL limits; the client splits larger
   // copy selections into several requests.
   flashcardContentsReadMax: 100,
-  flashcardAiBackMax: 1200,
 
   subjectNameMax: 100,
 
@@ -55,8 +54,6 @@ export const LIMITS = {
   authRateLimitPrefix: "ratelimit:auth",
   passwordResetRateLimitPrefix: "ratelimit:auth:password-reset",
   passwordResetRateLimitPerDay: 3,
-  aiBackGenerationRateLimitPrefix: "ratelimit:ai:back",
-  aiBackGenerationRateLimitPerDay: 500,
   aiAssistantRateLimitPrefix: "ratelimit:ai:assistant",
   aiAssistantRateLimitPerDay: 300,
   // The whole chat is resent each turn (it is not persisted), so these caps
@@ -81,6 +78,5 @@ export const SUBJECT_PATH_MAX_CHARS =
   LIMITS.maxSubjectNestingDepth * (LIMITS.subjectNameMax + 2);
 
 export const AI_LIMITS = {
-  improveMaxTokens: 300,
   assistantMaxOutputTokens: 4000,
 } as const;

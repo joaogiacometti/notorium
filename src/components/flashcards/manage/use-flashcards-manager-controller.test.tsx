@@ -11,12 +11,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 
 type ManagerController = ReturnType<typeof useFlashcardsManagerController>;
 
-const fetchStrugglingFlashcardsMock = vi.hoisted(() => vi.fn());
 const fetchManagePageMock = vi.hoisted(() => vi.fn());
-const toastMock = vi.hoisted(() => ({
-  error: vi.fn(),
-  success: vi.fn(),
-}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
@@ -25,11 +20,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/read-api/flashcards", () => ({
   fetchFlashcardsManagePage: fetchManagePageMock,
-  fetchStrugglingFlashcards: fetchStrugglingFlashcardsMock,
-}));
-
-vi.mock("sonner", () => ({
-  toast: toastMock,
 }));
 
 const emptyPageData: FlashcardManagePage = {
@@ -88,50 +78,26 @@ describe("useFlashcardsManagerController", () => {
     vi.clearAllMocks();
   });
 
-  it("loads struggling cards and enters refine mode on start", async () => {
-    const cards = [
-      {
-        id: "card-1",
-        front: "Front",
-        back: "Back",
-        subjectId: "subject-1",
-        subjectName: "Biology",
-        reviewCount: 12,
-        lapseCount: 5,
-      },
-    ];
-    fetchStrugglingFlashcardsMock.mockResolvedValue({ success: true, cards });
+  it.each(["studyLater", "struggling"] as const)(
+    "reads the %s filter and resets to the first page",
+    async (filter) => {
+      await renderController();
 
-    await renderController();
+      await act(async () => {
+        controller.setPageIndex(2);
+      });
+      await act(async () => {
+        controller.setFilter(filter);
+      });
 
-    expect(controller.refineMode).toBe(false);
-
-    await act(async () => {
-      await controller.startRefineMode();
-    });
-
-    expect(controller.refineMode).toBe(true);
-    expect(controller.strugglingCards).toEqual(cards);
-    expect(controller.isLoadingStrugglingCards).toBe(false);
-  });
-
-  it("reads the study later filter and resets to the first page", async () => {
-    await renderController();
-
-    await act(async () => {
-      controller.setPageIndex(2);
-    });
-    await act(async () => {
-      controller.setFilter("studyLater");
-    });
-
-    expect(controller.pageIndex).toBe(0);
-    await vi.waitFor(() =>
-      expect(fetchManagePageMock).toHaveBeenLastCalledWith(
-        expect.objectContaining({ pageIndex: 0, filter: "studyLater" }),
-      ),
-    );
-  });
+      expect(controller.pageIndex).toBe(0);
+      await vi.waitFor(() =>
+        expect(fetchManagePageMock).toHaveBeenLastCalledWith(
+          expect.objectContaining({ pageIndex: 0, filter }),
+        ),
+      );
+    },
+  );
 
   it("surfaces a failed page read through query state", async () => {
     fetchManagePageMock.mockRejectedValue(new Error("offline"));
@@ -162,56 +128,5 @@ describe("useFlashcardsManagerController", () => {
       controller.setDialog(null);
     });
     expect(controller.dialog).toBeNull();
-  });
-
-  it("stays out of refine mode and toasts when loading fails", async () => {
-    fetchStrugglingFlashcardsMock.mockResolvedValue({
-      success: false,
-      errorCode: "auth.required",
-    });
-
-    await renderController();
-
-    await act(async () => {
-      await controller.startRefineMode();
-    });
-
-    expect(controller.refineMode).toBe(false);
-    expect(toastMock.error).toHaveBeenCalledOnce();
-  });
-
-  it("stays out of refine mode and toasts when the request itself fails", async () => {
-    fetchStrugglingFlashcardsMock.mockRejectedValue(new TypeError("offline"));
-
-    await renderController();
-
-    await act(async () => {
-      await controller.startRefineMode();
-    });
-
-    expect(controller.refineMode).toBe(false);
-    expect(controller.isLoadingStrugglingCards).toBe(false);
-    expect(toastMock.error).toHaveBeenCalledOnce();
-  });
-
-  it("clears refine state on exit", async () => {
-    fetchStrugglingFlashcardsMock.mockResolvedValue({
-      success: true,
-      cards: [],
-    });
-
-    await renderController();
-
-    await act(async () => {
-      await controller.startRefineMode();
-    });
-    expect(controller.refineMode).toBe(true);
-
-    await act(async () => {
-      controller.exitRefine();
-    });
-
-    expect(controller.refineMode).toBe(false);
-    expect(controller.strugglingCards).toEqual([]);
   });
 });

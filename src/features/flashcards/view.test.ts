@@ -27,8 +27,9 @@ describe("resolveFlashcardsView", () => {
 });
 
 describe("resolveFlashcardManageFilter", () => {
-  it("keeps the study later filter", () => {
+  it("keeps the study later and struggling filters", () => {
     expect(resolveFlashcardManageFilter("studyLater")).toBe("studyLater");
+    expect(resolveFlashcardManageFilter("struggling")).toBe("struggling");
   });
 
   it("drops missing or unknown filters", () => {
