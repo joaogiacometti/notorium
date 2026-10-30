@@ -78,6 +78,7 @@ export type PdfZoom =
   | { kind: "ratio"; ratio: number };
 
 export const PDF_FIT_PAGE: PdfZoom = { kind: "fit", mode: "page" };
+export const PDF_FIT_WIDTH: PdfZoom = { kind: "fit", mode: "width" };
 
 export interface PdfReaderFrame {
   columnWidth: number;
@@ -93,8 +94,8 @@ export interface PdfPageSize {
 
 /**
  * Rendered page width for a zoom setting. Page fit shows a whole page on a
- * desktop and fits a phone's width; page width can be far taller than the
- * screen on wide monitors, which is why it is not the default.
+ * desktop and fits a phone's width; page width fills the column, so a page
+ * can be taller than the screen.
  *
  * @example resolvePageWidth(PDF_FIT_PAGE, { columnWidth: 1400, columnHeight: 732, padding: 16 }, { width: 500, height: 700 }); // 500
  */

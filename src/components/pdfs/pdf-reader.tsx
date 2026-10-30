@@ -7,7 +7,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { savePdfReadingPage } from "@/app/actions/pdfs";
 import {
   actualSizeRatio,
-  PDF_FIT_PAGE,
+  PDF_FIT_WIDTH,
   PDF_PAGE_GAP_PX,
   type PdfPageSize,
   type PdfZoom,
@@ -46,8 +46,8 @@ interface PdfReaderProps {
 }
 
 /**
- * A continuous, vertically scrolling PDF reader that fits a whole page to
- * the column by default, zooms with buttons, pinch, or Ctrl/⌘ + wheel, renders only
+ * A continuous, vertically scrolling PDF reader that fits pages to the
+ * column width by default, zooms with buttons, pinch, or Ctrl/⌘ + wheel, renders only
  * the pages near the viewport, and remembers the page being read.
  *
  * @example
@@ -120,7 +120,7 @@ function PdfPageColumn({
 }: Readonly<PdfPageColumnProps>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState<PdfZoom>(PDF_FIT_PAGE);
+  const [zoom, setZoom] = useState<PdfZoom>(PDF_FIT_WIDTH);
   const [pageAspects, setPageAspects] = useState<ReadonlyMap<number, number>>(
     () => new Map(),
   );

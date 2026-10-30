@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import {
   PDF_FIT_PAGE,
+  PDF_FIT_WIDTH,
   PDF_ZOOM_MAX,
   PDF_ZOOM_MIN,
   type PdfZoom,
@@ -105,7 +106,7 @@ export function PdfReaderToolbar({
 
 const ZOOM_PRESETS: Record<string, PdfZoom> = {
   page: PDF_FIT_PAGE,
-  width: { kind: "fit", mode: "width" },
+  width: PDF_FIT_WIDTH,
   actual: { kind: "ratio", ratio: 1 },
 };
 
