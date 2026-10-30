@@ -56,3 +56,17 @@ export async function openSubjectSidebarActions(
   await expect(actionsButton).toBeVisible();
   await actionsButton.click();
 }
+
+/**
+ * Runs an item from a subject's Documents submenu ("Add note", "Add PDF") in
+ * the left-menu subject tree.
+ */
+export async function clickSubjectDocumentsMenuItem(
+  page: Page,
+  subjectName: string,
+  itemName: string,
+) {
+  await openSubjectSidebarActions(page, subjectName);
+  await page.getByRole("menuitem", { name: "Documents", exact: true }).click();
+  await page.getByRole("menuitem", { name: itemName, exact: true }).click();
+}

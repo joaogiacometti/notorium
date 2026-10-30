@@ -13,9 +13,9 @@ import {
   getNoteById,
 } from "./support/db";
 import {
+  clickSubjectDocumentsMenuItem,
   expandSubjectSidebarRow,
   openSubjectInSidebar,
-  openSubjectSidebarActions,
 } from "./support/subjects";
 
 function escapeRegex(value: string) {
@@ -61,8 +61,7 @@ async function openNoteActions(page: Page) {
 }
 
 async function clickSubjectNewNote(page: Page, subjectName: string) {
-  await openSubjectSidebarActions(page, subjectName);
-  await page.getByRole("menuitem", { name: "Add note", exact: true }).click();
+  await clickSubjectDocumentsMenuItem(page, subjectName, "Add note");
 }
 
 async function createSidebarNote(
