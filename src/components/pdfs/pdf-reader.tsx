@@ -7,14 +7,20 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { savePdfReadingPage } from "@/app/actions/pdfs";
 import {
   actualSizeRatio,
+  cropPageSize,
   PDF_FIT_WIDTH,
+  PDF_NARROW_COLUMN_PX,
+  PDF_NO_CROP,
   PDF_PAGE_GAP_PX,
+  type PdfCrop,
   type PdfPageSize,
   type PdfZoom,
   pageRenderPixelRatio,
+  readerColumnPadding,
   resolvePageWidth,
 } from "@/components/pdfs/pdf-page-layout";
 import { PdfReaderToolbar } from "@/components/pdfs/pdf-reader-toolbar";
+import { measurePdfTextCrop } from "@/components/pdfs/pdf-text-crop";
 import { usePdfGestureZoom } from "@/components/pdfs/use-pdf-gesture-zoom";
 import { usePdfReadingProgress } from "@/components/pdfs/use-pdf-reading-progress";
 import { usePdfScrollLayout } from "@/components/pdfs/use-pdf-scroll-layout";
@@ -38,7 +44,6 @@ const PDF_LOAD_OPTIONS = {
 };
 const A4_POINTS: PdfPageSize = { width: 595, height: 842 };
 const RENDER_WINDOW_PAGES = 2;
-const COLUMN_PADDING_PX = 16;
 
 interface PdfReaderProps {
   pdfId: string;
@@ -102,6 +107,7 @@ export function PdfReader({
           pageCount={opened.pageCount}
           initialPage={opened.initialPage}
           basePage={opened.basePage}
+          textCrop={opened.textCrop}
         />
       ) : (
         <PdfColumnSkeleton />
@@ -116,6 +122,8 @@ interface OpenedPdf {
   initialPage: number;
   /** The opening page's size, assumed for pages that have not loaded yet. */
   basePage: PdfPageSize;
+  /** The text column of the opening pages; null when there is nothing to trim. */
+  textCrop: PdfCrop | null;
 }
 
 interface PdfPageColumnProps extends OpenedPdf {
@@ -132,26 +140,31 @@ function PdfPageColumn({
   pageCount,
   initialPage,
   basePage,
+  textCrop,
 }: Readonly<PdfPageColumnProps>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<PdfZoom>(PDF_FIT_WIDTH);
+  // Null follows the screen: phones trim margins, wider screens do not.
+  const [trimMargins, setTrimMargins] = useState<boolean | null>(null);
   const [pageAspects, setPageAspects] = useState<ReadonlyMap<number, number>>(
     () => new Map(),
   );
   const column = useElementSize(scrollRef);
+  const padding = readerColumnPadding(column.width);
+  const trimmed = trimMargins ?? column.width < PDF_NARROW_COLUMN_PX;
+  const crop = (trimmed ? textCrop : null) ?? PDF_NO_CROP;
+  const visiblePage = cropPageSize(basePage, crop);
+  // The slot shows the visible part; the page renders wider behind it.
   const pageWidth = resolvePageWidth(
     zoom,
-    {
-      columnWidth: column.width,
-      columnHeight: column.height,
-      padding: COLUMN_PADDING_PX,
-    },
-    basePage,
+    { columnWidth: column.width, columnHeight: column.height, padding },
+    visiblePage,
   );
-  const zoomRatio = actualSizeRatio(pageWidth, basePage);
+  const renderWidth = pageWidth / crop.width;
+  const zoomRatio = actualSizeRatio(pageWidth, visiblePage);
   const pageHeights = buildPageHeights(
-    pageWidth,
+    renderWidth,
     pageCount,
     pageAspects,
     basePage.height / basePage.width,
@@ -197,6 +210,9 @@ function PdfPageColumn({
         zoomRatio={zoomRatio}
         onZoomChange={setZoom}
         onPageJump={layout.scrollToPage}
+        trimMargins={textCrop !== null && trimmed}
+        canTrimMargins={textCrop !== null}
+        onTrimMarginsChange={setTrimMargins}
       />
       <div
         ref={scrollRef}
@@ -205,7 +221,7 @@ function PdfPageColumn({
         <div
           ref={contentRef}
           className="flex w-fit min-w-full origin-top flex-col items-center"
-          style={{ gap: PDF_PAGE_GAP_PX, padding: COLUMN_PADDING_PX }}
+          style={{ gap: PDF_PAGE_GAP_PX, padding }}
         >
           {pageHeights.map((height, index) => {
             const pageNumber = index + 1;
@@ -214,6 +230,8 @@ function PdfPageColumn({
                 key={`page-${pageNumber}`}
                 pageNumber={pageNumber}
                 width={pageWidth}
+                renderWidth={renderWidth}
+                cropLeft={crop.left * renderWidth}
                 height={height}
                 rendered={
                   Math.abs(pageNumber - layout.currentPage) <=
@@ -231,7 +249,11 @@ function PdfPageColumn({
 
 interface PdfPageSlotProps {
   pageNumber: number;
+  /** The visible slot width; the page renders at `renderWidth` behind it. */
   width: number;
+  renderWidth: number;
+  /** How far the page shifts left so its trimmed margin sits outside the slot. */
+  cropLeft: number;
   height: number;
   rendered: boolean;
   onAspect: (pageNumber: number, aspect: number) => void;
@@ -242,6 +264,8 @@ interface PdfPageSlotProps {
 function PdfPageSlot({
   pageNumber,
   width,
+  renderWidth,
+  cropLeft,
   height,
   rendered,
   onAspect,
@@ -254,25 +278,30 @@ function PdfPageSlot({
       style={{ width, height }}
     >
       {rendered ? (
-        <Page
-          pageNumber={pageNumber}
-          width={width}
-          // react-pdf suspends by default; a page suspending would hide the
-          // whole column through the dynamic-import boundary, which collapses
-          // it and resets the scroll position to the top.
-          suspense={false}
-          className="size-full"
-          devicePixelRatio={pageRenderPixelRatio(
-            width,
-            height,
-            window.devicePixelRatio,
-          )}
-          renderAnnotationLayer={false}
-          loading={placeholder}
-          onLoadSuccess={(page) =>
-            onAspect(pageNumber, page.originalHeight / page.originalWidth)
-          }
-        />
+        <div
+          className="h-full"
+          style={{ width: renderWidth, marginLeft: -cropLeft }}
+        >
+          <Page
+            pageNumber={pageNumber}
+            width={renderWidth}
+            // react-pdf suspends by default; a page suspending would hide the
+            // whole column through the dynamic-import boundary, which collapses
+            // it and resets the scroll position to the top.
+            suspense={false}
+            className="size-full"
+            devicePixelRatio={pageRenderPixelRatio(
+              renderWidth,
+              height,
+              window.devicePixelRatio,
+            )}
+            renderAnnotationLayer={false}
+            loading={placeholder}
+            onLoadSuccess={(page) =>
+              onAspect(pageNumber, page.originalHeight / page.originalWidth)
+            }
+          />
+        </div>
       ) : (
         placeholder
       )}
@@ -312,7 +341,20 @@ async function openPdfAt(
     pageCount: document.numPages,
     initialPage,
     basePage: await readPageSize(document, initialPage),
+    textCrop: await readTextCrop(document, initialPage),
   };
+}
+
+// Trimming is an enhancement: a page that fails to measure opens untrimmed.
+async function readTextCrop(
+  document: PDFDocumentProxy,
+  pageNumber: number,
+): Promise<PdfCrop | null> {
+  try {
+    return await measurePdfTextCrop(document, pageNumber);
+  } catch {
+    return null;
+  }
 }
 
 // Measuring a real page before the first layout keeps placeholder heights

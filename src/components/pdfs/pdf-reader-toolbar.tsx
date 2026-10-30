@@ -14,9 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,10 @@ interface PdfReaderToolbarProps {
   zoomRatio: number;
   onZoomChange: (zoom: PdfZoom) => void;
   onPageJump: (page: number) => void;
+  trimMargins: boolean;
+  /** False when the PDF has no text column to trim to, such as scans. */
+  canTrimMargins: boolean;
+  onTrimMarginsChange: (trim: boolean) => void;
 }
 
 export function PdfReaderToolbar({
@@ -38,6 +44,9 @@ export function PdfReaderToolbar({
   zoomRatio,
   onZoomChange,
   onPageJump,
+  trimMargins,
+  canTrimMargins,
+  onTrimMarginsChange,
 }: Readonly<PdfReaderToolbarProps>) {
   return (
     <div className="flex items-center justify-between gap-2">
@@ -86,6 +95,9 @@ export function PdfReaderToolbar({
           zoom={zoom}
           zoomRatio={zoomRatio}
           onZoomChange={onZoomChange}
+          trimMargins={trimMargins}
+          canTrimMargins={canTrimMargins}
+          onTrimMarginsChange={onTrimMarginsChange}
         />
         <Button
           type="button"
@@ -110,17 +122,24 @@ const ZOOM_PRESETS: Record<string, PdfZoom> = {
   actual: { kind: "ratio", ratio: 1 },
 };
 
-interface ZoomPresetMenuProps {
-  zoom: PdfZoom;
-  zoomRatio: number;
-  onZoomChange: (zoom: PdfZoom) => void;
-}
+type ZoomPresetMenuProps = Pick<
+  PdfReaderToolbarProps,
+  | "zoom"
+  | "zoomRatio"
+  | "onZoomChange"
+  | "trimMargins"
+  | "canTrimMargins"
+  | "onTrimMarginsChange"
+>;
 
 // The pdf.js viewer's zoom presets.
 function ZoomPresetMenu({
   zoom,
   zoomRatio,
   onZoomChange,
+  trimMargins,
+  canTrimMargins,
+  onTrimMarginsChange,
 }: Readonly<ZoomPresetMenuProps>) {
   return (
     <DropdownMenu>
@@ -151,6 +170,14 @@ function ZoomPresetMenu({
             Actual size
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuCheckboxItem
+          checked={trimMargins}
+          disabled={!canTrimMargins}
+          onCheckedChange={onTrimMarginsChange}
+        >
+          Trim margins
+        </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -3,10 +3,12 @@ import {
   actualSizeRatio,
   buildPageTops,
   clampPdfZoom,
+  cropPageSize,
   findPageAtOffset,
   PDF_FIT_PAGE,
   pageRenderPixelRatio,
   parsePageInput,
+  readerColumnPadding,
   resolvePageWidth,
   scrollAnchorAt,
   scrollOffsetOf,
@@ -136,12 +138,42 @@ describe("pageRenderPixelRatio", () => {
     expect(pageRenderPixelRatio(800, 1100, 2)).toBe(2);
   });
 
-  it("caps very dense screens at 2", () => {
-    expect(pageRenderPixelRatio(800, 1100, 3)).toBe(2);
+  it("renders phone screens at their full 3x density", () => {
+    expect(pageRenderPixelRatio(400, 560, 3)).toBe(3);
+  });
+
+  it("caps denser screens at 3", () => {
+    expect(pageRenderPixelRatio(400, 560, 4)).toBe(3);
   });
 
   it("lowers the ratio so a zoomed canvas stays under the pixel limit", () => {
     const ratio = pageRenderPixelRatio(3000, 4200, 2);
     expect(3000 * 4200 * ratio ** 2).toBeLessThanOrEqual(16_000_000);
+  });
+});
+
+describe("cropPageSize", () => {
+  it("keeps the cropped width and the full height", () => {
+    expect(
+      cropPageSize({ width: 600, height: 800 }, { left: 0.1, width: 0.75 }),
+    ).toEqual({ width: 450, height: 800 });
+  });
+
+  it("sizes a page width fit by its visible part", () => {
+    const frame = { columnWidth: 400, columnHeight: 700, padding: 4 };
+    const visible = cropPageSize(
+      { width: 600, height: 800 },
+      { left: 0.1, width: 0.75 },
+    );
+    expect(
+      resolvePageWidth({ kind: "fit", mode: "width" }, frame, visible),
+    ).toBe(392);
+  });
+});
+
+describe("readerColumnPadding", () => {
+  it("keeps less space around pages on phones", () => {
+    expect(readerColumnPadding(390)).toBe(4);
+    expect(readerColumnPadding(1024)).toBe(16);
   });
 });

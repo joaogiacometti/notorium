@@ -1,6 +1,8 @@
 export const PDF_PAGE_GAP_PX = 12;
 export const PDF_ZOOM_MIN = 0.25;
 export const PDF_ZOOM_MAX = 4;
+// Columns narrower than Tailwind's `sm` breakpoint are phones.
+export const PDF_NARROW_COLUMN_PX = 640;
 // PDF sizes are in points (1/72 in); "actual size" shows them at CSS inches.
 const PDF_POINTS_TO_CSS_PX = 96 / 72;
 const PDF_ZOOM_STEP = 0.25;
@@ -92,10 +94,29 @@ export interface PdfPageSize {
   height: number;
 }
 
+/** A horizontal crop of every page, as fractions of the page width. */
+export interface PdfCrop {
+  left: number;
+  width: number;
+}
+
+export const PDF_NO_CROP: PdfCrop = { left: 0, width: 1 };
+
+/** The page size left visible by a crop, so zoom math sizes the visible part. */
+export function cropPageSize(page: PdfPageSize, crop: PdfCrop): PdfPageSize {
+  return { width: page.width * crop.width, height: page.height };
+}
+
+/** Space around the pages: phones keep less so the page gets the width. */
+export function readerColumnPadding(columnWidth: number): number {
+  return columnWidth < PDF_NARROW_COLUMN_PX ? 4 : 16;
+}
+
 /**
  * Rendered page width for a zoom setting. Page fit shows a whole page on a
  * desktop and fits a phone's width; page width fills the column, so a page
- * can be taller than the screen.
+ * can be taller than the screen. Pass a cropped page size (`cropPageSize`) to
+ * size only the part of the page left visible.
  *
  * @example resolvePageWidth(PDF_FIT_PAGE, { columnWidth: 1400, columnHeight: 732, padding: 16 }, { width: 500, height: 700 }); // 500
  */
@@ -123,7 +144,7 @@ export function actualSizeRatio(pageWidth: number, page: PdfPageSize): number {
 // Browsers (iOS Safari most strictly) refuse or blank canvases above about
 // 16.7 million pixels, so high zoom trades sharpness for a drawable canvas.
 const MAX_CANVAS_PIXELS = 16_000_000;
-const MAX_RENDER_PIXEL_RATIO = 2;
+const MAX_RENDER_PIXEL_RATIO = 3;
 
 /** Device pixel ratio for a page canvas, bounded so the canvas stays drawable. */
 export function pageRenderPixelRatio(
