@@ -109,6 +109,15 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "limits.flashcardLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
   "limits.aiAssistantPerDay": "Daily limit reached for the study assistant.",
+  "limits.pdfLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} PDFs per subject.`,
+  "limits.pdfSizeLimit": (params) =>
+    `File size limit exceeded: PDFs can be at most ${params?.maxMb} MB.`,
+  "limits.pdfUploadsPerDay": "Daily PDF upload limit reached.",
+  "pdfs.invalidData": "Invalid PDF data.",
+  "pdfs.notFound": "PDF not found.",
+  "pdfs.notPdf": "The uploaded file is not a PDF.",
+  "pdfs.uploadMissing": "The uploaded file could not be found. Try again.",
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
   "documents.invalidData": "Invalid document data.",

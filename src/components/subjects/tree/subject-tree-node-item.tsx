@@ -34,6 +34,7 @@ interface SubjectTreeNodeItemProps {
   onRetryDocuments: (subjectId: string) => void;
   onCreateChild: (parentSubjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
+  onCreatePdf: (subjectId: string) => void;
   onCreateFlashcard: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
@@ -61,6 +62,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     onRetryDocuments,
     onCreateChild,
     onCreateNote,
+    onCreatePdf,
     onCreateFlashcard,
     onEdit,
     onDelete,
@@ -113,6 +115,7 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
           node={node}
           onCreateChild={onCreateChild}
           onCreateNote={onCreateNote}
+          onCreatePdf={onCreatePdf}
           onCreateFlashcard={onCreateFlashcard}
           onEdit={onEdit}
           onDelete={onDelete}

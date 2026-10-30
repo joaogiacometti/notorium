@@ -22,6 +22,12 @@ describe("getActiveDocumentSubjectId", () => {
     );
   });
 
+  it("returns the subject id for PDF documents", () => {
+    expect(getActiveDocumentSubjectId("/subjects/s1/documents/pdfs/p1")).toBe(
+      "s1",
+    );
+  });
+
   it("returns undefined when no document is open", () => {
     expect(getActiveDocumentSubjectId("/subjects/s1")).toBeUndefined();
     expect(

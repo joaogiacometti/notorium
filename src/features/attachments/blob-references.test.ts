@@ -7,9 +7,14 @@ vi.mock("@/db/index", () => ({
   getDb: () => ({ select: selectMock }),
 }));
 
+const pdfDocumentTable = vi.hoisted(() => ({
+  blobPathname: "pdf_document.blob_pathname",
+}));
+
 vi.mock("@/db/schema", () => ({
   note: "note_table",
   flashcard: "flashcard_table",
+  pdfDocument: pdfDocumentTable,
 }));
 
 vi.mock("@/lib/editor/rich-text", () => ({
@@ -20,7 +25,10 @@ vi.mock("@/lib/editor/rich-text", () => ({
 describe("collectAllReferencedPathnames", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fromMock.mockImplementation((table: string) => {
+    fromMock.mockImplementation((table: unknown) => {
+      if (table === pdfDocumentTable) {
+        return Promise.resolve([{ blobPathname: "notorium/pdfs/u/book.pdf" }]);
+      }
       switch (table) {
         case "note_table":
           return Promise.resolve([{ content: "note-a" }, { content: null }]);
@@ -42,6 +50,8 @@ describe("collectAllReferencedPathnames", () => {
 
     const referenced = await collectAllReferencedPathnames();
 
-    expect(referenced).toEqual(new Set(["note-a", "front-aback-a"]));
+    expect(referenced).toEqual(
+      new Set(["note-a", "front-aback-a", "notorium/pdfs/u/book.pdf"]),
+    );
   });
 });

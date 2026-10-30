@@ -1,6 +1,10 @@
 import { parseOwnedAttachmentPathname } from "@/features/attachments/pathname";
 import { getOptionalSession } from "@/lib/auth/auth";
-import { getMediaStorageProvider } from "@/lib/media-storage/provider";
+import { parseByteRangeHeader } from "@/lib/media-storage/byte-range";
+import {
+  getMediaStorageProvider,
+  type ReadBlobResult,
+} from "@/lib/media-storage/provider";
 
 export async function GET(request: Request): Promise<Response> {
   const session = await getOptionalSession();
@@ -26,24 +30,36 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
-    const image = await provider.readImage({ pathname: parsedPath.pathname });
+    const blob = await provider.readBlob({
+      pathname: parsedPath.pathname,
+      range: parseByteRangeHeader(request.headers.get("range")) ?? undefined,
+    });
 
-    if (!image) {
+    if (!blob) {
       return new Response(null, { status: 404 });
     }
 
-    const headers = new Headers();
-    headers.set("content-type", image.contentType);
-    headers.set("content-disposition", image.contentDisposition);
-    headers.set("cache-control", image.cacheControl);
-    headers.set("etag", image.etag);
-    headers.set("content-length", String(image.size));
-
-    return new Response(image.stream, {
-      status: 200,
-      headers,
+    return new Response(blob.stream, {
+      status: blob.contentRange ? 206 : 200,
+      headers: buildBlobResponseHeaders(blob),
     });
   } catch {
     return new Response(null, { status: 502 });
   }
+}
+
+// `accept-ranges` lets pdf.js switch to partial reads, so a large PDF loads
+// only the pages being viewed instead of the whole file.
+function buildBlobResponseHeaders(blob: ReadBlobResult): Headers {
+  const headers = new Headers();
+  headers.set("content-type", blob.contentType);
+  headers.set("content-disposition", blob.contentDisposition);
+  headers.set("cache-control", blob.cacheControl);
+  headers.set("etag", blob.etag);
+  headers.set("content-length", String(blob.size));
+  headers.set("accept-ranges", "bytes");
+  if (blob.contentRange) {
+    headers.set("content-range", blob.contentRange);
+  }
+  return headers;
 }

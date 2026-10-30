@@ -1,8 +1,17 @@
-import type { DocumentListItem } from "@/features/documents/types";
+import type {
+  DocumentKind,
+  DocumentListItem,
+} from "@/features/documents/types";
 import type { SubjectEditDto } from "@/lib/server/api-contracts";
 
 /** Subject passed to the rename dialog from a tree row. */
 export type SubjectEditTarget = SubjectEditDto;
+
+/** Document kind and subject a create dialog was opened for from a tree row. */
+export interface DocumentCreateTarget {
+  kind: DocumentKind;
+  subjectId: string;
+}
 
 /** Subject passed to the delete dialog from a tree row (path used as label). */
 export interface SubjectDeleteTarget {

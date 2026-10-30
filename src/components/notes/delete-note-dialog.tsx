@@ -1,11 +1,11 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useTransition } from "react";
-import { toast } from "sonner";
-import { deleteNote } from "@/app/actions/notes";
-import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
-import { t } from "@/lib/server/server-action-errors";
+import { DeleteDocumentDialog } from "@/components/documents/delete-document-dialog";
+import {
+  DOCUMENT_KIND_ACTIONS,
+  runDocumentAction,
+} from "@/components/documents/document-kind-actions";
 
 interface DeleteNoteDialogProps {
   noteId: string;
@@ -22,42 +22,20 @@ export function DeleteNoteDialog({
   onOpenChange,
   onSuccess,
 }: Readonly<DeleteNoteDialogProps>) {
-  const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
 
-  function handleDelete() {
-    startTransition(async () => {
-      const result = await deleteNote({ id: noteId });
-      if (result.success) {
-        await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          onOpenChange(false);
-        }
-      } else {
-        toast.error(t(result.errorCode, result.errorParams));
-      }
-    });
-  }
-
   return (
-    <ActionConfirmationDialog
+    <DeleteDocumentDialog
+      kindLabel={DOCUMENT_KIND_ACTIONS.note.label}
+      title={noteTitle}
       open={open}
       onOpenChange={onOpenChange}
-      title="Delete Note"
-      description={
-        <>
-          Are you sure you want to delete{" "}
-          <span className="font-semibold text-foreground">{noteTitle}</span>?
-          This action cannot be undone.
-        </>
+      onDelete={() =>
+        runDocumentAction("note", queryClient, () =>
+          DOCUMENT_KIND_ACTIONS.note.remove(noteId),
+        )
       }
-      confirmLabel="Delete"
-      pendingLabel="Deleting..."
-      confirmVariant="destructive"
-      isPending={isPending}
-      onConfirm={handleDelete}
+      onSuccess={onSuccess}
     />
   );
 }

@@ -1,32 +1,29 @@
 import "server-only";
 
-import { del, get, list, put } from "@vercel/blob";
+import { BlobNotFoundError, del, get, head, list, put } from "@vercel/blob";
+import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
 import { getServerEnv } from "@/env";
 import type {
+  CreateClientUploadTokenInput,
   DeleteImagesInput,
   ListImagesInput,
   MediaStorageProvider,
-  ReadImageInput,
-  ReadImageResult,
+  ReadBlobInput,
+  ReadBlobResult,
   StoredBlobEntry,
+  StoredBlobHead,
   UploadImageInput,
   UploadImageResult,
 } from "@/lib/media-storage/provider";
-
-function sanitizeFileName(fileName: string): string {
-  const normalized = fileName.trim().replaceAll(/[^a-zA-Z0-9._-]/g, "-");
-
-  if (normalized.length === 0) {
-    return "pasted-image";
-  }
-
-  return normalized.slice(0, 120);
-}
+import { buildMediaStoragePathname } from "@/lib/media-storage/storage-pathname";
 
 function buildPath(input: UploadImageInput): string {
-  const safeName = sanitizeFileName(input.fileName);
-
-  return `notorium/${input.context}/${input.userId}/${crypto.randomUUID()}-${safeName}`;
+  return buildMediaStoragePathname({
+    userId: input.userId,
+    context: input.context,
+    fileName: input.fileName,
+    fallbackFileName: "pasted-image",
+  });
 }
 
 export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
@@ -56,14 +53,17 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     };
   }
 
-  async function readImage(
-    input: ReadImageInput,
-  ): Promise<ReadImageResult | null> {
+  async function readBlob(
+    input: ReadBlobInput,
+  ): Promise<ReadBlobResult | null> {
     const result = await get(input.pathname, {
       access: "private",
       token: getBlobToken(),
+      headers: input.range ? { range: input.range } : undefined,
     });
 
+    // The SDK reports a 206 partial response as statusCode 200; the raw
+    // `content-range` header is what distinguishes it.
     if (result?.statusCode !== 200 || !result.blob.contentType) {
       return null;
     }
@@ -75,7 +75,33 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
       cacheControl: result.blob.cacheControl,
       etag: result.blob.etag,
       size: result.blob.size,
+      contentRange: result.headers.get("content-range"),
     };
+  }
+
+  async function headBlob(pathname: string): Promise<StoredBlobHead | null> {
+    try {
+      const result = await head(pathname, { token: getBlobToken() });
+      return { size: result.size, contentType: result.contentType };
+    } catch (error) {
+      if (error instanceof BlobNotFoundError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async function createClientUploadToken(
+    input: CreateClientUploadTokenInput,
+  ): Promise<string> {
+    return generateClientTokenFromReadWriteToken({
+      token: getBlobToken(),
+      pathname: input.pathname,
+      maximumSizeInBytes: input.maximumSizeInBytes,
+      allowedContentTypes: input.allowedContentTypes,
+      addRandomSuffix: false,
+      allowOverwrite: false,
+    });
   }
 
   async function deleteImages(input: DeleteImagesInput): Promise<void> {
@@ -130,7 +156,9 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
 
   return {
     uploadImage,
-    readImage,
+    readBlob,
+    headBlob,
+    createClientUploadToken,
     deleteImages,
     listImagePathnames,
     listImageEntries,

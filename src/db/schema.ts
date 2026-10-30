@@ -187,6 +187,43 @@ export const note = pgTable(
   ],
 );
 
+// An uploaded PDF document. The file lives in media storage at `blobPathname`;
+// `lastPage` is the reading position. Saving it leaves `updatedAt` untouched
+// so reading never reorders document lists.
+export const pdfDocument = pgTable(
+  "pdf_document",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    title: text("title").notNull(),
+    fileName: text("file_name").notNull(),
+    blobPathname: text("blob_pathname").notNull().unique(),
+    sizeBytes: integer("size_bytes").notNull(),
+    pageCount: integer("page_count"),
+    lastPage: integer("last_page").notNull().default(1),
+    subjectId: text("subject_id")
+      .notNull()
+      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("pdf_document_subjectId_idx").on(table.subjectId),
+    index("pdf_document_userId_idx").on(table.userId),
+    index("pdf_document_userId_updatedAt_idx").on(
+      table.userId,
+      table.updatedAt,
+    ),
+  ],
+);
+
 export const flashcard = pgTable(
   "flashcard",
   {
@@ -330,6 +367,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   subjects: many(subject),
   notes: many(note),
+  pdfDocuments: many(pdfDocument),
   flashcards: many(flashcard),
   flashcardReviewLogs: many(flashcardReviewLog),
 }));
@@ -360,6 +398,7 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
     references: [user.id],
   }),
   notes: many(note),
+  pdfDocuments: many(pdfDocument),
   flashcards: many(flashcard),
 }));
 
@@ -370,6 +409,17 @@ export const noteRelations = relations(note, ({ one }) => ({
   }),
   user: one(user, {
     fields: [note.userId],
+    references: [user.id],
+  }),
+}));
+
+export const pdfDocumentRelations = relations(pdfDocument, ({ one }) => ({
+  subject: one(subject, {
+    fields: [pdfDocument.subjectId],
+    references: [subject.id],
+  }),
+  user: one(user, {
+    fields: [pdfDocument.userId],
     references: [user.id],
   }),
 }));

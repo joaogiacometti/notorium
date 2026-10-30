@@ -66,7 +66,7 @@ describe("SubjectActionsMenu", () => {
     container.remove();
   });
 
-  it("offers Add note directly and opens its creation flow", () => {
+  it("offers Add note under Documents and opens its creation flow", () => {
     const onCreateNote = vi.fn();
     const node = {
       id: "biology",
@@ -80,6 +80,7 @@ describe("SubjectActionsMenu", () => {
           node={node}
           onCreateChild={vi.fn()}
           onCreateNote={onCreateNote}
+          onCreatePdf={vi.fn()}
           onCreateFlashcard={vi.fn()}
           onEdit={vi.fn()}
           onDelete={vi.fn()}
@@ -98,5 +99,37 @@ describe("SubjectActionsMenu", () => {
       named("Finish menu close")?.click();
     });
     expect(onCreateNote).toHaveBeenCalledWith("biology");
+  });
+
+  it("offers Add PDF under Documents and opens its upload flow", () => {
+    const onCreatePdf = vi.fn();
+    const node = {
+      id: "biology",
+      name: "Biology",
+      path: "Biology",
+      dueFlashcardCount: 0,
+    } as SubjectTreeNode;
+    act(() =>
+      root.render(
+        <SubjectActionsMenu
+          node={node}
+          onCreateChild={vi.fn()}
+          onCreateNote={vi.fn()}
+          onCreatePdf={onCreatePdf}
+          onCreateFlashcard={vi.fn()}
+          onEdit={vi.fn()}
+          onDelete={vi.fn()}
+        />,
+      ),
+    );
+
+    const buttons = [...container.querySelectorAll("button")];
+    const named = (label: string) =>
+      buttons.find((button) => button.textContent?.trim() === label);
+    act(() => {
+      named("Add PDF")?.click();
+      named("Finish menu close")?.click();
+    });
+    expect(onCreatePdf).toHaveBeenCalledWith("biology");
   });
 });

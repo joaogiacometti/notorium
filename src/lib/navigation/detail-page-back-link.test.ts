@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getDocumentDetailHref,
   getFlashcardDetailHref,
   getFlashcardExamSessionHref,
   getFlashcardReviewSessionHref,
@@ -57,6 +58,15 @@ describe("detail href builders", () => {
     expect(getNoteDetailHref("subject-1", "note-1")).toBe(
       "/subjects/subject-1/documents/notes/note-1",
     );
+  });
+
+  it("routes each document kind to its detail page", () => {
+    expect(
+      getDocumentDetailHref({ kind: "note", subjectId: "s1", id: "n1" }),
+    ).toBe("/subjects/s1/documents/notes/n1");
+    expect(
+      getDocumentDetailHref({ kind: "pdf", subjectId: "s1", id: "p1" }),
+    ).toBe("/subjects/s1/documents/pdfs/p1");
   });
 });
 

@@ -38,17 +38,17 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Subject fields: name.
 - Subject names must be unique among siblings for each user, including top-level subjects. Creating, renaming, or moving a subject to a name already used under the same parent is rejected with a duplicate-name error. The same name can appear under different parents. Uniqueness is case-sensitive.
 - Creating a subject with `Parent::Child` uses the existing `Parent` path as the parent and stores `Child` as the new subject name. If any path segment does not exist, it is created automatically in order. When creation starts from a selected parent, the path is resolved relative to that parent. All missing segments are inserted atomically. The `::` delimiter is reserved for path creation and cannot be stored in a renamed subject.
-- Subjects are folders: they hold notes, flashcards, and subfolders, and are managed entirely in the sidebar tree. A folder icon marks each subject; clicking its label expands or collapses it like the chevron (subjects with no subfolders or notes have nothing to expand, so their label stays inert). Subjects have no page of their own; visiting `/subjects/[id]` directly redirects home.
+- Subjects are folders: they hold notes, PDFs, flashcards, and subfolders, and are managed entirely in the sidebar tree. A folder icon marks each subject; clicking its label expands or collapses it like the chevron (subjects with no subfolders or documents have nothing to expand, so their label stays inert). Subjects have no page of their own; visiting `/subjects/[id]` directly redirects home.
 
 ### Documents
 
-- Each subject has a Documents area that holds its notes.
-- Document navigation lives in the global subject tree sidebar (the app frame): expanding a subject lists its notes, so note detail pages have no in-page documents sidebar and the editor spans the full content width. While a subject's documents load, the expanded subject shows a loading row; if loading fails, that row becomes "Couldn't load documents." with a Retry action instead of spinning forever, and collapsing and re-expanding the subject also retries.
-- Each note row in the tree sidebar has a kebab menu with the same actions as its detail-page header menu, working without opening the note, plus Rename (changes the title in a dialog): Rename, Copy as rich text, Copy as plain text, and Delete. These act on the document's last saved state; renames and deletes refresh the subject's rows in place.
+- Each subject has a Documents area that holds its notes and PDFs.
+- Document navigation lives in the global subject tree sidebar (the app frame): expanding a subject lists its notes and PDFs, so document detail pages have no in-page documents sidebar and the editor spans the full content width. While a subject's documents load, the expanded subject shows a loading row; if loading fails, that row becomes "Couldn't load documents." with a Retry action instead of spinning forever, and collapsing and re-expanding the subject also retries.
+- Each note row in the tree sidebar has a kebab menu with the same actions as its detail-page header menu, working without opening the note, plus Rename (changes the title in a dialog): Rename, Copy as rich text, Copy as plain text, and Delete. A PDF row offers Rename and Delete. These act on the document's last saved state; renames and deletes refresh the subject's rows in place.
 - Document row management (rename, delete, copy) happens through the subject tree sidebar's kebab menus. The sidebar remains the persistent navigator.
-- The tree sidebar supports drag-and-drop reorganization. A subject (including a subsubject) can be dragged onto another subject to become its child, or onto the "Move to top level" zone to become a root subject; that zone only appears while dragging a nested subject, since root subjects are already top level. A subject cannot be dropped onto itself, its current parent, or one of its own descendants. A note can be dragged onto any subject to move it under that subject; documents cannot be dropped on the top-level zone (every document belongs to a subject) or onto the subject they already belong to. Concurrent subject moves for the same user are serialized so overlapping moves cannot create a hierarchy cycle. Moves are rejected when the destination would exceed its note limit, and the dragged row shows a spinner while the move is in flight. The destination branch expands to reveal the moved item.
-- Each subject's sidebar kebab menu offers Subfolder and Add note directly; each prompts for a title and opens the new item. Rename changes the subject's name in a dialog.
-- Note detail pages offer a zen mode toggle next to the document actions menu. Zen mode expands the editor to a full-screen, distraction-free view that hides the breadcrumb bar while keeping the title and document actions available. `Escape` or the toggle exits; an `Escape` that closes a dialog or menu does not also exit zen mode.
+- The tree sidebar supports drag-and-drop reorganization. A subject (including a subsubject) can be dragged onto another subject to become its child, or onto the "Move to top level" zone to become a root subject; that zone only appears while dragging a nested subject, since root subjects are already top level. A subject cannot be dropped onto itself, its current parent, or one of its own descendants. A note or PDF can be dragged onto any subject to move it under that subject; documents cannot be dropped on the top-level zone (every document belongs to a subject) or onto the subject they already belong to. Concurrent subject moves for the same user are serialized so overlapping moves cannot create a hierarchy cycle. Moves are rejected when the destination would exceed its note or PDF limit, and the dragged row shows a spinner while the move is in flight. The destination branch expands to reveal the moved item.
+- Each subject's sidebar kebab menu offers Subfolder directly and Add note and Add PDF under a Documents submenu (flashcard actions sit under a Flashcards submenu); each prompts for a title (Add PDF also for the file) and opens the new item. Rename changes the subject's name in a dialog.
+- Note and PDF detail pages offer a zen mode toggle next to the document actions menu. Zen mode expands the editor or reader to a full-screen, distraction-free view that hides the breadcrumb bar while keeping the title and document actions available. `Escape` or the toggle exits; an `Escape` that closes a dialog or menu does not also exit zen mode.
 
 #### Notes
 
@@ -66,6 +66,16 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Image uploads accept files up to 4 MiB. Authenticated upload attempts (including invalid or oversized requests) count toward the 200-per-day allowance, checked before reading the body. The total multipart body is capped at 4 MiB plus 64 KiB of overhead; oversized uploads return a size-limit error.
 - Uploaded note and flashcard images are automatically optimized to WebP on upload, with a maximum dimension cap, to reduce stored size and bandwidth without a visible quality loss. The original is kept only if optimization would not make the file smaller.
 - When AI is configured, users can ask the study assistant to propose flashcards using the open note’s current content, then review and create them in chat.
+
+#### PDFs
+
+- Users upload PDF files (books, articles) to a subject and read them in the app on phone and desktop. Annotations, highlights, and two-page spreads are not supported.
+- Add PDF opens a dialog with a file picker and a title that defaults to the file name without its extension. Only PDF files up to 100 MB are accepted; the upload shows progress and goes straight from the browser to private blob storage, then the new PDF opens. Starting an upload counts toward a 50-per-day allowance.
+- The reader shows pages in one continuous vertical column, sized to Page fit by default, so a whole page is visible (on a phone this fits the page to the screen width). Only pages near the viewport are rendered, and the file is fetched in byte ranges, so large books open without downloading the whole file.
+- Zoom is shown as a percentage of the page's actual (printed) size and ranges from 25% to 400%: the − and + buttons step by 25%, the percentage button opens the presets Page fit, Page width, and Actual size, and pinch (touch) or Ctrl/⌘ + scroll wheel (mouse, trackpad pinch) zoom the PDF instead of the page. Zooming and resizing keep the reader on the same spot of the same page.
+- The toolbar shows the current page and page count with previous and next page buttons; typing a page number jumps to that page.
+- The reader remembers the last page read (only the page, not the position within it) and reopens there. Saving the page does not change the document's recency in lists.
+- The PDF header kebab menu offers Rename, Download, and Delete. Deleting a PDF removes it from the app; its stored file is removed by the scheduled orphan sweep.
 
 ### Flashcards
 
@@ -261,6 +271,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 - A user can create a maximum of 50 subjects.
 - A user can create a maximum of 100 notes per subject.
+- A user can upload a maximum of 20 PDFs per subject, each up to 100 MB, and start at most 50 PDF uploads per day.
 - A user can create a maximum of 2000 flashcards per subject.
 - A user can send a maximum of 300 study assistant messages per day.
 - Flashcard proposals use the study assistant message limit.
@@ -268,7 +279,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 ## Data Ownership and Security Rules
 
 - All user-owned data must be scoped by authenticated `userId`.
-- A user can only access or mutate their own subjects, notes, and flashcards.
+- A user can only access or mutate their own subjects, notes, PDFs, and flashcards.
 - Account deletion operations must enforce ownership checks server-side.
 
 ## Main Entities
@@ -287,6 +298,8 @@ Learners who want a private, lightweight workspace for making and reviewing stud
   - `id`, historical `flashcardId`, historical `subjectId`, `userId`, `rating`, `reviewedAt`, `daysElapsed`, timestamps
 - `note`
   - `id`, `title`, `content`, `subjectId`, timestamps, `userId`
+- `pdf_document`
+  - `id`, `title`, `fileName`, `blobPathname`, `sizeBytes`, `pageCount`, `lastPage`, `subjectId`, timestamps, `userId`
 
 ## Out of Scope
 

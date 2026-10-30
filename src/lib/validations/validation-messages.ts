@@ -43,6 +43,11 @@ const VALIDATION_MESSAGES: Record<string, string> = {
     "Content can include at most {max} attachments.",
   "Validation.notes.titleMaxLength": "Title must be at most 200 characters.",
   "Validation.notes.titleRequired": "Title is required.",
+  "Validation.pdfs.titleMaxLength": "Title must be at most 200 characters.",
+  "Validation.pdfs.titleRequired": "Title is required.",
+  "Validation.pdfs.fileRequired": "Choose a PDF file.",
+  "Validation.pdfs.fileEmpty": "This file is empty.",
+  "Validation.pdfs.fileMaxSize": "PDFs can be at most {maxMb} MB.",
   "Validation.search.queryMaxLength":
     "Search query must be at most 200 characters.",
   "Validation.subjects.nameMaxLength": "Name must be at most 100 characters.",

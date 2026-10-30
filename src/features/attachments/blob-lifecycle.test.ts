@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { flashcard, note } from "@/db/schema";
+import { flashcard, note, pdfDocument } from "@/db/schema";
 import type { StoredBlobEntry } from "@/lib/media-storage/provider";
 
 const { getDbMock, getMediaStorageProviderMock } = vi.hoisted(() => ({
@@ -19,17 +19,23 @@ const SHARED_HTML = `<p><img src="${SHARED_URL}"></p>`;
 class AttachmentRowsFake {
   notes: { content: string }[] = [];
   cards: { front: string; back: string }[] = [];
+  pdfs: { blobPathname: string }[] = [];
 
   select() {
     return {
-      from: async (table: typeof note | typeof flashcard) => {
+      from: async (
+        table: typeof note | typeof flashcard | typeof pdfDocument,
+      ) => {
         if (table === note) return this.notes;
         if (table === flashcard) return this.cards;
+        if (table === pdfDocument) return this.pdfs;
         throw new Error("Unexpected attachment table");
       },
     };
   }
 }
+
+const PDF_PATHNAME = "notorium/pdfs/user-1/id-book.pdf";
 
 class LifecycleStorageFake {
   readonly pathnames = new Set([SHARED_PATHNAME]);
@@ -107,4 +113,22 @@ describe("shared attachment lifecycle", () => {
       expect(storage.pathnames.has(SHARED_PATHNAME)).toBe(false);
     },
   );
+
+  it("keeps an uploaded PDF while its document exists, then collects it", async () => {
+    const rows = new AttachmentRowsFake();
+    const storage = new LifecycleStorageFake();
+    storage.pathnames.clear();
+    storage.pathnames.add(PDF_PATHNAME);
+    rows.pdfs = [{ blobPathname: PDF_PATHNAME }];
+    getDbMock.mockReturnValue(rows);
+    getMediaStorageProviderMock.mockResolvedValue(storage);
+    const { sweepOrphanBlobs } = await import("@/features/attachments/blob-gc");
+
+    expect(await sweepOrphanBlobs()).toMatchObject({ deleted: 0 });
+    expect(storage.pathnames.has(PDF_PATHNAME)).toBe(true);
+    rows.pdfs = [];
+
+    expect(await sweepOrphanBlobs()).toMatchObject({ deleted: 1 });
+    expect(storage.pathnames.has(PDF_PATHNAME)).toBe(false);
+  });
 });

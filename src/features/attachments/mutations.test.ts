@@ -3,7 +3,7 @@ import { LIMITS } from "@/lib/config/limits";
 
 const getMediaStorageProviderMock = vi.fn();
 const uploadImageMock = vi.fn();
-const readImageMock = vi.fn();
+const readBlobMock = vi.fn();
 vi.mock("@/lib/media-storage/provider", () => ({
   getMediaStorageProvider: getMediaStorageProviderMock,
 }));
@@ -29,7 +29,7 @@ describe("uploadAttachmentImageForUser", () => {
 
     getMediaStorageProviderMock.mockResolvedValue({
       uploadImage: uploadImageMock,
-      readImage: readImageMock,
+      readBlob: readBlobMock,
     });
   });
 

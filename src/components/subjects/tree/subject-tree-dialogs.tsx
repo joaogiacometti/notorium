@@ -3,13 +3,16 @@
 import type { ReactNode } from "react";
 import { LazyCreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
+import { CreatePdfDialog } from "@/components/pdfs/create-pdf-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import { DeleteSubjectDialog } from "@/components/subjects/delete-subject-dialog";
 import { EditSubjectDialog } from "@/components/subjects/edit-subject-dialog";
 import type {
+  DocumentCreateTarget,
   SubjectDeleteTarget,
   SubjectEditTarget,
 } from "@/components/subjects/tree/subject-tree-types";
+import type { DocumentKind } from "@/features/documents/types";
 
 interface SubjectTreeDialogsProps {
   /** Shared document kebab dialog host rendered alongside the tree dialogs. */
@@ -23,9 +26,9 @@ interface SubjectTreeDialogsProps {
   onEditTargetChange: (target: SubjectEditTarget | null) => void;
   deleteTarget: SubjectDeleteTarget | null;
   onDeleteTargetChange: (target: SubjectDeleteTarget | null) => void;
-  createNoteSubjectId: string | null;
-  onCreateNoteSubjectIdChange: (id: string | null) => void;
-  onNoteCreated: (noteId: string) => void;
+  createDocumentTarget: DocumentCreateTarget | null;
+  onCreateDocumentTargetChange: (target: DocumentCreateTarget | null) => void;
+  onDocumentCreated: (documentId: string) => void;
   createFlashcardSubjectId: string | null;
   onCreateFlashcardSubjectIdChange: (id: string | null) => void;
   /** Re-fetch tree counts after a mutating dialog completes. */
@@ -35,7 +38,7 @@ interface SubjectTreeDialogsProps {
 
 /**
  * Renders every dialog the subject tree can open (create/edit/delete subject,
- * create note/flashcard) plus the shared
+ * create note/PDF/flashcard) plus the shared
  * document kebab dialog host. Split out of `subject-tree-sidebar.tsx` to keep
  * that file focused on tree state and within the file-size guard.
  */
@@ -50,9 +53,9 @@ export function SubjectTreeDialogs({
   onEditTargetChange,
   deleteTarget,
   onDeleteTargetChange,
-  createNoteSubjectId,
-  onCreateNoteSubjectIdChange,
-  onNoteCreated,
+  createDocumentTarget,
+  onCreateDocumentTargetChange,
+  onDocumentCreated,
   createFlashcardSubjectId,
   onCreateFlashcardSubjectIdChange,
   onRefreshTree,
@@ -103,18 +106,15 @@ export function SubjectTreeDialogs({
         />
       ) : null}
 
-      {createNoteSubjectId ? (
-        <CreateNoteTitleDialog
-          subjectId={createNoteSubjectId}
-          open
+      {createDocumentTarget ? (
+        <CreateDocumentDialog
+          target={createDocumentTarget}
           onOpenChange={(open) => {
             if (!open) {
-              onCreateNoteSubjectIdChange(null);
+              onCreateDocumentTargetChange(null);
             }
           }}
-          onSuccess={(noteId) => {
-            onNoteCreated(noteId);
-          }}
+          onSuccess={onDocumentCreated}
         />
       ) : null}
 
@@ -129,5 +129,32 @@ export function SubjectTreeDialogs({
         aiEnabled={aiEnabled}
       />
     </>
+  );
+}
+
+const CREATE_DOCUMENT_DIALOGS = {
+  note: CreateNoteTitleDialog,
+  pdf: CreatePdfDialog,
+} satisfies Record<DocumentKind, unknown>;
+
+interface CreateDocumentDialogProps {
+  target: DocumentCreateTarget;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: (documentId: string) => void;
+}
+
+function CreateDocumentDialog({
+  target,
+  onOpenChange,
+  onSuccess,
+}: Readonly<CreateDocumentDialogProps>) {
+  const Dialog = CREATE_DOCUMENT_DIALOGS[target.kind];
+  return (
+    <Dialog
+      subjectId={target.subjectId}
+      open
+      onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
+    />
   );
 }

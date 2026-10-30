@@ -13,6 +13,12 @@ describe("parseOwnedAttachmentPathname", () => {
     });
   });
 
+  it("parses a PDF document pathname", () => {
+    expect(
+      parseOwnedAttachmentPathname("notorium/pdfs/user-1/id-book.pdf"),
+    ).toMatchObject({ ownerId: "user-1", context: "pdfs" });
+  });
+
   it("rejects unsupported contexts", () => {
     expect(
       parseOwnedAttachmentPathname("notorium/other/user-1/file.png"),

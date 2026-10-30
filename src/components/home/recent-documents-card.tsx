@@ -1,8 +1,11 @@
-import { FileText, Network } from "lucide-react";
 import Link from "next/link";
+import { DOCUMENT_KIND_ICONS } from "@/components/documents/document-kind-icons";
 import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DocumentListItem } from "@/features/documents/types";
+import type {
+  DocumentKind,
+  DocumentListItem,
+} from "@/features/documents/types";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 
@@ -11,7 +14,7 @@ interface RecentDocumentsCardProps {
 }
 
 /**
- * Dashboard card listing the user's most recently updated notes
+ * Dashboard card listing the user's most recently updated notes and PDFs
  * across every subject, each linking to its detail page.
  */
 export function RecentDocumentsCard({
@@ -23,7 +26,7 @@ export function RecentDocumentsCard({
       <CardContent>
         {documents.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Notes you edit will show up here.
+            Notes and PDFs you add will show up here.
           </p>
         ) : (
           <ul className="grid gap-1">
@@ -33,11 +36,7 @@ export function RecentDocumentsCard({
                   href={getDocumentDetailHref(document)}
                   className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 >
-                  {document.kind === "note" ? (
-                    <FileText className="size-4 shrink-0" />
-                  ) : (
-                    <Network className="size-4 shrink-0" />
-                  )}
+                  <DocumentKindIcon kind={document.kind} />
                   <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                     {document.title}
                   </span>
@@ -52,4 +51,9 @@ export function RecentDocumentsCard({
       </CardContent>
     </Card>
   );
+}
+
+function DocumentKindIcon({ kind }: Readonly<{ kind: DocumentKind }>) {
+  const Icon = DOCUMENT_KIND_ICONS[kind];
+  return <Icon className="size-4 shrink-0" />;
 }

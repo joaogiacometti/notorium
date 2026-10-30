@@ -1,3 +1,8 @@
+import {
+  DOCUMENT_ROUTE_SEGMENTS,
+  type DocumentKind,
+} from "@/features/documents/types";
+
 export const detailPageOriginValues = ["flashcards-manage"] as const;
 
 export type DetailPageOrigin = (typeof detailPageOriginValues)[number];
@@ -102,15 +107,15 @@ export function getFlashcardDetailHref(
 }
 
 export function getNoteDetailHref(subjectId: string, noteId: string) {
-  return `/subjects/${subjectId}/documents/notes/${noteId}`;
+  return getDocumentDetailHref({ kind: "note", subjectId, id: noteId });
 }
 
 export function getDocumentDetailHref(item: {
-  kind: "note";
+  kind: DocumentKind;
   subjectId: string;
   id: string;
 }) {
-  return getNoteDetailHref(item.subjectId, item.id);
+  return `/subjects/${item.subjectId}/documents/${DOCUMENT_ROUTE_SEGMENTS[item.kind]}/${item.id}`;
 }
 
 export function resolveFlashcardDetailBackLink(

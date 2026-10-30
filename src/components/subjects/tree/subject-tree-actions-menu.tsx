@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  Files,
   FileText,
+  FileType,
   FolderPlus,
   GraduationCap,
   Layers,
@@ -38,19 +40,21 @@ interface SubjectActionsMenuProps {
   node: SubjectTreeNode;
   onCreateChild: (parentSubjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
+  onCreatePdf: (subjectId: string) => void;
   onCreateFlashcard: (subjectId: string) => void;
   onEdit: (subject: SubjectEditTarget) => void;
   onDelete: (subject: SubjectDeleteTarget) => void;
 }
 
 /**
- * The per-subject kebab menu in the tree row. Subfolder and Add note are direct
- * actions; flashcard actions share a submenu.
+ * The per-subject kebab menu in the tree row. Subfolder is a direct action;
+ * document and flashcard actions each share a submenu.
  */
 export function SubjectActionsMenu({
   node,
   onCreateChild,
   onCreateNote,
+  onCreatePdf,
   onCreateFlashcard,
   onEdit,
   onDelete,
@@ -97,12 +101,26 @@ export function SubjectActionsMenu({
           Subfolder
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onClick={() => openDialog(() => onCreateNote(node.id))}
-        >
-          <FileText className="size-4" />
-          Add note
-        </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Files className="size-4" />
+            Documents
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreateNote(node.id))}
+            >
+              <FileText className="size-4" />
+              Add note
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreatePdf(node.id))}
+            >
+              <FileType className="size-4" />
+              Add PDF
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>

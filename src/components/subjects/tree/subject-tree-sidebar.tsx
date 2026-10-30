@@ -17,6 +17,7 @@ import { SubjectTreeEmptyState } from "@/components/subjects/tree/subject-tree-e
 import { SubjectTreeNodeItem } from "@/components/subjects/tree/subject-tree-node-item";
 import { SubjectTreeRootDropZone } from "@/components/subjects/tree/subject-tree-root-drop-zone";
 import type {
+  DocumentCreateTarget,
   SubjectDeleteTarget,
   SubjectDocumentsState,
   SubjectEditTarget,
@@ -62,9 +63,8 @@ export function SubjectTreeSidebar({
   const [deleteTarget, setDeleteTarget] = useState<SubjectDeleteTarget | null>(
     null,
   );
-  const [createNoteSubjectId, setCreateNoteSubjectId] = useState<string | null>(
-    null,
-  );
+  const [createDocumentTarget, setCreateDocumentTarget] =
+    useState<DocumentCreateTarget | null>(null);
   const [createFlashcardSubjectId, setCreateFlashcardSubjectId] = useState<
     string | null
   >(null);
@@ -290,16 +290,12 @@ export function SubjectTreeSidebar({
     setCreateOpen(true);
   }
 
-  function openCreateNote(subjectId: string) {
-    setCreateNoteSubjectId(subjectId);
-  }
-
-  function handleNoteCreated(noteId: string) {
-    const subjectId = createNoteSubjectId;
-    setCreateNoteSubjectId(null);
-    if (subjectId) {
-      void loadDocuments(subjectId);
-      router.push(`/subjects/${subjectId}/documents/notes/${noteId}`);
+  function handleDocumentCreated(documentId: string) {
+    const target = createDocumentTarget;
+    setCreateDocumentTarget(null);
+    if (target) {
+      void loadDocuments(target.subjectId);
+      router.push(getDocumentDetailHref({ ...target, id: documentId }));
     }
     refreshTree();
   }
@@ -377,7 +373,12 @@ export function SubjectTreeSidebar({
                 onToggle={handleToggle}
                 onRetryDocuments={(subjectId) => void loadDocuments(subjectId)}
                 onCreateChild={openCreateChild}
-                onCreateNote={openCreateNote}
+                onCreateNote={(subjectId) =>
+                  setCreateDocumentTarget({ kind: "note", subjectId })
+                }
+                onCreatePdf={(subjectId) =>
+                  setCreateDocumentTarget({ kind: "pdf", subjectId })
+                }
                 onCreateFlashcard={openCreateFlashcard}
                 onEdit={setEditTarget}
                 onDelete={setDeleteTarget}
@@ -403,9 +404,9 @@ export function SubjectTreeSidebar({
         onEditTargetChange={setEditTarget}
         deleteTarget={deleteTarget}
         onDeleteTargetChange={setDeleteTarget}
-        createNoteSubjectId={createNoteSubjectId}
-        onCreateNoteSubjectIdChange={setCreateNoteSubjectId}
-        onNoteCreated={handleNoteCreated}
+        createDocumentTarget={createDocumentTarget}
+        onCreateDocumentTargetChange={setCreateDocumentTarget}
+        onDocumentCreated={handleDocumentCreated}
         createFlashcardSubjectId={createFlashcardSubjectId}
         onCreateFlashcardSubjectIdChange={setCreateFlashcardSubjectId}
         onRefreshTree={refreshTree}

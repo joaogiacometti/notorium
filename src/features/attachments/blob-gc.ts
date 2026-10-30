@@ -6,12 +6,15 @@ import {
   type MediaStorageProvider,
   type StoredBlobEntry,
 } from "@/lib/media-storage/provider";
+import {
+  MEDIA_STORAGE_CONTEXTS,
+  MEDIA_STORAGE_NAMESPACE,
+} from "@/lib/media-storage/storage-pathname";
 
-/** Root prefix shared by every stored blob: `notorium/{context}/{userId}/...`. */
-const BLOB_ROOT_PREFIX = "notorium/";
+const BLOB_ROOT_PREFIX = `${MEDIA_STORAGE_NAMESPACE}/`;
 
 /** Keep the retired mindmaps prefix so account deletion purges older uploads. */
-const USER_BLOB_CONTEXTS = ["notes", "flashcards", "mindmaps"] as const;
+const USER_BLOB_CONTEXTS = [...MEDIA_STORAGE_CONTEXTS, "mindmaps"] as const;
 
 // Blobs younger than this are never collected. An upload that has not yet
 // committed its database reference would otherwise look like an orphan; the

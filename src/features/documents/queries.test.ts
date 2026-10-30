@@ -3,13 +3,25 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const getNotesBySubjectForUserMock = vi.fn();
 const getRecentNotesForUserMock = vi.fn();
 
+const getPdfsBySubjectForUserMock = vi.fn();
+const getRecentPdfsForUserMock = vi.fn();
+
 vi.mock("@/features/notes/queries", () => ({
   getNotesBySubjectForUser: getNotesBySubjectForUserMock,
   getRecentNotesForUser: getRecentNotesForUserMock,
 }));
 
+vi.mock("@/features/pdfs/queries", () => ({
+  getPdfsBySubjectForUser: getPdfsBySubjectForUserMock,
+  getRecentPdfsForUser: getRecentPdfsForUserMock,
+}));
+
 describe("document queries", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getPdfsBySubjectForUserMock.mockResolvedValue([]);
+    getRecentPdfsForUserMock.mockResolvedValue([]);
+  });
 
   it("lists a subject's notes in recency order", async () => {
     getNotesBySubjectForUserMock.mockResolvedValueOnce([
@@ -67,5 +79,34 @@ describe("document queries", () => {
       { id: "new", kind: "note" },
     ]);
     expect(getRecentNotesForUserMock).toHaveBeenCalledWith("user", 1);
+  });
+
+  it("interleaves notes and PDFs by recency", async () => {
+    getNotesBySubjectForUserMock.mockResolvedValueOnce([
+      {
+        id: "note",
+        title: "Note",
+        subjectId: "subject",
+        updatedAt: new Date("2026-04-19"),
+      },
+    ]);
+    getPdfsBySubjectForUserMock.mockResolvedValueOnce([
+      {
+        id: "pdf",
+        title: "Book",
+        subjectId: "subject",
+        updatedAt: new Date("2026-04-20"),
+      },
+    ]);
+    const { getSubjectDocumentsForUser } = await import(
+      "@/features/documents/queries"
+    );
+
+    const documents = await getSubjectDocumentsForUser("user", "subject");
+
+    expect(documents.map(({ id, kind }) => ({ id, kind }))).toEqual([
+      { id: "pdf", kind: "pdf" },
+      { id: "note", kind: "note" },
+    ]);
   });
 });

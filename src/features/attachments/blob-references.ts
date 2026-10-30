@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/db/index";
-import { flashcard, note } from "@/db/schema";
+import { flashcard, note, pdfDocument } from "@/db/schema";
 import { getInternalAttachmentPathnames } from "@/lib/editor/rich-text";
 
 async function collectNotePathnames(): Promise<string[]> {
@@ -30,9 +30,17 @@ async function collectFlashcardPathnames(): Promise<string[]> {
   return pathnames;
 }
 
+async function collectPdfPathnames(): Promise<string[]> {
+  const rows = await getDb()
+    .select({ blobPathname: pdfDocument.blobPathname })
+    .from(pdfDocument);
+
+  return rows.map((row) => row.blobPathname);
+}
+
 /**
  * Collect every blob pathname referenced by live database rows across all
- * features that store media (notes and flashcards). The
+ * features that store media (notes, flashcards, and PDF documents). The
  * orphan GC sweep treats any stored blob absent from this set as unreferenced.
  * Returning a complete set is safety-critical: a missing reference type would
  * cause the sweep to delete in-use blobs.
@@ -45,6 +53,7 @@ export async function collectAllReferencedPathnames(): Promise<Set<string>> {
   const groups = await Promise.all([
     collectNotePathnames(),
     collectFlashcardPathnames(),
+    collectPdfPathnames(),
   ]);
 
   return new Set(groups.flat());

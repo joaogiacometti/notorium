@@ -1,11 +1,16 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
+import { DeleteDocumentDialog } from "@/components/documents/delete-document-dialog";
+import {
+  DOCUMENT_KIND_ACTIONS,
+  runDocumentAction,
+} from "@/components/documents/document-kind-actions";
 import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
-import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
-import { EditNoteTitleDialog } from "@/components/notes/edit-note-title-dialog";
+import { RenameDocumentDialog } from "@/components/documents/rename-document-dialog";
 import type { DocumentListItem } from "@/features/documents/types";
 import {
   copyNoteContentToClipboard,
@@ -30,8 +35,10 @@ async function copySavedNoteContent(noteId: string, format: NoteCopyFormat) {
 }
 
 interface UseDocumentRowDialogsArgs {
-  /** Called after an edit or delete succeeds, before `router.refresh()`, so a
-   * caller with its own client-side document state can reload that subject. */
+  /** Called after an edit or delete succeeds, so a caller with its own
+   * client-side document state can reload that subject. Server-rendered views
+   * need no refresh: the action's revalidation re-renders the current page in
+   * the same response. */
   onChanged?: (item: DocumentListItem) => void;
 }
 
@@ -41,7 +48,7 @@ interface DocumentRowDialogs {
 }
 
 /**
- * Owns the per-document action dialogs (edit/delete/export) plus the
+ * Owns the per-document action dialogs (rename/delete) for every kind plus the
  * note copy action, and returns the row-menu handlers wired to them. Shared by
  * the documents list sidebar and the subject tree so both expose identical
  * document actions on their kebab menus.
@@ -55,15 +62,11 @@ export function useDocumentRowDialogs({
 }: Readonly<UseDocumentRowDialogsArgs>): DocumentRowDialogs {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const [editTarget, setEditTarget] = useState<DocumentListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentListItem | null>(
     null,
   );
-
-  function handleChanged(item: DocumentListItem) {
-    onChanged?.(item);
-    router.refresh();
-  }
 
   function handleDeleted(item: DocumentListItem) {
     onChanged?.(item);
@@ -71,7 +74,6 @@ export function useDocumentRowDialogs({
     if (redirectHref) {
       router.push(redirectHref);
     }
-    router.refresh();
   }
 
   const handlers: DocumentRowActionHandlers = {
@@ -81,35 +83,56 @@ export function useDocumentRowDialogs({
       void copySavedNoteContent(item.id, format),
   };
 
+  function closeEdit(open: boolean) {
+    if (!open) setEditTarget(null);
+  }
+
+  function closeDelete(open: boolean) {
+    if (!open) setDeleteTarget(null);
+  }
+
+  function finishEdit(target: DocumentListItem) {
+    setEditTarget(null);
+    onChanged?.(target);
+  }
+
+  function finishDelete(target: DocumentListItem) {
+    setDeleteTarget(null);
+    handleDeleted(target);
+  }
+
   const dialogs = (
     <>
-      {editTarget?.kind === "note" ? (
-        <EditNoteTitleDialog
-          note={{ id: editTarget.id, title: editTarget.title }}
+      {editTarget ? (
+        <RenameDocumentDialog
+          kindLabel={DOCUMENT_KIND_ACTIONS[editTarget.kind].label}
+          title={editTarget.title}
+          titleSchema={DOCUMENT_KIND_ACTIONS[editTarget.kind].titleSchema}
           open
-          onOpenChange={(open) => {
-            if (!open) setEditTarget(null);
-          }}
-          onSuccess={() => {
-            const target = editTarget;
-            setEditTarget(null);
-            handleChanged(target);
-          }}
+          onOpenChange={closeEdit}
+          onRename={(title) =>
+            runDocumentAction(editTarget.kind, queryClient, () =>
+              DOCUMENT_KIND_ACTIONS[editTarget.kind].rename(
+                editTarget.id,
+                title,
+              ),
+            )
+          }
+          onSuccess={() => finishEdit(editTarget)}
         />
       ) : null}
-      {deleteTarget?.kind === "note" ? (
-        <DeleteNoteDialog
-          noteId={deleteTarget.id}
-          noteTitle={deleteTarget.title}
+      {deleteTarget ? (
+        <DeleteDocumentDialog
+          kindLabel={DOCUMENT_KIND_ACTIONS[deleteTarget.kind].label}
+          title={deleteTarget.title}
           open
-          onOpenChange={(open) => {
-            if (!open) setDeleteTarget(null);
-          }}
-          onSuccess={() => {
-            const target = deleteTarget;
-            setDeleteTarget(null);
-            handleDeleted(target);
-          }}
+          onOpenChange={closeDelete}
+          onDelete={() =>
+            runDocumentAction(deleteTarget.kind, queryClient, () =>
+              DOCUMENT_KIND_ACTIONS[deleteTarget.kind].remove(deleteTarget.id),
+            )
+          }
+          onSuccess={() => finishDelete(deleteTarget)}
         />
       ) : null}
     </>

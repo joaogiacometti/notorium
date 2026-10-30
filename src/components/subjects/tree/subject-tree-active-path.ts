@@ -1,3 +1,5 @@
+import { DOCUMENT_ROUTE_SEGMENTS } from "@/features/documents/types";
+
 /**
  * Pure helpers that read the active subject/document from a pathname so the
  * subject tree can highlight the current location and reveal its rows. Kept
@@ -21,9 +23,13 @@ export function getActiveSubjectId(pathname: string): string | undefined {
   return candidate;
 }
 
+const DOCUMENT_ROUTE_SEGMENT_VALUES: readonly string[] = Object.values(
+  DOCUMENT_ROUTE_SEGMENTS,
+);
+
 /**
  * Subject id whose document rows must be revealed because a document under it is
- * open. Matches `/subjects/[id]/documents/notes/[docId]`, so the
+ * open. Matches `/subjects/[id]/documents/{kind segment}/[docId]`, so the
  * tree can expand that subject and load its documents on first paint.
  *
  * @example getActiveDocumentSubjectId("/subjects/s1/documents/notes/n1") // "s1"
@@ -35,7 +41,7 @@ export function getActiveDocumentSubjectId(
   if (segments[0] !== "subjects" || segments[2] !== "documents") {
     return undefined;
   }
-  if (segments[3] !== "notes") {
+  if (!DOCUMENT_ROUTE_SEGMENT_VALUES.includes(segments[3])) {
     return undefined;
   }
   return segments[1];

@@ -171,6 +171,7 @@ describe("purgeUserBlobs", () => {
     expect(prefixes).toEqual([
       "notorium/notes/u/",
       "notorium/flashcards/u/",
+      "notorium/pdfs/u/",
       "notorium/mindmaps/u/",
     ]);
     expect(deleteImagesMock).toHaveBeenCalledTimes(1);

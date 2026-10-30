@@ -1,6 +1,6 @@
 import { and, count, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, note, subject } from "@/db/schema";
+import { flashcard, note, pdfDocument, subject } from "@/db/schema";
 import { buildDueAtFilter } from "@/features/flashcard-review/due-filter";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 
@@ -86,20 +86,27 @@ export async function getSubjectTreeForUser(
 }
 
 /**
- * Direct (non-rolled-up) note counts keyed by subject id. Used
+ * Direct (non-rolled-up) note and PDF counts keyed by subject id. Used
  * to seed {@link getSubjectTreeForUser} before subtree counts are accumulated.
  */
 async function getDocumentCountsBySubject(
   userId: string,
 ): Promise<Map<string, number>> {
-  const noteCounts = await getDb()
-    .select({ subjectId: note.subjectId, count: count() })
-    .from(note)
-    .where(eq(note.userId, userId))
-    .groupBy(note.subjectId);
+  const [noteCounts, pdfCounts] = await Promise.all([
+    getDb()
+      .select({ subjectId: note.subjectId, count: count() })
+      .from(note)
+      .where(eq(note.userId, userId))
+      .groupBy(note.subjectId),
+    getDb()
+      .select({ subjectId: pdfDocument.subjectId, count: count() })
+      .from(pdfDocument)
+      .where(eq(pdfDocument.userId, userId))
+      .groupBy(pdfDocument.subjectId),
+  ]);
 
   const counts = new Map<string, number>();
-  for (const row of noteCounts) {
+  for (const row of [...noteCounts, ...pdfCounts]) {
     counts.set(row.subjectId, (counts.get(row.subjectId) ?? 0) + row.count);
   }
   return counts;

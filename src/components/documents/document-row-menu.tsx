@@ -48,7 +48,10 @@ export function DocumentRowMenu({
     pendingActionRef.current = action;
   }
 
-  const kindItems = <NoteRowMenuItems item={item} {...handlers} />;
+  const kindItems =
+    item.kind === "note" ? (
+      <NoteRowMenuItems item={item} {...handlers} />
+    ) : null;
 
   return (
     <DropdownMenu>

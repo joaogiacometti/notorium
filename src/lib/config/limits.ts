@@ -3,6 +3,7 @@ export const LIMITS = {
   maxChildSubjectsPerSubject: 50,
   maxSubjectNestingDepth: 4,
   maxNotesPerSubject: 100,
+  maxPdfsPerSubject: 20,
   maxAttachmentsPerNote: 20,
   maxAttachmentsPerFlashcard: 10,
   maxFlashcardsPerSubject: 2000,
@@ -20,6 +21,15 @@ export const LIMITS = {
   attachmentSignedReadTtlSeconds: 300,
   attachmentUploadRateLimitPrefix: "ratelimit:attachments:upload",
   attachmentUploadRateLimitPerDay: 200,
+
+  pdfTitleMax: 200,
+  pdfFileNameMax: 255,
+  // 100 MB. PDFs upload straight from the browser to media storage with a
+  // short-lived client token, so Vercel's function body cap does not apply.
+  pdfMaxMegabytes: 100,
+  pdfMaxBytes: 100 * 1024 * 1024,
+  pdfUploadRateLimitPrefix: "ratelimit:pdfs:upload",
+  pdfUploadRateLimitPerDay: 50,
 
   flashcardFrontMax: 1000,
   flashcardBackMax: 4000,

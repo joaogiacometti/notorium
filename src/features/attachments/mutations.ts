@@ -1,3 +1,4 @@
+import { getAttachmentReadUrl } from "@/features/attachments/pathname";
 import {
   isSupportedAttachmentImageMimeType,
   type UploadImageContext,
@@ -15,10 +16,6 @@ export type UploadAttachmentImageResult =
       pathname: string;
     }
   | ActionErrorResult;
-
-function buildAttachmentReadUrl(pathname: string): string {
-  return `/api/attachments/blob?pathname=${encodeURIComponent(pathname)}`;
-}
 
 export interface UploadAttachmentImageInput {
   fileName: string;
@@ -83,7 +80,7 @@ export async function uploadAttachmentImageForUser(
 
     return {
       success: true,
-      url: buildAttachmentReadUrl(uploaded.pathname),
+      url: getAttachmentReadUrl(uploaded.pathname),
       pathname: uploaded.pathname,
     };
   } catch {

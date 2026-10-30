@@ -63,6 +63,7 @@ function renderNode(node: SubjectTreeNode, onToggle: (id: string) => void) {
         onRetryDocuments={noop}
         onCreateChild={noop}
         onCreateNote={noop}
+        onCreatePdf={noop}
         onCreateFlashcard={noop}
         onEdit={noop}
         onDelete={noop}

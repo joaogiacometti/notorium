@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getOptionalSessionMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
-const readImageMock = vi.fn();
+const readBlobMock = vi.fn();
 
 vi.mock("@/lib/auth/auth", () => ({
   getOptionalSession: getOptionalSessionMock,
@@ -12,9 +12,10 @@ vi.mock("@/lib/media-storage/provider", () => ({
   getMediaStorageProvider: getMediaStorageProviderMock,
 }));
 
-function getRouteRequest(pathname: string) {
+function getRouteRequest(pathname: string, headers?: HeadersInit) {
   return new Request(
     `http://localhost/api/attachments/blob?pathname=${encodeURIComponent(pathname)}`,
+    { headers },
   );
 }
 
@@ -41,18 +42,19 @@ describe("GET /api/attachments/blob", () => {
       },
     });
 
-    readImageMock.mockResolvedValue({
+    readBlobMock.mockResolvedValue({
       stream: createStream("ok"),
       contentType: "image/png",
       contentDisposition: "inline",
       cacheControl: "private, max-age=0",
       etag: "etag-1",
       size: 2,
+      contentRange: null,
     });
 
     getMediaStorageProviderMock.mockResolvedValue({
       uploadImage: vi.fn(),
-      readImage: readImageMock,
+      readBlob: readBlobMock,
     });
   });
 
@@ -98,7 +100,7 @@ describe("GET /api/attachments/blob", () => {
   });
 
   it("returns 404 when blob cannot be found", async () => {
-    readImageMock.mockResolvedValueOnce(null);
+    readBlobMock.mockResolvedValueOnce(null);
 
     const { GET } = await import("@/app/api/attachments/blob/route");
     const response = await GET(
@@ -106,7 +108,7 @@ describe("GET /api/attachments/blob", () => {
     );
 
     expect(response.status).toBe(404);
-    expect(readImageMock).toHaveBeenCalledWith({
+    expect(readBlobMock).toHaveBeenCalledWith({
       pathname: "notorium/flashcards/user-1/file.png",
     });
   });
@@ -124,5 +126,43 @@ describe("GET /api/attachments/blob", () => {
     expect(response.headers.get("cache-control")).toBe("private, max-age=0");
     expect(response.headers.get("etag")).toBe("etag-1");
     expect(response.headers.get("content-length")).toBe("2");
+  });
+
+  it("answers a valid range request with partial content", async () => {
+    readBlobMock.mockResolvedValueOnce({
+      stream: createStream("pdf"),
+      contentType: "application/pdf",
+      contentDisposition: "inline",
+      cacheControl: "private, max-age=0",
+      etag: "etag-2",
+      size: 3,
+      contentRange: "bytes 0-2/1000",
+    });
+
+    const { GET } = await import("@/app/api/attachments/blob/route");
+    const response = await GET(
+      getRouteRequest("notorium/pdfs/user-1/book.pdf", { range: "bytes=0-2" }),
+    );
+
+    expect(readBlobMock).toHaveBeenCalledWith({
+      pathname: "notorium/pdfs/user-1/book.pdf",
+      range: "bytes=0-2",
+    });
+    expect(response.status).toBe(206);
+    expect(response.headers.get("content-range")).toBe("bytes 0-2/1000");
+    expect(response.headers.get("accept-ranges")).toBe("bytes");
+  });
+
+  it("ignores a malformed range header and reads the whole blob", async () => {
+    const { GET } = await import("@/app/api/attachments/blob/route");
+    const response = await GET(
+      getRouteRequest("notorium/notes/user-1/file.png", { range: "bytes=9-1" }),
+    );
+
+    expect(readBlobMock).toHaveBeenCalledWith({
+      pathname: "notorium/notes/user-1/file.png",
+      range: undefined,
+    });
+    expect(response.status).toBe(200);
   });
 });

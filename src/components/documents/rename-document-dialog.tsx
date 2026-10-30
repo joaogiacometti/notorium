@@ -1,11 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { editNote } from "@/app/actions/notes";
+import type { z } from "zod";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,56 +21,58 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { type EditNoteForm, editNoteSchema } from "@/features/notes/validation";
-import { t } from "@/lib/server/server-action-errors";
+import { type ActionErrorResult, t } from "@/lib/server/server-action-errors";
 
-interface EditNoteTitleDialogProps {
-  note: Pick<EditNoteForm, "id" | "title">;
+interface DocumentTitleForm {
+  title: string;
+}
+
+interface RenameDocumentDialogProps {
+  /** Singular kind name shown in the dialog, such as "Note" or "PDF". */
+  kindLabel: string;
+  title: string;
+  titleSchema: z.ZodType<DocumentTitleForm, DocumentTitleForm>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onRename: (title: string) => Promise<{ success: true } | ActionErrorResult>;
   onSuccess: () => void;
 }
 
-type EditNoteTitleForm = Pick<EditNoteForm, "title">;
-
-const editNoteTitleSchema = editNoteSchema.pick({ title: true });
-
 /**
- * Renders title-only note editing for compact list actions.
+ * Title-only rename dialog shared by every document kind.
  *
  * @example
- * <EditNoteTitleDialog note={note} open onOpenChange={setOpen} onSuccess={refresh} />
+ * <RenameDocumentDialog kindLabel="PDF" title={pdf.title} titleSchema={pdfTitleFormSchema} open onOpenChange={setOpen} onRename={(title) => renamePdf({ id, title })} onSuccess={refresh} />
  */
-export function EditNoteTitleDialog({
-  note,
+export function RenameDocumentDialog({
+  kindLabel,
+  title,
+  titleSchema,
   open,
   onOpenChange,
+  onRename,
   onSuccess,
-}: Readonly<EditNoteTitleDialogProps>) {
-  const queryClient = useQueryClient();
+}: Readonly<RenameDocumentDialogProps>) {
+  const inputId = useId();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const form = useForm<EditNoteTitleForm>({
-    resolver: zodResolver(editNoteTitleSchema),
-    defaultValues: { title: note.title },
-    values: { title: note.title },
+  const form = useForm<DocumentTitleForm>({
+    resolver: zodResolver(titleSchema),
+    defaultValues: { title },
+    values: { title },
   });
 
-  async function handleSubmit(data: EditNoteTitleForm) {
+  async function handleSubmit(values: DocumentTitleForm) {
     if (isSubmitting) {
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      const result = await editNote({ id: note.id, title: data.title });
-
+      const result = await onRename(values.title);
       if (!result.success) {
         toast.error(t(result.errorCode, result.errorParams));
         return;
       }
-
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       onOpenChange(false);
       onSuccess();
     } finally {
@@ -81,9 +82,8 @@ export function EditNoteTitleDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      form.reset({ title: note.title });
+      form.reset({ title });
     }
-
     onOpenChange(nextOpen);
   }
 
@@ -91,24 +91,22 @@ export function EditNoteTitleDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Rename Note</DialogTitle>
+          <DialogTitle>Rename {kindLabel}</DialogTitle>
           <DialogDescription className="sr-only">
-            Update the note title.
+            Update the {kindLabel.toLowerCase()} title.
           </DialogDescription>
         </DialogHeader>
-        <form id="form-edit-note" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
           <FieldGroup className="gap-4">
             <Controller
               name="title"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-edit-note-title-input">
-                    Title
-                  </FieldLabel>
+                  <FieldLabel htmlFor={inputId}>Title</FieldLabel>
                   <Input
                     {...field}
-                    id="form-edit-note-title-input"
+                    id={inputId}
                     aria-invalid={fieldState.invalid}
                     autoFocus
                   />

@@ -1,8 +1,12 @@
-const ATTACHMENT_NAMESPACE = "notorium";
-export const ATTACHMENT_CONTEXT_VALUES = ["notes", "flashcards"] as const;
-const ATTACHMENT_CONTEXTS = new Set<string>(ATTACHMENT_CONTEXT_VALUES);
+import {
+  MEDIA_STORAGE_CONTEXTS,
+  MEDIA_STORAGE_NAMESPACE,
+  type MediaStorageContext,
+} from "@/lib/media-storage/storage-pathname";
 
-export type AttachmentContext = (typeof ATTACHMENT_CONTEXT_VALUES)[number];
+const ATTACHMENT_CONTEXTS = new Set<string>(MEDIA_STORAGE_CONTEXTS);
+
+export type AttachmentContext = MediaStorageContext;
 
 export interface ParsedOwnedAttachmentPathname {
   pathname: string;
@@ -32,7 +36,7 @@ export function parseOwnedAttachmentPathname(
 
   const [namespace, context, ownerId, fileName] = segments;
 
-  if (namespace !== ATTACHMENT_NAMESPACE) {
+  if (namespace !== MEDIA_STORAGE_NAMESPACE) {
     return null;
   }
 
@@ -54,4 +58,13 @@ export function parseOwnedAttachmentPathname(
     context: context as AttachmentContext,
     fileName,
   };
+}
+
+/**
+ * The authenticated, same-origin read URL for a stored blob.
+ *
+ * @example getAttachmentReadUrl("notorium/pdfs/u/id-book.pdf");
+ */
+export function getAttachmentReadUrl(pathname: string): string {
+  return `/api/attachments/blob?pathname=${encodeURIComponent(pathname)}`;
 }

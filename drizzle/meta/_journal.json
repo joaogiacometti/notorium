@@ -540,6 +540,13 @@
       "when": 1793358840974,
       "tag": "0076_round_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1793390571891,
+      "tag": "0077_right_taskmaster",
+      "breakpoints": true
     }
   ]
 }

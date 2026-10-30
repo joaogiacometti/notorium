@@ -1,9 +1,11 @@
 import "server-only";
 
 import { getServerEnv } from "@/env";
+import type { MediaStorageContext } from "@/lib/media-storage/storage-pathname";
 import { createVercelBlobMediaStorageProvider } from "@/lib/media-storage/vercel-blob-provider";
 
-export type MediaStorageUploadContext = "notes" | "flashcards";
+/** Contexts that accept image uploads; PDFs upload straight from the browser. */
+export type MediaStorageUploadContext = Exclude<MediaStorageContext, "pdfs">;
 
 export interface UploadImageInput {
   userId: string;
@@ -18,8 +20,10 @@ export interface UploadImageResult {
   pathname: string;
 }
 
-export interface ReadImageInput {
+export interface ReadBlobInput {
   pathname: string;
+  /** A validated single `bytes=` range (see `parseByteRangeHeader`). */
+  range?: string;
 }
 
 export interface DeleteImagesInput {
@@ -35,18 +39,35 @@ export interface StoredBlobEntry {
   uploadedAt: Date;
 }
 
-export interface ReadImageResult {
+export interface ReadBlobResult {
   stream: ReadableStream<Uint8Array>;
   contentType: string;
   contentDisposition: string;
   cacheControl: string;
   etag: string;
+  /** Bytes in this response: the requested range when `contentRange` is set. */
   size: number;
+  /** Set when storage answered a range request with partial content. */
+  contentRange: string | null;
+}
+
+export interface StoredBlobHead {
+  size: number;
+  contentType: string;
+}
+
+export interface CreateClientUploadTokenInput {
+  pathname: string;
+  maximumSizeInBytes: number;
+  allowedContentTypes: string[];
 }
 
 export interface MediaStorageProvider {
   uploadImage(input: UploadImageInput): Promise<UploadImageResult>;
-  readImage(input: ReadImageInput): Promise<ReadImageResult | null>;
+  readBlob(input: ReadBlobInput): Promise<ReadBlobResult | null>;
+  headBlob(pathname: string): Promise<StoredBlobHead | null>;
+  /** Issues a short-lived token that lets the browser upload one private blob. */
+  createClientUploadToken(input: CreateClientUploadTokenInput): Promise<string>;
   deleteImages(input: DeleteImagesInput): Promise<void>;
   listImagePathnames(input: ListImagesInput): Promise<string[]>;
   listImageEntries(input: ListImagesInput): Promise<StoredBlobEntry[]>;

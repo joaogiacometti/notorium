@@ -31,7 +31,9 @@ The study assistant sends each chat's id to OpenRouter as `session_id`. This sup
 
 ## Attachments
 
-Attachment uploads use Vercel Blob. Files are limited to 4 MiB and multipart bodies to 4 MiB plus 64 KiB. Each authenticated attempt consumes the 200-per-day upload allowance before the body is read, including invalid and oversized attempts.
+Attachment uploads and PDF documents use Vercel Blob. Image files are limited to 4 MiB and multipart bodies to 4 MiB plus 64 KiB. Each authenticated attempt consumes the 200-per-day upload allowance before the body is read, including invalid and oversized attempts.
+
+PDFs (up to 100 MB, 50 uploads per day) upload directly from the browser to the Blob store with a short-lived client token issued by the server; large files use multipart uploads.
 
 Set:
 
@@ -39,7 +41,7 @@ Set:
 | --- | --- |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob read/write token |
 
-If unset, attachment upload features remain disabled.
+If unset, image and PDF uploads fail with a "No media storage is configured" message.
 
 ## Email Sending
 

@@ -133,7 +133,7 @@ arbitrary (`z-[60]`, `z-(--x)`) z-index classes are rejected outside
 | --- | --- | --- |
 | `z-raised` | 10 | In-flow content lifted over its siblings: sticky table headers, editor handles |
 | `z-chrome` | 30 | Sticky app chrome: page top bar, mobile header, the study assistant launcher and global sidebar |
-| `z-immersive` | 35 | Note zen mode (`fixed inset-0`) |
+| `z-immersive` | 35 | Note and PDF zen mode (`fixed inset-0`) |
 | `z-overlay` | 50 | Everything that floats or blocks the page: dialogs, sheets, menus, popovers, selects, and tooltips |
 
 Toasts (Sonner) manage their own z-index above all layers.
