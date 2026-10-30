@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const getOptionalSessionMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
 const readBlobMock = vi.fn();
+const headBlobMock = vi.fn();
 
 vi.mock("@/lib/auth/auth", () => ({
   getOptionalSession: getOptionalSessionMock,
@@ -55,6 +56,7 @@ describe("GET /api/attachments/blob", () => {
     getMediaStorageProviderMock.mockResolvedValue({
       uploadImage: vi.fn(),
       readBlob: readBlobMock,
+      headBlob: headBlobMock,
     });
   });
 
@@ -164,5 +166,38 @@ describe("GET /api/attachments/blob", () => {
       range: undefined,
     });
     expect(response.status).toBe(200);
+  });
+
+  it("answers a range past the end of the blob with 416", async () => {
+    readBlobMock.mockRejectedValueOnce(new Error("Failed to fetch blob: 416"));
+    headBlobMock.mockResolvedValueOnce({
+      size: 1000,
+      contentType: "application/pdf",
+    });
+
+    const { GET } = await import("@/app/api/attachments/blob/route");
+    const response = await GET(
+      getRouteRequest("notorium/pdfs/user-1/book.pdf", {
+        range: "bytes=1000-",
+      }),
+    );
+
+    expect(response.status).toBe(416);
+    expect(response.headers.get("content-range")).toBe("bytes */1000");
+  });
+
+  it("keeps 502 when a satisfiable range read fails", async () => {
+    readBlobMock.mockRejectedValueOnce(new Error("Failed to fetch blob: 500"));
+    headBlobMock.mockResolvedValueOnce({
+      size: 1000,
+      contentType: "application/pdf",
+    });
+
+    const { GET } = await import("@/app/api/attachments/blob/route");
+    const response = await GET(
+      getRouteRequest("notorium/pdfs/user-1/book.pdf", { range: "bytes=0-9" }),
+    );
+
+    expect(response.status).toBe(502);
   });
 });

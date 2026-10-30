@@ -1,8 +1,12 @@
 import { parseOwnedAttachmentPathname } from "@/features/attachments/pathname";
 import { getOptionalSession } from "@/lib/auth/auth";
-import { parseByteRangeHeader } from "@/lib/media-storage/byte-range";
+import {
+  isByteRangeUnsatisfiable,
+  parseByteRangeHeader,
+} from "@/lib/media-storage/byte-range";
 import {
   getMediaStorageProvider,
+  type MediaStorageProvider,
   type ReadBlobResult,
 } from "@/lib/media-storage/provider";
 
@@ -29,10 +33,11 @@ export async function GET(request: Request): Promise<Response> {
     return new Response(null, { status: 503 });
   }
 
+  const range = parseByteRangeHeader(request.headers.get("range")) ?? undefined;
   try {
     const blob = await provider.readBlob({
       pathname: parsedPath.pathname,
-      range: parseByteRangeHeader(request.headers.get("range")) ?? undefined,
+      range,
     });
 
     if (!blob) {
@@ -44,8 +49,28 @@ export async function GET(request: Request): Promise<Response> {
       headers: buildBlobResponseHeaders(blob),
     });
   } catch {
+    return buildFailedReadResponse(provider, parsedPath.pathname, range);
+  }
+}
+
+// Storage rejects a range past the end of the file as an error, not a status
+// the SDK returns, so only this failure path pays for the extra size lookup.
+async function buildFailedReadResponse(
+  provider: MediaStorageProvider,
+  pathname: string,
+  range: string | undefined,
+): Promise<Response> {
+  const stored = range
+    ? await provider.headBlob(pathname).catch(() => null)
+    : null;
+  if (!range || !stored || !isByteRangeUnsatisfiable(range, stored.size)) {
     return new Response(null, { status: 502 });
   }
+
+  return new Response(null, {
+    status: 416,
+    headers: { "content-range": `bytes */${stored.size}` },
+  });
 }
 
 // `accept-ranges` lets pdf.js switch to partial reads, so a large PDF loads

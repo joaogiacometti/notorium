@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseByteRangeHeader } from "@/lib/media-storage/byte-range";
+import {
+  isByteRangeUnsatisfiable,
+  parseByteRangeHeader,
+} from "@/lib/media-storage/byte-range";
 
 describe("parseByteRangeHeader", () => {
   it("keeps a bounded single range", () => {
@@ -20,5 +23,22 @@ describe("parseByteRangeHeader", () => {
     "bytes=abc-",
   ])("rejects %j", (value) => {
     expect(parseByteRangeHeader(value)).toBeNull();
+  });
+});
+
+describe("isByteRangeUnsatisfiable", () => {
+  it.each([
+    ["bytes=1000-", 1000],
+    ["bytes=1500-1600", 1000],
+    ["bytes=0-", 0],
+  ])("rejects %j for a %i byte blob", (range, size) => {
+    expect(isByteRangeUnsatisfiable(range, size)).toBe(true);
+  });
+
+  it.each([
+    ["bytes=999-", 1000],
+    ["bytes=0-5000", 1000],
+  ])("accepts %j for a %i byte blob", (range, size) => {
+    expect(isByteRangeUnsatisfiable(range, size)).toBe(false);
   });
 });
