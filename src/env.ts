@@ -12,6 +12,9 @@ const serverEnvSchema = z
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
     REDIS_URL: z.url().optional(),
     BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
+    NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR: z.string().min(1).optional(),
+    // Set by Vercel on every deployment; only read to block test fixtures there.
+    VERCEL: z.string().optional(),
     OPENROUTER_API_KEY: z.string().min(1).optional(),
     OPENROUTER_MODEL: z.string().min(1).optional(),
     OPENROUTER_REASONING_EFFORT: z
@@ -45,6 +48,16 @@ const serverEnvSchema = z
             "UPSTASH_REDIS_REST_TOKEN is required when using upstash backend",
         });
       }
+    }
+
+    // The fixture overrides Blob storage and writes to ephemeral local disk,
+    // so a stray setting on a deployment would silently lose uploads.
+    if (data.VERCEL && data.NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR"],
+        message: `NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR is for Playwright runs only and must be unset on Vercel, got "${data.NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR}"`,
+      });
     }
 
     if (data.RATE_LIMIT_BACKEND === "redis" && !data.REDIS_URL) {

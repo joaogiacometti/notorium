@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isByteRangeUnsatisfiable,
   parseByteRangeHeader,
+  readByteRangeBounds,
 } from "@/lib/media-storage/byte-range";
 
 describe("parseByteRangeHeader", () => {
@@ -40,5 +41,21 @@ describe("isByteRangeUnsatisfiable", () => {
     ["bytes=0-5000", 1000],
   ])("accepts %j for a %i byte blob", (range, size) => {
     expect(isByteRangeUnsatisfiable(range, size)).toBe(false);
+  });
+});
+
+describe("readByteRangeBounds", () => {
+  it("reads a bounded range", () => {
+    expect(readByteRangeBounds("bytes=0-65535")).toEqual({
+      start: 0,
+      end: 65535,
+    });
+  });
+
+  it("reads an open-ended range", () => {
+    expect(readByteRangeBounds("bytes=1024-")).toEqual({
+      start: 1024,
+      end: null,
+    });
   });
 });

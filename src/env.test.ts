@@ -9,6 +9,8 @@ const SERVER_ENV_KEYS = [
   "OPENROUTER_REASONING_EFFORT",
   "NOTORIUM_EMAIL_FIXTURE_MODE",
   "NOTORIUM_EMAIL_FIXTURE_INBOX_PATH",
+  "NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR",
+  "VERCEL",
   "RATE_LIMIT_BACKEND",
   "BLOB_READ_WRITE_TOKEN",
   "SKIP_ENV_VALIDATION",
@@ -141,6 +143,29 @@ describe("server env", () => {
     expect(env.NOTORIUM_EMAIL_FIXTURE_MODE).toBe("playwright");
     expect(env.NOTORIUM_EMAIL_FIXTURE_INBOX_PATH).toBe(
       "test-results/email-fixture-inbox.jsonl",
+    );
+  });
+
+  it("allows the media storage fixture outside Vercel", async () => {
+    setRequiredServerEnv();
+    process.env.NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR = "test-results/media";
+
+    const { getServerEnv } = await import("@/env");
+
+    expect(getServerEnv().NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR).toBe(
+      "test-results/media",
+    );
+  });
+
+  it("rejects the media storage fixture on a Vercel deployment", async () => {
+    setRequiredServerEnv();
+    process.env.NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR = "test-results/media";
+    process.env.VERCEL = "1";
+
+    const { getServerEnv } = await import("@/env");
+
+    expect(() => getServerEnv()).toThrowError(
+      "NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR",
     );
   });
 });

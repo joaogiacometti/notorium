@@ -86,6 +86,8 @@ These values are useful for local tooling and deployment workflows, but they are
 
 `.env.test.example` is for isolated E2E runs only.
 
+Playwright's web server sets `NOTORIUM_EMAIL_FIXTURE_*` and `NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR` itself, so sent emails and uploaded files stay on disk under `test-results/` instead of reaching Resend or Vercel Blob. Never set them in a real deployment.
+
 Use:
 
 ```bash

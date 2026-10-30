@@ -26,6 +26,23 @@ export function parseByteRangeHeader(value: string | null): string | null {
   return end >= start ? `bytes=${start}-${end}` : null;
 }
 
+export interface ByteRangeBounds {
+  start: number;
+  /** Inclusive last byte, or null for an open-ended range. */
+  end: number | null;
+}
+
+/**
+ * Splits a range from `parseByteRangeHeader` into its byte offsets.
+ *
+ * @example
+ * readByteRangeBounds("bytes=10-"); // { start: 10, end: null }
+ */
+export function readByteRangeBounds(range: string): ByteRangeBounds {
+  const [start, end] = range.slice("bytes=".length).split("-");
+  return { start: Number(start), end: end ? Number(end) : null };
+}
+
 /**
  * True when a range from `parseByteRangeHeader` starts at or past the end of
  * a blob of `size` bytes, which HTTP answers with 416 (RFC 9110 §14.1.2).
@@ -34,6 +51,5 @@ export function parseByteRangeHeader(value: string | null): string | null {
  * isByteRangeUnsatisfiable("bytes=1000-", 1000); // true
  */
 export function isByteRangeUnsatisfiable(range: string, size: number): boolean {
-  const start = Number(range.slice("bytes=".length).split("-")[0]);
-  return start >= size;
+  return readByteRangeBounds(range).start >= size;
 }

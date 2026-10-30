@@ -5,6 +5,7 @@ const baseURL =
   process.env.BETTER_AUTH_URL ??
   "http://127.0.0.1:3001";
 const emailFixtureInboxPath = "test-results/email-fixture-inbox.jsonl";
+const mediaStorageFixtureDir = "test-results/media-storage-fixture";
 const bootstrapSpecs = /signup-bootstrap\.spec\.ts/;
 const publicSpecs = /(login|password-reset)\.spec\.ts/;
 
@@ -28,6 +29,7 @@ export default defineConfig({
     env: {
       NOTORIUM_EMAIL_FIXTURE_MODE: "playwright",
       NOTORIUM_EMAIL_FIXTURE_INBOX_PATH: emailFixtureInboxPath,
+      NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR: mediaStorageFixtureDir,
       OPENROUTER_API_KEY: "playwright-openrouter-key",
       OPENROUTER_MODEL: "playwright-openrouter-model",
       RESEND_API_KEY: "playwright-resend-key",

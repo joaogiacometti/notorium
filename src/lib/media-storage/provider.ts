@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getServerEnv } from "@/env";
+import { createFixtureMediaStorageProvider } from "@/lib/media-storage/fixture-provider";
 import type { MediaStorageContext } from "@/lib/media-storage/storage-pathname";
 import { createVercelBlobMediaStorageProvider } from "@/lib/media-storage/vercel-blob-provider";
 
@@ -80,7 +81,10 @@ export interface MediaStorageProvider {
  * const attachmentsEnabled = isMediaStorageConfigured();
  */
 export function isMediaStorageConfigured(): boolean {
-  return Boolean(getServerEnv().BLOB_READ_WRITE_TOKEN);
+  const env = getServerEnv();
+  return Boolean(
+    env.NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR || env.BLOB_READ_WRITE_TOKEN,
+  );
 }
 
 /**
@@ -90,6 +94,10 @@ export function isMediaStorageConfigured(): boolean {
  * const provider = await getMediaStorageProvider();
  */
 export async function getMediaStorageProvider(): Promise<MediaStorageProvider | null> {
+  const fixtureDir = getServerEnv().NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR;
+  if (fixtureDir) {
+    return createFixtureMediaStorageProvider(fixtureDir);
+  }
   if (!isMediaStorageConfigured()) {
     return null;
   }
