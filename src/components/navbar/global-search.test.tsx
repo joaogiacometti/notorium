@@ -19,7 +19,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 };
 
 class FakeSearchApi {
-  matches: SearchData = { notes: [], flashcards: [] };
+  matches: SearchData = { notes: [], pdfs: [], flashcards: [] };
   searchedQueries: string[] = [];
   /** When true, searches never settle, simulating a slow server. */
   holdSearches = false;
@@ -70,6 +70,10 @@ function note(id: string, title: string): SearchData["notes"][number] {
     subjectId: "subject-1",
     subjectName: "Biology",
   };
+}
+
+function pdf(id: string, title: string): SearchData["pdfs"][number] {
+  return { id, title, subjectId: "subject-1", subjectName: "Biology" };
 }
 
 function flashcard(
@@ -185,6 +189,7 @@ describe("GlobalSearch", () => {
   it("lists matching notes and flashcards once the user types", async () => {
     api.matches = {
       notes: [note("n1", "Cell cycle")],
+      pdfs: [],
       flashcards: [flashcard("f1", "Cell membrane")],
     };
     await renderSearch();
@@ -207,7 +212,11 @@ describe("GlobalSearch", () => {
   });
 
   it("lists matching commands together with server results", async () => {
-    api.matches = { notes: [note("n1", "Subject notes")], flashcards: [] };
+    api.matches = {
+      notes: [note("n1", "Subject notes")],
+      pdfs: [],
+      flashcards: [],
+    };
     await renderSearch();
     await typeQuery("subject");
 
@@ -230,7 +239,11 @@ describe("GlobalSearch", () => {
   });
 
   it("keeps previous matches while a refined search loads", async () => {
-    api.matches = { notes: [note("n1", "Cell cycle")], flashcards: [] };
+    api.matches = {
+      notes: [note("n1", "Cell cycle")],
+      pdfs: [],
+      flashcards: [],
+    };
     await renderSearch();
     await typeQuery("cell");
     api.holdSearches = true;
@@ -248,18 +261,37 @@ describe("GlobalSearch", () => {
     await typeQuery("zzzz");
 
     expect(document.body.textContent).toContain(
-      "No matching commands, notes, or flashcards.",
+      "No matching commands, notes, PDFs, or flashcards.",
     );
   });
 
   it("navigates and closes when a result is selected", async () => {
-    api.matches = { notes: [note("n1", "Cell cycle")], flashcards: [] };
+    api.matches = {
+      notes: [note("n1", "Cell cycle")],
+      pdfs: [],
+      flashcards: [],
+    };
     await renderSearch();
     await typeQuery("cell");
     clickOption("Cell cycle");
 
     expect(routerPushMock).toHaveBeenCalledWith(expect.stringContaining("n1"));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("lists matching PDFs and opens the reader when one is selected", async () => {
+    api.matches = {
+      notes: [],
+      pdfs: [pdf("p1", "Cell biology textbook")],
+      flashcards: [],
+    };
+    await renderSearch();
+    await typeQuery("cell");
+    clickOption("Cell biology textbook");
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      "/subjects/subject-1/documents/pdfs/p1",
+    );
   });
 
   it("runs a command and closes the dialog", async () => {
@@ -278,6 +310,15 @@ describe("GlobalSearch", () => {
       document.querySelector('[data-testid="create-dialog"]')?.textContent,
     ).toBe("note");
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("opens the Add PDF dialog for the Create PDF command", async () => {
+    await renderSearch();
+    clickOption("Create PDF");
+
+    expect(
+      document.querySelector('[data-testid="create-dialog"]')?.textContent,
+    ).toBe("pdf");
   });
 
   it("toggles on Ctrl+K but not while the shortcuts dialog is open", async () => {

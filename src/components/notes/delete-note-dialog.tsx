@@ -31,7 +31,7 @@ export function DeleteNoteDialog({
       open={open}
       onOpenChange={onOpenChange}
       onDelete={() =>
-        runDocumentAction("note", queryClient, () =>
+        runDocumentAction(queryClient, () =>
           DOCUMENT_KIND_ACTIONS.note.remove(noteId),
         )
       }

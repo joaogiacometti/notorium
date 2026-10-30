@@ -4,6 +4,7 @@ import type {
   flashcardReviewLog,
   flashcardSchedulerSettings,
   note,
+  pdfDocument,
   subject,
 } from "@/db/schema";
 import type { FlashcardSourceLink } from "@/features/flashcards/source-contract";
@@ -144,6 +145,13 @@ export type SearchNoteResult = Pick<
   subjectName: string;
 };
 
+export type SearchPdfResult = Pick<
+  InferSelectModel<typeof pdfDocument>,
+  "id" | "title" | "subjectId"
+> & {
+  subjectName: string;
+};
+
 export type SearchFlashcardResult = Pick<
   FlashcardEntity,
   "id" | "front" | "back" | "subjectId"
@@ -154,6 +162,7 @@ export type SearchFlashcardResult = Pick<
 
 export type SearchData = {
   notes: SearchNoteResult[];
+  pdfs: SearchPdfResult[];
   flashcards: SearchFlashcardResult[];
 };
 

@@ -50,7 +50,13 @@ export const savePdfReadingPageSchema = z.object({
 
 export type SavePdfReadingPageForm = z.infer<typeof savePdfReadingPageSchema>;
 
-/** Title-only client form for the Add PDF and Rename dialogs; the file is checked separately. */
+/** Title-only client form for the Rename dialog. */
 export const pdfTitleFormSchema = renamePdfSchema.pick({ title: true });
 
-export type PdfTitleForm = z.infer<typeof pdfTitleFormSchema>;
+/** Client form for the Add PDF dialog; the file is checked separately. */
+export const createPdfFormSchema = createPdfSchema.pick({
+  subjectId: true,
+  title: true,
+});
+
+export type CreatePdfFormValues = z.infer<typeof createPdfFormSchema>;

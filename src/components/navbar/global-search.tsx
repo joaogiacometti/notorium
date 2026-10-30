@@ -17,6 +17,7 @@ import {
 import {
   FlashcardResultGroup,
   NoteResultGroup,
+  PdfResultGroup,
 } from "@/components/navbar/search-result-groups";
 import { useSearchCommandActions } from "@/components/navbar/use-search-command-actions";
 import { useSearchResults } from "@/components/navbar/use-search-results";
@@ -38,7 +39,7 @@ interface GlobalSearchProps {
 }
 
 /**
- * One dialog for both finding notes and flashcards and running commands
+ * One dialog for both finding notes, PDFs, and flashcards and running commands
  * (create, go to, settings). Opened with Cmd/Ctrl+K or from the sidebar.
  */
 export function GlobalSearch({
@@ -114,7 +115,8 @@ export function GlobalSearch({
   const subjectId = onFlashcards
     ? (searchParams.get("subjectId") ?? undefined)
     : undefined;
-  const hasResults = results.notes.length + results.flashcards.length > 0;
+  const hasResults =
+    results.notes.length + results.pdfs.length + results.flashcards.length > 0;
 
   return (
     <>
@@ -122,25 +124,30 @@ export function GlobalSearch({
         open={open}
         onOpenChange={handleOpenChange}
         title="Search and Commands"
-        description="Search your notes and flashcards or run a command"
+        description="Search your notes, PDFs, and flashcards or run a command"
         commandProps={{ shouldFilter: false }}
       >
         <CommandInput
           value={query}
           onValueChange={setQuery}
           maxLength={LIMITS.searchQueryMax}
-          placeholder="Search notes and flashcards, or run a command..."
+          placeholder="Search notes, PDFs, and flashcards, or run a command..."
         />
         <CommandList>
           {!results.isSearching && commands.length === 0 && !hasResults && (
             <CommandEmpty>
-              No matching commands, notes, or flashcards.
+              No matching commands, notes, PDFs, or flashcards.
             </CommandEmpty>
           )}
           <SearchCommandGroups commands={commands} onRun={runAction} />
           {results.isSearching && !hasResults ? <SearchingRow /> : null}
           <NoteResultGroup
             notes={results.notes}
+            highlightQuery={results.highlightQuery}
+            onSelect={navigate}
+          />
+          <PdfResultGroup
+            pdfs={results.pdfs}
             highlightQuery={results.highlightQuery}
             onSelect={navigate}
           />

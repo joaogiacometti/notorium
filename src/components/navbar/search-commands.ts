@@ -1,6 +1,7 @@
 import {
   BookOpen,
   FileText,
+  FileType,
   Home,
   Keyboard,
   LaptopMinimal,
@@ -16,7 +17,7 @@ import type { AppTheme } from "@/lib/theme";
 export type SearchCommandGroup = "Create" | "Go to" | "Settings";
 
 /** Dialogs that open straight from a search command. */
-export type ContextFreeDialog = "subject" | "flashcard" | "note";
+export type ContextFreeDialog = "subject" | "flashcard" | "note" | "pdf";
 
 export type SearchCommandAction =
   | { kind: "navigate"; href: string }
@@ -58,6 +59,14 @@ export const searchCommands: SearchCommand[] = [
     keywords: ["new", "add", "create", "note", "document"],
     icon: FileText,
     action: { kind: "create", dialog: "note" },
+  },
+  {
+    id: "create-pdf",
+    label: "Create PDF",
+    group: "Create",
+    keywords: ["new", "add", "create", "upload", "pdf", "book", "document"],
+    icon: FileType,
+    action: { kind: "create", dialog: "pdf" },
   },
   {
     id: "goto-home",

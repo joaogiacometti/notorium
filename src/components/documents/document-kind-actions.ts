@@ -15,8 +15,6 @@ interface DocumentKindActions {
   titleSchema: z.ZodType<{ title: string }, { title: string }>;
   rename: (id: string, title: string) => DocumentActionResult;
   remove: (id: string) => DocumentActionResult;
-  /** Whether the kind's titles feed the search palette's cached data. */
-  searchable: boolean;
 }
 
 export const DOCUMENT_KIND_ACTIONS = {
@@ -25,28 +23,25 @@ export const DOCUMENT_KIND_ACTIONS = {
     titleSchema: editNoteSchema.pick({ title: true }),
     rename: (id, title) => editNote({ id, title }),
     remove: (id) => deleteNote({ id }),
-    searchable: true,
   },
   pdf: {
     label: "PDF",
     titleSchema: pdfTitleFormSchema,
     rename: (id, title) => renamePdf({ id, title }),
     remove: (id) => deletePdf({ id }),
-    searchable: false,
   },
 } satisfies Record<DocumentKind, DocumentKindActions>;
 
 /**
- * Runs a rename or delete and, once it succeeds for a searchable kind, waits
- * for the search palette's cached titles to reload so they never go stale.
+ * Runs a rename or delete and, once it succeeds, waits for the search
+ * palette's cached titles to reload so they never go stale.
  */
 export async function runDocumentAction(
-  kind: DocumentKind,
   queryClient: QueryClient,
   action: () => DocumentActionResult,
 ): DocumentActionResult {
   const result = await action();
-  if (result.success && DOCUMENT_KIND_ACTIONS[kind].searchable) {
+  if (result.success) {
     await queryClient.invalidateQueries({ queryKey: ["search-data"] });
   }
   return result;

@@ -194,13 +194,13 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 ### Global Search
 
-- Search notes and flashcards by text with case- and accent-insensitive matching ("funcao" finds "Função"). Subjects have no page, so they are not search results; notes also match on their subject's name.
+- Search notes, PDFs, and flashcards by text with case- and accent-insensitive matching ("funcao" finds "Função"). Subjects have no page, so they are not search results; notes and PDFs also match on their subject's name. PDFs match on their title only, not their file contents.
 - Flashcard search results navigate to the flashcard detail page.
 - Flashcard search results display subject paths using `::` notation.
 - Search is user-scoped and accessible from the left menu (and the `Cmd/Ctrl+K` shortcut).
 - Search results are cached on the client and invalidated after related mutations.
 - Search result text matching the query (ignoring case and accents) is highlighted in results, with matched phrases kept centered in preview snippets. Standard light and dark themes use the warning highlight color; custom themes use theme-native highlight colors. Highlighting is rendered safely without raw HTML injection.
-- Before the user types, the dialog shows only commands and loads nothing. Notes and flashcards are searched only once the query reaches the search minimum (2 characters); until the first matches arrive a "Searching…" row stands in for results (never the empty message), and refining a query keeps the previous matches visible until the new ones load.
+- Before the user types, the dialog shows only commands and loads nothing. Notes, PDFs, and flashcards are searched only once the query reaches the search minimum (2 characters); until the first matches arrive a "Searching…" row stands in for results (never the empty message), and refining a query keeps the previous matches visible until the new ones load.
 
 ### Study Assistant
 
@@ -228,10 +228,10 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 
 ### Commands in Global Search
 
-- The Global Search dialog (`Ctrl`/`Cmd+K`) also runs actions and navigates. Commands appear above note and flashcard results, including before the user types.
+- The Global Search dialog (`Ctrl`/`Cmd+K`) also runs actions and navigates. Commands appear above note, PDF, and flashcard results, including before the user types.
 - Commands are searchable by name and keyword (case- and accent-insensitive) and grouped as Create, Go to, and Settings.
-- Create commands open the existing create dialogs: Subject, Flashcard, and Note.
-- Creating a Note requires a subject: the create dialog preselects the current subject on note pages, otherwise the user chooses a subject in the dialog. The subject picker can create a subject inline, including a nested `::` path, and selects it automatically. Created notes navigate to their detail page.
+- Create commands open the existing create dialogs: Subject, Flashcard, Note, and PDF.
+- Creating a Note or PDF requires a subject: the create dialog preselects the current subject on document pages, otherwise the user chooses a subject in the dialog. The subject picker can create a subject inline, including a nested `::` path, and selects it automatically. Created notes and PDFs navigate to their detail page.
 - Go to commands navigate to Home and Flashcards.
 - Settings commands switch the theme (Light, Dark, System), open the account settings dialog, and open the keyboard shortcuts help dialog.
 - The search hotkey is suspended while another dialog is open.
@@ -257,7 +257,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 ### UI/UX Baseline
 
 - Responsive layout for desktop and mobile.
-- The left menu holds the account menu, Search, the global section links (Home, Flashcards), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: a flashcards-due row whose button starts the review (or browses flashcards when caught up), a full-width review-activity heatmap with study streaks, and recently edited notes across all subjects. Subjects are managed in the sidebar tree, not on the dashboard. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
+- The left menu holds the account menu, Search, the global section links (Home, Flashcards), and the subject tree. On launch and after login the user lands on the Home dashboard (`/`); signed-out users are sent to the login page. The Home dashboard greets the user and surfaces overview cards: a flashcards-due row whose button starts the review (or browses flashcards when caught up), a full-width review-activity heatmap with study streaks, and recently edited notes and PDFs across all subjects. Subjects are managed in the sidebar tree, not on the dashboard. On desktop the menu can be collapsed via a toggle in its header; while collapsed a floating button restores it, and the collapsed state persists across reloads. On mobile it opens from a top "Menu" sheet instead.
 - Every page shows a sticky top bar with a breadcrumb (e.g. `Subject > Note` or `Flashcards > Biology::Cells`) that indicates the current location and replaces per-page "Back to …" links. It holds at most a parent crumb (linked when it has a page; subjects do not) and the current page as the unlinked final crumb. A note named like its subject still shows both crumbs.
 - Loading states and skeletons.
 - Toast feedback for mutation success and error states.

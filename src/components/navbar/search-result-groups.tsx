@@ -1,10 +1,12 @@
 "use client";
 
-import { FileText, Layers } from "lucide-react";
+import { Layers, type LucideIcon } from "lucide-react";
+import { DOCUMENT_KIND_ICONS } from "@/components/documents/document-kind-icons";
 import { CommandGroup, CommandItem } from "@/components/ui/command";
 import { LIMITS } from "@/lib/config/limits";
 import { richTextToPlainText } from "@/lib/editor/rich-text";
 import {
+  getDocumentDetailHref,
   getFlashcardDetailHref,
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
@@ -15,6 +17,7 @@ import {
 import type { SearchData } from "@/lib/server/api-contracts";
 
 type SearchNote = SearchData["notes"][number];
+type SearchPdf = SearchData["pdfs"][number];
 type SearchFlashcard = SearchData["flashcards"][number];
 
 const RESULT_ITEM_CLASS =
@@ -45,18 +48,12 @@ export function NoteResultGroup({
           onSelect={() => onSelect(getNoteDetailHref(n.subjectId, n.id))}
           className={RESULT_ITEM_CLASS}
         >
-          <div className="flex w-full min-w-0 items-center gap-2">
-            <FileText className="!size-4 text-muted-foreground" />
-            <span className="min-w-0 flex-1 truncate">
-              {renderSearchHighlightedText(n.title, highlightQuery)}
-            </span>
-            <span className={SUBJECT_LABEL_CLASS}>
-              <span className="shrink-0">in</span>
-              <span className="block min-w-0 flex-1 truncate">
-                {renderSearchHighlightedText(n.subjectName, highlightQuery)}
-              </span>
-            </span>
-          </div>
+          <DocumentResultHeading
+            icon={DOCUMENT_KIND_ICONS.note}
+            title={n.title}
+            subjectName={n.subjectName}
+            highlightQuery={highlightQuery}
+          />
           {n.content && (
             <ResultSnippet
               text={richTextToPlainText(n.content)}
@@ -64,6 +61,49 @@ export function NoteResultGroup({
               maxLength={LIMITS.contentPreviewTruncate}
             />
           )}
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  );
+}
+
+interface PdfResultGroupProps {
+  pdfs: SearchPdf[];
+  highlightQuery: string;
+  onSelect: (href: string) => void;
+}
+
+export function PdfResultGroup({
+  pdfs,
+  highlightQuery,
+  onSelect,
+}: Readonly<PdfResultGroupProps>) {
+  if (pdfs.length === 0) {
+    return null;
+  }
+  return (
+    <CommandGroup heading="PDFs">
+      {pdfs.map((p) => (
+        <CommandItem
+          key={p.id}
+          value={p.id}
+          onSelect={() =>
+            onSelect(
+              getDocumentDetailHref({
+                kind: "pdf",
+                subjectId: p.subjectId,
+                id: p.id,
+              }),
+            )
+          }
+          className={RESULT_ITEM_CLASS}
+        >
+          <DocumentResultHeading
+            icon={DOCUMENT_KIND_ICONS.pdf}
+            title={p.title}
+            subjectName={p.subjectName}
+            highlightQuery={highlightQuery}
+          />
         </CommandItem>
       ))}
     </CommandGroup>
@@ -122,6 +162,35 @@ export function FlashcardResultGroup({
         </CommandItem>
       ))}
     </CommandGroup>
+  );
+}
+
+interface DocumentResultHeadingProps {
+  icon: LucideIcon;
+  title: string;
+  subjectName: string;
+  highlightQuery: string;
+}
+
+function DocumentResultHeading({
+  icon: Icon,
+  title,
+  subjectName,
+  highlightQuery,
+}: Readonly<DocumentResultHeadingProps>) {
+  return (
+    <div className="flex w-full min-w-0 items-center gap-2">
+      <Icon className="!size-4 text-muted-foreground" />
+      <span className="min-w-0 flex-1 truncate">
+        {renderSearchHighlightedText(title, highlightQuery)}
+      </span>
+      <span className={SUBJECT_LABEL_CLASS}>
+        <span className="shrink-0">in</span>
+        <span className="block min-w-0 flex-1 truncate">
+          {renderSearchHighlightedText(subjectName, highlightQuery)}
+        </span>
+      </span>
+    </div>
   );
 }
 

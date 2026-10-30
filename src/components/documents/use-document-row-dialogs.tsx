@@ -111,7 +111,7 @@ export function useDocumentRowDialogs({
           open
           onOpenChange={closeEdit}
           onRename={(title) =>
-            runDocumentAction(editTarget.kind, queryClient, () =>
+            runDocumentAction(queryClient, () =>
               DOCUMENT_KIND_ACTIONS[editTarget.kind].rename(
                 editTarget.id,
                 title,
@@ -128,7 +128,7 @@ export function useDocumentRowDialogs({
           open
           onOpenChange={closeDelete}
           onDelete={() =>
-            runDocumentAction(deleteTarget.kind, queryClient, () =>
+            runDocumentAction(queryClient, () =>
               DOCUMENT_KIND_ACTIONS[deleteTarget.kind].remove(deleteTarget.id),
             )
           }

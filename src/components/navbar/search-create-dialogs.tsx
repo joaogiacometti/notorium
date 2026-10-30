@@ -3,8 +3,12 @@
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
 import type { ContextFreeDialog } from "@/components/navbar/search-commands";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
+import { CreatePdfDialog } from "@/components/pdfs/create-pdf-dialog";
 import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
-import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
+import {
+  getDocumentDetailHref,
+  getNoteDetailHref,
+} from "@/lib/navigation/detail-page-back-link";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
 export type ActiveCreateDialog = ContextFreeDialog;
@@ -56,6 +60,21 @@ export function SearchCreateDialogs({
         onOpenChange={handleOpenChange}
         onSuccess={(noteId, createdSubjectId) =>
           onNavigate(getNoteDetailHref(createdSubjectId, noteId))
+        }
+      />
+      <CreatePdfDialog
+        subjectId={subjectId ?? undefined}
+        subjects={subjects}
+        open={activeDialog === "pdf"}
+        onOpenChange={handleOpenChange}
+        onSuccess={(pdfId, createdSubjectId) =>
+          onNavigate(
+            getDocumentDetailHref({
+              kind: "pdf",
+              subjectId: createdSubjectId,
+              id: pdfId,
+            }),
+          )
         }
       />
     </>

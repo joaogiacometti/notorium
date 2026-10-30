@@ -1,6 +1,6 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, note, subject } from "@/db/schema";
+import { flashcard, note, pdfDocument, subject } from "@/db/schema";
 import { foldedContains } from "@/features/search/match-sql";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
@@ -24,7 +24,7 @@ export async function getSearchDataForUser(
       ),
   );
 
-  const [allNotes, allFlashcards] = await Promise.all([
+  const [allNotes, allPdfs, allFlashcards] = await Promise.all([
     getDb()
       .select({
         id: note.id,
@@ -47,6 +47,27 @@ export async function getSearchDataForUser(
         ),
       )
       .orderBy(desc(note.updatedAt))
+      .limit(LIMITS.searchResultsLimit),
+    getDb()
+      .select({
+        id: pdfDocument.id,
+        title: pdfDocument.title,
+        subjectId: pdfDocument.subjectId,
+        subjectName: subject.name,
+      })
+      .from(pdfDocument)
+      .innerJoin(subject, eq(pdfDocument.subjectId, subject.id))
+      .where(
+        and(
+          eq(pdfDocument.userId, userId),
+          ...subjectFilters,
+          or(
+            foldedContains(pdfDocument.title, searchPattern),
+            foldedContains(subject.name, searchPattern),
+          ),
+        ),
+      )
+      .orderBy(desc(pdfDocument.updatedAt))
       .limit(LIMITS.searchResultsLimit),
     getDb()
       .select({
@@ -73,6 +94,7 @@ export async function getSearchDataForUser(
 
   return {
     notes: allNotes,
+    pdfs: allPdfs,
     flashcards: allFlashcards.map((flashcard) => ({
       ...flashcard,
       subjectPath:

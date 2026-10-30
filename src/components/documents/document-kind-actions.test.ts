@@ -25,11 +25,10 @@ class FakeQueryClient {
 }
 
 describe("runDocumentAction", () => {
-  it("reloads cached search titles after a note change succeeds", async () => {
+  it("reloads cached search titles after a document change succeeds", async () => {
     const client = new FakeQueryClient();
 
     const result = await runDocumentAction(
-      "note",
       client.asQueryClient(),
       async () => ({
         success: true,
@@ -40,21 +39,10 @@ describe("runDocumentAction", () => {
     expect(client.invalidated).toEqual([{ queryKey: ["search-data"] }]);
   });
 
-  it("leaves search data alone for kinds the search palette does not list", async () => {
-    const client = new FakeQueryClient();
-
-    await runDocumentAction("pdf", client.asQueryClient(), async () => ({
-      success: true,
-    }));
-
-    expect(client.invalidated).toEqual([]);
-  });
-
   it("returns a failure without touching search data", async () => {
     const client = new FakeQueryClient();
 
     const result = await runDocumentAction(
-      "note",
       client.asQueryClient(),
       async () => ({
         errorCode: "notes.notFound",

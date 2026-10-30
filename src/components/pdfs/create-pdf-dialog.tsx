@@ -1,10 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type ChangeEvent, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { type ChangeEvent, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
+import { SubjectSelect } from "@/components/shared/subject-select";
+import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,21 +26,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { getPdfFileProblem, pdfTitleFromFileName } from "@/features/pdfs/utils";
 import {
+  type CreatePdfFormValues,
+  createPdfFormSchema,
   PDF_MIME_TYPE,
-  type PdfTitleForm,
-  pdfTitleFormSchema,
 } from "@/features/pdfs/validation";
 import { uploadPdfDocument } from "@/lib/attachments/upload-pdf-document";
 import { LIMITS } from "@/lib/config/limits";
+import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 interface CreatePdfDialogProps {
-  subjectId: string;
+  subjectId?: string;
+  /** When set, the dialog shows a subject picker preselected to `subjectId`. */
+  subjects?: SubjectOption[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (pdfId: string) => void;
+  onSuccess: (pdfId: string, subjectId: string) => void;
 }
 
 /**
@@ -49,17 +55,36 @@ interface CreatePdfDialogProps {
  */
 export function CreatePdfDialog({
   subjectId,
+  subjects: initialSubjects,
   open,
   onOpenChange,
   onSuccess,
 }: Readonly<CreatePdfDialogProps>) {
+  const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const isUploading = progress !== null;
-  const form = useForm<PdfTitleForm>({
-    resolver: zodResolver(pdfTitleFormSchema),
-    defaultValues: { title: "" },
+  const emptyValues = { subjectId: subjectId ?? "", title: "" };
+  const form = useForm<CreatePdfFormValues>({
+    resolver: zodResolver(createPdfFormSchema),
+    defaultValues: emptyValues,
   });
+  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
+    initialSubjects,
+    onSubjectCreated: (createdSubjectId) =>
+      form.setValue("subjectId", createdSubjectId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      }),
+  });
+
+  // The search palette keeps this dialog mounted, so pick up the current
+  // subject each time it opens.
+  useEffect(() => {
+    if (open) {
+      form.reset({ subjectId: subjectId ?? "", title: "" });
+    }
+  }, [form, open, subjectId]);
   const fileProblem = file
     ? getPdfFileProblem(file)
     : form.formState.isSubmitted
@@ -74,13 +99,13 @@ export function CreatePdfDialog({
     }
   }
 
-  async function handleSubmit(values: PdfTitleForm) {
+  async function handleSubmit(values: CreatePdfFormValues) {
     if (isUploading || !file || fileProblem) return;
 
     setProgress(0);
     try {
       const result = await uploadPdfDocument({
-        subjectId,
+        subjectId: values.subjectId,
         title: values.title,
         file,
         onProgress: setProgress,
@@ -89,9 +114,10 @@ export function CreatePdfDialog({
         toast.error(t(result.errorCode, result.errorParams));
         return;
       }
+      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       notifySubjectDocumentsChanged(result.subjectId);
       onOpenChange(false);
-      onSuccess(result.pdfId);
+      onSuccess(result.pdfId, result.subjectId);
     } finally {
       setProgress(null);
     }
@@ -100,7 +126,7 @@ export function CreatePdfDialog({
   function handleOpenChange(nextOpen: boolean) {
     if (isUploading) return;
     if (!nextOpen) {
-      form.reset({ title: "" });
+      form.reset(emptyValues);
       setFile(null);
     }
     onOpenChange(nextOpen);
@@ -117,6 +143,24 @@ export function CreatePdfDialog({
         </DialogHeader>
         <form id="form-create-pdf" onSubmit={form.handleSubmit(handleSubmit)}>
           <FieldGroup className="gap-4">
+            {initialSubjects ? (
+              <Controller
+                name="subjectId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <SubjectSelect
+                    value={field.value}
+                    onChange={(value) => field.onChange(value ?? "")}
+                    subjects={subjects}
+                    id="form-create-pdf-subject"
+                    error={fieldState.error?.message}
+                    ariaInvalid={fieldState.invalid}
+                    disabled={isUploading}
+                    onCreateSubject={handleCreateSubject}
+                  />
+                )}
+              />
+            ) : null}
             <Field data-invalid={fileProblem !== null}>
               <FieldLabel htmlFor="form-create-pdf-file">File</FieldLabel>
               <Input

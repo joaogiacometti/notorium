@@ -1,10 +1,14 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Download, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { DeleteDocumentDialog } from "@/components/documents/delete-document-dialog";
-import { DOCUMENT_KIND_ACTIONS } from "@/components/documents/document-kind-actions";
+import {
+  DOCUMENT_KIND_ACTIONS,
+  runDocumentAction,
+} from "@/components/documents/document-kind-actions";
 import { RenameDocumentDialog } from "@/components/documents/rename-document-dialog";
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { LazyPdfReader } from "@/components/pdfs/lazy-pdf-reader";
@@ -36,6 +40,7 @@ interface PdfDetailProps {
 
 export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
   const { isZenMode, toggleZenMode } = useZenMode();
   const [renameOpen, setRenameOpen] = useState(false);
@@ -92,7 +97,11 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
         titleSchema={DOCUMENT_KIND_ACTIONS.pdf.titleSchema}
         open={renameOpen}
         onOpenChange={setRenameOpen}
-        onRename={(title) => DOCUMENT_KIND_ACTIONS.pdf.rename(pdf.id, title)}
+        onRename={(title) =>
+          runDocumentAction(queryClient, () =>
+            DOCUMENT_KIND_ACTIONS.pdf.rename(pdf.id, title),
+          )
+        }
         onSuccess={() => notifySubjectDocumentsChanged(pdf.subjectId)}
       />
       <DeleteDocumentDialog
@@ -100,7 +109,11 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
         title={pdf.title}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onDelete={() => DOCUMENT_KIND_ACTIONS.pdf.remove(pdf.id)}
+        onDelete={() =>
+          runDocumentAction(queryClient, () =>
+            DOCUMENT_KIND_ACTIONS.pdf.remove(pdf.id),
+          )
+        }
         onSuccess={() => {
           setDeleteOpen(false);
           notifySubjectDocumentsChanged(pdf.subjectId);

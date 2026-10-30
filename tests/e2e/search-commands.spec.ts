@@ -1,7 +1,8 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
 
-const SEARCH_PLACEHOLDER = "Search notes and flashcards, or run a command...";
+const SEARCH_PLACEHOLDER =
+  "Search notes, PDFs, and flashcards, or run a command...";
 
 async function openSearchDialog(page: Page) {
   await page.keyboard.press("ControlOrMeta+k");

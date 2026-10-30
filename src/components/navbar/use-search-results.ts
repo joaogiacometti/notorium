@@ -6,10 +6,11 @@ import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import { fetchSearchData } from "@/lib/read-api/search";
 import type { SearchData } from "@/lib/server/api-contracts";
 
-const NO_SEARCH_DATA: SearchData = { notes: [], flashcards: [] };
+const NO_SEARCH_DATA: SearchData = { notes: [], pdfs: [], flashcards: [] };
 
 interface SearchResults {
   notes: SearchData["notes"];
+  pdfs: SearchData["pdfs"];
   flashcards: SearchData["flashcards"];
   /** True while a typed query has no matches to show yet. */
   isSearching: boolean;
@@ -18,7 +19,7 @@ interface SearchResults {
 }
 
 /**
- * Loads notes and flashcards matching `query` (debounced). Nothing loads until
+ * Loads notes, PDFs, and flashcards matching `query` (debounced). Nothing loads until
  * the query reaches the search minimum, and a refined query keeps the previous
  * matches on screen until its own arrive, so typing never blanks the list.
  */
@@ -48,9 +49,10 @@ export function useSearchResults(
     // Typed past the minimum but still debouncing.
     return { ...NO_SEARCH_DATA, isSearching: true, highlightQuery: "" };
   }
-  const { notes, flashcards } = searchQuery.data ?? NO_SEARCH_DATA;
+  const { notes, pdfs, flashcards } = searchQuery.data ?? NO_SEARCH_DATA;
   return {
     notes,
+    pdfs,
     flashcards,
     isSearching: searchQuery.isPending,
     highlightQuery: debouncedQuery,

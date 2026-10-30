@@ -176,6 +176,7 @@ describe("read route handlers", () => {
 
     expect(short.body).toEqual({
       notes: [],
+      pdfs: [],
       flashcards: [],
     });
     expect(queries.getSearchDataForUser).toHaveBeenCalledTimes(1);
