@@ -50,24 +50,18 @@ describe("FlashcardsManagerTable", () => {
     vi.clearAllMocks();
   });
 
-  it("limits long front excerpts in the manager table", async () => {
+  it("shows the full front excerpt and leaves truncation to the column width", async () => {
     await renderTable([createFlashcard()]);
 
-    expect(container.textContent).toContain("Very long front content for...");
-    expect(container.textContent).not.toContain(
+    expect(container.textContent).toContain(
       "Very long front content for a flashcard manager row",
     );
   });
 
-  it("marks only study-later rows", async () => {
-    await renderTable([
-      createFlashcard({ id: "marked", studyLaterAt: new Date() }),
-      createFlashcard({ id: "plain" }),
-    ]);
+  it("does not mark study-later rows in the table", async () => {
+    await renderTable([createFlashcard({ studyLaterAt: new Date() })]);
 
-    expect(
-      container.querySelectorAll('[aria-label="Study later"]'),
-    ).toHaveLength(1);
+    expect(container.querySelector('[aria-label="Study later"]')).toBe(null);
   });
 
   it("shows lapse counts only when asked", async () => {

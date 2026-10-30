@@ -172,7 +172,7 @@ export function FlashcardsManagerToolbar({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:justify-between">
-              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem]">
+              <div className="flex min-w-0 basis-full flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem] sm:flex-1 sm:basis-0">
                 <ToolbarStatusBadges
                   isManageScopeLoading={isManageScopeLoading}
                   hasManageScopeError={hasManageScopeError}

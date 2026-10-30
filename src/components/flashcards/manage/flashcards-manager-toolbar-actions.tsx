@@ -80,9 +80,11 @@ export function ToolbarActionBar({
     <div
       className={cn(
         "ml-auto flex min-h-8 items-center justify-end gap-2 sm:min-w-34",
+        // Phones give the bar its own row, so it only takes space while shown;
+        // wider screens reserve its slot to avoid layout shift on selection.
         visible
-          ? "visible opacity-100"
-          : "pointer-events-none invisible opacity-0",
+          ? "visible opacity-100 max-sm:w-full max-sm:justify-between"
+          : "pointer-events-none invisible opacity-0 max-sm:hidden",
       )}
     >
       <ToolbarIconActionButton

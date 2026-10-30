@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
@@ -40,62 +40,23 @@ interface FlashcardRowActionHandlers {
   onStudyLaterToggleRequested: (flashcard: FlashcardManageItem) => void;
 }
 
-const flashcardFrontPreviewMaxLength = 28;
-
 function getColumnClassName(columnId: string) {
   switch (columnId) {
     case "select":
       return "w-9 min-w-9";
+    // max-w-0 lets the percentage widths win over content width, so long
+    // text truncates instead of widening the table.
     case "front":
-      return "min-w-[7.5rem] max-w-[8.5rem] sm:min-w-[10rem] sm:max-w-[12rem] lg:min-w-[8rem] lg:max-w-[11rem]";
+      return "w-[65%] max-w-0 lg:w-full";
     case "subjectPath":
-      return "min-w-[5.5rem] sm:min-w-[7rem] lg:min-w-[4rem] lg:max-w-[9rem]";
+      return "w-[35%] max-w-0 lg:w-36 lg:max-w-36";
+    case "lapseCount":
+      return "w-12 min-w-12";
     case "actions":
       return "w-14 min-w-14";
     default:
       return "";
   }
-}
-
-function getFlashcardFrontPreview(value: string) {
-  if (value.length <= flashcardFrontPreviewMaxLength) {
-    return value;
-  }
-
-  return `${value.slice(0, flashcardFrontPreviewMaxLength).trimEnd()}...`;
-}
-
-interface FlashcardFrontCellProps {
-  item: FlashcardManageItem;
-  showLapseCount: boolean;
-}
-
-function FlashcardFrontCell({
-  item,
-  showLapseCount,
-}: Readonly<FlashcardFrontCellProps>) {
-  return (
-    <div className="flex min-w-0 items-center gap-1.5 py-1">
-      <div className="min-w-0 overflow-hidden">
-        <div
-          className="truncate text-sm font-semibold leading-6 text-foreground/95"
-          title={item.frontTitle ?? undefined}
-        >
-          {getFlashcardFrontPreview(item.frontExcerpt)}
-        </div>
-      </div>
-      {showLapseCount ? (
-        <LapseCountMarker lapseCount={item.lapseCount} />
-      ) : null}
-      {item.studyLaterAt ? (
-        <Clock
-          className="size-3.5 shrink-0 text-muted-foreground"
-          role="img"
-          aria-label="Study later"
-        />
-      ) : null}
-    </div>
-  );
 }
 
 function LapseCountMarker({ lapseCount }: Readonly<{ lapseCount: number }>) {
@@ -104,7 +65,7 @@ function LapseCountMarker({ lapseCount }: Readonly<{ lapseCount: number }>) {
 
   return (
     <span
-      className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground"
+      className="flex shrink-0 items-center justify-end gap-0.5 py-1 text-xs text-muted-foreground"
       role="img"
       aria-label={label}
       title={label}
@@ -114,6 +75,13 @@ function LapseCountMarker({ lapseCount }: Readonly<{ lapseCount: number }>) {
     </span>
   );
 }
+
+const lapseCountColumn: ManagerColumnDef<FlashcardManageItem> = {
+  id: "lapseCount",
+  size: 48,
+  header: () => <div className="w-12 min-w-12" />,
+  cell: ({ row }) => <LapseCountMarker lapseCount={row.original.lapseCount} />,
+};
 
 function getColumns(
   {
@@ -132,10 +100,12 @@ function getColumns(
       size: 220,
       header: () => <TableHeaderLabel>Front</TableHeaderLabel>,
       cell: ({ row }) => (
-        <FlashcardFrontCell
-          item={row.original}
-          showLapseCount={showLapseCount}
-        />
+        <div
+          className="min-w-0 truncate py-1 text-sm font-semibold leading-6 text-foreground/95"
+          title={row.original.frontTitle ?? undefined}
+        >
+          {row.original.frontExcerpt}
+        </div>
       ),
     },
     {
@@ -144,13 +114,14 @@ function getColumns(
       header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
-          className="min-w-0 overflow-hidden truncate py-1 text-sm leading-6 text-muted-foreground"
+          className="truncate py-1 text-sm leading-6 text-muted-foreground"
           title={row.original.subjectPath ?? undefined}
         >
           {row.original.subjectPath}
         </div>
       ),
     },
+    ...(showLapseCount ? [lapseCountColumn] : []),
     {
       id: "actions",
       size: 56,
@@ -260,7 +231,7 @@ export function FlashcardsManagerTable({
       emptyLabel="No flashcards match your filters."
       getRowId={(row) => row.id}
       onRowClick={onRowClick}
-      tableClassName="w-full min-w-[22rem] sm:min-w-[27rem] lg:min-w-[20rem]"
+      tableClassName="w-full"
       getHeaderCellClassName={getColumnClassName}
       getBodyCellClassName={(columnId) =>
         cn("px-3 py-3 align-middle", getColumnClassName(columnId))
@@ -282,7 +253,7 @@ export function FlashcardsManagerTableSkeleton({
     <TableSkeleton
       className={cn("flex h-full flex-col", className)}
       headerClassName="py-3"
-      columnTemplate="2.25rem minmax(7.5rem,1.35fr) minmax(5.5rem,0.9fr) 3.5rem"
+      columnTemplate="2.25rem minmax(0,1.85fr) minmax(0,1fr) 3.5rem"
       headers={[
         {
           content: (

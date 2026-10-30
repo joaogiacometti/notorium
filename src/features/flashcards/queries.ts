@@ -198,7 +198,7 @@ export async function getFlashcardsManagePageForUser(
       studyLaterAt: row.studyLaterAt,
       lapseCount: row.lapseCount,
       front: row.front,
-      frontExcerpt: getRichTextExcerpt(row.front, 45),
+      frontExcerpt: getRichTextExcerpt(row.front, 160),
       frontTitle: richTextToPlainText(row.front) || null,
       subjectName: row.subjectName,
       subjectPath:
