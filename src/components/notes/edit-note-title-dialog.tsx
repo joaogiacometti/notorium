@@ -26,7 +26,7 @@ import { type EditNoteForm, editNoteSchema } from "@/features/notes/validation";
 import { t } from "@/lib/server/server-action-errors";
 
 interface EditNoteTitleDialogProps {
-  note: Pick<EditNoteForm, "id" | "title"> & { content?: string | null };
+  note: Pick<EditNoteForm, "id" | "title">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -64,11 +64,7 @@ export function EditNoteTitleDialog({
     setIsSubmitting(true);
 
     try {
-      const result = await editNote({
-        id: note.id,
-        title: data.title,
-        content: note.content ?? undefined,
-      });
+      const result = await editNote({ id: note.id, title: data.title });
 
       if (!result.success) {
         toast.error(t(result.errorCode, result.errorParams));

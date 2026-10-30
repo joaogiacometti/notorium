@@ -88,10 +88,19 @@ export async function editNoteForUser(
 
   await getDb()
     .update(note)
-    .set(getNoteMutationValues(data))
+    .set(getNoteEditValues(data))
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 
   return { success: true, subjectId: existing.subjectId };
+}
+
+// Omitted content means a title-only rename, so the saved content is kept.
+function getNoteEditValues(data: EditNoteForm) {
+  if (data.content === undefined) {
+    return { title: data.title };
+  }
+
+  return getNoteMutationValues(data);
 }
 
 /**

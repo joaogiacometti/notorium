@@ -147,6 +147,24 @@ describe("editNoteForUser", () => {
     );
   });
 
+  it("keeps saved content when a rename omits content", async () => {
+    getNoteByIdForUserMock.mockResolvedValueOnce({
+      id: "note-1",
+      subjectId: "subject-1",
+      content: "<p>Keep</p>",
+    });
+
+    const { editNoteForUser } = await import("@/features/notes/mutations");
+
+    const result = await editNoteForUser("user-1", {
+      id: "note-1",
+      title: "Renamed",
+    });
+
+    expect(result).toEqual({ success: true, subjectId: "subject-1" });
+    expect(updateSetMock).toHaveBeenCalledWith({ title: "Renamed" });
+  });
+
   it("defers removed attachment deletion to the orphan sweep", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
