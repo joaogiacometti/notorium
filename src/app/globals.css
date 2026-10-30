@@ -520,6 +520,17 @@
   @apply mb-0 w-full;
 }
 
+/* A PDF selection kept for the study assistant after focus leaves the
+   reader (use-pdf-study-context.ts). PDF pages stay white in every theme, so
+   this uses a hue that reads on paper rather than the theme's --primary. */
+::highlight(pdf-kept-selection) {
+  background-color: color-mix(
+    in oklab,
+    var(--intent-info-fill) 35%,
+    transparent
+  );
+}
+
 /* The editor content scrolls (overflow-x: auto), so selection chrome stays
    inside the image: an outward outline or handle is clipped or adds stray
    scrollbars to a full-width image. */

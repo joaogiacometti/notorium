@@ -86,6 +86,8 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
         </div>
         <LazyPdfReader
           pdfId={pdf.id}
+          title={pdf.title}
+          subjectPath={subjectName}
           fileUrl={fileUrl}
           initialPage={pdf.lastPage}
         />

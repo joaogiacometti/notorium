@@ -13,6 +13,7 @@ const isolatedDomTests = [
   "src/components/flashcards/review/review-session-card-content.test.tsx",
   "src/components/account/delete-account-dialog.test.tsx",
   "src/components/navbar/logout-button.test.tsx",
+  "src/components/pdfs/use-pdf-study-context.test.tsx",
 ];
 
 export default defineConfig({

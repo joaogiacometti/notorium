@@ -181,6 +181,19 @@ describe("readStudyContextSource", () => {
     ).toBeUndefined();
     expect(readStudyContextSource(undefined)).toBeUndefined();
   });
+  it("does not record a PDF as a flashcard source", () => {
+    expect(
+      readStudyContextSource({
+        kind: "pdf",
+        documentId: "p1",
+        title: "Biology",
+        content: "ATP",
+        partial: false,
+        page: 3,
+        scope: "page",
+      }),
+    ).toBeUndefined();
+  });
 });
 
 describe("stampLastUserMetadata", () => {

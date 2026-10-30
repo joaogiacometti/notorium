@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDocumentContext,
+  buildPdfContext,
   buildReviewContext,
 } from "@/components/assistant/study-context-content";
 import {
@@ -106,4 +107,37 @@ it("captures document identity alongside the live content", () => {
   expect(
     buildDocumentContext("note", "Cells", "Biology", "<p>ATP</p>", "note-1"),
   ).toMatchObject({ documentId: "note-1", kind: "note" });
+});
+
+describe("PDF study context", () => {
+  const pdf = { id: "pdf-1", title: "Cell biology" };
+
+  it("labels the page and whether the text is a selection", () => {
+    const page = buildPdfContext(pdf, "Biology", {
+      page: 42,
+      scope: "page",
+      text: "Mitochondria",
+    });
+    const selection = { ...page, scope: "selection" as const };
+    expect(studyContextSchema.safeParse(page).success).toBe(true);
+    expect(describeStudyContext(page)).toBe("Using PDF: Cell biology · p. 42");
+    expect(describeStudyContext(selection)).toBe(
+      "Using PDF: Cell biology · p. 42 · selection",
+    );
+  });
+  it("caps long text and flags pages without selectable text", () => {
+    const long = buildPdfContext(pdf, "", {
+      page: 1,
+      scope: "selection",
+      text: "x".repeat(12001),
+    });
+    const scanned = buildPdfContext(pdf, "", {
+      page: 2,
+      scope: "page",
+      text: "",
+    });
+    expect(long.content).toHaveLength(12000);
+    expect(describeStudyContext(long)).toContain("partial context");
+    expect(describeStudyContext(scanned)).toContain("no selectable text");
+  });
 });

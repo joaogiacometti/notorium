@@ -18,6 +18,7 @@ import { PdfReaderToolbar } from "@/components/pdfs/pdf-reader-toolbar";
 import { usePdfGestureZoom } from "@/components/pdfs/use-pdf-gesture-zoom";
 import { usePdfReadingProgress } from "@/components/pdfs/use-pdf-reading-progress";
 import { usePdfScrollLayout } from "@/components/pdfs/use-pdf-scroll-layout";
+import { usePdfStudyContext } from "@/components/pdfs/use-pdf-study-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -41,6 +42,8 @@ const COLUMN_PADDING_PX = 16;
 
 interface PdfReaderProps {
   pdfId: string;
+  title: string;
+  subjectPath: string;
   fileUrl: string;
   initialPage: number;
 }
@@ -48,13 +51,16 @@ interface PdfReaderProps {
 /**
  * A continuous, vertically scrolling PDF reader that fits pages to the
  * column width by default, zooms with buttons, pinch, or Ctrl/⌘ + wheel, renders only
- * the pages near the viewport, and remembers the page being read.
+ * the pages near the viewport, remembers the page being read, and offers
+ * the selected or visible text to the study assistant.
  *
  * @example
- * <PdfReader pdfId={pdf.id} fileUrl={url} initialPage={pdf.lastPage} />
+ * <PdfReader pdfId={pdf.id} title={pdf.title} subjectPath={subjectName} fileUrl={url} initialPage={pdf.lastPage} />
  */
 export function PdfReader({
   pdfId,
+  title,
+  subjectPath,
   fileUrl,
   initialPage,
 }: Readonly<PdfReaderProps>) {
@@ -90,6 +96,9 @@ export function PdfReader({
       {opened ? (
         <PdfPageColumn
           pdfId={pdfId}
+          title={title}
+          subjectPath={subjectPath}
+          pdfDocument={opened.pdfDocument}
           pageCount={opened.pageCount}
           initialPage={opened.initialPage}
           basePage={opened.basePage}
@@ -102,6 +111,7 @@ export function PdfReader({
 }
 
 interface OpenedPdf {
+  pdfDocument: PDFDocumentProxy;
   pageCount: number;
   initialPage: number;
   /** The opening page's size, assumed for pages that have not loaded yet. */
@@ -110,10 +120,15 @@ interface OpenedPdf {
 
 interface PdfPageColumnProps extends OpenedPdf {
   pdfId: string;
+  title: string;
+  subjectPath: string;
 }
 
 function PdfPageColumn({
   pdfId,
+  title,
+  subjectPath,
+  pdfDocument,
   pageCount,
   initialPage,
   basePage,
@@ -164,6 +179,13 @@ function PdfPageColumn({
     pageCount,
     initialPage,
     save: savePdfReadingPage,
+  });
+  usePdfStudyContext({
+    pdf: { id: pdfId, title },
+    subjectPath,
+    pdfDocument,
+    currentPage: layout.currentPage,
+    pagesRef: contentRef,
   });
 
   return (
@@ -286,6 +308,7 @@ async function openPdfAt(
 ): Promise<OpenedPdf> {
   const initialPage = Math.min(Math.max(1, savedPage), document.numPages);
   return {
+    pdfDocument: document,
     pageCount: document.numPages,
     initialPage,
     basePage: await readPageSize(document, initialPage),

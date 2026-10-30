@@ -17,6 +17,14 @@ const documentFields = {
  */
 export const studyContextSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("note"), ...documentFields }),
+  // Text extracted from the user's selection or the visible page; empty when
+  // that page has no text layer (scanned images).
+  z.object({
+    kind: z.literal("pdf"),
+    ...documentFields,
+    page: z.number().int().positive(),
+    scope: z.enum(["selection", "page"]),
+  }),
   z.object({
     kind: z.literal("review"),
     mode: z.enum(["review", "exam"]),
@@ -37,5 +45,15 @@ export type StudyContext = z.infer<typeof studyContextSchema>;
 export function describeStudyContext(context: StudyContext): string {
   if (context.kind === "review")
     return `Using current ${context.mode === "exam" ? "exam" : "review"} card · ${context.back === undefined ? "answer hidden" : "front and answer"}`;
+  if (context.kind === "pdf") return describePdfContext(context);
   return `Using ${context.kind}: ${context.title || "Untitled"}${context.partial ? " · partial context" : ""}`;
+}
+
+function describePdfContext(
+  context: Extract<StudyContext, { kind: "pdf" }>,
+): string {
+  const source = `Using PDF: ${context.title || "Untitled"} · p. ${context.page}`;
+  if (!context.content) return `${source} · no selectable text`;
+  const scope = context.scope === "selection" ? " · selection" : "";
+  return `${source}${scope}${context.partial ? " · partial context" : ""}`;
 }

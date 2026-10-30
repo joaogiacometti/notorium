@@ -16,7 +16,7 @@ export function buildDocumentContext(
   subjectPath: string,
   content: string,
   documentId?: string,
-): Exclude<StudyContext, { kind: "review" }> {
+): Extract<StudyContext, { kind: "note" }> {
   const text = studyRichText(content);
   return {
     kind,
@@ -45,6 +45,33 @@ export function buildReviewContext(
     ...(revealed
       ? { back: studyRichText(card.back) }
       : { hiddenBack: studyRichText(card.back) }),
+  };
+}
+
+/** Where a PDF snapshot's text came from: a selection or the visible page. */
+export interface PdfStudyText {
+  page: number;
+  scope: "selection" | "page";
+  text: string;
+}
+
+/** Build a bounded snapshot of a PDF's selected or visible text.
+ * @example buildPdfContext(pdf, subjectPath, { page: 3, scope: "page", text });
+ */
+export function buildPdfContext(
+  pdf: { id: string; title: string },
+  subjectPath: string,
+  source: PdfStudyText,
+): Extract<StudyContext, { kind: "pdf" }> {
+  return {
+    kind: "pdf",
+    documentId: pdf.id,
+    title: pdf.title,
+    subjectPath,
+    content: source.text.slice(0, STUDY_CONTEXT_MAX_CHARS),
+    partial: source.text.length > STUDY_CONTEXT_MAX_CHARS,
+    page: source.page,
+    scope: source.scope,
   };
 }
 

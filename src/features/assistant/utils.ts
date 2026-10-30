@@ -173,7 +173,8 @@ export function readProposalSource(
 export function readStudyContextSource(
   context: StudyContext | undefined,
 ): FlashcardSource | undefined {
-  if (!context || context.kind === "review" || !context.documentId) {
+  // Flashcard sources link back to notes only.
+  if (context?.kind !== "note" || !context.documentId) {
     return undefined;
   }
   return { kind: context.kind, id: context.documentId };
