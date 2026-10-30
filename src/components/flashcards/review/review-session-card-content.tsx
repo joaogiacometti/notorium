@@ -1,6 +1,6 @@
 "use client";
 
-import { Lightbulb } from "lucide-react";
+import { Clock, Lightbulb } from "lucide-react";
 import { type RefObject, useEffect, useRef } from "react";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { buildReviewContext } from "@/components/assistant/study-context-content";
@@ -75,6 +75,7 @@ function ReviewSessionCardAttempt({
             {subjectLabel}
           </p>
         ) : null}
+        {card.studyLaterAt ? <StudyLaterLabel /> : null}
         {/* Hidden until reveal: the source title can give the answer away. */}
         {revealed ? (
           <FlashcardSourceReference
@@ -99,6 +100,15 @@ function ReviewSessionCardAttempt({
       </div>
       {revealed && assistedRecall ? <AssistedRecallNote /> : null}
     </div>
+  );
+}
+
+function StudyLaterLabel() {
+  return (
+    <p className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+      <Clock className="size-3.5" />
+      Study later
+    </p>
   );
 }
 

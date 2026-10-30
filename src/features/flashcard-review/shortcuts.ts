@@ -24,6 +24,9 @@ export type FlashcardReviewShortcutAction =
       type: "undo";
     }
   | {
+      type: "studyLater";
+    }
+  | {
       type: "grade";
       grade: ReviewGrade;
     };
@@ -52,6 +55,7 @@ interface UseFlashcardReviewShortcutsOptions {
   onDelete: () => void;
   onReset: () => void;
   onUndo: () => void;
+  onToggleStudyLater: () => void;
   onGrade: (grade: ReviewGrade) => void;
   onExit: () => void;
 }
@@ -123,6 +127,10 @@ export function getFlashcardReviewShortcutAction({
     return { type: "reset" };
   }
 
+  if (key.toLowerCase() === "l") {
+    return { type: "studyLater" };
+  }
+
   if (!revealed) {
     return null;
   }
@@ -174,5 +182,6 @@ function runFlashcardReviewShortcutAction(
   else if (action.type === "delete") options.onDelete();
   else if (action.type === "reset") options.onReset();
   else if (action.type === "undo") options.onUndo();
+  else if (action.type === "studyLater") options.onToggleStudyLater();
   else options.onGrade(action.grade);
 }

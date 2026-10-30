@@ -30,6 +30,7 @@ const baseHandlers = {
   onUndoReview: vi.fn(),
   onStopEditing: vi.fn(),
   onFlashcardUpdated: vi.fn(),
+  onToggleStudyLater: vi.fn(),
 };
 
 function makeCard(): FlashcardReviewEntity {
@@ -46,6 +47,7 @@ function makeCard(): FlashcardReviewEntity {
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
+    studyLaterAt: null,
     subjectId: "deck-1",
     subjectName: "Biology",
     subjectPath: "Biology",
@@ -117,6 +119,46 @@ describe("ReviewSessionScreen", () => {
     expect(baseHandlers.onEditFlashcard).toHaveBeenCalledOnce();
     expect(baseHandlers.onResetFlashcard).toHaveBeenCalledOnce();
     expect(baseHandlers.onDeleteFlashcard).toHaveBeenCalledOnce();
+  });
+
+  it("marks the card study later from the card actions menu", async () => {
+    const onToggleStudyLater = vi.fn();
+    await renderReviewSessionScreen({ onToggleStudyLater });
+
+    const item = await clickMenuItem("Study later");
+
+    expect(item?.getAttribute("aria-checked")).toBe("false");
+    expect(onToggleStudyLater).toHaveBeenCalledOnce();
+    expect(container.textContent).not.toContain("Study later");
+  });
+
+  it("labels a marked card and shows the menu item checked", async () => {
+    const onToggleStudyLater = vi.fn();
+    await renderReviewSessionScreen({
+      currentCard: { ...makeCard(), studyLaterAt: new Date() },
+      onToggleStudyLater,
+    });
+
+    expect(container.textContent).toContain("Study later");
+    const item = await clickMenuItem("Study later");
+
+    expect(item?.getAttribute("aria-checked")).toBe("true");
+    expect(onToggleStudyLater).toHaveBeenCalledOnce();
+  });
+
+  it("offers study later in exam mode too", async () => {
+    const onToggleStudyLater = vi.fn();
+    await renderReviewSessionScreen({
+      currentCard: { ...makeCard(), studyLaterAt: new Date() },
+      isExamMode: true,
+      onToggleStudyLater,
+    });
+
+    expect(container.textContent).toContain("Study later");
+    const item = await clickMenuItem("Study later");
+
+    expect(item?.getAttribute("aria-checked")).toBe("true");
+    expect(onToggleStudyLater).toHaveBeenCalledOnce();
   });
 
   it("copies the current card as Markdown from the card actions menu", async () => {
@@ -231,7 +273,9 @@ describe("ReviewSessionScreen", () => {
     });
 
     const item = Array.from(
-      document.body.querySelectorAll('[role="menuitem"]'),
+      document.body.querySelectorAll(
+        '[role="menuitem"], [role="menuitemcheckbox"]',
+      ),
     ).find((menuItem) => menuItem.textContent?.includes(label));
 
     expect(item).toBeTruthy();
@@ -239,6 +283,7 @@ describe("ReviewSessionScreen", () => {
     await act(async () => {
       item?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
+    return item;
   }
 
   async function renderReviewSessionScreen(

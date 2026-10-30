@@ -208,6 +208,9 @@ export const flashcard = pgTable(
     lastReviewedAt: timestamp("last_reviewed_at"),
     reviewCount: integer("review_count").notNull().default(0),
     lapseCount: integer("lapse_count").notNull().default(0),
+    // Set when the user defers the card to the end of review sessions; null
+    // means unmarked. Cleared only by the user.
+    studyLaterAt: timestamp("study_later_at"),
     subjectId: text("subject_id")
       .notNull()
       .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),

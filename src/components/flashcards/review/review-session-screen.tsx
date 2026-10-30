@@ -15,6 +15,7 @@ import { ReviewGradeButtons } from "@/components/flashcards/review/review-grade-
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
 import { ReviewSessionShell } from "@/components/flashcards/review/review-session-shell";
 import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
+import { StudyLaterMenuItem } from "@/components/flashcards/shared/study-later-menu-item";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -50,6 +51,7 @@ interface ReviewSessionScreenProps {
   onEditFlashcard: () => void;
   onResetFlashcard: () => void;
   onDeleteFlashcard: () => void;
+  onToggleStudyLater: () => void;
   isExamMode?: boolean;
   /** The current card is open in the inline editor instead of being reviewed. */
   editing: boolean;
@@ -122,6 +124,8 @@ function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
           canUndoReview={!isExamMode && props.canUndoReview}
           onUndoReview={props.onUndoReview}
           onCopyFlashcard={() => copyReviewCard(currentCard, subjects)}
+          studyLaterMarked={currentCard.studyLaterAt !== null}
+          onToggleStudyLater={props.onToggleStudyLater}
           onEditFlashcard={props.onEditFlashcard}
           onResetFlashcard={props.onResetFlashcard}
           onDeleteFlashcard={props.onDeleteFlashcard}
@@ -143,7 +147,9 @@ interface SessionCardActionsProps {
   isPending: boolean;
   canUndoReview: boolean;
   cardActions?: boolean;
+  studyLaterMarked?: boolean;
   onUndoReview: () => void;
+  onToggleStudyLater?: () => void;
   onCopyFlashcard?: () => void;
   onEditFlashcard?: () => void;
   onResetFlashcard?: () => void;
@@ -154,7 +160,9 @@ function SessionCardActions({
   isPending,
   canUndoReview,
   cardActions = true,
+  studyLaterMarked = false,
   onUndoReview,
+  onToggleStudyLater,
   onCopyFlashcard,
   onEditFlashcard,
   onResetFlashcard,
@@ -188,6 +196,10 @@ function SessionCardActions({
         ) : null}
         {cardActions ? (
           <>
+            <StudyLaterMenuItem
+              marked={studyLaterMarked}
+              onSelect={() => onToggleStudyLater?.()}
+            />
             <DropdownMenuItem
               onClick={onCopyFlashcard}
               className="cursor-pointer"

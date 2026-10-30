@@ -15,13 +15,28 @@ function countDueCards(cards: FlashcardReviewEntity[], now: Date): number {
   return cards.filter((card) => isCardDueWithLearnAhead(card, now)).length;
 }
 
+function isStudyLater(card: FlashcardReviewEntity): boolean {
+  return card.studyLaterAt !== null;
+}
+
+function shouldQueueBefore(
+  card: FlashcardReviewEntity,
+  candidate: FlashcardReviewEntity,
+): boolean {
+  if (isStudyLater(card) !== isStudyLater(candidate)) {
+    return isStudyLater(candidate);
+  }
+
+  return candidate.dueAt.getTime() > card.dueAt.getTime();
+}
+
 function insertCardByDueAt(
   cards: FlashcardReviewEntity[],
   card: FlashcardReviewEntity,
 ): FlashcardReviewEntity[] {
   const nextCards = [...cards];
-  const insertIndex = nextCards.findIndex(
-    (candidate) => candidate.dueAt.getTime() > card.dueAt.getTime(),
+  const insertIndex = nextCards.findIndex((candidate) =>
+    shouldQueueBefore(card, candidate),
   );
 
   if (insertIndex === -1) {
@@ -31,6 +46,46 @@ function insertCardByDueAt(
 
   nextCards.splice(insertIndex, 0, card);
   return nextCards;
+}
+
+/**
+ * Stable split that keeps study-later cards behind every other card, matching
+ * the server's `studyLaterLastOrder`.
+ *
+ * @example
+ * const cards = orderStudyLaterLast([...current.cards, ...incoming.cards]);
+ */
+export function orderStudyLaterLast(
+  cards: FlashcardReviewEntity[],
+): FlashcardReviewEntity[] {
+  return [
+    ...cards.filter((card) => !isStudyLater(card)),
+    ...cards.filter(isStudyLater),
+  ];
+}
+
+/**
+ * Set or clear a card's study-later mark. Marking moves the card to the end
+ * of the queue; clearing leaves it where it is.
+ *
+ * @example
+ * commitReviewState(setFlashcardStudyLaterInState(state, card.id, new Date()));
+ */
+export function setFlashcardStudyLaterInState(
+  state: FlashcardReviewState,
+  cardId: string,
+  studyLaterAt: Date | null,
+): FlashcardReviewState {
+  const target = state.cards.find((card) => card.id === cardId);
+  if (!target) {
+    return state;
+  }
+
+  const updated = { ...target, studyLaterAt };
+  const cards = studyLaterAt
+    ? [...state.cards.filter((card) => card.id !== cardId), updated]
+    : state.cards.map((card) => (card.id === cardId ? updated : card));
+  return { ...state, cards };
 }
 
 export function applyReviewedFlashcardToState(
@@ -94,7 +149,7 @@ export function mergeFlashcardReviewStates(
   const actualDueCount = countDueCards(cards, now);
 
   return {
-    cards,
+    cards: orderStudyLaterLast(cards),
     summary: {
       ...incoming.summary,
       dueCount: Math.max(incoming.summary.dueCount, actualDueCount),

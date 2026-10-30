@@ -127,6 +127,19 @@ describe("getFlashcardReviewShortcutAction", () => {
     ).toBeNull();
   });
 
+  it("toggles study later on l, before or after reveal", () => {
+    expect(
+      getFlashcardReviewShortcutAction({ ...defaultInput, key: "l" }),
+    ).toEqual({ type: "studyLater" });
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "l",
+        revealed: true,
+      }),
+    ).toEqual({ type: "studyLater" });
+  });
+
   it("maps 1 through 4 to the expected grades when revealed", () => {
     expect(
       getFlashcardReviewShortcutAction({

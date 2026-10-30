@@ -6,6 +6,7 @@ import {
   reviewFlashcard,
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
+import { setFlashcardStudyLater } from "@/app/actions/flashcards";
 import {
   createDeferred,
   makeCard,
@@ -25,6 +26,10 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 vi.mock("@/app/actions/flashcard-review", () => ({
   reviewFlashcard: vi.fn(),
   undoFlashcardReview: vi.fn(),
+}));
+
+vi.mock("@/app/actions/flashcards", () => ({
+  setFlashcardStudyLater: vi.fn(),
 }));
 
 // Records navigation in place of the Next.js App Router.
@@ -128,6 +133,7 @@ vi.mock("sonner", () => ({
 const getFlashcardReviewStateMock = vi.mocked(fetchFlashcardReviewState);
 const reviewFlashcardMock = vi.mocked(reviewFlashcard);
 const undoFlashcardReviewMock = vi.mocked(undoFlashcardReview);
+const setFlashcardStudyLaterMock = vi.mocked(setFlashcardStudyLater);
 
 describe("FlashcardReviewSession", () => {
   let container: HTMLDivElement;
@@ -436,6 +442,73 @@ describe("FlashcardReviewSession", () => {
       expect(currentCardId()).toBe("card-1");
     });
     expect(toast.error).toHaveBeenCalledTimes(1);
+  });
+
+  async function pressKey(key: string) {
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key }));
+    });
+  }
+
+  it("defers a card marked study later until the other cards are graded", async () => {
+    setFlashcardStudyLaterMock.mockResolvedValue({
+      success: true,
+      studyLaterAt: new Date("2026-03-07T12:00:00.000Z"),
+    });
+    reviewFlashcardMock.mockResolvedValue({
+      success: true,
+      reviewedCardId: "card-2",
+      reviewLogId: "review-log-2",
+      flashcard: {
+        ...makeReviewCard("card-2"),
+        dueAt: new Date("2099-01-01T00:00:00.000Z"),
+      },
+    });
+    await renderSession(
+      makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
+    );
+
+    await pressKey("l");
+
+    expect(currentCardId()).toBe("card-2");
+    expect(setFlashcardStudyLaterMock).toHaveBeenCalledWith({
+      id: "card-1",
+      studyLater: true,
+    });
+
+    await act(async () => {
+      clickButton("Grade good");
+    });
+
+    await vi.waitFor(() => {
+      expect(currentCardId()).toBe("card-1");
+    });
+  });
+
+  it("clears the optimistic mark with a toast when saving study later fails", async () => {
+    setFlashcardStudyLaterMock.mockResolvedValue({
+      success: false,
+      errorCode: "flashcards.notFound",
+    });
+    reviewFlashcardMock.mockReturnValue(new Promise(() => {}));
+    await renderSession(
+      makeReviewState(2, [makeReviewCard("card-1"), makeReviewCard("card-2")]),
+    );
+
+    await pressKey("l");
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalledTimes(1);
+    });
+    await act(async () => {
+      clickButton("Grade good");
+    });
+    await pressKey("l");
+
+    expect(currentCardId()).toBe("card-1");
+    expect(setFlashcardStudyLaterMock).toHaveBeenLastCalledWith({
+      id: "card-1",
+      studyLater: true,
+    });
   });
 
   it("does not bring back a graded card from a refill fetched before its save landed", async () => {

@@ -49,6 +49,7 @@ const flashcardReviewSelection = {
   lastReviewedAt: flashcard.lastReviewedAt,
   reviewCount: flashcard.reviewCount,
   lapseCount: flashcard.lapseCount,
+  studyLaterAt: flashcard.studyLaterAt,
   subjectId: flashcard.subjectId,
 };
 

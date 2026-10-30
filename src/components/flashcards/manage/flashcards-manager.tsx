@@ -15,7 +15,9 @@ import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/comp
 import { LazyBulkResetFlashcardsDialog as BulkResetFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-reset-flashcards-dialog";
 import { useFlashcardCopy } from "@/components/flashcards/manage/use-flashcard-copy";
 import { useFlashcardsManagerController } from "@/components/flashcards/manage/use-flashcards-manager-controller";
+import { toggleStudyLater } from "@/components/flashcards/shared/toggle-study-later";
 import { Card } from "@/components/ui/card";
+import type { FlashcardManageFilter } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
 import { getFlashcardDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { FlashcardManagePage } from "@/lib/server/api-contracts";
@@ -25,6 +27,7 @@ interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
   initialSubjectId?: string;
   initialSearch?: string;
+  initialFilter?: FlashcardManageFilter;
   initialPageSize: number;
   aiEnabled: boolean;
 }
@@ -33,6 +36,7 @@ export function FlashcardsManager({
   initialPageData,
   initialSubjectId,
   initialSearch,
+  initialFilter,
   initialPageSize,
   aiEnabled,
 }: Readonly<FlashcardsManagerProps>) {
@@ -51,6 +55,8 @@ export function FlashcardsManager({
     refreshManagePage,
     selectedSubjectId,
     selectedFlashcardIds,
+    filter,
+    setFilter,
     setDialog,
     setPageIndex,
     setPageSize,
@@ -68,6 +74,7 @@ export function FlashcardsManager({
     initialPageData,
     initialSubjectId,
     initialSearch,
+    initialFilter,
     initialPageSize,
   });
   const isManageScopeLoading =
@@ -122,7 +129,6 @@ export function FlashcardsManager({
           pageIndex={pageIndex}
           pageSize={pageSize}
           isLoading={isManageScopeLoading}
-          onEditRequested={openFlashcardDetail}
           onCopyRequested={(flashcardId) =>
             void copyFlashcardsById([flashcardId])
           }
@@ -131,6 +137,9 @@ export function FlashcardsManager({
           onPageSizeChange={setPageSize}
           onDeleteRequested={(target) => setDialog({ kind: "delete", target })}
           onResetRequested={(target) => setDialog({ kind: "reset", target })}
+          onStudyLaterToggleRequested={(item) =>
+            void toggleStudyLater(item, () => refreshManagePage())
+          }
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           onRowClick={(row) => openFlashcardDetail(row.id)}
         />
@@ -150,6 +159,10 @@ export function FlashcardsManager({
         }
         total={total}
         refineMode={refineMode}
+        studyLaterFilterActive={filter === "studyLater"}
+        onToggleStudyLaterFilter={() =>
+          setFilter(filter === "studyLater" ? undefined : "studyLater")
+        }
         strugglingCount={strugglingCards.length}
         isLoadingStrugglingCards={isLoadingStrugglingCards}
         aiEnabled={aiEnabled}

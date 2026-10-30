@@ -7,6 +7,7 @@ import { FlashcardReviewActionCardSkeleton } from "@/components/flashcards/revie
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
 import { SubjectScopeFilter } from "@/components/flashcards/shared/subject-scope-filter";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { FlashcardManageFilter } from "@/features/flashcards/validation";
 import type { FlashcardsView } from "@/features/flashcards/view";
 import {
   getFlashcardExamSessionHref,
@@ -22,6 +23,7 @@ interface FlashcardsPageClientProps {
   currentView: FlashcardsView;
   scopedSubjectId?: string;
   initialSearch?: string;
+  initialFilter?: FlashcardManageFilter;
   initialPageSize: number;
   subjects: SubjectOption[];
   initialManagePageData: FlashcardManagePage;
@@ -38,6 +40,7 @@ export function FlashcardsPageClient({
   currentView,
   scopedSubjectId,
   initialSearch,
+  initialFilter,
   initialPageSize,
   subjects,
   initialManagePageData,
@@ -118,6 +121,7 @@ export function FlashcardsPageClient({
           initialPageData={initialManagePageData}
           initialSubjectId={scopedSubjectId}
           initialSearch={initialSearch}
+          initialFilter={initialFilter}
           initialPageSize={initialPageSize}
           aiEnabled={aiEnabled}
         />

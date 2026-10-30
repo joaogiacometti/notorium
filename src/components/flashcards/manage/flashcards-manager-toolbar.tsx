@@ -1,6 +1,13 @@
 "use client";
 
-import { CopyPlus, Loader2, Search, Sparkles, Wand2 } from "lucide-react";
+import {
+  Clock,
+  CopyPlus,
+  Loader2,
+  Search,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 import type { JSX } from "react";
 import { ToolbarActionBar } from "@/components/flashcards/manage/flashcards-manager-toolbar-actions";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
@@ -20,6 +27,8 @@ interface FlashcardsManagerToolbarProps {
   selectedFlashcardIds: string[];
   total: number;
   refineMode: boolean;
+  studyLaterFilterActive: boolean;
+  onToggleStudyLaterFilter: () => void;
   strugglingCount: number;
   isLoadingStrugglingCards: boolean;
   aiEnabled: boolean;
@@ -136,6 +145,38 @@ function ToolbarStatusBadges({
   );
 }
 
+interface StudyLaterFilterChipProps {
+  active: boolean;
+  onToggle: () => void;
+}
+
+// A filter, not an action: it sits with the result count, sized like it, and
+// takes the primary tint while the table shows only study-later cards.
+function StudyLaterFilterChip({
+  active,
+  onToggle,
+}: Readonly<StudyLaterFilterChipProps>): JSX.Element {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="xs"
+      onClick={onToggle}
+      aria-pressed={active}
+      aria-label="Show Study later cards"
+      className={cn(
+        "border-border font-normal",
+        active
+          ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+          : "text-muted-foreground",
+      )}
+    >
+      <Clock className="size-3.5" />
+      Study later
+    </Button>
+  );
+}
+
 // Opens the refine mode that lists struggling cards for AI improvement.
 function RefineCardsButton({
   refineMode,
@@ -169,6 +210,8 @@ export function FlashcardsManagerToolbar({
   selectedFlashcardIds,
   total,
   refineMode,
+  studyLaterFilterActive,
+  onToggleStudyLaterFilter,
   strugglingCount,
   isLoadingStrugglingCards,
   aiEnabled,
@@ -241,6 +284,12 @@ export function FlashcardsManagerToolbar({
                   resultsCountText={viewModel.resultsCountText}
                   refineCountText={viewModel.refineCountText}
                 />
+                {refineMode ? null : (
+                  <StudyLaterFilterChip
+                    active={studyLaterFilterActive}
+                    onToggle={onToggleStudyLaterFilter}
+                  />
+                )}
               </div>
 
               <ToolbarActionBar

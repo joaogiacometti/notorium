@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import type { StrugglingFlashcard } from "@/features/flashcards/refine/types";
+import type { FlashcardManageFilter } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
 import {
@@ -25,6 +26,7 @@ interface UseFlashcardsManagerControllerOptions {
   initialPageData: FlashcardManagePage;
   initialSubjectId?: string;
   initialSearch?: string;
+  initialFilter?: FlashcardManageFilter;
   initialPageSize: number;
 }
 
@@ -42,15 +44,18 @@ function buildManageParams({
   subjectId,
   pageSize,
   search,
+  filter,
 }: Readonly<{
   subjectId?: string;
   pageSize: number;
   search: string;
+  filter?: FlashcardManageFilter;
 }>) {
   const query = new URLSearchParams({ view: "manage" });
 
   if (subjectId) query.set("subjectId", subjectId);
   if (search) query.set("search", search);
+  if (filter) query.set("filter", filter);
   if (pageSize !== DEFAULT_PAGE_SIZE) query.set("pageSize", String(pageSize));
 
   return query.toString();
@@ -60,6 +65,7 @@ export function useFlashcardsManagerController({
   initialPageData,
   initialSubjectId,
   initialSearch,
+  initialFilter,
   initialPageSize,
 }: Readonly<UseFlashcardsManagerControllerOptions>) {
   const pathname = usePathname();
@@ -87,16 +93,21 @@ export function useFlashcardsManagerController({
   const selectedSubjectIdRef = useRef(selectedSubjectId);
   selectedSubjectIdRef.current = selectedSubjectId;
   const {
+    filter,
     pageIndex,
     resolvedSearchQuery,
     searchQuery,
+    setFilter,
     setPageIndex,
     setSearchQuery,
-  } = useManagerPageState({
-    initialFilter: undefined,
+  } = useManagerPageState<FlashcardManageFilter | undefined>({
+    initialFilter,
     initialSearchQuery: initialSearch ?? "",
     searchDebounceMs: flashcardManagerSearchDebounceMs,
     onSearchChange: () => {
+      setSelectedFlashcardIds([]);
+    },
+    onFilterChange: () => {
       setSelectedFlashcardIds([]);
     },
   });
@@ -111,12 +122,13 @@ export function useFlashcardsManagerController({
       subjectId: selectedSubjectIdRef.current,
       pageSize: pageSizeState,
       search: resolvedSearchQuery,
+      filter,
     });
 
     startTransition(() => {
       routerRef.current.replace(`${pathnameRef.current}?${query}`);
     });
-  }, [pageSizeState, resolvedSearchQuery]);
+  }, [pageSizeState, resolvedSearchQuery, filter]);
 
   function handleSubjectChange(nextSubjectId: string | undefined) {
     setSelectedFlashcardIds([]);
@@ -126,6 +138,7 @@ export function useFlashcardsManagerController({
       subjectId: nextSubjectId,
       pageSize: pageSizeState,
       search: resolvedSearchQuery,
+      filter,
     });
 
     startTransition(() => {
@@ -146,6 +159,7 @@ export function useFlashcardsManagerController({
       pageSizeState,
       selectedSubjectId ?? "all",
       resolvedSearchQuery,
+      filter ?? "all",
     ],
     queryFn: () =>
       fetchFlashcardsManagePage({
@@ -153,12 +167,14 @@ export function useFlashcardsManagerController({
         pageSize: pageSizeState,
         subjectId: selectedSubjectId,
         search: resolvedSearchQuery,
+        filter,
       }),
     initialData:
       pageIndex === 0 &&
       (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
       pageSizeState === initialPageSize &&
-      resolvedSearchQuery === (initialSearch ?? "")
+      resolvedSearchQuery === (initialSearch ?? "") &&
+      filter === initialFilter
         ? initialPageData
         : undefined,
     placeholderData: (previousData) => previousData,
@@ -244,6 +260,8 @@ export function useFlashcardsManagerController({
     searchQuery,
     selectedSubjectId,
     selectedFlashcardIds,
+    filter,
+    setFilter,
     setDialog,
     setPageIndex,
     setPageSize,

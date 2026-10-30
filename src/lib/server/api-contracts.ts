@@ -34,7 +34,7 @@ export type FlashcardDetailEntity = FlashcardWithSourceEntity & {
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "subjectId" | "updatedAt"
+  "id" | "subjectId" | "updatedAt" | "studyLaterAt"
 > & {
   front: string;
   frontExcerpt: string;
@@ -76,6 +76,7 @@ export type FlashcardReviewEntity = Pick<
   | "lastReviewedAt"
   | "reviewCount"
   | "lapseCount"
+  | "studyLaterAt"
 > & {
   source?: FlashcardSourceLink | null;
   subjectName?: string;
@@ -241,6 +242,12 @@ export type BulkMoveFlashcardsResult =
       ids: string[];
       subjectId: string;
       previousSubjectIds: string[];
+    }
+  | ActionErrorResult;
+export type SetFlashcardStudyLaterResult =
+  | {
+      success: true;
+      studyLaterAt: Date | null;
     }
   | ActionErrorResult;
 export type ResetFlashcardResult =

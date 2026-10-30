@@ -1,4 +1,14 @@
-import { and, count, desc, eq, inArray, or, type SQL, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, subject } from "@/db/schema";
 import { attachFlashcardSources } from "@/features/flashcards/source-queries";
@@ -56,19 +66,14 @@ export function getFlashcardsManageOrderBy(
   ];
 }
 
-export async function getFlashcardsManagePageForUser(
+async function buildManageFilters(
   userId: string,
   {
-    pageIndex,
-    pageSize,
     subjectId,
     subjectIds,
-    search,
-  }: FlashcardsManageQueryInput,
-): Promise<FlashcardManagePage> {
-  const normalizedSearch = search?.trim() ?? "";
-  const searchPattern = buildContainsSearchPattern(normalizedSearch);
-  const offset = pageIndex * pageSize;
+    filter,
+  }: Pick<FlashcardsManageQueryInput, "subjectId" | "subjectIds" | "filter">,
+): Promise<SQL<unknown>[]> {
   const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
   const scopedSubjectIds = await resolveScopedSubjectIds(
     userId,
@@ -79,6 +84,33 @@ export async function getFlashcardsManagePageForUser(
   if (scopedSubjectIds && scopedSubjectIds.length > 0) {
     filters.push(inArray(flashcard.subjectId, scopedSubjectIds));
   }
+
+  if (filter === "studyLater") {
+    filters.push(isNotNull(flashcard.studyLaterAt));
+  }
+
+  return filters;
+}
+
+export async function getFlashcardsManagePageForUser(
+  userId: string,
+  {
+    pageIndex,
+    pageSize,
+    subjectId,
+    subjectIds,
+    search,
+    filter,
+  }: FlashcardsManageQueryInput,
+): Promise<FlashcardManagePage> {
+  const normalizedSearch = search?.trim() ?? "";
+  const searchPattern = buildContainsSearchPattern(normalizedSearch);
+  const offset = pageIndex * pageSize;
+  const filters = await buildManageFilters(userId, {
+    subjectId,
+    subjectIds,
+    filter,
+  });
 
   const totalFilters =
     normalizedSearch.length > 0
@@ -99,6 +131,7 @@ export async function getFlashcardsManagePageForUser(
           id: flashcard.id,
           subjectId: flashcard.subjectId,
           updatedAt: flashcard.updatedAt,
+          studyLaterAt: flashcard.studyLaterAt,
           front: flashcard.front,
           subjectName: subject.name,
         })
@@ -132,6 +165,7 @@ export async function getFlashcardsManagePageForUser(
       id: row.id,
       subjectId: row.subjectId,
       updatedAt: row.updatedAt,
+      studyLaterAt: row.studyLaterAt,
       front: row.front,
       frontExcerpt: getRichTextExcerpt(row.front, 45),
       frontTitle: richTextToPlainText(row.front) || null,

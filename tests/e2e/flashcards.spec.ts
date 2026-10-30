@@ -413,3 +413,91 @@ test("review and exam actions respect subject scope", async ({
     ]);
   }
 });
+
+test("study later defers a card in review and lists it in manage", async ({
+  page,
+  e2eUser,
+}) => {
+  const subjectName = getUniqueSubjectName("study-later");
+  const deferredFront = getUniqueFlashcardFront("study-later-deferred");
+  const otherFront = getUniqueFlashcardFront("study-later-other");
+
+  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+
+  try {
+    const subject = await createSubject(e2eUser.userId, subjectName);
+    await createFlashcardForSubject(
+      e2eUser.userId,
+      subject.id,
+      deferredFront,
+      getUniqueFlashcardBack("study-later-deferred"),
+      new Date(Date.now() - 2 * 60 * 1000),
+    );
+    await createFlashcardForSubject(
+      e2eUser.userId,
+      subject.id,
+      otherFront,
+      getUniqueFlashcardBack("study-later-other"),
+      new Date(Date.now() - 60 * 1000),
+    );
+
+    await openFlashcardsReviewPage(page, subject.id);
+    await page.getByRole("link", { name: "Start review", exact: true }).click();
+    await expect(page.getByText(deferredFront)).toBeVisible();
+
+    // The mark saves in the background; reload only once it has landed.
+    const markSaved = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        /\/flashcards\/review/.test(response.url()) &&
+        response.status() === 200,
+    );
+    await page.getByRole("button", { name: "Open review actions" }).click();
+    await page.getByRole("menuitemcheckbox", { name: "Study later" }).click();
+    await expect(page.getByText(otherFront)).toBeVisible();
+    await markSaved;
+
+    await page.reload();
+    await expect(page.getByText(otherFront)).toBeVisible();
+    await page.getByRole("button", { name: "Show answer" }).click();
+    await page.getByRole("button", { name: /Easy/i }).click();
+    await expect(page.getByText(deferredFront)).toBeVisible();
+    await page.getByRole("button", { name: "Exit review" }).click();
+    await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
+
+    await openFlashcardsManagePage(page, subject.id);
+    await page.getByRole("button", { name: "Show Study later cards" }).click();
+    await expect(page).toHaveURL(/filter=studyLater/);
+    const deferredRow = page
+      .getByRole("link")
+      .filter({ has: page.getByTitle(deferredFront, { exact: true }) });
+    await expect(deferredRow).toBeVisible();
+    await expect(page.getByTitle(otherFront, { exact: true })).toHaveCount(0);
+
+    await deferredRow.getByTitle(deferredFront, { exact: true }).click();
+    await expect(page.locator("#form-edit-flashcard-front")).toContainText(
+      deferredFront,
+    );
+    await page.getByRole("button", { name: "Open flashcard actions" }).click();
+    await expect(
+      page.getByRole("menuitemcheckbox", { name: "Study later" }),
+    ).toBeChecked();
+    await page.keyboard.press("Escape");
+    await page.goBack();
+    await expect(deferredRow).toBeVisible();
+
+    // Row actions only take pointer events while the row is hovered.
+    await deferredRow.hover();
+    await deferredRow
+      .getByRole("button", { name: "Open flashcard actions" })
+      .click();
+    await page
+      .getByRole("menuitemcheckbox", { name: "Study later", checked: true })
+      .click();
+    await expect(page.getByTitle(deferredFront, { exact: true })).toHaveCount(
+      0,
+    );
+  } finally {
+    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  }
+});

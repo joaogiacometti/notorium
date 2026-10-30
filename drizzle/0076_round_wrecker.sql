@@ -1,0 +1,1 @@
+ALTER TABLE "flashcard" ADD COLUMN "study_later_at" timestamp;

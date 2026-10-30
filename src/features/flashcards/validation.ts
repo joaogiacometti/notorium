@@ -122,11 +122,24 @@ export const bulkMoveFlashcardsSchema = z.object({
 
 export type BulkMoveFlashcardsForm = z.infer<typeof bulkMoveFlashcardsSchema>;
 
+export const setFlashcardStudyLaterSchema = z.object({
+  id: idSchema,
+  studyLater: z.boolean(),
+});
+
+export type SetFlashcardStudyLaterForm = z.infer<
+  typeof setFlashcardStudyLaterSchema
+>;
+
 export const resetFlashcardSchema = z.object({
   id: idSchema,
 });
 
 export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;
+
+export const flashcardManageFilterSchema = z.enum(["studyLater"]);
+
+export type FlashcardManageFilter = z.infer<typeof flashcardManageFilterSchema>;
 
 export const flashcardsManageQuerySchema = z.object({
   pageIndex: z.number().int().min(0).default(0),
@@ -139,6 +152,7 @@ export const flashcardsManageQuerySchema = z.object({
   subjectId: idSchema.optional(),
   subjectIds: optionalBulkIdsSchema,
   search: z.string().trim().max(LIMITS.searchQueryMax).optional(),
+  filter: flashcardManageFilterSchema.optional(),
 });
 
 export type FlashcardsManageQueryInput = z.infer<

@@ -192,6 +192,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.FlashcardReview,
   },
   {
+    id: "flashcard-study-later",
+    kind: "keys",
+    keys: ["l"],
+    description: "Toggle Study later",
+    category: ShortcutCategory.FlashcardReview,
+  },
+  {
     id: "flashcard-exit-session",
     kind: "keys",
     keys: ["escape"],

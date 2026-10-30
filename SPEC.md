@@ -72,6 +72,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Create, read, update, and delete flashcards within subjects.
 - The flashcards manage table supports selectable page sizes of 10, 25, 50, 100, 250, or 500 rows, persisted in the URL.
 - Flashcard manage search ignores case and accents, and ranks front matches before back matches, subject-name matches, and recency tie-breakers.
+- The manage toolbar `Study later` filter chip, beside the result count, narrows the table to cards marked study later, persisted in the URL as `?filter=studyLater`; marked rows show a clock marker, and each row's actions menu toggles the mark.
 - Flashcard fields: front and back rich text.
 - Flashcard fronts must be unique per user across subjects after the existing rich-text normalization. Duplicate fronts are rejected by the database when saving; typing triggers no duplicate checks and Save does not wait for one. Flashcard editors show save-time duplicate errors inline, preserve the draft, and clear the error when the front changes so the user can retry.
 - Flashcards proposed while a note is active retain that document as their source when created directly or through the create dialog the proposal's Edit opens. The source is captured with the request, so later navigation does not change older proposals. Cards requested without document context have no source; sources are not inferred from chat history or library search.
@@ -97,7 +98,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - Flashcards have a global top-level page with review and management views.
 - The default flashcards page opens in the review view, with management available as an alternate global view.
 - Flashcards have a dedicated flat detail page at `/flashcards/[flashcardId]`. Its header mirrors the note page: the subject path as the title row beside the actions menu, with the source link under it when the card has one; it does not show creation time. Front and Back edit with auto-save in the shared flashcard editor.
-- Every flashcard is edited in one editor: Front stacked over a tinted Back, laid out like the review card, under a single formatting toolbar that follows the focused side and stays pinned while a long card scrolls. Each side grows with its content, so the surrounding page, dialog, or session scrolls instead of the fields. The detail page, the New flashcard dialog, and review/exam sessions all use it. There is no Edit Flashcard dialog: Edit in the manage table opens the detail page, and Edit in review/exam (`e`) turns the current card into the editor in place, with Cancel and Save (Ctrl/Cmd+Enter) in the session footer and Escape to cancel, so the assistant sidebar stays usable while editing.
+- Every flashcard is edited in one editor: Front stacked over a tinted Back, laid out like the review card, under a single formatting toolbar that follows the focused side and stays pinned while a long card scrolls. Each side grows with its content, so the surrounding page, dialog, or session scrolls instead of the fields. The detail page, the New flashcard dialog, and review/exam sessions all use it. There is no Edit Flashcard dialog: clicking a manage table row opens the detail page (the row actions menu has no Edit item), and Edit in review/exam (`e`) turns the current card into the editor in place, with Cancel and Save (Ctrl/Cmd+Enter) in the session footer and Escape to cancel, so the assistant sidebar stays usable while editing.
 - The New flashcard dialog has the subject picker, the flashcard editor, and a footer with "Keep front" and "Keep back" checkboxes (which carry those fields into the next card) beside the Create button (Ctrl/Cmd+Enter). Its header holds the assistant launcher and the close button.
 - Flashcards can be copied as Markdown for pasting into an AI chat or sharing with others. A single card copies from the manage table row menu, the detail-page header menu (with the content currently in its editors), or the review/exam session card actions menu; the manage toolbar's `Copy` action copies every selected row at once, in table order. Each card copies its subject path, front, and back; several cards get numbered `## Card N` headings separated by `---`. Rich text becomes Markdown (bold, italics, strikethrough, inline code, links, lists, task lists, code blocks, tables, and LaTeX math as `$...$`/`$$...$$`). Uploaded images are private to their owner, so they copy as `[Image]` placeholders; public image URLs copy as Markdown images. A toast confirms how many cards were copied or reports the failure, including when the cards no longer exist. The toolbar `Copy` action stays disabled with a spinner until every copy in progress finishes.
 - Flashcard review remains available in the global flashcards page.
@@ -140,6 +141,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
   - `e` edits the current card in place.
   - `d` opens delete flashcard confirmation.
   - `u` undoes the last review while an undo is available (not in exam mode).
+  - `l` marks the current card study later, or removes the mark.
   - `r` opens reset review progress confirmation for the current card.
   - `1` grades `Again` after reveal.
   - `2` grades `Hard` after reveal.
@@ -161,13 +163,21 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - "Improve" asks the AI for a rewritten back, shown as a before/after diff the user can accept or discard.
 - Legacy `view=refine` URLs fall back to the review view.
 
+### Study Later
+
+- During a due review, users can mark the current card "Study later" from the card actions menu or with `l` when they cannot recall it clearly and have no time to study it now. Marking does not grade the card: it moves to the end of the queue and comes back after every other due card, where it is graded normally.
+- Exam sessions offer the same menu item and `l`; there the mark only saves for future due reviews, and the exam keeps its order and current card.
+- Due cards marked study later are always queued after unmarked due cards, across batches and reloads, in every review session until the mark is removed. Marking does not change which cards are due or the card's schedule.
+- The review, manage-row, and card detail actions menus show `Study later` as a checkable item, checked while the card is marked; selecting it toggles the mark. The mark stays until the user removes it there; grading or resetting a card keeps it. A marked card shows a muted "Study later" label in review and exam sessions.
+- The manage view lists marked cards through its `Study later` filter (see Flashcards).
+
 ### Review Session
 
 - Distraction-free review page at `/flashcards/review`, optimized for mobile. The home "Flashcards due" card's `Review now` link opens it directly.
 - Starts from the `Start review` link on the review hub, the home card, or the sidebar; reloading keeps the session and resumes the remaining due cards.
 - Hides the left menu and all non-essential UI elements.
 - Shows progress bar, card content, and rating buttons only.
-- Shows a card actions menu for copy, edit, reset review progress, and delete.
+- Shows a card actions menu for study later, copy, edit, reset review progress, and delete.
 - Keyboard shortcuts:
   - `Escape` exits the session.
 - Exiting waits for in-flight grade saves, then returns to the review hub with the same subject scope. The completion screen provides the same exit.
@@ -279,7 +289,7 @@ Learners who want a private, lightweight workspace for making and reviewing stud
 - `subject`
   - `id`, `name`, `parentSubjectId`, timestamps, `userId`
 - `flashcard`
-  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `subjectId`, timestamps, `userId`
+  - `id`, `front`, `back`, `state`, `dueAt`, `stability`, `difficulty`, `intervalDays`, `learningStep`, `lastReviewedAt`, `reviewCount`, `lapseCount`, `studyLaterAt`, `subjectId`, timestamps, `userId`
 - `flashcard_scheduler_settings`
   - `id`, `userId`, `desiredRetention`, `weights`, `optimizedReviewCount`, `automaticOptimizationEnabled`, optimization timestamps
 - `flashcard_review_log`

@@ -57,6 +57,7 @@ vi.mock("@/db/schema", () => ({
     lapseCount: "flashcard_lapse_count_column",
     state: "flashcard_state_column",
     createdAt: "flashcard_created_at_column",
+    studyLaterAt: "flashcard_study_later_at_column",
   },
   flashcardReviewLog: {
     userId: "flashcard_review_log_user_id_column",
@@ -282,5 +283,26 @@ describe("getFlashcardReviewStateForUser", () => {
       "relearning",
     ]);
     vi.useRealTimers();
+  });
+
+  it("orders study-later cards after every other due card", async () => {
+    const orderByMock = vi.fn(() => ({
+      limit: vi.fn().mockResolvedValue([]),
+    }));
+    selectMock.mockImplementation(() => ({
+      from: () => ({
+        where: vi.fn().mockResolvedValue([{ total: 0, due: 0 }]),
+        innerJoin: () => ({ where: () => ({ orderBy: orderByMock }) }),
+      }),
+    }));
+
+    const { getFlashcardReviewStateForUser } = await import("./queries");
+    await getFlashcardReviewStateForUser("user-1");
+
+    const [studyLaterTerm, dueAtTerm] = orderByMock.mock.calls[0] as unknown[];
+    expect(studyLaterTerm).toMatchObject({
+      values: ["flashcard_study_later_at_column"],
+    });
+    expect(dueAtTerm).toBe("flashcard_due_at_column");
   });
 });

@@ -8,10 +8,12 @@ import {
   excludeFlashcardsFromFetchedState,
   gradeFlashcardLocally,
   mergeFlashcardReviewStates,
+  orderStudyLaterLast,
   removeFlashcardsFromReviewState,
   replaceFlashcardInReviewState,
   restoreFlashcardToFront,
   scheduleGradeAt,
+  setFlashcardStudyLaterInState,
   shouldRefillFlashcardReviewState,
 } from "@/features/flashcard-review/state";
 import { getDefaultFsrsWeights } from "@/features/flashcards/fsrs";
@@ -43,6 +45,7 @@ function makeCard(
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
+    studyLaterAt: null,
     subjectId: "deck-1",
     ...overrides,
   };
@@ -599,5 +602,138 @@ describe("excludeFlashcardsFromFetchedState", () => {
 
     expect(next.cards.map((card) => card.id)).toEqual(["b"]);
     expect(next.summary).toEqual({ dueCount: 1, totalCount: 9 });
+  });
+});
+
+describe("study later ordering", () => {
+  const markedAt = new Date("2026-03-07T11:30:00.000Z");
+  const ids = (state: FlashcardReviewState) => state.cards.map((c) => c.id);
+
+  it("keeps study-later cards behind the others in their relative order", () => {
+    const cards = [
+      makeCard("a", new Date("2026-03-07T10:00:00.000Z"), {
+        studyLaterAt: markedAt,
+      }),
+      makeCard("b", new Date("2026-03-07T11:00:00.000Z")),
+      makeCard("c", new Date("2026-03-07T09:00:00.000Z"), {
+        studyLaterAt: markedAt,
+      }),
+      makeCard("d", new Date("2026-03-07T12:00:00.000Z")),
+    ];
+
+    expect(orderStudyLaterLast(cards).map((card) => card.id)).toEqual([
+      "b",
+      "d",
+      "a",
+      "c",
+    ]);
+  });
+
+  it("moves a newly marked card to the end of the queue", () => {
+    const state = makeState(
+      [
+        makeCard("a", new Date("2026-03-07T10:00:00.000Z")),
+        makeCard("b", new Date("2026-03-07T11:00:00.000Z")),
+      ],
+      2,
+    );
+
+    const next = setFlashcardStudyLaterInState(state, "a", markedAt);
+
+    expect(ids(next)).toEqual(["b", "a"]);
+    expect(next.cards[1].studyLaterAt).toEqual(markedAt);
+    expect(next.summary).toEqual(state.summary);
+  });
+
+  it("clears a mark without moving the card", () => {
+    const state = makeState(
+      [
+        makeCard("a", new Date("2026-03-07T10:00:00.000Z"), {
+          studyLaterAt: markedAt,
+        }),
+        makeCard("b", new Date("2026-03-07T11:00:00.000Z")),
+      ],
+      2,
+    );
+
+    const next = setFlashcardStudyLaterInState(state, "a", null);
+
+    expect(ids(next)).toEqual(["a", "b"]);
+    expect(next.cards[0].studyLaterAt).toBeNull();
+  });
+
+  it("re-queues a regraded unmarked card ahead of study-later cards", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const state = makeState(
+      [
+        makeCard("a", new Date("2026-03-07T11:00:00.000Z")),
+        makeCard("b", new Date("2026-03-07T10:00:00.000Z"), {
+          studyLaterAt: markedAt,
+        }),
+      ],
+      2,
+    );
+
+    const next = applyReviewedFlashcardToState(
+      state,
+      "a",
+      makeCard("a", new Date("2026-03-07T11:59:00.000Z"), {
+        state: "learning",
+        learningStep: 0,
+      }),
+      now,
+    );
+
+    expect(ids(next)).toEqual(["a", "b"]);
+  });
+
+  it("re-queues a regraded study-later card among the study-later cards", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const state = makeState(
+      [
+        makeCard("a", new Date("2026-03-07T11:00:00.000Z"), {
+          studyLaterAt: markedAt,
+        }),
+        makeCard("b", new Date("2026-03-07T11:59:30.000Z")),
+        makeCard("c", new Date("2026-03-07T11:00:00.000Z"), {
+          studyLaterAt: markedAt,
+        }),
+      ],
+      3,
+    );
+
+    const next = applyReviewedFlashcardToState(
+      state,
+      "a",
+      makeCard("a", new Date("2026-03-07T11:01:00.000Z"), {
+        state: "learning",
+        learningStep: 0,
+        studyLaterAt: markedAt,
+      }),
+      now,
+    );
+
+    expect(ids(next)).toEqual(["b", "c", "a"]);
+  });
+
+  it("puts refilled cards ahead of study-later cards", () => {
+    const now = new Date("2026-03-07T12:00:00.000Z");
+    const current = makeState(
+      [
+        makeCard("a", new Date("2026-03-07T11:00:00.000Z")),
+        makeCard("b", new Date("2026-03-07T10:00:00.000Z"), {
+          studyLaterAt: markedAt,
+        }),
+      ],
+      3,
+    );
+    const incoming = makeState(
+      [makeCard("c", new Date("2026-03-07T11:10:00.000Z"))],
+      3,
+    );
+
+    const next = mergeFlashcardReviewStates(current, incoming, now);
+
+    expect(ids(next)).toEqual(["a", "c", "b"]);
   });
 });

@@ -91,6 +91,19 @@ describe("read route handlers", () => {
     );
   });
 
+  it("manage page passes the study later filter and rejects unknown ones", async () => {
+    const route = import("@/app/api/flashcards/manage-page/route");
+    await callRoute(route, "/api/flashcards/manage-page?filter=studyLater");
+    const bad = await callRoute(route, "/api/flashcards/manage-page?filter=x");
+
+    expect(bad.status).toBe(400);
+    expect(queries.getFlashcardsManagePageForUser).toHaveBeenCalledTimes(1);
+    expect(queries.getFlashcardsManagePageForUser).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ filter: "studyLater" }),
+    );
+  });
+
   it("flashcard contents collects repeated ids and caps them per request", async () => {
     const route = import("@/app/api/flashcards/contents/route");
     const tooMany = Array.from({ length: 101 }, (_, index) => `ids=c${index}`);

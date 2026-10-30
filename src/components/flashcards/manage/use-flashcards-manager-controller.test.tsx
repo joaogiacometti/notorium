@@ -115,6 +115,24 @@ describe("useFlashcardsManagerController", () => {
     expect(controller.isLoadingStrugglingCards).toBe(false);
   });
 
+  it("reads the study later filter and resets to the first page", async () => {
+    await renderController();
+
+    await act(async () => {
+      controller.setPageIndex(2);
+    });
+    await act(async () => {
+      controller.setFilter("studyLater");
+    });
+
+    expect(controller.pageIndex).toBe(0);
+    await vi.waitFor(() =>
+      expect(fetchManagePageMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ pageIndex: 0, filter: "studyLater" }),
+      ),
+    );
+  });
+
   it("surfaces a failed page read through query state", async () => {
     fetchManagePageMock.mockRejectedValue(new Error("offline"));
     await renderController();

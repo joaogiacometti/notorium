@@ -1,4 +1,4 @@
-import { and, inArray, lte, or, type SQL } from "drizzle-orm";
+import { and, inArray, lte, or, type SQL, sql } from "drizzle-orm";
 import { flashcard } from "@/db/schema";
 import {
   LEARN_AHEAD_STATES,
@@ -22,4 +22,16 @@ export function buildDueAtFilter(now: Date): SQL<unknown> {
     lte(flashcard.dueAt, aheadCutoff),
     or(lte(flashcard.dueAt, now), inArray(flashcard.state, LEARN_AHEAD_STATES)),
   ) as SQL<unknown>;
+}
+
+/**
+ * Leading review-queue sort term: unmarked cards (`false`) before cards marked
+ * study later (`true`), so deferred cards come after every other due card even
+ * across batches. Mirrors `orderStudyLaterLast` on the client.
+ *
+ * @example
+ * .orderBy(studyLaterLastOrder(), asc(flashcard.dueAt))
+ */
+export function studyLaterLastOrder(): SQL<boolean> {
+  return sql<boolean>`${flashcard.studyLaterAt} is not null`;
 }

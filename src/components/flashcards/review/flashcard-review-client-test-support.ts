@@ -23,6 +23,7 @@ export function makeCard(id: string): FlashcardReviewEntity {
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
+    studyLaterAt: null,
     subjectId: "deck-1",
     subjectName: "Biology",
     subjectPath: "Biology",

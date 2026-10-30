@@ -7,6 +7,7 @@ import {
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
 import { useAppShellRefreshAfterReview } from "@/components/flashcards/review/use-app-shell-refresh-after-review";
+import { useReviewStudyLater } from "@/components/flashcards/review/use-review-study-later";
 import {
   applyReviewedFlashcardToState,
   excludeFlashcardsFromFetchedState,
@@ -41,8 +42,8 @@ interface UndoableReview {
 
 /**
  * Owns the due-review session state machine: the working card batch,
- * optimistic apply on edit/delete/reset, optimistic grading with background
- * saves, background refill, and undo.
+ * optimistic apply on edit/delete/reset/study later, optimistic grading with
+ * background saves, background refill, and undo.
  *
  * @example
  * const controller = useFlashcardReviewController({
@@ -93,6 +94,11 @@ export function useFlashcardReviewController({
   useAppShellRefreshAfterReview(pendingSaveCount + (isUndoPending ? 1 : 0));
 
   const currentCard = reviewState.cards[0] ?? null;
+  const { toggleReviewCardStudyLater, pendingStudyLaterCount } =
+    useReviewStudyLater({
+      readReviewState: () => reviewStateRef.current,
+      commitReturnedReviewState,
+    });
 
   function commitReviewState(nextState: FlashcardReviewState) {
     reviewStateRef.current = nextState;
@@ -210,6 +216,14 @@ export function useFlashcardReviewController({
       replaceFlashcardInReviewState(reviewStateRef.current, updatedFlashcard),
     );
     resetCardViewState();
+  }
+
+  function handleToggleStudyLater() {
+    if (!currentCard || isPending) {
+      return;
+    }
+
+    toggleReviewCardStudyLater(currentCard);
   }
 
   function handleGrade(grade: ReviewGrade) {
@@ -362,7 +376,8 @@ export function useFlashcardReviewController({
     reviewState,
     currentCard,
     isPending,
-    hasPendingWrites: pendingSaveCount > 0 || isUndoPending,
+    hasPendingWrites:
+      pendingSaveCount > 0 || pendingStudyLaterCount > 0 || isUndoPending,
     canUndoReview: undoableReview !== null && pendingSaveCount === 0,
     // More cards are due than are queued and a refill or save is still in
     // flight, so an empty queue does not mean the session is done.
@@ -371,6 +386,7 @@ export function useFlashcardReviewController({
       reviewState.summary.dueCount > 0 &&
       (isRefilling || pendingSaveCount > 0),
     handleGrade,
+    handleToggleStudyLater,
     handleUndoReview,
     handleFlashcardUpdated,
     handleFlashcardDeleted,

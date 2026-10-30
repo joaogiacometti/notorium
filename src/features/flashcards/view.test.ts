@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveFlashcardsView } from "@/features/flashcards/view";
+import {
+  resolveFlashcardManageFilter,
+  resolveFlashcardsView,
+} from "@/features/flashcards/view";
 
 describe("resolveFlashcardsView", () => {
   it("returns review when view is missing", () => {
@@ -20,5 +23,16 @@ describe("resolveFlashcardsView", () => {
 
   it("falls back to review for invalid values", () => {
     expect(resolveFlashcardsView("invalid")).toBe("review");
+  });
+});
+
+describe("resolveFlashcardManageFilter", () => {
+  it("keeps the study later filter", () => {
+    expect(resolveFlashcardManageFilter("studyLater")).toBe("studyLater");
+  });
+
+  it("drops missing or unknown filters", () => {
+    expect(resolveFlashcardManageFilter(undefined)).toBeUndefined();
+    expect(resolveFlashcardManageFilter("unknown")).toBeUndefined();
   });
 });

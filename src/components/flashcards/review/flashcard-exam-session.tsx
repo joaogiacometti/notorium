@@ -71,6 +71,7 @@ export function FlashcardExamSession({
     onDelete: () => setDeleteOpen(true),
     onReset: () => setResetOpen(true),
     onUndo: () => {},
+    onToggleStudyLater: exam.handleToggleStudyLater,
     onGrade: exam.handleGrade,
     onExit: exam.handleExit,
   });
@@ -109,6 +110,7 @@ export function FlashcardExamSession({
         onFlashcardUpdated={exam.updateExamCard}
         onResetFlashcard={() => setResetOpen(true)}
         onDeleteFlashcard={() => setDeleteOpen(true)}
+        onToggleStudyLater={exam.handleToggleStudyLater}
       />
       <ReviewSessionDialogs
         currentCard={currentCard}

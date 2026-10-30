@@ -10,6 +10,7 @@ import {
   improveFlashcardBackForUserInput,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
+import { setFlashcardStudyLaterForUser } from "@/features/flashcards/study-later-mutations";
 import {
   type BulkDeleteFlashcardsForm,
   type BulkMoveFlashcardsForm,
@@ -27,6 +28,8 @@ import {
   improveFlashcardBackSchema,
   type ResetFlashcardForm,
   resetFlashcardSchema,
+  type SetFlashcardStudyLaterForm,
+  setFlashcardStudyLaterSchema,
 } from "@/features/flashcards/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
@@ -38,6 +41,7 @@ import type {
   EditFlashcardResult,
   ImproveFlashcardBackResult,
   ResetFlashcardResult,
+  SetFlashcardStudyLaterResult,
 } from "@/lib/server/api-contracts";
 import { revalidateAppShell } from "@/lib/server/revalidate-views";
 
@@ -192,4 +196,20 @@ export async function resetFlashcard(
   }
 
   return result;
+}
+
+// Skips `revalidateAppShell`: no server-rendered view shows the mark, and a
+// refresh mid-review would redirect away once nothing else is due (see
+// `use-app-shell-refresh-after-review.ts`). The manage table refetches instead.
+export async function setFlashcardStudyLater(
+  data: SetFlashcardStudyLaterForm,
+): Promise<SetFlashcardStudyLaterResult> {
+  return runValidatedUserAction(
+    "flashcards.setFlashcardStudyLater",
+    setFlashcardStudyLaterSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) =>
+      setFlashcardStudyLaterForUser(userId, parsedData),
+  );
 }

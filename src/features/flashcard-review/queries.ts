@@ -1,7 +1,10 @@
 import { and, asc, count, eq, gte, inArray, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, flashcardReviewLog, subject } from "@/db/schema";
-import { buildDueAtFilter } from "@/features/flashcard-review/due-filter";
+import {
+  buildDueAtFilter,
+  studyLaterLastOrder,
+} from "@/features/flashcard-review/due-filter";
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
 import { attachFlashcardSources } from "@/features/flashcards/source-queries";
@@ -94,7 +97,11 @@ async function selectDueFlashcards(
     .from(flashcard)
     .innerJoin(subject, eq(flashcard.subjectId, subject.id))
     .where(and(...scopeFilters, buildDueAtFilter(now)))
-    .orderBy(asc(flashcard.dueAt), asc(flashcard.createdAt))
+    .orderBy(
+      studyLaterLastOrder(),
+      asc(flashcard.dueAt),
+      asc(flashcard.createdAt),
+    )
     .limit(limit);
 
   return attachFlashcardSources(

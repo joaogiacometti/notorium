@@ -23,6 +23,8 @@ import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-fla
 import { getEditFlashcardFormValues } from "@/components/flashcards/shared/edit-flashcard-form-values";
 import { FlashcardCardEditor } from "@/components/flashcards/shared/flashcard-card-editor";
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
+import { StudyLaterMenuItem } from "@/components/flashcards/shared/study-later-menu-item";
+import { toggleStudyLater } from "@/components/flashcards/shared/toggle-study-later";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import type { Breadcrumb } from "@/components/shared/page-top-bar";
 import { Button } from "@/components/ui/button";
@@ -61,6 +63,9 @@ export function FlashcardDetail({
   const [resetOpen, setResetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
+  // The page is server-rendered and the mark write skips revalidation, so the
+  // saved mark is kept locally.
+  const [studyLaterAt, setStudyLaterAt] = useState(flashcard.studyLaterAt);
   // Stable reference required — BulkMoveFlashcardsDialog has `ids` in its effect deps
   const moveIds = useMemo(() => [flashcard.id], [flashcard.id]);
   const [isFrontImageUploading, setIsFrontImageUploading] = useState(false);
@@ -151,6 +156,15 @@ export function FlashcardDetail({
                 <Copy className="size-4" />
                 Copy
               </DropdownMenuItem>
+              <StudyLaterMenuItem
+                marked={studyLaterAt !== null}
+                onSelect={() =>
+                  void toggleStudyLater(
+                    { id: flashcard.id, studyLaterAt },
+                    setStudyLaterAt,
+                  )
+                }
+              />
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => setResetOpen(true)}

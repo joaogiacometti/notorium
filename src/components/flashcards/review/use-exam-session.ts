@@ -3,6 +3,9 @@ import { shuffleExamCards } from "@/features/flashcard-review/exam";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
 
+type ExamCardPatch = Pick<FlashcardReviewEntity, "id"> &
+  Partial<FlashcardReviewEntity>;
+
 interface ExamSession {
   cards: FlashcardReviewEntity[];
   currentIndex: number;
@@ -29,7 +32,7 @@ function appendRating(session: ExamSession, rating: ReviewGrade): ExamSession {
 
 function replaceCard(
   session: ExamSession,
-  updatedCard: FlashcardReviewEntity,
+  updatedCard: ExamCardPatch,
 ): ExamSession {
   return {
     ...session,
@@ -97,7 +100,7 @@ export function useExamSession(initialCards: FlashcardReviewEntity[]) {
     );
   }
 
-  function updateCard(updatedCard: FlashcardReviewEntity) {
+  function updateCard(updatedCard: ExamCardPatch) {
     setSession((currentSession) =>
       currentSession
         ? replaceCard(currentSession, updatedCard)

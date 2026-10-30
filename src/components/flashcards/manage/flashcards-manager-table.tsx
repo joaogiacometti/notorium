@@ -1,5 +1,6 @@
 "use client";
 
+import { Clock } from "lucide-react";
 import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
@@ -18,23 +19,23 @@ interface FlashcardsManagerTableProps {
   pageIndex: number;
   pageSize: number;
   isLoading: boolean;
-  onEditRequested: (flashcardId: string) => void;
   onCopyRequested: (flashcardId: string) => void;
   onMoveRequested: (flashcard: FlashcardTarget) => void;
   onPageIndexChange: (pageIndex: number) => void;
   onPageSizeChange: (pageSize: number) => void;
   onDeleteRequested: (flashcard: FlashcardTarget) => void;
   onResetRequested: (flashcard: FlashcardTarget) => void;
+  onStudyLaterToggleRequested: (flashcard: FlashcardManageItem) => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
   onRowClick?: (flashcard: FlashcardManageItem) => void;
 }
 
 interface FlashcardRowActionHandlers {
-  onEditRequested: (flashcardId: string) => void;
   onCopyRequested: (flashcardId: string) => void;
   onMoveRequested: (flashcard: FlashcardTarget) => void;
   onDeleteRequested: (flashcard: FlashcardTarget) => void;
   onResetRequested: (flashcard: FlashcardTarget) => void;
+  onStudyLaterToggleRequested: (flashcard: FlashcardManageItem) => void;
 }
 
 const flashcardFrontPreviewMaxLength = 28;
@@ -64,8 +65,8 @@ function getFlashcardFrontPreview(value: string) {
 
 function FlashcardFrontCell({ item }: Readonly<{ item: FlashcardManageItem }>) {
   return (
-    <div className="flex min-w-0 items-center py-1">
-      <div className="min-w-0 flex-1 overflow-hidden">
+    <div className="flex min-w-0 items-center gap-1.5 py-1">
+      <div className="min-w-0 overflow-hidden">
         <div
           className="truncate text-sm font-semibold leading-6 text-foreground/95"
           title={item.frontTitle ?? undefined}
@@ -73,17 +74,24 @@ function FlashcardFrontCell({ item }: Readonly<{ item: FlashcardManageItem }>) {
           {getFlashcardFrontPreview(item.frontExcerpt)}
         </div>
       </div>
+      {item.studyLaterAt ? (
+        <Clock
+          className="size-3.5 shrink-0 text-muted-foreground"
+          role="img"
+          aria-label="Study later"
+        />
+      ) : null}
     </div>
   );
 }
 
 function getColumns(
   {
-    onEditRequested,
     onCopyRequested,
     onMoveRequested,
     onDeleteRequested,
     onResetRequested,
+    onStudyLaterToggleRequested,
   }: FlashcardRowActionHandlers,
   hasSelection: boolean,
 ): ManagerColumnDef<FlashcardManageItem>[] {
@@ -114,7 +122,6 @@ function getColumns(
       cell: ({ row }) => (
         <div className="flex w-14 min-w-14 items-center justify-start pl-1">
           <FlashcardsTableRowActions
-            onEditRequested={() => onEditRequested(row.original.id)}
             onCopyRequested={() => onCopyRequested(row.original.id)}
             onMoveRequested={() =>
               onMoveRequested({
@@ -134,6 +141,10 @@ function getColumns(
                 front: row.original.front,
               })
             }
+            onStudyLaterToggleRequested={() =>
+              onStudyLaterToggleRequested(row.original)
+            }
+            studyLaterMarked={row.original.studyLaterAt !== null}
             hasSelection={hasSelection}
           />
         </div>
@@ -149,13 +160,13 @@ export function FlashcardsManagerTable({
   pageIndex,
   pageSize,
   isLoading,
-  onEditRequested,
   onCopyRequested,
   onMoveRequested,
   onPageIndexChange,
   onPageSizeChange,
   onDeleteRequested,
   onResetRequested,
+  onStudyLaterToggleRequested,
   onSelectedFlashcardIdsChange,
   onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
@@ -164,11 +175,11 @@ export function FlashcardsManagerTable({
     () =>
       getColumns(
         {
-          onEditRequested,
           onCopyRequested,
           onMoveRequested,
           onDeleteRequested,
           onResetRequested,
+          onStudyLaterToggleRequested,
         },
         hasSelection,
       ),
@@ -176,9 +187,9 @@ export function FlashcardsManagerTable({
       hasSelection,
       onCopyRequested,
       onDeleteRequested,
-      onEditRequested,
       onMoveRequested,
       onResetRequested,
+      onStudyLaterToggleRequested,
     ],
   );
 

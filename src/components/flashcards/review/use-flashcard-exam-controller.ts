@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toggleStudyLater } from "@/components/flashcards/shared/toggle-study-later";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
 import { useExamSession } from "./use-exam-session";
@@ -13,7 +14,8 @@ interface UseFlashcardExamControllerParams {
 
 /**
  * Coordinates one exam run on the exam page: grading, exit confirmation,
- * weak-card retries, and in-session card edits.
+ * weak-card retries, and in-session card edits. Study later only saves the
+ * mark for future due reviews; the exam keeps its order and current card.
  *
  * @example
  * const exam = useFlashcardExamController({
@@ -77,6 +79,17 @@ export function useFlashcardExamController({
     resetCardViewState();
   }
 
+  function handleToggleStudyLater() {
+    const card = examSession.currentCard;
+    if (!card) {
+      return;
+    }
+
+    void toggleStudyLater(card, (studyLaterAt) =>
+      examSession.updateCard({ id: card.id, studyLaterAt }),
+    );
+  }
+
   function removeExamCard(deletedId: string) {
     examSession.removeCard(deletedId);
     resetCardViewState();
@@ -93,6 +106,7 @@ export function useFlashcardExamController({
     handleExit,
     handleConfirmExit,
     handleRetryWeakCards,
+    handleToggleStudyLater,
     updateExamCard,
     removeExamCard,
   };

@@ -24,6 +24,7 @@ function createFlashcard(
     subjectName: "Biology",
     subjectPath: "Biology / Cells",
     updatedAt: new Date("2026-04-20T10:00:00.000Z"),
+    studyLaterAt: null,
     ...overrides,
   };
 }
@@ -49,30 +50,45 @@ describe("FlashcardsManagerTable", () => {
   });
 
   it("limits long front excerpts in the manager table", async () => {
-    await act(async () => {
-      root.render(
-        <FlashcardsManagerTable
-          flashcards={[createFlashcard()]}
-          total={1}
-          selectedFlashcardIds={[]}
-          pageIndex={0}
-          pageSize={25}
-          isLoading={false}
-          onEditRequested={() => {}}
-          onCopyRequested={() => {}}
-          onMoveRequested={() => {}}
-          onPageIndexChange={() => {}}
-          onPageSizeChange={() => {}}
-          onDeleteRequested={() => {}}
-          onResetRequested={() => {}}
-          onSelectedFlashcardIdsChange={() => {}}
-        />,
-      );
-    });
+    await renderTable([createFlashcard()]);
 
     expect(container.textContent).toContain("Very long front content for...");
     expect(container.textContent).not.toContain(
       "Very long front content for a flashcard manager row",
     );
   });
+
+  it("marks only study-later rows", async () => {
+    await renderTable([
+      createFlashcard({ id: "marked", studyLaterAt: new Date() }),
+      createFlashcard({ id: "plain" }),
+    ]);
+
+    expect(
+      container.querySelectorAll('[aria-label="Study later"]'),
+    ).toHaveLength(1);
+  });
+
+  async function renderTable(flashcards: FlashcardManageItem[]) {
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerTable
+          flashcards={flashcards}
+          total={flashcards.length}
+          selectedFlashcardIds={[]}
+          pageIndex={0}
+          pageSize={25}
+          isLoading={false}
+          onCopyRequested={() => {}}
+          onMoveRequested={() => {}}
+          onPageIndexChange={() => {}}
+          onPageSizeChange={() => {}}
+          onDeleteRequested={() => {}}
+          onResetRequested={() => {}}
+          onStudyLaterToggleRequested={() => {}}
+          onSelectedFlashcardIdsChange={() => {}}
+        />,
+      );
+    });
+  }
 });

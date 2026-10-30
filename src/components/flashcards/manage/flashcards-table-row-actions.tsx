@@ -4,35 +4,38 @@ import {
   ArrowRightLeft,
   Copy,
   MoreVertical,
-  Pencil,
   RotateCcw,
   Trash2,
 } from "lucide-react";
 
+import { StudyLaterMenuItem } from "@/components/flashcards/shared/study-later-menu-item";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface FlashcardsTableRowActionsProps {
-  onEditRequested: () => void;
   onCopyRequested: () => void;
   onMoveRequested: () => void;
   onResetRequested: () => void;
   onDeleteRequested: () => void;
+  onStudyLaterToggleRequested: () => void;
+  studyLaterMarked: boolean;
   hasSelection?: boolean;
 }
 
 export function FlashcardsTableRowActions({
-  onEditRequested,
   onCopyRequested,
   onMoveRequested,
   onResetRequested,
   onDeleteRequested,
+  onStudyLaterToggleRequested,
+  studyLaterMarked,
   hasSelection = false,
 }: Readonly<FlashcardsTableRowActionsProps>) {
   return (
@@ -48,10 +51,6 @@ export function FlashcardsTableRowActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onEditRequested} className="cursor-pointer">
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={onCopyRequested} className="cursor-pointer">
           <Copy className="size-4" />
           Copy
@@ -60,10 +59,16 @@ export function FlashcardsTableRowActions({
           <ArrowRightLeft className="size-4" />
           Move
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <StudyLaterMenuItem
+          marked={studyLaterMarked}
+          onSelect={onStudyLaterToggleRequested}
+        />
         <DropdownMenuItem onClick={onResetRequested} className="cursor-pointer">
           <RotateCcw className="size-4" />
           Reset
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={onDeleteRequested}
           className="cursor-pointer text-destructive focus:text-destructive"

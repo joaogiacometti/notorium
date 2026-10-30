@@ -33,6 +33,7 @@ function makeCard(): FlashcardReviewEntity {
     lastReviewedAt: null,
     reviewCount: 0,
     lapseCount: 0,
+    studyLaterAt: null,
     subjectId: "subject-1",
     userId: "user-1",
     createdAt: new Date("2026-03-07T11:00:00.000Z"),

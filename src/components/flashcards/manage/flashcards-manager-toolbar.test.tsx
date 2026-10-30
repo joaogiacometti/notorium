@@ -15,6 +15,8 @@ const baseProps = {
   selectedFlashcardIds: [],
   total: 0,
   refineMode: false,
+  studyLaterFilterActive: false,
+  onToggleStudyLaterFilter: vi.fn(),
   strugglingCount: 0,
   isLoadingStrugglingCards: false,
   aiEnabled: false,
@@ -75,6 +77,32 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     expect(baseProps.onOpenCreateDialog).toHaveBeenCalledOnce();
+  });
+
+  it("toggles the study later filter and shows when it is on", async () => {
+    await act(async () => {
+      root.render(<FlashcardsManagerToolbar {...baseProps} />);
+    });
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Show Study later cards"]',
+    );
+    expect(button?.getAttribute("aria-pressed")).toBe("false");
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(baseProps.onToggleStudyLaterFilter).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      root.render(
+        <FlashcardsManagerToolbar {...baseProps} studyLaterFilterActive />,
+      );
+    });
+    expect(
+      container
+        .querySelector('button[aria-label="Show Study later cards"]')
+        ?.getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 
   it("shows an unavailable count when the manage read fails", async () => {
