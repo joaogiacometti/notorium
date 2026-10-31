@@ -139,7 +139,7 @@ export function AppLayoutClient({
   // remains visible (RemNote style) instead of disappearing entirely.
   const mainRow = showSidebar ? (
     <SidebarCollapseProvider value={{ collapsed, setCollapsed }}>
-      <div className="flex min-h-svh">
+      <div className="flex min-h-[calc(100dvh-var(--app-mobile-header-height))]">
         {collapsed ? (
           <CollapsedSidebar onOpenSearch={() => setSearchOpen(true)} />
         ) : (
@@ -153,13 +153,19 @@ export function AppLayoutClient({
       </div>
     </SidebarCollapseProvider>
   ) : (
-    <div className="flex min-h-svh">
+    <div className="flex min-h-[calc(100dvh-var(--app-mobile-header-height))]">
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 
   const content = (
-    <div className="min-h-svh bg-background">
+    <div
+      className={cn(
+        "min-h-dvh bg-background [--app-mobile-header-height:0rem]",
+        showSidebar &&
+          "[--app-mobile-header-height:3rem] lg:[--app-mobile-header-height:0rem]",
+      )}
+    >
       {userId && (
         <GlobalSearch
           userId={userId}

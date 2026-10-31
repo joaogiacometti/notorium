@@ -56,6 +56,23 @@ flashcard faces: a card is one surface, read or edited, so its Front/Back keep
 the uppercase face labels of `FlashcardFace` in review, the detail page, and the
 create dialog alike. Other uppercase section labels are for read-only sections.
 
+## PDF reading workspace
+
+- On phones, PDF pages use the full workspace width, with a compact title row
+  and a single bottom reading bar. The workspace follows the dynamic viewport;
+  the bar reserves the bottom safe area and never overlays page content. Subtract
+  both the breadcrumb and the shell's `--app-mobile-header-height` from the
+  in-flow workspace height, so only the book scrolls, not the outer page.
+- Mobile reading controls use `size-10` touch targets. Page navigation stays
+  visible; Back sits beside page navigation and appears on phones only when
+  there is a return location. The percentage menu owns zoom steps and margins,
+  not navigation.
+- Contents open as a full-width, independently scrolling tray above the pages,
+  capped at half the reading region. At `sm` and above, keep the top toolbar,
+  left contents sidebar, and standard page-frame spacing.
+- Use the existing flat surfaces, theme colors, borders, and control radii;
+  do not introduce floating pill controls or decorative shadows.
+
 ## Flashcard editor
 
 `FlashcardCardEditor` is the only way a flashcard is edited. It is one bordered

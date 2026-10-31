@@ -242,11 +242,11 @@ function PdfPageColumn({
         canTrimMargins={textCrop !== null}
         onTrimMarginsChange={setTrimMargins}
       />
-      <div className="flex min-h-0 flex-1 gap-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 sm:flex-row">
         {contentsOpen && (
           <aside
             aria-label="Table of contents"
-            className="flex min-h-0 w-64 max-w-1/2 shrink-0"
+            className="flex min-h-0 max-h-1/2 w-full shrink-0 px-2 sm:max-h-none sm:w-64 sm:max-w-1/2 sm:px-0"
           >
             <PdfTableOfContents
               pdfDocument={pdfDocument}
@@ -256,7 +256,7 @@ function PdfPageColumn({
         )}
         <div
           ref={scrollRef}
-          className="min-h-0 min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto rounded-md bg-muted/40"
+          className="min-h-0 min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto overscroll-contain bg-muted/40 sm:rounded-md"
         >
           <div
             ref={contentRef}
@@ -439,7 +439,7 @@ function useElementSize(ref: RefObject<HTMLElement | null>): {
 function PdfColumnSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <Skeleton className="h-9 w-full rounded-md" />
+      <Skeleton className="order-last h-14 w-full rounded-md sm:order-first sm:h-9" />
       <Skeleton className="min-h-0 flex-1 rounded-md" />
     </div>
   );

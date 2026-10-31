@@ -60,14 +60,14 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
       <AppPageContainer
         maxWidth="7xl"
         className={cn(
-          "flex flex-col gap-4 overflow-hidden",
+          "flex flex-col gap-2 overflow-hidden px-0 pt-2 sm:gap-4 sm:pt-6",
           isZenMode
-            ? "fixed inset-0 z-immersive h-svh max-w-none bg-background py-4"
-            : "h-[calc(100svh-3.5rem)] pb-4 lg:pb-6",
+            ? "fixed inset-0 z-immersive h-dvh max-w-none bg-background pb-0 sm:py-4"
+            : "h-[calc(100dvh-3.5rem-var(--app-mobile-header-height,0rem))] pb-0 sm:pb-4 lg:pb-6",
         )}
       >
-        <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-4">
-          <h1 className="min-w-0 truncate px-3 text-xl leading-10 font-semibold tracking-tight">
+        <div className="flex min-w-0 shrink-0 items-start justify-between gap-2 px-4 sm:gap-4 sm:px-0">
+          <h1 className="min-w-0 truncate text-xl leading-10 font-semibold tracking-tight sm:px-3">
             {pdf.title}
           </h1>
           <div className="flex shrink-0 gap-2">

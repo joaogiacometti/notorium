@@ -23,12 +23,14 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface PdfReaderToolbarProps {
   currentPage: number;
@@ -66,12 +68,16 @@ export function PdfReaderToolbar({
   onTrimMarginsChange,
 }: Readonly<PdfReaderToolbarProps>) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="flex items-center gap-1">
+    <fieldset
+      aria-label="PDF reading controls"
+      className="order-last flex min-w-0 shrink-0 items-center justify-between gap-1 border-t border-border bg-background px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:order-first sm:flex-wrap sm:gap-2 sm:border-0 sm:p-0"
+    >
+      <div className="flex min-w-0 items-center sm:gap-1">
         <Button
           type="button"
           variant="ghost"
           size="icon"
+          className="size-10 sm:size-9"
           aria-label="Table of contents"
           ref={contentsToggleRef}
           title="Table of contents"
@@ -86,6 +92,10 @@ export function PdfReaderToolbar({
           variant="ghost"
           size="icon"
           aria-label="Back to previous location"
+          className={cn(
+            "size-10 sm:size-9",
+            !canGoBack && "hidden sm:inline-flex",
+          )}
           title="Back to previous location"
           disabled={!canGoBack}
           onClick={onGoBack}
@@ -97,20 +107,11 @@ export function PdfReaderToolbar({
           variant="ghost"
           size="icon"
           aria-label="Previous page"
+          className="size-10 sm:size-9"
           disabled={currentPage <= 1}
           onClick={() => onPageJump(currentPage - 1)}
         >
           <ChevronUp className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Next page"
-          disabled={currentPage >= pageCount}
-          onClick={() => onPageJump(currentPage + 1)}
-        >
-          <ChevronDown className="size-4" />
         </Button>
         <PageJumpField
           key={currentPage}
@@ -118,6 +119,17 @@ export function PdfReaderToolbar({
           pageCount={pageCount}
           onPageJump={onPageJump}
         />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Next page"
+          className="size-10 sm:size-9"
+          disabled={currentPage >= pageCount}
+          onClick={() => onPageJump(currentPage + 1)}
+        >
+          <ChevronDown className="size-4" />
+        </Button>
       </div>
       <div className="flex items-center gap-1">
         <Button
@@ -125,6 +137,7 @@ export function PdfReaderToolbar({
           variant="ghost"
           size="icon"
           aria-label="Zoom out"
+          className="hidden sm:inline-flex"
           disabled={zoomRatio <= PDF_ZOOM_MIN}
           onClick={() =>
             onZoomChange({ kind: "ratio", ratio: stepPdfZoom(zoomRatio, -1) })
@@ -145,6 +158,7 @@ export function PdfReaderToolbar({
           variant="ghost"
           size="icon"
           aria-label="Zoom in"
+          className="hidden sm:inline-flex"
           disabled={zoomRatio >= PDF_ZOOM_MAX}
           onClick={() =>
             onZoomChange({ kind: "ratio", ratio: stepPdfZoom(zoomRatio, 1) })
@@ -153,7 +167,7 @@ export function PdfReaderToolbar({
           <Plus className="size-4" />
         </Button>
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -189,13 +203,32 @@ function ZoomPresetMenu({
           type="button"
           variant="ghost"
           size="sm"
-          className="min-w-16 tabular-nums"
+          className="h-10 min-w-12 px-1 tabular-nums sm:h-8 sm:min-w-16 sm:px-3"
           aria-label="Zoom presets"
         >
           {Math.round(zoomRatio * 100)}%
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <div className="sm:hidden">
+          <DropdownMenuItem
+            disabled={zoomRatio <= PDF_ZOOM_MIN}
+            onSelect={() =>
+              onZoomChange({ kind: "ratio", ratio: stepPdfZoom(zoomRatio, -1) })
+            }
+          >
+            <Minus /> Zoom out
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={zoomRatio >= PDF_ZOOM_MAX}
+            onSelect={() =>
+              onZoomChange({ kind: "ratio", ratio: stepPdfZoom(zoomRatio, 1) })
+            }
+          >
+            <Plus /> Zoom in
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </div>
         <DropdownMenuRadioGroup
           value={activeZoomPreset(zoom)}
           onValueChange={(value) => {
@@ -262,12 +295,15 @@ function PageJumpField({
       <Input
         aria-label="Page number"
         inputMode="numeric"
-        className="h-8 w-14 text-center tabular-nums"
+        enterKeyHint="go"
+        className="h-10 w-12 px-1 text-center text-base tabular-nums sm:h-8 sm:w-14 sm:text-sm"
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => setDraft(String(currentPage))}
       />
-      <span className="tabular-nums">/ {pageCount}</span>
+      <span className="whitespace-nowrap text-xs tabular-nums sm:text-sm">
+        / {pageCount}
+      </span>
     </form>
   );
 }

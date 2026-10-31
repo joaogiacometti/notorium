@@ -106,6 +106,76 @@ test("finds an uploaded PDF from global search", async ({ page, e2eUser }) => {
   }
 });
 
+test("keeps mobile reading controls on screen while only the book scrolls", async ({
+  page,
+  e2eUser,
+}) => {
+  const subjectName = getUniqueSubjectName("mobile-scroll");
+  const pdfTitle = getUniquePdfTitle("mobile-scroll");
+  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  try {
+    await createSubject(e2eUser.userId, subjectName);
+    await openSubjectInSidebar(page, subjectName);
+    await uploadPdfFromSidebar(page, subjectName, pdfTitle);
+    await expect(
+      page.getByRole("textbox", { name: "Page number" }),
+    ).toBeVisible();
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 390, height: 640 },
+      { width: 320, height: 640 },
+      { width: 844, height: 390 },
+      { width: 1280, height: 800 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await expectReaderWithinViewport(page);
+    }
+    await page.setViewportSize({ width: 390, height: 640 });
+    await page
+      .getByRole("button", { name: "Table of contents", exact: true })
+      .click();
+    await expectReaderWithinViewport(page);
+    await page
+      .getByRole("button", { name: "Table of contents", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Enter zen mode" }).click();
+    await expectReaderWithinViewport(page);
+    await page.getByRole("button", { name: "Exit zen mode" }).click();
+    await expectReaderWithinViewport(page);
+  } finally {
+    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  }
+});
+
+async function expectReaderWithinViewport(page: Page): Promise<void> {
+  const controls = page.getByRole("group", { name: "PDF reading controls" });
+  await expect
+    .poll(() =>
+      controls.evaluate((element) => element.getBoundingClientRect().bottom),
+    )
+    .toBeLessThanOrEqual(page.viewportSize()?.height ?? 0);
+  expect(
+    await controls.evaluate(
+      (element) => element.scrollWidth - element.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(1);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollHeight - window.innerHeight,
+      ),
+    )
+    .toBeLessThanOrEqual(1);
+  const book = page.locator("[data-page-number]").first().locator("../..");
+  await book.evaluate((element) => {
+    element.scrollTop = 120;
+  });
+  await expect
+    .poll(() => book.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+}
+
 test("renames and deletes a PDF from its header menu", async ({
   page,
   e2eUser,
