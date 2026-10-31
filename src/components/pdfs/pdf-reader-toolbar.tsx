@@ -1,7 +1,14 @@
 "use client";
 
-import { ArrowLeft, ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  ListTree,
+  Minus,
+  Plus,
+} from "lucide-react";
+import { type FormEvent, type RefObject, useState } from "react";
 import {
   PDF_FIT_PAGE,
   PDF_FIT_WIDTH,
@@ -33,6 +40,9 @@ interface PdfReaderToolbarProps {
   onPageJump: (page: number) => void;
   canGoBack: boolean;
   onGoBack: () => void;
+  contentsOpen: boolean;
+  contentsToggleRef: RefObject<HTMLButtonElement | null>;
+  onToggleContents: () => void;
   trimMargins: boolean;
   /** False when the PDF has no text column to trim to, such as scans. */
   canTrimMargins: boolean;
@@ -48,13 +58,29 @@ export function PdfReaderToolbar({
   onPageJump,
   canGoBack,
   onGoBack,
+  contentsOpen,
+  contentsToggleRef,
+  onToggleContents,
   trimMargins,
   canTrimMargins,
   onTrimMarginsChange,
 }: Readonly<PdfReaderToolbarProps>) {
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Table of contents"
+          ref={contentsToggleRef}
+          title="Table of contents"
+          aria-expanded={contentsOpen}
+          aria-controls={contentsOpen ? "pdf-table-of-contents" : undefined}
+          onClick={onToggleContents}
+        >
+          <ListTree className="size-4" />
+        </Button>
         <Button
           type="button"
           variant="ghost"

@@ -27,6 +27,7 @@ import {
   resolvePageWidth,
 } from "@/components/pdfs/pdf-page-layout";
 import { PdfReaderToolbar } from "@/components/pdfs/pdf-reader-toolbar";
+import { PdfTableOfContents } from "@/components/pdfs/pdf-table-of-contents";
 import { measurePdfTextCrop } from "@/components/pdfs/pdf-text-crop";
 import { usePdfGestureZoom } from "@/components/pdfs/use-pdf-gesture-zoom";
 import { usePdfReadingProgress } from "@/components/pdfs/use-pdf-reading-progress";
@@ -164,6 +165,8 @@ function PdfPageColumn({
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<PdfZoom>(PDF_FIT_WIDTH);
+  const [contentsOpen, setContentsOpen] = useState(false);
+  const contentsToggleRef = useRef<HTMLButtonElement>(null);
   // Null follows the screen: phones trim margins, wider screens do not.
   const [trimMargins, setTrimMargins] = useState<boolean | null>(null);
   const [pageAspects, setPageAspects] = useState<ReadonlyMap<number, number>>(
@@ -232,37 +235,53 @@ function PdfPageColumn({
         onPageJump={layout.scrollToPage}
         canGoBack={layout.canGoBack}
         onGoBack={layout.goBack}
+        contentsOpen={contentsOpen}
+        contentsToggleRef={contentsToggleRef}
+        onToggleContents={() => setContentsOpen((open) => !open)}
         trimMargins={textCrop !== null && trimmed}
         canTrimMargins={textCrop !== null}
         onTrimMarginsChange={setTrimMargins}
       />
-      <div
-        ref={scrollRef}
-        className="min-h-0 flex-1 touch-pan-x touch-pan-y overflow-auto rounded-md bg-muted/40"
-      >
+      <div className="flex min-h-0 flex-1 gap-2">
+        {contentsOpen && (
+          <aside
+            aria-label="Table of contents"
+            className="flex min-h-0 w-64 max-w-1/2 shrink-0"
+          >
+            <PdfTableOfContents
+              pdfDocument={pdfDocument}
+              onNavigate={(page) => navigationRef.current?.followPageLink(page)}
+            />
+          </aside>
+        )}
         <div
-          ref={contentRef}
-          className="flex w-fit min-w-full origin-top flex-col items-center"
-          style={{ gap: PDF_PAGE_GAP_PX, padding }}
+          ref={scrollRef}
+          className="min-h-0 min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto rounded-md bg-muted/40"
         >
-          {pageHeights.map((height, index) => {
-            const pageNumber = index + 1;
-            return (
-              <PdfPageSlot
-                key={`page-${pageNumber}`}
-                pageNumber={pageNumber}
-                width={pageWidth}
-                renderWidth={renderWidth}
-                cropLeft={crop.left * renderWidth}
-                height={height}
-                rendered={
-                  Math.abs(pageNumber - layout.currentPage) <=
-                  RENDER_WINDOW_PAGES
-                }
-                onAspect={recordPageAspect}
-              />
-            );
-          })}
+          <div
+            ref={contentRef}
+            className="flex w-fit min-w-full origin-top flex-col items-center"
+            style={{ gap: PDF_PAGE_GAP_PX, padding }}
+          >
+            {pageHeights.map((height, index) => {
+              const pageNumber = index + 1;
+              return (
+                <PdfPageSlot
+                  key={`page-${pageNumber}`}
+                  pageNumber={pageNumber}
+                  width={pageWidth}
+                  renderWidth={renderWidth}
+                  cropLeft={crop.left * renderWidth}
+                  height={height}
+                  rendered={
+                    Math.abs(pageNumber - layout.currentPage) <=
+                    RENDER_WINDOW_PAGES
+                  }
+                  onAspect={recordPageAspect}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </>
