@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import {
   PDF_FIT_PAGE,
@@ -31,6 +31,8 @@ interface PdfReaderToolbarProps {
   zoomRatio: number;
   onZoomChange: (zoom: PdfZoom) => void;
   onPageJump: (page: number) => void;
+  canGoBack: boolean;
+  onGoBack: () => void;
   trimMargins: boolean;
   /** False when the PDF has no text column to trim to, such as scans. */
   canTrimMargins: boolean;
@@ -44,6 +46,8 @@ export function PdfReaderToolbar({
   zoomRatio,
   onZoomChange,
   onPageJump,
+  canGoBack,
+  onGoBack,
   trimMargins,
   canTrimMargins,
   onTrimMarginsChange,
@@ -51,6 +55,17 @@ export function PdfReaderToolbar({
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Back to previous location"
+          title="Back to previous location"
+          disabled={!canGoBack}
+          onClick={onGoBack}
+        >
+          <ArrowLeft className="size-4" />
+        </Button>
         <Button
           type="button"
           variant="ghost"

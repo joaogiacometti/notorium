@@ -1,8 +1,15 @@
 "use client";
 
 import "react-pdf/dist/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import { type RefObject, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { savePdfReadingPage } from "@/app/actions/pdfs";
 import {
@@ -23,7 +30,10 @@ import { PdfReaderToolbar } from "@/components/pdfs/pdf-reader-toolbar";
 import { measurePdfTextCrop } from "@/components/pdfs/pdf-text-crop";
 import { usePdfGestureZoom } from "@/components/pdfs/use-pdf-gesture-zoom";
 import { usePdfReadingProgress } from "@/components/pdfs/use-pdf-reading-progress";
-import { usePdfScrollLayout } from "@/components/pdfs/use-pdf-scroll-layout";
+import {
+  type PdfScrollLayout,
+  usePdfScrollLayout,
+} from "@/components/pdfs/use-pdf-scroll-layout";
 import { usePdfStudyContext } from "@/components/pdfs/use-pdf-study-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,6 +82,7 @@ export function PdfReader({
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [opened, setOpened] = useState<OpenedPdf | null>(null);
   const [failed, setFailed] = useState(false);
+  const navigationRef = useRef<PdfScrollLayout>(null);
 
   if (failed) {
     return (
@@ -94,12 +105,18 @@ export function PdfReader({
         setOpened(await openPdfAt(document, initialPage))
       }
       onLoadError={() => setFailed(true)}
+      onItemClick={({ pageNumber }) =>
+        navigationRef.current?.followPageLink(pageNumber)
+      }
+      externalLinkTarget="_blank"
+      externalLinkRel="noopener noreferrer nofollow"
       loading={<PdfColumnSkeleton />}
       error={null}
       className="flex min-h-0 flex-1 flex-col gap-2"
     >
       {opened ? (
         <PdfPageColumn
+          navigationRef={navigationRef}
           pdfId={pdfId}
           title={title}
           subjectPath={subjectPath}
@@ -127,12 +144,14 @@ interface OpenedPdf {
 }
 
 interface PdfPageColumnProps extends OpenedPdf {
+  navigationRef: RefObject<PdfScrollLayout | null>;
   pdfId: string;
   title: string;
   subjectPath: string;
 }
 
 function PdfPageColumn({
+  navigationRef,
   pdfId,
   title,
   subjectPath,
@@ -170,6 +189,7 @@ function PdfPageColumn({
     basePage.height / basePage.width,
   );
   const layout = usePdfScrollLayout({ scrollRef, pageHeights, initialPage });
+  useImperativeHandle(navigationRef, () => layout);
 
   // Most PDFs repeat one page shape, so a page matching the assumed shape
   // must not trigger a column-wide re-layout when it loads.
@@ -210,6 +230,8 @@ function PdfPageColumn({
         zoomRatio={zoomRatio}
         onZoomChange={setZoom}
         onPageJump={layout.scrollToPage}
+        canGoBack={layout.canGoBack}
+        onGoBack={layout.goBack}
         trimMargins={textCrop !== null && trimmed}
         canTrimMargins={textCrop !== null}
         onTrimMarginsChange={setTrimMargins}
@@ -295,7 +317,7 @@ function PdfPageSlot({
               height,
               window.devicePixelRatio,
             )}
-            renderAnnotationLayer={false}
+            renderAnnotationLayer
             loading={placeholder}
             onLoadSuccess={(page) =>
               onAspect(pageNumber, page.originalHeight / page.originalWidth)

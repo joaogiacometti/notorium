@@ -30,6 +30,9 @@ interface PdfScrollLayoutInput {
 export interface PdfScrollLayout {
   currentPage: number;
   scrollToPage: (page: number) => void;
+  followPageLink: (page: number) => void;
+  canGoBack: boolean;
+  goBack: () => void;
 }
 
 function haveSameHeights(left: number[], right: number[]): boolean {
@@ -54,6 +57,7 @@ export function usePdfScrollLayout({
   initialPage,
 }: PdfScrollLayoutInput): PdfScrollLayout {
   const [currentPage, setCurrentPage] = useState(initialPage);
+  const [linkHistory, setLinkHistory] = useState<ScrollAnchor[]>([]);
   const previousLayoutRef = useRef<PageLayout | null>(null);
   // Last offset the user scrolled to, recorded on every scroll event so a
   // layout change never restores a stale position (which fought scrollbar
@@ -104,8 +108,33 @@ export function usePdfScrollLayout({
     const scroller = scrollRef.current;
     if (!scroller || pageTops.length === 0) return;
     scroller.scrollTop = scrollOffsetOf(layout, { page, fraction: 0 });
+    lastScrollTopRef.current = scroller.scrollTop;
     setCurrentPage(page);
   }
 
-  return { currentPage, scrollToPage };
+  function followPageLink(page: number) {
+    const scroller = scrollRef.current;
+    if (!scroller || pageTops.length === 0) return;
+    const origin = scrollAnchorAt(layout, scroller.scrollTop);
+    setLinkHistory((history) => [...history, origin]);
+    scrollToPage(page);
+  }
+
+  function goBack() {
+    const origin = linkHistory.at(-1);
+    const scroller = scrollRef.current;
+    if (!origin || !scroller || pageTops.length === 0) return;
+    scroller.scrollTop = scrollOffsetOf(layout, origin);
+    lastScrollTopRef.current = scroller.scrollTop;
+    setCurrentPage(origin.page);
+    setLinkHistory((history) => history.slice(0, -1));
+  }
+
+  return {
+    currentPage,
+    scrollToPage,
+    followPageLink,
+    canGoBack: linkHistory.length > 0,
+    goBack,
+  };
 }
