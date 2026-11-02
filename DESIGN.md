@@ -217,6 +217,13 @@ review/exam session header, the New flashcard dialog header, and zen mode. The
 panel header matches the top bar's `h-14`; the composer is one rounded field
 with the send button inside it.
 
+The composer's slash-command menu is an in-flow tray directly above the field,
+inside the composer footer, so it cannot obscure messages or escape a dialog's
+focus boundary. Reuse `Command`, `CommandList`, `CommandItem`, and
+`CommandShortcut`, matching global search: one icon, the action label above a
+muted `text-xs` description, and the monospace slash command on the right.
+Keep keyboard focus in the textarea.
+
 The header's Hints first toggle is an `icon-sm` ghost button like its
 neighbors, with `aria-pressed`: a lightbulb on a `bg-primary/10` tint when on, a
 muted crossed-out lightbulb when off. Keep its accessible label fixed and let

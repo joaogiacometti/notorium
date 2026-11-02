@@ -55,6 +55,8 @@ export function FlashcardEditorDialogContent({
           event.target.closest("[data-study-assistant]")
         ) {
           event.preventDefault();
+          // Radix sees Escape in capture, before the composer's menu can dismiss it.
+          if (event.target.closest("[aria-activedescendant]")) return;
           workspace.setOpen(false);
         }
       }}

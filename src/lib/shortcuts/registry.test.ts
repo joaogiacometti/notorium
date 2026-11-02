@@ -111,6 +111,20 @@ describe("resolvePlatformShortcutKeys", () => {
 });
 
 describe("shortcutRegistry", () => {
+  it("documents the assistant command and its menu controls", () => {
+    expect(getShortcutsByCategory(ShortcutCategory.StudyAssistant)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "typed", keys: ["/new"] }),
+        expect.objectContaining({ kind: "keys", keys: ["enter"] }),
+        expect.objectContaining({
+          kind: "keys",
+          keys: ["arrowup", "arrowdown"],
+        }),
+        expect.objectContaining({ kind: "keys", keys: ["escape"] }),
+      ]),
+    );
+    expect(formatShortcutKeys(["arrowup", "arrowdown"])).toEqual(["↑", "↓"]);
+  });
   it("has at least one shortcut in every displayed category", () => {
     for (const section of shortcutCategorySections) {
       expect(getShortcutsByCategory(section.category).length).toBeGreaterThan(

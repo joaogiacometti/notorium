@@ -2,6 +2,10 @@
 
 import { ArrowUp, Square } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import {
+  AssistantCommandMenu,
+  type AssistantCommandMenuIds,
+} from "@/components/assistant/assistant-command-menu";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { LIMITS } from "@/lib/config/limits";
@@ -10,6 +14,7 @@ interface AssistantComposerProps {
   busy: boolean;
   onSend: (text: string) => Promise<boolean>;
   onStop: () => void;
+  onNewChat: () => void;
   value?: string;
   onValueChange?: (value: string) => void;
   focusRequested?: boolean;
@@ -19,6 +24,7 @@ export function AssistantComposer({
   busy,
   onSend,
   onStop,
+  onNewChat,
   value,
   onValueChange,
   focusRequested = false,
@@ -26,22 +32,47 @@ export function AssistantComposer({
   const [localDraft, setLocalDraft] = useState("");
   const draft = value ?? localDraft;
   const setDraft = onValueChange ?? setLocalDraft;
+  const [menuDismissed, setMenuDismissed] = useState(false);
+  const [menuIds, setMenuIds] = useState<AssistantCommandMenuIds | null>(null);
+  const commandText = draft.trim();
+  const menuOpen =
+    !menuDismissed &&
+    commandText.startsWith("/") &&
+    "/new".startsWith(commandText);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (focusRequested) textareaRef.current?.focus();
   }, [focusRequested]);
-  const canSend = !busy && draft.trim().length > 0;
+  const canSend = !busy && commandText.length > 0;
 
-  async function submitDraft() {
+  function startNewChat(): void {
+    onNewChat();
+    setDraft("");
+    setMenuDismissed(false);
+    textareaRef.current?.focus();
+  }
+
+  async function submitDraft(): Promise<void> {
+    if (commandText === "/new") return startNewChat();
     if (!canSend) return;
-    const sent = await onSend(draft.trim());
+    const sent = await onSend(commandText);
     if (sent !== false) setDraft("");
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key !== "Enter" || event.shiftKey) return;
     if (event.nativeEvent.isComposing) return;
+    if (menuOpen && ["Escape", "ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.key === "Escape") setMenuDismissed(true);
+      return;
+    }
+    if (event.key !== "Enter" || event.shiftKey) return;
     event.preventDefault();
+    if (menuOpen) {
+      event.stopPropagation();
+      return startNewChat();
+    }
     void submitDraft();
   }
 
@@ -52,13 +83,31 @@ export function AssistantComposer({
         event.preventDefault();
         void submitDraft();
       }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setMenuDismissed(true);
+      }}
     >
+      {menuOpen ? (
+        <AssistantCommandMenu
+          onIdsChange={setMenuIds}
+          onNewChat={startNewChat}
+        />
+      ) : null}
       <div className="flex items-end gap-1 rounded-lg border border-input bg-background p-1.5 transition-colors focus-within:border-ring">
         <Textarea
           ref={textareaRef}
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setMenuDismissed(false);
+          }}
+          onFocus={() => setMenuDismissed(false)}
           onKeyDown={handleKeyDown}
+          aria-autocomplete="list"
+          aria-controls={menuOpen ? menuIds?.list : undefined}
+          aria-activedescendant={menuOpen ? menuIds?.option : undefined}
+          aria-haspopup="listbox"
           maxLength={LIMITS.assistantMessageMaxChars}
           placeholder="Ask a study question…"
           aria-label="Message the study assistant"

@@ -50,6 +50,7 @@ type SendMessagesOptions = Parameters<
 
 type FakeReply =
   | { text: string }
+  | { streaming: true }
   | { errorBody: unknown }
   | { proposal: ProposedFlashcard[] };
 
@@ -63,6 +64,11 @@ class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
 
   replyWith(text: string): this {
     this.replies.push({ text });
+    return this;
+  }
+
+  streamReply(): this {
+    this.replies.push({ streaming: true });
     return this;
   }
 
@@ -86,6 +92,18 @@ class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
     }
     if ("proposal" in reply) {
       return streamOfChunks(proposalChunks(reply.proposal));
+    }
+    if ("streaming" in reply) {
+      return new ReadableStream({
+        start(controller) {
+          controller.enqueue({ type: "start" });
+          options.abortSignal?.addEventListener(
+            "abort",
+            () => controller.close(),
+            { once: true },
+          );
+        },
+      });
     }
     return streamOfChunks(textChunks(reply.text));
   }
@@ -316,6 +334,51 @@ describe("study assistant", () => {
 
     expect(container.textContent).not.toContain("Mitosis?");
     expect(container.querySelector('[data-testid="rich-reply"]')).toBeNull();
+  });
+
+  it("runs /new locally and sends the next question without old history", async () => {
+    const transport = new FakeAssistantChatTransport()
+      .replyWith("Hello.")
+      .replyWith("Fresh reply.");
+    await renderPanel(transport);
+    await sendMessage("Mitosis?");
+    await sendMessage("/new");
+    expect(transport.requests).toHaveLength(1);
+    expect(container.textContent).not.toContain("Mitosis?");
+    expect(container.querySelector('[data-testid="rich-reply"]')).toBeNull();
+    await sendMessage("Meiosis?");
+    expect(transport.requests[1]?.messages).toHaveLength(1);
+    expect(container.textContent).toContain("Fresh reply.");
+  });
+
+  it("aborts an active reply with /new and clears the controlled composer", async () => {
+    const transport = new FakeAssistantChatTransport().streamReply();
+    await renderPanel(transport);
+    await sendMessage("Mitosis?");
+    expect(
+      container.querySelector('[aria-label="Stop answer"]'),
+    ).not.toBeNull();
+    const textarea = getByLabel<HTMLTextAreaElement>(
+      "Message the study assistant",
+    );
+    await act(async () => {
+      setTextareaValue(textarea, "/new");
+    });
+    await act(async () => {
+      textarea.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(transport.requests).toHaveLength(1);
+    expect(transport.requests[0]?.abortSignal?.aborted).toBe(true);
+    expect(container.textContent).not.toContain("Mitosis?");
+    expect(textarea.value).toBe("");
+    expect(document.activeElement).toBe(textarea);
+    expect(container.querySelector('[aria-label="Stop answer"]')).toBeNull();
   });
 
   it("shows the route error and retries the question", async () => {

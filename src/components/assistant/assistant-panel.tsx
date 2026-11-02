@@ -144,6 +144,7 @@ function AssistantConversationPanel({
         onSend={(text) => workspace.send(text)}
         focusRequested={workspace.open}
         onStop={() => void chat.stop()}
+        onNewChat={workspace.reset}
       />
     </AssistantPanelFrame>
   );

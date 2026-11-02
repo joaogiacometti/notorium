@@ -1,5 +1,6 @@
 export enum ShortcutCategory {
   Global = "global",
+  StudyAssistant = "study_assistant",
   NotesEditor = "notes_editor",
   FlashcardReview = "flashcard_review",
 }
@@ -32,11 +33,40 @@ export interface ShortcutCategorySection {
 /** Display order and headings for the shortcuts help dialog. */
 export const shortcutCategorySections: ShortcutCategorySection[] = [
   { category: ShortcutCategory.Global, label: "Global" },
+  { category: ShortcutCategory.StudyAssistant, label: "Study assistant" },
   { category: ShortcutCategory.NotesEditor, label: "Notes editor" },
   { category: ShortcutCategory.FlashcardReview, label: "Flashcard review" },
 ];
 
 export const shortcutRegistry: Shortcut[] = [
+  {
+    id: "assistant-new-chat",
+    kind: "typed",
+    keys: ["/new"],
+    description: "Stop the reply and clear the conversation",
+    category: ShortcutCategory.StudyAssistant,
+  },
+  {
+    id: "assistant-command-select",
+    kind: "keys",
+    keys: ["enter"],
+    description: "Run the highlighted composer command",
+    category: ShortcutCategory.StudyAssistant,
+  },
+  {
+    id: "assistant-command-navigate",
+    kind: "keys",
+    keys: ["arrowup", "arrowdown"],
+    description: "Navigate composer commands",
+    category: ShortcutCategory.StudyAssistant,
+  },
+  {
+    id: "assistant-command-dismiss",
+    kind: "keys",
+    keys: ["escape"],
+    description: "Dismiss the composer command menu",
+    category: ShortcutCategory.StudyAssistant,
+  },
   {
     id: "global-search",
     kind: "keys",
@@ -260,6 +290,8 @@ const SHORTCUT_KEY_LABELS: Record<string, string> = {
   delete: "Del",
   backspace: "Backspace",
   f10: "F10",
+  arrowup: "↑",
+  arrowdown: "↓",
 };
 
 /**
