@@ -2,10 +2,6 @@ import { cookies } from "next/headers";
 import { AccountSettingsProvider } from "@/components/account/account-settings-provider";
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
-import {
-  parseSavedTutoringMode,
-  TUTORING_MODE_COOKIE,
-} from "@/features/assistant/validation";
 import { getSubjectTreeForUser } from "@/features/subjects/tree-queries";
 import { isAiEnabled } from "@/lib/ai/config";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
@@ -22,9 +18,6 @@ export default async function AuthenticatedAppLayout({
   const cookieStore = await cookies();
   const initialSidebarCollapsed =
     cookieStore.get("notorium:sidebar-collapsed")?.value === "true";
-  const initialTutoring = parseSavedTutoringMode(
-    cookieStore.get(TUTORING_MODE_COOKIE)?.value,
-  );
 
   return (
     <ShortcutsProvider>
@@ -37,7 +30,6 @@ export default async function AuthenticatedAppLayout({
           userId={session?.user.id ?? ""}
           aiEnabled={isAiEnabled()}
           initialSidebarCollapsed={initialSidebarCollapsed}
-          initialTutoring={initialTutoring}
         >
           {children}
         </AppLayoutClient>

@@ -10,33 +10,21 @@ import {
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
 import {
+  endGuidedLessonInputSchema,
+  guidedLessonInputSchema,
+  guidedLessonOutputSchema,
+} from "@/features/assistant/guided-lesson-contract";
+import {
   librarySearchInputSchema,
   librarySearchOutputSchema,
 } from "@/features/assistant/library-search-contract";
 import { studyContextSchema } from "@/features/assistant/study-context";
+import { studyQuestionSchema } from "@/features/assistant/study-question-contract";
 import {
   flashcardProposalInputSchema,
   flashcardProposalOutputSchema,
 } from "@/features/assistant/tools";
 import { LIMITS } from "@/lib/config/limits";
-
-/** How the assistant handles problems: graduated hints first, or direct answers.
- * @example tutoringModeSchema.parse("hints");
- */
-export const tutoringModeSchema = z.enum(["hints", "answers"]);
-export type TutoringMode = z.infer<typeof tutoringModeSchema>;
-
-/** Cookie that keeps the user's tutoring toggle across reloads. */
-export const TUTORING_MODE_COOKIE = "notorium:assistant-tutoring";
-
-/** Saved tutoring mode; a missing or unknown cookie value falls back to hints.
- * @example parseSavedTutoringMode(undefined); // "hints"
- */
-export function parseSavedTutoringMode(
-  value: string | undefined,
-): TutoringMode {
-  return tutoringModeSchema.catch("hints").parse(value);
-}
 
 const userTextPartSchema = z.object({
   type: z.literal("text"),
@@ -109,6 +97,9 @@ const unansweredToolPartSchema = z.object({
     "tool-proposeFlashcardEdits",
     "tool-proposeNoteEdits",
     "tool-searchLibrary",
+    "tool-startGuidedLesson",
+    "tool-endGuidedLesson",
+    "tool-askStudyQuestion",
   ]),
   state: z.enum(["input-streaming", "input-available", "output-error"]),
 });
@@ -119,6 +110,21 @@ const replyPartSchema = z.union([
   answeredProposalPartSchema,
   answeredEditsPartSchema,
   answeredLibrarySearchPartSchema,
+  answeredToolPartSchema(
+    "tool-startGuidedLesson",
+    guidedLessonInputSchema,
+    guidedLessonOutputSchema,
+  ),
+  answeredToolPartSchema(
+    "tool-endGuidedLesson",
+    endGuidedLessonInputSchema,
+    guidedLessonOutputSchema,
+  ),
+  answeredToolPartSchema(
+    "tool-askStudyQuestion",
+    studyQuestionSchema,
+    studyQuestionSchema,
+  ),
   answeredToolPartSchema(
     "tool-proposeNoteEdits",
     noteEditsInputSchema,
@@ -143,6 +149,12 @@ const userMessageSchema = z.object({
   id: z.string().min(1).max(100),
   role: z.literal("user"),
   parts: z.array(userTextPartSchema).min(1).max(1),
+  metadata: z
+    .object({
+      lessonSummary: z.string().min(1).max(100).optional(),
+      studyAnswer: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 const replyMessageSchema = z.object({
@@ -185,11 +197,10 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
  */
 export const assistantChatRequestSchema = z
   .object({
+    historyTruncated: z.boolean().optional(),
     draft: flashcardDraftSchema.optional(),
     documentDraft: documentDraftSchema.optional(),
     context: studyContextSchema.optional(),
-    // Defaults to hints so tabs loaded before the toggle existed stay guarded.
-    tutoring: tutoringModeSchema.default("hints"),
     chatId: z.string().min(1).max(100).optional(),
     messages: z
       .array(

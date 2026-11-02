@@ -26,6 +26,12 @@ interface StreamChatResponseOptions {
    * step resends the whole prompt (mostly from the prompt cache).
    */
   maxModelSteps?: number;
+  /** Successful display-only tool results that finish the turn. */
+  stopAfterTools?: string[];
+  /** Permit final prose but no further actions after one of these results. */
+  disableToolsAfter?: string[];
+  /** Hide these tools after a successful result in this reply. */
+  singleUseTools?: string[];
   abortSignal?: AbortSignal;
   /**
    * Stable id of the conversation, sent as OpenRouter's `session_id` so every
@@ -61,6 +67,9 @@ export async function streamChatResponse({
   tools,
   activeTools,
   maxModelSteps = 1,
+  stopAfterTools = [],
+  disableToolsAfter = [],
+  singleUseTools = [],
   abortSignal,
   sessionId,
 }: StreamChatResponseOptions): Promise<Response> {
@@ -71,7 +80,29 @@ export async function streamChatResponse({
     maxOutputTokens,
     tools,
     activeTools,
-    stopWhen: isStepCount(maxModelSteps),
+    prepareStep: ({ steps }) => {
+      const completed = new Set(
+        steps.flatMap((step) =>
+          step.toolResults.map((result) => result.toolName),
+        ),
+      );
+      if (disableToolsAfter.some((name) => completed.has(name)))
+        return { activeTools: [] };
+      return {
+        activeTools: (activeTools ?? Object.keys(tools ?? {})).filter(
+          (name) => !singleUseTools.includes(name) || !completed.has(name),
+        ),
+      };
+    },
+    stopWhen: [
+      isStepCount(maxModelSteps),
+      ({ steps }) =>
+        steps
+          .at(-1)
+          ?.toolResults.some((result) =>
+            stopAfterTools.includes(result.toolName),
+          ) ?? false,
+    ],
     abortSignal,
     // Spread into the OpenRouter request body as-is, hence the snake_case.
     providerOptions: sessionId

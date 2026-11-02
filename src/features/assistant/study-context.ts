@@ -24,6 +24,7 @@ export const studyContextSchema = z.discriminatedUnion("kind", [
     ...documentFields,
     page: z.number().int().positive(),
     scope: z.enum(["selection", "page"]),
+    selectionChanged: z.boolean().optional(),
   }),
   z.object({
     kind: z.literal("review"),
@@ -31,9 +32,8 @@ export const studyContextSchema = z.discriminatedUnion("kind", [
     subjectPath: z.string().max(SUBJECT_PATH_MAX_CHARS).optional(),
     front: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS),
     back: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS).optional(),
-    // The unrevealed answer, so hints and attempt checks match the user's own
-    // card; a tutor given the solution stopped making errors students copied
-    // (Bastani et al., PNAS 2025). The prompt forbids stating it unasked.
+    // Ground hints and feedback in the card's unrevealed answer. The prompt
+    // forbids disclosing it unless requested.
     hiddenBack: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS).optional(),
   }),
 ]);

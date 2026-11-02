@@ -12,6 +12,18 @@ import { LIMITS } from "@/lib/config/limits";
 const atpCard = { front: "What is ATP?", back: "Energy carrier." };
 
 describe("flashcardProposalInputSchema", () => {
+  it("rejects JSON-corrupted LaTeX rather than proposing unreadable cards", () => {
+    expect(
+      flashcardProposalInputSchema.safeParse({
+        cards: [{ front: "Em \bhat y, qual a taxa?", back: "Uma taxa." }],
+      }).success,
+    ).toBe(false);
+    expect(
+      flashcardProposalInputSchema.safeParse({
+        cards: [{ front: "Qual a fração?", back: "$\frac{1}{2}$" }],
+      }).success,
+    ).toBe(false);
+  });
   it("accepts several cards with optional subject paths", () => {
     const parsed = flashcardProposalInputSchema.parse({
       cards: [
@@ -113,17 +125,58 @@ describe("assistant tool availability", () => {
     expect(selectAssistantActiveTools(context)).toEqual([
       "proposeFlashcards",
       "searchLibrary",
+      "startGuidedLesson",
+      "askStudyQuestion",
       ...(editor ? [editor] : []),
     ]);
   });
-  it("retains every tool definition for history, with only search executable", () => {
+  it("hides the lesson start marker while a lesson is active", () => {
+    expect(selectAssistantActiveTools({ lessonActive: true })).toEqual([
+      "proposeFlashcards",
+      "searchLibrary",
+      "endGuidedLesson",
+      "askStudyQuestion",
+    ]);
+  });
+  it("does not expose either mode transition while evaluating a study answer", () => {
+    for (const lessonActive of [false, true]) {
+      const active = selectAssistantActiveTools({
+        lessonActive,
+        studyAnswer: true,
+      });
+      expect(active).not.toContain("startGuidedLesson");
+      expect(active).not.toContain("endGuidedLesson");
+    }
+  });
+  it("rejects repeated lesson starts even if a model calls a hidden tool", () => {
+    const options = { toolCallId: "start", messages: [], context: {} };
     const tools = buildAssistantTools(new EmptyToolLibrary().search);
-    expect(Object.keys(tools)).toHaveLength(4);
+    expect(
+      tools.startGuidedLesson.execute?.({ topic: "Topic" }, options),
+    ).toEqual({ topic: "Topic" });
+    expect(() =>
+      tools.startGuidedLesson.execute?.({ topic: "Another topic" }, options),
+    ).toThrow("already active");
+    const active = buildAssistantTools(new EmptyToolLibrary().search, {
+      lessonTopic: "Topic",
+    });
+    expect(() =>
+      active.startGuidedLesson.execute?.({ topic: "Another topic" }, options),
+    ).toThrow("already active");
+  });
+  it("retains every tool definition for history without executing write proposals", () => {
+    const tools = buildAssistantTools(new EmptyToolLibrary().search);
+    expect(Object.keys(tools)).toHaveLength(7);
     expect(
       Object.entries(tools)
         .filter(([, value]) => value.execute)
         .map(([name]) => name),
-    ).toEqual(["searchLibrary"]);
+    ).toEqual([
+      "searchLibrary",
+      "startGuidedLesson",
+      "endGuidedLesson",
+      "askStudyQuestion",
+    ]);
     for (const definition of Object.values(tools)) {
       expect(
         JSON.stringify(z.toJSONSchema(definition.inputSchema as z.ZodType)),

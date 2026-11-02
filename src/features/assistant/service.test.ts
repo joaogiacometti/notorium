@@ -169,9 +169,159 @@ describe("streamAssistantReplyForUser", () => {
     expect(call?.tools?.map((tool) => tool.name)).toEqual([
       "proposeFlashcards",
       "searchLibrary",
+      "startGuidedLesson",
+      "askStudyQuestion",
     ]);
     expect(JSON.stringify(call?.prompt[0])).not.toContain("Biology::Cells");
     expect(JSON.stringify(call?.prompt.at(-1))).toContain("Biology::Cells");
+  });
+
+  it.each([
+    { endedByUser: undefined, lessonActive: true },
+    { endedByUser: true, lessonActive: false },
+  ])(
+    "restates an active lesson and hides the start marker until the user ends it (endedByUser=$endedByUser)",
+    async ({ endedByUser, lessonActive }) => {
+      const model = createFakeStreamingModel("Next step.");
+      getAiModelMock.mockReturnValue(model);
+      const { streamAssistantReplyForUser } = await import(
+        "@/features/assistant/service"
+      );
+      const marker = {
+        type: "tool-startGuidedLesson" as const,
+        toolCallId: "lesson-1",
+        state: "output-available" as const,
+        input: { topic: "Linear regression" },
+        output: { topic: "Linear regression", endedByUser },
+      };
+
+      const result = await streamAssistantReplyForUser({
+        userId: "user-1",
+        messages: [
+          {
+            id: "u1",
+            role: "user",
+            parts: [{ type: "text", text: "Teach me" }],
+          },
+          { id: "a1", role: "assistant", parts: [marker] },
+          {
+            id: "u2",
+            role: "user",
+            parts: [{ type: "text", text: "College" }],
+          },
+        ],
+        loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      });
+      if (result.success) await result.response.text();
+
+      const call = model.doStreamCalls[0];
+      expect(
+        call?.tools?.some((tool) => tool.name === "startGuidedLesson"),
+      ).toBe(!lessonActive);
+      expect(
+        JSON.stringify(call?.prompt.at(-1)).includes("Active guided lesson"),
+      ).toBe(lessonActive);
+    },
+  );
+
+  it("displays choices without another model call that could reveal the answer", async () => {
+    const question = { question: "Quanto é 2 + 3?", options: ["4", "5", "6"] };
+    const model = createFakeToolThenTextModel(
+      "askStudyQuestion",
+      question,
+      "This must not be generated.",
+    );
+    getAiModelMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages,
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (!result.success) throw new Error("Expected a streamed reply");
+    const body = await result.response.text();
+    expect(body).toContain('"options":["4","5","6"]');
+    expect(model.doStreamCalls).toHaveLength(1);
+    expect(readStreamedText(body)).toBe("");
+  });
+
+  it("continues teaching after a lesson start without offering another start", async () => {
+    const model = createFakeToolThenTextModel(
+      "startGuidedLesson",
+      { topic: "Topic" },
+      "An opening explanation.",
+    );
+    getAiModelMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages: [
+        {
+          id: "request",
+          role: "user",
+          parts: [{ type: "text", text: "/learn Topic" }],
+        },
+      ],
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (!result.success) throw new Error("Expected a streamed reply");
+    expect(readStreamedText(await result.response.text())).toBe(
+      "An opening explanation.",
+    );
+    expect(
+      model.doStreamCalls[1]?.tools?.map((tool) => tool.name),
+    ).not.toContain("startGuidedLesson");
+  });
+
+  it("executes a user-requested lesson exit with the active topic and preserves it in history", async () => {
+    const model = createFakeToolThenTextModel(
+      "endGuidedLesson",
+      {},
+      "The lesson has ended.",
+    );
+    getAiModelMock.mockReturnValue(model);
+    const { streamAssistantReplyForUser } = await import(
+      "@/features/assistant/service"
+    );
+    const result = await streamAssistantReplyForUser({
+      userId: "user-1",
+      messages: [
+        {
+          id: "u1",
+          role: "user",
+          parts: [{ type: "text", text: "Guide me through a topic" }],
+        },
+        {
+          id: "a1",
+          role: "assistant",
+          parts: [
+            {
+              type: "tool-startGuidedLesson",
+              toolCallId: "start",
+              state: "output-available",
+              input: { topic: "Topic" },
+              output: { topic: "Topic" },
+            },
+          ],
+        },
+        {
+          id: "u2",
+          role: "user",
+          parts: [{ type: "text", text: "End the lesson" }],
+        },
+      ],
+      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+    });
+    if (!result.success) throw new Error("Expected a streamed reply");
+    const body = await result.response.text();
+    expect(body).toContain('"endedByUser":true');
+    expect(body).toContain('"topic":"Topic"');
+    expect(readStreamedText(body)).toBe("The lesson has ended.");
+    expect(model.doStreamCalls[1]?.tools ?? []).toEqual([]);
   });
 
   it("searches the user's library, then answers from the hits", async () => {
@@ -213,8 +363,9 @@ describe("streamAssistantReplyForUser", () => {
     expect(readStreamedText(body)).toBe("Yes, one flashcard.");
     expect(JSON.stringify(answerCall?.prompt)).toContain("What is mitosis?");
     expect(JSON.stringify(answerCall?.prompt)).not.toContain("card-1");
-    // Same tools on both steps, so the answer step hits the prompt cache.
-    expect(answerCall?.tools).toEqual(model.doStreamCalls[0]?.tools);
+    expect(answerCall?.tools?.map((tool) => tool.name)).not.toContain(
+      "searchLibrary",
+    );
     expect(model.doStreamCalls).toHaveLength(2);
   });
 
@@ -506,41 +657,6 @@ describe("streamAssistantReplyForUser", () => {
     );
   });
 
-  it("sends the tutoring mode in the latest turn, keeping instructions stable", async () => {
-    const model = createFakeStreamingModel("What have you tried?");
-    getAiModelMock.mockReturnValue(model);
-    const { streamAssistantReplyForUser } = await import(
-      "@/features/assistant/service"
-    );
-    for (const tutoring of [undefined, "answers"] as const) {
-      const result = await streamAssistantReplyForUser({
-        userId: "user-1",
-        messages,
-        tutoring,
-        loadSubjectPaths: new FakeSubjectPathStore([]).load,
-      });
-      if (result.success) await result.response.text();
-    }
-    const [first, second] = model.doStreamCalls;
-    expect(first.prompt[0]).toEqual(second.prompt[0]);
-    const firstContext = first.prompt.at(-1)?.content[0];
-    const secondContext = second.prompt.at(-1)?.content[0];
-    if (
-      typeof firstContext === "string" ||
-      typeof secondContext === "string" ||
-      firstContext?.type !== "text" ||
-      secondContext?.type !== "text"
-    ) {
-      throw new Error("Expected labeled tutoring context text");
-    }
-    expect(JSON.parse(firstContext.text.split("\n")[1])).toEqual({
-      mode: "hints",
-    });
-    expect(JSON.parse(secondContext.text.split("\n")[1])).toEqual({
-      mode: "answers",
-    });
-  });
-
   it("preserves old editor tool results after the editor closes", async () => {
     const model = createFakeStreamingModel(
       "The note suggestion was discarded.",
@@ -591,6 +707,8 @@ describe("streamAssistantReplyForUser", () => {
     expect(call.tools?.map((tool) => tool.name)).toEqual([
       "proposeFlashcards",
       "searchLibrary",
+      "startGuidedLesson",
+      "askStudyQuestion",
     ]);
     expect(call.prompt).toContainEqual(
       expect.objectContaining({

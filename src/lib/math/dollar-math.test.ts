@@ -15,10 +15,21 @@ describe("splitDollarMath", () => {
     ]);
   });
 
-  it("keeps currency and empty delimiters literal", () => {
-    expect(splitDollarMath("Costs $100$ or $ $")).toEqual([
-      { kind: "text", text: "Costs $100$ or $ $" },
+  it("recognizes numeric answer choices as math", () => {
+    expect(splitDollarMath("$3$ / $12$ / $0,5$")).toEqual([
+      { kind: "math", latex: "3", display: false },
+      { kind: "text", text: " / " },
+      { kind: "math", latex: "12", display: false },
+      { kind: "text", text: " / " },
+      { kind: "math", latex: "0,5", display: false },
     ]);
+  });
+
+  it("keeps unpaired currency and empty delimiters literal", () => {
+    expect(splitDollarMath("Costs $100")).toEqual([
+      { kind: "text", text: "Costs $100" },
+    ]);
+    expect(splitDollarMath("$ $")).toEqual([{ kind: "text", text: "$ $" }]);
   });
 });
 
@@ -31,6 +42,14 @@ describe("normalizeOverEscapedLatex", () => {
 
   it("keeps real line breaks before non-letters", () => {
     expect(normalizeOverEscapedLatex("$$a \\\\ 1$$")).toBe("$$a \\\\ 1$$");
+  });
+
+  it("restores JSON-escaped commands only within math", () => {
+    expect(
+      normalizeOverEscapedLatex(
+        "Tab\there $5\times 2$ and $\frac{1}{2} + \beta$",
+      ),
+    ).toBe("Tab\there $5\\times 2$ and $\\frac{1}{2} + \\beta$");
   });
 });
 

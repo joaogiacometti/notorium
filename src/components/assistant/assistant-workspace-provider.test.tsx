@@ -13,13 +13,26 @@ import "@/components/assistant/flashcard-draft-content";
 function DraftHarness() {
   const workspace = useAssistantWorkspace();
   const [documentId, setDocumentId] = useState("underlying-note");
-  useStudyContext({
-    kind: "note",
-    documentId,
-    title: "Underlying note",
-    content: "Background",
-    partial: false,
-  });
+  const [pdfExcerpt, setPdfExcerpt] = useState<string | null>(null);
+  useStudyContext(
+    pdfExcerpt
+      ? {
+          kind: "pdf",
+          documentId: "pdf",
+          title: "Study material",
+          content: pdfExcerpt,
+          page: 2,
+          scope: "selection",
+          partial: false,
+        }
+      : {
+          kind: "note",
+          documentId,
+          title: "Underlying note",
+          content: "Background",
+          partial: false,
+        },
+  );
   const [open, setOpen] = useState(true);
   const [blocked, setBlocked] = useState(false);
   const [generation, setGeneration] = useState(0);
@@ -95,11 +108,35 @@ function DraftHarness() {
       <button type="button" onClick={() => setDocumentId("another-note")}>
         Navigate document
       </button>
+      <button type="button" onClick={() => setPdfExcerpt("First excerpt")}>
+        Select PDF
+      </button>
+      <button type="button" onClick={() => setPdfExcerpt("Another excerpt")}>
+        Change selection
+      </button>
       <button type="button" onClick={() => void workspace?.send()}>
         Retry
       </button>
       <button type="button" onClick={() => workspace?.reset()}>
         New chat
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void workspace?.send("First request");
+          void workspace?.send("Second request");
+        }}
+      >
+        Send twice
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void workspace?.send("Pending request");
+          workspace?.reset();
+        }}
+      >
+        Send then reset
       </button>
     </div>
   );
@@ -145,6 +182,29 @@ describe("shared assistant flashcard editing", () => {
     await click("Send");
     expect(transport.requests).toHaveLength(0);
     expect(read("notice")).toContain("Wait for saving");
+  });
+
+  it("distinguishes a newly selected passage from an unchanged source during follow-ups", async () => {
+    await click("Close");
+    await click("Select PDF");
+    await click("Send");
+    expect(transport.requests.at(-1)?.body).toMatchObject({
+      context: { content: "First excerpt", selectionChanged: true },
+    });
+    await click("Send");
+    expect(transport.requests.at(-1)?.body).toMatchObject({
+      context: { selectionChanged: false },
+    });
+    await click("Change selection");
+    await click("Send");
+    expect(transport.requests.at(-1)?.body).toMatchObject({
+      context: { content: "Another excerpt", selectionChanged: true },
+    });
+    await click("New chat");
+    await click("Send");
+    expect(transport.requests.at(-1)?.body).toMatchObject({
+      context: { selectionChanged: true },
+    });
   });
 
   it("captures the document source on the user turn only when document context is active", async () => {
@@ -284,6 +344,20 @@ describe("shared assistant flashcard editing", () => {
     expect(read("pending")).toBe("{}");
     expect(read("messages")).toBe("[]");
     expect(read("values")).toContain("Improved front");
+  });
+
+  it("prevents concurrent sends while preparing a request", async () => {
+    await click("Send twice");
+    expect(transport.requests).toHaveLength(1);
+    expect(read("messages")).toContain("First request");
+    expect(read("messages")).not.toContain("Second request");
+  });
+
+  it("does not send a prepared request after new chat", async () => {
+    await click("Send then reset");
+    expect(transport.requests).toHaveLength(0);
+    expect(read("messages")).toBe("[]");
+    expect(read("notice")).toBe("");
   });
   it("handles fresh proposals after new chat even when the model reuses a call id", async () => {
     transport.callId = "reused-call";

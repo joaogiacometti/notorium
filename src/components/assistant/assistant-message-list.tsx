@@ -13,14 +13,18 @@ import {
   AssistantRichReply,
   preloadAssistantRichReply,
 } from "@/components/assistant/assistant-rich-reply";
+import { AssistantStudyQuestion } from "@/components/assistant/assistant-study-question";
 import type { FlashcardProposalControls } from "@/components/assistant/use-flashcard-proposal-outcomes";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import {
   isAssistantReplyInFlight,
   readFlashcardProposalParts,
+  readGuidedLessonParts,
+  readGuidedLessonTransitions,
   readLibrarySearchParts,
   readProposalSource,
 } from "@/features/assistant/utils";
+import { splitDollarMath } from "@/lib/math/dollar-math";
 import { cn } from "@/lib/utils";
 
 interface AssistantMessageListProps {
@@ -28,6 +32,7 @@ interface AssistantMessageListProps {
   status: ChatStatus;
   proposals: FlashcardProposalControls;
   onOpenLibraryHit?: () => void;
+  onAnswer?: (text: string) => Promise<boolean>;
 }
 
 export function AssistantMessageList({
@@ -35,17 +40,20 @@ export function AssistantMessageList({
   status,
   proposals,
   onOpenLibraryHit,
+  onAnswer,
 }: Readonly<AssistantMessageListProps>) {
   const endRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages.at(-1);
   const busy = isAssistantReplyInFlight(status);
-  // The reply exists before its first token arrives; until then it reads as
-  // "Thinking…" rather than an empty bubble.
+  const lessonTransitions = readGuidedLessonTransitions(messages);
+  // The reply exists before its first token arrives, and a finished search or
+  // lesson marker is followed by another model step; until text streams in,
+  // it reads as "Thinking…" rather than a stalled chat.
   const awaitingFirstToken =
     status === "submitted" ||
     (status === "streaming" &&
       lastMessage?.role === "assistant" &&
-      !hasVisibleContent(lastMessage, busy));
+      (!hasVisibleContent(lastMessage, busy) || awaitsNextStep(lastMessage)));
 
   // Runs after every render: each streamed chunk re-renders the list, and the
   // view should follow the reply as it grows.
@@ -75,6 +83,13 @@ export function AssistantMessageList({
         )
         .map((message) => (
           <div key={message.id} className="space-y-2">
+            {readGuidedLessonParts(message).map((part) => (
+              <GuidedLessonMarker
+                key={part.toolCallId}
+                part={part}
+                changesState={lessonTransitions.has(part.toolCallId)}
+              />
+            ))}
             {readMessageText(message) === "" ? null : (
               <AssistantMessageBubble
                 message={message}
@@ -88,6 +103,19 @@ export function AssistantMessageList({
                 onOpenHit={onOpenLibraryHit}
               />
             ))}
+            {message.parts.flatMap((part) =>
+              part.type === "tool-askStudyQuestion" &&
+              part.state === "output-available"
+                ? [
+                    <AssistantStudyQuestion
+                      key={part.toolCallId}
+                      question={part.output}
+                      disabled={busy || message !== lastMessage || !onAnswer}
+                      onAnswer={onAnswer}
+                    />,
+                  ]
+                : [],
+            )}
             {readDocumentProposalParts(
               message,
               busy && message === lastMessage,
@@ -116,23 +144,48 @@ export function AssistantMessageList({
   );
 }
 
+// A start repeated during a lesson shows nothing; one the user ended from the
+// indicator also shows where the lesson stopped.
+function GuidedLessonMarker({
+  part,
+  changesState,
+}: Readonly<{
+  part: ReturnType<typeof readGuidedLessonParts>[number];
+  changesState: boolean;
+}>) {
+  const lines = [
+    changesState ? `Guided lesson started · ${part.output.topic}` : null,
+    part.output.endedByUser ? "Guided lesson ended" : null,
+  ].filter((line) => line !== null);
+  return lines.map((line) => (
+    <p key={line} className="text-xs text-muted-foreground">
+      {line}
+    </p>
+  ));
+}
+
 function AssistantMessageBubble({
   message,
   streaming,
 }: Readonly<{ message: AssistantUIMessage; streaming: boolean }>) {
-  const text = readMessageText(message);
   const fromUser = message.role === "user";
+  const text =
+    fromUser && message.metadata?.lessonSummary
+      ? "End lesson · Summary"
+      : readMessageText(message);
+  const userHasMath =
+    fromUser && splitDollarMath(text).some((part) => part.kind === "math");
 
   return (
     <div
       className={cn(
         "max-w-[85%] rounded-lg px-3 py-2 text-sm",
         fromUser
-          ? "ml-auto bg-primary text-primary-foreground whitespace-pre-wrap"
+          ? "ml-auto bg-muted text-foreground whitespace-pre-wrap"
           : "bg-muted/50",
       )}
     >
-      {fromUser || streaming ? (
+      {(fromUser && !userHasMath) || streaming ? (
         <AssistantPlainReply text={text} />
       ) : (
         // Rendered as rich text only once complete: half-streamed LaTeX or
@@ -143,6 +196,20 @@ function AssistantMessageBubble({
   );
 }
 
+// A server-run tool finished (or a new step began) and no text followed yet.
+function awaitsNextStep(message: AssistantUIMessage): boolean {
+  const last = message.parts.at(-1);
+  if (!last) return true;
+  if (last.type === "step-start") return true;
+  if (last.type === "text") return last.text === "";
+  return (
+    (last.type === "tool-startGuidedLesson" ||
+      last.type === "tool-endGuidedLesson" ||
+      last.type === "tool-searchLibrary") &&
+    last.state === "output-available"
+  );
+}
+
 // Replies stopped before their first token have nothing to show.
 function hasVisibleContent(
   message: AssistantUIMessage,
@@ -150,9 +217,15 @@ function hasVisibleContent(
 ): boolean {
   return (
     readMessageText(message) !== "" ||
+    readGuidedLessonParts(message).length > 0 ||
     readFlashcardProposalParts(message).length > 0 ||
     readLibrarySearchParts(message).length > 0 ||
-    readDocumentProposalParts(message, replyInFlight).length > 0
+    readDocumentProposalParts(message, replyInFlight).length > 0 ||
+    message.parts.some(
+      (part) =>
+        part.type === "tool-askStudyQuestion" &&
+        part.state === "output-available",
+    )
   );
 }
 

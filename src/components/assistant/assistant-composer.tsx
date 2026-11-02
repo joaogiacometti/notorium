@@ -5,6 +5,8 @@ import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import {
   AssistantCommandMenu,
   type AssistantCommandMenuIds,
+  type AssistantCommandName,
+  matchAssistantCommands,
 } from "@/components/assistant/assistant-command-menu";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,11 +36,15 @@ export function AssistantComposer({
   const setDraft = onValueChange ?? setLocalDraft;
   const [menuDismissed, setMenuDismissed] = useState(false);
   const [menuIds, setMenuIds] = useState<AssistantCommandMenuIds | null>(null);
+  const [chosenCommand, setChosenCommand] =
+    useState<AssistantCommandName | null>(null);
   const commandText = draft.trim();
-  const menuOpen =
-    !menuDismissed &&
-    commandText.startsWith("/") &&
-    "/new".startsWith(commandText);
+  const commands = matchAssistantCommands(draft);
+  const menuOpen = !menuDismissed && commands.length > 0;
+  const activeCommand =
+    chosenCommand && commands.includes(chosenCommand)
+      ? chosenCommand
+      : commands[0];
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (focusRequested) textareaRef.current?.focus();
@@ -50,6 +56,24 @@ export function AssistantComposer({
     setDraft("");
     setMenuDismissed(false);
     textareaRef.current?.focus();
+  }
+
+  // `/learn` only fills the composer; the topic the user types after it is
+  // sent as an ordinary message, so the lesson request stays in the history.
+  function runCommand(command: AssistantCommandName): void {
+    if (command === "/new") {
+      startNewChat();
+      return;
+    }
+    setDraft(`${command} `);
+    setChosenCommand(null);
+    textareaRef.current?.focus();
+  }
+
+  function moveActiveCommand(step: 1 | -1): void {
+    const index = activeCommand ? commands.indexOf(activeCommand) : 0;
+    const next = commands.at((index + step) % commands.length);
+    if (next) setChosenCommand(next);
   }
 
   async function submitDraft(): Promise<void> {
@@ -65,13 +89,14 @@ export function AssistantComposer({
       event.preventDefault();
       event.stopPropagation();
       if (event.key === "Escape") setMenuDismissed(true);
+      else moveActiveCommand(event.key === "ArrowDown" ? 1 : -1);
       return;
     }
     if (event.key !== "Enter" || event.shiftKey) return;
     event.preventDefault();
-    if (menuOpen) {
+    if (menuOpen && activeCommand) {
       event.stopPropagation();
-      return startNewChat();
+      return runCommand(activeCommand);
     }
     void submitDraft();
   }
@@ -88,10 +113,13 @@ export function AssistantComposer({
           setMenuDismissed(true);
       }}
     >
-      {menuOpen ? (
+      {menuOpen && activeCommand ? (
         <AssistantCommandMenu
+          commands={commands}
+          active={activeCommand}
+          onActiveChange={setChosenCommand}
           onIdsChange={setMenuIds}
-          onNewChat={startNewChat}
+          onSelect={runCommand}
         />
       ) : null}
       <div className="flex items-end gap-1 rounded-lg border border-input bg-background p-1.5 transition-colors focus-within:border-ring">
@@ -109,7 +137,7 @@ export function AssistantComposer({
           aria-activedescendant={menuOpen ? menuIds?.option : undefined}
           aria-haspopup="listbox"
           maxLength={LIMITS.assistantMessageMaxChars}
-          placeholder="Ask a study question…"
+          placeholder="Ask a question, or /learn a topic…"
           aria-label="Message the study assistant"
           rows={1}
           className="field-sizing-content max-h-32 min-h-8 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0 dark:bg-transparent"

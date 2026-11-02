@@ -3,6 +3,7 @@ import {
   createAssistantChatTransport,
   readAssistantErrorMessage,
 } from "@/components/assistant/assistant-chat-transport";
+import { readActiveLessonTopic } from "@/features/assistant/guided-lesson-contract";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -99,6 +100,56 @@ describe("createAssistantChatTransport", () => {
     expect(sent[0]?.role).toBe("user");
     expect(sent).toHaveLength(LIMITS.assistantMaxMessages - 1);
   });
+
+  it.each([false, true])(
+    "preserves the lesson anchor when trimming a long chat (summary=%s)",
+    async (summary) => {
+      const recorder = new RecordingChatFetch().install();
+      const messages = Array.from(
+        { length: LIMITS.assistantMaxMessages + 12 },
+        (_, index) => textMessage(index),
+      );
+      messages[1] = {
+        id: "lesson",
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-startGuidedLesson",
+            toolCallId: "lesson",
+            state: "output-available",
+            input: { topic: "Topic" },
+            output: { topic: "Topic", endedByUser: summary },
+          },
+        ],
+      };
+      messages.push({
+        id: "latest",
+        role: "user",
+        parts: [{ type: "text", text: summary ? "Summary" : "I need help" }],
+        ...(summary ? { metadata: { lessonSummary: "lesson" } } : {}),
+      });
+      await createAssistantChatTransport().sendMessages({
+        trigger: "submit-message",
+        chatId: "long",
+        messageId: undefined,
+        messages,
+        abortSignal: undefined,
+      });
+      const body = recorder.bodies[0] as SentChatBody & {
+        historyTruncated?: boolean;
+      };
+      expect(body.messages.length).toBeLessThanOrEqual(
+        LIMITS.assistantMaxMessages,
+      );
+      expect(body.messages[0].role).toBe("user");
+      expect(body.messages[1].id).toBe("lesson");
+      expect(body.messages.at(-1)?.id).toBe("latest");
+      expect(readActiveLessonTopic(body.messages)).toBe(
+        summary ? null : "Topic",
+      );
+      expect(body.historyTruncated).toBe(true);
+    },
+  );
 });
 
 describe("readAssistantErrorMessage", () => {

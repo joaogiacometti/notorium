@@ -8,7 +8,7 @@ import type { FlashcardSource } from "@/features/flashcards/source-contract";
  * library search parts.
  */
 export type AssistantUIMessage = UIMessage<
-  { source?: FlashcardSource },
+  { source?: FlashcardSource; lessonSummary?: string; studyAnswer?: boolean },
   never,
   AssistantTools
 >;
@@ -17,6 +17,12 @@ export type AssistantUIMessage = UIMessage<
 export type AssistantFlashcardProposalPart = Extract<
   AssistantUIMessage["parts"][number],
   { type: "tool-proposeFlashcards" }
+>;
+
+/** A `startGuidedLesson` marker as stored in an assistant message. */
+export type AssistantGuidedLessonPart = Extract<
+  AssistantUIMessage["parts"][number],
+  { type: "tool-startGuidedLesson" | "tool-endGuidedLesson" }
 >;
 
 /** A `searchLibrary` tool call as stored in an assistant message. */

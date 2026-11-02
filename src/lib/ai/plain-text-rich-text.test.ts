@@ -5,6 +5,12 @@ import {
 } from "@/lib/ai/plain-text-rich-text";
 
 describe("plainTextToRichText math conversion", () => {
+  it("normalizes JSON-corrupted and double-escaped math while preserving code", () => {
+    const html = plainTextToRichText("$5\times 2$ $\\\\hat y$ `\times`");
+    expect(html).toContain('data-latex="5\\times 2"');
+    expect(html).toContain('data-latex="\\hat y"');
+    expect(html).toContain("<code>\times</code>");
+  });
   it("converts inline $...$ into an inline math node", () => {
     expect(plainTextToRichText("The area is $A = \\pi r^2$ exactly")).toBe(
       '<p>The area is <span data-type="inline-math" data-latex="A = \\pi r^2"></span> exactly</p>',
@@ -30,8 +36,14 @@ describe("plainTextToRichText math conversion", () => {
   });
 
   it("leaves bare currency amounts untouched", () => {
-    expect(plainTextToRichText("It costs $100$ dollars")).toBe(
-      "<p>It costs $100$ dollars</p>",
+    expect(plainTextToRichText("It costs $100 dollars")).toBe(
+      "<p>It costs $100 dollars</p>",
+    );
+  });
+
+  it("renders numeric LaTeX in choices and submitted answers", () => {
+    expect(plainTextToRichText("B) $6$")).toBe(
+      '<p>B) <span data-type="inline-math" data-latex="6"></span></p>',
     );
   });
 
@@ -96,7 +108,7 @@ describe("mathTextToRichText", () => {
     expect(mathTextToRichText("$$x^2$$")).toBe(
       '<div data-type="block-math" data-latex="x^2"></div>',
     );
-    expect(mathTextToRichText("$100$")).toBe("$100$");
+    expect(mathTextToRichText("$100")).toBe("$100");
   });
 });
 

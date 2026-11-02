@@ -6,10 +6,6 @@ import { AssistantLauncherButton } from "@/components/assistant/assistant-launch
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { StudyAssistant } from "@/components/assistant/study-assistant";
 
-vi.mock("@/app/actions/assistant-preferences", () => ({
-  setTutoringModePreference: async () => {},
-}));
-
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };

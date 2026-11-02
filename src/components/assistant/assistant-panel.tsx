@@ -1,14 +1,9 @@
 "use client";
 
-import {
-  Lightbulb,
-  LightbulbOff,
-  PanelRightClose,
-  RotateCcw,
-  SquarePen,
-} from "lucide-react";
+import { PanelRightClose, RotateCcw, SquarePen } from "lucide-react";
 import { readAssistantErrorMessage } from "@/components/assistant/assistant-chat-transport";
 import { AssistantComposer } from "@/components/assistant/assistant-composer";
+import { AssistantLessonIndicator } from "@/components/assistant/assistant-lesson-indicator";
 import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
 import { AssistantPanelFrame } from "@/components/assistant/assistant-panel-frame";
 import {
@@ -18,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { describeStudyContext } from "@/features/assistant/study-context";
 import { isAssistantReplyInFlight } from "@/features/assistant/utils";
-import { cn } from "@/lib/utils";
 
 interface AssistantPanelProps {
   /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
@@ -59,7 +53,6 @@ function AssistantConversationPanel({
       embedded={embedded}
       actions={
         <div className="flex items-center gap-1">
-          <HintsFirstToggle workspace={workspace} />
           <Button
             type="button"
             variant="ghost"
@@ -83,6 +76,7 @@ function AssistantConversationPanel({
         </div>
       }
     >
+      <AssistantLessonIndicator chat={chat} onEnd={workspace.finishLesson} />
       {workspace.editor ? (
         <p className="border-b px-4 py-2 text-xs text-muted-foreground">
           Using current flashcard draft
@@ -118,6 +112,7 @@ function AssistantConversationPanel({
         messages={chat.messages}
         status={chat.status}
         proposals={proposals}
+        onAnswer={(text) => workspace.send(text, { studyAnswer: true })}
         onOpenLibraryHit={() => minimizeOnCompactLayout(onMinimize)}
       />
       {chat.error ? (
@@ -147,37 +142,6 @@ function AssistantConversationPanel({
         onNewChat={workspace.reset}
       />
     </AssistantPanelFrame>
-  );
-}
-
-// An icon button like its header neighbors. The pressed state is the mode; the
-// label stays fixed so screen readers announce "Hints first, pressed" rather
-// than a changing name, and the title explains the current mode on hover.
-function HintsFirstToggle({
-  workspace,
-}: Readonly<{ workspace: AssistantWorkspace }>) {
-  const hints = workspace.tutoring === "hints";
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-label="Hints first"
-      aria-pressed={hints}
-      title={
-        hints
-          ? "Hints first is on: problems get hints before the answer"
-          : "Hints first is off: problems are solved right away"
-      }
-      className={cn(hints ? "bg-primary/10" : "text-muted-foreground")}
-      onClick={() => workspace.setTutoring(hints ? "answers" : "hints")}
-    >
-      {hints ? (
-        <Lightbulb className="size-4" />
-      ) : (
-        <LightbulbOff className="size-4" />
-      )}
-    </Button>
   );
 }
 

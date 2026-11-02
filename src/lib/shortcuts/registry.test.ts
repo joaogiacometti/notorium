@@ -111,10 +111,11 @@ describe("resolvePlatformShortcutKeys", () => {
 });
 
 describe("shortcutRegistry", () => {
-  it("documents the assistant command and its menu controls", () => {
+  it("documents the assistant commands and their menu controls", () => {
     expect(getShortcutsByCategory(ShortcutCategory.StudyAssistant)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: "typed", keys: ["/new"] }),
+        expect.objectContaining({ kind: "typed", keys: ["/learn"] }),
         expect.objectContaining({ kind: "keys", keys: ["enter"] }),
         expect.objectContaining({
           kind: "keys",

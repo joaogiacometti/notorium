@@ -3,18 +3,23 @@ import type { AssistantChatRequest } from "@/features/assistant/validation";
 type AssistantContextInput = Pick<
   AssistantChatRequest,
   "messages" | "draft" | "documentDraft" | "context"
-> & { tutoring?: AssistantChatRequest["tutoring"] };
+> & {
+  /** Topic of the lesson the chat leaves active; restated every turn. */
+  lessonTopic?: string | null;
+  lessonSummaryTopic?: string;
+  historyTruncated?: boolean;
+};
 
 // Restated after the request: models read the end of a prompt most closely,
 // and the open material sits right before the request, where a follow-up such
 // as "make a card for it" otherwise resolved against the material instead of
 // the conversation.
 const REQUEST_REMINDER =
-  "Answer the user_request above using the user-language policy, not the resource language. References such as it, this, or that point to the latest topic discussed in the conversation; only when the conversation has none, or the request names the material, do they point to the request context.";
+  "Answer the user_request above using the user-language policy, not the resource language. An explicit reference to material or a newly changed PDF selection in Current material takes precedence for local references such as it, this, or that. Otherwise resolve follow-ups from the latest conversation topic before unchanged open material. Selecting material changes the reference context, not the learning mode.";
 
 /**
- * Wrap the latest user turn the way long-context guides recommend: labeled
- * request context first, the user's words tagged as the request, and a short
+ * Wrap the latest user turn with labeled request context first, the user's
+ * words tagged as the request, and a short
  * reminder last. Earlier turns stay unchanged, so they remain a cacheable
  * prefix and context never accumulates on resend.
  * @example assembleAssistantMessages(request, subjectPaths);
@@ -24,9 +29,31 @@ export function assembleAssistantMessages(
   subjectPaths: string[],
 ): AssistantChatRequest["messages"] {
   const contextParts = [
-    contextTextPart("Tutoring settings", { mode: input.tutoring ?? "hints" }),
     contextTextPart("Available subject paths", subjectPaths),
     contextTextPart("Current material", describeAssistantMaterial(input)),
+    ...(input.lessonSummaryTopic
+      ? [
+          contextTextPart("Requested closing summary", {
+            topic: input.lessonSummaryTopic,
+          }),
+        ]
+      : []),
+    ...(input.historyTruncated
+      ? [
+          contextTextPart("History availability", {
+            partial: true,
+            note: "Some earlier conversation turns are unavailable. Do not infer missing responses or a complete learning assessment.",
+          }),
+        ]
+      : []),
+    ...(input.lessonTopic
+      ? [
+          contextTextPart("Active guided lesson", {
+            topic: input.lessonTopic,
+            note: "Keep teaching this lesson step by step until the user ends it.",
+          }),
+        ]
+      : []),
   ];
   return input.messages.map((message, index) =>
     index === input.messages.length - 1 && message.role === "user"

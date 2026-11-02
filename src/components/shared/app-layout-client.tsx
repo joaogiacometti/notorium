@@ -13,7 +13,6 @@ import { MobileSidebarSheet } from "@/components/shared/mobile-sidebar-sheet";
 import { SidebarCollapseProvider } from "@/components/shared/sidebar-collapse-context";
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { useSidebarCollapsed } from "@/components/shared/use-sidebar-collapsed";
-import type { TutoringMode } from "@/features/assistant/validation";
 import { isFlashcardSessionPath } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
@@ -27,7 +26,6 @@ interface AppLayoutClientProps {
   userId: string;
   aiEnabled: boolean;
   initialSidebarCollapsed: boolean;
-  initialTutoring: TutoringMode;
   children: React.ReactNode;
 }
 
@@ -95,7 +93,6 @@ export function AppLayoutClient({
   userId,
   aiEnabled,
   initialSidebarCollapsed,
-  initialTutoring,
   children,
 }: Readonly<AppLayoutClientProps>) {
   const pathname = usePathname();
@@ -180,7 +177,7 @@ export function AppLayoutClient({
     </div>
   );
   return userId && aiEnabled ? (
-    <AssistantWorkspaceProvider initialTutoring={initialTutoring}>
+    <AssistantWorkspaceProvider>
       <AssistantAppFrame>{content}</AssistantAppFrame>
     </AssistantWorkspaceProvider>
   ) : (

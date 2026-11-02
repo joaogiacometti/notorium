@@ -79,16 +79,22 @@ describe("flashcard draft rich text", () => {
 
   it("preserves code, currency, existing math nodes, and surrounding inline formatting", () => {
     const result = restoreDraftReplacement(
-      '<p><strong>Symbol</strong> $x$ is useful. Price: $100$.</p><pre><code>$x$</code></pre><p><code>$y$</code> <span data-type="inline-math" data-latex="z"></span></p>',
+      '<p><strong>Symbol</strong> $x$ is useful. Price: $100.</p><pre><code>$x$</code></pre><p><code>$y$</code> <span data-type="inline-math" data-latex="z"></span></p>',
       "",
     );
     expect(result).toContain("<strong>Symbol</strong>");
     expect(result).toContain('data-latex="x"');
     expect(result).toContain("</span> is useful.");
-    expect(result).toContain("$100$");
+    expect(result).toContain("$100.");
     expect(result).toContain("$x$</code>");
     expect(result).toContain("<code>$y$</code>");
     expect(result.match(/data-latex="z"/g)).toHaveLength(1);
+  });
+
+  it("converts a dollar-delimited numeric answer rather than treating it as currency", () => {
+    const result = restoreDraftReplacement("<p>$12$</p>", "");
+    expect(result).toContain('data-latex="12"');
+    expect(result).not.toContain("$12$");
   });
 
   it("converts a standalone block equation without adding blank paragraphs", () => {

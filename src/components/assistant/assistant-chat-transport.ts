@@ -1,5 +1,6 @@
 import { type ChatTransport, DefaultChatTransport } from "ai";
 import type { AssistantUIMessage } from "@/features/assistant/types";
+import { readActiveGuidedLesson } from "@/features/assistant/utils";
 import { LIMITS } from "@/lib/config/limits";
 import {
   resolveActionErrorMessage,
@@ -22,7 +23,14 @@ export function createAssistantChatTransport(): ChatTransport<AssistantUIMessage
   return new DefaultChatTransport<AssistantUIMessage>({
     api: ASSISTANT_CHAT_API,
     prepareSendMessagesRequest: ({ id, messages, body }) => ({
-      body: { ...body, chatId: id, messages: keepRecentChat(messages) },
+      body: {
+        ...body,
+        chatId: id,
+        messages: keepRecentChat(messages),
+        ...(messages.length > LIMITS.assistantMaxMessages
+          ? { historyTruncated: true }
+          : {}),
+      },
     }),
   });
 }
@@ -30,7 +38,31 @@ export function createAssistantChatTransport(): ChatTransport<AssistantUIMessage
 function keepRecentChat(messages: AssistantUIMessage[]): AssistantUIMessage[] {
   const recent = messages.slice(-LIMITS.assistantMaxMessages);
   const firstUserIndex = recent.findIndex((message) => message.role === "user");
-  return firstUserIndex === -1 ? recent : recent.slice(firstUserIndex);
+  const tail = firstUserIndex === -1 ? recent : recent.slice(firstUserIndex);
+  const markerId =
+    messages.at(-1)?.metadata?.lessonSummary ??
+    readActiveGuidedLesson(messages)?.toolCallId;
+  if (!markerId || messages.length <= LIMITS.assistantMaxMessages) return tail;
+  const markerIndex = messages.findIndex((message) =>
+    message.parts.some(
+      (part) =>
+        part.type === "tool-startGuidedLesson" && part.toolCallId === markerId,
+    ),
+  );
+  if (markerIndex < 0 || tail.includes(messages[markerIndex])) return tail;
+  const userIndex = messages
+    .slice(0, markerIndex)
+    .findLastIndex((message) => message.role === "user");
+  if (userIndex < 0) return tail;
+  // Keep the session anchor and spend the remaining budget on recent turns.
+  const room = LIMITS.assistantMaxMessages - 2;
+  const boundedTail = messages.slice(-room);
+  const userStart = boundedTail.findIndex((message) => message.role === "user");
+  return [
+    messages[userIndex],
+    messages[markerIndex],
+    ...boundedTail.slice(userStart < 0 ? 0 : userStart),
+  ];
 }
 
 /**

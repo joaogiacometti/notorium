@@ -3,7 +3,10 @@
 // assistant can run it in the browser.
 
 import { escapeHtml } from "@/lib/html-escape";
-import { splitDollarMath } from "@/lib/math/dollar-math";
+import {
+  normalizeOverEscapedLatex,
+  splitDollarMath,
+} from "@/lib/math/dollar-math";
 import { mathNodeHtml } from "@/lib/math/math-nodes";
 
 function codeBlockHtml(language: string, code: string): string {
@@ -72,7 +75,7 @@ function extractMathSegments(value: string): {
   segments: MathSegment[];
 } {
   const segments: MathSegment[] = [];
-  const text = splitDollarMath(value)
+  const text = splitDollarMath(normalizeOverEscapedLatex(value))
     .map((part) => {
       if (part.kind === "text") return part.text;
       const token = `MATHMARKER${segments.length}END`;

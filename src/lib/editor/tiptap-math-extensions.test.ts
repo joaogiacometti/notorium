@@ -3,6 +3,7 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { describe, expect, it } from "vitest";
+import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
 import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
 import { MATH_KATEX_OPTIONS } from "@/lib/math/katex";
 
@@ -17,6 +18,20 @@ function roundTrip(html: string): string {
 }
 
 describe("buildMathExtensions", () => {
+  it("renders numeric answer choices through the real editor math extension", () => {
+    const editor = new Editor({
+      extensions: [StarterKit, ...buildMathExtensions()],
+      content: plainTextToRichText("B) $6$"),
+    });
+    try {
+      const math = editor.view.dom.querySelector(".katex");
+      expect(math).not.toBeNull();
+      expect(math?.textContent).toContain("6");
+      expect(editor.view.dom.textContent).not.toContain("$6$");
+    } finally {
+      editor.destroy();
+    }
+  });
   it("returns inline and block math nodes", () => {
     const names = buildMathExtensions().map((extension) => extension.name);
     expect(names).toEqual(["inlineMath", "blockMath"]);

@@ -3,7 +3,6 @@
 import { useChat } from "@ai-sdk/react";
 import type { ChatTransport } from "ai";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { setTutoringModePreference } from "@/app/actions/assistant-preferences";
 import { createAssistantChatTransport } from "@/components/assistant/assistant-chat-transport";
 import {
   type ActiveFlashcardEditor,
@@ -25,12 +24,13 @@ import {
 } from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import {
+  endGuidedLesson,
   isAssistantReplyInFlight,
   prepareDraftForAssistant,
+  readActiveGuidedLesson,
   readStudyContextSource,
   stampLastUserMetadata,
 } from "@/features/assistant/utils";
-import type { TutoringMode } from "@/features/assistant/validation";
 
 const sharedTransport = createAssistantChatTransport();
 const EDIT_FIELDS = ["front", "back"] as const;
@@ -38,8 +38,6 @@ const EDIT_FIELDS = ["front", "back"] as const;
 interface AssistantWorkspaceProviderProps {
   children: ReactNode;
   transport?: ChatTransport<AssistantUIMessage>;
-  /** Saved Hints first choice, read from its cookie by the server layout. */
-  initialTutoring?: TutoringMode;
 }
 
 /** Own the conversation independently of floating or editor presentation.
@@ -48,7 +46,6 @@ interface AssistantWorkspaceProviderProps {
 export function AssistantWorkspaceProvider({
   children,
   transport = sharedTransport,
-  initialTutoring = "hints",
 }: Readonly<AssistantWorkspaceProviderProps>) {
   const contexts = useRef<Array<() => StudyContext | null>>([]);
   const [context, setContext] = useState<StudyContext | null>(null);
@@ -71,7 +68,6 @@ export function AssistantWorkspaceProvider({
   }).current;
   const chat = useChat<AssistantUIMessage>({ transport });
   const [composerDraft, setComposerDraft] = useState("");
-  const [tutoring, setTutoringState] = useState(initialTutoring);
   const [open, setOpen] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);
@@ -96,6 +92,9 @@ export function AssistantWorkspaceProvider({
   const requestRef = useRef<FlashcardDraft | null>(null);
   const handled = useRef(new Set<string>());
   const chatGeneration = useRef(0);
+  const closingLesson = useRef(false);
+  const preparingMessage = useRef(false);
+  const lastPdfSelection = useRef<string | null>(null);
   const editors = useRef<ActiveFlashcardEditor[]>([]);
   pendingRef.current = pending;
 
@@ -220,12 +219,35 @@ export function AssistantWorkspaceProvider({
     setPending(null);
   }
 
-  async function send(text?: string): Promise<boolean> {
-    if (isAssistantReplyInFlight(chat.status)) return false;
+  async function send(
+    text?: string,
+    sendOptions?: { studyAnswer?: boolean },
+  ): Promise<boolean> {
+    if (
+      isAssistantReplyInFlight(chat.status) ||
+      closingLesson.current ||
+      preparingMessage.current
+    )
+      return false;
+    const generation = chatGeneration.current;
+    const lastUser = chat.messages.findLast(
+      (message) => message.role === "user",
+    );
+    if (text === undefined && lastUser?.metadata?.lessonSummary) {
+      setNotice(null);
+      void chat.regenerate({ body: {} }).catch(() => {
+        if (generation === chatGeneration.current)
+          setNotice(
+            "The lesson has ended, but its summary could not be generated. You can retry.",
+          );
+      });
+      return true;
+    }
     if (editorRef.current && !editorRef.current.available()) {
       setNotice("Wait for saving or image uploads to finish, then try again.");
       return false;
     }
+    preparingMessage.current = true;
     try {
       const draft = editorRef.current?.snapshot();
       const documentDraft = documents.capture();
@@ -246,22 +268,42 @@ export function AssistantWorkspaceProvider({
       await settlePending();
       await documents.settle();
       await proposals.skipOpenCards();
+      if (generation !== chatGeneration.current) return false;
       requestRef.current = draft ?? null;
       if (studyContext?.kind === "review" && studyContext.hiddenBack) {
         setAssistedRecallFront(studyContext.front);
       }
       setNotice(null);
+      const selection =
+        studyContext?.kind === "pdf" && studyContext.scope === "selection"
+          ? JSON.stringify([
+              studyContext.documentId,
+              studyContext.title,
+              studyContext.page,
+              studyContext.content,
+            ])
+          : null;
+      const requestContext =
+        selection && studyContext?.kind === "pdf"
+          ? {
+              ...studyContext,
+              selectionChanged: selection !== lastPdfSelection.current,
+            }
+          : studyContext;
       const options = {
         body: {
-          tutoring,
           ...(draft
             ? { draft: prepareDraftForAssistant(draft) }
             : documentDraft
               ? { documentDraft }
-              : { context: studyContext }),
+              : { context: requestContext }),
         },
       };
       const metadata = {
+        ...(sendOptions?.studyAnswer ||
+        (text === undefined && lastUser?.metadata?.studyAnswer)
+          ? { studyAnswer: true }
+          : {}),
         source: readStudyContextSource(
           draft ? undefined : (contexts.current.at(-1)?.() ?? undefined),
         ),
@@ -275,13 +317,53 @@ export function AssistantWorkspaceProvider({
         text !== undefined
           ? chat.sendMessage({ text, metadata }, options)
           : chat.regenerate(options);
-      void sending.catch(() =>
-        setNotice("The message could not be sent. Please retry."),
-      );
+      lastPdfSelection.current = selection;
+      void sending.catch(() => {
+        if (generation === chatGeneration.current)
+          setNotice("The message could not be sent. Please retry.");
+      });
       return true;
     } catch {
-      setNotice("The message could not be prepared. Please retry.");
+      if (generation === chatGeneration.current)
+        setNotice("The message could not be prepared. Please retry.");
       return false;
+    } finally {
+      preparingMessage.current = false;
+    }
+  }
+
+  async function finishLesson() {
+    const lesson = readActiveGuidedLesson(chat.messages);
+    if (!lesson || closingLesson.current) return;
+    closingLesson.current = true;
+    chatGeneration.current += 1;
+    const generation = chatGeneration.current;
+    try {
+      await chat.stop();
+      if (generation !== chatGeneration.current) return;
+      chat.setMessages((messages) =>
+        endGuidedLesson(messages, lesson.toolCallId),
+      );
+      await settlePending();
+      await documents.settle();
+      await proposals.skipOpenCards();
+      if (generation !== chatGeneration.current) return;
+      setNotice(null);
+      // Exit is already recorded. Summary failure must never reopen the lesson.
+      await chat.sendMessage(
+        {
+          text: "Summarize the lesson we just ended, in the language used during that lesson.",
+          metadata: { lessonSummary: lesson.toolCallId },
+        },
+        { body: {} },
+      );
+    } catch {
+      if (generation === chatGeneration.current)
+        setNotice(
+          "The lesson has ended, but its summary could not be generated. You can retry.",
+        );
+    } finally {
+      closingLesson.current = false;
     }
   }
 
@@ -365,12 +447,6 @@ export function AssistantWorkspaceProvider({
     }
   });
 
-  function setTutoring(mode: TutoringMode) {
-    setTutoringState(mode);
-    // Best effort: a lost write only means the next reload starts in hints.
-    void setTutoringModePreference(mode).catch(() => {});
-  }
-
   function reset() {
     chatGeneration.current += 1;
     chat.stop();
@@ -378,6 +454,7 @@ export function AssistantWorkspaceProvider({
     void settlePending();
     requestRef.current = null;
     handled.current.clear();
+    lastPdfSelection.current = null;
     chat.clearError();
     chat.setMessages([]);
     proposals.reset();
@@ -399,8 +476,6 @@ export function AssistantWorkspaceProvider({
         registerPortalTarget,
         composerDraft,
         setComposerDraft,
-        tutoring,
-        setTutoring,
         proposals,
         context,
         assistedRecallFront,
@@ -410,6 +485,7 @@ export function AssistantWorkspaceProvider({
         pending,
         decide,
         send,
+        finishLesson,
         reset,
         notice: notice ?? documents.notice,
       }}

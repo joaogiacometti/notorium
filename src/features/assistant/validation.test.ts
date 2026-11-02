@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  assistantChatRequestSchema,
-  parseSavedTutoringMode,
-} from "@/features/assistant/validation";
+import { assistantChatRequestSchema } from "@/features/assistant/validation";
 import { LIMITS } from "@/lib/config/limits";
 
 function userMessage(id: string, text: string) {
@@ -18,6 +15,33 @@ function replyMessage(id: string, text: string) {
 }
 
 describe("assistantChatRequestSchema", () => {
+  it("keeps questions and conversational exits in subsequent requests", () => {
+    const question = { question: "Quanto é 2 + 3?", options: ["4", "5", "6"] };
+    const parts = [
+      {
+        type: "tool-askStudyQuestion",
+        toolCallId: "question",
+        state: "output-available",
+        input: question,
+        output: question,
+      },
+      {
+        type: "tool-endGuidedLesson",
+        toolCallId: "end",
+        state: "output-available",
+        input: {},
+        output: { topic: "Aritmética", endedByUser: true },
+      },
+    ];
+    const parsed = assistantChatRequestSchema.parse({
+      messages: [
+        userMessage("u1", "Me dê opções"),
+        { id: "a1", role: "assistant", parts },
+        userMessage("u2", "Obrigado"),
+      ],
+    });
+    expect(parsed.messages[1]?.parts).toEqual(parts);
+  });
   it("accepts a chat and keeps reply text with its step markers", () => {
     const parsed = assistantChatRequestSchema.parse({
       messages: [
@@ -48,26 +72,34 @@ describe("assistantChatRequestSchema", () => {
     ).toBeUndefined();
   });
 
-  it("defaults tutoring to hints and rejects unknown modes", () => {
-    const messages = [userMessage("m1", "Solve x + 2 = 5")];
+  it("keeps a lesson marker the user ended so the model sees it", () => {
+    const marker = {
+      type: "tool-startGuidedLesson",
+      toolCallId: "lesson-1",
+      state: "output-available",
+      input: { topic: "Derivatives" },
+      output: { topic: "Derivatives", endedByUser: true },
+    };
+    const parsed = assistantChatRequestSchema.parse({
+      messages: [
+        userMessage("m1", "/learn derivatives"),
+        { id: "m2", role: "assistant", parts: [marker] },
+        userMessage("m3", "Just tell me"),
+      ],
+    });
 
-    expect(assistantChatRequestSchema.parse({ messages }).tutoring).toBe(
-      "hints",
-    );
-    expect(
-      assistantChatRequestSchema.parse({ messages, tutoring: "answers" })
-        .tutoring,
-    ).toBe("answers");
-    expect(
-      assistantChatRequestSchema.safeParse({ messages, tutoring: "cheat" })
-        .success,
-    ).toBe(false);
+    expect(parsed.messages[1]?.parts).toEqual([marker]);
   });
 
-  it("restores a saved tutoring mode and falls back to hints", () => {
-    expect(parseSavedTutoringMode("answers")).toBe("answers");
-    expect(parseSavedTutoringMode(undefined)).toBe("hints");
-    expect(parseSavedTutoringMode("cheat")).toBe("hints");
+  it("ignores the retired tutoring field sent by tabs loaded before /learn", () => {
+    const messages = [userMessage("m1", "Solve x + 2 = 5")];
+    const parsed = assistantChatRequestSchema.parse({
+      messages,
+      tutoring: "hints",
+    });
+
+    expect(parsed).not.toHaveProperty("tutoring");
+    expect(parsed.messages).toHaveLength(1);
   });
 
   it("rejects an empty or oversized chat id", () => {

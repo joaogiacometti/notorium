@@ -9,7 +9,6 @@ import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-wor
 import { StudyAssistant } from "@/components/assistant/study-assistant";
 import type { ProposedFlashcard } from "@/features/assistant/tools";
 import type { AssistantUIMessage } from "@/features/assistant/types";
-import type { TutoringMode } from "@/features/assistant/validation";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
 
 // Stands in for the Tiptap editor, which needs a real layout engine. While
@@ -31,15 +30,6 @@ vi.mock("@/components/shared/tiptap-renderer", () => ({
     ),
 }));
 
-// Records the cookie writes the Hints first toggle would make on the server.
-const savedTutoringModes = vi.hoisted((): string[] => []);
-
-vi.mock("@/app/actions/assistant-preferences", () => ({
-  setTutoringModePreference: async (mode: string) => {
-    savedTutoringModes.push(mode);
-  },
-}));
-
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
@@ -49,10 +39,13 @@ type SendMessagesOptions = Parameters<
 >[0];
 
 type FakeReply =
+  | { chunks: UIMessageChunk[] }
   | { text: string }
   | { streaming: true }
   | { errorBody: unknown }
-  | { proposal: ProposedFlashcard[] };
+  | { proposal: ProposedFlashcard[] }
+  | { lesson: { topic: string; text: string } }
+  | { lessonThenWait: string };
 
 /**
  * In-memory chat backend: answers each request with the next queued reply,
@@ -61,6 +54,11 @@ type FakeReply =
 class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
   readonly requests: SendMessagesOptions[] = [];
   private readonly replies: FakeReply[] = [];
+
+  replyWithChunks(chunks: UIMessageChunk[]): this {
+    this.replies.push({ chunks });
+    return this;
+  }
 
   replyWith(text: string): this {
     this.replies.push({ text });
@@ -77,6 +75,17 @@ class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
     return this;
   }
 
+  startLessonWith(topic: string, text: string): this {
+    this.replies.push({ lesson: { topic, text } });
+    return this;
+  }
+
+  /** Marks a lesson, then holds the stream open as if the next step is pending. */
+  startLessonThenWait(topic: string): this {
+    this.replies.push({ lessonThenWait: topic });
+    return this;
+  }
+
   failWith(errorBody: unknown): this {
     this.replies.push({ errorBody });
     return this;
@@ -87,11 +96,60 @@ class FakeAssistantChatTransport implements ChatTransport<AssistantUIMessage> {
   ): Promise<ReadableStream<UIMessageChunk>> {
     this.requests.push(options);
     const reply = this.replies.shift() ?? { text: "" };
+    if ("chunks" in reply) return streamOfChunks(reply.chunks);
     if ("errorBody" in reply) {
       throw new Error(JSON.stringify(reply.errorBody));
     }
     if ("proposal" in reply) {
       return streamOfChunks(proposalChunks(reply.proposal));
+    }
+    if ("lessonThenWait" in reply) {
+      const marker = { topic: reply.lessonThenWait };
+      return new ReadableStream({
+        start(controller) {
+          for (const chunk of [
+            { type: "start" },
+            { type: "start-step" },
+            {
+              type: "tool-input-available",
+              toolCallId: "lesson-1",
+              toolName: "startGuidedLesson",
+              input: marker,
+            },
+            {
+              type: "tool-output-available",
+              toolCallId: "lesson-1",
+              output: marker,
+            },
+            { type: "finish-step" },
+            { type: "start-step" },
+          ] satisfies UIMessageChunk[])
+            controller.enqueue(chunk);
+          options.abortSignal?.addEventListener(
+            "abort",
+            () => controller.close(),
+            { once: true },
+          );
+        },
+      });
+    }
+    if ("lesson" in reply) {
+      const marker = { topic: reply.lesson.topic };
+      return streamOfChunks([
+        { type: "start" },
+        {
+          type: "tool-input-available",
+          toolCallId: "lesson-1",
+          toolName: "startGuidedLesson",
+          input: marker,
+        },
+        {
+          type: "tool-output-available",
+          toolCallId: "lesson-1",
+          output: marker,
+        },
+        ...textChunks(reply.lesson.text).slice(1),
+      ]);
     }
     if ("streaming" in reply) {
       return new ReadableStream({
@@ -165,17 +223,11 @@ describe("study assistant", () => {
     vi.unstubAllGlobals();
   });
 
-  async function renderPanel(
-    transport: FakeAssistantChatTransport,
-    initialTutoring?: TutoringMode,
-  ) {
+  async function renderPanel(transport: FakeAssistantChatTransport) {
     await act(async () => {
       root.render(
         <QueryClientProvider client={new QueryClient()}>
-          <AssistantWorkspaceProvider
-            transport={transport}
-            initialTutoring={initialTutoring}
-          >
+          <AssistantWorkspaceProvider transport={transport}>
             <AssistantPanel onMinimize={() => {}} />
           </AssistantWorkspaceProvider>
         </QueryClientProvider>,
@@ -220,39 +272,6 @@ describe("study assistant", () => {
     ]);
   });
 
-  it("sends hint-first tutoring by default and direct answers once toggled off", async () => {
-    const transport = new FakeAssistantChatTransport()
-      .replyWith("What have you tried?")
-      .replyWith("x = 3.");
-    await renderPanel(transport);
-    const toggle = container.querySelector<HTMLButtonElement>(
-      "button[aria-pressed]",
-    );
-
-    await sendMessage("Solve x + 2 = 5");
-    await act(async () => toggle?.click());
-    await sendMessage("Just tell me");
-
-    expect(toggle?.getAttribute("aria-pressed")).toBe("false");
-    expect(transport.requests[0]?.body).toMatchObject({ tutoring: "hints" });
-    expect(transport.requests[1]?.body).toMatchObject({ tutoring: "answers" });
-    expect(savedTutoringModes.at(-1)).toBe("answers");
-  });
-
-  it("starts from the saved tutoring mode", async () => {
-    const transport = new FakeAssistantChatTransport().replyWith("x = 3.");
-    await renderPanel(transport, "answers");
-
-    await sendMessage("Solve x + 2 = 5");
-
-    expect(
-      container
-        .querySelector("button[aria-pressed]")
-        ?.getAttribute("aria-pressed"),
-    ).toBe("false");
-    expect(transport.requests[0]?.body).toMatchObject({ tutoring: "answers" });
-  });
-
   it("keeps the finished reply visible until the rich renderer is ready", async () => {
     fakeTiptapRenderer.ready = false;
     await renderPanel(
@@ -265,6 +284,18 @@ describe("study assistant", () => {
     expect(container.textContent).toContain("ATP stores energy.");
   });
 
+  it("typesets numeric math in the user's submitted answer as well as assistant replies", async () => {
+    await renderPanel(new FakeAssistantChatTransport().replyWith("Correto."));
+    await sendMessage("B) $6$");
+    expect(
+      [...container.querySelectorAll('[data-testid="rich-reply"]')].some(
+        (reply) =>
+          reply.textContent ===
+          '<p>B) <span data-type="inline-math" data-latex="6"></span></p>',
+      ),
+    ).toBe(true);
+  });
+
   it("shows no empty bubble for a reply without text", async () => {
     await renderPanel(new FakeAssistantChatTransport().replyWith(""));
 
@@ -272,6 +303,19 @@ describe("study assistant", () => {
 
     expect(container.querySelector('[data-testid="rich-reply"]')).toBeNull();
     expect(container.textContent).not.toContain("Thinking…");
+  });
+
+  it("keeps showing Thinking… after a lesson marker until the reply text arrives", async () => {
+    await renderPanel(
+      new FakeAssistantChatTransport().startLessonThenWait("Derivatives"),
+    );
+
+    await sendMessage("Teach me derivatives");
+
+    expect(container.textContent).toContain(
+      "Guided lesson started · Derivatives",
+    );
+    expect(container.textContent).toContain("Thinking…");
   });
 
   it("shows a proposed flashcard and sends its outcome with the next turn", async () => {
@@ -300,6 +344,191 @@ describe("study assistant", () => {
         output: { outcomes: ["dismissed"] },
       }),
     );
+  });
+
+  it("ends the lesson and requests exactly one closing summary without clearing a draft", async () => {
+    const transport = new FakeAssistantChatTransport()
+      .startLessonWith("Topic", "An opening explanation.")
+      .replyWith("Studied: the topic. Understanding has not been assessed.")
+      .replyWith("A direct answer.");
+    await renderPanel(transport);
+
+    await sendMessage("/learn Topic");
+    const indicator = () =>
+      [...container.querySelectorAll('[role="status"]')].find((element) =>
+        element.textContent?.includes("Guided lesson"),
+      );
+    expect(indicator()?.textContent).toContain("Topic");
+    expect(container.textContent).toContain("Guided lesson started · Topic");
+    await act(async () =>
+      setTextareaValue(
+        getByLabel<HTMLTextAreaElement>("Message the study assistant"),
+        "Unfinished thought",
+      ),
+    );
+    await act(async () => {
+      const end = [...container.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes("End lesson"),
+      );
+      end?.click();
+      end?.click();
+    });
+    expect(indicator()).toBeUndefined();
+    expect(transport.requests).toHaveLength(2);
+    expect(transport.requests[1]?.messages.at(-1)?.metadata).toEqual({
+      lessonSummary: "lesson-1",
+    });
+    expect(container.textContent).toContain(
+      "Understanding has not been assessed.",
+    );
+    expect(
+      getByLabel<HTMLTextAreaElement>("Message the study assistant").value,
+    ).toBe("Unfinished thought");
+
+    await sendMessage("Just tell me what it is");
+    expect(transport.requests[2]?.messages[1]?.parts).toContainEqual(
+      expect.objectContaining({
+        type: "tool-startGuidedLesson",
+        output: { topic: "Topic", endedByUser: true },
+      }),
+    );
+  });
+
+  it("records a conversational exit and removes lesson controls", async () => {
+    const transport = new FakeAssistantChatTransport()
+      .startLessonWith("Topic", "An opening explanation.")
+      .replyWithChunks([
+        { type: "start" },
+        {
+          type: "tool-input-available",
+          toolName: "endGuidedLesson",
+          toolCallId: "end-1",
+          input: {},
+        },
+        {
+          type: "tool-output-available",
+          toolCallId: "end-1",
+          output: { topic: "Topic", endedByUser: true },
+        },
+        ...textChunks("The lesson has ended.").slice(1),
+      ])
+      .replyWith("A direct answer.");
+    await renderPanel(transport);
+    await sendMessage("Guide me through a topic");
+    await sendMessage("End the lesson");
+    expect(container.textContent).toContain("Guided lesson ended");
+    expect(
+      [...container.querySelectorAll("button")].some((button) =>
+        button.textContent?.includes("End lesson"),
+      ),
+    ).toBe(false);
+    await sendMessage("Explain the term");
+    expect(
+      transport.requests[2]?.messages.flatMap((message) => message.parts),
+    ).toContainEqual(
+      expect.objectContaining({
+        type: "tool-endGuidedLesson",
+        output: { topic: "Topic", endedByUser: true },
+      }),
+    );
+  });
+
+  it("aborts the pending tutor reply before requesting the closing summary", async () => {
+    const transport = new FakeAssistantChatTransport().startLessonThenWait(
+      "Topic",
+    );
+    await renderPanel(transport);
+    await sendMessage("Guide me through a topic");
+    const end = [...container.querySelectorAll("button")].find((button) =>
+      button.textContent?.includes("End lesson"),
+    );
+    expect(end?.disabled).toBe(false);
+    await act(async () => end?.click());
+    expect(container.textContent).toContain("Guided lesson ended");
+    expect(container.querySelector('[aria-label="Stop answer"]')).toBeNull();
+    expect(transport.requests).toHaveLength(2);
+    expect(
+      transport.requests[1]?.messages.at(-1)?.metadata?.lessonSummary,
+    ).toBe("lesson-1");
+  });
+
+  it("keeps the lesson ended after summary failure and retries without losing its intent", async () => {
+    const transport = new FakeAssistantChatTransport()
+      .startLessonWith("Topic", "An opening explanation.")
+      .failWith({ success: false, errorCode: "assistant.unavailable" })
+      .replyWith("The topic was explained; understanding was not assessed.");
+    await renderPanel(transport);
+    await sendMessage("/learn Topic");
+    await act(async () =>
+      [...container.querySelectorAll("button")]
+        .find((button) => button.textContent?.includes("End lesson"))
+        ?.click(),
+    );
+    expect(container.textContent).toContain("Guided lesson ended");
+    expect(
+      [...container.querySelectorAll("button")].some((button) =>
+        button.textContent?.includes("End lesson"),
+      ),
+    ).toBe(false);
+    expect(transport.requests).toHaveLength(2);
+    await act(async () =>
+      [...container.querySelectorAll("button")]
+        .find((button) => button.textContent?.includes("Retry"))
+        ?.click(),
+    );
+    expect(transport.requests).toHaveLength(3);
+    expect(
+      transport.requests[2]?.messages.findLast(
+        (message) => message.role === "user",
+      )?.metadata?.lessonSummary,
+    ).toBe("lesson-1");
+    expect(transport.requests[2]?.body).toEqual({});
+    expect(container.textContent).toContain("understanding was not assessed");
+  });
+
+  it("shows clickable choices and prevents duplicate or stale answer submissions", async () => {
+    const question = { question: "Quanto é $2+3$?", options: ["4", "5", "6"] };
+    const transport = new FakeAssistantChatTransport()
+      .replyWithChunks([
+        { type: "start" },
+        {
+          type: "tool-input-available",
+          toolName: "askStudyQuestion",
+          toolCallId: "question-1",
+          input: question,
+        },
+        {
+          type: "tool-output-available",
+          toolCallId: "question-1",
+          output: question,
+        },
+        { type: "finish" },
+      ])
+      .replyWith("Correto.");
+    await renderPanel(transport);
+    await sendMessage("Me dê opções");
+    const option = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "B) 5",
+    );
+    expect(option).toBeDefined();
+    await act(async () => {
+      option?.click();
+      option?.click();
+    });
+    expect(transport.requests).toHaveLength(2);
+    expect(transport.requests[1]?.messages.at(-1)?.parts).toEqual([
+      { type: "text", text: "B) 5" },
+    ]);
+    expect(transport.requests[1]?.messages.at(-1)?.metadata?.studyAnswer).toBe(
+      true,
+    );
+    expect(option?.disabled).toBe(true);
+    expect(option?.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "A) 4",
+      )?.disabled,
+    ).toBe(true);
   });
 
   it("tells the assistant about cards left open when the next message is sent", async () => {

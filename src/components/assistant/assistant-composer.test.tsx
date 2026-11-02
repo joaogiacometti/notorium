@@ -127,6 +127,65 @@ describe("assistant composer", () => {
     },
   );
 
+  it("lists both commands for a bare slash and moves the highlight with arrows", async () => {
+    await renderComposer();
+    await typeDraft("/");
+    const optionTexts = () =>
+      [...container.querySelectorAll('[role="option"]')].map(
+        (option) => option.textContent,
+      );
+    const selected = () =>
+      container.querySelector('[role="option"][aria-selected="true"]');
+    expect(optionTexts()).toEqual([
+      expect.stringContaining("New chat"),
+      expect.stringContaining("Learn a topic"),
+    ]);
+    await pressKey("ArrowDown");
+    expect(selected()?.textContent).toContain("Learn a topic");
+    expect(
+      container
+        .querySelector("textarea")
+        ?.getAttribute("aria-activedescendant"),
+    ).toBe(selected()?.id);
+    await pressKey("ArrowDown");
+    expect(selected()?.textContent).toContain("New chat");
+    await pressKey("ArrowUp");
+    expect(selected()?.textContent).toContain("Learn a topic");
+  });
+
+  it.each(["/l", "/learn"])(
+    "fills %s as a lesson prefix with Enter and sends the topic as a message",
+    async (draft) => {
+      const submission = await renderComposer();
+      await typeDraft(draft);
+      const options = container.querySelectorAll('[role="option"]');
+      expect(options).toHaveLength(1);
+      expect(options[0]?.textContent).toContain("Learn a topic");
+      await pressKey("Enter");
+      const textarea = container.querySelector("textarea");
+      expect(textarea?.value).toBe("/learn ");
+      expect(document.activeElement).toBe(textarea);
+      expect(container.querySelector('[role="listbox"]')).toBeNull();
+      expect(submission.messages).toEqual([]);
+      await typeDraft("/learn binary search");
+      await pressKey("Enter");
+      expect(submission.resets).toBe(0);
+      expect(submission.messages).toEqual(["/learn binary search"]);
+    },
+  );
+
+  it("fills the lesson prefix when Learn a topic is clicked", async () => {
+    const submission = await renderComposer();
+    await typeDraft("/");
+    await act(async () => {
+      [...container.querySelectorAll<HTMLElement>('[role="option"]')]
+        .find((option) => option.textContent?.includes("Learn a topic"))
+        ?.click();
+    });
+    expect(container.querySelector("textarea")?.value).toBe("/learn ");
+    expect(submission.messages).toEqual([]);
+  });
+
   it.each([false, true])(
     "resets on exact trimmed form submission even when busy=%s",
     async (busy) => {

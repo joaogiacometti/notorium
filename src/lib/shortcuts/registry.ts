@@ -47,6 +47,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.StudyAssistant,
   },
   {
+    id: "assistant-learn",
+    kind: "typed",
+    keys: ["/learn"],
+    description: "Start a guided lesson on a topic",
+    category: ShortcutCategory.StudyAssistant,
+  },
+  {
     id: "assistant-command-select",
     kind: "keys",
     keys: ["enter"],

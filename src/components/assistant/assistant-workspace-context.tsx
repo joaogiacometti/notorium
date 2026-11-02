@@ -11,7 +11,6 @@ import type {
 } from "@/features/assistant/edit-contract";
 import type { StudyContext } from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
-import type { TutoringMode } from "@/features/assistant/validation";
 
 export interface ActiveFlashcardEditor {
   sessionId: string;
@@ -37,9 +36,6 @@ export interface AssistantWorkspace {
   documents: DocumentEditControls;
   composerDraft: string;
   setComposerDraft: (draft: string) => void;
-  /** Hint-first by default; the choice is saved in a cookie across reloads. */
-  tutoring: TutoringMode;
-  setTutoring: (mode: TutoringMode) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
   host: HTMLElement | null;
@@ -62,7 +58,11 @@ export interface AssistantWorkspace {
   register: (editor: ActiveFlashcardEditor) => () => void;
   pending: PendingFlashcardEdits | null;
   decide: (field: FlashcardEditField, accept: boolean) => void;
-  send: (text?: string) => Promise<boolean>;
+  send: (
+    text?: string,
+    options?: { studyAnswer?: boolean },
+  ) => Promise<boolean>;
+  finishLesson: () => Promise<void>;
   reset: () => void;
   notice: string | null;
 }
